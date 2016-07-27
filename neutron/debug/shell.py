@@ -20,7 +20,6 @@ from oslo_utils import importutils
 
 from neutron._i18n import _
 from neutron.agent.common import utils
-from neutron.agent.linux import interface
 from neutron.conf.agent import common as config
 from neutron.debug import debug_agent
 from neutronclient.common import exceptions as exc
@@ -71,7 +70,7 @@ class NeutronDebugShell(shell.NeutronShell):
                 _("You must provide a config file for bridge -"
                   " either --config-file or env[NEUTRON_TEST_CONFIG_FILE]"))
         client = self.client_manager.neutron
-        cfg.CONF.register_opts(interface.OPTS)
+        config.register_interface_opts()
         cfg.CONF.register_opts(config.EXT_NET_BRIDGE_OPTS)
         config.register_interface_driver_opts_helper(cfg.CONF)
         cfg.CONF(['--config-file', self.options.config_file])

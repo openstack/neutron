@@ -15,22 +15,11 @@
 
 import abc
 
-from oslo_config import cfg
 import six
 
-from neutron._i18n import _
+from neutron.conf.agent import common as agent_conf
 
-OPTS = [
-    cfg.StrOpt('pd_confs',
-               default='$state_path/pd',
-               help=_('Location to store IPv6 PD files.')),
-    cfg.StrOpt('vendor_pen',
-               default='8888',
-               help=_("A decimal value as Vendor's Registered Private "
-                      "Enterprise Number as required by RFC3315 DUID-EN.")),
-]
-
-cfg.CONF.register_opts(OPTS)
+agent_conf.register_pddriver_opts()
 
 
 @six.add_metaclass(abc.ABCMeta)

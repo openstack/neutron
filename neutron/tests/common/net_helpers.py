@@ -767,7 +767,7 @@ class OVSPortFixture(PortFixture):
         # machines as the port should be treated by OVS agent and not by
         # external party
         interface_config = cfg.ConfigOpts()
-        interface_config.register_opts(interface.OPTS)
+        config.register_interface_opts(interface_config)
         ovs_interface = interface.OVSInterfaceDriver(interface_config)
         ovs_interface.plug_new(
             None,

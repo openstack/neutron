@@ -19,15 +19,12 @@ import jinja2
 import netaddr
 from neutron_lib import constants
 from neutron_lib.utils import file as file_utils
-from oslo_config import cfg
 from oslo_log import log as logging
 import six
 
-from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
-
 
 RADVD_SERVICE_NAME = 'radvd'
 RADVD_SERVICE_CMD = 'radvd'
@@ -36,17 +33,6 @@ MAX_RDNSS_ENTRIES = 3
 
 LOG = logging.getLogger(__name__)
 
-OPTS = [
-    cfg.StrOpt('ra_confs',
-               default='$state_path/ra',
-               help=_('Location to store IPv6 RA config files')),
-    cfg.IntOpt('min_rtr_adv_interval',
-               default=30,
-               help=_('MinRtrAdvInterval setting for radvd.conf')),
-    cfg.IntOpt('max_rtr_adv_interval',
-               default=100,
-               help=_('MaxRtrAdvInterval setting for radvd.conf')),
-]
 
 CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 {

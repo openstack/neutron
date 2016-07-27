@@ -23,6 +23,57 @@ from neutron._i18n import _
 from neutron.common import config
 
 
+EXTERNAL_PROCESS_OPTS = [
+    cfg.StrOpt('external_pids',
+               default='$state_path/external/pids',
+               help=_('Location to store child pid files')),
+]
+
+
+PD_OPTS = [
+    cfg.StrOpt('pd_dhcp_driver',
+               default='dibbler',
+               help=_('Service to handle DHCPv6 Prefix delegation.')),
+]
+
+
+PD_DRIVER_OPTS = [
+    cfg.StrOpt('pd_confs',
+               default='$state_path/pd',
+               help=_('Location to store IPv6 PD files.')),
+    cfg.StrOpt('vendor_pen',
+               default='8888',
+               help=_("A decimal value as Vendor's Registered Private "
+                      "Enterprise Number as required by RFC3315 DUID-EN.")),
+]
+
+
+INTERFACE_OPTS = [
+    cfg.StrOpt('ovs_integration_bridge',
+               default='br-int',
+               help=_('Name of Open vSwitch bridge to use')),
+    cfg.BoolOpt('ovs_use_veth',
+                default=False,
+                help=_('Uses veth for an OVS interface or not. '
+                       'Support kernels with limited namespace support '
+                       '(e.g. RHEL 6.5) so long as ovs_use_veth is set to '
+                       'True.')),
+]
+
+
+RA_OPTS = [
+    cfg.StrOpt('ra_confs',
+               default='$state_path/ra',
+               help=_('Location to store IPv6 RA config files')),
+    cfg.IntOpt('min_rtr_adv_interval',
+               default=30,
+               help=_('MinRtrAdvInterval setting for radvd.conf')),
+    cfg.IntOpt('max_rtr_adv_interval',
+               default=100,
+               help=_('MaxRtrAdvInterval setting for radvd.conf')),
+]
+
+
 ROOT_HELPER_OPTS = [
     cfg.StrOpt('root_helper', default='sudo',
                help=_("Root helper application. "
@@ -129,6 +180,26 @@ def get_log_args(conf, log_file_name, **kwargs):
                 cmd_args.append(
                     '--syslog-log-facility=%s' % conf.syslog_log_facility)
     return cmd_args
+
+
+def register_external_process_opts(cfg=cfg.CONF):
+    cfg.register_opts(EXTERNAL_PROCESS_OPTS)
+
+
+def register_pd_opts(cfg=cfg.CONF):
+    cfg.register_opts(PD_OPTS)
+
+
+def register_pddriver_opts(cfg=cfg.CONF):
+    cfg.register_opts(PD_DRIVER_OPTS)
+
+
+def register_interface_opts(cfg=cfg.CONF):
+    cfg.register_opts(INTERFACE_OPTS)
+
+
+def register_ra_opts(cfg=cfg.CONF):
+    cfg.register_opts(RA_OPTS)
 
 
 def register_root_helper(conf=cfg.CONF):

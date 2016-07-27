@@ -16,7 +16,6 @@ import mock
 from oslo_config import cfg
 
 from neutron.agent.linux import dhcp
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
@@ -31,8 +30,8 @@ class TestDhcp(functional_base.BaseSudoTestCase):
     def setUp(self):
         super(TestDhcp, self).setUp()
         conf = cfg.ConfigOpts()
-        conf.register_opts(config.INTERFACE_DRIVER_OPTS)
-        conf.register_opts(interface.OPTS)
+        config.register_interface_driver_opts_helper(conf)
+        config.register_interface_opts(conf)
         conf.register_opts(common_conf.core_opts)
         conf.register_opts(dhcp_conf.DHCP_AGENT_OPTS)
         conf.set_override('interface_driver', 'openvswitch')

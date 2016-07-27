@@ -17,14 +17,12 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import ovs_lib
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config
 from neutron.conf.agent import cmd
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
-
 
 LOG = logging.getLogger(__name__)
 
@@ -39,8 +37,8 @@ def setup_conf():
     conf = cfg.CONF
     cmd.register_cmd_opts(cmd.ovs_opts, conf)
     l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
-    conf.register_opts(interface.OPTS)
     agent_config.register_interface_driver_opts_helper(conf)
+    agent_config.register_interface_opts()
     return conf
 
 

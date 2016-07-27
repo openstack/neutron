@@ -20,7 +20,6 @@ from oslo_utils import importutils
 from neutron._i18n import _
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
@@ -39,7 +38,7 @@ RULE = '-r-'
 LABEL = '-l-'
 
 config.register_interface_driver_opts_helper(cfg.CONF)
-cfg.CONF.register_opts(interface.OPTS)
+config.register_interface_opts()
 
 
 class IptablesManagerTransaction(object):

@@ -24,23 +24,15 @@ from oslo_utils import fileutils
 import psutil
 import six
 
-from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-
 from neutron.conf.agent import common as agent_cfg
+
 
 LOG = logging.getLogger(__name__)
 
 
-OPTS = [
-    cfg.StrOpt('external_pids',
-               default='$state_path/external/pids',
-               help=_('Location to store child pid files')),
-]
-
-
-cfg.CONF.register_opts(OPTS)
+agent_cfg.register_external_process_opts()
 agent_cfg.register_process_monitor_opts(cfg.CONF)
 
 

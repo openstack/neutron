@@ -19,10 +19,6 @@ import sys
 from oslo_config import cfg
 from oslo_service import service
 
-from neutron.agent.linux import external_process
-from neutron.agent.linux import interface
-from neutron.agent.linux import pd
-from neutron.agent.linux import ra
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.conf.agent import common as config
@@ -38,10 +34,10 @@ def register_opts(conf):
     meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, conf)
     config.register_interface_driver_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
-    conf.register_opts(interface.OPTS)
-    conf.register_opts(external_process.OPTS)
-    conf.register_opts(pd.OPTS)
-    conf.register_opts(ra.OPTS)
+    config.register_interface_opts(conf)
+    config.register_external_process_opts(conf)
+    config.register_pddriver_opts(conf)
+    config.register_ra_opts(conf)
     config.register_availability_zone_opts_helper(conf)
 
 
