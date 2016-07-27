@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
+import itertools
 
+import mock
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
 from oslo_utils import uuidutils
@@ -85,8 +86,11 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         super(TrunkDbObjectTestCase, self).setUp()
 
         self._create_test_network()
+        sub_ports = []
+        for obj in self.db_objs:
+            sub_ports.extend(obj['sub_ports'])
 
-        for obj in self.obj_fields:
+        for obj in itertools.chain(self.obj_fields, sub_ports):
             self._create_port(id=obj['port_id'],
                               network_id=self._network['id'])
 
@@ -121,3 +125,10 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         self.assertEqual(expected, set(map(_as_tuple, trunk.sub_ports)))
         self.assertEqual(expected, set(map(_as_tuple, sub_ports)))
+
+    def test_get_objects_queries_constant(self):
+        # NOTE(korzen) Trunk object has synthetic field 'sub_port' which is
+        # not defined as model relationship between sub_port and trunk.
+        # Both sub_port and trunk have relationship to port model, but this
+        # relationship is not proactively loading the port object.
+        pass

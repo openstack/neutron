@@ -16,12 +16,10 @@ from operator import itemgetter
 from oslo_utils import uuidutils
 
 from neutron import context
-from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import subnet
-from neutron.tests import tools
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
@@ -171,12 +169,6 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertEqual(1, new.dns_nameservers[0].order)
         self.assertEqual(2, new.dns_nameservers[1].order)
         self.assertEqual(4, new.dns_nameservers[-1].order)
-
-    def _create_network(self):
-        name = "test-network-%s" % tools.get_random_string(4)
-        return obj_db_api.create_object(self.context,
-                                        models_v2.Network,
-                                        {'name': name})
 
     def _create_shared_network_rbac_entry(self, network):
         attrs = {
