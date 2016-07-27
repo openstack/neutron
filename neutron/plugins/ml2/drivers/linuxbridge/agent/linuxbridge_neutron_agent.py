@@ -439,7 +439,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
     def add_tap_interface(self, network_id, network_type, physical_network,
                           segmentation_id, tap_device_name, device_owner):
-        """Add tap interface and handle interface missing exeptions."""
+        """Add tap interface and handle interface missing exceptions."""
         try:
             return self._add_tap_interface(network_id, network_type,
                                            physical_network, segmentation_id,
