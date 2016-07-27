@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
@@ -26,6 +28,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
 from neutron.services import service_base
+from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import rules
@@ -122,7 +125,15 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                         tenant_id=trunk['tenant_id'],
                                         port_id=trunk['port_id'],
                                         sub_ports=sub_ports)
-        trunk_obj.create()
+        with db_api.autonested_transaction(context.session):
+            trunk_obj.create()
+            payload = callbacks.TrunkPayload(context, trunk_obj.id,
+                                             current_trunk=trunk_obj)
+            registry.notify(
+                constants.TRUNK, events.PRECOMMIT_CREATE, self,
+                payload=payload)
+        registry.notify(
+            constants.TRUNK, events.AFTER_CREATE, self, payload=payload)
         return trunk_obj
 
     @db_base_plugin_common.convert_result_to_dict
@@ -131,9 +142,17 @@ class TrunkPlugin(service_base.ServicePluginBase,
         trunk_data = trunk['trunk']
         with db_api.autonested_transaction(context.session):
             trunk_obj = self._get_trunk(context, trunk_id)
+            original_trunk = copy.deepcopy(trunk_obj)
             trunk_obj.update_fields(trunk_data, reset_changes=True)
             trunk_obj.update()
-            return trunk_obj
+            payload = callbacks.TrunkPayload(context, trunk_id,
+                                             original_trunk=original_trunk,
+                                             current_trunk=trunk_obj)
+            registry.notify(constants.TRUNK, events.PRECOMMIT_UPDATE, self,
+                            payload=payload)
+        registry.notify(constants.TRUNK, events.AFTER_UPDATE, self,
+                        payload=payload)
+        return trunk_obj
 
     def delete_trunk(self, context, trunk_id):
         """Delete the specified trunk."""
@@ -143,8 +162,14 @@ class TrunkPlugin(service_base.ServicePluginBase,
             trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
             if not trunk_port_validator.is_bound(context):
                 trunk.delete()
+                payload = callbacks.TrunkPayload(context, trunk_id,
+                                                 original_trunk=trunk)
+                registry.notify(constants.TRUNK, events.PRECOMMIT_DELETE, self,
+                                payload=payload)
             else:
                 raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
+        registry.notify(constants.TRUNK, events.AFTER_DELETE, self,
+                        payload=payload)
 
     @db_base_plugin_common.convert_result_to_dict
     def add_subports(self, context, trunk_id, subports):
@@ -159,6 +184,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
 
         with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
+            original_trunk = copy.deepcopy(trunk)
             rules.trunk_can_be_managed(context, trunk)
             for subport in subports:
                 obj = trunk_objects.SubPort(
@@ -170,10 +196,16 @@ class TrunkPlugin(service_base.ServicePluginBase,
                 obj.create()
                 trunk['sub_ports'].append(obj)
                 added_subports.append(obj)
-
-        registry.notify(
-            constants.SUBPORTS, events.AFTER_CREATE, self,
-            added_subports=added_subports)
+            payload = callbacks.TrunkPayload(context, trunk_id,
+                                             current_trunk=trunk,
+                                             original_trunk=original_trunk,
+                                             subports=added_subports)
+            if added_subports:
+                registry.notify(constants.SUBPORTS, events.PRECOMMIT_CREATE,
+                                self, payload=payload)
+        if added_subports:
+            registry.notify(
+                constants.SUBPORTS, events.AFTER_CREATE, self, payload=payload)
         return trunk
 
     @db_base_plugin_common.convert_result_to_dict
@@ -182,6 +214,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
         subports = subports['sub_ports']
         with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
+            original_trunk = copy.deepcopy(trunk)
             rules.trunk_can_be_managed(context, trunk)
 
             subports_validator = rules.SubPortsValidator(
@@ -205,11 +238,19 @@ class TrunkPlugin(service_base.ServicePluginBase,
                 subport_obj.delete()
                 removed_subports.append(subport_obj)
 
-            trunk.sub_ports = list(current_subports.values())
+            del trunk.sub_ports[:]
+            trunk.sub_ports.extend(current_subports.values())
+            payload = callbacks.TrunkPayload(context, trunk_id,
+                                             current_trunk=trunk,
+                                             original_trunk=original_trunk,
+                                             subports=removed_subports)
+            if removed_subports:
+                registry.notify(constants.SUBPORTS, events.PRECOMMIT_DELETE,
+                                self, payload=payload)
+        if removed_subports:
             registry.notify(
-                constants.SUBPORTS, events.AFTER_DELETE, self,
-                removed_subports=removed_subports)
-            return trunk
+                constants.SUBPORTS, events.AFTER_DELETE, self, payload=payload)
+        return trunk
 
     @db_base_plugin_common.filter_fields
     def get_subports(self, context, trunk_id, fields=None):
