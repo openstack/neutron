@@ -30,9 +30,11 @@ from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
+from neutron.extensions import l3
 from neutron.plugins.common import constants
 from neutron.quota import resource_registry
 from neutron import service
+from neutron.services.l3_router.service_providers import driver_controller
 from neutron.services import service_base
 
 
@@ -55,7 +57,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     """
     supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
                                    "extraroute", "l3_agent_scheduler",
-                                   "l3-ha", "router_availability_zone"]
+                                   "l3-ha", "router_availability_zone",
+                                   "l3-flavors"]
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -76,6 +79,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         rpc_worker = service.RpcWorker([self], worker_process_count=0)
 
         self.add_worker(rpc_worker)
+        self.l3_driver_controller = driver_controller.DriverController(self)
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):
@@ -111,3 +115,11 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         return super(L3RouterPlugin, self).create_floatingip(
             context, floatingip,
             initial_status=n_const.FLOATINGIP_STATUS_DOWN)
+
+
+def add_flavor_id(plugin, router_res, router_db):
+    router_res['flavor_id'] = router_db['flavor_id']
+
+
+common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+    l3.ROUTERS, [add_flavor_id])

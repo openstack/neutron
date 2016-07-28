@@ -95,6 +95,8 @@ class Router(model_base.HasStandardAttributes, model_base.BASEV2,
     admin_state_up = sa.Column(sa.Boolean)
     gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))
     gw_port = orm.relationship(models_v2.Port, lazy='joined')
+    flavor_id = sa.Column(sa.String(36),
+                          sa.ForeignKey("flavors.id"), nullable=True)
     attached_ports = orm.relationship(
         RouterPort,
         backref='router',

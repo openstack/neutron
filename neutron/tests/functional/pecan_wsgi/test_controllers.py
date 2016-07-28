@@ -603,7 +603,8 @@ class TestRouterController(TestResourceController):
     def setUp(self):
         cfg.CONF.set_override(
             'service_plugins',
-            ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'])
+            ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin',
+             'neutron.services.flavors.flavors_plugin.FlavorsPlugin'])
         super(TestRouterController, self).setUp()
         plugin = manager.NeutronManager.get_plugin()
         ctx = context.get_admin_context()
@@ -699,7 +700,8 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
     def setUp(self):
         cfg.CONF.set_override(
             'service_plugins',
-            ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'])
+            ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin',
+             'neutron.services.flavors.flavors_plugin.FlavorsPlugin'])
         super(TestL3AgentShimControllers, self).setUp()
         policy.init()
         policy._ENFORCER.set_rules(

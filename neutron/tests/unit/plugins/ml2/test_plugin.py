@@ -109,9 +109,14 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
     l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
                  'TestL3NatServicePlugin')
 
+    def get_additional_service_plugins(self):
+        """Subclasses can return a dictionary of service plugins to load."""
+        return {}
+
     def setup_parent(self):
         """Perform parent setup with the common plugin configuration class."""
         service_plugins = {'l3_plugin_name': self.l3_plugin}
+        service_plugins.update(self.get_additional_service_plugins())
         # Ensure that the parent setup can be called without arguments
         # by the common configuration setUp.
         parent_setup = functools.partial(
