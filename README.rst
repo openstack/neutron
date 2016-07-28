@@ -17,6 +17,9 @@ available at: <http://docs.openstack.org>. This includes:
 Neutron Administrator Guide
    http://docs.openstack.org/admin-guide-cloud/networking.html
 
+Neutron Developer Guide
+   http://docs.openstack.org/developer/neutron/devref/
+
 Networking Guide
    http://docs.openstack.org/networking-guide/
 
