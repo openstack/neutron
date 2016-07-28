@@ -1161,6 +1161,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise psec.PortSecurityAndIPRequiredForSecurityGroups()
 
     def _setup_dhcp_agent_provisioning_component(self, context, port):
+        # NOTE(kevinbenton): skipping network ports is a workaround for
+        # the fact that we don't issue dhcp notifications from internal
+        # port creation like router ports and dhcp ports via RPC
+        if utils.is_port_trusted(port):
+            return
         subnet_ids = [f['subnet_id'] for f in port['fixed_ips']]
         if (db.is_dhcp_active_on_any_subnet(context, subnet_ids) and
             any(self.get_configuration_dict(a).get('notifies_port_ready')
