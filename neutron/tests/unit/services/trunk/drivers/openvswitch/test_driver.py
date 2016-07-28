@@ -11,9 +11,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import mock
+
 from neutron_lib import constants
 from oslo_config import cfg
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
+    constants as agent_consts)
 from neutron.services.trunk.drivers.openvswitch import driver
 from neutron.tests import base
 
@@ -35,3 +41,14 @@ class OVSDriverTestCase(base.BaseTestCase):
                               'openvswitch', group='ml2')
         ovs_driver = driver.OVSDriver.create()
         self.assertTrue(ovs_driver.is_loaded)
+
+    @mock.patch('neutron.services.trunk.utils.gen_trunk_br_name')
+    def test_vif_details_bridge_name_handler_registration(self,
+                                                          mock_gen_br_name):
+        driver.register()
+        mock_gen_br_name.return_value = 'fake-trunk-br-name'
+        test_trigger = mock.Mock()
+        registry.notify(agent_consts.OVS_BRIDGE_NAME, events.BEFORE_READ,
+                        test_trigger, **{'port': {'trunk_details':
+                                                  {'trunk_id': 'foo'}}})
+        test_trigger.assert_called_once_with('fake-trunk-br-name')

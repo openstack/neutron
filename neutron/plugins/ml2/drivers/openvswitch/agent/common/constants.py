@@ -142,3 +142,6 @@ OPENFLOW14 = "OpenFlow14"
 
 # A placeholder for dead vlans.
 DEAD_VLAN_TAG = p_const.MAX_VLAN_TAG + 1
+
+# callback resource for setting 'bridge_name' in the 'binding:vif_details'
+OVS_BRIDGE_NAME = 'ovs_bridge_name'
