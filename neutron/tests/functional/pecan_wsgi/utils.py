@@ -110,6 +110,19 @@ class FakeExtension(extensions.ExtensionDescriptor):
     HYPHENATED_RESOURCE = 'meh_meh'
     HYPHENATED_COLLECTION = HYPHENATED_RESOURCE + 's'
 
+    SUB_RESOURCE_ATTRIBUTE_MAP = {
+        'fake_subresources': {
+            'parent': {
+                'collection_name': (
+                    HYPHENATED_COLLECTION),
+                'member_name': HYPHENATED_RESOURCE},
+            'parameters': {'foo': {'is_visible': True},
+                           'bar': {'is_visible': True}
+                           }
+        }
+    }
+    FAKE_SUB_RESOURCE_COLLECTION = 'fake_subresources'
+
     RAM = {
         HYPHENATED_COLLECTION: {
             'fake': {'is_visible': True}
@@ -137,12 +150,34 @@ class FakeExtension(extensions.ExtensionDescriptor):
         params = self.RAM.get(self.HYPHENATED_COLLECTION, {})
         attributes.PLURALS.update({self.HYPHENATED_COLLECTION:
                                    self.HYPHENATED_RESOURCE})
+        fake_plugin = FakePlugin()
         controller = base.create_resource(
             collection, self.HYPHENATED_RESOURCE, FakePlugin(),
             params, allow_bulk=True, allow_pagination=True,
             allow_sorting=True)
-        return [extensions.ResourceExtension(collection, controller,
-                                             attr_map=params)]
+        resources = [extensions.ResourceExtension(collection,
+                                                  controller,
+                                                  attr_map=params)]
+        for collection_name in self.SUB_RESOURCE_ATTRIBUTE_MAP:
+            resource_name = collection_name
+            parent = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
+                'parent')
+            params = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
+                'parameters')
+
+            controller = base.create_resource(collection_name, resource_name,
+                                              fake_plugin, params,
+                                              allow_bulk=True,
+                                              parent=parent)
+
+            resource = extensions.ResourceExtension(
+                collection_name,
+                controller, parent,
+                path_prefix="",
+                attr_map=params)
+            resources.append(resource)
+
+        return resources
 
     def get_extended_resources(self, version):
         if version == "2.0":
@@ -165,3 +200,7 @@ class FakePlugin(object):
 
     def get_meh_mehs(self, context, filters=None, fields=None):
         return [{'fake': 'fake'}]
+
+    def get_meh_meh_fake_subresources(self, context, id_, fields=None,
+                                      filters=None):
+        return {'foo': id_}

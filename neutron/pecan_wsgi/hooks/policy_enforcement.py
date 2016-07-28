@@ -35,7 +35,8 @@ def _custom_getter(resource, resource_id):
         return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
-def fetch_resource(neutron_context, collection, resource, resource_id):
+def fetch_resource(neutron_context, collection, resource, resource_id,
+                   parent_id=None):
     controller = manager.NeutronManager.get_controller_for_resource(
         collection)
     attrs = controller.resource_info
@@ -50,9 +51,11 @@ def fetch_resource(neutron_context, collection, resource, resource_id):
                       value.get('primary_key') or 'default' not in value)]
     plugin = manager.NeutronManager.get_plugin_for_resource(resource)
     if plugin:
-        getter = getattr(plugin, 'get_%s' % resource)
-        # TODO(kevinbenton): the parent_id logic currently in base.py
-        return getter(neutron_context, resource_id, fields=field_list)
+        getter = controller.plugin_shower
+        getter_args = [neutron_context, resource_id]
+        if parent_id:
+            getter_args.append(parent_id)
+        return getter(*getter_args, fields=field_list)
     else:
         # Some legit resources, like quota, do not have a plugin yet.
         # Retrieving the original object is nevertheless important
@@ -81,8 +84,13 @@ class PolicyHook(hooks.PecanHook):
         needs_prefetch = (state.request.method == 'PUT' or
                           state.request.method == 'DELETE')
         policy.init()
-        action = '%s_%s' % (pecan_constants.ACTION_MAP[state.request.method],
-                            resource)
+
+        # NOTE(tonytan4ever): needs to get the actual action from controller's
+        # _plugin_handlers
+        controller = manager.NeutronManager.get_controller_for_resource(
+            collection)
+        action = controller.plugin_handlers[
+            pecan_constants.ACTION_MAP[state.request.method]]
 
         # NOTE(salv-orlando): As bulk updates are not supported, in case of PUT
         # requests there will be only a single item to process, and its
@@ -97,8 +105,10 @@ class PolicyHook(hooks.PecanHook):
                 # Ops... this was a delete after all!
                 item = {}
             resource_id = state.request.context.get('resource_id')
+            parent_id = state.request.context.get('parent_id')
             resource_obj = fetch_resource(neutron_context, collection,
-                                          resource, resource_id)
+                                          resource, resource_id,
+                                          parent_id=parent_id)
             if resource_obj:
                 original_resources.append(resource_obj)
                 obj = copy.copy(resource_obj)
