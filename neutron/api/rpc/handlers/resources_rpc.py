@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from neutron_lib import exceptions
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -179,27 +181,63 @@ class ResourcesPushRpcApi(object):
 
     def __init__(self):
         target = oslo_messaging.Target(
-            version='1.0',
             namespace=constants.RPC_NAMESPACE_RESOURCES)
         self.client = n_rpc.get_client(target)
 
-    def _prepare_object_fanout_context(self, obj, version):
+    def _prepare_object_fanout_context(self, obj, resource_version,
+                                       rpc_version):
         """Prepare fanout context, one topic per object type."""
-        obj_topic = resource_type_versioned_topic(obj.obj_name(), version)
-        return self.client.prepare(fanout=True, topic=obj_topic)
+        obj_topic = resource_type_versioned_topic(obj.obj_name(),
+                                                  resource_version)
+        return self.client.prepare(fanout=True, topic=obj_topic,
+                                   version=rpc_version)
+
+    @staticmethod
+    def _classify_resources_by_type(resource_list):
+        resources_by_type = collections.defaultdict(list)
+        for resource in resource_list:
+            resource_type = resources.get_resource_type(resource)
+            resources_by_type[resource_type].append(resource)
+        return resources_by_type
 
     @log_helpers.log_method_call
-    def push(self, context, resource, event_type):
-        resource_type = resources.get_resource_type(resource)
+    def push(self, context, resource_list, event_type):
+        """Push an event and list of resources to agents, batched per type.
+        When a list of different resource types is passed to this method,
+        the push will be sent as separate individual list pushes, one per
+        resource type.
+        """
+
+        resources_by_type = self._classify_resources_by_type(resource_list)
+        for resource_type, type_resources in resources_by_type.items():
+            self._push(context, resource_type, type_resources, event_type)
+
+    def _push(self, context, resource_type, resource_list, event_type):
+        """Push an event and list of resources of the same type to agents."""
         _validate_resource_type(resource_type)
-        versions = version_manager.get_resource_versions(resource_type)
-        for version in versions:
-            cctxt = self._prepare_object_fanout_context(resource, version)
-            dehydrated_resource = resource.obj_to_primitive(
-                target_version=version)
-            cctxt.cast(context, 'push',
-                       resource=dehydrated_resource,
-                       event_type=event_type)
+        compat_call = len(resource_list) == 1
+
+        for version in version_manager.get_resource_versions(resource_type):
+            cctxt = self._prepare_object_fanout_context(
+                resource_list[0], version,
+                rpc_version='1.0' if compat_call else '1.1')
+
+            dehydrated_resources = [
+                resource.obj_to_primitive(target_version=version)
+                for resource in resource_list]
+
+            if compat_call:
+                #TODO(mangelajo): remove in Ocata, backwards compatibility
+                #                 for agents expecting a single element as
+                #                 a single element instead of a list, this
+                #                 is only relevant to the QoSPolicy topic queue
+                cctxt.cast(context, 'push',
+                           resource=dehydrated_resources[0],
+                           event_type=event_type)
+            else:
+                cctxt.cast(context, 'push',
+                           resource_list=dehydrated_resources,
+                           event_type=event_type)
 
 
 class ResourcesPushRpcCallback(object):
@@ -211,14 +249,22 @@ class ResourcesPushRpcCallback(object):
     """
     # History
     #   1.0 Initial version
+    #   1.1 push method introduces resource_list support
 
-    target = oslo_messaging.Target(version='1.0',
+    target = oslo_messaging.Target(version='1.1',
                                    namespace=constants.RPC_NAMESPACE_RESOURCES)
 
-    def push(self, context, resource, event_type):
-        resource_obj = obj_base.NeutronObject.clean_obj_from_primitive(
-            resource)
-        LOG.debug("Resources notification (%(event_type)s): %(resource)s",
-                  {'event_type': event_type, 'resource': repr(resource_obj)})
-        resource_type = resources.get_resource_type(resource_obj)
-        cons_registry.push(resource_type, resource_obj, event_type)
+    def push(self, context, **kwargs):
+        """Push receiver, will always receive resources of the same type."""
+        # TODO(mangelajo): accept single 'resource' parameter for backwards
+        #                  compatibility during Newton, remove in Ocata
+        resource_list = ([kwargs['resource']] if 'resource' in kwargs else
+                         kwargs['resource_list'])
+        event_type = kwargs['event_type']
+
+        resource_objs = [
+            obj_base.NeutronObject.clean_obj_from_primitive(resource)
+            for resource in resource_list]
+
+        resource_type = resources.get_resource_type(resource_objs[0])
+        cons_registry.push(resource_type, resource_objs, event_type)

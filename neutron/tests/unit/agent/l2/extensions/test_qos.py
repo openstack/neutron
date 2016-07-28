@@ -238,7 +238,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
             self.qos_ext, '_process_update_policy') as update_mock:
 
             policy_obj = mock.Mock()
-            self.qos_ext._handle_notification(policy_obj, events.UPDATED)
+            self.qos_ext._handle_notification([policy_obj], events.UPDATED)
             update_mock.assert_called_with(policy_obj)
 
     def test__process_update_policy(self):

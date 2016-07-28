@@ -51,6 +51,6 @@ class ConsumerRegistryTestCase(base.BaseTestCase):
         callback2 = mock.Mock()
         callbacks = {callback1, callback2}
         manager_mock().get_callbacks.return_value = callbacks
-        registry.push(resource_type_, resource_, event_type_)
+        registry.push(resource_type_, [resource_], event_type_)
         for callback in callbacks:
-            callback.assert_called_with(resource_, event_type_)
+            callback.assert_called_with([resource_], event_type_)

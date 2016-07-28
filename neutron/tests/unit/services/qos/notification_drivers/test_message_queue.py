@@ -53,7 +53,7 @@ class TestQosRpcNotificationDriver(base.BaseQosTestCase):
                                 **self.rule_data['bandwidth_limit_rule'])
 
     def _validate_push_params(self, event_type, policy):
-        self.rpc_api.push.assert_called_once_with(self.context, policy,
+        self.rpc_api.push.assert_called_once_with(self.context, [policy],
                                                   event_type)
 
     def test_create_policy(self):

@@ -220,13 +220,14 @@ class QosAgentExtension(l2_agent_extension.L2AgentExtension):
             connection.create_consumer(topic, endpoints, fanout=True)
 
     @lockutils.synchronized('qos-port')
-    def _handle_notification(self, qos_policy, event_type):
+    def _handle_notification(self, qos_policies, event_type):
         # server does not allow to remove a policy that is attached to any
         # port, so we ignore DELETED events. Also, if we receive a CREATED
         # event for a policy, it means that there are no ports so far that are
         # attached to it. That's why we are interested in UPDATED events only
         if event_type == events.UPDATED:
-            self._process_update_policy(qos_policy)
+            for qos_policy in qos_policies:
+                self._process_update_policy(qos_policy)
 
     @lockutils.synchronized('qos-port')
     def handle_port(self, context, port):

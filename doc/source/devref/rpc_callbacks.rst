@@ -211,10 +211,10 @@ The agent code processing port updates may look like::
     from neutron.api.rpc.callbacks import resources
 
 
-    def process_resource_updates(resource_type, resource, event_type):
+    def process_resource_updates(resource_type, resource_list, event_type):
 
         # send to the right handler which will update any control plane
-        # details related to the updated resource...
+        # details related to the updated resources...
 
 
     def subscribe_resources():
@@ -238,7 +238,7 @@ The relevant function is:
 The callback function will receive the following arguments:
 
 * resource_type: the type of resource which is receiving the update.
-* resource: resource of supported object
+* resource_list: list of resources which have been pushed by server.
 * event_type: will be one of CREATED, UPDATED, or DELETED, see
   neutron.api.rpc.callbacks.events for details.
 
@@ -263,8 +263,21 @@ Sending resource events
 -----------------------
 
 On the server side, resource updates could come from anywhere, a service plugin,
-an extension, anything that updates, creates, or destroys the resource and that
+an extension, anything that updates, creates, or destroys the resources and that
 is of any interest to subscribed agents.
+
+A callback is expected to receive a list of resources. When resources in the list
+belong to the same resource type, a single push RPC message is sent; if the list
+contains objects of different resource types, resources of each type are grouped
+and sent separately, one push RPC message per type. On the receiver side,
+resources in a list always belong to the same type. In other words, a server-side
+push of a list of heterogenous objects will result into N messages on bus and
+N client-side callback invocations, where N is the number of unique resource
+types in the given list, e.g. L(A, A, B, C, C, C) would be fragmented into
+L1(A, A), L2(B), L3(C, C, C), and each list pushed separately.
+
+Note: there is no guarantee in terms of order in which separate resource lists
+will be delivered to consumers.
 
 The server/publisher side may look like::
 
@@ -274,17 +287,17 @@ The server/publisher side may look like::
     def create_qos_policy(...):
         policy = fetch_policy(...)
         update_the_db(...)
-        registry.push(policy, events.CREATED)
+        registry.push([policy], events.CREATED)
 
     def update_qos_policy(...):
         policy = fetch_policy(...)
         update_the_db(...)
-        registry.push(policy, events.UPDATED)
+        registry.push([policy], events.UPDATED)
 
     def delete_qos_policy(...):
         policy = fetch_policy(...)
         update_the_db(...)
-        registry.push(policy, events.DELETED)
+        registry.push([policy], events.DELETED)
 
 
 References
