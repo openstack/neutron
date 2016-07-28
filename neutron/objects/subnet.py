@@ -175,7 +175,8 @@ class Subnet(base.NeutronDbObject):
     foreign_keys = {'network_id': 'id'}
 
     fields_need_translation = {
-        'project_id': 'tenant_id'
+        'project_id': 'tenant_id',
+        'host_routes': 'routes'
     }
 
     def __init__(self, context=None, **kwargs):

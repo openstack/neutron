@@ -270,6 +270,11 @@ class NeutronDbObject(NeutronObject):
     fields_no_update = []
 
     # dict with name mapping: {'field_name_in_object': 'field_name_in_db'}
+    # It can be used also as DB relationship mapping to synthetic fields name.
+    # It is needed to load synthetic fields with one SQL query using side
+    # loaded entities.
+    # Examples: {'synthetic_field_name': 'relationship_name_in_model'}
+    #           {'field_name_in_object': 'field_name_in_db'}
     fields_need_translation = {}
 
     # obj_extra_fields defines properties that are not part of the model
@@ -286,7 +291,8 @@ class NeutronDbObject(NeutronObject):
                 if field in db_obj and not self.is_synthetic(field):
                     setattr(self, field, db_obj[field])
                 break
-        self.load_synthetic_db_fields()
+        for obj in objs:
+            self.load_synthetic_db_fields(obj)
         self.obj_reset_changes()
 
     @classmethod
@@ -426,7 +432,7 @@ class NeutronDbObject(NeutronObject):
 
         return fields
 
-    def load_synthetic_db_fields(self):
+    def load_synthetic_db_fields(self, db_obj=None):
         """
         Load the synthetic fields that are stored in a different table from the
         main object.
@@ -453,14 +459,29 @@ class NeutronDbObject(NeutronObject):
             objclass = objclasses[0]
             if len(objclass.foreign_keys.keys()) > 1:
                 raise NeutronSyntheticFieldMultipleForeignKeys(field=field)
-            objs = objclass.get_objects(
-                self.obj_context, **{
-                    k: getattr(
-                        self, v) for k, v in objclass.foreign_keys.items()})
-            if isinstance(self.fields[field], obj_fields.ObjectField):
-                setattr(self, field, objs[0] if objs else None)
+
+            synthetic_field_db_name = (
+                self.fields_need_translation.get(field, field))
+            synth_db_objs = (db_obj.get(synthetic_field_db_name, None)
+                             if db_obj else None)
+
+            # synth_db_objs can be list, empty list or None, that is why
+            # we need 'is not None', because [] is valid case for 'True'
+            if synth_db_objs is not None:
+                if not isinstance(synth_db_objs, list):
+                    synth_db_objs = [synth_db_objs]
+                synth_objs = [objclass._load_object(self.obj_context,
+                                objclass.modify_fields_from_db(obj))
+                              for obj in synth_db_objs]
             else:
-                setattr(self, field, objs)
+                synth_objs = objclass.get_objects(
+                    self.obj_context, **{
+                        k: getattr(self, v)
+                        for k, v in objclass.foreign_keys.items()})
+            if isinstance(self.fields[field], obj_fields.ObjectField):
+                setattr(self, field, synth_objs[0] if synth_objs else None)
+            else:
+                setattr(self, field, synth_objs)
             self.obj_reset_changes([field])
 
     def create(self):

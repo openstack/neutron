@@ -39,6 +39,7 @@ from neutron.objects.db import api as obj_db_api
 from neutron.objects import subnet
 from neutron.tests import base as test_base
 from neutron.tests import tools
+from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
@@ -311,6 +312,11 @@ def remove_timestamps_from_fields(obj_fields):
             if field not in TIMESTAMP_FIELDS}
 
 
+def get_non_synthetic_fields(objclass, obj_fields):
+    return {field: value for field, value in obj_fields.items()
+            if not objclass.is_synthetic(field)}
+
+
 class _BaseObjectTestCase(object):
 
     _test_class = FakeNeutronObject
@@ -374,6 +380,20 @@ class _BaseObjectTestCase(object):
 
     def fake_get_objects(self, context, model, **kwargs):
         return self.model_map[model]
+
+    def _get_object_synthetic_fields(self, objclass):
+        return [field for field in objclass.synthetic_fields
+                if objclass.is_object_field(field)]
+
+    def _get_ovo_object_class(self, objclass, field):
+        try:
+            name = objclass.fields[field].objname
+            return obj_base.VersionedObjectRegistry.obj_classes().get(name)[0]
+        except TypeError:
+            # NOTE(korzen) some synthetic fields are not handled by
+            # this method, for example the ones that have subclasses, see
+            # QosRule
+            return
 
 
 class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
@@ -441,9 +461,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         for db_obj in db_objs:
             for field in self._test_class.synthetic_fields:
                 if self._test_class.is_object_field(field):
-                    obj_class = obj_base.VersionedObjectRegistry.obj_classes(
-                                    ).get(self._test_class.fields[
-                                        field].objname)[0]
+                    obj_class = self._get_ovo_object_class(self._test_class,
+                                                           field)
                     mock_calls.append(
                         mock.call(
                             self.context, obj_class.db_model,
@@ -707,24 +726,17 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     def test_to_dict_synthetic_fields(self):
         cls_ = self._test_class
-        object_fields = [
-            field
-            for field in cls_.synthetic_fields
-            if cls_.is_object_field(field)
-        ]
+        object_fields = self._get_object_synthetic_fields(cls_)
         if not object_fields:
             self.skipTest(
                 'No object fields found in test class %r' % cls_)
 
         for field in object_fields:
             obj = cls_(self.context, **self.obj_fields[0])
-            objclasses = obj_base.VersionedObjectRegistry.obj_classes(
-            ).get(cls_.fields[field].objname)
-            if not objclasses:
-                # NOTE(ihrachys): this test does not handle fields of types
-                # that are not registered (for example, QosRule)
+            objclass = self._get_ovo_object_class(cls_, field)
+            if not objclass:
                 continue
-            objclass = objclasses[0]
+
             child = objclass(
                 self.context, **objclass.modify_fields_from_db(
                     self.get_random_fields(obj_cls=objclass))
@@ -832,10 +844,20 @@ class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
                           obj.load_synthetic_db_fields)
 
 
-class BaseDbObjectTestCase(_BaseObjectTestCase):
+class BaseDbObjectTestCase(_BaseObjectTestCase,
+                           test_db_base_plugin_v2.DbOperationBoundMixin):
     def setUp(self):
         super(BaseDbObjectTestCase, self).setUp()
         self.useFixture(tools.CommonDbMixinHooksFixture())
+        synthetic_fields = self._get_object_synthetic_fields(self._test_class)
+        for synth_field in synthetic_fields:
+            objclass = self._get_ovo_object_class(self._test_class,
+                                                  synth_field)
+            if not objclass:
+                continue
+            for db_obj in self.db_objs:
+                objclass_fields = self.get_random_fields(objclass)
+                db_obj[synth_field] = [objclass_fields]
 
     def _create_test_network(self):
         # TODO(ihrachys): replace with network.create() once we get an object
@@ -843,6 +865,12 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self._network = obj_db_api.create_object(self.context,
                                                  models_v2.Network,
                                                  {'name': 'test-network1'})
+
+    def _create_network(self):
+        name = "test-network-%s" % tools.get_random_string(4)
+        return obj_db_api.create_object(self.context,
+                                        models_v2.Network,
+                                        {'name': name})
 
     def _create_test_subnet(self, network):
         test_subnet = {
@@ -899,6 +927,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
         self._port = self._create_port(network_id=network['id'])
 
     def _make_object(self, fields):
+        fields = get_non_synthetic_fields(self._test_class, fields)
         return self._test_class(
             self.context, **remove_timestamps_from_fields(fields))
 
@@ -1016,6 +1045,75 @@ class BaseDbObjectTestCase(_BaseObjectTestCase):
             filters = {field: [self.obj_fields[0][field]]}
             new = self._test_class.get_objects(self.context, **filters)
             self.assertEqual([obj], new)
+
+    def _get_non_synth_fields(self, objclass, db_attrs):
+        fields = objclass.modify_fields_from_db(db_attrs)
+        fields = remove_timestamps_from_fields(fields)
+        fields = get_non_synthetic_fields(objclass, fields)
+        return fields
+
+    def _create_object_with_synthetic_fields(self, db_obj):
+        cls_ = self._test_class
+        object_fields = self._get_object_synthetic_fields(cls_)
+
+        # create base object
+        obj = cls_(self.context, **self._get_non_synth_fields(cls_, db_obj))
+        obj.create()
+
+        # create objects that are going to be loaded into the base object
+        # through synthetic fields
+        for field in object_fields:
+            objclass = self._get_ovo_object_class(cls_, field)
+            if not objclass:
+                continue
+            objclass_fields = self._get_non_synth_fields(objclass,
+                                                         db_obj[field][0])
+
+            # make sure children point to the base object
+            for local_field, foreign_key in objclass.foreign_keys.items():
+                objclass_fields[local_field] = obj.get(foreign_key)
+
+            synth_field_obj = objclass(self.context, **objclass_fields)
+            synth_field_obj.create()
+
+            # populate the base object synthetic fields with created children
+            if isinstance(cls_.fields[field], obj_fields.ObjectField):
+                setattr(obj, field, synth_field_obj)
+            else:
+                setattr(obj, field, [synth_field_obj])
+
+            # reset the object so that we can compare it to other clean objects
+            obj.obj_reset_changes([field])
+        return obj
+
+    def test_get_object_with_synthetic_fields(self):
+        object_fields = self._get_object_synthetic_fields(self._test_class)
+        if not object_fields:
+            self.skipTest(
+                'No synthetic object fields found '
+                'in test class %r' % self._test_class
+            )
+        obj = self._create_object_with_synthetic_fields(self.db_objs[0])
+        listed_obj = self._test_class.get_object(
+            self.context, **obj._get_composite_keys())
+        self.assertTrue(listed_obj)
+        self.assertEqual(obj, listed_obj)
+
+    # NOTE(korzen) _list method is used in neutron.tests.db.unit.db.
+    # test_db_base_plugin_v2.DbOperationBoundMixin in _list_and_count_queries()
+    # This is used in test_subnet for asserting that number of queries is
+    # constant. It can be used also for port and network objects when ready.
+    def _list(self, resource, neutron_context):
+        cls_ = resource
+        return cls_.get_objects(neutron_context)
+
+    def test_get_objects_queries_constant(self):
+        iter_db_obj = iter(self.db_objs)
+
+        def _create():
+            self._create_object_with_synthetic_fields(next(iter_db_obj))
+
+        self._assert_object_list_queries_constant(_create, self._test_class)
 
 
 class UniqueObjectBase(test_base.BaseTestCase):
