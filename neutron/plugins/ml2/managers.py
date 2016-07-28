@@ -161,7 +161,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def _extend_network_dict_provider(self, network, segments):
         if not segments:
-            LOG.error(_LE("Network %s has no segments"), network['id'])
+            LOG.debug("Network %s has no segments", network['id'])
             for attr in provider.ATTRIBUTES:
                 network[attr] = None
         elif len(segments) > 1:
