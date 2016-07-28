@@ -294,15 +294,12 @@ class NeutronDbObject(NeutronObject):
     # in to_dict()
     # obj_extra_fields = []
 
-    def from_db_object(self, *objs):
-        db_objs = [self.modify_fields_from_db(db_obj) for db_obj in objs]
+    def from_db_object(self, db_obj):
+        fields = self.modify_fields_from_db(db_obj)
         for field in self.fields:
-            for db_obj in db_objs:
-                if field in db_obj and not self.is_synthetic(field):
-                    setattr(self, field, db_obj[field])
-                break
-        for obj in objs:
-            self.load_synthetic_db_fields(obj)
+            if field in fields and not self.is_synthetic(field):
+                setattr(self, field, fields[field])
+        self.load_synthetic_db_fields(db_obj)
         self.obj_reset_changes()
 
     @classmethod
