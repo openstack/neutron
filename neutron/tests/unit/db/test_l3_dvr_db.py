@@ -624,7 +624,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             elif action == 'del':
                 self.mixin.delete_arp_entry_for_dvr_service_port(
                     self.ctx, port)
-                self.assertTrue(3, l3_notify.del_arp_entry.call_count)
+                self.assertEqual(3, l3_notify.del_arp_entry.call_count)
 
     def test_update_arp_entry_for_dvr_service_port_added(self):
         action = 'add'
