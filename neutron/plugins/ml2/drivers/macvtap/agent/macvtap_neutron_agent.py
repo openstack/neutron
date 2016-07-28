@@ -186,11 +186,14 @@ def parse_interface_mappings():
 
 def validate_firewall_driver():
     fw_driver = cfg.CONF.SECURITYGROUP.firewall_driver
-    if fw_driver != 'neutron.agent.firewall.NoopFirewallDriver':
+    supported_fw_drivers = ['neutron.agent.firewall.NoopFirewallDriver',
+                            'noop']
+    if fw_driver not in supported_fw_drivers:
         LOG.error(_LE('Unsupported configuration option for "SECURITYGROUP.'
-                      'firewall_driver"! Only "neutron.agent.firewall.'
-                      'NoopFirewallDriver" is supported by macvtap agent, but'
-                      '"%s" is configured. Agent terminated!'),
+                      'firewall_driver"! Only the NoopFirewallDriver is '
+                      'supported by macvtap agent, but "%s" is configured. '
+                      'Set the firewall_driver to "noop" and start the '
+                      'agent again. Agent terminated!'),
                   fw_driver)
         sys.exit(1)
 
