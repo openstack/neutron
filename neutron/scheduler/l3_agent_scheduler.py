@@ -31,8 +31,8 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db
-from neutron.db import l3_db
 from neutron.db import l3_hamode_db
+from neutron.db.models import l3 as l3_models
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import l3
 
@@ -85,10 +85,11 @@ class L3Scheduler(object):
         """Get routers with no agent binding."""
         # TODO(gongysh) consider the disabled agent's router
         no_agent_binding = ~sql.exists().where(
-            l3_db.Router.id ==
+            l3_models.Router.id ==
             l3_agentschedulers_db.RouterL3AgentBinding.router_id)
-        query = context.session.query(l3_db.Router.id).filter(no_agent_binding)
-        query = query.filter(l3_db.Router.status ==
+        query = context.session.query(
+            l3_models.Router.id).filter(no_agent_binding)
+        query = query.filter(l3_models.Router.status ==
                              constants.ROUTER_STATUS_ACTIVE)
         unscheduled_router_ids = [router_id_[0] for router_id_ in query]
         if unscheduled_router_ids:

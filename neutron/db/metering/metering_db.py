@@ -23,7 +23,7 @@ from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.api.v2 import attributes as attr
 from neutron.common import constants
 from neutron.db import common_db_mixin as base_db
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.extensions import metering
 
 
@@ -46,7 +46,7 @@ class MeteringLabel(model_base.BASEV2,
     rules = orm.relationship(MeteringLabelRule, backref="label",
                              cascade="delete", lazy="joined")
     routers = orm.relationship(
-        l3_db.Router,
+        l3_models.Router,
         primaryjoin="MeteringLabel.tenant_id==Router.tenant_id",
         foreign_keys='MeteringLabel.tenant_id',
         uselist=True)
@@ -214,7 +214,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
             if label.shared:
                 if not all_routers:
                     all_routers = self._get_collection_query(context,
-                                                             l3_db.Router)
+                                                             l3_models.Router)
                 routers = all_routers
             else:
                 routers = label.routers
@@ -238,7 +238,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
             rule['metering_label_id'])
 
         if label.shared:
-            routers = self._get_collection_query(context, l3_db.Router)
+            routers = self._get_collection_query(context, l3_models.Router)
         else:
             routers = label.routers
 
@@ -259,6 +259,6 @@ class MeteringDbMixin(metering.MeteringPluginBase,
             labels = labels.filter(MeteringLabel.id == label_id)
         elif router_ids:
             labels = (labels.join(MeteringLabel.routers).
-                      filter(l3_db.Router.id.in_(router_ids)))
+                      filter(l3_models.Router.id.in_(router_ids)))
 
         return self._process_sync_metering_data(context, labels)

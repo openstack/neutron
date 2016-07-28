@@ -22,6 +22,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
 from neutron import manager
 from neutron.tests import base
@@ -141,7 +142,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
         query.reset_mock()
         result = list(
             l3_db.L3_NAT_dbonly_mixin._unique_floatingip_iterator(query))
-        query.order_by.assert_called_once_with(l3_db.FloatingIP.id)
+        query.order_by.assert_called_once_with(l3_models.FloatingIP.id)
         self.assertEqual([({'id': 'id1'}, 'scope1'),
                           ({'id': 'id2'}, 'scope2'),
                           ({'id': 'id3'}, 'scope3')], result)
@@ -212,7 +213,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     def test__check_and_get_fip_assoc_with_extra_association_no_change(self):
         fip = {'extra_key': 'value'}
         context = mock.MagicMock()
-        floatingip_db = l3_db.FloatingIP(
+        floatingip_db = l3_models.FloatingIP(
             id='fake_fip_id',
             floating_network_id='fake_floating_network_id',
             floating_ip_address='8.8.8.8',
@@ -234,7 +235,7 @@ class L3_NAT_db_mixin(base.BaseTestCase):
         self.db = l3_db.L3_NAT_db_mixin()
 
     def _test_create_router(self, external_gateway_info=None):
-        router_db = l3_db.Router(id='123')
+        router_db = l3_models.Router(id='123')
         router_dict = {'id': '123', 'tenant_id': '456',
                        'external_gateway_info': external_gateway_info}
         # Need to use a copy here as the create_router method pops the gateway

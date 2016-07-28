@@ -28,6 +28,7 @@ from neutron.db import api as db_api
 from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
@@ -138,7 +139,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         # foreign key violations
         self.context.session.flush()
         self.context.session.add(self.net_ext)
-        self.router = l3_db.Router(
+        self.router = l3_models.Router(
             id=_uuid(),
             name=None,
             tenant_id=self.tenant_id,
@@ -217,7 +218,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
             ip_address='3.3.3.3')
-        self.fip = l3_db.FloatingIP(
+        self.fip = l3_models.FloatingIP(
             id=_uuid(),
             floating_ip_address='1.1.1.2',
             floating_network_id=self.ext_net_id,

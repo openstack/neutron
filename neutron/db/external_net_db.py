@@ -30,7 +30,7 @@ from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import db_base_plugin_v2
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import external_net
@@ -231,12 +231,12 @@ class External_net_db_mixin(object):
         ports = context.session.query(models_v2.Port.id).filter_by(
             device_owner=DEVICE_OWNER_ROUTER_GW,
             network_id=policy['object_id'])
-        router = context.session.query(l3_db.Router).filter(
-            l3_db.Router.gw_port_id.in_(ports))
+        router = context.session.query(l3_models.Router).filter(
+            l3_models.Router.gw_port_id.in_(ports))
         rbac = rbac_db.NetworkRBAC
         if policy['target_tenant'] != '*':
             router = router.filter(
-                l3_db.Router.tenant_id == policy['target_tenant'])
+                l3_models.Router.tenant_id == policy['target_tenant'])
             # if there is a wildcard entry we can safely proceed without the
             # router lookup because they will have access either way
             if context.session.query(rbac_db.NetworkRBAC).filter(
@@ -261,11 +261,12 @@ class External_net_db_mixin(object):
                        rbac.action == 'access_as_external',
                        rbac.target_tenant != '*'))
             router = router.filter(
-                ~l3_db.Router.tenant_id.in_(tenants_with_entries))
+                ~l3_models.Router.tenant_id.in_(tenants_with_entries))
             if new_tenant:
                 # if this is an update we also need to ignore any router
                 # interfaces that belong to the new target.
-                router = router.filter(l3_db.Router.tenant_id != new_tenant)
+                router = router.filter(
+                    l3_models.Router.tenant_id != new_tenant)
         if router.count():
             msg = _("There are routers attached to this network that "
                     "depend on this policy for access.")

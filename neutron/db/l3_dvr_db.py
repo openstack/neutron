@@ -34,6 +34,7 @@ from neutron.db import l3_agentschedulers_db as l3_sched_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -303,7 +304,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _get_floatingip_on_port(self, context, port_id=None):
         """Helper function to retrieve the fip associated with port."""
-        fip_qry = context.session.query(l3_db.FloatingIP)
+        fip_qry = context.session.query(l3_models.FloatingIP)
         floating_ip = fip_qry.filter_by(fixed_port_id=port_id)
         return floating_ip.first()
 
@@ -351,7 +352,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                         port['fixed_ips'][-1]['subnet_id'])
 
                 with context.session.begin(subtransactions=True):
-                    router_port = l3_db.RouterPort(
+                    router_port = l3_models.RouterPort(
                         port_id=port['id'],
                         router_id=router.id,
                         port_type=device_owner
@@ -538,10 +539,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """Query router interfaces that relate to list of router_ids."""
         if not router_ids:
             return []
-        qry = context.session.query(l3_db.RouterPort)
+        qry = context.session.query(l3_models.RouterPort)
         qry = qry.filter(
-            l3_db.RouterPort.router_id.in_(router_ids),
-            l3_db.RouterPort.port_type == const.DEVICE_OWNER_ROUTER_SNAT
+            l3_models.RouterPort.router_id.in_(router_ids),
+            l3_models.RouterPort.port_type == const.DEVICE_OWNER_ROUTER_SNAT
         )
         interfaces = collections.defaultdict(list)
         for rp in qry:
@@ -775,7 +776,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _get_snat_interface_ports_for_router(self, context, router_id):
         """Return all existing snat_router_interface ports."""
-        qry = context.session.query(l3_db.RouterPort)
+        qry = context.session.query(l3_models.RouterPort)
         qry = qry.filter_by(
             router_id=router_id,
             port_type=const.DEVICE_OWNER_ROUTER_SNAT
@@ -802,7 +803,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             raise n_exc.BadRequest(resource='router', msg=msg)
 
         with context.session.begin(subtransactions=True):
-            router_port = l3_db.RouterPort(
+            router_port = l3_models.RouterPort(
                 port_id=snat_port['id'],
                 router_id=router.id,
                 port_type=const.DEVICE_OWNER_ROUTER_SNAT
@@ -1029,8 +1030,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             (port_dict['status'] == const.PORT_STATUS_ACTIVE))
         if not port_valid_state:
             return
-        query = context.session.query(l3_db.FloatingIP).filter(
-            l3_db.FloatingIP.fixed_ip_address == port_addr_pair_ip)
+        query = context.session.query(l3_models.FloatingIP).filter(
+            l3_models.FloatingIP.fixed_ip_address == port_addr_pair_ip)
         fip = query.first()
         return self._core_plugin.get_port(
             context, fip.fixed_port_id) if fip else None

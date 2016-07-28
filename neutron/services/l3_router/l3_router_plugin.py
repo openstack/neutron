@@ -25,12 +25,12 @@ from neutron.common import topics
 from neutron.db import common_db_mixin
 from neutron.db import dns_db
 from neutron.db import extraroute_db
-from neutron.db import l3_db
 from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
+from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
 from neutron.plugins.common import constants
 from neutron.quota import resource_registry
@@ -64,8 +64,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    @resource_registry.tracked_resources(router=l3_db.Router,
-                                         floatingip=l3_db.FloatingIP)
+    @resource_registry.tracked_resources(router=l3_models.Router,
+                                         floatingip=l3_models.FloatingIP)
     def __init__(self):
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)

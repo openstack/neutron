@@ -22,7 +22,7 @@ from sqlalchemy.orm import query
 
 from neutron import context
 from neutron.db import db_base_plugin_v2
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import portbindings
@@ -293,7 +293,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_neutron_router(self):
         with self.ctx.session.begin(subtransactions=True):
-            router = l3_db.Router()
+            router = l3_models.Router()
             self.ctx.session.add(router)
             return router
 

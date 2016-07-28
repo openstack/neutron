@@ -24,7 +24,7 @@ from sqlalchemy import orm
 from neutron._i18n import _, _LE
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import dns
 from neutron.extensions import l3
@@ -70,7 +70,7 @@ class FloatingIPDNS(model_base.BASEV2):
 
     # Add a relationship to the FloatingIP model in order to instruct
     # SQLAlchemy to eagerly load this association
-    floatingip = orm.relationship(l3_db.FloatingIP,
+    floatingip = orm.relationship(l3_models.FloatingIP,
                                   backref=orm.backref("dns",
                                                       lazy='joined',
                                                       uselist=False,

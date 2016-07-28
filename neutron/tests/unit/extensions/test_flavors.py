@@ -25,7 +25,7 @@ from neutron.api.v2 import attributes as attr
 from neutron import context
 from neutron.db import api as dbapi
 from neutron.db import flavors_db
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import servicetype_db
 from neutron.extensions import flavors
 from neutron.plugins.common import constants
@@ -669,7 +669,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         # make use of router since it has a flavor id
         fl, data = self._create_flavor()
         with self.ctx.session.begin():
-            self.ctx.session.add(l3_db.Router(flavor_id=fl['id']))
+            self.ctx.session.add(l3_models.Router(flavor_id=fl['id']))
         self.assertRaises(
             flavors.FlavorInUse,
             self.plugin.delete_flavor,
