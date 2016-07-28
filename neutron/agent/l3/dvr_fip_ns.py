@@ -165,6 +165,11 @@ class FipNamespace(namespaces.Namespace):
 
     def delete(self):
         self.destroyed = True
+        self._delete()
+        self.agent_gateway_port = None
+
+    @namespaces.check_ns_existence
+    def _delete(self):
         ip_wrapper = ip_lib.IPWrapper(namespace=self.name)
         for d in ip_wrapper.get_devices(exclude_loopback=True):
             if d.name.startswith(FIP_2_ROUTER_DEV_PREFIX):
@@ -179,7 +184,6 @@ class FipNamespace(namespaces.Namespace):
                                    bridge=ext_net_bridge,
                                    namespace=self.name,
                                    prefix=FIP_EXT_DEV_PREFIX)
-        self.agent_gateway_port = None
 
         # TODO(mrsmith): add LOG warn if fip count != 0
         LOG.debug('DVR: destroy fip namespace: %s', self.name)
