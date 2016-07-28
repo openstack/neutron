@@ -167,8 +167,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'max_prefixlen': max_prefixlen,
                'is_default': subnetpool['is_default'],
                'shared': subnetpool['shared'],
-               'prefixes': [str(prefix)
-                            for prefix in subnetpool['prefixes']],
+               'prefixes': [prefix.cidr for prefix in subnetpool['prefixes']],
                'ip_version': subnetpool['ip_version'],
                'default_quota': subnetpool['default_quota'],
                'address_scope_id': subnetpool['address_scope_id']}

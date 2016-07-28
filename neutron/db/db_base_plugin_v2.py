@@ -1012,7 +1012,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         subnetpool = subnetpool_obj.SubnetPool(context, **pool_args)
         subnetpool.create()
 
-        return self._make_subnetpool_dict(subnetpool)
+        return self._make_subnetpool_dict(subnetpool.db_obj)
 
     def update_subnetpool(self, context, id, subnetpool):
         new_sp = subnetpool['subnetpool']
@@ -1048,12 +1048,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         for key in ['min_prefixlen', 'max_prefixlen', 'default_prefixlen']:
             updated['key'] = str(updated[key])
         self._apply_dict_extend_functions(attributes.SUBNETPOOLS,
-                                          updated, orig_sp)
+                                          updated, orig_sp.db_obj)
         return updated
 
     def get_subnetpool(self, context, id, fields=None):
         subnetpool = self._get_subnetpool(context, id)
-        return self._make_subnetpool_dict(subnetpool, fields)
+        return self._make_subnetpool_dict(subnetpool.db_obj, fields)
 
     def get_subnetpools(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
@@ -1062,7 +1062,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         subnetpools = subnetpool_obj.SubnetPool.get_objects(
             context, _pager=pager, **filters)
         return [
-            self._make_subnetpool_dict(pool, fields)
+            self._make_subnetpool_dict(pool.db_obj, fields)
             for pool in subnetpools
         ]
 

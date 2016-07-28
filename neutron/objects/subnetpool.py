@@ -97,13 +97,6 @@ class SubnetPool(base.NeutronDbObject):
                 obj.reload_prefixes()
             return objs
 
-    def _get_changed_synthetic_fields(self):
-        fields = self.obj_get_changes()
-        for field in self._get_changed_persistent_fields():
-            if field in fields:
-                del fields[field]
-        return fields
-
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def create(self):
         synthetic_changes = self._get_changed_synthetic_fields()

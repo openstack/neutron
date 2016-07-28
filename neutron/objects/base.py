@@ -12,6 +12,7 @@
 
 import abc
 import copy
+import functools
 import itertools
 
 from neutron_lib import exceptions
@@ -222,6 +223,24 @@ class NeutronObject(obj_base.VersionedObject,
         return len(cls.get_objects(context, **kwargs))
 
 
+def _detach_db_obj(func):
+    """Decorator to detach db_obj from the session."""
+    @functools.wraps(func)
+    def decorator(self, *args, **kwargs):
+        synthetic_changed = bool(self._get_changed_synthetic_fields())
+        res = func(self, *args, **kwargs)
+        # some relationship based fields may be changed since we
+        # captured the model, let's refresh it for the latest database
+        # state
+        if synthetic_changed:
+            # TODO(ihrachys) consider refreshing just changed attributes
+            self.obj_context.session.refresh(self.db_obj)
+        # detach the model so that consequent fetches don't reuse it
+        self.obj_context.session.expunge(self.db_obj)
+        return res
+    return decorator
+
+
 class DeclarativeObject(abc.ABCMeta):
 
     def __init__(cls, name, bases, dct):
@@ -244,19 +263,23 @@ class DeclarativeObject(abc.ABCMeta):
                     fields_no_update_set.add(key)
         cls.fields_no_update = list(fields_no_update_set)
 
-        # generate unique_keys from the model
         model = getattr(cls, 'db_model', None)
-        if model and not getattr(cls, 'unique_keys', None):
-            cls.unique_keys = []
-            obj_field_names = set(cls.fields.keys())
-            model_to_obj_translation = {
-                v: k for (k, v) in cls.fields_need_translation.items()}
+        if model:
+            # generate unique_keys from the model
+            if not getattr(cls, 'unique_keys', None):
+                cls.unique_keys = []
+                obj_field_names = set(cls.fields.keys())
+                model_to_obj_translation = {
+                    v: k for (k, v) in cls.fields_need_translation.items()}
 
-            for model_unique_key in model_base.get_unique_keys(model):
-                obj_unique_key = [model_to_obj_translation.get(key, key)
-                                  for key in model_unique_key]
-                if obj_field_names.issuperset(obj_unique_key):
-                    cls.unique_keys.append(obj_unique_key)
+                for model_unique_key in model_base.get_unique_keys(model):
+                    obj_unique_key = [model_to_obj_translation.get(key, key)
+                                      for key in model_unique_key]
+                    if obj_field_names.issuperset(obj_unique_key):
+                        cls.unique_keys.append(obj_unique_key)
+            # detach db_obj right after object is loaded from the model
+            cls.create = _detach_db_obj(cls.create)
+            cls.update = _detach_db_obj(cls.update)
 
         if (hasattr(cls, 'has_standard_attributes') and
                 cls.has_standard_attributes()):
@@ -303,12 +326,22 @@ class NeutronDbObject(NeutronObject):
     # in to_dict()
     # obj_extra_fields = []
 
+    def __init__(self, *args, **kwargs):
+        super(NeutronDbObject, self).__init__(*args, **kwargs)
+        self._captured_db_model = None
+
+    @property
+    def db_obj(self):
+        '''Return a database model that persists object data.'''
+        return self._captured_db_model
+
     def from_db_object(self, db_obj):
         fields = self.modify_fields_from_db(db_obj)
         for field in self.fields:
             if field in fields and not self.is_synthetic(field):
                 setattr(self, field, fields[field])
         self.load_synthetic_db_fields(db_obj)
+        self._captured_db_model = db_obj
         self.obj_reset_changes()
 
     @classmethod
@@ -364,6 +397,8 @@ class NeutronDbObject(NeutronObject):
     def _load_object(cls, context, db_obj):
         obj = cls(context)
         obj.from_db_object(db_obj)
+        # detach the model so that consequent fetches don't reuse it
+        context.session.expunge(obj.db_obj)
         return obj
 
     def obj_load_attr(self, attrname):
@@ -441,6 +476,13 @@ class NeutronDbObject(NeutronObject):
                 del fields[field]
         return fields
 
+    def _get_changed_synthetic_fields(self):
+        fields = self.obj_get_changes()
+        for field in self._get_changed_persistent_fields():
+            if field in fields:
+                del fields[field]
+        return fields
+
     def _validate_changed_fields(self, fields):
         fields = fields.copy()
         forbidden_updates = set(self.fields_no_update) & set(fields.keys())
@@ -492,8 +534,7 @@ class NeutronDbObject(NeutronObject):
             if synth_db_objs is not None:
                 if not isinstance(synth_db_objs, list):
                     synth_db_objs = [synth_db_objs]
-                synth_objs = [objclass._load_object(self.obj_context,
-                                objclass.modify_fields_from_db(obj))
+                synth_objs = [objclass._load_object(self.obj_context, obj)
                               for obj in synth_db_objs]
             else:
                 synth_objs = objclass.get_objects(
@@ -546,19 +587,19 @@ class NeutronDbObject(NeutronObject):
         updates = self._get_changed_persistent_fields()
         updates = self._validate_changed_fields(updates)
 
-        if updates:
-            with db_api.autonested_transaction(self.obj_context.session):
-                db_obj = obj_db_api.update_object(
-                    self.obj_context, self.db_model,
-                    self.modify_fields_to_db(updates),
-                    **self.modify_fields_to_db(
-                        self._get_composite_keys()))
-                self.from_db_object(db_obj)
+        with db_api.autonested_transaction(self.obj_context.session):
+            db_obj = obj_db_api.update_object(
+                self.obj_context, self.db_model,
+                self.modify_fields_to_db(updates),
+                **self.modify_fields_to_db(
+                    self._get_composite_keys()))
+            self.from_db_object(db_obj)
 
     def delete(self):
         obj_db_api.delete_object(self.obj_context, self.db_model,
                                  **self.modify_fields_to_db(
                                      self._get_composite_keys()))
+        self._captured_db_model = None
 
     @classmethod
     def count(cls, context, **kwargs):
