@@ -275,10 +275,11 @@ class L3Scheduler(object):
         dep_getter = functools.partial(plugin.get_ha_network, ctxt, tenant_id)
         dep_creator = functools.partial(plugin._create_ha_network,
                                         ctxt, tenant_id)
+        dep_deleter = functools.partial(plugin._delete_ha_network, ctxt)
         dep_id_attr = 'network_id'
         try:
             port_binding = utils.create_object_with_dependency(
-                creator, dep_getter, dep_creator, dep_id_attr)[0]
+                creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)[0]
             with db_api.autonested_transaction(context.session):
                 port_binding.l3_agent_id = agent['id']
         except db_exc.DBDuplicateEntry:

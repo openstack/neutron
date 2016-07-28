@@ -457,9 +457,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                        context, router_db.tenant_id)
         dep_creator = functools.partial(self._create_ha_network,
                                         context, router_db.tenant_id)
+        dep_deleter = functools.partial(self._delete_ha_network, context)
         dep_id_attr = 'network_id'
         return n_utils.create_object_with_dependency(
-            creator, dep_getter, dep_creator, dep_id_attr)
+            creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)
 
     def create_router(self, context, router):
         is_ha = self._is_ha(router['router'])
