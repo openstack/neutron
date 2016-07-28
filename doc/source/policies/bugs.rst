@@ -363,6 +363,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | api_                          | A bug affecting the API layer           | Salvatore Orlando    |
 +-------------------------------+-----------------------------------------+----------------------+
+| api-ref_                      | A bug affecting the API reference       | Akihiro Motoki       |
++-------------------------------+-----------------------------------------+----------------------+
 | auto-allocated-topology_      | A bug affecting get-me-a-network        | Henry Gessau         |
 +-------------------------------+-----------------------------------------+----------------------+
 | baremetal_                    | A bug affecting Ironic support          | Sukhdev Kapur        |
@@ -469,6 +471,14 @@ API
 
 * `API - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=api>`_
 * `API - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=api>`_
+
+.. _api-ref:
+
+API Reference
++++++++++++++
+
+* `API Reference - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=api-ref>`_
+* `API Reference - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=api-ref>`_
 
 .. _auto-allocated-topology:
 
