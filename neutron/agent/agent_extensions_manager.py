@@ -10,24 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
 from oslo_log import log
 import stevedore
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _LI
+from neutron.conf.agent import agent_extensions_manager as agent_ext_mgr_config
 
 LOG = log.getLogger(__name__)
 
-
-AGENT_EXT_MANAGER_OPTS = [
-    cfg.ListOpt('extensions',
-                default=[],
-                help=_('Extensions list to use')),
-]
-
-
-def register_opts(conf):
-    conf.register_opts(AGENT_EXT_MANAGER_OPTS, 'agent')
+agent_ext_mgr_config.register_agent_ext_manager_opts()
 
 
 class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
