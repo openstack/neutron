@@ -77,10 +77,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
         rtr_2_fip_name = self.fip_ns.get_rtr_ext_device_name(self.router_id)
         mark_traffic_to_floating_ip = (
-            'floatingip', '-d %s -i %s -j MARK --set-xmark %s' % (
+            'floatingip', '-d %s/32 -i %s -j MARK --set-xmark %s' % (
                 floating_ip, rtr_2_fip_name, internal_mark))
         mark_traffic_from_fixed_ip = (
-            'FORWARD', '-s %s -j $float-snat' % fixed_ip)
+            'FORWARD', '-s %s/32 -j $float-snat' % fixed_ip)
         return [mark_traffic_to_floating_ip, mark_traffic_from_fixed_ip]
 
     def floating_ip_added_dist(self, fip, fip_cidr):
