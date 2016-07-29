@@ -60,8 +60,8 @@ class TestObjectVersions(test_base.BaseTestCase):
         fingerprints = checker.get_hashes()
 
         if os.getenv('GENERATE_HASHES'):
-            file('object_hashes.txt', 'w').write(
-                pprint.pformat(fingerprints))
+            with open('object_hashes.txt', 'w') as hashes_file:
+                hashes_file.write(pprint.pformat(fingerprints))
 
         expected, actual = checker.test_hashes(object_data)
         self.assertEqual(expected, actual,
