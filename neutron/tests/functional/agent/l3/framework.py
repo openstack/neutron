@@ -29,9 +29,9 @@ from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
+from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base

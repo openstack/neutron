@@ -27,10 +27,10 @@ from neutron.agent.l3 import router_info
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.common import config as base_config
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf import common as base_config
 from neutron.extensions import portbindings
 from neutron.tests import base
 from neutron.tests.common import l3_test_common

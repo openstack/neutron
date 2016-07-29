@@ -25,8 +25,8 @@ from neutron.pecan_wsgi import hooks
 from neutron.pecan_wsgi import startup
 
 CONF = cfg.CONF
-CONF.import_opt('bind_host', 'neutron.common.config')
-CONF.import_opt('bind_port', 'neutron.common.config')
+CONF.import_opt('bind_host', 'neutron.conf.common')
+CONF.import_opt('bind_port', 'neutron.conf.common')
 
 
 def setup_app(*args, **kwargs):

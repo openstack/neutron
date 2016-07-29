@@ -28,7 +28,7 @@ from neutron.tests import base
 
 
 CONF = cfg.CONF
-CONF.import_opt('state_path', 'neutron.common.config')
+CONF.import_opt('state_path', 'neutron.conf.common')
 
 
 class RPCFixture(fixtures.Fixture):

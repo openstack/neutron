@@ -47,10 +47,10 @@ from neutron.agent.linux import pd
 from neutron.agent.linux import ra
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.common import config as base_config
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf import common as base_config
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.tests import base

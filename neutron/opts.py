@@ -31,6 +31,7 @@ import neutron.agent.securitygroups_rpc
 import neutron.common.cache_utils
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
+import neutron.conf.common
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.db.agents_db
@@ -130,14 +131,14 @@ def list_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.common.config.core_cli_opts,
-             neutron.common.config.core_opts,
+             neutron.conf.common.core_cli_opts,
+             neutron.conf.common.core_opts,
              neutron.wsgi.socket_opts,
              neutron.conf.service.service_opts)
          ),
-        (neutron.common.config.NOVA_CONF_SECTION,
+        (neutron.conf.common.NOVA_CONF_SECTION,
          itertools.chain(
-              neutron.common.config.nova_opts)
+              neutron.conf.common.nova_opts)
          ),
         ('quotas', neutron.conf.quota.core_quota_opts)
     ]

@@ -52,7 +52,7 @@ from neutron.tests import tools
 
 
 CONF = cfg.CONF
-CONF.import_opt('state_path', 'neutron.common.config')
+CONF.import_opt('state_path', 'neutron.conf.common')
 
 ROOTDIR = os.path.dirname(__file__)
 ETCDIR = os.path.join(ROOTDIR, 'etc')
