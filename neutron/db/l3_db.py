@@ -1382,13 +1382,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         raise n_exc.ServicePortInUse(port_id=port['id'],
                                      reason=reason)
 
-    def disassociate_floatingips(self, context, port_id):
+    def disassociate_floatingips(self, context, port_id, do_notify=True):
         """Disassociate all floating IPs linked to specific port.
 
         @param port_id: ID of the port to disassociate floating IPs.
         @param do_notify: whether we should notify routers right away.
+                          This parameter is ignored.
         @return: set of router-ids that require notification updates
-                 if do_notify is False, otherwise None.
         """
         router_ids = set()
 
@@ -1751,7 +1751,7 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
                  if do_notify is False, otherwise None.
         """
         router_ids = super(L3_NAT_db_mixin, self).disassociate_floatingips(
-            context, port_id)
+            context, port_id, do_notify)
         if do_notify:
             self.notify_routers_updated(context, router_ids)
             # since caller assumes that we handled notifications on its
