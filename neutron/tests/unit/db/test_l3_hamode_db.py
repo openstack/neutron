@@ -756,6 +756,34 @@ class L3HATestCase(L3HATestFramework):
             self.assertEqual(states[router['id']],
                              router[n_const.HA_ROUTER_STATE_KEY])
 
+    def test_sync_ha_router_info_ha_interface_port_concurrently_deleted(self):
+        router1 = self._create_router()
+        router2 = self._create_router()
+
+        # retrieve all router ha port bindings
+        bindings = self.plugin.get_ha_router_port_bindings(
+            self.admin_ctx, [router1['id'], router2['id']])
+        self.assertEqual(4, len(bindings))
+
+        routers = self.plugin.get_ha_sync_data_for_host(
+            self.admin_ctx, self.agent1['host'], self.agent1)
+        self.assertEqual(2, len(routers))
+
+        bindings = self.plugin.get_ha_router_port_bindings(
+            self.admin_ctx, [router1['id'], router2['id']],
+            self.agent1['host'])
+        self.assertEqual(2, len(bindings))
+
+        fake_binding = mock.Mock()
+        fake_binding.router_id = router2['id']
+        fake_binding.port = None
+        with mock.patch.object(
+                self.plugin, "get_ha_router_port_bindings",
+                return_value=[bindings[0], fake_binding]):
+            routers = self.plugin.get_ha_sync_data_for_host(
+                self.admin_ctx, self.agent1['host'], self.agent1)
+            self.assertEqual(1, len(routers))
+
     def test_set_router_states_handles_concurrently_deleted_router(self):
         router1 = self._create_router()
         router2 = self._create_router()
