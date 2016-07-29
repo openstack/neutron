@@ -1,0 +1,8 @@
+---
+upgrade:
+    - The network_device_mtu option is removed. Existing
+      users of the option are advised to adopt new
+      configuration options to accommodate for their
+      underlying physical infrastructure. The relevant
+      options are global_physnet_mtu for all plugins,
+      and also path_mtu and physical_network_mtus for ML2.
