@@ -314,3 +314,6 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
                           "Neutron subnet %s does not exist"),
                       subnet_id)
             raise n_exc.SubnetNotFound(subnet_id=subnet_id)
+
+    def needs_rollback(self):
+        return False
