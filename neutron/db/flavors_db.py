@@ -12,53 +12,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.db import model_base
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc as sa_exc
 
-from neutron.api.v2 import attributes as attr
+from neutron.common import _deprecate
 from neutron.db import common_db_mixin
+from neutron.db.models import flavor as flavor_models
 from neutron.db import servicetype_db as sdb
 from neutron.extensions import flavors as ext_flavors
 
+_deprecate._moved_global('Flavor', new_module=flavor_models)
+_deprecate._moved_global('ServiceProfile', new_module=flavor_models)
+_deprecate._moved_global('FlavorServiceProfileBinding',
+                         new_module=flavor_models)
+
+
 LOG = logging.getLogger(__name__)
-
-
-class Flavor(model_base.BASEV2, model_base.HasId):
-    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
-    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
-    enabled = sa.Column(sa.Boolean, nullable=False, default=True,
-                        server_default=sa.sql.true())
-    # Make it True for multi-type flavors
-    service_type = sa.Column(sa.String(36), nullable=True)
-    service_profiles = orm.relationship("FlavorServiceProfileBinding",
-        cascade="all, delete-orphan")
-
-
-class ServiceProfile(model_base.BASEV2, model_base.HasId):
-    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
-    driver = sa.Column(sa.String(1024), nullable=False)
-    enabled = sa.Column(sa.Boolean, nullable=False, default=True,
-                        server_default=sa.sql.true())
-    metainfo = sa.Column(sa.String(4096))
-    flavors = orm.relationship("FlavorServiceProfileBinding")
-
-
-class FlavorServiceProfileBinding(model_base.BASEV2):
-    flavor_id = sa.Column(sa.String(36),
-                          sa.ForeignKey("flavors.id",
-                                        ondelete="CASCADE"),
-                          nullable=False, primary_key=True)
-    flavor = orm.relationship(Flavor)
-    service_profile_id = sa.Column(sa.String(36),
-                                   sa.ForeignKey("serviceprofiles.id",
-                                                 ondelete="CASCADE"),
-                                   nullable=False, primary_key=True)
-    service_profile = orm.relationship(ServiceProfile)
 
 
 class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
@@ -67,13 +38,14 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def _get_flavor(self, context, flavor_id):
         try:
-            return self._get_by_id(context, Flavor, flavor_id)
+            return self._get_by_id(context, flavor_models.Flavor, flavor_id)
         except sa_exc.NoResultFound:
             raise ext_flavors.FlavorNotFound(flavor_id=flavor_id)
 
     def _get_service_profile(self, context, sp_id):
         try:
-            return self._get_by_id(context, ServiceProfile, sp_id)
+            return self._get_by_id(
+                context, flavor_models.ServiceProfile, sp_id)
         except sa_exc.NoResultFound:
             raise ext_flavors.ServiceProfileNotFound(sp_id=sp_id)
 
@@ -113,7 +85,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def _ensure_service_profile_not_in_use(self, context, sp_id):
         """Ensures no current bindings to flavors exist."""
-        fl = (context.session.query(FlavorServiceProfileBinding).
+        fl = (context.session.query(flavor_models.FlavorServiceProfileBinding).
               filter_by(service_profile_id=sp_id).first())
         if fl:
             raise ext_flavors.ServiceProfileInUse(sp_id=sp_id)
@@ -131,11 +103,11 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def create_flavor(self, context, flavor):
         fl = flavor['flavor']
         with context.session.begin(subtransactions=True):
-            fl_db = Flavor(id=uuidutils.generate_uuid(),
-                           name=fl['name'],
-                           description=fl['description'],
-                           service_type=fl['service_type'],
-                           enabled=fl['enabled'])
+            fl_db = flavor_models.Flavor(id=uuidutils.generate_uuid(),
+                                         name=fl['name'],
+                                         description=fl['description'],
+                                         service_type=fl['service_type'],
+                                         enabled=fl['enabled'])
             context.session.add(fl_db)
         return self._make_flavor_dict(fl_db)
 
@@ -166,7 +138,8 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def get_flavors(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
-        return self._get_collection(context, Flavor, self._make_flavor_dict,
+        return self._get_collection(context, flavor_models.Flavor,
+                                    self._make_flavor_dict,
                                     filters=filters, fields=fields,
                                     sorts=sorts, limit=limit,
                                     marker_obj=marker,
@@ -176,13 +149,14 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                                       service_profile, flavor_id):
         sp = service_profile['service_profile']
         with context.session.begin(subtransactions=True):
-            bind_qry = context.session.query(FlavorServiceProfileBinding)
+            bind_qry = context.session.query(
+                flavor_models.FlavorServiceProfileBinding)
             binding = bind_qry.filter_by(service_profile_id=sp['id'],
                                          flavor_id=flavor_id).first()
             if binding:
                 raise ext_flavors.FlavorServiceProfileBindingExists(
                     sp_id=sp['id'], fl_id=flavor_id)
-            binding = FlavorServiceProfileBinding(
+            binding = flavor_models.FlavorServiceProfileBinding(
                 service_profile_id=sp['id'],
                 flavor_id=flavor_id)
             context.session.add(binding)
@@ -192,9 +166,12 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def delete_flavor_service_profile(self, context,
                                       service_profile_id, flavor_id):
         with context.session.begin(subtransactions=True):
-            binding = (context.session.query(FlavorServiceProfileBinding).
-                       filter_by(service_profile_id=service_profile_id,
-                       flavor_id=flavor_id).first())
+            binding = (
+                context.session.query(
+                    flavor_models.FlavorServiceProfileBinding).
+                filter_by(service_profile_id=service_profile_id,
+                          flavor_id=flavor_id).
+                first())
             if not binding:
                 raise ext_flavors.FlavorServiceProfileBindingNotFound(
                     sp_id=service_profile_id, fl_id=flavor_id)
@@ -203,9 +180,12 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def get_flavor_service_profile(self, context,
                                    service_profile_id, flavor_id, fields=None):
         with context.session.begin(subtransactions=True):
-            binding = (context.session.query(FlavorServiceProfileBinding).
-                       filter_by(service_profile_id=service_profile_id,
-                       flavor_id=flavor_id).first())
+            binding = (
+                context.session.query(
+                    flavor_models.FlavorServiceProfileBinding).
+                filter_by(service_profile_id=service_profile_id,
+                          flavor_id=flavor_id).
+                first())
             if not binding:
                 raise ext_flavors.FlavorServiceProfileBindingNotFound(
                     sp_id=service_profile_id, fl_id=flavor_id)
@@ -223,11 +203,11 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                 raise ext_flavors.ServiceProfileEmpty()
 
         with context.session.begin(subtransactions=True):
-            sp_db = ServiceProfile(id=uuidutils.generate_uuid(),
-                                   description=sp['description'],
-                                   driver=sp['driver'],
-                                   enabled=sp['enabled'],
-                                   metainfo=sp['metainfo'])
+            sp_db = flavor_models.ServiceProfile(id=uuidutils.generate_uuid(),
+                                                 description=sp['description'],
+                                                 driver=sp['driver'],
+                                                 enabled=sp['enabled'],
+                                                 metainfo=sp['metainfo'])
             context.session.add(sp_db)
 
         return self._make_service_profile_dict(sp_db)
@@ -259,7 +239,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def get_service_profiles(self, context, filters=None, fields=None,
                              sorts=None, limit=None, marker=None,
                              page_reverse=False):
-        return self._get_collection(context, ServiceProfile,
+        return self._get_collection(context, flavor_models.ServiceProfile,
                                     self._make_service_profile_dict,
                                     filters=filters, fields=fields,
                                     sorts=sorts, limit=limit,
@@ -273,7 +253,8 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         """From flavor, choose service profile and find provider for driver."""
 
         with context.session.begin(subtransactions=True):
-            bind_qry = context.session.query(FlavorServiceProfileBinding)
+            bind_qry = context.session.query(
+                flavor_models.FlavorServiceProfileBinding)
             binding = bind_qry.filter_by(flavor_id=flavor_id).first()
             if not binding:
                 raise ext_flavors.FlavorServiceProfileBindingNotFound(
@@ -303,3 +284,6 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                'provider': providers[0].get('name')}
 
         return [self._fields(res, fields)]
+
+
+_deprecate._MovedGlobals()
