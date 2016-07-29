@@ -15,6 +15,7 @@
 import functools
 import itertools
 
+from debtcollector import removals
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as l3_constants
@@ -152,6 +153,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     )
 
     _dns_integration = None
+
+    # NOTE(armax): multiple l3 service plugins (potentially out of tree)
+    # inherit from l3_db and may need the callbacks to be processed. Having
+    # an implicit subscription (through the __new__ method) preserves the
+    # existing behavior, and at the same time it avoids fixing it manually
+    # in each and every l3 plugin out there.
+    def __new__(cls):
+        L3_NAT_dbonly_mixin._subscribe_callbacks()
+        return super(L3_NAT_dbonly_mixin, cls).__new__(cls)
+
+    @staticmethod
+    def _subscribe_callbacks():
+        registry.subscribe(
+            _prevent_l3_port_delete_callback, resources.PORT,
+            events.BEFORE_DELETE)
 
     @property
     def _is_dns_integration_supported(self):
@@ -1645,6 +1661,27 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 class L3RpcNotifierMixin(object):
     """Mixin class to add rpc notifier attribute to db_base_plugin_v2."""
 
+    # NOTE(armax): multiple l3 service plugins (potentially out of tree)
+    # inherit from l3_db and may need the callbacks to be processed. Having
+    # an implicit subscription (through the __new__ method) preserves the
+    # existing behavior, and at the same time it avoids fixing it manually
+    # in each and every l3 plugin out there.
+    def __new__(cls):
+        L3RpcNotifierMixin._subscribe_callbacks()
+        return object.__new__(cls)
+
+    @staticmethod
+    def _subscribe_callbacks():
+        registry.subscribe(
+            _notify_routers_callback, resources.PORT, events.AFTER_DELETE)
+        registry.subscribe(
+            _notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
+            events.AFTER_UPDATE)
+        registry.subscribe(
+            _notify_subnetpool_address_scope_update,
+            resources.SUBNETPOOL_ADDRESS_SCOPE,
+            events.AFTER_UPDATE)
+
     @property
     def l3_rpc_notifier(self):
         if not hasattr(self, '_l3_rpc_notifier'):
@@ -1822,24 +1859,9 @@ def _notify_subnetpool_address_scope_update(resource, event,
     l3plugin.notify_routers_updated(context, router_ids)
 
 
+@removals.remove(
+    message="This will be removed in the P cycle. "
+            "Subscriptions are now registered during object creation."
+)
 def subscribe():
-    registry.subscribe(
-        _prevent_l3_port_delete_callback, resources.PORT, events.BEFORE_DELETE)
-    registry.subscribe(
-        _notify_routers_callback, resources.PORT, events.AFTER_DELETE)
-    registry.subscribe(
-        _notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
-        events.AFTER_UPDATE)
-    registry.subscribe(
-        _notify_subnetpool_address_scope_update,
-        resources.SUBNETPOOL_ADDRESS_SCOPE,
-        events.AFTER_UPDATE)
-
-# NOTE(armax): multiple l3 service plugins (potentially out of tree) inherit
-# from l3_db and may need the callbacks to be processed. Having an implicit
-# subscription (through the module import) preserves the existing behavior,
-# and at the same time it avoids fixing it manually in each and every l3 plugin
-# out there. That said, The subscription is also made explicit in the
-# reference l3 plugin. The subscription operation is idempotent so there is no
-# harm in registering the same callback multiple times.
-subscribe()
+    pass
