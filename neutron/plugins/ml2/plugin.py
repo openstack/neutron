@@ -735,6 +735,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.create_network_segments(context, net_data,
                                                       tenant_id)
             self.type_manager.extend_network_dict_provider(context, result)
+            # Update the transparent vlan if configured
+            if utils.is_extension_supported(self, 'vlan-transparent'):
+                vlt = vlantransparent.get_vlan_transparent(net_data)
+                net_db['vlan_transparent'] = vlt
+                result['vlan_transparent'] = vlt
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
             self.mechanism_manager.create_network_precommit(mech_context)
@@ -748,12 +753,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                 net_data[az_ext.AZ_HINTS])
                 net_db[az_ext.AZ_HINTS] = az_hints
                 result[az_ext.AZ_HINTS] = az_hints
-
-            # Update the transparent vlan if configured
-            if utils.is_extension_supported(self, 'vlan-transparent'):
-                vlt = vlantransparent.get_vlan_transparent(net_data)
-                net_db['vlan_transparent'] = vlt
-                result['vlan_transparent'] = vlt
 
         self._apply_dict_extend_functions('networks', result, net_db)
         return result, mech_context
