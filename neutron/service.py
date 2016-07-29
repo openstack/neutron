@@ -225,7 +225,7 @@ def serve_rpc():
 
 def _get_api_workers():
     workers = cfg.CONF.api_workers
-    if not workers:
+    if workers is None:
         workers = processutils.get_worker_count()
     return workers
 
