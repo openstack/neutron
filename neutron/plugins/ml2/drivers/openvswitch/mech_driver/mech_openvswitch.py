@@ -85,10 +85,16 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         return self.vif_type
 
     def get_vif_details(self, agent, context):
-        if (agent['configurations'].get('datapath_type') !=
-                a_const.OVS_DATAPATH_NETDEV):
-            return self.vif_details
-        caps = agent['configurations'].get('ovs_capabilities', {})
+        a_config = agent['configurations']
+        if a_config.get('datapath_type') != a_const.OVS_DATAPATH_NETDEV:
+            details = dict(self.vif_details)
+            hybrid = portbindings.OVS_HYBRID_PLUG
+            if hybrid in a_config:
+                # we only override the vif_details for hybrid pluggin set
+                # in the constuctor if the agent specifically requests it
+                details[hybrid] = a_config[hybrid]
+            return details
+        caps = a_config.get('ovs_capabilities', {})
         if a_const.OVS_DPDK_VHOST_USER in caps.get('iface_types', []):
             sock_path = self.agent_vhu_sockpath(agent, context.current['id'])
             return {

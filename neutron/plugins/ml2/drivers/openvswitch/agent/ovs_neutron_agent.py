@@ -46,6 +46,7 @@ from neutron.common import ipv6_utils as ipv6
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron import context
+from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
@@ -230,6 +231,34 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.enable_tunneling,
             self.enable_distributed_routing)
 
+        if self.enable_tunneling:
+            self.setup_tunnel_br_flows()
+
+        self.dvr_agent.setup_dvr_flows()
+
+        # Collect additional bridges to monitor
+        self.ancillary_brs = self.setup_ancillary_bridges(
+            ovs_conf.integration_bridge, ovs_conf.tunnel_bridge)
+
+        # In order to keep existed device's local vlan unchanged,
+        # restore local vlan mapping at start
+        self._restore_local_vlan_map()
+
+        # Security group agent support
+        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
+                self.sg_plugin_rpc, self.local_vlan_map,
+                defer_refresh_firewall=True, integration_bridge=self.int_br)
+
+        # we default to False to provide backward compat with out of tree
+        # firewall drivers that expect the logic that existed on the Neutron
+        # server which only enabled hybrid plugging based on the use of the
+        # hybrid driver.
+        hybrid_plug = getattr(self.sg_agent.firewall,
+                              'OVS_HYBRID_PLUG_REQUIRED', False)
+        self.prevent_arp_spoofing = (
+            agent_conf.prevent_arp_spoofing and
+            not self.sg_agent.firewall.provides_arp_spoofing_protection)
+
         #TODO(mangelajo): optimize resource_versions to only report
         #                 versions about resources which are common,
         #                 or which are used by specific extensions.
@@ -251,7 +280,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                'datapath_type': ovs_conf.datapath_type,
                                'ovs_capabilities': self.ovs.capabilities,
                                'vhostuser_socket_dir':
-                               ovs_conf.vhostuser_socket_dir},
+                               ovs_conf.vhostuser_socket_dir,
+                               portbindings.OVS_HYBRID_PLUG: hybrid_plug},
             'resource_versions': resources.LOCAL_RESOURCE_VERSIONS,
             'agent_type': agent_conf.agent_type,
             'start_flag': True}
@@ -261,29 +291,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             heartbeat = loopingcall.FixedIntervalLoopingCall(
                 self._report_state)
             heartbeat.start(interval=report_interval)
-
-        if self.enable_tunneling:
-            self.setup_tunnel_br_flows()
-
-        self.dvr_agent.setup_dvr_flows()
-
-        # Collect additional bridges to monitor
-        self.ancillary_brs = self.setup_ancillary_bridges(
-            ovs_conf.integration_bridge, ovs_conf.tunnel_bridge)
-
-        # In order to keep existed device's local vlan unchanged,
-        # restore local vlan mapping at start
-        self._restore_local_vlan_map()
-
-        # Security group agent support
-        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
-                self.sg_plugin_rpc, self.local_vlan_map,
-                defer_refresh_firewall=True, integration_bridge=self.int_br)
-
-        self.prevent_arp_spoofing = (
-            agent_conf.prevent_arp_spoofing and
-            not self.sg_agent.firewall.provides_arp_spoofing_protection)
-
         # Initialize iteration counter
         self.iter_num = 0
         self.run_daemon_loop = True
