@@ -24,7 +24,15 @@ from neutron.tests import base
 class TransactionTestCase(base.BaseTestCase):
     def test_commit_raises_exception_on_timeout(self):
         with mock.patch.object(queue, 'Queue') as mock_queue:
-            transaction = impl_idl.Transaction(mock.sentinel, mock.Mock(), 0)
+            transaction = impl_idl.NeutronOVSDBTransaction(mock.sentinel,
+                                                           mock.Mock(), 0)
             mock_queue.return_value.get.side_effect = queue.Empty
             with testtools.ExpectedException(api.TimeoutException):
                 transaction.commit()
+
+    def test_post_commit_does_not_raise_exception(self):
+        with mock.patch.object(impl_idl.NeutronOVSDBTransaction,
+                               "do_post_commit", side_effect=Exception):
+            transaction = impl_idl.NeutronOVSDBTransaction(mock.sentinel,
+                                                           mock.Mock(), 0)
+            transaction.post_commit(mock.Mock())
