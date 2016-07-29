@@ -26,6 +26,7 @@ NETWORK_API_EXTENSIONS="
     qos, \
     quotas, \
     rbac-policies, \
+    revisions, \
     router, \
     router_availability_zone, \
     security-group, \

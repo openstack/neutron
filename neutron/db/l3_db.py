@@ -74,6 +74,7 @@ class RouterPort(model_base.BASEV2):
         sa.String(36),
         sa.ForeignKey('ports.id', ondelete="CASCADE"),
         primary_key=True)
+    revises_on_change = ('router', )
     # The port_type attribute is redundant as the port table already specifies
     # it in DEVICE_OWNER.However, this redundancy enables more efficient
     # queries on router ports, and also prevents potential error-prone
@@ -1243,10 +1244,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._update_fip_assoc(context, fip, floatingip_db,
                                    self._core_plugin.get_port(
                                        context.elevated(), fip_port_id))
-            floatingip_dict = self._make_floatingip_dict(floatingip_db)
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_update_precommit(
-                    context, floatingip_dict)
+                    context, floatingip_db)
+        floatingip_dict = self._make_floatingip_dict(floatingip_db)
         if self._is_dns_integration_supported:
             self._process_dns_floatingip_update_postcommit(context,
                                                            floatingip_dict,

@@ -45,6 +45,7 @@ DEFAULT_SERVICE_PLUGINS = {
     'timestamp_core': 'timestamp_core',
     'network_ip_availability': 'network-ip-availability',
     'flavors': 'flavors',
+    'revisions': 'revisions',
 }
 
 # Service operation status constants
