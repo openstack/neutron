@@ -125,10 +125,3 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         self.assertEqual(expected, set(map(_as_tuple, trunk.sub_ports)))
         self.assertEqual(expected, set(map(_as_tuple, sub_ports)))
-
-    def test_get_objects_queries_constant(self):
-        # NOTE(korzen) Trunk object has synthetic field 'sub_port' which is
-        # not defined as model relationship between sub_port and trunk.
-        # Both sub_port and trunk have relationship to port model, but this
-        # relationship is not proactively loading the port object.
-        pass
