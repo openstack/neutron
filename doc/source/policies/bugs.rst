@@ -428,8 +428,6 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | qos_                          | A bug affecting ML2/QoS                 | Miguel Ajo           |
 +-------------------------------+-----------------------------------------+----------------------+
-| released-neutronclient_       | A bug affecting released clients        | Kyle Mestery         |
-+-------------------------------+-----------------------------------------+----------------------+
 | release-subproject_           | A request to release a subproject       | Ihar Hrachyshka      |
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team         |
@@ -714,14 +712,6 @@ QoS
 
 * `QoS - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=qos>`_
 * `QoS - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=qos>`_
-
-.. _released-neutronclient:
-
-Released Neutron Client
-+++++++++++++++++++++++
-
-* `Released Neutron Client - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=released-neutronclient>`_
-* `Released Neutron Client - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=released-neutronclient>`_
 
 .. _release-subproject:
 
