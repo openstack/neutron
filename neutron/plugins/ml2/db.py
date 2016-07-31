@@ -22,13 +22,17 @@ import six
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.ml2 import models
+from neutron.services.segments import exceptions as seg_exc
 
 LOG = log.getLogger(__name__)
 
@@ -305,3 +309,30 @@ def is_dhcp_active_on_any_subnet(context, subnet_ids):
     return bool(context.session.query(models_v2.Subnet).
                 enable_eagerloads(False).filter_by(enable_dhcp=True).
                 filter(models_v2.Subnet.id.in_(subnet_ids)).count())
+
+
+def _prevent_segment_delete_with_port_bound(resource, event, trigger,
+                                            context, segment):
+    """Raise exception if there are any ports bound with segment_id."""
+    segment_id = segment['id']
+    query = context.session.query(models_v2.Port)
+    query = query.join(
+        models.PortBindingLevel,
+        models.PortBindingLevel.port_id == models_v2.Port.id)
+    query = query.filter(models.PortBindingLevel.segment_id == segment_id)
+    port_ids = [p.id for p in query]
+
+    # There are still some ports in the segment, segment should not be deleted
+    # TODO(xiaohhui): Should we delete the dhcp port automatically here?
+    if port_ids:
+        reason = _("The segment is still bound with port(s) "
+                   "%s") % ", ".join(port_ids)
+        raise seg_exc.SegmentInUse(segment_id=segment_id, reason=reason)
+
+
+def subscribe():
+    registry.subscribe(_prevent_segment_delete_with_port_bound,
+                       resources.SEGMENT,
+                       events.BEFORE_DELETE)
+
+subscribe()

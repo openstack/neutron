@@ -16,7 +16,11 @@
 
 from sqlalchemy.orm import session
 
+from neutron._i18n import _
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.extensions import ip_allocation
@@ -24,6 +28,7 @@ from neutron.extensions import l2_adjacency
 from neutron.extensions import segment
 from neutron import manager
 from neutron.services.segments import db
+from neutron.services.segments import exceptions
 
 
 def _extend_network_dict_binding(plugin, network_res, network_db):
@@ -71,8 +76,25 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
             attributes.PORTS, [_extend_port_dict_binding])
 
+        registry.subscribe(
+            self._prevent_segment_delete_with_subnet_associated,
+            resources.SEGMENT,
+            events.BEFORE_DELETE)
+
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+
+    def _prevent_segment_delete_with_subnet_associated(
+            self, resource, event, trigger, context, segment):
+        """Raise exception if there are any subnets associated with segment."""
+        segment_id = segment['id']
+        query = context.session.query(models_v2.Subnet.id)
+        query = query.filter(models_v2.Subnet.segment_id == segment_id)
+        subnet_ids = [s[0] for s in query]
+        if subnet_ids:
+            reason = _("The segment is still associated with subnet(s) "
+                       "%s") % ", ".join(subnet_ids)
+            raise exceptions.SegmentInUse(segment_id=segment_id, reason=reason)

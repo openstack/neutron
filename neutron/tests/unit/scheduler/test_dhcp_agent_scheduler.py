@@ -298,8 +298,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
 
     def setUp(self):
         super(TestAutoScheduleSegments, self).setUp()
-        self.plugin = importutils.import_object('neutron.plugins.ml2.plugin.'
-                                                'Ml2Plugin')
+        self.plugin = self.driver
         self.segments_plugin = importutils.import_object(
             'neutron.services.segments.plugin.Plugin')
         self.ctx = context.get_admin_context()
@@ -317,8 +316,8 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
         seg = self.segments_plugin.create_segment(
             self.ctx,
             {'segment': {'network_id': network_id,
-                         'physical_network': constants.ATTR_NOT_SPECIFIED,
-                         'network_type': 'meh',
+                         'physical_network': 'physnet1',
+                         'network_type': 'vlan',
                          'segmentation_id': constants.ATTR_NOT_SPECIFIED}})
         return seg['id']
 
@@ -506,8 +505,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         weight_scheduler = (
             'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler')
         cfg.CONF.set_override('network_scheduler_driver', weight_scheduler)
-        self.plugin = importutils.import_object('neutron.plugins.ml2.plugin.'
-                                                'Ml2Plugin')
+        self.plugin = self.driver
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
             side_effect=lambda context, network_id, hosts: hosts).start()
@@ -531,8 +529,8 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         seg = self.segments_plugin.create_segment(
             self.ctx,
             {'segment': {'network_id': network_id,
-                         'physical_network': constants.ATTR_NOT_SPECIFIED,
-                         'network_type': 'meh',
+                         'physical_network': 'physnet1',
+                         'network_type': 'vlan',
                          'segmentation_id': constants.ATTR_NOT_SPECIFIED}})
         return seg['id']
 
