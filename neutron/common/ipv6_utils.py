@@ -23,7 +23,6 @@ from neutron_lib import constants as const
 from oslo_log import log
 
 from neutron._i18n import _, _LI
-from neutron.common import constants
 
 
 LOG = log.getLogger(__name__)
@@ -67,7 +66,7 @@ def is_enabled():
 
 def is_auto_address_subnet(subnet):
     """Check if subnet is an auto address subnet."""
-    modes = [constants.IPV6_SLAAC, constants.DHCPV6_STATELESS]
+    modes = [const.IPV6_SLAAC, const.DHCPV6_STATELESS]
     return (subnet['ipv6_address_mode'] in modes
             or subnet['ipv6_ra_mode'] in modes)
 
