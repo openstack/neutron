@@ -16,10 +16,10 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE, _LI
-from neutron.agent.linux import ipset_manager
+from neutron._i18n import _LE, _LI
 from neutron.agent.linux import utils
 from neutron.common import config
+from neutron.conf.agent import cmd as command
 
 
 LOG = logging.getLogger(__name__)
@@ -31,22 +31,8 @@ def setup_conf():
     Use separate setup_conf for the utility because there are many options
     from the main config that do not apply during clean-up.
     """
-
-    cli_opts = [
-        cfg.BoolOpt('allsets',
-                    default=False,
-                    help=_('Destroy all IPsets.')),
-        cfg.BoolOpt('force',
-                    default=False,
-                    help=_('Destroy IPsets even if there is an iptables '
-                           'reference.')),
-        cfg.StrOpt('prefix',
-                   default=ipset_manager.NET_PREFIX,
-                   help=_('String prefix used to match IPset names.')),
-    ]
-
     conf = cfg.CONF
-    conf.register_cli_opts(cli_opts)
+    command.register_cmd_opts(command.ip_opts, conf)
     return conf
 
 

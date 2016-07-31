@@ -22,7 +22,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _LE
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as l3_agent
@@ -33,6 +33,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import config
+from neutron.conf.agent import cmd
 from neutron.conf.agent import dhcp as dhcp_config
 
 
@@ -60,17 +61,8 @@ def setup_conf():
     from the main config that do not apply during clean-up.
     """
 
-    cli_opts = [
-        cfg.BoolOpt('force',
-                    default=False,
-                    help=_('Delete the namespace by removing all devices.')),
-        cfg.StrOpt('agent-type',
-                   choices=['dhcp', 'l3', 'lbaas'],
-                   help=_('Cleanup resources of a specific agent type only.')),
-    ]
-
     conf = cfg.CONF
-    conf.register_cli_opts(cli_opts)
+    cmd.register_cmd_opts(cmd.netns_opts, conf)
     agent_config.register_interface_driver_opts_helper(conf)
     dhcp_config.register_agent_dhcp_opts(conf)
     conf.register_opts(interface.OPTS)

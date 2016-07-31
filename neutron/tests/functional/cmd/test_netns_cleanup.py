@@ -19,6 +19,8 @@ from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import netns_cleanup
+from neutron.conf.agent import cmd
+from neutron.tests import base as basetest
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
@@ -64,3 +66,17 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
         namespaces_now = ip_lib.IPWrapper.get_namespaces()
         self.assertNotIn(l3_namespace, namespaces_now)
         self.assertNotIn(dhcp_namespace, namespaces_now)
+
+
+class TestNETNSCLIConfig(basetest.BaseTestCase):
+
+    def setup_config(self, args=None):
+        self.conf = netns_cleanup.setup_conf()
+        super(TestNETNSCLIConfig, self).setup_config(args=args)
+
+    def test_netns_opts_registration(self):
+        self.assertFalse(self.conf.force)
+        self.assertIsNone(self.conf.get('agent_type'))
+        # to unregister opts
+        self.conf.reset()
+        self.conf.unregister_opts(cmd.netns_opts)
