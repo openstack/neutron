@@ -811,8 +811,7 @@ class Dnsmasq(DhcpLocalProcess):
                 self._release_lease(mac, ip, client_id)
 
         if not dhcp_port_exists:
-            self.device_manager.driver.unplug(
-                self.interface_name, namespace=self.network.namespace)
+            self.device_manager.unplug(self.interface_name, self.network)
 
     def _output_addn_hosts_file(self):
         """Writes a dnsmasq compatible additional hosts file.
@@ -1300,7 +1299,16 @@ class DeviceManager(object):
             # delete all devices except current active DHCP port device
             if d.name != dev_name:
                 LOG.debug("Found stale device %s, deleting", d.name)
-                self.driver.unplug(d.name, namespace=network.namespace)
+                self.unplug(d.name, network)
+
+    def plug(self, network, port, interface_name):
+        """Plug device settings for the network's DHCP on this host."""
+        self.driver.plug(network.id,
+                         port.id,
+                         interface_name,
+                         port.mac_address,
+                         namespace=network.namespace,
+                         mtu=network.get('mtu'))
 
     def setup(self, network):
         """Create and initialize a device for network's DHCP on this host."""
@@ -1313,12 +1321,7 @@ class DeviceManager(object):
             LOG.debug('Reusing existing device: %s.', interface_name)
         else:
             try:
-                self.driver.plug(network.id,
-                                 port.id,
-                                 interface_name,
-                                 port.mac_address,
-                                 namespace=network.namespace,
-                                 mtu=network.get('mtu'))
+                self.plug(network, port, interface_name)
             except Exception:
                 with excutils.save_and_reraise_exception():
                     LOG.exception(_LE('Unable to plug DHCP port for '
@@ -1366,10 +1369,14 @@ class DeviceManager(object):
         """Update device settings for the network's DHCP on this host."""
         self._set_default_route(network, device_name)
 
+    def unplug(self, device_name, network):
+        """Unplug device settings for the network's DHCP on this host."""
+        self.driver.unplug(device_name, namespace=network.namespace)
+
     def destroy(self, network, device_name):
         """Destroy the device used for the network's DHCP on this host."""
         if device_name:
-            self.driver.unplug(device_name, namespace=network.namespace)
+            self.unplug(device_name, network)
         else:
             LOG.debug('No interface exists for network %s', network.id)
 
