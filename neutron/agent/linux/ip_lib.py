@@ -800,6 +800,13 @@ class IpRouteCommand(IpDeviceCommandBase):
                                    'proto', 'kernel',
                                    'dev', device))
 
+    def flush(self, ip_version, table=None, **kwargs):
+        args = ['flush']
+        args += self._table_args(table)
+        for k, v in kwargs.items():
+            args += [k, v]
+        self._as_root([ip_version], tuple(args))
+
     def add_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = get_ip_version(cidr)
         args = ['replace', cidr]
