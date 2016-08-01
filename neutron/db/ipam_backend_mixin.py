@@ -38,6 +38,7 @@ from neutron.db import segments_db
 from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.extensions import portbindings
 from neutron.extensions import segment
+from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import db as segment_svc_db
@@ -564,18 +565,50 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 fixed_ip_list.append({'subnet_id': subnet['id']})
         return fixed_ip_list
 
-    def _ipam_get_subnets(self, context, network_id, host):
+    def _query_filter_service_subnets(self, query, service_type):
+        ServiceType = service_type_db.SubnetServiceType
+        query = query.add_entity(ServiceType)
+        query = query.outerjoin(ServiceType)
+        query = query.filter(or_(ServiceType.service_type.is_(None),
+                                 ServiceType.service_type == service_type))
+        return query.from_self(models_v2.Subnet)
+
+    def _check_service_subnets(self, query, service_type):
+        """Raise an exception if empty subnet list is caused by service type"""
+        if not query.limit(1).count():
+            return
+        query = self._query_filter_service_subnets(query, service_type)
+        if query.limit(1).count():
+            return
+        raise ipam_exceptions.IpAddressGenerationFailureNoMatchingSubnet()
+
+    def _sort_service_subnets(self, subnets, query, service_type):
+        """Give priority to subnets with service_types"""
+        subnets = sorted(subnets,
+                         key=lambda subnet: not subnet.get('service_types'))
+        if not subnets:
+            # If we have an empty subnet list, check if it's caused by
+            # the service type.
+            self._check_service_subnets(query, service_type)
+        return subnets
+
+    def _ipam_get_subnets(self, context, network_id, host, service_type=None):
         Subnet = models_v2.Subnet
         SegmentHostMapping = segment_svc_db.SegmentHostMapping
 
-        query = self._get_collection_query(context, Subnet)
-        query = query.filter(Subnet.network_id == network_id)
+        unfiltered_query = self._get_collection_query(context, Subnet)
+        unfiltered_query = unfiltered_query.filter(
+                               Subnet.network_id == network_id)
+        query = self._query_filter_service_subnets(unfiltered_query,
+                                                   service_type)
         # Note:  This seems redundant, but its not.  It has to cover cases
         # where host is None, ATTR_NOT_SPECIFIED, or '' due to differences in
         # host binding implementations.
         if not validators.is_attr_set(host) or not host:
             query = query.filter(Subnet.segment_id.is_(None))
-            return [self._make_subnet_dict(c, context=context) for c in query]
+            return self._sort_service_subnets(
+                       [self._make_subnet_dict(c, context=context)
+                        for c in query], unfiltered_query, service_type)
 
         # A host has been provided.  Consider these two scenarios
         # 1. Not a routed network:  subnets are not on segments
@@ -602,6 +635,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             query = query.filter(Subnet.network_id == network_id)
             query = query.filter(Subnet.segment_id.isnot(None))
             if query.count() == 0:
+                self._check_service_subnets(unfiltered_query, service_type)
                 return []
             # It is a routed network but no subnets found for host
             raise segment_exc.HostNotConnectedToAnySegment(
@@ -618,8 +652,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             raise segment_exc.HostConnectedToMultipleSegments(
                 host=host, network_id=network_id)
 
-        return [self._make_subnet_dict(subnet, context=context)
-                for subnet, _mapping in results]
+        return self._sort_service_subnets(
+                   [self._make_subnet_dict(subnet, context=context)
+                    for subnet, _mapping in results],
+                   unfiltered_query, service_type)
 
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
         args = super(IpamBackendMixin, self)._make_subnet_args(

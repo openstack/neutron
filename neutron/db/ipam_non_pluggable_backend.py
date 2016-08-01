@@ -67,7 +67,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             subnet_ip_pools.add(netaddr.IPRange(ip_pool.first_ip,
                                                 ip_pool.last_ip))
 
-        for subnet_id in ip_pools:
+        for subnet_id in subnet_id_list:
             subnet_ip_pools = ip_pools[subnet_id]
             subnet_ip_allocs = ip_allocations[subnet_id]
             filter_set = netaddr.IPSet()
@@ -282,7 +282,8 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         p = port['port']
         subnets = self._ipam_get_subnets(context,
                                          network_id=p['network_id'],
-                                         host=p.get(portbindings.HOST_ID))
+                                         host=p.get(portbindings.HOST_ID),
+                                         service_type=p.get('device_owner'))
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)

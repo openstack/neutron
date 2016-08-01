@@ -44,7 +44,7 @@ class SubnetServiceTypesExtensionTestCase(
          test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     """Test API extension subnet_service_types attributes.
     """
-    CIDR = '10.0.0.0/8'
+    CIDRS = ['10.0.0.0/8', '20.0.0.0/8', '30.0.0.0/8']
     IP_VERSION = 4
 
     def setUp(self):
@@ -54,14 +54,17 @@ class SubnetServiceTypesExtensionTestCase(
         super(SubnetServiceTypesExtensionTestCase,
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
-    def _create_service_subnet(self, service_types=None, network=None):
+    def _create_service_subnet(self, service_types=None, cidr=None,
+                               network=None):
         if not network:
             with self.network() as network:
                 pass
         network = network['network']
+        if not cidr:
+            cidr = self.CIDRS[0]
         args = {'net_id': network['id'],
                 'tenant_id': network['tenant_id'],
-                'cidr': self.CIDR,
+                'cidr': cidr,
                 'ip_version': self.IP_VERSION}
         if service_types:
             args['service_types'] = service_types
@@ -158,8 +161,121 @@ class SubnetServiceTypesExtensionTestCase(
         # Update it with an invalid service type
         self._test_update_subnet(subnet, service_types, expect_fail=True)
 
+    def _assert_port_res(self, port, service_type, subnet, fallback,
+                         error='IpAddressGenerationFailureNoMatchingSubnet'):
+        res = self.deserialize('json', port)
+        if fallback:
+            port = res['port']
+            self.assertEqual(1, len(port['fixed_ips']))
+            self.assertEqual(service_type, port['device_owner'])
+            self.assertEqual(subnet['id'], port['fixed_ips'][0]['subnet_id'])
+        else:
+            self.assertEqual(error, res['NeutronError']['type'])
+
+    def test_create_port_with_matching_service_type(self):
+        with self.network() as network:
+            pass
+        matching_type = 'network:foo'
+        non_matching_type = 'network:bar'
+        # Create a subnet with no service types
+        self._create_service_subnet(network=network)
+        # Create a subnet with a non-matching service type
+        self._create_service_subnet([non_matching_type],
+                                    cidr=self.CIDRS[2],
+                                    network=network)
+        # Create a subnet with a service type to match the port device owner
+        res = self._create_service_subnet([matching_type],
+                                          cidr=self.CIDRS[1],
+                                          network=network)
+        service_subnet = self.deserialize('json', res)['subnet']
+        # Create a port with device owner matching the correct service subnet
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'],
+                                 device_owner=matching_type)
+        self._assert_port_res(port, matching_type, service_subnet, True)
+
+    def test_create_port_without_matching_service_type(self, fallback=True):
+        with self.network() as network:
+            pass
+        subnet = ''
+        matching_type = 'compute:foo'
+        non_matching_type = 'network:foo'
+        if fallback:
+            # Create a subnet with no service types
+            res = self._create_service_subnet(network=network)
+            subnet = self.deserialize('json', res)['subnet']
+        # Create a subnet with a non-matching service type
+        self._create_service_subnet([non_matching_type],
+                                    cidr=self.CIDRS[1],
+                                    network=network)
+        # Create a port with device owner not matching the service subnet
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'],
+                                 device_owner=matching_type)
+        self._assert_port_res(port, matching_type, subnet, fallback)
+
+    def test_create_port_without_matching_service_type_no_fallback(self):
+        self.test_create_port_without_matching_service_type(fallback=False)
+
+    def test_create_port_no_device_owner(self, fallback=True):
+        with self.network() as network:
+            pass
+        subnet = ''
+        service_type = 'compute:foo'
+        if fallback:
+            # Create a subnet with no service types
+            res = self._create_service_subnet(network=network)
+            subnet = self.deserialize('json', res)['subnet']
+        # Create a subnet with a service_type
+        self._create_service_subnet([service_type],
+                                    cidr=self.CIDRS[1],
+                                    network=network)
+        # Create a port without a device owner
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'])
+        self._assert_port_res(port, '', subnet, fallback)
+
+    def test_create_port_no_device_owner_no_fallback(self):
+        self.test_create_port_no_device_owner(fallback=False)
+
+    def test_create_port_exhausted_subnet(self, fallback=True):
+        with self.network() as network:
+            pass
+        subnet = ''
+        service_type = 'compute:foo'
+        if fallback:
+            # Create a subnet with no service types
+            res = self._create_service_subnet(network=network)
+            subnet = self.deserialize('json', res)['subnet']
+        # Create a subnet with a service_type
+        res = self._create_service_subnet([service_type],
+                                          cidr=self.CIDRS[1],
+                                          network=network)
+        service_subnet = self.deserialize('json', res)['subnet']
+        # Update the service subnet with empty allocation pools
+        data = {'subnet': {'allocation_pools': []}}
+        req = self.new_update_request('subnets', data, service_subnet['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        # Create a port with a matching device owner
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'],
+                                 device_owner=service_type)
+        self._assert_port_res(port, service_type, subnet, fallback,
+                              error='IpAddressGenerationFailure')
+
+    def test_create_port_exhausted_subnet_no_fallback(self):
+        self.test_create_port_exhausted_subnet(fallback=False)
+
 
 class SubnetServiceTypesExtensionTestCasev6(
         SubnetServiceTypesExtensionTestCase):
-    CIDR = '2001:db8::/64'
+    CIDRS = ['2001:db8:2::/64', '2001:db8:3::/64', '2001:db8:4::/64']
     IP_VERSION = 6
