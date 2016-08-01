@@ -498,6 +498,12 @@ class NetcatTester(object):
 
         return message == testing_string
 
+    def test_no_connectivity(self, respawn=False):
+        try:
+            return not self.test_connectivity(respawn)
+        except RuntimeError:
+            return True
+
     def _spawn_nc_in_namespace(self, namespace, address, listen=False):
         cmd = ['nc', address, self.dst_port]
         if self.protocol == self.UDP:
