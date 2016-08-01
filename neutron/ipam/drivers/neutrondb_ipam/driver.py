@@ -291,7 +291,7 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
             raise ipam_exc.InvalidSubnetRequest(
                 reason=_("An identifier must be specified when updating "
                          "a subnet"))
-        if not subnet_request.allocation_pools:
+        if subnet_request.allocation_pools is None:
             LOG.debug("Update subnet request for subnet %s did not specify "
                       "new allocation pools, there is nothing to do",
                       subnet_request.subnet_id)
