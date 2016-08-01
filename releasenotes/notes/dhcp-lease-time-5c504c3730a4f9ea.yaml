@@ -1,0 +1,5 @@
+---
+upgrade:
+  - The configuration option dhcp_lease_time was
+    deprecated in the Havana cycle. This option is no longer
+    supported. The option was replaced by dhcp_lease_duration.
