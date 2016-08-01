@@ -28,7 +28,6 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import sql
 
 from neutron._i18n import _, _LI
-from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -126,8 +125,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def _get_agent_mode(self, agent_db):
         agent_conf = self.get_configuration_dict(agent_db)
-        return agent_conf.get(n_const.L3_AGENT_MODE,
-                              n_const.L3_AGENT_MODE_LEGACY)
+        return agent_conf.get(constants.L3_AGENT_MODE,
+                              constants.L3_AGENT_MODE_LEGACY)
 
     def validate_agent_router_combination(self, context, agent, router):
         """Validate if the router can be correctly assigned to the agent.
@@ -144,10 +143,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         agent_mode = self._get_agent_mode(agent)
 
-        if agent_mode == n_const.L3_AGENT_MODE_DVR:
+        if agent_mode == constants.L3_AGENT_MODE_DVR:
             raise l3agentscheduler.DVRL3CannotAssignToDvrAgent()
 
-        if (agent_mode == n_const.L3_AGENT_MODE_LEGACY and
+        if (agent_mode == constants.L3_AGENT_MODE_LEGACY and
             router.get('distributed')):
             raise l3agentscheduler.RouterL3AgentMismatch(
                 router_id=router['id'], agent_id=agent['id'])
@@ -227,7 +226,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         """
         agent = self._get_agent(context, agent_id)
         agent_mode = self._get_agent_mode(agent)
-        if agent_mode == n_const.L3_AGENT_MODE_DVR:
+        if agent_mode == constants.L3_AGENT_MODE_DVR:
             raise l3agentscheduler.DVRL3CannotRemoveFromDvrAgent()
 
         self._unbind_router(context, router_id, agent_id)
@@ -462,10 +461,10 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 continue
 
             agent_conf = self.get_configuration_dict(l3_agent)
-            agent_mode = agent_conf.get(n_const.L3_AGENT_MODE,
-                                        n_const.L3_AGENT_MODE_LEGACY)
-            if (agent_mode == n_const.L3_AGENT_MODE_DVR or
-                    (agent_mode == n_const.L3_AGENT_MODE_LEGACY and
+            agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
+                                        constants.L3_AGENT_MODE_LEGACY)
+            if (agent_mode == constants.L3_AGENT_MODE_DVR or
+                    (agent_mode == constants.L3_AGENT_MODE_LEGACY and
                      is_router_distributed)):
                 continue
 

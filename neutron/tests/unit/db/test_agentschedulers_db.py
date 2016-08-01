@@ -1050,9 +1050,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_dvr_router_csnat_rescheduling(self):
         helpers.register_l3_agent(
-            host=L3_HOSTA, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         helpers.register_l3_agent(
-            host=L3_HOSTB, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         with self.subnet() as s:
             net_id = s['subnet']['network_id']
             self._set_net_external(net_id)
@@ -1077,9 +1077,9 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_dvr_router_manual_rescheduling(self):
         helpers.register_l3_agent(
-            host=L3_HOSTA, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         helpers.register_l3_agent(
-            host=L3_HOSTB, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         with self.subnet() as s:
             net_id = s['subnet']['network_id']
             self._set_net_external(net_id)

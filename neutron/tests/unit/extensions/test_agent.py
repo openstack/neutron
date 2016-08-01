@@ -23,7 +23,6 @@ from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.api.v2 import attributes
-from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -83,9 +82,9 @@ class AgentDBTestMixIn(object):
     def _register_agent_states(self, lbaas_agents=False):
         """Register two L3 agents and two DHCP agents."""
         l3_hosta = helpers._get_l3_agent_dict(
-            L3_HOSTA, n_const.L3_AGENT_MODE_LEGACY)
+            L3_HOSTA, constants.L3_AGENT_MODE_LEGACY)
         l3_hostb = helpers._get_l3_agent_dict(
-            L3_HOSTB, n_const.L3_AGENT_MODE_LEGACY)
+            L3_HOSTB, constants.L3_AGENT_MODE_LEGACY)
         dhcp_hosta = helpers._get_dhcp_agent_dict(DHCP_HOSTA)
         dhcp_hostc = helpers._get_dhcp_agent_dict(DHCP_HOSTC)
         helpers.register_l3_agent(host=L3_HOSTA)
@@ -118,9 +117,9 @@ class AgentDBTestMixIn(object):
 
     def _register_dvr_agents(self):
         dvr_snat_agent = helpers.register_l3_agent(
-            host=L3_HOSTA, agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
+            host=L3_HOSTA, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         dvr_agent = helpers.register_l3_agent(
-            host=L3_HOSTB, agent_mode=n_const.L3_AGENT_MODE_DVR)
+            host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR)
         return [dvr_snat_agent, dvr_agent]
 
     def _register_l3_agent(self, host):

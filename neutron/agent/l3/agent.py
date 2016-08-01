@@ -311,12 +311,12 @@ class L3NATAgent(ha.AgentMixin,
             kwargs['host'] = self.host
 
         if router.get('distributed') and router.get('ha'):
-            if self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT:
+            if self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT:
                 kwargs['state_change_callback'] = self.enqueue_state_change
                 return dvr_edge_ha_router.DvrEdgeHaRouter(*args, **kwargs)
 
         if router.get('distributed'):
-            if self.conf.agent_mode == l3_constants.L3_AGENT_MODE_DVR_SNAT:
+            if self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT:
                 return dvr_router.DvrEdgeRouter(*args, **kwargs)
             else:
                 return dvr_local_router.DvrLocalRouter(*args, **kwargs)
