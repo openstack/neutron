@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from tempest import test
 
+from neutron.common import utils
 from neutron.tests.tempest.api import base
 
 
@@ -29,6 +31,18 @@ class DHCPAgentSchedulersTestJSON(base.BaseAdminNetworkTest):
         cls.subnet = cls.create_subnet(cls.network)
         cls.cidr = cls.subnet['cidr']
         cls.port = cls.create_port(cls.network)
+
+    @test.idempotent_id('f164801e-1dd8-4b8b-b5d3-cc3ac77cfaa5')
+    def test_dhcp_port_status_active(self):
+
+        def dhcp_port_active():
+            for p in self.client.list_ports(
+                    network_id=self.network['id'])['ports']:
+                if (p['device_owner'] == constants.DEVICE_OWNER_DHCP and
+                        p['status'] == constants.PORT_STATUS_ACTIVE):
+                    return True
+            return False
+        utils.wait_until_true(dhcp_port_active)
 
     @test.idempotent_id('5032b1fe-eb42-4a64-8f3b-6e189d8b5c7d')
     def test_list_dhcp_agent_hosting_network(self):
