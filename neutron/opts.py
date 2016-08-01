@@ -34,6 +34,7 @@ import neutron.conf.agent.ovs_conf
 import neutron.conf.common
 import neutron.conf.quota
 import neutron.conf.service
+import neutron.conf.wsgi
 import neutron.db.agents_db
 import neutron.db.agentschedulers_db
 import neutron.db.dvr_mac_db
@@ -133,7 +134,7 @@ def list_opts():
          itertools.chain(
              neutron.conf.common.core_cli_opts,
              neutron.conf.common.core_opts,
-             neutron.wsgi.socket_opts,
+             neutron.conf.wsgi.socket_opts,
              neutron.conf.service.service_opts)
          ),
         (neutron.conf.common.NOVA_CONF_SECTION,
