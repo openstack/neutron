@@ -39,9 +39,6 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     This class implements the strategy for IP address allocation and
     deallocation for the Neutron DB IPAM driver.
-    Allocation for IP addresses is based on the concept of availability
-    ranges, which were already used in Neutron's DB base class for handling
-    IPAM operations.
     """
 
     @classmethod
@@ -72,7 +69,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
                                               subnet_request.gateway_ip)
         else:
             pools = subnet_request.allocation_pools
-        # Create IPAM allocation pools and availability ranges
+        # Create IPAM allocation pools
         cls.create_allocation_pools(subnet_manager, session, pools,
                                     subnet_request.subnet_cidr)
 
@@ -208,9 +205,8 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     def deallocate(self, address):
         # This is almost a no-op because the Neutron DB IPAM driver does not
-        # delete IPAllocation objects, neither rebuilds availability ranges
-        # at every deallocation. The only operation it performs is to delete
-        # an IPRequest entry.
+        # delete IPAllocation objects at every deallocation. The only operation
+        # it performs is to delete an IPRequest entry.
         session = self._context.session
 
         count = self.subnet_manager.delete_allocation(

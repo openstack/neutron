@@ -13,12 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
-from sqlalchemy.orm import exc as orm_exc
 
 from neutron.ipam.drivers.neutrondb_ipam import db_models
-from neutron.ipam import exceptions as ipam_exc
 
 # Database operations for Neutron's DB-backed IPAM driver
 
@@ -69,7 +66,7 @@ class IpamSubnetManager(object):
             neutron_subnet_id=neutron_subnet_id).delete()
 
     def create_pool(self, session, pool_start, pool_end):
-        """Create an allocation pool and availability ranges for the subnet.
+        """Create an allocation pool for the subnet.
 
         This method does not perform any validation on parameters; it simply
         persist data on the database.
@@ -83,11 +80,6 @@ class IpamSubnetManager(object):
             first_ip=pool_start,
             last_ip=pool_end)
         session.add(ip_pool)
-        ip_range = db_models.IpamAvailabilityRange(
-            allocation_pool=ip_pool,
-            first_ip=pool_start,
-            last_ip=pool_end)
-        session.add(ip_range)
         return ip_pool
 
     def delete_allocation_pools(self, session):
@@ -103,104 +95,6 @@ class IpamSubnetManager(object):
         return session.query(
             db_models.IpamAllocationPool).filter_by(
             ipam_subnet_id=self._ipam_subnet_id)
-
-    def _range_query(self, session):
-        return session.query(
-            db_models.IpamAvailabilityRange).join(
-            db_models.IpamAllocationPool).filter_by(
-            ipam_subnet_id=self._ipam_subnet_id)
-
-    def get_first_range(self, session):
-        """Return the first availability range for the subnet
-
-        :param session: database session
-        :return: first available range as instance of
-            neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
-        """
-        return self._range_query(session).first()
-
-    def list_ranges_by_subnet_id(self, session):
-        """Return availability ranges for a given ipam subnet
-
-        :param session: database session
-        :return: list of availability ranges as instances of
-            neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
-        """
-        return self._range_query(session)
-
-    def list_ranges_by_allocation_pool(self, session, allocation_pool_id):
-        """Return availability ranges for a given pool.
-
-        :param session: database session
-        :param allocation_pool_id: allocation pool identifier
-        :return: list of availability ranges as instances of
-            neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
-        """
-        return session.query(
-            db_models.IpamAvailabilityRange).join(
-            db_models.IpamAllocationPool).filter_by(
-            id=allocation_pool_id)
-
-    def update_range(self, session, db_range, first_ip=None, last_ip=None):
-        """Updates db_range to have new first_ip and last_ip.
-
-        :param session: database session
-        :param db_range: IpamAvailabilityRange db object
-        :param first_ip: first ip address in range
-        :param last_ip: last ip address in range
-        :return: count of updated rows
-        """
-        opts = {}
-        if first_ip:
-            opts['first_ip'] = str(first_ip)
-        if last_ip:
-            opts['last_ip'] = str(last_ip)
-        if not opts:
-            raise ipam_exc.IpamAvailabilityRangeNoChanges()
-        try:
-            return session.query(
-                db_models.IpamAvailabilityRange).filter_by(
-                allocation_pool_id=db_range.allocation_pool_id).filter_by(
-                first_ip=db_range.first_ip).filter_by(
-                last_ip=db_range.last_ip).update(opts)
-        except orm_exc.ObjectDeletedError:
-            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed())
-
-    def delete_range(self, session, db_range):
-        """Return count of deleted ranges
-
-        :param session: database session
-        :param db_range: IpamAvailabilityRange db object
-        """
-        try:
-            return session.query(
-                db_models.IpamAvailabilityRange).filter_by(
-                allocation_pool_id=db_range.allocation_pool_id).filter_by(
-                first_ip=db_range.first_ip).filter_by(
-                last_ip=db_range.last_ip).delete()
-        except orm_exc.ObjectDeletedError:
-            raise db_exc.RetryRequest(ipam_exc.IPAllocationFailed())
-
-    def create_range(self, session, allocation_pool_id,
-                     range_start, range_end):
-        """Create an availability range for a given pool.
-
-        This method does not perform any validation on parameters; it simply
-        persist data on the database.
-
-        :param session: database session
-        :param allocation_pool_id: allocation pool identifier
-        :param range_start: first ip address in the range
-        :param range_end: last ip address in the range
-        :return: the newly created availability range as an instance of
-            neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAvailabilityRange
-        """
-        new_ip_range = db_models.IpamAvailabilityRange(
-            allocation_pool_id=allocation_pool_id,
-            first_ip=range_start,
-            last_ip=range_end)
-        session.add(new_ip_range)
-        return new_ip_range
 
     def check_unique_allocation(self, session, ip_address):
         """Validate that the IP address on the subnet is not in use."""
