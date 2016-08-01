@@ -20,7 +20,6 @@ from sqlalchemy import or_
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as const
 from neutron.common import utils as n_utils
 
 from neutron.db import agentschedulers_db
@@ -286,8 +285,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
         # dvr routers are not explicitly scheduled to agents on hosts with
         # dvr serviceable ports, so need special handling
-        if self._get_agent_mode(agent_db) in [const.L3_AGENT_MODE_DVR,
-                                              const.L3_AGENT_MODE_DVR_SNAT]:
+        if self._get_agent_mode(agent_db) in [n_const.L3_AGENT_MODE_DVR,
+                                              n_const.L3_AGENT_MODE_DVR_SNAT]:
             if not router_ids:
                 result_set |= set(self._get_dvr_router_ids_for_host(
                     context, agent_db['host']))
