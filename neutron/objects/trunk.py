@@ -111,10 +111,12 @@ class Trunk(base.NeutronDbObject):
             except o_db_exc.DBReferenceError:
                 raise n_exc.PortNotFound(port_id=self.port_id)
 
-            for sub_port in sub_ports:
-                sub_port.trunk_id = self.id
-                sub_port.create()
-            self.load_synthetic_db_fields()
+            if sub_ports:
+                for sub_port in sub_ports:
+                    sub_port.trunk_id = self.id
+                    sub_port.create()
+                    self.sub_ports.append(sub_port)
+                self.obj_reset_changes(['sub_ports'])
 
     # TODO(ivc): add support for 'sub_ports' in 'Trunk.update' for
     # consistency with 'Trunk.create'
