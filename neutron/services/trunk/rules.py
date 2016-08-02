@@ -24,7 +24,7 @@ from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import exceptions as trunk_exc
 
 
-# This layer is introduced for keeping busines logic and
+# This layer is introduced for keeping business logic and
 # data persistence decoupled.
 
 
