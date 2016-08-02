@@ -96,7 +96,7 @@ class Trunk(base.NeutronDbObject):
         'sub_ports': obj_fields.ListOfObjectsField(SubPort.__name__),
     }
 
-    fields_no_update = ['tenant_id', 'port_id', 'status']
+    fields_no_update = ['tenant_id', 'port_id']
 
     synthetic_fields = ['sub_ports']
 

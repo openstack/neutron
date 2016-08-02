@@ -218,3 +218,43 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_remove_subports_notify_precommit_delete(self):
         self._test_remove_subports_notify(events.PRECOMMIT_DELETE)
+
+    def test_create_trunk_in_pending_state(self):
+        with self.port() as port:
+            trunk = self._create_test_trunk(port)
+            self.assertEqual(
+                constants.PENDING_STATUS, trunk['status'])
+
+    def test_add_subports_trunk_in_error_state_raises(self):
+        with self.port() as port, self.port() as subport:
+            trunk = self._create_test_trunk(port)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            trunk_obj.status = constants.ERROR_STATUS
+            trunk_obj.update()
+            s = create_subport_dict(subport['port']['id'])
+            self.assertRaises(trunk_exc.TrunkInErrorState,
+                self.trunk_plugin.add_subports,
+                self.context, trunk['id'], {'sub_ports': [s]})
+
+    def test_add_subports_trunk_goes_to_pending(self):
+        with self.port() as port, self.port() as subport:
+            trunk = self._create_test_trunk(port)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            trunk_obj.status = constants.ACTIVE_STATUS
+            trunk_obj.update()
+            s = create_subport_dict(subport['port']['id'])
+            trunk = self.trunk_plugin.add_subports(
+                self.context, trunk['id'], {'sub_ports': [s]})
+            self.assertEqual(constants.PENDING_STATUS, trunk['status'])
+
+    def test_remove_subports_trunk_goes_to_pending(self):
+        with self.port() as port, self.port() as subport:
+            s = create_subport_dict(subport['port']['id'])
+            trunk = self._create_test_trunk(port, [s])
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            trunk_obj.status = constants.ACTIVE_STATUS
+            trunk_obj.update()
+            trunk = self.trunk_plugin.remove_subports(
+                self.context, trunk['id'],
+                {'sub_ports': [{'port_id': subport['port']['id']}]})
+            self.assertEqual(constants.PENDING_STATUS, trunk['status'])
