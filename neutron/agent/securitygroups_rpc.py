@@ -90,7 +90,6 @@ class SecurityGroupAgentRpc(object):
         self.context = context
         self.plugin_rpc = plugin_rpc
         self.init_firewall(defer_refresh_firewall, integration_bridge)
-        self.local_vlan_map = local_vlan_map
 
     def init_firewall(self, defer_refresh_firewall=False,
                       integration_bridge=None):

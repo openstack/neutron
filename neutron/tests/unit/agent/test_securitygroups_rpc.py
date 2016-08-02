@@ -35,7 +35,6 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import securitygroup as ext_sg
 from neutron import manager
-from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.extensions import test_securitygroup as test_sg
@@ -3121,12 +3120,8 @@ class TestSecurityGroupAgentWithOVSIptables(
                                                     test_rpc_v1_1)
 
     def _init_agent(self, defer_refresh_firewall):
-        fake_map = ovs_neutron_agent.LocalVLANMapping(1, 'network_type',
-                                                      'physical_network', 1)
-        local_vlan_map = {'fakenet': fake_map}
         self.agent = sg_rpc.SecurityGroupAgentRpc(
             context=None, plugin_rpc=self.rpc,
-            local_vlan_map=local_vlan_map,
             defer_refresh_firewall=defer_refresh_firewall)
         self._enforce_order_in_firewall(self.agent.firewall)
 
