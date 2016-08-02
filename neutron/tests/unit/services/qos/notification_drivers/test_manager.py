@@ -66,7 +66,7 @@ class TestQosDriversManager(TestQosDriversManagerBase):
         self.driver_manager = driver_mgr.QosServiceNotificationDriverManager()
 
     def _validate_registry_params(self, event_type, policy):
-        self.rpc_api.push.assert_called_with(self.context, policy,
+        self.rpc_api.push.assert_called_with(self.context, [policy],
                                              event_type)
 
     def test_create_policy_default_configuration(self):

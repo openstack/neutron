@@ -53,7 +53,7 @@ class RpcQosServiceNotificationDriver(
         pass
 
     def update_policy(self, context, policy):
-        self.notification_api.push(context, policy, events.UPDATED)
+        self.notification_api.push(context, [policy], events.UPDATED)
 
     def delete_policy(self, context, policy):
-        self.notification_api.push(context, policy, events.DELETED)
+        self.notification_api.push(context, [policy], events.DELETED)
