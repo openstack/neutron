@@ -67,10 +67,8 @@ def check_duplicate_segments(segments, is_partial_func=None):
     if len(set(fully_specifieds)) != len(fully_specifieds):
         raise SegmentsContainDuplicateEntry()
 
-
-validators.validators['type:convert_segments'] = (
-    _convert_and_validate_segments)
-
+validators.add_validator('convert_segments',
+                         _convert_and_validate_segments)
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'networks': {

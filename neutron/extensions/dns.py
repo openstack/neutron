@@ -196,11 +196,9 @@ def convert_to_lowercase(data):
     msg = _("'%s' cannot be converted to lowercase string") % data
     raise n_exc.InvalidInput(error_message=msg)
 
-
-validators.validators['type:dns_name'] = _validate_dns_name
-validators.validators['type:fip_dns_name'] = _validate_fip_dns_name
-validators.validators['type:dns_domain'] = _validate_dns_domain
-
+validators.add_validator('dns_name', _validate_dns_name)
+validators.add_validator('fip_dns_name', _validate_fip_dns_name)
+validators.add_validator('dns_domain', _validate_dns_domain)
 
 DNSNAME = 'dns_name'
 DNSDOMAIN = 'dns_domain'

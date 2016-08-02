@@ -430,8 +430,9 @@ def convert_value(attr_info, res_dict, exc_cls=ValueError):
         if 'validate' not in attr_vals:
             continue
         for rule in attr_vals['validate']:
-            res = lib_validators.validators[rule](res_dict[attr],
-                                                  attr_vals['validate'][rule])
+            validator = lib_validators.get_validator(rule)
+            res = validator(res_dict[attr], attr_vals['validate'][rule])
+
             if res:
                 msg_dict = dict(attr=attr, reason=res)
                 msg = _("Invalid input for %(attr)s. "

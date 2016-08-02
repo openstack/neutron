@@ -78,8 +78,8 @@ def _validate_flavor_service_type(validate_type, valid_values=None):
     if validate_type not in plugins:
         raise InvalidFlavorServiceType(service_type=validate_type)
 
-validators.validators['type:validate_flavor_service_type'] = (
-    _validate_flavor_service_type)
+validators.add_validator('validate_flavor_service_type',
+                         _validate_flavor_service_type)
 
 FLAVORS = 'flavors'
 SERVICE_PROFILES = 'service_profiles'

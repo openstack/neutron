@@ -62,9 +62,8 @@ def _validate_extra_dhcp_opt(data, key_specs=None):
             if msg:
                 raise ExtraDhcpOptBadData(data=msg)
 
-
-validators.validators['type:list_of_extra_dhcp_opts'] = (
-    _validate_extra_dhcp_opt)
+validators.add_validator('list_of_extra_dhcp_opts',
+                         _validate_extra_dhcp_opt)
 
 # Attribute Map
 EXTRADHCPOPTS = 'extra_dhcp_opts'
