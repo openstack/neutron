@@ -159,7 +159,7 @@ core_opts = [
     cfg.StrOpt('web_framework', default='legacy',
                choices=('legacy', 'pecan'),
                help=_("This will choose the web framework in which to run "
-                      "the Neutron API server. 'pecan' is a new experiemental "
+                      "the Neutron API server. 'pecan' is a new experimental "
                       "rewrite of the API server.")),
     cfg.IntOpt('global_physnet_mtu', default=constants.DEFAULT_NETWORK_MTU,
                deprecated_name='segment_mtu', deprecated_group='ml2',
