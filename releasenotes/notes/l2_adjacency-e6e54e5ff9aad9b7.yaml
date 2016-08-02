@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The new l2_adjacency extension adds an l2_adjacency field to the network,
+    to indicate whether or not there is guaranteed L2 adjacency between the
+    ports on that Network.  Routed network implementations would typically set
+    l2_adjacency to False.

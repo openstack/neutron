@@ -20,9 +20,20 @@ from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.extensions import ip_allocation
+from neutron.extensions import l2_adjacency
 from neutron.extensions import segment
 from neutron import manager
 from neutron.services.segments import db
+
+
+def _extend_network_dict_binding(plugin, network_res, network_db):
+    if not manager.NeutronManager.get_service_plugins().get('segments'):
+        return
+
+    # TODO(carl_baldwin) Make this work with service subnets when it's a thing.
+    is_adjacent = (not network_db.subnets
+                   or not network_db.subnets[0].segment_id)
+    network_res[l2_adjacency.L2_ADJACENCY] = is_adjacent
 
 
 def _extend_subnet_dict_binding(plugin, subnet_res, subnet_db):
@@ -50,9 +61,11 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     _instance = None
 
-    supported_extension_aliases = ["segment", "ip_allocation"]
+    supported_extension_aliases = ["segment", "ip_allocation", "l2_adjacency"]
 
     def __init__(self):
+        common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+            attributes.NETWORKS, [_extend_network_dict_binding])
         common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
             attributes.SUBNETS, [_extend_subnet_dict_binding])
         common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
