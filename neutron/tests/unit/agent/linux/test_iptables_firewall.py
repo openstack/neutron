@@ -26,9 +26,9 @@ from neutron.agent import firewall
 from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_firewall
-from neutron.agent import securitygroups_rpc as sg_cfg
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
+from neutron.conf.agent import securitygroups_rpc as security_config
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
 
@@ -71,7 +71,7 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
     def setUp(self):
         super(BaseIptablesFirewallTestCase, self).setUp()
         cfg.CONF.register_opts(a_cfg.ROOT_HELPER_OPTS, 'AGENT')
-        cfg.CONF.register_opts(sg_cfg.security_group_opts, 'SECURITYGROUP')
+        security_config.register_securitygroups_opts()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')
