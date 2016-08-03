@@ -77,11 +77,13 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
                            **{'max_kbps': {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True, 'default': None,
-                                  'validate': {'type:non_negative': None}},
+                                  'validate': {'type:range': [0,
+                                      common_constants.DB_INTEGER_MAX_VALUE]}},
                               'max_burst_kbps': {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True, 'default': 0,
-                                  'validate': {'type:non_negative': None}}})
+                                  'validate': {'type:range': [0,
+                                  common_constants.DB_INTEGER_MAX_VALUE]}}})
     },
     'dscp_marking_rules': {
         'parent': {'collection_name': 'policies',
