@@ -28,7 +28,7 @@ from neutron.agent.ovsdb.native import connection
 from neutron.agent.ovsdb.native import idlutils
 
 
-cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.conf.agent.ovs_conf')
+cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
 
 LOG = logging.getLogger(__name__)
 
