@@ -174,6 +174,8 @@ class Subnet(base.NeutronDbObject):
 
     foreign_keys = {'network_id': 'id'}
 
+    fields_no_update = ['project_id']
+
     fields_need_translation = {
         'project_id': 'tenant_id',
         'host_routes': 'routes'
