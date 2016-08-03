@@ -1044,7 +1044,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         for field in remove_timestamps_from_fields(self.obj_fields[0]):
             filters = {field: [self.obj_fields[0][field]]}
             new = self._test_class.get_objects(self.context, **filters)
-            self.assertEqual([obj], new)
+            self.assertEqual([obj], new, 'Filtering by %s failed.' % field)
 
     def _get_non_synth_fields(self, objclass, db_attrs):
         fields = objclass.modify_fields_from_db(db_attrs)
