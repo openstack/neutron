@@ -356,6 +356,10 @@ class API(object):
         """
 
 
+class TimeoutException(Exception):
+    pass
+
+
 def val_to_py(val):
     """Convert a json ovsdb return value to native python object"""
     if isinstance(val, collections.Sequence) and len(val) == 2:
