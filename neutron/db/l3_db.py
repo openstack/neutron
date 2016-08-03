@@ -1119,7 +1119,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        dns_integration = utils.is_extension_supported(self, 'dns-integration')
+        dns_integration = utils.is_extension_supported(self._core_plugin,
+                                                       'dns-integration')
         with context.session.begin(subtransactions=True):
             # This external port is never exposed to the tenant.
             # it is used purely for internal system and admin use when
@@ -1186,7 +1187,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _update_floatingip(self, context, id, floatingip):
         fip = floatingip['floatingip']
-        dns_integration = utils.is_extension_supported(self, 'dns-integration')
+        dns_integration = utils.is_extension_supported(self._core_plugin,
+                                                       'dns-integration')
         with context.session.begin(subtransactions=True):
             floatingip_db = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_db)
@@ -1225,7 +1227,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
         floatingip_dict = self._make_floatingip_dict(floatingip)
-        if utils.is_extension_supported(self, 'dns-integration'):
+        if utils.is_extension_supported(self._core_plugin, 'dns-integration'):
             self._process_dns_floatingip_delete(context, floatingip_dict)
         # Foreign key cascade will take care of the removal of the
         # floating IP record once the port is deleted. We can't start
