@@ -525,7 +525,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, filters=dvr_filters)
             self.assertEqual(1, len(dvr_ports))
 
-    def test_remove_router_interface_csnat_ports_removal_with_ipv6(self):
+    def _setup_router_with_v4_and_v6(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
@@ -548,36 +548,56 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                     {'subnet_id': subnet_v4['subnet']['id']})
                 self.mixin.add_router_interface(self.ctx, router['id'],
                     {'subnet_id': subnet_v6['subnet']['id']})
-                csnat_filters = {'device_owner':
-                                 [l3_const.DEVICE_OWNER_ROUTER_SNAT]}
-                csnat_ports = self.core_plugin.get_ports(
-                    self.ctx, filters=csnat_filters)
-                self.assertEqual(2, len(csnat_ports))
-                dvr_filters = {'device_owner':
-                               [l3_const.DEVICE_OWNER_DVR_INTERFACE]}
-                dvr_ports = self.core_plugin.get_ports(
-                    self.ctx, filters=dvr_filters)
-                self.assertEqual(2, len(dvr_ports))
-                with mock.patch.object(
-                    manager.NeutronManager,
-                    'get_service_plugins') as get_svc_plugin:
-                    get_svc_plugin.return_value = {
-                        plugin_const.L3_ROUTER_NAT: plugin}
-                    self.mixin.manager = manager
-                    self.mixin.remove_router_interface(
-                        self.ctx, router['id'],
-                        {'subnet_id': subnet_v4['subnet']['id']})
+                get_svc_plugin = mock.patch.object(
+                    manager.NeutronManager, 'get_service_plugins').start()
+                get_svc_plugin.return_value = {
+                    plugin_const.L3_ROUTER_NAT: plugin}
+                self.mixin.manager = manager
+                return router, subnet_v4, subnet_v6
 
-                csnat_ports = self.core_plugin.get_ports(
-                    self.ctx, filters=csnat_filters)
-                self.assertEqual(1, len(csnat_ports))
-                self.assertEqual(
-                    subnet_v6['subnet']['id'],
-                    csnat_ports[0]['fixed_ips'][0]['subnet_id'])
+    def test_remove_router_interface_csnat_ports_removal_with_ipv6(self):
+        router, subnet_v4, subnet_v6 = self._setup_router_with_v4_and_v6()
+        csnat_filters = {'device_owner':
+                         [l3_const.DEVICE_OWNER_ROUTER_SNAT]}
+        csnat_ports = self.core_plugin.get_ports(
+            self.ctx, filters=csnat_filters)
+        self.assertEqual(2, len(csnat_ports))
+        dvr_filters = {'device_owner':
+                       [l3_const.DEVICE_OWNER_DVR_INTERFACE]}
+        dvr_ports = self.core_plugin.get_ports(
+            self.ctx, filters=dvr_filters)
+        self.assertEqual(2, len(dvr_ports))
+        self.mixin.remove_router_interface(
+            self.ctx, router['id'],
+            {'subnet_id': subnet_v4['subnet']['id']})
+        csnat_ports = self.core_plugin.get_ports(
+            self.ctx, filters=csnat_filters)
+        self.assertEqual(1, len(csnat_ports))
+        self.assertEqual(
+            subnet_v6['subnet']['id'],
+            csnat_ports[0]['fixed_ips'][0]['subnet_id'])
 
-                dvr_ports = self.core_plugin.get_ports(
-                    self.ctx, filters=dvr_filters)
-                self.assertEqual(1, len(dvr_ports))
+        dvr_ports = self.core_plugin.get_ports(
+            self.ctx, filters=dvr_filters)
+        self.assertEqual(1, len(dvr_ports))
+
+    def test_remove_router_interface_csnat_port_missing_ip(self):
+        # NOTE(kevinbenton): this is a contrived scenario to reproduce
+        # a condition observed in bug/1609540. Once we figure out why
+        # these ports lose their IP we can remove this test.
+        router, subnet_v4, subnet_v6 = self._setup_router_with_v4_and_v6()
+        self.mixin.remove_router_interface(
+            self.ctx, router['id'],
+            {'subnet_id': subnet_v4['subnet']['id']})
+        csnat_filters = {'device_owner':
+                         [l3_const.DEVICE_OWNER_ROUTER_SNAT]}
+        csnat_ports = self.core_plugin.get_ports(
+            self.ctx, filters=csnat_filters)
+        self.core_plugin.update_port(self.ctx, csnat_ports[0]['id'],
+                                     {'port': {'fixed_ips': []}})
+        self.mixin.remove_router_interface(
+            self.ctx, router['id'],
+            {'subnet_id': subnet_v6['subnet']['id']})
 
     def test__validate_router_migration_notify_advanced_services(self):
         router = {'name': 'foo_router', 'admin_state_up': False}
