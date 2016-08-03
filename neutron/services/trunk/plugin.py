@@ -30,6 +30,7 @@ from neutron.objects import trunk as trunk_objects
 from neutron.services import service_base
 from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants
+from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import rules
 
@@ -61,11 +62,39 @@ class TrunkPlugin(service_base.ServicePluginBase,
     def __init__(self):
         db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
             attributes.PORTS, [_extend_port_trunk_details])
+        self._drivers = []
         self._segmentation_types = {}
+        self._interfaces = set()
+        self._agent_types = set()
+        drivers.register()
         registry.subscribe(rules.enforce_port_deletion_rules,
                            resources.PORT, events.BEFORE_DELETE)
         registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
-        LOG.debug('Trunk plugin loaded')
+        for driver in self._drivers:
+            LOG.debug('Trunk plugin loaded with driver %s', driver.name)
+        self.check_compatibility()
+
+    def check_compatibility(self):
+        """Fail to load if no compatible driver is found."""
+        if not any([driver.is_loaded for driver in self._drivers]):
+            raise trunk_exc.IncompatibleTrunkPluginConfiguration()
+
+    def register_driver(self, driver):
+        """Register driver with trunk plugin."""
+        if driver.agent_type:
+            self._agent_types.add(driver.agent_type)
+        self._interfaces = self._interfaces | set(driver.interfaces)
+        self._drivers.append(driver)
+
+    @property
+    def supported_interfaces(self):
+        """A set of supported interfaces."""
+        return self._interfaces
+
+    @property
+    def supported_agent_types(self):
+        """A set of supported agent types."""
+        return self._agent_types
 
     def add_segmentation_type(self, segmentation_type, id_validator):
         self._segmentation_types[segmentation_type] = id_validator
