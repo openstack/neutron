@@ -14,6 +14,7 @@
 
 import copy
 import mock
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.common import utils
@@ -30,7 +31,7 @@ class TestDvrFipNs(base.BaseTestCase):
     def setUp(self):
         super(TestDvrFipNs, self).setUp()
         self.conf = mock.Mock()
-        self.conf.state_path = '/tmp'
+        self.conf.state_path = cfg.CONF.state_path
         self.driver = mock.Mock()
         self.driver.DEV_NAME_LEN = 14
         self.net_id = _uuid()

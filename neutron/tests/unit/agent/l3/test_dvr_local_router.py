@@ -15,6 +15,7 @@
 import mock
 import netaddr
 from neutron_lib import constants as l3_constants
+from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import uuidutils
 
@@ -58,7 +59,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('send_arp_for_ha', 1)
-        self.conf.set_override('state_path', '')
+        self.conf.set_override('state_path', cfg.CONF.state_path)
 
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
@@ -600,8 +601,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                                  'dvr', 0)
 
     def test_external_gateway_removed_ext_gw_port_and_fip(self):
-        self.conf.set_override('state_path', '/tmp')
-
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = 'dvr'
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
