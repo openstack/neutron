@@ -32,6 +32,9 @@ from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.callbacks import resources
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources as local_resources
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import topics
@@ -303,6 +306,10 @@ class CommonAgentLoop(service.Service):
                                            device_details['port_id'],
                                            device_details['device'])
                 self.ext_manager.handle_port(self.context, device_details)
+                registry.notify(local_resources.PORT_DEVICE,
+                                events.AFTER_UPDATE, self,
+                                context=self.context,
+                                device_details=device_details)
             else:
                 LOG.info(_LI("Device %s not defined on plugin"), device)
 
@@ -339,6 +346,9 @@ class CommonAgentLoop(service.Service):
             self.ext_manager.delete_port(self.context,
                                          {'device': device,
                                           'port_id': port_id})
+            registry.notify(local_resources.PORT_DEVICE, events.AFTER_DELETE,
+                            self, context=self.context, device=device,
+                            port_id=port_id)
         if self.prevent_arp_spoofing:
             self.mgr.delete_arp_spoofing_protection(devices)
         return resync

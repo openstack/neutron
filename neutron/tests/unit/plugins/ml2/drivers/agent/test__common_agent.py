@@ -20,6 +20,9 @@ from oslo_config import cfg
 import testtools
 
 from neutron.agent.linux import bridge_lib
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
@@ -67,6 +70,36 @@ class TestCommonAgentLoop(base.BaseTestCase):
                                             'foo-binary')
             with mock.patch.object(self.agent, "daemon_loop"):
                 self.agent.start()
+
+    def test_treat_devices_removed_notify(self):
+        handler = mock.Mock()
+        registry.subscribe(handler, resources.PORT_DEVICE, events.AFTER_DELETE)
+        devices = [DEVICE_1]
+        self.agent.treat_devices_removed(devices)
+        handler.assert_called_once_with(mock.ANY, mock.ANY, self.agent,
+                                        context=mock.ANY, device=DEVICE_1,
+                                        port_id=mock.ANY)
+
+    def test_treat_devices_added_updated_notify(self):
+        handler = mock.Mock()
+        registry.subscribe(handler, resources.PORT_DEVICE, events.AFTER_UPDATE)
+        agent = self.agent
+        mock_details = {'device': 'dev123',
+                        'port_id': 'port123',
+                        'network_id': 'net123',
+                        'admin_state_up': True,
+                        'network_type': 'vlan',
+                        'segmentation_id': 100,
+                        'physical_network': 'physnet1',
+                        'device_owner': 'horse'}
+        agent.plugin_rpc = mock.Mock()
+        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.mgr = mock.Mock()
+        agent.mgr.plug_interface.return_value = True
+        agent.treat_devices_added_updated(set(['dev123']))
+        handler.assert_called_once_with(mock.ANY, mock.ANY, self.agent,
+                                        context=mock.ANY,
+                                        device_details=mock_details)
 
     def test_treat_devices_removed_with_existed_device(self):
         agent = self.agent
