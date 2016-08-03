@@ -335,6 +335,10 @@ class TenantQuotaNotFound(e.NotFound):
     message = _("Quota for tenant %(tenant_id)s could not be found.")
 
 
+class TenantIdProjectIdFilterConflict(e.BadRequest):
+    message = _("Both tenant_id and project_id passed as filters.")
+
+
 # Neutron-lib migration shim. This will wrap any exceptions that are moved
 # to that library in a deprecation warning, until they can be updated to
 # import directly from their new location.
