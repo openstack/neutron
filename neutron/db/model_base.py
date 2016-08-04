@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import debtcollector
 from oslo_db.sqlalchemy import models
 from oslo_utils import uuidutils
 import sqlalchemy as sa
@@ -23,15 +24,62 @@ from sqlalchemy import orm
 from neutron.api.v2 import attributes as attr
 
 
-class HasTenant(object):
-    """Tenant mixin, add to subclasses that have a tenant."""
+class HasProject(object):
+    """Project mixin, add to subclasses that have a user."""
 
-    # NOTE(jkoelker) tenant_id is just a free form string ;(
-    tenant_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), index=True)
+    # NOTE(jkoelker) project_id is just a free form string ;(
+    project_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), index=True)
+
+    def __init__(self, *args, **kwargs):
+        # NOTE(dasm): debtcollector requires init in class
+        super(HasProject, self).__init__(*args, **kwargs)
+
+    def get_tenant_id(self):
+        return self.project_id
+
+    def set_tenant_id(self, value):
+        self.project_id = value
+
+    @declarative.declared_attr
+    @debtcollector.moves.moved_property('project_id')
+    def tenant_id(cls):
+        return orm.synonym(
+            'project_id',
+            descriptor=property(cls.get_tenant_id, cls.set_tenant_id))
+
+
+HasTenant = debtcollector.moves.moved_class(HasProject, "HasTenant", __name__)
+
+
+class HasProjectNoIndex(HasProject):
+    """Project mixin, add to subclasses that have a user."""
+
+    # NOTE(jkoelker) project_id is just a free form string ;(
+    project_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN))
+
+
+class HasProjectPrimaryKeyIndex(HasProject):
+    """Project mixin, add to subclasses that have a user."""
+
+    # NOTE(jkoelker) project_id is just a free form string ;(
+    project_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), nullable=False,
+                           primary_key=True, index=True)
+
+
+class HasProjectPrimaryKey(HasProject):
+    """Project mixin, add to subclasses that have a user."""
+
+    # NOTE(jkoelker) project_id is just a free form string ;(
+    project_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), nullable=False,
+                           primary_key=True)
 
 
 class HasId(object):
     """id mixin, add to subclasses that have an id."""
+
+    def __init__(self, *args, **kwargs):
+        # NOTE(dasm): debtcollector requires init in class
+        super(HasId, self).__init__(*args, **kwargs)
 
     id = sa.Column(sa.String(36),
                    primary_key=True,
@@ -40,6 +88,10 @@ class HasId(object):
 
 class HasStatusDescription(object):
     """Status with description mixin."""
+
+    def __init__(self, *args, **kwargs):
+        # NOTE(dasm): debtcollector requires init in class
+        super(HasStatusDescription, self).__init__(*args, **kwargs)
 
     status = sa.Column(sa.String(16), nullable=False)
     status_description = sa.Column(sa.String(attr.DESCRIPTION_MAX_LEN))

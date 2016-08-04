@@ -18,11 +18,10 @@ import sqlalchemy as sa
 from neutron.db import model_base
 
 
-class AutoAllocatedTopology(model_base.BASEV2):
+class AutoAllocatedTopology(model_base.BASEV2,
+                            model_base.HasProjectPrimaryKey):
 
     __tablename__ = 'auto_allocated_topologies'
-
-    tenant_id = sa.Column(sa.String(255), primary_key=True)
 
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id',

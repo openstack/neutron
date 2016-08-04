@@ -41,17 +41,15 @@ LOG = logging.getLogger(__name__)
 
 
 class SecurityGroup(model_base.HasStandardAttributes, model_base.BASEV2,
-                    model_base.HasId, model_base.HasTenant):
+                    model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron security group."""
 
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
 
 
-class DefaultSecurityGroup(model_base.BASEV2):
+class DefaultSecurityGroup(model_base.BASEV2, model_base.HasProjectPrimaryKey):
     __tablename__ = 'default_security_group'
 
-    tenant_id = sa.Column(sa.String(attributes.TENANT_ID_MAX_LEN),
-                          primary_key=True, nullable=False)
     security_group_id = sa.Column(sa.String(36),
                                   sa.ForeignKey("securitygroups.id",
                                                 ondelete="CASCADE"),
@@ -83,7 +81,7 @@ class SecurityGroupPortBinding(model_base.BASEV2):
 
 
 class SecurityGroupRule(model_base.HasStandardAttributes, model_base.BASEV2,
-                        model_base.HasId, model_base.HasTenant):
+                        model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron security group rule."""
 
     security_group_id = sa.Column(sa.String(36),

@@ -38,7 +38,9 @@ class MeteringLabelRule(model_base.BASEV2, model_base.HasId):
     excluded = sa.Column(sa.Boolean, default=False, server_default=sql.false())
 
 
-class MeteringLabel(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
+class MeteringLabel(model_base.BASEV2,
+                    model_base.HasId,
+                    model_base.HasProject):
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
     description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
     rules = orm.relationship(MeteringLabelRule, backref="label",

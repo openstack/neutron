@@ -23,7 +23,7 @@ from neutron.services.trunk import constants
 
 
 class Trunk(model_base.HasStandardAttributes, model_base.BASEV2,
-            model_base.HasId, model_base.HasTenant):
+            model_base.HasId, model_base.HasProject):
 
     admin_state_up = sa.Column(
         sa.Boolean(), nullable=False, server_default=sql.true())

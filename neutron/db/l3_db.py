@@ -89,7 +89,7 @@ class RouterPort(model_base.BASEV2):
 
 
 class Router(model_base.HasStandardAttributes, model_base.BASEV2,
-             model_base.HasId, model_base.HasTenant):
+             model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron router."""
 
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
@@ -109,7 +109,7 @@ class Router(model_base.HasStandardAttributes, model_base.BASEV2,
 
 
 class FloatingIP(model_base.HasStandardAttributes, model_base.BASEV2,
-                 model_base.HasId, model_base.HasTenant):
+                 model_base.HasId, model_base.HasProject):
     """Represents a floating IP address.
 
     This IP address may or may not be allocated to a tenant, and may or

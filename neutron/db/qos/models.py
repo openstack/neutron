@@ -21,7 +21,7 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_models
 
 
-class QosPolicy(model_base.BASEV2, model_base.HasId, model_base.HasTenant):
+class QosPolicy(model_base.BASEV2, model_base.HasId, model_base.HasProject):
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(attrs.NAME_MAX_LEN))
     description = sa.Column(sa.String(attrs.DESCRIPTION_MAX_LEN))
