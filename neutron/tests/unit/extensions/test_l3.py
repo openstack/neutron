@@ -1982,7 +1982,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_floatingip_with_assoc_fails(self):
         self._test_floatingip_with_assoc_fails(
-            'neutron.db.l3_db.L3_NAT_db_mixin._check_and_get_fip_assoc')
+            'neutron.db.l3_db.L3_NAT_dbonly_mixin._check_and_get_fip_assoc')
 
     def test_create_floatingip_with_assoc(
         self, expected_status=l3_constants.FLOATINGIP_STATUS_ACTIVE):

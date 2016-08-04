@@ -1565,12 +1565,18 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
 
     def test_update_distributed_port_binding_on_concurrent_port_delete(self):
         plugin = manager.NeutronManager.get_plugin()
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            p_const.L3_ROUTER_NAT)
         with self.port() as port:
             port = {
                 'id': port['port']['id'],
                 portbindings.HOST_ID: 'foo_host',
             }
-            with mock.patch.object(plugin, 'get_port', new=plugin.delete_port):
+            # NOTE(rtheis): Mock L3 service prevent_l3_port_deletion() to
+            # prevent recursive loop introduced by the plugin get_port mock.
+            with mock.patch.object(plugin, 'get_port',
+                                   new=plugin.delete_port), \
+                mock.patch.object(l3plugin, 'prevent_l3_port_deletion'):
                 res = plugin.update_distributed_port_binding(
                     self.context, 'foo_port_id', {'port': port})
         self.assertIsNone(res)

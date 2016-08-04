@@ -72,7 +72,6 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         super(L3RouterPlugin, self).__init__()
         if 'dvr' in self.supported_extension_aliases:
             l3_dvrscheduler_db.subscribe()
-        l3_db.subscribe()
         self.agent_notifiers.update(
             {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
 

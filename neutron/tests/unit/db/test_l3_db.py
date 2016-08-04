@@ -200,7 +200,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
 
     @mock.patch.object(l3_db, '_notify_subnetpool_address_scope_update')
     def test_subscribe_address_scope_of_subnetpool(self, notify):
-        l3_db.subscribe()
+        l3_db.L3RpcNotifierMixin._subscribe_callbacks()
         registry.notify(resources.SUBNETPOOL_ADDRESS_SCOPE,
                         events.AFTER_UPDATE, mock.ANY, context=mock.ANY,
                         subnetpool_id='fake_id')
