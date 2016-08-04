@@ -22,6 +22,7 @@ from neutron.extensions import portbindings
 from neutron import manager
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import exceptions as trunk_exc
+from neutron.services.trunk import utils
 
 
 # This layer is introduced for keeping business logic and
@@ -56,6 +57,7 @@ class TrunkPortValidator(object):
 
     def __init__(self, port_id):
         self.port_id = port_id
+        self._port = None
 
     def validate(self, context):
         """Validate that the port can be used in a trunk."""
@@ -74,7 +76,7 @@ class TrunkPortValidator(object):
         if trunks:
             raise trunk_exc.ParentPortInUse(port_id=self.port_id)
 
-        if self.is_bound(context):
+        if not self.can_be_trunked(context):
             raise trunk_exc.ParentPortInUse(port_id=self.port_id)
 
         return self.port_id
@@ -83,10 +85,37 @@ class TrunkPortValidator(object):
         """Return true if the port is bound, false otherwise."""
         # Validate that the given port_id does not have a port binding.
         core_plugin = manager.NeutronManager.get_plugin()
-        port = core_plugin.get_port(context, self.port_id)
-        device_owner = port.get('device_owner', '')
-        return port.get(portbindings.HOST_ID) or \
-            device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX)
+        self._port = core_plugin.get_port(context, self.port_id)
+        device_owner = self._port.get('device_owner', '')
+        return (
+            self._port.get(portbindings.HOST_ID) or
+            device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX))
+
+    def can_be_trunked(self, context):
+        """"Return true if a port can be trunked."""
+        if not self.is_bound(context):
+            # An unbound port can be trunked, always.
+            return True
+
+        trunk_plugin = manager.NeutronManager.get_service_plugins()['trunk']
+        vif_type = self._port.get(portbindings.VIF_TYPE)
+        binding_host = self._port.get(portbindings.HOST_ID)
+
+        # Determine the driver that will be in charge of the trunk: this
+        # can be determined based on the vif type, whether or not the
+        # driver is agent-based, and whether the host is running the agent
+        # associated to the driver itself.
+        drivers = [
+            driver for driver in trunk_plugin.registered_drivers
+            if utils.is_driver_compatible(
+                context, driver, vif_type, binding_host)
+        ]
+        if len(drivers) > 1:
+            raise trunk_exc.TrunkPluginDriverConflict()
+        elif len(drivers) == 1:
+            return drivers[0].can_trunk_bound_port
+        else:
+            return False
 
 
 class SubPortsValidator(object):

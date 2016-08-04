@@ -53,6 +53,14 @@ class DriverBase(object):
         required.
         """
 
+    def is_interface_compatible(self, interface):
+        """True if the driver is compatible with the interface."""
+        return interface in self.interfaces
+
+    def is_agent_compatible(self, agent_type):
+        """True if the driver is compatible with the agent type."""
+        return agent_type == self.agent_type
+
     def register(self, resource, event, trigger, **kwargs):
         """Register the trunk driver.
 
