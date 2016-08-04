@@ -13,12 +13,12 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import validators
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 
 from neutron._i18n import _
 from neutron.extensions import portbindings
-from neutron.extensions import trunk
 from neutron import manager
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import exceptions as trunk_exc
@@ -102,7 +102,7 @@ class SubPortsValidator(object):
         # Perform basic validation on subports, in case subports
         # are not automatically screened by the API layer.
         if basic_validation:
-            msg = trunk.validate_subports(self.subports)
+            msg = validators.validate_subports(self.subports)
             if msg:
                 raise n_exc.InvalidInput(error_message=msg)
         if trunk_validation:
