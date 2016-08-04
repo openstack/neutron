@@ -253,6 +253,10 @@ def get_random_prefixlen(version=4):
     return random.randint(0, maxlen)
 
 
+def get_random_port():
+    return random.randint(n_const.PORT_RANGE_MIN, n_const.PORT_RANGE_MAX)
+
+
 def get_random_ip_version():
     return random.choice(n_const.IP_ALLOWED_VERSIONS)
 
@@ -292,6 +296,18 @@ def get_random_ip_address(version=4):
         ip = ipv6_utils.get_ipv6_addr_by_EUI64('2001:db8::/64',
                                                get_random_mac())
         return ip
+
+
+def get_random_flow_direction():
+    return random.choice(n_const.VALID_DIRECTIONS)
+
+
+def get_random_ether_type():
+    return random.choice(n_const.VALID_ETHERTYPES)
+
+
+def get_random_ip_protocol():
+    return random.choice(list(constants.IP_PROTOCOL_MAP.keys()))
 
 
 def is_bsd():

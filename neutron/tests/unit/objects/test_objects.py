@@ -26,6 +26,7 @@ from neutron.tests import tools
 # NOTE: The hashes in this list should only be changed if they come with a
 # corresponding version bump in the affected objects.
 object_data = {
+    '_DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'AddressScope': '1.0-25560799db384acfe1549634959a82b4',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
@@ -38,6 +39,8 @@ object_data = {
     'QosRuleType': '1.1-8a53fef4c6a43839d477a85b787d22ce',
     'QosPolicy': '1.1-7c5659e1c1f64395223592d3d3293e22',
     'Route': '1.0-a9883a63b416126f9e345523ec09483b',
+    'SecurityGroup': '1.0-e26b90c409b31fd2e3c6fcec402ac0b9',
+    'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',
     'Subnet': '1.0-b71e720f45fff2a39759940e010be7d1',
     'SubnetPool': '1.0-e8300bfbc4762cc88a7f6205b52da2f8',
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',
