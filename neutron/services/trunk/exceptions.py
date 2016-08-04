@@ -57,3 +57,8 @@ class TrunkInUse(n_exc.InUse):
 
 class TrunkDisabled(n_exc.Conflict):
     message = _("Trunk %(trunk_id)s is currently disabled.")
+
+
+class TrunkInErrorState(n_exc.Conflict):
+    message = _("Trunk %(trunk_id)s is in error state. Attempt "
+                "to resolve the error condition before proceeding.")
