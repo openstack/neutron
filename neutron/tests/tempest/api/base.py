@@ -472,7 +472,7 @@ class BaseAdminNetworkTest(BaseNetworkTest):
 def _require_sorting(f):
     @functools.wraps(f)
     def inner(self, *args, **kwargs):
-        if not CONF.neutron_plugin_options.validate_sorting:
+        if not test.is_extension_enabled("sorting", "network"):
             self.skipTest('Sorting feature is required')
         return f(self, *args, **kwargs)
     return inner
@@ -481,7 +481,7 @@ def _require_sorting(f):
 def _require_pagination(f):
     @functools.wraps(f)
     def inner(self, *args, **kwargs):
-        if not CONF.neutron_plugin_options.validate_pagination:
+        if not test.is_extension_enabled("pagination", "network"):
             self.skipTest('Pagination feature is required')
         return f(self, *args, **kwargs)
     return inner

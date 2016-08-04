@@ -791,3 +791,12 @@ class NetworkClientJSON(service_client.RestClient):
         self.expected_success(201, resp.status)
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
+
+    def list_extensions(self, **filters):
+        uri = self.get_uri("extensions")
+        if filters:
+            uri = '?'.join([uri, urlparse.urlencode(filters)])
+        resp, body = self.get(uri)
+        body = {'extensions': self.deserialize_list(body)}
+        self.expected_success(200, resp.status)
+        return service_client.ResponseBody(resp, body)
