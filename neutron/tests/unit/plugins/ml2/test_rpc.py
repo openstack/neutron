@@ -59,7 +59,8 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             'host': host
         }
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin'
-                        '._device_to_port_id'):
+                        '._device_to_port_id'),\
+            mock.patch.object(self.callbacks, 'notify_ha_port_status'):
             with mock.patch('neutron.db.provisioning_blocks.'
                             'provisioning_complete') as pc:
                 self.callbacks.update_device_up(mock.Mock(), **kwargs)
@@ -212,6 +213,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 
     def _test_update_device_not_bound_to_host(self, func):
         self.plugin.port_bound_to_host.return_value = False
+        self.callbacks.notify_ha_port_status = mock.Mock()
         self.plugin._device_to_port_id.return_value = 'fake_port_id'
         res = func(mock.Mock(), device='fake_device', host='fake_host')
         self.plugin.port_bound_to_host.assert_called_once_with(mock.ANY,
@@ -234,6 +236,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 
     def test_update_device_down_call_update_port_status(self):
         self.plugin.update_port_status.return_value = False
+        self.callbacks.notify_ha_port_status = mock.Mock()
         self.plugin._device_to_port_id.return_value = 'fake_port_id'
         self.assertEqual(
             {'device': 'fake_device', 'exists': False},

@@ -25,6 +25,7 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import resources
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
@@ -182,16 +183,18 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             LOG.debug("Device %(device)s not bound to the"
                       " agent host %(host)s",
                       {'device': device, 'host': host})
-            return {'device': device,
-                    'exists': port_exists}
-
-        try:
-            port_exists = bool(plugin.update_port_status(
-                rpc_context, port_id, n_const.PORT_STATUS_DOWN, host))
-        except exc.StaleDataError:
-            port_exists = False
-            LOG.debug("delete_port and update_device_down are being executed "
-                      "concurrently. Ignoring StaleDataError.")
+        else:
+            try:
+                port_exists = bool(plugin.update_port_status(
+                    rpc_context, port_id, n_const.PORT_STATUS_DOWN, host))
+            except exc.StaleDataError:
+                port_exists = False
+                LOG.debug("delete_port and update_device_down are being "
+                          "executed concurrently. Ignoring StaleDataError.")
+                return {'device': device,
+                        'exists': port_exists}
+        self.notify_ha_port_status(port_id, rpc_context,
+                                   n_const.PORT_STATUS_DOWN, host)
 
         return {'device': device,
                 'exists': port_exists}
@@ -217,11 +220,19 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 port = plugin._get_port(rpc_context, port_id)
             except exceptions.PortNotFound:
                 LOG.debug("Port %s not found, will not notify nova.", port_id)
+                return
             else:
                 if port.device_owner.startswith(
                         n_const.DEVICE_OWNER_COMPUTE_PREFIX):
                     plugin.nova_notifier.notify_port_active_direct(port)
-            return
+                    return
+        else:
+            self.update_port_status_to_active(port, rpc_context, port_id, host)
+        self.notify_ha_port_status(port_id, rpc_context,
+                                   n_const.PORT_STATUS_ACTIVE, host, port=port)
+
+    def update_port_status_to_active(self, port, rpc_context, port_id, host):
+        plugin = manager.NeutronManager.get_plugin()
         if port and port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
             # NOTE(kevinbenton): we have to special case DVR ports because of
             # the special multi-binding status update logic they have that
@@ -240,6 +251,29 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             provisioning_blocks.provisioning_complete(
                 rpc_context, port['id'], resources.PORT,
                 provisioning_blocks.L2_AGENT_ENTITY)
+
+    def notify_ha_port_status(self, port_id, rpc_context,
+                              status, host, port=None):
+        plugin = manager.NeutronManager.get_plugin()
+        l2pop_driver = plugin.mechanism_manager.mech_drivers.get(
+                'l2population')
+        if not l2pop_driver:
+            return
+        if not port:
+            port = ml2_db.get_port(rpc_context.session, port_id)
+            if not port:
+                return
+        is_ha_port = l3_hamode_db.is_ha_router_port(port['device_owner'],
+                                                    port['device_id'])
+        if is_ha_port:
+            port_context = plugin.get_bound_port_context(
+                    rpc_context, port_id)
+            port_context.current['status'] = status
+            port_context.current[portbindings.HOST_ID] = host
+            if status == n_const.PORT_STATUS_ACTIVE:
+                l2pop_driver.obj.update_port_up(port_context)
+            else:
+                l2pop_driver.obj.update_port_down(port_context)
 
     def update_device_list(self, rpc_context, **kwargs):
         devices_up = []
