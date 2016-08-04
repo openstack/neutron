@@ -53,9 +53,9 @@ core_opts = [
                       "removed in the Ocata release.")),
     cfg.BoolOpt('allow_bulk', default=True,
                 help=_("Allow the usage of the bulk API")),
-    cfg.BoolOpt('allow_pagination', default=False,
+    cfg.BoolOpt('allow_pagination', default=True,
                 help=_("Allow the usage of the pagination")),
-    cfg.BoolOpt('allow_sorting', default=False,
+    cfg.BoolOpt('allow_sorting', default=True,
                 help=_("Allow the usage of the sorting")),
     cfg.StrOpt('pagination_max_limit', default="-1",
                help=_("The maximum number of items returned in a single "
