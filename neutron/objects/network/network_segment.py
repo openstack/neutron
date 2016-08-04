@@ -35,4 +35,7 @@ class NetworkSegment(base.NeutronDbObject):
         'segment_index': obj_fields.IntegerField(default=0)
     }
 
-    foreign_keys = {'Network': {'network_id': 'id'}}
+    foreign_keys = {
+        'Network': {'network_id': 'id'},
+        'PortBindingLevel': {'id': 'segment_id'},
+    }

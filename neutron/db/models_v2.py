@@ -110,12 +110,13 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
     )
     api_collections = [attr.PORTS]
 
-    def __init__(self, id=None, tenant_id=None, name=None, network_id=None,
-                 mac_address=None, admin_state_up=None, status=None,
-                 device_id=None, device_owner=None, fixed_ips=None, **kwargs):
+    def __init__(self, id=None, tenant_id=None, project_id=None, name=None,
+                 network_id=None, mac_address=None, admin_state_up=None,
+                 status=None, device_id=None, device_owner=None,
+                 fixed_ips=None, **kwargs):
         super(Port, self).__init__(**kwargs)
         self.id = id
-        self.tenant_id = tenant_id
+        self.project_id = project_id or tenant_id
         self.name = name
         self.network_id = network_id
         self.mac_address = mac_address

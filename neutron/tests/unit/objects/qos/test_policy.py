@@ -385,7 +385,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj = self._create_test_policy()
         obj.attach_port(self._port['id'])
         ids = self._test_class.get_bound_tenant_ids(self.context, obj['id'])
-        self.assertEqual(ids.pop(), self._port['tenant_id'])
+        self.assertEqual(ids.pop(), self._port.project_id)
         self.assertEqual(len(ids), 0)
 
         obj.detach_port(self._port['id'])

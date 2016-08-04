@@ -11,12 +11,15 @@
 #    under the License.
 
 import mock
+from neutron_lib import exceptions as n_exc
 
 from neutron import context
+from neutron.db import models_v2
 from neutron import manager
 from neutron.objects import base
 from neutron.objects.db import api
 from neutron.tests import base as test_base
+from neutron.tests.unit import testlib_api
 
 
 PLUGIN_NAME = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
@@ -47,3 +50,72 @@ class GetObjectsTestCase(test_base.BaseTestCase):
             filters={},
             limit=limit,
             marker_obj=get_object.return_value)
+
+
+class CRUDScenarioTestCase(testlib_api.SqlTestCase):
+
+    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+    def setUp(self):
+        super(CRUDScenarioTestCase, self).setUp()
+        # TODO(ihrachys): revisit plugin setup once we decouple
+        # neutron.objects.db.api from core plugin instance
+        self.setup_coreplugin(self.CORE_PLUGIN)
+        # NOTE(ihrachys): nothing specific to networks in this test case, but
+        # we needed to pick some real model, so we picked the network. Any
+        # other model would work as well for our needs here.
+        self.model = models_v2.Network
+        self.ctxt = context.get_admin_context()
+
+    def test_get_object_create_update_delete(self):
+        obj = api.create_object(self.ctxt, self.model, {'name': 'foo'})
+
+        new_obj = api.get_object(self.ctxt, self.model, id=obj.id)
+        self.assertEqual(obj, new_obj)
+
+        obj = new_obj
+        api.update_object(self.ctxt, self.model, {'name': 'bar'}, id=obj.id)
+
+        new_obj = api.get_object(self.ctxt, self.model, id=obj.id)
+        self.assertEqual(obj, new_obj)
+
+        obj = new_obj
+        api.delete_object(self.ctxt, self.model, id=obj.id)
+
+        new_obj = api.get_object(self.ctxt, self.model, id=obj.id)
+        self.assertIsNone(new_obj)
+
+        # delete_object raises an exception on missing object
+        self.assertRaises(
+            n_exc.ObjectNotFound,
+            api.delete_object, self.ctxt, self.model, id=obj.id)
+
+        # but delete_objects does not not
+        api.delete_objects(self.ctxt, self.model, id=obj.id)
+
+    def test_delete_objects_removes_all_matching_objects(self):
+        # create some objects with identical description
+        for i in range(10):
+            api.create_object(
+                self.ctxt, self.model,
+                {'name': 'foo%d' % i, 'description': 'bar'})
+        # create some more objects with a different description
+        descriptions = set()
+        for i in range(10, 20):
+            desc = 'bar%d' % i
+            descriptions.add(desc)
+            api.create_object(
+                self.ctxt, self.model,
+                {'name': 'foo%d' % i, 'description': desc})
+        # make sure that all objects are in the database
+        self.assertEqual(20, api.count(self.ctxt, self.model))
+        # now delete just those with the 'bar' description
+        api.delete_objects(self.ctxt, self.model, description='bar')
+
+        # check that half of objects are gone, and remaining have expected
+        # descriptions
+        objs = api.get_objects(self.ctxt, self.model)
+        self.assertEqual(10, len(objs))
+        self.assertEqual(
+            descriptions,
+            {obj.description for obj in objs})

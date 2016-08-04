@@ -10,6 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# TODO(ihrachys): cover the module with functional tests targeting supported
+# backends
+
 from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
@@ -83,3 +86,15 @@ def delete_object(context, model, **kwargs):
     with context.session.begin(subtransactions=True):
         db_obj = _safe_get_object(context, model, **kwargs)
         context.session.delete(db_obj)
+
+
+# TODO(ihrachys): expose through objects API
+def delete_objects(context, model, **kwargs):
+    '''Delete matching objects, if any.
+
+    This function does not raise exceptions if nothing matches.
+    '''
+    with context.session.begin(subtransactions=True):
+        db_objs = get_objects(context, model, **kwargs)
+        for db_obj in db_objs:
+            context.session.delete(db_obj)
