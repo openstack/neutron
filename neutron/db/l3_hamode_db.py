@@ -31,6 +31,7 @@ from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
+from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_attrs_db
@@ -759,3 +760,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     n_exc.PortNotFound):
                 # Take concurrently deleted interfaces in to account
                 pass
+
+
+def is_ha_router_port(device_owner, router_id):
+    session = db_api.get_session()
+    if device_owner in [constants.DEVICE_OWNER_ROUTER_INTF,
+                        constants.DEVICE_OWNER_ROUTER_SNAT]:
+        query = session.query(l3_attrs_db.RouterExtraAttributes)
+        query = query.filter_by(ha=True)
+        query = query.filter(l3_attrs_db.RouterExtraAttributes.router_id ==
+                             router_id)
+        return bool(query.limit(1).count())
+    else:
+        return False

@@ -17,12 +17,18 @@ import mock
 from oslo_serialization import jsonutils
 import testtools
 
+from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import topics
 from neutron import context
+from neutron.db import agents_db
+from neutron.db import common_db_mixin
+from neutron.db import l3_agentschedulers_db
+from neutron.db import l3_hamode_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
+from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
@@ -31,6 +37,7 @@ from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc
+from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -40,10 +47,18 @@ HOST_2 = HOST + '_2'
 HOST_3 = HOST + '_3'
 HOST_4 = HOST + '_4'
 HOST_5 = HOST + '_5'
+TEST_ROUTER_ID = 'router_id'
 
 
 NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+
+
+class FakeL3PluginWithAgents(common_db_mixin.CommonDbMixin,
+                             l3_hamode_db.L3_HA_NAT_db_mixin,
+                             l3_agentschedulers_db.L3AgentSchedulerDbMixin,
+                             agents_db.AgentDbMixin):
+    pass
 
 
 class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
@@ -100,6 +115,18 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         uptime = ('neutron.plugins.ml2.drivers.l2pop.db.get_agent_uptime')
         uptime_patch = mock.patch(uptime, return_value=190)
         uptime_patch.start()
+
+    def _setup_l3(self):
+        notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
+                                    '_notify_ha_interfaces_updated')
+        self.notif_m = notif_p.start()
+        self.plugin = FakeL3PluginWithAgents()
+        self._register_ml2_agents()
+        self._register_l3_agents()
+
+    def _register_l3_agents(self):
+        self.agent1 = helpers.register_l3_agent(host=HOST)
+        self.agent2 = helpers.register_l3_agent(host=HOST_2)
 
     def _register_ml2_agents(self):
         helpers.register_ovs_agent(host=HOST, tunneling_ip='20.0.0.1')
@@ -166,6 +193,216 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         payload = {'netuuid': {'ports': {'1': [l2pop_rpc.PortInfo(*entry)]}}}
         result = jsonutils.loads(jsonutils.dumps(payload))
         self.assertEqual(entry, result['netuuid']['ports']['1'][0])
+
+    def _create_router(self, ha=True, tenant_id='tenant1',
+                       distributed=None, ctx=None):
+        if ctx is None:
+            ctx = self.adminContext
+        ctx.tenant_id = tenant_id
+        router = {'name': TEST_ROUTER_ID, 'admin_state_up': True,
+                  'tenant_id': ctx.tenant_id}
+        if ha is not None:
+            router['ha'] = ha
+        if distributed is not None:
+            router['distributed'] = distributed
+        return self.plugin.create_router(ctx, {'router': router})
+
+    def _bind_router(self, router_id):
+        with self.adminContext.session.begin(subtransactions=True):
+            scheduler = l3_agent_scheduler.ChanceScheduler()
+            filters = {'agent_type': [constants.AGENT_TYPE_L3]}
+            agents_db = self.plugin.get_agents_db(self.adminContext,
+                                                  filters=filters)
+            scheduler._bind_ha_router_to_agents(
+                self.plugin,
+                self.adminContext,
+                router_id,
+                agents_db)
+        self._bind_ha_network_ports(router_id)
+
+    def _bind_ha_network_ports(self, router_id):
+        port_bindings = self.plugin.get_ha_router_port_bindings(
+            self.adminContext, [router_id])
+        plugin = manager.NeutronManager.get_plugin()
+
+        for port_binding in port_bindings:
+            filters = {'id': [port_binding.port_id]}
+            port = plugin.get_ports(self.adminContext, filters=filters)[0]
+            if port_binding.l3_agent_id == self.agent1['id']:
+                port[portbindings.HOST_ID] = self.agent1['host']
+            else:
+                port[portbindings.HOST_ID] = self.agent2['host']
+            plugin.update_port(self.adminContext, port['id'],
+                               {attributes.PORT: port})
+
+    def _get_first_interface(self, net_id, router_id):
+        plugin = manager.NeutronManager.get_plugin()
+        device_filter = {'device_id': [router_id],
+                         'device_owner':
+                         [constants.DEVICE_OWNER_ROUTER_INTF]}
+        return plugin.get_ports(self.adminContext, filters=device_filter)[0]
+
+    def _add_router_interface(self, subnet, router, host):
+        interface_info = {'subnet_id': subnet['id']}
+        self.plugin.add_router_interface(self.adminContext,
+                                         router['id'], interface_info)
+        self.plugin.update_routers_states(
+            self.adminContext,
+            {router['id']: constants.HA_ROUTER_STATE_ACTIVE}, host)
+
+        port = self._get_first_interface(subnet['network_id'], router['id'])
+
+        self.mock_cast.reset_mock()
+        self.mock_fanout.reset_mock()
+        self.callbacks.update_device_up(self.adminContext, agent_id=host,
+                                        device=port['id'], host=host)
+        return port
+
+    def _create_ha_router(self):
+        self._setup_l3()
+        router = self._create_router()
+        self._bind_router(router['id'])
+        return router
+
+    def _verify_remove_fdb(self, expected, agent_id, device, host=None):
+        self.mock_fanout.reset_mock()
+        self.callbacks.update_device_down(self.adminContext, agent_id=host,
+                                          device=device, host=host)
+        self.mock_fanout.assert_called_with(
+            mock.ANY, 'remove_fdb_entries', expected)
+
+    def test_other_agents_get_flood_entries_for_ha_agents(self):
+        # First HA router port is added on HOST and HOST2, then network port
+        # is added on HOST4.
+        # HOST4 should get flood entries for HOST1 and HOST2
+        router = self._create_ha_router()
+        service_plugins = manager.NeutronManager.get_service_plugins()
+        service_plugins[service_constants.L3_ROUTER_NAT] = self.plugin
+        with self.subnet(network=self._network, enable_dhcp=False) as snet, \
+            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
+                       return_value=service_plugins):
+            subnet = snet['subnet']
+            port = self._add_router_interface(subnet, router, HOST)
+
+            host_arg = {portbindings.HOST_ID: HOST_4, 'admin_state_up': True}
+            with self.port(subnet=snet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+                device1 = 'tap' + p1['id']
+
+                self.mock_cast.reset_mock()
+                self.mock_fanout.reset_mock()
+                self.callbacks.update_device_up(
+                    self.adminContext, agent_id=HOST_4, device=device1)
+
+                cast_expected = {
+                    port['network_id']: {
+                        'ports': {'20.0.0.1': [constants.FLOODING_ENTRY],
+                                  '20.0.0.2': [constants.FLOODING_ENTRY]},
+                        'network_type': 'vxlan', 'segment_id': 1}}
+                self.assertEqual(1, self.mock_cast.call_count)
+                self.mock_cast.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', cast_expected, HOST_4)
+
+    def test_delete_ha_port(self):
+        # First network port is added on HOST, and then HA router port
+        # is added on HOST and HOST2.
+        # Remove_fdb should carry flood entry of only HOST2 and not HOST
+        router = self._create_ha_router()
+
+        service_plugins = manager.NeutronManager.get_service_plugins()
+        service_plugins[service_constants.L3_ROUTER_NAT] = self.plugin
+        with self.subnet(network=self._network, enable_dhcp=False) as snet, \
+            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
+                       return_value=service_plugins):
+            host_arg = {portbindings.HOST_ID: HOST, 'admin_state_up': True}
+            with self.port(subnet=snet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+                device1 = 'tap' + p1['id']
+                self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST, device=device1)
+
+                subnet = snet['subnet']
+                port = self._add_router_interface(subnet, router, HOST)
+
+                expected = {port['network_id']:
+                    {'ports': {'20.0.0.2': [constants.FLOODING_ENTRY]},
+                     'network_type': 'vxlan', 'segment_id': 1}}
+
+                self.mock_fanout.reset_mock()
+                interface_info = {'subnet_id': subnet['id']}
+                self.plugin.remove_router_interface(self.adminContext,
+                                         router['id'], interface_info)
+                self.mock_fanout.assert_called_with(
+                    mock.ANY, 'remove_fdb_entries', expected)
+
+    def test_ha_agents_get_other_fdb(self):
+        # First network port is added on HOST4, then HA router port is
+        # added on HOST and HOST2.
+        # Both HA agents should create tunnels to HOST4 and among themselves.
+        # Both HA agents should be notified to other agents.
+        router = self._create_ha_router()
+
+        service_plugins = manager.NeutronManager.get_service_plugins()
+        service_plugins[service_constants.L3_ROUTER_NAT] = self.plugin
+        with self.subnet(network=self._network, enable_dhcp=False) as snet, \
+            mock.patch('neutron.manager.NeutronManager.get_service_plugins',
+                       return_value=service_plugins):
+            host_arg = {portbindings.HOST_ID: HOST_4, 'admin_state_up': True}
+            with self.port(subnet=snet,
+                           device_owner=DEVICE_OWNER_COMPUTE,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port1:
+                p1 = port1['port']
+                device1 = 'tap' + p1['id']
+                self.callbacks.update_device_up(
+                    self.adminContext, agent_id=HOST_4, device=device1)
+                p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
+
+                subnet = snet['subnet']
+                port = self._add_router_interface(subnet, router, HOST)
+                fanout_expected = {port['network_id']: {
+                    'ports': {'20.0.0.1': [constants.FLOODING_ENTRY]},
+                    'network_type': 'vxlan', 'segment_id': 1}}
+
+                cast_expected_host = {port['network_id']: {
+                    'ports': {
+                        '20.0.0.4': [constants.FLOODING_ENTRY,
+                                     l2pop_rpc.PortInfo(p1['mac_address'],
+                                                        p1_ips[0])],
+                        '20.0.0.2': [constants.FLOODING_ENTRY]},
+                    'network_type': 'vxlan', 'segment_id': 1}}
+                self.mock_cast.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', cast_expected_host, HOST)
+                self.mock_fanout.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', fanout_expected)
+
+                self.mock_cast.reset_mock()
+                self.mock_fanout.reset_mock()
+
+                self.callbacks.update_device_up(
+                    self.adminContext, agent_id=HOST_2,
+                    device=port['id'], host=HOST_2)
+
+                cast_expected_host2 = {port['network_id']: {
+                    'ports': {
+                        '20.0.0.4': [constants.FLOODING_ENTRY,
+                                     l2pop_rpc.PortInfo(p1['mac_address'],
+                                                        p1_ips[0])],
+                        '20.0.0.1': [constants.FLOODING_ENTRY]},
+                    'network_type': 'vxlan', 'segment_id': 1}}
+                fanout_expected = {port['network_id']: {
+                    'ports': {'20.0.0.2': [constants.FLOODING_ENTRY]},
+                    'network_type': 'vxlan', 'segment_id': 1}}
+                self.mock_cast.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', cast_expected_host2, HOST_2)
+                self.mock_fanout.assert_called_with(
+                    mock.ANY, 'add_fdb_entries', fanout_expected)
 
     def test_fdb_add_called(self):
         self._register_ml2_agents()
@@ -839,12 +1076,15 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
         l2pop_mech.L2PopulationAgentNotify = mock.Mock()
         l2pop_mech.rpc_ctx = mock.Mock()
+        port = {'device_owner': ''}
+        context = mock.Mock()
+        context.current = port
         with mock.patch.object(l2pop_mech,
                                '_get_agent_fdb',
                                return_value=None) as upd_port_down,\
                 mock.patch.object(l2pop_mech.L2PopulationAgentNotify,
                                   'remove_fdb_entries'):
-            l2pop_mech.delete_port_postcommit(mock.Mock())
+            l2pop_mech.delete_port_postcommit(context)
             self.assertTrue(upd_port_down.called)
 
     def test_delete_unbound_port(self):
@@ -916,9 +1156,11 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
 
         with mock.patch.object(l2pop_db, 'get_agent_ip',
                                side_effect=agent_ip_side_effect),\
-                mock.patch.object(l2pop_db, 'get_nondvr_active_network_ports',
+                mock.patch.object(l2pop_db,
+                                  'get_nondistributed_active_network_ports',
                                   return_value=fdb_network_ports),\
-                mock.patch.object(l2pop_db, 'get_dvr_active_network_ports',
+                mock.patch.object(l2pop_db,
+                                  'get_distributed_active_network_ports',
                                   return_value=tunnel_network_ports):
             session = mock.Mock()
             agent = mock.Mock()
