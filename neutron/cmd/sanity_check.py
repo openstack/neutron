@@ -200,7 +200,7 @@ def check_ovs_conntrack():
                       'failed. OVS/CT firewall will not work. A newer '
                       'version of OVS (2.5+) and linux kernel (4.3+) are '
                       'required. See '
-                      'https://github.com/openvswitch/ovs/blob/master/FAQ.md'
+                      'https://github.com/openvswitch/ovs/blob/master/FAQ.md '
                       'for more information.'))
     return result
 
