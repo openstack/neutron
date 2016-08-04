@@ -26,7 +26,6 @@ from oslo_utils import timeutils
 from sqlalchemy import orm
 import testscenarios
 
-from neutron.common import constants as n_const
 from neutron import context as n_context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as db_v2
@@ -286,18 +285,18 @@ class L3SchedulerBaseMixin(object):
 
     def _register_l3_agents(self, plugin=None):
         self.agent1 = helpers.register_l3_agent(
-            'host_1', n_const.L3_AGENT_MODE_LEGACY)
+            'host_1', constants.L3_AGENT_MODE_LEGACY)
         self.agent_id1 = self.agent1.id
         self.agent2 = helpers.register_l3_agent(
-            'host_2', n_const.L3_AGENT_MODE_LEGACY)
+            'host_2', constants.L3_AGENT_MODE_LEGACY)
         self.agent_id2 = self.agent2.id
 
     def _register_l3_dvr_agents(self):
         self.l3_dvr_agent = helpers.register_l3_agent(
-            HOST_DVR, n_const.L3_AGENT_MODE_DVR)
+            HOST_DVR, constants.L3_AGENT_MODE_DVR)
         self.l3_dvr_agent_id = self.l3_dvr_agent.id
         self.l3_dvr_snat_agent = helpers.register_l3_agent(
-            HOST_DVR_SNAT, n_const.L3_AGENT_MODE_DVR_SNAT)
+            HOST_DVR_SNAT, constants.L3_AGENT_MODE_DVR_SNAT)
         self.l3_dvr_snat_id = self.l3_dvr_snat_agent.id
 
     def _set_l3_agent_admin_state(self, context, agent_id, state=True):
@@ -1676,7 +1675,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
 
     def test_auto_schedule_ha_router_when_incompatible_agent_exist(self):
         handle_internal_only_routers_agent = helpers.register_l3_agent(
-            'host_3', n_const.L3_AGENT_MODE_LEGACY, internal_only=False)
+            'host_3', constants.L3_AGENT_MODE_LEGACY, internal_only=False)
         router = self._create_ha_router()
 
         self.plugin.auto_schedule_routers(
@@ -1690,7 +1689,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
 
     def test_auto_schedule_ha_router_when_dvr_agent_exist(self):
         dvr_agent = helpers.register_l3_agent(
-            HOST_DVR, n_const.L3_AGENT_MODE_DVR)
+            HOST_DVR, constants.L3_AGENT_MODE_DVR)
         router = self._create_ha_router()
 
         self.plugin.auto_schedule_routers(self.adminContext, dvr_agent.host,
