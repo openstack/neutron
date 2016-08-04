@@ -532,6 +532,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 msg = _('Cannot change HA attribute of active routers. Please '
                         'set router admin_state_up to False prior to upgrade.')
                 raise n_exc.BadRequest(resource='router', msg=msg)
+
+            if requested_ha_state:
+                # This will throw HANotEnoughAvailableAgents if there aren't
+                # enough l3 agents to handle this router.
+                self.get_number_of_agents_for_scheduling(context)
+
             # set status to ALLOCATING so this router is no longer
             # provided to agents while its interfaces are being re-configured.
             # Keep in mind that if we want conversion to be hitless, this
