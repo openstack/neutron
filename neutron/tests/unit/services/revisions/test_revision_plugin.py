@@ -16,6 +16,7 @@
 import netaddr
 
 from neutron import context as nctx
+from neutron.db import models_v2
 from neutron import manager
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -33,6 +34,20 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.l3p = (manager.NeutronManager.
                     get_service_plugins()['L3_ROUTER_NAT'])
         self.ctx = nctx.get_admin_context()
+
+    def test_handle_expired_object(self):
+        rp = manager.NeutronManager.get_service_plugins()['revision_plugin']
+        with self.port():
+            with self.ctx.session.begin():
+                ipal_obj = self.ctx.session.query(models_v2.IPAllocation).one()
+                # load port into our session
+                port_obj = self.ctx.session.query(models_v2.Port).one()
+                # simulate concurrent delete in another session
+                nctx.get_admin_context().session.query(models_v2.Port).delete()
+                # expire the port so the revision bumping code will trigger a
+                # lookup on its attributes and encounter an ObjectDeletedError
+                self.ctx.session.expire(port_obj)
+                rp._bump_related_revisions(self.ctx.session, ipal_obj)
 
     def test_port_name_update_revises(self):
         with self.port() as port:

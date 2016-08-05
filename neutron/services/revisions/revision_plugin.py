@@ -13,6 +13,7 @@
 
 from oslo_log import log as logging
 from sqlalchemy import event
+from sqlalchemy.orm import exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _, _LW
@@ -53,17 +54,21 @@ class RevisionPlugin(service_base.ServicePluginBase):
 
     def _bump_related_revisions(self, session, obj):
         for revises_col in getattr(obj, 'revises_on_change', ()):
-            related_obj = self._find_related_obj(session, obj, revises_col)
-            if not related_obj:
-                LOG.warning(_LW("Could not find related %(col)s for resource "
-                                "%(obj)s to bump revision."),
-                            {'obj': obj, 'col': revises_col})
-                continue
-            # if related object revises others, bump those as well
-            self._bump_related_revisions(session, related_obj)
-            # no need to bump revisions on related objects being deleted
-            if related_obj not in session.deleted:
-                related_obj.bump_revision()
+            try:
+                related_obj = self._find_related_obj(session, obj, revises_col)
+                if not related_obj:
+                    LOG.warning(_LW("Could not find related %(col)s for "
+                                    "resource %(obj)s to bump revision."),
+                                {'obj': obj, 'col': revises_col})
+                    continue
+                # if related object revises others, bump those as well
+                self._bump_related_revisions(session, related_obj)
+                # no need to bump revisions on related objects being deleted
+                if related_obj not in session.deleted:
+                    related_obj.bump_revision()
+            except exc.ObjectDeletedError:
+                # object was in session but another writer deleted it
+                pass
 
     def get_plugin_type(self):
         return "revision_plugin"
