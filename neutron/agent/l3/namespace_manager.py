@@ -130,6 +130,10 @@ class NamespaceManager(object):
                 ns_prefix, ns_id = self.get_prefix_and_id(ns)
                 self._cleanup(ns_prefix, ns_id)
 
+    def ensure_snat_cleanup(self, router_id):
+        prefix = dvr_snat_ns.SNAT_NS_PREFIX
+        self._cleanup(prefix, router_id)
+
     def _cleanup(self, ns_prefix, ns_id):
         ns_class = self.ns_prefix_to_class_map[ns_prefix]
         ns = ns_class(ns_id, self.agent_conf, self.driver, use_ipv6=False)

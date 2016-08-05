@@ -82,6 +82,9 @@ class Namespace(object):
             msg = _LE('Failed trying to delete namespace: %s')
             LOG.exception(msg, self.name)
 
+    def exists(self):
+        return self.ip_wrapper_root.netns.exists(self.name)
+
 
 class RouterNamespace(Namespace):
 
