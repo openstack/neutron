@@ -364,7 +364,8 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
             enable_dhcp = (not self._strip_host_index(net_id) in
                            self.networks_with_dhcp_disabled)
             subnets.append({'network_id': net_id,
-                            'enable_dhcp': enable_dhcp})
+                            'enable_dhcp': enable_dhcp,
+                            'segment_id': None})
         return subnets
 
     def get_network(self, context, net_id):

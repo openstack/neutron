@@ -30,6 +30,7 @@ from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import availability_zone as az_ext
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
+from neutron.services.segments import db as segments_db
 
 LOG = logging.getLogger(__name__)
 
@@ -44,10 +45,16 @@ class AutoScheduler(object):
         # a list of (agent, net_ids) tuples
         bindings_to_add = []
         with context.session.begin(subtransactions=True):
-            fields = ['network_id', 'enable_dhcp']
+            fields = ['network_id', 'enable_dhcp', 'segment_id']
             subnets = plugin.get_subnets(context, fields=fields)
-            net_ids = set(s['network_id'] for s in subnets
-                          if s['enable_dhcp'])
+            net_ids = {}
+            net_segment_ids = collections.defaultdict(set)
+            for s in subnets:
+                if s['enable_dhcp']:
+                    net_segment_ids[s['network_id']].add(s.get('segment_id'))
+            for network_id, segment_ids in net_segment_ids.items():
+                is_routed_network = any(segment_ids)
+                net_ids[network_id] = is_routed_network
             if not net_ids:
                 LOG.debug('No non-hosted networks')
                 return False
@@ -57,17 +64,28 @@ class AutoScheduler(object):
                                  agents_db.Agent.host == host,
                                  agents_db.Agent.admin_state_up == sql.true())
             dhcp_agents = query.all()
+
+            query = context.session.query(
+                segments_db.SegmentHostMapping.segment_id)
+            query = query.filter(segments_db.SegmentHostMapping.host == host)
+            segments_on_host = {s.segment_id for s in query}
+
             for dhcp_agent in dhcp_agents:
                 if agents_db.AgentDbMixin.is_agent_down(
                     dhcp_agent.heartbeat_timestamp):
                     LOG.warning(_LW('DHCP agent %s is not active'),
                                 dhcp_agent.id)
                     continue
-                for net_id in net_ids:
+                for net_id, is_routed_network in net_ids.items():
                     agents = plugin.get_dhcp_agents_hosting_networks(
                         context, [net_id])
-                    if len(agents) >= agents_per_network:
-                        continue
+                    segments_on_network = net_segment_ids[net_id]
+                    if is_routed_network:
+                        if len(segments_on_network & segments_on_host) == 0:
+                            continue
+                    else:
+                        if len(agents) >= agents_per_network:
+                            continue
                     if any(dhcp_agent.id == agent.id for agent in agents):
                         continue
                     net = plugin.get_network(context, net_id)
