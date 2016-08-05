@@ -319,8 +319,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         min_agents = cfg.CONF.min_l3_agents_per_router
         num_agents = len(self.get_l3_agents(context, active=True,
-            filters={'agent_modes': [n_const.L3_AGENT_MODE_LEGACY,
-                                     n_const.L3_AGENT_MODE_DVR_SNAT]}))
+            filters={'agent_modes': [constants.L3_AGENT_MODE_LEGACY,
+                                     constants.L3_AGENT_MODE_DVR_SNAT]}))
         max_agents = cfg.CONF.max_l3_agents_per_router
         if max_agents:
             if max_agents > num_agents:
@@ -723,8 +723,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     def get_ha_sync_data_for_host(self, context, host, agent,
                                   router_ids=None, active=None):
         agent_mode = self._get_agent_mode(agent)
-        dvr_agent_mode = (agent_mode in [n_const.L3_AGENT_MODE_DVR_SNAT,
-                                         n_const.L3_AGENT_MODE_DVR])
+        dvr_agent_mode = (agent_mode in [constants.L3_AGENT_MODE_DVR_SNAT,
+                                         constants.L3_AGENT_MODE_DVR])
         if (dvr_agent_mode and n_utils.is_extension_supported(
                 self, constants.L3_DISTRIBUTED_EXT_ALIAS)):
             # DVR has to be handled differently
