@@ -196,6 +196,7 @@ class Subnet(model_base.HasStandardAttributes, model_base.BASEV2,
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)
     gateway_ip = sa.Column(sa.String(64))
+    revises_on_change = ('networks', )
     allocation_pools = orm.relationship(IPAllocationPool,
                                         backref='subnet',
                                         lazy="joined",
