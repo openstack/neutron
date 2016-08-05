@@ -196,19 +196,19 @@ def check_python3_no_iteritems(logical_line):
 def check_asserttruefalse(logical_line, filename):
     """N328 - Don't use assertEqual(True/False, observed)."""
     if 'neutron/tests/' in filename:
-        if re.search(r"assertEqual\(\s*True,[^,]*(,[^,]*)?\)", logical_line):
+        if re.search(r"assertEqual\(\s*True,[^,]*(,[^,]*)?", logical_line):
             msg = ("N328: Use assertTrue(observed) instead of "
                    "assertEqual(True, observed)")
             yield (0, msg)
-        if re.search(r"assertEqual\([^,]*,\s*True(,[^,]*)?\)", logical_line):
+        if re.search(r"assertEqual\([^,]*,\s*True(,[^,]*)?", logical_line):
             msg = ("N328: Use assertTrue(observed) instead of "
                    "assertEqual(True, observed)")
             yield (0, msg)
-        if re.search(r"assertEqual\(\s*False,[^,]*(,[^,]*)?\)", logical_line):
+        if re.search(r"assertEqual\(\s*False,[^,]*(,[^,]*)?", logical_line):
             msg = ("N328: Use assertFalse(observed) instead of "
                    "assertEqual(False, observed)")
             yield (0, msg)
-        if re.search(r"assertEqual\([^,]*,\s*False(,[^,]*)?\)", logical_line):
+        if re.search(r"assertEqual\([^,]*,\s*False(,[^,]*)?", logical_line):
             msg = ("N328: Use assertFalse(observed) instead of "
                    "assertEqual(False, observed)")
             yield (0, msg)
