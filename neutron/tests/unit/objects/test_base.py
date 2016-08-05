@@ -93,7 +93,7 @@ class FakeWeirdKeySmallNeutronObject(base.NeutronDbObject):
 
 
 @obj_base.VersionedObjectRegistry.register_if(False)
-class FakeNeutronObject(base.NeutronDbObject):
+class FakeNeutronDbObject(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
@@ -263,6 +263,33 @@ class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
     }
 
 
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObject(base.NeutronObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'project_id': obj_fields.StringField(),
+        'field2': obj_fields.UUIDField(),
+    }
+
+    @classmethod
+    def get_object(cls, context, **kwargs):
+        if not hasattr(cls, '_obj'):
+            cls._obj = FakeNeutronObject(id=uuidutils.generate_uuid(),
+                                         project_id='fake-id',
+                                         field2=uuidutils.generate_uuid())
+        return cls._obj
+
+    @classmethod
+    def get_objects(cls, context, _pager=None, count=1, **kwargs):
+        return [
+            cls.get_object(context, **kwargs)
+            for i in range(count)
+        ]
+
+
 def get_random_dscp_mark():
     return random.choice(constants.VALID_DSCP_MARKS)
 
@@ -319,7 +346,7 @@ def get_non_synthetic_fields(objclass, obj_fields):
 
 class _BaseObjectTestCase(object):
 
-    _test_class = FakeNeutronObject
+    _test_class = FakeNeutronDbObject
 
     CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
@@ -536,6 +563,19 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                side_effect=self.fake_get_objects):
             self.assertRaises(base.exceptions.InvalidInput,
                               self._test_class.get_objects, self.context,
+                              fake_field='xxx')
+
+    def test_count(self):
+        if not isinstance(self._test_class, base.NeutronDbObject):
+            self.skipTest('Class %s does not inherit from NeutronDbObject' %
+                          self._test_class)
+        expected = 10
+        with mock.patch.object(obj_db_api, 'count', return_value=expected):
+            self.assertEqual(expected, self._test_class.count(self.context))
+
+    def test_count_invalid_fields(self):
+            self.assertRaises(base.exceptions.InvalidInput,
+                              self._test_class.count, self.context,
                               fake_field='xxx')
 
     def _validate_objects(self, expected, observed):
@@ -803,6 +843,14 @@ class UniqueKeysTestCase(test_base.BaseTestCase):
         observed = {tuple(sorted(key))
                     for key in UniqueKeysTestObject.unique_keys}
         self.assertEqual(expected, observed)
+
+
+class NeutronObjectCountTestCase(test_base.BaseTestCase):
+
+    def test_count(self):
+        expected = 10
+        self.assertEqual(
+            expected, FakeNeutronObject.count(None, count=expected))
 
 
 class BaseDbObjectCompositePrimaryKeyWithIdTestCase(BaseObjectIfaceTestCase):
@@ -1115,6 +1163,12 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
         self._assert_object_list_queries_constant(_create, self._test_class)
 
+    def test_count(self):
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+        self.assertEqual(
+            len(self.obj_fields), self._test_class.count(self.context))
+
 
 class UniqueObjectBase(test_base.BaseTestCase):
     def setUp(self):
@@ -1151,7 +1205,7 @@ class RegisterFilterHookOnModelTestCase(UniqueObjectBase):
         self.assertNotIn(
             filter_name, self.registered_object.extra_filter_names)
         base.register_filter_hook_on_model(
-            FakeNeutronObject.db_model, filter_name)
+            FakeNeutronDbObject.db_model, filter_name)
         self.assertIn(filter_name, self.registered_object.extra_filter_names)
 
 

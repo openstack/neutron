@@ -17,13 +17,21 @@ from neutron import manager
 
 
 # Common database operation implementations
-def get_object(context, model, **kwargs):
+def _get_filter_query(context, model, **kwargs):
     # TODO(jlibosva): decompose _get_collection_query from plugin instance
     plugin = manager.NeutronManager.get_plugin()
     with context.session.begin(subtransactions=True):
         filters = _kwargs_to_filters(**kwargs)
         query = plugin._get_collection_query(context, model, filters)
-        return query.first()
+        return query
+
+
+def get_object(context, model, **kwargs):
+    return _get_filter_query(context, model, **kwargs).first()
+
+
+def count(context, model, **kwargs):
+    return _get_filter_query(context, model, **kwargs).count()
 
 
 def _kwargs_to_filters(**kwargs):
