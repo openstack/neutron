@@ -51,6 +51,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'name': {'allow_post': True, 'allow_put': False,
                  'is_visible': True, 'default': ''},
         'description': {'allow_post': True, 'allow_put': False,
+                        'validate': {
+                            'type:string': attr.LONG_DESCRIPTION_MAX_LEN},
                         'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,

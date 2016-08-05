@@ -18,6 +18,7 @@ from neutron_lib import constants as n_consts
 import webob.exc
 
 from neutron.api import extensions
+from neutron.api.v2 import attributes as attr
 from neutron.common import config
 from neutron import context
 import neutron.extensions
@@ -32,6 +33,8 @@ DB_METERING_PLUGIN_KLASS = (
 )
 
 extensions_path = ':'.join(neutron.extensions.__path__)
+_long_description_ok = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN)
+_long_description_ng = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN + 1)
 
 
 class MeteringPluginDbTestCaseMixin(object):
@@ -154,6 +157,16 @@ class TestMetering(MeteringPluginDbTestCase):
                                  shared=shared) as metering_label:
             for k, v, in keys:
                 self.assertEqual(metering_label['metering_label'][k], v)
+
+    def test_create_metering_label_with_max_description_length(self):
+        res = self._create_metering_label(self.fmt, 'my label',
+                                          _long_description_ok)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+    def test_create_metering_label_with_too_long_description(self):
+        res = self._create_metering_label(self.fmt, 'my label',
+                                          _long_description_ng)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_update_metering_label(self):
         name = 'my label'
