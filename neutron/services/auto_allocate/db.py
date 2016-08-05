@@ -28,7 +28,7 @@ from neutron.common import exceptions as c_exc
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
-from neutron.db import external_net_db
+from neutron.db.models import external_net as ext_net_models
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import l3
@@ -57,14 +57,14 @@ def _ensure_external_network_default_value_callback(
     is_default = request.get(IS_DEFAULT, False)
     if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE) and is_default:
         # ensure there is only one default external network at any given time
-        obj = (context.session.query(external_net_db.ExternalNetwork).
+        obj = (context.session.query(ext_net_models.ExternalNetwork).
             filter_by(is_default=True)).first()
         if obj and network['id'] != obj.network_id:
             raise exceptions.DefaultExternalNetworkExists(
                 net_id=obj.network_id)
 
     # Reflect the status of the is_default on the create/update request
-    obj = (context.session.query(external_net_db.ExternalNetwork).
+    obj = (context.session.query(ext_net_models.ExternalNetwork).
         filter_by(network_id=network['id']))
     obj.update({IS_DEFAULT: is_default})
 
@@ -220,7 +220,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         """Get the default external network for the deployment."""
         with context.session.begin(subtransactions=True):
             default_external_networks = (context.session.query(
-                external_net_db.ExternalNetwork).
+                ext_net_models.ExternalNetwork).
                 filter_by(is_default=sql.true()).
                 join(models_v2.Network).
                 join(standard_attr.StandardAttribute).

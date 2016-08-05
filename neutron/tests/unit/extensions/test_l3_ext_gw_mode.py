@@ -25,9 +25,9 @@ from webob import exc
 
 from neutron import context as nctx
 from neutron.db import api as db_api
-from neutron.db import external_net_db
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
+from neutron.db.models import external_net as ext_net_models
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
@@ -132,7 +132,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             tenant_id=self.tenant_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
-        self.net_ext = external_net_db.ExternalNetwork(
+        self.net_ext = ext_net_models.ExternalNetwork(
             network_id=self.ext_net_id)
         self.context.session.add(self.network)
         # The following is to avoid complaints from SQLite on
