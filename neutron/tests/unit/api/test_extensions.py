@@ -24,6 +24,7 @@ from oslo_serialization import jsonutils
 from oslo_service import wsgi as base_wsgi
 import routes
 import six
+import testtools
 import webob
 import webob.exc as webexc
 import webtest
@@ -625,7 +626,14 @@ class ExtensionManagerTest(base.BaseTestCase):
         default_ext = list(constants.DEFAULT_SERVICE_PLUGINS.values())[0]
         ext_mgr.add_extension(ext_stubs.StubExtensionWithReqs(default_ext))
         ext_mgr.extend_resources("2.0", attr_map)
-        self.assertIn(default_ext, ext_mgr.extensions)
+        # none of the default extensions should be loaded as their
+        # requirements are not satisfied, and yet we do not fail.
+        self.assertFalse(ext_mgr.extensions)
+
+    def test__check_faulty_extensions_raise_not_default_ext(self):
+        ext_mgr = extensions.ExtensionManager('')
+        with testtools.ExpectedException(exceptions.ExtensionsNotFound):
+            ext_mgr._check_faulty_extensions(set(['foo']))
 
     def test_invalid_extensions_are_not_registered(self):
 

@@ -527,16 +527,29 @@ class ExtensionManager(object):
                           "their requirements. Some features will not "
                           "work as expected."),
                       ', '.join(unloadable_extensions))
-            # Fail gracefully for default extensions, just in case some out
-            # of tree plugins are not entirely up to speed
-            default_extensions = set(const.DEFAULT_SERVICE_PLUGINS.values())
-            if not unloadable_extensions <= default_extensions:
-                raise exceptions.ExtensionsNotFound(
-                    extensions=list(unloadable_extensions))
-
+            self._check_faulty_extensions(unloadable_extensions)
         # Extending extensions' attributes map.
         for ext in processed_exts.values():
             ext.update_attributes_map(attr_map)
+
+    def _check_faulty_extensions(self, faulty_extensions):
+        """Raise for non-default faulty extensions.
+
+        Gracefully fail for defective default extensions, which will be
+        removed from the list of loaded extensions.
+        """
+        default_extensions = set(const.DEFAULT_SERVICE_PLUGINS.values())
+        if not faulty_extensions <= default_extensions:
+            raise exceptions.ExtensionsNotFound(
+                extensions=list(faulty_extensions))
+        else:
+            # Remove the faulty extensions so that they do not show during
+            # ext-list
+            for ext in faulty_extensions:
+                try:
+                    del self.extensions[ext]
+                except KeyError:
+                    pass
 
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""
