@@ -257,15 +257,16 @@ def remove_conf_files(cfg_root, uuid):
         os.unlink(file_path)
 
 
-def get_root_helper_child_pid(pid, run_as_root=False):
+def get_root_helper_child_pid(pid, expected_cmd, run_as_root=False):
     """
-    Get the lowest child pid in the process hierarchy
+    Get the first non root_helper child pid in the process hierarchy.
 
     If root helper was used, two or more processes would be created:
 
      - a root helper process (e.g. sudo myscript)
      - possibly a rootwrap script (e.g. neutron-rootwrap)
      - a child process (e.g. myscript)
+     - possibly its child processes
 
     Killing the root helper process will leave the child process
     running, re-parented to init, so the only way to ensure that both
@@ -273,18 +274,17 @@ def get_root_helper_child_pid(pid, run_as_root=False):
     """
     pid = str(pid)
     if run_as_root:
-        try:
-            pid = find_child_pids(pid)[0]
-        except IndexError:
-            # Process is already dead
-            return None
         while True:
             try:
                 # We shouldn't have more than one child per process
                 # so keep getting the children of the first one
                 pid = find_child_pids(pid)[0]
             except IndexError:
-                # Last process in the tree, return it
+                return  # We never found the child pid with expected_cmd
+
+            # If we've found a pid with no root helper, return it.
+            # If we continue, we can find transient children.
+            if pid_invoked_with_cmdline(pid, expected_cmd):
                 break
     return pid
 
