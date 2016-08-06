@@ -40,8 +40,6 @@ class _DeprecateSubset(object):
                 debtcollector.deprecate(
                     name,
                     message='moved to %s' % other_mod.__name__,
-                    version='mitaka',
-                    removal_version='newton',
                     stacklevel=4)
 
                 return vars(other_mod)[name]
