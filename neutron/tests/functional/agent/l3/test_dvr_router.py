@@ -527,16 +527,14 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router_info = self.generate_dvr_router_info()
         router = self.manage_router(self.agent, router_info)
         ext_port = router.get_ex_gw_port()
-        gw_ip = self._port_first_ip_cidr(ext_port).partition('/')[0]
         rfp_devicename = router.get_external_device_interface_name(ext_port)
-        prevent_snat_rule = router.external_gateway_nat_fip_rules(
-            gw_ip, rfp_devicename)
+        prevent_snat_rule = router._prevent_snat_for_internal_traffic_rule(
+            rfp_devicename)
 
         def is_prevent_snat_rule_exist(router_iptables_manager):
             rules = router_iptables_manager.get_rules_for_table('nat')
-            return all(str(iptables_manager.IptablesRule(
-                nat_rule[0], nat_rule[1])) in rules
-                for nat_rule in prevent_snat_rule)
+            return (str(iptables_manager.IptablesRule(
+                prevent_snat_rule[0], prevent_snat_rule[1])) in rules)
 
         self.assertTrue(is_prevent_snat_rule_exist(router.iptables_manager))
 
@@ -546,34 +544,6 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         self.assertTrue(is_prevent_snat_rule_exist(
             restarted_router.iptables_manager))
-
-    def test_ping_floatingip_reply_with_floatingip(self):
-        router_info = self.generate_dvr_router_info()
-        router = self.manage_router(self.agent, router_info)
-        router_ip_cidr = self._port_first_ip_cidr(router.internal_ports[0])
-        router_ip = router_ip_cidr.partition('/')[0]
-
-        br_int = framework.get_ovs_bridge(
-            self.agent.conf.ovs_integration_bridge)
-
-        src_machine, dst_machine = self.useFixture(
-            machine_fixtures.PeerMachines(
-                br_int,
-                net_helpers.increment_ip_cidr(router_ip_cidr),
-                router_ip)).machines
-
-        dst_fip = '19.4.4.10'
-        router.router[l3_constants.FLOATINGIP_KEY] = []
-        self._add_fip(router, dst_fip,
-                      fixed_address=dst_machine.ip,
-                      host=self.agent.conf.host)
-        router.process(self.agent)
-
-        # Verify that the ping replys with fip
-        ns_ip_wrapper = ip_lib.IPWrapper(src_machine.namespace)
-        result = ns_ip_wrapper.netns.execute(
-            ['ping', '-c', 1, '-W', 5, dst_fip])
-        self._assert_ping_reply_from_expected_address(result, dst_fip)
 
     def _get_fixed_ip_rule_priority(self, namespace, fip):
         iprule = ip_lib.IPRule(namespace)

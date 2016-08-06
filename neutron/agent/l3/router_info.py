@@ -706,12 +706,16 @@ class RouterInfo(object):
         gw_port = self._router.get('gw_port')
         self._handle_router_snat_rules(gw_port, interface_name)
 
-    def external_gateway_nat_fip_rules(self, ex_gw_ip, interface_name):
-        dont_snat_traffic_to_internal_ports_if_not_to_floating_ip = (
+    def _prevent_snat_for_internal_traffic_rule(self, interface_name):
+        return (
             'POSTROUTING', '! -i %(interface_name)s '
                            '! -o %(interface_name)s -m conntrack ! '
                            '--ctstate DNAT -j ACCEPT' %
                            {'interface_name': interface_name})
+
+    def external_gateway_nat_fip_rules(self, ex_gw_ip, interface_name):
+        dont_snat_traffic_to_internal_ports_if_not_to_floating_ip = (
+            self._prevent_snat_for_internal_traffic_rule(interface_name))
         # Makes replies come back through the router to reverse DNAT
         ext_in_mark = self.agent_conf.external_ingress_mark
         snat_internal_traffic_to_floating_ip = (
