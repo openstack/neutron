@@ -16,6 +16,8 @@
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 
+from neutron.conf.plugins.ml2.drivers.mech_sriov import agent_common \
+     as agent_common_config
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import config
 from neutron.plugins.ml2.drivers.mech_sriov.agent \
     import sriov_nic_agent as agent
@@ -49,9 +51,9 @@ class TestSriovAgentConfig(base.BaseTestCase):
                       'physnet3': ['p3p1']}
 
     def test_defaults(self):
-        self.assertEqual(config.DEFAULT_DEVICE_MAPPINGS,
+        self.assertEqual(agent_common_config.DEFAULT_DEVICE_MAPPINGS,
                          cfg.CONF.SRIOV_NIC.physical_device_mappings)
-        self.assertEqual(config.DEFAULT_EXCLUDE_DEVICES,
+        self.assertEqual(agent_common_config.DEFAULT_EXCLUDE_DEVICES,
                          cfg.CONF.SRIOV_NIC.exclude_devices)
         self.assertEqual(2,
                          cfg.CONF.AGENT.polling_interval)
