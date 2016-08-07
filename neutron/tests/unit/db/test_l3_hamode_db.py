@@ -550,6 +550,27 @@ class L3HATestCase(L3HATestFramework):
                                                         network.network_id)
         self.assertEqual(allocs_before, allocs_after)
 
+    def test_migration_delete_ha_network_if_last_router(self):
+        router = self._create_router()
+
+        self._migrate_router(router['id'], False)
+        self.assertIsNone(
+            self.plugin.get_ha_network(self.admin_ctx, router['tenant_id']))
+
+    def test_migration_no_delete_ha_network_if_not_last_router(self):
+        router = self._create_router()
+        router2 = self._create_router()
+
+        network = self.plugin.get_ha_network(self.admin_ctx,
+                                             router['tenant_id'])
+        network2 = self.plugin.get_ha_network(self.admin_ctx,
+                                              router2['tenant_id'])
+        self.assertEqual(network, network2)
+
+        self._migrate_router(router['id'], False)
+        self.assertIsNotNone(
+            self.plugin.get_ha_network(self.admin_ctx, router2['tenant_id']))
+
     def test_one_ha_router_one_not(self):
         self._create_router(ha=False)
         self._create_router()
@@ -909,9 +930,13 @@ class L3HATestCase(L3HATestFramework):
                        self.core_plugin.get_networks(self.admin_ctx)]
         self.assertIn('HA network tenant %s' % router1['tenant_id'],
                       nets_before)
+        ha_network = self.plugin.get_ha_network(self.admin_ctx,
+                                                router1['tenant_id'])
         with mock.patch.object(self.plugin, '_delete_ha_network',
                                side_effect=exception):
-            self.plugin.delete_router(self.admin_ctx, router1['id'])
+            self.plugin.safe_delete_ha_network(self.admin_ctx,
+                                               ha_network,
+                                               router1['tenant_id'])
             nets_after = [net['name'] for net in
                           self.core_plugin.get_networks(self.admin_ctx)]
             self.assertIn('HA network tenant %s' % router1['tenant_id'],
