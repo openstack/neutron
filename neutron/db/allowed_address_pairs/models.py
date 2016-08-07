@@ -10,13 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from neutron.common import _deprecate
 from neutron.db.models import allowed_address_pair as aap_models
 
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), aap_models)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_deprecate._moved_global('AllowedAddressPair', new_module=aap_models)
+
+
+_deprecate._MovedGlobals()

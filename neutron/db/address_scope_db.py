@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from neutron_lib import constants
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
@@ -25,6 +23,9 @@ from neutron.db import db_base_plugin_v2
 from neutron.db.models import address_scope as address_scope_model
 from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import subnetpool as subnetpool_obj
+
+
+_deprecate._moved_global('AddressScope', new_module=address_scope_model)
 
 
 class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
@@ -144,8 +145,4 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         attr.NETWORKS, ['_extend_network_dict_address_scope'])
 
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(),
-                                                    address_scope_model)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_deprecate._MovedGlobals()

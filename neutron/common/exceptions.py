@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from neutron_lib import exceptions as e
 
 from neutron._i18n import _
@@ -314,15 +312,7 @@ class TenantIdProjectIdFilterConflict(e.BadRequest):
     message = _("Both tenant_id and project_id passed as filters.")
 
 
-# Neutron-lib migration shim. This will wrap any exceptions that are moved
-# to that library in a deprecation warning, until they can be updated to
-# import directly from their new location.
-# If you're wondering why we bother saving _OLD_REF, it is because if we
-# do not, then the original module we are overwriting gets garbage collected,
-# and then you will find some super strange behavior with inherited classes
-# and the like. Saving a ref keeps it around.
-
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), e)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+# Neutron-lib migration shim. This will emit a deprecation warning on any
+# reference to exceptions that have been moved out of this module and into
+# the neutron_lib.exceptions module.
+_deprecate._MovedGlobals(e)
