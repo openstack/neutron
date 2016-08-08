@@ -58,7 +58,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def _get_segment(self, context, segment_id):
         try:
             return self._get_by_id(
-                context, db.NetworkSegment, segment_id)
+                context, segment_model.NetworkSegment, segment_id)
         except exc.NoResultFound:
             raise exceptions.SegmentNotFound(segment_id=segment_id)
 
@@ -112,7 +112,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                 segment_index = (segments[-1].get('segment_index') + 1)
             args['segment_index'] = segment_index
 
-            new_segment = db.NetworkSegment(**args)
+            new_segment = segment_model.NetworkSegment(**args)
             context.session.add(new_segment)
             # Do some preliminary operations before commiting the segment to db
             registry.notify(resources.SEGMENT, events.PRECOMMIT_CREATE, self,
@@ -140,7 +140,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         marker_obj = self._get_marker_obj(context, 'segment', limit, marker)
         make_segment_dict = functools.partial(self._make_segment_dict)
         return self._get_collection(context,
-                                    db.NetworkSegment,
+                                    segment_model.NetworkSegment,
                                     make_segment_dict,
                                     filters=filters,
                                     fields=fields,
@@ -152,7 +152,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     @log_helpers.log_method_call
     def get_segments_count(self, context, filters=None):
         return self._get_collection_count(context,
-                                          db.NetworkSegment,
+                                          segment_model.NetworkSegment,
                                           filters=filters)
 
     @log_helpers.log_method_call
@@ -175,8 +175,8 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
 
         # Delete segment in DB
         with context.session.begin(subtransactions=True):
-            query = self._model_query(context, db.NetworkSegment)
-            query = query.filter(db.NetworkSegment.id == uuid)
+            query = self._model_query(context, segment_model.NetworkSegment)
+            query = query.filter(segment_model.NetworkSegment.id == uuid)
             if 0 == query.delete():
                 raise exceptions.SegmentNotFound(segment_id=uuid)
             # Do some preliminary operations before deleting segment in db
@@ -242,8 +242,8 @@ def get_segments_with_phys_nets(context, phys_nets):
         return []
 
     with context.session.begin(subtransactions=True):
-        segments = context.session.query(db.NetworkSegment).filter(
-            db.NetworkSegment.physical_network.in_(phys_nets))
+        segments = context.session.query(segment_model.NetworkSegment).filter(
+            segment_model.NetworkSegment.physical_network.in_(phys_nets))
         return segments
 
 

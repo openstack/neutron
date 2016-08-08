@@ -19,7 +19,40 @@ from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.db import segments_db as db
+from neutron.api.v2 import attributes
+from neutron.db import models_v2
+from neutron.db import standard_attr
+from neutron.extensions import segment
+
+
+# Some standalone plugins need a DB table to store provider
+# network information. Initially there was no such table,
+# but in Mitaka the ML2 NetworkSegment table was promoted here.
+class NetworkSegment(standard_attr.HasStandardAttributes,
+                     model_base.BASEV2, model_base.HasId):
+    """Represent persistent state of a network segment.
+
+    A network segment is a portion of a neutron network with a
+    specific physical realization. A neutron network can consist of
+    one or more segments.
+    """
+
+    network_id = sa.Column(sa.String(36),
+                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
+                           nullable=False)
+    network_type = sa.Column(sa.String(32), nullable=False)
+    physical_network = sa.Column(sa.String(64))
+    segmentation_id = sa.Column(sa.Integer)
+    is_dynamic = sa.Column(sa.Boolean, default=False, nullable=False,
+                           server_default=sa.sql.false())
+    segment_index = sa.Column(sa.Integer, nullable=False, server_default='0')
+    name = sa.Column(sa.String(attributes.NAME_MAX_LEN),
+                     nullable=True)
+    network = orm.relationship(models_v2.Network,
+                               backref=orm.backref("segments",
+                                                   lazy='joined',
+                                                   cascade='delete'))
+    api_collections = [segment.SEGMENTS]
 
 
 class SegmentHostMapping(model_base.BASEV2):
@@ -38,6 +71,6 @@ class SegmentHostMapping(model_base.BASEV2):
     # Add a relationship to the NetworkSegment model in order to instruct
     # SQLAlchemy to eagerly load this association
     network_segment = orm.relationship(
-        db.NetworkSegment, backref=orm.backref("segment_host_mapping",
-                                               lazy='joined',
-                                               cascade='delete'))
+        NetworkSegment, backref=orm.backref("segment_host_mapping",
+                                            lazy='joined',
+                                            cascade='delete'))

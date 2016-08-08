@@ -36,7 +36,6 @@ from neutron.db import db_base_plugin_common
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
-from neutron.db import segments_db
 from neutron.extensions import ip_allocation as ipa
 from neutron.extensions import portbindings
 from neutron.extensions import segment
@@ -335,14 +334,15 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 network_id=network_id)
 
         if segment_id:
-            query = context.session.query(segments_db.NetworkSegment)
-            query = query.filter(segments_db.NetworkSegment.id == segment_id)
-            segment_model = query.one()
-            if segment_model.network_id != network_id:
+            query = context.session.query(segment_model.NetworkSegment)
+            query = query.filter(
+                segment_model.NetworkSegment.id == segment_id)
+            segment = query.one()
+            if segment.network_id != network_id:
                 raise segment_exc.NetworkIdsDontMatch(
                     subnet_network=network_id,
                     segment_id=segment_id)
-            if segment_model.is_dynamic:
+            if segment.is_dynamic:
                 raise segment_exc.SubnetCantAssociateToDynamicSegment()
 
     def _get_subnet_for_fixed_ip(self, context, fixed, subnets):

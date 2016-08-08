@@ -32,7 +32,7 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
-from neutron.db import segments_db
+from neutron.db.models import segment as segments_model
 from neutron import objects
 from neutron.objects import base
 from neutron.objects import common_types
@@ -1150,9 +1150,8 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         }
         # TODO(korzen): replace with segment.create() once we get an object
         # implementation for segments
-        self._segment = obj_db_api.create_object(self.context,
-                                                 segments_db.NetworkSegment,
-                                                 test_segment)
+        self._segment = obj_db_api.create_object(
+            self.context, segments_model.NetworkSegment, test_segment)
 
     def _create_test_port(self, network):
         self._port = self._create_port(network_id=network['id'])

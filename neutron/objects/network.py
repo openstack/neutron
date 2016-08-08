@@ -17,11 +17,11 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import api as db_api
 from neutron.db import dns_db
+from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.db.port_security import models as ps_models
 from neutron.db.qos import models as qos_models
 from neutron.db import rbac_db_models
-from neutron.db import segments_db
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import base
 from neutron.objects import common_types
@@ -35,7 +35,7 @@ class NetworkSegment(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
-    db_model = segments_db.NetworkSegment
+    db_model = segment_model.NetworkSegment
 
     fields = {
         'id': obj_fields.UUIDField(),
