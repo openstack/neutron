@@ -33,6 +33,7 @@ import neutron.conf.agent.l3.config
 import neutron.conf.agent.ovs_conf
 import neutron.conf.common
 import neutron.conf.extensions.allowedaddresspairs
+import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.quota
 import neutron.conf.service
@@ -51,7 +52,6 @@ import neutron.db.migration.cli
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
 import neutron.plugins.ml2.config
-import neutron.plugins.ml2.drivers.agent.config
 import neutron.plugins.ml2.drivers.macvtap.agent.config
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
 import neutron.plugins.ml2.drivers.mech_sriov.mech_driver.mech_driver
@@ -187,7 +187,7 @@ def list_linux_bridge_opts():
         ('vxlan',
          neutron.conf.plugins.ml2.drivers.linuxbridge.vxlan_opts),
         ('agent',
-         neutron.plugins.ml2.drivers.agent.config.agent_opts),
+         neutron.conf.plugins.ml2.drivers.agent.agent_opts),
         ('securitygroup',
          neutron.agent.securitygroups_rpc.security_group_opts)
     ]
@@ -211,7 +211,7 @@ def list_macvtap_opts():
         ('macvtap',
          neutron.plugins.ml2.drivers.macvtap.agent.config.macvtap_opts),
         ('agent',
-         neutron.plugins.ml2.drivers.agent.config.agent_opts),
+         neutron.conf.plugins.ml2.drivers.agent.agent_opts),
         ('securitygroup',
          neutron.agent.securitygroups_rpc.security_group_opts)
     ]
