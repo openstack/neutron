@@ -29,10 +29,10 @@ from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import topics
+from neutron.conf.plugins.ml2.drivers import macvtap as config
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
-from neutron.plugins.ml2.drivers.macvtap.agent import config  # noqa
 from neutron.plugins.ml2.drivers.macvtap import macvtap_common
 
 LOG = logging.getLogger(__name__)
@@ -40,6 +40,8 @@ LOG = logging.getLogger(__name__)
 MACVTAP_AGENT_BINARY = "neutron-macvtap-agent"
 MACVTAP_FS = "/sys/class/net/"
 EXTENSION_DRIVER_TYPE = 'macvtap'
+
+config.register_macvtap_opts()
 
 
 class MacvtapRPCCallBack(sg_rpc.SecurityGroupAgentRpcCallbackMixin,

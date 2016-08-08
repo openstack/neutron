@@ -34,4 +34,5 @@ macvtap_opts = [
 ]
 
 
-cfg.CONF.register_opts(macvtap_opts, "macvtap")
+def register_macvtap_opts(cfg=cfg.CONF):
+    cfg.register_opts(macvtap_opts, "macvtap")
