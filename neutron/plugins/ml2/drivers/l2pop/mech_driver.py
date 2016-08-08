@@ -19,17 +19,19 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LW
+from neutron.conf.plugins.ml2.drivers import l2pop as config
 from neutron import context as n_context
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers.l2pop import config  # noqa
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 
 LOG = logging.getLogger(__name__)
+
+config.register_l2_population_opts()
 
 
 class L2populationMechanismDriver(api.MechanismDriver):

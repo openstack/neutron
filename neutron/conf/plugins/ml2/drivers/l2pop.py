@@ -24,4 +24,6 @@ l2_population_options = [
                       'existing ports whent it restarts')),
 ]
 
-cfg.CONF.register_opts(l2_population_options, "l2pop")
+
+def register_l2_population_opts(cfg=cfg.CONF):
+    cfg.register_opts(l2_population_options, "l2pop")
