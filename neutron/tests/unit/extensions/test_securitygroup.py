@@ -19,6 +19,7 @@ import mock
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import context
+from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_db.exception as exc
@@ -37,6 +38,8 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_securitygroup.'
                    'SecurityGroupTestPlugin')
+LONG_NAME_OK = 'x' * (db_const.NAME_FIELD_SIZE)
+LONG_NAME_NG = 'x' * (db_const.NAME_FIELD_SIZE + 1)
 
 
 class SecurityGroupTestExtensionManager(object):
@@ -378,6 +381,39 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self.assertEqual(data['security_group']['description'],
                              res['security_group']['description'])
 
+    def test_update_security_group_with_max_name_length(self):
+        with self.security_group() as sg:
+            data = {'security_group': {'name': LONG_NAME_OK,
+                                       'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_group']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.ext_api))
+            self.assertEqual(data['security_group']['name'],
+                             res['security_group']['name'])
+            self.assertEqual(data['security_group']['description'],
+                             res['security_group']['description'])
+
+    def test_update_security_group_with_too_long_name(self):
+        with self.security_group() as sg:
+            data = {'security_group': {'name': LONG_NAME_NG,
+                                       'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_group']['id'])
+            res = req.get_response(self.ext_api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
+    def test_update_security_group_with_boolean_type_name(self):
+        with self.security_group() as sg:
+            data = {'security_group': {'name': True,
+                                       'description': 'new_desc'}}
+            req = self.new_update_request('security-groups',
+                                          data,
+                                          sg['security_group']['id'])
+            res = req.get_response(self.ext_api)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
     def test_check_default_security_group_description(self):
         with self.network():
             res = self.new_list_request('security-groups')
@@ -404,6 +440,24 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         res = self._create_security_group(self.fmt, name, description)
         self.deserialize(self.fmt, res)
         self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_security_group_with_max_name_length(self):
+        description = 'my webservers'
+        res = self._create_security_group(self.fmt, LONG_NAME_OK, description)
+        self.deserialize(self.fmt, res)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+    def test_create_security_group_with_too_long_name(self):
+        description = 'my webservers'
+        res = self._create_security_group(self.fmt, LONG_NAME_NG, description)
+        self.deserialize(self.fmt, res)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
+    def test_create_security_group_with_boolean_type_name(self):
+        description = 'my webservers'
+        res = self._create_security_group(self.fmt, True, description)
+        self.deserialize(self.fmt, res)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
     def test_list_security_groups(self):
         with self.security_group(name='sg1', description='sg') as v1,\

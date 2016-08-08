@@ -194,7 +194,10 @@ def convert_ip_prefix_to_cidr(ip_prefix):
         raise exceptions.InvalidCIDR(input=ip_prefix)
 
 
-def _validate_name_not_default(data, valid_values=None):
+def _validate_name_not_default(data, max_len=db_const.NAME_FIELD_SIZE):
+    msg = validators.validate_string(data, max_len)
+    if msg:
+        return msg
     if data.lower() == "default":
         raise SecurityGroupDefaultAlreadyExists()
 
