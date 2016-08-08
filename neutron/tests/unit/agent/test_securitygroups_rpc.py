@@ -3057,6 +3057,8 @@ class TestSecurityGroupAgentEnhancedIpsetWithIptables(
 
     def test_security_group_member_updated(self):
         self.sg_info.return_value = self.devices_info1
+        self.ipset._get_new_set_ips = mock.Mock(return_value=['10.0.0.3'])
+        self.ipset._get_deleted_set_ips = mock.Mock(return_value=[])
         self._replay_iptables(IPSET_FILTER_1, IPTABLES_FILTER_V6_1,
                               IPTABLES_RAW_DEFAULT)
         self._replay_iptables(IPSET_FILTER_1, IPTABLES_FILTER_V6_1,
@@ -3084,6 +3086,8 @@ class TestSecurityGroupAgentEnhancedIpsetWithIptables(
             2, self.agent.firewall.security_group_updated.call_count)
 
     def test_security_group_rule_updated(self):
+        self.ipset._get_new_set_ips = mock.Mock(return_value=['10.0.0.3'])
+        self.ipset._get_deleted_set_ips = mock.Mock(return_value=[])
         self.sg_info.return_value = self.devices_info2
         self._replay_iptables(IPSET_FILTER_2, IPTABLES_FILTER_V6_2,
                               IPTABLES_RAW_DEFAULT)
