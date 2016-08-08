@@ -14,21 +14,31 @@
 
 import contextlib
 import netaddr
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes as attrs
 from neutron.common import exceptions as n_exc
+from neutron.db import l3_dvr_ha_scheduler_db
+from neutron.db import l3_hamode_db
 from neutron.extensions import bgp
 from neutron.extensions import external_net
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as p_const
 from neutron.services.bgp import bgp_plugin
+from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 _uuid = uuidutils.generate_uuid
 
 ADVERTISE_FIPS_KEY = 'advertise_floating_ip_host_routes'
+
+
+class TestL3Plugin(test_l3.TestL3NatAgentSchedulingServicePlugin,
+                   l3_hamode_db.L3_HA_NAT_db_mixin,
+                   l3_dvr_ha_scheduler_db.L3_DVR_HA_scheduler_db_mixin):
+    pass
 
 
 class BgpEntityCreationMixin(object):
@@ -107,7 +117,8 @@ class BgpEntityCreationMixin(object):
                                               gw_prefix='8.8.8.0/24',
                                               tenant_prefix='192.168.0.0/16',
                                               address_scope=None,
-                                              distributed=False):
+                                              distributed=False,
+                                              ha=False):
         prefixes = [gw_prefix, tenant_prefix]
         gw_ip_net = netaddr.IPNetwork(gw_prefix)
         tenant_ip_net = netaddr.IPNetwork(tenant_prefix)
@@ -132,7 +143,8 @@ class BgpEntityCreationMixin(object):
                              {'network': {external_net.EXTERNAL: True}})
                 ext_gw_info = {'network_id': gw_net_id}
                 with self.router(external_gateway_info=ext_gw_info,
-                                 distributed=distributed) as router:
+                                 distributed=distributed,
+                                 ha=ha) as router:
                     router_id = router['id']
                     router_interface_info = {'subnet_id':
                                              int_subnet['subnet']['id']}
@@ -147,8 +159,8 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
     fmt = 'json'
 
     def setup_parent(self):
-        self.l3_plugin = ('neutron.tests.unit.extensions.test_l3.'
-                          'TestL3NatAgentSchedulingServicePlugin')
+        self.l3_plugin = ('neutron.tests.unit.db.test_bgp_db.'
+                          'TestL3Plugin')
         super(BgpTests, self).setup_parent()
 
     def setUp(self):
@@ -1044,3 +1056,93 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
                                                                  gw_net_id,
                                                                  6)
             self.assertTrue(not speakers)
+
+    def _create_scenario_test_l3_agents(self, agent_confs):
+        for item in agent_confs:
+            self.plugin._create_or_update_agent(
+                self.context,
+                {'agent_type': 'L3 agent',
+                 'host': item['host'],
+                 'binary': 'neutron-l3-agent',
+                 'topic': 'test',
+                 'configurations': {"agent_mode": item['mode']}})
+
+    def _create_scenario_test_ports(self, tenant_id, port_configs):
+        ports = []
+        for item in port_configs:
+            port_data = {
+                'port': {'name': 'test1',
+                         'network_id': item['net_id'],
+                         'tenant_id': tenant_id,
+                         'admin_state_up': True,
+                         'device_id': _uuid(),
+                         'device_owner': 'compute:nova',
+                         'mac_address': attrs.ATTR_NOT_SPECIFIED,
+                         'fixed_ips': attrs.ATTR_NOT_SPECIFIED,
+                         portbindings.HOST_ID: item['host']}}
+            port = self.plugin.create_port(self.context, port_data)
+            ports.append(port)
+        return ports
+
+    def _create_scenario_test_fips(self, ext_net_id,
+                                   tenant_id, port_ids):
+        for port_id in port_ids:
+            fip_data = {'floatingip': {'floating_network_id': ext_net_id,
+                                       'tenant_id': tenant_id,
+                                       'port_id': port_id}}
+            self.l3plugin.create_floatingip(self.context, fip_data)
+
+    def _test_legacy_router_fips_next_hop(self, router_ha=False):
+        if router_ha:
+            cfg.CONF.set_override('l3_ha', True)
+            cfg.CONF.set_override('max_l3_agents_per_router', 2)
+            cfg.CONF.set_override('min_l3_agents_per_router', 2)
+        gw_prefix = '172.16.10.0/24'
+        tenant_prefix = '10.10.10.0/24'
+        tenant_id = _uuid()
+
+        agent_confs = [{"host": "compute1", "mode": "dvr"},
+                       {"host": "compute2", "mode": "dvr"},
+                       {"host": "network1", "mode": "dvr_snat"}]
+        if router_ha:
+            agent_confs.append({"host": "network2", "mode": "dvr_snat"})
+
+        self._create_scenario_test_l3_agents(agent_confs)
+        with self.router_with_external_and_tenant_networks(
+                tenant_id=tenant_id,
+                gw_prefix=gw_prefix,
+                tenant_prefix=tenant_prefix,
+                ha=router_ha) as res:
+            router, ext_net, int_net = res
+            gw_net_id = ext_net['network']['id']
+            ext_gw_info = router['external_gateway_info']
+
+            self.l3plugin.create_fip_agent_gw_port_if_not_exists(
+                self.context, gw_net_id, 'compute1')
+            self.l3plugin.create_fip_agent_gw_port_if_not_exists(
+                self.context, gw_net_id, 'compute2')
+
+            port_configs = [{'net_id': int_net['network']['id'],
+                             'host': 'compute1'},
+                            {'net_id': int_net['network']['id'],
+                             'host': 'compute2'}]
+            ports = self._create_scenario_test_ports(tenant_id, port_configs)
+            port_ids = [port['id'] for port in ports]
+            self._create_scenario_test_fips(gw_net_id, tenant_id, port_ids)
+
+            next_hop = ext_gw_info[
+                'external_fixed_ips'][0]['ip_address']
+            with self.bgp_speaker(4, 1234, networks=[gw_net_id]) as speaker:
+                bgp_speaker_id = speaker['id']
+                routes = self.bgp_plugin.get_routes_by_bgp_speaker_id(
+                    self.context, bgp_speaker_id)
+                routes = list(routes)
+                self.assertEqual(2, len(routes))
+                for route in routes:
+                    self.assertEqual(next_hop, route['next_hop'])
+
+    def test_legacy_router_fips_has_no_next_hop_to_fip_agent_gateway(self):
+        self._test_legacy_router_fips_next_hop()
+
+    def test_ha_router_fips_has_no_next_hop_to_fip_agent_gateway(self):
+        self._test_legacy_router_fips_next_hop(router_ha=True)
