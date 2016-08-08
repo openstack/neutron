@@ -34,11 +34,16 @@ FLAT_VLAN = 0
 
 sriov_opts = [
     cfg.ListOpt('supported_pci_vendor_devs',
-               default=['15b3:1004', '8086:10ca'],
                help=_("Comma-separated list of supported PCI vendor devices, "
                       "as defined by vendor_id:product_id according to the "
-                      "PCI ID Repository. Default enables support for Intel "
-                      "and Mellanox SR-IOV capable NICs.")),
+                      "PCI ID Repository. Default None accept all PCI vendor "
+                      "devices"
+                      "DEPRECATED: This option is deprecated in the Newton "
+                      "release and will be removed in the Ocata release. "
+                      "Starting from Ocata the mechanism driver will accept "
+                      "all PCI vendor devices."),
+                deprecated_for_removal=True),
+
 ]
 
 cfg.CONF.register_opts(sriov_opts, "ml2_sriov")
@@ -92,7 +97,8 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def initialize(self):
         try:
             self.pci_vendor_info = cfg.CONF.ml2_sriov.supported_pci_vendor_devs
-            self._check_pci_vendor_config(self.pci_vendor_info)
+            if self.pci_vendor_info is not None:
+                self._check_pci_vendor_config(self.pci_vendor_info)
         except ValueError:
             LOG.exception(_LE("Failed to parse supported PCI vendor devices"))
             raise cfg.Error(_("Parsing supported pci_vendor_devs failed"))
@@ -173,6 +179,8 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         return False
 
     def _check_supported_pci_vendor_device(self, context):
+        if self.pci_vendor_info is None:
+            return True
         if self.pci_vendor_info:
             profile = context.current.get(portbindings.PROFILE, {})
             if not profile:

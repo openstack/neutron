@@ -1,0 +1,6 @@
+---
+deprecations:
+  - The 'supported_pci_vendor_devs' option is deprecated in Newton and will
+    be removed in Ocata. The validation of supported pci vendors is done in
+    nova-scheduler through the pci_passthrough_whitelist option when it
+    selects a suitable hypervisor, hence the option is considered redundant.
