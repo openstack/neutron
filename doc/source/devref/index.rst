@@ -55,6 +55,7 @@ Neutron Internals
    services_and_agents
    api_layer
    ml2_ext_manager
+   calling_ml2_plugin
    quota
    api_extensions
    plugin-api
