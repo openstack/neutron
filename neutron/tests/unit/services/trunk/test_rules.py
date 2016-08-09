@@ -17,7 +17,6 @@ import mock
 
 import testtools
 
-from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
@@ -160,15 +159,6 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
         with self.port() as port:
             core_plugin = manager.NeutronManager.get_plugin()
             port['port']['binding:host_id'] = 'host'
-            core_plugin.update_port(self.context, port['port']['id'], port)
-            validator = rules.TrunkPortValidator(port['port']['id'])
-            self.assertTrue(validator.is_bound(self.context))
-
-    def test_validate_port_has_device_owner_compute(self):
-        with self.port() as port:
-            core_plugin = manager.NeutronManager.get_plugin()
-            device_owner = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'test'
-            port['port']['device_owner'] = device_owner
             core_plugin.update_port(self.context, port['port']['id'], port)
             validator = rules.TrunkPortValidator(port['port']['id'])
             self.assertTrue(validator.is_bound(self.context))

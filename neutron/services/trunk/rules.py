@@ -14,7 +14,6 @@
 
 from neutron_lib.api import converters
 from neutron_lib.api import validators
-from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 
 from neutron._i18n import _
@@ -86,10 +85,7 @@ class TrunkPortValidator(object):
         # Validate that the given port_id does not have a port binding.
         core_plugin = manager.NeutronManager.get_plugin()
         self._port = core_plugin.get_port(context, self.port_id)
-        device_owner = self._port.get('device_owner', '')
-        return (
-            self._port.get(portbindings.HOST_ID) or
-            device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX))
+        return bool(self._port.get(portbindings.HOST_ID))
 
     def can_be_trunked(self, context):
         """"Return true if a port can be trunked."""
