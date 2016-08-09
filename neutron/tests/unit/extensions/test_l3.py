@@ -2928,7 +2928,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
         def mock_fail__validate_router_port_info(ctx, router, port_id):
             # Fail with raising BadRequest exception
-            msg = _("Failure mocking...")
+            msg = "Failure mocking..."
             raise n_exc.BadRequest(resource='router', msg=msg)
 
         def mock_update_port_with_transaction(ctx, id, port):
