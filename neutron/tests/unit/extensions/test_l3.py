@@ -1241,6 +1241,35 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           None,
                                           p['port']['id'])
 
+    def test_router_add_interface_dup_port(self):
+        '''This tests that if multiple routers add one port as their
+        interfaces. Only the first router's interface would be added
+        to this port. All the later requests would return exceptions.
+        '''
+        with self.router() as r1, self.router() as r2, self.network() as n:
+            with self.subnet(network=n) as s:
+                with self.port(subnet=s) as p:
+                    self._router_interface_action('add',
+                                                  r1['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+                    # mock out the sequential check
+                    plugin = 'neutron.db.l3_db.L3_NAT_dbonly_mixin'
+                    with mock.patch(plugin + '._check_router_port',
+                                    port_id=p['port']['id'],
+                                    device_id=r2['router']['id']) as checkport:
+                        checkport.return_value = p['port']
+                        self._router_interface_action('add',
+                                                      r2['router']['id'],
+                                                      None,
+                                                      p['port']['id'],
+                                                      exc.HTTPConflict.code)
+                    # clean-up
+                    self._router_interface_action('remove',
+                                                  r1['router']['id'],
+                                                  None,
+                                                  p['port']['id'])
+
     def _assert_body_port_id_and_update_port(self, body, mock_update_port,
                                              port_id, device_id):
         self.assertNotIn('port_id', body)
