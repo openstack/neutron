@@ -697,9 +697,14 @@ class BgpDbMixin(common_db.CommonDbMixin):
 
     def _get_dvr_fip_host_routes_by_bgp_speaker(self, context,
                                                 bgp_speaker_id):
+        router_attrs = l3_attrs_db.RouterExtraAttributes
         with context.session.begin(subtransactions=True):
             gw_query = self._get_gateway_query(context, bgp_speaker_id)
             fip_query = self._get_fip_query(context, bgp_speaker_id)
+
+            fip_query = fip_query.filter(
+                l3_db.FloatingIP.router_id == router_attrs.router_id,
+                router_attrs.distributed == sa.sql.true())
 
             #Create the join query
             join_query = self._join_fip_by_host_binding_to_agent_gateway(
