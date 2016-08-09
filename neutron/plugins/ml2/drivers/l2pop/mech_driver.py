@@ -41,6 +41,10 @@ class L2populationMechanismDriver(api.MechanismDriver,
         self.rpc_ctx = n_context.get_admin_context_without_session()
 
     def _get_port_fdb_entries(self, port):
+        # the port might be concurrently deleted
+        if not port or not port.get('fixed_ips'):
+            return []
+
         return [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
                                    ip_address=ip['ip_address'])
                 for ip in port['fixed_ips']]
