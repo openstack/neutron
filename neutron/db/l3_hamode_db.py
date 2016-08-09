@@ -565,6 +565,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             self._set_vr_id(context, router_db, ha_network)
         else:
             self._delete_ha_interfaces(context, router_db.id)
+            # always attempt to cleanup the network as the router is
+            # deleted. the core plugin will stop us if its in use
+            self.safe_delete_ha_network(context, ha_network,
+                                        router_db.tenant_id)
 
         self.schedule_router(context, router_id)
         router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
@@ -577,6 +581,26 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     def _delete_ha_network(self, context, net):
         admin_ctx = context.elevated()
         self._core_plugin.delete_network(admin_ctx, net.network_id)
+
+    def safe_delete_ha_network(self, context, ha_network, tenant_id):
+        try:
+            self._delete_ha_network(context, ha_network)
+        except (n_exc.NetworkNotFound,
+                orm.exc.ObjectDeletedError):
+            LOG.debug(
+                "HA network for tenant %s was already deleted.", tenant_id)
+        except sa.exc.InvalidRequestError:
+            LOG.info(_LI("HA network %s can not be deleted."),
+                     ha_network.network_id)
+        except n_exc.NetworkInUse:
+            # network is still in use, this is normal so we don't
+            # log anything
+            pass
+        else:
+            LOG.info(_LI("HA network %(network)s was deleted as "
+                         "no HA routers are present in tenant "
+                         "%(tenant)s."),
+                     {'network': ha_network.network_id, 'tenant': tenant_id})
 
     def delete_router(self, context, id):
         router_db = self._get_router(context, id)
@@ -598,26 +622,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
                 # always attempt to cleanup the network as the router is
                 # deleted. the core plugin will stop us if its in use
-                try:
-                    self._delete_ha_network(context, ha_network)
-                except (n_exc.NetworkNotFound,
-                        orm.exc.ObjectDeletedError):
-                    LOG.debug(
-                        "HA network for tenant %s was already deleted.",
-                        router_db.tenant_id)
-                except sa.exc.InvalidRequestError:
-                    LOG.info(_LI("HA network %s can not be deleted."),
-                             ha_network.network_id)
-                except n_exc.NetworkInUse:
-                    # network is still in use, this is normal so we don't
-                    # log anything
-                    pass
-                else:
-                    LOG.info(_LI("HA network %(network)s was deleted as "
-                                 "no HA routers are present in tenant "
-                                 "%(tenant)s."),
-                             {'network': ha_network.network_id,
-                              'tenant': router_db.tenant_id})
+                self.safe_delete_ha_network(context, ha_network,
+                                            router_db.tenant_id)
 
     def _unbind_ha_router(self, context, router_id):
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):
