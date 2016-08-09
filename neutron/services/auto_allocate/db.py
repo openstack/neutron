@@ -18,7 +18,6 @@ from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
-from sqlalchemy import sql
 
 from neutron._i18n import _, _LE
 from neutron.api.v2 import attributes
@@ -30,12 +29,11 @@ from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
-from neutron.db.models import external_net as ext_net_models
-from neutron.db import models_v2
-from neutron.db import standard_attr
 from neutron.extensions import l3
 from neutron.objects import auto_allocate as auto_allocate_obj
+from neutron.objects import base as base_obj
 from neutron.objects import exceptions as obj_exc
+from neutron.objects import network as net_obj
 from neutron.plugins.common import utils as p_utils
 from neutron.services.auto_allocate import exceptions
 
@@ -58,16 +56,20 @@ def _ensure_external_network_default_value_callback(
     is_default = request.get(IS_DEFAULT, False)
     if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE) and is_default:
         # ensure there is only one default external network at any given time
-        obj = (context.session.query(ext_net_models.ExternalNetwork).
-            filter_by(is_default=True)).first()
-        if obj and network['id'] != obj.network_id:
-            raise exceptions.DefaultExternalNetworkExists(
-                net_id=obj.network_id)
+        pager = base_obj.Pager(limit=1)
+        objs = net_obj.ExternalNetwork.get_objects(context,
+            _pager=pager, is_default=True)
+        if objs:
+            if objs[0] and network['id'] != objs[0].network_id:
+                raise exceptions.DefaultExternalNetworkExists(
+                    net_id=objs[0].network_id)
 
     # Reflect the status of the is_default on the create/update request
-    obj = (context.session.query(ext_net_models.ExternalNetwork).
-        filter_by(network_id=network['id']))
-    obj.update({IS_DEFAULT: is_default})
+    obj = net_obj.ExternalNetwork.get_object(context,
+                                             network_id=network['id'])
+    if obj:
+        obj.is_default = is_default
+        obj.update()
 
 
 class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
@@ -216,13 +218,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
     def _get_default_external_network(self, context):
         """Get the default external network for the deployment."""
-        with context.session.begin(subtransactions=True):
-            default_external_networks = (context.session.query(
-                ext_net_models.ExternalNetwork).
-                filter_by(is_default=sql.true()).
-                join(models_v2.Network).
-                join(standard_attr.StandardAttribute).
-                order_by(standard_attr.StandardAttribute.id).all())
+
+        default_external_networks = net_obj.ExternalNetwork.get_objects(
+            context, is_default=True)
 
         if not default_external_networks:
             LOG.error(_LE("Unable to find default external network "

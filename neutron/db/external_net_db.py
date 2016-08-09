@@ -17,7 +17,6 @@ from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
-from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
 
 from neutron._i18n import _
@@ -28,12 +27,12 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import _utils as db_utils
 from neutron.db import db_base_plugin_v2
-from neutron.db.models import external_net as ext_net_models
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import external_net
 from neutron.extensions import rbac as rbac_ext
+from neutron.objects import network as net_obj
 
 
 DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
@@ -79,13 +78,8 @@ class External_net_db_mixin(object):
         '_network_result_filter_hook')
 
     def _network_is_external(self, context, net_id):
-        try:
-            context.session.query(
-                ext_net_models.ExternalNetwork).filter_by(
-                    network_id=net_id).one()
-            return True
-        except exc.NoResultFound:
-            return False
+        return net_obj.ExternalNetwork.objects_exist(
+            context, network_id=net_id)
 
     def _extend_network_dict_l3(self, network_res, network_db):
         # Comparing with None for converting uuid into bool
@@ -104,8 +98,8 @@ class External_net_db_mixin(object):
             return
 
         if external:
-            context.session.add(
-                ext_net_models.ExternalNetwork(network_id=net_data['id']))
+            net_obj.ExternalNetwork(
+                context, network_id=net_data['id']).create()
             context.session.add(rbac_db.NetworkRBAC(
                   object_id=net_data['id'], action='access_as_external',
                   target_tenant='*', tenant_id=net_data['tenant_id']))
@@ -138,8 +132,8 @@ class External_net_db_mixin(object):
             return
 
         if new_value:
-            context.session.add(
-                ext_net_models.ExternalNetwork(network_id=net_id))
+            net_obj.ExternalNetwork(
+                context, network_id=net_id).create()
             net_data[external_net.EXTERNAL] = True
             if allow_all:
                 context.session.add(rbac_db.NetworkRBAC(
@@ -155,9 +149,8 @@ class External_net_db_mixin(object):
             if port:
                 raise external_net.ExternalNetworkInUse(net_id=net_id)
 
-            for edb in (context.session.query(ext_net_models.ExternalNetwork).
-                        filter_by(network_id=net_id)):
-                context.session.delete(edb)
+            net_obj.ExternalNetwork.delete_objects(
+                context, network_id=net_id)
             for rbdb in (context.session.query(rbac_db.NetworkRBAC).filter_by(
                          object_id=net_id, action='access_as_external')):
                 context.session.delete(rbdb)
@@ -226,10 +219,8 @@ class External_net_db_mixin(object):
             # deleting the wildcard is okay as long as the tenants with
             # attached routers have their own entries and the network is
             # not the default external network.
-            is_default = context.session.query(
-                ext_net_models.ExternalNetwork).filter_by(
-                    network_id=policy['object_id'], is_default=True).count()
-            if is_default:
+            if net_obj.ExternalNetwork.objects_exist(
+                    context, network_id=policy['object_id'], is_default=True):
                 msg = _("Default external networks must be shared to "
                         "everyone.")
                 raise rbac_ext.RbacPolicyInUse(object_id=policy['object_id'],

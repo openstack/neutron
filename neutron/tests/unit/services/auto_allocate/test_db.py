@@ -25,10 +25,14 @@ from neutron.services.auto_allocate import exceptions
 from neutron.tests.unit import testlib_api
 
 
-class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
+DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+
+class AutoAllocateTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(AutoAllocateTestCase, self).setUp()
+        self.setup_coreplugin(core_plugin=DB_PLUGIN_KLASS)
         self.ctx = context.get_admin_context()
         self.mixin = db.AutoAllocatedTopologyMixin()
         self.mixin._l3_plugin = mock.Mock()

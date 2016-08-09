@@ -32,7 +32,6 @@ import testtools
 from neutron.common import constants
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
-from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import l3 as l3_model
 from neutron.db import standard_attr
 from neutron import objects
@@ -1278,12 +1277,10 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def _create_external_network(self):
         test_network = self._create_network()
-        # TODO(manjeets) replace this with ext_net ovo
-        # once it is implemented
-        return obj_db_api.create_object(
-            self.context,
-            ext_net_model.ExternalNetwork,
-            {'network_id': test_network['id']})
+        ext_net = net_obj.ExternalNetwork(self.context,
+            network_id=test_network['id'])
+        ext_net.create()
+        return ext_net
 
     def _create_test_fip(self):
         fake_fip = '172.23.3.0'

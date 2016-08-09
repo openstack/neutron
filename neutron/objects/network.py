@@ -17,6 +17,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import api as db_api
 from neutron.db.models import dns as dns_models
+from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.db.port_security import models as ps_models
@@ -74,6 +75,23 @@ class NetworkPortSecurity(base_ps._PortSecurity):
     db_model = ps_models.NetworkSecurityBinding
 
     fields_need_translation = {'id': 'network_id'}
+
+
+@obj_base.VersionedObjectRegistry.register
+class ExternalNetwork(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = ext_net_model.ExternalNetwork
+
+    foreign_keys = {'Network': {'network_id': 'id'}}
+
+    primary_keys = ['network_id']
+
+    fields = {
+        'network_id': common_types.UUIDField(),
+        'is_default': obj_fields.BooleanField(default=False),
+    }
 
 
 @obj_base.VersionedObjectRegistry.register
