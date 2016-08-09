@@ -390,6 +390,9 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                              self._filter_bindings(context, down_bindings)]
             agents = self.get_agents_db(
                 context, {'agent_type': [constants.AGENT_TYPE_DHCP]})
+            if not agents:
+                # No agents configured so nothing to do.
+                return
             active_agents = [agent for agent in agents if
                              self.is_eligible_agent(context, True, agent)]
             if not active_agents:
