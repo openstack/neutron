@@ -58,7 +58,11 @@ class IpConntrackManager(object):
                 ip_cmd = [str(net.ip), '-w', zone_id]
                 if remote_ip and str(
                         netaddr.IPNetwork(remote_ip).version) in ethertype:
-                    ip_cmd.extend(['-s', str(remote_ip)])
+                    if rule.get('direction') == 'ingress':
+                        direction = '-s'
+                    else:
+                        direction = '-d'
+                    ip_cmd.extend([direction, str(remote_ip)])
                 conntrack_cmds.add(tuple(cmd + ip_cmd))
         return conntrack_cmds
 
