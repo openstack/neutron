@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 from neutron import manager
 from neutron.plugins.common import utils
 from neutron.services.trunk import constants
+from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
 from neutron.services.trunk import rules
@@ -119,6 +120,9 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
         super(TrunkPortValidatorTestCase, self).setUp()
+        self.drivers_patch = mock.patch.object(drivers, 'register').start()
+        self.compat_patch = mock.patch.object(
+            trunk_plugin.TrunkPlugin, 'check_compatibility').start()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
         self.trunk_plugin.add_segmentation_type(constants.VLAN,
                                                 utils.is_valid_vlan_tag)
