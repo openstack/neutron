@@ -464,7 +464,7 @@ and the port on br-int.
 Implementation Trunk Bridge (Option C)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This implementation is based on this `_etherpad <https://etherpad.openstack.org/p/trunk-bridge-tagged-patch-experiment>`.
+This implementation is based on this `etherpad <https://etherpad.openstack.org/p/trunk-bridge-tagged-patch-experiment>`_.
 Credits to Bence Romsics.
 The option use_veth_interconnection=true won't be supported, it will probably be deprecated soon,
 see [1].
