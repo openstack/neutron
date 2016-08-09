@@ -908,7 +908,7 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
     def _test_create_agent_fdb(self, fdb_network_ports, agent_ips):
         mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
         tunnel_network_ports, tunnel_agent = (
-            self._mock_network_ports(HOST + '1', None))
+            self._mock_network_ports(HOST + '1', [None]))
         agent_ips[tunnel_agent] = '10.0.0.1'
 
         def agent_ip_side_effect(agent):
@@ -929,17 +929,17 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                                                  segment,
                                                  'network_id')
 
-    def _mock_network_ports(self, host_name, binding):
+    def _mock_network_ports(self, host_name, bindings):
         agent = mock.Mock()
         agent.host = host_name
-        return [(binding, agent)], agent
+        return [(binding, agent) for binding in bindings], agent
 
     def test_create_agent_fdb(self):
         binding = mock.Mock()
         binding.port = {'mac_address': '00:00:DE:AD:BE:EF',
                         'fixed_ips': [{'ip_address': '1.1.1.1'}]}
         fdb_network_ports, fdb_agent = (
-            self._mock_network_ports(HOST + '2', binding))
+            self._mock_network_ports(HOST + '2', [binding]))
         agent_ips = {fdb_agent: '20.0.0.1'}
 
         agent_fdb = self._test_create_agent_fdb(fdb_network_ports,
@@ -967,6 +967,33 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                            'ports':
                            {'10.0.0.1':
                             [constants.FLOODING_ENTRY]}}
+        self.assertEqual(expected_result, result)
+
+    def test_create_agent_fdb_concurrent_port_deletion(self):
+        binding = mock.Mock()
+        binding.port = {'mac_address': '00:00:DE:AD:BE:EF',
+                        'fixed_ips': [{'ip_address': '1.1.1.1'}]}
+        binding2 = mock.Mock()
+        # the port was deleted
+        binding2.port = None
+        fdb_network_ports, fdb_agent = (
+            self._mock_network_ports(HOST + '2', [binding, binding2]))
+        agent_ips = {fdb_agent: '20.0.0.1'}
+
+        agent_fdb = self._test_create_agent_fdb(fdb_network_ports,
+                                                agent_ips)
+        result = agent_fdb['network_id']
+
+        expected_result = {'segment_id': 1,
+                           'network_type': 'vxlan',
+                           'ports':
+                           {'10.0.0.1':
+                            [constants.FLOODING_ENTRY],
+                            '20.0.0.1':
+                            [constants.FLOODING_ENTRY,
+                             l2pop_rpc.PortInfo(
+                                 mac_address='00:00:DE:AD:BE:EF',
+                                 ip_address='1.1.1.1')]}}
         self.assertEqual(expected_result, result)
 
     def test_update_port_precommit_mac_address_changed_raises(self):
