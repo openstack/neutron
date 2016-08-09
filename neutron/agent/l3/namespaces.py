@@ -13,9 +13,12 @@
 #    under the License.
 #
 
-from oslo_log import log as logging
+import functools
 
-from neutron._i18n import _LE
+from oslo_log import log as logging
+from oslo_utils import excutils
+
+from neutron._i18n import _LE, _LW
 from neutron.agent.linux import ip_lib
 
 LOG = logging.getLogger(__name__)
@@ -58,6 +61,25 @@ def get_id_from_ns_name(ns_name):
         return ns_name[dash_index + 1:]
 
 
+def check_ns_existence(f):
+    @functools.wraps(f)
+    def wrapped(self, *args, **kwargs):
+        if not self.exists():
+            LOG.warning(_LW('Namespace %(name)s does not exists. Skipping '
+                            '%(func)s'),
+                        {'name': self.name, 'func': f.__name__})
+            return
+        try:
+            return f(self, *args, **kwargs)
+        except RuntimeError:
+            with excutils.save_and_reraise_exception() as ctx:
+                if not self.exists():
+                    LOG.debug('Namespace %(name)s was concurrently deleted',
+                              self.name)
+                    ctx.reraise = False
+    return wrapped
+
+
 class Namespace(object):
 
     def __init__(self, name, agent_conf, driver, use_ipv6):
@@ -98,6 +120,7 @@ class RouterNamespace(Namespace):
     def _get_ns_name(cls, router_id):
         return build_ns_name(NS_PREFIX, router_id)
 
+    @check_ns_existence
     def delete(self):
         ns_ip = ip_lib.IPWrapper(namespace=self.name)
         for d in ns_ip.get_devices(exclude_loopback=True):
