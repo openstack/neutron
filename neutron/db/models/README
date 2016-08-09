@@ -1,0 +1,4 @@
+This directory is designed to contain all SQLAlchemy models shipped with core
+Neutron. The expected directory structure is flat, meaning there should be no
+subdirectories. Module names should use singular forms for nouns (port.py, not
+ports.py).
