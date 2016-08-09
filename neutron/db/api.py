@@ -20,11 +20,13 @@ from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_db.sqlalchemy import enginefacade
+from oslo_log import log as logging
 from oslo_utils import excutils
 import osprofiler.sqlalchemy
 import six
 import sqlalchemy
 from sqlalchemy.orm import exc
+import traceback
 
 from neutron.common import exceptions
 from neutron.common import profiler  # noqa
@@ -35,6 +37,7 @@ context_manager.configure(sqlite_fk=True)
 _PROFILER_INITIALIZED = False
 
 MAX_RETRIES = 10
+LOG = logging.getLogger(__name__)
 
 
 def is_retriable(e):
@@ -48,12 +51,28 @@ def is_retriable(e):
 is_deadlock = moves.moved_function(is_retriable, 'is_deadlock', __name__,
                                    message='use "is_retriable" instead',
                                    version='newton', removal_version='ocata')
-retry_db_errors = oslo_db_api.wrap_db_retry(
+_retry_db_errors = oslo_db_api.wrap_db_retry(
     max_retries=MAX_RETRIES,
     retry_interval=0.1,
     inc_retry_interval=True,
     exception_checker=is_retriable
 )
+
+
+def retry_db_errors(f):
+    """Log retriable exceptions before retry to help debugging."""
+
+    @_retry_db_errors
+    @six.wraps(f)
+    def wrapped(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            with excutils.save_and_reraise_exception():
+                if is_retriable(e):
+                    LOG.debug("Retry wrapper got retriable exception: %s",
+                              traceback.format_exc())
+    return wrapped
 
 
 def reraise_as_retryrequest(f):
