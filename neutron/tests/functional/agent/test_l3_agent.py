@@ -1549,6 +1549,34 @@ class TestDvrRouter(L3AgentTestFramework):
         self.assertFalse(self._fixed_ip_rule_exists(router_ns, fixed_ip))
         self.assertTrue(self._fixed_ip_rule_exists(router_ns, new_fixed_ip))
 
+    def test_dvr_gateway_move_does_not_remove_redirect_rules(self):
+        """Test to validate snat redirect rules not cleared with snat move."""
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info(enable_snat=True)
+        router_info[l3_constants.FLOATINGIP_KEY] = []
+        router_info[l3_constants.FLOATINGIP_AGENT_INTF_KEY] = []
+        router1 = self.manage_router(self.agent, router_info)
+        router1.router['gw_port_host'] = ""
+        self.agent._process_updated_router(router1.router)
+        router_updated = self.agent.router_info[router1.router['id']]
+        self.assertTrue(self._namespace_exists(router_updated.ns_name))
+        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
+        ip4_rules_list = ns_ipr.rule.list_rules(l3_constants.IP_VERSION_4)
+        self.assertEqual(4, len(ip4_rules_list))
+        # IPRule list should have 4 entries.
+        # Three entries from 'default', 'main' and 'local' table.
+        # The remaining 1 is for the router interfaces(csnat port).
+        default_rules_list_count = 0
+        interface_rules_list_count = 0
+        for ip_rule in ip4_rules_list:
+            tbl_index = ip_rule['table']
+            if tbl_index in ['local', 'default', 'main']:
+                default_rules_list_count = default_rules_list_count + 1
+            else:
+                interface_rules_list_count = interface_rules_list_count + 1
+        self.assertEqual(3, default_rules_list_count)
+        self.assertEqual(1, interface_rules_list_count)
+
     def _get_fixed_ip_rule_priority(self, namespace, fip):
         iprule = ip_lib.IPRule(namespace)
         lines = iprule.rule._as_root([4], ['show']).splitlines()
