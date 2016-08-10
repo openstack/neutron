@@ -50,6 +50,7 @@ VIF_DETAILS_VLAN = 'vlan'
 VIF_DETAILS_MACVTAP_SOURCE = 'macvtap_source'
 VIF_DETAILS_MACVTAP_MODE = 'macvtap_mode'
 VIF_DETAILS_PHYSICAL_INTERFACE = 'physical_interface'
+VIF_DETAILS_BRIDGE_NAME = 'bridge_name'
 
 # The keys below are used in the VIF_DETAILS attribute to convey
 # information related to the configuration of the vhost-user VIF driver.

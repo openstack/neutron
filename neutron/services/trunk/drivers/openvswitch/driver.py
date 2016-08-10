@@ -15,9 +15,14 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
 from neutron.extensions import portbindings
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
+    constants as agent_consts)
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.drivers import base
+from neutron.services.trunk import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -53,4 +58,15 @@ def register():
     """Register the driver."""
     global DRIVER
     DRIVER = OVSDriver.create()
+    # To set the bridge_name in a parent port's vif_details.
+    registry.subscribe(vif_details_bridge_name_handler,
+                       agent_consts.OVS_BRIDGE_NAME,
+                       events.BEFORE_READ)
     LOG.debug('Open vSwitch trunk driver registered')
+
+
+def vif_details_bridge_name_handler(resource, event, set_br_name, **kwargs):
+    """If port is a trunk port, generate a bridge_name for its vif_details."""
+    port = kwargs['port']
+    if 'trunk_details' in port:
+        set_br_name(utils.gen_trunk_br_name(port['trunk_details']['trunk_id']))

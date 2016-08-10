@@ -16,10 +16,14 @@
 from neutron_lib import constants
 from oslo_config import cfg
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import driver_api as api
-from neutron.plugins.ml2.drivers.openvswitch.mech_driver \
-    import mech_openvswitch
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
+    constants as a_const)
+from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
+    mech_openvswitch)
 from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
 
@@ -58,6 +62,19 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
                               'SECURITYGROUP')
         self.driver = mech_openvswitch.OpenvswitchMechanismDriver()
         self.driver.initialize()
+
+    def test__set_bridge_name_notify(self):
+
+        def fake_callback(resource, event, trigger, **kwargs):
+            trigger('fake-br-name')
+
+        registry.subscribe(fake_callback, a_const.OVS_BRIDGE_NAME,
+                           events.BEFORE_READ)
+        fake_vif_details = {}
+        self.driver._set_bridge_name('foo', fake_vif_details)
+        self.assertEqual(
+            'fake-br-name',
+            fake_vif_details.get(portbindings.VIF_DETAILS_BRIDGE_NAME, ''))
 
 
 class OpenvswitchMechanismSGDisabledBaseTestCase(
