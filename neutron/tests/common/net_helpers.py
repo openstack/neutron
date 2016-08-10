@@ -180,7 +180,12 @@ def _get_source_ports_from_ss_output(output):
     return ports
 
 
-def get_unused_port(used, start=1024, end=65535):
+def get_unused_port(used, start=1024, end=None):
+    if end is None:
+        port_range = utils.execute(
+            ['sysctl', '-n', 'net.ipv4.ip_local_port_range'])
+        end = int(port_range.split()[0]) - 1
+
     candidates = set(range(start, end + 1))
     return random.choice(list(candidates - used))
 

@@ -53,7 +53,7 @@ class PortAllocationTestCase(base.DietTestCase):
 
     def test_get_free_namespace_port(self):
         ss_output2 = ss_output
-        for p in range(1024, 65535):
+        for p in range(1024, 32767):
             ss_output2 += ss_output_template % p
 
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') \
@@ -63,4 +63,10 @@ class PortAllocationTestCase(base.DietTestCase):
             ipwrapper.return_value = m
             result = net_helpers.get_free_namespace_port(
                 n_const.PROTO_NAME_TCP)
-            self.assertEqual(65535, result)
+            self.assertEqual(32767, result)
+
+    def test_get_unused_port(self):
+        with mock.patch('neutron.agent.linux.utils.execute') as ex:
+            ex.return_value = "2048\t61000"
+            result = net_helpers.get_unused_port(set(range(1025, 2048)))
+            self.assertEqual(1024, result)
