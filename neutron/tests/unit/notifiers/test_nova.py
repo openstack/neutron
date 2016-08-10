@@ -22,11 +22,13 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
+from neutron.common import constants
 from neutron.db import models_v2
 from neutron.notifiers import nova
 from neutron.tests import base
 
 DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+DEVICE_OWNER_BAREMETAL = constants.DEVICE_OWNER_BAREMETAL_PREFIX + 'fake'
 
 
 class TestNovaNotify(base.BaseTestCase):
@@ -311,6 +313,21 @@ class TestNovaNotify(base.BaseTestCase):
         port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
         returned_obj = {'port':
                         {'device_owner': DEVICE_OWNER_COMPUTE,
+                         'id': port_id,
+                         'device_id': device_id}}
+
+        expected_event = {'server_uuid': device_id,
+                          'name': nova.VIF_DELETED,
+                          'tag': port_id}
+        event = self.nova_notifier.create_port_changed_event('delete_port',
+                                                             {}, returned_obj)
+        self.assertEqual(expected_event, event)
+
+    def test_delete_baremetal_port_notify(self):
+        device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
+        port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
+        returned_obj = {'port':
+                        {'device_owner': DEVICE_OWNER_BAREMETAL,
                          'id': port_id,
                          'device_id': device_id}}
 

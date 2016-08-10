@@ -142,6 +142,8 @@ DVR_FIP_LL_CIDR = '169.254.64.0/18'
 L3_HA_NET_CIDR = '169.254.192.0/18'
 METADATA_CIDR = '169.254.169.254/32'
 
+DEVICE_OWNER_BAREMETAL_PREFIX = "baremetal:"
+
 # Neutron-lib migration shim. This will wrap any constants that are moved
 # to that library in a deprecation warning, until they can be updated to
 # import directly from their new location.
