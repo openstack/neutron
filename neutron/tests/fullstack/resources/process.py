@@ -21,6 +21,7 @@ import signal
 import fixtures
 from neutronclient.common import exceptions as nc_exc
 from neutronclient.v2_0 import client
+from oslo_log import log as logging
 from oslo_utils import fileutils
 
 from neutron.agent.linux import async_process
@@ -30,6 +31,8 @@ from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base as fullstack_base
+
+LOG = logging.getLogger(__name__)
 
 
 class ProcessFixture(fixtures.Fixture):
@@ -66,13 +69,28 @@ class ProcessFixture(fixtures.Fixture):
             cmd, run_as_root=run_as_root, namespace=self.namespace
         )
         self.process.start(block=True)
+        LOG.debug("Process started: %s", self.process_name)
 
-    def stop(self):
+    def stop(self, kill_signal=None):
+        kill_signal = kill_signal or self.kill_signal
         try:
-            self.process.stop(block=True, kill_signal=self.kill_signal)
+            self.process.stop(block=True, kill_signal=kill_signal)
         except async_process.AsyncProcessException as e:
             if "Process is not running" not in str(e):
                 raise
+        LOG.debug("Process stopped: %s", self.process_name)
+
+    def restart(self, executor=None):
+        def _restart():
+            self.stop()
+            self.start()
+
+        LOG.debug("Restarting process: %s", self.process_name)
+
+        if executor is None:
+            _restart()
+        else:
+            return executor.submit(_restart)
 
 
 class RabbitmqEnvironmentFixture(fixtures.Fixture):
@@ -101,7 +119,18 @@ class RabbitmqEnvironmentFixture(fixtures.Fixture):
         utils.execute(cmd, run_as_root=True)
 
 
-class NeutronServerFixture(fixtures.Fixture):
+class ServiceFixture(fixtures.Fixture):
+    def restart(self, executor=None):
+        return self.process_fixture.restart(executor=executor)
+
+    def start(self):
+        return self.process_fixture.start()
+
+    def stop(self, kill_signal=None):
+        return self.process_fixture.stop(kill_signal=kill_signal)
+
+
+class NeutronServerFixture(ServiceFixture):
 
     NEUTRON_SERVER = "neutron-server"
 
@@ -141,7 +170,7 @@ class NeutronServerFixture(fixtures.Fixture):
         return client.Client(auth_strategy="noauth", endpoint_url=url)
 
 
-class OVSAgentFixture(fixtures.Fixture):
+class OVSAgentFixture(ServiceFixture):
 
     NEUTRON_OVS_AGENT = "neutron-openvswitch-agent"
 
@@ -174,7 +203,7 @@ class OVSAgentFixture(fixtures.Fixture):
             kill_signal=signal.SIGTERM))
 
 
-class LinuxBridgeAgentFixture(fixtures.Fixture):
+class LinuxBridgeAgentFixture(ServiceFixture):
 
     NEUTRON_LINUXBRIDGE_AGENT = "neutron-linuxbridge-agent"
 
@@ -206,7 +235,7 @@ class LinuxBridgeAgentFixture(fixtures.Fixture):
         )
 
 
-class L3AgentFixture(fixtures.Fixture):
+class L3AgentFixture(ServiceFixture):
 
     NEUTRON_L3_AGENT = "neutron-l3-agent"
 
