@@ -1138,6 +1138,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 sys.exit(1)
             br = self.br_phys_cls(bridge)
             br.set_agent_uuid_stamp(self.agent_uuid_stamp)
+            br.set_secure_mode()
             br.setup_controllers(self.conf)
             if cfg.CONF.AGENT.drop_flows_on_start:
                 br.delete_flows()
