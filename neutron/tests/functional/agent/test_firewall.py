@@ -124,7 +124,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
             self.skipTest("Open vSwitch with conntrack is not installed "
                           "on this machine. To run tests for OVS/CT firewall,"
                           " please meet the requirements (kernel>=4.3, "
-                          "OVS>=2.5. More info at"
+                          "OVS>=2.5). More info at "
                           "https://github.com/openvswitch/ovs/blob/master/"
                           "FAQ.md")
         tester = self.useFixture(
