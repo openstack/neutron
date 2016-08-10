@@ -61,12 +61,22 @@ class ClientFixture(fixtures.Fixture):
 
         return self._create_resource(resource_type, spec)
 
-    def create_network(self, tenant_id, name=None, external=False):
+    def create_network(self, tenant_id, name=None, external=False,
+                       network_type=None, segmentation_id=None,
+                       physical_network=None):
         resource_type = 'network'
 
         name = name or utils.get_rand_name(prefix=resource_type)
         spec = {'tenant_id': tenant_id, 'name': name}
         spec['router:external'] = external
+
+        if segmentation_id is not None:
+            spec['provider:segmentation_id'] = segmentation_id
+        if network_type is not None:
+            spec['provider:network_type'] = network_type
+        if physical_network is not None:
+            spec['provider:physical_network'] = physical_network
+
         return self._create_resource(resource_type, spec)
 
     def create_subnet(self, tenant_id, network_id,
