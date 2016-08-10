@@ -65,7 +65,7 @@ def check_ns_existence(f):
     @functools.wraps(f)
     def wrapped(self, *args, **kwargs):
         if not self.exists():
-            LOG.warning(_LW('Namespace %(name)s does not exists. Skipping '
+            LOG.warning(_LW('Namespace %(name)s does not exist. Skipping '
                             '%(func)s'),
                         {'name': self.name, 'func': f.__name__})
             return
