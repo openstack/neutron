@@ -206,6 +206,7 @@ class TunnelTest(object):
 
         self.mock_map_tun_bridge_expected = [
             mock.call.create(),
+            mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
             mock.call.setup_default_table(),
             mock.call.port_exists('phy-%s' % self.MAP_TUN_BRIDGE),
@@ -664,6 +665,7 @@ class TunnelTestUseVethInterco(TunnelTest):
 
         self.mock_map_tun_bridge_expected = [
             mock.call.create(),
+            mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
             mock.call.setup_default_table(),
             mock.call.add_port(self.intb),

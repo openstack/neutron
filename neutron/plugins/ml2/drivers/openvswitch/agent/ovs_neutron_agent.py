@@ -1106,6 +1106,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # The bridge already exists, so create won't recreate it, but will
             # handle things like changing the datapath_type
             br.create()
+            br.set_secure_mode()
             br.setup_controllers(self.conf)
             if cfg.CONF.AGENT.drop_flows_on_start:
                 br.delete_flows()
