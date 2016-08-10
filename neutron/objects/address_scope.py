@@ -15,7 +15,7 @@
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.db import address_scope_db as models
+from neutron.db.models import address_scope as models
 from neutron.objects import base
 from neutron.objects import common_types
 
