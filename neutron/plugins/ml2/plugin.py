@@ -19,7 +19,6 @@ from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
 from oslo_db import exception as os_db_exception
 from oslo_log import helpers as log_helpers
 from oslo_log import log
@@ -1199,8 +1198,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             attrs['status'] = const.PORT_STATUS_DOWN
 
         session = context.session
-        with db_api.exc_to_retry(os_db_exception.DBDuplicateEntry),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
             port_db = self.create_port_db(context, port)
             result = self._make_port_dict(port_db, process_extensions=False)
@@ -1345,8 +1343,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         bound_mech_contexts = []
 
-        with db_api.exc_to_retry(os_db_exception.DBDuplicateEntry),\
-                session.begin(subtransactions=True):
+        with session.begin(subtransactions=True):
             port_db, binding = db.get_locked_port_and_binding(session, id)
             if not port_db:
                 raise exc.PortNotFound(port_id=id)
@@ -1655,12 +1652,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return self._bind_port_if_needed(port_context)
 
-    @oslo_db_api.wrap_db_retry(
-        max_retries=db_api.MAX_RETRIES, retry_on_request=True,
-        exception_checker=lambda e: isinstance(e, (sa_exc.StaleDataError,
-                                                   os_db_exception.DBDeadlock))
-    )
     @utils.transaction_guard
+    @db_api.retry_db_errors
     def update_port_status(self, context, port_id, status, host=None,
                            network=None):
         """
