@@ -13,6 +13,7 @@
 #    under the License.
 
 import errno
+import inspect
 import os.path
 import re
 import sys
@@ -24,6 +25,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from oslo_log import log as logging
 import six
+import testscenarios
 import testtools
 
 from neutron.common import exceptions as n_exc
@@ -33,6 +35,8 @@ from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.unit import tests
+
+load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class TestParseMappings(base.BaseTestCase):
@@ -685,43 +689,65 @@ class TestSafeDecodeUtf8(base.BaseTestCase):
 
 
 class TestPortRuleMasking(base.BaseTestCase):
+    scenarios = [
+        ('Test 1 (networking-ovs-dpdk)',
+         {'port_min': 5,
+          'port_max': 12,
+          'expected': ['0x0005', '0x0006/0xfffe', '0x0008/0xfffc', '0x000c']}
+         ),
+        ('Test 2 (networking-ovs-dpdk)',
+         {'port_min': 20,
+          'port_max': 130,
+          'expected': ['0x0014/0xfffc', '0x0018/0xfff8',
+                       '0x0020/0xffe0', '0x0040/0xffc0', '0x0080/0xfffe',
+                       '0x0082']}),
+        ('Test 3 (networking-ovs-dpdk)',
+         {'port_min': 4501,
+          'port_max': 33057,
+          'expected': ['0x1195', '0x1196/0xfffe', '0x1198/0xfff8',
+                       '0x11a0/0xffe0', '0x11c0/0xffc0', '0x1200/0xfe00',
+                       '0x1400/0xfc00', '0x1800/0xf800', '0x2000/0xe000',
+                       '0x4000/0xc000', '0x8000/0xff00', '0x8100/0xffe0',
+                       '0x8120/0xfffe']}),
+        ('Test port_max == 2^k-1',
+         {'port_min': 101,
+          'port_max': 127,
+          'expected': ['0x0065', '0x0066/0xfffe', '0x0068/0xfff8',
+                       '0x0070/0xfff0']}),
+        ('Test single even port',
+         {'port_min': 22,
+          'port_max': 22,
+          'expected': ['0x0016']}),
+        ('Test single odd port',
+         {'port_min': 5001,
+          'port_max': 5001,
+          'expected': ['0x1389']}),
+        ('Test full interval',
+         {'port_min': 0,
+          'port_max': 7,
+          'expected': ['0x0000/0xfff8']}),
+        ('Test 2^k interval',
+         {'port_min': 8,
+          'port_max': 15,
+          'expected': ['0x0008/0xfff8']}),
+        ('Test full port range',
+         {'port_min': 0,
+          'port_max': 65535,
+          'expected': ['0x0000/0x0000']}),
+        ('Test bad values',
+         {'port_min': 12,
+          'port_max': 5,
+          'expected': ValueError}),
+    ]
+
     def test_port_rule_masking(self):
-        compare_rules = lambda x, y: set(x) == set(y) and len(x) == len(y)
-
-        # Test 1.
-        port_min = 5
-        port_max = 12
-        expected_rules = ['0x0005', '0x000c', '0x0006/0xfffe',
-                          '0x0008/0xfffc']
-        rules = utils.port_rule_masking(port_min, port_max)
-        self.assertTrue(compare_rules(rules, expected_rules))
-
-        # Test 2.
-        port_min = 20
-        port_max = 130
-        expected_rules = ['0x0014/0xfffe', '0x0016/0xfffe', '0x0018/0xfff8',
-                          '0x0020/0xffe0', '0x0040/0xffc0', '0x0080/0xfffe',
-                          '0x0082']
-        rules = utils.port_rule_masking(port_min, port_max)
-        self.assertEqual(expected_rules, rules)
-
-        # Test 3.
-        port_min = 4501
-        port_max = 33057
-        expected_rules = ['0x1195', '0x1196/0xfffe', '0x1198/0xfff8',
-                          '0x11a0/0xffe0', '0x11c0/0xffc0', '0x1200/0xfe00',
-                          '0x1400/0xfc00', '0x1800/0xf800', '0x2000/0xe000',
-                          '0x4000/0xc000', '0x8021/0xff00', '0x8101/0xffe0',
-                          '0x8120/0xfffe']
-
-        rules = utils.port_rule_masking(port_min, port_max)
-        self.assertEqual(expected_rules, rules)
-
-    def test_port_rule_masking_min_higher_than_max(self):
-        port_min = 10
-        port_max = 5
-        with testtools.ExpectedException(ValueError):
-            utils.port_rule_masking(port_min, port_max)
+        if (inspect.isclass(self.expected)
+                and issubclass(self.expected, Exception)):
+            with testtools.ExpectedException(self.expected):
+                utils.port_rule_masking(self.port_min, self.port_max)
+        else:
+            rules = utils.port_rule_masking(self.port_min, self.port_max)
+            self.assertItemsEqual(self.expected, rules)
 
 
 class TestAuthenticEUI(base.BaseTestCase):
