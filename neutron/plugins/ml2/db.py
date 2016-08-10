@@ -23,8 +23,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LE
+from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
-from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
 from neutron.extensions import portbindings
 from neutron import manager
@@ -209,7 +209,7 @@ def get_ports_and_sgs(context, port_ids):
 
 def get_sg_ids_grouped_by_port(context, port_ids):
     sg_ids_grouped_by_port = {}
-    sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
+    sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
 
     with context.session.begin(subtransactions=True):
         # partial UUIDs must be individually matched with startswith.
@@ -223,8 +223,9 @@ def get_sg_ids_grouped_by_port(context, port_ids):
             or_criteria.append(models_v2.Port.id.in_(full_uuids))
 
         query = context.session.query(
-            models_v2.Port, sg_db.SecurityGroupPortBinding.security_group_id)
-        query = query.outerjoin(sg_db.SecurityGroupPortBinding,
+            models_v2.Port,
+            sg_models.SecurityGroupPortBinding.security_group_id)
+        query = query.outerjoin(sg_models.SecurityGroupPortBinding,
                                 models_v2.Port.id == sg_binding_port)
         query = query.filter(or_(*or_criteria))
 
