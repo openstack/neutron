@@ -559,19 +559,30 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
     def remove_interface(self, bridge_name, interface_name):
         bridge_device = bridge_lib.BridgeDevice(bridge_name)
         if bridge_device.exists():
-            if not bridge_lib.is_bridged_interface(interface_name):
+            if not bridge_device.owns_interface(interface_name):
                 return True
             LOG.debug("Removing device %(interface_name)s from bridge "
                       "%(bridge_name)s",
                       {'interface_name': interface_name,
                        'bridge_name': bridge_name})
-            if bridge_device.delif(interface_name):
-                return False
-            LOG.debug("Done removing device %(interface_name)s from bridge "
-                      "%(bridge_name)s",
-                      {'interface_name': interface_name,
-                       'bridge_name': bridge_name})
-            return True
+            try:
+                bridge_device.delif(interface_name)
+                LOG.debug("Done removing device %(interface_name)s from "
+                          "bridge %(bridge_name)s",
+                          {'interface_name': interface_name,
+                           'bridge_name': bridge_name})
+                return True
+            except RuntimeError:
+                with excutils.save_and_reraise_exception() as ctxt:
+                    if not bridge_device.owns_interface(interface_name):
+                        # the exception was likely a side effect of the tap
+                        # being deleted by some other agent during handling
+                        ctxt.reraise = False
+                        LOG.debug("Cannot remove %(interface_name)s from "
+                                  "%(bridge_name)s. It is not on the bridge.",
+                                  {'interface_name': interface_name,
+                                   'bridge_name': bridge_name})
+                        return False
         else:
             LOG.debug("Cannot remove device %(interface_name)s bridge "
                       "%(bridge_name)s does not exist",

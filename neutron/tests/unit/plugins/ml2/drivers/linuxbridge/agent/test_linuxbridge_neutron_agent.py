@@ -706,24 +706,35 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_remove_interface(self):
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
-                mock.patch.object(bridge_lib,
-                                  'is_bridged_interface') as isdev_fn,\
+                mock.patch.object(bridge_lib.BridgeDevice,
+                                  'owns_interface') as owns_fn,\
                 mock.patch.object(bridge_lib.BridgeDevice,
                                   "delif") as delif_fn:
             de_fn.return_value = False
             self.assertFalse(self.lbm.remove_interface("br0", "eth0"))
-            self.assertFalse(isdev_fn.called)
+            self.assertFalse(owns_fn.called)
 
             de_fn.return_value = True
-            isdev_fn.return_value = False
+            owns_fn.return_value = False
             self.assertTrue(self.lbm.remove_interface("br0", "eth0"))
-
-            isdev_fn.return_value = True
-            delif_fn.return_value = True
-            self.assertFalse(self.lbm.remove_interface("br0", "eth0"))
 
             delif_fn.return_value = False
             self.assertTrue(self.lbm.remove_interface("br0", "eth0"))
+
+    def test_remove_interface_not_on_bridge(self):
+        bridge_device = mock.Mock()
+        with mock.patch.object(bridge_lib, "BridgeDevice",
+                               return_value=bridge_device):
+            bridge_device.exists.return_value = True
+            bridge_device.delif.side_effect = RuntimeError
+
+            bridge_device.owns_interface.side_effect = [True, False]
+            self.lbm.remove_interface("br0", 'tap0')
+            self.assertEqual(2, bridge_device.owns_interface.call_count)
+
+            bridge_device.owns_interface.side_effect = [True, True]
+            self.assertRaises(RuntimeError,
+                              self.lbm.remove_interface, "br0", 'tap0')
 
     def test_delete_interface(self):
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
