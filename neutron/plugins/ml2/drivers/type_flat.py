@@ -13,16 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
+
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
 import six
-import sqlalchemy as sa
 
 from neutron._i18n import _, _LI, _LW
+from neutron.common import _deprecate
 from neutron.common import exceptions as n_exc
-from neutron.db import model_base
+from neutron.db.models.plugins.ml2 import flatallocation as type_flat_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import helpers
@@ -39,19 +41,6 @@ flat_opts = [
 ]
 
 cfg.CONF.register_opts(flat_opts, "ml2_type_flat")
-
-
-class FlatAllocation(model_base.BASEV2):
-    """Represent persistent allocation state of a physical network.
-
-    If a record exists for a physical network, then that physical
-    network has been allocated as a flat network.
-    """
-
-    __tablename__ = 'ml2_flat_allocations'
-
-    physical_network = sa.Column(sa.String(64), nullable=False,
-                                 primary_key=True)
 
 
 class FlatTypeDriver(helpers.BaseTypeDriver):
@@ -114,7 +103,8 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
             try:
                 LOG.debug("Reserving flat network on physical "
                           "network %s", physical_network)
-                alloc = FlatAllocation(physical_network=physical_network)
+                alloc = type_flat_model.FlatAllocation(
+                    physical_network=physical_network)
                 alloc.save(session)
             except db_exc.DBDuplicateEntry:
                 raise n_exc.FlatNetworkInUse(
@@ -129,7 +119,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
     def release_segment(self, session, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
         with session.begin(subtransactions=True):
-            count = (session.query(FlatAllocation).
+            count = (session.query(type_flat_model.FlatAllocation).
                      filter_by(physical_network=physical_network).
                      delete())
         if count:
@@ -147,3 +137,9 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
         if physical_network in self.physnet_mtus:
             mtu.append(int(self.physnet_mtus[physical_network]))
         return min(mtu) if mtu else 0
+
+
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_OLD_REF = sys.modules[__name__]
+sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), type_flat_model)
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
