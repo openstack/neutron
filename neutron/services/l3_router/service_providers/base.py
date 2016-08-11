@@ -37,7 +37,7 @@ MANDATORY = _FeatureFlag(supports=True, requires=True)
 
 
 class L3ServiceProvider(object):
-    """Base class for L3 service providers.
+    """Base class for L3 service provider drivers.
 
     On __init__ this will be given a handle to the l3 plugin. It is then the
     responsibility of the driver to subscribe to the events it is interested
