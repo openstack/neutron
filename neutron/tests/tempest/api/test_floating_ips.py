@@ -41,6 +41,20 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         for i in range(2):
             cls.create_port(cls.network)
 
+    @test.idempotent_id('f6a0fb6c-cb64-4b81-b0d5-f41d8f69d22d')
+    def test_blank_update_clears_association(self):
+        # originally the floating IP had no attributes other than its
+        # association, so an update with an empty body was a signal to
+        # clear the association. This test ensures we maintain that behavior.
+        body = self.client.create_floatingip(
+            floating_network_id=self.ext_net_id,
+            port_id=self.ports[0]['id'],
+            description='d1'
+        )['floatingip']
+        self.assertEqual(self.ports[0]['id'], body['port_id'])
+        body = self.client.update_floatingip(body['id'])['floatingip']
+        self.assertFalse(body['port_id'])
+
     @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442641ffff')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")
