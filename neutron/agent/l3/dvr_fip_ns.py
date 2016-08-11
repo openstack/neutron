@@ -132,13 +132,13 @@ class FipNamespace(namespaces.Namespace):
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
 
     def create(self):
-        # TODO(Carl) Get this functionality from mlavelle's namespace baseclass
         LOG.debug("DVR: add fip namespace: %s", self.name)
-        ip_wrapper_root = ip_lib.IPWrapper()
-        ip_wrapper = ip_wrapper_root.ensure_namespace(self.get_name())
+        # parent class will ensure the namespace exists and turn-on forwarding
+        super(FipNamespace, self).create()
         # Somewhere in the 3.19 kernel timeframe ip_nonlocal_bind was
         # changed to be a per-namespace attribute.  To be backwards
         # compatible we need to try both if at first we fail.
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.name)
         try:
             ip_wrapper.netns.execute(['sysctl',
                                       '-w',
@@ -149,15 +149,10 @@ class FipNamespace(namespaces.Namespace):
             LOG.debug('DVR: fip namespace (%s) does not support setting '
                       'net.ipv4.ip_nonlocal_bind, trying in root namespace',
                       self.name)
-            ip_wrapper_root.netns.execute(['sysctl',
-                                           '-w',
-                                           'net.ipv4.ip_nonlocal_bind=1'],
-                                          run_as_root=True)
-
-        ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
-        if self.use_ipv6:
-            ip_wrapper.netns.execute(['sysctl', '-w',
-                                      'net.ipv6.conf.all.forwarding=1'])
+            self.ip_wrapper_root.netns.execute(['sysctl',
+                                                '-w',
+                                                'net.ipv4.ip_nonlocal_bind=1'],
+                                               run_as_root=True)
 
         # no connection tracking needed in fip namespace
         self._iptables_manager.ipv4['raw'].add_rule('PREROUTING',
