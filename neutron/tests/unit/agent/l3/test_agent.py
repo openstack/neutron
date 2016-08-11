@@ -1872,7 +1872,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         self.mock_driver.unplug.assert_called_with(
             stale_devnames[0],
-            bridge="br-ex",
+            bridge="",
             namespace=ri.ns_name,
             prefix=l3_agent.EXTERNAL_DEV_PREFIX)
 
@@ -2053,6 +2053,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._test_process_routers_update_router_deleted(True)
 
     def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
+        self.conf.set_override('external_network_bridge', 'br-ex')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_external_network_id.return_value = 'aaa'
 
@@ -2081,6 +2082,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(self.plugin_api.get_external_network_id.called)
 
     def test_process_router_if_compatible_with_stale_cached_ext_net(self):
+        self.conf.set_override('external_network_bridge', 'br-ex')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_external_network_id.return_value = 'aaa'
         agent.target_ex_net_id = 'bbb'
@@ -2096,6 +2098,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent.context)
 
     def test_process_router_if_compatible_w_no_ext_net_and_2_net_plugin(self):
+        self.conf.set_override('external_network_bridge', 'br-ex')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 
         router = {'id': _uuid(),
@@ -2137,7 +2140,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'external_gateway_info': {'network_id': 'aaa'}}
 
         agent.router_info = {}
-        self.conf.set_override('external_network_bridge', '')
         agent._process_router_if_compatible(router)
         self.assertIn(router['id'], agent.router_info)
 

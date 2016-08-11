@@ -24,6 +24,7 @@ from neutron.agent.linux import ip_lib
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.tests import base as tests_base
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
@@ -95,6 +96,39 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         router.process(self.agent)
 
         self.assertIsNone(device.route.get_gateway())
+
+    def _make_bridge(self):
+        bridge = framework.get_ovs_bridge(tests_base.get_rand_name())
+        bridge.create()
+        self.addCleanup(bridge.destroy)
+        return bridge
+
+    def test_external_network_bridge_change(self):
+        bridge1, bridge2 = self._make_bridge(), self._make_bridge()
+        self.agent.conf.set_override('external_network_bridge',
+                                     bridge1.br_name)
+        router_info = self.generate_router_info(False)
+        router = self.manage_router(self.agent, router_info)
+        gw_port = router.router['gw_port']
+        gw_inf_name = router.get_external_device_name(gw_port['id'])
+
+        self.assertIn(gw_inf_name,
+                      [v.port_name for v in bridge1.get_vif_ports()])
+        # changeing the external_network_bridge should have no impact since
+        # the interface exists.
+        self.agent.conf.set_override('external_network_bridge',
+                                     bridge2.br_name)
+        self.manage_router(self.agent, router_info)
+        self.assertIn(gw_inf_name,
+                      [v.port_name for v in bridge1.get_vif_ports()])
+        self.assertNotIn(gw_inf_name,
+                         [v.port_name for v in bridge2.get_vif_ports()])
+        namespaces.Namespace.delete(router.router_namespace)
+        self.manage_router(self.agent, router_info)
+        self.assertIn(gw_inf_name,
+                      [v.port_name for v in bridge2.get_vif_ports()])
+        self.assertNotIn(gw_inf_name,
+                         [v.port_name for v in bridge1.get_vif_ports()])
 
     def test_legacy_router_ns_rebuild(self):
         router_info = self.generate_router_info(False)
