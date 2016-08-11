@@ -64,8 +64,8 @@ class DriverController(object):
     @property
     def _flavor_plugin(self):
         if not hasattr(self, '_flavor_plugin_ref'):
-            self._flavor_plugin = manager.NeutronManager.get_service_plugins()[
-                constants.FLAVORS]
+            _service_plugins = manager.NeutronManager.get_service_plugins()
+            self._flavor_plugin_ref = _service_plugins[constants.FLAVORS]
         return self._flavor_plugin_ref
 
     def _set_router_provider(self, resource, event, trigger, context, router,

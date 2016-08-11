@@ -13,10 +13,13 @@
 #    under the License.
 
 import mock
+from mock import patch
 from neutron_lib import constants
 import testtools
 
 from neutron import context
+from neutron import manager
+from neutron.plugins.common import constants as p_cons
 from neutron.services.l3_router.service_providers import driver_controller
 from neutron.tests.unit import testlib_api
 
@@ -89,3 +92,11 @@ class TestDriverController(testlib_api.SqlTestCase):
             # if association was cleared, get_router will be called
             self.fake_l3.get_router.side_effect = ValueError
             self.dc._get_provider_for_router(self.ctx, body['id'])
+
+    @patch.object(manager.NeutronManager, "get_service_plugins")
+    def test__flavor_plugin(self, get_service_plugins):
+        _fake_flavor_plugin = mock.sentinel.fla_plugin
+        get_service_plugins.return_value = {p_cons.FLAVORS:
+                                            _fake_flavor_plugin}
+        _dc = driver_controller.DriverController(self.fake_l3)
+        self.assertEqual(_fake_flavor_plugin, _dc._flavor_plugin)
