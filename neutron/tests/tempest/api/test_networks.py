@@ -121,6 +121,22 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertEqual(project_id, new_net['project_id'])
         self.assertEqual(project_id, new_net['tenant_id'])
 
+    @test.idempotent_id('94e2a44c-3367-4253-8c2a-22deaf59e96c')
+    @test.requires_ext(extension="dns-integration",
+                       service="network")
+    def test_create_update_network_dns_domain(self):
+        domain1 = 'test.org.'
+        body = self.create_network(dns_domain=domain1)
+        self.assertEqual(domain1, body['dns_domain'])
+        net_id = body['id']
+        body = self.client.list_networks(id=net_id)['networks'][0]
+        self.assertEqual(domain1, body['dns_domain'])
+        domain2 = 'd.org.'
+        body = self.client.update_network(net_id, dns_domain=domain2)
+        self.assertEqual(domain2, body['network']['dns_domain'])
+        body = self.client.show_network(net_id)['network']
+        self.assertEqual(domain2, body['dns_domain'])
+
     @test.idempotent_id('6ae6d24f-9194-4869-9c85-c313cb20e080')
     def test_list_networks_fields(self):
         # Verify specific fields of the networks
