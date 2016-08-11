@@ -1241,6 +1241,21 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           None,
                                           p['port']['id'])
 
+    def test_router_add_interface_delete_port_after_failure(self):
+        with self.router() as r, self.subnet() as s:
+            plugin = manager.NeutronManager.get_plugin()
+            # inject a failure in the update port that happens at the end
+            # to ensure the port gets deleted
+            with mock.patch.object(
+                    plugin, 'update_port',
+                    side_effect=n_exc.InvalidInput(error_message='x')):
+                self._router_interface_action('add',
+                                              r['router']['id'],
+                                              s['subnet']['id'],
+                                              None,
+                                              exc.HTTPBadRequest.code)
+                self.assertFalse(plugin.get_ports(context.get_admin_context()))
+
     def test_router_add_interface_dup_port(self):
         '''This tests that if multiple routers add one port as their
         interfaces. Only the first router's interface would be added
@@ -1255,15 +1270,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   p['port']['id'])
                     # mock out the sequential check
                     plugin = 'neutron.db.l3_db.L3_NAT_dbonly_mixin'
-                    with mock.patch(plugin + '._check_router_port',
-                                    port_id=p['port']['id'],
-                                    device_id=r2['router']['id']) as checkport:
-                        checkport.return_value = p['port']
-                        self._router_interface_action('add',
-                                                      r2['router']['id'],
-                                                      None,
-                                                      p['port']['id'],
-                                                      exc.HTTPConflict.code)
+                    check_p = mock.patch(plugin + '._check_router_port',
+                                         port_id=p['port']['id'],
+                                         device_id=r2['router']['id'],
+                                         return_value=p['port'])
+                    checkport = check_p.start()
+                    # do regular checkport after first skip
+                    checkport.side_effect = check_p.stop()
+                    self._router_interface_action('add',
+                                                  r2['router']['id'],
+                                                  None,
+                                                  p['port']['id'],
+                                                  exc.HTTPConflict.code)
                     # clean-up
                     self._router_interface_action('remove',
                                                   r1['router']['id'],

@@ -17,7 +17,6 @@ from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helper
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -328,14 +327,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if new_port:
             with p_utils.delete_port_on_error(self._core_plugin,
                                               context, port['id']) as delmgr:
+                delmgr.delete_on_error = cleanup_port
                 if router.extra_attributes.distributed and router.gw_port:
                     admin_context = context.elevated()
                     self._add_csnat_router_interface_port(
                         admin_context, router, port['network_id'],
                         port['fixed_ips'][-1]['subnet_id'])
 
-                delmgr.delete_on_error = cleanup_port
-            try:
                 with context.session.begin(subtransactions=True):
                     router_port = l3_db.RouterPort(
                         port_id=port['id'],
@@ -343,17 +341,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                         port_type=device_owner
                     )
                     context.session.add(router_port)
-            except db_exc.DBDuplicateEntry:
-                qry = context.session.query(l3_db.RouterPort).filter_by(
-                    port_id=port['id']).one()
-                existing_router_id = qry['router_id']
-                raise n_exc.PortInUse(net_id=port['network_id'],
-                                      port_id=port['id'],
-                                      device_id=existing_router_id)
-            # Update owner after actual process again in order to
-            # make sure the records in routerports table and ports
-            # table are consistent.
-            else:
+                # Update owner after actual process again in order to
+                # make sure the records in routerports table and ports
+                # table are consistent.
                 self._core_plugin.update_port(
                     context, port['id'], {'port': {
                                          'device_id': router.id,

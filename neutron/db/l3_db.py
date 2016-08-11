@@ -20,7 +20,6 @@ import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as l3_constants
 from neutron_lib import exceptions as n_exc
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
@@ -794,7 +793,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             with p_utils.delete_port_on_error(self._core_plugin,
                                               context, port['id']) as delmgr:
                 delmgr.delete_on_error = cleanup_port
-            try:
                 with context.session.begin(subtransactions=True):
                     router_port = RouterPort(
                         port_id=port['id'],
@@ -802,17 +800,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         port_type=device_owner
                     )
                     context.session.add(router_port)
-            except db_exc.DBDuplicateEntry:
-                qry = context.session.query(RouterPort).filter_by(
-                    port_id=port['id']).one()
-                existing_router_id = qry['router_id']
-                raise n_exc.PortInUse(net_id=port['network_id'],
-                                      port_id=port['id'],
-                                      device_id=existing_router_id)
-            # Update owner after actual process again in order to
-            # make sure the records in routerports table and ports
-            # table are consistent.
-            else:
+                # Update owner after actual process again in order to
+                # make sure the records in routerports table and ports
+                # table are consistent.
                 self._core_plugin.update_port(
                     context, port['id'], {'port': {
                                          'device_id': router.id,
