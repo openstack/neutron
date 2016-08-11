@@ -36,6 +36,12 @@ def get_all_resources():
     return ResourceRegistry.get_instance().resources
 
 
+def unregister_all_resources():
+    if not ResourceRegistry._instance:
+        return
+    return ResourceRegistry.get_instance().unregister_resources()
+
+
 def get_resource(resource_name):
     return ResourceRegistry.get_instance().get_resource(resource_name)
 
@@ -183,6 +189,10 @@ class ResourceRegistry(object):
         if not cfg.CONF.QUOTAS.track_quota_usage:
             return
 
+        if isinstance(self._resources.get(resource_name),
+                      resource.CountableResource):
+            raise RuntimeError("Resource %s is already registered as a "
+                               "countable resource." % resource_name)
         current_model_class = self._tracked_resource_mappings.setdefault(
             resource_name, model_class)
 

@@ -46,6 +46,7 @@ from neutron.common import utils
 from neutron.db import agentschedulers_db
 from neutron import manager
 from neutron import policy
+from neutron.quota import resource_registry
 from neutron.tests import fake_notifier
 from neutron.tests import post_mortem_debug
 from neutron.tests import tools
@@ -302,6 +303,7 @@ class BaseTestCase(DietTestCase):
 
         policy.init()
         self.addCleanup(policy.reset)
+        self.addCleanup(resource_registry.unregister_all_resources)
         self.addCleanup(rpc_consumer_reg.clear)
 
     def get_new_temp_dir(self):
