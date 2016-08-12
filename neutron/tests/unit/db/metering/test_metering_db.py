@@ -155,6 +155,15 @@ class TestMetering(MeteringPluginDbTestCase):
             for k, v, in keys:
                 self.assertEqual(metering_label['metering_label'][k], v)
 
+    def test_update_metering_label(self):
+        name = 'my label'
+        description = 'my metering label'
+        data = {'metering_label': {}}
+        with self.metering_label(name, description) as metering_label:
+            metering_label_id = metering_label['metering_label']['id']
+            self._update('metering-labels', metering_label_id, data,
+                         webob.exc.HTTPNotImplemented.code)
+
     def test_delete_metering_label(self):
         name = 'my label'
         description = 'my metering label'
@@ -194,6 +203,20 @@ class TestMetering(MeteringPluginDbTestCase):
                                           excluded) as label_rule:
                 for k, v, in keys:
                     self.assertEqual(label_rule['metering_label_rule'][k], v)
+
+    def test_update_metering_label_rule(self):
+        name = 'my label'
+        description = 'my metering label'
+        direction = 'egress'
+        remote_ip_prefix = '192.168.0.0/24'
+        data = {'metering_label_rule': {}}
+        with self.metering_label(name, description) as metering_label, \
+                self.metering_label_rule(
+                        metering_label['metering_label']['id'],
+                        direction, remote_ip_prefix) as label_rule:
+            rule_id = label_rule['metering_label_rule']['id']
+            self._update('metering-label-rules', rule_id, data,
+                         webob.exc.HTTPNotImplemented.code)
 
     def test_delete_metering_label_rule(self):
         name = 'my label'

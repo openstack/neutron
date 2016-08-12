@@ -146,6 +146,10 @@ class MeteringPluginBase(service_base.ServicePluginBase):
         """Create a metering label."""
         pass
 
+    def update_metering_label(self, context, id, metering_label):
+        """Update a metering label."""
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def delete_metering_label(self, context, label_id):
         """Delete a metering label."""
@@ -167,6 +171,10 @@ class MeteringPluginBase(service_base.ServicePluginBase):
     def create_metering_label_rule(self, context, metering_label_rule):
         """Create a metering label rule."""
         pass
+
+    def update_metering_label_rule(self, context, id, metering_label_rule):
+        """Update a metering label rule."""
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_metering_label_rule(self, context, rule_id, fields=None):
