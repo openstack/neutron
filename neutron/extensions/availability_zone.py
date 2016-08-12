@@ -48,9 +48,8 @@ def _validate_availability_zone_hints(data, valid_value=None):
         msg = _("Too many availability_zone_hints specified")
         raise exceptions.InvalidInput(error_message=msg)
 
-
-validators.validators['type:availability_zone_hints'] = (
-    _validate_availability_zone_hints)
+validators.add_validator('availability_zone_hints',
+                         _validate_availability_zone_hints)
 
 # Attribute Map
 RESOURCE_NAME = 'availability_zone'

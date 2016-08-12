@@ -93,8 +93,8 @@ def _validate_allowed_address_pairs(address_pairs, valid_values=None):
         if msg:
             raise webob.exc.HTTPBadRequest(msg)
 
-validators.validators['type:validate_allowed_address_pairs'] = (
-    _validate_allowed_address_pairs)
+validators.add_validator('validate_allowed_address_pairs',
+                         _validate_allowed_address_pairs)
 
 ADDRESS_PAIRS = 'allowed_address_pairs'
 EXTENDED_ATTRIBUTES_2_0 = {
