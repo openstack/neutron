@@ -252,7 +252,7 @@ class Request(wsgi.Request):
         return bm or 'application/json'
 
     def get_content_type(self):
-        allowed_types = ("application/json")
+        allowed_types = ("application/json",)
         if "Content-Type" not in self.headers:
             LOG.debug("Missing Content-Type")
             return None
