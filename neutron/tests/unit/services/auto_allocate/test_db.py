@@ -13,6 +13,7 @@
 
 import mock
 from neutron_lib import exceptions as n_exc
+from oslo_db import exception as db_exc
 
 from neutron import context
 from neutron.services.auto_allocate import db
@@ -57,6 +58,22 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
         self.assertRaises(n_exc.BadRequest,
             self.mixin.get_auto_allocated_topology,
             self.ctx, mock.ANY, fields=['foo'])
+
+    def _test__build_topology(self, exception):
+        with mock.patch.object(self.mixin,
+                               '_provision_tenant_private_network',
+                               side_effect=exception), \
+                mock.patch.object(self.mixin, '_cleanup') as f:
+            self.assertRaises(exception,
+                              self.mixin._build_topology,
+                              self.ctx, mock.ANY, 'foo_net')
+            return f.call_count
+
+    def test__build_topology_retriable_exception(self):
+        self.assertTrue(self._test__build_topology(db_exc.DBConnectionError))
+
+    def test__build_topology_non_retriable_exception(self):
+        self.assertFalse(self._test__build_topology(Exception))
 
     def test__check_requirements_fail_on_missing_ext_net(self):
         self.assertRaises(exceptions.AutoAllocationFailure,

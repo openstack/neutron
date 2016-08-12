@@ -17,6 +17,7 @@
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from oslo_utils import excutils
 from sqlalchemy import sql
 
 from neutron._i18n import _, _LE
@@ -24,6 +25,7 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -94,6 +96,19 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
     # - update router gateway -> prevent operation
     # - ...
 
+    @property
+    def core_plugin(self):
+        if not getattr(self, '_core_plugin', None):
+            self._core_plugin = manager.NeutronManager.get_plugin()
+        return self._core_plugin
+
+    @property
+    def l3_plugin(self):
+        if not getattr(self, '_l3_plugin', None):
+            self._l3_plugin = manager.NeutronManager.get_service_plugins().get(
+                constants.L3_ROUTER_NAT)
+        return self._l3_plugin
+
     def get_auto_allocated_topology(self, context, tenant_id, fields=None):
         """Return tenant's network associated to auto-allocated topology.
 
@@ -119,26 +134,35 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             context)
 
         # If we reach this point, then we got some work to do!
-        subnets = self._provision_tenant_private_network(context, tenant_id)
-        network_id = subnets[0]['network_id']
-        router = self._provision_external_connectivity(
-            context, default_external_network, subnets, tenant_id)
-        network_id = self._save(
-            context, tenant_id, network_id, router['id'], subnets)
+        network_id = self._build_topology(
+            context, tenant_id, default_external_network)
         return self._response(network_id, tenant_id, fields=fields)
 
-    @property
-    def core_plugin(self):
-        if not getattr(self, '_core_plugin', None):
-            self._core_plugin = manager.NeutronManager.get_plugin()
-        return self._core_plugin
-
-    @property
-    def l3_plugin(self):
-        if not getattr(self, '_l3_plugin', None):
-            self._l3_plugin = manager.NeutronManager.get_service_plugins().get(
-                constants.L3_ROUTER_NAT)
-        return self._l3_plugin
+    def _build_topology(self, context, tenant_id, default_external_network):
+        """Build the network topology and returns its network UUID."""
+        network_id = None
+        router_id = None
+        subnets = None
+        try:
+            subnets = self._provision_tenant_private_network(
+                context, tenant_id)
+            network_id = subnets[0]['network_id']
+            router = self._provision_external_connectivity(
+                context, default_external_network, subnets, tenant_id)
+            network_id = self._save(
+                context, tenant_id, network_id, router['id'], subnets)
+            return network_id
+        except Exception as e:
+            with excutils.save_and_reraise_exception():
+                # FIXME(armax): defensively catch all errors and let
+                # the caller retry the operation, if it can be retried.
+                # This catch-all should no longer be necessary once
+                # bug #1612798 is solved; any other error should just
+                # surface up to the user and be dealt with as a bug.
+                if db_api.is_retriable(e):
+                    self._cleanup(
+                        context, network_id=network_id,
+                        router_id=router_id, subnets=subnets)
 
     def _check_requirements(self, context, tenant_id):
         """Raise if requirements are not met."""
