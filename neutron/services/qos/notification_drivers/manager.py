@@ -12,17 +12,12 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.conf.services import qos_driver_manager as qos_mgr
 from neutron._i18n import _, _LI
 from neutron import manager
 
 QOS_DRIVER_NAMESPACE = 'neutron.qos.notification_drivers'
-QOS_PLUGIN_OPTS = [
-    cfg.ListOpt('notification_drivers',
-                default=['message_queue'],
-                help=_('Drivers list to use to send the update notification')),
-]
-
-cfg.CONF.register_opts(QOS_PLUGIN_OPTS, "qos")
+qos_mgr.register_qos_plugin_opts()
 
 LOG = logging.getLogger(__name__)
 

@@ -32,6 +32,7 @@ from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.conf.services import metering_agent
 from neutron import context
 from neutron import manager
 from neutron import service as neutron_service
@@ -62,17 +63,6 @@ class MeteringPluginRpc(object):
 
 
 class MeteringAgent(MeteringPluginRpc, manager.Manager):
-
-    Opts = [
-        cfg.StrOpt('driver',
-                   default='neutron.services.metering.drivers.noop.'
-                   'noop_driver.NoopMeteringDriver',
-                   help=_("Metering driver")),
-        cfg.IntOpt('measure_interval', default=30,
-                   help=_("Interval between two metering measures")),
-        cfg.IntOpt('report_interval', default=300,
-                   help=_("Interval between two metering reports")),
-    ]
 
     def __init__(self, host, conf=None):
         self.conf = conf or cfg.CONF
@@ -290,7 +280,7 @@ class MeteringAgentWithStateReport(MeteringAgent):
 
 def main():
     conf = cfg.CONF
-    conf.register_opts(MeteringAgent.Opts)
+    metering_agent.register_metering_agent_opts()
     config.register_agent_state_opts_helper(conf)
     common_config.init(sys.argv[1:])
     config.setup_logging()
