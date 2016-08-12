@@ -20,7 +20,6 @@ from oslo_utils import uuidutils
 
 from neutron.common import exceptions as c_exc
 from neutron import context
-from neutron.plugins.common import utils
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions
 from neutron.tests.unit import testlib_api
@@ -160,14 +159,14 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
                 provisioning_exception)
 
     def test__save_with_provisioning_error(self):
-        with mock.patch.object(utils, "update_network", side_effect=Exception):
-            with testtools.ExpectedException(
-                    exceptions.UnknownProvisioningError) as e:
-                self.mixin._save(self.ctx, 'foo_t', 'foo_n', 'foo_r',
-                                 [{'id': 'foo_s'}])
-                self.assertEqual('foo_n', e.network_id)
-                self.assertEqual('foo_r', e.router_id)
-                self.assertEqual([{'id': 'foo_s'}], e.subnets)
+        self.mixin._core_plugin.update_network.side_effect = Exception
+        with testtools.ExpectedException(
+                exceptions.UnknownProvisioningError) as e:
+            self.mixin._save(self.ctx, 'foo_t', 'foo_n', 'foo_r',
+                             [{'id': 'foo_s'}])
+            self.assertEqual('foo_n', e.network_id)
+            self.assertEqual('foo_r', e.router_id)
+            self.assertEqual([{'id': 'foo_s'}], e.subnets)
 
     def test__provision_external_connectivity_with_provisioning_error(self):
         self.mixin._l3_plugin.create_router.side_effect = Exception

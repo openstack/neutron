@@ -780,6 +780,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertTrue(sg_member_update.called)
 
     def test_update_port_status_with_network(self):
+        registry.clear()  # don't care about callback behavior
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
         with self.port() as port:

@@ -1359,7 +1359,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                 mock.ANY, 'agent_updated',
                 {'admin_state_up': False}, DHCP_HOSTA)
 
-    def _network_port_create(
+    def _api_network_port_create(
             self, hosts, gateway=constants.ATTR_NOT_SPECIFIED, owner=None):
         for host in hosts:
             helpers.register_dhcp_agent(host)
@@ -1373,6 +1373,22 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                 else:
                     with self.port(subnet=subnet1) as port:
                         return [net1, subnet1, port]
+
+    def _network_port_create(self, *args, **kwargs):
+        net, sub, port = self._api_network_port_create(*args, **kwargs)
+
+        dhcp_notifier = self.plugin.agent_notifiers[constants.AGENT_TYPE_DHCP]
+        if (not hasattr(dhcp_notifier, 'uses_native_notifications') or
+            not all(dhcp_notifier.uses_native_notifications[r]['create']
+                    for r in ('port', 'subnet', 'network'))):
+            return net, sub, port
+        # since plugin has native dhcp notifications, the payloads will be the
+        # same as the getter outputs
+        ctx = context.get_admin_context()
+        net['network'] = self.plugin.get_network(ctx, net['network']['id'])
+        sub['subnet'] = self.plugin.get_subnet(ctx, sub['subnet']['id'])
+        port['port'] = self.plugin.get_port(ctx, port['port']['id'])
+        return net, sub, port
 
     def _notification_mocks(self, hosts, net, subnet, port):
         host_calls = {}

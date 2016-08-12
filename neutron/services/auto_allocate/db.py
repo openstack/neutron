@@ -340,9 +340,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                         tenant_id=tenant_id,
                         network_id=network_id,
                         router_id=router_id))
-            p_utils.update_network(
-                self.core_plugin, context,
-                network_id, {'admin_state_up': True})
+            self.core_plugin.update_network(
+                context, network_id,
+                {'network': {'admin_state_up': True}})
         except db_exc.DBDuplicateEntry:
             LOG.error(_LE("Multiple auto-allocated networks detected for "
                           "tenant %(tenant)s. Attempting clean up for "
