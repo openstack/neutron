@@ -20,8 +20,9 @@ import mock
 
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
-from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent
 from neutron.tests import base
+from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent import \
+    test_vlanmanager
 
 
 class FakeNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin):
@@ -53,6 +54,8 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
 
     def setUp(self):
         super(TestL2populationRpcCallBackTunnelMixinBase, self).setUp()
+        self.vlan_manager = self.useFixture(
+            test_vlanmanager.LocalVlanManagerFixture()).manager
         self.fakeagent = FakeNeutronAgent()
         self.fakebr = mock.Mock()
         Port = collections.namedtuple('Port', 'ip, ofport')
@@ -112,21 +115,13 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
             },
         }
 
-        self.lvm1 = ovs_neutron_agent.LocalVLANMapping(
-            self.lvms[0].vlan, self.type_gre, self.lvms[0].phys,
-            self.lvms[0].segid, {self.lvms[0].vif: self.lvms[0].port})
-        self.lvm2 = ovs_neutron_agent.LocalVLANMapping(
-            self.lvms[1].vlan, self.type_gre, self.lvms[1].phys,
-            self.lvms[1].segid, {self.lvms[1].vif: self.lvms[1].port})
-        self.lvm3 = ovs_neutron_agent.LocalVLANMapping(
-            self.lvms[2].vlan, self.type_gre, self.lvms[2].phys,
-            self.lvms[2].segid, {self.lvms[2].vif: self.lvms[2].port})
-
-        self.local_vlan_map1 = {
-            self.lvms[0].net: self.lvm1,
-            self.lvms[1].net: self.lvm2,
-            self.lvms[2].net: self.lvm3,
-        }
+        for i in range(3):
+            self.vlan_manager.add(
+                self.lvms[i].net,
+                self.lvms[i].vlan, self.type_gre, self.lvms[i].phys,
+                self.lvms[i].segid, {self.lvms[i].vif: self.lvms[i].port})
+            setattr(self, 'lvm%d' % i,
+                    self.vlan_manager.get(self.lvms[i].net))
 
         self.upd_fdb_entry1_val = {
             self.lvms[0].net: {

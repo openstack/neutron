@@ -28,6 +28,8 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
+from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
+    import test_vlanmanager
 
 
 def nonzero(f):
@@ -74,6 +76,7 @@ class TunnelTest(object):
 
     def setUp(self):
         super(TunnelTest, self).setUp()
+        self.useFixture(test_vlanmanager.LocalVlanManagerFixture())
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.native.connection.Connection.start')
         conn_patcher.start()
@@ -93,11 +96,11 @@ class TunnelTest(object):
         self.MAP_TUN_INT_OFPORT = 33333
         self.MAP_TUN_PHY_OFPORT = 44444
 
-        self.LVM = self.mod_agent.LocalVLANMapping(
+        self.LVM_DATA = (
             LV_ID, 'gre', None, LS_ID, VIF_PORTS)
-        self.LVM_FLAT = self.mod_agent.LocalVLANMapping(
+        self.LVM_FLAT_DATA = (
             LV_ID, 'flat', 'net1', LS_ID, VIF_PORTS)
-        self.LVM_VLAN = self.mod_agent.LocalVLANMapping(
+        self.LVM_VLAN_DATA = (
             LV_ID, 'vlan', 'net1', LS_ID, VIF_PORTS)
 
         self.inta = mock.Mock()
@@ -420,16 +423,16 @@ class TunnelTest(object):
 
         a = self._build_agent()
         a.available_local_vlans = set()
-        a.local_vlan_map[NET_UUID] = self.LVM
+        a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
         a.reclaim_local_vlan(NET_UUID)
-        self.assertIn(self.LVM.vlan, a.available_local_vlans)
+        self.assertIn(self.LVM_DATA[0], a.available_local_vlans)
         self._verify_mock_calls()
 
     def test_reclaim_local_vlan_flat(self):
         self.mock_map_tun_bridge_expected.append(
             mock.call.reclaim_local_vlan(
                 port=self.MAP_TUN_PHY_OFPORT,
-                lvid=self.LVM_FLAT.vlan))
+                lvid=self.LVM_FLAT_DATA[0]))
         self.mock_int_bridge_expected.append(
             mock.call.reclaim_local_vlan(
                 port=self.INT_OFPORT,
@@ -440,16 +443,16 @@ class TunnelTest(object):
         a.int_ofports['net1'] = self.INT_OFPORT
 
         a.available_local_vlans = set()
-        a.local_vlan_map[NET_UUID] = self.LVM_FLAT
+        a.vlan_manager.add(NET_UUID, *self.LVM_FLAT_DATA)
         a.reclaim_local_vlan(NET_UUID)
-        self.assertIn(self.LVM_FLAT.vlan, a.available_local_vlans)
+        self.assertIn(self.LVM_FLAT_DATA[0], a.available_local_vlans)
         self._verify_mock_calls()
 
     def test_reclaim_local_vlan_vlan(self):
         self.mock_map_tun_bridge_expected.append(
             mock.call.reclaim_local_vlan(
                 port=self.MAP_TUN_PHY_OFPORT,
-                lvid=self.LVM_VLAN.vlan))
+                lvid=self.LVM_VLAN_DATA[0]))
         self.mock_int_bridge_expected.append(
             mock.call.reclaim_local_vlan(
                 port=self.INT_OFPORT,
@@ -460,9 +463,9 @@ class TunnelTest(object):
         a.int_ofports['net1'] = self.INT_OFPORT
 
         a.available_local_vlans = set()
-        a.local_vlan_map[NET_UUID] = self.LVM_VLAN
+        a.vlan_manager.add(NET_UUID, *self.LVM_VLAN_DATA)
         a.reclaim_local_vlan(NET_UUID)
-        self.assertIn(self.LVM_VLAN.vlan, a.available_local_vlans)
+        self.assertIn(self.LVM_VLAN_DATA[0], a.available_local_vlans)
         self._verify_mock_calls()
 
     def test_port_bound(self):
@@ -477,7 +480,7 @@ class TunnelTest(object):
                                        vlan_mapping)]
 
         a = self._build_agent()
-        a.local_vlan_map[NET_UUID] = self.LVM
+        a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
         a.local_dvr_map = {}
         self.ovs_bridges[self.INT_BRIDGE].db_get_val.return_value = {}
         a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID,
@@ -488,7 +491,7 @@ class TunnelTest(object):
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'reclaim_local_vlan') as reclaim_local_vlan:
             a = self._build_agent()
-            a.local_vlan_map[NET_UUID] = self.LVM
+            a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
             a.port_unbound(VIF_ID, NET_UUID)
 
         reclaim_local_vlan.assert_called_once_with(NET_UUID)
@@ -507,7 +510,7 @@ class TunnelTest(object):
 
         a = self._build_agent()
         a.available_local_vlans = set([LV_ID])
-        a.local_vlan_map[NET_UUID] = self.LVM
+        a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
         self.ovs_bridges[self.INT_BRIDGE].db_get_val.return_value = mock.Mock()
         a.port_dead(VIF_PORT)
         self._verify_mock_calls()
