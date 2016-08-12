@@ -22,7 +22,6 @@ import six
 import testtools
 
 import neutron
-from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
@@ -79,7 +78,7 @@ def _register_agent(agent, plugin=None):
         admin_context, agent['agent_type'], agent['host'])
 
 
-def register_l3_agent(host=HOST, agent_mode=n_const.L3_AGENT_MODE_LEGACY,
+def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
                       internal_only=True, ext_net_id='', ext_bridge='',
                       az=DEFAULT_AZ):
     agent = _get_l3_agent_dict(host, agent_mode, internal_only, ext_net_id,

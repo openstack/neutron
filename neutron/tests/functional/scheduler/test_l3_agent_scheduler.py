@@ -16,12 +16,10 @@
 import collections
 import random
 
+from neutron_lib import constants
+from oslo_utils import uuidutils
 import testscenarios
 
-from oslo_utils import uuidutils
-
-from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron import context
 from neutron.db import external_net_db
 from neutron.scheduler import l3_agent_scheduler
@@ -613,9 +611,9 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
                   'enable_dhcp': False,
                   'gateway_ip': gw_ip,
                   'shared': False,
-                  'allocation_pools': attributes.ATTR_NOT_SPECIFIED,
-                  'dns_nameservers': attributes.ATTR_NOT_SPECIFIED,
-                  'host_routes': attributes.ATTR_NOT_SPECIFIED}
+                  'allocation_pools': constants.ATTR_NOT_SPECIFIED,
+                  'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
+                  'host_routes': constants.ATTR_NOT_SPECIFIED}
 
         return self.plugin.create_subnet(self.adminContext, {'subnet': subnet})
 

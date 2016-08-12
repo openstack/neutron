@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 import osprofiler
@@ -20,7 +21,6 @@ import sqlalchemy
 from sqlalchemy.orm import exc
 import testtools
 
-from neutron.common import exceptions
 from neutron.db import api as db_api
 from neutron.tests import base
 

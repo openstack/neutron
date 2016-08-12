@@ -20,7 +20,6 @@ from webob import exc
 
 from neutron.api import api_common as common
 from neutron.api.v2 import base as base_v2
-from neutron.common import exceptions as n_exc
 from neutron.tests import base
 
 
@@ -98,8 +97,9 @@ class APICommonTestCase(base.BaseTestCase):
                           params)
 
     def test_convert_exception_to_http_exc_multiple_different_codes(self):
-        e = n_exc.MultipleExceptions([exceptions.NetworkInUse(net_id='nid'),
-                                      exceptions.PortNotFound(port_id='pid')])
+        e = exceptions.MultipleExceptions(
+            [exceptions.NetworkInUse(net_id='nid'),
+             exceptions.PortNotFound(port_id='pid')])
         conv = common.convert_exception_to_http_exc(e, base_v2.FAULT_MAP, None)
         self.assertIsInstance(conv, exc.HTTPConflict)
         self.assertEqual(
@@ -109,8 +109,9 @@ class APICommonTestCase(base.BaseTestCase):
             jsonutils.loads(conv.body)['NeutronError']['message'])
 
     def test_convert_exception_to_http_exc_multiple_same_codes(self):
-        e = n_exc.MultipleExceptions([exceptions.NetworkNotFound(net_id='nid'),
-                                      exceptions.PortNotFound(port_id='pid')])
+        e = exceptions.MultipleExceptions(
+            [exceptions.NetworkNotFound(net_id='nid'),
+             exceptions.PortNotFound(port_id='pid')])
         conv = common.convert_exception_to_http_exc(e, base_v2.FAULT_MAP, None)
         self.assertIsInstance(conv, exc.HTTPNotFound)
         self.assertEqual(
@@ -118,7 +119,7 @@ class APICommonTestCase(base.BaseTestCase):
             jsonutils.loads(conv.body)['NeutronError']['message'])
 
     def test_convert_exception_to_http_exc_multiple_empty_inner(self):
-        e = n_exc.MultipleExceptions([])
+        e = exceptions.MultipleExceptions([])
         conv = common.convert_exception_to_http_exc(e, base_v2.FAULT_MAP, None)
         self.assertIsInstance(conv, exc.HTTPInternalServerError)
 

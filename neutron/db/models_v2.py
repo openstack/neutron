@@ -213,11 +213,13 @@ class Subnet(model_base.HasStandardAttributes, model_base.BASEV2,
     ipv6_ra_mode = sa.Column(sa.Enum(constants.IPV6_SLAAC,
                                      constants.DHCPV6_STATEFUL,
                                      constants.DHCPV6_STATELESS,
-                                     name='ipv6_ra_modes'), nullable=True)
+                                     name='ipv6_ra_modes'),
+                             nullable=True)
     ipv6_address_mode = sa.Column(sa.Enum(constants.IPV6_SLAAC,
-                                  constants.DHCPV6_STATEFUL,
-                                  constants.DHCPV6_STATELESS,
-                                  name='ipv6_address_modes'), nullable=True)
+                                          constants.DHCPV6_STATEFUL,
+                                          constants.DHCPV6_STATELESS,
+                                          name='ipv6_address_modes'),
+                                  nullable=True)
     # subnets don't have their own rbac_entries, they just inherit from
     # the network rbac entries
     rbac_entries = orm.relationship(

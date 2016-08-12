@@ -372,7 +372,7 @@ class L3NATAgent(ha.AgentMixin,
         self.l3_ext_manager = (
             l3_ext_manager.L3AgentExtensionsManager(self.conf))
         self.l3_ext_manager.initialize(
-            connection, l3_constants.L3_AGENT_MODE)
+            connection, lib_const.L3_AGENT_MODE)
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""
@@ -560,7 +560,7 @@ class L3NATAgent(ha.AgentMixin,
                         ext_net_id = (r['external_gateway_info'] or {}).get(
                             'network_id')
                         is_snat_agent = (self.conf.agent_mode ==
-                            l3_constants.L3_AGENT_MODE_DVR_SNAT)
+                            lib_const.L3_AGENT_MODE_DVR_SNAT)
                         if ext_net_id:
                             ns_manager.keep_ext_net(ext_net_id)
                         elif is_snat_agent:

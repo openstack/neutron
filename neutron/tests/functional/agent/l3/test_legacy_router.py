@@ -16,7 +16,7 @@
 import copy
 
 import mock
-from neutron_lib import constants as l3_constants
+from neutron_lib import constants as lib_constants
 
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
@@ -137,7 +137,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         gw_inf_name = router.get_external_device_name(gw_port['id'])
         gw_device = ip_lib.IPDevice(gw_inf_name, namespace=router.ns_name)
         router_ports = [gw_device]
-        for i_port in router_info.get(l3_constants.INTERFACE_KEY, []):
+        for i_port in router_info.get(lib_constants.INTERFACE_KEY, []):
             interface_name = router.get_internal_device_name(i_port['id'])
             router_ports.append(
                 ip_lib.IPDevice(interface_name, namespace=router.ns_name))
@@ -265,7 +265,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
                 router_ip)).machines
 
         dst_fip = '19.4.4.10'
-        router.router[l3_constants.FLOATINGIP_KEY] = []
+        router.router[lib_constants.FLOATINGIP_KEY] = []
         self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
         router.process(self.agent)
 
@@ -280,7 +280,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         src_machine, dst_machine, dst_fip = (
             self._setup_fip_with_fixed_ip_from_same_subnet(enable_snat=True))
         protocol_port = net_helpers.get_free_namespace_port(
-            l3_constants.PROTO_NAME_TCP, dst_machine.namespace)
+            lib_constants.PROTO_NAME_TCP, dst_machine.namespace)
         # client sends to fip
         netcat = net_helpers.NetcatTester(
             src_machine.namespace, dst_machine.namespace,
@@ -304,15 +304,15 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         router_info = self.generate_router_info(enable_ha=False,
                                                 num_internal_ports=2)
         address_scope1 = {
-            str(l3_constants.IP_VERSION_4): internal_address_scope1}
+            str(lib_constants.IP_VERSION_4): internal_address_scope1}
         address_scope2 = {
-            str(l3_constants.IP_VERSION_4): internal_address_scope2}
+            str(lib_constants.IP_VERSION_4): internal_address_scope2}
         if gw_address_scope:
             router_info['gw_port']['address_scopes'] = {
-                str(l3_constants.IP_VERSION_4): gw_address_scope}
-        router_info[l3_constants.INTERFACE_KEY][0]['address_scopes'] = (
+                str(lib_constants.IP_VERSION_4): gw_address_scope}
+        router_info[lib_constants.INTERFACE_KEY][0]['address_scopes'] = (
             address_scope1)
-        router_info[l3_constants.INTERFACE_KEY][1]['address_scopes'] = (
+        router_info[lib_constants.INTERFACE_KEY][1]['address_scopes'] = (
             address_scope2)
 
         router = self.manage_router(self.agent, router_info)
@@ -356,7 +356,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         (machine_same_scope, machine_diff_scope,
             router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
 
-        router.router[l3_constants.FLOATINGIP_KEY] = []
+        router.router[lib_constants.FLOATINGIP_KEY] = []
         fip_same_scope = '19.4.4.10'
         self._add_fip(router, fip_same_scope,
                       fixed_address=machine_same_scope.ip,
@@ -399,7 +399,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         (machine_same_scope, machine_diff_scope,
             router) = self._setup_address_scope('scope1', 'scope2', 'scope1')
 
-        router.router[l3_constants.FLOATINGIP_KEY] = []
+        router.router[lib_constants.FLOATINGIP_KEY] = []
         fip = '19.4.4.11'
         self._add_fip(router, fip,
                       fixed_address=machine_diff_scope.ip,

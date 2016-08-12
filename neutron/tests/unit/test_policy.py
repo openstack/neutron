@@ -16,7 +16,7 @@
 """Test of Policy Engine For Neutron"""
 
 import mock
-from neutron_lib import constants as const
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_db import exception as db_exc
 from oslo_policy import fixture as op_fixture
@@ -27,7 +27,6 @@ from oslo_utils import importutils
 import neutron
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron import manager
 from neutron import policy
@@ -330,10 +329,10 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                            oslo_policy.PolicyNotAuthorized)
 
     def test_create_port_device_owner_regex(self):
-        blocked_values = (const.DEVICE_OWNER_NETWORK_PREFIX,
+        blocked_values = (constants.DEVICE_OWNER_NETWORK_PREFIX,
                           'network:abdef',
-                          const.DEVICE_OWNER_DHCP,
-                          const.DEVICE_OWNER_ROUTER_INTF)
+                          constants.DEVICE_OWNER_DHCP,
+                          constants.DEVICE_OWNER_ROUTER_INTF)
         for val in blocked_values:
             self._test_advsvc_action_on_attr(
                 'create', 'port', 'device_owner', val,
@@ -570,7 +569,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_tenant_id_check_no_target_field_raises(self):
         # Try and add a bad rule
         self.assertRaises(
-            n_exc.PolicyInitError,
+            exceptions.PolicyInitError,
             oslo_policy.Rules.from_dict,
             {'test_policy': 'tenant_id:(wrong_stuff)'})
 
@@ -580,7 +579,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = "create_network"
         target = {'tenant_id': 'fake'}
         self.fakepolicyinit()
-        self.assertRaises(n_exc.PolicyCheckError,
+        self.assertRaises(exceptions.PolicyCheckError,
                           policy.enforce,
                           self.context, action, target)
 
@@ -653,7 +652,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             attr, resource, target, action)
         self.assertFalse(result)
 
-        target = {attr: const.ATTR_NOT_SPECIFIED, 'tgt-tenant': 'tenantA'}
+        target = {attr: constants.ATTR_NOT_SPECIFIED, 'tgt-tenant': 'tenantA'}
         result = policy._is_attribute_explicitly_set(
             attr, resource, target, action)
         self.assertFalse(result)

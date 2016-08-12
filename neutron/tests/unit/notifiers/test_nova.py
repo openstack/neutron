@@ -22,13 +22,12 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
-from neutron.common import constants
 from neutron.db import models_v2
 from neutron.notifiers import nova
 from neutron.tests import base
 
 DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
-DEVICE_OWNER_BAREMETAL = constants.DEVICE_OWNER_BAREMETAL_PREFIX + 'fake'
+DEVICE_OWNER_BAREMETAL = n_const.DEVICE_OWNER_BAREMETAL_PREFIX + 'fake'
 
 
 class TestNovaNotify(base.BaseTestCase):

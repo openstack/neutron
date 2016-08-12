@@ -32,7 +32,6 @@ from neutron._i18n import _
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context
 from neutron.db import agents_db
@@ -2323,7 +2322,7 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
             with self.subnet(network=network,
                              cidr='2001:100::0/64',
                              ip_version=6,
-                             ipv6_ra_mode=n_const.IPV6_SLAAC) as subnet:
+                             ipv6_ra_mode=constants.IPV6_SLAAC) as subnet:
                 with self.port(subnet=subnet) as port:
                     with mock.patch(driver) as driver_mock:
                         # Validate that deletion of SLAAC allocation happens

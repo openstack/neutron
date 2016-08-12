@@ -14,7 +14,7 @@
 
 import collections
 import netaddr
-from neutron_lib import constants as l3_constants
+from neutron_lib import constants as lib_constants
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE, _LW
@@ -143,7 +143,7 @@ class RouterInfo(object):
 
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""
-        return self.router.get(l3_constants.FLOATINGIP_KEY, [])
+        return self.router.get(lib_constants.FLOATINGIP_KEY, [])
 
     def floating_forward_rules(self, floating_ip, fixed_ip):
         return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
@@ -226,7 +226,7 @@ class RouterInfo(object):
             ports_scopemark = self._get_address_scope_mark()
             devices_in_ext_scope = {
                 device for device, mark
-                in ports_scopemark[l3_constants.IP_VERSION_4].items()
+                in ports_scopemark[lib_constants.IP_VERSION_4].items()
                 if mark == ext_scope_mark}
             # Add address scope for floatingip egress
             for device in devices_in_ext_scope:
@@ -279,7 +279,7 @@ class RouterInfo(object):
         device.delete_addr_and_conntrack_state(ip_cidr)
 
     def move_floating_ip(self, fip):
-        return l3_constants.FLOATINGIP_STATUS_ACTIVE
+        return lib_constants.FLOATINGIP_STATUS_ACTIVE
 
     def remove_external_gateway_ip(self, device, ip_cidr):
         device.delete_addr_and_conntrack_state(ip_cidr)
@@ -311,7 +311,7 @@ class RouterInfo(object):
             fip_ip = fip['floating_ip_address']
             ip_cidr = common_utils.ip_to_cidr(fip_ip)
             new_cidrs.add(ip_cidr)
-            fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ACTIVE
+            fip_statuses[fip['id']] = lib_constants.FLOATINGIP_STATUS_ACTIVE
             if ip_cidr not in existing_cidrs:
                 fip_statuses[fip['id']] = self.add_floating_ip(
                     fip, interface_name, device)
@@ -346,7 +346,7 @@ class RouterInfo(object):
             for ip_addr in ex_gw_port['fixed_ips']:
                 ex_gw_ip = ip_addr['ip_address']
                 addr = netaddr.IPAddress(ex_gw_ip)
-                if addr.version == l3_constants.IP_VERSION_4:
+                if addr.version == lib_constants.IP_VERSION_4:
                     gw_cidrs.add(common_utils.ip_to_cidr(ex_gw_ip))
         return gw_cidrs
 
@@ -361,14 +361,14 @@ class RouterInfo(object):
 
     def put_fips_in_error_state(self):
         fip_statuses = {}
-        for fip in self.router.get(l3_constants.FLOATINGIP_KEY, []):
-            fip_statuses[fip['id']] = l3_constants.FLOATINGIP_STATUS_ERROR
+        for fip in self.router.get(lib_constants.FLOATINGIP_KEY, []):
+            fip_statuses[fip['id']] = lib_constants.FLOATINGIP_STATUS_ERROR
         return fip_statuses
 
     def delete(self, agent):
         self.router['gw_port'] = None
-        self.router[l3_constants.INTERFACE_KEY] = []
-        self.router[l3_constants.FLOATINGIP_KEY] = []
+        self.router[lib_constants.INTERFACE_KEY] = []
+        self.router[lib_constants.FLOATINGIP_KEY] = []
         self.process_delete(agent)
         self.disable_radvd()
         self.router_namespace.delete()
@@ -487,7 +487,7 @@ class RouterInfo(object):
     def _process_internal_ports(self, pd):
         existing_port_ids = set(p['id'] for p in self.internal_ports)
 
-        internal_ports = self.router.get(l3_constants.INTERFACE_KEY, [])
+        internal_ports = self.router.get(lib_constants.INTERFACE_KEY, [])
         current_port_ids = set(p['id'] for p in internal_ports
                                if p['admin_state_up'])
 
@@ -643,8 +643,8 @@ class RouterInfo(object):
 
         device = ip_lib.IPDevice(interface_name, namespace=ns_name)
         current_gateways = set()
-        for ip_version in (l3_constants.IP_VERSION_4,
-                           l3_constants.IP_VERSION_6):
+        for ip_version in (lib_constants.IP_VERSION_4,
+                           lib_constants.IP_VERSION_6):
             gateway = device.route.get_gateway(ip_version=ip_version)
             if gateway and gateway.get('gateway'):
                 current_gateways.add(gateway.get('gateway'))
@@ -856,7 +856,7 @@ class RouterInfo(object):
         existing_floating_ips = self.floating_ips
         self.floating_ips = set(fip_statuses.keys())
         for fip_id in existing_floating_ips - self.floating_ips:
-            fip_statuses[fip_id] = l3_constants.FLOATINGIP_STATUS_DOWN
+            fip_statuses[fip_id] = lib_constants.FLOATINGIP_STATUS_DOWN
         # filter out statuses that didn't change
         fip_statuses = {f: stat for f, stat in fip_statuses.items()
                         if stat != FLOATINGIP_STATUS_NOCHANGE}
@@ -915,8 +915,8 @@ class RouterInfo(object):
             'PREROUTING', copy_address_scope_for_existing)
 
     def _get_port_devicename_scopemark(self, ports, name_generator):
-        devicename_scopemark = {l3_constants.IP_VERSION_4: dict(),
-                                l3_constants.IP_VERSION_6: dict()}
+        devicename_scopemark = {lib_constants.IP_VERSION_4: dict(),
+                                lib_constants.IP_VERSION_6: dict()}
         for p in ports:
             device_name = name_generator(p['id'])
             ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
@@ -930,7 +930,7 @@ class RouterInfo(object):
 
     def _get_address_scope_mark(self):
         # Prepare address scope iptables rule for internal ports
-        internal_ports = self.router.get(l3_constants.INTERFACE_KEY, [])
+        internal_ports = self.router.get(lib_constants.INTERFACE_KEY, [])
         ports_scopemark = self._get_port_devicename_scopemark(
             internal_ports, self.get_internal_device_name)
 
@@ -939,8 +939,8 @@ class RouterInfo(object):
         if external_port:
             external_port_scopemark = self._get_port_devicename_scopemark(
                 [external_port], self.get_external_device_name)
-            for ip_version in (l3_constants.IP_VERSION_4,
-                               l3_constants.IP_VERSION_6):
+            for ip_version in (lib_constants.IP_VERSION_4,
+                               lib_constants.IP_VERSION_6):
                 ports_scopemark[ip_version].update(
                     external_port_scopemark[ip_version])
         return ports_scopemark
@@ -953,13 +953,13 @@ class RouterInfo(object):
                 external_port['id'])
 
         # Process address scope iptables rules
-        for ip_version in (l3_constants.IP_VERSION_4,
-                           l3_constants.IP_VERSION_6):
+        for ip_version in (lib_constants.IP_VERSION_4,
+                           lib_constants.IP_VERSION_6):
             scopemarks = ports_scopemark[ip_version]
             iptables = iptables_manager.get_tables(ip_version)
             iptables['mangle'].empty_chain('scope')
             iptables['filter'].empty_chain('scope')
-            dont_block_external = (ip_version == l3_constants.IP_VERSION_4
+            dont_block_external = (ip_version == lib_constants.IP_VERSION_4
                                    and self._snat_enabled and external_port)
             for device_name, mark in scopemarks.items():
                 # Add address scope iptables rule
@@ -982,7 +982,7 @@ class RouterInfo(object):
             return
 
         scopes = external_port.get('address_scopes', {})
-        return scopes.get(str(l3_constants.IP_VERSION_4))
+        return scopes.get(str(lib_constants.IP_VERSION_4))
 
     def process_external_port_address_scope_routing(self, iptables_manager):
         if not self._snat_enabled:

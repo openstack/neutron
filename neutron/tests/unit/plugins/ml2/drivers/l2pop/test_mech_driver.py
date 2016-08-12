@@ -19,7 +19,6 @@ from neutron_lib import exceptions
 from oslo_serialization import jsonutils
 import testtools
 
-from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron import context
 from neutron.extensions import portbindings
@@ -435,7 +434,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 cidr='2001:db8::/64',
                 ip_version=6,
                 gateway_ip='fe80::1',
-                ipv6_address_mode=n_const.IPV6_SLAAC) as subnet2:
+                ipv6_address_mode=constants.IPV6_SLAAC) as subnet2:
             with self.port(
                 subnet,
                 fixed_ips=[{'subnet_id': subnet['subnet']['id']},

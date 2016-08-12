@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib import constants as lib_const
+from neutron_lib import exceptions as lib_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -20,7 +21,6 @@ from neutron._i18n import _
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import exceptions as n_exc
 from neutron.db import servicetype_db as st_db
 from neutron import manager
 from neutron.plugins.common import constants
@@ -110,7 +110,7 @@ class DriverController(object):
         # attributes via the API.
         try:
             _ensure_driver_supports_request(drv, router)
-        except n_exc.Invalid:
+        except lib_exc.Invalid:
             # the current driver does not support this request, we need to
             # migrate to a new provider. populate the distributed and ha
             # flags from the previous state if not in the update so we can
@@ -120,7 +120,7 @@ class DriverController(object):
             # the flavor will make things inconsistent. We can probably
             # update the flavor automatically in the future.
             if old_router['flavor_id']:
-                raise n_exc.Invalid(_(
+                raise lib_exc.Invalid(_(
                     "Changing the 'ha' and 'distributed' attributes on a "
                     "router associated with a flavor is not supported."))
             if 'distributed' not in router:
@@ -202,7 +202,7 @@ class _LegacyPlusProviderConfiguration(
                 self.add_provider({'service_type': constants.L3_ROUTER_NAT,
                                    'name': name, 'driver': path,
                                    'default': False})
-            except n_exc.Invalid:
+            except lib_exc.Invalid:
                 LOG.debug("Could not add L3 provider '%s', it may have "
                           "already been explicitly defined.", name)
 
@@ -244,6 +244,6 @@ def _ensure_driver_supports_request(drv, router_body):
         if flag not in [True, False]:
             continue  # not specified in body
         if not getattr(drv, attr).is_compatible(flag):
-            raise n_exc.Invalid(
+            raise lib_exc.Invalid(
                 _("Provider %(name)s does not support %(key)s=%(flag)s")
                 % dict(name=drv.name, key=key, flag=flag))

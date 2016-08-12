@@ -176,7 +176,7 @@ class PolicyHook(hooks.PecanHook):
             # This exception must be explicitly caught as the exception
             # translation hook won't be called if an error occurs in the
             # 'after' handler.
-            raise webob.exc.HTTPForbidden(e.message)
+            raise webob.exc.HTTPForbidden(str(e))
 
         if is_single:
             resp = resp[0]

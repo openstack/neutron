@@ -239,7 +239,8 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
 
         if local_vlan_map is not None:
             vlanmanager.deprecate_local_vlan_map_in_object(
-                "%s.get_agent_ports()" % self.__class__.__name__)
+                "%s.get_agent_ports()" % self.__class__.__name__,
+                stacklevel_extra=1)
             return get_lvm_from_mapping
         return get_lvm_from_manager
 

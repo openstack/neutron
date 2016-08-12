@@ -359,8 +359,8 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         allocation_pools = [netaddr.IPRange('::2', '::ffff:ffff:ffff:ffff')]
         with self.subnet(cidr=None, ip_version=6,
                          subnetpool_id=constants.IPV6_PD_POOL_ID,
-                         ipv6_ra_mode=n_const.IPV6_SLAAC,
-                         ipv6_address_mode=n_const.IPV6_SLAAC):
+                         ipv6_ra_mode=constants.IPV6_SLAAC,
+                         ipv6_address_mode=constants.IPV6_SLAAC):
             pool_mock.get_instance.assert_called_once_with(None, mock.ANY)
             self.assertTrue(mocks['driver'].allocate_subnet.called)
             request = mocks['driver'].allocate_subnet.call_args[0][0]

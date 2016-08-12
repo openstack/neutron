@@ -17,7 +17,7 @@ import functools
 
 import mock
 import netaddr
-from neutron_lib import constants as l3_constants
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -29,7 +29,6 @@ from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
@@ -123,13 +122,13 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router_info = self.generate_router_info(enable_ha=ha)
         router = self.manage_router(self.agent, router_info)
 
-        port = net_helpers.get_free_namespace_port(l3_constants.PROTO_NAME_TCP,
-                                                   router.ns_name)
+        port = net_helpers.get_free_namespace_port(
+            constants.PROTO_NAME_TCP, router.ns_name)
         client_address = '19.4.4.3'
         server_address = '35.4.0.4'
 
         def clean_fips(router):
-            router.router[l3_constants.FLOATINGIP_KEY] = []
+            router.router[constants.FLOATINGIP_KEY] = []
 
         clean_fips(router)
         self._add_fip(router, client_address, fixed_address=server_address)
@@ -170,8 +169,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
         # Assert that every defined FIP is updated via RPC
         expected_fips = set([
-            (fip['id'], l3_constants.FLOATINGIP_STATUS_ACTIVE) for fip in
-            router.router[l3_constants.FLOATINGIP_KEY]])
+            (fip['id'], constants.FLOATINGIP_STATUS_ACTIVE) for fip in
+            router.router[constants.FLOATINGIP_KEY]])
         call = [args[0] for args in rpc.call_args_list][0]
         actual_fips = set(
             [(fip_id, status) for fip_id, status in call[2].items()])
@@ -188,7 +187,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         def ha_router_dev_name_getter(not_used):
             return router.get_ha_device_name()
         self.assertTrue(self.device_exists_with_ips_and_mac(
-            router.router[l3_constants.HA_INTERFACE_KEY],
+            router.router[constants.HA_INTERFACE_KEY],
             ha_router_dev_name_getter, router.ns_name))
 
     def _assert_gateway(self, router, v6_ext_gw_with_sub=True):
@@ -227,7 +226,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         router = self.manage_router(self.agent, router_info)
 
         # Add multiple-IPv6-prefix internal router port
-        slaac = n_const.IPV6_SLAAC
+        slaac = constants.IPV6_SLAAC
         slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
         subnet_modes = [slaac_mode] * 2
         self._add_internal_interface_by_subnet(router.router,
@@ -247,7 +246,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             # not when it ends. Thus, we have to wait until keepalived finishes
             # configuring everything. We verify this by waiting until the last
             # device has an IP address.
-            device = router.router[l3_constants.INTERFACE_KEY][-1]
+            device = router.router[constants.INTERFACE_KEY][-1]
             device_exists = functools.partial(
                 self.device_exists_with_ips_and_mac,
                 device,
@@ -308,7 +307,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                'fixed_ip_address': fixed_address,
                'host': host,
                'fixed_ip_address_scope': fixed_ip_address_scope}
-        router.router[l3_constants.FLOATINGIP_KEY].append(fip)
+        router.router[constants.FLOATINGIP_KEY].append(fip)
 
     def _add_internal_interface_by_subnet(self, router, count=1,
                                           ip_version=4,
@@ -352,7 +351,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         external_device_name = router.get_external_device_name(
             external_port['id'])
         external_device_cidr = self._port_first_ip_cidr(external_port)
-        internal_port = router.router[l3_constants.INTERFACE_KEY][0]
+        internal_port = router.router[constants.INTERFACE_KEY][0]
         int_port_ipv6 = ip_lib.get_ipv6_lladdr(internal_port['mac_address'])
         internal_device_name = router.get_internal_device_name(
             internal_port['id'])
@@ -442,7 +441,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                        metadata_port_filter))
 
     def _assert_internal_devices(self, router):
-        internal_devices = router.router[l3_constants.INTERFACE_KEY]
+        internal_devices = router.router[constants.INTERFACE_KEY]
         self.assertTrue(len(internal_devices))
         for device in internal_devices:
             self.assertTrue(self.device_exists_with_ips_and_mac(
@@ -481,7 +480,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         assert_ovs_bridge_empty(self.agent.conf.external_network_bridge)
 
     def floating_ips_configured(self, router):
-        floating_ips = router.router[l3_constants.FLOATINGIP_KEY]
+        floating_ips = router.router[constants.FLOATINGIP_KEY]
         external_port = router.get_ex_gw_port()
         return len(floating_ips) and all(
             ip_lib.device_exists_with_ips_and_mac(

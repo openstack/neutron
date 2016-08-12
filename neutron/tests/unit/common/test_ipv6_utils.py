@@ -15,8 +15,8 @@
 
 import collections
 import mock
+from neutron_lib import constants
 
-from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.tests import base
 from neutron.tests import tools

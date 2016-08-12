@@ -27,7 +27,6 @@ from neutron.agent import firewall as firewall_base
 from neutron.agent.linux import iptables_manager
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
-from neutron.common import constants as n_const
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import rpc as n_rpc
 from neutron import context
@@ -682,7 +681,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=n_const.IPV6_SLAAC
+                            ipv6_ra_mode=const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -750,7 +749,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=n_const.IPV6_SLAAC
+                            ipv6_ra_mode=const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -825,7 +824,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=n_const.IPV6_SLAAC
+                            ipv6_ra_mode=const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -893,7 +892,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         with self.network() as n,\
                 self.subnet(n, gateway_ip=fake_gateway,
                             cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=n_const.IPV6_SLAAC
+                            ipv6_ra_mode=const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']
@@ -941,7 +940,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         fake_prefix = FAKE_PREFIX[const.IPv6]
         with self.network() as n,\
                 self.subnet(n, gateway_ip=None, cidr=fake_prefix,
-                            ip_version=6, ipv6_ra_mode=n_const.IPV6_SLAAC
+                            ip_version=6, ipv6_ra_mode=const.IPV6_SLAAC
                             ) as subnet_v6,\
                 self.security_group() as sg1:
             sg1_id = sg1['security_group']['id']

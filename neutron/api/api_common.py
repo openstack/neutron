@@ -28,7 +28,6 @@ from webob import exc
 
 from neutron._i18n import _, _LW
 from neutron.common import constants
-from neutron.common import exceptions as n_exc
 from neutron import wsgi
 
 
@@ -386,7 +385,7 @@ class NeutronController(object):
 
 def convert_exception_to_http_exc(e, faults, language):
     serializer = wsgi.JSONDictSerializer()
-    if isinstance(e, n_exc.MultipleExceptions):
+    if isinstance(e, exceptions.MultipleExceptions):
         converted_exceptions = [
             convert_exception_to_http_exc(inner, faults, language)
             for inner in e.inner_exceptions]

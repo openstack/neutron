@@ -699,7 +699,7 @@ class IpRouteCommand(IpDeviceCommandBase):
             with excutils.save_and_reraise_exception() as ctx:
                 if "Cannot find device" in str(rte):
                     ctx.reraise = False
-                    raise n_exc.DeviceNotFoundError(device_name=self.name)
+                    raise exceptions.DeviceNotFoundError(device_name=self.name)
 
     def delete_gateway(self, gateway, table=None):
         ip_version = get_ip_version(gateway)

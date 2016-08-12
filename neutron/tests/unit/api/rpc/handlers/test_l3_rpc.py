@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.common import constants
 from neutron import context
 from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2

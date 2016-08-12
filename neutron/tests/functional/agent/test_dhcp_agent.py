@@ -32,7 +32,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
@@ -112,7 +111,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             "ipv6_ra_mode": None,
             "ipv6_address_mode": None})
         if ip_version == 6:
-            sn_dict['ipv6_address_mode'] = constants.DHCPV6_STATEFUL
+            sn_dict['ipv6_address_mode'] = lib_const.DHCPV6_STATEFUL
         return sn_dict
 
     def create_port_dict(self, network_id, subnet_id, mac_address,

@@ -15,11 +15,12 @@
 
 import mock
 import netaddr
+from neutron_lib import exceptions
 import testtools
 
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
-from neutron.common import exceptions
+from neutron.common import exceptions as n_exc
 from neutron.tests import base
 
 NETNS_SAMPLE = [
@@ -480,7 +481,7 @@ class TestIpWrapper(base.BaseTestCase):
 
     def test_add_vxlan_invalid_port_length(self):
         wrapper = ip_lib.IPWrapper()
-        self.assertRaises(exceptions.NetworkVxlanPortRangeError,
+        self.assertRaises(n_exc.NetworkVxlanPortRangeError,
                           wrapper.add_vxlan, 'vxlan0', 'vni0', group='group0',
                           dev='dev0', ttl='ttl0', tos='tos0',
                           local='local0', proxy=True,

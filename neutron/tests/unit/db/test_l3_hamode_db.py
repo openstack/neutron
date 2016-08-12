@@ -65,7 +65,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         self.plugin.router_scheduler = l3_agent_scheduler.ChanceScheduler()
         self.agent1 = helpers.register_l3_agent()
         self.agent2 = helpers.register_l3_agent(
-            'host_2', n_const.L3_AGENT_MODE_DVR_SNAT)
+            'host_2', constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, ha=True, tenant_id='tenant1', distributed=None,
                        ctx=None, admin_state_up=True):
@@ -839,7 +839,7 @@ class L3HATestCase(L3HATestFramework):
         # Test setup registers two l3 agents.
         # Register another l3 agent with dvr mode and assert that
         # get_number_of_ha_agent_candidates return 2.
-        helpers.register_l3_agent('host_3', n_const.L3_AGENT_MODE_DVR)
+        helpers.register_l3_agent('host_3', constants.L3_AGENT_MODE_DVR)
         num_ha_candidates = self.plugin.get_number_of_agents_for_scheduling(
             self.admin_ctx)
         self.assertEqual(2, num_ha_candidates)
@@ -852,7 +852,7 @@ class L3HATestCase(L3HATestFramework):
         # Test setup registers two l3 agents.
         # Register another l3 agent with dvr mode and assert that
         # get_number_of_ha_agent_candidates return 2.
-        helpers.register_l3_agent('host_3', n_const.L3_AGENT_MODE_DVR_SNAT)
+        helpers.register_l3_agent('host_3', constants.L3_AGENT_MODE_DVR_SNAT)
         num_ha_candidates = self.plugin.get_number_of_agents_for_scheduling(
             self.admin_ctx)
         self.assertEqual(3, num_ha_candidates)
@@ -1054,7 +1054,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
 
     def test_ensure_host_set_on_ports_dvr_ha_binds_to_active(self):
         agent3 = helpers.register_l3_agent('host_3',
-                                           n_const.L3_AGENT_MODE_DVR_SNAT)
+                                           constants.L3_AGENT_MODE_DVR_SNAT)
         ext_net = self._create_network(self.core_plugin, self.admin_ctx,
                                        external=True)
         int_net = self._create_network(self.core_plugin, self.admin_ctx)
