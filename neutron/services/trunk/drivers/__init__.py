@@ -13,6 +13,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron.services.trunk.drivers.linuxbridge import driver as lxb_driver
 from neutron.services.trunk.drivers.openvswitch import driver as ovs_driver
 
 
@@ -24,4 +25,5 @@ def register():
     # be at least one compatible driver enabled in the deployment for trunk
     # setup to be successful. The plugin fails to initialize if no compatible
     # driver is found in the deployment.
+    lxb_driver.register()
     ovs_driver.register()
