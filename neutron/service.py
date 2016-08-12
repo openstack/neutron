@@ -241,7 +241,7 @@ def _start_workers(workers):
             # dispose the whole pool before os.fork, otherwise there will
             # be shared DB connections in child processes which may cause
             # DB errors.
-            session.dispose()
+            session.context_manager.dispose_pool()
 
             for worker in process_workers:
                 worker_launcher.launch_service(worker,
