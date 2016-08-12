@@ -966,6 +966,10 @@ class TestIpRouteCommand(TestIPCmdBase):
             self.assertEqual(self.route_cmd.get_gateway(),
                              test_case['expected'])
 
+    def test_flush_route_table(self):
+        self.route_cmd.flush(self.ip_version, self.table)
+        self._assert_sudo([self.ip_version], ('flush', 'table', self.table))
+
     def test_add_route(self):
         self.route_cmd.add_route(self.cidr, self.ip, self.table)
         self._assert_sudo([self.ip_version],
