@@ -1229,7 +1229,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             expected_port_update = {
                 'device_owner': l3_constants.DEVICE_OWNER_ROUTER_INTF,
                 'device_id': r['router']['id']}
-            update_port.assert_called_with(
+            update_port.assert_any_call(
                 mock.ANY, p['port']['id'], {'port': expected_port_update})
             # fetch port and confirm device_id
             body = self._show('ports', p['port']['id'])
