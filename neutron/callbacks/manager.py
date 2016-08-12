@@ -166,4 +166,6 @@ def _get_id(callback):
     # TODO(armax): consider using something other than names
     # https://www.python.org/dev/peps/pep-3155/, but this
     # might be okay for now.
-    return reflection.get_callable_name(callback)
+    parts = (reflection.get_callable_name(callback),
+             str(hash(callback)))
+    return '-'.join(parts)

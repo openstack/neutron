@@ -22,6 +22,19 @@ from neutron.callbacks import resources
 from neutron.tests import base
 
 
+class ObjectWithCallback(object):
+
+    def __init__(self):
+        self.counter = 0
+
+    def callback(self, *args, **kwargs):
+        self.counter += 1
+
+
+class GloriousObjectWithCallback(ObjectWithCallback):
+    pass
+
+
 def callback_1(*args, **kwargs):
     callback_1.counter += 1
 callback_id_1 = manager._get_id(callback_1)
@@ -214,3 +227,19 @@ class CallBacksManagerTestCase(base.BaseTestCase):
             resources.ROUTER, events.BEFORE_DELETE, mock.ANY)
         self.assertEqual(2, callback_1.counter)
         self.assertEqual(1, callback_2.counter)
+
+    def test_object_instances_as_subscribers(self):
+        """Ensures that the manager doesn't think these are equivalent."""
+        a = GloriousObjectWithCallback()
+        b = ObjectWithCallback()
+        c = ObjectWithCallback()
+        for o in (a, b, c):
+            self.manager.subscribe(
+                o.callback, resources.PORT, events.BEFORE_CREATE)
+            # ensure idempotency remains for a single object
+            self.manager.subscribe(
+                o.callback, resources.PORT, events.BEFORE_CREATE)
+        self.manager.notify(resources.PORT, events.BEFORE_CREATE, mock.ANY)
+        self.assertEqual(1, a.counter)
+        self.assertEqual(1, b.counter)
+        self.assertEqual(1, c.counter)
