@@ -22,6 +22,7 @@ from neutron._i18n import _, _LW
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils
 from neutron.db.allowed_address_pairs import models as addr_pair
+from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
 from neutron.extensions import securitygroup as ext_sg
@@ -234,8 +235,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def _select_sg_ids_for_ports(self, context, ports):
         if not ports:
             return []
-        sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
-        sg_binding_sgid = sg_db.SecurityGroupPortBinding.security_group_id
+        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
+        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
         query = context.session.query(sg_binding_sgid)
         query = query.filter(sg_binding_port.in_(ports.keys()))
         return query.all()
@@ -243,14 +244,14 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def _select_rules_for_ports(self, context, ports):
         if not ports:
             return []
-        sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
-        sg_binding_sgid = sg_db.SecurityGroupPortBinding.security_group_id
+        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
+        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
 
-        sgr_sgid = sg_db.SecurityGroupRule.security_group_id
+        sgr_sgid = sg_models.SecurityGroupRule.security_group_id
 
         query = context.session.query(sg_binding_port,
-                                      sg_db.SecurityGroupRule)
-        query = query.join(sg_db.SecurityGroupRule,
+                                      sg_models.SecurityGroupRule)
+        query = query.join(sg_models.SecurityGroupRule,
                            sgr_sgid == sg_binding_sgid)
         query = query.filter(sg_binding_port.in_(ports.keys()))
         return query.all()
@@ -263,8 +264,8 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             ips_by_group[remote_group_id] = set()
 
         ip_port = models_v2.IPAllocation.port_id
-        sg_binding_port = sg_db.SecurityGroupPortBinding.port_id
-        sg_binding_sgid = sg_db.SecurityGroupPortBinding.security_group_id
+        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
+        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
 
         # Join the security group binding table directly to the IP allocation
         # table instead of via the Port table skip an unnecessary intermediary

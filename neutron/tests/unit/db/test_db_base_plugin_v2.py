@@ -50,8 +50,8 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin
 from neutron.db import l3_db
+from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
-from neutron.db import securitygroups_db as sgdb
 from neutron import manager
 from neutron.tests import base
 from neutron.tests import tools
@@ -6029,11 +6029,12 @@ class DbModelMixin(object):
 
     def _make_security_group_and_rule(self, ctx):
         with ctx.session.begin():
-            sg = sgdb.SecurityGroup(name='sg', description='sg')
-            rule = sgdb.SecurityGroupRule(security_group=sg, port_range_min=1,
-                                          port_range_max=2, protocol='TCP',
-                                          ethertype='v4', direction='ingress',
-                                          remote_ip_prefix='0.0.0.0/0')
+            sg = sg_models.SecurityGroup(name='sg', description='sg')
+            rule = sg_models.SecurityGroupRule(
+                security_group=sg, port_range_min=1,
+                port_range_max=2, protocol='TCP',
+                ethertype='v4', direction='ingress',
+                remote_ip_prefix='0.0.0.0/0')
             ctx.session.add(sg)
             ctx.session.add(rule)
         return sg, rule
@@ -6112,9 +6113,9 @@ class DbModelMixin(object):
         ctx = context.get_admin_context()
         sg, rule = self._make_security_group_and_rule(ctx)
         self._test_staledata_error_on_concurrent_object_update(
-            sgdb.SecurityGroup, sg['id'])
+            sg_models.SecurityGroup, sg['id'])
         self._test_staledata_error_on_concurrent_object_update(
-            sgdb.SecurityGroupRule, rule['id'])
+            sg_models.SecurityGroupRule, rule['id'])
 
     def _test_staledata_error_on_concurrent_object_update(self, model, dbid):
         """Test revision compare and swap update breaking on concurrent update.

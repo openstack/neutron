@@ -55,10 +55,10 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import dvr_mac_db
 from neutron.db import external_net_db
 from neutron.db import extradhcpopt_db
+from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
 from neutron.db.quota import driver  # noqa
-from neutron.db import securitygroups_db
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_db_models as service_type_db
@@ -150,8 +150,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port=models_v2.Port,
         subnet=models_v2.Subnet,
         subnetpool=models_v2.SubnetPool,
-        security_group=securitygroups_db.SecurityGroup,
-        security_group_rule=securitygroups_db.SecurityGroupRule)
+        security_group=sg_models.SecurityGroup,
+        security_group_rule=sg_models.SecurityGroupRule)
     def __init__(self):
         # First load drivers, then initialize DB, then initialize drivers
         self.type_manager = managers.TypeManager()
