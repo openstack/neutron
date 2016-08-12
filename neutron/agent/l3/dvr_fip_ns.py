@@ -43,6 +43,8 @@ FIP_RT_TBL = 16
 # Rule priority range for FIPs
 FIP_PR_START = 32768
 FIP_PR_END = FIP_PR_START + 40000
+# Fixed rule priority for Fast Path Exit rules
+FAST_PATH_EXIT_PR = 80000
 
 
 class FipNamespace(namespaces.Namespace):
