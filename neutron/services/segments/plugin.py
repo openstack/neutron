@@ -45,16 +45,23 @@ def _extend_port_dict_binding(plugin, port_res, port_db):
         return
 
     value = ip_allocation.IP_ALLOCATION_IMMEDIATE
-    if not port_res.get('fixed_ips'):
-        # NOTE Only routed network ports have deferred allocation. Check if it
-        # is routed by looking for subnets associated with segments.
-        object_session = session.Session.object_session(port_db)
-        query = object_session.query(models_v2.Subnet)
-        query = query.filter_by(network_id=port_db.network_id)
-        query = query.filter(models_v2.Subnet.segment_id.isnot(None))
+    segment_id = None
+    # TODO(Carl) eliminate this query entirely and use optimistic joins
+    object_session = session.Session.object_session(port_db)
+    query = object_session.query(models_v2.Subnet)
+    query = query.filter_by(network_id=port_db.network_id)
+    query = query.filter(models_v2.Subnet.segment_id.isnot(None))
+    ips = port_res.get('fixed_ips')
+    if not ips:
         if query.count():
             value = ip_allocation.IP_ALLOCATION_DEFERRED
+    else:
+        query = query.filter_by(id=ips[0]['subnet_id'])
+        routed_subnet = query.one_or_none()
+        if routed_subnet:
+            segment_id = routed_subnet[segment.SEGMENT_ID]
     port_res[ip_allocation.IP_ALLOCATION] = value
+    port_res[segment.IPAM_SEGMENT_ID] = segment_id
 
 
 class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
