@@ -320,6 +320,10 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.IPAddressField: tools.get_random_ip_address,
     common_types.MACAddressField: tools.get_random_EUI,
     common_types.IPV6ModeEnumField: tools.get_random_ipv6_mode,
+    common_types.FlowDirectionEnumField: tools.get_random_flow_direction,
+    common_types.EtherTypeEnumField: tools.get_random_ether_type,
+    common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
+    common_types.PortRangeField: tools.get_random_port,
 }
 
 
@@ -532,13 +536,17 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         get_objects_mock.assert_has_calls(mock_calls)
 
     def test_get_objects_mixed_fields(self):
-        synthetic_fields = self._test_class.synthetic_fields
+        synthetic_fields = (
+            set(self._test_class.synthetic_fields) -
+            self._test_class.extra_filter_names
+        )
         if not synthetic_fields:
-            self.skipTest('No synthetic fields found in test class %r' %
+            self.skipTest('No synthetic fields that are not extra filters '
+                          'found in test class %r' %
                           self._test_class)
 
         filters = copy.copy(self.valid_field_filter)
-        filters[synthetic_fields[0]] = 'xxx'
+        filters[synthetic_fields.pop()] = 'xxx'
 
         with mock.patch.object(obj_db_api, 'get_objects',
                                return_value=self.db_objs):
@@ -546,17 +554,21 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                               self._test_class.get_objects, self.context,
                               **filters)
 
-    def test_get_objects_synthetic_fields(self):
-        synthetic_fields = self._test_class.synthetic_fields
+    def test_get_objects_synthetic_fields_not_extra_filters(self):
+        synthetic_fields = (
+            set(self._test_class.synthetic_fields) -
+            self._test_class.extra_filter_names
+        )
         if not synthetic_fields:
-            self.skipTest('No synthetic fields found in test class %r' %
+            self.skipTest('No synthetic fields that are not extra filters '
+                          'found in test class %r' %
                           self._test_class)
 
         with mock.patch.object(obj_db_api, 'get_objects',
                                side_effect=self.fake_get_objects):
             self.assertRaises(base.exceptions.InvalidInput,
                               self._test_class.get_objects, self.context,
-                              **{synthetic_fields[0]: 'xxx'})
+                              **{synthetic_fields.pop(): 'xxx'})
 
     def test_get_objects_invalid_fields(self):
         with mock.patch.object(obj_db_api, 'get_objects',

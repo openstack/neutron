@@ -248,7 +248,7 @@ class DeclarativeObject(abc.ABCMeta):
                 cls.has_standard_attributes()):
             standardattributes.add_standard_attributes(cls)
         # Instantiate extra filters per class
-        cls.extra_filter_names = set()
+        cls.extra_filter_names = set(cls.extra_filter_names)
 
 
 @six.add_metaclass(DeclarativeObject)
