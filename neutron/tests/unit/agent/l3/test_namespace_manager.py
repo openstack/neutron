@@ -91,6 +91,13 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
             retrieved_ns_names = self.ns_manager.list_all()
         self.assertFalse(retrieved_ns_names)
 
+    def test_ensure_snat_cleanup(self):
+        router_id = _uuid()
+        with mock.patch.object(self.ns_manager, '_cleanup') as mock_cleanup:
+            self.ns_manager.ensure_snat_cleanup(router_id)
+            mock_cleanup.assert_called_once_with(dvr_snat_ns.SNAT_NS_PREFIX,
+                                                 router_id)
+
     def test_ensure_router_cleanup(self):
         router_id = _uuid()
         ns_names = [namespaces.NS_PREFIX + _uuid() for _ in range(5)]

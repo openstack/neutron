@@ -567,8 +567,12 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback,
                         # need to keep fip namespaces as well
                         ext_net_id = (r['external_gateway_info'] or {}).get(
                             'network_id')
+                        is_snat_agent = (self.conf.agent_mode ==
+                            l3_constants.L3_AGENT_MODE_DVR_SNAT)
                         if ext_net_id:
                             ns_manager.keep_ext_net(ext_net_id)
+                        elif is_snat_agent:
+                            ns_manager.ensure_snat_cleanup(r['id'])
                     update = queue.RouterUpdate(
                         r['id'],
                         queue.PRIORITY_SYNC_ROUTERS_TASK,
