@@ -35,6 +35,10 @@ class OVSDriverTestCase(base.BaseTestCase):
                          ovs_driver.segmentation_types)
         self.assertEqual(constants.AGENT_TYPE_OVS, ovs_driver.agent_type)
         self.assertFalse(ovs_driver.can_trunk_bound_port)
+        self.assertTrue(
+            ovs_driver.is_agent_compatible(constants.AGENT_TYPE_OVS))
+        self.assertTrue(
+            ovs_driver.is_interface_compatible(driver.SUPPORTED_INTERFACES[0]))
 
     def test_driver_is_loaded(self):
         cfg.CONF.set_override('mechanism_drivers',

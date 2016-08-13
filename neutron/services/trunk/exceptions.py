@@ -67,3 +67,8 @@ class TrunkInErrorState(n_exc.Conflict):
 class IncompatibleTrunkPluginConfiguration(n_exc.NeutronException):
     message = _("Cannot load trunk plugin: no compatible core plugin "
                 "configuration is found.")
+
+
+class TrunkPluginDriverConflict(n_exc.Conflict):
+    message = _("A misconfiguration in the environment prevents the "
+                "operation from completing, please, contact the admin.")

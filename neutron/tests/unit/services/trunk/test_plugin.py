@@ -24,10 +24,10 @@ from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
-from neutron.services.trunk.drivers import base
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
 from neutron.tests.unit.plugins.ml2 import test_plugin
+from neutron.tests.unit.services.trunk import fakes
 
 
 def create_subport_dict(port_id):
@@ -267,17 +267,6 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(constants.PENDING_STATUS, trunk['status'])
 
 
-class FakeDriver(base.DriverBase):
-
-    @property
-    def is_loaded(self):
-        return True
-
-    @classmethod
-    def create(cls):
-        return FakeDriver('foo_name', ('foo_intfs',), ('foo_seg_types',))
-
-
 class TrunkPluginDriversTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
@@ -290,8 +279,9 @@ class TrunkPluginDriversTestCase(test_plugin.Ml2PluginV2TestCase):
             trunk_plugin.TrunkPlugin()
 
     def test_plugin_with_fake_driver(self):
-        fake_driver = FakeDriver.create()
+        fake_driver = fakes.FakeDriver.create()
         plugin = trunk_plugin.TrunkPlugin()
         self.assertTrue(fake_driver.is_loaded)
         self.assertEqual(set([]), plugin.supported_agent_types)
         self.assertEqual(set(['foo_intfs']), plugin.supported_interfaces)
+        self.assertEqual([fake_driver], plugin.registered_drivers)

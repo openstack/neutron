@@ -87,6 +87,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
         self._drivers.append(driver)
 
     @property
+    def registered_drivers(self):
+        """The registered drivers."""
+        return self._drivers
+
+    @property
     def supported_interfaces(self):
         """A set of supported interfaces."""
         return self._interfaces
