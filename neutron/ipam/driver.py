@@ -119,6 +119,18 @@ class Pool(object):
         :raises: TODO(Carl) What sort of errors do we need to plan for?
         """
 
+    def needs_rollback(self):
+        """Whether driver needs an explicit rollback when operations fail.
+
+        A driver that (de)allocates resources in the same DB transaction passed
+        to it by Neutron will not want explicit rollback. A truly external IPAM
+        system would need to return True for sure. The default is True since
+        all drivers were assumed to be designed to need it from the start.
+
+        :returns: True if driver needs to be called on rollback
+        """
+        return True
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Subnet(object):

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import mock
 import netaddr
 from neutron_lib import constants
@@ -779,3 +780,74 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._ipam_allocate_ips.assert_called_once_with(
             context, mocks['driver'], db_port,
             changes.remove, revert_on_fail=False)
+
+
+class TestRollback(test_db_base.NeutronDbPluginV2TestCase):
+    def setUp(self):
+        cfg.CONF.set_override('ipam_driver', 'internal')
+        super(TestRollback, self).setUp()
+
+    def test_ipam_rollback_not_broken_on_session_rollback(self):
+        """Triggers an error that calls rollback on session."""
+        with self.network() as net:
+            with self.subnet(network=net, cidr='10.0.1.0/24') as subnet1:
+                with self.subnet(network=net, cidr='10.0.2.0/24') as subnet2:
+                    pass
+
+        # If this test fails and this method appears in the server side stack
+        # trace then IPAM rollback was likely tried using a session which had
+        # already been rolled back by the DB exception.
+        def rollback(func, *args, **kwargs):
+            func(*args, **kwargs)
+
+        # Ensure DBDuplicate exception is raised in the context where IPAM
+        # rollback is triggered. It "breaks" the session because it triggers DB
+        # rollback. Inserting a flush in _store_ip_allocation does this.
+        orig = ipam_pluggable_backend.IpamPluggableBackend._store_ip_allocation
+
+        def store(context, ip_address, *args, **kwargs):
+            try:
+                return orig(context, ip_address, *args, **kwargs)
+            finally:
+                context.session.flush()
+
+        # Create a port to conflict with later. Simulates a race for addresses.
+        result = self._create_port(
+            self.fmt,
+            net_id=net['network']['id'],
+            fixed_ips=[{'subnet_id': subnet1['subnet']['id']},
+                       {'subnet_id': subnet2['subnet']['id']}])
+        port = self.deserialize(self.fmt, result)
+        fixed_ips = port['port']['fixed_ips']
+
+        # Hands out the same 2nd IP to create conflict and trigger rollback
+        ips = [{'subnet_id': fixed_ips[0]['subnet_id'],
+                'ip_address': fixed_ips[0]['ip_address']},
+               {'subnet_id': fixed_ips[1]['subnet_id'],
+                'ip_address': fixed_ips[1]['ip_address']}]
+
+        def alloc(*args, **kwargs):
+            def increment_address(a):
+                a['ip_address'] = str(netaddr.IPAddress(a['ip_address']) + 1)
+            # Increment 1st address to return a free address on the first call
+            increment_address(ips[0])
+            try:
+                return copy.deepcopy(ips)
+            finally:
+                # Increment 2nd address to return free address on the 2nd call
+                increment_address(ips[1])
+
+        Backend = ipam_pluggable_backend.IpamPluggableBackend
+        with mock.patch.object(Backend, '_store_ip_allocation', wraps=store),\
+            mock.patch.object(Backend, '_safe_rollback', wraps=rollback),\
+            mock.patch.object(Backend, '_allocate_ips_for_port', wraps=alloc):
+                # Create port with two addresses. The wrapper lets one succeed
+                # then simulates race for the second to trigger IPAM rollback.
+                response = self._create_port(
+                    self.fmt,
+                    net_id=net['network']['id'],
+                    fixed_ips=[{'subnet_id': subnet1['subnet']['id']},
+                               {'subnet_id': subnet2['subnet']['id']}])
+
+        # When all goes well, retry kicks in and the operation is successful.
+        self.assertEqual(webob.exc.HTTPCreated.code, response.status_int)
