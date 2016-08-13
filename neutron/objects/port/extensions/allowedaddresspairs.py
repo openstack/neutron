@@ -14,7 +14,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
-from neutron.db.allowed_address_pairs import models
+from neutron.db.models import allowed_address_pair as models
 from neutron.objects import base
 from neutron.objects import common_types
 

@@ -21,7 +21,7 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _, _LW
 from neutron.common import ipv6_utils as ipv6
 from neutron.common import utils
-from neutron.db.allowed_address_pairs import models as addr_pair
+from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import securitygroups_db as sg_db
@@ -271,14 +271,14 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         # table instead of via the Port table skip an unnecessary intermediary
         query = context.session.query(sg_binding_sgid,
                                       models_v2.IPAllocation.ip_address,
-                                      addr_pair.AllowedAddressPair.ip_address)
+                                      aap_models.AllowedAddressPair.ip_address)
         query = query.join(models_v2.IPAllocation,
                            ip_port == sg_binding_port)
         # Outerjoin because address pairs may be null and we still want the
         # IP for the port.
         query = query.outerjoin(
-            addr_pair.AllowedAddressPair,
-            sg_binding_port == addr_pair.AllowedAddressPair.port_id)
+            aap_models.AllowedAddressPair,
+            sg_binding_port == aap_models.AllowedAddressPair.port_id)
         query = query.filter(sg_binding_sgid.in_(remote_group_ids))
         # Each allowed address pair IP record for a port beyond the 1st
         # will have a duplicate regular IP in the query response since

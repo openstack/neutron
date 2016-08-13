@@ -29,11 +29,11 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
-from neutron.db.allowed_address_pairs import models as addr_pair_db
 from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db as l3_sched_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
+from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -212,8 +212,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         """Return all active ports associated with the allowed_addr_pair ip."""
         query = context.session.query(
             models_v2.Port).filter(
-                models_v2.Port.id == addr_pair_db.AllowedAddressPair.port_id,
-                addr_pair_db.AllowedAddressPair.ip_address == fixed_ip,
+                models_v2.Port.id == aap_models.AllowedAddressPair.port_id,
+                aap_models.AllowedAddressPair.ip_address == fixed_ip,
                 models_v2.Port.network_id == network_id,
                 models_v2.Port.admin_state_up == True)  # noqa
         return query.all()
