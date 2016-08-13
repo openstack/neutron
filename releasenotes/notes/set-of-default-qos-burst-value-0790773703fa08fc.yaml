@@ -1,0 +1,7 @@
+---
+prelude: >
+    By default, the QoS driver for the Open vSwitch
+    and Linuxbridge agents calculates the burst value
+    as 80% of the available bandwidth.
+fixes:
+  - Fixes bug 1572670
