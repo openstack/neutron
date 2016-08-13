@@ -21,10 +21,9 @@ Based on this comparison database can be healed with healing migration.
 
 """
 
-# TODO(ihrachys): move the module under neutron/tests
-
 import os.path
 
+from neutron.common import utils
 from neutron.db import address_scope_db  # noqa
 from neutron.db import agents_db  # noqa
 from neutron.db import agentschedulers_db  # noqa
@@ -63,10 +62,9 @@ from neutron.plugins.ml2 import models as ml2_models  # noqa
 from neutron.services.auto_allocate import models as aa_models  # noqa
 from neutron.services.segments import db  # noqa
 from neutron.services.trunk import models as trunk_models  # noqa
-from neutron.tests import tools
 
 
-tools.import_modules_recursively(os.path.dirname(models.__file__))
+utils.import_modules_recursively(os.path.dirname(models.__file__))
 
 
 def get_metadata():

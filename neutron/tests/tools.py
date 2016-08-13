@@ -14,15 +14,14 @@
 #    under the License.
 
 import copy
-import importlib
 import os
 import platform
 import random
 import string
-import sys
 import time
 import warnings
 
+from debtcollector import moves
 import fixtures
 import mock
 import netaddr
@@ -30,10 +29,10 @@ from neutron_lib import constants
 import six
 import unittest2
 
-import neutron
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
+from neutron.common import utils
 from neutron.db import common_db_mixin
 
 
@@ -132,9 +131,6 @@ class CommonDbMixinHooksFixture(fixtures.Fixture):
         common_db_mixin.CommonDbMixin._model_query_hooks = self.original_hooks
 
 
-from neutron.common import utils
-
-
 def setup_mock_calls(mocked_call, expected_calls_and_values):
     """A convenient method to setup a sequence of mock calls.
 
@@ -202,36 +198,6 @@ class UnorderedList(list):
 
     def __neq__(self, other):
         return not self == other
-
-
-def import_modules_recursively(topdir):
-    '''Import and return all modules below the topdir directory.'''
-    modules = []
-    for root, dirs, files in os.walk(topdir):
-        for file_ in files:
-            if file_[-3:] != '.py':
-                continue
-
-            module = file_[:-3]
-            if module == '__init__':
-                continue
-
-            import_base = root.replace('/', '.')
-
-            # NOTE(ihrachys): in Python3, or when we are not located in the
-            # directory containing neutron code, __file__ is absolute, so we
-            # should truncate it to exclude PYTHONPATH prefix
-            prefixlen = len(os.path.dirname(neutron.__file__))
-            import_base = 'neutron' + import_base[prefixlen:]
-
-            module = '.'.join([import_base, module])
-            if module not in sys.modules:
-                importlib.import_module(module)
-            modules.append(module)
-
-        for dir_ in dirs:
-            modules.extend(import_modules_recursively(dir_))
-    return modules
 
 
 def get_random_string(n=10):
@@ -333,3 +299,8 @@ def reset_random_seed():
 
 def get_random_ipv6_mode():
     return random.choice(n_const.IPV6_MODES)
+
+
+import_modules_recursively = moves.moved_function(
+    utils.import_modules_recursively, 'import_modules_recursively', __name__,
+    version='Newton', removal_version='Ocata')
