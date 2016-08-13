@@ -264,8 +264,6 @@ class L3ConfigFixture(ConfigFixture):
     def _prepare_config_with_ovs_agent(self, integration_bridge):
         self.config.update({
             'DEFAULT': {
-                'l3_agent_manager': ('neutron.agent.l3_agent.'
-                                     'L3NATAgentWithStateReport'),
                 'interface_driver': ('neutron.agent.linux.interface.'
                                      'OVSInterfaceDriver'),
                 'ovs_integration_bridge': integration_bridge,
