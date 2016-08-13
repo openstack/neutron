@@ -31,10 +31,17 @@ import traceback
 from neutron.common import exceptions
 from neutron.common import profiler  # noqa
 
-context_manager = enginefacade.transaction_context()
-context_manager.configure(sqlite_fk=True)
 
-_PROFILER_INITIALIZED = False
+def set_hook(engine):
+    if cfg.CONF.profiler.enabled and cfg.CONF.profiler.trace_sqlalchemy:
+        osprofiler.sqlalchemy.add_tracing(sqlalchemy, engine, 'neutron.db')
+
+
+context_manager = enginefacade.transaction_context()
+
+context_manager.configure(sqlite_fk=True)
+context_manager.append_on_engine_create(set_hook)
+
 
 MAX_RETRIES = 10
 LOG = logging.getLogger(__name__)
@@ -97,16 +104,6 @@ def _is_nested_instance(e, etypes):
             any(_is_nested_instance(i, etypes) for i in e.inner_exceptions))
 
 
-# TODO(akamyshnikova) this code should be in oslo.db
-def _set_profiler():
-    global _PROFILER_INITIALIZED
-    if (not _PROFILER_INITIALIZED and cfg.CONF.profiler.enabled and
-            cfg.CONF.profiler.trace_sqlalchemy):
-        _PROFILER_INITIALIZED = True
-        osprofiler.sqlalchemy.add_tracing(
-            sqlalchemy, context_manager.get_legacy_facade().get_engine(), "db")
-
-
 @contextlib.contextmanager
 def exc_to_retry(exceptions):
     try:
@@ -122,7 +119,6 @@ def exc_to_retry(exceptions):
 # connections will be updated, this won't be needed
 def get_engine():
     """Helper method to grab engine."""
-    _set_profiler()
     return context_manager.get_legacy_facade().get_engine()
 
 
@@ -137,7 +133,6 @@ def dispose():
 # connections will be updated, this won't be needed
 def get_session(autocommit=True, expire_on_commit=False, use_slave=False):
     """Helper method to grab session."""
-    _set_profiler()
     return context_manager.get_legacy_facade().get_session(
         autocommit=autocommit, expire_on_commit=expire_on_commit,
         use_slave=use_slave)
