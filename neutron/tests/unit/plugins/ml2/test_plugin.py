@@ -1072,7 +1072,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                     raise db_exc.DBDuplicateEntry()
 
         listener = IPAllocationsGrenade()
-        engine = db_api.get_engine()
+        engine = db_api.context_manager.get_legacy_facade().get_engine()
         event.listen(engine, 'before_cursor_execute', listener.execute)
         event.listen(engine, 'commit', listener.commit)
         self.addCleanup(event.remove, engine, 'before_cursor_execute',

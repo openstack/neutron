@@ -16,6 +16,7 @@
 import contextlib
 
 from debtcollector import moves
+from debtcollector import removals
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
@@ -115,8 +116,7 @@ def exc_to_retry(exceptions):
                 raise db_exc.RetryRequest(e)
 
 
-#TODO(akamyshnikova): when all places in the code, which use sessions/
-# connections will be updated, this won't be needed
+@removals.remove(version='Newton', removal_version='Ocata')
 def get_engine():
     """Helper method to grab engine."""
     return context_manager.get_legacy_facade().get_engine()
