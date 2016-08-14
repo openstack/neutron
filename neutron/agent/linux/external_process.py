@@ -61,7 +61,8 @@ class ProcessManager(MonitoredProcess):
     """
     def __init__(self, conf, uuid, namespace=None, service=None,
                  pids_path=None, default_cmd_callback=None,
-                 cmd_addl_env=None, pid_file=None, run_as_root=False):
+                 cmd_addl_env=None, pid_file=None, run_as_root=False,
+                 custom_reload_callback=None):
 
         self.conf = conf
         self.uuid = uuid
@@ -71,6 +72,7 @@ class ProcessManager(MonitoredProcess):
         self.pids_path = pids_path or self.conf.external_pids
         self.pid_file = pid_file
         self.run_as_root = run_as_root
+        self.custom_reload_callback = custom_reload_callback
 
         if service:
             self.service_pid_fname = 'pid.' + service
@@ -94,7 +96,10 @@ class ProcessManager(MonitoredProcess):
             self.reload_cfg()
 
     def reload_cfg(self):
-        self.disable('HUP')
+        if self.custom_reload_callback:
+            self.disable(get_stop_command=self.custom_reload_callback)
+        else:
+            self.disable('HUP')
 
     def disable(self, sig='9', get_stop_command=None):
         pid = self.pid
