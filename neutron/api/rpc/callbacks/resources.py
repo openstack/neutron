@@ -11,23 +11,32 @@
 #    under the License.
 
 from neutron.objects.qos import policy
+from neutron.objects import trunk
 
 
+_TRUNK_CLS = trunk.Trunk
 _QOS_POLICY_CLS = policy.QosPolicy
+_SUBPORT_CLS = trunk.SubPort
 
 _VALID_CLS = (
+    _TRUNK_CLS,
     _QOS_POLICY_CLS,
+    _SUBPORT_CLS,
 )
 
 _VALID_TYPES = [cls.obj_name() for cls in _VALID_CLS]
 
 
 # Supported types
+TRUNK = _TRUNK_CLS.obj_name()
 QOS_POLICY = _QOS_POLICY_CLS.obj_name()
+SUBPORT = _SUBPORT_CLS.obj_name()
 
 
 _TYPE_TO_CLS_MAP = {
+    TRUNK: _TRUNK_CLS,
     QOS_POLICY: _QOS_POLICY_CLS,
+    SUBPORT: _SUBPORT_CLS,
 }
 
 LOCAL_RESOURCE_VERSIONS = {

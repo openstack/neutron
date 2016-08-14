@@ -62,6 +62,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     def __init__(self):
         db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
             attributes.PORTS, [_extend_port_trunk_details])
+        self._rpc_backend = None
         self._drivers = []
         self._segmentation_types = {}
         self._interfaces = set()
@@ -78,6 +79,12 @@ class TrunkPlugin(service_base.ServicePluginBase,
         """Fail to load if no compatible driver is found."""
         if not any([driver.is_loaded for driver in self._drivers]):
             raise trunk_exc.IncompatibleTrunkPluginConfiguration()
+
+    def set_rpc_backend(self, backend):
+        self._rpc_backend = backend
+
+    def is_rpc_enabled(self):
+        return self._rpc_backend is not None
 
     def register_driver(self, driver):
         """Register driver with trunk plugin."""
