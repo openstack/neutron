@@ -67,8 +67,8 @@ class TestNetnsCleanup(base.BaseTestCase):
 
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.return_value.namespace_is_empty.return_value = is_empty
-            self.assertEqual(util.eligible_for_deletion(conf, ns, force),
-                             expected)
+            self.assertEqual(expected,
+                             util.eligible_for_deletion(conf, ns, force))
 
             expected_calls = [mock.call(namespace=ns)]
             if not force:
@@ -101,10 +101,8 @@ class TestNetnsCleanup(base.BaseTestCase):
 
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
             ip_wrap.return_value.namespace_is_empty.return_value = True
-            self.assertEqual(True,
-                             util.eligible_for_deletion(conf, ns_dhcp, False))
-            self.assertEqual(False,
-                             util.eligible_for_deletion(conf, ns_l3, False))
+            self.assertTrue(util.eligible_for_deletion(conf, ns_dhcp, False))
+            self.assertFalse(util.eligible_for_deletion(conf, ns_l3, False))
 
             expected_calls = [mock.call(namespace=ns_dhcp),
                               mock.call().namespace_is_empty()]
