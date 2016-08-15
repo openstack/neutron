@@ -412,6 +412,9 @@ class IptablesManager(object):
         finally:
             try:
                 self.defer_apply_off()
+            except n_exc.IpTablesApplyException:
+                # already in the format we want, just reraise
+                raise
             except Exception:
                 msg = _('Failure applying iptables rules')
                 LOG.exception(msg)
@@ -436,7 +439,16 @@ class IptablesManager(object):
             lock_name += '-' + self.namespace
 
         with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
-            return self._apply_synchronized()
+            first = self._apply_synchronized()
+            if not cfg.CONF.AGENT.debug_iptables_rules:
+                return first
+            second = self._apply_synchronized()
+            if second:
+                msg = (_("IPTables Rules did not converge. Diff: %s") %
+                       '\n'.join(second))
+                LOG.error(msg)
+                raise n_exc.IpTablesApplyException(msg)
+            return first
 
     def get_rules_for_table(self, table):
         """Runs iptables-save on a table and returns the results."""

@@ -1,0 +1,4 @@
+[[post-config|/etc/neutron/neutron.conf]]
+
+[AGENT]
+debug_iptables_rules=True

@@ -64,6 +64,12 @@ IPTABLES_OPTS = [
                        "generated iptables rules that describe each rule's "
                        "purpose. System must support the iptables comments "
                        "module for addition of comments.")),
+    cfg.BoolOpt('debug_iptables_rules', default=False,
+                help=_("Duplicate every iptables difference calculation to "
+                       "ensure the format being generated matches the format "
+                       "of iptables-save. This option should not be turned "
+                       "on for production systems because it imposes a "
+                       "performance penalty.")),
 ]
 
 PROCESS_MONITOR_OPTS = [
