@@ -13,7 +13,9 @@
 #    under the License.
 
 import errno
+import os.path
 import re
+import sys
 
 import eventlet
 import mock
@@ -30,6 +32,7 @@ from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
 from neutron.tests.common import helpers
+from neutron.tests.unit import tests
 
 
 class TestParseMappings(base.BaseTestCase):
@@ -778,3 +781,14 @@ class TestExcDetails(base.BaseTestCase):
     def test_extract_exc_details_no_details_attached(self):
         self.assertIsInstance(
             utils.extract_exc_details(Exception()), six.text_type)
+
+
+class ImportModulesRecursivelyTestCase(base.BaseTestCase):
+
+    def test_object_modules(self):
+        example_module = 'neutron.tests.unit.tests.example.dir.example_module'
+        sys.modules.pop(example_module, None)
+        modules = utils.import_modules_recursively(
+            os.path.dirname(tests.__file__))
+        self.assertIn(example_module, modules)
+        self.assertIn(example_module, sys.modules)

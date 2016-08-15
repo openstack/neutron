@@ -22,9 +22,11 @@ import collections
 import decimal
 import errno
 import functools
+import importlib
 import math
 import multiprocessing
 import os
+import os.path
 import random
 import signal
 import socket
@@ -46,6 +48,7 @@ from oslo_utils import importutils
 import six
 from stevedore import driver
 
+import neutron
 from neutron._i18n import _, _LE
 from neutron.db import api as db_api
 
@@ -693,3 +696,33 @@ def extract_exc_details(e):
     if args is _NO_ARGS_MARKER:
         return details
     return details % args
+
+
+def import_modules_recursively(topdir):
+    '''Import and return all modules below the topdir directory.'''
+    modules = []
+    for root, dirs, files in os.walk(topdir):
+        for file_ in files:
+            if file_[-3:] != '.py':
+                continue
+
+            module = file_[:-3]
+            if module == '__init__':
+                continue
+
+            import_base = root.replace('/', '.')
+
+            # NOTE(ihrachys): in Python3, or when we are not located in the
+            # directory containing neutron code, __file__ is absolute, so we
+            # should truncate it to exclude PYTHONPATH prefix
+            prefixlen = len(os.path.dirname(neutron.__file__))
+            import_base = 'neutron' + import_base[prefixlen:]
+
+            module = '.'.join([import_base, module])
+            if module not in sys.modules:
+                importlib.import_module(module)
+            modules.append(module)
+
+        for dir_ in dirs:
+            modules.extend(import_modules_recursively(dir_))
+    return modules
