@@ -43,6 +43,12 @@ class RequestTestCase(base.BaseTestCase):
         result = request.get_content_type()
         self.assertEqual("application/json", result)
 
+    def test_content_type_with_partial_matched_string(self):
+        request = wsgi.Request.blank('/tests/123')
+        request.headers["Content-Type"] = "application/j"
+        result = request.best_match_content_type()
+        self.assertEqual("application/json", result)
+
     def test_content_type_from_accept(self):
         content_type = 'application/json'
         request = wsgi.Request.blank('/tests/123')
