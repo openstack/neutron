@@ -21,6 +21,7 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron import context
 from neutron.db import dvr_mac_db
+from neutron.db.models import dvr as dvr_models
 from neutron.extensions import dvr
 from neutron.extensions import portbindings
 from neutron import manager
@@ -42,13 +43,13 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def _create_dvr_mac_entry(self, host, mac_address):
         with self.ctx.session.begin(subtransactions=True):
-            entry = dvr_mac_db.DistributedVirtualRouterMacAddress(
+            entry = dvr_models.DistributedVirtualRouterMacAddress(
                 host=host, mac_address=mac_address)
             self.ctx.session.add(entry)
 
     def test__get_dvr_mac_address_by_host(self):
         with self.ctx.session.begin(subtransactions=True):
-            entry = dvr_mac_db.DistributedVirtualRouterMacAddress(
+            entry = dvr_models.DistributedVirtualRouterMacAddress(
                 host='foo_host', mac_address='foo_mac_address')
             self.ctx.session.add(entry)
         result = self.mixin._get_dvr_mac_address_by_host(self.ctx, 'foo_host')
