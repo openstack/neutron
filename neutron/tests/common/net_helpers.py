@@ -206,7 +206,7 @@ def get_free_namespace_port(protocol, namespace=None):
     elif protocol == n_const.PROTO_NAME_UDP:
         param = '-una'
     else:
-        raise ValueError("Unsupported procotol %s" % protocol)
+        raise ValueError("Unsupported protocol %s" % protocol)
 
     ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
     output = ip_wrapper.netns.execute(['ss', param])
@@ -369,7 +369,7 @@ class Pinger(object):
             self._wait_for_death()
             self._parse_stats()
         else:
-            raise RuntimeError("Pinger is running infinitelly, use stop() "
+            raise RuntimeError("Pinger is running infinitely, use stop() "
                                "first")
 
 
