@@ -56,6 +56,12 @@ DROP_OPERATIONS = {
 }
 
 
+def upgrade(engine, alembic_config, branch_name='heads'):
+    cfg.CONF.set_override('connection', engine.url, group='database')
+    migration.do_alembic_command(alembic_config, 'upgrade',
+                                 branch_name)
+
+
 class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     '''Test for checking of equality models state and migrations.
 
@@ -119,6 +125,10 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         - existing correct column parameters,
         - right value,
         - wrong value.
+
+    This class also contains tests for branches, like that correct operations
+    are used in contract and expand branches.
+
     '''
 
     BUILD_SCHEMA = False
@@ -131,8 +141,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         self.alembic_config.neutron_config = cfg.CONF
 
     def db_sync(self, engine):
-        cfg.CONF.set_override('connection', engine.url, group='database')
-        migration.do_alembic_command(self.alembic_config, 'upgrade', 'heads')
+        upgrade(engine, self.alembic_config)
 
     def get_engine(self):
         return self.engine
@@ -200,10 +209,17 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                         return False
         return True
 
+    def test_upgrade_expand_branch(self):
+        # Verify that "command neutron-db-manage upgrade --expand" works
+        #  without errors. Check this for both MySQL and PostgreSQL.
+        upgrade(self.engine, self.alembic_config,
+                branch_name='%s@head' % migration.EXPAND_BRANCH)
 
-class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
-                                _TestModelsMigrations,
-                                testlib_api.SqlTestCaseLight):
+    def test_upgrade_contract_branch(self):
+        # Verify that "command neutron-db-manage upgrade --contract" works
+        # without errors. Check this for both MySQL and PostgreSQL.
+        upgrade(self.engine, self.alembic_config,
+                branch_name='%s@head' % migration.CONTRACT_BRANCH)
 
     @contextmanager
     def _listener(self, engine, listener_func):
@@ -294,7 +310,7 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                           "command")
 
         find_migration_exceptions()
-        engine = self.get_engine()
+        engine = self.engine
         cfg.CONF.set_override('connection', engine.url, group='database')
         with engine.begin() as connection:
             self.alembic_config.attributes['connection'] = connection
@@ -310,6 +326,25 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                 migration.do_alembic_command(
                     self.alembic_config, 'upgrade',
                     '%s@head' % migration.CONTRACT_BRANCH)
+
+    def _test_has_offline_migrations(self, revision, expected):
+        engine = self.get_engine()
+        cfg.CONF.set_override('connection', engine.url, group='database')
+        migration.do_alembic_command(self.alembic_config, 'upgrade', revision)
+        self.assertEqual(expected,
+                         migration.has_offline_migrations(self.alembic_config,
+                                                          'unused'))
+
+    def test_has_offline_migrations_pending_contract_scripts(self):
+        self._test_has_offline_migrations('kilo', True)
+
+    def test_has_offline_migrations_all_heads_upgraded(self):
+        self._test_has_offline_migrations('heads', False)
+
+
+class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
+                                _TestModelsMigrations,
+                                testlib_api.SqlTestCaseLight):
 
     def test_check_mysql_engine(self):
         engine = self.get_engine()
@@ -327,20 +362,6 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                    insp.get_table_options(table)['mysql_engine'] != 'InnoDB'
                    and table != 'alembic_version']
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
-
-    def _test_has_offline_migrations(self, revision, expected):
-        engine = self.get_engine()
-        cfg.CONF.set_override('connection', engine.url, group='database')
-        migration.do_alembic_command(self.alembic_config, 'upgrade', revision)
-        self.assertEqual(expected,
-                         migration.has_offline_migrations(self.alembic_config,
-                                                          'unused'))
-
-    def test_has_offline_migrations_pending_contract_scripts(self):
-        self._test_has_offline_migrations('kilo', True)
-
-    def test_has_offline_migrations_all_heads_upgraded(self):
-        self._test_has_offline_migrations('heads', False)
 
 
 class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
