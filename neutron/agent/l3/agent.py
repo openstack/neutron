@@ -209,25 +209,21 @@ class L3NATAgent(ha.AgentMixin,
                 self.neutron_service_plugins = (
                     self.plugin_rpc.get_service_plugin_list(self.context))
             except oslo_messaging.RemoteError as e:
-                with excutils.save_and_reraise_exception() as ctx:
-                    ctx.reraise = False
-                    LOG.warning(_LW('l3-agent cannot check service plugins '
-                                    'enabled at the neutron server when '
-                                    'startup due to RPC error. It happens '
-                                    'when the server does not support this '
-                                    'RPC API. If the error is '
-                                    'UnsupportedVersion you can ignore this '
-                                    'warning. Detail message: %s'), e)
+                LOG.warning(_LW('l3-agent cannot check service plugins '
+                                'enabled at the neutron server when '
+                                'startup due to RPC error. It happens '
+                                'when the server does not support this '
+                                'RPC API. If the error is '
+                                'UnsupportedVersion you can ignore this '
+                                'warning. Detail message: %s'), e)
                 self.neutron_service_plugins = None
             except oslo_messaging.MessagingTimeout as e:
-                with excutils.save_and_reraise_exception() as ctx:
-                    ctx.reraise = False
-                    LOG.warning(_LW('l3-agent cannot contact neutron server '
-                                    'to retrieve service plugins enabled. '
-                                    'Check connectivity to neutron server. '
-                                    'Retrying... '
-                                    'Detailed message: %(msg)s.'), {'msg': e})
-                    continue
+                LOG.warning(_LW('l3-agent cannot contact neutron server '
+                                'to retrieve service plugins enabled. '
+                                'Check connectivity to neutron server. '
+                                'Retrying... '
+                                'Detailed message: %(msg)s.'), {'msg': e})
+                continue
             break
 
         self.init_extension_manager(self.plugin_rpc)
