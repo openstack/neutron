@@ -32,7 +32,7 @@ from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.db import l3_agentschedulers_db
+from neutron.db.models import l3agent as rb_model
 from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
@@ -797,7 +797,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             # A should still have it even though it was inactive due to the
             # admin_state being down
-            rab = l3_agentschedulers_db.RouterL3AgentBinding
+            rab = rb_model.RouterL3AgentBinding
             binding = (self.adminContext.session.query(rab).
                        filter(rab.router_id == r['router']['id']).first())
             self.assertEqual(binding.l3_agent.host, L3_HOSTA)

@@ -33,6 +33,7 @@ from neutron.db import api as db_api
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3agent as rb_model
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import l3
 
@@ -58,7 +59,7 @@ class L3Scheduler(object):
         pass
 
     def _router_has_binding(self, context, router_id, l3_agent_id):
-        router_binding_model = l3_agentschedulers_db.RouterL3AgentBinding
+        router_binding_model = rb_model.RouterL3AgentBinding
 
         query = context.session.query(router_binding_model)
         query = query.filter(router_binding_model.router_id == router_id,
@@ -202,7 +203,7 @@ class L3Scheduler(object):
                 self.bind_router(context, router['id'], l3_agent)
 
     def bind_router(self, context, router_id, chosen_agent,
-                    binding_index=l3_agentschedulers_db.LOWEST_BINDING_INDEX):
+                    binding_index=rb_model.LOWEST_BINDING_INDEX):
         """Bind the router to the l3 agent which has been chosen."""
         # Pre-cache the agent's id so that if an exception is raised we can
         # safely access its value. Otherwise, sqlalchemy will try to fetch it
@@ -211,7 +212,7 @@ class L3Scheduler(object):
 
         try:
             with context.session.begin(subtransactions=True):
-                binding = l3_agentschedulers_db.RouterL3AgentBinding()
+                binding = rb_model.RouterL3AgentBinding()
                 binding.l3_agent = chosen_agent
                 binding.router_id = router_id
                 binding.binding_index = binding_index
@@ -359,7 +360,7 @@ class L3Scheduler(object):
                                  chosen_agents):
         port_bindings = plugin.get_ha_router_port_bindings(context,
                                                            [router_id])
-        binding_indices = range(l3_agentschedulers_db.LOWEST_BINDING_INDEX,
+        binding_indices = range(rb_model.LOWEST_BINDING_INDEX,
                                 len(port_bindings) + 1)
         for port_binding, agent, binding_index in zip(
             port_bindings, chosen_agents, binding_indices):

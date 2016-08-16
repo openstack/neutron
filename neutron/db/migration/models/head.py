@@ -34,7 +34,6 @@ from neutron.db import external_net_db  # noqa
 from neutron.db.extra_dhcp_opt import models as edo_models  # noqa
 from neutron.db import extraroute_db  # noqa
 from neutron.db import flavors_db  # noqa
-from neutron.db import l3_agentschedulers_db  # noqa
 from neutron.db import l3_attrs_db  # noqa
 from neutron.db import l3_dvrscheduler_db  # noqa
 from neutron.db import l3_gwmode_db  # noqa

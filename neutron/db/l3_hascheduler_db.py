@@ -23,6 +23,7 @@ from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3_sch_db
 from neutron.db import l3_attrs_db
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3agent as rb_model
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
@@ -39,7 +40,7 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
         # the group by statement when using an aggregate function.
         # One solution is to generate a subquery and join it with the desired
         # columns.
-        binding_model = l3_sch_db.RouterL3AgentBinding
+        binding_model = rb_model.RouterL3AgentBinding
         sub_query = (context.session.query(
             binding_model.router_id,
             func.count(binding_model.router_id).label('count')).
@@ -60,8 +61,9 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
         if not agent_ids:
             return []
         query = (context.session.query(agents_db.Agent, func.count(
-            l3_sch_db.RouterL3AgentBinding.router_id).label('count')).
-            outerjoin(l3_sch_db.RouterL3AgentBinding).
+            rb_model.RouterL3AgentBinding.router_id)
+            .label('count')).
+            outerjoin(rb_model.RouterL3AgentBinding).
             group_by(agents_db.Agent.id).
             filter(agents_db.Agent.id.in_(agent_ids)).
             order_by('count'))
