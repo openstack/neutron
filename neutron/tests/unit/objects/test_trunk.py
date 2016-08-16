@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import trunk as t_obj
+from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as t_exc
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
@@ -150,3 +151,21 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
             set(trunk1_vids),
             {sp.segmentation_id for sp in listed_trunk1.sub_ports}
         )
+
+    def test_update_multiple_fields(self):
+        trunk = t_obj.Trunk(context=self.context,
+                            admin_state_up=False,
+                            port_id=self.db_obj['port_id'],
+                            status=constants.DOWN_STATUS)
+        trunk.create()
+        fields = {'admin_state_up': True, 'status': constants.ACTIVE_STATUS}
+        trunk.update(**fields)
+
+        trunk = t_obj.Trunk.get_object(self.context, id=trunk.id)
+        self._assert_trunk_attrs(trunk, **fields)
+
+    def _assert_trunk_attrs(self, trunk, **kwargs):
+        """Check the values passed in kwargs match the values of the trunk"""
+        for k in trunk.fields:
+            if k in kwargs:
+                self.assertEqual(kwargs[k], trunk[k])

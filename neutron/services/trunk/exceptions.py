@@ -72,3 +72,8 @@ class IncompatibleTrunkPluginConfiguration(n_exc.NeutronException):
 class TrunkPluginDriverConflict(n_exc.Conflict):
     message = _("A misconfiguration in the environment prevents the "
                 "operation from completing, please, contact the admin.")
+
+
+class SubPortBindingError(n_exc.NeutronException):
+    message = _("Failed to set port binding for port %(port_id)s on trunk "
+                "%(trunk_id)s.")

@@ -118,5 +118,6 @@ class Trunk(base.NeutronDbObject):
                     self.sub_ports.append(sub_port)
                 self.obj_reset_changes(['sub_ports'])
 
-    # TODO(ivc): add support for 'sub_ports' in 'Trunk.update' for
-    # consistency with 'Trunk.create'
+    def update(self, **kwargs):
+        self.update_fields(kwargs)
+        super(Trunk, self).update()
