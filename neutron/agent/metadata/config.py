@@ -50,36 +50,36 @@ DRIVER_OPTS = [
 
 
 METADATA_PROXY_HANDLER_OPTS = [
-     cfg.StrOpt('auth_ca_cert',
-                help=_("Certificate Authority public key (CA cert) "
-                       "file for ssl")),
-     cfg.StrOpt('nova_metadata_ip', default='127.0.0.1',
-                help=_("IP address used by Nova metadata server.")),
-     cfg.PortOpt('nova_metadata_port',
-                 default=8775,
-                 help=_("TCP Port used by Nova metadata server.")),
-     cfg.StrOpt('metadata_proxy_shared_secret',
-                default='',
-                help=_('When proxying metadata requests, Neutron signs the '
-                       'Instance-ID header with a shared secret to prevent '
-                       'spoofing. You may select any string for a secret, '
-                       'but it must match here and in the configuration used '
-                       'by the Nova Metadata Server. NOTE: Nova uses the same '
-                       'config key, but in [neutron] section.'),
-                secret=True),
-     cfg.StrOpt('nova_metadata_protocol',
-                default='http',
-                choices=['http', 'https'],
-                help=_("Protocol to access nova metadata, http or https")),
-     cfg.BoolOpt('nova_metadata_insecure', default=False,
-                 help=_("Allow to perform insecure SSL (https) requests to "
-                        "nova metadata")),
-     cfg.StrOpt('nova_client_cert',
-                default='',
-                help=_("Client certificate for nova metadata api server.")),
-     cfg.StrOpt('nova_client_priv_key',
-                default='',
-                help=_("Private key of client certificate."))
+    cfg.StrOpt('auth_ca_cert',
+               help=_("Certificate Authority public key (CA cert) "
+                      "file for ssl")),
+    cfg.StrOpt('nova_metadata_ip', default='127.0.0.1',
+               help=_("IP address used by Nova metadata server.")),
+    cfg.PortOpt('nova_metadata_port',
+                default=8775,
+                help=_("TCP Port used by Nova metadata server.")),
+    cfg.StrOpt('metadata_proxy_shared_secret',
+               default='',
+               help=_('When proxying metadata requests, Neutron signs the '
+                      'Instance-ID header with a shared secret to prevent '
+                      'spoofing. You may select any string for a secret, '
+                      'but it must match here and in the configuration used '
+                      'by the Nova Metadata Server. NOTE: Nova uses the same '
+                      'config key, but in [neutron] section.'),
+               secret=True),
+    cfg.StrOpt('nova_metadata_protocol',
+               default='http',
+               choices=['http', 'https'],
+               help=_("Protocol to access nova metadata, http or https")),
+    cfg.BoolOpt('nova_metadata_insecure', default=False,
+                help=_("Allow to perform insecure SSL (https) requests to "
+                       "nova metadata")),
+    cfg.StrOpt('nova_client_cert',
+               default='',
+               help=_("Client certificate for nova metadata api server.")),
+    cfg.StrOpt('nova_client_priv_key',
+               default='',
+               help=_("Private key of client certificate."))
 ]
 
 DEDUCE_MODE = 'deduce'
