@@ -612,13 +612,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             if ha_network:
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
-                # NOTE(kevinbenton): normally the ha interfaces should have
-                # been automatically removed by the super delete_router call.
-                # However, that only applies to interfaces created after fix
-                # Ifd3e007aaf2a2ed8123275aa3a9f540838e3c003 which added the
-                # RouterPort relationship to ha interfaces. Legacy interfaces
-                # will be cleaned up by this.
-                self._delete_ha_interfaces(context, router_db.id)
 
                 # always attempt to cleanup the network as the router is
                 # deleted. the core plugin will stop us if its in use
