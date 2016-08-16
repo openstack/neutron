@@ -19,8 +19,6 @@ from neutron._i18n import _
 DEFAULT_BRIDGE_MAPPINGS = []
 DEFAULT_INTERFACE_MAPPINGS = []
 DEFAULT_VXLAN_GROUP = '224.0.0.1'
-DEFAULT_KERNEL_HZ_VALUE = 250  # [Hz]
-DEFAULT_TC_TBF_LATENCY = 50  # [ms]
 
 vxlan_opts = [
     cfg.BoolOpt('enable_vxlan', default=True,
@@ -76,20 +74,7 @@ bridge_opts = [
                 help=_("List of <physical_network>:<physical_bridge>")),
 ]
 
-qos_options = [
-    cfg.IntOpt('kernel_hz', default=DEFAULT_KERNEL_HZ_VALUE,
-               help=_("Value of host kernel tick rate (hz) for calculating "
-                      "minimum burst value in bandwidth limit rules for "
-                      "a port with QoS. See kernel configuration file for "
-                      "HZ value and tc-tbf manual for more information.")),
-    cfg.IntOpt('tbf_latency', default=DEFAULT_TC_TBF_LATENCY,
-               help=_("Value of latency (ms) for calculating size of queue "
-                      "for a port with QoS. See tc-tbf manual for more "
-                      "information."))
-]
-
 
 def register_linuxbridge_opts(cfg=cfg.CONF):
     cfg.register_opts(vxlan_opts, "VXLAN")
     cfg.register_opts(bridge_opts, "LINUX_BRIDGE")
-    cfg.register_opts(qos_options, "QOS")
