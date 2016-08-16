@@ -38,10 +38,10 @@ from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import common_db_mixin
-from neutron.db import l3_attrs_db
 from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3_attrs
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
@@ -819,9 +819,9 @@ def is_ha_router_port(device_owner, router_id):
     if device_owner == constants.DEVICE_OWNER_HA_REPLICATED_INT:
         return True
     elif device_owner == constants.DEVICE_OWNER_ROUTER_SNAT:
-        query = session.query(l3_attrs_db.RouterExtraAttributes)
+        query = session.query(l3_attrs.RouterExtraAttributes)
         query = query.filter_by(ha=True)
-        query = query.filter(l3_attrs_db.RouterExtraAttributes.router_id ==
+        query = query.filter(l3_attrs.RouterExtraAttributes.router_id ==
                              router_id)
         return bool(query.limit(1).count())
     else:

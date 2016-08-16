@@ -32,7 +32,7 @@ from neutron.common import _deprecate
 from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
-from neutron.db import l3_attrs_db
+from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
@@ -109,13 +109,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                     rb_model.RouterL3AgentBinding).
                     join(agents_db.Agent).
                     filter(agents_db.Agent.heartbeat_timestamp < cutoff,
-                    agents_db.Agent.admin_state_up).
-                    outerjoin(l3_attrs_db.RouterExtraAttributes,
-                    l3_attrs_db.RouterExtraAttributes.router_id ==
+                    agents_db.Agent.admin_state_up).outerjoin(
+                        l3_attrs.RouterExtraAttributes,
+                        l3_attrs.RouterExtraAttributes.router_id ==
                     rb_model.RouterL3AgentBinding.router_id).filter(
                     sa.or_(
-                        l3_attrs_db.RouterExtraAttributes.ha == sql.false(),
-                        l3_attrs_db.RouterExtraAttributes.ha == sql.null())))
+                        l3_attrs.RouterExtraAttributes.ha == sql.false(),
+                        l3_attrs.RouterExtraAttributes.ha == sql.null())))
 
     def _get_agent_mode(self, agent_db):
         agent_conf = self.get_configuration_dict(agent_db)

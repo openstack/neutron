@@ -21,8 +21,8 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3_sch_db
-from neutron.db import l3_attrs_db
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import portbindings
 from neutron import manager
@@ -44,11 +44,11 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
         sub_query = (context.session.query(
             binding_model.router_id,
             func.count(binding_model.router_id).label('count')).
-            join(l3_attrs_db.RouterExtraAttributes,
+            join(l3_attrs.RouterExtraAttributes,
                  binding_model.router_id ==
-                 l3_attrs_db.RouterExtraAttributes.router_id).
+                 l3_attrs.RouterExtraAttributes.router_id).
             join(l3_models.Router).
-            filter(l3_attrs_db.RouterExtraAttributes.ha == sql.true()).
+            filter(l3_attrs.RouterExtraAttributes.ha == sql.true()).
             group_by(binding_model.router_id).subquery())
 
         query = (context.session.query(l3_models.Router, sub_query.c.count).
