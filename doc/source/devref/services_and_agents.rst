@@ -83,3 +83,27 @@ Connecting to the Database
 Only the neutron-server connects to the neutron database. Agents may never
 connect directly to the database, as this would break the ability to do rolling
 upgrades.
+
+Configuration Options
+---------------------
+
+In addition to database access, configuration options are segregated between
+neutron-server and agents. Both services and agents may load the main
+```neutron.conf``` since this file should contain the oslo.messaging
+configuration for internal Neutron RPCs and may contain host specific
+configuration such as file paths. In addition ```neutron.conf``` contains the
+database, Keystone, and Nova credentials and endpoints strictly for
+neutron-server to use.
+
+In addition neutron-server may load a plugin specific configuration file, yet
+the agents should not. As the plugin configuration is primarily site wide
+options and the plugin provides the persistence layer for Neutron, agents
+should be instructed to act upon these values via RPC.
+
+Each individual agent may have its own configuration file. This file should be
+loaded after the main ```neutron.conf``` file, so the agent configuration takes
+precedence. The agent specific configuration may contain configurations which
+vary between hosts in a Neutron deployment such as the external_network_bridge
+for a L3 agent. If any agent requires access to additional external services
+beyond the Neutron RPC, those endpoints should be defined in the agent specific
+configuration file (e.g. nova metadata for metadata agent).
