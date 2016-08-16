@@ -26,6 +26,7 @@ from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import plugin as trunk_plugin
+from neutron.services.trunk.seg_types import validators
 from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit.services.trunk import fakes
 
@@ -267,21 +268,38 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(constants.DOWN_STATUS, trunk['status'])
 
 
-class TrunkPluginDriversTestCase(test_plugin.Ml2PluginV2TestCase):
+class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(TrunkPluginDriversTestCase, self).setUp()
+        super(TrunkPluginCompatDriversTestCase, self).setUp()
         mock.patch.object(drivers, 'register').start()
 
-    def test_plugin_fails_to_start(self):
+    def test_plugin_fails_to_start_no_loaded_drivers(self):
         with testtools.ExpectedException(
                 trunk_exc.IncompatibleTrunkPluginConfiguration):
             trunk_plugin.TrunkPlugin()
 
+    def test_plugins_fails_to_start_seg_type_validator_not_found(self):
+        fakes.FakeDriver.create()
+        with mock.patch.object(
+                validators, 'get_validator', side_effect=KeyError), \
+            testtools.ExpectedException(
+                    trunk_exc.SegmentationTypeValidatorNotFound):
+                trunk_plugin.TrunkPlugin()
+
+    def test_plugins_fails_to_start_conflicting_seg_types(self):
+        fakes.FakeDriver.create()
+        fakes.FakeDriver2.create()
+        with testtools.ExpectedException(
+                trunk_exc.IncompatibleDriverSegmentationTypes):
+            trunk_plugin.TrunkPlugin()
+
     def test_plugin_with_fake_driver(self):
-        fake_driver = fakes.FakeDriver.create()
-        plugin = trunk_plugin.TrunkPlugin()
-        self.assertTrue(fake_driver.is_loaded)
-        self.assertEqual(set([]), plugin.supported_agent_types)
-        self.assertEqual(set(['foo_intfs']), plugin.supported_interfaces)
-        self.assertEqual([fake_driver], plugin.registered_drivers)
+        with mock.patch.object(validators, 'get_validator',
+                               return_value={'foo_seg_types': mock.ANY}):
+            fake_driver = fakes.FakeDriver.create()
+            plugin = trunk_plugin.TrunkPlugin()
+            self.assertTrue(fake_driver.is_loaded)
+            self.assertEqual(set([]), plugin.supported_agent_types)
+            self.assertEqual(set(['foo_intfs']), plugin.supported_interfaces)
+            self.assertEqual([fake_driver], plugin.registered_drivers)

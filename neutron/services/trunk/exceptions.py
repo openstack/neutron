@@ -69,6 +69,18 @@ class IncompatibleTrunkPluginConfiguration(n_exc.NeutronException):
                 "configuration is found.")
 
 
+class IncompatibleDriverSegmentationTypes(n_exc.NeutronException):
+    message = _("Cannot load trunk plugin: no compatible segmentation "
+                "type configuration can be found amongst list of loaded "
+                "drivers.")
+
+
+class SegmentationTypeValidatorNotFound(n_exc.NotFound):
+    message = _("Validator not found for segmentation type %(seg_type)s. "
+                "It must be registered before the plugin init can "
+                "proceed.")
+
+
 class TrunkPluginDriverConflict(n_exc.Conflict):
     message = _("A misconfiguration in the environment prevents the "
                 "operation from completing, please, contact the admin.")

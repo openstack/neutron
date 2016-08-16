@@ -33,6 +33,7 @@ from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import rules
+from neutron.services.trunk.seg_types import validators
 
 LOG = logging.getLogger(__name__)
 
@@ -76,9 +77,43 @@ class TrunkPlugin(service_base.ServicePluginBase,
         self.check_compatibility()
 
     def check_compatibility(self):
+        """Verify the plugin can load correctly and fail otherwise."""
+        self.check_driver_compatibility()
+        self.check_segmentation_compatibility()
+
+    def check_driver_compatibility(self):
         """Fail to load if no compatible driver is found."""
         if not any([driver.is_loaded for driver in self._drivers]):
             raise trunk_exc.IncompatibleTrunkPluginConfiguration()
+
+    def check_segmentation_compatibility(self):
+        """Fail to load if segmentation type conflicts are found.
+
+        In multi-driver deployments each loaded driver must support the same
+        set of segmentation types consistently.
+        """
+        # Get list of segmentation types for the loaded drivers.
+        list_of_driver_seg_types = [
+            set(driver.segmentation_types) for driver in self._drivers
+            if driver.is_loaded
+        ]
+
+        # If not empty, check that there is at least one we can use.
+        compat_segmentation_types = set()
+        if list_of_driver_seg_types:
+            compat_segmentation_types = (
+                set.intersection(*list_of_driver_seg_types))
+        if not compat_segmentation_types:
+            raise trunk_exc.IncompatibleDriverSegmentationTypes()
+
+        # If there is at least one, make sure the validator is defined.
+        try:
+            for seg_type in compat_segmentation_types:
+                self.add_segmentation_type(
+                    seg_type, validators.get_validator(seg_type))
+        except KeyError:
+            raise trunk_exc.SegmentationTypeValidatorNotFound(
+                seg_type=seg_type)
 
     def set_rpc_backend(self, backend):
         self._rpc_backend = backend
