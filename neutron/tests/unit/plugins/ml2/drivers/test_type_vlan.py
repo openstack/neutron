@@ -18,6 +18,7 @@ from neutron_lib import exceptions as exc
 from testtools import matchers
 
 import neutron.db.api as db
+from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import config
@@ -59,7 +60,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                               self.driver._parse_network_vlan_ranges)
 
     def _get_allocation(self, session, segment):
-        return session.query(type_vlan.VlanAllocation).filter_by(
+        return session.query(vlan_alloc_model.VlanAllocation).filter_by(
             physical_network=segment[api.PHYSICAL_NETWORK],
             vlan_id=segment[api.SEGMENTATION_ID]).first()
 
