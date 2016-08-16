@@ -138,7 +138,10 @@ From database point of view, following objects are defined in schema:
 * QosPolicy: directly maps to the conceptual policy resource.
 * QosNetworkPolicyBinding, QosPortPolicyBinding: defines attachment between a
   Neutron resource and a QoS policy.
-* QosBandwidthLimitRule: defines the only rule type available at the moment.
+* QosBandwidthLimitRule: defines the rule to limit the maximum egress
+  bandwidth.
+* QosDscpMarkingRule: defines the rule that marks the Differentiated Service
+  bits for egress traffic.
 
 
 All database models are defined under:
