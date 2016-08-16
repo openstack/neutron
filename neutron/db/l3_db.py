@@ -422,6 +422,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             raise n_exc.BadRequest(resource='router', msg=msg)
         return network_id
 
+    # NOTE(yamamoto): This method is an override point for plugins
+    # inheriting this class.  Do not optimize this out.
+    def router_gw_port_has_floating_ips(self, context, router_id):
+        """Return True if the router's gateway port is serving floating IPs."""
+        return bool(self.get_floatingips_count(context,
+                                               {'router_id': [router_id]}))
+
     def _delete_current_gw_port(self, context, router_id, router,
                                 new_network_id):
         """Delete gw port if attached to an old network."""
@@ -432,8 +439,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         admin_ctx = context.elevated()
         old_network_id = router.gw_port['network_id']
 
-        if self.get_floatingips_count(
-            admin_ctx, {'router_id': [router_id]}):
+        if self.router_gw_port_has_floating_ips(admin_ctx, router_id):
             raise l3.RouterExternalGatewayInUseByFloatingIp(
                 router_id=router_id, net_id=router.gw_port['network_id'])
         gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
