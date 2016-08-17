@@ -189,7 +189,7 @@ def list_linux_bridge_opts():
         ('agent',
          neutron.plugins.ml2.drivers.agent.config.agent_opts),
         ('securitygroup',
-         neutron.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts)
     ]
 
 
@@ -213,7 +213,7 @@ def list_macvtap_opts():
         ('agent',
          neutron.plugins.ml2.drivers.agent.config.agent_opts),
         ('securitygroup',
-         neutron.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts)
     ]
 
 
@@ -255,7 +255,7 @@ def list_ml2_conf_opts():
         ('ml2_type_geneve',
          neutron.plugins.ml2.drivers.type_geneve.geneve_opts),
         ('securitygroup',
-         neutron.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts)
     ]
 
 
@@ -279,7 +279,7 @@ def list_ovs_opts():
          neutron.plugins.ml2.drivers.openvswitch.agent.common.config.
          agent_opts),
         ('securitygroup',
-         neutron.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts)
     ]
 
 
