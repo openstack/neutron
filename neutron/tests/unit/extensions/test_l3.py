@@ -1242,7 +1242,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           p['port']['id'])
 
     def test_router_add_interface_delete_port_after_failure(self):
-        with self.router() as r, self.subnet() as s:
+        with self.router() as r, self.subnet(enable_dhcp=False) as s:
             plugin = manager.NeutronManager.get_plugin()
             # inject a failure in the update port that happens at the end
             # to ensure the port gets deleted
