@@ -65,6 +65,7 @@ object_data = {
     'SubnetServiceType': '1.0-05ae4cdb2a9026a697b143926a1add8c',
     'SubPort': '1.0-72c8471068db1f0491b5480fe49b52bb',
     'Trunk': '1.0-80ebebb57f2b0dbb510f84d91421ed10',
+    'VlanAllocation': '1.0-72636c1b7d5c8eef987bd09666e64f3e',
 }
 
 

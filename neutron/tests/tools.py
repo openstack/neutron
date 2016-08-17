@@ -35,6 +35,7 @@ import unittest2
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.db import common_db_mixin
+from neutron.plugins.common import constants as p_const
 
 
 class AttributeMapMemento(fixtures.Fixture):
@@ -240,6 +241,10 @@ def get_random_prefixlen(version=4):
 
 def get_random_port():
     return random.randint(n_const.PORT_RANGE_MIN, n_const.PORT_RANGE_MAX)
+
+
+def get_random_vlan():
+    return random.randint(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)
 
 
 def get_random_ip_version():
