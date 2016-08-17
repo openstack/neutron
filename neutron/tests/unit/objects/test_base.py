@@ -32,6 +32,7 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
+from neutron.db.models import l3 as l3_model
 from neutron.db.models import segment as segments_model
 from neutron import objects
 from neutron.objects import base
@@ -1152,6 +1153,15 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         # implementation for segments
         self._segment = obj_db_api.create_object(
             self.context, segments_model.NetworkSegment, test_segment)
+
+    def _create_test_router(self):
+        attrs = {
+            'name': 'test_router',
+        }
+        # TODO(sindhu): Replace with the router object once its ready
+        self._router = obj_db_api.create_object(self.context,
+                                                l3_model.Router,
+                                                attrs)
 
     def _create_test_port(self, network):
         self._port = self._create_port(network_id=network['id'])
