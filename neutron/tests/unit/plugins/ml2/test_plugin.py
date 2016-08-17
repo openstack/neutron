@@ -144,7 +144,7 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
                                      [self.phys_vrange, self.phys2_vrange],
                                      group='ml2_type_vlan')
         self.setup_parent()
-        self.driver = ml2_plugin.Ml2Plugin()
+        self.driver = manager.NeutronManager.get_plugin()
         self.context = context.get_admin_context()
 
 
@@ -2430,14 +2430,14 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
 
 class TestTransactionGuard(Ml2PluginV2TestCase):
     def test_delete_network_guard(self):
-        plugin = ml2_plugin.Ml2Plugin()
+        plugin = manager.NeutronManager.get_plugin()
         ctx = context.get_admin_context()
         with ctx.session.begin(subtransactions=True):
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_network(ctx, 'id')
 
     def test_delete_subnet_guard(self):
-        plugin = ml2_plugin.Ml2Plugin()
+        plugin = manager.NeutronManager.get_plugin()
         ctx = context.get_admin_context()
         with ctx.session.begin(subtransactions=True):
             with testtools.ExpectedException(RuntimeError):
