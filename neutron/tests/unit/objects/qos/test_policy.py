@@ -11,6 +11,8 @@
 #    under the License.
 
 import mock
+from oslo_versionedobjects import exception
+import testtools
 
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
@@ -389,12 +391,19 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj, rule_objs = self._create_test_policy_with_rules(
             RULE_OBJ_CLS.keys(), reload_rules=True)
 
-        policy_obj_v1_2 = self._policy_through_version(policy_obj, '1.2')
+        policy_obj_v1_2 = self._policy_through_version(
+            policy_obj, policy.QosPolicy.VERSION)
 
         for rule_obj in rule_objs:
             self.assertIn(rule_obj, policy_obj_v1_2.rules)
 
-    def test_object_version_degradation_1_1_to_1_0(self):
+    def test_object_version_degradation_1_3_to_1_2_null_description(self):
+        policy_obj = self._create_test_policy()
+        policy_obj.description = None
+        with testtools.ExpectedException(exception.IncompatibleObjectVersion):
+            policy_obj.obj_to_primitive('1.2')
+
+    def test_object_version_degradation_to_1_0(self):
         #NOTE(mangelajo): we should not check .VERSION, since that's the
         #                 local version on the class definition
         policy_obj, rule_objs = self._create_test_policy_with_rules(
