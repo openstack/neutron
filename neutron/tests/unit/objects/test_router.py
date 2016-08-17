@@ -37,3 +37,23 @@ class RouterRouteDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             db_obj['router_id'] = self._router['id']
             obj_field['router_id'] = self._router['id']
             obj['router_id'] = self._router['id']
+
+
+class RouterExtraAttrsIfaceObjTestCase(obj_test_base.
+                                       BaseObjectIfaceTestCase):
+    _test_class = router.RouterExtraAttributes
+
+
+class RouterExtraAttrsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
+                                    testlib_api.SqlTestCase):
+    _test_class = router.RouterExtraAttributes
+
+    def setUp(self):
+        super(RouterExtraAttrsDbObjTestCase, self).setUp()
+
+        for db_obj, obj_field, obj in zip(
+                self.db_objs, self.obj_fields, self.objs):
+            self._create_test_router()
+            db_obj['router_id'] = self._router['id']
+            obj_field['router_id'] = self._router['id']
+            obj['router_id'] = self._router['id']
