@@ -15,6 +15,8 @@
 
 import os
 
+from neutron.api import api_common
+
 
 def get_view_builder(req):
     base_url = req.application_url
@@ -28,7 +30,7 @@ class ViewBuilder(object):
 
         :param base_url: url of the root wsgi application
         """
-        self.base_url = base_url
+        self.base_url = api_common.prepare_url(base_url)
 
     def build(self, version_data):
         """Generic method used to generate a version entity."""

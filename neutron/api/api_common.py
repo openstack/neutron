@@ -72,7 +72,7 @@ def get_previous_link(request, items, id_key):
         marker = items[0][id_key]
         params['marker'] = marker
     params['page_reverse'] = True
-    return "%s?%s" % (request.path_url, parse.urlencode(params))
+    return "%s?%s" % (prepare_url(request.path_url), parse.urlencode(params))
 
 
 def get_next_link(request, items, id_key):
@@ -82,7 +82,20 @@ def get_next_link(request, items, id_key):
         marker = items[-1][id_key]
         params['marker'] = marker
     params.pop('page_reverse', None)
-    return "%s?%s" % (request.path_url, parse.urlencode(params))
+    return "%s?%s" % (prepare_url(request.path_url), parse.urlencode(params))
+
+
+def prepare_url(orig_url):
+    """Takes a link and swaps in network_link_prefix if set."""
+    prefix = cfg.CONF.network_link_prefix
+    # Copied directly from nova/api/openstack/common.py
+    if not prefix:
+        return orig_url
+    url_parts = list(parse.urlsplit(orig_url))
+    prefix_parts = list(parse.urlsplit(prefix))
+    url_parts[0:2] = prefix_parts[0:2]
+    url_parts[2] = prefix_parts[2] + url_parts[2]
+    return parse.urlunsplit(url_parts).rstrip('/')
 
 
 def get_limit_and_marker(request):

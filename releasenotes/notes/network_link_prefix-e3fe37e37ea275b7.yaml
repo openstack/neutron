@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    A new ``network_link_prefix`` configuration option is introduced that allows to
+    alter the domain returned in the URLs included in the API responses. It behaves the
+    same way as the ``compute_link_prefix`` and ``glance_link_prefix``
+    options do for Nova and Glance.
