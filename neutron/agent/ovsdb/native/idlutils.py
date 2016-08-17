@@ -194,7 +194,7 @@ def condition_match(row, condition):
     elif isinstance(match, list):
         # According to rfc7047, lists support '=' and '!='
         # (both strict and relaxed). Will follow twilson's dict comparison
-        # and implement relaxed version (excludes/includes as per standart)
+        # and implement relaxed version (excludes/includes as per standard)
         if op == "=":
             if not all([val, match]):
                 return val == match
