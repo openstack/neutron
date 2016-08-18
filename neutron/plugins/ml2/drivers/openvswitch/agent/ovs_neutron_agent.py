@@ -52,11 +52,14 @@ from neutron import context
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
+from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_agent_extension_api as ovs_ext_api
+from neutron.plugins.ml2.drivers.openvswitch.agent \
+    import ovs_capabilities
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_dvr_neutron_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent import vlanmanager
@@ -2152,10 +2155,12 @@ def prepare_xen_compute():
 
 def main(bridge_classes):
     prepare_xen_compute()
+    ovs_capabilities.register()
     validate_tunnel_config(cfg.CONF.AGENT.tunnel_types, cfg.CONF.OVS.local_ip)
 
     try:
         agent = OVSNeutronAgent(bridge_classes, cfg.CONF)
+        capabilities.notify_init_event(n_const.AGENT_TYPE_OVS, agent)
     except (RuntimeError, ValueError) as e:
         LOG.error(_LE("%s Agent terminated!"), e)
         sys.exit(1)
