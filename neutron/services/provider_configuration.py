@@ -22,6 +22,7 @@ from neutron.conf.services import provider_configuration as prov_config
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_log import versionutils
 import stevedore
 
 from neutron._i18n import _, _LW
@@ -116,6 +117,11 @@ class NeutronModule(object):
         # necessary, if modules are loaded on the fly (DevStack may
         # be an example)
         if not providers:
+            versionutils.report_deprecated_feature(
+                LOG,
+                _LW('Implicit loading of service providers from '
+                    'neutron_*.conf files is deprecated and will be removed '
+                    'in Ocata release.'))
             providers = self.ini().service_providers.service_provider
 
         return providers
