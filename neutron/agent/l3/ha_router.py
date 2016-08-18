@@ -352,6 +352,8 @@ class HaRouter(router.RouterInfo):
         self._plug_external_gateway(ex_gw_port, interface_name, self.ns_name)
         self._add_gateway_vip(ex_gw_port, interface_name)
         self._disable_ipv6_addressing_on_interface(interface_name)
+        if self.ha_state == 'master':
+            self._enable_ra_on_gw(ex_gw_port, self.ns_name, interface_name)
 
     def external_gateway_updated(self, ex_gw_port, interface_name):
         self._plug_external_gateway(

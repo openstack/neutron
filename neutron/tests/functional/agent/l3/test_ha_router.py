@@ -18,11 +18,13 @@ import copy
 import mock
 from neutron_lib import constants as l3_constants
 import six
+import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import constants
+from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
@@ -96,6 +98,20 @@ class L3HATestCase(framework.L3AgentTestFramework):
         # Advts from upstream router when no external gateway is configured.
         self._router_lifecycle(enable_ha=True, dual_stack=True,
                                v6_ext_gw_with_sub=False)
+
+    @testtools.skipUnless(ipv6_utils.is_enabled(), "IPv6 is not enabled")
+    def test_ipv6_router_advts_after_router_state_change(self):
+        # Schedule router to l3 agent, and then add router gateway. Verify
+        # that router gw interface is configured to receive Router Advts.
+        router_info = l3_test_common.prepare_router_data(
+            enable_snat=True, enable_ha=True, dual_stack=True, enable_gw=False)
+        router = self.manage_router(self.agent, router_info)
+        common_utils.wait_until_true(lambda: router.ha_state == 'master')
+        _ext_dev_name, ex_port = l3_test_common.prepare_ext_gw_test(
+            mock.Mock(), router)
+        router_info['gw_port'] = ex_port
+        router.process(self.agent)
+        self._assert_ipv6_accept_ra(router)
 
     def test_keepalived_configuration(self):
         router_info = self.generate_router_info(enable_ha=True)

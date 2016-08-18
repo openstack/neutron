@@ -599,6 +599,14 @@ class RouterInfo(object):
                 device = ip_lib.IPDevice(device_name, namespace=namespace)
                 device.route.add_route(subnet['gateway_ip'], scope='link')
 
+    def _enable_ra_on_gw(self, ex_gw_port, ns_name, interface_name):
+        gateway_ips = self._get_external_gw_ips(ex_gw_port)
+        if not self.use_ipv6 or self.is_v6_gateway_set(gateway_ips):
+            return
+
+        # There is no IPv6 gw_ip, use RouterAdvt for default route.
+        self.driver.configure_ipv6_ra(ns_name, interface_name)
+
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
         LOG.debug("External gateway added: port(%s), interface(%s), ns(%s)",
@@ -610,10 +618,6 @@ class RouterInfo(object):
         ip_cidrs = common_utils.fixed_ip_cidrs(ex_gw_port['fixed_ips'])
 
         gateway_ips = self._get_external_gw_ips(ex_gw_port)
-        enable_ra_on_gw = False
-        if self.use_ipv6 and not self.is_v6_gateway_set(gateway_ips):
-            # There is no IPv6 gw_ip, use RouterAdvt for default route.
-            enable_ra_on_gw = True
 
         self._add_route_to_gw(ex_gw_port, device_name=interface_name,
                               namespace=ns_name, preserve_ips=preserve_ips)
@@ -637,8 +641,7 @@ class RouterInfo(object):
         for ip in gateway_ips:
             device.route.add_gateway(ip)
 
-        if enable_ra_on_gw:
-            self.driver.configure_ipv6_ra(ns_name, interface_name)
+        self._enable_ra_on_gw(ex_gw_port, ns_name, interface_name)
 
         for fixed_ip in ex_gw_port['fixed_ips']:
             ip_lib.send_ip_addr_adv_notif(ns_name,
