@@ -50,7 +50,7 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
         t2 = bridge_lib.get_interface_bridged_time(port)
         self.assertIsNotNone(t1)
         self.assertIsNotNone(t2)
-        self.assertGreater(t2, t1)
+        self.assertGreaterEqual(t2, t1)
 
     def test_get_interface_bridge(self):
         bridge = bridge_lib.BridgeDevice.get_interface_bridge(
