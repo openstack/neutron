@@ -106,6 +106,15 @@ class BaseOVS(object):
         self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
         self.ovsdb = ovsdb.API.get(self)
 
+    def add_manager(self, connection_uri):
+        self.ovsdb.add_manager(connection_uri).execute()
+
+    def get_manager(self):
+        return self.ovsdb.get_manager().execute()
+
+    def remove_manager(self, connection_uri):
+        self.ovsdb.remove_manager(connection_uri).execute()
+
     def add_bridge(self, bridge_name,
                    datapath_type=constants.OVS_DATAPATH_SYSTEM):
 
