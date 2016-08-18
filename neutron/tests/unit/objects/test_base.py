@@ -34,6 +34,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import l3 as l3_model
+from neutron.db import standard_attr
 from neutron import objects
 from neutron.objects import base
 from neutron.objects import common_types
@@ -1208,6 +1209,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def _create_test_port(self, network):
         self._port = self._create_port(network_id=network['id'])
+
+    def _create_test_standard_attribute(self):
+        attrs = {
+            'id': tools.get_random_integer(),
+            'resource_type': tools.get_random_string(4),
+            'revision_number': tools.get_random_integer()
+        }
+        self._standard_attribute = obj_db_api.create_object(
+            self.context,
+            standard_attr.StandardAttribute,
+            attrs)
 
     def _make_object(self, fields):
         fields = get_non_synthetic_fields(self._test_class, fields)
