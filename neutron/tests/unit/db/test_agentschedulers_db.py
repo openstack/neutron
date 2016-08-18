@@ -24,7 +24,6 @@ from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.api import extensions
-from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
@@ -1301,7 +1300,8 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
             side_effect=lambda context, network_id, hosts: hosts).start()
-        self.dhcp_notifier = dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
+        plugin = manager.NeutronManager.get_plugin()
+        self.dhcp_notifier = plugin.agent_notifiers[constants.AGENT_TYPE_DHCP]
         self.dhcp_notifier_cast = mock.patch(
             'neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
             'DhcpAgentNotifyAPI._cast_message').start()
