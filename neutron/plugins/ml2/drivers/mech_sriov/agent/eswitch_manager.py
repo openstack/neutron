@@ -59,10 +59,6 @@ class PciOsWrapper(object):
                     file_link = os.readlink(file_path)
                     pci_slot = os.path.basename(file_link)
                     vf_list.append((pci_slot, vf_index))
-        if not vf_list:
-            raise exc.InvalidDeviceError(
-                dev_name=dev_name,
-                reason=_("Device has no virtual functions"))
         return vf_list
 
     @classmethod
