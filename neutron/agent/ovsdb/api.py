@@ -101,6 +101,36 @@ class API(object):
         """
 
     @abc.abstractmethod
+    def add_manager(self, connection_uri):
+        """Create a command to add a Manager to the OVS switch
+
+        This API will add a new manager without overriding the existing ones.
+
+        :param connection_uri: target to which manager needs to be set
+        :type connection_uri: string, see ovs-vsctl manpage for format
+        :returns:           :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
+    def get_manager(self):
+        """Create a command to get Manager list from the OVS switch
+
+        :returns: :class:`Command` with list of Manager names result
+        """
+
+    @abc.abstractmethod
+    def remove_manager(self, connection_uri):
+        """Create a command to remove a Manager from the OVS switch
+
+        This API will remove the manager configured on the OVS switch.
+
+        :param connection_uri: target identifying the manager uri that
+                               needs to be removed.
+        :type connection_uri: string, see ovs-vsctl manpage for format
+        :returns:           :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
     def add_br(self, name, may_exist=True, datapath_type=None):
         """Create a command to add an OVS bridge
 

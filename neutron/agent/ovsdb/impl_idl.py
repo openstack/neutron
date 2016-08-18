@@ -211,6 +211,15 @@ class OvsdbIdl(api.API):
                                        self.context.vsctl_timeout,
                                        check_error, log_errors)
 
+    def add_manager(self, connection_uri):
+        return cmd.AddManagerCommand(self, connection_uri)
+
+    def get_manager(self):
+        return cmd.GetManagerCommand(self)
+
+    def remove_manager(self, connection_uri):
+        return cmd.RemoveManagerCommand(self, connection_uri)
+
     def add_br(self, name, may_exist=True, datapath_type=None):
         return cmd.AddBridgeCommand(self, name, may_exist, datapath_type)
 

@@ -25,10 +25,11 @@ class ExclusivePort(resource_allocator.ExclusiveResource):
     :type port: int
     """
 
-    def __init__(self, protocol):
+    def __init__(self, protocol, start=1024, end=None):
         super(ExclusivePort, self).__init__(
             'ports',
-            functools.partial(net_helpers.get_free_namespace_port, protocol))
+            functools.partial(net_helpers.get_free_namespace_port, protocol,
+                              start=start, end=end))
 
     def _setUp(self):
         super(ExclusivePort, self)._setUp()

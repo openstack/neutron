@@ -34,10 +34,3 @@ class TestOVSNativeHelpers(base.BaseTestCase):
         for conn_uri, expected in CONNECTION_TO_MANAGER_URI_MAP:
             self.assertEqual(expected,
                              helpers._connection_to_manager_uri(conn_uri))
-
-    def test_enable_connection_uri(self):
-        for conn_uri, manager_uri in CONNECTION_TO_MANAGER_URI_MAP:
-            helpers.enable_connection_uri(conn_uri)
-            self.execute.assert_called_with(
-                ['ovs-vsctl', 'set-manager', manager_uri],
-                run_as_root=True)
