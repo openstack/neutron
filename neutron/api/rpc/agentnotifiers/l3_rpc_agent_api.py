@@ -79,23 +79,10 @@ class L3AgentNotifyAPI(object):
         """Notify arp details to l3 agents hosting router."""
         if not router_id:
             return
-        adminContext = (context.is_admin and
-                        context or context.elevated())
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
-        hosts = plugin.get_hosts_to_notify(adminContext, router_id)
-        # TODO(murali): replace cast with fanout to avoid performance
-        # issues at greater scale.
-        for host in hosts:
-            log_topic = '%s.%s' % (topics.L3_AGENT, host)
-            LOG.debug('Casting message %(method)s with topic %(topic)s',
-                      {'topic': log_topic, 'method': method})
-            dvr_arptable = {'router_id': router_id,
-                            'arp_table': data}
-            cctxt = self.client.prepare(topic=topics.L3_AGENT,
-                                        server=host,
-                                        version='1.2')
-            cctxt.cast(context, method, payload=dvr_arptable)
+        dvr_arptable = {'router_id': router_id, 'arp_table': data}
+        LOG.debug('Fanout dvr_arptable update: %s', dvr_arptable)
+        cctxt = self.client.prepare(fanout=True, version='1.2')
+        cctxt.cast(context, method, payload=dvr_arptable)
 
     def _notification(self, context, method, router_ids, operation,
                       shuffle_agents, schedule_routers=True):
