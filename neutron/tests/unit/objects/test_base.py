@@ -1991,3 +1991,24 @@ class OperationOnStringAndJsonTestCase(test_base.BaseTestCase):
                 res = base.NeutronDbObject.filter_to_json_str(field_val,
                                                               default_val)
                 self.assertEqual(default_val, res)
+
+
+class NeutronObjectValidatorTestCase(test_base.BaseTestCase):
+
+    def test_load_wrong_synthetic_fields(self):
+        try:
+            @obj_base.VersionedObjectRegistry.register_if(False)
+            class FakeNeutronObjectSyntheticFieldWrong(base.NeutronDbObject):
+                # Version 1.0: Initial version
+                VERSION = '1.0'
+
+                db_model = FakeModel
+
+                fields = {
+                    'id': common_types.UUIDField(),
+                    'obj_field': common_types.UUIDField()
+                }
+
+                synthetic_fields = ['obj_field', 'wrong_synthetic_field_name']
+        except o_exc.NeutronObjectValidatorException as exc:
+            self.assertIn('wrong_synthetic_field_name', str(exc))

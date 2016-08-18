@@ -290,6 +290,11 @@ class DeclarativeObject(abc.ABCMeta):
         if 'project_id' in cls.fields and 'tenant_id' not in cls.fields:
             cls.extra_filter_names.add('tenant_id')
 
+        invalid_fields = [f for f in cls.synthetic_fields
+                          if f not in cls.fields]
+        if invalid_fields:
+            raise o_exc.NeutronObjectValidatorException(fields=invalid_fields)
+
 
 @six.add_metaclass(DeclarativeObject)
 class NeutronDbObject(NeutronObject):
