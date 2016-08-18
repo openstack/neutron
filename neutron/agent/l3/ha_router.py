@@ -385,7 +385,9 @@ class HaRouter(router.RouterInfo):
     def process(self, agent):
         super(HaRouter, self).process(agent)
 
-        if self.ha_port:
+        self.ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
+        if (self.ha_port and
+                self.ha_port['status'] == n_consts.PORT_STATUS_ACTIVE):
             self.enable_keepalived()
 
     @common_utils.synchronized('enable_radvd')

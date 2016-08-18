@@ -273,6 +273,18 @@ class L3HATestCase(framework.L3AgentTestFramework):
         # call the configure_fip_addresses directly here
         router.configure_fip_addresses(interface_name)
 
+    def test_ha_port_status_update(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router_info[constants.HA_INTERFACE_KEY]['status'] = (
+            constants.PORT_STATUS_DOWN)
+        router1 = self.manage_router(self.agent, router_info)
+        common_utils.wait_until_true(lambda: router1.ha_state == 'backup')
+
+        router1.router[constants.HA_INTERFACE_KEY]['status'] = (
+            constants.PORT_STATUS_ACTIVE)
+        self.agent._process_updated_router(router1.router)
+        common_utils.wait_until_true(lambda: router1.ha_state == 'master')
+
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
