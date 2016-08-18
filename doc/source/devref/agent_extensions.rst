@@ -35,6 +35,27 @@ thereby allowing an extension to access resources internal to the agent. At
 layer 2, for instance, upon each port event the agent is then able to trigger a
 handle_port method in its extensions.
 
+Interactions with the agent API object are in the following order:
+
+#. The agent initializes the agent API object.
+#. The agent passes the agent API object into the extension manager.
+#. The manager passes the agent API object into each extension.
+#. An extension calls the new agent API object method to receive, for instance, bridge wrappers with cookies allocated.
+
+
+  +-----------+
+  | Agent API +--------------------------------------------------+
+  +-----+-----+                                                  |
+        |                                   +-----------+        |
+        |1                               +--+ Extension +--+     |
+        |                                |  +-----------+  |     |
+  +---+-+-+---+  2  +--------------+  3  |                 |  4  |
+  |   Agent   +-----+ Ext. manager +-----+--+   ....    +--+-----+
+  +-----------+     +--------------+     |                 |
+                                         |  +-----------+  |
+                                         +--+ Extension +--+
+                                            +-----------+
+
 Each extension is referenced through a stevedore entry point defined within a
 specific namespace. For example, L2 extensions are referenced through the
 neutron.agent.l2.extensions namespace.
@@ -71,5 +92,11 @@ this object.
 This agent API object is part of neutron's public interface for third parties.
 All changes to the interface will be managed in a backwards-compatible way.
 
-At the moment, only the L2 Open vSwitch agent provides an agent API object to
-extensions. See :doc:`L2 agent extensions <agent_extensions>`.
+At this time, on the L2 side, only the L2 Open vSwitch agent provides an agent
+API object to extensions. See :doc:`L2 agent extensions <l2_agent_extensions>`. 
+For L3, see :doc:`L3 agent extensions <l3_agent_extensions>`.
+
+The relevant modules are:
+
+* neutron.agent.l2.agent_extension_api
+* neutron.agent.l3.agent_extension_api

@@ -20,7 +20,7 @@ from neutron.agent import agent_extension
 
 
 @six.add_metaclass(abc.ABCMeta)
-class L3AgentCoreResourceExtension(agent_extension.AgentCoreResourceExtension):
+class L3AgentCoreResourceExtension(agent_extension.AgentExtension):
     """Define stable abstract interface for l3 agent extensions.
 
     An agent extension extends the agent core functionality.
