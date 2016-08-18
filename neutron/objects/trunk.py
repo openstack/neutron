@@ -32,7 +32,7 @@ class SubPort(base.NeutronDbObject):
     db_model = models.SubPort
 
     primary_keys = ['port_id']
-    foreign_keys = {'trunk_id': 'id'}
+    foreign_keys = {'Trunk': {'trunk_id': 'id'}}
 
     fields = {
         'port_id': obj_fields.UUIDField(),

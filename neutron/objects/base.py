@@ -68,6 +68,10 @@ class NeutronSyntheticFieldMultipleForeignKeys(exceptions.NeutronException):
                 "foreign key")
 
 
+class NeutronSyntheticFieldsForeignKeysNotFound(exceptions.NeutronException):
+    message = _("%(child)s does not define a foreign key for %(parent)s")
+
+
 def get_updatable_fields(cls, fields):
     fields = fields.copy()
     for field in cls.fields_no_update:
@@ -445,6 +449,7 @@ class NeutronDbObject(NeutronObject):
         This method doesn't take care of loading synthetic fields that aren't
         stored in the DB, e.g. 'shared' in RBAC policy.
         """
+        clsname = self.__class__.__name__
 
         # TODO(rossella_s) Find a way to handle ObjectFields with
         # subclasses=True
@@ -462,7 +467,11 @@ class NeutronDbObject(NeutronObject):
                 # QosRule
                 continue
             objclass = objclasses[0]
-            if len(objclass.foreign_keys.keys()) > 1:
+            foreign_keys = objclass.foreign_keys.get(clsname)
+            if not foreign_keys:
+                raise NeutronSyntheticFieldsForeignKeysNotFound(
+                    parent=clsname, child=objclass.__name__)
+            if len(foreign_keys.keys()) > 1:
                 raise NeutronSyntheticFieldMultipleForeignKeys(field=field)
 
             synthetic_field_db_name = (
@@ -482,7 +491,7 @@ class NeutronDbObject(NeutronObject):
                 synth_objs = objclass.get_objects(
                     self.obj_context, **{
                         k: getattr(self, v)
-                        for k, v in objclass.foreign_keys.items()})
+                        for k, v in foreign_keys.items()})
             if isinstance(self.fields[field], obj_fields.ObjectField):
                 setattr(self, field, synth_objs[0] if synth_objs else None)
             else:

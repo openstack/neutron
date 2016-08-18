@@ -106,7 +106,7 @@ class SecurityGroupRule(base.NeutronDbObject):
         'remote_ip_prefix': obj_fields.IPNetworkField(nullable=True),
     }
 
-    foreign_keys = {'security_group_id': 'id'}
+    foreign_keys = {'SecurityGroup': {'security_group_id': 'id'}}
 
     fields_no_update = ['project_id', 'security_group_id']
 

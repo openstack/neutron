@@ -67,12 +67,56 @@ class FakeSmallNeutronObject(base.NeutronDbObject):
 
     primary_keys = ['field1']
 
-    foreign_keys = {'field1': 'id'}
+    foreign_keys = {
+        'FakeNeutronObjectCompositePrimaryKeyWithId': {'field1': 'id'},
+        'FakeNeutronDbObject': {'field2': 'id'},
+        'FakeNeutronObjectUniqueKey': {'field3': 'id'},
+    }
+
+    fields = {
+        'field1': obj_fields.UUIDField(),
+        'field2': obj_fields.UUIDField(),
+        'field3': obj_fields.UUIDField(),
+    }
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeSmallNeutronObjectWithMultipleParents(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = ObjectFieldsModel
+
+    primary_keys = ['field1', 'field2']
+
+    foreign_keys = {
+        'FakeParent': {'field1': 'id'},
+        'FakeParent2': {'field2': 'id'},
+    }
 
     fields = {
         'field1': obj_fields.UUIDField(),
         'field2': obj_fields.StringField(),
     }
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeParent(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = ObjectFieldsModel
+
+    primary_keys = ['field1', 'field2']
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'children': obj_fields.ListOfObjectsField(
+            'FakeSmallNeutronObjectWithMultipleParents',
+            nullable=True)
+    }
+
+    synthetic_fields = ['children']
 
 
 @obj_base.VersionedObjectRegistry.register_if(False)
@@ -84,7 +128,10 @@ class FakeWeirdKeySmallNeutronObject(base.NeutronDbObject):
 
     primary_keys = ['field1']
 
-    foreign_keys = {'field1': 'weird_key'}
+    foreign_keys = {
+        'FakeNeutronObjectNonStandardPrimaryKey': {'field1': 'weird_key'},
+        'FakeNeutronObjectCompositePrimaryKey': {'field2': 'weird_key'},
+    }
 
     fields = {
         'field1': obj_fields.UUIDField(),
@@ -225,7 +272,9 @@ class FakeNeutronObjectMultipleForeignKeys(base.NeutronDbObject):
 
     db_model = ObjectFieldsModel
 
-    foreign_keys = {'field1': 'id', 'field2': 'id'}
+    foreign_keys = {
+        'FakeNeutronObjectSyntheticField': {'field1': 'id', 'field2': 'id'},
+    }
 
     fields = {
         'field1': obj_fields.UUIDField(),
@@ -494,12 +543,14 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 if self._test_class.is_object_field(field):
                     obj_class = self._get_ovo_object_class(self._test_class,
                                                            field)
+                    foreign_keys = obj_class.foreign_keys.get(
+                        self._test_class.__name__)
                     mock_calls.append(
                         mock.call(
                             self.context, obj_class.db_model,
                             _pager=self.pager_map[obj_class.obj_name()],
                             **{k: db_obj[v]
-                            for k, v in obj_class.foreign_keys.items()}))
+                            for k, v in foreign_keys.items()}))
         return mock_calls
 
     def test_get_objects(self):
@@ -904,6 +955,31 @@ class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
                           obj.load_synthetic_db_fields)
 
 
+class BaseDbObjectMultipleParentsForForeignKeysTestCase(
+        _BaseObjectTestCase,
+        test_base.BaseTestCase):
+
+    _test_class = FakeParent
+
+    def test_load_synthetic_db_fields_with_multiple_parents(self):
+        child_cls = FakeSmallNeutronObjectWithMultipleParents
+        self.obj_registry.register(child_cls)
+        self.obj_registry.register(FakeParent)
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        fake_children = [
+            child_cls(
+                self.context, **child_cls.modify_fields_from_db(
+                    self.get_random_fields(obj_cls=child_cls))
+            )
+            for _ in range(5)
+        ]
+        with mock.patch.object(child_cls, 'get_objects',
+                               return_value=fake_children) as get_objects:
+            obj.load_synthetic_db_fields()
+        get_objects.assert_called_once_with(self.context, field1=obj.id)
+        self.assertEqual(fake_children, obj.children)
+
+
 class BaseDbObjectTestCase(_BaseObjectTestCase,
                            test_db_base_plugin_v2.DbOperationBoundMixin):
     def setUp(self):
@@ -1130,7 +1206,8 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                                                          db_obj[field][0])
 
             # make sure children point to the base object
-            for local_field, foreign_key in objclass.foreign_keys.items():
+            foreign_keys = objclass.foreign_keys.get(obj.__class__.__name__)
+            for local_field, foreign_key in foreign_keys.items():
                 objclass_fields[local_field] = obj.get(foreign_key)
 
             synth_field_obj = objclass(self.context, **objclass_fields)
