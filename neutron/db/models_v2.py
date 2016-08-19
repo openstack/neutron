@@ -133,6 +133,8 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
     device_id = sa.Column(sa.String(attr.DEVICE_ID_MAX_LEN), nullable=False)
     device_owner = sa.Column(sa.String(attr.DEVICE_OWNER_MAX_LEN),
                              nullable=False)
+    ip_allocation = sa.Column(sa.String(16))
+
     __table_args__ = (
         sa.Index(
             'ix_ports_network_id_mac_address', 'network_id', 'mac_address'),

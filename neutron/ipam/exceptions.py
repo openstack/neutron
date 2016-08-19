@@ -84,3 +84,7 @@ class IpamValueInvalid(exceptions.Conflict):
     def __init__(self, message=None):
         self.message = message
         super(IpamValueInvalid, self).__init__()
+
+
+class DeferIpam(exceptions.NeutronException):
+    message = _("Exception used to signal that IP allocation is deferred")

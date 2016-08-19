@@ -47,8 +47,10 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import standardattrdescription_db as stattr_db
+from neutron.extensions import ip_allocation as ipa
 from neutron.extensions import l3
 from neutron import ipam
+from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
 from neutron import manager
 from neutron import neutron_plugin_base_v2
@@ -1138,7 +1140,17 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             db_port = self._create_db_port_obj(context, port_data)
             p['mac_address'] = db_port['mac_address']
 
-            self.ipam.allocate_ips_for_port_and_store(context, port, port_id)
+            try:
+                self.ipam.allocate_ips_for_port_and_store(
+                    context, port, port_id)
+                db_port['ip_allocation'] = ipa.IP_ALLOCATION_IMMEDIATE
+            except ipam_exc.DeferIpam:
+                db_port['ip_allocation'] = ipa.IP_ALLOCATION_DEFERRED
+            fixed_ips = p['fixed_ips']
+            if validators.is_attr_set(fixed_ips) and not fixed_ips:
+                # [] was passed explicitly as fixed_ips. An unaddressed port.
+                db_port['ip_allocation'] = ipa.IP_ALLOCATION_NONE
+
         return db_port
 
     def _validate_port_for_update(self, context, db_port, new_port, new_mac):
