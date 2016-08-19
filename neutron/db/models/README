@@ -1,4 +1,6 @@
 This directory is designed to contain all SQLAlchemy models shipped with core
-Neutron. The expected directory structure is flat, meaning there should be no
-subdirectories. Module names should use singular forms for nouns (port.py, not
-ports.py).
+Neutron.
+
+* The expected directory structure is flat, except for the ML2 plugins. All ML2
+  plugin models should fall under the plugins subdirectory (i.e. plugins/ml2/gre_allocation).
+* Module names should use singular forms for nouns (port.py, not ports.py).
