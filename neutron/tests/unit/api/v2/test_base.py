@@ -137,10 +137,18 @@ def _list_cmp(l1, l2):
 
 
 class APIv2TestCase(APIv2TestBase):
+
+    @staticmethod
+    def _get_policy_attrs(attr_info):
+        policy_attrs = {name for (name, info) in attr_info.items()
+                        if info.get('required_by_policy')}
+        if 'tenant_id' in policy_attrs:
+            policy_attrs.add('project_id')
+        return sorted(policy_attrs)
+
     def _do_field_list(self, resource, base_fields):
         attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[resource]
-        policy_attrs = [name for (name, info) in attr_info.items()
-                        if info.get('required_by_policy')]
+        policy_attrs = self._get_policy_attrs(attr_info)
         for name, info in attr_info.items():
             if info.get('primary_key'):
                 policy_attrs.append(name)
@@ -488,6 +496,7 @@ class APIv2TestCase(APIv2TestBase):
                                            'id',
                                            'subnets',
                                            'shared',
+                                           'project_id',
                                            'tenant_id']))
         instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
@@ -771,7 +780,11 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
     def test_create_use_defaults(self):
         net_id = _uuid()
-        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        tenant_id = _uuid()
+
+        initial_input = {'network': {'name': 'net1',
+                                     'tenant_id': tenant_id,
+                                     'project_id': tenant_id}}
         full_input = {'network': {'admin_state_up': True,
                                   'shared': False}}
         full_input['network'].update(initial_input['network'])
@@ -807,7 +820,8 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         # tenant_id should be fetched from env
         initial_input = {'network': {'name': 'net1'}}
         full_input = {'network': {'admin_state_up': True,
-                      'shared': False, 'tenant_id': tenant_id}}
+                      'shared': False, 'tenant_id': tenant_id,
+                      'project_id': tenant_id}}
         full_input['network'].update(initial_input['network'])
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
@@ -918,6 +932,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         device_id = _uuid()
         initial_input = {'port': {'name': '', 'network_id': net_id,
                                   'tenant_id': tenant_id,
+                                  'project_id': tenant_id,
                                   'device_id': device_id,
                                   'admin_state_up': True}}
         full_input = {'port': {'admin_state_up': True,
@@ -1218,8 +1233,10 @@ class SubresourceTest(base.BaseTestCase):
 
     def test_create_sub_resource(self):
         instance = self.plugin.return_value
+        tenant_id = _uuid()
 
-        body = {'dummy': {'foo': 'bar', 'tenant_id': _uuid()}}
+        body = {'dummy': {'foo': 'bar', 'tenant_id': tenant_id,
+                          'project_id': tenant_id}}
         self.api.post_json('/networks/id1/dummies', body)
         instance.create_network_dummy.assert_called_once_with(mock.ANY,
                                                               network_id='id1',
@@ -1499,7 +1516,9 @@ class ExtensionTestCase(base.BaseTestCase):
 
     def test_extended_create(self):
         net_id = _uuid()
-        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid(),
+        tenant_id = _uuid()
+        initial_input = {'network': {'name': 'net1', 'tenant_id': tenant_id,
+                                     'project_id': tenant_id,
                                      'v2attrs:something_else': "abc"}}
         data = {'network': {'admin_state_up': True, 'shared': False}}
         data['network'].update(initial_input['network'])

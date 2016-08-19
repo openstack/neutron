@@ -125,12 +125,14 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
 
     def test_network_create_with_provider_attrs(self):
         ctx = context.get_admin_context()
-        ctx.tenant_id = 'an_admin'
+        tenant_id = 'an_admin'
+        ctx.tenant_id = tenant_id
         res, data = self._post_network_with_provider_attrs(ctx)
         instance = self.plugin.return_value
         exp_input = {'network': data}
         exp_input['network'].update({'admin_state_up': True,
-                                     'tenant_id': 'an_admin',
+                                     'tenant_id': tenant_id,
+                                     'project_id': tenant_id,
                                      'shared': False})
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=exp_input)

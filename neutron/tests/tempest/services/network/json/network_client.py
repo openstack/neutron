@@ -872,6 +872,19 @@ class NetworkClientJSON(service_client.RestClient):
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
+    def create_network_keystone_v3(self, name, project_id):
+        uri = '%s/networks' % self.uri_prefix
+        post_data = {
+            'network': {
+                'name': name,
+                'project_id': project_id
+            }
+        }
+        resp, body = self.post(uri, self.serialize(post_data))
+        body = self.deserialize_single(body)
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     def list_extensions(self, **filters):
         uri = self.get_uri("extensions")
         if filters:

@@ -46,6 +46,10 @@ class NetworksTestJSON(base.BaseNetworkTest):
             fields.append('mtu')
         for key in fields:
             self.assertEqual(network[key], self.network[key])
+        project_id = self.client.tenant_id
+        self.assertEqual(project_id, network['tenant_id'])
+        if test.is_extension_enabled('project-id', 'network'):
+            self.assertEqual(project_id, network['project_id'])
 
     @test.idempotent_id('867819bb-c4b6-45f7-acf9-90edcf70aa5e')
     def test_show_network_fields(self):
@@ -59,6 +63,27 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertEqual(sorted(network.keys()), sorted(fields))
         for field_name in fields:
             self.assertEqual(network[field_name], self.network[field_name])
+        self.assertNotIn('tenant_id', network)
+        self.assertNotIn('project_id', network)
+
+    @test.idempotent_id('26f2b7a5-2cd1-4f3a-b11f-ad259b099b11')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_show_network_fields_keystone_v3(self):
+
+        def _check_show_network_fields(fields, expect_project_id,
+                                       expect_tenant_id):
+            params = {}
+            if fields:
+                params['fields'] = fields
+            body = self.client.show_network(self.network['id'], **params)
+            network = body['network']
+            self.assertEqual(expect_project_id, 'project_id' in network)
+            self.assertEqual(expect_tenant_id, 'tenant_id' in network)
+
+        _check_show_network_fields(None, True, True)
+        _check_show_network_fields(['tenant_id'], False, True)
+        _check_show_network_fields(['project_id'], True, False)
+        _check_show_network_fields(['project_id', 'tenant_id'], True, True)
 
     @test.idempotent_id('c72c1c0c-2193-4aca-ccc4-b1442640bbbb')
     @test.requires_ext(extension="standard-attr-description",
@@ -75,6 +100,28 @@ class NetworksTestJSON(base.BaseNetworkTest):
         body = self.client.list_networks(id=net_id)['networks'][0]
         self.assertEqual('d2', body['description'])
 
+    @test.idempotent_id('0cc0552f-afaf-4231-b7a7-c2a1774616da')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_create_network_keystone_v3(self):
+        project_id = self.client.tenant_id
+
+        name = 'created-with-project_id'
+        body = self.client.create_network_keystone_v3(name, project_id)
+        new_net = body['network']
+        self.assertEqual(name, new_net['name'])
+        self.assertEqual(project_id, new_net['project_id'])
+        self.assertEqual(project_id, new_net['tenant_id'])
+
+        body = self.client.list_networks(id=new_net['id'])['networks'][0]
+        self.assertEqual(name, body['name'])
+
+        new_name = 'create-with-project_id-2'
+        body = self.client.update_network(new_net['id'], name=new_name)
+        new_net = body['network']
+        self.assertEqual(new_name, new_net['name'])
+        self.assertEqual(project_id, new_net['project_id'])
+        self.assertEqual(project_id, new_net['tenant_id'])
+
     @test.idempotent_id('6ae6d24f-9194-4869-9c85-c313cb20e080')
     def test_list_networks_fields(self):
         # Verify specific fields of the networks
@@ -86,6 +133,26 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertNotEmpty(networks, "Network list returned is empty")
         for network in networks:
             self.assertEqual(sorted(network.keys()), sorted(fields))
+
+    @test.idempotent_id('a23186b9-aa6f-4b08-b877-35ca3b9cd54c')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_list_networks_fields_keystone_v3(self):
+        def _check_list_networks_fields(fields, expect_project_id,
+                                        expect_tenant_id):
+            params = {}
+            if fields:
+                params['fields'] = fields
+            body = self.client.list_networks(**params)
+            networks = body['networks']
+            self.assertNotEmpty(networks, "Network list returned is empty")
+            for network in networks:
+                self.assertEqual(expect_project_id, 'project_id' in network)
+                self.assertEqual(expect_tenant_id, 'tenant_id' in network)
+
+        _check_list_networks_fields(None, True, True)
+        _check_list_networks_fields(['tenant_id'], False, True)
+        _check_list_networks_fields(['project_id'], True, False)
+        _check_list_networks_fields(['project_id', 'tenant_id'], True, True)
 
 
 class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):
