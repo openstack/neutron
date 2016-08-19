@@ -22,11 +22,14 @@ from neutron.tests.tempest.api import base
 class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
 
     """
-    NOTE: This test may eventually migrate to Tempest.
-
-    Tests the Get-Me-A-Network operation in the Neutron API
+    Tests the Get-Me-A-Network operations in the Neutron API
     using the REST client for Neutron.
     """
+    # NOTE(armax): this is a precaution to avoid interference
+    # from other tests exercising this extension. So long as
+    # all tests are added under TestAutoAllocatedTopology,
+    # nothing bad should happen.
+    force_tenant_isolation = True
 
     @classmethod
     @test.requires_ext(extension="auto-allocated-topology", service="network")
@@ -101,3 +104,14 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
         # After the initial GET, the API should be idempotent
         self.assertEqual(network_id1, network_id2)
         self.assertEqual(resources_after1, resources_after2)
+
+    @test.idempotent_id('aabc0b02-cee4-11e5-9f3c-091127605a2b')
+    def test_delete_allocated_net_topology_as_tenant(self):
+        resources_before = self._count_topology_resources()
+        self.assertEqual((0, 0, 0), resources_before)
+        body = self.client.get_auto_allocated_topology()
+        topology = body['auto_allocated_topology']
+        self.assertIsNotNone(topology)
+        self.client.delete_auto_allocated_topology()
+        resources_after = self._count_topology_resources()
+        self.assertEqual((0, 0, 0), resources_after)

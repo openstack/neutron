@@ -114,6 +114,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
         The topology will be provisioned upon return, if network is missing.
         """
+        fields = fields or []
         tenant_id = self._validate(context, tenant_id)
         if CHECK_REQUIREMENTS in fields:
             # for dry-run requests, simply validates that subsequent
@@ -137,6 +138,17 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         network_id = self._build_topology(
             context, tenant_id, default_external_network)
         return self._response(network_id, tenant_id, fields=fields)
+
+    def delete_auto_allocated_topology(self, context, tenant_id):
+        tenant_id = self._validate(context, tenant_id)
+        topology = self._get_auto_allocated_topology(context, tenant_id)
+        if topology:
+            subnets = self.core_plugin.get_subnets(
+                context,
+                filters={'network_id': [topology['network_id']]})
+            self._cleanup(
+                context, network_id=topology['network_id'],
+                router_id=topology['router_id'], subnets=subnets)
 
     def _build_topology(self, context, tenant_id, default_external_network):
         """Build the network topology and returns its network UUID."""
@@ -187,12 +199,15 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
         return tenant_id
 
-    def _get_auto_allocated_network(self, context, tenant_id):
-        """Get the auto allocated network for the tenant."""
+    def _get_auto_allocated_topology(self, context, tenant_id):
+        """Return the auto allocated topology record if present or None."""
         with context.session.begin(subtransactions=True):
-            network = (context.session.query(models.AutoAllocatedTopology).
+            return (context.session.query(models.AutoAllocatedTopology).
                 filter_by(tenant_id=tenant_id).first())
 
+    def _get_auto_allocated_network(self, context, tenant_id):
+        """Get the auto allocated network for the tenant."""
+        network = self._get_auto_allocated_topology(context, tenant_id)
         if network:
             return network['network_id']
 
@@ -333,25 +348,29 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             network_id = self._get_auto_allocated_network(context, tenant_id)
         return network_id
 
+    # FIXME(kevinbenton): get rid of the retry once bug/1612798 is resolved
     @db_api.retry_db_errors
     def _cleanup(self, context, network_id=None, router_id=None, subnets=None):
         """Clean up auto allocated resources."""
-        # TODO(kevinbenton): get rid of the retry and notfound exception
-        # handlers once bug/1612798 is resolved
+        # Concurrent attempts to delete the topology may interleave and
+        # cause some operations to fail with NotFound exceptions. Rather
+        # than fail partially, the exceptions should be ignored and the
+        # cleanup should proceed uninterrupted.
         if router_id:
             for subnet in subnets or []:
-                try:
-                    self.l3_plugin.remove_router_interface(
-                        context, router_id, {'subnet_id': subnet['id']})
-                except n_exc.NotFound:
-                    pass
-            try:
-                self.l3_plugin.delete_router(context, router_id)
-            except n_exc.NotFound:
-                pass
+                ignore_notfound(
+                    self.l3_plugin.remove_router_interface,
+                    context, router_id, {'subnet_id': subnet['id']})
+            ignore_notfound(self.l3_plugin.delete_router, context, router_id)
 
         if network_id:
-            try:
-                self.core_plugin.delete_network(context, network_id)
-            except n_exc.NotFound:
-                pass
+            ignore_notfound(
+                self.core_plugin.delete_network, context, network_id)
+
+
+def ignore_notfound(func, *args, **kwargs):
+    """Call the given function and pass if a `NotFound` exception is raised."""
+    try:
+        return func(*args, **kwargs)
+    except n_exc.NotFound:
+        pass

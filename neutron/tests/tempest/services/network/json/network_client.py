@@ -738,6 +738,12 @@ class NetworkClientJSON(service_client.RestClient):
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
+    def delete_auto_allocated_topology(self, tenant_id=None):
+        uri = '%s/auto-allocated-topology/%s' % (self.uri_prefix, tenant_id)
+        resp, body = self.delete(uri)
+        self.expected_success(204, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     def create_security_group_rule(self, direction, security_group_id,
                                    **kwargs):
         post_body = {'security_group_rule': kwargs}
