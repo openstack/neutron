@@ -194,11 +194,17 @@ class HasStandardAttributes(object):
                                 single_parent=True,
                                 uselist=False)
 
-    def __init__(self, description='', *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        standard_attr_keys = ['description', 'created_at',
+                              'updated_at', 'revision_number']
+        standard_attr_kwargs = {}
+        for key in standard_attr_keys:
+            if key in kwargs:
+                standard_attr_kwargs[key] = kwargs.pop(key)
         super(HasStandardAttributes, self).__init__(*args, **kwargs)
         # here we automatically create the related standard attribute object
         self.standard_attr = StandardAttribute(
-            resource_type=self.__tablename__, description=description)
+            resource_type=self.__tablename__, **standard_attr_kwargs)
 
     @declarative.declared_attr
     def description(cls):
