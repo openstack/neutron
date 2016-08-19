@@ -6,9 +6,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-15 19:53+0000\n"
+"POT-Creation-Date: 2016-08-18 18:59+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1884,14 +1884,6 @@ msgstr ""
 "автоматически вычитает байты, необходимые для протокола перекрытия, из этого "
 "значения. Значение по умолчанию: 1500, стандартное для Ethernet."
 
-msgid ""
-"MTU setting for device. This option will be removed in Newton. Please use "
-"the system-wide segment_mtu setting which the agents will take into account "
-"when wiring VIFs."
-msgstr ""
-"Параметр MTU для устройства. Будет удален в Newton. Используйте системное "
-"значение segment_mtu для агентов, работающих с VIF."
-
 msgid "MTU size of veth interfaces"
 msgstr "Размер MTU интерфейсов veth"
 
@@ -1970,9 +1962,6 @@ msgid ""
 msgstr ""
 "Правило метки измерения с remote_ip_prefix %(remote_ip_prefix)s "
 "перекрывается другим правилом"
-
-msgid "Method cannot be called within a transaction."
-msgstr "Метод нельзя вызывать внутри транзакции."
 
 msgid "Migration from distributed router to centralized is not supported"
 msgstr ""
@@ -2070,17 +2059,6 @@ msgstr "Имя '%s' не должно начинаться дефисом или
 
 msgid "Name of Open vSwitch bridge to use"
 msgstr "Имя используемого моста Open vSwitch"
-
-msgid ""
-"Name of bridge used for external network traffic. This should be set to an "
-"empty value for the Linux Bridge. When this parameter is set, each L3 agent "
-"can be associated with no more than one external network. This option is "
-"deprecated and will be removed in the M release."
-msgstr ""
-"Имя моста, используемого для передачи данных по внешней сети. Для Linux "
-"Bridge должно быть задано пустое значение. Если задан этот параметр, то "
-"каждый агент L3 может быть связан не более чем с одной внешней сетью. Эта "
-"опция устарела и будет удалена в выпуске M."
 
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
@@ -3313,13 +3291,6 @@ msgid ""
 "access."
 msgstr ""
 "К сети подключены маршрутизаторы, доступ к которым зависит от этой стратегии."
-
-msgid ""
-"This will choose the web framework in which to run the Neutron API server. "
-"'pecan' is a new experiemental rewrite of the API server."
-msgstr ""
-"Укажите веб-среду, а которой работает сервер API Neutron. 'pecan' - это "
-"новый экспериментальный вариант сервера API."
 
 msgid "Timeout"
 msgstr "Таймаут"
