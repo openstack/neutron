@@ -24,7 +24,6 @@ Based on this comparison database can be healed with healing migration.
 import os.path
 
 from neutron.common import utils
-from neutron.db import address_scope_db  # noqa
 from neutron.db import agents_db  # noqa
 from neutron.db import agentschedulers_db  # noqa
 from neutron.db import dns_db  # noqa
