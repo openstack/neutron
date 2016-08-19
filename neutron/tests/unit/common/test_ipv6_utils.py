@@ -55,10 +55,10 @@ class IPv6byEUI64TestCase(base.BaseTestCase):
                           ipv6_utils.get_ipv6_addr_by_EUI64(prefix, mac))
 
 
-class TestIsEnabled(base.BaseTestCase):
+class TestIsEnabledAndBindByDefault(base.BaseTestCase):
 
     def setUp(self):
-        super(TestIsEnabled, self).setUp()
+        super(TestIsEnabledAndBindByDefault, self).setUp()
 
         def reset_detection_flag():
             ipv6_utils._IS_IPV6_ENABLED = None
@@ -70,25 +70,25 @@ class TestIsEnabled(base.BaseTestCase):
 
     def test_enabled(self):
         self.useFixture(tools.OpenFixture(self.proc_path, '0'))
-        enabled = ipv6_utils.is_enabled()
+        enabled = ipv6_utils.is_enabled_and_bind_by_default()
         self.assertTrue(enabled)
 
     def test_disabled(self):
         self.useFixture(tools.OpenFixture(self.proc_path, '1'))
-        enabled = ipv6_utils.is_enabled()
+        enabled = ipv6_utils.is_enabled_and_bind_by_default()
         self.assertFalse(enabled)
 
     def test_disabled_non_exists(self):
         mo = self.useFixture(tools.OpenFixture(self.proc_path, '1')).mock_open
         self.mock_exists.return_value = False
-        enabled = ipv6_utils.is_enabled()
+        enabled = ipv6_utils.is_enabled_and_bind_by_default()
         self.assertFalse(enabled)
         self.assertFalse(mo.called)
 
     def test_memoize(self):
         mo = self.useFixture(tools.OpenFixture(self.proc_path, '0')).mock_open
-        ipv6_utils.is_enabled()
-        enabled = ipv6_utils.is_enabled()
+        ipv6_utils.is_enabled_and_bind_by_default()
+        enabled = ipv6_utils.is_enabled_and_bind_by_default()
         self.assertTrue(enabled)
         mo.assert_called_once_with(self.proc_path, 'r')
 

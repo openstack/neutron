@@ -98,7 +98,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self._router_lifecycle(enable_ha=True, dual_stack=True,
                                v6_ext_gw_with_sub=False)
 
-    @testtools.skipUnless(ipv6_utils.is_enabled(), "IPv6 is not enabled")
+    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
+                          "IPv6 is not enabled")
     def test_ipv6_router_advts_after_router_state_change(self):
         # Schedule router to l3 agent, and then add router gateway. Verify
         # that router gw interface is configured to receive Router Advts.

@@ -66,7 +66,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def __init__(self, namespace=None):
         self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=ipv6_utils.is_enabled(),
+            use_ipv6=ipv6_utils.is_enabled_and_bind_by_default(),
             namespace=namespace)
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
         # driver composed over this one
