@@ -46,13 +46,15 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.br_int = mock.Mock()
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(1000, 10))
+        self.qos_driver.br_int.dump_flows_for = mock.Mock(return_value=None)
         self.get = self.qos_driver.br_int.get_egress_bw_limit_for_port
         self.qos_driver.br_int.del_egress_bw_limit_for_port = mock.Mock()
         self.delete = self.qos_driver.br_int.delete_egress_bw_limit_for_port
         self.qos_driver.br_int.create_egress_bw_limit_for_port = mock.Mock()
         self.create = self.qos_driver.br_int.create_egress_bw_limit_for_port
-        self.rule = self._create_bw_limit_rule_obj()
-        self.qos_policy = self._create_qos_policy_obj([self.rule])
+        self.rules = [self._create_bw_limit_rule_obj(),
+                     self._create_dscp_marking_rule_obj()]
+        self.qos_policy = self._create_qos_policy_obj(self.rules)
         self.port = self._create_fake_port(self.qos_policy.id)
 
     def _create_bw_limit_rule_obj(self):
@@ -60,6 +62,13 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         rule_obj.id = uuidutils.generate_uuid()
         rule_obj.max_kbps = 2
         rule_obj.max_burst_kbps = 200
+        rule_obj.obj_reset_changes()
+        return rule_obj
+
+    def _create_dscp_marking_rule_obj(self):
+        rule_obj = rule.QosDscpMarkingRule()
+        rule_obj.id = uuidutils.generate_uuid()
+        rule_obj.dscp_mark = 32
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -86,6 +95,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         return {'vif_port': FakeVifPort(),
                 'qos_policy_id': policy_id,
                 'network_qos_policy_id': None,
+                'port_id': uuidutils.generate_uuid(),
                 'device_owner': uuidutils.generate_uuid()}
 
     def test_create_new_rule(self):
@@ -95,19 +105,22 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         # Assert create is the last call
         self.assertEqual(
             'create_egress_bw_limit_for_port',
-            self.qos_driver.br_int.method_calls[-1][0])
+            self.qos_driver.br_int.method_calls[0][0])
         self.assertEqual(0, self.delete.call_count)
         self.create.assert_called_once_with(
-            self.port_name, self.rule.max_kbps,
-            self.rule.max_burst_kbps)
+            self.port_name, self.rules[0].max_kbps,
+            self.rules[0].max_burst_kbps)
+        self._assert_dscp_rule_create_updated()
 
     def test_create_existing_rules(self):
         self.qos_driver.create(self.port, self.qos_policy)
-        self._assert_rule_create_updated()
+        self._assert_bw_rule_create_updated()
+        self._assert_dscp_rule_create_updated()
 
     def test_update_rules(self):
         self.qos_driver.update(self.port, self.qos_policy)
-        self._assert_rule_create_updated()
+        self._assert_bw_rule_create_updated()
+        self._assert_dscp_rule_create_updated()
 
     def test_update_rules_no_vif_port(self):
         port = copy.copy(self.port)
@@ -125,12 +138,22 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.delete(port, self.qos_policy)
         self.delete.assert_not_called()
 
-    def _assert_rule_create_updated(self):
+    def _assert_bw_rule_create_updated(self):
         # Assert create is the last call
         self.assertEqual(
             'create_egress_bw_limit_for_port',
-            self.qos_driver.br_int.method_calls[-1][0])
+            self.qos_driver.br_int.method_calls[0][0])
 
         self.create.assert_called_once_with(
-            self.port_name, self.rule.max_kbps,
-            self.rule.max_burst_kbps)
+            self.port_name, self.rules[0].max_kbps,
+            self.rules[0].max_burst_kbps)
+
+    def _assert_dscp_rule_create_updated(self):
+        # Assert add_flow is the last call
+        self.assertEqual(
+            'add_flow',
+            self.qos_driver.br_int.method_calls[-1][0])
+
+        self.qos_driver.br_int.add_flow.assert_called_once_with(
+            actions='mod_nw_tos:128,load:55->NXM_NX_REG2[0..5],resubmit(,0)',
+            in_port=mock.ANY, priority=65535, reg2=0, table=0)

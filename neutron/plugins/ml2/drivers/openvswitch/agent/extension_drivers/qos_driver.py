@@ -12,12 +12,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.l2.extensions import qos
 from neutron.plugins.ml2.drivers.openvswitch.mech_driver import (
     mech_openvswitch)
+from neutron.services.qos import qos_consts
 
 
 LOG = logging.getLogger(__name__)
@@ -33,6 +36,7 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
         self.br_int_name = cfg.CONF.OVS.integration_bridge
         self.br_int = None
         self.agent_api = None
+        self.ports = collections.defaultdict(dict)
 
     def consume_api(self, agent_api):
         self.agent_api = agent_api
@@ -47,7 +51,7 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
     def update_bandwidth_limit(self, port, rule):
         vif_port = port.get('vif_port')
         if not vif_port:
-            port_id = port.get('port_id', None)
+            port_id = port.get('port_id')
             LOG.debug("update_bandwidth_limit was received for port %s but "
                       "vif_port was not found. It seems that port is already "
                       "deleted", port_id)
@@ -65,7 +69,7 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
     def delete_bandwidth_limit(self, port):
         vif_port = port.get('vif_port')
         if not vif_port:
-            port_id = port.get('port_id', None)
+            port_id = port.get('port_id')
             LOG.debug("delete_bandwidth_limit was received for port %s but "
                       "vif_port was not found. It seems that port is already "
                       "deleted", port_id)
@@ -76,7 +80,15 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
         self.update_dscp_marking(port, rule)
 
     def update_dscp_marking(self, port, rule):
-        port_name = port['vif_port'].port_name
+        self.ports[port['port_id']][qos_consts.RULE_TYPE_DSCP_MARKING] = port
+        vif_port = port.get('vif_port')
+        if not vif_port:
+            port_id = port.get('port_id')
+            LOG.debug("update_dscp_marking was received for port %s but "
+                      "vif_port was not found. It seems that port is already "
+                      "deleted", port_id)
+            return
+        port_name = vif_port.port_name
         port = self.br_int.get_port_ofport(port_name)
         mark = rule.dscp_mark
         #mark needs to be bit shifted 2 left to not overwrite the
@@ -109,7 +121,12 @@ class QosOVSAgentDriver(qos.QosAgentDriver):
                                      actions=actions)
 
     def delete_dscp_marking(self, port):
-        port_name = port['vif_port'].port_name
-        port = self.br_int.get_port_ofport(port_name)
-
-        self.br_int.delete_flows(in_port=port, table=0, reg2=0)
+        dscp_port = self.ports[port['port_id']].pop(qos_consts.
+                                                    RULE_TYPE_DSCP_MARKING, 0)
+        if dscp_port:
+            port_num = dscp_port['vif_port'].ofport
+            self.br_int.delete_flows(in_port=port_num, table=0, reg2=0)
+        else:
+            LOG.debug("delete_dscp_marking was received for port %s but "
+                      "no port information was stored to be deleted",
+                      port['port_id'])
