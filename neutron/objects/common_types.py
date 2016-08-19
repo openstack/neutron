@@ -15,18 +15,14 @@ import itertools
 
 import netaddr
 from neutron_lib import constants as lib_constants
-from neutron_lib import exceptions
+
 from oslo_versionedobjects import fields as obj_fields
 import six
 
 from neutron._i18n import _
 from neutron.common import constants
 from neutron.extensions import dns as dns_ext
-
-
-class NeutronRangeConstrainedIntegerInvalidLimit(exceptions.NeutronException):
-    message = _("Incorrect range limits specified: "
-                "start = %(start)s, end = %(end)s")
+from neutron.objects import exceptions as o_exc
 
 
 class IPV6ModeEnumField(obj_fields.AutoTypedField):
@@ -39,7 +35,7 @@ class RangeConstrainedInteger(obj_fields.Integer):
             self._start = int(start)
             self._end = int(end)
         except (TypeError, ValueError):
-            raise NeutronRangeConstrainedIntegerInvalidLimit(
+            raise o_exc.NeutronRangeConstrainedIntegerInvalidLimit(
                 start=start, end=end)
         super(RangeConstrainedInteger, self).__init__(**kwargs)
 

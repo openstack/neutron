@@ -15,9 +15,8 @@ import copy
 import functools
 import itertools
 
-from neutron_lib import exceptions
+from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
-from oslo_utils import reflection
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import six
@@ -28,51 +27,10 @@ from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import exceptions as o_exc
 from neutron.objects.extensions import standardattributes
 
 _NO_DB_MODEL = object()
-
-
-#TODO(jlibosva): Move these classes to exceptions module
-class NeutronObjectUpdateForbidden(exceptions.NeutronException):
-    message = _("Unable to update the following object fields: %(fields)s")
-
-
-class NeutronDbObjectDuplicateEntry(exceptions.Conflict):
-    message = _("Failed to create a duplicate %(object_type)s: "
-                "for attribute(s) %(attributes)s with value(s) %(values)s")
-
-    def __init__(self, object_class, db_exception):
-        super(NeutronDbObjectDuplicateEntry, self).__init__(
-            object_type=reflection.get_class_name(object_class,
-                                                  fully_qualified=False),
-            attributes=db_exception.columns,
-            values=db_exception.value)
-
-
-class NeutronDbObjectNotFoundByModel(exceptions.NotFound):
-    message = _("NeutronDbObject not found by model %(model)s.")
-
-
-class NeutronPrimaryKeyMissing(exceptions.BadRequest):
-    message = _("For class %(object_type)s missing primary keys: "
-                "%(missing_keys)s")
-
-    def __init__(self, object_class, missing_keys):
-        super(NeutronPrimaryKeyMissing, self).__init__(
-            object_type=reflection.get_class_name(object_class,
-                                                  fully_qualified=False),
-            missing_keys=missing_keys
-        )
-
-
-class NeutronSyntheticFieldMultipleForeignKeys(exceptions.NeutronException):
-    message = _("Synthetic field %(field)s shouldn't have more than one "
-                "foreign key")
-
-
-class NeutronSyntheticFieldsForeignKeysNotFound(exceptions.NeutronException):
-    message = _("%(child)s does not define a foreign key for %(parent)s")
 
 
 def get_updatable_fields(cls, fields):
@@ -88,7 +46,7 @@ def get_object_class_by_model(model):
         obj_class = obj_class[0]
         if getattr(obj_class, 'db_model', _NO_DB_MODEL) is model:
             return obj_class
-    raise NeutronDbObjectNotFoundByModel(model=model.__name__)
+    raise o_exc.NeutronDbObjectNotFoundByModel(model=model.__name__)
 
 
 def register_filter_hook_on_model(model, filter_name):
@@ -207,7 +165,7 @@ class NeutronObject(obj_base.VersionedObject,
         if bad_filters:
             bad_filters = ', '.join(bad_filters)
             msg = _("'%s' is not supported for filtering") % bad_filters
-            raise exceptions.InvalidInput(error_message=msg)
+            raise n_exc.InvalidInput(error_message=msg)
 
     @classmethod
     @abc.abstractmethod
@@ -436,8 +394,8 @@ class NeutronDbObject(NeutronObject):
         all_keys = itertools.chain([cls.primary_keys], cls.unique_keys)
         if not any(lookup_keys.issuperset(keys) for keys in all_keys):
             missing_keys = set(cls.primary_keys).difference(lookup_keys)
-            raise NeutronPrimaryKeyMissing(object_class=cls.__name__,
-                                           missing_keys=missing_keys)
+            raise o_exc.NeutronPrimaryKeyMissing(object_class=cls.__name__,
+                                                 missing_keys=missing_keys)
 
         with db_api.autonested_transaction(context.session):
             db_obj = obj_db_api.get_object(
@@ -499,7 +457,7 @@ class NeutronDbObject(NeutronObject):
         fields = fields.copy()
         forbidden_updates = set(self.fields_no_update) & set(fields.keys())
         if forbidden_updates:
-            raise NeutronObjectUpdateForbidden(fields=forbidden_updates)
+            raise o_exc.NeutronObjectUpdateForbidden(fields=forbidden_updates)
 
         return fields
 
@@ -531,10 +489,11 @@ class NeutronDbObject(NeutronObject):
             objclass = objclasses[0]
             foreign_keys = objclass.foreign_keys.get(clsname)
             if not foreign_keys:
-                raise NeutronSyntheticFieldsForeignKeysNotFound(
+                raise o_exc.NeutronSyntheticFieldsForeignKeysNotFound(
                     parent=clsname, child=objclass.__name__)
             if len(foreign_keys.keys()) > 1:
-                raise NeutronSyntheticFieldMultipleForeignKeys(field=field)
+                raise o_exc.NeutronSyntheticFieldMultipleForeignKeys(
+                        field=field)
 
             synthetic_field_db_name = (
                 self.fields_need_translation.get(field, field))
@@ -567,7 +526,7 @@ class NeutronDbObject(NeutronObject):
                     self.obj_context, self.db_model,
                     self.modify_fields_to_db(fields))
             except obj_exc.DBDuplicateEntry as db_exc:
-                raise NeutronDbObjectDuplicateEntry(
+                raise o_exc.NeutronDbObjectDuplicateEntry(
                     object_class=self.__class__, db_exception=db_exc)
 
             self.from_db_object(db_obj)

@@ -20,6 +20,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import api as db_api
 from neutron.objects import base
+from neutron.objects import exceptions as o_exc
 from neutron.services.trunk import exceptions as t_exc
 from neutron.services.trunk import models
 
@@ -72,7 +73,7 @@ class SubPort(base.NeutronDbObject):
                     raise t_exc.TrunkNotFound(trunk_id=self.trunk_id)
 
                 raise n_exc.PortNotFound(port_id=self.port_id)
-            except base.NeutronDbObjectDuplicateEntry:
+            except o_exc.NeutronDbObjectDuplicateEntry:
                 raise t_exc.DuplicateSubPort(
                     segmentation_type=self.segmentation_type,
                     segmentation_id=self.segmentation_id,
