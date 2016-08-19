@@ -1161,17 +1161,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if 'description' in fip:
             update['description'] = fip['description']
         floatingip_db.update(update)
-        next_hop = None
-        if router_id:
-            # NOTE(tidwellr) use admin context here
-            # tenant may not own the router and that's OK on a FIP association
-            router = self._get_router(context.elevated(), router_id)
-            gw_port = router.gw_port
-            for fixed_ip in gw_port.fixed_ips:
-                addr = netaddr.IPAddress(fixed_ip.ip_address)
-                if addr.version == constants.IP_VERSION_4:
-                    next_hop = fixed_ip.ip_address
-                    break
         return {'fixed_ip_address': internal_ip_address,
                 'fixed_port_id': port_id,
                 'router_id': router_id,
@@ -1179,7 +1168,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'floating_ip_address': floatingip_db.floating_ip_address,
                 'floating_network_id': floatingip_db.floating_network_id,
                 'floating_ip_id': floatingip_db.id,
-                'next_hop': next_hop,
                 'context': context}
 
     def _is_ipv4_network(self, context, net_id):
