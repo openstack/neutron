@@ -100,6 +100,12 @@ class L3HATestFramework(testlib_api.SqlTestCase):
             data['admin_state_up'] = admin_state
         return self.plugin._update_router_db(ctx, router_id, data)
 
+    def _bind_router(self, router_id):
+        self.plugin.router_scheduler.schedule(
+            self.plugin,
+            self.admin_ctx,
+            router_id)
+
 
 class L3HATestCase(L3HATestFramework):
 
@@ -198,67 +204,6 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
         helpers.set_agent_admin_state(self.agent1['id'])
         self._assert_ha_state_for_agent_is_standby(router, self.agent1)
-
-    def test_router_created_in_active_state(self):
-        router = self._create_router()
-        self.assertEqual(n_const.ROUTER_STATUS_ACTIVE, router['status'])
-
-    def test_router_update_stay_active(self):
-        router = self._create_router()
-        router['name'] = 'test_update'
-        router_updated = self.plugin._update_router_db(self.admin_ctx,
-                                                       router['id'], router)
-        self.assertEqual(n_const.ROUTER_STATUS_ACTIVE,
-                         router_updated['status'])
-
-    def test_allocating_router_hidden_from_sync(self):
-        r1, r2 = self._create_router(), self._create_router()
-        r1['status'] = n_const.ROUTER_STATUS_ALLOCATING
-        self.plugin._update_router_db(self.admin_ctx, r1['id'], r1)
-        # store shorter name for readability
-        get_method = self.plugin._get_active_l3_agent_routers_sync_data
-        # r1 should be hidden
-        expected = [self.plugin.get_router(self.admin_ctx, r2['id'])]
-        self.assertEqual(expected, get_method(self.admin_ctx, None, None,
-                                              [r1['id'], r2['id']]))
-        # but once it transitions back, all is well in the world again!
-        r1['status'] = n_const.ROUTER_STATUS_ACTIVE
-        self.plugin._update_router_db(self.admin_ctx, r1['id'], r1)
-        expected.append(self.plugin.get_router(self.admin_ctx, r1['id']))
-        # just compare ids since python3 won't let us sort dicts
-        expected = sorted([r['id'] for r in expected])
-        result = sorted([r['id'] for r in get_method(
-              self.admin_ctx, None, None, [r1['id'], r2['id']])])
-        self.assertEqual(expected, result)
-
-    def test_router_ha_update_allocating_then_active(self):
-        router = self._create_router()
-        _orig = self.plugin._delete_ha_interfaces
-
-        def check_state(context, router_id):
-            self.assertEqual(
-                n_const.ROUTER_STATUS_ALLOCATING,
-                self.plugin._get_router(context, router_id)['status'])
-            return _orig(context, router_id)
-        with mock.patch.object(self.plugin, '_delete_ha_interfaces',
-                               side_effect=check_state) as ha_mock:
-            router = self._migrate_router(router['id'], ha=False)
-            self.assertTrue(ha_mock.called)
-        self.assertEqual(n_const.ROUTER_STATUS_ACTIVE,
-                         router['status'])
-
-    def test_router_created_allocating_state_during_interface_create(self):
-        _orig = self.plugin._ensure_vr_id
-
-        def check_state(context, router, ha_network):
-            self.assertEqual(n_const.ROUTER_STATUS_ALLOCATING,
-                             router.status)
-            return _orig(context, router, ha_network)
-        with mock.patch.object(self.plugin, '_ensure_vr_id',
-                               side_effect=check_state) as vr_id_mock:
-            router = self._create_router()
-            self.assertTrue(vr_id_mock.called)
-        self.assertEqual(n_const.ROUTER_STATUS_ACTIVE, router['status'])
 
     def test_ha_router_create(self):
         router = self._create_router()

@@ -27,7 +27,6 @@ import six
 from sqlalchemy import sql
 
 from neutron._i18n import _LE, _LW
-from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
@@ -89,8 +88,6 @@ class L3Scheduler(object):
             rb_model.RouterL3AgentBinding.router_id)
         query = context.session.query(
             l3_models.Router.id).filter(no_agent_binding)
-        query = query.filter(l3_models.Router.status ==
-                             constants.ROUTER_STATUS_ACTIVE)
         unscheduled_router_ids = [router_id_[0] for router_id_ in query]
         if unscheduled_router_ids:
             return plugin.get_routers(
@@ -106,8 +103,7 @@ class L3Scheduler(object):
         :returns: the list of routers to be scheduled
         """
         if router_ids is not None:
-            filters = {'id': router_ids,
-                       'status': [constants.ROUTER_STATUS_ACTIVE]}
+            filters = {'id': router_ids}
             routers = plugin.get_routers(context, filters=filters)
             result = self._filter_unscheduled_routers(plugin, context, routers)
         else:

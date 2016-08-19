@@ -310,13 +310,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                                                router_ids):
         if n_utils.is_extension_supported(self,
                                           constants.L3_HA_MODE_EXT_ALIAS):
-            routers = self.get_ha_sync_data_for_host(context, host, agent,
-                                                     router_ids=router_ids,
-                                                     active=True)
-        else:
-            routers = self.get_sync_data(context, router_ids=router_ids,
-                                         active=True)
-        return self.filter_allocating_and_missing_routers(context, routers)
+            return self.get_ha_sync_data_for_host(context, host, agent,
+                                                  router_ids=router_ids,
+                                                  active=True)
+
+        return self.get_sync_data(context, router_ids=router_ids, active=True)
 
     def list_router_ids_on_host(self, context, host, router_ids=None):
         agent = self._get_agent_by_type_and_host(

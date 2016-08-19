@@ -20,10 +20,6 @@ ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
     (lib_constants.DEVICE_OWNER_ROUTER_GW,)
 
 ROUTER_STATUS_ACTIVE = 'ACTIVE'
-# NOTE(kevinbenton): a BUILD status for routers could be added in the future
-# for agents to indicate when they are wiring up the ports. The following is
-# to indicate when the server is busy building sub-components of a router
-ROUTER_STATUS_ALLOCATING = 'ALLOCATING'
 
 DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
 

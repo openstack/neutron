@@ -1470,6 +1470,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
     def test_create_ha_port_and_bind_catch_integrity_error(self):
         router = self._create_ha_router(tenant_id='foo_tenant')
+        self.plugin.schedule_router(self.adminContext, router['id'])
         agent = {'id': 'foo_agent'}
 
         orig_fn = orm.Session.add
@@ -1490,6 +1491,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
     def test_create_ha_port_and_bind_catch_router_not_found(self):
         router = self._create_ha_router(tenant_id='foo_tenant')
+        self.plugin.schedule_router(self.adminContext, router['id'])
         agent = {'id': 'foo_agent'}
 
         with mock.patch.object(self.plugin.router_scheduler, 'bind_router'):
@@ -2112,6 +2114,7 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         self._set_l3_agent_admin_state(self.adminContext, self.agent6['id'],
                                        state=False)
         r1 = self._create_ha_router(az_hints=['az1', 'az3'])
+        self.plugin.schedule_router(self.adminContext, r1['id'])
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [r1['id']])
         self.assertEqual(2, len(agents))
