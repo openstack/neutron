@@ -23,7 +23,7 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _LW
-from neutron.db import model_base
+from neutron.db import standard_attr
 
 LOG = log.getLogger(__name__)
 
@@ -58,10 +58,10 @@ class TimeStamp_db_mixin(object):
         changed_since = (timeutils.
                          normalize_time(changed_since_string))
         target_model_class = list(query._mapper_adapter_map.keys())[0]
-        query = query.join(model_base.StandardAttribute,
+        query = query.join(standard_attr.StandardAttribute,
                            target_model_class.standard_attr_id ==
-                           model_base.StandardAttribute.id).filter(
-                           model_base.StandardAttribute.updated_at
+                           standard_attr.StandardAttribute.id).filter(
+                           standard_attr.StandardAttribute.updated_at
                            >= changed_since)
         return query
 
@@ -70,17 +70,17 @@ class TimeStamp_db_mixin(object):
 
         while objs_list:
             obj = objs_list.pop()
-            if (isinstance(obj, model_base.HasStandardAttributes)
+            if (isinstance(obj, standard_attr.HasStandardAttributes)
                 and obj.standard_attr_id):
                 obj.updated_at = timeutils.utcnow()
 
     def register_db_events(self):
-        event.listen(model_base.StandardAttribute, 'before_insert',
+        event.listen(standard_attr.StandardAttribute, 'before_insert',
                      self._add_timestamp)
         event.listen(se.Session, 'before_flush', self.update_timestamp)
 
     def unregister_db_events(self):
-        self._unregister_db_event(model_base.StandardAttribute,
+        self._unregister_db_event(standard_attr.StandardAttribute,
                                   'before_insert', self._add_timestamp)
         self._unregister_db_event(se.Session, 'before_flush',
                                   self.update_timestamp)

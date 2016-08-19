@@ -30,8 +30,8 @@ from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
-from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import standard_attr
 from neutron.extensions import l3
 from neutron import manager
 from neutron.plugins.common import constants
@@ -227,8 +227,8 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 external_net_db.ExternalNetwork).
                 filter_by(is_default=sql.true()).
                 join(models_v2.Network).
-                join(model_base.StandardAttribute).
-                order_by(model_base.StandardAttribute.id).all())
+                join(standard_attr.StandardAttribute).
+                order_by(standard_attr.StandardAttribute.id).all())
 
         if not default_external_networks:
             LOG.error(_LE("Unable to find default external network "

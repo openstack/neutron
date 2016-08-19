@@ -24,6 +24,7 @@ import six
 from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db import model_base
+from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.extensions import standardattributes
 
@@ -307,7 +308,8 @@ class NeutronDbObject(NeutronObject):
     @classmethod
     def has_standard_attributes(cls):
         return bool(cls.db_model and
-                    issubclass(cls.db_model, model_base.HasStandardAttributes))
+                    issubclass(cls.db_model,
+                               standard_attr.HasStandardAttributes))
 
     @classmethod
     def modify_fields_to_db(cls, fields):

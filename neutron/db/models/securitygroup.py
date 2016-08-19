@@ -18,9 +18,10 @@ from sqlalchemy import orm
 from neutron.api.v2 import attributes
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import standard_attr
 
 
-class SecurityGroup(model_base.HasStandardAttributes, model_base.BASEV2,
+class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
                     model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron security group."""
 
@@ -60,7 +61,7 @@ class SecurityGroupPortBinding(model_base.BASEV2):
                             lazy='joined', cascade='delete'))
 
 
-class SecurityGroupRule(model_base.HasStandardAttributes, model_base.BASEV2,
+class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
                         model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron security group rule."""
 

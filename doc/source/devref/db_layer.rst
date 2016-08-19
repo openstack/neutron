@@ -76,7 +76,7 @@ many-to-one because each object then needs its own table for the attributes
 
 To address this issue, the 'standardattribute' table is available. Any model
 can add support for this table by inheriting the 'HasStandardAttributes' mixin
-in neutron.db.model_base. This mixin will add a standard_attr_id BigInteger
+in neutron.db.standard_attr. This mixin will add a standard_attr_id BigInteger
 column to the model with a foreign key relationship to the 'standardattribute'
 table. The model will then be able to access any columns of the
 'standardattribute' table and any tables related to it.

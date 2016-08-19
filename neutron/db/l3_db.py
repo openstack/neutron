@@ -44,6 +44,7 @@ from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db as l3_agt
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import standard_attr
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import external_net
 from neutron.extensions import l3
@@ -90,7 +91,7 @@ class RouterPort(model_base.BASEV2):
         lazy='joined')
 
 
-class Router(model_base.HasStandardAttributes, model_base.BASEV2,
+class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
              model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron router."""
 
@@ -110,7 +111,7 @@ class Router(model_base.HasStandardAttributes, model_base.BASEV2,
         secondary=l3_agt.RouterL3AgentBinding.__table__)
 
 
-class FloatingIP(model_base.HasStandardAttributes, model_base.BASEV2,
+class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
                  model_base.HasId, model_base.HasProject):
     """Represents a floating IP address.
 
