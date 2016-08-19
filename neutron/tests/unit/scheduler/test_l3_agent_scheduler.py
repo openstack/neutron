@@ -135,13 +135,15 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         with mock.patch.object(self.scheduler,
                                '_get_routers_to_schedule') as gs,\
                 mock.patch.object(self.scheduler,
-                                  '_get_routers_can_schedule') as gr:
-            result = self.scheduler.auto_schedule_routers(
+                                  '_get_routers_can_schedule',) as gr,\
+                mock.patch.object(self.scheduler,
+                                  '_bind_routers') as gb:
+            self.scheduler.auto_schedule_routers(
                 self.plugin, mock.ANY, mock.ANY, mock.ANY)
             self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-            self.assertTrue(result)
             self.assertTrue(gs.called)
             self.assertTrue(gr.called)
+            self.assertTrue(gb.called)
 
     def test_auto_schedule_routers_no_agents(self):
         self.plugin.get_enabled_agent_on_host.return_value = None
@@ -1428,6 +1430,18 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
         self._register_l3_agents()
 
+    @staticmethod
+    def get_router_l3_agent_binding(context, router_id, l3_agent_id=None,
+                                    binding_index=None):
+        model = l3_agentschedulers_db.RouterL3AgentBinding
+        query = context.session.query(model)
+        query = query.filter(model.router_id == router_id)
+        if l3_agent_id:
+            query = query.filter(model.l3_agent_id == l3_agent_id)
+        if binding_index:
+            query = query.filter(model.binding_index == binding_index)
+        return query
+
     def _create_ha_router(self, ha=True, tenant_id='tenant1', az_hints=None):
         self.adminContext.tenant_id = tenant_id
         router = {'name': 'router1', 'admin_state_up': True,
@@ -1475,6 +1489,74 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                     self.plugin, self.adminContext,
                     router['id'], router['tenant_id'], agent)
                 self.assertFalse(bind_router.called)
+
+
+class VacantBindingIndexTestCase(L3HATestCaseMixin):
+    """Test various scenarios for get_vacant_binding_index().
+
+        binding_index
+            The binding_index we want to delete/unschedule.
+
+        is_manual_scheduling
+            Whether or not this is a scheduling requested by the user
+            (`neutron l3-agent-router-add`) or by some worker (scheduler or RPC
+            from agent). If this is a manual scheduling we should always
+            comply.
+    """
+
+    binding_scenarios = [
+        ('Delete first binding_index',
+         dict(binding_index=1)),
+
+        ('Delete middle binding_index',
+         dict(binding_index=2)),
+
+        ('Delete last binding_index',
+         dict(binding_index=3)),
+
+        ('Do not remove any bindings',
+         dict(binding_index=None)),
+    ]
+
+    manual_scheduling_scenarios = [
+        ('with manual scheduling',
+         dict(is_manual_scheduling=True)),
+
+        ('without manual scheduling',
+         dict(is_manual_scheduling=False)),
+    ]
+
+    scenarios = testscenarios.multiply_scenarios(
+        binding_scenarios, manual_scheduling_scenarios)
+
+    def test_get_vacant_binding_index(self):
+        helpers.register_l3_agent('host_3')
+        cfg.CONF.set_override('max_l3_agents_per_router', 3)
+        cfg.CONF.set_override('min_l3_agents_per_router', 3)
+        router = self._create_ha_router()
+
+        if self.binding_index:
+            binding = self.get_router_l3_agent_binding(
+                self.adminContext, router['id'],
+                binding_index=self.binding_index)
+            self.assertEqual(1, binding.count())
+            with self.adminContext.session.begin():
+                self.adminContext.session.delete(binding.first())
+
+        vacant_binding_index = self.plugin.get_vacant_binding_index(
+                self.adminContext, router['id'], self.is_manual_scheduling)
+
+        if self.binding_index:
+            self.assertEqual(self.binding_index, vacant_binding_index)
+        else:
+            if self.is_manual_scheduling:
+                # If this is a manual scheduling, the user requested the
+                # binding so we should always provide a new one.
+                self.assertEqual(cfg.CONF.max_l3_agents_per_router + 1,
+                                 vacant_binding_index)
+            else:
+                # Else, we already have 3 so -1 is the 'error' value.
+                self.assertEqual(-1, vacant_binding_index)
 
 
 class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
@@ -1634,6 +1716,37 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         ha_ports = self.plugin.get_ha_router_port_bindings(self.adminContext,
                                                            [router['id']])
         self.assertIn(agent.id, [ha_port.l3_agent_id for ha_port in ha_ports])
+
+    def test_schedule_routers_unique_binding_indices(self):
+        cfg.CONF.set_override('max_l3_agents_per_router', 2)
+        router = self._create_ha_router()
+
+        bindings = self.get_router_l3_agent_binding(self.adminContext,
+                                                    router['id']).all()
+        binding_indices = [binding.binding_index for binding in bindings]
+        self.assertEqual(list(range(1, cfg.CONF.max_l3_agents_per_router + 1)),
+                         binding_indices)
+
+    def test_bind_router_twice_for_non_ha(self):
+        router = self._create_ha_router(ha=False)
+        self.plugin.router_scheduler.bind_router(self.adminContext,
+                                                 router['id'],
+                                                 self.agent1)
+        self.plugin.router_scheduler.bind_router(self.adminContext,
+                                                 router['id'],
+                                                 self.agent2)
+
+        # Make sure the second bind_router call didn't schedule the router to
+        # more agents than allowed.
+        agents = self.plugin.get_l3_agents_hosting_routers(self.adminContext,
+                                                           [router['id']])
+        self.assertEqual(1, len(agents))
+
+        # Moreover, make sure that the agent that did get bound, only got bound
+        # once.
+        bindings = self.get_router_l3_agent_binding(
+            self.adminContext, router['id'], l3_agent_id=agents[0]['id'])
+        self.assertEqual(1, bindings.count())
 
 
 class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):

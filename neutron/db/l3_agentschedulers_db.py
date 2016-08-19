@@ -41,6 +41,8 @@ from neutron.plugins.common import constants as service_constants
 
 LOG = logging.getLogger(__name__)
 
+LOWEST_BINDING_INDEX = 1
+
 L3_AGENTS_SCHEDULER_OPTS = [
     cfg.StrOpt('router_scheduler_driver',
                default='neutron.scheduler.l3_agent_scheduler.'
@@ -60,6 +62,13 @@ cfg.CONF.register_opts(L3_AGENTS_SCHEDULER_OPTS)
 class RouterL3AgentBinding(model_base.BASEV2):
     """Represents binding between neutron routers and L3 agents."""
 
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'router_id', 'binding_index',
+            name='uniq_router_l3_agent_binding0router_id0binding_index0'),
+        model_base.BASEV2.__table_args__
+    )
+
     router_id = sa.Column(sa.String(36),
                           sa.ForeignKey("routers.id", ondelete='CASCADE'),
                           primary_key=True)
@@ -67,6 +76,8 @@ class RouterL3AgentBinding(model_base.BASEV2):
     l3_agent_id = sa.Column(sa.String(36),
                             sa.ForeignKey("agents.id", ondelete='CASCADE'),
                             primary_key=True)
+    binding_index = sa.Column(sa.Integer, nullable=False,
+                              server_default=str(LOWEST_BINDING_INDEX))
 
 
 class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
@@ -194,7 +205,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                         service_constants.L3_ROUTER_NAT)
                     self.router_scheduler.create_ha_port_and_bind(
                         plugin, context, router['id'],
-                        router['tenant_id'], agent)
+                        router['tenant_id'], agent, is_manual_scheduling=True)
                 else:
                     self.router_scheduler.bind_router(
                         context, router_id, agent)
@@ -489,7 +500,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def auto_schedule_routers(self, context, host, router_ids):
         if self.router_scheduler:
-            return self.router_scheduler.auto_schedule_routers(
+            self.router_scheduler.auto_schedule_routers(
                 self, context, host, router_ids)
 
     def schedule_router(self, context, router, candidates=None):
@@ -522,6 +533,40 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         agents = self.get_l3_agents_hosting_routers(
             context, [router_id], admin_state_up=state, active=True)
         return [a.host for a in agents]
+
+    def get_vacant_binding_index(self, context, router_id,
+                                 is_manual_scheduling=False):
+        """Return a vacant binding_index to use and whether or not it exists.
+
+        Each RouterL3AgentBinding has a binding_index which is unique per
+        router_id, and when creating a single binding we require to find a
+        'vacant' binding_index which isn't yet used - for example if we have
+        bindings with indices 1 and 3, then clearly binding_index == 2 is free.
+
+        :returns: binding_index.
+        """
+        num_agents = self.get_number_of_agents_for_scheduling(context)
+
+        query = context.session.query(RouterL3AgentBinding)
+        query = query.filter(
+            RouterL3AgentBinding.router_id == router_id)
+        query = query.order_by(RouterL3AgentBinding.binding_index.asc())
+
+        bindings = query.all()
+        binding_indices = [b.binding_index for b in bindings]
+        all_indicies = set(range(LOWEST_BINDING_INDEX, num_agents + 1))
+        open_slots = sorted(list(all_indicies - set(binding_indices)))
+
+        if open_slots:
+            return open_slots[0]
+
+        # Last chance: if this is a manual scheduling, we're gonna allow
+        # creation of a binding_index even if it will exceed
+        # max_l3_agents_per_router.
+        if is_manual_scheduling:
+            return max(all_indicies) + 1
+
+        return -1
 
 
 class AZL3AgentSchedulerDbMixin(L3AgentSchedulerDbMixin,
