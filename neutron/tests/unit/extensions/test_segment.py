@@ -720,8 +720,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
-        self._validate_immediate_ip_allocation(
-            res['port']['id'], segment_id=segments[1]['segment']['id'])
+        self._validate_immediate_ip_allocation(res['port']['id'])
 
         # Since host mapped to middle segment, IP must come from middle subnet
         self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
@@ -910,7 +909,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
         ips = response['port']['fixed_ips']
         self.assertEqual(0, len(ips))
 
-    def _validate_immediate_ip_allocation(self, port_id, segment_id=None):
+    def _validate_immediate_ip_allocation(self, port_id):
         request = self.new_show_request('ports', port_id)
         response = self.deserialize(self.fmt, request.get_response(self.api))
 
@@ -918,8 +917,6 @@ class TestSegmentAwareIpam(SegmentTestCase):
                          response['port'][ip_allocation.IP_ALLOCATION])
         ips = response['port']['fixed_ips']
         self.assertNotEqual(0, len(ips))
-        self.assertEqual(segment_id,
-                         response['port'][ext_segment.IPAM_SEGMENT_ID])
 
     def _create_deferred_ip_port(self, network):
         response = self._create_port(self.fmt,

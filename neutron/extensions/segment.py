@@ -31,7 +31,6 @@ SEGMENT_ID = 'segment_id'
 NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
-IPAM_SEGMENT_ID = 'ipam_segment_id'
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
@@ -73,10 +72,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                      'default': None,
                      'validate': {'type:uuid_or_none': None},
                      'is_visible': True, },
-    },
-    attributes.PORTS: {
-        IPAM_SEGMENT_ID: {'allow_post': False, 'allow_put': False,
-                          'is_visible': True},
     },
 }
 
