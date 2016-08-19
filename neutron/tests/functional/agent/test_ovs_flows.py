@@ -182,18 +182,18 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_mac_spoof_blocks_wrong_mac(self):
         self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr])
         self._setup_arp_spoof_for_port(self.dst_p.name, [self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
         # changing the allowed mac should stop the port from working
         self._setup_arp_spoof_for_port(self.src_p.name, [self.src_addr],
                                        mac='00:11:22:33:44:55')
-        net_helpers.assert_no_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_no_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_doesnt_block_ipv6(self):
         self.src_addr = '2000::1'
@@ -205,7 +205,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         # make sure the IPv6 addresses are ready before pinging
         self.src_p.addr.wait_until_address_ready(self.src_addr)
         self.dst_p.addr.wait_until_address_ready(self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_blocks_response(self):
         # this will prevent the destination from responding to the ARP
@@ -250,7 +250,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
                                                          self.dst_addr])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_icmpv6_neigh_advt_allowed_address_pairs(self):
         self.src_addr = '2000::1'
@@ -262,14 +262,14 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         # make sure the IPv6 addresses are ready before pinging
         self.src_p.addr.wait_until_address_ready(self.src_addr)
         self.dst_p.addr.wait_until_address_ready(self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_allowed_address_pairs_0cidr(self):
         self._setup_arp_spoof_for_port(self.dst_p.name, ['9.9.9.9/0',
                                                          '1.2.3.4'])
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_disable_port_security(self):
         # block first and then disable port security to make sure old rules
@@ -279,7 +279,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
                                        psec=False)
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def test_arp_spoof_disable_network_port(self):
         # block first and then disable port security to make sure old rules
@@ -290,7 +290,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
             device_owner=n_const.DEVICE_OWNER_ROUTER_GW)
         self.src_p.addr.add('%s/24' % self.src_addr)
         self.dst_p.addr.add('%s/24' % self.dst_addr)
-        net_helpers.assert_ping(self.src_namespace, self.dst_addr, count=2)
+        net_helpers.assert_ping(self.src_namespace, self.dst_addr)
 
     def _setup_arp_spoof_for_port(self, port, addrs, psec=True,
                                   device_owner='nobody', mac=None):
