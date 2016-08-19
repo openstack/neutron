@@ -20,12 +20,13 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy import or_
 
 from neutron.common import constants as l3_consts
 from neutron.common import utils as n_utils
-
+from neutron.conf.db import l3_dvr_db as l3_dvr_db_conf
 from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db.models import l3 as l3_models
@@ -35,6 +36,7 @@ from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models as ml2_models
 
 LOG = logging.getLogger(__name__)
+l3_dvr_db_conf.register_db_l3_dvr_opts()
 
 
 class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
@@ -331,6 +333,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def _get_dvr_hosts_for_subnets(self, context, subnet_ids):
         """Get a list of hosts with DVR servicable ports on subnet_ids."""
+        host_dvr_dhcp = cfg.CONF.host_dvr_for_dhcp
         Binding = ml2_models.PortBinding
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
@@ -342,12 +345,13 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         owner_filter = or_(
             Port.device_owner.startswith(n_const.DEVICE_OWNER_COMPUTE_PREFIX),
             Port.device_owner.in_(
-                n_utils.get_other_dvr_serviced_device_owners()))
+                n_utils.get_other_dvr_serviced_device_owners(host_dvr_dhcp)))
         query = query.filter(owner_filter)
         hosts = [item[0] for item in query if item[0] != '']
         return hosts
 
     def _get_dvr_subnet_ids_on_host_query(self, context, host):
+        host_dvr_dhcp = cfg.CONF.host_dvr_for_dhcp
         query = context.session.query(
             models_v2.IPAllocation.subnet_id).distinct()
         query = query.join(models_v2.IPAllocation.port)
@@ -357,7 +361,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             models_v2.Port.device_owner.startswith(
                 n_const.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
-                n_utils.get_other_dvr_serviced_device_owners()))
+                n_utils.get_other_dvr_serviced_device_owners(host_dvr_dhcp)))
         query = query.filter(owner_filter)
         return query
 
@@ -452,6 +456,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         IPAllocation = models_v2.IPAllocation
         Port = models_v2.Port
 
+        host_dvr_dhcp = cfg.CONF.host_dvr_for_dhcp
         query = context.session.query(Binding)
         query = query.join(Binding.port)
         query = query.join(Port.fixed_ips)
@@ -461,7 +466,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             models_v2.Port.device_owner.startswith(
                 n_const.DEVICE_OWNER_COMPUTE_PREFIX),
             models_v2.Port.device_owner.in_(
-                n_utils.get_other_dvr_serviced_device_owners()))
+                n_utils.get_other_dvr_serviced_device_owners(host_dvr_dhcp)))
         query = query.filter(device_filter)
         host_filter = or_(
             ml2_models.PortBinding.host == host,
