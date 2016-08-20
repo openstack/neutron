@@ -1099,6 +1099,11 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self._test_update(tenant_id + "bad", tenant_id,
                           exc.HTTPNotFound.code, expect_errors=True)
 
+    def test_update_keystone_no_tenant(self):
+        tenant_id = _uuid()
+        self._test_update(tenant_id, None,
+                          exc.HTTPNotFound.code, expect_errors=True)
+
     def test_update_readonly_field(self):
         data = {'network': {'status': "NANANA"}}
         res = self.api.put(_get_path('networks', id=_uuid()),
