@@ -404,7 +404,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         raise_db_retriable=False. See neutron.db.api.is_retriable for
         what db exception is retriable
         """
-        error = False
+        errors = []
         for driver in self.ordered_mech_drivers:
             try:
                 getattr(driver.obj, method_name)(context)
@@ -419,12 +419,13 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                     _LE("Mechanism driver '%(name)s' failed in %(method)s"),
                     {'name': driver.name, 'method': method_name}
                 )
-                error = True
+                errors.append(e)
                 if not continue_on_failure:
                     break
-        if error:
+        if errors:
             raise ml2_exc.MechanismDriverError(
-                method=method_name
+                method=method_name,
+                errors=errors
             )
 
     def create_network_precommit(self, context):

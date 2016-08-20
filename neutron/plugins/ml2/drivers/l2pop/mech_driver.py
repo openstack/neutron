@@ -14,13 +14,13 @@
 #    under the License.
 
 from neutron_lib import constants as const
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _LW
+from neutron._i18n import _, _LW
 from neutron import context as n_context
 from neutron.db import api as db_api
-from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.l2pop import config  # noqa
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
@@ -114,9 +114,9 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
         if (orig['mac_address'] != port['mac_address'] and
             context.status == const.PORT_STATUS_ACTIVE):
-            LOG.warning(_LW("unable to modify mac_address of ACTIVE port "
-                            "%s"), port['id'])
-            raise ml2_exc.MechanismDriverError(method='update_port_precommit')
+            msg = _("unable to modify mac_address of ACTIVE port "
+                    "%s") % port['id']
+            raise exceptions.InvalidInput(error_message=msg)
 
     def update_port_postcommit(self, context):
         port = context.current
