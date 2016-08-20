@@ -103,6 +103,9 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                 " between (L2) Neutron networks and access to external"
                 " networks via a NAT gateway.")
 
+    def router_supports_scheduling(self, context, router_id):
+        return self.l3_driver_controller.uses_scheduler(context, router_id)
+
     def create_floatingip(self, context, floatingip):
         """Create floating IP.
 

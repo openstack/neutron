@@ -42,6 +42,16 @@ class TestDriverController(testlib_api.SqlTestCase):
         self.dc._flavor_plugin_ref.get_flavor_next_provider.return_value = [
             provider]
 
+    def test_uses_scheduler(self):
+        self._return_provider_for_flavor('dvrha')
+        router_db = mock.Mock()
+        router = dict(id='router_id', flavor_id='abc123')
+        self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
+                                     self.ctx, router, router_db)
+        self.assertTrue(self.dc.uses_scheduler(self.ctx, 'router_id'))
+        self.dc.drivers['dvrha'].use_integrated_agent_scheduler = False
+        self.assertFalse(self.dc.uses_scheduler(self.ctx, 'router_id'))
+
     def test__set_router_provider_flavor_specified(self):
         self._return_provider_for_flavor('dvrha')
         router_db = mock.Mock()

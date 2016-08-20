@@ -184,6 +184,10 @@ class DVRL3CannotRemoveFromDvrAgent(exceptions.Conflict):
                 "an agent in 'dvr' mode.")
 
 
+class RouterDoesntSupportScheduling(exceptions.Conflict):
+    message = _("Router %(router_id)s does not support agent scheduling.")
+
+
 @six.add_metaclass(abc.ABCMeta)
 class L3AgentSchedulerPluginBase(object):
     """REST API to operate the l3 agent scheduler.
@@ -206,6 +210,10 @@ class L3AgentSchedulerPluginBase(object):
     @abc.abstractmethod
     def list_l3_agents_hosting_router(self, context, router_id):
         pass
+
+    def router_supports_scheduling(self, context, router_id):
+        """Override this method to conditionally schedule routers."""
+        return True
 
 
 def notify(context, action, router_id, agent_id):

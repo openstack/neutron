@@ -17,3 +17,4 @@ from neutron.services.l3_router.service_providers import base
 
 class DvrDriver(base.L3ServiceProvider):
     distributed_support = base.MANDATORY
+    use_integrated_agent_scheduler = True

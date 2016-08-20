@@ -204,6 +204,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def add_router_to_l3_agent(self, context, agent_id, router_id):
         """Add a l3 agent to host a router."""
+        if not self.router_supports_scheduling(context, router_id):
+            raise l3agentscheduler.RouterDoesntSupportScheduling(
+                router_id=router_id)
         with context.session.begin(subtransactions=True):
             router = self.get_router(context, router_id)
             agent = self._get_agent(context, agent_id)

@@ -17,3 +17,4 @@ from neutron.services.l3_router.service_providers import base
 
 class SingleNodeDriver(base.L3ServiceProvider):
     """Provider for single L3 agent routers."""
+    use_integrated_agent_scheduler = True

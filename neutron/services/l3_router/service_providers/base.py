@@ -46,10 +46,15 @@ class L3ServiceProvider(object):
     The 'ha' and 'distributed' attributes below are used to determine if a
     router request with the 'ha' or 'distributed' attribute can be supported
     by this particular driver. These attributes must be present.
+
+    The 'use_integrated_agent_scheduler' flag indicates whether or not routers
+    which belong to the driver should be automatically scheduled using the L3
+    agent scheduler integrated into Neutron.
     """
 
     ha_support = UNSUPPORTED
     distributed_support = UNSUPPORTED
+    use_integrated_agent_scheduler = False
 
     def __init__(self, l3plugin):
         self.l3plugin = l3plugin

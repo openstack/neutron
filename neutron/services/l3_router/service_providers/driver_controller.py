@@ -185,6 +185,11 @@ class DriverController(object):
               "distributed=%(d)s and ha=%(h)s") % {'d': distributed, 'h': ha}
         )
 
+    def uses_scheduler(self, context, router_id):
+        """Returns True if the integrated L3 scheduler should be used."""
+        return (self._get_provider_for_router(context, router_id).
+                use_integrated_agent_scheduler)
+
 
 class _LegacyPlusProviderConfiguration(
     provider_configuration.ProviderConfiguration):

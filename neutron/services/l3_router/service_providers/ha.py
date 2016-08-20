@@ -17,3 +17,4 @@ from neutron.services.l3_router.service_providers import base
 
 class HaDriver(base.L3ServiceProvider):
     ha_support = base.MANDATORY
+    use_integrated_agent_scheduler = True
