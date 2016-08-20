@@ -22,8 +22,10 @@ from ovs.db import idl
 from ovs import jsonrpc
 from ovs import poller
 from ovs import stream
+import six
 
 from neutron._i18n import _
+from neutron.agent.ovsdb import api
 
 
 RowLookup = collections.namedtuple('RowLookup',
@@ -233,3 +235,28 @@ def get_index_column(table):
         idx = table.indexes[0]
         if len(idx) == 1:
             return idx[0].name
+
+
+def db_replace_record(obj):
+    """Replace any api.Command objects with their results
+
+    This method should leave obj untouched unless the object contains an
+    api.Command object.
+    """
+    if isinstance(obj, collections.Mapping):
+        for k, v in six.iteritems(obj):
+            if isinstance(v, api.Command):
+                obj[k] = v.result
+    elif (isinstance(obj, collections.Sequence)
+          and not isinstance(obj, six.string_types)):
+        for i, v in enumerate(obj):
+            if isinstance(v, api.Command):
+                try:
+                    obj[i] = v.result
+                except TypeError:
+                    # NOTE(twilson) If someone passes a tuple, then just return
+                    # a tuple with the Commands replaced with their results
+                    return type(obj)(getattr(v, "result", v) for v in obj)
+    elif isinstance(obj, api.Command):
+        obj = obj.result
+    return obj

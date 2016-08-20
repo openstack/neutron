@@ -41,6 +41,9 @@ class BaseCommand(api.Command):
                 if not check_error:
                     ctx.reraise = False
 
+    def post_commit(self, txn):
+        pass
+
     def __str__(self):
         command_info = self.__dict__
         return "%s(%s)" % (
@@ -164,8 +167,13 @@ class DbCreateCommand(BaseCommand):
     def run_idl(self, txn):
         row = txn.insert(self.api._tables[self.table])
         for col, val in self.columns.items():
-            setattr(row, col, val)
+            setattr(row, col, idlutils.db_replace_record(val))
+        # This is a temporary row to be used within the transaction
         self.result = row
+
+    def post_commit(self, txn):
+        # Replace the temporary row with the post-commit UUID to match vsctl
+        self.result = txn.get_insert_uuid(self.result.uuid)
 
 
 class DbDestroyCommand(BaseCommand):
@@ -194,7 +202,7 @@ class DbSetCommand(BaseCommand):
             # this soon.
             if isinstance(val, collections.OrderedDict):
                 val = dict(val)
-            setattr(record, col, val)
+            setattr(record, col, idlutils.db_replace_record(val))
 
 
 class DbClearCommand(BaseCommand):

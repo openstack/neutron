@@ -14,6 +14,7 @@
 
 import collections
 import itertools
+import uuid
 
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -149,6 +150,22 @@ class DbGetCommand(DbCommand):
             self._result = list(self._result[0].values())[0]
 
 
+class DbCreateCommand(BaseCommand):
+    def __init__(self, context, opts=None, args=None):
+        super(DbCreateCommand, self).__init__(context, "create", opts, args)
+        # NOTE(twilson) pre-commit result used for intra-transaction reference
+        self.record_id = "@%s" % uuid.uuid4()
+        self.opts.append("--id=%s" % self.record_id)
+
+    @property
+    def result(self):
+        return self._result
+
+    @result.setter
+    def result(self, val):
+        self._result = uuid.UUID(val) if val else val
+
+
 class BrExistsCommand(DbCommand):
     @DbCommand.result.setter
     def result(self, val):
@@ -194,7 +211,7 @@ class OvsdbVsctl(ovsdb.API):
     def db_create(self, table, **col_values):
         args = [table]
         args += _set_colval_args(*col_values.items())
-        return BaseCommand(self.context, 'create', args=args)
+        return DbCreateCommand(self.context, args=args)
 
     def db_destroy(self, table, record):
         args = [table, record]
