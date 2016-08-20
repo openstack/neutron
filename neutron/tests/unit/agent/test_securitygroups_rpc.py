@@ -1220,7 +1220,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.agent.refresh_firewall = mock.Mock()
         self.agent.security_groups_provider_updated(None)
         self.agent.refresh_firewall.assert_has_calls(
-            [mock.call.refresh_firewall(None)])
+            [mock.call.refresh_firewall()])
 
     def test_refresh_firewall(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
@@ -1344,7 +1344,7 @@ class SecurityGroupAgentEnhancedRpcTestCase(
         self.agent.refresh_firewall = mock.Mock()
         self.agent.security_groups_provider_updated(None)
         self.agent.refresh_firewall.assert_has_calls(
-            [mock.call.refresh_firewall(None)])
+            [mock.call.refresh_firewall()])
 
     def test_refresh_firewall_enhanced_rpc(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
@@ -1489,8 +1489,15 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.assertTrue(self.agent.global_refresh_firewall)
 
     def test_security_groups_provider_updated_devices_specified(self):
+        self.agent.firewall.ports = {
+            'fake_device_1': {
+                'id': 'fake_port_id_1',
+                'device': 'fake_device_1'},
+            'fake_device_2': {
+                'id': 'fake_port_id_2',
+                'device': 'fake_device_2'}}
         self.agent.security_groups_provider_updated(
-            ['fake_device_1', 'fake_device_2'])
+            ['fake_port_id_1', 'fake_port_id_2'])
         self.assertFalse(self.agent.global_refresh_firewall)
         self.assertIn('fake_device_1', self.agent.devices_to_refilter)
         self.assertIn('fake_device_2', self.agent.devices_to_refilter)
