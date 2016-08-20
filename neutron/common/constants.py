@@ -28,10 +28,6 @@ ROUTER_STATUS_ACTIVE = 'ACTIVE'
 # for agents to indicate when they are wiring up the ports. The following is
 # to indicate when the server is busy building sub-components of a router
 ROUTER_STATUS_ALLOCATING = 'ALLOCATING'
-L3_AGENT_MODE_DVR = 'dvr'
-L3_AGENT_MODE_DVR_SNAT = 'dvr_snat'
-L3_AGENT_MODE_LEGACY = 'legacy'
-L3_AGENT_MODE = 'agent_mode'
 
 DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
 
@@ -48,7 +44,6 @@ DEFAULT_MINIMUM_AGENTS_FOR_HA = 2
 HA_ROUTER_STATE_ACTIVE = 'active'
 HA_ROUTER_STATE_STANDBY = 'standby'
 
-AGENT_TYPE_MACVTAP = 'Macvtap agent'
 PAGINATION_INFINITE = 'infinite'
 
 SORT_DIRECTION_ASC = 'asc'
@@ -67,11 +62,6 @@ VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
 
 IP_PROTOCOL_NUM_TO_NAME_MAP = {
     str(v): k for k, v in lib_constants.IP_PROTOCOL_MAP.items()}
-
-DHCPV6_STATEFUL = 'dhcpv6-stateful'
-DHCPV6_STATELESS = 'dhcpv6-stateless'
-IPV6_SLAAC = 'slaac'
-IPV6_MODES = [DHCPV6_STATEFUL, DHCPV6_STATELESS, IPV6_SLAAC]
 
 # Special provisional prefix for IPv6 Prefix Delegation
 PROVISIONAL_IPV6_PD_PREFIX = '::/64'
