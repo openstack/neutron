@@ -9,17 +9,18 @@
 # Sungjin Kang <potopro@gmail.com>, 2013
 # Sungjin Kang <potopro@gmail.com>, 2013
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
+# HYUNGBAI PARK <openstack.make@gmail.com>, 2016. #zanata
 # jtjang <jang.jitae@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
+"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-15 19:53+0000\n"
+"POT-Creation-Date: 2016-08-18 18:59+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-07-15 08:26+0000\n"
-"Last-Translator: jtjang <jang.jitae@gmail.com>\n"
+"PO-Revision-Date: 2016-08-17 10:52+0000\n"
+"Last-Translator: HYUNGBAI PARK <openstack.make@gmail.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -1823,14 +1824,6 @@ msgstr ""
 "neutron이 이 값에서 오버레이 프로토콜 오버헤드를 자동으로 제거합니다. 이더넷"
 "의 표준 값인 1500으로 기본값이 지정됩니다."
 
-msgid ""
-"MTU setting for device. This option will be removed in Newton. Please use "
-"the system-wide segment_mtu setting which the agents will take into account "
-"when wiring VIFs."
-msgstr ""
-"장치의 MTU 설정입니다. 이 옵션은 Newton에서 제거됩니다. VIF를 연결할 때 에이"
-"전트에서 고려할 시스템 전체 segment_mtu 설정을 사용하십시오."
-
 msgid "MTU size of veth interfaces"
 msgstr "veth 인터페이스의 MTU 크기"
 
@@ -1906,9 +1899,6 @@ msgid ""
 msgstr ""
 "remote_ip_prefix %(remote_ip_prefix)s을(를) 가진 측정 레이블 규칙이 다른 항목"
 "과 겹침"
-
-msgid "Method cannot be called within a transaction."
-msgstr "트랜잭션 내에서 메소드를 호출할 수 없습니다."
 
 msgid "Migration from distributed router to centralized is not supported"
 msgstr "분산 라우터에서 중앙으로 마이그레이션하는 작업은 지원되지 않음"
@@ -1996,17 +1986,6 @@ msgid "Name of Open vSwitch bridge to use"
 msgstr "사용할 열린 vSwitch 브릿지의 이름"
 
 msgid ""
-"Name of bridge used for external network traffic. This should be set to an "
-"empty value for the Linux Bridge. When this parameter is set, each L3 agent "
-"can be associated with no more than one external network. This option is "
-"deprecated and will be removed in the M release."
-msgstr ""
-"외부 네트워크 트래픽에 사용되는 브릿지 이름입니다. Linux Bridge의 빈 값으로 "
-"설정해야 합니다. 이 매개변수가 설정되면 각 L3 에이전트를 두 개 이상의 외부 네"
-"트워크에 연관시킬 수 있습니다. 이 옵션은 더 이상 사용되지 않으므로 M 릴리스에"
-"서 제거됩니다."
-
-msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
 msgstr ""
 "사용할 nova 리젼의 이름입니다. 키스톤이 둘 이상의 리젼을 관리할 경우 유용합니"
@@ -2079,7 +2058,7 @@ msgid "Neutron Service Type Management"
 msgstr "Neutron 서비스 유형 관리"
 
 msgid "Neutron core_plugin not configured!"
-msgstr "Neutron core_plugin이 구성되지 않았습니다!"
+msgstr "Neutron core_plugin이 구성되지 않았습니다"
 
 msgid "New value for first_ip or last_ip has to be specified."
 msgstr "first_ip 또는 last_ip의 새 값을 지정해야 합니다."
@@ -2331,7 +2310,7 @@ msgstr "Ping 제한시간 초과"
 
 #, python-format
 msgid "Plugin '%s' not found."
-msgstr "플러그인 '%s'를 찾을 수 없습니다."
+msgstr "플러그인 '%s'를 찾을 수 없습니다"
 
 msgid "Plugin does not support updating provider attributes"
 msgstr "플러그인이 제공자 속성 업데이트를 지원하지 않음"
@@ -3189,13 +3168,6 @@ msgid ""
 msgstr ""
 "이 네트워크에 연결된 라우터가 있으며, 해당 라우터에는 액세스를 위해 이 정책"
 "이 필요합니다."
-
-msgid ""
-"This will choose the web framework in which to run the Neutron API server. "
-"'pecan' is a new experiemental rewrite of the API server."
-msgstr ""
-"그러면 Neutron API 서버를 실행할 웹 프레임워크를 선택합니다. 'pecan'은 API 서"
-"버를 실험적으로 새로 재작성합니다."
 
 msgid "Timeout"
 msgstr "제한시간"
