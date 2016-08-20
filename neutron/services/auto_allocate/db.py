@@ -333,13 +333,25 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             network_id = self._get_auto_allocated_network(context, tenant_id)
         return network_id
 
+    @db_api.retry_db_errors
     def _cleanup(self, context, network_id=None, router_id=None, subnets=None):
         """Clean up auto allocated resources."""
+        # TODO(kevinbenton): get rid of the retry and notfound exception
+        # handlers once bug/1612798 is resolved
         if router_id:
             for subnet in subnets or []:
-                self.l3_plugin.remove_router_interface(
-                    context, router_id, {'subnet_id': subnet['id']})
-            self.l3_plugin.delete_router(context, router_id)
+                try:
+                    self.l3_plugin.remove_router_interface(
+                        context, router_id, {'subnet_id': subnet['id']})
+                except n_exc.NotFound:
+                    pass
+            try:
+                self.l3_plugin.delete_router(context, router_id)
+            except n_exc.NotFound:
+                pass
 
         if network_id:
-            self.core_plugin.delete_network(context, network_id)
+            try:
+                self.core_plugin.delete_network(context, network_id)
+            except n_exc.NotFound:
+                pass
