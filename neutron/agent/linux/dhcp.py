@@ -948,7 +948,8 @@ class Dnsmasq(DhcpLocalProcess):
             if port.device_owner not in constants.ROUTER_INTERFACE_OWNERS:
                 continue
             for alloc in port.fixed_ips:
-                if subnets[alloc.subnet_id].gateway_ip == alloc.ip_address:
+                if (alloc.subnet_id in subnets and
+                    subnets[alloc.subnet_id].gateway_ip == alloc.ip_address):
                     isolated_subnets[alloc.subnet_id] = False
 
         return isolated_subnets

@@ -281,6 +281,23 @@ class FakeRouterPort(object):
                                for ip in self.fixed_ips]
 
 
+class FakeRouterPortNoDHCP(object):
+    def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+                 ip_address='192.168.0.1', domain='openstacklocal'):
+        self.id = 'ssssssss-ssss-ssss-ssss-ssssssssssss'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_ROUTER_INTF
+        self.mac_address = '00:00:0f:rr:rr:rr'
+        self.device_id = 'fake_router_port_no_dhcp'
+        self.dns_assignment = []
+        self.extra_dhcp_opts = []
+        self.device_owner = dev_owner
+        self.fixed_ips = [FakeIPAllocation(
+            ip_address, 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee')]
+        self.dns_assignment = [FakeDNSAssignment(ip.ip_address, domain=domain)
+                               for ip in self.fixed_ips]
+
+
 class FakeRouterPort2(object):
     def __init__(self):
         self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
@@ -599,6 +616,15 @@ class FakeDualNetworkSingleDHCP(object):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4SubnetNoDHCP()]
         self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeDualNetworkSingleDHCPBothAttaced(object):
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        # dhcp-agent actually can't get the subnet with dhcp disabled
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakeRouterPortNoDHCP(), FakeRouterPort()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -1334,6 +1360,18 @@ class TestDnsmasq(TestBase):
             'tag:tag0,option:router,192.168.0.1').lstrip()
 
         self._test_output_opts_file(expected, FakeDualNetworkSingleDHCP())
+
+    def test_output_opts_file_single_dhcp_both_not_isolated(self):
+        expected = (
+            'tag:tag0,option:dns-server,8.8.8.8\n'
+            'tag:tag0,option:classless-static-route,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,20.0.0.1/24,20.0.0.1,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,option:router,192.168.0.1').lstrip()
+
+        self._test_output_opts_file(expected,
+                                    FakeDualNetworkSingleDHCPBothAttaced())
 
     def test_output_opts_file_dual_dhcp_rfc3442(self):
         expected = (
