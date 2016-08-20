@@ -57,6 +57,35 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
 
         device.delete_addr_and_conntrack_state.assert_called_once_with(cidr)
 
+    @mock.patch.object(ip_lib, 'IPDevice')
+    def test_remove_multiple_external_gateway_ips(self, IPDevice):
+        ri = self._create_router(mock.MagicMock())
+        IPDevice.return_value = device = mock.Mock()
+        gw_ip_pri = '172.16.5.110'
+        gw_ip_sec = '172.16.5.111'
+        gw_ip6_pri = '2001:db8::1'
+        gw_ip6_sec = '2001:db8::2'
+        v4_prefixlen = 24
+        v6_prefixlen = 64
+        ex_gw_port = {'fixed_ips': [
+            {'ip_address': gw_ip_pri,
+             'prefixlen': v4_prefixlen},
+            {'ip_address': gw_ip_sec},
+            {'ip_address': gw_ip6_pri,
+             'prefixlen': v6_prefixlen},
+            {'ip_address': gw_ip6_sec}]}
+
+        ri.external_gateway_removed(ex_gw_port, "qg-fake-name")
+
+        cidr_pri = '%s/%s' % (gw_ip_pri, v4_prefixlen)
+        cidr_sec = '%s/%s' % (gw_ip_sec, l3_constants.IPv4_BITS)
+        cidr_v6 = '%s/%s' % (gw_ip6_pri, v6_prefixlen)
+        cidr_v6_sec = '%s/%s' % (gw_ip6_sec, l3_constants.IPv6_BITS)
+
+        device.delete_addr_and_conntrack_state.assert_has_calls(
+            [mock.call(cidr_pri), mock.call(cidr_sec),
+             mock.call(cidr_v6), mock.call(cidr_v6_sec)])
+
 
 @mock.patch.object(ip_lib, 'send_ip_addr_adv_notif')
 class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):

@@ -672,10 +672,11 @@ class RouterInfo(object):
                   ex_gw_port, interface_name)
         device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
         for ip_addr in ex_gw_port['fixed_ips']:
+            prefixlen = ip_addr.get('prefixlen')
             self.remove_external_gateway_ip(device,
                                             common_utils.ip_to_cidr(
                                                 ip_addr['ip_address'],
-                                                ip_addr['prefixlen']))
+                                                prefixlen))
         self.driver.unplug(interface_name,
                            bridge=self.agent_conf.external_network_bridge,
                            namespace=self.ns_name,
