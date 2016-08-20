@@ -1131,6 +1131,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 context,
                 fip,
                 floatingip_db['floating_network_id'])
+
+            if port_id == floatingip_db.fixed_port_id:
+                # Floating IP association is not changed.
+                return port_id, internal_ip_address, router_id
+
             fip_qry = context.session.query(FloatingIP)
             try:
                 fip_qry.filter_by(
