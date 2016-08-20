@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.db import model_base
 from oslo_db.sqlalchemy import models
 import sqlalchemy as sa
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 
 from neutron.api.v2 import attributes as attr
-from neutron.db import model_base
 
 
 class StandardAttribute(model_base.BASEV2, models.TimestampMixin):

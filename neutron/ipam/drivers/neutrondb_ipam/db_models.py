@@ -14,10 +14,9 @@
 #    under the License.
 
 
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm as sa_orm
-
-from neutron.db import model_base
 
 # Database models used by the neutron DB IPAM driver
 

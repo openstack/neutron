@@ -18,6 +18,7 @@ import functools
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -39,7 +40,6 @@ from neutron.db import common_db_mixin
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha

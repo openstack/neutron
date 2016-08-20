@@ -13,6 +13,7 @@
 #    under the License.
 #
 
+from neutron_lib.db import model_base
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -21,7 +22,6 @@ from neutron._i18n import _LE
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import api as db_api
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import standard_attr
 

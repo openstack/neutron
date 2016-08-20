@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import portbindings_base
 from neutron.extensions import portbindings

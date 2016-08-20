@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db import db_base_plugin_v2
-from neutron.db import model_base
 from neutron.extensions import l3
 
 

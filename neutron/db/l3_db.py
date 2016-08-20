@@ -19,6 +19,7 @@ from debtcollector import removals
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as lib_constants
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -42,7 +43,6 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db as l3_agt
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.db import standardattrdescription_db as st_attr

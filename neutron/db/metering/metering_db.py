@@ -13,6 +13,7 @@
 # under the License.
 
 import netaddr
+from neutron_lib.db import model_base
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -23,7 +24,6 @@ from neutron.api.v2 import attributes as attr
 from neutron.common import constants
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_db
-from neutron.db import model_base
 from neutron.extensions import metering
 
 

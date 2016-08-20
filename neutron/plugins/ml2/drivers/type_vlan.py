@@ -15,6 +15,7 @@
 
 import sys
 
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
@@ -23,7 +24,6 @@ import sqlalchemy as sa
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.db import api as db_api
-from neutron.db import model_base
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import driver_api as api

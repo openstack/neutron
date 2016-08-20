@@ -10,10 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 
 from neutron.api.v2 import attributes as attr
-from neutron.db import model_base
 
 
 class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasProject):

@@ -15,6 +15,7 @@
 
 import debtcollector
 from neutron_lib import constants
+from neutron_lib.db import model_base
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -32,7 +33,6 @@ from neutron.common import utils as n_utils
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import l3_attrs_db
-from neutron.db import model_base
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
 from neutron import manager
