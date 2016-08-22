@@ -58,17 +58,13 @@ OVS_DEFAULT_CAPS = {
 _SENTINEL = object()
 
 
-def _ofport_result_pending(result):
+def _ovsdb_result_pending(result):
     """Return True if ovs-vsctl indicates the result is still pending."""
     # ovs-vsctl can return '[]' for an ofport that has not yet been assigned
-    try:
-        int(result)
-        return False
-    except (ValueError, TypeError):
-        return True
+    return result == []
 
 
-def _ofport_retry(fn):
+def _ovsdb_retry(fn):
     """Decorator for retrying when OVS has yet to assign an ofport.
 
     The instance's vsctl_timeout is used as the max waiting time. This relies
@@ -79,7 +75,7 @@ def _ofport_retry(fn):
         self = args[0]
         new_fn = tenacity.retry(
             reraise=True,
-            retry=tenacity.retry_if_result(_ofport_result_pending),
+            retry=tenacity.retry_if_result(_ovsdb_result_pending),
             wait=tenacity.wait_exponential(multiplier=0.01, max=1),
             stop=tenacity.stop_after_delay(
                 self.vsctl_timeout))(fn)
@@ -307,7 +303,7 @@ class OVSBridge(BaseOVS):
     def remove_all_flows(self):
         self.run_ofctl("del-flows", [])
 
-    @_ofport_retry
+    @_ovsdb_retry
     def _get_port_ofport(self, port_name):
         return self.db_get_val("Interface", port_name, "ofport")
 
@@ -321,9 +317,19 @@ class OVSBridge(BaseOVS):
                           port_name)
         return ofport
 
+    @_ovsdb_retry
+    def _get_datapath_id(self):
+        return self.db_get_val('Bridge', self.br_name, 'datapath_id')
+
     def get_datapath_id(self):
-        return self.db_get_val('Bridge',
-                               self.br_name, 'datapath_id')
+        try:
+            return self._get_datapath_id()
+        except tenacity.RetryError:
+            # if ovs fails to find datapath_id then something is likely to be
+            # broken here
+            LOG.exception(_LE("Timed out retrieving datapath_id on bridge "
+                              "%s."), self.br_name)
+            raise RuntimeError('No datapath_id on bridge %s' % self.br_name)
 
     def do_action_flows(self, action, kwargs_list):
         if action != 'del':
