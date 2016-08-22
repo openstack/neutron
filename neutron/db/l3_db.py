@@ -1884,7 +1884,7 @@ def _notify_subnetpool_address_scope_update(resource, event,
 
 
 @removals.remove(
-    message="This will be removed in the P cycle. "
+    message="This will be removed in the Pike release. "
             "Subscriptions are now registered during object creation."
 )
 def subscribe():
