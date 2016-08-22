@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from keystoneauth1 import exceptions as ks_exc
 from keystoneauth1 import loading as ks_loading
 from keystoneauth1 import session
@@ -25,6 +27,16 @@ from neutron.common import exceptions as n_exc
 LOG = logging.getLogger(__name__)
 
 PLACEMENT_API_WITH_AGGREGATES = 'placement 1.1'
+
+
+def check_placement_api_available(f):
+    @functools.wraps(f)
+    def wrapper(self, *a, **k):
+        try:
+            return f(self, *a, **k)
+        except ks_exc.EndpointNotFound:
+            raise n_exc.PlacementEndpointNotFound()
+    return wrapper
 
 
 class PlacementAPIClient(object):
@@ -55,6 +67,7 @@ class PlacementAPIClient(object):
         return self._client.delete(url, endpoint_filter=self.ks_filter,
                                    **kwargs)
 
+    @check_placement_api_available
     def create_resource_provider(self, resource_provider):
         """Create a resource provider.
 
@@ -64,6 +77,7 @@ class PlacementAPIClient(object):
         url = '/resource_providers'
         self._post(url, resource_provider)
 
+    @check_placement_api_available
     def delete_resource_provider(self, resource_provider_uuid):
         """Delete a resource provider.
 
@@ -73,6 +87,7 @@ class PlacementAPIClient(object):
         url = '/resource_providers/%s' % resource_provider_uuid
         self._delete(url)
 
+    @check_placement_api_available
     def create_inventory(self, resource_provider_uuid, inventory):
         """Create an inventory.
 
@@ -86,6 +101,7 @@ class PlacementAPIClient(object):
         url = '/resource_providers/%s/inventories' % resource_provider_uuid
         self._post(url, inventory)
 
+    @check_placement_api_available
     def get_inventory(self, resource_provider_uuid, resource_class):
         """Get resource provider inventory.
 
@@ -112,6 +128,7 @@ class PlacementAPIClient(object):
             else:
                 raise
 
+    @check_placement_api_available
     def update_inventory(self, resource_provider_uuid, inventory,
                          resource_class):
         """Update an inventory.
@@ -134,6 +151,7 @@ class PlacementAPIClient(object):
                 resource_provider=resource_provider_uuid,
                 resource_class=resource_class)
 
+    @check_placement_api_available
     def associate_aggregates(self, resource_provider_uuid, aggregates):
         """Associate a list of aggregates with a resource provider.
 
@@ -147,6 +165,7 @@ class PlacementAPIClient(object):
                  headers={'openstack-api-version':
                           PLACEMENT_API_WITH_AGGREGATES})
 
+    @check_placement_api_available
     def list_aggregates(self, resource_provider_uuid):
         """List resource provider aggregates.
 

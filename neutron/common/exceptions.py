@@ -41,6 +41,10 @@ class NetworkQosBindingNotFound(e.NotFound):
                 "could not be found.")
 
 
+class PlacementEndpointNotFound(e.NotFound):
+    message = _("Placement API endpoint not found")
+
+
 class PlacementResourceProviderNotFound(e.NotFound):
     message = _("Placement resource provider not found %(resource_provider)s.")
 
