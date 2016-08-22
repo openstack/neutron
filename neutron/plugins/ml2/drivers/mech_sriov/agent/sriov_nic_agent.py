@@ -254,20 +254,11 @@ class SriovNicSwitchAgent(object):
                             device)
             except exc.SriovNicError:
                 LOG.warning(_LW("Failed to set device %s state"), device)
-                return
-            if admin_state_up:
-                # update plugin about port status
-                self.plugin_rpc.update_device_up(self.context,
-                                                 device,
-                                                 self.agent_id,
-                                                 cfg.CONF.host)
-            else:
-                self.plugin_rpc.update_device_down(self.context,
-                                                   device,
-                                                   self.agent_id,
-                                                   cfg.CONF.host)
+                return False
         else:
             LOG.info(_LI("No device with MAC %s defined on agent."), device)
+            return False
+        return True
 
     def _update_network_ports(self, network_id, port_id, mac_pci_slot):
         self._clean_network_ports(mac_pci_slot)
@@ -296,6 +287,8 @@ class SriovNicSwitchAgent(object):
             # resync is needed
             return True
 
+        devices_up = set()
+        devices_down = set()
         for device_details in devices_details_list:
             device = device_details['device']
             LOG.debug("Port with MAC address %s is added", device)
@@ -306,10 +299,14 @@ class SriovNicSwitchAgent(object):
                 port_id = device_details['port_id']
                 profile = device_details['profile']
                 spoofcheck = device_details.get('port_security_enabled', True)
-                self.treat_device(device,
-                                  profile.get('pci_slot'),
-                                  device_details['admin_state_up'],
-                                  spoofcheck)
+                if self.treat_device(device,
+                                     profile.get('pci_slot'),
+                                     device_details['admin_state_up'],
+                                     spoofcheck):
+                    if device_details['admin_state_up']:
+                        devices_up.add(device)
+                    else:
+                        devices_down.add(device)
                 self._update_network_ports(device_details['network_id'],
                                            port_id,
                                            (device, profile.get('pci_slot')))
@@ -317,6 +314,11 @@ class SriovNicSwitchAgent(object):
             else:
                 LOG.info(_LI("Device with MAC %s not defined on plugin"),
                          device)
+        self.plugin_rpc.update_device_list(self.context,
+                                           devices_up,
+                                           devices_down,
+                                           self.agent_id,
+                                           self.conf.host)
         return False
 
     def treat_devices_removed(self, devices):
