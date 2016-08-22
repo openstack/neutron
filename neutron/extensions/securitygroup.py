@@ -16,13 +16,13 @@
 import abc
 
 import netaddr
+from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
 from neutron_lib.plugins import directory
 from oslo_utils import netutils
-from oslo_utils import uuidutils
 import six
 
 from neutron._i18n import _
@@ -184,16 +184,6 @@ def convert_validate_port_value(port):
         raise SecurityGroupInvalidPortValue(port=port)
 
 
-def convert_to_uuid_list_or_none(value_list):
-    if value_list is None:
-        return
-    for sg_id in value_list:
-        if not uuidutils.is_uuid_like(sg_id):
-            msg = _("'%s' is not an integer or uuid") % sg_id
-            raise nexception.InvalidInput(error_message=msg)
-    return value_list
-
-
 def convert_ip_prefix_to_cidr(ip_prefix):
     if not ip_prefix:
         return
@@ -275,7 +265,9 @@ EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {SECURITYGROUPS: {'allow_post': True,
                                'allow_put': True,
                                'is_visible': True,
-                               'convert_to': convert_to_uuid_list_or_none,
+                               'convert_to':
+                                   converters.convert_none_to_empty_list,
+                               'validate': {'type:uuid_list': None},
                                'default': const.ATTR_NOT_SPECIFIED}}}
 
 # Register the configuration options
