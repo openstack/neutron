@@ -34,6 +34,7 @@ object_data = {
     'DistributedPortBinding': '1.0-4df058ae1aeae3ae1c15b8f6a4c692d9',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
+    'FlatAllocation': '1.0-bf666f24f4642b047eeca62311fbcb41',
     'FloatingIPDNS': '1.0-ee3db848500fa1825235f701828c06d5',
     'GeneveAllocation': '1.0-d5f76e8eac60a778914d61dd8e23e90f',
     'GeneveEndpoint': '1.0-040f026996b5952e2ae4ccd40ac61ca6',

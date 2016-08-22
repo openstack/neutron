@@ -15,7 +15,6 @@
 
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log
 import six
 
@@ -24,6 +23,8 @@ from neutron.common import _deprecate
 from neutron.common import exceptions as n_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import flatallocation as type_flat_model
+from neutron.objects import exceptions as obj_base
+from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import helpers
@@ -92,17 +93,17 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
 
     def reserve_provider_segment(self, context, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
-        with context.session.begin(subtransactions=True):
-            try:
-                LOG.debug("Reserving flat network on physical "
-                          "network %s", physical_network)
-                alloc = type_flat_model.FlatAllocation(
-                    physical_network=physical_network)
-                alloc.save(context.session)
-            except db_exc.DBDuplicateEntry:
-                raise n_exc.FlatNetworkInUse(
-                    physical_network=physical_network)
-            segment[api.MTU] = self.get_mtu(alloc.physical_network)
+        try:
+            LOG.debug("Reserving flat network on physical "
+                      "network %s", physical_network)
+            alloc = flat_obj.FlatAllocation(
+                context,
+                physical_network=physical_network)
+            alloc.create()
+        except obj_base.NeutronDbObjectDuplicateEntry:
+            raise n_exc.FlatNetworkInUse(
+                physical_network=physical_network)
+        segment[api.MTU] = self.get_mtu(alloc.physical_network)
         return segment
 
     def allocate_tenant_segment(self, context):
@@ -112,15 +113,17 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
     def release_segment(self, context, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
         with context.session.begin(subtransactions=True):
-            count = (context.session.query(type_flat_model.FlatAllocation).
-                     filter_by(physical_network=physical_network).
-                     delete())
-        if count:
-            LOG.debug("Releasing flat network on physical network %s",
-                      physical_network)
-        else:
-            LOG.warning(_LW("No flat network found on physical network %s"),
-                        physical_network)
+            obj = flat_obj.FlatAllocation.get_object(
+                context,
+                physical_network=physical_network)
+            if obj:
+                obj.delete()
+                LOG.debug("Releasing flat network on physical network %s",
+                          physical_network)
+            else:
+                LOG.warning(_LW(
+                    "No flat network found on physical network %s"),
+                    physical_network)
 
     def get_mtu(self, physical_network):
         seg_mtu = super(FlatTypeDriver, self).get_mtu()
