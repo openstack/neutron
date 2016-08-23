@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
-
 from tempest.lib.services.compute import keypairs_client
 from tempest.lib.services.compute import servers_client
 from tempest.lib.services.identity.v2 import tenants_client
@@ -30,22 +28,12 @@ class Manager(manager.Manager):
     """
     Top level manager for OpenStack tempest clients
     """
-    try:
-        default_params = {
-            'disable_ssl_certificate_validation':
-                CONF.service_clients.disable_ssl_certificate_validation,
-            'ca_certs': CONF.service_clients.ca_certificates_file,
-            'trace_requests': CONF.debug.trace_requests
-        }
-    except cfg.NoSuchOptError:
-        # TODO(armax): remove this except when a new tempest release
-        # > 12.1.0 includes change 1afca56b05
-        default_params = {
-            'disable_ssl_certificate_validation':
-                CONF.identity.disable_ssl_certificate_validation,
-            'ca_certs': CONF.identity.ca_certificates_file,
-            'trace_requests': CONF.debug.trace_requests
-        }
+    default_params = {
+        'disable_ssl_certificate_validation':
+            CONF.identity.disable_ssl_certificate_validation,
+        'ca_certs': CONF.identity.ca_certificates_file,
+        'trace_requests': CONF.debug.trace_requests
+    }
 
     # NOTE: Tempest uses timeout values of compute API if project specific
     # timeout values don't exist.
