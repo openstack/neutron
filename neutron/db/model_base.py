@@ -30,10 +30,6 @@ class HasProject(object):
     # NOTE(jkoelker) project_id is just a free form string ;(
     project_id = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN), index=True)
 
-    def __init__(self, *args, **kwargs):
-        # NOTE(dasm): debtcollector requires init in class
-        super(HasProject, self).__init__(*args, **kwargs)
-
     def get_tenant_id(self):
         return self.project_id
 
@@ -41,7 +37,6 @@ class HasProject(object):
         self.project_id = value
 
     @declarative.declared_attr
-    @debtcollector.moves.moved_property('project_id')
     def tenant_id(cls):
         return orm.synonym(
             'project_id',
