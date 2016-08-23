@@ -609,7 +609,7 @@ class TestMl2HostSegmentMappingAgentServerSynch(HostSegmentMappingTestCase):
         physical_network = 'phys_net1'
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin, start_flag=False)
-        self.assertTrue(host in db.reported_hosts)
+        self.assertIn(host, db.reported_hosts)
         self.assertEqual(1, mock_function.call_count)
         expected_call = mock.call(mock.ANY, host, set())
         mock_function.assert_has_calls([expected_call])
@@ -620,10 +620,10 @@ class TestMl2HostSegmentMappingAgentServerSynch(HostSegmentMappingTestCase):
         physical_network = 'phys_net1'
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin, start_flag=False)
-        self.assertTrue(host in db.reported_hosts)
+        self.assertIn(host, db.reported_hosts)
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin, start_flag=True)
-        self.assertTrue(host in db.reported_hosts)
+        self.assertIn(host, db.reported_hosts)
         self.assertEqual(2, mock_function.call_count)
         expected_call = mock.call(mock.ANY, host, set())
         mock_function.assert_has_calls([expected_call, expected_call])
@@ -634,11 +634,11 @@ class TestMl2HostSegmentMappingAgentServerSynch(HostSegmentMappingTestCase):
         physical_network = 'phys_net1'
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin, start_flag=False)
-        self.assertTrue(host in db.reported_hosts)
+        self.assertIn(host, db.reported_hosts)
         mock_function.reset_mock()
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin, start_flag=False)
-        self.assertTrue(host in db.reported_hosts)
+        self.assertIn(host, db.reported_hosts)
         mock_function.assert_not_called()
 
 

@@ -381,9 +381,9 @@ class OVSFlowTestCase(OVSAgentTestBase):
                                 "nw_proto=1,nw_tos=0,nw_ttl=128,"
                                 "icmp_type=8,icmp_code=0,"
                                 "dl_vlan=%(vlan_tag)d" % kwargs)
-        self.assertTrue("vlan_tci=0x0000" in trace["Final flow"])
-        self.assertTrue(("dl_src=%(gateway_mac)s" % kwargs) in
-                        trace["Final flow"])
+        self.assertIn("vlan_tci=0x0000", trace["Final flow"])
+        self.assertIn(("dl_src=%(gateway_mac)s" % kwargs),
+                      trace["Final flow"])
 
     def test_install_flood_to_tun(self):
         attrs = {
@@ -401,12 +401,11 @@ class OVSFlowTestCase(OVSAgentTestBase):
                        "nw_tos=0,nw_ttl=128,icmp_type=8,icmp_code=0,"
                        "dl_vlan=%(vlan)d,dl_vlan_pcp=0" % kwargs)
         trace = self._run_trace(self.tun_br.br_name, test_packet)
-        self.assertTrue(("tun_id=0x%(tun_id)x" % kwargs) in
-                        trace["Final flow"])
-        self.assertTrue("vlan_tci=0x0000," in trace["Final flow"])
+        self.assertIn(("tun_id=0x%(tun_id)x" % kwargs), trace["Final flow"])
+        self.assertIn("vlan_tci=0x0000,", trace["Final flow"])
 
         self.br_tun.delete_flood_to_tun(kwargs['vlan'])
 
         trace = self._run_trace(self.tun_br.br_name, test_packet)
         self.assertEqual(" unchanged", trace["Final flow"])
-        self.assertTrue("drop" in trace["Datapath actions"])
+        self.assertIn("drop", trace["Datapath actions"])

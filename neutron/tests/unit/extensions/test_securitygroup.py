@@ -292,7 +292,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         def side_effect(context, security_group, default_sg):
             # can't always raise, or create_security_group will hang
             self.assertTrue(default_sg)
-            self.assertTrue(num_called[0] < 2)
+            self.assertLess(num_called[0], 2)
             num_called[0] += 1
             ret = original_func(context, security_group, default_sg)
             if num_called[0] == 1:

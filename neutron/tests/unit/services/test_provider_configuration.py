@@ -70,7 +70,7 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
         res = provconf.parse_service_provider_opt()
         # This parsing crosses repos if additional projects are installed,
         # so check that at least what we expect is there; there may be more.
-        self.assertTrue(len(res) >= 3)
+        self.assertGreaterEqual(len(res), 3)
 
     def test_parse_service_provider_invalid_format(self):
         self._set_override([constants.LOADBALANCER +

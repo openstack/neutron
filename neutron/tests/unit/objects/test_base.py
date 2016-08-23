@@ -660,7 +660,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         for field in self._test_class.obj_extra_fields:
             # field is accessible and cannot be set by any value
             getattr(obj, field)
-            self.assertTrue(field in obj.to_dict().keys())
+            self.assertIn(field, obj.to_dict().keys())
             self.assertRaises(AttributeError, setattr, obj, field, "1")
 
     def test_fields_no_update(self):

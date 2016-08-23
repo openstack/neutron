@@ -1627,7 +1627,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
         self.assertEqual('physnet1',
                          dynamic_segment[driver_api.PHYSICAL_NETWORK])
-        self.assertTrue(dynamic_segment[driver_api.SEGMENTATION_ID] > 0)
+        self.assertGreater(dynamic_segment[driver_api.SEGMENTATION_ID], 0)
         segment2 = {driver_api.NETWORK_TYPE: 'vlan',
                     driver_api.SEGMENTATION_ID: 1234,
                     driver_api.PHYSICAL_NETWORK: 'physnet3'}
@@ -1657,7 +1657,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('physnet1',
                          dynamic_segment[driver_api.PHYSICAL_NETWORK])
         dynamic_segmentation_id = dynamic_segment[driver_api.SEGMENTATION_ID]
-        self.assertTrue(dynamic_segmentation_id > 0)
+        self.assertGreater(dynamic_segmentation_id, 0)
         dynamic_segment1 = segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet1')
         dynamic_segment1_id = dynamic_segment1[driver_api.SEGMENTATION_ID]
@@ -1688,7 +1688,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('physnet1',
                          dynamic_segment[driver_api.PHYSICAL_NETWORK])
         dynamic_segmentation_id = dynamic_segment[driver_api.SEGMENTATION_ID]
-        self.assertTrue(dynamic_segmentation_id > 0)
+        self.assertGreater(dynamic_segmentation_id, 0)
         self.driver.type_manager.release_dynamic_segment(
             self.context.session, dynamic_segment[driver_api.ID])
         self.assertIsNone(segments_db.get_dynamic_segment(
@@ -1824,7 +1824,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('vlan', dynamic_segment[driver_api.NETWORK_TYPE])
         self.assertEqual('physnet2',
                          dynamic_segment[driver_api.PHYSICAL_NETWORK])
-        self.assertTrue(dynamic_segment[driver_api.SEGMENTATION_ID] > 0)
+        self.assertGreater(dynamic_segment[driver_api.SEGMENTATION_ID], 0)
 
         with mock.patch.object(type_vlan.VlanTypeDriver,
                                'release_segment') as rs:
