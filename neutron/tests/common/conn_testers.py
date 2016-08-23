@@ -331,9 +331,11 @@ class OVSConnectionTester(ConnectionTester):
     def _setUp(self):
         super(OVSConnectionTester, self)._setUp()
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self._peer, self._vm = self.useFixture(
+        machines = self.useFixture(
             machine_fixtures.PeerMachines(
                 self.bridge, self.ip_cidr)).machines
+        self._peer = machines[0]
+        self._vm = machines[1]
         self._set_port_attrs(self._peer.port)
         self._set_port_attrs(self._vm.port)
 
@@ -381,9 +383,11 @@ class LinuxBridgeConnectionTester(ConnectionTester):
     def _setUp(self):
         super(LinuxBridgeConnectionTester, self)._setUp()
         self.bridge = self.useFixture(net_helpers.LinuxBridgeFixture()).bridge
-        self._peer, self._vm = self.useFixture(
+        machines = self.useFixture(
             machine_fixtures.PeerMachines(
                 self.bridge, self.ip_cidr)).machines
+        self._peer = machines[0]
+        self._vm = machines[1]
 
     @property
     def bridge_namespace(self):
