@@ -154,3 +154,22 @@ class NetworkDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
         obj = network.Network.get_object(self.context, id=obj.id)
         self.assertEqual('bar.com', obj.dns_domain)
+
+
+class SegmentHostMappingIfaceObjectTestCase(
+    obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = network.SegmentHostMapping
+
+
+class SegmentHostMappingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
+                                         testlib_api.SqlTestCase):
+
+    _test_class = network.SegmentHostMapping
+
+    def setUp(self):
+        super(SegmentHostMappingDbObjectTestCase, self).setUp()
+        self._create_test_network()
+        self._create_test_segment(network=self._network)
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
+            obj['segment_id'] = self._segment['id']

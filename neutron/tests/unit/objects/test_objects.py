@@ -51,6 +51,7 @@ object_data = {
     'Route': '1.0-a9883a63b416126f9e345523ec09483b',
     'SecurityGroup': '1.0-e26b90c409b31fd2e3c6fcec402ac0b9',
     'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',
+    'SegmentHostMapping': '1.0-521597cf82ead26217c3bd10738f00f0',
     'Subnet': '1.0-b71e720f45fff2a39759940e010be7d1',
     'SubnetPool': '1.0-e8300bfbc4762cc88a7f6205b52da2f8',
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',

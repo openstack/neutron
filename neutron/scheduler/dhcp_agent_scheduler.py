@@ -27,9 +27,9 @@ from neutron._i18n import _LI, _LW
 from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
-from neutron.db.models import segment as segment_model
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import availability_zone as az_ext
+from neutron.objects import network
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
 
@@ -66,10 +66,10 @@ class AutoScheduler(object):
                 agent_model.Agent.admin_state_up == sql.true())
             dhcp_agents = query.all()
 
-            query = context.session.query(
-                segment_model.SegmentHostMapping.segment_id)
-            query = query.filter(segment_model.SegmentHostMapping.host == host)
-            segments_on_host = {s.segment_id for s in query}
+            segment_host_mapping = network.SegmentHostMapping.get_objects(
+                context, host=host)
+
+            segments_on_host = {s.segment_id for s in segment_host_mapping}
 
             for dhcp_agent in dhcp_agents:
                 if agents_db.AgentDbMixin.is_agent_down(
