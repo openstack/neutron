@@ -164,7 +164,6 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
         self.trunk = trunk_manager.TrunkParentPort(
             trunk_id, uuidutils.generate_uuid())
 
-    # TODO(jlibosva): Replace all tester methods with more robust tests
     def test_connectivity(self):
         """Test connectivity with trunk and sub ports.
 
@@ -193,10 +192,8 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
         conn_testers.OVSBaseConnectionTester.set_tag(
             self.trunk.patch_port_int_name, self.tester.bridge, vlan_net1)
 
-        self.tester.assert_connection(protocol=self.tester.ICMP,
-                                      direction=self.tester.INGRESS)
-        self.tester.assert_connection(protocol=self.tester.ICMP,
-                                      direction=self.tester.EGRESS)
+        self.tester.wait_for_connection(self.tester.INGRESS)
+        self.tester.wait_for_connection(self.tester.EGRESS)
 
         self.tester.add_vlan_interface_and_peer(sub_port_segmentation_id,
                                                 self.net2_cidr)
@@ -217,15 +214,14 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
         conn_testers.OVSBaseConnectionTester.set_tag(
             sub_port.patch_port_int_name, self.tester.bridge, vlan_net2)
 
-        self.tester.test_sub_port_icmp_connectivity(self.tester.INGRESS)
-        self.tester.test_sub_port_icmp_connectivity(self.tester.EGRESS)
+        self.tester.wait_for_sub_port_connectivity(self.tester.INGRESS)
+        self.tester.wait_for_sub_port_connectivity(self.tester.EGRESS)
 
         self.trunk_manager.remove_sub_port(sub_port.trunk_id,
                                            sub_port.port_id)
-        self.tester.test_sub_port_icmp_no_connectivity(self.tester.INGRESS)
-        self.tester.test_sub_port_icmp_no_connectivity(self.tester.EGRESS)
+        self.tester.wait_for_sub_port_no_connectivity(self.tester.INGRESS)
+        self.tester.wait_for_sub_port_no_connectivity(self.tester.EGRESS)
 
         self.trunk_manager.remove_trunk(self.trunk.trunk_id,
                                         self.trunk.port_id)
-        self.tester.assert_no_connection(protocol=self.tester.ICMP,
-                                         direction=self.tester.INGRESS)
+        self.tester.wait_for_no_connection(self.tester.INGRESS)
