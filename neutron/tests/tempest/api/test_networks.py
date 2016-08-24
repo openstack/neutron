@@ -95,7 +95,7 @@ class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):
 
     resource = 'network'
 
-    list_kwargs = {'shared': False}
+    list_kwargs = {'shared': False, 'router:external': False}
 
     @classmethod
     def resource_setup(cls):
