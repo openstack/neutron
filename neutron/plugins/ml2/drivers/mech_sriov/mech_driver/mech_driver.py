@@ -161,6 +161,10 @@ class SriovNicSwitchMechanismDriver(api.MechanismDriver):
             return True
         return False
 
+    def check_vlan_transparency(self, context):
+        """SR-IOV driver vlan transparency support."""
+        return True
+
     def _check_supported_pci_vendor_device(self, context):
         if self.pci_vendor_info:
             profile = context.current.get(portbindings.PROFILE, {})
