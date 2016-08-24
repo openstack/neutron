@@ -27,6 +27,8 @@ class LinuxBridgeDriverTestCase(base.BaseTestCase):
         cfg.CONF.set_override('mechanism_drivers',
                               ['a', 'b'], group='ml2')
         self.assertFalse(inst.is_loaded)
+        cfg.CONF.set_override('core_plugin', 'my_foo_plugin')
+        self.assertFalse(inst.is_loaded)
 
     def test_driver_properties(self):
         inst = driver.LinuxBridgeDriver.create()

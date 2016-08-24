@@ -46,6 +46,11 @@ class OVSDriverTestCase(base.BaseTestCase):
         ovs_driver = driver.OVSDriver.create()
         self.assertTrue(ovs_driver.is_loaded)
 
+    def test_driver_is_not_loaded(self):
+        cfg.CONF.set_override('core_plugin', 'my_foo_plugin')
+        ovs_driver = driver.OVSDriver.create()
+        self.assertFalse(ovs_driver.is_loaded)
+
     @mock.patch('neutron.services.trunk.utils.gen_trunk_br_name')
     def test_vif_details_bridge_name_handler_registration(self,
                                                           mock_gen_br_name):
