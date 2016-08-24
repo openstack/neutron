@@ -15,6 +15,7 @@
 import contextlib
 
 from neutron_lib import constants as n_consts
+from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.api import extensions
@@ -35,6 +36,7 @@ DB_METERING_PLUGIN_KLASS = (
 extensions_path = ':'.join(neutron.extensions.__path__)
 _long_description_ok = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN)
 _long_description_ng = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN + 1)
+_fake_uuid = uuidutils.generate_uuid
 
 
 class MeteringPluginDbTestCaseMixin(object):
@@ -216,6 +218,18 @@ class TestMetering(MeteringPluginDbTestCase):
                                           excluded) as label_rule:
                 for k, v, in keys:
                     self.assertEqual(label_rule['metering_label_rule'][k], v)
+
+    def test_create_metering_label_rule_with_non_existent_label(self):
+        direction = 'egress'
+        remote_ip_prefix = '192.168.0.0/24'
+        excluded = True
+
+        res = self._create_metering_label_rule(self.fmt,
+                                               _fake_uuid(),
+                                               direction,
+                                               remote_ip_prefix,
+                                               excluded)
+        self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_update_metering_label_rule(self):
         name = 'my label'
