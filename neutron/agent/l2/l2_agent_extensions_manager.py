@@ -38,23 +38,23 @@ class L2AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     def handle_port(self, context, data):
         """Notify all agent extensions to handle port."""
         for extension in self:
-            try:
+            if hasattr(extension.obj, 'handle_port'):
                 extension.obj.handle_port(context, data)
-            except AttributeError:
-                LOG.exception(
-                    _LE("Agent Extension '%(name)s' failed "
-                        "while handling port update"),
+            else:
+                LOG.error(
+                    _LE("Agent Extension '%(name)s' does not "
+                        "implement method handle_port"),
                     {'name': extension.name}
                 )
 
     def delete_port(self, context, data):
         """Notify all agent extensions to delete port."""
         for extension in self:
-            try:
+            if hasattr(extension.obj, 'delete_port'):
                 extension.obj.delete_port(context, data)
-            except AttributeError:
-                LOG.exception(
-                    _LE("Agent Extension '%(name)s' failed "
-                        "while handling port deletion"),
+            else:
+                LOG.error(
+                    _LE("Agent Extension '%(name)s' does not "
+                        "implement method delete_port"),
                     {'name': extension.name}
                 )
