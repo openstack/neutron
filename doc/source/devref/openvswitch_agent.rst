@@ -467,7 +467,7 @@ Implementation Trunk Bridge (Option C)
 This implementation is based on this `etherpad <https://etherpad.openstack.org/p/trunk-bridge-tagged-patch-experiment>`_.
 Credits to Bence Romsics.
 The option use_veth_interconnection=true won't be supported, it will probably be deprecated soon,
-see [1].
+see [1]. The IDs used for bridge and port names are truncated.
 
 ::
 
@@ -479,24 +479,25 @@ see [1].
                |
          +-----+--------------------------+
          |    tap1                        |
-         |          br-trunk-1            |
+         |          tbr-trunk-id          |
          |                                |
-         | tp-patch-trunk  sp-patch-trunk |
+         | tpt-parent-id   spt-subport-id |
          |                   (tag 100)    |
          +-----+-----------------+--------+
                |                 |
                |                 |
                |                 |
          +-----+-----------------+---------+
-         | tp-patch-int     sp-patch-int   |
+         | tpi-parent-id    spi-subport-id |
          |  (tag 3)           (tag 5)      |
+         |                                 |
          |           br-int                |
          +---------------------------------+
 
-tp-patch-trunk: trunk bridge side of the patch port that implements a trunk
-tp-patch-int: int bridge side of the patch port that implements a trunk
-sp-patch-trunk: trunk bridge side of the patch port that implements a subport
-sp-patch-int: int bridge side of the patch port that implements a subport
+tpt-parent-id: trunk bridge side of the patch port that implements a trunk.
+tpi-parent-id: int bridge side of the patch port that implements a trunk.
+spt-subport-id: trunk bridge side of the patch port that implements a subport.
+spi-subport-id: int bridge side of the patch port that implements a subport.
 
 [1] https://bugs.launchpad.net/neutron/+bug/1587296
 
@@ -505,23 +506,23 @@ Trunk creation
 
 A VM is spawned passing to Nova the port-id of a parent port associated with
 a trunk. Neutron will pass to Nova the bridge where to plug the vif as part of the vif details.
-The os-vif driver creates the trunk bridge br-trunk-1 if it does not exist in plug().
-It will create the tap interface tap1 and plug it into br-trunk-1 setting the parent port ID in the external-ids.
+The os-vif driver creates the trunk bridge tbr-trunk-id if it does not exist in plug().
+It will create the tap interface tap1 and plug it into tbr-trunk-id setting the parent port ID in the external-ids.
 The OVS agent will be monitoring the creation of ports on the trunk bridges. When it detects
 that a new port has been created on the trunk bridge, it will do the following:
 
 ::
 
- ovs-vsctl add-port br-trunk-1 tp-patch-trunk -- set Interface tp-patch-trunk type=patch options:peer=tp-patch-int
- ovs-vsctl add-port br-int tp-patch-int tag=3 -- set Interface tp-patch-int type=patch options:peer=tp-patch-trunk
+ ovs-vsctl add-port tbr-trunk-id tpt-parent-id -- set Interface tpt-parent-id type=patch options:peer=tpi-parent-id
+ ovs-vsctl add-port br-int tpi-parent-id tag=3 -- set Interface tpi-parent-id type=patch options:peer=tpt-parent-id
 
 
 A patch port is created to connect the trunk bridge to the integration bridge.
-tp-patch-trunk, the trunk bridge side of the patch is not associated to any
+tpt-parent-id, the trunk bridge side of the patch is not associated to any
 tag. It will carry untagged traffic.
-tp-patch-int, the br-int side the patch port is tagged with VLAN 3. We assume that the
+tpi-parent-id, the br-int side the patch port is tagged with VLAN 3. We assume that the
 trunk is on network1 that on this host is associated with VLAN 3.
-The OVS agent will set the trunk ID in the external-ids of tp-patch-trunk and tp-patch-int.
+The OVS agent will set the trunk ID in the external-ids of tpt-parent-id and tpi-parent-id.
 If the parent port is associated with one or more subports the agent will process them as
 described in the next paragraph.
 
@@ -536,32 +537,32 @@ create a new patch port:
 
 ::
 
- ovs-vsctl add-port br-trunk-1 sp-patch-trunk tag=100 -- set Interface sp-patch-trunk type=patch options:peer=sp-patch-int
- ovs-vsctl add-port br-int sp-patch-int tag=5 -- set Interface sp-patch-int type=patch options:peer=sp-patch-trunk
+ ovs-vsctl add-port tbr-trunk-id spt-subport-id tag=100 -- set Interface spt-subport-id type=patch options:peer=spi-subport-id
+ ovs-vsctl add-port br-int spi-subport-id tag=5 -- set Interface spi-subport-id type=patch options:peer=spt-subport-id
 
 This patch port connects the trunk bridge to the integration bridge.
-sp-patch-trunk, the trunk bridge side of the patch is tagged using VLAN 100.
+spt-subport-id, the trunk bridge side of the patch is tagged using VLAN 100.
 We assume that the segmentation ID of the subport is 100.
-sp-patch-int, the br-int side of the patch port is tagged with VLAN 5. We
+spi-subport-id, the br-int side of the patch port is tagged with VLAN 5. We
 assume that the subport is on network2 that on this host uses VLAN 5.
-The OVS agent will set the subport ID in the external-ids of sp-patch-trunk and sp-patch-int.
+The OVS agent will set the subport ID in the external-ids of spt-subport-id and spi-subport-id.
 
 *Inbound traffic from the VM point of view*
 
-The traffic coming out of tp-patch-int will be stripped by br-int of VLAN 3.
-It will reach tp-patch-trunk untagged and from there tap1.
-The traffic coming out of sp-patch-int will be stripped by br-int of VLAN 5.
-It will reach sp-patch-trunk where it will be tagged with VLAN 100 and it will
+The traffic coming out of tpi-parent-id will be stripped by br-int of VLAN 3.
+It will reach tpt-parent-id untagged and from there tap1.
+The traffic coming out of spi-subport-id will be stripped by br-int of VLAN 5.
+It will reach spt-subport-id where it will be tagged with VLAN 100 and it will
 then get to tap1 tagged.
 
 
 *Outbound traffic from the VM point of view*
 
-The untagged traffic coming from tap1 will reach tp-patch-trunk and from there
-tp-patch-int where it will be tagged using VLAN 3.
-The traffic tagged with VLAN 100 from tap1 will reach sp-patch-trunk.
-VLAN 100 will be stripped since sp-patch-trunk is a tagged port and the packet
-will reach sp-patch-int, where it's tagged using VLAN 5.
+The untagged traffic coming from tap1 will reach tpt-parent-id and from there
+tpi-parent-id where it will be tagged using VLAN 3.
+The traffic tagged with VLAN 100 from tap1 will reach spt-subport-id.
+VLAN 100 will be stripped since spt-subport-id is a tagged port and the packet
+will reach spi-subport-id, where it's tagged using VLAN 5.
 
 Parent port deletion
 ++++++++++++++++++++

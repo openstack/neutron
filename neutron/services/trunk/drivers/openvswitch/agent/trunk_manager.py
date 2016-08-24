@@ -59,7 +59,10 @@ def get_patch_peer_attrs(peer_name, port_mac=None, port_id=None):
 
 
 class TrunkBridge(ovs_lib.OVSBridge):
+    """An OVS trunk bridge.
 
+    A trunk bridge has a name that follows a specific naming convention.
+    """
     def __init__(self, trunk_id):
         name = utils.gen_trunk_br_name(trunk_id)
         super(TrunkBridge, self).__init__(name)
@@ -69,6 +72,14 @@ class TrunkBridge(ovs_lib.OVSBridge):
 
 
 class TrunkParentPort(object):
+    """An OVS trunk parent port.
+
+    A trunk parent port is represented in OVS with two patch ports that
+    connect a trunk bridge and the integration bridge respectively.
+    These patch ports follow strict naming conventions: tpi-<hash> for
+    the patch port that goes into the integration bridge, and tpt-<hash>
+    for the patch port that goes into the trunk bridge.
+    """
     DEV_PREFIX = 'tp'
 
     def __init__(self, trunk_id, port_id, port_mac=None):
@@ -76,10 +87,8 @@ class TrunkParentPort(object):
         self.port_id = port_id
         self.port_mac = port_mac
         self.bridge = TrunkBridge(self.trunk_id)
-        # The name has form of tpi-<hash>
         self.patch_port_int_name = get_br_int_port_name(
             self.DEV_PREFIX, port_id)
-        # The name has form of tpt-<hash>
         self.patch_port_trunk_name = get_br_trunk_port_name(
             self.DEV_PREFIX, port_id)
         self._transaction = None
@@ -104,20 +113,24 @@ class TrunkParentPort(object):
                     self._transaction = None
 
     def plug(self, br_int):
-        """Create patch ports between trunk bridge and given bridge.
+        """Plug patch ports between trunk bridge and given bridge.
 
-        The method creates one patch port on the given bridge side using
-        port mac and id as external ids.  The other endpoint of patch port is
+        The method plugs one patch port on the given bridge side using
+        port MAC and ID as external IDs.  The other endpoint of patch port is
         attached to the trunk bridge.  Everything is done in a single
-        ovsdb transaction so either all operations succeed or fail.
+        OVSDB transaction so either all operations succeed or fail.
 
-        :param br_int: An integration bridge where peer endpoint of patch port
+        :param br_int: an integration bridge where peer endpoint of patch port
                        will be created.
-
         """
-        # NOTE(jlibosva): osvdb is an api so it doesn't matter whether we
+        # NOTE(jlibosva): OVSDB is an api so it doesn't matter whether we
         # use self.bridge or br_int
         ovsdb = self.bridge.ovsdb
+        # Once the bridges are connected with the following patch ports,
+        # the ovs agent will recognize the ports for processing and it will
+        # take over the wiring process and everything that entails.
+        # REVISIT(rossella_s): revisit this integration part, should tighter
+        # control over the wiring logic for trunk ports be required.
         patch_int_attrs = get_patch_peer_attrs(
             self.patch_port_trunk_name, self.port_mac, self.port_id)
         patch_trunk_attrs = get_patch_peer_attrs(self.patch_port_int_name)
@@ -135,10 +148,10 @@ class TrunkParentPort(object):
     def unplug(self, bridge):
         """Unplug the trunk from bridge.
 
-        Method deletes in single ovsdb transaction the trunk bridge and patch
+        Method unplugs in single OVSDB transaction the trunk bridge and patch
         port on provided bridge.
 
-        :param bridge: Bridge that has peer side of patch port for this
+        :param bridge: bridge that has peer side of patch port for this
                        subport.
         """
         ovsdb = self.bridge.ovsdb
@@ -149,7 +162,14 @@ class TrunkParentPort(object):
 
 
 class SubPort(TrunkParentPort):
-    # Patch port names have form of spi-<hash> or spt-<hash> respectively.
+    """An OVS trunk subport.
+
+    A subport is represented in OVS with two patch ports that
+    connect a trunk bridge and the integration bridge respectively.
+    These patch ports follow strict naming conventions: spi-<hash> for
+    the patch port that goes into the integration bridge, and spt-<hash>
+    for the patch port that goes into the trunk bridge.
+    """
     DEV_PREFIX = 'sp'
 
     def __init__(self, trunk_id, port_id, port_mac=None, segmentation_id=None):
@@ -157,17 +177,16 @@ class SubPort(TrunkParentPort):
         self.segmentation_id = segmentation_id
 
     def plug(self, br_int):
-        """Create patch ports between trunk bridge and given bridge.
+        """Unplug patch ports between trunk bridge and given bridge.
 
-        The method creates one patch port on the given bridge side using
-        port mac and id as external ids.  The other endpoint of patch port is
+        The method unplugs one patch port on the given bridge side using
+        port MAC and ID as external IDs.  The other endpoint of patch port is
         attached to the trunk bridge.  Then it sets vlan tag represented by
-        segmentation_id.  Everything is done in a single ovsdb transaction so
+        segmentation_id.  Everything is done in a single OVSDB transaction so
         either all operations succeed or fail.
 
-        :param br_int: An integration bridge where peer endpoint of patch port
+        :param br_int: an integration bridge where peer endpoint of patch port
                        will be created.
-
         """
         ovsdb = self.bridge.ovsdb
         with self.ovsdb_transaction() as txn:
@@ -179,10 +198,10 @@ class SubPort(TrunkParentPort):
     def unplug(self, bridge):
         """Unplug the sub port from the bridge.
 
-        Method deletes in single ovsdb transaction both endpoints of patch
+        Method unplugs in single OVSDB transaction both endpoints of patch
         ports that represents the subport.
 
-        :param bridge: Bridge that has peer side of patch port for this
+        :param bridge: bridge that has peer side of patch port for this
                        subport.
         """
         ovsdb = self.bridge.ovsdb
@@ -211,19 +230,13 @@ class TrunkManager(object):
         :param trunk_id: ID of the trunk.
         :param port_id: ID of the parent port.
         :param port_mac: the MAC address of the parent port.
-        :raises: TrunkBridgeNotFound -- In case trunk bridge doesn't exist.
-
+        :raises:
+             TrunkBridgeNotFound: in case trunk bridge does not exist.
         """
         trunk = TrunkParentPort(trunk_id, port_id, port_mac)
         try:
             if not trunk.bridge.exists():
                 raise exc.TrunkBridgeNotFound(bridge=trunk.bridge.br_name)
-            # Once the bridges are connected with the following patch ports,
-            # the ovs agent will recognize the ports for processing and it will
-            # take over the wiring process and everything that entails.
-            # REVISIT(rossella_s): revisit this integration part, should
-            # tighter control over the wiring logic for trunk ports be
-            # required.
             trunk.plug(self.br_int)
         except RuntimeError as e:
             raise TrunkManagerError(error=e)
@@ -235,18 +248,17 @@ class TrunkManager(object):
             if trunk.bridge.exists():
                 trunk.unplug(self.br_int)
             else:
-                LOG.debug("Trunk bridge with ID %s doesn't exist.", trunk_id)
+                LOG.debug("Trunk bridge with ID %s does not exist.", trunk_id)
         except RuntimeError as e:
             raise TrunkManagerError(error=e)
 
     def add_sub_port(self, trunk_id, port_id, port_mac, segmentation_id):
         """Create a sub_port.
 
-        :param trunk_id: ID of the trunk
-        :param port_id: ID of the child port
-        :param segmentation_id: segmentation ID associated with this sub-port
-        :param port_mac: MAC address of the child port
-
+        :param trunk_id: ID of the trunk.
+        :param port_id: ID of the subport.
+        :param segmentation_id: segmentation ID associated with this subport.
+        :param port_mac: MAC address of the subport.
         """
         sub_port = SubPort(trunk_id, port_id, port_mac, segmentation_id)
         # If creating of parent trunk bridge takes longer than API call for
@@ -261,8 +273,8 @@ class TrunkManager(object):
     def remove_sub_port(self, trunk_id, port_id):
         """Remove a sub_port.
 
-        :param trunk_id: ID of the trunk
-        :param port_id: ID of the child port
+        :param trunk_id: ID of the trunk.
+        :param port_id: ID of the subport.
         """
         sub_port = SubPort(trunk_id, port_id)
 
@@ -272,7 +284,7 @@ class TrunkManager(object):
             if sub_port.bridge.exists():
                 sub_port.unplug(self.br_int)
             else:
-                LOG.debug("Trunk bridge with ID %s doesn't exist.", trunk_id)
+                LOG.debug("Trunk bridge with ID %s does not exist.", trunk_id)
         except RuntimeError as e:
             raise TrunkManagerError(error=e)
 
