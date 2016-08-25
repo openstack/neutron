@@ -17,7 +17,6 @@ import sys
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
-from oslo_log import log as logging
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
@@ -35,9 +34,6 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import securitygroup as sg_models
 from neutron.extensions import securitygroup as ext_sg
-
-
-LOG = logging.getLogger(__name__)
 
 
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
