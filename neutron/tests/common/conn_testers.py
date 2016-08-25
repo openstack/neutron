@@ -64,6 +64,7 @@ class ConnectionTester(fixtures.Fixture):
     ARP = n_consts.ETHERTYPE_NAME_ARP
     INGRESS = firewall.INGRESS_DIRECTION
     EGRESS = firewall.EGRESS_DIRECTION
+    ICMP_COUNT = 1
 
     def __init__(self, ip_cidr):
         self.ip_cidr = ip_cidr
@@ -157,7 +158,8 @@ class ConnectionTester(fixtures.Fixture):
         icmp_timeout = ICMP_VERSION_TIMEOUTS[ip_version]
         try:
             net_helpers.assert_ping(src_namespace, ip_address,
-                                    timeout=icmp_timeout)
+                                    timeout=icmp_timeout,
+                                    count=self.ICMP_COUNT)
         except RuntimeError:
             raise ConnectionTesterException(
                 "ICMP packets can't get from %s namespace to %s address" % (
@@ -317,7 +319,28 @@ class ConnectionTester(fixtures.Fixture):
                 'sending icmp packets to %s' % destination)
 
 
-class OVSConnectionTester(ConnectionTester):
+class OVSBaseConnectionTester(ConnectionTester):
+
+    @property
+    def peer_port_id(self):
+        return self._peer.port.id
+
+    @property
+    def vm_port_id(self):
+        return self._vm.port.id
+
+    @staticmethod
+    def set_tag(port_name, bridge, tag):
+        bridge.set_db_attribute('Port', port_name, 'tag', tag)
+        other_config = bridge.db_get_val(
+            'Port', port_name, 'other_config')
+        other_config['tag'] = tag
+        bridge.set_db_attribute(
+            'Port', port_name, 'other_config', other_config)
+
+
+class OVSConnectionTester(OVSBaseConnectionTester):
+
     """Tester with OVS bridge in the middle
 
     The endpoints are created as OVS ports attached to the OVS bridge.
@@ -347,27 +370,103 @@ class OVSConnectionTester(ConnectionTester):
         for column, value in attrs:
             self.bridge.set_db_attribute('Interface', port.name, column, value)
 
-    @property
-    def peer_port_id(self):
-        return self._peer.port.id
-
-    @property
-    def vm_port_id(self):
-        return self._vm.port.id
-
-    def set_tag(self, port_name, tag):
-        self.bridge.set_db_attribute('Port', port_name, 'tag', tag)
-        other_config = self.bridge.db_get_val(
-            'Port', port_name, 'other_config')
-        other_config['tag'] = tag
-        self.bridge.set_db_attribute(
-            'Port', port_name, 'other_config', other_config)
-
     def set_vm_tag(self, tag):
-        self.set_tag(self._vm.port.name, tag)
+        self.set_tag(self._vm.port.name, self.bridge, tag)
 
     def set_peer_tag(self, tag):
-        self.set_tag(self._peer.port.name, tag)
+        self.set_tag(self._peer.port.name, self.bridge, tag)
+
+
+class OVSTrunkConnectionTester(OVSBaseConnectionTester):
+    """Tester with OVS bridge and a trunk bridge
+
+    Two endpoints: one is a VM that is connected to a port associated with a
+    trunk (the port is created  on the trunk bridge), the other is a VM on the
+    same network (the port is on the integration bridge).
+
+    NOTE: The OVS ports are connected from the namespace. This connection is
+    currently not supported in OVS and may lead to unpredicted behavior:
+    https://bugzilla.redhat.com/show_bug.cgi?id=1160340
+
+    """
+    ICMP_COUNT = 3
+
+    def __init__(self, ip_cidr, br_trunk_name):
+        super(OVSTrunkConnectionTester, self).__init__(ip_cidr)
+        self._br_trunk_name = br_trunk_name
+
+    def _setUp(self):
+        super(OVSTrunkConnectionTester, self)._setUp()
+        self.bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+        self.br_trunk = self.useFixture(
+            net_helpers.OVSTrunkBridgeFixture(self._br_trunk_name)).bridge
+        self._peer = self.useFixture(machine_fixtures.FakeMachine(
+                self.bridge, self.ip_cidr))
+        ip_cidr = net_helpers.increment_ip_cidr(self.ip_cidr, 1)
+
+        self._vm = self.useFixture(machine_fixtures.FakeMachine(
+            self.br_trunk, ip_cidr))
+
+    def add_vlan_interface_and_peer(self, vlan, ip_cidr):
+        """Create a sub_port and a peer
+
+        We create a sub_port that uses vlan as segmentation ID. In the vm
+        namespace we create a vlan subinterface on the same vlan.
+        A peer on the same network is created. When pinging from the peer
+        to the sub_port packets will be tagged using the internal vlan ID
+        of the network. The sub_port will remove that vlan tag and push the
+        vlan specified in the segmentation ID. The packets will finally reach
+        the vlan subinterface in the vm namespace.
+
+        """
+
+        ip_wrap = ip_lib.IPWrapper(self._vm.namespace)
+        dev_name = self._vm.port.name + ".%d" % vlan
+        ip_wrap.add_vlan(dev_name, self._vm.port.name, vlan)
+        dev = ip_wrap.device(dev_name)
+        dev.addr.add(ip_cidr)
+        dev.link.set_up()
+        self._ip_vlan = ip_cidr.partition('/')[0]
+        ip_cidr = net_helpers.increment_ip_cidr(ip_cidr, 1)
+        self._peer2 = self.useFixture(machine_fixtures.FakeMachine(
+            self.bridge, ip_cidr))
+
+    def set_vm_tag(self, tag):
+        self.set_tag(self._vm.port.name, self.br_trunk, tag)
+
+    def set_peer_tag(self, tag):
+        self.set_tag(self._peer.port.name, self.bridge, tag)
+
+    def _get_subport_namespace_and_address(self, direction):
+        if direction == self.INGRESS:
+            return self._peer2.namespace, self._ip_vlan
+        return self._vm.namespace, self._peer2.ip
+
+    def test_sub_port_icmp_connectivity(self, direction):
+
+        src_namespace, ip_address = self._get_subport_namespace_and_address(
+            direction)
+        ip_version = ip_lib.get_ip_version(ip_address)
+        icmp_timeout = ICMP_VERSION_TIMEOUTS[ip_version]
+        try:
+            net_helpers.assert_ping(src_namespace, ip_address,
+                                    timeout=icmp_timeout,
+                                    count=self.ICMP_COUNT)
+        except RuntimeError:
+            raise ConnectionTesterException(
+                "ICMP packets can't get from %s namespace to %s address" % (
+                    src_namespace, ip_address))
+
+    def test_sub_port_icmp_no_connectivity(self, direction):
+        try:
+            self.test_sub_port_icmp_connectivity(direction)
+        except ConnectionTesterException:
+            pass
+        else:
+            raise ConnectionTesterException(
+                'Established %s connection with protocol ICMP, ' % (
+                    direction))
 
 
 class LinuxBridgeConnectionTester(ConnectionTester):

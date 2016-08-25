@@ -685,6 +685,14 @@ class OVSBridgeFixture(fixtures.Fixture):
         self.addCleanup(self.bridge.destroy)
 
 
+class OVSTrunkBridgeFixture(OVSBridgeFixture):
+    """This bridge doesn't generate the name."""
+    def _setUp(self):
+        ovs = ovs_lib.BaseOVS()
+        self.bridge = ovs.add_bridge(self.prefix)
+        self.addCleanup(self.bridge.destroy)
+
+
 class OVSPortFixture(PortFixture):
     NIC_NAME_LEN = 14
 
