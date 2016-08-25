@@ -33,6 +33,7 @@ class SnatNamespace(namespaces.Namespace):
     def get_snat_ns_name(cls, router_id):
         return namespaces.build_ns_name(SNAT_NS_PREFIX, router_id)
 
+    @namespaces.check_ns_existence
     def delete(self):
         ns_ip = ip_lib.IPWrapper(namespace=self.name)
         for d in ns_ip.get_devices(exclude_loopback=True):
