@@ -69,14 +69,12 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                  vif_details={portbindings.CAP_PORT_FILTER: False},
                  supported_vnic_types=[portbindings.VNIC_DIRECT,
                                        portbindings.VNIC_MACVTAP,
-                                       portbindings.VNIC_DIRECT_PHYSICAL],
-                 supported_pci_vendor_info=None):
+                                       portbindings.VNIC_DIRECT_PHYSICAL]):
         """Initialize base class for SriovNicSwitch L2 agent type.
 
         :param agent_type: Constant identifying agent type in agents_db
         :param vif_details: Dictionary with details for VIF driver when bound
         :param supported_vnic_types: The binding:vnic_type values we can bind
-        :param supported_pci_vendor_info: The pci_vendor_info values to bind
         """
         self.agent_type = agent_type
         self.supported_vnic_types = supported_vnic_types
