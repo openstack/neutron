@@ -200,7 +200,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         p = port['port']
         subnets = self._ipam_get_subnets(context,
                                          network_id=p['network_id'],
-                                         host=p.get(portbindings.HOST_ID))
+                                         host=p.get(portbindings.HOST_ID),
+                                         service_type=p.get('device_owner'))
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)

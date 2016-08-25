@@ -1,0 +1,15 @@
+---
+features:
+  - Subnets now have a new property 'service_types'.
+    This is a list of port device owners, such that
+    only ports with a matching device owner will be
+    given an IP from this subnet. If no matching
+    service subnet exists for the given device owner,
+    or no service subnets have been defined on the
+    network, the port will be assigned an IP from a
+    subnet with no service-types. This preserves
+    backwards compatibility with older deployments.
+upgrade:
+  - A new table 'subnet_service_types' has been added
+    to cater for this feature. It uses the ID field
+    from the 'subnets' table as a foreign key.
