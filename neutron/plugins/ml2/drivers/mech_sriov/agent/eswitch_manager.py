@@ -102,14 +102,12 @@ class EmbSwitch(object):
     @ivar pci_dev_wrapper: pci device wrapper
     """
 
-    def __init__(self, phys_net, dev_name, exclude_devices):
+    def __init__(self, dev_name, exclude_devices):
         """Constructor
 
-        @param phys_net: physical network
         @param dev_name: network device name
         @param exclude_devices: list of pci slots to exclude
         """
-        self.phys_net = phys_net
         self.dev_name = dev_name
         self.pci_slot_map = {}
         self.pci_dev_wrapper = pci_lib.PciDeviceIPWrapper(dev_name)
@@ -362,7 +360,7 @@ class ESwitchManager(object):
                                         exclude_devices.get(dev_name, set()))
 
     def _create_emb_switch(self, phys_net, dev_name, exclude_devices):
-        embedded_switch = EmbSwitch(phys_net, dev_name, exclude_devices)
+        embedded_switch = EmbSwitch(dev_name, exclude_devices)
         self.emb_switches_map.setdefault(phys_net, []).append(embedded_switch)
         for pci_slot in embedded_switch.get_pci_slot_list():
             self.pci_slot_map[pci_slot] = embedded_switch
