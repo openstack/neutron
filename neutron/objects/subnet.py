@@ -32,7 +32,7 @@ class DNSNameServer(base.NeutronDbObject):
 
     primary_keys = ['address', 'subnet_id']
 
-    foreign_keys = {'subnet_id': 'id'}
+    foreign_keys = {'Subnet': {'subnet_id': 'id'}}
 
     fields = {
         'address': obj_fields.StringField(),
@@ -62,7 +62,7 @@ class Route(base.NeutronDbObject):
 
     primary_keys = ['destination', 'nexthop', 'subnet_id']
 
-    foreign_keys = {'subnet_id': 'id'}
+    foreign_keys = {'Subnet': {'subnet_id': 'id'}}
 
     fields = {
         'subnet_id': obj_fields.UUIDField(),
@@ -99,7 +99,7 @@ class IPAllocationPool(base.NeutronDbObject):
 
     db_model = models_v2.IPAllocationPool
 
-    foreign_keys = {'subnet_id': 'id'}
+    foreign_keys = {'Subnet': {'subnet_id': 'id'}}
 
     fields_need_translation = {
         'start': 'first_ip',
@@ -172,7 +172,7 @@ class Subnet(base.NeutronDbObject):
     synthetic_fields = ['allocation_pools', 'dns_nameservers', 'host_routes',
                         'shared']
 
-    foreign_keys = {'network_id': 'id'}
+    foreign_keys = {'Network': {'network_id': 'id'}}
 
     fields_no_update = ['project_id']
 
