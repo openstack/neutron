@@ -291,6 +291,10 @@ def get_random_ether_type():
     return random.choice(n_const.VALID_ETHERTYPES)
 
 
+def get_random_ipam_status():
+    return random.choice(n_const.VALID_IPAM_ALLOCATION_STATUSES)
+
+
 def get_random_ip_protocol():
     return random.choice(list(constants.IP_PROTOCOL_MAP.keys()))
 

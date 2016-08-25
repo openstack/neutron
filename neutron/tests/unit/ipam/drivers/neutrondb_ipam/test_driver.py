@@ -18,13 +18,14 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
 from neutron import context
-from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
+from neutron.objects import ipam as ipam_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_plugin
 from neutron.tests.unit import testlib_api
 
@@ -206,9 +207,10 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
 
     def test_get_details_for_invalid_subnet_id_fails(self):
         cidr = '10.0.0.0/24'
+        non_existent_id = uuidutils.generate_uuid()
         subnet_req = ipam_req.SpecificSubnetRequest(
             self._tenant_id,
-            'non-existent-id',
+            non_existent_id,
             cidr)
         self.ipam_pool.allocate_subnet(subnet_req)
         # Neutron subnet does not exist, so get_subnet should fail
@@ -386,8 +388,10 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         # This test should pass because ipam subnet is no longer
         # have foreign key relationship with neutron subnet.
         # Creating ipam subnet before neutron subnet is a valid case.
+        tenant_id = uuidutils.generate_uuid()
+        subnet_id = uuidutils.generate_uuid()
         subnet_req = ipam_req.SpecificSubnetRequest(
-            'tenant_id', 'meh', '192.168.0.0/24')
+            tenant_id, subnet_id, '192.168.0.0/24')
         self.ipam_pool.allocate_subnet(subnet_req)
 
     def test_update_allocation_pools_with_no_pool_change(self):
@@ -405,14 +409,16 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         self.assertFalse(ipam_subnet.create_allocation_pools.called)
 
     def _test__no_pool_changes(self, new_pools):
-        id = 'some-id'
+        id = uuidutils.generate_uuid()
         ipam_subnet = driver.NeutronDbSubnet(id, self.ctx)
-        pools = [db_models.IpamAllocationPool(ipam_subnet_id=id,
-                                              first_ip='192.168.10.20',
-                                              last_ip='192.168.10.41'),
-                 db_models.IpamAllocationPool(ipam_subnet_id=id,
-                                              first_ip='192.168.10.50',
-                                              last_ip='192.168.10.60')]
+        pools = [ipam_obj.IpamAllocationPool(self.ctx,
+                                             ipam_subnet_id=id,
+                                             first_ip='192.168.10.20',
+                                             last_ip='192.168.10.41'),
+                 ipam_obj.IpamAllocationPool(self.ctx,
+                                             ipam_subnet_id=id,
+                                             first_ip='192.168.10.50',
+                                             last_ip='192.168.10.60')]
 
         ipam_subnet.subnet_manager.list_pools = mock.Mock(return_value=pools)
         return ipam_subnet._no_pool_changes(self.ctx, new_pools)
