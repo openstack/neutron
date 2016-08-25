@@ -170,7 +170,7 @@ Neutron Routers are realized in OpenVSwitch
 Finding the router in ip/ipconfig
 ---------------------------------
 
-* http://docs.openstack.org/admin-guide-cloud/networking.html
+* http://docs.openstack.org/admin-guide/networking.html
 
         The neutron-l3-agent uses the Linux IP stack and iptables to perform L3 forwarding and NAT.
         In order to support multiple routers with potentially overlapping IP addresses, neutron-l3-agent
@@ -212,11 +212,11 @@ For example::
 Provider Networking
 -------------------
 
-Neutron can also be configured to create `provider networks <http://docs.openstack.org/admin-guide-cloud/networking_adv-features.html#provider-networks>`_
+Neutron can also be configured to create `provider networks <http://docs.openstack.org/admin-guide/networking_adv-features.html#provider-networks>`_
 
 Further Reading
 ---------------
 * `Packet Pushers - Neutron Network Implementation on Linux <http://packetpushers.net/openstack-quantum-network-implementation-in-linux/>`_
-* `OpenStack Cloud Administrator Guide <http://docs.openstack.org/admin-guide-cloud/networking.html>`_
+* `OpenStack Administrator Guide <http://docs.openstack.org/admin-guide/networking.html>`_
 * `Neutron - Layer 3 API extension usage guide <http://docs.openstack.org/api/openstack-network/2.0/content/router_ext.html>`_
 *  `Darragh O'Reilly -  The Quantum L3 router and floating IPs <http://techbackground.blogspot.com/2013/05/the-quantum-l3-router-and-floating-ips.html>`_
