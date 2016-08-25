@@ -38,7 +38,7 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     def add_router(self, context, data):
         """Notify all agent extensions to add router."""
         for extension in self:
-            if hasattr(self, 'add_router'):
+            if hasattr(extension.obj, 'add_router'):
                 extension.obj.add_router(context, data)
             else:
                 LOG.error(
@@ -50,7 +50,7 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     def update_router(self, context, data):
         """Notify all agent extensions to update router."""
         for extension in self:
-            if hasattr(self, 'update_router'):
+            if hasattr(extension.obj, 'update_router'):
                 extension.obj.update_router(context, data)
             else:
                 LOG.error(
@@ -62,7 +62,7 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     def delete_router(self, context, data):
         """Notify all agent extensions to delete router."""
         for extension in self:
-            if hasattr(self, 'delete_router'):
+            if hasattr(extension.obj, 'delete_router'):
                 extension.obj.delete_router(context, data)
             else:
                 LOG.error(
