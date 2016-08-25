@@ -88,8 +88,7 @@ EXT_NET_BRIDGE_OPTS = [
                       "traffic. This should be set to an empty value for the "
                       "Linux Bridge. When this parameter is set, each L3 "
                       "agent can be associated with no more than one external "
-                      "network. This option is deprecated and will be removed "
-                      "in the M release.")),
+                      "network.")),
 ]
 
 
