@@ -35,7 +35,10 @@ class LinuxBridgeDriver(base.DriverBase):
 
     @property
     def is_loaded(self):
-        return NAME in cfg.CONF.ml2.mechanism_drivers
+        try:
+            return NAME in cfg.CONF.ml2.mechanism_drivers
+        except cfg.NoSuchOptError:
+            return False
 
     @classmethod
     def create(cls):
