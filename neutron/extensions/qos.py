@@ -228,18 +228,18 @@ class QoSPluginBase(service_base.ServicePluginBase):
                     # "delete_policy_rule".
                     proxy_method = attrib.replace(rule_type + '_', '')
 
-                    rule_obj = self.rule_objects[rule_type]
-                    return self._call_proxy_method(proxy_method, rule_obj)
+                    rule_cls = self.rule_objects[rule_type]
+                    return self._call_proxy_method(proxy_method, rule_cls)
 
         # If we got here, then either attrib matched no pattern or the
         # rule_type embedded in attrib wasn't in self.rule_objects.
         raise AttributeError(attrib)
 
-    def _call_proxy_method(self, method_name, rule_obj):
-        """Call proxy method. We need to add the rule_obj, obtained from the
+    def _call_proxy_method(self, method_name, rule_cls):
+        """Call proxy method. We need to add the rule_cls, obtained from the
         self.rule_objects dictionary, to the incoming args.  The context is
         passed to proxy method as first argument; the remaining args will
-        follow rule_obj.
+        follow rule_cls.
 
         Some of the incoming method calls have the policy rule name as one of
         the keys in the kwargs.  For instance, the incoming kwargs for the
@@ -260,24 +260,24 @@ class QoSPluginBase(service_base.ServicePluginBase):
 
         :param method_name: the name of the method to call
         :type method_name: str
-        :param rule_obj: the rule object, which is sent as an argument to the
+        :param rule_cls: the rule class, which is sent as an argument to the
                          proxy method
-        :type rule_obj: a class from the rule_object (qos.objects.rule) module
+        :type rule_cls: a class from the rule_object (qos.objects.rule) module
         """
-        def _make_call(method_name, rule_obj, *args, **kwargs):
+        def _make_call(method_name, rule_cls, *args, **kwargs):
             context = args[0]
             args_list = list(args[1:])
             params = kwargs
-            rule_data_name = rule_obj.rule_type + "_rule"
+            rule_data_name = rule_cls.rule_type + "_rule"
             if rule_data_name in params:
                 params['rule_data'] = params.pop(rule_data_name)
 
             return getattr(self, method_name)(
-                context, rule_obj, *args_list, **params
+                context, rule_cls, *args_list, **params
             )
 
         return lambda *args, **kwargs: _make_call(
-            method_name, rule_obj, *args, **kwargs)
+            method_name, rule_cls, *args, **kwargs)
 
     def get_plugin_description(self):
         return "QoS Service Plugin for ports and networks"
@@ -313,25 +313,25 @@ class QoSPluginBase(service_base.ServicePluginBase):
         pass
 
     @abc.abstractmethod
-    def create_policy_rule(self, context, policy_id, rule_data, rule_obj):
+    def create_policy_rule(self, context, rule_cls, policy_id, rule_data):
         pass
 
     @abc.abstractmethod
-    def update_policy_rule(self, context, rule_id, policy_id, rule_data,
-                           rule_obj):
+    def update_policy_rule(self, context, rule_cls, rule_id, policy_id,
+                           rule_data):
         pass
 
     @abc.abstractmethod
-    def delete_policy_rule(self, context, rule_id, policy_id):
+    def delete_policy_rule(self, context, rule_cls, rule_id, policy_id):
         pass
 
     @abc.abstractmethod
-    def get_policy_rule(self, context, rule_id, policy_id, rule_obj,
+    def get_policy_rule(self, context, rule_cls, rule_id, policy_id,
                         fields=None):
         pass
 
     @abc.abstractmethod
-    def get_policy_rules(self, context, policy_id, rule_obj,
+    def get_policy_rules(self, context, rule_cls, policy_id,
                          filters=None, fields=None, sorts=None, limit=None,
                          marker=None, page_reverse=False):
         pass
