@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.db.models.plugins.ml2 import gre_allocation_endpoints as gre_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_gre
 from neutron.tests.unit.plugins.ml2.drivers import base_type_tunnel
@@ -27,12 +28,12 @@ HOST_TWO = 'fake_host_two'
 
 
 def _add_allocation(session, gre_id, allocated=False):
-    allocation = type_gre.GreAllocation(gre_id=gre_id, allocated=allocated)
+    allocation = gre_model.GreAllocation(gre_id=gre_id, allocated=allocated)
     allocation.save(session)
 
 
 def _get_allocation(session, gre_id):
-    return session.query(type_gre.GreAllocation).filter_by(
+    return session.query(gre_model.GreAllocation).filter_by(
         gre_id=gre_id).one()
 
 
