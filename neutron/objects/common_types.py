@@ -29,6 +29,10 @@ from neutron.common import utils
 from neutron.plugins.common import constants as plugin_constants
 
 
+class HARouterEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_HA_STATES)
+
+
 class IPV6ModeEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(valid_values=lib_constants.IPV6_MODES)
 

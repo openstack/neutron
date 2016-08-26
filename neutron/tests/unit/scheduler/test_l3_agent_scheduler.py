@@ -39,10 +39,10 @@ from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
-from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
+from neutron.objects import l3_hamode
 from neutron.objects import l3agent as rb_obj
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
@@ -1615,11 +1615,9 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         agent = agents.pop()
         self.plugin.remove_router_from_l3_agent(
             self.adminContext, agent.id, router['id'])
-        session = self.adminContext.session
-        db = l3ha_model.L3HARouterAgentPortBinding
-        results = session.query(db).filter_by(
-            router_id=router['id'])
-        results = [binding.l3_agent_id for binding in results.all()]
+        objs = l3_hamode.L3HARouterAgentPortBinding.get_objects(
+            self.adminContext, router_id=router['id'])
+        results = [binding.l3_agent_id for binding in objs]
         self.assertNotIn(agent.id, results)
 
     def test_add_ha_interface_to_l3_agent(self):

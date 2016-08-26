@@ -268,7 +268,7 @@ class L3Scheduler(object):
     def _add_port_from_net_and_ensure_vr_id(self, plugin, ctxt, router_db,
                                             tenant_id, ha_net):
         plugin._ensure_vr_id(ctxt, router_db, ha_net)
-        return plugin.add_ha_port(ctxt, router_db.id, ha_net.network.id,
+        return plugin.add_ha_port(ctxt, router_db.id, ha_net.network_id,
                                   tenant_id)
 
     def create_ha_port_and_bind(self, plugin, context, router_id,

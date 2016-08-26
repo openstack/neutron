@@ -23,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -43,6 +44,7 @@ from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
+from neutron.objects import l3_hamode
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
 from neutron.tests.common import helpers
@@ -169,10 +171,8 @@ class L3HATestCase(L3HATestFramework):
     def test_get_l3_bindings_hosting_router_with_ha_states_not_scheduled(self):
         router = self._create_router(ha=False)
         # Check that there no L3 agents scheduled for this router
-        res = self.admin_ctx.session.query(
-            l3ha_model.L3HARouterAgentPortBinding).filter(
-            l3ha_model.L3HARouterAgentPortBinding.router_id == router['id']
-        ).all()
+        res = l3_hamode.L3HARouterAgentPortBinding.get_objects(
+            self.admin_ctx, router_id=router['id'])
         self.assertEqual([], [r.agent for r in res])
         bindings = self.plugin.get_l3_bindings_hosting_router_with_ha_states(
             self.admin_ctx, router['id'])
@@ -589,7 +589,7 @@ class L3HATestCase(L3HATestFramework):
     def test_create_ha_network_binding_failure_rolls_back_network(self):
         networks_before = self.core_plugin.get_networks(self.admin_ctx)
 
-        with mock.patch.object(l3ha_model, 'L3HARouterNetwork',
+        with mock.patch.object(l3_hamode, 'L3HARouterNetwork',
                                side_effect=ValueError):
             self.assertRaises(ValueError, self.plugin._create_ha_network,
                               self.admin_ctx, _uuid())
@@ -688,7 +688,8 @@ class L3HATestCase(L3HATestFramework):
                                              router['tenant_id'])
         self.plugin._create_ha_network_tenant_binding(
             self.admin_ctx, 't1', network['network_id'])
-        with testtools.ExpectedException(db_exc.DBDuplicateEntry):
+        with testtools.ExpectedException(
+                exceptions.NeutronDbObjectDuplicateEntry):
             self.plugin._create_ha_network_tenant_binding(
                 self.admin_ctx, 't1', network['network_id'])
 
@@ -947,9 +948,8 @@ class L3HATestCase(L3HATestFramework):
         router1 = self._create_router()
         states = {router1['id']: 'active'}
         with mock.patch.object(self.plugin, 'get_ha_router_port_bindings'):
-            (self.admin_ctx.session.query(
-                 l3ha_model.L3HARouterAgentPortBinding).
-             filter_by(router_id=router1['id']).delete())
+            (l3_hamode.L3HARouterAgentPortBinding.delete_objects(
+                self.admin_ctx, router_id=router1['id']))
             self.plugin.update_routers_states(
                 self.admin_ctx, states, self.agent1['host'])
 

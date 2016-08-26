@@ -289,6 +289,10 @@ def get_random_flow_direction():
     return random.choice(n_const.VALID_DIRECTIONS)
 
 
+def get_random_ha_states():
+    return random.choice(n_const.VALID_HA_STATES)
+
+
 def get_random_ether_type():
     return random.choice(n_const.VALID_ETHERTYPES)
 
