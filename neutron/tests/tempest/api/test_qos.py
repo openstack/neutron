@@ -75,6 +75,28 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertTrue(retrieved_policy['shared'])
         self.assertEqual([], retrieved_policy['rules'])
 
+    @test.idempotent_id('6e880e0f-bbfc-4e54-87c6-680f90e1b618')
+    def test_policy_update_forbidden_for_regular_tenants_own_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='',
+                                        shared=False,
+                                        tenant_id=self.client.tenant_id)
+        self.assertRaises(
+            exceptions.Forbidden,
+            self.client.update_qos_policy,
+            policy['id'], description='test policy')
+
+    @test.idempotent_id('4ecfd7e7-47b6-4702-be38-be9235901a87')
+    def test_policy_update_forbidden_for_regular_tenants_foreign_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='',
+                                        shared=False,
+                                        tenant_id=self.admin_client.tenant_id)
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.update_qos_policy,
+            policy['id'], description='test policy')
+
     @test.idempotent_id('ee263db4-009a-4641-83e5-d0e83506ba4c')
     def test_shared_policy_update(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -425,6 +447,34 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             exceptions.Forbidden,
             self.client.create_bandwidth_limit_rule,
             'policy', 1, 2)
+
+    @test.idempotent_id('1bfc55d9-6fd8-4293-ab3a-b1d69bf7cd2e')
+    def test_rule_update_forbidden_for_regular_tenants_own_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False,
+                                        tenant_id=self.client.tenant_id)
+        rule = self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
+                                                    max_kbps=1,
+                                                    max_burst_kbps=1)
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.update_bandwidth_limit_rule,
+            policy['id'], rule['id'], max_kbps=2, max_burst_kbps=4)
+
+    @test.idempotent_id('9a607936-4b6f-4c2f-ad21-bd5b3d4fc91f')
+    def test_rule_update_forbidden_for_regular_tenants_foreign_policy(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False,
+                                        tenant_id=self.admin_client.tenant_id)
+        rule = self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
+                                                    max_kbps=1,
+                                                    max_burst_kbps=1)
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.update_bandwidth_limit_rule,
+            policy['id'], rule['id'], max_kbps=2, max_burst_kbps=4)
 
     @test.idempotent_id('ce0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
     def test_get_rules_by_policy(self):
