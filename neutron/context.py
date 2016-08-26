@@ -32,21 +32,20 @@ class ContextBase(oslo_context.RequestContext):
 
     """
 
-    def __init__(self, user_id, tenant_id, is_admin=None, roles=None,
-                 timestamp=None, request_id=None, tenant_name=None,
-                 user_name=None, overwrite=True, auth_token=None,
-                 is_advsvc=None):
+    def __init__(self, user_id=None, tenant_id=None, is_admin=None,
+                 timestamp=None, tenant_name=None, user_name=None,
+                 is_advsvc=None, **kwargs):
         """Object initialization.
 
         :param overwrite: Set to False to ensure that the greenthread local
             copy of the index is not overwritten.
         """
-        super(ContextBase, self).__init__(auth_token=auth_token,
-                                          user=user_id, tenant=tenant_id,
-                                          is_admin=is_admin,
-                                          request_id=request_id,
-                                          overwrite=overwrite,
-                                          roles=roles)
+        # NOTE(jamielennox): We maintain these arguments in order for tests
+        # that pass arguments positionally.
+        kwargs.setdefault('user', user_id)
+        kwargs.setdefault('tenant', tenant_id)
+        super(ContextBase, self).__init__(is_admin=is_admin, **kwargs)
+
         self.user_name = user_name
         self.tenant_name = tenant_name
 
