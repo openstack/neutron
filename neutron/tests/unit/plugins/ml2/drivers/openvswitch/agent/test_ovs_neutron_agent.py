@@ -1189,6 +1189,7 @@ class TestOvsNeutronAgent(object):
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
                 mock.call.phys_br.create(),
+                mock.call.phys_br.set_secure_mode(),
                 mock.call.phys_br.setup_controllers(mock.ANY),
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.db_get_val('Interface', 'int-br-eth',
@@ -1303,6 +1304,7 @@ class TestOvsNeutronAgent(object):
             expected_calls = [
                 mock.call.phys_br_cls('br-eth'),
                 mock.call.phys_br.create(),
+                mock.call.phys_br.set_secure_mode(),
                 mock.call.phys_br.setup_controllers(mock.ANY),
                 mock.call.phys_br.setup_default_table(),
                 mock.call.int_br.delete_port('int-br-eth'),
