@@ -13,7 +13,9 @@
 
 import mock
 
+from neutron.api.rpc.callbacks import resource_manager
 from neutron.callbacks import events
+from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import backend
 from neutron.tests import base
@@ -21,10 +23,13 @@ from neutron.tests import base
 
 class ServerSideRpcBackendTest(base.BaseTestCase):
     # TODO(fitoduarte): add more test to improve coverage of module
-    @mock.patch("neutron.api.rpc.callbacks.resource_manager."
-                "ResourceCallbacksManager.register")
+    def setUp(self):
+        super(ServerSideRpcBackendTest, self).setUp()
+        self.register_mock = mock.patch.object(
+            resource_manager.ResourceCallbacksManager, "register").start()
+
     @mock.patch("neutron.callbacks.manager.CallbacksManager.subscribe")
-    def test___init__(self, mocked_subscribe, mocked_register):
+    def test___init__(self, mocked_subscribe):
         test_obj = backend.ServerSideRpcBackend()
 
         calls = [mock.call(test_obj.process_event,
@@ -41,3 +46,25 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
                            events.AFTER_DELETE)
                  ]
         mocked_subscribe.assert_has_calls(calls, any_order=True)
+
+    def test_process_event(self):
+        test_obj = backend.ServerSideRpcBackend()
+        test_obj._stub = mock_stub = mock.Mock()
+        trunk_plugin = mock.Mock()
+
+        test_obj.process_event(
+            trunk_consts.TRUNK, events.AFTER_CREATE, trunk_plugin,
+            callbacks.TrunkPayload("context",
+                                   "id",
+                                   current_trunk="current_trunk"))
+        test_obj.process_event(
+            trunk_consts.TRUNK, events.AFTER_DELETE, trunk_plugin,
+            callbacks.TrunkPayload("context",
+                                   "id",
+                                   original_trunk="original_trunk"))
+
+        calls = [mock.call.trunk_created("context",
+                           "current_trunk"),
+                 mock.call.trunk_deleted("context",
+                           "original_trunk")]
+        mock_stub.assert_has_calls(calls, any_order=False)

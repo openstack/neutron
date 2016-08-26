@@ -54,7 +54,8 @@ class ServerSideRpcBackend(object):
                 events.AFTER_DELETE: self._stub.subports_deleted,
             }
         elif resource == trunk_consts.TRUNK:
-            payload = payload.current_trunk
+            # On AFTER_DELETE event, current_trunk is None
+            payload = payload.current_trunk or payload.original_trunk
             method = {
                 events.AFTER_CREATE: self._stub.trunk_created,
                 events.AFTER_DELETE: self._stub.trunk_deleted,
