@@ -713,7 +713,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     }
                 )
             else:
-                mtu = type_driver.get_mtu(provider.PHYSICAL_NETWORK)
+                mtu = type_driver.get_mtu(s[provider.PHYSICAL_NETWORK])
                 # Some drivers, like 'local', may return None; the assumption
                 # then is that for the segment type, MTU has no meaning or
                 # unlimited, and so we should then ignore those values.
