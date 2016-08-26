@@ -26,11 +26,11 @@ from sqlalchemy import sql
 from neutron._i18n import _LI, _LW
 from neutron.db import agents_db
 from neutron.db import api as db_api
+from neutron.db.models import segment as segment_model
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import availability_zone as az_ext
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
-from neutron.services.segments import db as segments_db
 
 LOG = logging.getLogger(__name__)
 
@@ -66,8 +66,8 @@ class AutoScheduler(object):
             dhcp_agents = query.all()
 
             query = context.session.query(
-                segments_db.SegmentHostMapping.segment_id)
-            query = query.filter(segments_db.SegmentHostMapping.host == host)
+                segment_model.SegmentHostMapping.segment_id)
+            query = query.filter(segment_model.SegmentHostMapping.host == host)
             segments_on_host = {s.segment_id for s in query}
 
             for dhcp_agent in dhcp_agents:

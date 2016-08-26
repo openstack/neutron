@@ -28,6 +28,7 @@ from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
+from neutron.db.models import segment as segment_model
 from neutron.db import portbindings_db
 from neutron.db import segments_db
 from neutron.extensions import ip_allocation
@@ -471,7 +472,7 @@ class HostSegmentMappingTestCase(SegmentTestCase):
     def _get_segments_for_host(self, host):
         ctx = context.get_admin_context()
         segments_host_list = ctx.session.query(
-            db.SegmentHostMapping).filter_by(host=host)
+            segment_model.SegmentHostMapping).filter_by(host=host)
         return {seg_host['segment_id']: seg_host
                 for seg_host in segments_host_list}
 
@@ -788,7 +789,7 @@ class TestSegmentAwareIpam(SegmentTestCase):
         ctx = context.get_admin_context()
         with ctx.session.begin(subtransactions=True):
             for segment_id, host in mappings:
-                record = db.SegmentHostMapping(
+                record = segment_model.SegmentHostMapping(
                     segment_id=segment_id,
                     host=host)
                 ctx.session.add(record)
