@@ -49,7 +49,7 @@ def set_db_defaults():
     db_options.set_defaults(
         cfg.CONF,
         connection='sqlite://',
-        sqlite_db='', max_pool_size=10,
+        max_pool_size=10,
         max_overflow=20, pool_timeout=10)
 
 set_db_defaults()
