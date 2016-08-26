@@ -1161,6 +1161,19 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
 
 class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
+    def test_get_mtu_with_physical_net(self):
+        plugin = manager.NeutronManager.get_plugin()
+        mock_type_driver = mock.MagicMock()
+        plugin.type_manager.drivers['driver1'] = mock.Mock()
+        plugin.type_manager.drivers['driver1'].obj = mock_type_driver
+        net = {
+            'name': 'net1',
+            pnet.NETWORK_TYPE: 'driver1',
+            pnet.PHYSICAL_NETWORK: 'physnet1',
+        }
+        plugin._get_network_mtu(net)
+        mock_type_driver.get_mtu.assert_called_once_with('physnet1')
+
     def _register_type_driver_with_mtu(self, driver, mtu):
         plugin = manager.NeutronManager.get_plugin()
 
