@@ -141,7 +141,6 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
                 label_id = label['id']
                 self.label_tenant_id[label_id] = tenant_id
 
-            tenant_id = self.label_tenant_id.get
         accs = self._get_traffic_counters(self.context, self.routers.values())
         if not accs:
             return
