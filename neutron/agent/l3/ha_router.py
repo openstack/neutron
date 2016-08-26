@@ -193,11 +193,11 @@ class HaRouter(router.RouterInfo):
         default_gw_rts = []
         instance = self._get_keepalived_instance()
         for gw_ip in gateway_ips:
-                # TODO(Carl) This is repeated everywhere.  A method would
-                # be nice.
-                default_gw = n_consts.IP_ANY[netaddr.IPAddress(gw_ip).version]
-                default_gw_rts.append(keepalived.KeepalivedVirtualRoute(
-                    default_gw, gw_ip, interface_name))
+            # TODO(Carl) This is repeated everywhere.  A method would
+            # be nice.
+            default_gw = n_consts.IP_ANY[netaddr.IPAddress(gw_ip).version]
+            default_gw_rts.append(keepalived.KeepalivedVirtualRoute(
+                default_gw, gw_ip, interface_name))
         instance.virtual_routes.gateway_routes = default_gw_rts
 
     def _add_extra_subnet_onlink_routes(self, ex_gw_port, interface_name):
