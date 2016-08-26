@@ -122,11 +122,9 @@ def get_engine():
     return context_manager.get_legacy_facade().get_engine()
 
 
+@removals.remove(version='newton', removal_version='Ocata')
 def dispose():
-    # TODO(akamyshnikova): Use context_manager.dispose_pool() when it is
-    #                      available in oslo.db
-    if context_manager._factory._started:
-        get_engine().pool.dispose()
+    context_manager.dispose_pool()
 
 
 #TODO(akamyshnikova): when all places in the code, which use sessions/
