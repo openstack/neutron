@@ -478,6 +478,24 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertFalse(
             mock_admin_client.recordsets.delete.call_args_list)
 
+    def test_create_port_dns_name_field_missing(self, *mocks):
+        res = self._create_network(self.fmt, 'test_network', True)
+        net = self.deserialize(self.fmt, res)['network']
+        cidr = '10.0.0.0/24'
+        self._create_subnet_for_test(net['id'], cidr)
+        port_request = {
+            'port': {
+                'network_id': net['id'],
+                'tenant_id': net['tenant_id'],
+                'name': 'mugsie',
+                'admin_state_up': True,
+                'device_id': '',
+                'device_owner': '',
+                'fixed_ips': ''
+            }
+        }
+        self.plugin.create_port(self.context, port_request)
+
     def test_dns_driver_loaded_after_server_restart(self, *mocks):
         dns_integration.DNS_DRIVER = None
         net, port, dns_data_db = self._create_port_for_test()
