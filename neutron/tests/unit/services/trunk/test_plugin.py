@@ -19,6 +19,8 @@ import testtools
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
+from neutron.callbacks import resources
+from neutron.extensions import portbindings
 from neutron import manager
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import callbacks
@@ -265,6 +267,51 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.context, trunk['id'],
                 {'sub_ports': [{'port_id': subport['port']['id']}]})
             self.assertEqual(constants.DOWN_STATUS, trunk['status'])
+
+    def test__trigger_trunk_status_change_vif_type_changed_unbound(self):
+        with self.port() as parent:
+            parent[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_UNBOUND
+            original_port = {portbindings.VIF_TYPE: 'fakeviftype'}
+            self._test__trigger_trunk_status_change(parent,
+                                                    original_port,
+                                                    constants.ACTIVE_STATUS,
+                                                    constants.DOWN_STATUS)
+
+    def test__trigger_trunk_status_change_vif_type_unchanged(self):
+        with self.port() as parent:
+            parent[portbindings.VIF_TYPE] = 'fakeviftype'
+            original_port = {portbindings.VIF_TYPE: 'fakeviftype'}
+            self._test__trigger_trunk_status_change(parent,
+                                                    original_port,
+                                                    constants.ACTIVE_STATUS,
+                                                    constants.ACTIVE_STATUS)
+
+    def test__trigger_trunk_status_change_vif_type_changed(self):
+        with self.port() as parent:
+            parent[portbindings.VIF_TYPE] = 'realviftype'
+            original_port = {portbindings.VIF_TYPE: 'fakeviftype'}
+            self._test__trigger_trunk_status_change(parent,
+                                                    original_port,
+                                                    constants.ACTIVE_STATUS,
+                                                    constants.ACTIVE_STATUS)
+
+    def _test__trigger_trunk_status_change(self, new_parent,
+                                           original_parent,
+                                           initial_trunk_status,
+                                           final_trunk_status):
+        trunk = self._create_test_trunk(new_parent)
+        trunk = self._get_trunk_obj(trunk['id'])
+        trunk.update(status=initial_trunk_status)
+        trunk_details = {'trunk_id': trunk.id}
+        new_parent['trunk_details'] = trunk_details
+        original_parent['trunk_details'] = trunk_details
+        kwargs = {'context': self.context, 'port': new_parent,
+                  'original_port': original_parent}
+        self.trunk_plugin._trigger_trunk_status_change(resources.PORT,
+                                                  events.AFTER_UPDATE,
+                                                  None, **kwargs)
+        trunk = self._get_trunk_obj(trunk.id)
+        self.assertEqual(final_trunk_status, trunk.status)
 
 
 class TrunkPluginDriversTestCase(test_plugin.Ml2PluginV2TestCase):
