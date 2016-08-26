@@ -35,14 +35,11 @@ class ContextBase(oslo_context.RequestContext):
     def __init__(self, user_id, tenant_id, is_admin=None, roles=None,
                  timestamp=None, request_id=None, tenant_name=None,
                  user_name=None, overwrite=True, auth_token=None,
-                 is_advsvc=None, **kwargs):
+                 is_advsvc=None):
         """Object initialization.
 
         :param overwrite: Set to False to ensure that the greenthread local
             copy of the index is not overwritten.
-
-        :param kwargs: Extra arguments that might be present, but we ignore
-            because they possibly came in from older rpc messages.
         """
         super(ContextBase, self).__init__(auth_token=auth_token,
                                           user=user_id, tenant=tenant_id,
@@ -97,7 +94,15 @@ class ContextBase(oslo_context.RequestContext):
 
     @classmethod
     def from_dict(cls, values):
-        return cls(**values)
+        return cls(user_id=values.get('user_id', values.get('user')),
+                   tenant_id=values.get('tenant_id', values.get('project_id')),
+                   is_admin=values.get('is_admin'),
+                   roles=values.get('roles'),
+                   timestamp=values.get('timestamp'),
+                   request_id=values.get('request_id'),
+                   tenant_name=values.get('tenant_name'),
+                   user_name=values.get('user_name'),
+                   auth_token=values.get('auth_token'))
 
     def elevated(self):
         """Return a version of this context with admin flag set."""

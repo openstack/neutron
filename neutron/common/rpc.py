@@ -229,13 +229,7 @@ class RequestContextSerializer(om_serializer.Serializer):
         trace_info = rpc_ctxt_dict.pop("trace_info", None)
         if trace_info:
             profiler.init(**trace_info)
-        user_id = rpc_ctxt_dict.pop('user_id', None)
-        if not user_id:
-            user_id = rpc_ctxt_dict.pop('user', None)
-        tenant_id = rpc_ctxt_dict.pop('tenant_id', None)
-        if not tenant_id:
-            tenant_id = rpc_ctxt_dict.pop('project_id', None)
-        return context.Context(user_id, tenant_id, **rpc_ctxt_dict)
+        return context.Context.from_dict(rpc_ctxt_dict)
 
 
 @profiler.trace_cls("rpc")
