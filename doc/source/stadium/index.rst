@@ -16,11 +16,26 @@
 Neutron Stadium
 ================
 
-The Stadium Guide contains information on policies and procedures for the
-Neutron Stadium.
+This section contains information on policies and procedures for the so called
+Neutron Stadium. The Neutron Stadium is the list of projects that show up in the
+OpenStack `Governance Document <http://governance.openstack.org/reference/projects/neutron.html>`_.
+
+The list includes projects that the Neutron PTL and core team are directly
+involved in, and manage on a day to day basis. To do so, the PTL and team
+ensure that common practices and guidelines are followed throughout the Stadium,
+for all aspects that pertain software development, from inception, to coding,
+testing, documentation and more.
+
+The Stadium is not to be intended as a VIP club for OpenStack networking
+projects, or an upper tier within OpenStack. It is simply the list of projects
+the Neutron team and PTL claim responsibility for when producing Neutron
+deliverables throughout the release `cycles <https://github.com/openstack/releases>`_.
+
+For more details on the Stadium, and what it takes for a project to be
+considered an integral part of the Stadium, please read on.
 
 .. toctree::
    :maxdepth: 3
 
-   sub_projects
-   sub_project_guidelines
+   governance
+   guidelines
