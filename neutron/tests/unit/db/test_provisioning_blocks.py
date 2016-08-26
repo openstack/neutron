@@ -22,11 +22,14 @@ from neutron.db import models_v2
 from neutron.db import provisioning_blocks as pb
 from neutron.tests.unit import testlib_api
 
+CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
 
 class TestStatusBarriers(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(TestStatusBarriers, self).setUp()
+        self.setup_coreplugin(CORE_PLUGIN)
         self.ctx = n_ctx.get_admin_context()
         self.provisioned = mock.Mock()
         self.port = self._make_port()
