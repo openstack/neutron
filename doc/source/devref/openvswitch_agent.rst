@@ -21,24 +21,24 @@
       (Avoid deeper levels because they do not render well.)
 
 
-OpenVSwitch L2 Agent
-====================
+Open vSwitch L2 Agent
+=====================
 
-This Agent uses the `OpenVSwitch`_ virtual switch to create L2
+This Agent uses the `Open vSwitch`_ virtual switch to create L2
 connectivity for instances, along with bridges created in conjunction
 with OpenStack Nova for filtering.
 
 ovs-neutron-agent can be configured to use different networking technologies
 to create project isolation.
 These technologies are implemented as ML2 type drivers which are used in
-conjunction with the OpenVSwitch mechanism driver.
+conjunction with the Open vSwitch mechanism driver.
 
 VLAN Tags
 ---------
 
 .. image:: images/under-the-hood-scenario-1-ovs-compute.png
 
-.. _OpenVSwitch: http://openvswitch.org
+.. _Open vSwitch: http://openvswitch.org
 
 
 GRE Tunnels
@@ -360,7 +360,7 @@ Iptables Firewall
                |                 |
          +-----+-----------------+----+
          |    port 1          port 2  |
-         |                            |
+         |   (tag 3)         (tag 5)  |
          |           br-int           |
          +----------------------------+
 
@@ -405,7 +405,7 @@ OVS Firewall case
                |                 |
          +-----+-----------------+----+
          |    port 1          port 2  |
-         |                            |
+         |   (tag 3)         (tag 5)  |
          |           br-int           |
          +----------------------------+
 
@@ -482,13 +482,14 @@ see [1].
          |          br-trunk-1            |
          |                                |
          | tp-patch-trunk  sp-patch-trunk |
+         |                   (tag 100)    |
          +-----+-----------------+--------+
                |                 |
                |                 |
                |                 |
          +-----+-----------------+---------+
          | tp-patch-int     sp-patch-int   |
-         |                                 |
+         |  (tag 3)           (tag 5)      |
          |           br-int                |
          +---------------------------------+
 
@@ -509,8 +510,10 @@ It will create the tap interface tap1 and plug it into br-trunk-1 setting the pa
 The OVS agent will be monitoring the creation of ports on the trunk bridges. When it detects
 that a new port has been created on the trunk bridge, it will do the following:
 
-ovs-vsctl add-port  br-trunk-1 tp-patch-trunk -- set Interface tp-patch-trunk type=patch options:peer=tp-patch-int
-ovs-vsctl add-port br-int tp-patch-int tag=3 -- set Interface tp-patch-int type=patch options:peer=tp-patch-trunk
+::
+
+ ovs-vsctl add-port br-trunk-1 tp-patch-trunk -- set Interface tp-patch-trunk type=patch options:peer=tp-patch-int
+ ovs-vsctl add-port br-int tp-patch-int tag=3 -- set Interface tp-patch-int type=patch options:peer=tp-patch-trunk
 
 
 A patch port is created to connect the trunk bridge to the integration bridge.
@@ -531,9 +534,10 @@ associated with the parent port).
 When a subport is added to a parent port that is used by a VM the OVS agent will
 create a new patch port:
 
+::
 
-ovs-vsctl add-port  br-trunk-1 sp-patch-trunk tag=100 -- set Interface sp-patch-trunk type=patch options:peer=sp-patch-int
-ovs-vsctl add-port br-int sp-patch-int tag=5 -- set Interface sp-patch-int type=patch options:peer=sp-patch-trunk
+ ovs-vsctl add-port br-trunk-1 sp-patch-trunk tag=100 -- set Interface sp-patch-trunk type=patch options:peer=sp-patch-int
+ ovs-vsctl add-port br-int sp-patch-int tag=5 -- set Interface sp-patch-int type=patch options:peer=sp-patch-trunk
 
 This patch port connects the trunk bridge to the integration bridge.
 sp-patch-trunk, the trunk bridge side of the patch is tagged using VLAN 100.
