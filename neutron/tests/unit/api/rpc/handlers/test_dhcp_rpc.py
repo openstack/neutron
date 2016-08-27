@@ -16,7 +16,6 @@
 import mock
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
-from oslo_db import exception as db_exc
 
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.callbacks import resources
@@ -139,10 +138,6 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self._test__port_action_with_failures(
             exc=n_exc.SubnetNotFound(subnet_id='foo_subnet_id'),
             action='create_port')
-
-    def test_create_port_catch_db_error(self):
-        self._test__port_action_with_failures(exc=db_exc.DBError(),
-                                              action='create_port')
 
     def test_create_port_catch_ip_generation_failure_reraise(self):
         self.assertRaises(
