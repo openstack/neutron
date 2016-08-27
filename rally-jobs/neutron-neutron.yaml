@@ -3,7 +3,7 @@
     -
       runner:
         type: "constant"
-        times: 40
+        times: 100
         concurrency: 20
       context:
         users:
@@ -11,8 +11,11 @@
           users_per_tenant: 1
         quotas:
           neutron:
-             network: -1
+             network: 100
       sla:
+        max_avg_duration_per_atomic:
+          neutron.list_networks: 15  # reduce as perf is fixed
+
         failure_rate:
           max: 0
 
@@ -66,7 +69,7 @@
       args:
         network_create_args:
         port_create_args:
-        ports_per_network: 20
+        ports_per_network: 100
       runner:
         type: "constant"
         times: 40
@@ -80,10 +83,10 @@
              network: -1
              subnet: -1
              router: -1
-             port: -1
+             port: 4040  # (ports per network + 1 dhcp) * times
       sla:
         max_avg_duration_per_atomic:
-          neutron.list_ports: 5
+          neutron.list_ports: 15  # reduce as perf is fixed
         failure_rate:
           max: 0
 
