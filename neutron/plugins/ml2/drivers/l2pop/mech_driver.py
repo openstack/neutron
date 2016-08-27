@@ -48,6 +48,10 @@ class L2populationMechanismDriver(api.MechanismDriver):
                                    ip_address=ip['ip_address'])
                 for ip in port['fixed_ips']]
 
+    def check_vlan_transparency(self, context):
+        """L2population driver vlan transparency support."""
+        return True
+
     def delete_port_postcommit(self, context):
         port = context.current
         agent_host = context.host
