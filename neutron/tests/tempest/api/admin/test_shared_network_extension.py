@@ -192,6 +192,22 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         )['rbac_policy']
         return {'network': net, 'subnet': subnet, 'policy': pol}
 
+    @test.attr(type='smoke')
+    @test.idempotent_id('86c3529b-1231-40de-803c-bfffffff1eee')
+    def test_create_rbac_policy_with_target_tenant_none(self):
+        with testtools.ExpectedException(lib_exc.BadRequest):
+            self._make_admin_net_and_subnet_shared_to_tenant_id(
+                tenant_id=None)
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('86c3529b-1231-40de-803c-bfffffff1fff')
+    def test_create_rbac_policy_with_target_tenant_too_long_id(self):
+        with testtools.ExpectedException(lib_exc.BadRequest):
+            target_tenant = '1234' * 100
+            self._make_admin_net_and_subnet_shared_to_tenant_id(
+                tenant_id=target_tenant)
+
+    @test.attr(type='smoke')
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff1fff')
     def test_network_only_visible_to_policy_target(self):
         net = self._make_admin_net_and_subnet_shared_to_tenant_id(
