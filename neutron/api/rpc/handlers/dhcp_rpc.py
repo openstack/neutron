@@ -104,6 +104,7 @@ class DhcpRpcCallback(object):
         except (db_exc.DBError,
                 exceptions.NetworkNotFound,
                 exceptions.SubnetNotFound,
+                exceptions.InvalidInput,
                 exceptions.IpAddressGenerationFailure) as e:
             with excutils.save_and_reraise_exception(reraise=False) as ctxt:
                 if isinstance(e, exceptions.IpAddressGenerationFailure):
