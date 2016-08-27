@@ -951,7 +951,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                 self.assertEqual(0, del_fn.call_count)
                 self.assertEqual(1, log.call_count)
 
-    def test_fdb_add(self):
+    def _test_fdb_add(self, proxy_enabled=False):
         fdb_entries = {'net_id':
                        {'ports':
                         {'agent_ip': [constants.FLOODING_ENTRY,
@@ -979,7 +979,17 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                           check_exit_code=False),
             ]
             execute_fn.assert_has_calls(expected)
-            add_fn.assert_called_with('port_ip', 'port_mac')
+            if proxy_enabled:
+                add_fn.assert_called_with('port_ip', 'port_mac')
+            else:
+                add_fn.assert_not_called()
+
+    def test_fdb_add(self):
+        self._test_fdb_add(proxy_enabled=False)
+
+    def test_fdb_add_with_arp_responder(self):
+        cfg.CONF.set_override('arp_responder', True, 'VXLAN')
+        self._test_fdb_add(proxy_enabled=True)
 
     def test_fdb_ignore(self):
         fdb_entries = {'net_id':
@@ -1010,7 +1020,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
 
             self.assertFalse(execute_fn.called)
 
-    def test_fdb_remove(self):
+    def _test_fdb_remove(self, proxy_enabled=False):
         fdb_entries = {'net_id':
                        {'ports':
                         {'agent_ip': [constants.FLOODING_ENTRY,
@@ -1036,9 +1046,19 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                           check_exit_code=False),
             ]
             execute_fn.assert_has_calls(expected)
-            del_fn.assert_called_with('port_ip', 'port_mac')
+            if proxy_enabled:
+                del_fn.assert_called_with('port_ip', 'port_mac')
+            else:
+                del_fn.assert_not_called()
 
-    def test_fdb_update_chg_ip(self):
+    def test_fdb_remove(self):
+        self._test_fdb_remove(proxy_enabled=False)
+
+    def test_fdb_remove_with_arp_responder(self):
+        cfg.CONF.set_override('arp_responder', True, 'VXLAN')
+        self._test_fdb_remove(proxy_enabled=True)
+
+    def _test_fdb_update_chg_ip(self, proxy_enabled=False):
         fdb_entries = {'chg_ip':
                        {'net_id':
                         {'agent_ip':
@@ -1051,8 +1071,19 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                                   return_value='') as del_fn:
             self.lb_rpc.fdb_update(None, fdb_entries)
 
-            del_fn.assert_called_with('port_ip_1', 'port_mac')
-            add_fn.assert_called_with('port_ip_2', 'port_mac')
+            if proxy_enabled:
+                del_fn.assert_called_with('port_ip_1', 'port_mac')
+                add_fn.assert_called_with('port_ip_2', 'port_mac')
+            else:
+                del_fn.assert_not_called()
+                add_fn.assert_not_called()
+
+    def test_fdb_update_chg_ip(self):
+        self._test_fdb_update_chg_ip(proxy_enabled=False)
+
+    def test_fdb_update_chg_ip_with_arp_responder(self):
+        cfg.CONF.set_override('arp_responder', True, 'VXLAN')
+        self._test_fdb_update_chg_ip(proxy_enabled=True)
 
     def test_fdb_update_chg_ip_empty_lists(self):
         fdb_entries = {'chg_ip': {'net_id': {'agent_ip': {}}}}
