@@ -14,7 +14,9 @@
 import mock
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
+from oslo_utils import uuidutils
 
+from neutron.common import exceptions as c_exc
 from neutron import context
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions
@@ -59,6 +61,21 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
         self.assertRaises(n_exc.BadRequest,
             self.mixin.get_auto_allocated_topology,
             self.ctx, mock.ANY, fields=['foo'])
+
+    def test__provision_tenant_private_network_handles_subnet_errors(self):
+        network_id = uuidutils.generate_uuid()
+        self.mixin._core_plugin.create_network.return_value = (
+            {'id': network_id})
+        self.mixin._core_plugin.create_subnet.side_effect = (
+            c_exc.SubnetAllocationError(reason='disaster'))
+        with mock.patch.object(self.mixin, "_get_supported_subnetpools") as f,\
+                mock.patch.object(self.mixin, "_cleanup") as g:
+            f.return_value = (
+                [{'ip_version': 4, "id": uuidutils.generate_uuid()}])
+            self.assertRaises(exceptions.AutoAllocationFailure,
+                              self.mixin._provision_tenant_private_network,
+                              self.ctx, 'foo_tenant')
+            g.assert_called_once_with(self.ctx, network_id)
 
     def _test__build_topology(self, exception):
         with mock.patch.object(self.mixin,

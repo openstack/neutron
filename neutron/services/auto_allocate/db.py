@@ -25,6 +25,7 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.common import exceptions as c_exc
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
@@ -280,10 +281,12 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 subnets.append(p_utils.create_subnet(
                     self.core_plugin, context, {'subnet': subnet_args}))
             return subnets
-        except (ValueError, n_exc.BadRequest, n_exc.NotFound):
+        except (c_exc.SubnetAllocationError, ValueError,
+                n_exc.BadRequest, n_exc.NotFound) as e:
             LOG.error(_LE("Unable to auto allocate topology for tenant "
-                          "%s due to missing requirements, e.g. default "
-                          "or shared subnetpools"), tenant_id)
+                          "%(tenant_id)s due to missing or unmet "
+                          "requirements. Reason: %(reason)s"),
+                      {'tenant_id': tenant_id, 'reason': e})
             if network:
                 self._cleanup(context, network['id'])
             raise exceptions.AutoAllocationFailure(
