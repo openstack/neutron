@@ -35,7 +35,6 @@ from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.conf.agent import dhcp as dhcp_config
-from neutron import context
 from neutron.tests import base
 
 
@@ -1087,8 +1086,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
 class TestDhcpPluginApiProxy(base.BaseTestCase):
     def _test_dhcp_api(self, method, **kwargs):
-        ctxt = context.get_admin_context()
-        proxy = dhcp_agent.DhcpPluginApi('foo', ctxt, host='foo')
+        proxy = dhcp_agent.DhcpPluginApi('foo', host='foo')
 
         with mock.patch.object(proxy.client, 'call') as rpc_mock,\
                 mock.patch.object(proxy.client, 'prepare') as prepare_mock:
@@ -1104,7 +1102,7 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
 
             prepare_mock.assert_called_once_with(**prepare_args)
             kwargs['host'] = proxy.host
-            rpc_mock.assert_called_once_with(ctxt, method, **kwargs)
+            rpc_mock.assert_called_once_with(mock.ANY, method, **kwargs)
 
     def test_get_active_networks_info(self):
         self._test_dhcp_api('get_active_networks_info', version='1.1')

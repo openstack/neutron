@@ -58,8 +58,7 @@ class DhcpAgent(manager.Manager):
         self.conf = conf or cfg.CONF
         self.cache = NetworkCache()
         self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
-        ctx = context.get_admin_context_without_session()
-        self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, ctx, self.conf.host)
+        self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, self.conf.host)
         # create dhcp dir to store dhcp info
         dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
         utils.ensure_dir(dhcp_dir)
@@ -467,14 +466,22 @@ class DhcpPluginApi(object):
 
     """
 
-    def __init__(self, topic, context, host):
-        self.context = context
+    def __init__(self, topic, host):
         self.host = host
         target = oslo_messaging.Target(
                 topic=topic,
                 namespace=n_const.RPC_NAMESPACE_DHCP_PLUGIN,
                 version='1.0')
         self.client = n_rpc.get_client(target)
+
+    @property
+    def context(self):
+        # TODO(kevinbenton): the context should really be passed in to each of
+        # these methods so a call can be tracked all of the way through the
+        # system but that will require a larger refactor to pass the context
+        # everywhere. We just generate a new one here on each call so requests
+        # can be independently tracked server side.
+        return context.get_admin_context_without_session()
 
     def get_active_networks_info(self):
         """Make a remote process call to retrieve all network info."""
