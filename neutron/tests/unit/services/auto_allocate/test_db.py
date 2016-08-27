@@ -28,6 +28,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
         self.ctx = context.get_admin_context()
         self.mixin = db.AutoAllocatedTopologyMixin()
         self.mixin._l3_plugin = mock.Mock()
+        self.mixin._core_plugin = mock.Mock()
 
     def test__provision_external_connectivity_expected_cleanup(self):
         """Test that the right resources are cleaned up."""
@@ -96,3 +97,17 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
             result = self.mixin._check_requirements(self.ctx, 'foo_tenant')
             expected = {'id': 'dry-run=pass', 'tenant_id': 'foo_tenant'}
             self.assertEqual(expected, result)
+
+    def test__cleanup_handles_failures(self):
+        retry_then_notfound = (
+            [db_exc.RetryRequest(ValueError())] +
+            [n_exc.NotFound()] * 10
+        )
+        self.mixin._l3_plugin.remove_router_interface.side_effect = (
+            retry_then_notfound)
+        self.mixin._l3_plugin.delete_router.side_effect = (
+            retry_then_notfound)
+        self.mixin._core_plugin.delete_network.side_effect = (
+            retry_then_notfound)
+        self.mixin._cleanup(self.ctx, network_id=44, router_id=45,
+                            subnets=[{'id': 46}])
