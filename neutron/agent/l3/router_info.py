@@ -303,6 +303,7 @@ class RouterInfo(object):
         device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
         existing_cidrs = self.get_router_cidrs(device)
         new_cidrs = set()
+        gw_cidrs = self._get_gw_ips_cidr()
 
         floating_ips = self.get_floating_ips()
         # Loop once to ensure that floating ips are configured.
@@ -329,7 +330,7 @@ class RouterInfo(object):
                 # that's how the caller determines that it was removed
                 fip_statuses[fip['id']] = FLOATINGIP_STATUS_NOCHANGE
         fips_to_remove = (
-            ip_cidr for ip_cidr in existing_cidrs - new_cidrs
+            ip_cidr for ip_cidr in existing_cidrs - new_cidrs - gw_cidrs
             if common_utils.is_cidr_host(ip_cidr))
         for ip_cidr in fips_to_remove:
             LOG.debug("Removing floating ip %s from interface %s in "
@@ -337,6 +338,17 @@ class RouterInfo(object):
             self.remove_floating_ip(device, ip_cidr)
 
         return fip_statuses
+
+    def _get_gw_ips_cidr(self):
+        gw_cidrs = set()
+        ex_gw_port = self.get_ex_gw_port()
+        if ex_gw_port:
+            for ip_addr in ex_gw_port['fixed_ips']:
+                ex_gw_ip = ip_addr['ip_address']
+                addr = netaddr.IPAddress(ex_gw_ip)
+                if addr.version == l3_constants.IP_VERSION_4:
+                    gw_cidrs.add(common_utils.ip_to_cidr(ex_gw_ip))
+        return gw_cidrs
 
     def configure_fip_addresses(self, interface_name):
         try:
