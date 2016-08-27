@@ -15,7 +15,6 @@
 import mock
 from neutron_lib import constants
 
-from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron.extensions import external_net
 from neutron.extensions import l3_ext_ha_mode
@@ -32,7 +31,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         super(L3DvrHATestCase, self).setUp()
         self.l3_agent_2 = helpers.register_l3_agent(
             host="standby",
-            agent_mode=n_const.L3_AGENT_MODE_DVR_SNAT)
+            agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, distributed=True, ha=True):
         return (super(L3DvrHATestCase, self).
@@ -136,7 +135,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         HOST1, HOST2, HOST3 = 'host1', 'host2', 'host3'
         for host in [HOST1, HOST2, HOST3]:
             helpers.register_l3_agent(
-                host=host, agent_mode=n_const.L3_AGENT_MODE_DVR)
+                host=host, agent_mode=constants.L3_AGENT_MODE_DVR)
 
         router = self._create_router(distributed=True, ha=True)
         arg_list = (portbindings.HOST_ID,)

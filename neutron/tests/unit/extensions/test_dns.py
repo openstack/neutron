@@ -15,10 +15,9 @@
 import math
 
 import netaddr
-from neutron_lib import constants as n_const
+from neutron_lib import constants
 from oslo_config import cfg
 
-from neutron.common import constants
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
@@ -92,7 +91,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                 data['port'][arg] = kwargs[arg]
         # create a dhcp port device id if one hasn't been supplied
         if ('device_owner' in kwargs and
-            kwargs['device_owner'] == n_const.DEVICE_OWNER_DHCP and
+            kwargs['device_owner'] == constants.DEVICE_OWNER_DHCP and
             'host' in kwargs and
             'device_id' not in kwargs):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])

@@ -27,7 +27,6 @@ from neutron._i18n import _LE, _LI, _LW
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import constants as n_const
 from neutron import context
 from neutron import manager
 from neutron.notifiers import batch_notifier
@@ -87,7 +86,7 @@ class Notifier(object):
             if (port['device_id'] and uuidutils.is_uuid_like(port['device_id'])
                     and port['device_owner'].startswith((
                         constants.DEVICE_OWNER_COMPUTE_PREFIX,
-                        n_const.DEVICE_OWNER_BAREMETAL_PREFIX))):
+                        constants.DEVICE_OWNER_BAREMETAL_PREFIX))):
                 return True
         except (KeyError, AttributeError):
             pass

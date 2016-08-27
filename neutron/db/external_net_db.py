@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron_lib.api import validators
-from neutron_lib import constants as l3_constants
+from neutron_lib import constants as lib_constants
 from neutron_lib import exceptions as n_exc
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -39,7 +39,7 @@ from neutron import manager
 from neutron.plugins.common import constants as service_constants
 
 
-DEVICE_OWNER_ROUTER_GW = l3_constants.DEVICE_OWNER_ROUTER_GW
+DEVICE_OWNER_ROUTER_GW = lib_constants.DEVICE_OWNER_ROUTER_GW
 
 
 class ExternalNetwork(model_base.BASEV2):

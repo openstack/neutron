@@ -298,7 +298,7 @@ def reset_random_seed():
 
 
 def get_random_ipv6_mode():
-    return random.choice(n_const.IPV6_MODES)
+    return random.choice(constants.IPV6_MODES)
 
 
 import_modules_recursively = moves.moved_function(

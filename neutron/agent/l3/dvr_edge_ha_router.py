@@ -19,7 +19,6 @@ from neutron.agent.l3 import dvr_edge_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
-from neutron.common import constants as l3_constants
 
 
 class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
@@ -105,7 +104,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
 
     def _is_this_snat_host(self):
         return (self.agent_conf.agent_mode
-                == l3_constants.L3_AGENT_MODE_DVR_SNAT)
+                == constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _dvr_internal_network_removed(self, port):
         super(DvrEdgeHaRouter, self)._dvr_internal_network_removed(port)

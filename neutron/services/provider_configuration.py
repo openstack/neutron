@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import debtcollector
 import importlib
 import itertools
 import os
@@ -32,9 +31,7 @@ LOG = logging.getLogger(__name__)
 
 SERVICE_PROVIDERS = 'neutron.service_providers'
 
-debtcollector.deprecate(
-    'Moved serviceprovider_opts to %s' % prov_config.__name__,
-    version="newton", removal_version="ocata")
+# TODO(HenryG): use MovedGlobals to deprecate this.
 serviceprovider_opts = prov_config.serviceprovider_opts
 
 prov_config.register_service_provider_opts()

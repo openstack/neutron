@@ -18,7 +18,6 @@ import netaddr
 from neutron_lib import constants
 import webob.exc
 
-from neutron.common import constants as n_const
 from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
 from neutron.db import portbindings_db
@@ -51,8 +50,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
         return results
 
     def _mock_slaac_subnet_on(self):
-        slaac_subnet = {'ipv6_address_mode': n_const.IPV6_SLAAC,
-                        'ipv6_ra_mode': n_const.IPV6_SLAAC}
+        slaac_subnet = {'ipv6_address_mode': constants.IPV6_SLAAC,
+                        'ipv6_ra_mode': constants.IPV6_SLAAC}
         self.mixin._get_subnet = mock.Mock(return_value=slaac_subnet)
 
     def _mock_slaac_subnet_off(self):
@@ -64,8 +63,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
         """Mock incoming subnets as autoaddressed."""
         def _get_subnet(context, subnet_id):
             if subnet_id in subnet_ids:
-                return {'ipv6_address_mode': n_const.IPV6_SLAAC,
-                        'ipv6_ra_mode': n_const.IPV6_SLAAC}
+                return {'ipv6_address_mode': constants.IPV6_SLAAC,
+                        'ipv6_ra_mode': constants.IPV6_SLAAC}
             else:
                 return {'ipv6_address_mode': None,
                         'ipv6_ra_mode': None}
@@ -135,8 +134,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
 
         # mock to test auto address part
         pd_subnet = {'subnetpool_id': constants.IPV6_PD_POOL_ID,
-                     'ipv6_address_mode': n_const.IPV6_SLAAC,
-                     'ipv6_ra_mode': n_const.IPV6_SLAAC}
+                     'ipv6_address_mode': constants.IPV6_SLAAC,
+                     'ipv6_ra_mode': constants.IPV6_SLAAC}
         self.mixin._get_subnet = mock.Mock(return_value=pd_subnet)
 
         # make a copy of original_ips

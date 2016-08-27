@@ -11,7 +11,7 @@
 #    under the License.
 
 import mock
-from neutron_lib import constants as l3_constants
+from neutron_lib import constants as lib_constants
 from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
@@ -127,7 +127,7 @@ class TestRouterInfo(base.BaseTestCase):
         port = {
             'id': _uuid(),
             'fixed_ips': [{'ip_address': '172.9.9.9'}],
-            'address_scopes': {l3_constants.IP_VERSION_4: '1234'}
+            'address_scopes': {lib_constants.IP_VERSION_4: '1234'}
         }
         ipv4_mangle = ri.iptables_manager.ipv4['mangle'] = mock.MagicMock()
         ri.get_address_scope_mark_mask = mock.Mock(return_value='fake_mark')
@@ -137,7 +137,7 @@ class TestRouterInfo(base.BaseTestCase):
         ri.process_floating_ip_address_scope_rules = mock.Mock()
         ri.iptables_manager._apply = mock.Mock()
 
-        ri.router[l3_constants.INTERFACE_KEY] = [port]
+        ri.router[lib_constants.INTERFACE_KEY] = [port]
         ri.process_address_scope()
 
         ipv4_mangle.add_rule.assert_called_once_with(
@@ -338,8 +338,8 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
 
         statuses = ri.put_fips_in_error_state()
 
-        expected = [{mock.sentinel.id1: l3_constants.FLOATINGIP_STATUS_ERROR,
-                     mock.sentinel.id2: l3_constants.FLOATINGIP_STATUS_ERROR}]
+        expected = [{mock.sentinel.id1: lib_constants.FLOATINGIP_STATUS_ERROR,
+                     mock.sentinel.id2: lib_constants.FLOATINGIP_STATUS_ERROR}]
         self.assertNotEqual(expected, statuses)
 
     def test_configure_fip_addresses(self):
@@ -372,7 +372,7 @@ class TestFloatingIpWithMockDevice(BasicRouterTestCaseFramework):
             'id': fip_id, 'port_id': _uuid(),
             'floating_ip_address': '15.1.2.3',
             'fixed_ip_address': '192.168.0.2',
-            'status': l3_constants.FLOATINGIP_STATUS_DOWN
+            'status': lib_constants.FLOATINGIP_STATUS_DOWN
         }
 
         IPDevice.return_value = device = mock.Mock()
@@ -382,7 +382,7 @@ class TestFloatingIpWithMockDevice(BasicRouterTestCaseFramework):
 
         fip_statuses = ri.process_floating_ip_addresses(
             mock.sentinel.interface_name)
-        self.assertEqual({fip_id: l3_constants.FLOATINGIP_STATUS_ACTIVE},
+        self.assertEqual({fip_id: lib_constants.FLOATINGIP_STATUS_ACTIVE},
                          fip_statuses)
 
         self.assertFalse(device.addr.add.called)
@@ -417,13 +417,13 @@ class TestFloatingIpWithMockDevice(BasicRouterTestCaseFramework):
         }
         ri = self._create_router()
         ri.add_floating_ip = mock.Mock(
-            return_value=l3_constants.FLOATINGIP_STATUS_ERROR)
+            return_value=lib_constants.FLOATINGIP_STATUS_ERROR)
         ri.get_floating_ips = mock.Mock(return_value=[fip])
 
         fip_statuses = ri.process_floating_ip_addresses(
             mock.sentinel.interface_name)
 
-        self.assertEqual({fip_id: l3_constants.FLOATINGIP_STATUS_ERROR},
+        self.assertEqual({fip_id: lib_constants.FLOATINGIP_STATUS_ERROR},
                          fip_statuses)
 
     # TODO(mrsmith): refactor for DVR cases

@@ -13,7 +13,7 @@
 #    under the License.
 
 import mock
-from neutron_lib import constants as l3_constants
+from neutron_lib import constants as lib_constants
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import legacy_router
@@ -78,9 +78,9 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         ri.external_gateway_removed(ex_gw_port, "qg-fake-name")
 
         cidr_pri = '%s/%s' % (gw_ip_pri, v4_prefixlen)
-        cidr_sec = '%s/%s' % (gw_ip_sec, l3_constants.IPv4_BITS)
+        cidr_sec = '%s/%s' % (gw_ip_sec, lib_constants.IPv4_BITS)
         cidr_v6 = '%s/%s' % (gw_ip6_pri, v6_prefixlen)
-        cidr_v6_sec = '%s/%s' % (gw_ip6_sec, l3_constants.IPv6_BITS)
+        cidr_v6_sec = '%s/%s' % (gw_ip6_sec, lib_constants.IPv6_BITS)
 
         device.delete_addr_and_conntrack_state.assert_has_calls(
             [mock.call(cidr_pri), mock.call(cidr_sec),
@@ -101,7 +101,7 @@ class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):
             mock.sentinel.interface_name,
             ip,
             self.agent_conf)
-        self.assertEqual(l3_constants.FLOATINGIP_STATUS_ACTIVE, result)
+        self.assertEqual(lib_constants.FLOATINGIP_STATUS_ACTIVE, result)
 
     def test_add_floating_ip_error(self, send_ip_addr_adv_notif):
         ri = self._create_router()
@@ -110,4 +110,4 @@ class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):
                                     mock.sentinel.interface_name,
                                     mock.sentinel.device)
         self.assertFalse(ip_lib.send_ip_addr_adv_notif.called)
-        self.assertEqual(l3_constants.FLOATINGIP_STATUS_ERROR, result)
+        self.assertEqual(lib_constants.FLOATINGIP_STATUS_ERROR, result)

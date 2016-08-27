@@ -57,7 +57,7 @@ class IPV6ModeEnumFieldTest(test_base.BaseTestCase, TestField):
         super(IPV6ModeEnumFieldTest, self).setUp()
         self.field = common_types.IPV6ModeEnumField()
         self.coerce_good_values = [(mode, mode)
-                                   for mode in constants.IPV6_MODES]
+                                   for mode in const.IPV6_MODES]
         self.coerce_bad_values = ['6', 4, 'type', 'slaacc']
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values

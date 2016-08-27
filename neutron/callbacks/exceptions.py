@@ -13,14 +13,13 @@
 from neutron_lib import exceptions
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 
 
 class Invalid(exceptions.NeutronException):
     message = _("The value '%(value)s' for %(element)s is not valid.")
 
 
-class CallbackFailure(n_exc.MultipleExceptions):
+class CallbackFailure(exceptions.MultipleExceptions):
 
     def __init__(self, errors):
         self.errors = errors

@@ -24,7 +24,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.common import _deprecate
-from neutron.common import constants as n_const
 
 
 # Defining a constant to avoid repeating string literal in several modules
@@ -280,12 +279,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'is_visible': True},
         'ipv6_ra_mode': {'allow_post': True, 'allow_put': False,
                          'default': constants.ATTR_NOT_SPECIFIED,
-                         'validate': {'type:values': n_const.IPV6_MODES},
+                         'validate': {'type:values': constants.IPV6_MODES},
                          'is_visible': True},
         'ipv6_address_mode': {'allow_post': True, 'allow_put': False,
                               'default': constants.ATTR_NOT_SPECIFIED,
                               'validate': {'type:values':
-                                           n_const.IPV6_MODES},
+                                           constants.IPV6_MODES},
                               'is_visible': True},
         SHARED: {'allow_post': False,
                  'allow_put': False,

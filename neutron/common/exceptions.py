@@ -21,19 +21,6 @@ from neutron._i18n import _
 from neutron.common import _deprecate
 
 
-class MultipleExceptions(Exception):
-    """Container for multiple exceptions encountered.
-
-    The API layer of Neutron will automatically unpack, translate,
-    filter, and combine the inner exceptions in any exception derived
-    from this class.
-    """
-
-    def __init__(self, exceptions, *args, **kwargs):
-        super(MultipleExceptions, self).__init__(*args, **kwargs)
-        self.inner_exceptions = exceptions
-
-
 class SubnetPoolNotFound(e.NotFound):
     message = _("Subnet pool %(subnetpool_id)s could not be found.")
 
@@ -55,14 +42,6 @@ class PortQosBindingNotFound(e.NotFound):
 class NetworkQosBindingNotFound(e.NotFound):
     message = _("QoS binding for network %(net_id)s and policy %(policy_id)s "
                 "could not be found.")
-
-
-class PolicyInitError(e.NeutronException):
-    message = _("Failed to init policy %(policy)s because %(reason)s.")
-
-
-class PolicyCheckError(e.NeutronException):
-    message = _("Failed to check policy %(policy)s because %(reason)s.")
 
 
 class PolicyRemoveAuthorizationError(e.NotAuthorized):
@@ -311,10 +290,6 @@ class SubnetPoolDeleteError(e.BadRequest):
 
 class SubnetPoolQuotaExceeded(e.OverQuota):
     message = _("Per-tenant subnet pool prefix quota exceeded.")
-
-
-class DeviceNotFoundError(e.NeutronException):
-    message = _("Device '%(device_name)s' does not exist.")
 
 
 class NetworkSubnetPoolAffinityError(e.BadRequest):

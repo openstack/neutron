@@ -26,11 +26,10 @@ revision = '030a959ceafa'
 down_revision = '3d0e74aa7d37'
 
 from alembic import op
+from neutron_lib import exceptions
 import sqlalchemy as sa
 
 from neutron._i18n import _
-
-from neutron.common import exceptions
 
 routerports = sa.Table(
     'routerports', sa.MetaData(),

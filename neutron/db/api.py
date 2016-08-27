@@ -17,6 +17,7 @@ import contextlib
 
 from debtcollector import moves
 from debtcollector import removals
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
@@ -29,7 +30,6 @@ import sqlalchemy
 from sqlalchemy.orm import exc
 import traceback
 
-from neutron.common import exceptions
 from neutron.common import profiler  # noqa
 
 
@@ -106,12 +106,12 @@ def _is_nested_instance(e, etypes):
 
 
 @contextlib.contextmanager
-def exc_to_retry(exceptions):
+def exc_to_retry(etypes):
     try:
         yield
     except Exception as e:
         with excutils.save_and_reraise_exception() as ctx:
-            if _is_nested_instance(e, exceptions):
+            if _is_nested_instance(e, etypes):
                 ctx.reraise = False
                 raise db_exc.RetryRequest(e)
 

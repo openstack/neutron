@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from neutron_lib import constants
+
 import neutron.api.extensions as api_ext
 import neutron.common.config as config
-import neutron.common.constants as constants
 import neutron.extensions
 import neutron.services.network_ip_availability.plugin as plugin_module
 import neutron.tests.unit.db.test_db_base_plugin_v2 as test_db_base_plugin_v2

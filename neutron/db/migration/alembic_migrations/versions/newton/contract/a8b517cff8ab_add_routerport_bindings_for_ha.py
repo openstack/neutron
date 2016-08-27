@@ -23,6 +23,7 @@ revision = 'a8b517cff8ab'
 down_revision = '7d9d8eeec6ad'
 
 from alembic import op
+from neutron_lib import constants as lib_const
 import sqlalchemy as sa
 
 from neutron.common import constants
@@ -57,11 +58,11 @@ def upgrade():
         # as a result of Ifd3e007aaf2a2ed8123275aa3a9f540838e3c003 being
         # back-ported
         for router_port in session.query(router_ports).filter(
-            router_ports.c.port_type == constants.DEVICE_OWNER_ROUTER_HA_INTF):
+            router_ports.c.port_type == lib_const.DEVICE_OWNER_ROUTER_HA_INTF):
                 router_port_tuples.discard((router_port.router_id,
                                             router_port.port_id))
         new_records = [dict(router_id=router_id, port_id=port_id,
-                            port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF)
+                            port_type=lib_const.DEVICE_OWNER_ROUTER_HA_INTF)
                        for router_id, port_id in router_port_tuples]
     op.bulk_insert(router_ports, new_records)
     session.commit()

@@ -17,7 +17,7 @@ import collections
 import re
 
 from neutron_lib import constants
-from neutron_lib import exceptions as lib_exc
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -29,7 +29,6 @@ import six
 from neutron._i18n import _, _LE, _LW
 from neutron.api.v2 import attributes
 from neutron.common import constants as const
-from neutron.common import exceptions
 
 
 LOG = logging.getLogger(__name__)
@@ -265,7 +264,7 @@ class OwnerCheck(policy.Check):
                          target[parent_foreign_key],
                          fields=[parent_field])
                 target[self.target_field] = data[parent_field]
-            except lib_exc.NotFound as e:
+            except exceptions.NotFound as e:
                 # NOTE(kevinbenton): a NotFound exception can occur if a
                 # list operation is happening at the same time as one of
                 # the parents and its children being deleted. So we issue
