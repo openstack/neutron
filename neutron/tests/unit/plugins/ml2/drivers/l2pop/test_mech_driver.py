@@ -15,6 +15,7 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_serialization import jsonutils
 import testtools
 
@@ -24,7 +25,6 @@ from neutron import context
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as pnet
 from neutron import manager
-from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
@@ -1022,5 +1022,5 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                                              original_port=original_port)
 
         mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
-        with testtools.ExpectedException(ml2_exc.MechanismDriverError):
+        with testtools.ExpectedException(exceptions.InvalidInput):
             mech_driver.update_port_precommit(ctx)

@@ -2004,18 +2004,22 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
     def test_create_network_faulty(self):
 
+        err_msg = "Some errors"
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'create_network_postcommit',
-                               side_effect=ml2_exc.MechanismDriverError):
+                               side_effect=(exc.InvalidInput(
+                                                error_message=err_msg))):
             tenant_id = str(uuid.uuid4())
             data = {'network': {'name': 'net1',
                                 'tenant_id': tenant_id}}
             req = self.new_create_request('networks', data)
             res = req.get_response(self.api)
-            self.assertEqual(500, res.status_int)
+            self.assertEqual(400, res.status_int)
             error = self.deserialize(self.fmt, res)
-            self.assertEqual('MechanismDriverError',
+            self.assertEqual('InvalidInput',
                              error['NeutronError']['type'])
+            # Check the client can see the root cause of error.
+            self.assertIn(err_msg, error['NeutronError']['message'])
             query_params = "tenant_id=%s" % tenant_id
             nets = self._list('networks', query_params=query_params)
             self.assertFalse(nets['networks'])
@@ -2045,9 +2049,11 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
     def test_update_network_faulty(self):
 
+        err_msg = "Some errors"
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'update_network_postcommit',
-                               side_effect=ml2_exc.MechanismDriverError):
+                               side_effect=(exc.InvalidInput(
+                                                error_message=err_msg))):
             with mock.patch.object(mech_logger.LoggerMechanismDriver,
                                    'update_network_postcommit') as unp:
 
@@ -2063,10 +2069,12 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                 data = {'network': {'name': new_name}}
                 req = self.new_update_request('networks', data, net_id)
                 res = req.get_response(self.api)
-                self.assertEqual(500, res.status_int)
+                self.assertEqual(400, res.status_int)
                 error = self.deserialize(self.fmt, res)
-                self.assertEqual('MechanismDriverError',
+                self.assertEqual('InvalidInput',
                                  error['NeutronError']['type'])
+                # Check the client can see the root cause of error.
+                self.assertIn(err_msg, error['NeutronError']['message'])
                 # Test if other mechanism driver was called
                 self.assertTrue(unp.called)
                 net = self._show('networks', net_id)
@@ -2076,9 +2084,11 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
     def test_create_subnet_faulty(self):
 
+        err_msg = "Some errors"
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'create_subnet_postcommit',
-                               side_effect=ml2_exc.MechanismDriverError):
+                               side_effect=(exc.InvalidInput(
+                                                error_message=err_msg))):
 
             with self.network() as network:
                 net_id = network['network']['id']
@@ -2091,10 +2101,12 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                    'gateway_ip': '10.0.20.1'}}
                 req = self.new_create_request('subnets', data)
                 res = req.get_response(self.api)
-                self.assertEqual(500, res.status_int)
+                self.assertEqual(400, res.status_int)
                 error = self.deserialize(self.fmt, res)
-                self.assertEqual('MechanismDriverError',
+                self.assertEqual('InvalidInput',
                                  error['NeutronError']['type'])
+                # Check the client can see the root cause of error.
+                self.assertIn(err_msg, error['NeutronError']['message'])
                 query_params = "network_id=%s" % net_id
                 subnets = self._list('subnets', query_params=query_params)
                 self.assertFalse(subnets['subnets'])
@@ -2132,9 +2144,11 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
     def test_update_subnet_faulty(self):
 
+        err_msg = "Some errors"
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'update_subnet_postcommit',
-                               side_effect=ml2_exc.MechanismDriverError):
+                               side_effect=(exc.InvalidInput(
+                                                error_message=err_msg))):
             with mock.patch.object(mech_logger.LoggerMechanismDriver,
                                    'update_subnet_postcommit') as usp:
 
@@ -2156,10 +2170,12 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     data = {'subnet': {'name': new_name}}
                     req = self.new_update_request('subnets', data, subnet_id)
                     res = req.get_response(self.api)
-                    self.assertEqual(500, res.status_int)
+                    self.assertEqual(400, res.status_int)
                     error = self.deserialize(self.fmt, res)
-                    self.assertEqual('MechanismDriverError',
+                    self.assertEqual('InvalidInput',
                                      error['NeutronError']['type'])
+                    # Check the client can see the root cause of error.
+                    self.assertIn(err_msg, error['NeutronError']['message'])
                     # Test if other mechanism driver was called
                     self.assertTrue(usp.called)
                     subnet = self._show('subnets', subnet_id)
@@ -2169,9 +2185,11 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
 
     def test_create_port_faulty(self):
 
+        err_msg = "Some errors"
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'create_port_postcommit',
-                               side_effect=ml2_exc.MechanismDriverError):
+                               side_effect=(exc.InvalidInput(
+                                                error_message=err_msg))):
 
             with self.network() as network:
                 net_id = network['network']['id']
@@ -2183,10 +2201,12 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                  'fixed_ips': []}}
                 req = self.new_create_request('ports', data)
                 res = req.get_response(self.api)
-                self.assertEqual(500, res.status_int)
+                self.assertEqual(400, res.status_int)
                 error = self.deserialize(self.fmt, res)
-                self.assertEqual('MechanismDriverError',
+                self.assertEqual('InvalidInput',
                                  error['NeutronError']['type'])
+                # Check the client can see the root cause of error.
+                self.assertIn(err_msg, error['NeutronError']['message'])
                 query_params = "network_id=%s" % net_id
                 ports = self._list('ports', query_params=query_params)
                 self.assertFalse(ports['ports'])
