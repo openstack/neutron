@@ -44,9 +44,9 @@ OPTS = [
     cfg.IntOpt('network_device_mtu',
                deprecated_for_removal=True,
                help=_('MTU setting for device. This option will be removed in '
-                      'Newton. Please use the system-wide segment_mtu setting '
-                      'which the agents will take into account when wiring '
-                      'VIFs.')),
+                      'Newton. Please use the system-wide global_physnet_mtu '
+                      'setting which the agents will take into account when '
+                      'wiring VIFs.')),
 ]
 
 
