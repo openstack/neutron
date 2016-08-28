@@ -51,6 +51,22 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
                 self.ctx, network_id='network_foo',
                 router_id='router_foo', subnets=[])
 
+    def test__provision_external_connectivity_fail_expected_cleanup(self):
+        """Test that the right resources are cleaned up."""
+        subnets = [
+            {'id': 'subnet_foo_1', 'network_id': 'network_foo'},
+        ]
+        with mock.patch.object(self.mixin, '_cleanup') as mock_cleanup:
+            self.mixin.l3_plugin.create_router.side_effect = (
+                n_exc.BadRequest(resource='router', msg='doh!'))
+            self.assertRaises(exceptions.AutoAllocationFailure,
+                self.mixin._provision_external_connectivity,
+                self.ctx, 'ext_net_foo', subnets, 'tenant_foo')
+            # expected router_id to be None
+            mock_cleanup.assert_called_once_with(
+                self.ctx, network_id='network_foo',
+                router_id=None, subnets=[])
+
     def test_get_auto_allocated_topology_dry_run_happy_path_for_kevin(self):
         with mock.patch.object(self.mixin, '_check_requirements') as f:
             self.mixin.get_auto_allocated_topology(
