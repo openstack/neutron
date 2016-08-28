@@ -18,10 +18,9 @@
 from neutron_lib import exceptions
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 
 
-class MechanismDriverError(n_exc.MultipleExceptions):
+class MechanismDriverError(exceptions.MultipleExceptions):
     """Mechanism driver call failed."""
 
     def __init__(self, method, errors=None):
