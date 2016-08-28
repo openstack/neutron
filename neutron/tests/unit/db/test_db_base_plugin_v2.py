@@ -52,6 +52,7 @@ from neutron.db import ipam_backend_mixin
 from neutron.db import l3_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
+from neutron.db import standard_attr
 from neutron import manager
 from neutron.tests import base
 from neutron.tests import tools
@@ -6055,8 +6056,8 @@ class DbModelMixin(object):
 
     def _get_neutron_attr(self, ctx, attr_id):
         return ctx.session.query(
-            models_v2.model_base.StandardAttribute).filter(
-            models_v2.model_base.StandardAttribute.id == attr_id).one()
+            standard_attr.StandardAttribute).filter(
+            standard_attr.StandardAttribute.id == attr_id).one()
 
     def _test_standardattr_removed_on_obj_delete(self, ctx, obj):
         attr_id = obj.standard_attr_id

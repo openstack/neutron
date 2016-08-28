@@ -18,7 +18,7 @@ from sqlalchemy.orm import session as se
 
 from neutron._i18n import _, _LW
 from neutron.db import db_base_plugin_v2
-from neutron.db import model_base
+from neutron.db import standard_attr
 from neutron.extensions import revisions
 from neutron.services import service_base
 
@@ -40,7 +40,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
     def bump_revisions(self, session, context, instances):
         # bump revision number for any updated objects in the session
         for obj in session.dirty:
-            if isinstance(obj, model_base.HasStandardAttributes):
+            if isinstance(obj, standard_attr.HasStandardAttributes):
                 obj.bump_revision()
 
         # see if any created/updated/deleted objects bump the revision

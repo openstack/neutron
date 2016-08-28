@@ -23,6 +23,7 @@ from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import standard_attr
 
 LOG = logging.getLogger(__name__)
 PROVISIONING_COMPLETE = 'provisioning_complete'
@@ -36,7 +37,7 @@ class ProvisioningBlock(model_base.BASEV2):
     # the standard attr id of the thing we want to block
     standard_attr_id = (
         sa.Column(sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
-                  sa.ForeignKey(model_base.StandardAttribute.id,
+                  sa.ForeignKey(standard_attr.StandardAttribute.id,
                                 ondelete="CASCADE"),
                   primary_key=True))
     # the entity that wants to block the status change (e.g. L2 Agent)

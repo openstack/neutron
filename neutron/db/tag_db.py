@@ -17,12 +17,13 @@ from sqlalchemy import orm
 from sqlalchemy.orm import aliased
 
 from neutron.db import model_base
+from neutron.db import standard_attr
 
 
 class Tag(model_base.BASEV2):
     standard_attr_id = sa.Column(
         sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
-        sa.ForeignKey(model_base.StandardAttribute.id, ondelete="CASCADE"),
+        sa.ForeignKey(standard_attr.StandardAttribute.id, ondelete="CASCADE"),
         nullable=False, primary_key=True)
     tag = sa.Column(sa.String(60), nullable=False, primary_key=True)
     standard_attr = orm.relationship(

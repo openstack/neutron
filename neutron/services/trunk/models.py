@@ -19,10 +19,11 @@ from sqlalchemy import sql
 from neutron.api.v2 import attributes
 from neutron.db import model_base
 from neutron.db import models_v2
+from neutron.db import standard_attr
 from neutron.services.trunk import constants
 
 
-class Trunk(model_base.HasStandardAttributes, model_base.BASEV2,
+class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
             model_base.HasId, model_base.HasProject):
 
     admin_state_up = sa.Column(
