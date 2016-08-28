@@ -13,15 +13,16 @@
 # limitations under the License.
 
 from neutron_lib.db import model_base
-from oslo_db.sqlalchemy import models
+from oslo_utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 
 from neutron.api.v2 import attributes as attr
+from neutron.db import sqlalchemytypes
 
 
-class StandardAttribute(model_base.BASEV2, models.TimestampMixin):
+class StandardAttribute(model_base.BASEV2):
     """Common table to associate all Neutron API resources.
 
     By having Neutron objects related to this table, we can associate new
@@ -54,6 +55,10 @@ class StandardAttribute(model_base.BASEV2, models.TimestampMixin):
     revision_number = sa.Column(
         sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
         server_default='0', nullable=False)
+    created_at = sa.Column(sqlalchemytypes.TruncatedDateTime,
+                           default=timeutils.utcnow)
+    updated_at = sa.Column(sqlalchemytypes.TruncatedDateTime,
+                           onupdate=timeutils.utcnow)
 
     __mapper_args__ = {
         # see http://docs.sqlalchemy.org/en/latest/orm/versioning.html for

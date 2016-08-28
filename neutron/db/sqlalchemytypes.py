@@ -65,3 +65,19 @@ class MACAddress(types.TypeDecorator):
                                    "type.") % {'type': type(value),
                                                'value': value})
         return str(value)
+
+
+class TruncatedDateTime(types.TypeDecorator):
+    """Truncates microseconds.
+
+    Use this for datetime fields so we don't have to worry about DB-specifc
+    behavior when it comes to rounding/truncating microseconds off of
+    timestamps.
+    """
+
+    impl = types.DateTime
+
+    def process_bind_param(self, value, dialect):
+        return value.replace(microsecond=0) if value else value
+
+    process_result_value = process_bind_param

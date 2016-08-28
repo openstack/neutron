@@ -15,6 +15,7 @@ import netaddr
 
 from oslo_db import exception
 from oslo_db.sqlalchemy import test_base
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import six
 import sqlalchemy as sa
@@ -233,3 +234,24 @@ class MACAddressTestCase(SqlAlchemyTypesBaseTestCase):
         for mac in wrong_macs:
             self.assertRaises(exception.DBError, self._add_row,
                               id=uuidutils.generate_uuid(), mac=mac)
+
+
+class TruncatedDateTimeTestCase(SqlAlchemyTypesBaseTestCase):
+
+    def _get_test_table(self, meta):
+        return sa.Table(
+            'timetable',
+            meta,
+            sa.Column('id', sa.String(36), primary_key=True, nullable=False),
+            sa.Column('thetime', sqlalchemytypes.TruncatedDateTime)
+        )
+
+    def test_microseconds_truncated(self):
+        tstamp = timeutils.utcnow()
+        tstamp_low = tstamp.replace(microsecond=111111)
+        tstamp_high = tstamp.replace(microsecond=999999)
+        self._add_row(id=1, thetime=tstamp_low)
+        self._add_row(id=2, thetime=tstamp_high)
+        rows = self._get_all()
+        self.assertEqual(2, len(rows))
+        self.assertEqual(rows[0].thetime, rows[1].thetime)
