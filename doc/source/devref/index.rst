@@ -60,6 +60,7 @@ Neutron Internals
    api_extensions
    plugin-api
    db_layer
+   db_models
    policy
    rpc_api
    rpc_callbacks
