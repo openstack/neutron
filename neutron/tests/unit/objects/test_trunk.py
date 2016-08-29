@@ -118,8 +118,8 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         return trunk
 
     def test_create_with_sub_ports(self):
-        trunk = self._test_create_trunk_with_subports(self.db_obj['port_id'],
-                                                      [1, 2])
+        trunk = self._test_create_trunk_with_subports(
+            self.db_objs[0]['port_id'], [1, 2])
 
         def _as_tuple(sub_port):
             return (sub_port['port_id'],
@@ -134,7 +134,7 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_get_object_includes_correct_subports(self):
         trunk1_vids = [1, 2, 3]
         trunk2_vids = [4, 5, 6]
-        port_id1 = self.db_obj['port_id']
+        port_id1 = self.db_objs[0]['port_id']
         trunk1 = self._test_create_trunk_with_subports(port_id1, trunk1_vids)
 
         port_id2 = uuidutils.generate_uuid()
@@ -155,7 +155,7 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_update_multiple_fields(self):
         trunk = t_obj.Trunk(context=self.context,
                             admin_state_up=False,
-                            port_id=self.db_obj['port_id'],
+                            port_id=self.db_objs[0]['port_id'],
                             status=constants.DOWN_STATUS)
         trunk.create()
         fields = {'admin_state_up': True, 'status': constants.ACTIVE_STATUS}

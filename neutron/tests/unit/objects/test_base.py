@@ -432,7 +432,6 @@ class _BaseObjectTestCase(object):
             self._test_class.db_model(**self.get_random_fields())
             for _ in range(3)
         ]
-        self.db_obj = self.db_objs[0]
 
         # TODO(ihrachys) remove obj_fields since they duplicate self.objs
         self.obj_fields = [self._test_class.modify_fields_from_db(db_obj)
@@ -515,8 +514,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     # TODO(ihrachys) document the intent of all common test cases in docstrings
     def test_get_object(self):
-        with mock.patch.object(obj_db_api, 'get_object',
-                               return_value=self.db_obj) as get_object_mock:
+        with mock.patch.object(
+                obj_db_api, 'get_object',
+                return_value=self.db_objs[0]) as get_object_mock:
             with mock.patch.object(obj_db_api, 'get_objects',
                                    side_effect=self.fake_get_objects):
                 obj_keys = self.generate_object_keys(self._test_class)
@@ -551,7 +551,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
         for unique_keys in self._test_class.unique_keys:
             with mock.patch.object(obj_db_api, 'get_object',
-                                   return_value=self.db_obj) \
+                                   return_value=self.db_objs[0]) \
                     as get_object_mock:
                 with mock.patch.object(obj_db_api, 'get_objects',
                                        side_effect=self.fake_get_objects):
@@ -666,7 +666,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     def test_create(self):
         with mock.patch.object(obj_db_api, 'create_object',
-                               return_value=self.db_obj) as create_mock:
+                               return_value=self.db_objs[0]) as create_mock:
             with mock.patch.object(obj_db_api, 'get_objects',
                   side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.obj_fields[0])
@@ -680,7 +680,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     def test_create_updates_from_db_object(self):
         with mock.patch.object(obj_db_api, 'create_object',
-                               return_value=self.db_obj):
+                               return_value=self.db_objs[0]):
             with mock.patch.object(obj_db_api, 'get_objects',
                   side_effect=self.fake_get_objects):
                 self.objs[1].create()
@@ -758,7 +758,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
     @mock.patch.object(obj_db_api, 'update_object')
     def test_update_changes(self, update_mock):
         fields_to_update = self.get_updatable_fields(
-            self._test_class.modify_fields_from_db(self.db_obj))
+            self._test_class.modify_fields_from_db(self.db_objs[0]))
         if not fields_to_update:
             self.skipTest('No updatable fields found in test class %r' %
                           self._test_class)
@@ -795,7 +795,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     def test_update_updates_from_db_object(self):
         with mock.patch.object(obj_db_api, 'update_object',
-                               return_value=self.db_obj):
+                               return_value=self.db_objs[0]):
             with mock.patch.object(obj_db_api, 'get_objects',
                   side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.obj_fields[1])
