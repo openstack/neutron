@@ -1,0 +1,5 @@
+---
+upgrade:
+  - The configuration options for ``default_ipv4_subnet_pool`` and
+    ``default_ipv6_subnet_pool`` have been removed. Please use the
+    ``is_default`` option of the create/update subnetpool API instead.
