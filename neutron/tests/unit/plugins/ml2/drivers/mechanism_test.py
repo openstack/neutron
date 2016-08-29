@@ -34,7 +34,6 @@ class TestMechanismDriver(api.MechanismDriver):
             assert(context.current['id'] == context.original['id'])
         else:
             assert(not context.original)
-        assert(context.network_segments)
 
     def create_network_precommit(self, context):
         self._check_network_context(context, False)

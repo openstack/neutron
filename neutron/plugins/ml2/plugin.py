@@ -84,6 +84,7 @@ from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
 from neutron.quota import resource_registry
 from neutron.services.qos import qos_consts
+from neutron.services.segments import plugin as segments_plugin
 
 LOG = log.getLogger(__name__)
 
@@ -163,6 +164,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.mechanism_manager.initialize()
         registry.subscribe(self._port_provisioned, resources.PORT,
                            provisioning_blocks.PROVISIONING_COMPLETE)
+        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
+                           events.PRECOMMIT_CREATE)
+        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
+                           events.PRECOMMIT_DELETE)
+        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
+                           events.AFTER_CREATE)
+        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
+                           events.AFTER_DELETE)
         self._setup_dhcp()
         self._start_rpc_notifiers()
         self.add_agent_status_check_worker(self.agent_health_check)
@@ -927,7 +936,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         self.mechanism_manager.delete_network_precommit(
                             mech_context)
 
-                        self.type_manager.release_network_segments(session, id)
+                        registry.notify(resources.NETWORK,
+                                        events.PRECOMMIT_DELETE,
+                                        self,
+                                        context=context,
+                                        network_id=id)
                         record = self._get_network(context, id)
                         LOG.debug("Deleting network record %s", record)
                         session.delete(record)
@@ -1797,3 +1810,47 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if mech_driver.obj.check_segment_for_agent(segment, agent):
                     return True
         return False
+
+    def _handle_segment_change(self, rtype, event, trigger, context, segment):
+        if (event == events.PRECOMMIT_CREATE and
+            not isinstance(trigger, segments_plugin.Plugin)):
+            # TODO(xiaohhui): Now, when create network, ml2 will reserve
+            # segment and trigger this event handler. This event handler
+            # will reserve segment again, which will lead to error as the
+            # segment has already been reserved. This check could be removed
+            # by unifying segment creation procedure.
+            return
+
+        session = context.session
+        network_id = segment.get('network_id')
+
+        if event == events.PRECOMMIT_CREATE:
+            updated_segment = self.type_manager.reserve_network_segment(
+                session, segment)
+            # The segmentation id might be from ML2 type driver, update it
+            # in the original segment.
+            segment[api.SEGMENTATION_ID] = updated_segment[api.SEGMENTATION_ID]
+        elif event == events.PRECOMMIT_DELETE:
+            self.type_manager.release_network_segment(session, segment)
+
+        try:
+            self._notify_mechanism_driver_for_segment_change(
+                event, context, network_id)
+        except ml2_exc.MechanismDriverError:
+            with excutils.save_and_reraise_exception():
+                LOG.error(_LE("mechanism_manager error occurred when "
+                              "handle event %(event)s for segment "
+                              "'%(segment)s'"),
+                          {'event': event, 'segment': segment['id']})
+
+    def _notify_mechanism_driver_for_segment_change(self, event,
+                                                    context, network_id):
+        network_with_segments = self.get_network(context, network_id)
+        mech_context = driver_context.NetworkContext(
+            self, context, network_with_segments,
+            original_network=network_with_segments)
+        if (event == events.PRECOMMIT_CREATE or
+            event == events.PRECOMMIT_DELETE):
+            self.mechanism_manager.update_network_precommit(mech_context)
+        elif event == events.AFTER_CREATE or event == events.AFTER_DELETE:
+            self.mechanism_manager.update_network_postcommit(mech_context)

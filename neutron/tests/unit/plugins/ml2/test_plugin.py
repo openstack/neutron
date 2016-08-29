@@ -30,6 +30,7 @@ from sqlalchemy.orm import exc as sqla_exc
 
 from neutron._i18n import _
 from neutron.callbacks import events
+from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import utils
@@ -58,6 +59,8 @@ from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.qos import qos_consts
+from neutron.services.segments import db as segments_plugin_db
+from neutron.services.segments import plugin as segments_plugin
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
@@ -1840,6 +1843,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
         with mock.patch.object(type_vlan.VlanTypeDriver,
                                'release_segment') as rs:
+            segments_plugin_db.subscribe()
             req = self.new_delete_request('networks', network_id)
             res = req.get_response(self.api)
             self.assertEqual(2, rs.call_count)
@@ -2474,3 +2478,131 @@ class TestTransactionGuard(Ml2PluginV2TestCase):
         with ctx.session.begin(subtransactions=True):
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_subnet(ctx, 'id')
+
+
+class TestML2Segments(Ml2PluginV2TestCase):
+
+    def _reserve_segment(self, network, seg_id=None):
+        segment = {'id': 'fake_id',
+                   'network_id': network['network']['id'],
+                   'tenant_id': network['network']['tenant_id'],
+                   driver_api.NETWORK_TYPE: 'vlan',
+                   driver_api.PHYSICAL_NETWORK: self.physnet}
+        if seg_id:
+            segment[driver_api.SEGMENTATION_ID] = seg_id
+
+        self.driver._handle_segment_change(
+            mock.ANY, events.PRECOMMIT_CREATE, segments_plugin.Plugin(),
+            self.context, segment)
+
+        if seg_id:
+            # Assert it is not changed
+            self.assertEqual(seg_id, segment[driver_api.SEGMENTATION_ID])
+        else:
+            self.assertTrue(segment[driver_api.SEGMENTATION_ID] > 0)
+
+        return segment
+
+    def test_reserve_segment_success_with_partial_segment(self):
+        with self.network() as network:
+            self._reserve_segment(network)
+
+    def test_reserve_segment_fail_with_duplicate_param(self):
+        with self.network() as network:
+            self._reserve_segment(network, 10)
+
+            self.assertRaises(
+                exc.VlanIdInUse, self._reserve_segment, network, 10)
+
+    def test_reserve_segment_update_network_mtu(self):
+        with self.network() as network:
+            network_id = network['network']['id']
+            with mock.patch.object(
+                self.driver, '_get_network_mtu') as mtu:
+                mtu.return_value = 100
+                self._reserve_segment(network)
+                updated_network = self.driver.get_network(self.context,
+                                                          network_id)
+                self.assertEqual(100, updated_network[driver_api.MTU])
+
+                mtu.return_value = 200
+                self._reserve_segment(network)
+                updated_network = self.driver.get_network(self.context,
+                                                          network_id)
+                self.assertEqual(200, updated_network[driver_api.MTU])
+
+    def _test_nofity_mechanism_manager(self, event):
+        seg1 = {driver_api.NETWORK_TYPE: 'vlan',
+                driver_api.PHYSICAL_NETWORK: self.physnet,
+                driver_api.SEGMENTATION_ID: 1000}
+        seg2 = {driver_api.NETWORK_TYPE: 'vlan',
+                driver_api.PHYSICAL_NETWORK: self.physnet,
+                driver_api.SEGMENTATION_ID: 1001}
+        seg3 = {driver_api.NETWORK_TYPE: 'vlan',
+                driver_api.PHYSICAL_NETWORK: self.physnet,
+                driver_api.SEGMENTATION_ID: 1002}
+        with self.network() as network:
+            network = network['network']
+
+        for stale_seg in segments_db.get_network_segments(self.context.session,
+                                                          network['id']):
+            segments_db.delete_network_segment(self.context.session,
+                                               stale_seg['id'])
+
+        for seg in [seg1, seg2, seg3]:
+            seg['network_id'] = network['id']
+            segments_db.add_network_segment(self.context, network['id'], seg)
+
+        self.net_context = None
+
+        def record_network_context(net_context):
+            self.net_context = net_context
+
+        with mock.patch.object(managers.MechanismManager,
+                               'update_network_precommit',
+                               side_effect=record_network_context):
+            self.driver._handle_segment_change(
+                mock.ANY, event, segments_plugin.Plugin(), self.context, seg1)
+            # Make sure the mechanism manager can get the right amount of
+            # segments of network
+            self.assertEqual(3, len(self.net_context.current[mpnet.SEGMENTS]))
+
+    def test_reserve_segment_nofity_mechanism_manager(self):
+        self._test_nofity_mechanism_manager(events.PRECOMMIT_CREATE)
+
+    def test_release_segment(self):
+        with self.network() as network:
+            segment = self._reserve_segment(network, 10)
+            segment['network_id'] = network['network']['id']
+            self.driver._handle_segment_change(
+                mock.ANY, events.PRECOMMIT_DELETE, mock.ANY,
+                self.context, segment)
+            # Check that the segment_id is not reserved
+            segment = self._reserve_segment(
+                network, segment[driver_api.SEGMENTATION_ID])
+
+    def test_release_segment_nofity_mechanism_manager(self):
+        self._test_nofity_mechanism_manager(events.PRECOMMIT_DELETE)
+
+    def test_prevent_delete_segment_with_tenant_port(self):
+        fake_owner_compute = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
+        ml2_db.subscribe()
+        plugin = manager.NeutronManager.get_plugin()
+        with self.port(device_owner=fake_owner_compute) as port:
+            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+                                                         port['port']['id'])[1]
+            binding['host'] = 'host-ovs-no_filter'
+            mech_context = driver_context.PortContext(
+                plugin, self.context, port['port'],
+                plugin.get_network(self.context, port['port']['network_id']),
+                binding, None)
+            plugin._bind_port_if_needed(mech_context)
+            segment = segments_db.get_network_segments(
+                self.context.session, port['port']['network_id'])[0]
+            segment['network_id'] = port['port']['network_id']
+            self.assertRaises(c_exc.CallbackFailure, registry.notify,
+                              resources.SEGMENT, events.BEFORE_DELETE,
+                              mock.ANY,
+                              context=self.context, segment=segment)
+            exist_port = self._show('ports', port['port']['id'])
+            self.assertEqual(port['port']['id'], exist_port['port']['id'])

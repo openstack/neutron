@@ -21,6 +21,7 @@ import webob.exc
 
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
+from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron import context
@@ -175,23 +176,81 @@ class TestSegment(SegmentTestCase):
                                   expected=expected_segment)
 
     def test_create_segment_no_segmentation_id(self):
+
+        def _mock_reserve_segmentation_id(rtype, event, trigger,
+                                          context, segment):
+            if not segment.get('segmentation_id'):
+                segment['segmentation_id'] = 200
+
         with self.network() as network:
             network = network['network']
+
+        registry.subscribe(_mock_reserve_segmentation_id, resources.SEGMENT,
+                           events.PRECOMMIT_CREATE)
         expected_segment = {'network_id': network['id'],
                             'physical_network': 'phys_net',
                             'network_type': 'net_type',
-                            'segmentation_id': None}
+                            'segmentation_id': 200}
         self._test_create_segment(network_id=network['id'],
                                   physical_network='phys_net',
                                   expected=expected_segment)
 
+    def test_create_segment_with_exception_in_core_plugin(self):
+        cxt = context.get_admin_context()
+        with self.network() as network:
+            network = network['network']
+
+        with mock.patch.object(registry, 'notify') as notify:
+            notify.side_effect = exceptions.CallbackFailure(errors=Exception)
+            self.assertRaises(webob.exc.HTTPClientError,
+                              self.segment,
+                              network_id=network['id'],
+                              segmentation_id=200)
+
+        network_segments = segments_db.get_network_segments(cxt.session,
+                                                            network['id'])
+        self.assertEqual([], network_segments)
+
+    def test_create_segments_in_certain_order(self):
+        cxt = context.get_admin_context()
+        with self.network() as network:
+            network = network['network']
+            segment1 = self.segment(
+                network_id=network['id'], segmentation_id=200)
+            segment2 = self.segment(
+                network_id=network['id'], segmentation_id=201)
+            segment3 = self.segment(
+                network_id=network['id'], segmentation_id=202)
+            network_segments = segments_db.get_network_segments(cxt.session,
+                                                                network['id'])
+            self.assertEqual(segment1['segment']['id'],
+                             network_segments[0]['id'])
+            self.assertEqual(segment2['segment']['id'],
+                             network_segments[1]['id'])
+            self.assertEqual(segment3['segment']['id'],
+                             network_segments[2]['id'])
+
     def test_delete_segment(self):
         with self.network() as network:
             network = network['network']
-        segment = self.segment(network_id=network['id'])
+        self.segment(network_id=network['id'], segmentation_id=200)
+        segment = self.segment(network_id=network['id'], segmentation_id=201)
         self._delete('segments', segment['segment']['id'])
         self._show('segments', segment['segment']['id'],
                    expected_code=webob.exc.HTTPNotFound.code)
+
+    def test_delete_segment_failed_with_subnet_associated(self):
+        with self.network() as network:
+            net = network['network']
+
+            segment = self._test_create_segment(network_id=net['id'],
+                                                segmentation_id=200)
+            segment_id = segment['segment']['id']
+            with self.subnet(network=network, segment_id=segment_id):
+                self._delete('segments', segment_id,
+                             expected_code=webob.exc.HTTPConflict.code)
+                exist_segment = self._show('segments', segment_id)
+                self.assertEqual(segment_id, exist_segment['segment']['id'])
 
     def test_get_segment(self):
         with self.network() as network:
@@ -211,9 +270,18 @@ class TestSegment(SegmentTestCase):
                                   segmentation_id=200)
         self._test_create_segment(network_id=network['id'],
                                   physical_network='phys_net2',
-                                  segmentation_id=200)
+                                  segmentation_id=201)
         res = self._list('segments')
         self.assertEqual(2, len(res['segments']))
+
+    def test_update_segments(self):
+        with self.network() as network:
+            net = network['network']
+            segment = self._test_create_segment(network_id=net['id'],
+                                                segmentation_id=200)
+            segment['segment']['segmentation_id'] = '201'
+            self._update('segments', segment['segment']['id'], segment,
+                         expected_code=webob.exc.HTTPClientError.code)
 
 
 class TestSegmentML2(SegmentTestCase):
@@ -236,7 +304,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         with self.network() as network:
             net = network['network']
 
-        segment = self._test_create_segment(network_id=net['id'])
+        segment = self._test_create_segment(network_id=net['id'],
+                                            segmentation_id=200)
         segment_id = segment['segment']['id']
 
         with self.subnet(network=network, segment_id=segment_id) as subnet:
@@ -253,7 +322,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             with self.network() as network2:
                 net = network1['network']
 
-        segment = self._test_create_segment(network_id=net['id'])
+        segment = self._test_create_segment(network_id=net['id'],
+                                            segmentation_id=200)
 
         res = self._create_subnet(self.fmt,
                                   net_id=network2['network']['id'],
@@ -282,7 +352,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             with self.subnet(network=network):
                 net = network['network']
 
-        segment = self._test_create_segment(network_id=net['id'])
+        segment = self._test_create_segment(network_id=net['id'],
+                                            segmentation_id=200)
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
@@ -322,6 +393,9 @@ class HostSegmentMappingTestCase(SegmentTestCase):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      self._mechanism_drivers,
                                      group='ml2')
+        config.cfg.CONF.set_override('network_vlan_ranges',
+                                     ['phys_net1', 'phys_net2'],
+                                     group='ml2_type_vlan')
         if not plugin:
             plugin = 'ml2'
         super(HostSegmentMappingTestCase, self).setUp(plugin=plugin)
@@ -511,7 +585,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
             network = network['network']
         segment2 = self._test_create_segment(
             network_id=network['id'], physical_network=physical_network,
-            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+            segmentation_id=201, network_type=p_constants.TYPE_VLAN)['segment']
         segments_host_db = self._get_segments_for_host(host1)
         self.assertEqual(set((segment['id'], segment2['id'])),
                          set(segments_host_db))
@@ -663,7 +737,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
 
         segment = self._test_create_segment(
             network_id=network['network']['id'],
-            physical_network=physnet)
+            physical_network=physnet,
+            network_type=p_constants.TYPE_VLAN)
 
         ip_version = netaddr.IPNetwork(cidr).version if cidr else None
         with self.subnet(network=network,
@@ -730,7 +805,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
         with self.network() as network:
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
-                physical_network='physnet')
+                physical_network='physnet',
+                network_type=p_constants.TYPE_VLAN)
 
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
@@ -753,7 +829,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
                              cidr='2001:db8:0:0::/64') as subnet:
                 segment = self._test_create_segment(
                     network_id=network['network']['id'],
-                    physical_network='physnet')
+                    physical_network='physnet',
+                    network_type=p_constants.TYPE_VLAN)
 
         self._validate_l2_adjacency(network['network']['id'], is_adjacent=True)
 
@@ -823,7 +900,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
         with self.network() as network:
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
-                physical_network='physnet')
+                physical_network='physnet',
+                network_type=p_constants.TYPE_VLAN)
 
         # Create a port with no IP address (since there is no subnet)
         port = self._create_deferred_ip_port(network)
@@ -864,7 +942,8 @@ class TestSegmentAwareIpam(SegmentTestCase):
         with self.network() as network:
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
-                physical_network='physnet')
+                physical_network='physnet',
+                network_type=p_constants.TYPE_VLAN)
 
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
@@ -1155,6 +1234,10 @@ class TestSegmentAwareIpam(SegmentTestCase):
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
     def setUp(self):
+        config.cfg.CONF.set_override('network_vlan_ranges',
+                                     ['physnet:200:209', 'physnet0:200:209',
+                                      'physnet1:200:209', 'physnet2:200:209'],
+                                     group='ml2_type_vlan')
         super(TestSegmentAwareIpamML2, self).setUp(plugin='ml2')
 
 
@@ -1174,7 +1257,7 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
         segment = self._test_create_segment(network_id=network['id'],
                                             physical_network=phys_net,
                                             segmentation_id=200,
-                                            network_type='vxlan')
+                                            network_type='vlan')
         dhcp_agents = self.dhcp_agent_db.get_dhcp_agents_hosting_networks(
             self.ctx, [network['id']])
         self.assertEqual(0, len(dhcp_agents))
@@ -1230,7 +1313,7 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
         segment2 = self._test_create_segment(network_id=network['id'],
                                              physical_network=phys_net2,
                                              segmentation_id=200,
-                                             network_type='vxlan')['segment']
+                                             network_type='vlan')['segment']
         self._register_agent(DHCP_HOSTA,
                              mappings={phys_net1: 'br-eth-1'},
                              plugin=self.plugin)
