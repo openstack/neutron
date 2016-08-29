@@ -20,10 +20,6 @@ from neutron.tests.tempest.api import base
 
 class BaseSecGroupTest(base.BaseNetworkTest):
 
-    @classmethod
-    def resource_setup(cls):
-        super(BaseSecGroupTest, cls).resource_setup()
-
     def _create_security_group(self, **kwargs):
         # Create a security group
         name = data_utils.rand_name('secgroup-')

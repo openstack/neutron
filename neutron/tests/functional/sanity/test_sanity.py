@@ -26,9 +26,6 @@ class SanityTestCase(base.BaseTestCase):
     where someone modifies the API without updating the check script.
     """
 
-    def setUp(self):
-        super(SanityTestCase, self).setUp()
-
     def test_nova_notify_runs(self):
         checks.nova_notify_supported()
 
