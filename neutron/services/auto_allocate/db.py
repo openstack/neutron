@@ -302,22 +302,27 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             'admin_state_up': True
         }
         router = None
+        attached_subnets = []
         try:
             router = self.l3_plugin.create_router(
                 context, {'router': router_args})
-            attached_subnets = []
             for subnet in subnets:
                 self.l3_plugin.add_router_interface(
                     context, router['id'], {'subnet_id': subnet['id']})
                 attached_subnets.append(subnet)
             return router
-        except n_exc.BadRequest:
+        except n_exc.BadRequest as e:
             LOG.error(_LE("Unable to auto allocate topology for tenant "
-                          "%s because of router errors."), tenant_id)
+                          "%(tenant_id)s because of router errors. "
+                          "Reason: %(reason)s"),
+                      {'tenant_id': tenant_id, 'reason': e})
             if router:
-                self._cleanup(context,
-                    network_id=subnets[0]['network_id'],
-                    router_id=router['id'], subnets=attached_subnets)
+                router_id = router['id']
+            else:
+                router_id = None
+            self._cleanup(context,
+                network_id=subnets[0]['network_id'],
+                router_id=router_id, subnets=attached_subnets)
             raise exceptions.AutoAllocationFailure(
                 reason=_("Unable to provide external connectivity"))
 
