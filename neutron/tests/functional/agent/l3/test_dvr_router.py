@@ -965,8 +965,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             'scope1', 'scope1')
         # Internal networks that are in the same address scope can connected
         # each other
-        net_helpers.assert_ping(test_machine1.namespace, test_machine2.ip, 5)
-        net_helpers.assert_ping(test_machine2.namespace, test_machine1.ip, 5)
+        net_helpers.assert_ping(test_machine1.namespace, test_machine2.ip)
+        net_helpers.assert_ping(test_machine2.namespace, test_machine1.ip)
 
     def test_connection_from_diff_address_scope(self):
         self.agent.conf.agent_mode = 'dvr_snat'
@@ -1001,8 +1001,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         src_machine = self.useFixture(
             machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24'))
         # Floating ip should work no matter of address scope
-        net_helpers.assert_ping(src_machine.namespace, fip_same_scope, 5)
-        net_helpers.assert_ping(src_machine.namespace, fip_diff_scope, 5)
+        net_helpers.assert_ping(src_machine.namespace, fip_same_scope)
+        net_helpers.assert_ping(src_machine.namespace, fip_diff_scope)
 
     def test_direct_route_for_address_scope(self):
         self.agent.conf.agent_mode = 'dvr_snat'
@@ -1018,8 +1018,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             machine_fixtures.FakeMachine(br_ex, '19.4.4.12/24', gw_ip))
         # For the internal networks that are in the same address scope as
         # external network, they can directly route to external network
-        net_helpers.assert_ping(
-            src_machine.namespace, machine_same_scope.ip, 5)
+        net_helpers.assert_ping(src_machine.namespace, machine_same_scope.ip)
         # For the internal networks that are not in the same address scope as
         # external networks. SNAT will be used. Direct route will not work
         # here.
