@@ -133,10 +133,8 @@ core_opts = [
                        'instances via DHCP and RA MTU options.')),
     cfg.StrOpt('ipam_driver', default='internal',
                help=_("Neutron IPAM (IP address management) driver to use. "
-                      "If ipam_driver is not set (default behavior), no IPAM "
-                      "driver is used. In order to use the reference "
-                      "implementation of Neutron IPAM driver, "
-                      "use 'internal'.")),
+                      "By default, the reference implementation of the "
+                      "Neutron IPAM driver is used.")),
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
