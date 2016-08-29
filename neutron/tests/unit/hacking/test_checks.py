@@ -339,6 +339,13 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(
             1, len(list(checks.check_log_warn_deprecated(bad, 'f'))))
 
+    def test_check_python3_filter(self):
+        f = checks.check_python3_no_filter
+        self.assertLineFails(f, "filter(lambda obj: test(obj), data)")
+        self.assertLinePasses(f, "[obj for obj in data if test(obj)]")
+        self.assertLinePasses(f, "filter(function, range(0,10))")
+        self.assertLinePasses(f, "lambda x, y: x+y")
+
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand
 # in some cases, for example, hacking rules which take tokens as argument.
