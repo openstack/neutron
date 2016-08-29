@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron._i18n import _LE
 from neutron_lib import constants
 from oslo_log import log
 
@@ -54,6 +55,22 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """Macvtap driver vlan transparency support."""
         return False
 
+    def _is_live_migration(self, context):
+        # We cannot just check if
+        # context.original['host_id'] != context.current['host_id']
+        # This condition is also true, if nova does a reschedule of a
+        # instance when something went wrong during spawn. In this case,
+        # context.original['host_id'] is set to the failed host.
+        # The only safe way to detect a migration is to look into the binding
+        # profiles 'migrating_to' attribute, which is set by Nova since patch
+        # https://review.openstack.org/#/c/275073/.
+        port_profile = context.original.get(portbindings.PROFILE)
+        if port_profile and port_profile.get('migrating_to', None):
+            LOG.debug("Live migration with profile %s detected.", port_profile)
+            return True
+        else:
+            return False
+
     def try_to_bind_segment_for_agent(self, context, segment, agent):
         if self.check_segment_for_agent(segment, agent):
             vif_details_segment = self.vif_details
@@ -68,6 +85,35 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 vif_details_segment['vlan'] = vlan_id
             else:
                 macvtap_src = interface
+
+            if self._is_live_migration(context):
+                # We can use the original port here, as during live migration
+                # portbinding is done after the migration happened. Nova will
+                # not do a reschedule of the instance migration if binding
+                # fails, but just set the instance into error state.
+                # Due to that we can  be sure that the original port is the
+                # migration source port.
+                orig_vif_details = context.original[portbindings.VIF_DETAILS]
+                orig_source = orig_vif_details[
+                    portbindings.VIF_DETAILS_MACVTAP_SOURCE]
+                if orig_source != macvtap_src:
+                    source_host = context.original[portbindings.HOST_ID]
+                    target_host = agent['host']
+                    LOG.error(_LE("Vif binding denied by mechanism driver. "
+                                  "MacVTap source device '%(target_dev)s' on "
+                                  "the migration target '%(target_host)s'is "
+                                  "not equal to device '%(source_dev)s' on "
+                                  "the migration source '%(source_host)s. "
+                                  "Make sure that the "
+                                  "interface mapping of macvtap "
+                                  "agent on both hosts is equal "
+                                  "for the physical network '%(physnet)s'!"),
+                              {'source_dev': orig_source,
+                               'target_dev': macvtap_src,
+                               'target_host': target_host,
+                               'source_host': source_host,
+                               'physnet': segment['physical_network']})
+                    return False
 
             vif_details_segment['physical_interface'] = interface
             vif_details_segment['macvtap_source'] = macvtap_src

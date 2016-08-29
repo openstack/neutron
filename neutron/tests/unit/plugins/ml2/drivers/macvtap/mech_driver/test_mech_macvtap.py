@@ -16,6 +16,7 @@
 from neutron_lib import constants
 
 from neutron.extensions import portbindings
+from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.macvtap.mech_driver import mech_macvtap
 from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
@@ -31,9 +32,11 @@ class MacvtapMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     BAD_MAPPINGS = {'wrong_physical_network': 'wrong_if'}
     BAD_CONFIGS = {'interface_mappings': BAD_MAPPINGS}
 
-    AGENTS = [{'alive': True,
-               'configurations': GOOD_CONFIGS,
-               'host': 'host'}]
+    AGENT = {'alive': True,
+             'configurations': GOOD_CONFIGS,
+             'host': 'host'}
+    AGENTS = [AGENT]
+
     AGENTS_DEAD = [{'alive': False,
                     'configurations': GOOD_CONFIGS,
                     'host': 'dead_host'}]
@@ -55,8 +58,64 @@ class MacvtapMechanismGenericTestCase(MacvtapMechanismBaseTestCase,
     pass
 
 
+class MacvtapMechanismMigrationTestCase(object):
+    # MIGRATION_SEGMENT must be overridden for the specific type being tested
+    MIGRATION_SEGMENT = None
+
+    MIGRATION_SEGMENTS = [MIGRATION_SEGMENT]
+
+    def test__is_live_migration_true(self):
+        original = {"binding:profile": {"migrating_to": "host"}}
+        self._test__is_live_migration(True, original)
+
+    def test__is_live_migration_false(self):
+        self._test__is_live_migration(False, {})
+
+    def _test__is_live_migration(self, expected, original):
+        context = base.FakePortContext(self.AGENT_TYPE,
+                                       self.AGENTS,
+                                       self.MIGRATION_SEGMENTS,
+                                       vnic_type=self.VNIC_TYPE,
+                                       original=original)
+
+        self.assertEqual(expected, self.driver._is_live_migration(context))
+
+    def _test_try_to_bind_segment_for_agent_migration(self, expected,
+                                                      original):
+        context = base.FakePortContext(self.AGENT_TYPE,
+                                       self.AGENTS,
+                                       self.MIGRATION_SEGMENTS,
+                                       vnic_type=self.VNIC_TYPE,
+                                       original=original)
+        result = self.driver.try_to_bind_segment_for_agent(
+            context, self.MIGRATION_SEGMENT, self.AGENT)
+        self.assertEqual(expected, result)
+
+    def test_try_to_bind_segment_for_agent_migration_abort(self):
+        original = {"binding:profile": {"migrating_to": "host"},
+                    "binding:vif_details": {"macvtap_source": "bad_source"},
+                    "binding:host_id": "source_host"}
+        self._test_try_to_bind_segment_for_agent_migration(False, original)
+
+    def test_try_to_bind_segment_for_agent_migration_ok(self):
+        macvtap_src = "fake_if"
+        seg_id = self.MIGRATION_SEGMENT.get(api.SEGMENTATION_ID)
+        if seg_id:
+            # In the vlan case, macvtap source name ends with .vlan_id
+            macvtap_src += "." + str(seg_id)
+        original = {"binding:profile": {"migrating_to": "host"},
+                    "binding:vif_details": {"macvtap_source": macvtap_src},
+                    "binding:host_id": "source_host"}
+        self._test_try_to_bind_segment_for_agent_migration(True, original)
+
+
 class MacvtapMechanismFlatTestCase(MacvtapMechanismBaseTestCase,
-                                   base.AgentMechanismFlatTestCase):
+                                   base.AgentMechanismFlatTestCase,
+                                   MacvtapMechanismMigrationTestCase):
+    MIGRATION_SEGMENT = {api.ID: 'flat_segment_id',
+                         api.NETWORK_TYPE: 'flat',
+                         api.PHYSICAL_NETWORK: 'fake_physical_network'}
+
     def test_type_flat_vif_details(self):
         context = base.FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS,
@@ -75,7 +134,13 @@ class MacvtapMechanismFlatTestCase(MacvtapMechanismBaseTestCase,
 
 
 class MacvtapMechanismVlanTestCase(MacvtapMechanismBaseTestCase,
-                                   base.AgentMechanismVlanTestCase):
+                                   base.AgentMechanismVlanTestCase,
+                                   MacvtapMechanismMigrationTestCase):
+    MIGRATION_SEGMENT = {api.ID: 'vlan_segment_id',
+                         api.NETWORK_TYPE: 'vlan',
+                         api.PHYSICAL_NETWORK: 'fake_physical_network',
+                         api.SEGMENTATION_ID: 1234}
+
     def test_type_vlan_vif_details(self):
         context = base.FakePortContext(self.AGENT_TYPE,
                                   self.AGENTS,
