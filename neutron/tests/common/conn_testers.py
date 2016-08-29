@@ -21,6 +21,7 @@ from oslo_utils import uuidutils
 from neutron.agent import firewall
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_consts
+from neutron.common import utils as common_utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
@@ -48,6 +49,23 @@ def _validate_direction(f):
     return wrap
 
 
+def _get_packets_sent_received(src_namespace, dst_ip, count):
+    pinger = net_helpers.Pinger(src_namespace, dst_ip, count=count)
+    pinger.start()
+    pinger.wait()
+    return pinger.sent, pinger.received
+
+
+def all_replied(src_ns, dst_ip, count):
+    sent, received = _get_packets_sent_received(src_ns, dst_ip, count)
+    return sent == received
+
+
+def all_lost(src_ns, dst_ip, count):
+    sent, received = _get_packets_sent_received(src_ns, dst_ip, count)
+    return received == 0
+
+
 class ConnectionTester(fixtures.Fixture):
     """Base class for testers
 
@@ -64,10 +82,11 @@ class ConnectionTester(fixtures.Fixture):
     ARP = n_consts.ETHERTYPE_NAME_ARP
     INGRESS = firewall.INGRESS_DIRECTION
     EGRESS = firewall.EGRESS_DIRECTION
-    ICMP_COUNT = 1
 
     def __init__(self, ip_cidr):
         self.ip_cidr = ip_cidr
+        self.icmp_count = 3
+        self.connectivity_timeout = 12
 
     def _setUp(self):
         self._protocol_to_method = {
@@ -158,8 +177,7 @@ class ConnectionTester(fixtures.Fixture):
         icmp_timeout = ICMP_VERSION_TIMEOUTS[ip_version]
         try:
             net_helpers.assert_ping(src_namespace, ip_address,
-                                    timeout=icmp_timeout,
-                                    count=self.ICMP_COUNT)
+                                    timeout=icmp_timeout)
         except RuntimeError:
             raise ConnectionTesterException(
                 "ICMP packets can't get from %s namespace to %s address" % (
@@ -318,6 +336,28 @@ class ConnectionTester(fixtures.Fixture):
                 'No Host Destination Unreachable packets were received when '
                 'sending icmp packets to %s' % destination)
 
+    def wait_for_connection(self, direction):
+        src_ns, dst_ip = self._get_namespace_and_address(
+            direction)
+        all_replied_predicate = functools.partial(
+            all_replied, src_ns, dst_ip, count=self.icmp_count)
+        common_utils.wait_until_true(
+            all_replied_predicate, timeout=self.connectivity_timeout,
+            exception=ConnectionTesterException(
+                "Not all ICMP packets replied from %s namespace to %s "
+                "address." % self._get_namespace_and_address(direction)))
+
+    def wait_for_no_connection(self, direction):
+        src_ns, dst_ip = self._get_namespace_and_address(
+            direction)
+        all_lost_predicate = functools.partial(
+            all_lost, src_ns, dst_ip, count=self.icmp_count)
+        common_utils.wait_until_true(
+            all_lost_predicate, timeout=self.connectivity_timeout,
+            exception=ConnectionTesterException(
+                "At least one packet got reply from %s namespace to %s "
+                "address." % self._get_namespace_and_address(direction)))
+
 
 class OVSBaseConnectionTester(ConnectionTester):
 
@@ -389,7 +429,6 @@ class OVSTrunkConnectionTester(OVSBaseConnectionTester):
     https://bugzilla.redhat.com/show_bug.cgi?id=1160340
 
     """
-    ICMP_COUNT = 3
 
     def __init__(self, ip_cidr, br_trunk_name):
         super(OVSTrunkConnectionTester, self).__init__(ip_cidr)
@@ -443,30 +482,27 @@ class OVSTrunkConnectionTester(OVSBaseConnectionTester):
             return self._peer2.namespace, self._ip_vlan
         return self._vm.namespace, self._peer2.ip
 
-    def test_sub_port_icmp_connectivity(self, direction):
-
-        src_namespace, ip_address = self._get_subport_namespace_and_address(
+    def wait_for_sub_port_connectivity(self, direction):
+        src_ns, dst_ip = self._get_subport_namespace_and_address(
             direction)
-        ip_version = ip_lib.get_ip_version(ip_address)
-        icmp_timeout = ICMP_VERSION_TIMEOUTS[ip_version]
-        try:
-            net_helpers.assert_ping(src_namespace, ip_address,
-                                    timeout=icmp_timeout,
-                                    count=self.ICMP_COUNT)
-        except RuntimeError:
-            raise ConnectionTesterException(
-                "ICMP packets can't get from %s namespace to %s address" % (
-                    src_namespace, ip_address))
+        all_replied_predicate = functools.partial(
+            all_replied, src_ns, dst_ip, count=self.icmp_count)
+        common_utils.wait_until_true(
+            all_replied_predicate, timeout=self.connectivity_timeout,
+            exception=ConnectionTesterException(
+                "ICMP traffic from %s namespace to subport with address %s "
+                "can't get through." % (src_ns, dst_ip)))
 
-    def test_sub_port_icmp_no_connectivity(self, direction):
-        try:
-            self.test_sub_port_icmp_connectivity(direction)
-        except ConnectionTesterException:
-            pass
-        else:
-            raise ConnectionTesterException(
-                'Established %s connection with protocol ICMP, ' % (
-                    direction))
+    def wait_for_sub_port_no_connectivity(self, direction):
+        src_ns, dst_ip = self._get_subport_namespace_and_address(
+            direction)
+        all_lost_predicate = functools.partial(
+            all_lost, src_ns, dst_ip, count=self.icmp_count)
+        common_utils.wait_until_true(
+            all_lost_predicate, timeout=self.connectivity_timeout,
+            exception=ConnectionTesterException(
+                "ICMP traffic from %s namespace to subport with address %s "
+                "can still get through." % (src_ns, dst_ip)))
 
 
 class LinuxBridgeConnectionTester(ConnectionTester):
