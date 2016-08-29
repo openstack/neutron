@@ -62,23 +62,27 @@ class NeutronConfigFixture(ConfigFixture):
             'DEFAULT': {
                 'host': self._generate_host(),
                 'state_path': self._generate_state_path(self.temp_dir),
-                'lock_path': '$state_path/lock',
                 'api_paste_config': self._generate_api_paste(),
-                'policy_file': self._generate_policy_json(),
                 'core_plugin': 'ml2',
                 'service_plugins': ','.join(service_plugins),
                 'auth_strategy': 'noauth',
                 'debug': 'True',
+                'transport_url':
+                    'rabbit://%(user)s:%(password)s@%(host)s:5672/%(vhost)s' %
+                    {'user': rabbitmq_environment.user,
+                     'password': rabbitmq_environment.password,
+                     'host': rabbitmq_environment.host,
+                     'vhost': rabbitmq_environment.vhost},
             },
             'database': {
                 'connection': connection,
             },
-            'oslo_messaging_rabbit': {
-                'rabbit_userid': rabbitmq_environment.user,
-                'rabbit_password': rabbitmq_environment.password,
-                'rabbit_hosts': rabbitmq_environment.host,
-                'rabbit_virtual_host': rabbitmq_environment.vhost,
-            }
+            'oslo_concurrency': {
+                'lock_path': '$state_path/lock',
+            },
+            'oslo_policy': {
+                'policy_file': self._generate_policy_json(),
+            },
         })
 
     def _setUp(self):
