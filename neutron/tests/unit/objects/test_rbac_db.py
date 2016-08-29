@@ -29,9 +29,8 @@ from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
 
-class FakeDbModel(object):
-    def __init__(self, *args, **kwargs):
-        pass
+class FakeDbModel(dict):
+    pass
 
 
 class FakeRbacModel(rbac_db_models.RBACColumns, model_base.BASEV2):

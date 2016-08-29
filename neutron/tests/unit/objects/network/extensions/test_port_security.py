@@ -30,7 +30,9 @@ class NetworkPortSecurityDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(NetworkPortSecurityDbObjTestCase, self).setUp()
-        for db_obj, obj_field in zip(self.db_objs, self.obj_fields):
+        for db_obj, obj_field, obj in zip(
+                self.db_objs, self.obj_fields, self.objs):
             network = self._create_network()
             db_obj['network_id'] = network['id']
             obj_field['id'] = network['id']
+            obj['id'] = network['id']
