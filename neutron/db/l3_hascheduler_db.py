@@ -12,13 +12,20 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib import constants
 from sqlalchemy import func
 from sqlalchemy import sql
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3_sch_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
+from neutron.extensions import portbindings
+from neutron import manager
+from neutron.plugins.common import constants as service_constants
 
 
 class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
@@ -81,3 +88,25 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
                 bindings = [(binding.l3_agent, None) for binding in bindings]
 
         return self._get_agents_dict_for_router(bindings)
+
+
+def _notify_l3_agent_ha_port_update(resource, event, trigger, **kwargs):
+    new_port = kwargs.get('port')
+    original_port = kwargs.get('original_port')
+    context = kwargs.get('context')
+    host = new_port[portbindings.HOST_ID]
+
+    if new_port and original_port and host:
+        new_device_owner = new_port.get('device_owner', '')
+        if (new_device_owner == constants.DEVICE_OWNER_ROUTER_HA_INTF and
+            new_port['status'] == constants.PORT_STATUS_ACTIVE and
+            original_port['status'] != new_port['status']):
+            l3plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
+            l3plugin.l3_rpc_notifier.routers_updated_on_host(
+                context, [new_port['device_id']], host)
+
+
+def subscribe():
+    registry.subscribe(
+        _notify_l3_agent_ha_port_update, resources.PORT, events.AFTER_UPDATE)

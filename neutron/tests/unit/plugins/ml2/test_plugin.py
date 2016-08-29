@@ -58,6 +58,7 @@ from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
+from neutron.services.l3_router import l3_router_plugin
 from neutron.services.qos import qos_consts
 from neutron.services.segments import db as segments_plugin_db
 from neutron.services.segments import plugin as segments_plugin
@@ -83,6 +84,7 @@ PLUGIN_NAME = 'ml2'
 
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 HOST = 'fake_host'
+TEST_ROUTER_ID = 'router_id'
 
 
 # TODO(marun) - Move to somewhere common for reuse
@@ -707,6 +709,26 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with self.port() as port:
             self.assertEqual('DOWN', port['port']['status'])
             self.assertEqual('DOWN', self.port_create_status)
+
+    def test_update_port_status_notify_port_event_after_update(self):
+        ctx = context.get_admin_context()
+        plugin = ml2_plugin.Ml2Plugin()
+        # enable subscription for events
+        l3_router_plugin.L3RouterPlugin()
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            p_const.L3_ROUTER_NAT)
+        host_arg = {portbindings.HOST_ID: HOST}
+        with mock.patch.object(l3plugin.l3_rpc_notifier,
+                               'routers_updated_on_host') as mock_updated:
+            with self.port(device_owner=constants.DEVICE_OWNER_ROUTER_HA_INTF,
+                           device_id=TEST_ROUTER_ID,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port:
+                plugin.update_port_status(
+                    ctx, port['port']['id'],
+                    constants.PORT_STATUS_ACTIVE, host=HOST)
+                mock_updated.assert_called_once_with(
+                    mock.ANY, [TEST_ROUTER_ID], HOST)
 
     def test_update_port_status_short_id(self):
         ctx = context.get_admin_context()

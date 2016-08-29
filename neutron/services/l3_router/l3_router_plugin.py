@@ -30,6 +30,7 @@ from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
+from neutron.db import l3_hascheduler_db
 from neutron.extensions import l3
 from neutron.plugins.common import constants
 from neutron.quota import resource_registry
@@ -72,6 +73,8 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         super(L3RouterPlugin, self).__init__()
         if 'dvr' in self.supported_extension_aliases:
             l3_dvrscheduler_db.subscribe()
+        if 'l3-ha' in self.supported_extension_aliases:
+            l3_hascheduler_db.subscribe()
         self.agent_notifiers.update(
             {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
 
