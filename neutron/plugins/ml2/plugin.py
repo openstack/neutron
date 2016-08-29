@@ -421,7 +421,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._update_port_dict_binding(port, new_binding)
         new_context = driver_context.PortContext(
             self, orig_context._plugin_context, port,
-            orig_context.network.current, new_binding, None)
+            orig_context.network.current, new_binding, None,
+            original_port=orig_context.original)
 
         # Attempt to bind the port and return the context with the
         # result.
