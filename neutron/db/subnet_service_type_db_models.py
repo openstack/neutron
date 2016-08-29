@@ -13,34 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sqlalchemy as sa
-from sqlalchemy import orm
+# TODO(ihrachys): consider renaming the module since now it does not contain
+# any models at all
+
+import sys
 
 from neutron.api.v2 import attributes
+from neutron.common import _deprecate
 from neutron.db import common_db_mixin
-from neutron.db import model_base
-from neutron.db import models_v2
-
-
-class SubnetServiceType(model_base.BASEV2):
-    """Subnet Service Types table"""
-
-    __tablename__ = "subnet_service_types"
-
-    subnet_id = sa.Column(sa.String(36),
-                          sa.ForeignKey('subnets.id', ondelete="CASCADE"))
-    # Service types must be valid device owners, therefore share max length
-    service_type = sa.Column(sa.String(
-                                length=attributes.DEVICE_OWNER_MAX_LEN))
-    subnet = orm.relationship(models_v2.Subnet,
-                              backref=orm.backref('service_types',
-                                                  lazy='joined',
-                                                  cascade='all, delete-orphan',
-                                                  uselist=True))
-    __table_args__ = (
-        sa.PrimaryKeyConstraint('subnet_id', 'service_type'),
-        model_base.BASEV2.__table_args__
-    )
+from neutron.db.models import subnet_service_type as sst_model
 
 
 class SubnetServiceTypeMixin(object):
@@ -53,3 +34,9 @@ class SubnetServiceTypeMixin(object):
 
     common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
         attributes.SUBNETS, [_extend_subnet_service_types])
+
+
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_OLD_REF = sys.modules[__name__]
+sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), sst_model)
+# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE

@@ -33,9 +33,9 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
+from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
 from neutron.db import segments_db
-from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.extensions import portbindings
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
@@ -181,13 +181,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     def _update_subnet_service_types(self, context, subnet_id, s):
         old_types = context.session.query(
-                        service_type_db.SubnetServiceType).filter_by(
-                            subnet_id=subnet_id)
+            sst_model.SubnetServiceType).filter_by(subnet_id=subnet_id)
         for service_type in old_types:
             context.session.delete(service_type)
         updated_types = s.pop('service_types')
         for service_type in updated_types:
-            new_type = service_type_db.SubnetServiceType(
+            new_type = sst_model.SubnetServiceType(
                            subnet_id=subnet_id,
                            service_type=service_type)
             context.session.add(new_type)
@@ -523,7 +522,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         if validators.is_attr_set(service_types):
             for service_type in service_types:
-                service_type_entry = service_type_db.SubnetServiceType(
+                service_type_entry = sst_model.SubnetServiceType(
                     subnet_id=subnet.id,
                     service_type=service_type)
                 context.session.add(service_type_entry)
@@ -566,7 +565,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return fixed_ip_list
 
     def _query_filter_service_subnets(self, query, service_type):
-        ServiceType = service_type_db.SubnetServiceType
+        ServiceType = sst_model.SubnetServiceType
         query = query.add_entity(ServiceType)
         query = query.outerjoin(ServiceType)
         query = query.filter(or_(ServiceType.service_type.is_(None),
