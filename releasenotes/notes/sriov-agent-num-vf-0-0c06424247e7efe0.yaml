@@ -1,0 +1,3 @@
+---
+fixes:
+  - Allow SR-IOV agent to run with 0 vfs
