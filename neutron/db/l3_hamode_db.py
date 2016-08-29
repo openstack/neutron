@@ -655,7 +655,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             dead_agents = [
                 binding.agent for binding in bindings
                 if binding.state == n_const.HA_ROUTER_STATE_ACTIVE and
-                not binding.agent.is_active]
+                not (binding.agent.is_active and binding.agent.admin_state_up)]
+
             for dead_agent in dead_agents:
                 self.update_routers_states(
                     context, {router_id: n_const.HA_ROUTER_STATE_STANDBY},
