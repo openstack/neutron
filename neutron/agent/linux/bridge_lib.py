@@ -18,6 +18,8 @@
 
 import os
 
+from oslo_utils import excutils
+
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 
@@ -57,7 +59,11 @@ class BridgeDevice(ip_lib.IPDevice):
     @classmethod
     def addbr(cls, name, namespace=None):
         bridge = cls(name, namespace)
-        bridge._brctl(['addbr', bridge.name])
+        try:
+            bridge._brctl(['addbr', bridge.name])
+        except RuntimeError:
+            with excutils.save_and_reraise_exception() as ectx:
+                ectx.reraise = not bridge.exists()
         return bridge
 
     @classmethod

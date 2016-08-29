@@ -88,6 +88,13 @@ class BridgeLibTest(base.BaseTestCase):
     def test_addbr_without_namespace(self):
         self._test_br()
 
+    def test_addbr_exists(self):
+        self.execute.side_effect = RuntimeError()
+        with mock.patch.object(bridge_lib.BridgeDevice, 'exists',
+                               return_value=True):
+            bridge_lib.BridgeDevice.addbr(self._BR_NAME)
+            bridge_lib.BridgeDevice.addbr(self._BR_NAME)
+
     def test_owns_interface(self):
         br = bridge_lib.BridgeDevice('br-int')
         exists = lambda path: path == "/sys/class/net/br-int/brif/abc"
