@@ -37,15 +37,11 @@ class IpamTestCase(testlib_api.SqlTestCase):
     """
     Base class for tests that aim to test ip allocation.
     """
-    use_pluggable_ipam = False
-
     def setUp(self):
         super(IpamTestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
-        if self.use_pluggable_ipam:
-            self._turn_on_pluggable_ipam()
-        else:
-            self._turn_off_pluggable_ipam()
+        DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.plugin = base_plugin.NeutronDbPluginV2()
         self.cxt = context.Context(user_id=None,
                                    tenant_id=None,
@@ -57,16 +53,6 @@ class IpamTestCase(testlib_api.SqlTestCase):
         self.port_id = 'test_p_id'
         self._create_network()
         self._create_subnet()
-
-    def _turn_off_pluggable_ipam(self):
-        cfg.CONF.set_override('ipam_driver', None)
-        self.ip_availability_range = models_v2.IPAvailabilityRange
-
-    def _turn_on_pluggable_ipam(self):
-        cfg.CONF.set_override('ipam_driver', 'internal')
-        DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-        self.setup_coreplugin(DB_PLUGIN_KLASS)
-        self.ip_availability_range = ipam_models.IpamAvailabilityRange
 
     def result_set_to_dicts(self, resultset, keys):
         dicts = []
@@ -83,7 +69,7 @@ class IpamTestCase(testlib_api.SqlTestCase):
 
     def assert_ip_avail_range_matches(self, expected):
         result_set = self.cxt.session.query(
-            self.ip_availability_range).all()
+            ipam_models.IpamAvailabilityRange).all()
         keys = ['first_ip', 'last_ip']
         actual = self.result_set_to_dicts(result_set, keys)
         self.assertEqual(expected, actual)
@@ -166,11 +152,3 @@ class TestIpamMySql(testlib_api.MySQLTestCaseMixin, IpamTestCase):
 
 class TestIpamPsql(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
     pass
-
-
-class TestPluggableIpamMySql(testlib_api.MySQLTestCaseMixin, IpamTestCase):
-    use_pluggable_ipam = True
-
-
-class TestPluggableIpamPsql(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
-    use_pluggable_ipam = True
