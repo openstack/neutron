@@ -24,8 +24,6 @@ from neutron.tests.tempest import config
 
 from neutron_lib import constants as lib_constants
 
-CONF = config.CONF
-
 # 3 IP addresses are taken from every total for IPv4 these are reserved
 DEFAULT_IP4_RESERVED = 3
 # 2 IP addresses are taken from every total for IPv6 these are reserved

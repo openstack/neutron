@@ -16,9 +16,6 @@
 from tempest import test
 
 from neutron.tests.tempest.api import base
-from neutron.tests.tempest import config
-
-CONF = config.CONF
 
 
 class NetworksTestJSON(base.BaseNetworkTest):
