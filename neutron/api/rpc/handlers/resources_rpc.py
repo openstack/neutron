@@ -17,7 +17,6 @@ import collections
 
 from neutron_lib import exceptions
 from oslo_log import helpers as log_helpers
-from oslo_log import log as logging
 import oslo_messaging
 
 from neutron._i18n import _
@@ -29,9 +28,6 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.objects import base as obj_base
-
-
-LOG = logging.getLogger(__name__)
 
 
 class ResourcesRpcError(exceptions.NeutronException):
