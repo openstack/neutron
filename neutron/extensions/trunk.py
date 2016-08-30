@@ -32,6 +32,11 @@ RESOURCE_ATTRIBUTE_MAP = {
         'name': {'allow_post': True, 'allow_put': True,
                  'validate': {'type:string': attr.NAME_MAX_LEN},
                  'default': '', 'is_visible': True},
+        # TODO(armax): consolidate use of standardattr attributes
+        'description': {'allow_post': True,
+                        'allow_put': True,
+                        'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
+                        'default': '', 'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'validate':

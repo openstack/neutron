@@ -165,10 +165,12 @@ class TrunkPlugin(service_base.ServicePluginBase,
         # Otherwise a transition to BUILD (or ERROR) should be expected
         # depending on how the driver reacts. PRECOMMIT failures prevent the
         # trunk from being created altogether.
+        trunk_description = trunk.get('description', "")
         trunk_obj = trunk_objects.Trunk(context=context,
                                         admin_state_up=admin_state_up,
                                         id=uuidutils.generate_uuid(),
                                         name=trunk.get('name', ""),
+                                        description=trunk_description,
                                         tenant_id=trunk['tenant_id'],
                                         port_id=trunk['port_id'],
                                         status=constants.PENDING_STATUS,
