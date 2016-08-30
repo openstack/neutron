@@ -613,10 +613,12 @@ class Controller(object):
                            pluralized=self._collection)
         except oslo_policy.PolicyNotAuthorized:
             with excutils.save_and_reraise_exception() as ctxt:
-                # If a tenant is modifying it's own object, it's safe to return
+                # If a tenant is modifying its own object, it's safe to return
                 # a 403. Otherwise, pretend that it doesn't exist to avoid
                 # giving away information.
-                if request.context.tenant_id != orig_obj['tenant_id']:
+                orig_obj_tenant_id = orig_obj.get("tenant_id")
+                if (request.context.tenant_id != orig_obj_tenant_id or
+                    orig_obj_tenant_id is None):
                     ctxt.reraise = False
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
