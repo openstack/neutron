@@ -712,7 +712,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_update_port_status_notify_port_event_after_update(self):
         ctx = context.get_admin_context()
-        plugin = ml2_plugin.Ml2Plugin()
+        plugin = manager.NeutronManager.get_plugin()
         # enable subscription for events
         l3_router_plugin.L3RouterPlugin()
         l3plugin = manager.NeutronManager.get_service_plugins().get(
