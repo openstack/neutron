@@ -802,3 +802,51 @@ class TestShimControllers(test_functional.PecanFunctionalTest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual({sub_resource_collection: {'foo': temp_id}},
                          resp.json)
+
+
+class TestMemberActionController(test_functional.PecanFunctionalTest):
+    def setUp(self):
+        fake_ext = pecan_utils.FakeExtension()
+        fake_plugin = pecan_utils.FakePlugin()
+        plugins = {pecan_utils.FakePlugin.PLUGIN_TYPE: fake_plugin}
+        new_extensions = {fake_ext.get_alias(): fake_ext}
+        super(TestMemberActionController, self).setUp(
+            service_plugins=plugins, extensions=new_extensions)
+        hyphen_collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        self.collection = hyphen_collection.replace('_', '-')
+
+    def test_get_member_action_controller(self):
+        url = '/v2.0/{}/something/boo_meh.json'.format(self.collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({'boo_yah': 'something'}, resp.json)
+
+    def test_put_member_action_controller(self):
+        url = '/v2.0/{}/something/put_meh.json'.format(self.collection)
+        resp = self.app.put_json(url, params={'it_matters_not': 'ok'})
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({'poo_yah': 'something'}, resp.json)
+
+    def test_get_member_action_does_not_exist(self):
+        url = '/v2.0/{}/something/are_you_still_there.json'.format(
+            self.collection)
+        resp = self.app.get(url, expect_errors=True)
+        self.assertEqual(404, resp.status_int)
+
+    def test_put_member_action_does_not_exist(self):
+        url = '/v2.0/{}/something/are_you_still_there.json'.format(
+            self.collection)
+        resp = self.app.put_json(url, params={'it_matters_not': 'ok'},
+                                 expect_errors=True)
+        self.assertEqual(404, resp.status_int)
+
+    def test_put_on_get_member_action(self):
+        url = '/v2.0/{}/something/boo_meh.json'.format(self.collection)
+        resp = self.app.put_json(url, params={'it_matters_not': 'ok'},
+                                 expect_errors=True)
+        self.assertEqual(405, resp.status_int)
+
+    def test_get_on_put_member_action(self):
+        url = '/v2.0/{}/something/put_meh.json'.format(self.collection)
+        resp = self.app.get(url, expect_errors=True)
+        self.assertEqual(405, resp.status_int)

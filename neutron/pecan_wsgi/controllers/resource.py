@@ -27,10 +27,11 @@ LOG = logging.getLogger(__name__)
 class ItemController(utils.NeutronPecanController):
 
     def __init__(self, resource, item, plugin=None, resource_info=None,
-                 parent_resource=None):
+                 parent_resource=None, member_actions=None):
         super(ItemController, self).__init__(None, resource, plugin=plugin,
                                              resource_info=resource_info,
-                                             parent_resource=parent_resource)
+                                             parent_resource=parent_resource,
+                                             member_actions=member_actions)
         self.item = item
 
     @utils.expose(generic=True)
@@ -84,11 +85,24 @@ class ItemController(utils.NeutronPecanController):
         controller = manager.NeutronManager.get_controller_for_resource(
             collection)
         if not controller:
-            LOG.warning(_LW("No controller found for: %s - returning response "
-                        "code 404"), collection)
-            pecan.abort(404)
+            if collection not in self._member_actions:
+                LOG.warning(_LW("No controller found for: %s - returning"
+                                "response code 404"), collection)
+                pecan.abort(404)
+            # collection is a member action, so we create a new controller
+            # for it.
+            method = self._member_actions[collection]
+            kwargs = {'plugin': self.plugin,
+                      'resource_info': self.resource_info}
+            if method == 'PUT':
+                kwargs['update_action'] = collection
+            elif method == 'GET':
+                kwargs['show_action'] = collection
+            controller = MemberActionController(
+                self.resource, self.item, self, **kwargs)
+        else:
+            request.context['parent_id'] = request.context['resource_id']
         request.context['resource'] = controller.resource
-        request.context['parent_id'] = request.context['resource_id']
         return controller, remainder
 
 
@@ -104,11 +118,10 @@ class CollectionsController(utils.NeutronPecanController):
         request.context['uri_identifiers'][uri_identifier] = item
         return (self.item_controller_class(
             self.resource, item, resource_info=self.resource_info,
-                # NOTE(tonytan4ever): item needs to share the same
-                # parent as collection
-                parent_resource=self.parent
-                ),
-                remainder)
+            # NOTE(tonytan4ever): item needs to share the same
+            # parent as collection
+            parent_resource=self.parent,
+            member_actions=self._member_actions), remainder)
 
     @utils.expose(generic=True)
     def index(self, *args, **kwargs):
@@ -154,3 +167,60 @@ class CollectionsController(utils.NeutronPecanController):
             creator_args.append(request.context['parent_id'])
         creator_args.append(data)
         return {key: creator(*creator_args)}
+
+
+class MemberActionController(ItemController):
+    @property
+    def plugin_shower(self):
+        # NOTE(blogan): Do an explicit check for the _show_action because
+        # pecan will see the plugin_shower property as a possible custom route
+        # and try to evaluate it, which causes the code block to be executed.
+        # If _show_action is None, getattr throws an exception and fails a
+        # request.
+        if self._show_action:
+            return getattr(self.plugin, self._show_action)
+
+    @property
+    def plugin_updater(self):
+        if self._update_action:
+            return getattr(self.plugin, self._update_action)
+
+    def __init__(self, resource, item, parent_controller, plugin=None,
+                 resource_info=None, show_action=None, update_action=None):
+        super(MemberActionController, self).__init__(
+            resource, item, plugin=plugin, resource_info=resource_info)
+        self._show_action = show_action
+        self._update_action = update_action
+        self.parent_controller = parent_controller
+
+    @utils.expose(generic=True)
+    def index(self, *args, **kwargs):
+        if not self._show_action:
+            pecan.abort(405)
+        neutron_context = request.context['neutron_context']
+        fields = request.context['query_params'].get('fields')
+        return self.plugin_shower(neutron_context, self.item, fields=fields)
+
+    @utils.when(index, method='PUT')
+    def put(self, *args, **kwargs):
+        if not self._update_action:
+            LOG.debug("Action %(action)s is not defined on resource "
+                      "%(resource)s",
+                      {'action': self._update_action,
+                       'resource': self.resource})
+            pecan.abort(405)
+        neutron_context = request.context['neutron_context']
+        LOG.debug("Processing member action %(action)s for resource "
+                  "%(resource)s identified by %(item)s",
+                  {'action': self._update_action,
+                   'resource': self.resource,
+                   'item': self.item})
+        return self.plugin_updater(neutron_context, self.item,
+                                   request.context['request_data'])
+
+    @utils.when(index, method='HEAD')
+    @utils.when(index, method='POST')
+    @utils.when(index, method='PATCH')
+    @utils.when(index, method='DELETE')
+    def not_supported(self):
+        return super(MemberActionController, self).not_supported()

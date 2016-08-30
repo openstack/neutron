@@ -23,6 +23,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import rpc as n_rpc
 from neutron import manager
 from neutron.pecan_wsgi import constants as pecan_constants
+from neutron.pecan_wsgi.hooks import utils
 
 LOG = log.getLogger(__name__)
 
@@ -66,6 +67,8 @@ class NotifierHook(hooks.PecanHook):
         resource = state.request.context.get('resource')
         if not resource:
             return
+        if utils.is_member_action(utils.get_controller(state)):
+            return
         action = pecan_constants.ACTION_MAP.get(state.request.method)
         event = '%s.%s.start' % (resource, action)
         if action in ('create', 'update'):
@@ -91,6 +94,8 @@ class NotifierHook(hooks.PecanHook):
         action = pecan_constants.ACTION_MAP.get(state.request.method)
         if not action or action == 'get':
             LOG.debug("No notification will be sent for action: %s", action)
+            return
+        if utils.is_member_action(utils.get_controller(state)):
             return
         if state.response.status_int > 300:
             LOG.debug("No notification will be sent due to unsuccessful "

@@ -70,6 +70,7 @@ def initialize_all():
             resource = legacy_controller.resource
             plugin = legacy_controller.plugin
             attr_info = legacy_controller.attr_info
+            member_actions = legacy_controller.member_actions
             # Retrieving the parent resource.  It is expected the format of
             # the parent resource to be:
             # {'collection_name': 'name-of-collection',
@@ -80,7 +81,7 @@ def initialize_all():
             parent_resource = parent.get('member_name')
             new_controller = res_ctrl.CollectionsController(
                 collection, resource, resource_info=attr_info,
-                parent_resource=parent_resource)
+                parent_resource=parent_resource, member_actions=member_actions)
             manager.NeutronManager.set_plugin_for_resource(resource, plugin)
             if path_prefix:
                 manager.NeutronManager.add_resource_for_path_prefix(

@@ -1,3 +1,6 @@
+# Copyright (c) 2015 Taturiello Consulting, Meh.
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,9 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.pecan_wsgi.controllers import quota
 from neutron.pecan_wsgi.controllers import resource
+from neutron.pecan_wsgi.controllers import utils as controller_utils
 
 
-CollectionsController = resource.CollectionsController
-QuotasController = quota.QuotasController
+def get_controller(state):
+    if (state.arguments and state.arguments.args and
+            isinstance(state.arguments.args[0],
+                       controller_utils.NeutronPecanController)):
+        controller = state.arguments.args[0]
+        return controller
+
+
+def is_member_action(controller):
+    return isinstance(controller,
+                      resource.MemberActionController)

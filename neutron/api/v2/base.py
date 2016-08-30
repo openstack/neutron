@@ -71,6 +71,10 @@ class Controller(object):
     def attr_info(self):
         return self._attr_info
 
+    @property
+    def member_actions(self):
+        return self._member_actions
+
     def __init__(self, plugin, collection, resource, attr_info,
                  allow_bulk=False, member_actions=None, parent=None,
                  allow_pagination=False, allow_sorting=False):
