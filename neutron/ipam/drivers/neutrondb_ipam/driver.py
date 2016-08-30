@@ -43,14 +43,14 @@ class NeutronDbSubnet(ipam_base.Subnet):
     """
 
     @classmethod
-    def create_allocation_pools(cls, subnet_manager, session, pools, cidr):
+    def create_allocation_pools(cls, subnet_manager, context, pools, cidr):
         for pool in pools:
             # IPv6 addresses that start '::1', '::2', etc cause IP version
             # ambiguity when converted to integers by pool.first and pool.last.
             # Infer the IP version from the subnet cidr.
             ip_version = cidr.version
             subnet_manager.create_pool(
-                session,
+                context,
                 netaddr.IPAddress(pool.first, ip_version).format(),
                 netaddr.IPAddress(pool.last, ip_version).format())
 
@@ -61,8 +61,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
             ipam_subnet_id,
             subnet_request.subnet_id)
         # Create subnet resource
-        session = ctx.session
-        subnet_manager.create(session)
+        subnet_manager.create(ctx)
         # If allocation pools are not specified, define them around
         # the subnet's gateway IP
         if not subnet_request.allocation_pools:
@@ -71,7 +70,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         else:
             pools = subnet_request.allocation_pools
         # Create IPAM allocation pools
-        cls.create_allocation_pools(subnet_manager, session, pools,
+        cls.create_allocation_pools(subnet_manager, ctx, pools,
                                     subnet_request.subnet_cidr)
 
         return cls(ipam_subnet_id,
@@ -89,7 +88,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         :param neutron_subnet_id: neutron subnet identifier.
         """
         ipam_subnet = ipam_db_api.IpamSubnetManager.load_by_neutron_subnet_id(
-            ctx.session, neutron_subnet_id)
+            ctx, neutron_subnet_id)
         if not ipam_subnet:
             LOG.error(_LE("IPAM subnet referenced to "
                           "Neutron subnet %s does not exist"),
@@ -132,15 +131,15 @@ class NeutronDbSubnet(ipam_base.Subnet):
                                                             self._subnet_id)
         self._context = ctx
 
-    def _verify_ip(self, session, ip_address):
+    def _verify_ip(self, context, ip_address):
         """Verify whether IP address can be allocated on subnet.
 
-        :param session: database session
+        :param context: neutron api request context
         :param ip_address: String representing the IP address to verify
         :raises: InvalidInput, IpAddressAlreadyAllocated
         """
         # Ensure that the IP's are unique
-        if not self.subnet_manager.check_unique_allocation(session,
+        if not self.subnet_manager.check_unique_allocation(context,
                                                            ip_address):
             raise ipam_exc.IpAddressAlreadyAllocated(
                 subnet_id=self.subnet_manager.neutron_id,
@@ -152,13 +151,13 @@ class NeutronDbSubnet(ipam_base.Subnet):
                 subnet_id=self.subnet_manager.neutron_id,
                 ip=ip_address)
 
-    def _generate_ip(self, session, prefer_next=False):
+    def _generate_ip(self, context, prefer_next=False):
         """Generate an IP address from the set of available addresses."""
         ip_allocations = netaddr.IPSet()
-        for ipallocation in self.subnet_manager.list_allocations(session):
+        for ipallocation in self.subnet_manager.list_allocations(context):
             ip_allocations.add(netaddr.IPAddress(ipallocation.ip_address))
 
-        for ip_pool in self.subnet_manager.list_pools(session):
+        for ip_pool in self.subnet_manager.list_pools(context):
             ip_set = netaddr.IPSet()
             ip_set.add(netaddr.IPRange(ip_pool.first_ip, ip_pool.last_ip))
             av_set = ip_set.difference(ip_allocations)
@@ -183,7 +182,6 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # running transaction, which is started on create_port or upper level.
         # To be able to do rollback/retry actions correctly ipam driver
         # should not create new nested transaction blocks.
-        session = self._context.session
         all_pool_id = None
         # NOTE(salv-orlando): It would probably better to have a simpler
         # model for address requests and just check whether there is a
@@ -192,22 +190,24 @@ class NeutronDbSubnet(ipam_base.Subnet):
             # This handles both specific and automatic address requests
             # Check availability of requested IP
             ip_address = str(address_request.address)
-            self._verify_ip(session, ip_address)
+            self._verify_ip(self._context, ip_address)
         else:
             prefer_next = isinstance(address_request,
                                      ipam_req.PreferNextAddressRequest)
-            ip_address, all_pool_id = self._generate_ip(session, prefer_next)
+            ip_address, all_pool_id = self._generate_ip(self._context,
+                                                        prefer_next)
 
         # Create IP allocation request object
         # The only defined status at this stage is 'ALLOCATED'.
         # More states will be available in the future - e.g.: RECYCLABLE
         try:
-            with session.begin(subtransactions=True):
+            with self._context.session.begin(subtransactions=True):
                 # NOTE(kevinbenton): we use a subtransaction to force
                 # a flush here so we can capture DBReferenceErrors due
                 # to concurrent subnet deletions. (galera would deadlock
                 # later on final commit)
-                self.subnet_manager.create_allocation(session, ip_address)
+                self.subnet_manager.create_allocation(self._context,
+                                                      ip_address)
         except db_exc.DBReferenceError:
             raise n_exc.SubnetNotFound(
                 subnet_id=self.subnet_manager.neutron_id)
@@ -215,21 +215,19 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     def deallocate(self, address):
         # This is almost a no-op because the Neutron DB IPAM driver does not
-        # delete IPAllocation objects at every deallocation. The only operation
-        # it performs is to delete an IPRequest entry.
-        session = self._context.session
-
+        # delete IPAllocation objects at every deallocation. The only
+        # operation it performs is to delete an IPRequest entry.
         count = self.subnet_manager.delete_allocation(
-            session, address)
+            self._context, address)
         # count can hardly be greater than 1, but it can be 0...
         if not count:
             raise ipam_exc.IpAddressAllocationNotFound(
                 subnet_id=self.subnet_manager.neutron_id,
                 ip_address=address)
 
-    def _no_pool_changes(self, session, pools):
+    def _no_pool_changes(self, context, pools):
         """Check if pool updates in db are required."""
-        db_pools = self.subnet_manager.list_pools(session)
+        db_pools = self.subnet_manager.list_pools(context)
         iprange_pools = [netaddr.IPRange(pool.first_ip, pool.last_ip)
                          for pool in db_pools]
         return pools == iprange_pools
@@ -238,11 +236,11 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # Pools have already been validated in the subnet request object which
         # was sent to the subnet pool driver. Further validation should not be
         # required.
-        session = self._context.session
-        if self._no_pool_changes(session, pools):
+        if self._no_pool_changes(self._context, pools):
             return
-        self.subnet_manager.delete_allocation_pools(session)
-        self.create_allocation_pools(self.subnet_manager, session, pools, cidr)
+        self.subnet_manager.delete_allocation_pools(self._context)
+        self.create_allocation_pools(self.subnet_manager, self._context, pools,
+                                     cidr)
         self._pools = pools
 
     def get_details(self):
@@ -313,7 +311,7 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
         IPAM-related data has no foreign key relationships to neutron subnet,
         so removing ipam subnet manually
         """
-        count = ipam_db_api.IpamSubnetManager.delete(self._context.session,
+        count = ipam_db_api.IpamSubnetManager.delete(self._context,
                                                      subnet_id)
         if count < 1:
             LOG.error(_LE("IPAM subnet referenced to "

@@ -34,7 +34,7 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
         self.multi_pool = (('1.2.3.2', '1.2.3.12'), ('1.2.3.15', '1.2.3.24'))
         self.subnet_manager = db_api.IpamSubnetManager(self.ipam_subnet_id,
                                                        self.neutron_subnet_id)
-        self.subnet_manager_id = self.subnet_manager.create(self.ctx.session)
+        self.subnet_manager_id = self.subnet_manager.create(self.ctx)
         self.ctx.session.flush()
 
     def test_create(self):
@@ -44,7 +44,7 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
         self.assertEqual(1, len(subnets))
 
     def test_remove(self):
-        count = db_api.IpamSubnetManager.delete(self.ctx.session,
+        count = db_api.IpamSubnetManager.delete(self.ctx,
                                                 self.neutron_subnet_id)
         self.assertEqual(1, count)
         subnets = self.ctx.session.query(db_models.IpamSubnet).filter_by(
@@ -52,7 +52,7 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
         self.assertEqual(0, len(subnets))
 
     def test_remove_non_existent_subnet(self):
-        count = db_api.IpamSubnetManager.delete(self.ctx.session,
+        count = db_api.IpamSubnetManager.delete(self.ctx,
                                                 'non-existent')
         self.assertEqual(0, count)
 
@@ -61,7 +61,7 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
             any(pool == (db_pool.first_ip, db_pool.last_ip) for pool in pools))
 
     def test_create_pool(self):
-        self.subnet_manager.create_pool(self.ctx.session,
+        self.subnet_manager.create_pool(self.ctx,
                                         self.single_pool[0],
                                         self.single_pool[1])
 
@@ -71,25 +71,25 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
 
     def test_check_unique_allocation(self):
         self.assertTrue(self.subnet_manager.check_unique_allocation(
-            self.ctx.session, self.subnet_ip))
+            self.ctx, self.subnet_ip))
 
     def test_check_unique_allocation_negative(self):
-        self.subnet_manager.create_allocation(self.ctx.session,
+        self.subnet_manager.create_allocation(self.ctx,
                                               self.subnet_ip)
         self.assertFalse(self.subnet_manager.check_unique_allocation(
-            self.ctx.session, self.subnet_ip))
+            self.ctx, self.subnet_ip))
 
     def test_list_allocations(self):
         ips = ['1.2.3.4', '1.2.3.6', '1.2.3.7']
         for ip in ips:
-            self.subnet_manager.create_allocation(self.ctx.session, ip)
-        allocs = self.subnet_manager.list_allocations(self.ctx.session).all()
+            self.subnet_manager.create_allocation(self.ctx, ip)
+        allocs = self.subnet_manager.list_allocations(self.ctx).all()
         self.assertEqual(len(ips), len(allocs))
         for allocation in allocs:
             self.assertIn(allocation.ip_address, ips)
 
     def _test_create_allocation(self):
-        self.subnet_manager.create_allocation(self.ctx.session,
+        self.subnet_manager.create_allocation(self.ctx,
                                               self.subnet_ip)
         alloc = self.ctx.session.query(db_models.IpamAllocation).filter_by(
             ipam_subnet_id=self.ipam_subnet_id).all()
@@ -102,7 +102,7 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
 
     def test_delete_allocation(self):
         allocs = self._test_create_allocation()
-        self.subnet_manager.delete_allocation(self.ctx.session,
+        self.subnet_manager.delete_allocation(self.ctx,
                                               allocs[0].ip_address)
 
         allocs = self.ctx.session.query(db_models.IpamAllocation).filter_by(
