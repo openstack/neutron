@@ -299,6 +299,21 @@ class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
 
 
 @obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectSyntheticField2(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = FakeModel
+
+    fields = {
+        'id': obj_fields.UUIDField(),
+        'obj_field': obj_fields.ObjectField('FakeSmallNeutronObject')
+    }
+
+    synthetic_fields = ['obj_field']
+
+
+@obj_base.VersionedObjectRegistry.register_if(False)
 class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -952,6 +967,17 @@ class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
     def test_load_synthetic_db_fields_with_multiple_foreign_keys(self):
         obj = self._test_class(self.context, **self.obj_fields[0])
         self.assertRaises(base.NeutronSyntheticFieldMultipleForeignKeys,
+                          obj.load_synthetic_db_fields)
+
+
+class BaseDbObjectForeignKeysNotFoundTestCase(_BaseObjectTestCase,
+                                              test_base.BaseTestCase):
+
+    _test_class = FakeNeutronObjectSyntheticField2
+
+    def test_load_foreign_keys_not_belong_class(self):
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        self.assertRaises(base.NeutronSyntheticFieldsForeignKeysNotFound,
                           obj.load_synthetic_db_fields)
 
 
