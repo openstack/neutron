@@ -19,7 +19,6 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
-from six import add_metaclass
 
 from neutron._i18n import _
 from neutron.common import exceptions
@@ -28,15 +27,13 @@ from neutron.db import models_v2
 from neutron.db.qos import api as qos_db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.db.rbac_db_models import QosPolicyRBAC
-from neutron.objects import base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac_db
 
 
 @obj_base.VersionedObjectRegistry.register
-@add_metaclass(rbac_db.RbacNeutronMetaclass)
-class QosPolicy(base.NeutronDbObject):
+class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     # Version 1.1: QosDscpMarkingRule introduced
     # Version 1.2: Added QosMinimumBandwidthRule
