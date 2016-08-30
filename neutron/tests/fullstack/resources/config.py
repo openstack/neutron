@@ -17,8 +17,8 @@ import tempfile
 import fixtures
 from neutron_lib import constants
 
+from neutron.common import utils
 from neutron.plugins.ml2.extensions import qos as qos_ext
-from neutron.tests import base
 from neutron.tests.common import config_fixtures
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import helpers as c_helpers
@@ -93,7 +93,7 @@ class NeutronConfigFixture(ConfigFixture):
         super(NeutronConfigFixture, self)._setUp()
 
     def _generate_host(self):
-        return base.get_rand_name(prefix='host-')
+        return utils.get_rand_name(prefix='host-')
 
     def _generate_state_path(self, temp_dir):
         # Assume that temp_dir will be removed by the caller
@@ -184,19 +184,19 @@ class OVSConfigFixture(ConfigFixture):
         super(OVSConfigFixture, self)._setUp()
 
     def _generate_bridge_mappings(self):
-        return 'physnet1:%s' % base.get_rand_device_name(prefix='br-eth')
+        return 'physnet1:%s' % utils.get_rand_device_name(prefix='br-eth')
 
     def _generate_integration_bridge(self):
-        return base.get_rand_device_name(prefix='br-int')
+        return utils.get_rand_device_name(prefix='br-int')
 
     def _generate_tunnel_bridge(self):
-        return base.get_rand_device_name(prefix='br-tun')
+        return utils.get_rand_device_name(prefix='br-tun')
 
     def _generate_int_peer(self):
-        return base.get_rand_device_name(prefix='patch-tun')
+        return utils.get_rand_device_name(prefix='patch-tun')
 
     def _generate_tun_peer(self):
-        return base.get_rand_device_name(prefix='patch-int')
+        return utils.get_rand_device_name(prefix='patch-int')
 
     def get_br_int_name(self):
         return self.config.ovs.integration_bridge
@@ -284,10 +284,10 @@ class L3ConfigFixture(ConfigFixture):
         })
 
     def _generate_external_bridge(self):
-        return base.get_rand_device_name(prefix='br-ex')
+        return utils.get_rand_device_name(prefix='br-ex')
 
     def get_external_bridge(self):
         return self.config.DEFAULT.external_network_bridge
 
     def _generate_namespace_suffix(self):
-        return base.get_rand_name(prefix='test')
+        return utils.get_rand_name(prefix='test')

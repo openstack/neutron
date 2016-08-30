@@ -400,6 +400,15 @@ Where appropriate, exceptions can be added to the above script. If
 code is not part of the Neutron namespace, for example, it's probably
 reasonable to exclude their unit tests from the check.
 
+
+.. note ::
+
+   At no time should the production code import anything from testing subtree
+   (neutron.tests). There are distributions that split out neutron.tests
+   modules in a separate package that is not installed by default, making any
+   code that relies on presence of the modules to fail. For example, RDO is one
+   of those distributions.
+
 Running Tests
 -------------
 

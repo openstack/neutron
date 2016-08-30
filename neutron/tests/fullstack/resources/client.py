@@ -19,8 +19,8 @@ import fixtures
 from neutron_lib import constants
 from neutronclient.common import exceptions
 
+from neutron.common import utils
 from neutron.extensions import portbindings
-from neutron.tests import base
 
 
 def _safe_method(f):
@@ -54,7 +54,7 @@ class ClientFixture(fixtures.Fixture):
                       external_network=None):
         resource_type = 'router'
 
-        name = name or base.get_rand_name(prefix=resource_type)
+        name = name or utils.get_rand_name(prefix=resource_type)
         spec = {'tenant_id': tenant_id, 'name': name, 'ha': ha}
         if external_network:
             spec['external_gateway_info'] = {"network_id": external_network}
@@ -64,7 +64,7 @@ class ClientFixture(fixtures.Fixture):
     def create_network(self, tenant_id, name=None, external=False):
         resource_type = 'network'
 
-        name = name or base.get_rand_name(prefix=resource_type)
+        name = name or utils.get_rand_name(prefix=resource_type)
         spec = {'tenant_id': tenant_id, 'name': name}
         spec['router:external'] = external
         return self._create_resource(resource_type, spec)
@@ -74,7 +74,7 @@ class ClientFixture(fixtures.Fixture):
                       ipv6_address_mode='slaac', ipv6_ra_mode='slaac'):
         resource_type = 'subnet'
 
-        name = name or base.get_rand_name(prefix=resource_type)
+        name = name or utils.get_rand_name(prefix=resource_type)
         ip_version = netaddr.IPNetwork(cidr).version
         spec = {'tenant_id': tenant_id, 'network_id': network_id, 'name': name,
                 'cidr': cidr, 'enable_dhcp': enable_dhcp,

@@ -53,12 +53,12 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                      'ovs_neutron_agent.OVSPluginApi')
         mock.patch(agent_rpc).start()
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
-        self.br_int = base.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
-                                         prefix='br-int')
-        self.br_tun = base.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
-                                         prefix='br-tun')
-        self.br_phys = base.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
-                                          prefix='br-phys')
+        self.br_int = utils.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
+                                          prefix='br-int')
+        self.br_tun = utils.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
+                                          prefix='br-tun')
+        self.br_phys = utils.get_rand_name(n_const.DEVICE_NAME_MAX_LEN,
+                                           prefix='br-phys')
         patch_name_len = n_const.DEVICE_NAME_MAX_LEN - len("-patch-tun")
         self.patch_tun = "%s-patch-tun" % self.br_int[patch_name_len:]
         self.patch_int = "%s-patch-int" % self.br_tun[patch_name_len:]
@@ -177,7 +177,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                          random.randint(3, 254),
                          random.randint(3, 254),
                          random.randint(3, 254))}],
-                'vif_name': base.get_rand_name(
+                'vif_name': utils.get_rand_name(
                     self.driver.DEV_NAME_LEN, self.driver.DEV_NAME_PREFIX)}
 
     def _create_test_network_dict(self):

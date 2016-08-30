@@ -12,7 +12,7 @@
 
 import testtools
 
-from neutron.tests import base as tests_base
+from neutron.common import utils
 from neutron.tests.retargetable import base
 
 
@@ -24,7 +24,7 @@ class TestExample(base.RetargetableApiTest):
     """
 
     def test_network_lifecycle(self):
-        net = self.client.create_network(name=tests_base.get_rand_name())
+        net = self.client.create_network(name=utils.get_rand_name())
         listed_networks = {x.id: x.name for x in self.client.get_networks()}
         self.assertIn(net.id, listed_networks)
         self.assertEqual(listed_networks[net.id], net.name,

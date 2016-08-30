@@ -20,7 +20,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
 from neutron.common import utils
-from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -42,7 +41,7 @@ class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
                                 namespace='not_a_namespace')
 
     def test_plug_succeeds(self):
-        device_name = tests_base.get_rand_name()
+        device_name = utils.get_rand_name()
         mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
@@ -75,7 +74,7 @@ class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
         # Now plug a device with intended MTU that is higher than for the port
         # above and validate that its MTU is not reduced to the least MTU on
         # the bridge
-        device_name = tests_base.get_rand_name()
+        device_name = utils.get_rand_name()
         mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         self.interface.plug(network_id=uuidutils.generate_uuid(),

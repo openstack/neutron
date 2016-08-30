@@ -339,12 +339,27 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(
             1, len(list(checks.check_log_warn_deprecated(bad, 'f'))))
 
+    def test_check_no_imports_from_tests(self):
+        fail_codes = ('from neutron import tests',
+                      'from neutron.tests import base',
+                      'import neutron.tests.base')
+        for fail_code in fail_codes:
+            self.assertEqual(
+                1, len(list(
+                    checks.check_no_imports_from_tests(
+                        fail_code, "neutron/common/rpc.py", None))))
+            self.assertEqual(
+                0, len(list(
+                    checks.check_no_imports_from_tests(
+                        fail_code, "neutron/tests/test_fake.py", None))))
+
     def test_check_python3_filter(self):
         f = checks.check_python3_no_filter
         self.assertLineFails(f, "filter(lambda obj: test(obj), data)")
         self.assertLinePasses(f, "[obj for obj in data if test(obj)]")
         self.assertLinePasses(f, "filter(function, range(0,10))")
         self.assertLinePasses(f, "lambda x, y: x+y")
+
 
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand
