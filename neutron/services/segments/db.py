@@ -85,6 +85,15 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         """Create a segment."""
         segment = segment['segment']
         segment_id = segment.get('id') or uuidutils.generate_uuid()
+        try:
+            new_segment = self._create_segment_db(context, segment_id, segment)
+        except db_exc.DBReferenceError:
+            raise n_exc.NetworkNotFound(net_id=segment['network_id'])
+        registry.notify(resources.SEGMENT, events.AFTER_CREATE, self,
+                        context=context, segment=new_segment)
+        return self._make_segment_dict(new_segment)
+
+    def _create_segment_db(self, context, segment_id, segment):
         with context.session.begin(subtransactions=True):
             network_id = segment['network_id']
             physical_network = segment[extension.PHYSICAL_NETWORK]
@@ -114,19 +123,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
             args['segment_index'] = segment_index
 
             new_segment = db.NetworkSegment(**args)
-            try:
-                context.session.add(new_segment)
-                context.session.flush([new_segment])
-            except db_exc.DBReferenceError:
-                raise n_exc.NetworkNotFound(net_id=network_id)
+            context.session.add(new_segment)
             # Do some preliminary operations before commiting the segment to db
             registry.notify(resources.SEGMENT, events.PRECOMMIT_CREATE, self,
                             context=context, segment=new_segment)
-
-        registry.notify(resources.SEGMENT, events.AFTER_CREATE, self,
-                        context=context, segment=new_segment)
-
-        return self._make_segment_dict(new_segment)
+            return new_segment
 
     @log_helpers.log_method_call
     def update_segment(self, context, uuid, segment):
