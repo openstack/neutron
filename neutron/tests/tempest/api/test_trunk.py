@@ -58,44 +58,66 @@ class TrunkTestJSONBase(base.BaseAdminNetworkTest):
         trunks_cleanup(cls.client, cls.trunks)
         super(TrunkTestJSONBase, cls).resource_cleanup()
 
+    def _remove_timestamps(self, trunk):
+        # Let's make sure these fields exist, but let's not
+        # use them in the comparison, in case skews or
+        # roundups get in the way.
+        created_at = trunk.pop('created_at')
+        updated_at = trunk.pop('updated_at')
+        self.assertIsNotNone(created_at)
+        self.assertIsNotNone(updated_at)
+
     def _create_trunk_with_network_and_parent(self, subports, **kwargs):
         network = self.create_network()
         parent_port = self.create_port(network)
         trunk = self.client.create_trunk(parent_port['id'], subports, **kwargs)
         self.trunks.append(trunk['trunk'])
+        self._remove_timestamps(trunk['trunk'])
         return trunk
+
+    def _show_trunk(self, trunk_id):
+        trunk = self.client.show_trunk(trunk_id)
+        self._remove_timestamps(trunk['trunk'])
+        return trunk
+
+    def _list_trunks(self):
+        trunks = self.client.list_trunks()
+        for t in trunks['trunks']:
+            self._remove_timestamps(t)
+        return trunks
 
 
 class TrunkTestJSON(TrunkTestJSONBase):
 
+    def _test_create_trunk(self, subports):
+        trunk = self._create_trunk_with_network_and_parent(subports)
+        observed_trunk = self._show_trunk(trunk['trunk']['id'])
+        self.assertEqual(trunk, observed_trunk)
+
     @test.idempotent_id('e1a6355c-4768-41f3-9bf8-0f1d192bd501')
     def test_create_trunk_empty_subports_list(self):
-        trunk = self._create_trunk_with_network_and_parent([])
-        observed_trunk = self.client.show_trunk(trunk['trunk']['id'])
-        self.assertEqual(trunk, observed_trunk)
+        self._test_create_trunk([])
 
     @test.idempotent_id('382dfa39-ca03-4bd3-9a1c-91e36d2e3796')
     def test_create_trunk_subports_not_specified(self):
-        trunk = self._create_trunk_with_network_and_parent(None)
-        observed_trunk = self.client.show_trunk(trunk['trunk']['id'])
-        self.assertEqual(trunk, observed_trunk)
+        self._test_create_trunk(None)
 
     @test.idempotent_id('7de46c22-e2b6-4959-ac5a-0e624632ab32')
     def test_create_show_delete_trunk(self):
         trunk = self._create_trunk_with_network_and_parent(None)
         trunk_id = trunk['trunk']['id']
         parent_port_id = trunk['trunk']['port_id']
-        res = self.client.show_trunk(trunk_id)
+        res = self._show_trunk(trunk_id)
         self.assertEqual(trunk_id, res['trunk']['id'])
         self.assertEqual(parent_port_id, res['trunk']['port_id'])
         self.client.delete_trunk(trunk_id)
-        self.assertRaises(lib_exc.NotFound, self.client.show_trunk, trunk_id)
+        self.assertRaises(lib_exc.NotFound, self._show_trunk, trunk_id)
 
     @test.idempotent_id('4ce46c22-a2b6-4659-bc5a-0ef2463cab32')
     def test_create_update_trunk(self):
         trunk = self._create_trunk_with_network_and_parent(None)
         trunk_id = trunk['trunk']['id']
-        res = self.client.show_trunk(trunk_id)
+        res = self._show_trunk(trunk_id)
         self.assertTrue(res['trunk']['admin_state_up'])
         self.assertEqual("", res['trunk']['name'])
         self.assertEqual("", res['trunk']['description'])
@@ -121,7 +143,7 @@ class TrunkTestJSON(TrunkTestJSONBase):
         trunk2 = self._create_trunk_with_network_and_parent(None)
         expected_trunks = {trunk1['trunk']['id']: trunk1['trunk'],
                            trunk2['trunk']['id']: trunk2['trunk']}
-        trunk_list = self.client.list_trunks()['trunks']
+        trunk_list = self._list_trunks()['trunks']
         matched_trunks = [x for x in trunk_list if x['id'] in expected_trunks]
         self.assertEqual(2, len(matched_trunks))
         for trunk in matched_trunks:
@@ -136,7 +158,7 @@ class TrunkTestJSON(TrunkTestJSONBase):
                      'segmentation_type': 'vlan',
                      'segmentation_id': 2}]
         self.client.add_subports(trunk['trunk']['id'], subports)
-        trunk = self.client.show_trunk(trunk['trunk']['id'])
+        trunk = self._show_trunk(trunk['trunk']['id'])
         observed_subports = trunk['trunk']['sub_ports']
         self.assertEqual(1, len(observed_subports))
         created_subport = observed_subports[0]
@@ -178,7 +200,7 @@ class TrunkTestJSON(TrunkTestJSONBase):
         self.assertEqual(expected_subport, res['sub_ports'][0])
 
         # Validate the results of a subport list
-        trunk = self.client.show_trunk(trunk['trunk']['id'])
+        trunk = self._show_trunk(trunk['trunk']['id'])
         observed_subports = trunk['trunk']['sub_ports']
         self.assertEqual(1, len(observed_subports))
         self.assertEqual(expected_subport, observed_subports[0])
