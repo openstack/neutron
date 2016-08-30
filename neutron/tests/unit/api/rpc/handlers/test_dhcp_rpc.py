@@ -157,6 +157,9 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self._test__port_action_with_failures(
             exc=n_exc.IpAddressGenerationFailure(net_id='foo_network_id'),
             action='create_port')
+        self._test__port_action_with_failures(
+            exc=n_exc.InvalidInput(error_message='sorry'),
+            action='create_port')
 
     def test_get_network_info_return_none_on_not_found(self):
         self.plugin.get_network.side_effect = n_exc.NetworkNotFound(net_id='a')
