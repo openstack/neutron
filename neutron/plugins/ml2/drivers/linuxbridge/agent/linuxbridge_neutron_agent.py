@@ -35,7 +35,7 @@ from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler

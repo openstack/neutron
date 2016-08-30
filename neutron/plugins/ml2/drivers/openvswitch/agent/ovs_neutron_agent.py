@@ -42,9 +42,10 @@ from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
-from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import dvr_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import events as callback_events
 from neutron.callbacks import registry
 from neutron.common import config
@@ -237,7 +238,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self._restore_local_vlan_map()
 
         # Security group agent support
-        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(
+        self.sg_agent = agent_sg_rpc.SecurityGroupAgentRpc(
             self.context, self.sg_plugin_rpc, defer_refresh_firewall=True,
             integration_bridge=self.int_br)
 

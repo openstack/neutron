@@ -30,8 +30,9 @@ from osprofiler import profiler
 from neutron._i18n import _LE, _LI
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
-from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
+from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources as local_resources
@@ -150,7 +151,7 @@ class CommonAgentLoop(service.Service):
     def setup_rpc(self):
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(
+        self.sg_agent = agent_sg_rpc.SecurityGroupAgentRpc(
             self.context, self.sg_plugin_rpc, defer_refresh_firewall=True)
 
         self.agent_id = self.mgr.get_agent_id()
