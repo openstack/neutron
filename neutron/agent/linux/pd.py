@@ -20,6 +20,7 @@ import eventlet
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import netutils
 import six
 from stevedore import driver
 
@@ -28,7 +29,6 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
-from neutron.common import ipv6_utils
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
@@ -175,8 +175,8 @@ class PrefixDelegation(object):
 
     @staticmethod
     def _get_lla(mac):
-        lla = ipv6_utils.get_ipv6_addr_by_EUI64(n_const.IPv6_LLA_PREFIX,
-                                                mac)
+        lla = netutils.get_ipv6_addr_by_EUI64(n_const.IPv6_LLA_PREFIX,
+                                              mac)
         return lla
 
     def _get_llas(self, gw_ifname, ns_name):

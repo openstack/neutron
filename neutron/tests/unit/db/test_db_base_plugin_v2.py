@@ -26,6 +26,7 @@ from neutron_lib import exceptions as lib_exc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_utils import importutils
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import six
 from sqlalchemy import event
@@ -1356,8 +1357,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if ipv6_utils.is_auto_address_subnet(subnet['subnet']):
             port_mac = port['port']['mac_address']
             subnet_cidr = subnet['subnet']['cidr']
-            eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
-                                                             port_mac))
+            eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                           port_mac))
             self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
                              eui_addr)
 
@@ -1664,8 +1665,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(1, len(ips))
                 port_mac = port['port']['mac_address']
                 subnet_cidr = subnet['subnet']['cidr']
-                eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
-                                                                 port_mac))
+                eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                               port_mac))
                 self.assertEqual(ips[0]['ip_address'], eui_addr)
                 self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
 
@@ -1891,7 +1892,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             res = self._create_port(self.fmt, net_id=net_id)
             port = self.deserialize(self.fmt, res)
             port_mac = port['port']['mac_address']
-            eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+            eui_addr = str(netutils.get_ipv6_addr_by_EUI64(
                             prefix, port_mac))
             fixedips = [{'subnet_id': subnet_id, 'ip_address': eui_addr}]
             self.assertEqual(fixedips, port['port']['fixed_ips'])
@@ -1969,8 +1970,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                        subnet['subnet']['id']}]) as port:
                 port_mac = port['port']['mac_address']
                 subnet_cidr = subnet['subnet']['cidr']
-                eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr,
-                                                                 port_mac))
+                eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                               port_mac))
                 self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
                                  eui_addr)
 
@@ -1996,7 +1997,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.assertEqual(2, len(ips))
                     port_mac = port['port']['mac_address']
                     subnet_cidr = subnet2['subnet']['cidr']
-                    eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(
+                    eui_addr = str(netutils.get_ipv6_addr_by_EUI64(
                             subnet_cidr, port_mac))
                     self.assertIn(ips[0]['ip_address'], network_ip_set)
                     self.assertIn(ips[1]['ip_address'], network_ip_set)
@@ -2026,7 +2027,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def _calc_ipv6_addr_by_EUI64(port, subnet):
         port_mac = port['port']['mac_address']
         subnet_cidr = subnet['subnet']['cidr']
-        return str(ipv6_utils.get_ipv6_addr_by_EUI64(subnet_cidr, port_mac))
+        return str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr, port_mac))
 
     def test_ip_allocation_for_ipv6_subnet_slaac_address_mode(self):
         res = self._create_network(fmt=self.fmt, name='net',
@@ -2197,10 +2198,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         port_mac = port['port']['mac_address']
         cidr_1 = v6_subnet_1['subnet']['cidr']
         cidr_2 = v6_subnet_2['subnet']['cidr']
-        eui_addr_1 = str(ipv6_utils.get_ipv6_addr_by_EUI64(cidr_1,
-                                                           port_mac))
-        eui_addr_2 = str(ipv6_utils.get_ipv6_addr_by_EUI64(cidr_2,
-                                                           port_mac))
+        eui_addr_1 = str(netutils.get_ipv6_addr_by_EUI64(cidr_1,
+                                                         port_mac))
+        eui_addr_2 = str(netutils.get_ipv6_addr_by_EUI64(cidr_2,
+                                                         port_mac))
         self.assertEqual({eui_addr_1, eui_addr_2},
                          {fixed_ip['ip_address'] for fixed_ip in
                           port['port']['fixed_ips']})
@@ -4392,7 +4393,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
                 # create expected fixed_ips
                 port_mac = port_dict['mac_address']
-                eui_addr = str(ipv6_utils.get_ipv6_addr_by_EUI64(prefix,
+                eui_addr = str(netutils.get_ipv6_addr_by_EUI64(prefix,
                                                              port_mac))
                 ips = port_dict['fixed_ips']
                 for fip in ips:

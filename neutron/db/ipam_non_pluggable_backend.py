@@ -22,6 +22,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from oslo_utils import netutils
 from sqlalchemy import and_
 from sqlalchemy.orm import exc
 
@@ -358,7 +359,7 @@ class IpamNonPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def _calculate_ipv6_eui64_addr(self, context, subnet, mac_addr):
         prefix = subnet['cidr']
         network_id = subnet['network_id']
-        ip_address = ipv6_utils.get_ipv6_addr_by_EUI64(
+        ip_address = netutils.get_ipv6_addr_by_EUI64(
             prefix, mac_addr).format()
         if not self._check_unique_ip(context, network_id,
                                      subnet['id'], ip_address):

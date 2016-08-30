@@ -20,11 +20,11 @@ from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.common import constants as n_const
-from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
@@ -246,8 +246,8 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
               'subnet_cidr': '2001:470:abcd::/64',
               'mac': '6c:62:6d:de:cf:49',
               'eui64_address': True}
-        eui64_ip = ipv6_utils.get_ipv6_addr_by_EUI64(ip['subnet_cidr'],
-                                                     ip['mac'])
+        eui64_ip = netutils.get_ipv6_addr_by_EUI64(ip['subnet_cidr'],
+                                                   ip['mac'])
         mocks['ipam']._ipam_allocate_ips(mock.ANY, mocks['driver'],
                                          mock.ANY, [ip])
 
