@@ -75,9 +75,9 @@ class RabbitmqEnvironmentFixture(fixtures.Fixture):
         self.host = host
 
     def _setUp(self):
-        self.user = base.get_rand_name(prefix='user')
-        self.password = base.get_rand_name(prefix='pass')
-        self.vhost = base.get_rand_name(prefix='vhost')
+        self.user = common_utils.get_rand_name(prefix='user')
+        self.password = common_utils.get_rand_name(prefix='pass')
+        self.vhost = common_utils.get_rand_name(prefix='vhost')
 
         self._execute('add_user', self.user, self.password)
         self.addCleanup(self._execute, 'delete_user', self.user)

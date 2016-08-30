@@ -44,7 +44,6 @@ from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
-from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests import tools
 
@@ -226,11 +225,11 @@ def create_patch_ports(source, destination):
     :param source: Instance of OVSBridge
     :param destination: Instance of OVSBridge
     """
-    common = tests_base.get_rand_name(max_length=4, prefix='')
+    common = common_utils.get_rand_name(max_length=4, prefix='')
     prefix = '%s-%s-' % (PATCH_PREFIX, common)
 
-    source_name = tests_base.get_rand_device_name(prefix=prefix)
-    destination_name = tests_base.get_rand_device_name(prefix=prefix)
+    source_name = common_utils.get_rand_device_name(prefix=prefix)
+    destination_name = common_utils.get_rand_device_name(prefix=prefix)
 
     source.add_patch_port(source_name, destination_name)
     destination.add_patch_port(destination_name, source_name)
@@ -586,9 +585,9 @@ class NamedVethFixture(VethFixture):
     @staticmethod
     def get_veth_name(name):
         if name.startswith(VETH0_PREFIX):
-            return tests_base.get_rand_device_name(VETH0_PREFIX)
+            return common_utils.get_rand_device_name(VETH0_PREFIX)
         if name.startswith(VETH1_PREFIX):
-            return tests_base.get_rand_device_name(VETH1_PREFIX)
+            return common_utils.get_rand_device_name(VETH1_PREFIX)
         return name
 
 
@@ -710,7 +709,7 @@ class OVSPortFixture(PortFixture):
         # because in some tests this port can be used to providing connection
         # between linuxbridge agents and vlan_id can be also added to this
         # device name it has to be max LB_DEVICE_NAME_MAX_LEN long
-        port_name = tests_base.get_rand_name(
+        port_name = common_utils.get_rand_name(
             LB_DEVICE_NAME_MAX_LEN,
             PORT_PREFIX
         )

@@ -726,3 +726,42 @@ def import_modules_recursively(topdir):
         for dir_ in dirs:
             modules.extend(import_modules_recursively(dir_))
     return modules
+
+
+def get_rand_name(max_length=None, prefix='test'):
+    """Return a random string.
+
+    The string will start with 'prefix' and will be exactly 'max_length'.
+    If 'max_length' is None, then exactly 8 random characters, each
+    hexadecimal, will be added. In case len(prefix) <= len(max_length),
+    ValueError will be raised to indicate the problem.
+    """
+    return get_related_rand_names([prefix], max_length)[0]
+
+
+def get_rand_device_name(prefix='test'):
+    return get_rand_name(
+        max_length=n_const.DEVICE_NAME_MAX_LEN, prefix=prefix)
+
+
+def get_related_rand_names(prefixes, max_length=None):
+    """Returns a list of the prefixes with the same random characters appended
+
+    :param prefixes: A list of prefix strings
+    :param max_length: The maximum length of each returned string
+    :returns: A list with each prefix appended with the same random characters
+    """
+
+    if max_length:
+        length = max_length - max(len(p) for p in prefixes)
+        if length <= 0:
+            raise ValueError("'max_length' must be longer than all prefixes")
+    else:
+        length = 8
+    rndchrs = get_random_string(length)
+    return [p + rndchrs for p in prefixes]
+
+
+def get_related_rand_device_names(prefixes):
+    return get_related_rand_names(prefixes,
+                                  max_length=n_const.DEVICE_NAME_MAX_LEN)

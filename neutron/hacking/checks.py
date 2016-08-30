@@ -77,6 +77,10 @@ unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
 unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
 filter_match = re.compile(r".*filter\(lambda ")
 
+tests_imports_dot = re.compile(r"\bimport[\s]+neutron.tests\b")
+tests_imports_from1 = re.compile(r"\bfrom[\s]+neutron.tests\b")
+tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
+
 
 @flake8ext
 def validate_log_translations(logical_line, physical_line, filename):
@@ -383,6 +387,23 @@ def check_delayed_string_interpolation(logical_line, filename, noqa):
 
 
 @flake8ext
+def check_no_imports_from_tests(logical_line, filename, noqa):
+    """N343 Production code must not import from neutron.tests.*
+    """
+    msg = ("N343 Production code must not import from neutron.tests.*")
+
+    if noqa:
+        return
+
+    if 'neutron/tests/' in filename:
+        return
+
+    for regex in tests_imports_dot, tests_imports_from1, tests_imports_from2:
+        if re.match(regex, logical_line):
+            yield(0, msg)
+
+
+@flake8ext
 def check_python3_no_filter(logical_line):
     """N344 - Use list comprehension instead of filter(lambda)."""
 
@@ -412,4 +433,5 @@ def factory(register):
     register(check_builtins_gettext)
     register(check_unittest_imports)
     register(check_delayed_string_interpolation)
+    register(check_no_imports_from_tests)
     register(check_python3_no_filter)
