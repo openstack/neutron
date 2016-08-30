@@ -41,6 +41,11 @@ class ParentPortInUse(n_exc.InUse):
                 "eligible for use as a parent port.")
 
 
+class SubPortMtuGreaterThanTrunkPortMtu(n_exc.Conflict):
+    message = _("MTU %(port_mtu)s of subport %(port_id)s cannot be greater "
+                "than MTU %(trunk_mtu)s of trunk %(trunk_id)s.")
+
+
 class PortInUseAsTrunkParent(n_exc.InUse):
     message = _("Port %(port_id)s is currently a parent port "
                 "for trunk %(trunk_id)s.")

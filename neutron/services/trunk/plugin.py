@@ -238,16 +238,18 @@ class TrunkPlugin(service_base.ServicePluginBase,
     @db_base_plugin_common.convert_result_to_dict
     def add_subports(self, context, trunk_id, subports):
         """Add one or more subports to trunk."""
-        # Check for basic validation since the request body here is not
-        # automatically validated by the API layer.
-        subports = subports['sub_ports']
-        subports_validator = rules.SubPortsValidator(
-            self._segmentation_types, subports)
-        subports = subports_validator.validate(context, basic_validation=True)
-        added_subports = []
-
         with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
+
+            # Check for basic validation since the request body here is not
+            # automatically validated by the API layer.
+            subports = subports['sub_ports']
+            subports_validator = rules.SubPortsValidator(
+                self._segmentation_types, subports, trunk['port_id'])
+            subports = subports_validator.validate(
+                context, basic_validation=True)
+            added_subports = []
+
             rules.trunk_can_be_managed(context, trunk)
             original_trunk = copy.deepcopy(trunk)
             # NOTE(status_police): the trunk status should transition to

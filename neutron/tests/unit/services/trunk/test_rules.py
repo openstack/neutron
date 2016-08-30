@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 
 from neutron import manager
 from neutron.plugins.common import utils
+from neutron.plugins.ml2 import driver_api as api
 from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
@@ -39,6 +40,9 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
         super(SubPortsValidatorTestCase, self).setUp()
         self.segmentation_types = {constants.VLAN: utils.is_valid_vlan_tag}
         self.context = mock.ANY
+
+        mock.patch.object(rules.SubPortsValidator, '_get_port_mtu',
+                          return_value=None).start()
 
     def test_validate_subport_subport_and_trunk_shared_port_id(self):
         shared_id = uuidutils.generate_uuid()
@@ -117,6 +121,78 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
         self.assertRaises(n_exc.InvalidInput,
                           validator.validate,
                           self.context, basic_validation=True)
+
+
+class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
+
+    def setUp(self):
+        super(SubPortsValidatorMtuSanityTestCase, self).setUp()
+        self.segmentation_types = {constants.VLAN: utils.is_valid_vlan_tag}
+
+    def test_validate_subport_mtu_same_as_trunk(self):
+        self._test_validate_subport_trunk_mtu(1500, 1500)
+
+    def test_validate_subport_mtu_smaller_than_trunks(self):
+        self._test_validate_subport_trunk_mtu(500, 1500)
+
+    def test_validate_subport_mtu_greater_than_trunks(self):
+        self._test_validate_subport_trunk_mtu(1500, 500)
+
+    def test_validate_subport_mtu_unset_trunks_set(self):
+        self._test_validate_subport_trunk_mtu(None, 500)
+
+    def test_validate_subport_mtu_set_trunks_unset(self):
+        self._test_validate_subport_trunk_mtu(500, None)
+
+    def test_validate_subport_mtu_set_trunks_net_exception(self):
+        self._test_validate_subport_trunk_mtu(1500, 'exc')
+
+    def test_validate_subport_mtu_net_exception_trunks_set(self):
+        self._test_validate_subport_trunk_mtu('exc', 1500)
+
+    def _test_validate_subport_trunk_mtu(
+            self, subport_net_mtu, trunk_net_mtu):
+        plugin = manager.NeutronManager.get_plugin()
+        orig_get_network = plugin.get_network
+
+        def get_network_adjust_mtu(*args, **kwargs):
+            res = orig_get_network(*args, **kwargs)
+            if res['name'] == 'net_trunk':
+                if trunk_net_mtu == 'exc':
+                    raise n_exc.NetworkNotFound(net_id='net-id')
+                res[api.MTU] = trunk_net_mtu
+            elif res['name'] == 'net_subport':
+                if subport_net_mtu == 'exc':
+                    raise n_exc.NetworkNotFound(net_id='net-id')
+                res[api.MTU] = subport_net_mtu
+            return res
+
+        with self.network('net_trunk') as trunk_net,\
+            self.subnet(network=trunk_net) as trunk_subnet,\
+            self.port(subnet=trunk_subnet) as trunk_port,\
+            self.network('net_subport') as subport_net,\
+            self.subnet(network=subport_net) as subport_subnet,\
+            self.port(subnet=subport_subnet) as subport,\
+            mock.patch.object(plugin, "get_network",
+                              side_effect=get_network_adjust_mtu):
+            trunk = {'port_id': trunk_port['port']['id'],
+                     'tenant_id': 'test_tenant',
+                     'sub_ports': [{'port_id': subport['port']['id'],
+                                    'segmentation_type': 'vlan',
+                                    'segmentation_id': 2}]}
+
+            validator = rules.SubPortsValidator(
+                self.segmentation_types, trunk['sub_ports'], trunk['port_id'])
+
+            if subport_net_mtu is None or trunk_net_mtu is None:
+                validator.validate(self.context)
+            elif subport_net_mtu == 'exc' or trunk_net_mtu == 'exc':
+                validator.validate(self.context)
+            elif subport_net_mtu <= trunk_net_mtu:
+                validator.validate(self.context)
+            else:
+                self.assertRaises(trunk_exc.SubPortMtuGreaterThanTrunkPortMtu,
+                                  validator.validate, self.context)
 
 
 class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
