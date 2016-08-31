@@ -707,20 +707,24 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 type_driver = self.type_manager.drivers[segment_type].obj
             except KeyError:
                 # NOTE(ihrachys) This can happen when type driver is not loaded
-                # for an existing segment. While it's probably an indication of
+                # for an existing segment, or simply when the network has no
+                # segments at the specific time this is computed.
+                # In the former case, while it's probably an indication of
                 # a bad setup, it's better to be safe than sorry here. Also,
                 # several unit tests use non-existent driver types that may
                 # trigger the exception here.
-                LOG.warning(
-                    _LW("Failed to determine MTU for segment "
-                        "%(segment_type)s:%(segment_id)s; network "
-                        "%(network_id)s MTU calculation may be not accurate"),
-                    {
-                        'segment_type': segment_type,
-                        'segment_id': s[provider.SEGMENTATION_ID],
-                        'network_id': network['id'],
-                    }
-                )
+                if segment_type and s[provider.SEGMENTATION_ID]:
+                    LOG.warning(
+                        _LW("Failed to determine MTU for segment "
+                            "%(segment_type)s:%(segment_id)s; network "
+                            "%(network_id)s MTU calculation may be not "
+                            "accurate"),
+                        {
+                            'segment_type': segment_type,
+                            'segment_id': s[provider.SEGMENTATION_ID],
+                            'network_id': network['id'],
+                        }
+                    )
             else:
                 mtu = type_driver.get_mtu(s[provider.PHYSICAL_NETWORK])
                 # Some drivers, like 'local', may return None; the assumption
