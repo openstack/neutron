@@ -31,7 +31,7 @@ There's two ways to approach testing:
 1) Write unit tests because they're required to get your patch merged.
    This typically involves mock heavy tests that assert that your code is as
    written.
-2) Putting as much thought in to your testing strategy as you do to the rest
+2) Putting as much thought into your testing strategy as you do to the rest
    of your code. Use different layers of testing as appropriate to provide
    high *quality* coverage. Are you touching an agent? Test it against an
    actual system! Are you adding a new API? Test it for race conditions
