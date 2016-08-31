@@ -53,7 +53,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'convert_list_to': converters.convert_kvp_list_to_dict,
                       'validate': {'type:subports': None},
                       'enforce_policy': True,
-                      'is_visible': True}
+                      'is_visible': True},
+        # TODO(armax): consolidate use of standardattr attributes
+        'created_at': {'allow_post': False, 'allow_put': False,
+                       'is_visible': True, 'default': None},
+        'updated_at': {'allow_post': False, 'allow_put': False,
+                       'is_visible': True, 'default': None},
     },
 }
 
