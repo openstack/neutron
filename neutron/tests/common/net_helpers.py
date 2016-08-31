@@ -235,6 +235,27 @@ def create_patch_ports(source, destination):
     destination.add_patch_port(destination_name, source_name)
 
 
+def create_vlan_interface(
+        namespace, port_name, mac_address, ip_address, vlan_tag):
+    """Create a VLAN interface in namespace with IP address.
+
+    :param namespace: Namespace in which VLAN interface should be created.
+    :param port_name: Name of the port to which VLAN should be added.
+    :param ip_address: IPNetwork instance containing the VLAN interface IP
+                       address.
+    :param vlan_tag: VLAN tag for VLAN interface.
+    """
+    ip_wrap = ip_lib.IPWrapper(namespace)
+    dev_name = "%s.%d" % (port_name, vlan_tag)
+    ip_wrap.add_vlan(dev_name, port_name, vlan_tag)
+    dev = ip_wrap.device(dev_name)
+    dev.addr.add(str(ip_address))
+    dev.link.set_address(mac_address)
+    dev.link.set_up()
+
+    return dev
+
+
 class RootHelperProcess(subprocess.Popen):
     def __init__(self, cmd, *args, **kwargs):
         for arg in ('stdin', 'stdout', 'stderr'):

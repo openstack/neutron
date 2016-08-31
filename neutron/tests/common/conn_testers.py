@@ -15,6 +15,7 @@
 import functools
 
 import fixtures
+import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
@@ -462,13 +463,11 @@ class OVSTrunkConnectionTester(OVSBaseConnectionTester):
 
         """
 
-        ip_wrap = ip_lib.IPWrapper(self._vm.namespace)
-        dev_name = self._vm.port.name + ".%d" % vlan
-        ip_wrap.add_vlan(dev_name, self._vm.port.name, vlan)
-        dev = ip_wrap.device(dev_name)
-        dev.addr.add(ip_cidr)
-        dev.link.set_up()
-        self._ip_vlan = ip_cidr.partition('/')[0]
+        network = netaddr.IPNetwork(ip_cidr)
+        net_helpers.create_vlan_interface(
+            self._vm.namespace, self._vm.port.name,
+            self.vm_mac_address, network, vlan)
+        self._ip_vlan = str(network.ip)
         ip_cidr = net_helpers.increment_ip_cidr(ip_cidr, 1)
         self._peer2 = self.useFixture(machine_fixtures.FakeMachine(
             self.bridge, ip_cidr))
