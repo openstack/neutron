@@ -20,50 +20,49 @@ from neutron.tests.unit.services.trunk import fakes
 
 class UtilsTestCase(test_plugin.Ml2PluginV2TestCase):
 
-    def test_are_agent_types_available_on_host_returns_false(self):
+    def test_get_agent_types_by_host_returns_empty(self):
         self.assertFalse(
-            utils.are_agent_types_available_on_host(
-                self.context, ['foo_type'], 'foo_host'))
+            utils.get_agent_types_by_host(
+                self.context, 'foo_host'))
 
-    def test_are_agent_types_available_on_host_returns_true(self):
+    def test_get_agent_types_by_host_returns_agents(self):
         with mock.patch("neutron.db.agents_db.AgentDbMixin.get_agents") as f:
-            f.return_value = ['foo_agent']
-            self.assertTrue(
-                utils.are_agent_types_available_on_host(
-                    self.context, ['foo_type'], 'foo_host'))
+            f.return_value = [{'agent_type': 'foo_type'}]
+            self.assertEqual(
+                ['foo_type'],
+                utils.get_agent_types_by_host(
+                    self.context, 'foo_host'))
 
-    def _test_is_driver_compatible(self, driver, interface, host, agents=None):
-        with mock.patch("neutron.db.agents_db.AgentDbMixin.get_agents") as f:
-            f.return_value = agents or []
-            return utils.is_driver_compatible(self.context,
-                                              driver,
-                                              interface,
-                                              host)
+    def _test_is_driver_compatible(self, driver, interface, agent_types):
+        return utils.is_driver_compatible(self.context,
+                                          driver,
+                                          interface,
+                                          agent_types)
 
     def test_is_driver_compatible(self):
         driver = fakes.FakeDriverWithAgent.create()
         self.assertTrue(self._test_is_driver_compatible(
-            driver, 'foo_intfs', 'foo_host', [{'agent_type': 'foo_type'}]))
+            driver, 'foo_intfs', ['foo_type']))
 
     def test_is_driver_compatible_agent_based_agent_mismatch(self):
         driver = fakes.FakeDriverWithAgent.create()
         self.assertFalse(self._test_is_driver_compatible(
-            driver, 'foo_intfs', 'foo_host'))
+            driver, 'foo_intfs', ['foo_type_unknown']))
 
     def test_is_driver_incompatible_because_of_interface_mismatch(self):
         driver = fakes.FakeDriverWithAgent.create()
         self.assertFalse(self._test_is_driver_compatible(
-            driver, 'not_my_interface', 'foo_host'))
+            driver, 'not_my_interface', ['foo_type']))
 
     def test_is_driver_compatible_agentless(self):
         driver = fakes.FakeDriver.create()
         self.assertTrue(self._test_is_driver_compatible(
-            driver, 'foo_intfs', 'foo_host'))
+            driver, 'foo_intfs', ['foo_type']))
 
     def test_is_driver_compatible_multiple_drivers(self):
         driver1 = fakes.FakeDriverWithAgent.create()
         driver2 = fakes.FakeDriver2.create()
         self.assertTrue(self._test_is_driver_compatible(
-            driver1, 'foo_intfs', 'foo_host', [{'agent_type': 'foo_type'}]))
+            driver1, 'foo_intfs', ['foo_type']))
         self.assertFalse(self._test_is_driver_compatible(
-            driver2, 'foo_intfs', 'foo_host', [{'agent_type': 'foo_type'}]))
+            driver2, 'foo_intfs', ['foo_type']))

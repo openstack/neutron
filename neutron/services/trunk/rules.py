@@ -101,10 +101,11 @@ class TrunkPortValidator(object):
         # can be determined based on the vif type, whether or not the
         # driver is agent-based, and whether the host is running the agent
         # associated to the driver itself.
+        host_agent_types = utils.get_agent_types_by_host(context, binding_host)
         drivers = [
             driver for driver in trunk_plugin.registered_drivers
             if utils.is_driver_compatible(
-                context, driver, vif_type, binding_host)
+                context, driver, vif_type, host_agent_types)
         ]
         if len(drivers) > 1:
             raise trunk_exc.TrunkPluginDriverConflict()

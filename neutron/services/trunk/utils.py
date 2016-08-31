@@ -24,18 +24,19 @@ def gen_trunk_br_name(trunk_id):
             [:constants.DEVICE_NAME_MAX_LEN - 1])
 
 
-def are_agent_types_available_on_host(context, agent_types, host):
-    """Return true if agent types are present on the host."""
+def get_agent_types_by_host(context, host):
+    """Return the agent types registered on the host."""
+    agent_types = []
     core_plugin = manager.NeutronManager.get_plugin()
     if utils.is_extension_supported(core_plugin, 'agent'):
-        return bool(core_plugin.get_agents(
-            context.elevated(),
-            filters={'host': [host], 'agent_type': agent_types}))
-    return False
+        agents = core_plugin.get_agents(
+            context.elevated(), filters={'host': [host]})
+        agent_types = [a['agent_type'] for a in agents]
+    return agent_types
 
 
-def is_driver_compatible(context, driver, interface, binding_host):
-    """Return true if the driver is compatible with the interface and host.
+def is_driver_compatible(context, driver, interface, host_agent_types):
+    """True if the driver is compatible with interface and host_agent_types.
 
     There may be edge cases where a stale view or the deployment may make the
     following test fail to detect the right driver in charge of the bound port.
@@ -56,7 +57,4 @@ def is_driver_compatible(context, driver, interface, binding_host):
         return is_interface_compatible
 
     # For an agent-based driver, both interface and agent compat is required.
-    return (
-        is_interface_compatible and
-        are_agent_types_available_on_host(
-            context, [driver.agent_type], binding_host))
+    return is_interface_compatible and driver.agent_type in host_agent_types
