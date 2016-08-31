@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
@@ -34,6 +32,11 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import securitygroup as sg_models
 from neutron.extensions import securitygroup as ext_sg
+
+
+_deprecate._moved_global('DefaultSecurityGroup', new_module=sg_models)
+_deprecate._moved_global('SecurityGroupPortBinding', new_module=sg_models)
+_deprecate._moved_global('SecurityGroupRule', new_module=sg_models)
 
 
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
@@ -743,7 +746,4 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         return need_notify
 
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), sg_models)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_deprecate._MovedGlobals()

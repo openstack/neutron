@@ -26,7 +26,7 @@ from neutron.common import exceptions as nexc
 
 
 def check_globals(things, nmod, lmod):
-    core = vars(nmod)['my_globals']
+    core = vars(nmod)['_mg__my_globals']
     lib = vars(lmod)
     moved_things = []
     for thing in core:

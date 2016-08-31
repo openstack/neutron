@@ -16,12 +16,13 @@
 # TODO(ihrachys): consider renaming the module since now it does not contain
 # any models at all
 
-import sys
-
 from neutron.api.v2 import attributes
 from neutron.common import _deprecate
 from neutron.db import common_db_mixin
 from neutron.db.models import subnet_service_type as sst_model
+
+
+_deprecate._moved_global('SubnetServiceType', new_module=sst_model)
 
 
 class SubnetServiceTypeMixin(object):
@@ -36,7 +37,4 @@ class SubnetServiceTypeMixin(object):
         attributes.SUBNETS, [_extend_subnet_service_types])
 
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), sst_model)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_deprecate._MovedGlobals()

@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
@@ -36,6 +34,10 @@ gre_opts = [
 ]
 
 cfg.CONF.register_opts(gre_opts, "ml2_type_gre")
+
+
+_deprecate._moved_global('GreAllocation', new_module=gre_model)
+_deprecate._moved_global('GreEndpoints', new_module=gre_model)
 
 
 class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
@@ -70,7 +72,4 @@ class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         return mtu - p_const.GRE_ENCAP_OVERHEAD if mtu else 0
 
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), gre_model)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_deprecate._MovedGlobals()

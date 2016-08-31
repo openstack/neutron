@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-
 from neutron_lib import constants as lib_constants
 
 from neutron.common import _deprecate
@@ -135,15 +133,8 @@ DVR_FIP_LL_CIDR = '169.254.64.0/18'
 L3_HA_NET_CIDR = '169.254.192.0/18'
 METADATA_CIDR = '169.254.169.254/32'
 
-# Neutron-lib migration shim. This will wrap any constants that are moved
-# to that library in a deprecation warning, until they can be updated to
-# import directly from their new location.
-# If you're wondering why we bother saving _OLD_REF, it is because if we
-# do not, then the original module we are overwriting gets garbage collected,
-# and then you will find some super strange behavior with inherited classes
-# and the like. Saving a ref keeps it around.
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), lib_constants)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+# Neutron-lib migration shim. This will emit a deprecation warning on any
+# reference to constants that have been moved out of this module and into
+# the neutron_lib.constants module.
+_deprecate._MovedGlobals(lib_constants)

@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -41,6 +39,9 @@ flat_opts = [
 ]
 
 cfg.CONF.register_opts(flat_opts, "ml2_type_flat")
+
+
+_deprecate._moved_global('FlatAllocation', new_module=type_flat_model)
 
 
 class FlatTypeDriver(helpers.BaseTypeDriver):
@@ -139,7 +140,4 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
         return min(mtu) if mtu else 0
 
 
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
-_OLD_REF = sys.modules[__name__]
-sys.modules[__name__] = _deprecate._DeprecateSubset(globals(), type_flat_model)
-# WARNING: THESE MUST BE THE LAST TWO LINES IN THIS MODULE
+_deprecate._MovedGlobals()
