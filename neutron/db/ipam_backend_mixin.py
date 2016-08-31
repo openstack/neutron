@@ -324,7 +324,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             return
 
         if len(fixed_ip_list) > cfg.CONF.max_fixed_ips_per_port:
-            msg = _('Exceeded maximum amount of fixed ips per port.')
+            msg = _('Exceeded maximum amount of fixed ips per port')
             raise exc.InvalidInput(error_message=msg)
 
     def _validate_segment(self, context, network_id, segment_id):
