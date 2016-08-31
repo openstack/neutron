@@ -32,6 +32,7 @@ from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_local_router as dvr_local_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
+from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api
 from neutron.agent.l3 import l3_agent_extensions_manager as l3_ext_manager
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
@@ -369,10 +370,12 @@ class L3NATAgent(ha.AgentMixin,
 
     def init_extension_manager(self, connection):
         l3_ext_manager.register_opts(self.conf)
+        self.agent_api = l3_ext_api.L3AgentExtensionAPI(self.router_info)
         self.l3_ext_manager = (
             l3_ext_manager.L3AgentExtensionsManager(self.conf))
         self.l3_ext_manager.initialize(
-            connection, lib_const.L3_AGENT_MODE)
+            connection, lib_const.L3_AGENT_MODE,
+            self.agent_api)
 
     def router_deleted(self, context, router_id):
         """Deal with router deletion RPC message."""

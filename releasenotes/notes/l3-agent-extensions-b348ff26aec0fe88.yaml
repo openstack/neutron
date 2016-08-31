@@ -2,4 +2,8 @@
 features:
   - The neutron L3 agent now has the ability to load
     agent extensions, which allows other services to
-    integrate without additional agent changes.
+    integrate without additional agent changes.  An 
+    API for exposing the l3 agent's router info data 
+    to the extensions is also provided so that 
+    extensions can remain consistent with router
+    state.

@@ -21,23 +21,18 @@
       (Avoid deeper levels because they do not render well.)
 
 
-L2 agent extensions
+L3 agent extensions
 ===================
 
-L2 agent extensions are part of a generalized L2/L3 extension framework. See
+L3 agent extensions are part of a generalized L2/L3 extension framework. See
 :doc:`agent extensions <agent_extensions>`.
 
-Open vSwitch agent API
+L3 agent extension API
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* neutron.plugins.ml2.drivers.openvswitch.agent.ovs_agent_extension_api
+The L3 agent extension API object includes several methods that expose
+router information to L3 agent extensions::
 
-Open vSwitch agent API object includes two methods that return wrapped and
-hardened bridge objects with cookie values allocated for calling extensions::
-
-#. request_int_br
-#. request_tun_br
-
-Bridge objects returned by those methods already have new default cookie values
-allocated for extension flows. All flow management methods (add_flow, mod_flow,
-...) enforce those allocated cookies.
+#. get_routers_in_project
+#. get_router_hosting_port
+#. is_router_in_namespace
