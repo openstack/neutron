@@ -707,7 +707,8 @@ class NetworkClientJSON(service_client.RestClient):
         return service_client.ResponseBody(resp, body)
 
     def create_trunk(self, parent_port_id, subports,
-                     tenant_id=None, name=None, admin_state_up=None):
+                     tenant_id=None, name=None, admin_state_up=None,
+                     description=None):
         uri = '%s/trunks' % self.uri_prefix
         post_data = {
             'trunk': {
@@ -720,6 +721,8 @@ class NetworkClientJSON(service_client.RestClient):
             post_data['trunk']['tenant_id'] = tenant_id
         if name is not None:
             post_data['trunk']['name'] = name
+        if description is not None:
+            post_data['trunk']['description'] = description
         if admin_state_up is not None:
             post_data['trunk']['admin_state_up'] = admin_state_up
         resp, body = self.post(uri, self.serialize(post_data))

@@ -98,12 +98,22 @@ class TrunkTestJSON(TrunkTestJSONBase):
         res = self.client.show_trunk(trunk_id)
         self.assertTrue(res['trunk']['admin_state_up'])
         self.assertEqual("", res['trunk']['name'])
+        self.assertEqual("", res['trunk']['description'])
         res = self.client.update_trunk(
             trunk_id, name='foo', admin_state_up=False)
         self.assertFalse(res['trunk']['admin_state_up'])
         self.assertEqual("foo", res['trunk']['name'])
         # enable the trunk so that it can be managed
         self.client.update_trunk(trunk_id, admin_state_up=True)
+
+    @test.idempotent_id('5ff46c22-a2b6-5559-bc5a-0ef2463cab32')
+    def test_create_update_trunk_with_description(self):
+        trunk = self._create_trunk_with_network_and_parent(
+            None, description="foo description")
+        trunk_id = trunk['trunk']['id']
+        self.assertEqual("foo description", trunk['trunk']['description'])
+        trunk = self.client.update_trunk(trunk_id, description='')
+        self.assertEqual('', trunk['trunk']['description'])
 
     @test.idempotent_id('73365f73-bed6-42cd-960b-ec04e0c99d85')
     def test_list_trunks(self):
