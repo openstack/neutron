@@ -208,6 +208,10 @@
     "delete_policy_dscp_marking_rule": "rule:admin_only",
     "update_policy_dscp_marking_rule": "rule:admin_only",
     "get_rule_type": "rule:regular_user",
+    "get_policy_minimum_bandwidth_rule": "rule:regular_user",
+    "create_policy_minimum_bandwidth_rule": "rule:admin_only",
+    "delete_policy_minimum_bandwidth_rule": "rule:admin_only",
+    "update_policy_minimum_bandwidth_rule": "rule:admin_only",
 
     "restrict_wildcard": "(not field:rbac_policy:target_tenant=*) or rule:admin_only",
     "create_rbac_policy": "",

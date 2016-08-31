@@ -16,6 +16,7 @@
 import sqlalchemy as sa
 
 from neutron.api.v2 import attributes as attrs
+from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
@@ -87,3 +88,24 @@ class QosDscpMarkingRule(models_v2.HasId, model_base.BASEV2):
                               nullable=False,
                               unique=True)
     dscp_mark = sa.Column(sa.Integer)
+
+
+class QosMinimumBandwidthRule(models_v2.HasId, model_base.BASEV2):
+    __tablename__ = 'qos_minimum_bandwidth_rules'
+    qos_policy_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('qos_policies.id',
+                                            ondelete='CASCADE'),
+                              nullable=False,
+                              index=True)
+    min_kbps = sa.Column(sa.Integer)
+    direction = sa.Column(sa.Enum(constants.EGRESS_DIRECTION,
+                                  constants.INGRESS_DIRECTION,
+                                  name='directions'),
+                          nullable=False,
+                          server_default=constants.EGRESS_DIRECTION)
+    __table_args__ = (
+        sa.UniqueConstraint(
+            qos_policy_id, direction,
+            name='qos_minimum_bandwidth_rules0qos_policy_id0direction'),
+        model_base.BASEV2.__table_args__
+    )

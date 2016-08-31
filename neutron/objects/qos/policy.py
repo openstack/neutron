@@ -38,7 +38,8 @@ from neutron.objects import rbac_db
 class QosPolicy(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: QosDscpMarkingRule introduced
-    VERSION = '1.1'
+    # Version 1.2: Added QosMinimumBandwidthRule
+    VERSION = '1.2'
 
     # required by RbacNeutronMetaclass
     rbac_db_model = QosPolicyRBAC
@@ -212,11 +213,15 @@ class QosPolicy(base.NeutronDbObject):
         return set(bound_tenants)
 
     def obj_make_compatible(self, primitive, target_version):
+        def filter_rules(obj_names, rules):
+            return filter(lambda rule:
+                          (rule['versioned_object.name'] in obj_names), rules)
+
         _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            if 'rules' in primitive:
-                bw_obj_name = rule_obj_impl.QosBandwidthLimitRule.obj_name()
-                primitive['rules'] = filter(
-                    lambda rule: (rule['versioned_object.name'] ==
-                                  bw_obj_name),
-                    primitive['rules'])
+        names = []
+        if _target_version >= (1, 0):
+            names.append(rule_obj_impl.QosBandwidthLimitRule.obj_name())
+        if _target_version >= (1, 1):
+            names.append(rule_obj_impl.QosDscpMarkingRule.obj_name())
+        if 'rules' in primitive and names:
+            primitive['rules'] = filter_rules(names, primitive['rules'])

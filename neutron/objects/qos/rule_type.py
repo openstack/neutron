@@ -29,8 +29,9 @@ class RuleTypeField(obj_fields.BaseEnumField):
 @obj_base.VersionedObjectRegistry.register
 class QosRuleType(base.NeutronObject):
     # Version 1.0: Initial version
-    # Version 1.1: Added DscpMarkingRule
-    VERSION = '1.1'
+    # Version 1.1: Added QosDscpMarkingRule
+    # Version 1.2: Added QosMinimumBandwidthRule
+    VERSION = '1.2'
 
     fields = {
         'type': RuleTypeField(),

@@ -337,6 +337,13 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         obtained_policy = self.client.show_qos_policy(policy['id'])['policy']
         self.assertEqual(obtained_policy, policy)
 
+    @test.idempotent_id('aed8e2a6-22da-421b-89b9-935a2c1a1b50')
+    def test_policy_create_forbidden_for_regular_tenants(self):
+        self.assertRaises(
+            exceptions.Forbidden,
+            self.client.create_qos_policy,
+            'test-policy', 'test policy', False)
+
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
     @classmethod
@@ -433,13 +440,6 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
             exceptions.NotFound,
             self.create_qos_bandwidth_limit_rule,
             'policy', 200, 1337)
-
-    @test.idempotent_id('eed8e2a6-22da-421b-89b9-935a2c1a1b50')
-    def test_policy_create_forbidden_for_regular_tenants(self):
-        self.assertRaises(
-            exceptions.Forbidden,
-            self.client.create_qos_policy,
-            'test-policy', 'test policy', False)
 
     @test.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
     def test_rule_create_forbidden_for_regular_tenants(self):
@@ -878,6 +878,147 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
         # Test 'list rules'
         rules = self.admin_client.list_dscp_marking_rules(policy1['id'])
         rules = rules['dscp_marking_rules']
+        rules_ids = [r['id'] for r in rules]
+        self.assertIn(rule1['id'], rules_ids)
+        self.assertNotIn(rule2['id'], rules_ids)
+
+
+class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
+    DIRECTION_EGRESS = "egress"
+    DIRECTION_INGRESS = "ingress"
+    RULE_NAME = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH + "_rule"
+    RULES_NAME = RULE_NAME + "s"
+
+    @classmethod
+    @test.requires_ext(extension="qos", service="network")
+    def resource_setup(cls):
+        super(QosMinimumBandwidthRuleTestJSON, cls).resource_setup()
+
+    @test.idempotent_id('aa59b00b-3e9c-4787-92f8-93a5cdf5e378')
+    def test_rule_create(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_minimum_bandwidth_rule(
+            policy_id=policy['id'], min_kbps=1138,
+            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+
+        # Test 'show rule'
+        retrieved_rule = self.admin_client.show_minimum_bandwidth_rule(
+            policy['id'], rule['id'])
+        retrieved_rule = retrieved_rule[self.RULE_NAME]
+        self.assertEqual(rule['id'], retrieved_rule['id'])
+        self.assertEqual(1138, retrieved_rule['min_kbps'])
+        self.assertEqual(self.DIRECTION_EGRESS, retrieved_rule['direction'])
+
+        # Test 'list rules'
+        rules = self.admin_client.list_minimum_bandwidth_rules(policy['id'])
+        rules = rules[self.RULES_NAME]
+        rules_ids = [r['id'] for r in rules]
+        self.assertIn(rule['id'], rules_ids)
+
+        # Test 'show policy'
+        retrieved_policy = self.admin_client.show_qos_policy(policy['id'])
+        policy_rules = retrieved_policy['policy']['rules']
+        self.assertEqual(1, len(policy_rules))
+        self.assertEqual(rule['id'], policy_rules[0]['id'])
+        self.assertEqual(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                         policy_rules[0]['type'])
+
+    @test.idempotent_id('aa59b00b-ab01-4787-92f8-93a5cdf5e378')
+    def test_rule_create_fail_for_the_same_type(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.admin_client.create_minimum_bandwidth_rule(
+            policy_id=policy['id'], min_kbps=200,
+            direction=self.DIRECTION_EGRESS)
+
+        self.assertRaises(exceptions.Conflict,
+                          self.admin_client.create_minimum_bandwidth_rule,
+                          policy_id=policy['id'],
+                          min_kbps=201, direction=self.DIRECTION_EGRESS)
+
+    @test.idempotent_id('d6fce764-e511-4fa6-9f86-f4b41cf142cf')
+    def test_rule_create_fail_for_direction_ingress(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.assertRaises(exceptions.BadRequest,
+                          self.admin_client.create_minimum_bandwidth_rule,
+                          policy_id=policy['id'],
+                          min_kbps=201, direction=self.DIRECTION_INGRESS)
+
+    @test.idempotent_id('a49a6988-2568-47d2-931e-2dbc858943b3')
+    def test_rule_update(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_minimum_bandwidth_rule(
+            policy_id=policy['id'], min_kbps=300,
+            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+
+        self.admin_client.update_minimum_bandwidth_rule(policy['id'],
+            rule['id'], min_kbps=350, direction=self.DIRECTION_EGRESS)
+
+        retrieved_policy = self.admin_client.show_minimum_bandwidth_rule(
+            policy['id'], rule['id'])
+        retrieved_policy = retrieved_policy[self.RULE_NAME]
+        self.assertEqual(350, retrieved_policy['min_kbps'])
+        self.assertEqual(self.DIRECTION_EGRESS, retrieved_policy['direction'])
+
+    @test.idempotent_id('a7ee6efd-7b33-4a68-927d-275b4f8ba958')
+    def test_rule_delete(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        rule = self.admin_client.create_minimum_bandwidth_rule(
+            policy['id'], 200, self.DIRECTION_EGRESS)[self.RULE_NAME]
+
+        retrieved_policy = self.admin_client.show_minimum_bandwidth_rule(
+            policy['id'], rule['id'])
+        retrieved_policy = retrieved_policy[self.RULE_NAME]
+        self.assertEqual(rule['id'], retrieved_policy['id'])
+
+        self.admin_client.delete_minimum_bandwidth_rule(policy['id'],
+                                                        rule['id'])
+        self.assertRaises(exceptions.NotFound,
+                          self.admin_client.show_minimum_bandwidth_rule,
+                          policy['id'], rule['id'])
+
+    @test.idempotent_id('a211222c-5808-46cb-a961-983bbab6b852')
+    def test_rule_create_rule_nonexistent_policy(self):
+        self.assertRaises(
+            exceptions.NotFound,
+            self.admin_client.create_minimum_bandwidth_rule,
+            'policy', 200, self.DIRECTION_EGRESS)
+
+    @test.idempotent_id('b4a2e7ad-786f-4927-a85a-e545a93bd274')
+    def test_rule_create_forbidden_for_regular_tenants(self):
+        self.assertRaises(
+            exceptions.Forbidden,
+            self.client.create_minimum_bandwidth_rule,
+            'policy', 300, self.DIRECTION_EGRESS)
+
+    @test.idempotent_id('de0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
+    def test_get_rules_by_policy(self):
+        policy1 = self.create_qos_policy(name='test-policy1',
+                                         description='test policy1',
+                                         shared=False)
+        rule1 = self.admin_client.create_minimum_bandwidth_rule(
+            policy_id=policy1['id'], min_kbps=200,
+            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+
+        policy2 = self.create_qos_policy(name='test-policy2',
+                                         description='test policy2',
+                                         shared=False)
+        rule2 = self.admin_client.create_minimum_bandwidth_rule(
+            policy_id=policy2['id'], min_kbps=5000,
+            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+
+        # Test 'list rules'
+        rules = self.admin_client.list_minimum_bandwidth_rules(policy1['id'])
+        rules = rules[self.RULES_NAME]
         rules_ids = [r['id'] for r in rules]
         self.assertIn(rule1['id'], rules_ids)
         self.assertNotIn(rule2['id'], rules_ids)
