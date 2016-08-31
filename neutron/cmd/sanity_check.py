@@ -185,6 +185,16 @@ def check_vf_management():
     return result
 
 
+def check_vf_extended_management():
+    result = checks.vf_extended_management_supported()
+    if not result:
+        LOG.error(_LE('Check for VF extended management support failed. '
+                      'Please ensure that the version of ip link '
+                      'being used has VF extended support: version '
+                      '"iproute2-ss140804", git tag "v3.16.0"'))
+    return result
+
+
 def check_ovsdb_native():
     cfg.CONF.set_override('ovsdb_interface', 'native', group='OVS')
     result = checks.ovsdb_native_supported()
@@ -248,6 +258,8 @@ OPTS = [
                     help=_('Check for ICMPv6 header match support')),
     BoolOptCallback('vf_management', check_vf_management,
                     help=_('Check for VF management support')),
+    BoolOptCallback('vf_extended_management', check_vf_extended_management,
+                    help=_('Check for VF extended management support')),
     BoolOptCallback('read_netns', check_read_netns,
                     help=_('Check netns permission settings')),
     BoolOptCallback('dnsmasq_version', check_dnsmasq_version,
@@ -307,6 +319,9 @@ def enable_tests_from_config():
         cfg.CONF.set_default('ipset_installed', True)
     if cfg.CONF.SECURITYGROUP.enable_security_group:
         cfg.CONF.set_default('ip6tables_installed', True)
+    if ('sriovnicswitch' in cfg.CONF.ml2.mechanism_drivers and
+        'qos' in cfg.CONF.ml2.extension_drivers):
+        cfg.CONF.set_default('vf_extended_management', True)
 
 
 def all_tests_passed():
