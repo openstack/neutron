@@ -42,7 +42,6 @@ from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron import context as ctx
 from neutron.db import db_base_plugin_common
-from neutron.db import ipam_non_pluggable_backend
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
@@ -213,10 +212,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise n_exc.InvalidSharedSetting(network=network_id)
 
     def set_ipam_backend(self):
-        if cfg.CONF.ipam_driver:
-            self.ipam = ipam_pluggable_backend.IpamPluggableBackend()
-        else:
-            self.ipam = ipam_non_pluggable_backend.IpamNonPluggableBackend()
+        self.ipam = ipam_pluggable_backend.IpamPluggableBackend()
 
     def _validate_host_route(self, route, ip_version):
         try:
