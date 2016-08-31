@@ -17,6 +17,7 @@ import collections
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron._i18n import _LE
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks.producer import registry
 from neutron.api.rpc.callbacks import resources
@@ -26,6 +27,8 @@ from neutron.db import api as db_api
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.objects import trunk as trunk_objects
+from neutron.services.trunk import constants as trunk_consts
+from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk.rpc import constants
 
 LOG = logging.getLogger(__name__)
@@ -60,7 +63,6 @@ class TrunkSkeleton(object):
                                    namespace=constants.TRUNK_BASE_NAMESPACE)
 
     _core_plugin = None
-    _trunk_plugin = None
 
     def __init__(self):
         # Used to provide trunk lookups for the agent.
@@ -72,8 +74,6 @@ class TrunkSkeleton(object):
 
     @property
     def core_plugin(self):
-        # TODO(armax): consider getting rid of this property if we
-        # can get access to the Port object
         if not self._core_plugin:
             self._core_plugin = manager.NeutronManager.get_plugin()
         return self._core_plugin
@@ -83,6 +83,7 @@ class TrunkSkeleton(object):
         el = context.elevated()
         ports_by_trunk_id = collections.defaultdict(list)
         updated_ports = collections.defaultdict(list)
+
         for s in subports:
             ports_by_trunk_id[s['trunk_id']].append(s['port_id'])
         for trunk_id, subport_ids in ports_by_trunk_id.items():
@@ -90,15 +91,13 @@ class TrunkSkeleton(object):
             if not trunk:
                 LOG.debug("Trunk not found. id: %s", trunk_id)
                 continue
-            trunk_port_id = trunk.port_id
-            trunk_port = self.core_plugin.get_port(el, trunk_port_id)
-            trunk_host = trunk_port.get(portbindings.HOST_ID)
-            for port_id in subport_ids:
-                updated_port = self.core_plugin.update_port(
-                    el, port_id, {'port': {portbindings.HOST_ID: trunk_host}})
-                # NOTE(fitoduarte): consider trimming down the content
-                # of the port data structure.
-                updated_ports[trunk_id].append(updated_port)
+
+            trunk_updated_ports = self._process_trunk_subport_bindings(
+                                                                  el,
+                                                                  trunk,
+                                                                  subport_ids)
+            updated_ports[trunk.id].extend(trunk_updated_ports)
+
         return updated_ports
 
     def update_trunk_status(self, context, trunk_id, status):
@@ -106,8 +105,61 @@ class TrunkSkeleton(object):
         with db_api.autonested_transaction(context.session):
             trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
             if trunk:
-                trunk.status = status
-                trunk.update()
+                trunk.update(status=status)
+
+    def _process_trunk_subport_bindings(self, context, trunk, port_ids):
+        """Process port bindings for subports on the given trunk."""
+        updated_ports = []
+        trunk_port_id = trunk.port_id
+        trunk_port = self.core_plugin.get_port(context, trunk_port_id)
+        trunk_host = trunk_port.get(portbindings.HOST_ID)
+
+        # NOTE(status_police) Set the trunk in BUILD state before processing
+        # subport bindings. The trunk will stay in BUILD state until an
+        # attempt has been made to bind all subports passed here and the
+        # agent acknowledges the operation was successful.
+        trunk.update(status=trunk_consts.BUILD_STATUS)
+
+        for port_id in port_ids:
+            try:
+                updated_port = self._handle_port_binding(context, port_id,
+                                                         trunk, trunk_host)
+                # NOTE(fitoduarte): consider trimming down the content
+                # of the port data structure.
+                updated_ports.append(updated_port)
+            except trunk_exc.SubPortBindingError as e:
+                LOG.error(_LE("Failed to bind subport: %s"), e)
+
+                # NOTE(status_police) The subport binding has failed in a
+                # manner in which we cannot proceed and the user must take
+                # action to bring the trunk back to a sane state.
+                trunk.update(status=trunk_consts.ERROR_STATUS)
+                return []
+            except Exception as e:
+                msg = _LE("Failed to bind subport port %(port)s on trunk "
+                          "%(trunk)s: %(exc)s")
+                LOG.error(msg, {'port': port_id, 'trunk': trunk.id, 'exc': e})
+
+        if len(port_ids) != len(updated_ports):
+            trunk.update(status=trunk_consts.DEGRADED_STATUS)
+
+        return updated_ports
+
+    def _handle_port_binding(self, context, port_id, trunk, trunk_host):
+        """Bind the given port to the given host.
+
+           :param context: The context to use for the operation
+           :param port_id: The UUID of the port to be bound
+           :param trunk: The trunk that the given port belongs to
+           :param trunk_host: The host to bind the given port to
+        """
+        port = self.core_plugin.update_port(context, port_id,
+                             {'port': {portbindings.HOST_ID: trunk_host}})
+        vif_type = port.get(portbindings.VIF_TYPE)
+        if vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
+            raise trunk_exc.SubPortBindingError(port_id=port_id,
+                                                trunk_id=trunk.id)
+        return port
 
 
 class TrunkStub(object):

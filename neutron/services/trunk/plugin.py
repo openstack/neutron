@@ -159,7 +159,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
                          segmentation_type=p['segmentation_type'])
                      for p in trunk['sub_ports']]
         admin_state_up = trunk.get('admin_state_up', True)
-        # NOTE(status_police): a trunk is created in PENDING status. Depending
+        # NOTE(status_police): a trunk is created in DOWN status. Depending
         # on the nature of the create request, a driver may set the status
         # immediately to ACTIVE if no physical provisioning is required.
         # Otherwise a transition to BUILD (or ERROR) should be expected
@@ -173,7 +173,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                         description=trunk_description,
                                         tenant_id=trunk['tenant_id'],
                                         port_id=trunk['port_id'],
-                                        status=constants.PENDING_STATUS,
+                                        status=constants.DOWN_STATUS,
                                         sub_ports=sub_ports)
         with db_api.autonested_transaction(context.session):
             trunk_obj.create()
@@ -245,20 +245,18 @@ class TrunkPlugin(service_base.ServicePluginBase,
             rules.trunk_can_be_managed(context, trunk)
             original_trunk = copy.deepcopy(trunk)
             # NOTE(status_police): the trunk status should transition to
-            # PENDING (and consequently to BUILD and finally in ACTIVE
-            # or ERROR), only if it is not in ERROR status already. A user
-            # should attempt to resolve the ERROR condition before adding
-            # more subports to the trunk. Should a trunk be in PENDING or
-            # BUILD state (e.g. when dealing with multiple concurrent
-            # requests), the status is still forced to PENDING and thus
-            # can potentially overwrite an interleaving state change to
-            # ACTIVE. Eventually the driver should bring the status back
-            # to ACTIVE or ERROR.
+            # DOWN (and finally in ACTIVE or ERROR), only if it is not in
+            # ERROR status already. A user should attempt to resolve the ERROR
+            # condition before adding more subports to the trunk. Should a
+            # trunk be in DOWN or BUILD state (e.g. when dealing with
+            # multiple concurrent requests), the status is still forced to
+            # DOWN and thus can potentially overwrite an interleaving state
+            # change to ACTIVE. Eventually the driver should bring the status
+            # back to ACTIVE or ERROR.
             if trunk.status == constants.ERROR_STATUS:
                 raise trunk_exc.TrunkInErrorState(trunk_id=trunk_id)
             else:
-                trunk.status = constants.PENDING_STATUS
-                trunk.update()
+                trunk.update(status=constants.DOWN_STATUS)
 
             for subport in subports:
                 obj = trunk_objects.SubPort(
@@ -315,14 +313,13 @@ class TrunkPlugin(service_base.ServicePluginBase,
             del trunk.sub_ports[:]
             trunk.sub_ports.extend(current_subports.values())
             # NOTE(status_police): the trunk status should transition to
-            # PENDING irrespective of the status in which it is in to allow
+            # DOWN irrespective of the status in which it is in to allow
             # the user to resolve potential conflicts due to prior add_subports
             # operations.
-            # Should a trunk be in PENDING or BUILD state (e.g. when dealing
+            # Should a trunk be in DOWN or BUILD state (e.g. when dealing
             # with multiple concurrent requests), the status is still forced
-            # to PENDING. See add_subports() for more details.
-            trunk.status = constants.PENDING_STATUS
-            trunk.update()
+            # to DOWN. See add_subports() for more details.
+            trunk.update(status=constants.DOWN_STATUS)
             payload = callbacks.TrunkPayload(context, trunk_id,
                                              current_trunk=trunk,
                                              original_trunk=original_trunk,

@@ -22,15 +22,20 @@
 # attribute ADMIN_STATE_UP is not to be confused with STATUS: the former
 # indicates whether a trunk can be managed. If a trunk has admin_state_up
 # equal to false, the trunk plugin will reject any user request to manage
-# the trunk resources (i.e. adding/removing sub-ports).
+# the trunk resources (i.e. adding/removing sub-ports). ACTIVE_STATUS
+# reflects the provisioning state of logical and physical resources associated
+# with the trunk.
 ACTIVE_STATUS = 'ACTIVE'
 
 # The server has acknowledged the user request: a user has asked to either
 # create a trunk or add/remove resources to a trunk, and the plugin has
 # created/updated the logical resource. The request has been passed along
 # to a backend, and the physical resources associated to the trunk are
-# in the process of being provisioned.
-PENDING_STATUS = 'PENDING'
+# in the process of being provisioned. A trunk is in DOWN state any time
+# the physical resources have been deprovisioned due to a system event,
+# such as instance deletion. In such a situation, the logical resource
+# exists but it has no physical resources associated with it.
+DOWN_STATUS = 'DOWN'
 
 # A driver/backend has acknowledged the server request: once the server
 # notifies the driver/backend, a trunk is in BUILD state while the
