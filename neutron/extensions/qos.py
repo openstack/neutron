@@ -102,7 +102,7 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
         'parameters': dict(QOS_RULE_COMMON_FIELDS,
                            **{'min_kbps': {
                                   'allow_post': True, 'allow_put': True,
-                                  'is_visible': True, 'default': None,
+                                  'is_visible': True,
                                   'validate': {'type:range': [0,
                                   common_constants.DB_INTEGER_MAX_VALUE]}},
                               'direction': {
