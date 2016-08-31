@@ -20,6 +20,7 @@ import operator
 from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
@@ -100,7 +101,8 @@ class DhcpRpcCallback(object):
             else:
                 msg = _('Unrecognized action')
                 raise exceptions.Invalid(message=msg)
-        except (exceptions.NetworkNotFound,
+        except (db_exc.DBReferenceError,
+                exceptions.NetworkNotFound,
                 exceptions.SubnetNotFound,
                 exceptions.InvalidInput,
                 exceptions.IpAddressGenerationFailure) as e:
