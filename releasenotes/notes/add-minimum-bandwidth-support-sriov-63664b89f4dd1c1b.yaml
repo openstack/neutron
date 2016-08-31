@@ -1,0 +1,8 @@
+---
+features:
+  - SR-IOV now supports egress minimum bandwidth configuration.
+other:
+  - In order to use QoS egress minimum bandwidth limit feature, 'ip-link' must
+    support the extended VF management parameter ``min_tx_rate``. Minimum
+    version of ``ip-link`` supporting this parameter is ``iproute2-ss140804``,
+    git tag ``v3.16.0``.
