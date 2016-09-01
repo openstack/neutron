@@ -2142,6 +2142,10 @@ class TestDeviceManager(TestConfBase):
                                     'ip_address': 'unique-IP-address'})
                     for ip in port.fixed_ips
                 ]
+                # server rudely gave us an extra address we didn't ask for
+                port.fixed_ips.append(dhcp.DictModel(
+                    {'subnet_id': 'ffffffff-6666-6666-6666-ffffffffffff',
+                     'ip_address': '2003::f816:3eff:fe45:e893'}))
                 return port
 
             plugin.create_dhcp_port.side_effect = mock_create

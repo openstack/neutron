@@ -1272,7 +1272,10 @@ class DeviceManager(object):
         fixed_ips = [dict(subnet_id=fixed_ip.subnet_id,
                           ip_address=fixed_ip.ip_address,
                           subnet=dhcp_subnets[fixed_ip.subnet_id])
-                     for fixed_ip in dhcp_port.fixed_ips]
+                     for fixed_ip in dhcp_port.fixed_ips
+                     # we don't care about any ips on subnets irrelevant
+                     # to us (e.g. auto ipv6 addresses)
+                     if fixed_ip.subnet_id in dhcp_subnets]
 
         ips = [DictModel(item) if isinstance(item, dict) else item
                for item in fixed_ips]
