@@ -22,8 +22,9 @@ from sqlalchemy.orm import exc
 from neutron.api.v2 import attributes
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
+from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
-from neutron.db import tag_db as tag_model
+from neutron.db import tag_db as tag_methods
 from neutron.extensions import tag as tag_ext
 
 
@@ -121,4 +122,4 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
             resource, [_extend_tags_dict])
         common_db_mixin.CommonDbMixin.register_model_query_hook(
             model, "tag", None, None,
-            functools.partial(tag_model.apply_tag_filters, model))
+            functools.partial(tag_methods.apply_tag_filters, model))
