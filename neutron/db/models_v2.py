@@ -14,12 +14,13 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
 from neutron.api.v2 import attributes as attr
-from neutron.db import model_base
+from neutron.common import _deprecate
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import rbac_db_models
 from neutron.db import standard_attr
@@ -27,9 +28,10 @@ from neutron.db import standard_attr
 
 # NOTE(kevinbenton): these are here for external projects that expect them
 # to be found in this module.
-HasTenant = model_base.HasTenant
-HasId = model_base.HasId
-HasStatusDescription = model_base.HasStatusDescription
+_deprecate._moved_global('HasTenant', new_name='HasProject',
+                         new_module=model_base)
+_deprecate._moved_global('HasId', new_module=model_base)
+_deprecate._moved_global('HasStatusDescription', new_module=model_base)
 
 
 class IPAvailabilityRange(model_base.BASEV2):
@@ -66,7 +68,7 @@ class IPAvailabilityRange(model_base.BASEV2):
         return "%s - %s" % (self.first_ip, self.last_ip)
 
 
-class IPAllocationPool(model_base.BASEV2, HasId):
+class IPAllocationPool(model_base.BASEV2, model_base.HasId):
     """Representation of an allocation pool in a Neutron subnet."""
 
     subnet_id = sa.Column(sa.String(36), sa.ForeignKey('subnets.id',
@@ -116,7 +118,7 @@ class SubnetRoute(model_base.BASEV2, Route):
 
 
 class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
-           HasId, HasTenant):
+           model_base.HasId, model_base.HasProject):
     """Represents a port on a Neutron v2 network."""
 
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
@@ -175,7 +177,7 @@ class DNSNameServer(model_base.BASEV2):
 
 
 class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
-             HasId, HasTenant):
+             model_base.HasId, model_base.HasProject):
     """Represents a neutron subnet.
 
     When a subnet is created the first and last entries will be created. These
@@ -245,7 +247,7 @@ class SubnetPoolPrefix(model_base.BASEV2):
 
 
 class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
-                 HasId, HasTenant):
+                 model_base.HasId, model_base.HasProject):
     """Represents a neutron subnet pool.
     """
 
@@ -267,7 +269,7 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
 
 
 class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
-              HasId, HasTenant):
+              model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron network."""
 
     name = sa.Column(sa.String(attr.NAME_MAX_LEN))
@@ -285,3 +287,6 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     dhcp_agents = orm.relationship(
         'Agent', lazy='joined', viewonly=True,
         secondary=ndab_model.NetworkDhcpAgentBinding.__table__)
+
+
+_deprecate._MovedGlobals()

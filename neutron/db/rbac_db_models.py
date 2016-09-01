@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 import sqlalchemy as sa
 from sqlalchemy.ext import declarative
@@ -22,7 +23,6 @@ from sqlalchemy.orm import validates
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
-from neutron.db import model_base
 from neutron import manager
 
 

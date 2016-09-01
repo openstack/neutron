@@ -18,6 +18,7 @@
 import functools
 
 from neutron_lib import constants
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
@@ -31,7 +32,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
-from neutron.db import model_base
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager

@@ -18,6 +18,7 @@ import datetime
 from eventlet import greenthread
 from neutron_lib.api import converters
 from neutron_lib import constants
+from neutron_lib.db import model_base
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -39,7 +40,6 @@ from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import api as db_api
-from neutron.db import model_base
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 from neutron import manager

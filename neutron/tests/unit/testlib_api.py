@@ -19,16 +19,16 @@ import testresources
 import testscenarios
 import testtools
 
+from neutron_lib.db import model_base
 from oslo_db import exception as oslodb_exception
 from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import provision
 from oslo_db.sqlalchemy import session
 
 from neutron.db import api as db_api
-# Import all data models
 from neutron.db.migration import cli as migration
+# Import all data models
 from neutron.db.migration.models import head  # noqa
-from neutron.db import model_base
 from neutron.tests import base
 from neutron import wsgi
 

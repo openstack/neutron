@@ -12,6 +12,7 @@
 
 import mock
 
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
@@ -19,7 +20,6 @@ from six import add_metaclass
 import sqlalchemy as sa
 
 from neutron.callbacks import events
-from neutron.db import model_base
 from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import base

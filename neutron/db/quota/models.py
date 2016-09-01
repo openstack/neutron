@@ -12,11 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
-
-from neutron.db import model_base
 
 
 class ResourceDelta(model_base.BASEV2):

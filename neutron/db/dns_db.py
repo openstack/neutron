@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -24,7 +25,6 @@ from neutron._i18n import _, _LE
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import dns
 from neutron.extensions import l3

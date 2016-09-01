@@ -12,11 +12,11 @@
 #    under the License.
 #
 
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import aliased
 
-from neutron.db import model_base
 from neutron.db import standard_attr
 
 

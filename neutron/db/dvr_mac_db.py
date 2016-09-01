@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -29,7 +30,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.db import api as db_api
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
 from neutron.extensions import portbindings

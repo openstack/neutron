@@ -15,6 +15,7 @@
 
 from neutron_lib.api import validators
 from neutron_lib import constants as lib_constants
+from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -30,7 +31,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import external_net

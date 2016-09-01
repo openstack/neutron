@@ -15,11 +15,11 @@
 
 from itertools import chain
 
+from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
 
 from neutron.api.v2 import attributes as attr
-from neutron.db import model_base
 from neutron.services import provider_configuration as pconf
 
 LOG = logging.getLogger(__name__)

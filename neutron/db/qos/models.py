@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import model_base
 import sqlalchemy as sa
 
 from neutron.api.v2 import attributes as attrs
 from neutron.common import constants
-from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.db import standard_attr
@@ -83,7 +83,7 @@ class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
     qos_policy = sa.orm.relationship(QosPolicy)
 
 
-class QosDscpMarkingRule(models_v2.HasId, model_base.BASEV2):
+class QosDscpMarkingRule(model_base.HasId, model_base.BASEV2):
     __tablename__ = 'qos_dscp_marking_rules'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',
