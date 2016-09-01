@@ -57,13 +57,16 @@ class PortAllocationTestCase(base.DietTestCase):
             ss_output2 += ss_output_template % p
 
         with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') \
-            as ipwrapper:
+            as ipwrapper, \
+            mock.patch('neutron.agent.linux.utils.execute') as ex:
             m = mock.MagicMock()
             m.netns.execute.return_value = ss_output2
             ipwrapper.return_value = m
+            local_port_range_start = 32768
+            ex.return_value = "%s\t61000" % local_port_range_start
             result = net_helpers.get_free_namespace_port(
                 n_const.PROTO_NAME_TCP)
-            self.assertEqual(32767, result)
+            self.assertEqual((local_port_range_start - 1), result)
 
     def test_get_unused_port(self):
         with mock.patch('neutron.agent.linux.utils.execute') as ex:
