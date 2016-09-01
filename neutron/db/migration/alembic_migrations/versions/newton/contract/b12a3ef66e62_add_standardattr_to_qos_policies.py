@@ -50,11 +50,6 @@ standardattrs = sa.Table(
 def upgrade():
     generate_records_for_existing()
     # add the constraint now that everything is populated on that table
-    op.create_foreign_key(
-        constraint_name=None, source_table=TABLE,
-        referent_table='standardattributes',
-        local_cols=['standard_attr_id'], remote_cols=['id'],
-        ondelete='CASCADE')
     op.alter_column(TABLE, 'standard_attr_id', nullable=False,
                     existing_type=sa.BigInteger(), existing_nullable=True,
                     existing_server_default=False)
@@ -62,6 +57,11 @@ def upgrade():
         constraint_name='uniq_%s0standard_attr_id' % TABLE,
         table_name=TABLE, columns=['standard_attr_id'])
     op.drop_column(TABLE, 'description')
+    op.create_foreign_key(
+        constraint_name=None, source_table=TABLE,
+        referent_table='standardattributes',
+        local_cols=['standard_attr_id'], remote_cols=['id'],
+        ondelete='CASCADE')
 
 
 def generate_records_for_existing():
