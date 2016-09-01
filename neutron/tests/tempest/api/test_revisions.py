@@ -55,6 +55,17 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
         updated = self.admin_client.update_subnetpool(sp['id'], name='sp2')
         self.assertGreater(updated['subnetpool']['revision'], sp['revision'])
 
+    @test.idempotent_id('e8c5d7db-2b8d-4567-a326-6e123437c4d1')
+    def test_update_subnet_bumps_network_revision(self):
+        net = self.create_network()
+        subnet = self.create_subnet(net)
+        updated = self.client.show_network(net['id'])
+        self.assertGreater(updated['network']['revision'], net['revision'])
+        self.client.delete_subnet(subnet['id'])
+        updated2 = self.client.show_network(net['id'])
+        self.assertGreater(updated2['network']['revision'],
+                           updated['network']['revision'])
+
     @test.idempotent_id('6c256f71-c929-4200-b3dc-4e1843506be5')
     @test.requires_ext(extension="security-group", service="network")
     def test_update_sg_group_bumps_revision(self):
