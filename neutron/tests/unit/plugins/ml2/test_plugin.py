@@ -710,26 +710,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertEqual('DOWN', port['port']['status'])
             self.assertEqual('DOWN', self.port_create_status)
 
-    def test_update_port_status_notify_port_event_after_update(self):
-        ctx = context.get_admin_context()
-        plugin = manager.NeutronManager.get_plugin()
-        # enable subscription for events
-        l3_router_plugin.L3RouterPlugin()
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-            p_const.L3_ROUTER_NAT)
-        host_arg = {portbindings.HOST_ID: HOST}
-        with mock.patch.object(l3plugin.l3_rpc_notifier,
-                               'routers_updated_on_host') as mock_updated:
-            with self.port(device_owner=constants.DEVICE_OWNER_ROUTER_HA_INTF,
-                           device_id=TEST_ROUTER_ID,
-                           arg_list=(portbindings.HOST_ID,),
-                           **host_arg) as port:
-                plugin.update_port_status(
-                    ctx, port['port']['id'],
-                    constants.PORT_STATUS_ACTIVE, host=HOST)
-                mock_updated.assert_called_once_with(
-                    mock.ANY, [TEST_ROUTER_ID], HOST)
-
     def test_update_port_status_short_id(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
@@ -1106,6 +1086,30 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         func()
         # make sure that the grenade went off during the commit
         self.assertTrue(listener.except_raised)
+
+
+class TestMl2PortsV2WithL3(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
+    """For testing methods that require the L3 service plugin."""
+
+    def test_update_port_status_notify_port_event_after_update(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        # enable subscription for events
+        l3_router_plugin.L3RouterPlugin()
+        l3plugin = manager.NeutronManager.get_service_plugins().get(
+            p_const.L3_ROUTER_NAT)
+        host_arg = {portbindings.HOST_ID: HOST}
+        with mock.patch.object(l3plugin.l3_rpc_notifier,
+                               'routers_updated_on_host') as mock_updated:
+            with self.port(device_owner=constants.DEVICE_OWNER_ROUTER_HA_INTF,
+                           device_id=TEST_ROUTER_ID,
+                           arg_list=(portbindings.HOST_ID,),
+                           **host_arg) as port:
+                plugin.update_port_status(
+                    ctx, port['port']['id'],
+                    constants.PORT_STATUS_ACTIVE, host=HOST)
+                mock_updated.assert_called_once_with(
+                    mock.ANY, [TEST_ROUTER_ID], HOST)
 
 
 class TestMl2PluginOnly(Ml2PluginV2TestCase):
