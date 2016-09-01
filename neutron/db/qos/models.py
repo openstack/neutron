@@ -20,12 +20,13 @@ from neutron.common import constants
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
+from neutron.db import standard_attr
 
 
-class QosPolicy(model_base.BASEV2, model_base.HasId, model_base.HasProject):
+class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,
+                model_base.HasId, model_base.HasProject):
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(attrs.NAME_MAX_LEN))
-    description = sa.Column(sa.String(attrs.DESCRIPTION_MAX_LEN))
     rbac_entries = sa.orm.relationship(rbac_db_models.QosPolicyRBAC,
                                        backref='qos_policy', lazy='joined',
                                        cascade='all, delete, delete-orphan')
@@ -78,6 +79,8 @@ class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
                               unique=True)
     max_kbps = sa.Column(sa.Integer)
     max_burst_kbps = sa.Column(sa.Integer)
+    revises_on_change = ('qos_policy', )
+    qos_policy = sa.orm.relationship(QosPolicy)
 
 
 class QosDscpMarkingRule(models_v2.HasId, model_base.BASEV2):
@@ -88,6 +91,8 @@ class QosDscpMarkingRule(models_v2.HasId, model_base.BASEV2):
                               nullable=False,
                               unique=True)
     dscp_mark = sa.Column(sa.Integer)
+    revises_on_change = ('qos_policy', )
+    qos_policy = sa.orm.relationship(QosPolicy)
 
 
 class QosMinimumBandwidthRule(models_v2.HasId, model_base.BASEV2):
@@ -103,6 +108,9 @@ class QosMinimumBandwidthRule(models_v2.HasId, model_base.BASEV2):
                                   name='directions'),
                           nullable=False,
                           server_default=constants.EGRESS_DIRECTION)
+    revises_on_change = ('qos_policy', )
+    qos_policy = sa.orm.relationship(QosPolicy)
+
     __table_args__ = (
         sa.UniqueConstraint(
             qos_policy_id, direction,

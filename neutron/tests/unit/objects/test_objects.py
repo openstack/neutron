@@ -39,7 +39,7 @@ object_data = {
     'QosDscpMarkingRule': '1.2-0313c6554b34fd10c753cb63d638256c',
     'QosMinimumBandwidthRule': '1.2-314c3419f4799067cc31cc319080adff',
     'QosRuleType': '1.2-e6fd08fcca152c339cbd5e9b94b1b8e7',
-    'QosPolicy': '1.2-7c5659e1c1f64395223592d3d3293e22',
+    'QosPolicy': '1.3-2eb3494f990acae59cb51381e7f99443',
     'Route': '1.0-a9883a63b416126f9e345523ec09483b',
     'SecurityGroup': '1.0-e26b90c409b31fd2e3c6fcec402ac0b9',
     'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',
