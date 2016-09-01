@@ -653,15 +653,16 @@ class NetworkClientJSON(service_client.RestClient):
         self.expected_success(204, resp.status)
         return service_client.ResponseBody(resp, body)
 
-    def create_minimum_bandwidth_rule(self, policy_id, min_kbps, direction):
+    def create_minimum_bandwidth_rule(self, policy_id, direction,
+                                      min_kbps=None):
         uri = '%s/qos/policies/%s/minimum_bandwidth_rules' % (
             self.uri_prefix, policy_id)
-        post_data = self.serialize({
-            'minimum_bandwidth_rule': {
-                'min_kbps': min_kbps,
-                'direction': direction
-            }
-        })
+        data = {
+            'direction': direction,
+        }
+        if min_kbps is not None:
+            data['min_kbps'] = min_kbps
+        post_data = self.serialize({'minimum_bandwidth_rule': data})
         resp, body = self.post(uri, post_data)
         self.expected_success(201, resp.status)
         body = jsonutils.loads(body)

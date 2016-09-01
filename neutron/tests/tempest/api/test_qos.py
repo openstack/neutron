@@ -900,8 +900,9 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
                                         description='test policy',
                                         shared=False)
         rule = self.admin_client.create_minimum_bandwidth_rule(
-            policy_id=policy['id'], min_kbps=1138,
-            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+            policy_id=policy['id'],
+            direction=self.DIRECTION_EGRESS,
+            min_kbps=1138)[self.RULE_NAME]
 
         # Test 'show rule'
         retrieved_rule = self.admin_client.show_minimum_bandwidth_rule(
@@ -925,19 +926,29 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
                          policy_rules[0]['type'])
 
+    @test.idempotent_id('266d9b87-e51c-48bd-9aa7-8269573621be')
+    def test_rule_create_fail_for_missing_min_kbps(self):
+        policy = self.create_qos_policy(name='test-policy',
+                                        description='test policy',
+                                        shared=False)
+        self.assertRaises(exceptions.BadRequest,
+                          self.admin_client.create_minimum_bandwidth_rule,
+                          policy_id=policy['id'],
+                          direction=self.DIRECTION_EGRESS)
+
     @test.idempotent_id('aa59b00b-ab01-4787-92f8-93a5cdf5e378')
     def test_rule_create_fail_for_the_same_type(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
                                         shared=False)
         self.admin_client.create_minimum_bandwidth_rule(
-            policy_id=policy['id'], min_kbps=200,
-            direction=self.DIRECTION_EGRESS)
+            policy_id=policy['id'],
+            direction=self.DIRECTION_EGRESS, min_kbps=200)
 
         self.assertRaises(exceptions.Conflict,
                           self.admin_client.create_minimum_bandwidth_rule,
                           policy_id=policy['id'],
-                          min_kbps=201, direction=self.DIRECTION_EGRESS)
+                          direction=self.DIRECTION_EGRESS, min_kbps=201)
 
     @test.idempotent_id('d6fce764-e511-4fa6-9f86-f4b41cf142cf')
     def test_rule_create_fail_for_direction_ingress(self):
@@ -947,7 +958,8 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertRaises(exceptions.BadRequest,
                           self.admin_client.create_minimum_bandwidth_rule,
                           policy_id=policy['id'],
-                          min_kbps=201, direction=self.DIRECTION_INGRESS)
+                          direction=self.DIRECTION_INGRESS,
+                          min_kbps=201)
 
     @test.idempotent_id('a49a6988-2568-47d2-931e-2dbc858943b3')
     def test_rule_update(self):
@@ -955,8 +967,9 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
                                         description='test policy',
                                         shared=False)
         rule = self.admin_client.create_minimum_bandwidth_rule(
-            policy_id=policy['id'], min_kbps=300,
-            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+            policy_id=policy['id'],
+            direction=self.DIRECTION_EGRESS,
+            min_kbps=300)[self.RULE_NAME]
 
         self.admin_client.update_minimum_bandwidth_rule(policy['id'],
             rule['id'], min_kbps=350, direction=self.DIRECTION_EGRESS)
@@ -973,7 +986,7 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
                                         description='test policy',
                                         shared=False)
         rule = self.admin_client.create_minimum_bandwidth_rule(
-            policy['id'], 200, self.DIRECTION_EGRESS)[self.RULE_NAME]
+            policy['id'], self.DIRECTION_EGRESS, min_kbps=200)[self.RULE_NAME]
 
         retrieved_policy = self.admin_client.show_minimum_bandwidth_rule(
             policy['id'], rule['id'])
@@ -991,14 +1004,14 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertRaises(
             exceptions.NotFound,
             self.admin_client.create_minimum_bandwidth_rule,
-            'policy', 200, self.DIRECTION_EGRESS)
+            'policy', self.DIRECTION_EGRESS, min_kbps=200)
 
     @test.idempotent_id('b4a2e7ad-786f-4927-a85a-e545a93bd274')
     def test_rule_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
             exceptions.Forbidden,
             self.client.create_minimum_bandwidth_rule,
-            'policy', 300, self.DIRECTION_EGRESS)
+            'policy', self.DIRECTION_EGRESS, min_kbps=300)
 
     @test.idempotent_id('de0bd0c2-54d9-4e29-85f1-cfb36ac3ebe2')
     def test_get_rules_by_policy(self):
@@ -1006,15 +1019,17 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
                                          description='test policy1',
                                          shared=False)
         rule1 = self.admin_client.create_minimum_bandwidth_rule(
-            policy_id=policy1['id'], min_kbps=200,
-            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+            policy_id=policy1['id'],
+            direction=self.DIRECTION_EGRESS,
+            min_kbps=200)[self.RULE_NAME]
 
         policy2 = self.create_qos_policy(name='test-policy2',
                                          description='test policy2',
                                          shared=False)
         rule2 = self.admin_client.create_minimum_bandwidth_rule(
-            policy_id=policy2['id'], min_kbps=5000,
-            direction=self.DIRECTION_EGRESS)[self.RULE_NAME]
+            policy_id=policy2['id'],
+            direction=self.DIRECTION_EGRESS,
+            min_kbps=5000)[self.RULE_NAME]
 
         # Test 'list rules'
         rules = self.admin_client.list_minimum_bandwidth_rules(policy1['id'])
