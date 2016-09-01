@@ -1,0 +1,7 @@
+---
+prelude: >
+  - Call dhcp_release6 command line utility when releasing
+    unused IPv6 leases for DHCPv6 stateful subnets.
+    dhcp_release6 first appeared in dnsmasq 2.76
+fixes:
+  - closes bug 1521666

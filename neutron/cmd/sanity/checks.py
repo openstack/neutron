@@ -43,6 +43,7 @@ LOG = logging.getLogger(__name__)
 
 
 MINIMUM_DNSMASQ_VERSION = 2.67
+DNSMASQ_VERSION_DHCP_RELEASE6 = 2.76
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 
 
@@ -196,6 +197,10 @@ def get_minimal_dnsmasq_version_supported():
     return MINIMUM_DNSMASQ_VERSION
 
 
+def get_dnsmasq_version_with_dhcp_release6():
+    return DNSMASQ_VERSION_DHCP_RELEASE6
+
+
 def dnsmasq_version_supported():
     try:
         cmd = ['dnsmasq', '--version']
@@ -207,6 +212,18 @@ def dnsmasq_version_supported():
             return False
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking minimal dnsmasq version. "
+                  "Exception: %s", e)
+        return False
+    return True
+
+
+def dhcp_release6_supported():
+    try:
+        cmd = ['dhcp_release6', '--help']
+        env = {'LC_ALL': 'C'}
+        agent_utils.execute(cmd, addl_env=env)
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking dhcp_release6. "
                   "Exception: %s", e)
         return False
     return True
