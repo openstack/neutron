@@ -34,10 +34,7 @@ from neutron.quota import resource_registry
 from neutron import wsgi
 
 
-RESOURCES = {'network': 'networks',
-             'subnet': 'subnets',
-             'subnetpool': 'subnetpools',
-             'port': 'ports'}
+RESOURCES = attributes.CORE_RESOURCES
 SUB_RESOURCES = {}
 COLLECTION_ACTIONS = ['index', 'create']
 MEMBER_ACTIONS = ['show', 'update', 'delete']
