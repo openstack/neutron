@@ -179,6 +179,10 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             return True
         return False
 
+    def check_vlan_transparency(self, context):
+        """SR-IOV driver vlan transparency support."""
+        return True
+
     def _check_supported_pci_vendor_device(self, context):
         if self.pci_vendor_info is None:
             return True
