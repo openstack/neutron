@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import testtools
+
 from oslo_utils import uuidutils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
@@ -235,3 +237,35 @@ class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
         self._create_trunk_with_network_and_parent(subports)
         self.assertRaises(lib_exc.Conflict, self.client.delete_port,
                           port['id'])
+
+
+class TrunkTestMtusJSON(test_trunk.TrunkTestMtusJSONBase):
+
+    required_extensions = (
+        ['net-mtu'] + test_trunk.TrunkTestMtusJSONBase.required_extensions)
+
+    @test.attr(type='negative')
+    @test.idempotent_id('228380ef-1b7a-495e-b759-5b1f08e3e858')
+    def test_create_trunk_with_mtu_smaller_than_subport(self):
+        subports = [{'port_id': self.larger_mtu_port['id'],
+                     'segmentation_type': 'vlan',
+                     'segmentation_id': 2}]
+
+        with testtools.ExpectedException(lib_exc.Conflict):
+            trunk = self.client.create_trunk(self.smaller_mtu_port['id'],
+                                             subports)
+            self.trunks.append(trunk['trunk'])
+
+    @test.attr(type='negative')
+    @test.idempotent_id('3b32bf77-8002-403e-ad01-6f4cf018daa5')
+    def test_add_subport_with_mtu_greater_than_trunk(self):
+        subports = [{'port_id': self.larger_mtu_port['id'],
+                     'segmentation_type': 'vlan',
+                     'segmentation_id': 2}]
+
+        trunk = self.client.create_trunk(self.smaller_mtu_port['id'], None)
+        self.trunks.append(trunk['trunk'])
+
+        self.assertRaises(lib_exc.Conflict,
+                          self.client.add_subports,
+                          trunk['trunk']['id'], subports)

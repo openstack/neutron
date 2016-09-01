@@ -67,6 +67,7 @@ case $VENV in
     load_conf_hook quotas
     load_rc_hook qos
     load_rc_hook trunk
+    load_conf_hook mtu
     load_conf_hook osprofiler
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
         load_conf_hook iptables_verify
