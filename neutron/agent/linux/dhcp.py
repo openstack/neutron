@@ -459,7 +459,8 @@ class Dnsmasq(DhcpLocalProcess):
         except RuntimeError as e:
             # when failed to release single lease there's
             # no need to propagate error further
-            LOG.warning(e)
+            LOG.warning(_LW('DHCP release failed for %(cmd)s. '
+                            'Reason: %(e)s'), {'cmd': cmd, 'e': e})
 
     def _output_config_files(self):
         self._output_hosts_file()
