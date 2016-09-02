@@ -145,6 +145,10 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             return {'added': filtered_ports, 'removed': events['removed']}
         polling_manager.get_events = mock.Mock(side_effect=filter_events)
 
+    def stop_agent(self, agent, rpc_loop_thread):
+        agent.run_daemon_loop = False
+        rpc_loop_thread.wait()
+
     def start_agent(self, agent, ports=None, unplug_ports=None):
         if unplug_ports is None:
             unplug_ports = []
@@ -159,13 +163,10 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
             polling_manager._monitor.is_active)
         agent.check_ovs_status = mock.Mock(
             return_value=constants.OVS_NORMAL)
-        t = eventlet.spawn(agent.rpc_loop, polling_manager)
+        self.agent_thread = eventlet.spawn(agent.rpc_loop,
+                                           polling_manager)
 
-        def stop_agent(agent, rpc_loop_thread):
-            agent.run_daemon_loop = False
-            rpc_loop_thread.wait()
-
-        self.addCleanup(stop_agent, agent, t)
+        self.addCleanup(self.stop_agent, agent, self.agent_thread)
         return polling_manager
 
     def _create_test_port_dict(self):

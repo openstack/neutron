@@ -133,7 +133,8 @@ class TrunkParentPort(object):
         # control over the wiring logic for trunk ports be required.
         patch_int_attrs = get_patch_peer_attrs(
             self.patch_port_trunk_name, self.port_mac, self.port_id)
-        patch_trunk_attrs = get_patch_peer_attrs(self.patch_port_int_name)
+        patch_trunk_attrs = get_patch_peer_attrs(self.patch_port_int_name,
+                                                 self.port_mac, self.port_id)
 
         with self.ovsdb_transaction() as txn:
             txn.add(ovsdb.add_port(br_int.br_name,
