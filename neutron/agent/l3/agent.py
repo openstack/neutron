@@ -17,6 +17,7 @@ import eventlet
 import netaddr
 from neutron_lib import constants as lib_const
 from oslo_config import cfg
+from oslo_context import context as common_context
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
@@ -191,7 +192,7 @@ class L3NATAgent(ha.AgentMixin,
 
         self.driver = common_utils.load_interface_driver(self.conf)
 
-        self.context = n_context.get_admin_context_without_session()
+        self._context = n_context.get_admin_context_without_session()
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)
         self.fullsync = True
         self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
@@ -609,6 +610,13 @@ class L3NATAgent(ha.AgentMixin,
                                         timestamp=timestamp,
                                         action=queue.DELETE_ROUTER)
             self._queue.add(update)
+
+    @property
+    def context(self):
+        # generate a new request-id on each call to make server side tracking
+        # of RPC calls easier.
+        self._context.request_id = common_context.generate_request_id()
+        return self._context
 
     def after_start(self):
         # Note: the FWaaS' vArmourL3NATAgent is a subclass of L3NATAgent. It
