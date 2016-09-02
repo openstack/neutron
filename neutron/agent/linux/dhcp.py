@@ -771,6 +771,7 @@ class Dnsmasq(DhcpLocalProcess):
                             continue
                     parts = l.strip().split()
                     (iaid, ip, client_id) = parts[1], parts[2], parts[4]
+                    ip = ip.strip('[]')
                     if netaddr.IPAddress(ip).version == constants.IP_VERSION_4:
                         continue
                     leases[ip] = {'iaid': iaid,
