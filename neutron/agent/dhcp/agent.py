@@ -374,6 +374,9 @@ class DhcpAgent(manager.Manager):
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
         updated_port = dhcp.DictModel(payload['port'])
+        if self.cache.is_port_message_stale(payload['port']):
+            LOG.debug("Discarding stale port update: %s", updated_port)
+            return
         network = self.cache.get_network_by_id(updated_port.network_id)
         if network:
             LOG.info(_LI("Trigger reload_allocations for port %s"),
@@ -402,6 +405,7 @@ class DhcpAgent(manager.Manager):
     def port_delete_end(self, context, payload):
         """Handle the port.delete.end notification event."""
         port = self.cache.get_port_by_id(payload['port_id'])
+        self.cache.deleted_ports.add(payload['port_id'])
         if port:
             network = self.cache.get_network_by_id(port.network_id)
             self.cache.remove_port(port)
@@ -534,6 +538,15 @@ class NetworkCache(object):
         self.cache = {}
         self.subnet_lookup = {}
         self.port_lookup = {}
+        self.deleted_ports = set()
+
+    def is_port_message_stale(self, payload):
+        orig = self.get_port_by_id(payload['id'])
+        if orig and orig.get('revision', 0) > payload.get('revision', 0):
+            return True
+        if payload['id'] in self.deleted_ports:
+            return True
+        return False
 
     def get_port_ids(self):
         return self.port_lookup.keys()
