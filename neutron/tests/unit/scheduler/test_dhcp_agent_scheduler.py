@@ -316,6 +316,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
         seg = self.segments_plugin.create_segment(
             self.ctx,
             {'segment': {'network_id': network_id,
+                         'name': None, 'description': None,
                          'physical_network': 'physnet1',
                          'network_type': 'vlan',
                          'segmentation_id': constants.ATTR_NOT_SPECIFIED}})
@@ -529,6 +530,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         seg = self.segments_plugin.create_segment(
             self.ctx,
             {'segment': {'network_id': network_id,
+                         'name': None, 'description': None,
                          'physical_network': 'physnet1',
                          'network_type': 'vlan',
                          'segmentation_id': constants.ATTR_NOT_SPECIFIED}})

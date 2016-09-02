@@ -17,9 +17,11 @@ import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LI
+from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import standard_attr
 
 LOG = logging.getLogger(__name__)
 
@@ -31,7 +33,8 @@ but in Mitaka the ML2 NetworkSegment table was promoted here.
 """
 
 
-class NetworkSegment(model_base.BASEV2, model_base.HasId):
+class NetworkSegment(standard_attr.HasStandardAttributes,
+                     model_base.BASEV2, model_base.HasId):
     """Represent persistent state of a network segment.
 
     A network segment is a portion of a neutron network with a
@@ -48,6 +51,8 @@ class NetworkSegment(model_base.BASEV2, model_base.HasId):
     is_dynamic = sa.Column(sa.Boolean, default=False, nullable=False,
                            server_default=sa.sql.false())
     segment_index = sa.Column(sa.Integer, nullable=False, server_default='0')
+    name = sa.Column(sa.String(attributes.NAME_MAX_LEN),
+                     nullable=True)
 
 
 NETWORK_TYPE = NetworkSegment.network_type.name
