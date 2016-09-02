@@ -184,6 +184,10 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
 
 
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
+    def test_request_id_changes(self):
+        a = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.assertNotEqual(a.context.request_id, a.context.request_id)
+
     def test_init_ha_conf(self):
         with mock.patch('os.path.dirname', return_value='/etc/ha/'):
             l3_agent.L3NATAgent(HOSTNAME, self.conf)
