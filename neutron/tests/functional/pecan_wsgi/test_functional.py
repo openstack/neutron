@@ -19,14 +19,52 @@ import mock
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
+from oslo_middleware import base
+from oslo_service import wsgi
 from oslo_utils import uuidutils
-from pecan import set_config
-from pecan.testing import load_test_app
 import testtools
+import webob.dec
+import webtest
 
 from neutron.api import extensions as exts
+from neutron import context
 from neutron import manager
+from neutron import tests
 from neutron.tests.unit import testlib_api
+
+
+class InjectContext(base.ConfigurableMiddleware):
+
+    @webob.dec.wsgify
+    def __call__(self, req):
+        user_id = req.headers.get('X_USER_ID', '')
+
+        # Determine the tenant
+        tenant_id = req.headers.get('X_PROJECT_ID')
+
+        # Suck out the roles
+        roles = [r.strip() for r in req.headers.get('X_ROLES', '').split(',')]
+
+        # Human-friendly names
+        tenant_name = req.headers.get('X_PROJECT_NAME')
+        user_name = req.headers.get('X_USER_NAME')
+
+        # Create a context with the authentication data
+        ctx = context.Context(user_id, tenant_id, roles=roles,
+                              user_name=user_name, tenant_name=tenant_name)
+        req.environ['neutron.context'] = ctx
+        return self.application
+
+
+def create_test_app():
+    paste_config_loc = os.path.join(os.path.dirname(tests.__file__), 'etc',
+                                    'api-paste.ini')
+    paste_config_loc = os.path.abspath(paste_config_loc)
+    cfg.CONF.set_override('api_paste_config', paste_config_loc)
+    loader = wsgi.Loader(cfg.CONF)
+    app = loader.load_app('neutron')
+    app = InjectContext(app)
+    return webtest.TestApp(app)
 
 
 class PecanFunctionalTest(testlib_api.SqlTestCase):
@@ -35,7 +73,6 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
         self.setup_coreplugin('ml2', load_plugins=False)
         super(PecanFunctionalTest, self).setUp()
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
-        self.addCleanup(set_config, {}, overwrite=True)
         self.set_config_overrides()
         manager.init()
         ext_mgr = exts.PluginAwareExtensionManager.get_instance()
@@ -45,15 +82,10 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
             service_plugins[constants.CORE] = ext_mgr.plugins.get(
                 constants.CORE)
             ext_mgr.plugins = service_plugins
-        self.setup_app()
-
-    def setup_app(self):
-        self.app = load_test_app(os.path.join(
-            os.path.dirname(__file__),
-            'config.py'
-        ))
+        self.app = create_test_app()
 
     def set_config_overrides(self):
+        cfg.CONF.set_override('web_framework', 'pecan')
         cfg.CONF.set_override('auth_strategy', 'noauth')
 
     def do_request(self, url, tenant_id=None, admin=False,
@@ -109,8 +141,12 @@ class TestInvalidAuth(PecanFunctionalTest):
 
     def test_invalid_auth_strategy(self):
         cfg.CONF.set_override('auth_strategy', 'badvalue')
-        with testtools.ExpectedException(n_exc.InvalidConfigurationOption):
-            load_test_app(os.path.join(os.path.dirname(__file__), 'config.py'))
+        # NOTE(blogan): the auth.pipeline_factory will throw a KeyError
+        # with a bad value because that value is not the paste config.
+        # This KeyError is translated to a LookupError, which the oslo wsgi
+        # code translates into PasteAppNotFound.
+        with testtools.ExpectedException(wsgi.PasteAppNotFound):
+            create_test_app()
 
 
 class TestExceptionTranslationHook(PecanFunctionalTest):

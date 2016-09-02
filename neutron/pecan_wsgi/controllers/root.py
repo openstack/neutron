@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
 from oslo_log import log
 import pecan
 from pecan import request
@@ -23,6 +24,9 @@ from neutron.api.views import versions as versions_view
 from neutron import manager
 from neutron.pecan_wsgi.controllers import extensions as ext_ctrl
 from neutron.pecan_wsgi.controllers import utils
+
+
+CONF = cfg.CONF
 
 LOG = log.getLogger(__name__)
 _VERSION_INFO = {}
@@ -41,12 +45,16 @@ class RootController(object):
 
     @utils.expose(generic=True)
     def index(self):
-        # NOTE(kevinbenton): The pecan framework does not handle
-        # any requests to the root because they are intercepted
-        # by the 'version' returning wrapper.
-        pass
+        version_objs = [
+            {
+                "id": "v2.0",
+                "status": "CURRENT",
+            },
+        ]
+        builder = versions_view.get_view_builder(pecan.request)
+        versions = [builder.build(version) for version in version_objs]
+        return dict(versions=versions)
 
-    @utils.when(index, method='GET')
     @utils.when(index, method='HEAD')
     @utils.when(index, method='POST')
     @utils.when(index, method='PATCH')
@@ -66,6 +74,11 @@ class V2Controller(object):
     }
     _load_version_info(version_info)
 
+    # NOTE(blogan): Paste deploy handled the routing to the legacy extension
+    # controller.  If the extensions filter is removed from the api-paste.ini
+    # then this controller will be routed to  This means operators had
+    # the ability to turn off the extensions controller via tha api-paste but
+    # will not be able to turn it off with the pecan switch.
     extensions = ext_ctrl.ExtensionsController()
 
     @utils.expose(generic=True)
@@ -112,8 +125,3 @@ class V2Controller(object):
         # with the uri_identifiers
         request.context['uri_identifiers'] = {}
         return controller, remainder
-
-
-# This controller cannot be specified directly as a member of RootController
-# as its path is not a valid python identifier
-pecan.route(RootController, 'v2.0', V2Controller())

@@ -10,23 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
-
 from neutron import server
 from neutron.server import rpc_eventlet
 from neutron.server import wsgi_eventlet
-from neutron.server import wsgi_pecan
 
 
 def main():
-    server.boot_server(_main_neutron_server)
-
-
-def _main_neutron_server():
-    if cfg.CONF.web_framework == 'legacy':
-        wsgi_eventlet.eventlet_wsgi_server()
-    else:
-        wsgi_pecan.pecan_wsgi_server()
+    server.boot_server(wsgi_eventlet.eventlet_wsgi_server)
 
 
 def main_rpc_eventlet():

@@ -13,11 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
 import oslo_i18n
 import webob.dec
 
 from neutron._i18n import _
 from neutron.api.views import versions as versions_view
+from neutron.pecan_wsgi import app as pecan_app
 from neutron import wsgi
 
 
@@ -25,6 +27,8 @@ class Versions(object):
 
     @classmethod
     def factory(cls, global_config, **local_config):
+        if cfg.CONF.web_framework == 'pecan':
+            return pecan_app.versions_factory(global_config, **local_config)
         return cls(app=None)
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)

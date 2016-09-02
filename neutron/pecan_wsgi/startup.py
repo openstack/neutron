@@ -18,12 +18,21 @@ from neutron_lib.plugins import directory
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
-from neutron.api.v2 import router
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron.pecan_wsgi.controllers import utils
 from neutron import policy
 from neutron.quota import resource_registry
+
+
+# NOTE(blogan): This currently already exists in neutron.api.v2.router but
+# instead of importing that module and creating circular imports elsewhere,
+# it's easier to just copy it here.  The likelihood of it needing to be changed
+# are slim to none.
+RESOURCES = {'network': 'networks',
+             'subnet': 'subnets',
+             'subnetpool': 'subnetpools',
+             'port': 'ports'}
 
 
 def initialize_all():
@@ -33,7 +42,7 @@ def initialize_all():
     # At this stage we have a fully populated resource attribute map;
     # build Pecan controllers and routes for all core resources
     plugin = directory.get_plugin()
-    for resource, collection in router.RESOURCES.items():
+    for resource, collection in RESOURCES.items():
         resource_registry.register_resource_by_name(resource)
         new_controller = res_ctrl.CollectionsController(collection, resource,
                                                         plugin=plugin)

@@ -1,0 +1,45 @@
+[composite:neutron]
+use = egg:Paste#urlmap
+/: neutronversions_composite
+/v2.0: neutronapi_v2_0
+
+[composite:neutronapi_v2_0]
+use = call:neutron.auth:pipeline_factory
+noauth = cors http_proxy_to_wsgi request_id catch_errors extensions neutronapiapp_v2_0
+keystone = cors http_proxy_to_wsgi request_id catch_errors authtoken keystonecontext extensions neutronapiapp_v2_0
+
+[composite:neutronversions_composite]
+use = call:neutron.auth:pipeline_factory
+noauth = cors http_proxy_to_wsgi neutronversions
+keystone = cors http_proxy_to_wsgi neutronversions
+
+[filter:request_id]
+paste.filter_factory = oslo_middleware:RequestId.factory
+
+[filter:catch_errors]
+paste.filter_factory = oslo_middleware:CatchErrors.factory
+
+[filter:cors]
+paste.filter_factory = oslo_middleware.cors:filter_factory
+oslo_config_project = neutron
+
+[filter:http_proxy_to_wsgi]
+paste.filter_factory = oslo_middleware.http_proxy_to_wsgi:HTTPProxyToWSGI.factory
+
+[filter:keystonecontext]
+paste.filter_factory = neutron.auth:NeutronKeystoneContext.factory
+
+[filter:authtoken]
+paste.filter_factory = keystonemiddleware.auth_token:filter_factory
+
+[filter:extensions]
+paste.filter_factory = neutron.api.extensions:plugin_aware_extension_middleware_factory
+
+[app:neutronversions]
+paste.app_factory = neutron.api.versions:Versions.factory
+
+[app:neutronapiapp_v2_0]
+paste.app_factory = neutron.api.v2.router:APIRouter.factory
+
+[filter:osprofiler]
+paste.filter_factory = osprofiler.web:WsgiMiddleware.factory
