@@ -519,8 +519,8 @@ class NamespaceFixture(fixtures.Fixture):
     def _setUp(self):
         ip = ip_lib.IPWrapper()
         self.name = self.prefix + uuidutils.generate_uuid()
-        self.addCleanup(self.destroy)
         self.ip_wrapper = ip.ensure_namespace(self.name)
+        self.addCleanup(self.destroy)
 
     def destroy(self):
         if self.ip_wrapper.netns.exists(self.name):
