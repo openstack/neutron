@@ -72,15 +72,15 @@ def upgrade():
                   sa.Column('name', sa.String(255),
                             nullable=True))
     update_existing_records()
+    op.alter_column(TBL, 'standard_attr_id', nullable=False,
+                    existing_type=sa.BigInteger(), existing_nullable=True,
+                    existing_server_default=False)
     # add the constraint now that everything is populated on that table
     op.create_foreign_key(
         constraint_name=None, source_table=TBL,
         referent_table='standardattributes',
         local_cols=['standard_attr_id'], remote_cols=['id'],
         ondelete='CASCADE')
-    op.alter_column(TBL, 'standard_attr_id', nullable=False,
-                    existing_type=sa.BigInteger(), existing_nullable=True,
-                    existing_server_default=False)
     op.create_unique_constraint(
         constraint_name='uniq_%s0standard_attr_id' % TBL,
         table_name=TBL, columns=['standard_attr_id'])
