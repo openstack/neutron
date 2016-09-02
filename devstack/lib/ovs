@@ -31,6 +31,20 @@ function load_module {
     fi
 }
 
+# is_kernel_supported_for_ovs25() - compilation of openvswitch 2.5 kernel module
+#                                   supports only kernels up to 4.3.x, function
+#                                   determines whether compilation from source
+#                                   will succeed on this machine
+function is_kernel_supported_for_ovs25 {
+    major=$(uname -r | cut -d\. -f 1)
+    minor=$(uname -r | cut -d\. -f 2)
+    if [ $major -le 4 -a $minor -le 3 ]; then
+        return 0
+    fi
+
+    return 1
+}
+
 # compile_ovs() - Compile OVS from source and load needed modules.
 #                 Accepts two parameters:
 #                   - first one is True, modules are built and installed.
