@@ -109,6 +109,7 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
     l3_agents = orm.relationship(
         'Agent', lazy='joined', viewonly=True,
         secondary=l3_agt.RouterL3AgentBinding.__table__)
+    api_collections = [l3.ROUTERS]
 
 
 class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -148,6 +149,7 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
             name=('uniq_floatingips0floatingnetworkid'
                  '0fixedportid0fixedipaddress')),
         model_base.BASEV2.__table_args__,)
+    api_collections = [l3.FLOATINGIPS]
 
 
 class L3_NAT_dbonly_mixin(l3.RouterPluginBase,

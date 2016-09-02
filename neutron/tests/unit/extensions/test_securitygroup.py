@@ -45,13 +45,12 @@ class SecurityGroupTestExtensionManager(object):
         # The description of security_group_rules will be added by extending
         # standardattrdescription. But as API router will not be initialized
         # in test code, manually add it.
-        if (ext_sg.SECURITYGROUPRULES in
-                standardattrdescription.EXTENDED_ATTRIBUTES_2_0):
+        ext_res = (standardattrdescription.Standardattrdescription().
+                   get_extended_resources("2.0"))
+        if ext_sg.SECURITYGROUPRULES in ext_res:
             existing_sg_rule_attr_map = (
                 ext_sg.RESOURCE_ATTRIBUTE_MAP[ext_sg.SECURITYGROUPRULES])
-            sg_rule_attr_desc = (
-                standardattrdescription.
-                EXTENDED_ATTRIBUTES_2_0[ext_sg.SECURITYGROUPRULES])
+            sg_rule_attr_desc = ext_res[ext_sg.SECURITYGROUPRULES]
             existing_sg_rule_attr_map.update(sg_rule_attr_desc)
         # Add the resources to the global attribute map
         # This is done here as the setup process won't

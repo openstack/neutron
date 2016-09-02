@@ -32,11 +32,6 @@ RESOURCE_ATTRIBUTE_MAP = {
         'name': {'allow_post': True, 'allow_put': True,
                  'validate': {'type:string': attr.NAME_MAX_LEN},
                  'default': '', 'is_visible': True},
-        # TODO(armax): consolidate use of standardattr attributes
-        'description': {'allow_post': True,
-                        'allow_put': True,
-                        'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
-                        'default': '', 'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'validate':
@@ -54,13 +49,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:subports': None},
                       'enforce_policy': True,
                       'is_visible': True},
-        # TODO(armax): consolidate use of standardattr attributes
-        'created_at': {'allow_post': False, 'allow_put': False,
-                       'is_visible': True, 'default': None},
-        'updated_at': {'allow_post': False, 'allow_put': False,
-                       'is_visible': True, 'default': None},
-        'revision_number': {'allow_post': False, 'allow_put': False,
-                            'is_visible': True, 'default': None},
     },
 }
 

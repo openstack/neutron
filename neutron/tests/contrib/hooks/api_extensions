@@ -28,13 +28,13 @@ NETWORK_API_EXTENSIONS="
     qos, \
     quotas, \
     rbac-policies, \
-    revisions, \
     router, \
     router_availability_zone, \
     security-group, \
     service-type, \
     sorting, \
     standard-attr-description, \
+    standard-attr-revisions, \
     subnet_allocation, \
     tag, \
     timestamp_core, \

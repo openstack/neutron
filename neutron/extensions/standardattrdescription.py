@@ -15,17 +15,14 @@
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
+from neutron.db import standard_attr
 
 
-EXTENDED_ATTRIBUTES_2_0 = {}
-
-for resource in ('security_group_rules', 'security_groups', 'ports', 'subnets',
-                 'networks', 'routers', 'floatingips', 'subnetpools'):
-    EXTENDED_ATTRIBUTES_2_0[resource] = {
-        'description': {'allow_post': True, 'allow_put': True,
-                        'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
-                        'is_visible': True, 'default': ''},
-    }
+DESCRIPTION_BODY = {
+    'description': {'allow_post': True, 'allow_put': True,
+                    'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
+                    'is_visible': True, 'default': ''}
+}
 
 
 class Standardattrdescription(extensions.ExtensionDescriptor):
@@ -50,6 +47,7 @@ class Standardattrdescription(extensions.ExtensionDescriptor):
         return ['security-group', 'router']
 
     def get_extended_resources(self, version):
-        if version == "2.0":
-            return dict(EXTENDED_ATTRIBUTES_2_0.items())
-        return {}
+        if version != "2.0":
+            return {}
+        rs_map = standard_attr.get_standard_attr_resource_model_map()
+        return {resource: DESCRIPTION_BODY for resource in rs_map}

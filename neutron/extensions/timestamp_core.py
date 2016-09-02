@@ -13,6 +13,8 @@
 #    under the License.
 
 from neutron.api import extensions
+from neutron.db import standard_attr
+
 
 # Attribute Map
 CREATED = 'created_at'
@@ -24,12 +26,6 @@ TIMESTAMP_BODY = {
     UPDATED: {'allow_post': False, 'allow_put': False,
               'is_visible': True, 'default': None
               },
-}
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': TIMESTAMP_BODY,
-    'subnets': TIMESTAMP_BODY,
-    'ports': TIMESTAMP_BODY,
-    'subnetpools': TIMESTAMP_BODY,
 }
 
 
@@ -59,7 +55,7 @@ class Timestamp_core(extensions.ExtensionDescriptor):
         return "2016-03-01T10:00:00-00:00"
 
     def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
+        if version != "2.0":
             return {}
+        rs_map = standard_attr.get_standard_attr_resource_model_map()
+        return {resource: TIMESTAMP_BODY for resource in rs_map}

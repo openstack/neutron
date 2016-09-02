@@ -81,6 +81,12 @@ column to the model with a foreign key relationship to the 'standardattribute'
 table. The model will then be able to access any columns of the
 'standardattribute' table and any tables related to it.
 
+A model that inherits HasStandardAttributes must implement the property
+'api_collections', which is a list of API resources that the new object
+may appear under. In most cases, this will only be one (e.g. 'ports' for
+the Port model). This is used by all of the service plugins that add standard
+attribute fields to determine which API responses need to be populated.
+
 The introduction of a new standard attribute only requires one column addition
 to the 'standardattribute' table for one-to-one relationships or a new table
 for one-to-many or one-to-zero relationships. Then all of the models using the

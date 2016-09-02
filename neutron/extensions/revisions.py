@@ -12,6 +12,7 @@
 #    under the License.
 
 from neutron.api import extensions
+from neutron.db import standard_attr
 
 
 REVISION = 'revision_number'
@@ -19,11 +20,6 @@ REVISION_BODY = {
     REVISION: {'allow_post': False, 'allow_put': False,
                'is_visible': True, 'default': None},
 }
-RESOURCES = ('security_group_rules', 'security_groups', 'ports', 'subnets',
-             'networks', 'routers', 'floatingips', 'subnetpools')
-EXTENDED_ATTRIBUTES_2_0 = {}
-for resource in RESOURCES:
-    EXTENDED_ATTRIBUTES_2_0[resource] = REVISION_BODY
 
 
 class Revisions(extensions.ExtensionDescriptor):
@@ -35,7 +31,7 @@ class Revisions(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_alias(cls):
-        return "revisions"
+        return "standard-attr-revisions"
 
     @classmethod
     def get_description(cls):
@@ -47,7 +43,7 @@ class Revisions(extensions.ExtensionDescriptor):
         return "2016-04-11T10:00:00-00:00"
 
     def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
+        if version != "2.0":
             return {}
+        rs_map = standard_attr.get_standard_attr_resource_model_map()
+        return {resource: REVISION_BODY for resource in rs_map}
