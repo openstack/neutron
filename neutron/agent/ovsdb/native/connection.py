@@ -18,8 +18,8 @@ import traceback
 
 from ovs.db import idl
 from ovs import poller
-import retrying
 from six.moves import queue as Queue
+import tenacity
 
 from neutron.agent.ovsdb.native import helpers
 from neutron.agent.ovsdb.native import idlutils
@@ -96,8 +96,9 @@ class Connection(object):
             helpers.enable_connection_uri(self.connection)
 
             # There is a small window for a race, so retry up to a second
-            @retrying.retry(wait_exponential_multiplier=10,
-                            stop_max_delay=1000)
+            @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.01),
+                            stop=tenacity.stop_after_delay(1),
+                            reraise=True)
             def do_get_schema_helper():
                 return idlutils.get_schema_helper(self.connection,
                                                   self.schema_name)

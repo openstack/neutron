@@ -23,8 +23,8 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
-import retrying
 import six
+import tenacity
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import utils
@@ -74,12 +74,12 @@ def _ofport_retry(fn):
     @six.wraps(fn)
     def wrapped(*args, **kwargs):
         self = args[0]
-        new_fn = retrying.retry(
-            retry_on_result=_ofport_result_pending,
-            stop_max_delay=self.vsctl_timeout * 1000,
-            wait_exponential_multiplier=10,
-            wait_exponential_max=1000,
-            retry_on_exception=lambda _: False)(fn)
+        new_fn = tenacity.retry(
+            reraise=True,
+            retry=tenacity.retry_if_result(_ofport_result_pending),
+            wait=tenacity.wait_exponential(multiplier=0.01, max=1),
+            stop=tenacity.stop_after_delay(
+                self.vsctl_timeout))(fn)
         return new_fn(*args, **kwargs)
     return wrapped
 
@@ -275,7 +275,7 @@ class OVSBridge(BaseOVS):
         ofport = INVALID_OFPORT
         try:
             ofport = self._get_port_ofport(port_name)
-        except retrying.RetryError:
+        except tenacity.RetryError:
             LOG.exception(_LE("Timed out retrieving ofport on port %s."),
                           port_name)
         return ofport
