@@ -12,10 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
-from neutron.extensions import l3
-from neutron.extensions import securitygroup
+from neutron.db import standard_attr
 
 
 class StandardAttrDescriptionMixin(object):
@@ -26,10 +24,9 @@ class StandardAttrDescriptionMixin(object):
             return
         res['description'] = db_object.description
 
-    for resource in [attributes.NETWORKS, attributes.PORTS,
-                     attributes.SUBNETS, attributes.SUBNETPOOLS,
-                     securitygroup.SECURITYGROUPS,
-                     securitygroup.SECURITYGROUPRULES,
-                     l3.ROUTERS, l3.FLOATINGIPS]:
-        common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
-            resource, ['_extend_standard_attr_description'])
+    def __new__(cls, *args, **kwargs):
+        for resource in standard_attr.get_standard_attr_resource_model_map():
+            common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+                resource, ['_extend_standard_attr_description'])
+        return super(StandardAttrDescriptionMixin, cls).__new__(cls, *args,
+                                                                **kwargs)

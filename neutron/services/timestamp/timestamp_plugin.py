@@ -12,13 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
-from neutron.db import l3_db
-from neutron.db.models import securitygroup as sg_db
 from neutron.db import models_v2
-from neutron.extensions import l3
-from neutron.extensions import securitygroup as sg
+from neutron.db import standard_attr
 from neutron.objects import base as base_obj
 from neutron.services import service_base
 from neutron.services.timestamp import timestamp_db as ts_db
@@ -33,17 +29,7 @@ class TimeStampPlugin(service_base.ServicePluginBase,
     def __init__(self):
         super(TimeStampPlugin, self).__init__()
         self.register_db_events()
-        rs_model_maps = {
-            attributes.NETWORKS: models_v2.Network,
-            attributes.PORTS: models_v2.Port,
-            attributes.SUBNETS: models_v2.Subnet,
-            attributes.SUBNETPOOLS: models_v2.SubnetPool,
-            l3.ROUTERS: l3_db.Router,
-            l3.FLOATINGIPS: l3_db.FloatingIP,
-            sg.SECURITYGROUPS: sg_db.SecurityGroup,
-            sg.SECURITYGROUPRULES: sg_db.SecurityGroupRule
-        }
-
+        rs_model_maps = standard_attr.get_standard_attr_resource_model_map()
         for rsmap, model in rs_model_maps.items():
             db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
                 rsmap, [self.extend_resource_dict_timestamp])

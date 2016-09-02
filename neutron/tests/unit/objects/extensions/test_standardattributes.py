@@ -27,6 +27,7 @@ class FakeDbModelWithStandardAttributes(
         standard_attr.HasStandardAttributes, model_base.BASEV2):
     id = sa.Column(sa.String(36), primary_key=True, nullable=False)
     item = sa.Column(sa.String(64))
+    api_collections = []
 
 
 @obj_base.VersionedObjectRegistry.register_if(False)

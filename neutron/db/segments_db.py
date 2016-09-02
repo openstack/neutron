@@ -22,6 +22,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import standard_attr
+from neutron.extensions import segment
 
 LOG = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
     segment_index = sa.Column(sa.Integer, nullable=False, server_default='0')
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN),
                      nullable=True)
+    api_collections = [segment.SEGMENTS]
 
 
 NETWORK_TYPE = NetworkSegment.network_type.name

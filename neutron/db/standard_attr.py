@@ -18,6 +18,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 
+from neutron._i18n import _LE
 from neutron.api.v2 import attributes as attr
 from neutron.db import sqlalchemytypes
 
@@ -68,6 +69,26 @@ class StandardAttribute(model_base.BASEV2):
 
 
 class HasStandardAttributes(object):
+
+    @classmethod
+    def get_api_collections(cls):
+        """Define the API collection this object will appear under.
+
+        This should return a list of API collections that the object
+        will be exposed under. Most should be exposed in just one
+        collection (e.g. the network model is just exposed under
+        'networks').
+
+        This is used by the standard attr extensions to discover which
+        resources need to be extended with the standard attr fields
+        (e.g. created_at/updated_at/etc).
+        """
+        # NOTE(kevinbenton): can't use abc because the metaclass conflicts
+        # with the declarative base others inherit from.
+        if hasattr(cls, 'api_collections'):
+            return cls.api_collections
+        raise NotImplementedError("%s must define api_collections" % cls)
+
     @declarative.declared_attr
     def standard_attr_id(cls):
         return sa.Column(
@@ -132,3 +153,17 @@ class HasStandardAttributes(object):
             # this is a brand new object uncommited so we don't bump now
             return
         self.standard_attr.revision_number += 1
+
+
+def get_standard_attr_resource_model_map():
+    rs_map = {}
+    for subclass in HasStandardAttributes.__subclasses__():
+        for resource in subclass.get_api_collections():
+            if resource in rs_map:
+                raise RuntimeError(_LE("Model %(sub)s tried to register for "
+                                       "API resource %(res)s which conflicts "
+                                       "with model %(other)s.") %
+                                   dict(sub=subclass, other=rs_map[resource],
+                                        res=resource))
+            rs_map[resource] = subclass
+    return rs_map

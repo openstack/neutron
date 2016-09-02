@@ -19,7 +19,6 @@ from sqlalchemy.orm import session as se
 from neutron._i18n import _, _LW
 from neutron.db import db_base_plugin_v2
 from neutron.db import standard_attr
-from neutron.extensions import revisions
 from neutron.services import service_base
 
 LOG = logging.getLogger(__name__)
@@ -28,11 +27,11 @@ LOG = logging.getLogger(__name__)
 class RevisionPlugin(service_base.ServicePluginBase):
     """Plugin to populate revision numbers into standard attr resources."""
 
-    supported_extension_aliases = ['revisions']
+    supported_extension_aliases = ['standard-attr-revisions']
 
     def __init__(self):
         super(RevisionPlugin, self).__init__()
-        for resource in revisions.RESOURCES:
+        for resource in standard_attr.get_standard_attr_resource_model_map():
             db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
                 resource, [self.extend_resource_dict_revision])
         event.listen(se.Session, 'before_flush', self.bump_revisions)
