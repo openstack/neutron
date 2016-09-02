@@ -25,3 +25,13 @@ class AutoAllocationFailure(n_exc.Conflict):
 
 class DefaultExternalNetworkExists(n_exc.Conflict):
     message = _("A default external network already exists: %(net_id)s.")
+
+
+class UnknownProvisioningError(Exception):
+    """To track unknown errors and partial provisioning steps."""
+
+    def __init__(self, error, network_id=None, router_id=None, subnets=None):
+        self.error = error
+        self.network_id = network_id
+        self.router_id = router_id
+        self.subnets = subnets

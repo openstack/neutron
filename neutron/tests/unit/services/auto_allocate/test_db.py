@@ -12,12 +12,15 @@
 # limitations under the License.
 
 import mock
+import testtools
+
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.common import exceptions as c_exc
 from neutron import context
+from neutron.plugins.common import utils
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions
 from neutron.tests.unit import testlib_api
@@ -93,21 +96,98 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
                               self.ctx, 'foo_tenant')
             g.assert_called_once_with(self.ctx, network_id)
 
-    def _test__build_topology(self, exception):
+    def _test__build_topology(self, method, provisioning_exception):
         with mock.patch.object(self.mixin,
-                               '_provision_tenant_private_network',
-                               side_effect=exception), \
+                               method,
+                               side_effect=provisioning_exception), \
                 mock.patch.object(self.mixin, '_cleanup') as f:
-            self.assertRaises(exception,
+            self.assertRaises(provisioning_exception.error,
                               self.mixin._build_topology,
                               self.ctx, mock.ANY, 'foo_net')
-            return f.call_count
+            f.assert_called_once_with(
+                self.ctx,
+                network_id=provisioning_exception.network_id,
+                router_id=provisioning_exception.router_id,
+                subnets=provisioning_exception.subnets
+            )
 
-    def test__build_topology_retriable_exception(self):
-        self.assertTrue(self._test__build_topology(db_exc.DBConnectionError))
+    def test__build_topology_provisioning_error_no_toplogy(self):
+        provisioning_exception = exceptions.UnknownProvisioningError(
+            db_exc.DBError)
+        self._test__build_topology(
+            '_provision_tenant_private_network',
+            provisioning_exception)
 
-    def test__build_topology_non_retriable_exception(self):
-        self.assertFalse(self._test__build_topology(Exception))
+    def test__build_topology_provisioning_error_network_only(self):
+        provisioning_exception = exceptions.UnknownProvisioningError(
+            Exception, network_id='foo')
+        self._test__build_topology(
+            '_provision_tenant_private_network',
+            provisioning_exception)
+
+    def test__build_topology_error_only_network_again(self):
+        provisioning_exception = exceptions.UnknownProvisioningError(
+            AttributeError, network_id='foo')
+        with mock.patch.object(self.mixin,
+                               '_provision_tenant_private_network') as f:
+            f.return_value = [{'network_id': 'foo'}]
+            self._test__build_topology(
+                '_provision_external_connectivity',
+                provisioning_exception)
+
+    def test__build_topology_error_network_with_router(self):
+        provisioning_exception = exceptions.UnknownProvisioningError(
+            KeyError, network_id='foo_n', router_id='foo_r')
+        with mock.patch.object(self.mixin,
+                               '_provision_tenant_private_network') as f:
+            f.return_value = [{'network_id': 'foo_n'}]
+            self._test__build_topology(
+                '_provision_external_connectivity',
+                provisioning_exception)
+
+    def test__build_topology_error_network_with_router_and_interfaces(self):
+        provisioning_exception = exceptions.UnknownProvisioningError(
+            db_exc.DBConnectionError,
+            network_id='foo_n', router_id='foo_r', subnets=[{'id': 'foo_s'}])
+        with mock.patch.object(self.mixin,
+                               '_provision_tenant_private_network') as f,\
+                mock.patch.object(self.mixin,
+                                  '_provision_external_connectivity') as g:
+            f.return_value = [{'network_id': 'foo_n'}]
+            g.return_value = {'id': 'foo_r'}
+            self._test__build_topology(
+                '_save',
+                provisioning_exception)
+
+    def test__save_with_provisioning_error(self):
+        with mock.patch.object(utils, "update_network", side_effect=Exception):
+            with testtools.ExpectedException(
+                    exceptions.UnknownProvisioningError) as e:
+                self.mixin._save(self.ctx, 'foo_t', 'foo_n', 'foo_r',
+                                 [{'id': 'foo_s'}])
+                self.assertEqual('foo_n', e.network_id)
+                self.assertEqual('foo_r', e.router_id)
+                self.assertEqual([{'id': 'foo_s'}], e.subnets)
+
+    def test__provision_external_connectivity_with_provisioning_error(self):
+        self.mixin._l3_plugin.create_router.side_effect = Exception
+        with testtools.ExpectedException(
+                exceptions.UnknownProvisioningError) as e:
+            self.mixin._provision_external_connectivity(
+                self.ctx, 'foo_default',
+                [{'id': 'foo_s', 'network_id': 'foo_n'}],
+                'foo_tenant')
+            self.assertEqual('foo_n', e.network_id)
+            self.assertIsNone(e.router_id)
+            self.assertIsNone(e.subnets)
+
+    def test__provision_tenant_private_network_with_provisioning_error(self):
+        self.mixin._core_plugin.create_network.side_effect = Exception
+        with testtools.ExpectedException(
+                exceptions.UnknownProvisioningError) as e:
+            self.mixin._provision_tenant_private_network(
+                self.ctx, 'foo_tenant')
+            self.assertIsNone(e.network_id)
 
     def test__check_requirements_fail_on_missing_ext_net(self):
         self.assertRaises(exceptions.AutoAllocationFailure,
