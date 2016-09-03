@@ -17,7 +17,6 @@
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-from oslo_utils import excutils
 from sqlalchemy import sql
 
 from neutron._i18n import _, _LE
@@ -153,9 +152,6 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
     def _build_topology(self, context, tenant_id, default_external_network):
         """Build the network topology and returns its network UUID."""
-        network_id = None
-        router_id = None
-        subnets = None
         try:
             subnets = self._provision_tenant_private_network(
                 context, tenant_id)
@@ -165,17 +161,16 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             network_id = self._save(
                 context, tenant_id, network_id, router['id'], subnets)
             return network_id
-        except Exception as e:
-            with excutils.save_and_reraise_exception():
-                # FIXME(armax): defensively catch all errors and let
-                # the caller retry the operation, if it can be retried.
-                # This catch-all should no longer be necessary once
-                # bug #1612798 is solved; any other error should just
-                # surface up to the user and be dealt with as a bug.
-                if db_api.is_retriable(e):
-                    self._cleanup(
-                        context, network_id=network_id,
-                        router_id=router_id, subnets=subnets)
+        except exceptions.UnknownProvisioningError as e:
+            # Clean partially provisioned topologies, and reraise the
+            # error. If it can be retried, so be it.
+            LOG.error(_LE("Unknown error while provisioning topology for "
+                          "tenant %(tenant_id)s. Reason: %(reason)s"),
+                      {'tenant_id': tenant_id, 'reason': e})
+            self._cleanup(
+                context, network_id=e.network_id,
+                router_id=e.router_id, subnets=e.subnets)
+            raise e.error
 
     def _check_requirements(self, context, tenant_id):
         """Raise if requirements are not met."""
@@ -291,6 +286,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 self._cleanup(context, network['id'])
             raise exceptions.AutoAllocationFailure(
                 reason=_("Unable to provide tenant private network"))
+        except Exception as e:
+            network_id = network['id'] if network else None
+            raise exceptions.UnknownProvisioningError(e, network_id=network_id)
 
     def _provision_external_connectivity(
         self, context, default_external_network, subnets, tenant_id):
@@ -316,15 +314,17 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                           "%(tenant_id)s because of router errors. "
                           "Reason: %(reason)s"),
                       {'tenant_id': tenant_id, 'reason': e})
-            if router:
-                router_id = router['id']
-            else:
-                router_id = None
+            router_id = router['id'] if router else None
             self._cleanup(context,
                 network_id=subnets[0]['network_id'],
                 router_id=router_id, subnets=attached_subnets)
             raise exceptions.AutoAllocationFailure(
                 reason=_("Unable to provide external connectivity"))
+        except Exception as e:
+            router_id = router['id'] if router else None
+            raise exceptions.UnknownProvisioningError(
+                e, network_id=subnets[0]['network_id'],
+                router_id=router_id, subnets=subnets)
 
     def _save(self, context, tenant_id, network_id, router_id, subnets):
         """Save auto-allocated topology, or revert in case of DB errors."""
@@ -354,6 +354,10 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 context, network_id=network_id,
                 router_id=router_id, subnets=subnets)
             network_id = self._get_auto_allocated_network(context, tenant_id)
+        except Exception as e:
+            raise exceptions.UnknownProvisioningError(
+                e, network_id=network_id,
+                router_id=router_id, subnets=subnets)
         return network_id
 
     # FIXME(kevinbenton): get rid of the retry once bug/1612798 is resolved
