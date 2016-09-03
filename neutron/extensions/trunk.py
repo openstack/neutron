@@ -59,6 +59,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'is_visible': True, 'default': None},
         'updated_at': {'allow_post': False, 'allow_put': False,
                        'is_visible': True, 'default': None},
+        'revision_number': {'allow_post': False, 'allow_put': False,
+                            'is_visible': True, 'default': None},
     },
 }
 
