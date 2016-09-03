@@ -77,7 +77,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
         return "Adds revision numbers to resources."
 
     def extend_resource_dict_revision(self, plugin, resource_res, resource_db):
-        resource_res['revision'] = resource_db.revision_number
+        resource_res['revision_number'] = resource_db.revision_number
 
     def _find_related_obj(self, session, obj, relationship_col):
         """Find a related object for an object based on relationship column.
