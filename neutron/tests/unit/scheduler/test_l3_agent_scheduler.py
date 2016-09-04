@@ -254,9 +254,11 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def test__bind_routers_centralized(self):
         routers = [{'id': 'foo_router'}]
+        agent = agent_model.Agent(id='foo_agent')
         with mock.patch.object(self.scheduler, 'bind_router') as mock_bind:
-            self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, mock.ANY)
-        mock_bind.assert_called_once_with(mock.ANY, 'foo_router', mock.ANY)
+            self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
+        mock_bind.assert_called_once_with(mock.ANY, mock.ANY,
+                                          'foo_router', agent.id)
 
     def _test__bind_routers_ha(self, has_binding):
         routers = [{'id': 'foo_router', 'ha': True, 'tenant_id': '42'}]
@@ -577,7 +579,7 @@ class L3SchedulerTestBaseMixin(object):
         scheduler = l3_agent_scheduler.ChanceScheduler()
 
         rid = router['router']['id']
-        scheduler.bind_router(ctx, rid, agent)
+        scheduler.bind_router(self.plugin, ctx, rid, agent.id)
         results = (session.query(db).filter_by(router_id=rid).all())
         self.assertGreater(len(results), 0)
         self.assertIn(agent.id, [bind.l3_agent_id for bind in results])
@@ -596,7 +598,8 @@ class L3SchedulerTestBaseMixin(object):
         scheduler = l3_agent_scheduler.ChanceScheduler()
         # checking that bind_router() is not throwing
         # when supplied with router_id of non-existing router
-        scheduler.bind_router(self.adminContext, "dummyID", self.agent1)
+        scheduler.bind_router(self.plugin, self.adminContext,
+                              "dummyID", self.agent_id1)
 
     def test_bind_existing_router(self):
         router = self._make_router(self.fmt,
@@ -732,7 +735,8 @@ class L3SchedulerTestBaseMixin(object):
                                    name='r1')
         ctx = self.adminContext
         router_id = router['router']['id']
-        self.plugin.router_scheduler.bind_router(ctx, router_id, agent)
+        self.plugin.router_scheduler.bind_router(self.plugin, ctx,
+                                                 router_id, agent.id)
         agents = self.plugin.get_l3_agents_hosting_routers(ctx,
                                                     [router_id])
         self.assertEqual([agent.id], [agt.id for agt in agents])
@@ -1490,8 +1494,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                 instance.router_id = 'nonexistent_router'
             return orig_fn(s, instance)
 
-        with mock.patch.object(self.plugin.router_scheduler,
-                               'bind_router') as bind_router:
+        with mock.patch.object(self.plugin.router_scheduler, 'bind_router'):
             with mock.patch.object(
                     orm.Session, 'add',
                     side_effect=db_ref_err_for_add_haportbinding,
@@ -1499,21 +1502,30 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                 self.plugin.router_scheduler.create_ha_port_and_bind(
                     self.plugin, self.adminContext,
                     router['id'], router['tenant_id'], agent)
-                self.assertFalse(bind_router.called)
 
     def test_create_ha_port_and_bind_catch_router_not_found(self):
         router = self._create_ha_router(tenant_id='foo_tenant')
         agent = {'id': 'foo_agent'}
 
-        with mock.patch.object(self.plugin.router_scheduler,
-                               'bind_router') as bind_router:
+        with mock.patch.object(self.plugin.router_scheduler, 'bind_router'):
             with mock.patch.object(
                     self.plugin, 'add_ha_port',
                     side_effect=l3.RouterNotFound(router_id='foo_router')):
                 self.plugin.router_scheduler.create_ha_port_and_bind(
                     self.plugin, self.adminContext,
                     router['id'], router['tenant_id'], agent)
-                self.assertFalse(bind_router.called)
+
+    def test_create_ha_port_and_bind_bind_router_returns_None(self):
+        router = self._create_ha_router(tenant_id='foo_tenant')
+        agent = {'id': 'foo_agent'}
+
+        with mock.patch.object(self.plugin.router_scheduler, 'bind_router',
+                               return_value=None):
+            with mock.patch.object(self.plugin, 'add_ha_port') as add_ha_port:
+                self.plugin.router_scheduler.create_ha_port_and_bind(
+                    self.plugin, self.adminContext,
+                    router['id'], router['tenant_id'], agent)
+                self.assertFalse(add_ha_port.called)
 
 
 class VacantBindingIndexTestCase(L3HATestCaseMixin):
@@ -1763,12 +1775,14 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
 
     def test_bind_router_twice_for_non_ha(self):
         router = self._create_ha_router(ha=False)
-        self.plugin.router_scheduler.bind_router(self.adminContext,
+        self.plugin.router_scheduler.bind_router(self.plugin,
+                                                 self.adminContext,
                                                  router['id'],
-                                                 self.agent1)
-        self.plugin.router_scheduler.bind_router(self.adminContext,
+                                                 self.agent_id1)
+        self.plugin.router_scheduler.bind_router(self.plugin,
+                                                 self.adminContext,
                                                  router['id'],
-                                                 self.agent2)
+                                                 self.agent_id2)
 
         # Make sure the second bind_router call didn't schedule the router to
         # more agents than allowed.
