@@ -1759,3 +1759,28 @@ class TestSetIpNonlocalBindForHaNamespace(base.BaseTestCase):
         """Make sure message is formatted correctly."""
         with mock.patch.object(ip_lib, 'set_ip_nonlocal_bind', return_value=1):
             ip_lib.set_ip_nonlocal_bind_for_namespace('foo')
+
+
+class TestSysctl(base.BaseTestCase):
+    def setUp(self):
+        super(TestSysctl, self).setUp()
+        self.execute_p = mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
+        self.execute = self.execute_p.start()
+
+    def test_disable_ipv6_when_ipv6_globally_enabled(self):
+        dev = ip_lib.IPDevice('tap0', 'ns1')
+        with mock.patch.object(ip_lib.ipv6_utils,
+                               'is_enabled_and_bind_by_default',
+                               return_value=True):
+            dev.disable_ipv6()
+            self.execute.assert_called_once_with(
+                ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
+                log_fail_as_error=True, run_as_root=True)
+
+    def test_disable_ipv6_when_ipv6_globally_disabled(self):
+        dev = ip_lib.IPDevice('tap0', 'ns1')
+        with mock.patch.object(ip_lib.ipv6_utils,
+                               'is_enabled_and_bind_by_default',
+                               return_value=False):
+            dev.disable_ipv6()
+            self.assertFalse(self.execute.called)

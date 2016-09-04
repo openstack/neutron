@@ -31,6 +31,7 @@ import six
 from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.common import exceptions as n_exc
+from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as privileged
 
@@ -332,6 +333,8 @@ class IPDevice(SubProcessBase):
                           " floatingip %s", ip_str)
 
     def disable_ipv6(self):
+        if not ipv6_utils.is_enabled_and_bind_by_default():
+            return
         sysctl_name = re.sub(r'\.', '/', self.name)
         cmd = ['net.ipv6.conf.%s.disable_ipv6=1' % sysctl_name]
         return sysctl(cmd, namespace=self.namespace)
