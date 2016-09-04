@@ -51,15 +51,15 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
 
     def test_port_name_update_revises(self):
         with self.port() as port:
-            rev = port['port']['revision']
+            rev = port['port']['revision_number']
             new = {'port': {'name': 'seaweed'}}
             response = self._update('ports', port['port']['id'], new)
-            new_rev = response['port']['revision']
+            new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
 
     def test_port_ip_update_revises(self):
         with self.port() as port:
-            rev = port['port']['revision']
+            rev = port['port']['revision_number']
             new = {'port': {'fixed_ips': port['port']['fixed_ips']}}
             # ensure adding an IP allocation updates the port
             next_ip = str(netaddr.IPAddress(
@@ -67,14 +67,14 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             new['port']['fixed_ips'].append({'ip_address': next_ip})
             response = self._update('ports', port['port']['id'], new)
             self.assertEqual(2, len(response['port']['fixed_ips']))
-            new_rev = response['port']['revision']
+            new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
             # ensure deleting an IP allocation updates the port
             rev = new_rev
             new['port']['fixed_ips'].pop()
             response = self._update('ports', port['port']['id'], new)
             self.assertEqual(1, len(response['port']['fixed_ips']))
-            new_rev = response['port']['revision']
+            new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
 
     def test_security_group_rule_ops_bump_security_group(self):
@@ -83,7 +83,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         sg = self.cp.create_security_group(self.ctx, s)
         s['security_group']['name'] = 'hello'
         updated = self.cp.update_security_group(self.ctx, sg['id'], s)
-        self.assertGreater(updated['revision'], sg['revision'])
+        self.assertGreater(updated['revision_number'], sg['revision_number'])
         # ensure rule changes bump parent SG
         r = {'security_group_rule': {'tenant_id': 'some_tenant',
                                      'port_range_min': 80, 'protocol': 6,
@@ -96,11 +96,11 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         rule = self.cp.create_security_group_rule(self.ctx, r)
         sg = updated
         updated = self.cp.get_security_group(self.ctx, sg['id'])
-        self.assertGreater(updated['revision'], sg['revision'])
+        self.assertGreater(updated['revision_number'], sg['revision_number'])
         self.cp.delete_security_group_rule(self.ctx, rule['id'])
         sg = updated
         updated = self.cp.get_security_group(self.ctx, sg['id'])
-        self.assertGreater(updated['revision'], sg['revision'])
+        self.assertGreater(updated['revision_number'], sg['revision_number'])
 
     def test_router_interface_ops_bump_router(self):
         r = {'router': {'name': 'myrouter', 'tenant_id': 'some_tenant',
@@ -108,16 +108,19 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         router = self.l3p.create_router(self.ctx, r)
         r['router']['name'] = 'yourrouter'
         updated = self.l3p.update_router(self.ctx, router['id'], r)
-        self.assertGreater(updated['revision'], router['revision'])
+        self.assertGreater(updated['revision_number'],
+                           router['revision_number'])
         # add an intf and make sure it bumps rev
         with self.subnet(tenant_id='some_tenant') as s:
             interface_info = {'subnet_id': s['subnet']['id']}
         self.l3p.add_router_interface(self.ctx, router['id'], interface_info)
         router = updated
         updated = self.l3p.get_router(self.ctx, router['id'])
-        self.assertGreater(updated['revision'], router['revision'])
+        self.assertGreater(updated['revision_number'],
+                           router['revision_number'])
         self.l3p.remove_router_interface(self.ctx, router['id'],
                                          interface_info)
         router = updated
         updated = self.l3p.get_router(self.ctx, router['id'])
-        self.assertGreater(updated['revision'], router['revision'])
+        self.assertGreater(updated['revision_number'],
+                           router['revision_number'])
