@@ -17,9 +17,11 @@ from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 
 from neutron._i18n import _
+from neutron.common import utils as n_utils
 from neutron.extensions import portbindings
 from neutron import manager
 from neutron.objects import trunk as trunk_objects
+from neutron.plugins.ml2 import driver_api as api
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import utils
 
@@ -131,17 +133,55 @@ class SubPortsValidator(object):
             msg = validators.validate_subports(self.subports)
             if msg:
                 raise n_exc.InvalidInput(error_message=msg)
+        trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
         if trunk_validation:
-            return [self._validate(context, s) for s in self.subports]
+            return [self._validate(context, s, trunk_port_mtu)
+                    for s in self.subports]
         else:
             return self.subports
 
-    def _validate(self, context, subport):
+    def _get_port_mtu(self, context, port_id):
+        """
+        Return MTU for the network where the given port belongs to.
+        If the network or port cannot be obtained, or if MTU is not defined,
+        returns None.
+        """
+        core_plugin = manager.NeutronManager.get_plugin()
+
+        if not n_utils.is_extension_supported(core_plugin, 'net-mtu'):
+            return
+
+        try:
+            port = core_plugin.get_port(context, port_id)
+            net = core_plugin.get_network(context, port['network_id'])
+        except (n_exc.PortNotFound, n_exc.NetworkNotFound):
+            # A concurrent request might have made the port or network
+            # disappear; though during DB insertion, the subport request
+            # will fail on integrity constraint, it is safer to return
+            # a None MTU here.
+            return
+
+        return net[api.MTU]
+
+    def _validate(self, context, subport, trunk_port_mtu):
         # Check that the subport doesn't reference the same port_id as a
         # trunk we may be in the middle of trying to create, in other words
         # make the validation idiot proof.
         if subport['port_id'] == self.trunk_port_id:
             raise trunk_exc.ParentPortInUse(port_id=subport['port_id'])
+
+        # Check MTU sanity - subport MTU must not exceed trunk MTU.
+        # If for whatever reason trunk_port_mtu is not available,
+        # the MTU sanity check cannot be enforced.
+        if trunk_port_mtu:
+            port_mtu = self._get_port_mtu(context, subport['port_id'])
+            if port_mtu and port_mtu > trunk_port_mtu:
+                raise trunk_exc.SubPortMtuGreaterThanTrunkPortMtu(
+                    port_id=subport['port_id'],
+                    port_mtu=port_mtu,
+                    trunk_id=self.trunk_port_id,
+                    trunk_mtu=trunk_port_mtu
+                )
 
         # If the segmentation details are missing, we will need to
         # figure out defaults when the time comes to support Ironic.
