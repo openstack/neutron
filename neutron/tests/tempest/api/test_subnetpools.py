@@ -390,3 +390,7 @@ class SubnetPoolsSearchCriteriaTest(base.BaseSearchCriteriaTest,
     @test.idempotent_id('82a13efc-c18f-4249-b8ec-cec7cf26fbd6')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()
+
+    @test.idempotent_id('27feb3f8-40f4-4e50-8cd2-7d0096a98682')
+    def test_list_validation_filters(self):
+        self._test_list_validation_filters()

@@ -135,3 +135,7 @@ class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):
     @test.idempotent_id('f1867fc5-e1d6-431f-bc9f-8b882e43a7f9')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()
+
+    @test.idempotent_id('3574ec9b-a8b8-43e3-9c11-98f5875df6a9')
+    def test_list_validation_filters(self):
+        self._test_list_validation_filters()

@@ -41,7 +41,8 @@ class DNSNameServer(base.NeutronDbObject):
     }
 
     @classmethod
-    def get_objects(cls, context, _pager=None, **kwargs):
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    **kwargs):
         """Fetch DNSNameServer objects with default sort by 'order' field.
         """
         if not _pager:
@@ -50,6 +51,7 @@ class DNSNameServer(base.NeutronDbObject):
             # (NOTE) True means ASC, False is DESC
             _pager.sorts = [('order', True)]
         return super(DNSNameServer, cls).get_objects(context, _pager,
+                                                     validate_filters,
                                                      **kwargs)
 
 

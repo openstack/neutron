@@ -728,3 +728,12 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
             # marker
             expected_resources[:-1],
             self._extract_resources(body))
+
+    def _test_list_validation_filters(self):
+        validation_args = {
+            'unknown_filter': 'value',
+        }
+        body = self.list_method(**validation_args)
+        resources = self._extract_resources(body)
+        for resource in resources:
+            self.assertIn(resource['name'], self.resource_names)

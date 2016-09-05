@@ -107,12 +107,14 @@ class QosPolicy(base.NeutronDbObject):
             return policy_obj
 
     @classmethod
-    def get_objects(cls, context, **kwargs):
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    **kwargs):
         # We want to get the policy regardless of its tenant id. We'll make
         # sure the tenant has permission to access the policy later on.
         admin_context = context.elevated()
         with db_api.autonested_transaction(admin_context.session):
-            objs = super(QosPolicy, cls).get_objects(admin_context,
+            objs = super(QosPolicy, cls).get_objects(admin_context, _pager,
+                                                     validate_filters,
                                                      **kwargs)
             result = []
             for obj in objs:
