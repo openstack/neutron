@@ -615,3 +615,43 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         policy.log_rule_list(oslo_policy.RuleCheck('rule', 'create_'))
         self.assertTrue(mock_is_e.called)
         self.assertTrue(mock_debug.called)
+
+    def test__is_attribute_explicitly_set(self):
+        action = 'create'
+        attr = 'attr'
+
+        target = {attr: 'valueA', 'tgt-tenant': 'tenantA'}
+        resource = {attr: {'allow_post': True,
+                           'allow_put': True,
+                           'is_visible': True,
+                           'enforce_policy': True,
+                           'validate': {'type:string': 10}}}
+
+        result = policy._is_attribute_explicitly_set(
+            attr, resource, target, action)
+        self.assertTrue(result)
+
+        target = {'tgt-tenant': 'tenantA'}
+        result = policy._is_attribute_explicitly_set(
+            attr, resource, target, action)
+        self.assertFalse(result)
+
+        resource = {attr: {'allow_post': True,
+                           'allow_put': True,
+                           'is_visible': True,
+                           'default': 'DfltValue',
+                           'enforce_policy': True,
+                           'validate': {'type:string': 10}}}
+        result = policy._is_attribute_explicitly_set(
+            attr, resource, target, action)
+        self.assertFalse(result)
+
+        target = {attr: 'DfltValue', 'tgt-tenant': 'tenantA'}
+        result = policy._is_attribute_explicitly_set(
+            attr, resource, target, action)
+        self.assertFalse(result)
+
+        target = {attr: attributes.ATTR_NOT_SPECIFIED, 'tgt-tenant': 'tenantA'}
+        result = policy._is_attribute_explicitly_set(
+            attr, resource, target, action)
+        self.assertFalse(result)
