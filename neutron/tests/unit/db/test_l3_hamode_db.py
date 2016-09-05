@@ -806,11 +806,36 @@ class L3HATestCase(L3HATestFramework):
         self.assertEqual(2, len(bindings))
 
         fake_binding = mock.Mock()
-        fake_binding.router_id = router2['id']
+        fake_binding.router_id = bindings[1].router_id
         fake_binding.port = None
         with mock.patch.object(
                 self.plugin, "get_ha_router_port_bindings",
                 return_value=[bindings[0], fake_binding]):
+            routers = self.plugin.get_ha_sync_data_for_host(
+                self.admin_ctx, self.agent1['host'], self.agent1)
+            self.assertEqual(1, len(routers))
+            self.assertIsNotNone(routers[0].get(constants.HA_INTERFACE_KEY))
+
+    def test_sync_ha_router_info_router_concurrently_deleted(self):
+        self._create_router()
+
+        with mock.patch.object(
+                self.plugin, "get_ha_router_port_bindings",
+                return_value=[]):
+            routers = self.plugin.get_ha_sync_data_for_host(
+                self.admin_ctx, self.agent1['host'], self.agent1)
+            self.assertEqual(0, len(routers))
+
+    def test_sync_ha_router_info_router_concurrently_deleted_agent_dvr(self):
+        self._create_router()
+        orig_func = self.plugin._process_sync_ha_data
+
+        def process_sync_ha_data(context, routers, host, agent_mode):
+            return orig_func(context, routers, host,
+                             agent_mode=constants.L3_AGENT_MODE_DVR)
+
+        with mock.patch.object(self.plugin, '_process_sync_ha_data',
+                               side_effect=process_sync_ha_data):
             routers = self.plugin.get_ha_sync_data_for_host(
                 self.admin_ctx, self.agent1['host'], self.agent1)
             self.assertEqual(1, len(routers))
