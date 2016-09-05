@@ -95,7 +95,7 @@ class QosDscpMarkingRule(model_base.HasId, model_base.BASEV2):
     qos_policy = sa.orm.relationship(QosPolicy)
 
 
-class QosMinimumBandwidthRule(models_v2.HasId, model_base.BASEV2):
+class QosMinimumBandwidthRule(model_base.HasId, model_base.BASEV2):
     __tablename__ = 'qos_minimum_bandwidth_rules'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',
