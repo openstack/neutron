@@ -119,6 +119,13 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                 get_object_mock.assert_called_once_with(
                     admin_context, self._test_class.db_model, id='fake_id')
 
+    def test_to_dict_makes_primitive_field_value(self):
+        # is_shared_with_tenant requires DB
+        with mock.patch.object(self._test_class, 'is_shared_with_tenant',
+                               return_value=False):
+            (super(QosPolicyObjectTestCase, self).
+             test_to_dict_makes_primitive_field_value())
+
 
 class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                 testlib_api.SqlTestCase):
