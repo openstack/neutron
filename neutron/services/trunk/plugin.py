@@ -25,6 +25,7 @@ from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
 from neutron.db import db_base_plugin_v2
+from neutron.extensions import portbindings
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
 from neutron.services import service_base
@@ -70,6 +71,11 @@ class TrunkPlugin(service_base.ServicePluginBase,
         drivers.register()
         registry.subscribe(rules.enforce_port_deletion_rules,
                            resources.PORT, events.BEFORE_DELETE)
+        # NOTE(tidwellr) Consider keying off of PRECOMMIT_UPDATE if we find
+        # AFTER_UPDATE to be problematic for setting trunk status when a
+        # a parent port becomes unbound.
+        registry.subscribe(self._trigger_trunk_status_change,
+                           resources.PORT, events.AFTER_UPDATE)
         registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
         for driver in self._drivers:
             LOG.debug('Trunk plugin loaded with driver %s', driver.name)
@@ -345,3 +351,22 @@ class TrunkPlugin(service_base.ServicePluginBase,
             raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
 
         return obj
+
+    def _trigger_trunk_status_change(self, resource, event, trigger, **kwargs):
+        updated_port = kwargs['port']
+        trunk_details = updated_port.get('trunk_details')
+        # If no trunk_details, the port is not the parent of a trunk.
+        if not trunk_details:
+            return
+
+        context = kwargs['context']
+        original_port = kwargs['original_port']
+        orig_vif_type = original_port.get(portbindings.VIF_TYPE)
+        new_vif_type = updated_port.get(portbindings.VIF_TYPE)
+        vif_type_changed = orig_vif_type != new_vif_type
+        if vif_type_changed and new_vif_type == portbindings.VIF_TYPE_UNBOUND:
+            trunk = self._get_trunk(context, trunk_details['trunk_id'])
+            # NOTE(status_police) Trunk status goes to DOWN when the parent
+            # port is unbound. This means there are no more physical resources
+            # associated with the logical resource.
+            trunk.update(status=constants.DOWN_STATUS)
