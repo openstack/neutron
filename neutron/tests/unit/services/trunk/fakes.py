@@ -33,7 +33,7 @@ class FakeDriver2(base.DriverBase):
 
     @classmethod
     def create(cls):
-        return cls('foo_name2', ('foo_intf2',), ('foo_seg_types',))
+        return cls('foo_name2', ('foo_intf2',), ('foo_seg_types2',))
 
 
 class FakeDriverCanTrunkBoundPort(base.DriverBase):
