@@ -22,4 +22,4 @@ ddt>=1.0.1 # MIT
 pylint==1.4.5 # GNU GPL v2
 reno>=0.1.1 # Apache2
 # Needed to run DB commands in virtualenvs
-PyMySQL>=0.6.2 # MIT License
+PyMySQL!=0.7.7,>=0.6.2 # MIT License
