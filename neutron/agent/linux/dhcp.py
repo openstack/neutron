@@ -35,6 +35,7 @@ from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.cmd.sanity import checks
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -292,6 +293,8 @@ class Dnsmasq(DhcpLocalProcess):
 
     _ID = 'id:'
 
+    _IS_DHCP_RELEASE6_SUPPORTED = None
+
     @classmethod
     def check_version(cls):
         pass
@@ -442,10 +445,20 @@ class Dnsmasq(DhcpLocalProcess):
                                       service_name=DNSMASQ_SERVICE_NAME,
                                       monitored_process=pm)
 
+    def _is_dhcp_release6_supported(self):
+        if self._IS_DHCP_RELEASE6_SUPPORTED is None:
+            self._IS_DHCP_RELEASE6_SUPPORTED = checks.dhcp_release6_supported()
+            if not self._IS_DHCP_RELEASE6_SUPPORTED:
+                LOG.warning(_LW("dhcp_release6 is not present on this system, "
+                                "will not call it again."))
+        return self._IS_DHCP_RELEASE6_SUPPORTED
+
     def _release_lease(self, mac_address, ip, client_id=None,
                        server_id=None, iaid=None):
         """Release a DHCP lease."""
         if netaddr.IPAddress(ip).version == constants.IP_VERSION_6:
+            if not self._is_dhcp_release6_supported():
+                return
             cmd = ['dhcp_release6', '--iface', self.interface_name,
                    '--ip', ip, '--client-id', client_id,
                    '--server-id', server_id, '--iaid', iaid]
