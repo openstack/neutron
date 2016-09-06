@@ -46,9 +46,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     __native_bulk_support = True
 
-    def create_security_group_bulk(self, context, security_group_rule):
+    def create_security_group_bulk(self, context, security_groups):
         return self._create_bulk('security_group', context,
-                                 security_group_rule)
+                                 security_groups)
 
     def _registry_notify(self, res, event, id=None, exc_cls=None, **kwargs):
         # NOTE(armax): a callback exception here will prevent the request
