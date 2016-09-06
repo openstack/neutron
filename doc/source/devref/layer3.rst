@@ -214,6 +214,8 @@ Provider Networking
 
 Neutron can also be configured to create `provider networks <http://docs.openstack.org/admin-guide/networking_adv-features.html#provider-networks>`_
 
+.. include:: l3_agent_extensions.rst
+
 Further Reading
 ---------------
 * `Packet Pushers - Neutron Network Implementation on Linux <http://packetpushers.net/openstack-quantum-network-implementation-in-linux/>`_
