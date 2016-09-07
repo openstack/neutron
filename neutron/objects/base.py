@@ -141,7 +141,14 @@ class NeutronObject(obj_base.VersionedObject,
                 yield field, getattr(self, field)
 
     def to_dict(self):
-        dict_ = dict(self.items())
+        dict_ = {}
+        # not using obj_to_primitive because it skips extra fields
+        for name, value in self.items():
+            # we have to check if item is in fields because obj_extra_fields
+            # is included in self.items()
+            if name in self.fields and name not in self.synthetic_fields:
+                value = self.fields[name].to_primitive(self, name, value)
+            dict_[name] = value
         for field_name, value in self._synthetic_fields_items():
             field = self.fields[field_name]
             if isinstance(field, obj_fields.ListOfObjectsField):
@@ -149,6 +156,8 @@ class NeutronObject(obj_base.VersionedObject,
             elif isinstance(field, obj_fields.ObjectField):
                 dict_[field_name] = (
                     dict_[field_name].to_dict() if value else None)
+            else:
+                dict_[field_name] = field.to_primitive(self, field_name, value)
         return dict_
 
     @classmethod

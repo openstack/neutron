@@ -734,6 +734,15 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertTrue(field in obj.to_dict().keys())
             self.assertRaises(AttributeError, setattr, obj, field, "1")
 
+    def test_to_dict_makes_primitive_field_value(self):
+        obj = self._test_class(self.context, **self.obj_fields[0])
+        dict_ = obj.to_dict()
+        for k, v in dict_.items():
+            if k not in obj.fields:
+                continue
+            field = obj.fields[k]
+            self.assertEqual(v, field.to_primitive(obj, k, getattr(obj, k)))
+
     def test_fields_no_update(self):
         obj = self._test_class(self.context, **self.obj_fields[0])
         for field in self._test_class.fields_no_update:
