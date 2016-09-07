@@ -25,6 +25,7 @@ from oslo_utils import importutils
 from oslo_utils import timeutils
 from sqlalchemy import orm
 import testscenarios
+import testtools
 
 from neutron import context as n_context
 from neutron.db import agents_db
@@ -200,6 +201,21 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         with mock.patch.object(self.scheduler,
                                '_get_unscheduled_routers') as mock_get:
             mock_get.return_value = expected_routers
+            unscheduled_routers = self.scheduler._get_routers_to_schedule(
+                mock.ANY, self.plugin)
+        mock_get.assert_called_once_with(mock.ANY, self.plugin)
+        self.assertEqual(expected_routers, unscheduled_routers)
+
+    def test__get_routers_to_schedule_excludes_unsupported(self):
+        routers = [
+            {'id': 'router_1'}, {'id': 'router_2'}, {'id': 'router_3'}
+        ]
+        expected_routers = [{'id': 'router_2'}]
+        # exclude everything except for 2
+        self.plugin.router_supports_scheduling = lambda c, rid: rid[-1] == '2'
+        with mock.patch.object(self.scheduler,
+                               '_get_unscheduled_routers') as mock_get:
+            mock_get.return_value = routers
             unscheduled_routers = self.scheduler._get_routers_to_schedule(
                 mock.ANY, self.plugin)
         mock_get.assert_called_once_with(mock.ANY, self.plugin)
@@ -399,6 +415,14 @@ class L3SchedulerTestBaseMixin(object):
                               self.plugin.add_router_to_l3_agent,
                               self.adminContext, agent_id,
                               router['router']['id'])
+
+    def test__schedule_router_skips_unschedulable_routers(self):
+        mock.patch.object(self.plugin, 'router_supports_scheduling',
+                          return_value=False).start()
+        scheduler = l3_agent_scheduler.ChanceScheduler()
+        self.assertIsNone(scheduler._schedule_router(self.plugin,
+                                                     self.adminContext,
+                                                     'router_id'))
 
     def test_add_router_to_l3_agent_mismatch_error_dvr_to_legacy(self):
         self._register_l3_agents()
@@ -1654,6 +1678,15 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
     def test_get_agents_dict_for_router_unscheduled_returns_empty_list(self):
         self.assertEqual({'agents': []},
                          self.plugin._get_agents_dict_for_router([]))
+
+    def test_router_doesnt_support_scheduling(self):
+        with mock.patch.object(self.plugin, 'router_supports_scheduling',
+                               return_value=False):
+            agent = helpers.register_l3_agent(host='myhost_3')
+            with testtools.ExpectedException(
+                    l3agent.RouterDoesntSupportScheduling):
+                self.plugin.add_router_to_l3_agent(
+                    self.adminContext, agent.id, 'router_id')
 
     def test_manual_add_ha_router_to_agent(self):
         cfg.CONF.set_override('max_l3_agents_per_router', 2)

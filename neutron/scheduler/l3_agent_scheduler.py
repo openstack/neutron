@@ -108,9 +108,11 @@ class L3Scheduler(object):
             filters = {'id': router_ids,
                        'status': [constants.ROUTER_STATUS_ACTIVE]}
             routers = plugin.get_routers(context, filters=filters)
-            return self._filter_unscheduled_routers(context, plugin, routers)
+            result = self._filter_unscheduled_routers(context, plugin, routers)
         else:
-            return self._get_unscheduled_routers(context, plugin)
+            result = self._get_unscheduled_routers(context, plugin)
+        return [r for r in result
+                if plugin.router_supports_scheduling(context, r['id'])]
 
     def _get_routers_can_schedule(self, context, plugin, routers, l3_agent):
         """Get the subset of routers that can be scheduled on the L3 agent."""
@@ -237,6 +239,8 @@ class L3Scheduler(object):
 
     def _schedule_router(self, plugin, context, router_id,
                          candidates=None):
+        if not plugin.router_supports_scheduling(context, router_id):
+            return
         sync_router = plugin.get_router(context, router_id)
         candidates = candidates or self._get_candidates(
             plugin, context, sync_router)

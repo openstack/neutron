@@ -348,6 +348,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # implementation of l3 services
             return
 
+        if not l3_plugin.router_supports_scheduling(context, router_id):
+            return
         cur_agents = l3_plugin.list_l3_agents_hosting_router(
             context, router_id)['agents']
         for agent in cur_agents:

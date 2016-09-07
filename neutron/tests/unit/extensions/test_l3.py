@@ -3454,6 +3454,23 @@ class L3NatDBIntAgentSchedulingTestCase(L3BaseForIntTests,
                 s2['subnet']['network_id'])
             self._assert_router_on_agent(r['router']['id'], 'host2')
 
+    def test_router_update_gateway_scheduling_not_supported(self):
+        plugin = manager.NeutronManager.get_service_plugins().get(
+            service_constants.L3_ROUTER_NAT)
+        mock.patch.object(plugin, 'router_supports_scheduling',
+                          return_value=False).start()
+        with self.router() as r:
+            with self.subnet() as s1:
+                with self.subnet() as s2:
+                    self._set_net_external(s1['subnet']['network_id'])
+                    self._set_net_external(s2['subnet']['network_id'])
+                    # this should pass even though there are multiple
+                    # external networks since no scheduling decision needs
+                    # to be made
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s1['subnet']['network_id'])
+
     def test_router_update_gateway_no_eligible_l3_agent(self):
         with self.router() as r:
             with self.subnet() as s1:
