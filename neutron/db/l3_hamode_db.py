@@ -689,7 +689,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             None)
 
     @log_helpers.log_method_call
-    def _process_sync_ha_data(self, context, routers, host):
+    def _process_sync_ha_data(self, context, routers, host, agent_mode):
         routers_dict = dict((router['id'], router) for router in routers)
 
         bindings = self.get_ha_router_port_bindings(context,
@@ -715,9 +715,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             if interface:
                 self._populate_mtu_and_subnets_for_ports(context, [interface])
 
-        # Could not filter the HA_INTERFACE_KEY here, because a DVR router
-        # with SNAT HA in DVR compute host also does not have that attribute.
-        return list(routers_dict.values())
+        # If this is a DVR+HA router, but the agent is question is in 'dvr'
+        # mode (as opposed to 'dvr_snat'), then we want to always return it
+        # even though it's missing the '_ha_interface' key.
+        return [r for r in list(routers_dict.values())
+                if (agent_mode == constants.L3_AGENT_MODE_DVR or
+                    not r.get('ha') or r.get(constants.HA_INTERFACE_KEY))]
 
     @log_helpers.log_method_call
     def get_ha_sync_data_for_host(self, context, host, agent,
@@ -733,7 +736,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         else:
             sync_data = super(L3_HA_NAT_db_mixin, self).get_sync_data(context,
                                                             router_ids, active)
-        return self._process_sync_ha_data(context, sync_data, host)
+        return self._process_sync_ha_data(context, sync_data, host, agent_mode)
 
     @classmethod
     def _set_router_states(cls, context, bindings, states):
