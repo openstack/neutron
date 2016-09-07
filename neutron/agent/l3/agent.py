@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_context import context as common_context
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_serialization import jsonutils
 from oslo_service import loopingcall
 from oslo_service import periodic_task
 from oslo_utils import excutils
@@ -52,6 +53,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.common import utils
 from neutron import context as n_context
 from neutron import manager
 
@@ -65,6 +67,13 @@ EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 # Needed to reduce load on server side and to speed up resync on agent side.
 SYNC_ROUTERS_MAX_CHUNK_SIZE = 256
 SYNC_ROUTERS_MIN_CHUNK_SIZE = 32
+
+
+def log_verbose_exc(message, router_payload):
+    LOG.exception(message)
+    LOG.debug("Payload:\n%s",
+              utils.DelayedStringRenderer(jsonutils.dumps,
+                                          router_payload, indent=5))
 
 
 class L3PluginApi(object):
@@ -498,15 +507,16 @@ class L3NATAgent(ha.AgentMixin,
             try:
                 self._process_router_if_compatible(router)
             except n_exc.RouterNotCompatibleWithAgent as e:
-                LOG.exception(e.msg)
+                log_verbose_exc(e.msg, router)
                 # Was the router previously handled by this agent?
                 if router['id'] in self.router_info:
                     LOG.error(_LE("Removing incompatible router '%s'"),
                               router['id'])
                     self._safe_router_removed(router['id'])
             except Exception:
-                msg = _LE("Failed to process compatible router '%s'")
-                LOG.exception(msg, update.id)
+                log_verbose_exc(
+                    _LE("Failed to process compatible router: %s") % update.id,
+                    router)
                 self._resync_router(update)
                 continue
 
@@ -547,14 +557,15 @@ class L3NATAgent(ha.AgentMixin,
         prev_router_ids = set(self.router_info)
         curr_router_ids = set()
         timestamp = timeutils.utcnow()
-
+        router_ids = []
+        chunk = []
         try:
             router_ids = self.plugin_rpc.get_router_ids(context)
             # fetch routers by chunks to reduce the load on server and to
             # start router processing earlier
             for i in range(0, len(router_ids), self.sync_routers_chunk_size):
-                routers = self.plugin_rpc.get_routers(
-                    context, router_ids[i:i + self.sync_routers_chunk_size])
+                chunk = router_ids[i:i + self.sync_routers_chunk_size]
+                routers = self.plugin_rpc.get_routers(context, chunk)
                 LOG.debug('Processing :%r', routers)
                 for r in routers:
                     curr_router_ids.add(r['id'])
@@ -591,7 +602,9 @@ class L3NATAgent(ha.AgentMixin,
                           self.sync_routers_chunk_size)
             raise
         except oslo_messaging.MessagingException:
-            LOG.exception(_LE("Failed synchronizing routers due to RPC error"))
+            failed_routers = chunk or router_ids
+            LOG.exception(_LE("Failed synchronizing routers '%s' "
+                              "due to RPC error"), failed_routers)
             raise n_exc.AbortSyncRouters()
 
         self.fullsync = False

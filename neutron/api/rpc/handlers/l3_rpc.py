@@ -18,7 +18,6 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_serialization import jsonutils
 import six
 
 from neutron.common import constants as n_const
@@ -98,10 +97,6 @@ class L3RpcCallback(object):
         if utils.is_extension_supported(
             self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             self._ensure_host_set_on_ports(context, host, routers)
-        LOG.debug("Routers returned to l3 agent on host %s:\n%s",
-                  host,
-                  utils.DelayedStringRenderer(jsonutils.dumps,
-                                              routers, indent=5))
         return routers
 
     def _ensure_host_set_on_ports(self, context, host, routers):
