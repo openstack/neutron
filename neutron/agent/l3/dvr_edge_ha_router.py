@@ -90,11 +90,6 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         self._create_snat_namespace()
         super(DvrEdgeHaRouter, self).initialize(process_monitor)
 
-    def process(self, agent):
-        super(DvrEdgeHaRouter, self).process(agent)
-        if self.ha_port:
-            self.enable_keepalived()
-
     def get_router_cidrs(self, device):
         return router_info.RouterInfo.get_router_cidrs(self, device)
 
