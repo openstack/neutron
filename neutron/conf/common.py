@@ -83,7 +83,7 @@ core_opts = [
     cfg.IntOpt('max_fixed_ips_per_port', default=5,
                deprecated_for_removal=True,
                help=_("Maximum number of fixed ips per port. This option "
-                      "is deprecated and will be removed in the N "
+                      "is deprecated and will be removed in the Ocata "
                       "release.")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Enables IPv6 Prefix Delegation for automatic subnet "
