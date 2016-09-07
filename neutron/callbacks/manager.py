@@ -136,22 +136,27 @@ class CallbacksManager(object):
 
     def _notify_loop(self, resource, event, trigger, **kwargs):
         """The notification loop."""
-        LOG.debug("Notify callbacks for %(resource)s, %(event)s",
-                  {'resource': resource, 'event': event})
-
         errors = []
         callbacks = list(self._callbacks[resource].get(event, {}).items())
+        LOG.debug("Notify callbacks %s for %s, %s",
+                  callbacks, resource, events)
         # TODO(armax): consider using a GreenPile
         for callback_id, callback in callbacks:
             try:
-                LOG.debug("Calling callback %s", callback_id)
                 callback(resource, event, trigger, **kwargs)
             except Exception as e:
-                LOG.exception(_LE("Error during notification for "
-                                  "%(callback)s %(resource)s, %(event)s"),
-                              {'callback': callback_id,
-                               'resource': resource,
-                               'event': event})
+                abortable_event = (
+                    event.startswith(events.BEFORE) or
+                    event.startswith(events.PRECOMMIT)
+                )
+                if not abortable_event:
+                    LOG.exception(_LE("Error during notification for "
+                                      "%(callback)s %(resource)s, %(event)s"),
+                                  {'callback': callback_id,
+                                   'resource': resource, 'event': event})
+                else:
+                    LOG.error(_LE("Callback %(callback)s raised %(error)s"),
+                              {'callback': callback_id, 'error': e})
                 errors.append(exceptions.NotificationError(callback_id, e))
         return errors
 

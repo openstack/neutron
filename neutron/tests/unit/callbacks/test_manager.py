@@ -228,6 +228,19 @@ class CallBacksManagerTestCase(base.BaseTestCase):
         self.assertEqual(2, callback_1.counter)
         self.assertEqual(1, callback_2.counter)
 
+    @mock.patch("neutron.callbacks.manager.LOG")
+    def test__notify_loop_skip_log_errors(self, _logger):
+        self.manager.subscribe(
+            callback_raise, resources.PORT, events.BEFORE_CREATE)
+        self.manager.subscribe(
+            callback_raise, resources.PORT, events.PRECOMMIT_CREATE)
+        self.manager._notify_loop(
+            resources.PORT, events.BEFORE_CREATE, mock.ANY)
+        self.manager._notify_loop(
+            resources.PORT, events.PRECOMMIT_CREATE, mock.ANY)
+        self.assertFalse(_logger.exception.call_count)
+        self.assertTrue(_logger.error.call_count)
+
     def test_object_instances_as_subscribers(self):
         """Ensures that the manager doesn't think these are equivalent."""
         a = GloriousObjectWithCallback()
