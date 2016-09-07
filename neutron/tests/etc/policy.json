@@ -8,8 +8,6 @@
     "admin_only": "rule:context_is_admin",
     "regular_user": "",
     "shared": "field:networks:shared=True",
-    "shared_firewalls": "field:firewalls:shared=True",
-    "shared_firewall_policies": "field:firewall_policies:shared=True",
     "shared_subnetpools": "field:subnetpools:shared=True",
     "shared_address_scopes": "field:address_scopes:shared=True",
     "external": "field:networks:router:external=True",
@@ -115,27 +113,8 @@
     "create_router:external_gateway_info:external_fixed_ips": "rule:admin_only",
     "update_router:external_gateway_info:external_fixed_ips": "rule:admin_only",
 
-    "create_firewall": "",
-    "get_firewall": "rule:admin_or_owner",
-    "create_firewall:shared": "rule:admin_only",
-    "get_firewall:shared": "rule:admin_only",
-    "update_firewall": "rule:admin_or_owner",
-    "update_firewall:shared": "rule:admin_only",
-    "delete_firewall": "rule:admin_or_owner",
-
-    "create_firewall_policy": "",
-    "get_firewall_policy": "rule:admin_or_owner or rule:shared_firewall_policies",
-    "create_firewall_policy:shared": "rule:admin_or_owner",
-    "update_firewall_policy": "rule:admin_or_owner",
-    "delete_firewall_policy": "rule:admin_or_owner",
-
     "insert_rule": "rule:admin_or_owner",
     "remove_rule": "rule:admin_or_owner",
-
-    "create_firewall_rule": "",
-    "get_firewall_rule": "rule:admin_or_owner or rule:shared_firewalls",
-    "update_firewall_rule": "rule:admin_or_owner",
-    "delete_firewall_rule": "rule:admin_or_owner",
 
     "create_qos_queue": "rule:admin_only",
     "get_qos_queue": "rule:admin_only",
