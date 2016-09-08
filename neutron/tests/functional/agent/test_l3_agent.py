@@ -1700,6 +1700,33 @@ class TestDvrRouter(L3AgentTestFramework):
         self.assertFalse(sg_device)
         self.assertTrue(qg_device)
 
+    def test_dvr_router_gateway_redirect_cleanup_on_agent_restart(self):
+        """Test to validate the router namespace gateway redirect rule cleanup.
+
+        This test checks for the non existence of the gateway redirect
+        rules in the router namespace after the agent restarts while the
+        gateway is removed for the router.
+        """
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info()
+        router1 = self.manage_router(self.agent, router_info)
+        self._assert_snat_namespace_exists(router1)
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            self.agent.host, self.agent.conf)
+        router1.router['gw_port'] = ""
+        router1.router['gw_port_host'] = ""
+        router1.router['external_gateway_info'] = ""
+        restarted_router = self.manage_router(restarted_agent, router1.router)
+        self.assertTrue(self._namespace_exists(restarted_router.ns_name))
+        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
+        ip4_rules_list = ns_ipr.rule.list_rules(l3_constants.IP_VERSION_4)
+        ip6_rules_list = ns_ipr.rule.list_rules(l3_constants.IP_VERSION_6)
+        # Just make sure the basic set of rules are there in the router
+        # namespace
+        self.assertEqual(3, len(ip4_rules_list))
+        self.assertEqual(2, len(ip6_rules_list))
+
     def _assert_fip_namespace_deleted(self, ext_gateway_port):
         ext_net_id = ext_gateway_port['network_id']
         self.agent.fipnamespace_delete_on_ext_net(

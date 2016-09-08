@@ -292,6 +292,32 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         except exceptions.DeviceNotFoundError:
             pass
 
+    def _stale_ip_rule_cleanup(self, ns_ipr, ns_ipd, ip_version):
+        ip_rules_list = ns_ipr.rule.list_rules(ip_version)
+        snat_table_list = []
+        for ip_rule in ip_rules_list:
+            snat_table = ip_rule['table']
+            priority = ip_rule['priority']
+            if snat_table in ['local', 'default', 'main']:
+                continue
+            if (ip_version == l3_constants.IP_VERSION_4 and
+                snat_table in range(dvr_fip_ns.FIP_PR_START,
+                                    dvr_fip_ns.FIP_PR_END)):
+                continue
+            gateway_cidr = ip_rule['from']
+            ns_ipr.rule.delete(ip=gateway_cidr,
+                               table=snat_table,
+                               priority=priority)
+            snat_table_list.append(snat_table)
+        for tb in snat_table_list:
+            ns_ipd.route.flush(ip_version, table=tb)
+
+    def gateway_redirect_cleanup(self, rtr_interface):
+        ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
+        ns_ipd = ip_lib.IPDevice(rtr_interface, namespace=self.ns_name)
+        self._stale_ip_rule_cleanup(ns_ipr, ns_ipd, l3_constants.IP_VERSION_4)
+        self._stale_ip_rule_cleanup(ns_ipr, ns_ipd, l3_constants.IP_VERSION_6)
+
     def _snat_redirect_modify(self, gateway, sn_port, sn_int, is_add):
         """Adds or removes rules and routes for SNAT redirection."""
         try:
