@@ -2217,6 +2217,121 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(ip_address,
                                  body['floatingip']['fixed_ip_address'])
 
+    def test_floatingip_update_same_fixed_ip_same_port(self):
+        with self.subnet() as private_sub:
+            ip_range = list(netaddr.IPNetwork(private_sub['subnet']['cidr']))
+            fixed_ip = [{'ip_address': str(ip_range[-3])}]
+            with self.port(subnet=private_sub, fixed_ips=fixed_ip) as p:
+                with self.router() as r:
+                    with self.subnet(cidr='11.0.0.0/24') as public_sub:
+                        self._set_net_external(
+                            public_sub['subnet']['network_id'])
+                        self._add_external_gateway_to_router(
+                            r['router']['id'],
+                            public_sub['subnet']['network_id'])
+                        self._router_interface_action(
+                            'add', r['router']['id'],
+                            private_sub['subnet']['id'], None)
+                        fip1 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'])
+                        fip2 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'])
+                        # 1. Update floating IP 1 with port_id and fixed_ip
+                        body_1 = self._update(
+                            'floatingips', fip1['floatingip']['id'],
+                            {'floatingip': {'port_id': p['port']['id'],
+                                        'fixed_ip_address': str(ip_range[-3])}
+                             })
+                        self.assertEqual(str(ip_range[-3]),
+                            body_1['floatingip']['fixed_ip_address'])
+                        self.assertEqual(p['port']['id'],
+                            body_1['floatingip']['port_id'])
+                        # 2. Update floating IP 2 with port_id and fixed_ip
+                        # mock out the sequential check
+                        plugin = 'neutron.db.l3_db.L3_NAT_dbonly_mixin'
+                        check_get = mock.patch(
+                            plugin + '._check_and_get_fip_assoc',
+                            fip=fip2, floating_db=mock.ANY,
+                            return_value=(p['port']['id'], str(ip_range[-3]),
+                                          r['router']['id']))
+                        check_and_get = check_get.start()
+                        # do regular _check_and_get_fip_assoc() after skip
+                        check_and_get.side_effect = check_get.stop()
+                        self._update(
+                            'floatingips', fip2['floatingip']['id'],
+                            {'floatingip':
+                                {'port_id': p['port']['id'],
+                                 'fixed_ip_address': str(ip_range[-3])
+                                 }}, exc.HTTPConflict.code)
+                        body = self._show('floatingips',
+                                          fip2['floatingip']['id'])
+                        self.assertIsNone(
+                            body['floatingip']['fixed_ip_address'])
+                        self.assertIsNone(
+                            body['floatingip']['port_id'])
+
+    def test_create_multiple_floatingips_same_fixed_ip_same_port(self):
+        '''This tests that if multiple API requests arrive to create
+        floating IPs on same external network to same port with one
+        fixed ip, the latter API requests would be blocked at
+        database side.
+        '''
+        with self.router() as r:
+            with self.subnet(cidr='11.0.0.0/24') as public_sub:
+                self._set_net_external(public_sub['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    public_sub['subnet']['network_id'])
+
+                with self.subnet() as private_sub:
+                    ip_range = list(netaddr.IPNetwork(
+                        private_sub['subnet']['cidr']))
+                    fixed_ips = [{'ip_address': str(ip_range[-3])},
+                                {'ip_address': str(ip_range[-2])}]
+
+                    self._router_interface_action(
+                        'add', r['router']['id'],
+                        private_sub['subnet']['id'], None)
+
+                    with self.port(subnet=private_sub,
+                                   fixed_ips=fixed_ips) as p:
+                        # 1. Create floating IP 1
+                        fip1 = self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'],
+                            p['port']['id'],
+                            fixed_ip=str(ip_range[-3]))
+                        # 2. Create floating IP 2
+                        # mock out the sequential check
+                        plugin = 'neutron.db.l3_db.L3_NAT_dbonly_mixin'
+                        check_get = mock.patch(
+                            plugin + '._check_and_get_fip_assoc',
+                            fip=mock.ANY, floating_db=mock.ANY,
+                            return_value=(p['port']['id'], str(ip_range[-3]),
+                                          r['router']['id']))
+                        check_and_get = check_get.start()
+                        # do regular _check_and_get_fip_assoc() after skip
+                        check_and_get.side_effect = check_get.stop()
+                        self._make_floatingip(
+                            self.fmt,
+                            public_sub['subnet']['network_id'],
+                            p['port']['id'],
+                            fixed_ip=str(ip_range[-3]),
+                            http_status=exc.HTTPConflict.code)
+                        # Test that floating IP 1 is successfully created
+                        body = self._show('floatingips',
+                                          fip1['floatingip']['id'])
+                        self.assertEqual(
+                            body['floatingip']['port_id'],
+                            fip1['floatingip']['port_id'])
+
+                    self._delete('ports', p['port']['id'])
+                    # Test that port has been successfully deleted.
+                    body = self._show('ports', p['port']['id'],
+                                      expected_code=exc.HTTPNotFound.code)
+
     def test_first_floatingip_associate_notification(self):
         with self.port() as p:
             private_sub = {'subnet': {'id':
