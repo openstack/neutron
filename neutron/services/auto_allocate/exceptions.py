@@ -35,3 +35,6 @@ class UnknownProvisioningError(Exception):
         self.network_id = network_id
         self.router_id = router_id
         self.subnets = subnets
+
+    def __str__(self):
+        return str(self.error)
