@@ -71,11 +71,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _create_router_db(self, context, router, tenant_id):
         """Create a router db object with dvr additions."""
-        router['distributed'] = is_distributed_router(router)
         with context.session.begin(subtransactions=True):
             router_db = super(
                 L3_NAT_with_dvr_db_mixin, self)._create_router_db(
                     context, router, tenant_id)
+            router['distributed'] = is_distributed_router(router)
             self._process_extra_attr_router_create(context, router_db, router)
             return router_db
 

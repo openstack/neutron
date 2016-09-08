@@ -44,6 +44,19 @@ class RoutersFlavorTestCase(base.BaseRouterTest):
             cls.flavor['id'], sp['service_profile']['id'])
         cls.flavor_service_profiles.append((cls.flavor['id'],
                                             sp['service_profile']['id']))
+        # make another with a different driver
+        driver = ('neutron.services.l3_router.service_providers.'
+                  'dvr.DvrDriver')
+        sp = cls.admin_client.create_service_profile(driver=driver)
+        cls.service_profiles.append(sp['service_profile'])
+        cls.prem_flavor = cls.create_flavor(
+                name='better_special_flavor',
+                description='econonomy comfort',
+                service_type='L3_ROUTER_NAT')
+        cls.admin_client.create_flavor_service_profile(
+            cls.prem_flavor['id'], sp['service_profile']['id'])
+        cls.flavor_service_profiles.append((cls.prem_flavor['id'],
+                                            sp['service_profile']['id']))
 
     @classmethod
     def resource_cleanup(cls):
@@ -61,10 +74,15 @@ class RoutersFlavorTestCase(base.BaseRouterTest):
         flavors = self.client.list_flavors(id=self.flavor['id'])
         flavor = flavors['flavors'][0]
         self.assertEqual('special_flavor', flavor['name'])
+        flavors = self.client.list_flavors(id=self.prem_flavor['id'])
+        prem_flavor = flavors['flavors'][0]
+        self.assertEqual('better_special_flavor', prem_flavor['name'])
 
-        # ensure client can create router with flavor
+        # ensure client can create router with both flavors
         router = self.create_router('name', flavor_id=flavor['id'])
         self.assertEqual(flavor['id'], router['flavor_id'])
+        router = self.create_router('name', flavor_id=prem_flavor['id'])
+        self.assertEqual(prem_flavor['id'], router['flavor_id'])
 
     @test.idempotent_id('30e73858-a0fc-409c-a2e0-e9cd2826f6a2')
     def test_delete_router_flavor_in_use(self):
