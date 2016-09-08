@@ -479,17 +479,15 @@ class TestPciOsWrapper(base.BaseTestCase):
     def test_scan_vf_devices_no_content(self):
         with mock.patch("os.path.isdir", return_value=True),\
                 mock.patch("os.listdir", return_value=[]):
-            self.assertRaises(exc.InvalidDeviceError,
-                              esm.PciOsWrapper.scan_vf_devices,
-                              self.DEV_NAME)
+            self.assertEqual([],
+                             esm.PciOsWrapper.scan_vf_devices(self.DEV_NAME))
 
     def test_scan_vf_devices_no_match(self):
         with mock.patch("os.path.isdir", return_value=True),\
                 mock.patch("os.listdir",
                            return_value=self.DIR_CONTENTS_NO_MATCH):
-            self.assertRaises(exc.InvalidDeviceError,
-                              esm.PciOsWrapper.scan_vf_devices,
-                              self.DEV_NAME)
+            self.assertEqual([],
+                             esm.PciOsWrapper.scan_vf_devices(self.DEV_NAME))
 
     @mock.patch("os.listdir", side_effect=OSError())
     def test_is_assigned_vf_true(self, *args):
