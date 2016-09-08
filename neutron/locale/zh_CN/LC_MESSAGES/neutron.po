@@ -12,6 +12,7 @@
 # 汪军 <wwyyzz08@sina.com>, 2015
 # 陈展奇 <chenzq1604@163.com>, 2013-2014
 # 颜海峰 <yanheven@gmail.com>, 2014
+# Eric Lei <leiyashuai@inspur.com>, 2016. #zanata
 # Jimmy Li <ljzljm@163.com>, 2016. #zanata
 # Linda <duleish@cn.ibm.com>, 2016. #zanata
 # maoshuai <fwsakura@163.com>, 2016. #zanata
@@ -19,14 +20,14 @@
 # zzxwill <zzxwill@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 8.1.3.dev113\n"
+"Project-Id-Version: neutron 8.2.1.dev52\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-13 08:46+0000\n"
+"POT-Creation-Date: 2016-09-01 18:10+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-08-04 01:33+0000\n"
-"Last-Translator: Jimmy Li <ljzljm@163.com>\n"
+"PO-Revision-Date: 2016-09-07 09:06+0000\n"
+"Last-Translator: Eric Lei <leiyashuai@inspur.com>\n"
 "Language: zh-CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -2102,14 +2103,6 @@ msgstr "日志代理程序脉动信号"
 msgid "Loopback IP subnet is not supported if enable_dhcp is True."
 msgstr "如果 enable_dhcp 为 True，那么回送 IP 子网不受支持。"
 
-msgid ""
-"MTU setting for device. This option will be removed in Newton. Please use "
-"the system-wide segment_mtu setting which the agents will take into account "
-"when wiring VIFs."
-msgstr ""
-"设备的 MTU 设置。此选项将在 Newton 中移除。请使用系统范围的 segment_mtu 设"
-"置，连线 VIF 时，代理程序将考虑这些设置。"
-
 msgid "MTU size of veth interfaces"
 msgstr "veth 接口的 MTU 大小"
 
@@ -2280,12 +2273,10 @@ msgstr "要使用的已打开 vSwitch 网桥的名称"
 msgid ""
 "Name of bridge used for external network traffic. This should be set to an "
 "empty value for the Linux Bridge. When this parameter is set, each L3 agent "
-"can be associated with no more than one external network. This option is "
-"deprecated and will be removed in the M release."
+"can be associated with no more than one external network."
 msgstr ""
-"用于外部网络流量的网桥的名称。对于 Linux 网桥，它应设置为空值。如果设置了此参"
-"数，那么每个 L3 代理程序最多可与一个外部网络相关联。此选项已不推荐使用，将在 "
-"M 发行版中移除。"
+"用于外部网络流量的网桥名称。对于 Linux 网桥应设置为空值。如果设置了此参数，那"
+"么每个 L3 代理程序最多可与一个外部网络相关联。"
 
 msgid ""
 "Name of nova region to use. Useful if keystone manages more than one region."
