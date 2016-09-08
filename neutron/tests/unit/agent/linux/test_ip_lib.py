@@ -1002,6 +1002,10 @@ class TestIpRouteCommand(TestIPCmdBase):
         # Check two calls - device get and subnet get
         self.assertEqual(len(self.parent._run.mock_calls), 2)
 
+    def test_flush_route_table(self):
+        self.route_cmd.flush(self.ip_version, self.table)
+        self._assert_sudo([self.ip_version], ('flush', 'table', self.table))
+
     def test_add_route(self):
         self.route_cmd.add_route(self.cidr, self.ip, self.table)
         self._assert_sudo([self.ip_version],
