@@ -69,9 +69,10 @@ class TestDriverController(testlib_api.SqlTestCase):
             with mock.patch.object(
                 driver_controller,
                 "_ensure_driver_supports_request") as _ensure:
-                _ensure.side_effect = lib_exc.Invalid(message='message')
+                _ensure.side_effect = lib_exc.InvalidInput(
+                    error_message='message')
                 self.assertRaises(
-                    lib_exc.Invalid,
+                    lib_exc.InvalidInput,
                     test_dc._update_router_provider,
                     None, None, None, None,
                     None, {'name': 'testname'},

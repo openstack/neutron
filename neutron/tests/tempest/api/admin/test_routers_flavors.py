@@ -71,3 +71,9 @@ class RoutersFlavorTestCase(base.BaseRouterTest):
         self.create_router('name', flavor_id=self.flavor['id'])
         with testtools.ExpectedException(lib_exc.Conflict):
             self.admin_client.delete_flavor(self.flavor['id'])
+
+    @test.idempotent_id('83939cf7-5070-41bc-9a3e-cd9f22df2186')
+    def test_badrequest_on_requesting_flags_and_flavor(self):
+        with testtools.ExpectedException(lib_exc.BadRequest):
+            self.admin_client.create_router(
+                'name', flavor_id=self.flavor['id'], distributed=True)
