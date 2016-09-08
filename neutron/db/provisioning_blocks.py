@@ -20,6 +20,7 @@ import sqlalchemy as sa
 from neutron._i18n import _LE
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import standard_attr
 
@@ -47,6 +48,7 @@ def add_model_for_resource(resource, model):
     _RESOURCE_TO_MODEL_MAP[resource] = model
 
 
+@db_api.retry_if_session_inactive()
 def add_provisioning_component(context, object_id, object_type, entity):
     """Adds a provisioning block by an entity to a given object.
 
@@ -84,6 +86,7 @@ def add_provisioning_component(context, object_id, object_type, entity):
               log_dict)
 
 
+@db_api.retry_if_session_inactive()
 def remove_provisioning_component(context, object_id, object_type, entity,
                                   standard_attr_id=None):
     """Removes a provisioning block for an object with triggering a callback.
@@ -114,6 +117,7 @@ def remove_provisioning_component(context, object_id, object_type, entity,
         return False
 
 
+@db_api.retry_if_session_inactive()
 def provisioning_complete(context, object_id, object_type, entity):
     """Mark that the provisioning for object_id has been completed by entity.
 
@@ -152,6 +156,7 @@ def provisioning_complete(context, object_id, object_type, entity):
                         context=context, object_id=object_id)
 
 
+@db_api.retry_if_session_inactive()
 def is_object_blocked(context, object_id, object_type):
     """Return boolean indicating if object has a provisioning block.
 
