@@ -208,7 +208,7 @@ class Controller(object):
                 except oslo_policy.PolicyNotAuthorized:
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)
-                body = copy.deepcopy(kwargs.pop('body', None))
+                body = kwargs.pop('body', None)
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
                     arg_list.append(body)
@@ -405,7 +405,7 @@ class Controller(object):
         """Creates a new instance of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
         body = Controller.prepare_request_body(request.context,
-                                               copy.deepcopy(body), True,
+                                               body, True,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
         action = self._plugin_handlers[self.CREATE]
@@ -577,7 +577,7 @@ class Controller(object):
     @db_api.retry_db_errors
     def _update(self, request, id, body, **kwargs):
         body = Controller.prepare_request_body(request.context,
-                                               copy.deepcopy(body), False,
+                                               body, False,
                                                self._resource, self._attr_info,
                                                allow_bulk=self._allow_bulk)
         action = self._plugin_handlers[self.UPDATE]

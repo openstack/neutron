@@ -101,6 +101,65 @@ class TestDeadLockDecorator(base.BaseTestCase):
                            "sa_savepoint_1 does not exist')")
         self.assertIsNone(self._decorated_function(1, e))
 
+    @db_api.retry_if_session_inactive('alt_context')
+    def _alt_context_function(self, alt_context, *args, **kwargs):
+        return self._decorated_function(*args, **kwargs)
+
+    @db_api.retry_if_session_inactive()
+    def _context_function(self, context, list_arg, dict_arg,
+                          fail_count, exc_to_raise):
+        list_arg.append(1)
+        dict_arg[max(dict_arg.keys()) + 1] = True
+        self.fail_count = getattr(self, 'fail_count', fail_count + 1) - 1
+        if self.fail_count:
+            raise exc_to_raise
+        return list_arg, dict_arg
+
+    def test_stacked_retries_dont_explode_retry_count(self):
+        context = mock.Mock()
+        context.session.is_active = False
+        e = db_exc.DBConnectionError()
+        mock.patch('time.sleep').start()
+        with testtools.ExpectedException(db_exc.DBConnectionError):
+            # after 10 failures, the inner retry should give up and
+            # the exception should be tagged to prevent the outer retry
+            self._alt_context_function(context, 11, e)
+
+    def test_retry_if_session_inactive_args_not_mutated_after_retries(self):
+        context = mock.Mock()
+        context.session.is_active = False
+        list_arg = [1, 2, 3, 4]
+        dict_arg = {1: 'a', 2: 'b'}
+        l, d = self._context_function(context, list_arg, dict_arg,
+                                      5, db_exc.DBDeadlock())
+        # even though we had 5 failures the list and dict should only
+        # be mutated once
+        self.assertEqual(5, len(l))
+        self.assertEqual(3, len(d))
+
+    def test_retry_if_session_inactive_kwargs_not_mutated_after_retries(self):
+        context = mock.Mock()
+        context.session.is_active = False
+        list_arg = [1, 2, 3, 4]
+        dict_arg = {1: 'a', 2: 'b'}
+        l, d = self._context_function(context, list_arg=list_arg,
+                                      dict_arg=dict_arg,
+                                      fail_count=5,
+                                      exc_to_raise=db_exc.DBDeadlock())
+        # even though we had 5 failures the list and dict should only
+        # be mutated once
+        self.assertEqual(5, len(l))
+        self.assertEqual(3, len(d))
+
+    def test_retry_if_session_inactive_no_retry_in_active_session(self):
+        context = mock.Mock()
+        context.session.is_active = True
+        with testtools.ExpectedException(db_exc.DBDeadlock):
+            # retry decorator should have no effect in an active session
+            self._context_function(context, [], {1: 2},
+                                   fail_count=1,
+                                   exc_to_raise=db_exc.DBDeadlock())
+
 
 class TestCommonDBfunctions(base.BaseTestCase):
 
