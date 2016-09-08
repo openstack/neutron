@@ -64,6 +64,7 @@ class DistributedVirtualRouterMacAddress(model_base.BASEV2):
     mac_address = sa.Column(sa.String(32), nullable=False, unique=True)
 
 
+@db_api.retry_if_session_inactive()
 def _delete_mac_associated_with_agent(resource, event, trigger, context, agent,
                                       **kwargs):
     host = agent['host']
@@ -113,30 +114,31 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             raise ext_dvr.DVRMacAddressNotFound(host=host)
         return dvrma
 
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
+    def _create_dvr_mac_address_retry(self, context, host, base_mac):
+        with context.session.begin(subtransactions=True):
+            mac_address = utils.get_random_mac(base_mac)
+            dvr_mac_binding = DistributedVirtualRouterMacAddress(
+                host=host, mac_address=mac_address)
+            context.session.add(dvr_mac_binding)
+            LOG.debug("Generated DVR mac for host %(host)s "
+                      "is %(mac_address)s",
+                      {'host': host, 'mac_address': mac_address})
+        dvr_macs = self.get_dvr_mac_address_list(context)
+        # TODO(vivek): improve scalability of this fanout by
+        # sending a single mac address rather than the entire set
+        self.notifier.dvr_mac_address_update(context, dvr_macs)
+        return self._make_dvr_mac_address_dict(dvr_mac_binding)
+
     def _create_dvr_mac_address(self, context, host):
         """Create DVR mac address for a given host."""
         base_mac = cfg.CONF.dvr_base_mac.split(':')
-        for attempt in reversed(range(db_api.MAX_RETRIES)):
-            try:
-                with context.session.begin(subtransactions=True):
-                    mac_address = utils.get_random_mac(base_mac)
-                    dvr_mac_binding = DistributedVirtualRouterMacAddress(
-                        host=host, mac_address=mac_address)
-                    context.session.add(dvr_mac_binding)
-                    LOG.debug("Generated DVR mac for host %(host)s "
-                              "is %(mac_address)s",
-                              {'host': host, 'mac_address': mac_address})
-                dvr_macs = self.get_dvr_mac_address_list(context)
-                # TODO(vivek): improve scalability of this fanout by
-                # sending a single mac address rather than the entire set
-                self.notifier.dvr_mac_address_update(context, dvr_macs)
-                return self._make_dvr_mac_address_dict(dvr_mac_binding)
-            except db_exc.DBDuplicateEntry:
-                LOG.debug("Generated DVR mac %(mac)s exists."
-                          " Remaining attempts %(attempts_left)s.",
-                          {'mac': mac_address, 'attempts_left': attempt})
-        LOG.error(_LE("MAC generation error after %s attempts"),
-                  db_api.MAX_RETRIES)
+        try:
+            return self._create_dvr_mac_address_retry(context, host, base_mac)
+        except db_exc.DBDuplicateEntry:
+            LOG.error(_LE("MAC generation error after %s attempts"),
+                      db_api.MAX_RETRIES)
         raise ext_dvr.MacAddressGenerationFailure(host=host)
 
     def get_dvr_mac_address_list(self, context):
@@ -159,6 +161,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                 'mac_address': dvr_mac_entry['mac_address']}
 
     @log_helpers.log_method_call
+    @db_api.retry_if_session_inactive()
     def get_ports_on_host_by_subnet(self, context, host, subnet):
         """Returns DVR serviced ports on a given subnet in the input host
 
@@ -188,6 +191,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         return ports
 
     @log_helpers.log_method_call
+    @db_api.retry_if_session_inactive()
     def get_subnet_for_dvr(self, context, subnet, fixed_ips=None):
         if fixed_ips:
             subnet_data = fixed_ips[0]['subnet_id']
