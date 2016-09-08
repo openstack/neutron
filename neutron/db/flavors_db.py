@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.db import model_base
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
@@ -104,6 +105,10 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         # Future TODO(enikanorov): check that there is no binding to
         # instances. Shall address in future upon getting the right
         # flavor supported driver
+        # NOTE(kevinbenton): sqlalchemy utils has a cool dependent
+        # objects function we can use to quickly query all tables
+        # that have a foreign key ref to flavors. Or we could replace
+        # the call to this with callback events.
         pass
 
     def _ensure_service_profile_not_in_use(self, context, sp_id):
@@ -147,10 +152,17 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         return self._make_flavor_dict(fl, fields)
 
     def delete_flavor(self, context, flavor_id):
-        with context.session.begin(subtransactions=True):
-            self._ensure_flavor_not_in_use(context, flavor_id)
-            fl_db = self._get_flavor(context, flavor_id)
-            context.session.delete(fl_db)
+        # NOTE(kevinbenton): we need to fix _ensure_flavor_not_in_use,
+        # but the fix is non-trivial since multiple services can use
+        # flavors so for now we just capture the foreign key violation
+        # to detect if it's in use.
+        try:
+            with context.session.begin(subtransactions=True):
+                self._ensure_flavor_not_in_use(context, flavor_id)
+                fl_db = self._get_flavor(context, flavor_id)
+                context.session.delete(fl_db)
+        except db_exc.DBReferenceError:
+            raise ext_flavors.FlavorInUse(flavor_id=flavor_id)
 
     def get_flavors(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
