@@ -710,18 +710,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # Update owner before actual process in order to avoid the
         # case where a port might get attached to a router without the
         # owner successfully updating due to an unavailable backend.
-        port = self._check_router_port(context, port_id, '')
-        prev_owner = port['device_owner']
         self._core_plugin.update_port(
             context, port_id, {'port': {'device_id': router.id,
                                         'device_owner': owner}})
-        try:
-            return self._validate_router_port_info(context, router, port_id)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                self._core_plugin.update_port(
-                    context, port_id, {'port': {'device_id': '',
-                                                'device_owner': prev_owner}})
+
+        return self._validate_router_port_info(context, router, port_id)
 
     def _port_has_ipv6_address(self, port):
         for fixed_ip in port['fixed_ips']:
@@ -795,8 +788,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         cleanup_port = False
 
         if add_by_port:
-            port, subnets = self._add_interface_by_port(
-                    context, router, interface_info['port_id'], device_owner)
+            port_id = interface_info['port_id']
+            port = self._check_router_port(context, port_id, '')
+            revert_value = {'device_id': '',
+                            'device_owner': port['device_owner']}
+            with p_utils.update_port_on_error(
+                    self._core_plugin, context, port_id, revert_value):
+                port, subnets = self._add_interface_by_port(
+                    context, router, port_id, device_owner)
         # add_by_subnet is not used here, because the validation logic of
         # _validate_interface_info ensures that either of add_by_* is True.
         else:
@@ -804,10 +803,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     context, router, interface_info['subnet_id'], device_owner)
             cleanup_port = new_port  # only cleanup port we created
 
+        if cleanup_port:
+            mgr = p_utils.delete_port_on_error(
+                self._core_plugin, context, port['id'])
+        else:
+            revert_value = {'device_id': '',
+                            'device_owner': port['device_owner']}
+            mgr = p_utils.update_port_on_error(
+                self._core_plugin, context, port['id'], revert_value)
+
         if new_port:
-            with p_utils.delete_port_on_error(self._core_plugin,
-                                              context, port['id']) as delmgr:
-                delmgr.delete_on_error = cleanup_port
+            with mgr:
                 with context.session.begin(subtransactions=True):
                     router_port = RouterPort(
                         port_id=port['id'],

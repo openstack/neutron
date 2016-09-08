@@ -315,8 +315,14 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         cleanup_port = False
 
         if add_by_port:
-            port, subnets = self._add_interface_by_port(
-                    context, router, interface_info['port_id'], device_owner)
+            port_id = interface_info['port_id']
+            port = self._check_router_port(context, port_id, '')
+            revert_value = {'device_id': '',
+                            'device_owner': port['device_owner']}
+            with p_utils.update_port_on_error(
+                    self._core_plugin, context, port_id, revert_value):
+                port, subnets = self._add_interface_by_port(
+                    context, router, port_id, device_owner)
         elif add_by_sub:
             port, subnets, new_port = self._add_interface_by_subnet(
                     context, router, interface_info['subnet_id'], device_owner)
@@ -324,10 +330,17 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         subnet = subnets[0]
 
+        if cleanup_port:
+            mgr = p_utils.delete_port_on_error(
+                self._core_plugin, context, port['id'])
+        else:
+            revert_value = {'device_id': '',
+                            'device_owner': port['device_owner']}
+            mgr = p_utils.update_port_on_error(
+                self._core_plugin, context, port['id'], revert_value)
+
         if new_port:
-            with p_utils.delete_port_on_error(self._core_plugin,
-                                              context, port['id']) as delmgr:
-                delmgr.delete_on_error = cleanup_port
+            with mgr:
                 if router.extra_attributes.distributed and router.gw_port:
                     admin_context = context.elevated()
                     self._add_csnat_router_interface_port(
