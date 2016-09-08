@@ -384,8 +384,26 @@ class ESwitchManager(object):
                 embedded_switch = None
         return embedded_switch
 
-    def clear_rate(self, pci_slot, rate_type):
-        """Clear the VF rate
+    def clear_max_rate(self, pci_slot):
+        """Clear the VF "rate" parameter
+
+        Clear the "rate" configuration from VF by setting it to 0.
+        @param pci_slot: VF PCI slot
+        """
+        self._clear_rate(pci_slot,
+            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_RATE)
+
+    def clear_min_tx_rate(self, pci_slot):
+        """Clear the VF "min_tx_rate" parameter
+
+        Clear the "min_tx_rate" configuration from VF by setting it to 0.
+        @param pci_slot: VF PCI slot
+        """
+        self._clear_rate(pci_slot,
+            ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE)
+
+    def _clear_rate(self, pci_slot, rate_type):
+        """Clear the VF rate parameter specified in rate_type
 
         Clear the rate configuration from VF by setting it to 0.
         @param pci_slot: VF PCI slot
