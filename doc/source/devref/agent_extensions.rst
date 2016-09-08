@@ -42,19 +42,20 @@ Interactions with the agent API object are in the following order:
 #. The manager passes the agent API object into each extension.
 #. An extension calls the new agent API object method to receive, for instance, bridge wrappers with cookies allocated.
 
+::
 
-  +-----------+
-  | Agent API +--------------------------------------------------+
-  +-----+-----+                                                  |
-        |                                   +-----------+        |
-        |1                               +--+ Extension +--+     |
-        |                                |  +-----------+  |     |
-  +---+-+-+---+  2  +--------------+  3  |                 |  4  |
-  |   Agent   +-----+ Ext. manager +-----+--+   ....    +--+-----+
-  +-----------+     +--------------+     |                 |
-                                         |  +-----------+  |
-                                         +--+ Extension +--+
-                                            +-----------+
+    +-----------+
+    | Agent API +--------------------------------------------------+
+    +-----+-----+                                                  |
+          |                                   +-----------+        |
+          |1                               +--+ Extension +--+     |
+          |                                |  +-----------+  |     |
+    +---+-+-+---+  2  +--------------+  3  |                 |  4  |
+    |   Agent   +-----+ Ext. manager +-----+--+   ....    +--+-----+
+    +-----------+     +--------------+     |                 |
+                                           |  +-----------+  |
+                                           +--+ Extension +--+
+                                              +-----------+
 
 Each extension is referenced through a stevedore entry point defined within a
 specific namespace. For example, L2 extensions are referenced through the
@@ -66,8 +67,8 @@ The relevant modules are:
   This module defines an abstract extension interface for all agent
   extensions across L2 and L3.
 
-* neutron.agent.l2.agent_extension:
-* neutron.agent.l3.agent_extension:
+* neutron.agent.l2.l2_agent_extension:
+* neutron.agent.l3.l3_agent_extension:
   These modules subclass
   neutron.agent.agent_extension.AgentExtension and define a
   layer-specific abstract extension interface.
@@ -76,8 +77,8 @@ The relevant modules are:
   This module contains a manager that allows extensions to load themselves at
   runtime.
 
-* neutron.agent.l2.l2_extensions_manager:
-* neutron.agent.l3.l3_extensions_manager:
+* neutron.agent.l2.l2_agent_extensions_manager:
+* neutron.agent.l3.l3_agent_extensions_manager:
   Each of these modules passes core resource events to loaded extensions.
 
 
@@ -93,10 +94,14 @@ This agent API object is part of neutron's public interface for third parties.
 All changes to the interface will be managed in a backwards-compatible way.
 
 At this time, on the L2 side, only the L2 Open vSwitch agent provides an agent
-API object to extensions. See :doc:`L2 agent extensions <l2_agent_extensions>`. 
+API object to extensions. See :doc:`L2 agent extensions <l2_agent_extensions>`.
 For L3, see :doc:`L3 agent extensions <l3_agent_extensions>`.
 
 The relevant modules are:
 
-* neutron.agent.l2.agent_extension_api
-* neutron.agent.l3.agent_extension_api
+* neutron.agent.agent_extension
+* neutron.agent.agent_extensions_manager
+* neutron.agent.l2.l2_agent_extension_api
+* neutron.agent.l2.l2_agent_extensions_manager
+* neutron.agent.l3.l3_agent_extension_api
+* neutron.agent.l3.l3_agent_extensions_manager

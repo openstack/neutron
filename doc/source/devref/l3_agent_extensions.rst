@@ -28,7 +28,7 @@ L3 agent extensions are part of a generalized L2/L3 extension framework. See
 :doc:`agent extensions <agent_extensions>`.
 
 L3 agent extension API
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 The L3 agent extension API object includes several methods that expose
 router information to L3 agent extensions::
