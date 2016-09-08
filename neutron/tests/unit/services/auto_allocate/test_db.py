@@ -212,15 +212,12 @@ class AutoAllocateTestCase(testlib_api.SqlTestCaseLight):
             self.assertEqual(expected, result)
 
     def test__cleanup_handles_failures(self):
-        retry_then_notfound = (
-            [db_exc.RetryRequest(ValueError())] +
-            [n_exc.NotFound()] * 10
-        )
+        notfound = n_exc.NotFound
         self.mixin._l3_plugin.remove_router_interface.side_effect = (
-            retry_then_notfound)
+            notfound)
         self.mixin._l3_plugin.delete_router.side_effect = (
-            retry_then_notfound)
+            notfound)
         self.mixin._core_plugin.delete_network.side_effect = (
-            retry_then_notfound)
+            notfound)
         self.mixin._cleanup(self.ctx, network_id=44, router_id=45,
                             subnets=[{'id': 46}])

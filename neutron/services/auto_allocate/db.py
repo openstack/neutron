@@ -50,6 +50,7 @@ def _extend_external_network_default(core_plugin, net_res, net_db):
     return net_res
 
 
+@db_api.retry_if_session_inactive()
 def _ensure_external_network_default_value_callback(
     resource, event, trigger, context, request, network):
     """Ensure the is_default db field matches the create/update request."""
@@ -360,8 +361,6 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 router_id=router_id, subnets=subnets)
         return network_id
 
-    # FIXME(kevinbenton): get rid of the retry once bug/1612798 is resolved
-    @db_api.retry_db_errors
     def _cleanup(self, context, network_id=None, router_id=None, subnets=None):
         """Clean up auto allocated resources."""
         # Concurrent attempts to delete the topology may interleave and
