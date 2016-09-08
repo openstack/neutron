@@ -273,6 +273,9 @@ class RouterInfo(object):
     def add_floating_ip(self, fip, interface_name, device):
         raise NotImplementedError()
 
+    def gateway_redirect_cleanup(self, rtr_interface):
+        pass
+
     def remove_floating_ip(self, device, ip_cidr):
         device.delete_addr_and_conntrack_state(ip_cidr)
 
@@ -689,6 +692,10 @@ class RouterInfo(object):
         elif not ex_gw_port and self.ex_gw_port:
             self.external_gateway_removed(self.ex_gw_port, interface_name)
             pd.remove_gw_interface(self.router['id'])
+        elif not ex_gw_port and not self.ex_gw_port:
+            for p in self.internal_ports:
+                interface_name = self.get_internal_device_name(p['id'])
+                self.gateway_redirect_cleanup(interface_name)
 
         existing_devices = self._get_existing_devices()
         stale_devs = [dev for dev in existing_devices
