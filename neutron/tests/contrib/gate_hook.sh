@@ -44,14 +44,16 @@ case $VENV in
 
     configure_host_for_func_testing
 
-    # The OVS_BRANCH variable is used by git checkout. In the case below,
-    # we use a current (2016-08-19) HEAD commit from branch-2.5 that contains
-    # a fix for usage of VXLAN tunnels on a single node:
-    # https://github.com/openvswitch/ovs/commit/741f47cf35df2bfc7811b2cff75c9bb8d05fd26f
-    OVS_BRANCH=042326c3fcf61e8638fa15926f984ce5ae142f4b
-    remove_ovs_packages
-    compile_ovs True /usr /var
-    start_new_ovs
+    if is_kernel_supported_for_ovs25; then
+        # The OVS_BRANCH variable is used by git checkout. In the case below,
+        # we use a current (2016-08-19) HEAD commit from branch-2.5 that contains
+        # a fix for usage of VXLAN tunnels on a single node:
+        # https://github.com/openvswitch/ovs/commit/741f47cf35df2bfc7811b2cff75c9bb8d05fd26f
+        OVS_BRANCH=042326c3fcf61e8638fa15926f984ce5ae142f4b
+        remove_ovs_packages
+        compile_ovs True /usr /var
+        start_new_ovs
+    fi
 
     load_conf_hook iptables_verify
     # Make the workspace owned by the stack user
