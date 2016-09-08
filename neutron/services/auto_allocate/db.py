@@ -235,7 +235,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             LOG.error(_LE("Multiple external default networks detected. "
                           "Network %s is true 'default'."),
                       default_external_networks[0]['network_id'])
-        return default_external_networks[0]
+        return default_external_networks[0].network_id
 
     def _get_supported_subnetpools(self, context):
         """Return the default subnet pools available."""
@@ -295,7 +295,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         """Uplink tenant subnet(s) to external network."""
         router_args = {
             'name': 'auto_allocated_router',
-            l3.EXTERNAL_GW_INFO: default_external_network,
+            l3.EXTERNAL_GW_INFO: {'network_id': default_external_network},
             'tenant_id': tenant_id,
             'admin_state_up': True
         }
