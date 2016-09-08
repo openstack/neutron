@@ -772,6 +772,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result, mech_context
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def create_network(self, context, network):
         result, mech_context = self._create_network_db(context, network)
         kwargs = {'context': context, 'network': result}
@@ -787,11 +788,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def create_network_bulk(self, context, networks):
         objects = self._create_bulk_ml2(attributes.NETWORK, context, networks)
         return [obj['result'] for obj in objects]
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def update_network(self, context, id, network):
         net_data = network[attributes.NETWORK]
         provider._raise_if_updates_provider_attributes(net_data)
@@ -833,6 +836,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.notifier.network_update(context, updated_network)
         return updated_network
 
+    @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):
         session = context.session
         with session.begin(subtransactions=True):
@@ -842,6 +846,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return self._fields(result, fields)
 
+    @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
         session = context.session
@@ -886,6 +891,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         _LE("Exception auto-deleting subnet %s"), subnet_id)
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_network()
         # function is not used because it auto-deletes ports and
@@ -993,6 +999,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result, mech_context
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def create_subnet(self, context, subnet):
         result, mech_context = self._create_subnet_db(context, subnet)
         kwargs = {'context': context, 'subnet': result}
@@ -1007,11 +1014,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def create_subnet_bulk(self, context, subnets):
         objects = self._create_bulk_ml2(attributes.SUBNET, context, subnets)
         return [obj['result'] for obj in objects]
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def update_subnet(self, context, id, subnet):
         session = context.session
         with session.begin(subtransactions=True):
@@ -1037,6 +1046,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return updated_subnet
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def delete_subnet(self, context, id):
         # REVISIT(rkukura) The super(Ml2Plugin, self).delete_subnet()
         # function is not used because it deallocates the subnet's addresses
@@ -1246,6 +1256,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return result, mech_context
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def create_port(self, context, port):
         result, mech_context = self._create_port_db(context, port)
         # notify any plugin that is interested in port create events
@@ -1282,6 +1293,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return bound_context.current
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def create_port_bulk(self, context, ports):
         objects = self._create_bulk_ml2(attributes.PORT, context, ports)
 
@@ -1352,6 +1364,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 raise psec.PortSecurityPortHasSecurityGroup()
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def update_port(self, context, id, port):
         attrs = port[attributes.PORT]
         need_port_update_notify = False
@@ -1489,6 +1502,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding.router_id = attrs and attrs.get('device_id')
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def update_distributed_port_binding(self, context, id, port):
         attrs = port[attributes.PORT]
 
@@ -1546,6 +1560,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise exc.ServicePortInUse(port_id=port_id, reason=e)
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive()
     def delete_port(self, context, id, l3_port_check=True):
         self._pre_delete_port(context, id, l3_port_check)
         # TODO(armax): get rid of the l3 dependency in the with block
@@ -1616,6 +1631,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notify_security_groups_member_updated(context, port)
 
     @utils.transaction_guard
+    @db_api.retry_if_session_inactive(context_var_name='plugin_context')
     def get_bound_port_context(self, plugin_context, port_id, host=None,
                                cached_networks=None):
         session = plugin_context.session
@@ -1668,7 +1684,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self._bind_port_if_needed(port_context)
 
     @utils.transaction_guard
-    @db_api.retry_db_errors
+    @db_api.retry_if_session_inactive()
     def update_port_status(self, context, port_id, status, host=None,
                            network=None):
         """
@@ -1746,6 +1762,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return port['id']
 
+    @db_api.retry_if_session_inactive()
     def port_bound_to_host(self, context, port_id, host):
         if not host:
             return
@@ -1765,6 +1782,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port_host = db.get_port_binding_host(context.session, port_id)
             return port if (port_host == host) else None
 
+    @db_api.retry_if_session_inactive()
     def get_ports_from_devices(self, context, devices):
         port_ids_to_devices = dict(
             (self._device_to_port_id(context, device), device)

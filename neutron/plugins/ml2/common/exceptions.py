@@ -28,7 +28,7 @@ class MechanismDriverError(exceptions.MultipleExceptions):
         # MultipleExceptions and return inner exceptions. Keep it
         # for backward-compatibility, in case other code use it.
         self.message = _("%s failed.") % method
-        super(MechanismDriverError, self).__init__(errors)
+        super(MechanismDriverError, self).__init__(errors or [])
 
 
 class ExtensionDriverError(exceptions.InvalidInput):

@@ -305,6 +305,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         floating_ip = fip_qry.filter_by(fixed_port_id=port_id)
         return floating_ip.first()
 
+    @db_api.retry_if_session_inactive()
     def add_router_interface(self, context, router_id, interface_info):
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
         router = self._get_router(context, router_id)
@@ -486,6 +487,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     return True
         return False
 
+    @db_api.retry_if_session_inactive()
     def remove_router_interface(self, context, router_id, interface_info):
         router = self._get_router(context, router_id)
         if not router.extra_attributes.distributed:
@@ -968,6 +970,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                                   p['id'],
                                                   l3_port_check=False)
 
+    @db_api.retry_if_session_inactive()
     def create_floatingip(self, context, floatingip,
                           initial_status=const.FLOATINGIP_STATUS_ACTIVE):
         floating_ip = self._create_floatingip(
@@ -1003,6 +1006,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         else:
             self.notify_router_updated(context, router_id)
 
+    @db_api.retry_if_session_inactive()
     def update_floatingip(self, context, id, floatingip):
         old_floatingip, floatingip = self._update_floatingip(
             context, id, floatingip)
@@ -1012,6 +1016,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self._notify_floating_ip_change(context, floatingip)
         return floatingip
 
+    @db_api.retry_if_session_inactive()
     def delete_floatingip(self, context, id):
         floating_ip = self._delete_floatingip(context, id)
         self._notify_floating_ip_change(context, floating_ip)

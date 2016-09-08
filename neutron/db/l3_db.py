@@ -266,6 +266,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._update_router_gw_info(context, router_id,
                                         gw_info, router=router_db)
 
+    @db_api.retry_if_session_inactive()
     def create_router(self, context, router):
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, None)
@@ -293,6 +294,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             old_router=old_router)
             return router_db
 
+    @db_api.retry_if_session_inactive()
     def update_router(self, context, id, router):
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, lib_constants.ATTR_NOT_SPECIFIED)
@@ -562,6 +564,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             raise l3.RouterInUse(router_id=router_id)
         return router
 
+    @db_api.retry_if_session_inactive()
     def delete_router(self, context, id):
 
         #TODO(nati) Refactor here when we have router insertion model
@@ -578,10 +581,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             self, context=context, router_id=id)
             context.session.delete(router)
 
+    @db_api.retry_if_session_inactive()
     def get_router(self, context, id, fields=None):
         router = self._get_router(context, id)
         return self._make_router_dict(router, fields)
 
+    @db_api.retry_if_session_inactive()
     def get_routers(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
@@ -594,6 +599,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                     marker_obj=marker_obj,
                                     page_reverse=page_reverse)
 
+    @db_api.retry_if_session_inactive()
     def get_routers_count(self, context, filters=None):
         return self._get_collection_count(context, Router,
                                           filters=filters)
@@ -750,7 +756,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port = self._find_ipv6_router_port_by_network(router,
                                                           subnet['network_id'])
             if port:
-                fixed_ips = list(port['port']['fixed_ips'])
+                fixed_ips = list(map(dict, port['port']['fixed_ips']))
                 fixed_ips.append(fixed_ip)
                 return self._core_plugin.update_port(context,
                         port['port_id'], {'port':
@@ -778,6 +784,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             'subnet_ids': subnet_ids
         }
 
+    @db_api.retry_if_session_inactive()
     def add_router_interface(self, context, router_id, interface_info):
         router = self._get_router(context, router_id)
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
@@ -918,8 +925,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 port_subnets = [fip['subnet_id'] for fip in p['fixed_ips']]
                 if subnet_id in port_subnets and len(port_subnets) > 1:
                     # multiple prefix port - delete prefix from port
-                    fixed_ips = [fip for fip in p['fixed_ips'] if
-                            fip['subnet_id'] != subnet_id]
+                    fixed_ips = [dict(fip) for fip in p['fixed_ips']
+                                 if fip['subnet_id'] != subnet_id]
                     self._core_plugin.update_port(context, p['id'],
                             {'port':
                                 {'fixed_ips': fixed_ips}})
@@ -934,6 +941,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
                                                   subnet_id=subnet_id)
 
+    @db_api.retry_if_session_inactive()
     def remove_router_interface(self, context, router_id, interface_info):
         remove_by_port, remove_by_subnet = (
             self._validate_interface_info(interface_info, for_removal=True)
@@ -1282,6 +1290,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                           floatingip_db)
         return floatingip_dict
 
+    @db_api.retry_if_session_inactive()
     def create_floatingip(self, context, floatingip,
             initial_status=lib_constants.FLOATINGIP_STATUS_ACTIVE):
         return self._create_floatingip(context, floatingip, initial_status)
@@ -1312,11 +1321,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                          for floatingip in floatingips
                          if floatingip['router_id']]))
 
+    @db_api.retry_if_session_inactive()
     def update_floatingip(self, context, id, floatingip):
         _old_floatingip, floatingip = self._update_floatingip(
             context, id, floatingip)
         return floatingip
 
+    @db_api.retry_if_session_inactive()
     def update_floatingip_status(self, context, floatingip_id, status):
         """Update operational status for floating IP in neutron DB."""
         fip_query = self._model_query(context, FloatingIP).filter(
@@ -1337,13 +1348,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                       l3_port_check=False)
         return floatingip_dict
 
+    @db_api.retry_if_session_inactive()
     def delete_floatingip(self, context, id):
         self._delete_floatingip(context, id)
 
+    @db_api.retry_if_session_inactive()
     def get_floatingip(self, context, id, fields=None):
         floatingip = self._get_floatingip(context, id)
         return self._make_floatingip_dict(floatingip, fields)
 
+    @db_api.retry_if_session_inactive()
     def get_floatingips(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):
@@ -1362,6 +1376,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                     marker_obj=marker_obj,
                                     page_reverse=page_reverse)
 
+    @db_api.retry_if_session_inactive()
     def delete_disassociated_floatingips(self, context, network_id):
         query = self._model_query(context, FloatingIP)
         query = query.filter_by(floating_network_id=network_id,
@@ -1370,6 +1385,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         for fip in query:
             self.delete_floatingip(context, fip.id)
 
+    @db_api.retry_if_session_inactive()
     def get_floatingips_count(self, context, filters=None):
         return self._get_collection_count(context, FloatingIP,
                                           filters=filters)
@@ -1435,6 +1451,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         raise n_exc.ServicePortInUse(port_id=port['id'],
                                      reason=reason)
 
+    @db_api.retry_if_session_inactive()
     def disassociate_floatingips(self, context, port_id, do_notify=True):
         """Disassociate all floating IPs linked to specific port.
 
