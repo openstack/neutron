@@ -14,7 +14,7 @@ from oslo_config import cfg
 from oslo_log import log
 import six
 
-from neutron._i18n import _LI, _LW
+from neutron._i18n import _, _LI, _LW
 from neutron.quota import resource
 
 LOG = log.getLogger(__name__)
@@ -191,8 +191,8 @@ class ResourceRegistry(object):
 
         if isinstance(self._resources.get(resource_name),
                       resource.CountableResource):
-            raise RuntimeError("Resource %s is already registered as a "
-                               "countable resource." % resource_name)
+            raise RuntimeError(_("Resource %s is already registered as a "
+                                 "countable resource.") % resource_name)
         current_model_class = self._tracked_resource_mappings.setdefault(
             resource_name, model_class)
 
