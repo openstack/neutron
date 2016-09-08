@@ -58,33 +58,18 @@ class TrunkTestJSONBase(base.BaseAdminNetworkTest):
         trunks_cleanup(cls.client, cls.trunks)
         super(TrunkTestJSONBase, cls).resource_cleanup()
 
-    def _remove_timestamps(self, trunk):
-        # Let's make sure these fields exist, but let's not
-        # use them in the comparison, in case skews or
-        # roundups get in the way.
-        created_at = trunk.pop('created_at')
-        updated_at = trunk.pop('updated_at')
-        self.assertIsNotNone(created_at)
-        self.assertIsNotNone(updated_at)
-
     def _create_trunk_with_network_and_parent(self, subports, **kwargs):
         network = self.create_network()
         parent_port = self.create_port(network)
         trunk = self.client.create_trunk(parent_port['id'], subports, **kwargs)
         self.trunks.append(trunk['trunk'])
-        self._remove_timestamps(trunk['trunk'])
         return trunk
 
     def _show_trunk(self, trunk_id):
-        trunk = self.client.show_trunk(trunk_id)
-        self._remove_timestamps(trunk['trunk'])
-        return trunk
+        return self.client.show_trunk(trunk_id)
 
     def _list_trunks(self):
-        trunks = self.client.list_trunks()
-        for t in trunks['trunks']:
-            self._remove_timestamps(t)
-        return trunks
+        return self.client.list_trunks()
 
 
 class TrunkTestJSON(TrunkTestJSONBase):
