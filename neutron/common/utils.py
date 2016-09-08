@@ -755,7 +755,8 @@ def get_related_rand_names(prefixes, max_length=None):
     if max_length:
         length = max_length - max(len(p) for p in prefixes)
         if length <= 0:
-            raise ValueError("'max_length' must be longer than all prefixes")
+            raise ValueError(
+                _("'max_length' must be longer than all prefixes"))
     else:
         length = 8
     rndchrs = get_random_string(length)
