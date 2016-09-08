@@ -21,6 +21,7 @@ from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LW
 from neutron.common import utils
+from neutron.db import api as db_api
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
@@ -164,6 +165,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def notify_security_groups_member_updated(self, context, port):
         self.notify_security_groups_member_updated_bulk(context, [port])
 
+    @db_api.retry_if_session_inactive()
     def security_group_info_for_ports(self, context, ports):
         sg_info = {'devices': ports,
                    'security_groups': {},
@@ -446,6 +448,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             self._add_ingress_ra_rule(port, ips_ra)
             self._add_ingress_dhcp_rule(port, ips_dhcp)
 
+    @db_api.retry_if_session_inactive()
     def security_group_rules_for_ports(self, context, ports):
         rules_in_db = self._select_rules_for_ports(context, ports)
         for (port_id, rule_in_db) in rules_in_db:
