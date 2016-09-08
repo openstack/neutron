@@ -14,6 +14,7 @@
 
 import mock
 from oslo_config import cfg
+import testtools
 
 from neutron import context
 from neutron.quota import resource
@@ -63,6 +64,13 @@ class TestResourceRegistry(base.DietTestCase):
 
     def test_register_resource_by_name_not_tracked(self):
         self._test_register_resource_by_name('meh', resource.CountableResource)
+
+    def test_tracked_resource_error_if_already_registered_as_untracked(self):
+        self.registry.register_resource_by_name('meh')
+        with testtools.ExpectedException(RuntimeError):
+            self.registry.set_tracked_resource('meh', test_quota.MehModel)
+        # ensure unregister works
+        self.registry.unregister_resources()
 
     def test_register_resource_by_name_with_tracking_disabled_by_config(self):
         cfg.CONF.set_override('track_quota_usage', False,
