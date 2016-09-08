@@ -475,6 +475,12 @@ class Dnsmasq(DhcpLocalProcess):
             LOG.debug('Killing dnsmasq for network since all subnets have '
                       'turned off DHCP: %s', self.network.id)
             return
+        if not self.interface_name:
+            # we land here if above has been called and we receive port
+            # delete notifications for the network
+            LOG.debug('Agent does not have an interface on this network '
+                      'anymore, skipping reload: %s', self.network.id)
+            return
 
         self._release_unused_leases()
         self._spawn_or_reload_process(reload_with_HUP=True)

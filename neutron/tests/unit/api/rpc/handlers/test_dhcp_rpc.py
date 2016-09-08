@@ -162,6 +162,20 @@ class TestDhcpRpcCallback(base.BaseTestCase):
             exc=n_exc.InvalidInput(error_message='sorry'),
             action='create_port')
 
+    def test_update_port_missing_port_on_get(self):
+        self.plugin.get_port.side_effect = n_exc.PortNotFound(port_id='66')
+        self.assertIsNone(self.callbacks.update_dhcp_port(
+            context='ctx', host='host', port_id='66',
+            port={'port': {'network_id': 'a'}}))
+
+    def test_update_port_missing_port_on_update(self):
+        self.plugin.get_port.return_value = {
+            'device_id': n_const.DEVICE_ID_RESERVED_DHCP_PORT}
+        self.plugin.update_port.side_effect = n_exc.PortNotFound(port_id='66')
+        self.assertIsNone(self.callbacks.update_dhcp_port(
+            context='ctx', host='host', port_id='66',
+            port={'port': {'network_id': 'a'}}))
+
     def test_get_network_info_return_none_on_not_found(self):
         self.plugin.get_network.side_effect = n_exc.NetworkNotFound(net_id='a')
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
