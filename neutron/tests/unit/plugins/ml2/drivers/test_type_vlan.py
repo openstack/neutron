@@ -20,7 +20,7 @@ from neutron_lib.plugins.ml2 import api
 from testtools import matchers
 
 from neutron.db import api as db_api
-from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
+from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import config
@@ -37,6 +37,7 @@ UPDATED_VLAN_RANGES = {
     PROVIDER_NET: [],
     TENANT_NET: [(VLAN_MIN + 5, VLAN_MAX + 5)],
 }
+CORE_PLUGIN = 'ml2'
 
 
 class VlanTypeTest(testlib_api.SqlTestCase):
@@ -52,6 +53,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         self.driver._sync_vlan_allocations()
         self.context = context.Context()
         self.driver.physnet_mtus = []
+        self.setup_coreplugin(CORE_PLUGIN)
 
     def test_parse_network_exception_handling(self):
         with mock.patch.object(plugin_utils,
@@ -62,10 +64,10 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     @db_api.context_manager.reader
     def _get_allocation(self, context, segment):
-        return context.session.query(
-            vlan_alloc_model.VlanAllocation).filter_by(
+        return vlan_alloc_obj.VlanAllocation.get_object(
+            context,
             physical_network=segment[api.PHYSICAL_NETWORK],
-            vlan_id=segment[api.SEGMENTATION_ID]).first()
+            vlan_id=segment[api.SEGMENTATION_ID])
 
     def test_partial_segment_is_partial_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
