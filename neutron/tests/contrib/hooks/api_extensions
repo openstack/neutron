@@ -34,10 +34,9 @@ NETWORK_API_EXTENSIONS="
     sorting, \
     standard-attr-description, \
     standard-attr-revisions, \
+    standard-attr-timestamp, \
     subnet_allocation, \
     tag, \
-    timestamp_core, \
-    timestamp_ext, \
     trunk, \
     trunk-details"
 NETWORK_API_EXTENSIONS="$(echo $NETWORK_API_EXTENSIONS | tr -d ' ')"
