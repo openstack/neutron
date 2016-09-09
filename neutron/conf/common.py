@@ -96,7 +96,6 @@ core_opts = [
                        "Note that enabling PD will override the behavior of "
                        "the default IPv6 subnetpool.")),
     cfg.IntOpt('dhcp_lease_duration', default=86400,
-               deprecated_name='dhcp_lease_time',
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
                       "dnsmasq to use infinite lease times.")),
     cfg.StrOpt('dns_domain',
