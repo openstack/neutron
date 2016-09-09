@@ -11,7 +11,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib import exceptions as lib_exc
 from tempest import test
+import testtools
 
 from neutron.tests.tempest.api import base_routers as base
 
@@ -63,3 +65,9 @@ class RoutersFlavorTestCase(base.BaseRouterTest):
         # ensure client can create router with flavor
         router = self.create_router('name', flavor_id=flavor['id'])
         self.assertEqual(flavor['id'], router['flavor_id'])
+
+    @test.idempotent_id('30e73858-a0fc-409c-a2e0-e9cd2826f6a2')
+    def test_delete_router_flavor_in_use(self):
+        self.create_router('name', flavor_id=self.flavor['id'])
+        with testtools.ExpectedException(lib_exc.Conflict):
+            self.admin_client.delete_flavor(self.flavor['id'])
