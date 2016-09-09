@@ -59,12 +59,8 @@ class SecurityGroup(base.NeutronDbObject):
                 self.is_default = True
                 self.obj_reset_changes(['is_default'])
 
-    def from_db_object(self, *objs):
-        super(SecurityGroup, self).from_db_object(*objs)
-        for obj in objs:
-            self._load_is_default(obj)
-
-    def _load_is_default(self, db_obj):
+    def from_db_object(self, db_obj):
+        super(SecurityGroup, self).from_db_object(db_obj)
         setattr(self, 'is_default', bool(db_obj.get('default_security_group')))
         self.obj_reset_changes(['is_default'])
 

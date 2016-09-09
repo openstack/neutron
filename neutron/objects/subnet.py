@@ -209,10 +209,9 @@ class Subnet(base.NeutronDbObject):
         setattr(self, 'shared', shared)
         self.obj_reset_changes(['shared'])
 
-    def from_db_object(self, *objs):
-        super(Subnet, self).from_db_object(*objs)
-        for obj in objs:
-            self._load_shared(obj)
+    def from_db_object(self, db_obj):
+        super(Subnet, self).from_db_object(db_obj)
+        self._load_shared(db_obj)
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):

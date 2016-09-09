@@ -93,10 +93,10 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
     def test_get_objects_queries_constant(self):
         # TODO(electrocucaracha) SecurityGroup is using SecurityGroupRule
         # object to reload rules, which costs extra SQL query each time
-        # _load_is_default are called in get_object(s). SecurityGroup has
-        # defined relationship for SecurityGroupRules, so it should be possible
-        # to reuse side loaded values fo this. To be reworked in follow-up
-        # patch.
+        # is_default field is loaded as part of get_object(s). SecurityGroup
+        # has defined relationship for SecurityGroupRules, so it should be
+        # possible to reuse side loaded values fo this. To be reworked in
+        # follow-up patch.
         pass
 
 
