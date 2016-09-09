@@ -83,7 +83,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
               'segmentation_id': '2'}])
         with mock.patch.object(rules.TrunkPortValidator, 'validate') as f:
             validator.validate(self.context)
-            f.assert_called_once_with(self.context)
+            f.assert_called_once_with(self.context, parent_port=False)
 
     def test_validate_subport_subport_invalid_segmenation_type(self):
         validator = rules.SubPortsValidator(
@@ -239,6 +239,13 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
             validator = rules.TrunkPortValidator(port['port']['id'])
             self.assertTrue(validator.is_bound(self.context))
 
+    def test_validate_for_subport_calls_check(self):
+        with self.port() as port:
+            validator = rules.TrunkPortValidator(port['port']['id'])
+            with mock.patch.object(validator, "check_not_in_use") as f:
+                validator.validate(self.context, parent_port=False)
+                f.assert_called_once_with(self.context)
+
     def test_validate_port_cannot_be_trunked_raises(self):
         with self.port() as port, \
              mock.patch.object(rules.TrunkPortValidator,
@@ -302,3 +309,18 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertRaises(
                 trunk_exc.TrunkPluginDriverConflict,
                 validator.can_be_trunked, self.context)
+
+    def test_check_not_in_use_pass(self):
+        with self.port() as port:
+            validator = rules.TrunkPortValidator(port['port']['id'])
+            self.assertIsNone(validator.check_not_in_use(
+                self.context))
+
+    def test_check_not_in_use_raises(self):
+        with self.port() as port:
+            core_plugin = manager.NeutronManager.get_plugin()
+            port['port']['device_id'] = 'foo_device_id'
+            core_plugin.update_port(self.context, port['port']['id'], port)
+            validator = rules.TrunkPortValidator(port['port']['id'])
+            self.assertRaises(n_exc.PortInUse,
+                              validator.check_not_in_use, self.context)
