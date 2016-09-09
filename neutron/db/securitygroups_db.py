@@ -606,11 +606,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                   **kwargs)
 
             try:
+                sg_rule = query.one()
                 # As there is a filter on a primary key it is not possible for
                 # MultipleResultsFound to be raised
-                context.session.delete(query.one())
+                context.session.delete(sg_rule)
             except exc.NoResultFound:
                 raise ext_sg.SecurityGroupRuleNotFound(id=id)
+
+            kwargs['security_group_id'] = sg_rule['security_group_id']
 
         registry.notify(
             resources.SECURITY_GROUP_RULE, events.AFTER_DELETE, self,
