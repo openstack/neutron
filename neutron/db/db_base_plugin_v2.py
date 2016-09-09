@@ -130,7 +130,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             from neutron.notifiers import nova
             # NOTE(arosen) These event listeners are here to hook into when
             # port status changes and notify nova about their change.
-            self.nova_notifier = nova.Notifier()
+            self.nova_notifier = nova.Notifier.get_instance()
             event.listen(models_v2.Port, 'after_insert',
                          self.nova_notifier.send_port_status)
             event.listen(models_v2.Port, 'after_update',
