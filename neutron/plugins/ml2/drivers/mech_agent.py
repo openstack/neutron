@@ -95,11 +95,12 @@ class AgentMechanismDriverBase(api.MechanismDriver):
             return
         agents = context.host_agents(self.agent_type)
         if not agents:
-            LOG.warning(_LW("Port %(pid)s on network %(network)s not bound, "
-                            "no agent registered on host %(host)s"),
-                        {'pid': context.current['id'],
-                         'network': context.network.current['id'],
-                         'host': context.host})
+            LOG.debug("Port %(pid)s on network %(network)s not bound, "
+                      "no agent of type %(at)s registered on host %(host)s",
+                      {'pid': context.current['id'],
+                       'at': self.agent_type,
+                       'network': context.network.current['id'],
+                       'host': context.host})
         for agent in agents:
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
