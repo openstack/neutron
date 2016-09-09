@@ -181,3 +181,14 @@ class TestOVSDBHandler(base.BaseTestCase):
         trunk_rpc = self.ovsdb_handler.trunk_rpc
         trunk_rpc.update_trunk_status.assert_called_once_with(
             mock.ANY, mock.ANY, constants.ERROR_STATUS)
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge.set_db_attribute')
+    def test__set_trunk_metadata_with_None_params(self, mock_f):
+        with mock.patch.object(
+                self.ovsdb_handler, "_get_parent_port",
+                return_value={'name': 'foo', 'external_ids': {}}):
+            self.ovsdb_handler._set_trunk_metadata(None, None, 'foo', [])
+            mock_f.assert_called_once_with(
+                'Interface', 'foo', 'external_ids',
+                {'bridge_name': 'tbr-foo', 'trunk_id': 'foo',
+                 'subport_ids': '[]'})

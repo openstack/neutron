@@ -302,19 +302,19 @@ class OVSDBHandler(object):
             ctx, trunk.id, trunk.sub_ports, trunk_bridge=trunk_br,
             parent_port=port)
 
-    def _set_trunk_metadata(self, trunk_br, port, trunk_id, subport_ids):
+    def _set_trunk_metadata(self, trunk_bridge, port, trunk_id, subport_ids):
         """Set trunk metadata in OVS port for trunk parent port."""
         # update the parent port external_ids to store the trunk bridge
         # name, trunk id and subport ids so we can easily remove the trunk
         # bridge and service ports once this port is removed
-        trunk_bridge = trunk_br or ovs_lib.OVSBridge(
+        trunk_bridge = trunk_bridge or ovs_lib.OVSBridge(
             trunk_utils.gen_trunk_br_name(trunk_id))
         port = port or self._get_parent_port(trunk_bridge)
 
-        port['external_ids']['bridge_name'] = trunk_br.br_name
+        port['external_ids']['bridge_name'] = trunk_bridge.br_name
         port['external_ids']['trunk_id'] = trunk_id
         port['external_ids']['subport_ids'] = jsonutils.dumps(subport_ids)
-        trunk_br.set_db_attribute(
+        trunk_bridge.set_db_attribute(
             'Interface', port['name'], 'external_ids', port['external_ids'])
 
     def _get_trunk_metadata(self, port):
