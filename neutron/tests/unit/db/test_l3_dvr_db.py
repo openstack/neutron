@@ -52,6 +52,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         with self.ctx.session.begin(subtransactions=True):
             return self.mixin._create_router_db(self.ctx, router, 'foo_tenant')
 
+    def create_port(self, net_id, port_info):
+        with self.ctx.session.begin(subtransactions=True):
+            return self._create_port(self.fmt, net_id, **port_info)
+
     def _test__create_router_db(self, expected=False, distributed=None):
         router = {'name': 'foo_router', 'admin_state_up': True}
         if distributed is not None:
@@ -725,3 +729,46 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.assertEqual(1, len(router_ports))
                 self.assertEqual(l3_const.DEVICE_OWNER_ROUTER_GW,
                                  router_ports[0]['device_owner'])
+
+    def test_add_router_interface_by_port_failure(self):
+        router_dict = {'name': 'test_router',
+                       'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.subnet(cidr='10.10.10.0/24') as subnet:
+            port_dict = {
+                'device_id': '',
+                'device_owner': '',
+                'admin_state_up': True,
+                'fixed_ips': [{'subnet_id': subnet['subnet']['id'],
+                               'ip_address': '10.10.10.100'}]
+            }
+            net_id = subnet['subnet']['network_id']
+            port_res = self.create_port(net_id, port_dict)
+            port = self.deserialize(self.fmt, port_res)
+            self.assertIn('port', port, message='Create port failed.')
+
+            orig_update_port = self.mixin._core_plugin.update_port
+            call_info = {'count': 0}
+
+            def _fake_update_port(*args, **kwargs):
+                call_info['count'] += 1
+                if call_info['count'] == 2:
+                    raise RuntimeError()
+                else:
+                    return orig_update_port(*args, **kwargs)
+
+            # NOTE(trananhkma): expect that update_port() only raises an error
+            # at the 2nd function call (Update owner after actual process
+            # again in order).
+            with mock.patch.object(self.mixin._core_plugin, 'update_port',
+                                   side_effect=_fake_update_port):
+                self.assertRaises(
+                    RuntimeError,
+                    self.mixin.add_router_interface,
+                    self.ctx, router['id'], {'port_id': port['port']['id']})
+
+            port_info = self.core_plugin.get_port(self.ctx, port['port']['id'])
+            self.assertEqual(port_dict['device_id'], port_info['device_id'])
+            self.assertEqual(port_dict['device_owner'],
+                             port_info['device_owner'])

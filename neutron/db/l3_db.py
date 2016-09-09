@@ -802,13 +802,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port, subnets, new_port = self._add_interface_by_subnet(
                     context, router, interface_info['subnet_id'], device_owner)
             cleanup_port = new_port  # only cleanup port we created
+            revert_value = {'device_id': '',
+                            'device_owner': port['device_owner']}
 
         if cleanup_port:
             mgr = p_utils.delete_port_on_error(
                 self._core_plugin, context, port['id'])
         else:
-            revert_value = {'device_id': '',
-                            'device_owner': port['device_owner']}
             mgr = p_utils.update_port_on_error(
                 self._core_plugin, context, port['id'], revert_value)
 

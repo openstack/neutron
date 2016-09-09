@@ -327,6 +327,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             port, subnets, new_port = self._add_interface_by_subnet(
                     context, router, interface_info['subnet_id'], device_owner)
             cleanup_port = new_port
+            revert_value = {'device_id': '',
+                            'device_owner': port['device_owner']}
 
         subnet = subnets[0]
 
@@ -334,8 +336,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             mgr = p_utils.delete_port_on_error(
                 self._core_plugin, context, port['id'])
         else:
-            revert_value = {'device_id': '',
-                            'device_owner': port['device_owner']}
             mgr = p_utils.update_port_on_error(
                 self._core_plugin, context, port['id'], revert_value)
 
