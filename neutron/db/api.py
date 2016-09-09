@@ -14,6 +14,7 @@
 #    under the License.
 
 import contextlib
+import copy
 
 from debtcollector import moves
 from debtcollector import removals
@@ -30,6 +31,7 @@ import sqlalchemy
 from sqlalchemy.orm import exc
 import traceback
 
+from neutron._i18n import _LE
 from neutron.common import profiler  # noqa
 
 
@@ -49,6 +51,8 @@ LOG = logging.getLogger(__name__)
 
 
 def is_retriable(e):
+    if getattr(e, '_RETRY_EXCEEDED', False):
+        return False
     if _is_nested_instance(e, (db_exc.DBDeadlock, exc.StaleDataError,
                                db_exc.DBConnectionError,
                                db_exc.DBDuplicateEntry, db_exc.RetryRequest)):
@@ -67,10 +71,12 @@ _retry_db_errors = oslo_db_api.wrap_db_retry(
 )
 
 
-def retry_db_errors(f):
-    """Log retriable exceptions before retry to help debugging."""
+def _tag_retriables_as_unretriable(f):
+    """Puts a flag on retriable exceptions so is_retriable returns False.
 
-    @_retry_db_errors
+    This decorator can be used outside of a retry decorator to prevent
+    decorators higher up from retrying again.
+    """
     @six.wraps(f)
     def wrapped(*args, **kwargs):
         try:
@@ -78,9 +84,77 @@ def retry_db_errors(f):
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 if is_retriable(e):
+                    setattr(e, '_RETRY_EXCEEDED', True)
+    return wrapped
+
+
+def _copy_if_lds(item):
+    """Deepcopy lists/dicts/sets, leave everything else alone."""
+    return copy.deepcopy(item) if isinstance(item, (list, dict, set)) else item
+
+
+def retry_db_errors(f):
+    """Nesting-safe retry decorator with auto-arg-copy and logging.
+
+    Retry decorator for all functions which do not accept a context as an
+    argument. If the function accepts a context, use
+    'retry_if_session_inactive' below.
+
+    If retriable errors are retried and exceed the count, they will be tagged
+    with a flag so is_retriable will no longer recognize them as retriable.
+    This prevents multiple applications of this decorator (and/or the one
+    below) from retrying the same exception.
+    """
+
+    @_tag_retriables_as_unretriable
+    @_retry_db_errors
+    @six.wraps(f)
+    def wrapped(*args, **kwargs):
+        try:
+            # copy mutable args and kwargs to make retries safe. this doesn't
+            # prevent mutations of complex objects like the context or 'self'
+            dup_args = [_copy_if_lds(a) for a in args]
+            dup_kwargs = {k: _copy_if_lds(v) for k, v in kwargs.items()}
+            return f(*dup_args, **dup_kwargs)
+        except Exception as e:
+            with excutils.save_and_reraise_exception():
+                if is_retriable(e):
                     LOG.debug("Retry wrapper got retriable exception: %s",
                               traceback.format_exc())
     return wrapped
+
+
+def retry_if_session_inactive(context_var_name='context'):
+    """Retries only if the session in the context is inactive.
+
+    Calls a retry_db_errors wrapped version of the function if the context's
+    session passed in is inactive, otherwise it just calls the function
+    directly. This is useful to avoid retrying things inside of a transaction
+    which is ineffective for DB races/errors.
+
+    This should be used in all cases where retries are desired and the method
+    accepts a context.
+    """
+    def decorator(f):
+        try:
+            ctx_arg_index = f.__code__.co_varnames.index(context_var_name)
+        except ValueError:
+            raise RuntimeError(_LE("Could not find position of var %s")
+                               % context_var_name)
+        f_with_retry = retry_db_errors(f)
+
+        @six.wraps(f)
+        def wrapped(*args, **kwargs):
+            # only use retry wrapper if we aren't nested in an active
+            # transaction
+            if context_var_name in kwargs:
+                context = kwargs[context_var_name]
+            else:
+                context = args[ctx_arg_index]
+            method = f if context.session.is_active else f_with_retry
+            return method(*args, **kwargs)
+        return wrapped
+    return decorator
 
 
 def reraise_as_retryrequest(f):
