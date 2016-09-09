@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import mock
 
 from oslo_utils import uuidutils
@@ -65,3 +66,36 @@ class TrunkParentPortTestCase(base.BaseTestCase):
         with self.trunk.ovsdb_transaction() as txn2:
             mock.patch.object(txn2, 'commit').start()
             self.assertIsNot(txn1, txn2)
+
+
+class TrunkManagerTestCase(base.BaseTestCase):
+    """Tests are aimed to cover negative cases to make sure there is no typo in
+    the logging.
+    """
+    def setUp(self):
+        super(TrunkManagerTestCase, self).setUp()
+        self.trunk_manager = trunk_manager.TrunkManager(mock.sentinel.br_int)
+        mock.patch.object(trunk_manager, 'TrunkBridge').start()
+
+    @contextlib.contextmanager
+    def _resource_fails(self, resource, method_name):
+        with mock.patch.object(resource, method_name,
+                side_effect=RuntimeError):
+            with testtools.ExpectedException(trunk_manager.TrunkManagerError):
+                yield
+
+    def test_create_trunk_plug_fails(self):
+        with self._resource_fails(trunk_manager.TrunkParentPort, 'plug'):
+            self.trunk_manager.create_trunk(None, None, None)
+
+    def test_remove_trunk_unplug_fails(self):
+        with self._resource_fails(trunk_manager.TrunkParentPort, 'unplug'):
+            self.trunk_manager.remove_trunk(None, None)
+
+    def test_add_sub_port_plug_fails(self):
+        with self._resource_fails(trunk_manager.SubPort, 'plug'):
+            self.trunk_manager.add_sub_port(None, None, None, None)
+
+    def test_remove_sub_port_unplug_fails(self):
+        with self._resource_fails(trunk_manager.SubPort, 'unplug'):
+            self.trunk_manager.remove_sub_port(None, None)

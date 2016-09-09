@@ -13,6 +13,8 @@ from oslo_log import log as logging
 
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import resources
+from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
+from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.services.trunk.rpc import agent
 
 LOG = logging.getLogger(__name__)
@@ -21,9 +23,15 @@ TRUNK_SKELETON = None
 
 
 class OVSTrunkSkeleton(agent.TrunkSkeleton):
+    """It processes Neutron Server events to create the physical resources
+    associated to a logical trunk in response to user initiated API events
+    (such as trunk subport add/remove). It collaborates with the OVSDBHandler
+    to implement the trunk control plane.
+    """
 
-    def __init__(self):
+    def __init__(self, ovsdb_handler):
         super(OVSTrunkSkeleton, self).__init__()
+        self.ovsdb_handler = ovsdb_handler
         registry.unsubscribe(self.handle_trunks, resources.TRUNK)
 
     def handle_trunks(self, trunk, event_type):
@@ -43,4 +51,7 @@ def init_handler(resource, event, trigger, agent=None):
     # Set up agent-side RPC for receiving trunk events; we may want to
     # make this setup conditional based on server-side capabilities.
     global TRUNK_SKELETON
-    TRUNK_SKELETON = OVSTrunkSkeleton()
+
+    manager = trunk_manager.TrunkManager(agent.int_br)
+    handler = ovsdb_handler.OVSDBHandler(manager)
+    TRUNK_SKELETON = OVSTrunkSkeleton(handler)

@@ -13,13 +13,19 @@
 import contextlib
 
 from neutron_lib import constants
+from neutron_lib import exceptions
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions as exc
 from neutron.services.trunk import utils
 
 LOG = logging.getLogger(__name__)
+
+
+class TrunkManagerError(exceptions.NeutronException):
+    message = _("Error while communicating with OVSDB: %(error)s")
 
 
 def get_br_int_port_name(prefix, port_id):
@@ -188,6 +194,10 @@ class SubPort(TrunkParentPort):
 
 
 class TrunkManager(object):
+    """It implements the OVS trunk dataplane.
+
+    It interfaces with the OVSDB server to execute OVS commands.
+    """
 
     def __init__(self, br_int):
         self.br_int = br_int
@@ -205,22 +215,29 @@ class TrunkManager(object):
 
         """
         trunk = TrunkParentPort(trunk_id, port_id, port_mac)
-        if not trunk.bridge.exists():
-            raise exc.TrunkBridgeNotFound(bridge=trunk.bridge.br_name)
-        # Once the bridges are connected with the following patch ports,
-        # the ovs agent will recognize the ports for processing and it will
-        # take over the wiring process and everything that entails.
-        # REVISIT(rossella_s): revisit this integration part, should tighter
-        # control over the wiring logic for trunk ports be required.
-        trunk.plug(self.br_int)
+        try:
+            if not trunk.bridge.exists():
+                raise exc.TrunkBridgeNotFound(bridge=trunk.bridge.br_name)
+            # Once the bridges are connected with the following patch ports,
+            # the ovs agent will recognize the ports for processing and it will
+            # take over the wiring process and everything that entails.
+            # REVISIT(rossella_s): revisit this integration part, should
+            # tighter control over the wiring logic for trunk ports be
+            # required.
+            trunk.plug(self.br_int)
+        except RuntimeError as e:
+            raise TrunkManagerError(error=e)
 
     def remove_trunk(self, trunk_id, port_id):
         """Remove the trunk bridge."""
         trunk = TrunkParentPort(trunk_id, port_id)
-        if trunk.bridge.exists():
-            trunk.unplug(self.br_int)
-        else:
-            LOG.debug("Trunk bridge with ID %s doesn't exist.", trunk_id)
+        try:
+            if trunk.bridge.exists():
+                trunk.unplug(self.br_int)
+            else:
+                LOG.debug("Trunk bridge with ID %s doesn't exist.", trunk_id)
+        except RuntimeError as e:
+            raise TrunkManagerError(error=e)
 
     def add_sub_port(self, trunk_id, port_id, port_mac, segmentation_id):
         """Create a sub_port.
@@ -234,9 +251,12 @@ class TrunkManager(object):
         sub_port = SubPort(trunk_id, port_id, port_mac, segmentation_id)
         # If creating of parent trunk bridge takes longer than API call for
         # creating subport then bridge doesn't exist yet.
-        if not sub_port.bridge.exists():
-            raise exc.TrunkBridgeNotFound(bridge=sub_port.bridge.br_name)
-        sub_port.plug(self.br_int)
+        try:
+            if not sub_port.bridge.exists():
+                raise exc.TrunkBridgeNotFound(bridge=sub_port.bridge.br_name)
+            sub_port.plug(self.br_int)
+        except RuntimeError as e:
+            raise TrunkManagerError(error=e)
 
     def remove_sub_port(self, trunk_id, port_id):
         """Remove a sub_port.
@@ -248,7 +268,18 @@ class TrunkManager(object):
 
         # Trunk bridge might have been deleted by calling delete_trunk() before
         # remove_sub_port().
-        if sub_port.bridge.exists():
-            sub_port.unplug(self.br_int)
-        else:
-            LOG.debug("Trunk bridge with ID %s doesn't exist.", trunk_id)
+        try:
+            if sub_port.bridge.exists():
+                sub_port.unplug(self.br_int)
+            else:
+                LOG.debug("Trunk bridge with ID %s doesn't exist.", trunk_id)
+        except RuntimeError as e:
+            raise TrunkManagerError(error=e)
+
+    def get_port_uuid_from_external_ids(self, port):
+        """Return the port UUID from the port metadata."""
+        try:
+            return self.br_int.portid_from_external_ids(
+                port['external_ids'])
+        except RuntimeError as e:
+            raise TrunkManagerError(error=e)
