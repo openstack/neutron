@@ -82,7 +82,9 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         context_mock.assert_called_once_with()
         self.get_objects.assert_any_call(
             admin_context, self._test_class.db_model, _pager=None)
-        self._validate_objects(self.db_objs, objs)
+        self.assertItemsEqual(
+            [test_base.get_obj_db_fields(obj) for obj in self.objs],
+            [test_base.get_obj_db_fields(obj) for obj in objs])
 
     def test_get_objects_valid_fields(self):
         admin_context = self.context.elevated()
@@ -103,7 +105,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             get_objects_mock.assert_any_call(
                 admin_context, self._test_class.db_model, _pager=None,
                 **self.valid_field_filter)
-        self._validate_objects([self.db_obj], objs)
+        self._check_equal(objs[0], self.objs[0])
 
     def test_get_object(self):
         admin_context = self.context.elevated()
@@ -114,7 +116,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                                    return_value=admin_context) as context_mock:
                 obj = self._test_class.get_object(self.context, id='fake_id')
                 self.assertTrue(self._is_test_class(obj))
-                self.assertEqual(self.db_obj, test_base.get_obj_db_fields(obj))
+                self._check_equal(obj, self.objs[0])
                 context_mock.assert_called_once_with()
                 get_object_mock.assert_called_once_with(
                     admin_context, self._test_class.db_model, id='fake_id')
@@ -146,9 +148,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self._create_test_port(self._network)
 
     def _create_test_policy(self):
-        policy_obj = policy.QosPolicy(self.context, **self.db_obj)
-        policy_obj.create()
-        return policy_obj
+        self.objs[0].create()
+        return self.objs[0]
 
     def _create_test_policy_with_rules(self, rule_type, reload_rules=False):
         policy_obj = self._create_test_policy()

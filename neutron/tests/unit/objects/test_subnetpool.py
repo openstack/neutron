@@ -87,5 +87,5 @@ class SubnetPoolPrefixDbObjectTestCase(
     def setUp(self):
         super(SubnetPoolPrefixDbObjectTestCase, self).setUp()
         self._create_test_subnetpool()
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['subnetpool_id'] = self._pool.id

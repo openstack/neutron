@@ -32,5 +32,5 @@ class NetworkSegmentDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(NetworkSegmentDbObjectTestCase, self).setUp()
         self._create_test_network()
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['network_id'] = self._network['id']

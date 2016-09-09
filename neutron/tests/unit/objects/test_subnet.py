@@ -39,7 +39,7 @@ class IPAllocationPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         super(IPAllocationPoolDbObjectTestCase, self).setUp()
         self._create_test_network()
         self._create_test_subnet(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['subnet_id'] = self._subnet['id']
 
 
@@ -69,7 +69,7 @@ class DNSNameServerDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                            for db_obj in self.db_objs]
         self._create_test_network()
         self._create_test_subnet(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['subnet_id'] = self._subnet['id']
 
     def _is_objects_unique(self):
@@ -128,7 +128,7 @@ class RouteDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         super(RouteDbObjectTestCase, self).setUp()
         self._create_test_network()
         self._create_test_subnet(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['subnet_id'] = self._subnet['id']
 
 
@@ -151,7 +151,7 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         super(SubnetDbObjectTestCase, self).setUp()
         self._create_test_network()
         self._create_test_segment(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['network_id'] = self._network['id']
             obj['segment_id'] = self._segment['id']
 

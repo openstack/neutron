@@ -34,5 +34,5 @@ class AllowedAddrPairsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
         self.context = context.get_admin_context()
         self._create_test_network()
         self._create_test_port(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields):
+        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['port_id'] = self._port['id']
