@@ -12,9 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
-import time
-
 from neutron_lib import exceptions as n_exc
 from oslo_log import log
 from oslo_utils import timeutils
@@ -46,15 +43,11 @@ class TimeStamp_db_mixin(object):
             return query
         data = filters[CHANGED_SINCE][0]
         try:
-            # this block checks queried timestamp format.
-            datetime.datetime.fromtimestamp(time.mktime(
-                time.strptime(data,
-                              self.ISO8601_TIME_FORMAT)))
+            changed_since_string = timeutils.parse_isotime(data)
         except Exception:
             msg = _LW("The input %s must be in the "
-                      "following format: YYYY-MM-DDTHH:MM:SS") % CHANGED_SINCE
+                      "following format: YYYY-MM-DDTHH:MM:SSZ") % CHANGED_SINCE
             raise n_exc.InvalidInput(error_message=msg)
-        changed_since_string = timeutils.parse_isotime(data)
         changed_since = (timeutils.
                          normalize_time(changed_since_string))
         target_model_class = list(query._mapper_adapter_map.keys())[0]
@@ -94,9 +87,9 @@ class TimeStamp_db_mixin(object):
 
     def _format_timestamp(self, resource_db, result):
         result['created_at'] = (resource_db.created_at.
-                                strftime(self.ISO8601_TIME_FORMAT))
+                                strftime(self.ISO8601_TIME_FORMAT)) + 'Z'
         result['updated_at'] = (resource_db.updated_at.
-                                strftime(self.ISO8601_TIME_FORMAT))
+                                strftime(self.ISO8601_TIME_FORMAT)) + 'Z'
 
     def extend_resource_dict_timestamp(self, plugin_obj,
                                        resource_res, resource_db):
