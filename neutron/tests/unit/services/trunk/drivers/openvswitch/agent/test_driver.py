@@ -13,12 +13,40 @@
 
 import mock
 
+from oslo_utils import uuidutils
+
+from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
+from neutron.objects import trunk as trunk_obj
 from neutron.services.trunk.drivers.openvswitch.agent import driver
+from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.tests import base
+
+TRUNK_MANAGER = ('neutron.services.trunk.drivers.openvswitch.agent.'
+                 'trunk_manager.TrunkManager')
 
 
 class OvsTrunkSkeletonTest(base.BaseTestCase):
+
+    def setUp(self):
+        super(OvsTrunkSkeletonTest, self).setUp()
+        trunk_manager_cls_mock = mock.patch(TRUNK_MANAGER).start()
+        self.trunk_manager = trunk_manager_cls_mock.return_value
+        handler = ovsdb_handler.OVSDBHandler(self.trunk_manager)
+        mock.patch.object(handler, 'trunk_rpc').start()
+        mock.patch.object(handler, '_set_trunk_metadata').start()
+        mock.patch.object(
+            handler, 'manages_this_trunk', return_value=True).start()
+
+        self.skeleton = driver.OVSTrunkSkeleton(handler)
+        self.trunk_id = uuidutils.generate_uuid()
+        self.subports = [
+            trunk_obj.SubPort(
+                port_id=uuidutils.generate_uuid(),
+                trunk_id=self.trunk_id,
+                segmentation_type='foo',
+                segmentation_id=i)
+            for i in range(2)]
 
     @mock.patch("neutron.api.rpc.callbacks.resource_manager."
                 "ConsumerResourceCallbacksManager.unregister")
@@ -26,3 +54,38 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
         test_obj = driver.OVSTrunkSkeleton(mock.ANY)
         mocked_unregister.assert_called_with(test_obj.handle_trunks,
                                              resources.TRUNK)
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_handle_subports_created(self, br):
+        """Test handler calls into trunk manager for adding subports."""
+        def fake_update_subport_bindings(context, subports):
+            return {
+                self.trunk_id: [
+                    {'id': subport.port_id,
+                     'mac_address': "mac%d" % subport.segmentation_id}
+                    for subport in subports]}
+        trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
+        trunk_rpc.update_subport_bindings.side_effect = (
+                fake_update_subport_bindings)
+
+        self.skeleton.handle_subports(self.subports, events.CREATED)
+        expected_calls = [
+            mock.call(subport.trunk_id, subport.port_id, mock.ANY,
+                      subport.segmentation_id)
+            for subport in self.subports]
+        self.trunk_manager.add_sub_port.assert_has_calls(expected_calls)
+
+    def test_handle_subports_deleted(self):
+        """Test handler calls into trunk manager for deleting subports."""
+        self.skeleton.handle_subports(self.subports, events.DELETED)
+        expected_calls = [
+            mock.call(subport.trunk_id, subport.port_id)
+            for subport in self.subports]
+        self.trunk_manager.remove_sub_port.assert_has_calls(expected_calls)
+
+    def test_handle_subports_not_for_this_agent(self):
+        with mock.patch.object(self.skeleton, 'ovsdb_handler') as handler_m:
+            handler_m.manages_this_trunk.return_value = False
+            self.skeleton.handle_subports(self.subports, mock.ANY)
+        self.assertFalse(self.trunk_manager.wire_subports_for_trunk.called)
+        self.assertFalse(self.trunk_manager.unwire_subports_for_trunk.called)

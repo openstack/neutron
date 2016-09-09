@@ -11,7 +11,9 @@
 
 from oslo_log import log as logging
 
+from neutron._i18n import _LE
 from neutron.api.rpc.callbacks.consumer import registry
+from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
@@ -42,8 +44,22 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
         raise NotImplementedError()
 
     def handle_subports(self, subports, event_type):
-        # TODO(armax): call into TrunkManager to wire the subports
-        LOG.debug("Event %s for subports: %s", event_type, subports)
+        # Subports are always created with the same trunk_id and there is
+        # always at least one item in subports list
+        trunk_id = subports[0].trunk_id
+
+        if self.ovsdb_handler.manages_this_trunk(trunk_id):
+            LOG.debug("Event %s for subports: %s", event_type, subports)
+            if event_type == events.CREATED:
+                ctx = self.ovsdb_handler.context
+                self.ovsdb_handler.wire_subports_for_trunk(
+                    ctx, trunk_id, subports)
+            elif event_type == events.DELETED:
+                subport_ids = [subport.port_id for subport in subports]
+                self.ovsdb_handler.unwire_subports_for_trunk(
+                    trunk_id, subport_ids)
+            else:
+                LOG.error(_LE("Unknown event type %s"), event_type)
 
 
 def init_handler(resource, event, trigger, agent=None):
