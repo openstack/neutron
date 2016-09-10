@@ -1,0 +1,23 @@
+---
+prelude: >
+    Add ip_allocation attribute to port resources
+features:
+  - The port resource now has an ip_allocation attribute.
+    The value of this attribute will be set to
+    'immediate', 'deferred', or 'none' at the time the
+    port is created. It will not be changed when the port
+    is updated.
+
+    'immediate' means that the port is expected to have
+    an IP address and Neutron attempted IP allocation on
+    port creation. 'deferred' means that the port is
+    expected to have an IP address but Neutron deferred
+    IP allocation until a port update provides the host
+    to which the port will be bound. 'none' means that
+    the port was created explicitly with no addresses by
+    passing [] in fixed_ips when creating it.
+upgrade:
+  - All existing ports are considered to have 'immediate'
+    IP allocation. Any ports that do not have this
+    attribute should also be considered to have immediate
+    IP allocation.

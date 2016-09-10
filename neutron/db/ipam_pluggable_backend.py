@@ -280,8 +280,12 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         removed = []
         changes = self._get_changed_ips_for_port(
             context, original_ips, new_ips, port['device_owner'])
-        subnets = self._ipam_get_subnets(
-            context, network_id=port['network_id'], host=host)
+        try:
+            subnets = self._ipam_get_subnets(
+                context, network_id=port['network_id'], host=host)
+        except ipam_exc.DeferIpam:
+            subnets = []
+
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(
             context, port['network_id'], changes.add,

@@ -660,7 +660,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if query.limit(1).count():
             # No, must be a deferred IP port because there are matching
             # subnets. Happens on routed networks when host isn't known.
-            return []
+            raise ipam_exceptions.DeferIpam()
 
         raise ipam_exceptions.IpAddressGenerationFailureNoMatchingSubnet()
 

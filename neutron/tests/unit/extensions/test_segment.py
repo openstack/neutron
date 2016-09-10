@@ -986,6 +986,46 @@ class TestSegmentAwareIpam(SegmentTestCase):
         # Gets bad request because there are no eligible subnets.
         self.assertEqual(webob.exc.HTTPBadRequest.code, response.status_int)
 
+    def _create_port_and_show(self, network, **kwargs):
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['tenant_id'],
+            **kwargs)
+        port = self.deserialize(self.fmt, response)
+        request = self.new_show_request('ports', port['port']['id'])
+        return self.deserialize(self.fmt, request.get_response(self.api))
+
+    def test_port_create_with_no_fixed_ips_no_ipam_on_routed_network(self):
+        """Ports requesting no fixed_ips not deferred, even on routed net"""
+        with self.network() as network:
+            segment = self._test_create_segment(
+                network_id=network['network']['id'],
+                physical_network='physnet',
+                network_type=p_constants.TYPE_VLAN)
+            with self.subnet(network=network,
+                             segment_id=segment['segment']['id']):
+                pass
+
+        # Create an unbound port requesting no IP addresses
+        response = self._create_port_and_show(network, fixed_ips=[])
+        self.assertEqual([], response['port']['fixed_ips'])
+        self.assertEqual(ip_allocation.IP_ALLOCATION_NONE,
+                         response['port'][ip_allocation.IP_ALLOCATION])
+
+    def test_port_create_with_no_fixed_ips_no_ipam(self):
+        """Ports without addresses on non-routed networks are not deferred"""
+        with self.network() as network:
+            with self.subnet(network=network):
+                pass
+
+        # Create an unbound port requesting no IP addresses
+        response = self._create_port_and_show(network, fixed_ips=[])
+
+        self.assertEqual([], response['port']['fixed_ips'])
+        self.assertEqual(ip_allocation.IP_ALLOCATION_NONE,
+                         response['port'][ip_allocation.IP_ALLOCATION])
+
     def test_port_without_ip_not_deferred(self):
         """Ports without addresses on non-routed networks are not deferred"""
         with self.network() as network:
@@ -1001,6 +1041,18 @@ class TestSegmentAwareIpam(SegmentTestCase):
         request = self.new_show_request('ports', port['port']['id'])
         response = self.deserialize(self.fmt, request.get_response(self.api))
 
+        self.assertEqual([], response['port']['fixed_ips'])
+        self.assertEqual(ip_allocation.IP_ALLOCATION_IMMEDIATE,
+                         response['port'][ip_allocation.IP_ALLOCATION])
+
+    def test_port_without_ip_not_deferred_no_binding(self):
+        """Ports without addresses on non-routed networks are not deferred"""
+        with self.network() as network:
+            pass
+
+        # Create a unbound port with no IP address (since there is no subnet)
+        response = self._create_port_and_show(network)
+        self.assertEqual([], response['port']['fixed_ips'])
         self.assertEqual(ip_allocation.IP_ALLOCATION_IMMEDIATE,
                          response['port'][ip_allocation.IP_ALLOCATION])
 
@@ -1026,7 +1078,6 @@ class TestSegmentAwareIpam(SegmentTestCase):
         # Create the subnet and try to update the port to get an IP
         with self.subnet(network=network,
                          segment_id=segment['segment']['id']) as subnet:
-            self._validate_deferred_ip_allocation(port['port']['id'])
             self._validate_l2_adjacency(network['network']['id'],
                                         is_adjacent=False)
             # Try requesting an IP (but the only subnet is on a segment)
