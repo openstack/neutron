@@ -51,6 +51,8 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
+from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
+    import utils as lb_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -173,12 +175,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
     @staticmethod
     def get_tap_device_name(interface_id):
-        if not interface_id:
-            LOG.warning(_LW("Invalid Interface ID, will lead to incorrect "
-                            "tap device name"))
-        tap_device_name = constants.TAP_DEVICE_PREFIX + \
-            interface_id[:lconst.RESOURCE_ID_LENGTH]
-        return tap_device_name
+        return lb_utils.get_tap_device_name(interface_id)
 
     def get_vxlan_device_name(self, segmentation_id):
         if 0 <= int(segmentation_id) <= p_const.MAX_VXLAN_VNI:
