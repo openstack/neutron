@@ -138,9 +138,8 @@ class TrunkPortValidator(object):
         core_plugin = manager.NeutronManager.get_plugin()
         self._port = core_plugin.get_port(context, self.port_id)
         # NOTE(armax): the trunk extension itself does not make use of the
-        # device_id/device_owner fields, because it has no reason to. If
-        # need be, this check can be altered to accommodate the change in
-        # logic.
+        # device_id field, because it has no reason to. If need be, this
+        # check can be altered to accommodate the change in logic.
         if self._port['device_id']:
             raise n_exc.PortInUse(net_id=self._port['network_id'],
                                   port_id=self._port['id'],
