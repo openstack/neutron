@@ -90,10 +90,11 @@ def _is_attribute_explicitly_set(attribute_name, resource, target, action):
         # marked as being updated instead.
         return (attribute_name in target[const.ATTRIBUTES_TO_UPDATE] and
                 target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED)
-    return ('default' in resource[attribute_name] and
-            attribute_name in target and
-            target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED and
-            target[attribute_name] != resource[attribute_name]['default'])
+    result = (attribute_name in target and
+              target[attribute_name] is not attributes.ATTR_NOT_SPECIFIED)
+    if result and 'default' in resource[attribute_name]:
+        return target[attribute_name] != resource[attribute_name]['default']
+    return result
 
 
 def _should_validate_sub_attributes(attribute, sub_attr):
