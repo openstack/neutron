@@ -196,7 +196,7 @@ class TestSegmentNameDescription(SegmentTestCase):
                               segment['segment']['id'],
                               {'segment': {'name': None}},
                               expected_code=webob.exc.HTTPOk.code)
-        self.assertEqual(None, result['segment']['name'])
+        self.assertIsNone(result['segment']['name'])
 
     def test_update_segment_set_description_to_none(self):
         segment = self._test_create_segment(
@@ -205,7 +205,7 @@ class TestSegmentNameDescription(SegmentTestCase):
                               segment['segment']['id'],
                               {'segment': {'description': None}},
                               expected_code=webob.exc.HTTPOk.code)
-        self.assertEqual(None, result['segment']['description'])
+        self.assertIsNone(result['segment']['description'])
 
 
 class TestSegment(SegmentTestCase):
