@@ -60,7 +60,7 @@ class ConfigFileFixture(fixtures.Fixture):
             f.flush()
 
     def dict_to_config_parser(self, config_dict):
-        config_parser = six.moves.configparser.SafeConfigParser()
+        config_parser = six.moves.configparser.ConfigParser()
         for section, section_dict in six.iteritems(config_dict):
             if section != 'DEFAULT':
                 config_parser.add_section(section)
