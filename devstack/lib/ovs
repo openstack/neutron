@@ -38,7 +38,7 @@ function load_module {
 function is_kernel_supported_for_ovs25 {
     major=$(uname -r | cut -d\. -f 1)
     minor=$(uname -r | cut -d\. -f 2)
-    if [ $major -le 4 -o $minor -le 3 ]; then
+    if [ $major -lt 4 -o $minor -le 3 ]; then
         return 0
     fi
 
