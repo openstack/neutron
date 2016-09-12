@@ -292,6 +292,9 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         # is sent when a port is up on a physical bridge, hence waiting only
         # for the ports connected to br-int
         self.wait_until_ports_state([port_int], up=True)
+        # sanity pings before we start
+        net_helpers.assert_ping(ns_phys, ip_int)
+        net_helpers.assert_ping(self.namespace, ip_phys)
 
         with net_helpers.async_ping(ns_phys, [ip_int]) as done:
             while not done():
