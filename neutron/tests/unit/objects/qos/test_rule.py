@@ -69,7 +69,7 @@ class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
     _test_class = rule.QosBandwidthLimitRule
 
     def test_to_dict_returns_type(self):
-        obj = rule.QosBandwidthLimitRule(self.context, **self.db_obj)
+        obj = rule.QosBandwidthLimitRule(self.context, **self.db_objs[0])
         dict_ = obj.to_dict()
         self.assertEqual(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, dict_['type'])
 
