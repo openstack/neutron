@@ -79,6 +79,11 @@ class RouterExternalGatewayInUseByFloatingIp(nexception.InUse):
                 "gateway to external network %(net_id)s is required by one or "
                 "more floating IPs.")
 
+
+class RouterInterfaceAttachmentConflict(nexception.Conflict):
+    message = _("Error %(reason)s while attempting the operation.")
+
+
 ROUTERS = 'routers'
 FLOATINGIP = 'floatingip'
 FLOATINGIPS = '%ss' % FLOATINGIP
