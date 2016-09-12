@@ -43,7 +43,7 @@ class NotifierHook(hooks.PecanHook):
             # this is scoped to avoid a dependency on nova client when nova
             # notifications aren't enabled
             from neutron.notifiers import nova
-            self._nova_notifier = nova.Notifier()
+            self._nova_notifier = nova.Notifier.get_instance()
         self._nova_notifier.send_network_change(action_resource, *args)
 
     def _notify_dhcp_agent(self, context, resource_name, action, resources):
