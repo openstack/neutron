@@ -21,7 +21,7 @@ import testtools
 
 from neutron.common import utils as common_utils
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
-from neutron.services.trunk import utils
+from neutron.services.trunk.drivers.openvswitch import utils
 from neutron.tests.common import conn_testers
 from neutron.tests.common import helpers
 from neutron.tests.common import net_helpers

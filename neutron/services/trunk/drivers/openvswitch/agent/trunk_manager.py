@@ -19,7 +19,7 @@ from oslo_log import log as logging
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions as exc
-from neutron.services.trunk import utils
+from neutron.services.trunk.drivers.openvswitch import utils
 
 LOG = logging.getLogger(__name__)
 

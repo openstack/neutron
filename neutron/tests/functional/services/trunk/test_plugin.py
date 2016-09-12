@@ -13,8 +13,8 @@
 # under the License.
 
 from neutron.extensions import portbindings as pb
+from neutron.services.trunk.drivers.openvswitch import utils
 from neutron.services.trunk import plugin as trunk_plugin
-from neutron.services.trunk import utils as trunk_utils
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 
@@ -38,7 +38,7 @@ class TestTrunkServicePlugin(ml2_test_base.ML2TestFramework):
             bound_port = self.core_plugin.update_port(self.context,
                                                       trunk_port_id, port)
             self.assertEqual(
-                trunk_utils.gen_trunk_br_name(trunk_res['id']),
+                utils.gen_trunk_br_name(trunk_res['id']),
                 bound_port[pb.VIF_DETAILS][pb.VIF_DETAILS_BRIDGE_NAME])
 
     def test_ovs_bridge_name_not_set_when_not_trunk(self):
