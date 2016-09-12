@@ -426,44 +426,69 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # the new_ips contain all of the fixed_ips that are to be updated
         self._validate_max_ips_per_port(ips, device_owner)
 
-        add_ips = []
-        remove_ips = []
+        add_ips, prev_ips, remove_candidates = [], [], []
 
-        ips_map = {ip['ip_address']: ip
-                   for ip in itertools.chain(new_ips, original_ips)
-                   if 'ip_address' in ip}
+        # Consider fixed_ips that specify a specific address first to see if
+        # they already existed in original_ips or are completely new.
+        orig_by_ip = {ip['ip_address']: ip for ip in original_ips}
+        for ip in ips:
+            if 'ip_address' not in ip:
+                continue
 
-        new = set()
-        for ip in new_ips:
-            if ip.get('subnet_id') not in delete_subnet_ids:
-                if 'ip_address' in ip:
-                    new.add(ip['ip_address'])
-                else:
-                    add_ips.append(ip)
+            original = orig_by_ip.pop(ip['ip_address'], None)
+            if original:
+                prev_ips.append(original)
+            else:
+                add_ips.append(ip)
 
-        # Convert original ip addresses to sets
-        orig = set(ip['ip_address'] for ip in original_ips)
+        # Consider fixed_ips that don't specify ip_address. Try to match them
+        # up with originals to see if they can be reused.  Create a new map of
+        # the remaining, unmatched originals for this step.
+        orig_by_subnet = collections.defaultdict(list)
+        for ip in orig_by_ip.values():
+            orig_by_subnet[ip['subnet_id']].append(ip)
 
-        add = new - orig
-        unchanged = new & orig
-        remove = orig - new
+        for ip in ips:
+            if 'ip_address' in ip:
+                continue
 
-        # Convert results back to list of dicts
-        add_ips += [ips_map[ip] for ip in add]
-        prev_ips = [ips_map[ip] for ip in unchanged]
+            orig = orig_by_subnet.get(ip['subnet_id'])
+            if not orig:
+                add_ips.append(ip)
+                continue
+
+            # Try to match this new request up with an existing IP
+            orig_ip = orig.pop()
+            if ipv6_utils.is_eui64_address(orig_ip['ip_address']):
+                # In case of EUI64 address, the prefix may have changed so
+                # we want to make sure IPAM gets a chance to re-allocate
+                # it. This is safe in general because EUI-64 addresses
+                # always come out the same given the prefix doesn't change.
+                add_ips.append(ip)
+                remove_candidates.append(orig_ip)
+            else:
+                # Reuse the existing address on this subnet.
+                prev_ips.append(orig_ip)
+
+        # Iterate through any unclaimed original ips (orig_by_subnet) *and* the
+        # remove_candidates with this compound chain.
+        maybe_remove = itertools.chain(
+            itertools.chain.from_iterable(orig_by_subnet.values()),
+            remove_candidates)
 
         # Mark ip for removing if it is not found in new_ips
         # and subnet requires ip to be set manually.
         # For auto addressed subnet leave ip unchanged
         # unless it is explicitly marked for delete.
-        for ip in remove:
-            subnet_id = ips_map[ip]['subnet_id']
+        remove_ips = []
+        for ip in maybe_remove:
+            subnet_id = ip['subnet_id']
             ip_required = self._is_ip_required_by_subnet(context, subnet_id,
                                                          device_owner)
             if ip_required or subnet_id in delete_subnet_ids:
-                remove_ips.append(ips_map[ip])
+                remove_ips.append(ip)
             else:
-                prev_ips.append(ips_map[ip])
+                prev_ips.append(ip)
 
         return self.Changes(add=add_ips,
                             original=prev_ips,
