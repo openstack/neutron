@@ -1153,14 +1153,39 @@ class TestSegmentAwareIpam(SegmentTestCase):
         port = self._create_deferred_ip_port(network)
 
         # Create the subnet and try to update the port to get an IP
-        with self.subnet(network=network) as subnet:
+        with self.subnet(network=network):
             data = {'port': {portbindings.HOST_ID: 'fakehost'}}
             port_id = port['port']['id']
             port_req = self.new_update_request('ports', data, port_id)
             response = port_req.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
-        self._assert_one_ip_in_subnet(response, subnet['subnet']['cidr'])
+        res = self.deserialize(self.fmt, response)
+        self.assertEqual(0, len(res['port']['fixed_ips']))
+
+    def test_port_update_deferred_allocation_no_ipam(self):
+        """Binding information is provided on update. Don't allocate."""
+        with self.network() as network:
+            with self.subnet(network=network):
+                pass
+
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     fixed_ips=[])
+        port = self.deserialize(self.fmt, response)
+        ips = port['port']['fixed_ips']
+        self.assertEqual(0, len(ips))
+
+        # Create the subnet and try to update the port to get an IP
+        data = {'port': {portbindings.HOST_ID: 'fakehost'}}
+        port_id = port['port']['id']
+        port_req = self.new_update_request('ports', data, port_id)
+        response = port_req.get_response(self.api)
+
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
+        res = self.deserialize(self.fmt, response)
+        self.assertEqual(0, len(res['port']['fixed_ips']))
 
     def test_port_update_deferred_allocation_no_segments_manual_alloc(self):
         """Binding information is provided, subnet created after port"""
