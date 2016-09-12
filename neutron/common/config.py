@@ -36,6 +36,15 @@ from neutron import version
 
 LOG = logging.getLogger(__name__)
 
+# Jam here any extra log level default you care about. This helps keep
+# Neutron logs lean.
+EXTRA_LOG_LEVEL_DEFAULTS = [
+    'OFPHandler=INFO',
+    'OfctlService=INFO',
+    'ryu.base.app_manager=INFO',
+    'ryu.controller.controller=INFO',
+]
+
 # Register the configuration options
 common_config.register_core_common_config_opts()
 
@@ -86,10 +95,11 @@ def init(args, **kwargs):
 def setup_logging():
     """Sets up the logging options for a log with supplied name."""
     product_name = "neutron"
-    logging.setup(cfg.CONF, product_name)
     # We use the oslo.log default log levels and add only the extra levels
     # that Neutron needs.
-    logging.set_defaults(default_log_levels=logging.get_default_log_levels())
+    logging.set_defaults(default_log_levels=logging.get_default_log_levels() +
+                         EXTRA_LOG_LEVEL_DEFAULTS)
+    logging.setup(cfg.CONF, product_name)
     LOG.info(_LI("Logging enabled!"))
     LOG.info(_LI("%(prog)s version %(version)s"),
              {'prog': sys.argv[0],
