@@ -19,6 +19,7 @@ import eventlet
 import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
+import testtools
 
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import trunk as trunk_obj
@@ -26,6 +27,38 @@ from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.tests import base
+
+
+class TestLockOnBridgeName(base.BaseTestCase):
+    def setUp(self):
+        super(TestLockOnBridgeName, self).setUp()
+        self.lock_mock = mock.patch('oslo_concurrency.lockutils.lock').start()
+        self.method_called = False
+
+    def test_positional_argument(self):
+        @ovsdb_handler.lock_on_bridge_name(required_parameter='bridge_name')
+        def testing_method(param, bridge_name, another):
+            self.method_called = True
+
+        testing_method('foo', 'bridge', 'bar')
+        self.lock_mock.assert_called_once_with('bridge')
+        self.assertTrue(self.method_called)
+
+    def test_keyword_argument(self):
+        @ovsdb_handler.lock_on_bridge_name(required_parameter='bridge_name')
+        def testing_method(param, bridge_name, another):
+            self.method_called = True
+
+        testing_method('foo', another='baz', bridge_name='bridge')
+        self.lock_mock.assert_called_once_with('bridge')
+        self.assertTrue(self.method_called)
+
+    def test_missing_argument(self):
+        with testtools.ExpectedException(RuntimeError):
+            @ovsdb_handler.lock_on_bridge_name(
+                required_parameter='bridge_name')
+            def testing_method(one, two):
+                pass
 
 
 class TestIsTrunkServicePort(base.BaseTestCase):
@@ -73,6 +106,10 @@ class TestBridgeHasInstancePort(base.BaseTestCase):
         self.present_interfaces.extend(
             ['tbr-foo', 'spt-foo', 'tpt-foo', 'foo'])
         self.assertTrue(ovsdb_handler.bridge_has_instance_port(self.bridge))
+
+    def test_ovsdb_error(self):
+        self.bridge.get_iface_name_list.side_effect = RuntimeError
+        self.assertFalse(ovsdb_handler.bridge_has_instance_port(self.bridge))
 
 
 class TestOVSDBHandler(base.BaseTestCase):
@@ -126,15 +163,23 @@ class TestOVSDBHandler(base.BaseTestCase):
                     return_value=True):
                 self.ovsdb_handler.handle_trunk_add('foo')
 
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_handle_trunk_add_missing_bridge(self, br):
+        br.return_value.bridge_exists.return_value = False
+        with mock.patch.object(
+                ovsdb_handler, 'bridge_has_instance_port') as has_port_mock:
+            self.ovsdb_handler.handle_trunk_add('foo')
+        self.assertFalse(has_port_mock.called)
+
     def test_handle_trunk_remove_trunk_manager_failure(self):
         with mock.patch.object(self.ovsdb_handler, '_get_trunk_metadata',
                 side_effect=trunk_manager.TrunkManagerError(error='error')):
-            self.ovsdb_handler.handle_trunk_remove(self.fake_port)
+            self.ovsdb_handler.handle_trunk_remove('foo', self.fake_port)
 
     def test_handle_trunk_remove_rpc_failure(self):
         self.ovsdb_handler.trunk_rpc.update_trunk_status = (
             oslo_messaging.MessagingException)
-        self.ovsdb_handler.handle_trunk_remove(self.fake_port)
+        self.ovsdb_handler.handle_trunk_remove('foo', self.fake_port)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_wire_subports_for_trunk_trunk_manager_failure(self, br):
