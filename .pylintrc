@@ -2,11 +2,7 @@
 [MASTER]
 # Add <file or directory> to the black list. It should be a base name, not a
 # path. You may set this option multiple times.
-#
-# Note the 'openstack' below is intended to match only
-# neutron.openstack.common.  If we ever have another 'openstack'
-# dirname, then we'll need to expand the ignore features in pylint :/
-ignore=.git,tests,openstack
+ignore=.git,tests
 
 [MESSAGES CONTROL]
 # NOTE(gus): This is a long list.  A number of these are important and
