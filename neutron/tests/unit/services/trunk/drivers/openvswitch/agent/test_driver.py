@@ -13,6 +13,7 @@
 
 import mock
 
+import oslo_messaging
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.callbacks import events
@@ -89,3 +90,10 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
             self.skeleton.handle_subports(self.subports, mock.ANY)
         self.assertFalse(self.trunk_manager.wire_subports_for_trunk.called)
         self.assertFalse(self.trunk_manager.unwire_subports_for_trunk.called)
+
+    def test_handle_subports_trunk_rpc_error(self):
+        trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
+        trunk_rpc.update_subport_bindings.side_effect = (
+            oslo_messaging.MessagingException)
+        self.skeleton.handle_subports(self.subports, events.CREATED)
+        self.assertTrue(trunk_rpc.update_subport_bindings.called)
