@@ -41,6 +41,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron import context as ctx
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
@@ -144,6 +145,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             registry.subscribe(self.validate_network_rbac_policy_change,
                                rbac_mixin.RBAC_POLICY, e)
 
+    @db_api.retry_if_session_inactive()
     def validate_network_rbac_policy_change(self, resource, event, trigger,
                                             context, object_type, policy,
                                             **kwargs):
@@ -331,9 +333,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                           {'resource': resource, 'item': item})
         return objects
 
+    @db_api.retry_if_session_inactive()
     def create_network_bulk(self, context, networks):
         return self._create_bulk('network', context, networks)
 
+    @db_api.retry_if_session_inactive()
     def create_network(self, context, network):
         """Handle creation of a single network."""
         net_db = self.create_network_db(context, network)
@@ -362,6 +366,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             context.session.add(network)
         return network
 
+    @db_api.retry_if_session_inactive()
     def update_network(self, context, id, network):
         n = network['network']
         with context.session.begin(subtransactions=True):
@@ -392,6 +397,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                                           models_v2.Network))
         return self._make_network_dict(network, context=context)
 
+    @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, id)
@@ -414,10 +420,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
             context.session.delete(network)
 
+    @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):
         network = self._get_network(context, id)
         return self._make_network_dict(network, fields, context=context)
 
+    @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
@@ -432,10 +440,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                     marker_obj=marker_obj,
                                     page_reverse=page_reverse)
 
+    @db_api.retry_if_session_inactive()
     def get_networks_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Network,
                                           filters=filters)
 
+    @db_api.retry_if_session_inactive()
     def create_subnet_bulk(self, context, subnets):
         return self._create_bulk('subnet', context, subnets)
 
@@ -668,6 +678,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         msg = _('No default subnetpool found for IPv%s') % ip_version
         raise exc.BadRequest(resource='subnets', msg=msg)
 
+    @db_api.retry_if_session_inactive()
     def create_subnet(self, context, subnet):
 
         s = subnet['subnet']
@@ -721,6 +732,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                  'end': str(netaddr.IPAddress(p.last, subnet['ip_version']))}
                 for p in allocation_pools]
 
+    @db_api.retry_if_session_inactive()
     def update_subnet(self, context, id, subnet):
         """Update the subnet with new info.
 
@@ -848,6 +860,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                       "cannot delete", subnet_id)
             raise exc.SubnetInUse(subnet_id=subnet_id)
 
+    @db_api.retry_if_session_inactive()
     def delete_subnet(self, context, id):
         with context.session.begin(subtransactions=True):
             subnet = self._get_subnet(context, id)
@@ -897,20 +910,24 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # since there is no FK relationship
             self.ipam.delete_subnet(context, id)
 
+    @db_api.retry_if_session_inactive()
     def get_subnet(self, context, id, fields=None):
         subnet = self._get_subnet(context, id)
         return self._make_subnet_dict(subnet, fields, context=context)
 
+    @db_api.retry_if_session_inactive()
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
         return self._get_subnets(context, filters, fields, sorts, limit,
                                  marker, page_reverse)
 
+    @db_api.retry_if_session_inactive()
     def get_subnets_count(self, context, filters=None):
         return self._get_collection_count(context, models_v2.Subnet,
                                           filters=filters)
 
+    @db_api.retry_if_session_inactive()
     def get_subnets_by_network(self, context, network_id):
         return [self._make_subnet_dict(subnet_db) for subnet_db in
                 self._get_subnets_by_network(context, network_id)]
@@ -984,6 +1001,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     "been set. Only one default may exist per IP family")
             raise exc.InvalidInput(error_message=msg)
 
+    @db_api.retry_if_session_inactive()
     def create_subnetpool(self, context, subnetpool):
         sp = subnetpool['subnetpool']
         sp_reader = subnet_alloc.SubnetPoolReader(sp)
@@ -1014,6 +1032,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         return self._make_subnetpool_dict(subnetpool)
 
+    @db_api.retry_if_session_inactive()
     def update_subnetpool(self, context, id, subnetpool):
         new_sp = subnetpool['subnetpool']
 
@@ -1051,10 +1070,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                           updated, orig_sp)
         return updated
 
+    @db_api.retry_if_session_inactive()
     def get_subnetpool(self, context, id, fields=None):
         subnetpool = self._get_subnetpool(context, id)
         return self._make_subnetpool_dict(subnetpool, fields)
 
+    @db_api.retry_if_session_inactive()
     def get_subnetpools(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):
@@ -1066,6 +1087,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             for pool in subnetpools
         ]
 
+    @db_api.retry_if_session_inactive()
     def get_default_subnetpool(self, context, ip_version):
         """Retrieve the default subnetpool for the given IP version."""
         filters = {'is_default': True,
@@ -1074,6 +1096,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if subnetpool:
             return subnetpool[0]
 
+    @db_api.retry_if_session_inactive()
     def delete_subnetpool(self, context, id):
         with context.session.begin(subtransactions=True):
             subnetpool = self._get_subnetpool(context, id=id)
@@ -1090,6 +1113,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 op=_("mac address update"), port_id=id,
                 device_owner=device_owner)
 
+    @db_api.retry_if_session_inactive()
     def create_port_bulk(self, context, ports):
         return self._create_bulk('port', context, ports)
 
@@ -1106,6 +1130,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         context.session.add(db_port)
         return db_port
 
+    @db_api.retry_if_session_inactive()
     def create_port(self, context, port):
         db_port = self.create_port_db(context, port)
         return self._make_port_dict(db_port, process_extensions=False)
@@ -1169,6 +1194,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._check_mac_addr_update(context, db_port,
                                         new_mac, current_owner)
 
+    @db_api.retry_if_session_inactive()
     def update_port(self, context, id, port):
         new_port = port['port']
 
@@ -1196,6 +1222,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         result = self._make_port_dict(db_port)
         return result
 
+    @db_api.retry_if_session_inactive()
     def delete_port(self, context, id):
         with context.session.begin(subtransactions=True):
             self.ipam.delete_port(context, id)
@@ -1216,6 +1243,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                           "The port has already been deleted.",
                           port_id)
 
+    @db_api.retry_if_session_inactive()
     def get_port(self, context, id, fields=None):
         port = self._get_port(context, id)
         return self._make_port_dict(port, fields)
@@ -1250,6 +1278,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                             sort_dirs=sort_dirs)
         return query
 
+    @db_api.retry_if_session_inactive()
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None,
                   page_reverse=False):
@@ -1263,6 +1292,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             items.reverse()
         return items
 
+    @db_api.retry_if_session_inactive()
     def get_ports_count(self, context, filters=None):
         return self._get_ports_query(context, filters).count()
 

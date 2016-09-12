@@ -234,7 +234,7 @@ class L3_NAT_db_mixin(base.BaseTestCase):
             mock.patch.object(l3_db.L3_NAT_db_mixin, 'notify_router_updated')\
             as nru:
 
-            self.db.create_router(mock.ANY, router_input)
+            self.db.create_router(mock.Mock(), router_input)
             self.assertTrue(crd.called)
             if external_gateway_info:
                 self.assertTrue(urgi.called)

@@ -206,7 +206,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         return allocated_vr_ids
 
+    @db_api.retry_if_session_inactive()
     def _allocate_vr_id(self, context, network_id, router_id):
+        # TODO(kevinbenton): let decorator handle duplicate retry
+        # like in review.openstack.org/#/c/367179/1/neutron/db/l3_hamode_db.py
         for count in range(MAX_ALLOCATION_TRIES):
             try:
                 # NOTE(kevinbenton): we disallow subtransactions because the
@@ -237,6 +240,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             network_id=network_id, router_id=router_id,
             max_tries=MAX_ALLOCATION_TRIES)
 
+    @db_api.retry_if_session_inactive()
     def _delete_vr_id_allocation(self, context, ha_network, vr_id):
         with context.session.begin(subtransactions=True):
             context.session.query(L3HARouterVRIdAllocation).filter_by(
@@ -462,6 +466,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return n_utils.create_object_with_dependency(
             creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)
 
+    @db_api.retry_if_session_inactive()
     def create_router(self, context, router):
         is_ha = self._is_ha(router['router'])
         router['router']['ha'] = is_ha
@@ -494,6 +499,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     self.delete_router(context, router_dict['id'])
         return router_dict
 
+    @db_api.retry_if_session_inactive()
     def _update_router_db(self, context, router_id, data):
         router_db = self._get_router(context, router_id)
 
@@ -604,6 +610,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                          "%(tenant)s."),
                      {'network': ha_network.network_id, 'tenant': tenant_id})
 
+    @db_api.retry_if_session_inactive()
     def delete_router(self, context, id):
         router_db = self._get_router(context, id)
         super(L3_HA_NAT_db_mixin, self).delete_router(context, id)
@@ -750,6 +757,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 # Take concurrently deleted routers in to account
                 pass
 
+    @db_api.retry_if_session_inactive()
     def update_routers_states(self, context, states, host):
         """Receive dict of router ID to state and update them all."""
 
@@ -760,7 +768,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     def _update_router_port_bindings(self, context, states, host):
         admin_ctx = context.elevated()
-        device_filter = {'device_id': states.keys(),
+        device_filter = {'device_id': list(states.keys()),
                          'device_owner':
                          [constants.DEVICE_OWNER_HA_REPLICATED_INT,
                           constants.DEVICE_OWNER_ROUTER_SNAT]}
