@@ -12,16 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron_lib import constants
-
 from neutron.common import utils
 from neutron import manager
-from neutron.services.trunk.drivers.openvswitch import constants as ovs_const
-
-
-def gen_trunk_br_name(trunk_id):
-    return ((ovs_const.TRUNK_BR_PREFIX + trunk_id)
-            [:constants.DEVICE_NAME_MAX_LEN - 1])
 
 
 def get_agent_types_by_host(context, host):

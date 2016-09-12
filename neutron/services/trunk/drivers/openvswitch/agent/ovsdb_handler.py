@@ -35,8 +35,8 @@ from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent \
     import trunk_manager as tman
 from neutron.services.trunk.drivers.openvswitch import constants as t_const
+from neutron.services.trunk.drivers.openvswitch import utils
 from neutron.services.trunk.rpc import agent
-from neutron.services.trunk import utils as trunk_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -178,7 +178,7 @@ class OVSDBHandler(object):
 
     def manages_this_trunk(self, trunk_id):
         """True if this OVSDB handler manages trunk based on given ID."""
-        bridge_name = trunk_utils.gen_trunk_br_name(trunk_id)
+        bridge_name = utils.gen_trunk_br_name(trunk_id)
         return ovs_lib.BaseOVS().bridge_exists(bridge_name)
 
     def wire_subports_for_trunk(self, context, trunk_id, subports,
@@ -308,7 +308,7 @@ class OVSDBHandler(object):
         # name, trunk id and subport ids so we can easily remove the trunk
         # bridge and service ports once this port is removed
         trunk_bridge = trunk_bridge or ovs_lib.OVSBridge(
-            trunk_utils.gen_trunk_br_name(trunk_id))
+            utils.gen_trunk_br_name(trunk_id))
         port = port or self._get_parent_port(trunk_bridge)
 
         port['external_ids']['bridge_name'] = trunk_bridge.br_name

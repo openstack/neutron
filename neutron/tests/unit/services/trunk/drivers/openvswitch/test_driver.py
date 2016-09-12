@@ -23,6 +23,9 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
 from neutron.services.trunk.drivers.openvswitch import driver
 from neutron.tests import base
 
+GEN_TRUNK_BR_NAME_PATCH = (
+    'neutron.services.trunk.drivers.openvswitch.utils.gen_trunk_br_name')
+
 
 class OVSDriverTestCase(base.BaseTestCase):
 
@@ -51,7 +54,7 @@ class OVSDriverTestCase(base.BaseTestCase):
         ovs_driver = driver.OVSDriver.create()
         self.assertFalse(ovs_driver.is_loaded)
 
-    @mock.patch('neutron.services.trunk.utils.gen_trunk_br_name')
+    @mock.patch(GEN_TRUNK_BR_NAME_PATCH)
     def test_vif_details_bridge_name_handler_registration(self,
                                                           mock_gen_br_name):
         driver.register()

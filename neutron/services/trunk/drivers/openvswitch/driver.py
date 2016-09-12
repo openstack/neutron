@@ -22,7 +22,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as agent_consts)
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.drivers import base
-from neutron.services.trunk import utils
+from neutron.services.trunk.drivers.openvswitch import utils
 
 LOG = logging.getLogger(__name__)
 
