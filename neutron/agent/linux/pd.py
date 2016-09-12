@@ -202,10 +202,10 @@ class PrefixDelegation(object):
                                    lla_with_mask)
 
     def _spawn_lla_thread(self, gw_ifname, ns_name, lla_with_mask):
-            eventlet.spawn_n(self._ensure_lla_task,
-                             gw_ifname,
-                             ns_name,
-                             lla_with_mask)
+        eventlet.spawn_n(self._ensure_lla_task,
+                         gw_ifname,
+                         ns_name,
+                         lla_with_mask)
 
     def _delete_lla(self, router, lla_with_mask):
         if lla_with_mask and router['gw_interface']:

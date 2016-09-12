@@ -100,27 +100,27 @@ def get_segment_by_id(session, segment_id):
 
 def get_dynamic_segment(session, network_id, physical_network=None,
                         segmentation_id=None):
-        """Return a dynamic segment for the filters provided if one exists."""
-        with session.begin(subtransactions=True):
-            query = (session.query(segments_model.NetworkSegment).
-                     filter_by(network_id=network_id, is_dynamic=True))
-            if physical_network:
-                query = query.filter_by(physical_network=physical_network)
-            if segmentation_id:
-                query = query.filter_by(segmentation_id=segmentation_id)
-            record = query.first()
+    """Return a dynamic segment for the filters provided if one exists."""
+    with session.begin(subtransactions=True):
+        query = (session.query(segments_model.NetworkSegment).
+                 filter_by(network_id=network_id, is_dynamic=True))
+        if physical_network:
+            query = query.filter_by(physical_network=physical_network)
+        if segmentation_id:
+            query = query.filter_by(segmentation_id=segmentation_id)
+        record = query.first()
 
-        if record:
-            return _make_segment_dict(record)
-        else:
-            LOG.debug("No dynamic segment found for "
-                      "Network:%(network_id)s, "
-                      "Physical network:%(physnet)s, "
-                      "segmentation_id:%(segmentation_id)s",
-                      {'network_id': network_id,
-                       'physnet': physical_network,
-                       'segmentation_id': segmentation_id})
-            return None
+    if record:
+        return _make_segment_dict(record)
+    else:
+        LOG.debug("No dynamic segment found for "
+                  "Network:%(network_id)s, "
+                  "Physical network:%(physnet)s, "
+                  "segmentation_id:%(segmentation_id)s",
+                  {'network_id': network_id,
+                   'physnet': physical_network,
+                   'segmentation_id': segmentation_id})
+        return None
 
 
 def delete_network_segment(session, segment_id):

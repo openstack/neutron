@@ -488,7 +488,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                               "incompatible with DHCP service enabled.")
             if ((ip_ver == 4 and subnet_prefixlen > 30) or
                 (ip_ver == 6 and subnet_prefixlen > 126)):
-                    raise exc.InvalidInput(error_message=error_message)
+                raise exc.InvalidInput(error_message=error_message)
 
             net = netaddr.IPNetwork(s['cidr'])
             if net.is_multicast():
