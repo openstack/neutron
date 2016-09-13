@@ -171,8 +171,9 @@ class DriverController(object):
 
     def _attrs_to_driver(self, router):
         """Get a provider driver handle based on the ha/distributed flags."""
-        distributed = _is_distributed(router['distributed'])
-        ha = _is_ha(router['ha'])
+        distributed = _is_distributed(
+            router.get('distributed', lib_const.ATTR_NOT_SPECIFIED))
+        ha = _is_ha(router.get('ha', lib_const.ATTR_NOT_SPECIFIED))
         drivers = self.drivers.values()
         # make sure default is tried before the rest if defined
         if self.default_provider:

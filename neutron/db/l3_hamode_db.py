@@ -466,10 +466,15 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return n_utils.create_object_with_dependency(
             creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)
 
+    def _process_extra_attr_router_create(self, context, router_db,
+                                          router_res):
+        router_res['ha'] = self._is_ha(router_res)
+        super(L3_HA_NAT_db_mixin, self)._process_extra_attr_router_create(
+            context, router_db, router_res)
+
     @db_api.retry_if_session_inactive()
     def create_router(self, context, router):
         is_ha = self._is_ha(router['router'])
-        router['router']['ha'] = is_ha
         if is_ha:
             # we set the allocating status to hide it from the L3 agents
             # until we have created all of the requisite interfaces/networks
