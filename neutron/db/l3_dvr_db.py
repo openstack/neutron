@@ -376,12 +376,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                         router, subnet['network_id'],
                         const.DEVICE_OWNER_ROUTER_SNAT))
                 if cs_port:
-                    fixed_ips = list(cs_port['port']['fixed_ips'])
+                    fixed_ips = list(cs_port['fixed_ips'])
                     fixed_ips.append(fixed_ip)
                     try:
                         updated_port = self._core_plugin.update_port(
                             context.elevated(),
-                            cs_port['port_id'],
+                            cs_port['id'],
                             {'port': {'fixed_ips': fixed_ips}})
                     except Exception:
                         with excutils.save_and_reraise_exception():
@@ -451,7 +451,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if (p['network_id'] == net_id and
                 p['device_owner'] == device_owner and
                 self._port_has_ipv6_address(p, csnat_port_check=False)):
-                return port
+                return self._core_plugin._make_port_dict(p, None)
 
     def _check_for_multiprefix_csnat_port_and_update(
         self, context, router, network_id, subnet_id):
@@ -471,10 +471,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if cs_port:
                 fixed_ips = (
                     [fixedip for fixedip in
-                        cs_port['port']['fixed_ips']
+                        cs_port['fixed_ips']
                         if fixedip['subnet_id'] != subnet_id])
 
-                if len(fixed_ips) == len(cs_port['port']['fixed_ips']):
+                if len(fixed_ips) == len(cs_port['fixed_ips']):
                     # The subnet being detached from router is not part of
                     # ipv6 router port. No need to update the multiprefix.
                     return False
@@ -483,7 +483,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     # multiple prefix port - delete prefix from port
                     self._core_plugin.update_port(
                         context.elevated(),
-                        cs_port['port_id'], {'port': {'fixed_ips': fixed_ips}})
+                        cs_port['id'], {'port': {'fixed_ips': fixed_ips}})
                     return True
         return False
 
