@@ -24,15 +24,10 @@ Create Date: 2016-05-05 00:22:47.618593
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.db import migration
-
 
 # revision identifiers, used by Alembic.
 revision = '3d0e74aa7d37'
 down_revision = 'a963b38d82f4'
-
-# milestone identifier, used by neutron-db-manage
-neutron_milestone = [migration.NEWTON]
 
 
 def upgrade():
