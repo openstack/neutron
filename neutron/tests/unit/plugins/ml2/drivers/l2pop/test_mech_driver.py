@@ -1072,6 +1072,21 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_host_changed_twice(self):
         self._test_host_changed(twice=True)
 
+    def test_delete_port_no_fdb_entries_with_ha_port(self):
+        l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
+        l2pop_mech.L2PopulationAgentNotify = mock.Mock()
+        l2pop_mech.rpc_ctx = mock.Mock()
+        port = {'device_owner': l2pop_db.HA_ROUTER_PORTS[0]}
+        context = mock.Mock()
+        context.current = port
+        with mock.patch.object(l2pop_mech,
+                               '_get_agent_fdb',
+                               return_value=None) as upd_port_down,\
+                mock.patch.object(l2pop_mech.L2PopulationAgentNotify,
+                                  'remove_fdb_entries'):
+            l2pop_mech.delete_port_postcommit(context)
+            self.assertTrue(upd_port_down.called)
+
     def test_delete_port_invokes_update_device_down(self):
         l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
         l2pop_mech.L2PopulationAgentNotify = mock.Mock()
