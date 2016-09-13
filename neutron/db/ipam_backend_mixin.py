@@ -36,6 +36,7 @@ from neutron.db import db_base_plugin_common
 from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
 from neutron.db import segments_db
+from neutron.extensions import ip_allocation as ipa
 from neutron.extensions import portbindings
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
@@ -725,9 +726,11 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         fixed_ips_requested = validators.is_attr_set(new_port.get('fixed_ips'))
         old_ips = old_port.get('fixed_ips')
-        deferred_ip_allocation = (host and not old_host
-                                  and not old_ips
-                                  and not fixed_ips_requested)
+        deferred_ip_allocation = (
+            old_port.get('ip_allocation') == ipa.IP_ALLOCATION_DEFERRED
+            and host and not old_host
+            and not old_ips
+            and not fixed_ips_requested)
         if not deferred_ip_allocation:
             # Check that any existing IPs are valid on the new segment
             new_host_requested = host and host != old_host
