@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
 
 from neutron.agent.linux import bridge_lib
 from neutron.tests.common import net_helpers
@@ -28,7 +29,8 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
         bridge = self.useFixture(
             net_helpers.LinuxBridgeFixture(namespace=None)).bridge
         port_fixture = self.useFixture(
-            net_helpers.LinuxBridgePortFixture(bridge))
+            net_helpers.LinuxBridgePortFixture(
+                bridge, port_id=uuidutils.generate_uuid()))
         return bridge, port_fixture
 
     def test_is_bridged_interface(self):
@@ -42,12 +44,12 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
     def test_get_bridge_names(self):
         self.assertIn(self.bridge.name, bridge_lib.get_bridge_names())
 
-    def test_get_interface_bridged_time(self):
+    def test_get_interface_ifindex(self):
         port = self.port_fixture.br_port
-        t1 = bridge_lib.get_interface_bridged_time(port)
-        self.bridge.delif(port)
-        self.bridge.addif(port)
-        t2 = bridge_lib.get_interface_bridged_time(port)
+        t1 = bridge_lib.get_interface_ifindex(str(port))
+        self.port_fixture.veth_fixture.destroy()
+        self.port_fixture.veth_fixture._setUp()
+        t2 = bridge_lib.get_interface_ifindex(str(port))
         self.assertIsNotNone(t1)
         self.assertIsNotNone(t2)
         self.assertGreaterEqual(t2, t1)

@@ -39,10 +39,11 @@ def is_bridged_interface(interface):
         return os.path.exists(BRIDGE_PORT_FS_FOR_DEVICE % interface)
 
 
-def get_interface_bridged_time(interface):
+def get_interface_ifindex(interface):
     try:
-        return os.stat(BRIDGE_PORT_FS_FOR_DEVICE % interface).st_mtime
-    except OSError:
+        with open(os.path.join(BRIDGE_FS, interface, 'ifindex'), 'r') as fh:
+            return int(fh.read().strip())
+    except (IOError, ValueError):
         pass
 
 

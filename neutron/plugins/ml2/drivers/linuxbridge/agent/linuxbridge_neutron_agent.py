@@ -597,7 +597,12 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             LOG.debug("Done deleting interface %s", interface)
 
     def get_devices_modified_timestamps(self, devices):
-        return {d: bridge_lib.get_interface_bridged_time(d) for d in devices}
+        # NOTE(kevinbenton): we aren't returning real timestamps here. We
+        # are returning interface indexes instead which change when the
+        # interface is removed/re-added. This works for the direct
+        # comparison the common agent loop performs with these.
+        # See bug/1622833 for details.
+        return {d: bridge_lib.get_interface_ifindex(d) for d in devices}
 
     def get_all_devices(self):
         devices = set()

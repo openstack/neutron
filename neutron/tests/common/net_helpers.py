@@ -857,10 +857,11 @@ class LinuxBridgePortFixture(PortFixture):
         super(LinuxBridgePortFixture, self)._setUp()
         br_port_name = self._get_port_name()
         if br_port_name:
-            self.br_port, self.port = self.useFixture(
-                NamedVethFixture(veth0_prefix=br_port_name)).ports
+            self.veth_fixture = self.useFixture(
+                NamedVethFixture(veth0_prefix=br_port_name))
         else:
-            self.br_port, self.port = self.useFixture(VethFixture()).ports
+            self.veth_fixture = self.useFixture(VethFixture())
+        self.br_port, self.port = self.veth_fixture.ports
 
         if self.mac:
             self.port.link.set_address(self.mac)
