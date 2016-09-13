@@ -207,7 +207,7 @@ class TrackedResource(BaseResource):
     # can happen is two or more workers are trying to create a resource of a
     # give kind for the same tenant concurrently. Retrying the operation will
     # ensure that an UPDATE statement is emitted rather than an INSERT one
-    @db_api.retry_db_errors
+    @db_api.retry_if_session_inactive()
     def _set_quota_usage(self, context, tenant_id, in_use):
         return quota_api.set_quota_usage(
             context, self.name, tenant_id, in_use=in_use)

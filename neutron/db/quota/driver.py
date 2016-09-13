@@ -49,6 +49,7 @@ class DbQuotaDriver(object):
                     for key, resource in resources.items())
 
     @staticmethod
+    @db_api.retry_if_session_inactive()
     def get_tenant_quotas(context, resources, tenant_id):
         """Given a list of resources, retrieve the quotas for the given
         tenant. If no limits are found for the specified tenant, the operation
@@ -73,6 +74,7 @@ class DbQuotaDriver(object):
         return tenant_quota
 
     @staticmethod
+    @db_api.retry_if_session_inactive()
     def delete_tenant_quota(context, tenant_id):
         """Delete the quota entries for a given tenant_id.
 
@@ -88,6 +90,7 @@ class DbQuotaDriver(object):
                 raise n_exc.TenantQuotaNotFound(tenant_id=tenant_id)
 
     @staticmethod
+    @db_api.retry_if_session_inactive()
     def get_all_quotas(context, resources):
         """Given a list of resources, retrieve the quotas for the all tenants.
 
@@ -119,6 +122,7 @@ class DbQuotaDriver(object):
         return list(all_tenant_quotas.values())
 
     @staticmethod
+    @db_api.retry_if_session_inactive()
     def update_quota_limit(context, tenant_id, resource, limit):
         with context.session.begin():
             tenant_quota = context.session.query(quota_models.Quota).filter_by(
@@ -156,7 +160,7 @@ class DbQuotaDriver(object):
         quota_api.remove_expired_reservations(
             context, tenant_id=tenant_id)
 
-    @db_api.retry_db_errors
+    @db_api.retry_if_session_inactive()
     def make_reservation(self, context, tenant_id, resources, deltas, plugin):
         # Lock current reservation table
         # NOTE(salv-orlando): This routine uses DB write locks.

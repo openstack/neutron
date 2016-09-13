@@ -26,6 +26,7 @@ from oslo_db.sqlalchemy import enginefacade
 from oslo_log import log as logging
 from oslo_utils import excutils
 import osprofiler.sqlalchemy
+from pecan import util as p_util
 import six
 import sqlalchemy
 from sqlalchemy.orm import exc
@@ -137,7 +138,10 @@ def retry_if_session_inactive(context_var_name='context'):
     """
     def decorator(f):
         try:
-            ctx_arg_index = f.__code__.co_varnames.index(context_var_name)
+            # NOTE(kevinbenton): we use pecan's util function here because it
+            # deals with the horrors of finding args of already decorated
+            # functions
+            ctx_arg_index = p_util.getargspec(f).args.index(context_var_name)
         except ValueError:
             raise RuntimeError(_LE("Could not find position of var %s")
                                % context_var_name)
