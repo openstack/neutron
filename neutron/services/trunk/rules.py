@@ -60,8 +60,12 @@ class TrunkPortValidator(object):
         self.port_id = port_id
         self._port = None
 
-    def validate(self, context):
-        """Validate that the port can be used in a trunk."""
+    def validate(self, context, parent_port=True):
+        """Validate that the port can be used in a trunk.
+
+        :param parent_port: True if the port is intended for use
+                            as parent in a trunk.
+        """
         # TODO(tidwellr): there is a chance of a race between the
         # time these checks are performed and the time the trunk
         # creation is executed. To be revisited, if it bites.
@@ -77,8 +81,21 @@ class TrunkPortValidator(object):
         if trunks:
             raise trunk_exc.ParentPortInUse(port_id=self.port_id)
 
-        if not self.can_be_trunked(context):
-            raise trunk_exc.ParentPortInUse(port_id=self.port_id)
+        if parent_port:
+            # if the port is being used as a parent in a trunk, check if
+            # it can be trunked, i.e. if it is already associated to physical
+            # resources (namely it is bound). Bound ports may be used as
+            # trunk parents, but that depends on the underlying driver in
+            # charge.
+            if not self.can_be_trunked(context):
+                raise trunk_exc.ParentPortInUse(port_id=self.port_id)
+        else:
+            # if the port is being used as subport in a trunk, check if it is a
+            # port that is not actively used for other purposes, e.g. a router
+            # port, compute port, DHCP port etc. We have no clue what the side
+            # effects of connecting the port to a trunk would be, and it is
+            # better to err on the side of caution and prevent the operation.
+            self.check_not_in_use(context)
 
         return self.port_id
 
@@ -115,6 +132,19 @@ class TrunkPortValidator(object):
             return drivers[0].can_trunk_bound_port
         else:
             return False
+
+    def check_not_in_use(self, context):
+        """Raises PortInUse for ports assigned for device purposes."""
+        core_plugin = manager.NeutronManager.get_plugin()
+        self._port = core_plugin.get_port(context, self.port_id)
+        # NOTE(armax): the trunk extension itself does not make use of the
+        # device_id/device_owner fields, because it has no reason to. If
+        # need be, this check can be altered to accommodate the change in
+        # logic.
+        if self._port['device_id']:
+            raise n_exc.PortInUse(net_id=self._port['network_id'],
+                                  port_id=self._port['id'],
+                                  device_id=self._port['device_id'])
 
 
 class SubPortsValidator(object):
@@ -209,6 +239,7 @@ class SubPortsValidator(object):
             msg = _("Segmentation ID '%s' is not in range") % segmentation_id
             raise n_exc.InvalidInput(error_message=msg)
 
+        # Check if the subport is already participating in an active trunk
         trunk_validator = TrunkPortValidator(subport['port_id'])
-        trunk_validator.validate(context)
+        trunk_validator.validate(context, parent_port=False)
         return subport
