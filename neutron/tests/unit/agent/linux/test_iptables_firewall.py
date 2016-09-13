@@ -1910,6 +1910,12 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall._build_ipv4v6_mac_ip_list(mac_oth, ipv6,
                                                 mac_ipv4_pairs, mac_ipv6_pairs)
         self.assertEqual(fake_ipv6_pair, mac_ipv6_pairs)
+        # ensure that LLA is not added again for another v6 addr
+        ipv62 = 'fe81::1'
+        self.firewall._build_ipv4v6_mac_ip_list(mac_oth, ipv62,
+                                                mac_ipv4_pairs, mac_ipv6_pairs)
+        fake_ipv6_pair.append((mac_unix, ipv62))
+        self.assertEqual(fake_ipv6_pair, mac_ipv6_pairs)
 
 
 class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):

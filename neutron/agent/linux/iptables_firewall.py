@@ -389,7 +389,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             mac_ipv6_pairs.append((mac, ip_address))
             lla = str(netutils.get_ipv6_addr_by_EUI64(
                     constants.IPv6_LLA_PREFIX, mac))
-            mac_ipv6_pairs.append((mac, lla))
+            if (mac, lla) not in mac_ipv6_pairs:
+                # only add once so we don't generate duplicate rules
+                mac_ipv6_pairs.append((mac, lla))
 
     def _spoofing_rule(self, port, ipv4_rules, ipv6_rules):
         # Fixed rules for traffic sourced from unspecified addresses: 0.0.0.0
