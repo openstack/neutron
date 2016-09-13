@@ -38,7 +38,11 @@ function load_module {
 function is_kernel_supported_for_ovs25 {
     major=$(uname -r | cut -d\. -f 1)
     minor=$(uname -r | cut -d\. -f 2)
-    if [ $major -lt 4 -o $minor -le 3 ]; then
+    if [ $major -le 3 ]; then
+        # All 3.x branches and lesser are supported
+        return 0
+    elif [ $major -eq 4 -a $minor -le 3 ]; then
+        # If it's version 4, minor must not be higher than 3
         return 0
     fi
 
