@@ -72,8 +72,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
         agent_host = context.host
         fdb_entries = self._get_agent_fdb(context.bottom_bound_segment,
                                           port, agent_host)
-        session = db_api.get_session()
-        if port['device_owner'] in l2pop_db.HA_ROUTER_PORTS:
+        if port['device_owner'] in l2pop_db.HA_ROUTER_PORTS and fdb_entries:
+            session = db_api.get_session()
             network_id = port['network_id']
             other_fdb_ports = self._get_ha_port_agents_fdb(
                 session, network_id, port['device_id'])
