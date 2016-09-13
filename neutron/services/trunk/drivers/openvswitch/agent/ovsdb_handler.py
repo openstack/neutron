@@ -22,7 +22,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.agent.common import ovs_lib
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.callbacks import events
@@ -43,12 +43,24 @@ LOG = logging.getLogger(__name__)
 WAIT_FOR_PORT_TIMEOUT = 60
 
 
-def lock_on_bridge_name(f):
-    @functools.wraps(f)
-    def inner(bridge_name, *args, **kwargs):
-        with lockutils.lock(bridge_name):
-            return f(bridge_name, *args, **kwargs)
-    return inner
+def lock_on_bridge_name(required_parameter):
+    def func_decor(f):
+        try:
+            br_arg_index = f.__code__.co_varnames.index(required_parameter)
+        except ValueError:
+            raise RuntimeError(_("%s parameter is required for this decorator")
+                               % required_parameter)
+
+        @functools.wraps(f)
+        def inner(*args, **kwargs):
+            try:
+                bridge_name = kwargs[required_parameter]
+            except KeyError:
+                bridge_name = args[br_arg_index]
+            with lockutils.lock(bridge_name):
+                return f(*args, **kwargs)
+        return inner
+    return func_decor
 
 
 def is_trunk_bridge(port_name):
@@ -66,7 +78,15 @@ def bridge_has_instance_port(bridge):
     """True if there is an OVS port that doesn't have bridge or patch ports
        prefix.
     """
-    ifaces = bridge.get_iface_name_list()
+    try:
+        ifaces = bridge.get_iface_name_list()
+    except RuntimeError as e:
+        LOG.error(_LE("Cannot obtain interface list for bridge %(bridge)s: "
+                      "%(err)s"),
+                  {'bridge': bridge.br_name,
+                   'err': e})
+        return False
+
     return any(iface for iface in ifaces
                if not is_trunk_service_port(iface))
 
@@ -107,9 +127,9 @@ class OVSDBHandler(object):
             bridge_name = port_event['external_ids'].get('bridge_name')
             if bridge_name and is_trunk_bridge(bridge_name):
                 eventlet.spawn_n(
-                    self.handle_trunk_remove, port_event)
+                    self.handle_trunk_remove, bridge_name, port_event)
 
-    @lock_on_bridge_name
+    @lock_on_bridge_name(required_parameter='bridge_name')
     def handle_trunk_add(self, bridge_name):
         """Create trunk bridge based on parent port ID.
 
@@ -123,6 +143,15 @@ class OVSDBHandler(object):
         # If the VM fails to show up, i.e. this fails with a timeout,
         # then we clean the dangling bridge.
         bridge = ovs_lib.OVSBridge(bridge_name)
+
+        # Handle condition when there was bridge in both added and removed
+        # events and handle_trunk_remove greenthread was executed before
+        # handle_trunk_add
+        if not bridge.bridge_exists(bridge_name):
+            LOG.debug("The bridge %s was deleted before it was handled.",
+                      bridge_name)
+            return
+
         bridge_has_port_predicate = functools.partial(
             bridge_has_instance_port, bridge)
         try:
@@ -153,8 +182,8 @@ class OVSDBHandler(object):
                       {'bridge_name': bridge.br_name,
                        'err': e})
 
-    @lock_on_bridge_name
-    def handle_trunk_remove(self, port):
+    @lock_on_bridge_name(required_parameter='bridge_name')
+    def handle_trunk_remove(self, bridge_name, port):
         """Remove wiring between trunk bridge and integration bridge.
 
         The method calls into trunk manager to remove patch ports on
@@ -162,6 +191,7 @@ class OVSDBHandler(object):
         with a lock to prevent deletion of bridge while creation is still in
         process.
 
+        :param bridge_name: Name of the bridge used for locking purposes.
         :param port: Parent port dict.
         """
         try:
@@ -185,9 +215,6 @@ class OVSDBHandler(object):
                                 trunk_bridge=None, parent_port=None):
         """Create OVS ports associated to the logical subports."""
         # Tell the server that subports must be bound to this host.
-        # If this fails at the very beginning of the OVS trunk bridge
-        # lifecycle (trunk_bridge != None), then destroy the bridge
-        # and give up.
         subport_bindings = self.trunk_rpc.update_subport_bindings(
             context, subports)
 
@@ -218,23 +245,22 @@ class OVSDBHandler(object):
             # NOTE(status_police): Trunk bridge has missing metadata now, it
             # will cause troubles during deletion.
             # TODO(jlibosva): Investigate how to proceed during removal of
-            # trunk bridge that doesn't have metadata stored.
+            # trunk bridge that doesn't have metadata stored and whether it's
+            # wise to set DEGRADED status in case we don't have metadata
+            # present on the bridge.
             self.trunk_rpc.update_trunk_status(
                 context, trunk_id, constants.DEGRADED_STATUS)
             return
 
         # Set trunk status to DEGRADED if not all subports were created
         # succesfully
-        if len(subport_ids) != len(subports):
-            # NOTE(status_police): Not all subports were processed so trunk
-            # is changed to DEGRADED status to reflect it.
-            self.trunk_rpc.update_trunk_status(
-                context, trunk_id, constants.DEGRADED_STATUS)
-        else:
-            # NOTE(status_police): All new resources were processed and thus
-            # trunk should be set back to ACTIVE status.
-            self.trunk_rpc.update_trunk_status(context, trunk_id,
-                                               constants.ACTIVE_STATUS)
+        status = (constants.ACTIVE_STATUS if len(subport_ids) == len(subports)
+                  else constants.DEGRADED_STATUS)
+        # NOTE(status_police): Set trunk status to ACTIVE if all subports were
+        # added successfully. If some port wasn't added, trunk is set to
+        # DEGRADED.
+        self.trunk_rpc.update_trunk_status(
+            context, trunk_id, status)
 
         LOG.debug("Added trunk: %s", trunk_id)
 
