@@ -17,6 +17,7 @@ import itertools
 
 from neutron_lib import exceptions as lib_exc
 from six import add_metaclass
+from six import with_metaclass
 from sqlalchemy import and_
 
 from neutron._i18n import _
@@ -325,3 +326,6 @@ class RbacNeutronMetaclass(type):
         mcs.subscribe_to_rbac_events(cls)
 
         return cls
+
+
+NeutronRbacObject = with_metaclass(RbacNeutronMetaclass, base.NeutronDbObject)
