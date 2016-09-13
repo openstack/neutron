@@ -62,6 +62,7 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                            'service_type': constants.FLAVORS,
                            'description': 'the best flavor',
                            'tenant_id': tenant_id,
+                           'project_id': tenant_id,
                            'enabled': True}}
 
         expected = copy.deepcopy(data)
@@ -228,6 +229,7 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         expected = {'service_profile': {'description': 'the best sp',
                                         'driver': '',
                                         'tenant_id': tenant_id,
+                                        'project_id': tenant_id,
                                         'enabled': True,
                                         'metainfo': '{"data": "value"}'}}
 
@@ -374,7 +376,8 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
     def test_associate_service_profile_with_flavor(self):
         tenant_id = uuidutils.generate_uuid()
         expected = {'service_profile': {'id': _uuid(),
-                                        'tenant_id': tenant_id}}
+                                        'tenant_id': tenant_id,
+                                        'project_id': tenant_id}}
         instance = self.plugin.return_value
         instance.create_flavor_service_profile.return_value = (
             expected['service_profile'])

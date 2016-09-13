@@ -34,3 +34,7 @@ class ExtensionsTest(base.BaseNetworkTest):
     @test.idempotent_id('19db409e-a23f-445d-8bc8-ca3d64c84706')
     def test_list_extensions_pagination(self):
         self._test_list_extensions_includes('pagination')
+
+    @test.idempotent_id('155b7bc2-e358-4dd8-bf3e-1774c084567f')
+    def test_list_extensions_project_id(self):
+        self._test_list_extensions_includes('project-id')

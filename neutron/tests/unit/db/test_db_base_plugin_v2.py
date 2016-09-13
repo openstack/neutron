@@ -2925,14 +2925,16 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                       query_params=query_params)
 
     def test_list_networks_with_fields(self):
-        with self.network(name='net1') as net1:
+        with self.network(name='net1'):
             req = self.new_list_request('networks',
                                         params='fields=name')
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(1, len(res['networks']))
-            self.assertEqual(res['networks'][0]['name'],
-                             net1['network']['name'])
-            self.assertIsNone(res['networks'][0].get('id'))
+            net = res['networks'][0]
+            self.assertEqual('net1', net['name'])
+            self.assertNotIn('id', net)
+            self.assertNotIn('tenant_id', net)
+            self.assertNotIn('project_id', net)
 
     def test_list_networks_with_parameters_invalid_values(self):
         with self.network(name='net1', admin_state_up=False),\

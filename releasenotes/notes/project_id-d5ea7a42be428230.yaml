@@ -1,0 +1,7 @@
+---
+features:
+  - The Networking API now supports the 'project_id' field in requests and
+    responses, for compatibility with the Identity (Keystone) API V3. A new
+    API extension, 'project-id', has been added to allow API users to detect
+    if the 'project_id' field is supported. Note that the 'tenant_id' field
+    is still supported, and the two fields are functionally equivalent.

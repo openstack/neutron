@@ -129,7 +129,9 @@ class TestResDict(base.BaseTestCase):
         # req body
         res_dict2 = {}
         attributes.populate_tenant_id(ctx, res_dict2, None, True)
-        self.assertEqual({'tenant_id': ctx.tenant_id}, res_dict2)
+        self.assertEqual(
+            {'tenant_id': ctx.tenant_id, 'project_id': ctx.tenant_id},
+            res_dict2)
 
         # if the tenant_id is mandatory for the resource and not specified
         # in the request nor in the context, an exception should be raised

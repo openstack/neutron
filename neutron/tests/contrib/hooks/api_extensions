@@ -23,6 +23,7 @@ NETWORK_API_EXTENSIONS="
     network_availability_zone, \
     pagination, \
     port-security, \
+    project-id, \
     provider, \
     qos, \
     quotas, \

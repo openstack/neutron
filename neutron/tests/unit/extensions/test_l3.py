@@ -100,8 +100,9 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
 
     def test_router_create(self):
         router_id = _uuid()
+        tenant_id = _uuid()
         data = {'router': {'name': 'router1', 'admin_state_up': True,
-                           'tenant_id': _uuid(),
+                           'tenant_id': tenant_id, 'project_id': tenant_id,
                            'external_gateway_info': None}}
         return_value = copy.deepcopy(data['router'])
         return_value.update({'status': "ACTIVE", 'id': router_id})

@@ -27,6 +27,8 @@ from sqlalchemy import or_
 from sqlalchemy import sql
 
 from neutron._i18n import _LE
+from neutron.api.v2 import attributes
+
 
 LOG = logging.getLogger(__name__)
 
@@ -189,9 +191,9 @@ class CommonDbMixin(object):
 
     def _fields(self, resource, fields):
         if fields:
-            return dict(((key, item) for key, item in resource.items()
-                         if key in fields))
-        return resource
+            resource = {key: item for key, item in resource.items()
+                        if key in fields}
+        return attributes.populate_project_info(resource)
 
     def _get_by_id(self, context, model, id):
         query = self._model_query(context, model)
@@ -294,7 +296,8 @@ class CommonDbMixin(object):
                                            limit=limit,
                                            marker_obj=marker_obj,
                                            page_reverse=page_reverse)
-        items = [dict_func(c, fields) for c in query]
+        items = [attributes.populate_project_info(dict_func(c, fields))
+                 for c in query]
         if limit and page_reverse:
             items.reverse()
         return items

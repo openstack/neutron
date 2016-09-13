@@ -554,6 +554,7 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
         self.client2.show_qos_policy(qos_pol['id'])
         rbac_pol = {'target_tenant': '*',
                     'tenant_id': self.admin_client.tenant_id,
+                    'project_id': self.admin_client.tenant_id,
                     'object_type': 'qos_policy',
                     'object_id': qos_pol['id'],
                     'action': 'access_as_shared'}

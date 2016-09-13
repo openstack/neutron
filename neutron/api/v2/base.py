@@ -75,6 +75,23 @@ class Controller(object):
     def member_actions(self):
         return self._member_actions
 
+    def _init_policy_attrs(self):
+        """Create the list of attributes required by policy.
+
+        If the attribute map contains a tenant_id policy, then include
+        project_id to bring the resource into the brave new world.
+
+        :return: sorted list of attributes required by policy
+
+        """
+        policy_attrs = {name for (name, info) in self._attr_info.items()
+                        if info.get('required_by_policy')}
+        if 'tenant_id' in policy_attrs:
+            policy_attrs.add('project_id')
+
+        # Could use list(), but sorted() makes testing easier.
+        return sorted(policy_attrs)
+
     def __init__(self, plugin, collection, resource, attr_info,
                  allow_bulk=False, member_actions=None, parent=None,
                  allow_pagination=False, allow_sorting=False):
@@ -90,8 +107,7 @@ class Controller(object):
         self._native_bulk = self._is_native_bulk_supported()
         self._native_pagination = self._is_native_pagination_supported()
         self._native_sorting = self._is_native_sorting_supported()
-        self._policy_attrs = [name for (name, info) in self._attr_info.items()
-                              if info.get('required_by_policy')]
+        self._policy_attrs = self._init_policy_attrs()
         self._notifier = n_rpc.get_notifier('network')
         self._member_actions = member_actions
         self._primary_key = self._get_primary_key()
@@ -146,6 +162,13 @@ class Controller(object):
         """
         attributes_to_exclude = []
         for attr_name in data.keys():
+            # TODO(amotoki): At now, all attribute maps have tenant_id and
+            # determine excluded attributes based on tenant_id.
+            # We need to migrate tenant_id to project_id later
+            # as attr_info is referred to in various places and we need
+            # to check all logis carefully.
+            if attr_name == 'project_id':
+                continue
             attr_data = self._attr_info.get(attr_name)
             if attr_data and attr_data['is_visible']:
                 if policy.check(
@@ -159,6 +182,12 @@ class Controller(object):
             # if the code reaches this point then either the policy check
             # failed or the attribute was not visible in the first place
             attributes_to_exclude.append(attr_name)
+            # TODO(amotoki): As mentioned in the above TODO,
+            # we treat project_id and tenant_id equivalently.
+            # This should be migrated to project_id in Ocata.
+            if attr_name == 'tenant_id':
+                attributes_to_exclude.append('project_id')
+
         return attributes_to_exclude
 
     def _view(self, context, data, fields_to_strip=None):
