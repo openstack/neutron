@@ -153,8 +153,10 @@ class TrunkSkeleton(object):
            :param trunk: The trunk that the given port belongs to
            :param trunk_host: The host to bind the given port to
         """
-        port = self.core_plugin.update_port(context, port_id,
-                             {'port': {portbindings.HOST_ID: trunk_host}})
+        port = self.core_plugin.update_port(
+            context, port_id,
+            {'port': {portbindings.HOST_ID: trunk_host,
+                      'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER}})
         vif_type = port.get(portbindings.VIF_TYPE)
         if vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
             raise trunk_exc.SubPortBindingError(port_id=port_id,
