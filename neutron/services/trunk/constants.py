@@ -27,14 +27,21 @@
 # with the trunk.
 ACTIVE_STATUS = 'ACTIVE'
 
-# The server has acknowledged the user request: a user has asked to either
-# create a trunk or add/remove resources to a trunk, and the plugin has
-# created/updated the logical resource. The request has been passed along
-# to a backend, and the physical resources associated to the trunk are
-# in the process of being provisioned. A trunk is in DOWN state any time
-# the physical resources have been deprovisioned due to a system event,
-# such as instance deletion. In such a situation, the logical resource
-# exists but it has no physical resources associated with it.
+# A trunk is in DOWN state any time the logical and physical resources
+# associated to a trunk are not in sync. This can happen in the following
+# cases:
+# a) A user has asked to create a trunk, or add(remove) subports to a
+#    trunk in ACTIVE state. In this case, the plugin has created/updated the
+#    logical resource, and the request has been passed along to a backend. The
+#    physical resources associated to the trunk are in the process of being
+#    (de)commissioned. While this happens, the logical and physical state are
+#    mismatching, albeit temporarily during subport operations, or until a user
+#    spawns a VM after a trunk creation.
+# b) A system event, such as instance deletion, has led to the deprovisioning
+#    of the entire set of physical resources associated to the trunk. In this
+#    case, the logical resource exists but it has no physical resources
+#    associated with it, and the logical and physical state of the trunk are
+#    not matching.
 DOWN_STATUS = 'DOWN'
 
 # A driver/backend has acknowledged the server request: once the server
