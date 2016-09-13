@@ -1279,6 +1279,8 @@ class TestOvsNeutronAgent(object):
                              self.agent.int_ofports["physnet1"])
             self.assertEqual("phys_veth_ofport",
                              self.agent.phys_ofports["physnet1"])
+            int_br.add_port.assert_called_with("int-br-eth")
+            phys_br.add_port.assert_called_with("phy-br-eth")
 
     def _test_setup_physical_bridges_change_from_veth_to_patch_conf(
             self, port_exists=False):

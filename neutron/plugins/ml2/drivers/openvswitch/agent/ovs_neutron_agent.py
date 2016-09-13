@@ -1141,8 +1141,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     utils.execute(['udevadm', 'settle', '--timeout=10'])
                 int_veth, phys_veth = ip_wrapper.add_veth(int_if_name,
                                                           phys_if_name)
-                int_ofport = self.int_br.add_port(int_veth)
-                phys_ofport = br.add_port(phys_veth)
+                int_ofport = self.int_br.add_port(int_if_name)
+                phys_ofport = br.add_port(phys_if_name)
             else:
                 # Drop ports if the interface type doesn't match the
                 # configuration value
