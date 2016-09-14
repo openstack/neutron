@@ -116,11 +116,10 @@ class DhcpAgent(manager.Manager):
         except exceptions.Conflict:
             # No need to resync here, the agent will receive the event related
             # to a status update for the network
-            LOG.warning(_LW('Unable to %(action)s dhcp for %(net_id)s: there '
-                            'is a conflict with its current state; please '
-                            'check that the network and/or its subnet(s) '
-                            'still exist.'),
-                        {'net_id': network.id, 'action': action})
+            LOG.debug('Unable to %(action)s dhcp for %(net_id)s: there '
+                      'is a conflict with its current state; please '
+                      'check that the network and/or its subnet(s) '
+                      'still exist.', {'net_id': network.id, 'action': action})
         except Exception as e:
             if getattr(e, 'exc_type', '') != 'IpAddressGenerationFailure':
                 # Don't resync if port could not be created because of an IP
@@ -385,6 +384,7 @@ class DhcpAgent(manager.Manager):
             if self._is_port_on_this_agent(updated_port):
                 orig = self.cache.get_port_by_id(updated_port['id'])
                 # assume IP change if not in cache
+                orig = orig or {'fixed_ips': []}
                 old_ips = {i['ip_address'] for i in orig['fixed_ips'] or []}
                 new_ips = {i['ip_address'] for i in updated_port['fixed_ips']}
                 if old_ips != new_ips:

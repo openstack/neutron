@@ -1608,6 +1608,15 @@ class TestDnsmasq(TestBase):
                 exp_addn_name, exp_addn_data,
                 exp_opt_name, exp_opt_data,)
 
+    def test_reload_allocations_no_interface(self):
+        net = FakeDualNetwork()
+        ipath = '/dhcp/%s/interface' % net.id
+        self.useFixture(tools.OpenFixture(ipath))
+        test_pm = mock.Mock()
+        dm = self._get_dnsmasq(net, test_pm)
+        dm.reload_allocations()
+        self.assertFalse(test_pm.register.called)
+
     def test_reload_allocations(self):
         (exp_host_name, exp_host_data,
          exp_addn_name, exp_addn_data,
@@ -1617,7 +1626,7 @@ class TestDnsmasq(TestBase):
         hpath = '/dhcp/%s/host' % net.id
         ipath = '/dhcp/%s/interface' % net.id
         self.useFixture(tools.OpenFixture(hpath))
-        self.useFixture(tools.OpenFixture(ipath))
+        self.useFixture(tools.OpenFixture(ipath, 'tapdancingmice'))
         test_pm = mock.Mock()
         dm = self._get_dnsmasq(net, test_pm)
         dm.reload_allocations()
