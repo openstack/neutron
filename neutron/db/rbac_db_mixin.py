@@ -20,6 +20,7 @@ from sqlalchemy.orm import exc
 from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import rbac_db_models as models
 from neutron.extensions import rbac as ext_rbac
@@ -34,6 +35,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
     object_type_cache = {}
     supported_extension_aliases = ['rbac-policies']
 
+    @db_api.retry_if_session_inactive()
     def create_rbac_policy(self, context, rbac_policy):
         e = rbac_policy['rbac_policy']
         try:
@@ -60,6 +62,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         res['object_type'] = db_entry.object_type
         return self._fields(res, fields)
 
+    @db_api.retry_if_session_inactive()
     def update_rbac_policy(self, context, id, rbac_policy):
         pol = rbac_policy['rbac_policy']
         entry = self._get_rbac_policy(context, id)
@@ -75,6 +78,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
             entry.update(pol)
         return self._make_rbac_policy_dict(entry)
 
+    @db_api.retry_if_session_inactive()
     def delete_rbac_policy(self, context, id):
         entry = self._get_rbac_policy(context, id)
         object_type = entry['object_type']
@@ -98,10 +102,12 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         except exc.NoResultFound:
             raise ext_rbac.RbacPolicyNotFound(id=id, object_type=object_type)
 
+    @db_api.retry_if_session_inactive()
     def get_rbac_policy(self, context, id, fields=None):
         return self._make_rbac_policy_dict(
             self._get_rbac_policy(context, id), fields=fields)
 
+    @db_api.retry_if_session_inactive()
     def get_rbac_policies(self, context, filters=None, fields=None,
                           sorts=None, limit=None, page_reverse=False):
         filters = filters or {}
