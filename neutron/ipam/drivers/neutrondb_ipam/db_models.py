@@ -21,40 +21,6 @@ from sqlalchemy import orm as sa_orm
 # Database models used by the neutron DB IPAM driver
 
 
-# NOTE(salv-orlando): This is meant to replace the class
-# neutron.db.models_v2.IPAvailabilityRange.
-class IpamAvailabilityRange(model_base.BASEV2):
-    """Internal representation of available IPs for Neutron subnets.
-
-    Allocation - first entry from the range will be allocated.
-    If the first entry is equal to the last entry then this row
-    will be deleted.
-    Recycling ips involves reading the IPAllocationPool and IPAllocation tables
-    and inserting ranges representing available ips.  This happens after the
-    final allocation is pulled from this table and a new ip allocation is
-    requested.  Any contiguous ranges of available ips will be inserted as a
-    single range.
-    """
-
-    allocation_pool_id = sa.Column(sa.String(36),
-                                   sa.ForeignKey('ipamallocationpools.id',
-                                                 ondelete="CASCADE"),
-                                   nullable=False,
-                                   primary_key=True)
-    first_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
-    last_ip = sa.Column(sa.String(64), nullable=False, primary_key=True)
-    __table_args__ = (
-        sa.Index('ix_ipamavailabilityranges_first_ip_allocation_pool_id',
-                 'first_ip', 'allocation_pool_id'),
-        sa.Index('ix_ipamavailabilityranges_last_ip_allocation_pool_id',
-                 'last_ip', 'allocation_pool_id'),
-        model_base.BASEV2.__table_args__
-    )
-
-    def __repr__(self):
-        return "%s - %s" % (self.first_ip, self.last_ip)
-
-
 # NOTE(salv-orlando): The following data model creates redundancy with
 # models_v2.IPAllocationPool. This level of data redundancy could be tolerated
 # considering that the following model is specific to the IPAM driver logic.
@@ -72,10 +38,6 @@ class IpamAllocationPool(model_base.BASEV2, model_base.HasId):
                                nullable=False)
     first_ip = sa.Column(sa.String(64), nullable=False)
     last_ip = sa.Column(sa.String(64), nullable=False)
-    available_ranges = sa_orm.relationship(IpamAvailabilityRange,
-                                           backref='allocation_pool',
-                                           lazy="joined",
-                                           cascade='all, delete-orphan')
 
     def __repr__(self):
         return "%s - %s" % (self.first_ip, self.last_ip)

@@ -76,10 +76,6 @@ class IPAllocationFailed(exceptions.NeutronException):
     message = _("IP allocation failed. Try again later.")
 
 
-class IpamAvailabilityRangeNoChanges(exceptions.NeutronException):
-    message = _("New value for first_ip or last_ip has to be specified.")
-
-
 class IpamValueInvalid(exceptions.Conflict):
     def __init__(self, message=None):
         self.message = message

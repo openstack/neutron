@@ -21,7 +21,6 @@ import testtools
 from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import models_v2
-from neutron.ipam.drivers.neutrondb_ipam import db_models as ipam_models
 from neutron.tests.unit import testlib_api
 
 
@@ -64,13 +63,6 @@ class IpamTestCase(testlib_api.SqlTestCase):
     def assert_ip_alloc_matches(self, expected):
         result_set = self.cxt.session.query(models_v2.IPAllocation).all()
         keys = ['port_id', 'ip_address', 'subnet_id', 'network_id']
-        actual = self.result_set_to_dicts(result_set, keys)
-        self.assertEqual(expected, actual)
-
-    def assert_ip_avail_range_matches(self, expected):
-        result_set = self.cxt.session.query(
-            ipam_models.IpamAvailabilityRange).all()
-        keys = ['first_ip', 'last_ip']
         actual = self.result_set_to_dicts(result_set, keys)
         self.assertEqual(expected, actual)
 
