@@ -204,7 +204,8 @@ class NeutronObject(obj_base.VersionedObject,
 
     @classmethod
     @abc.abstractmethod
-    def get_objects(cls, context, _pager=None, **kwargs):
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    **kwargs):
         raise NotImplementedError()
 
     def create(self):
@@ -405,17 +406,21 @@ class NeutronDbObject(NeutronObject):
                 return cls._load_object(context, db_obj)
 
     @classmethod
-    def get_objects(cls, context, _pager=None, **kwargs):
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    **kwargs):
         """
         Fetch objects from DB and convert them to versioned objects.
 
         :param context:
         :param _pager: a Pager object representing advanced sorting/pagination
                        criteria
+        :param validate_filters: Raises an error in case of passing an unknown
+                                 filter
         :param kwargs: multiple keys defined by key=value pairs
         :return: list of objects of NeutronDbObject class
         """
-        cls.validate_filters(**kwargs)
+        if validate_filters:
+            cls.validate_filters(**kwargs)
         with db_api.autonested_transaction(context.session):
             db_objs = obj_db_api.get_objects(
                 context, cls.db_model, _pager=_pager,

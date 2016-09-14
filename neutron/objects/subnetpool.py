@@ -90,9 +90,12 @@ class SubnetPool(base.NeutronDbObject):
             return pool_obj
 
     @classmethod
-    def get_objects(cls, context, **kwargs):
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    **kwargs):
         with db_api.autonested_transaction(context.session):
-            objs = super(SubnetPool, cls).get_objects(context, **kwargs)
+            objs = super(SubnetPool, cls).get_objects(context, _pager,
+                                                      validate_filters,
+                                                      **kwargs)
             for obj in objs:
                 obj.reload_prefixes()
             return objs

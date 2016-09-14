@@ -645,6 +645,17 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                               self._test_class.get_objects, self.context,
                               fake_field='xxx')
 
+    def test_get_objects_without_validate_filters(self):
+        with mock.patch.object(
+                obj_db_api, 'get_objects',
+                side_effect=self.fake_get_objects):
+            objs = self._test_class.get_objects(self.context,
+                                                validate_filters=False,
+                                                unknown_filter='value')
+            self.assertItemsEqual(
+                [get_obj_db_fields(obj) for obj in self.objs],
+                [get_obj_db_fields(obj) for obj in objs])
+
     def test_count(self):
         if not isinstance(self._test_class, base.NeutronDbObject):
             self.skipTest('Class %s does not inherit from NeutronDbObject' %

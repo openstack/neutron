@@ -63,3 +63,7 @@ class SubnetsSearchCriteriaTest(base.BaseSearchCriteriaTest):
     @test.idempotent_id('d851937c-9821-4b46-9d18-43e9077ecac0')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()
+
+    @test.idempotent_id('c0f9280b-9d81-4728-a967-6be22659d4c8')
+    def test_list_validation_filters(self):
+        self._test_list_validation_filters()
