@@ -18,6 +18,7 @@ import random
 
 import netaddr
 from neutron_lib import exceptions as n_exc
+from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
 
@@ -203,7 +204,16 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # Create IP allocation request object
         # The only defined status at this stage is 'ALLOCATED'.
         # More states will be available in the future - e.g.: RECYCLABLE
-        self.subnet_manager.create_allocation(session, ip_address)
+        try:
+            with session.begin(subtransactions=True):
+                # NOTE(kevinbenton): we use a subtransaction to force
+                # a flush here so we can capture DBReferenceErrors due
+                # to concurrent subnet deletions. (galera would deadlock
+                # later on final commit)
+                self.subnet_manager.create_allocation(session, ip_address)
+        except db_exc.DBReferenceError:
+            raise n_exc.SubnetNotFound(
+                subnet_id=self.subnet_manager.neutron_id)
         return ip_address
 
     def deallocate(self, address):
