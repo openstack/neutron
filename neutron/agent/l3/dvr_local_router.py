@@ -428,14 +428,19 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             to_fip_interface_name = (
                 self.get_external_device_interface_name(ex_gw_port))
             self.process_floating_ip_addresses(to_fip_interface_name)
-        for p in self.internal_ports:
-            # NOTE: When removing the gateway port, pass in the snat_port
-            # cache along with the current ports.
-            gateway = self.get_snat_port_for_internal_port(p, self.snat_ports)
-            if not gateway:
-                continue
-            internal_interface = self.get_internal_device_name(p['id'])
-            self._snat_redirect_remove(gateway, p, internal_interface)
+        # NOTE:_snat_redirect_remove should be only called when the
+        # gateway is cleared and should not be called when the gateway
+        # is moved or rescheduled.
+        if not self.router.get('gw_port'):
+            for p in self.internal_ports:
+                # NOTE: When removing the gateway port, pass in the snat_port
+                # cache along with the current ports.
+                gateway = self.get_snat_port_for_internal_port(
+                    p, self.snat_ports)
+                if not gateway:
+                    continue
+                internal_interface = self.get_internal_device_name(p['id'])
+                self._snat_redirect_remove(gateway, p, internal_interface)
 
     def _handle_router_snat_rules(self, ex_gw_port, interface_name):
         """Configures NAT rules for Floating IPs for DVR."""
