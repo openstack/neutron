@@ -19,6 +19,9 @@ import mock
 from oslo_utils import timeutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db.agentschedulers_db import cfg
@@ -215,3 +218,23 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
     def test__cast_message(self):
         self.notifier._cast_message(mock.ANY, mock.ANY, mock.ANY)
         self.assertEqual(1, self.mock_cast.call_count)
+
+    def test__native_notification_unsubscribes(self):
+        self.assertFalse(self.notifier._unsubscribed_resources)
+        for res in (resources.PORT, resources.NETWORK, resources.SUBNET):
+            self.notifier._unsubscribed_resources = []
+            kwargs = {res: {}}
+            registry.notify(res, events.AFTER_CREATE, self,
+                            context=mock.Mock(), **kwargs)
+            # don't unsubscribe until all three types are observed
+            self.assertEqual([], self.notifier._unsubscribed_resources)
+            registry.notify(res, events.AFTER_UPDATE, self,
+                            context=mock.Mock(), **kwargs)
+            self.assertEqual([], self.notifier._unsubscribed_resources)
+            registry.notify(res, events.AFTER_DELETE, self,
+                            context=mock.Mock(), **kwargs)
+            self.assertEqual([res], self.notifier._unsubscribed_resources)
+            # after first time, no further unsubscribing should happen
+            registry.notify(res, events.AFTER_CREATE, self,
+                            context=mock.Mock(), **kwargs)
+            self.assertEqual([res], self.notifier._unsubscribed_resources)

@@ -47,6 +47,8 @@ class NotifierHook(hooks.PecanHook):
         self._nova_notifier.send_network_change(action_resource, *args)
 
     def _notify_dhcp_agent(self, context, resource_name, action, resources):
+        # NOTE(kevinbenton): we should remove this whole method in Ocata and
+        # make plugins emit the core resource events
         plugin = manager.NeutronManager.get_plugin_for_resource(resource_name)
         notifier_method = '%s.%s.end' % (resource_name, action)
         # use plugin's dhcp notifier, if this is already instantiated
@@ -55,6 +57,10 @@ class NotifierHook(hooks.PecanHook):
             agent_notifiers.get(constants.AGENT_TYPE_DHCP) or
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
         )
+        native_map = getattr(dhcp_agent_notifier, 'uses_native_notifications',
+                             {})
+        if native_map.get(resource_name, {}).get(action):
+            return
         # The DHCP Agent does not accept bulk notifications
         for resource in resources:
             item = {resource_name: resource}

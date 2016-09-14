@@ -222,7 +222,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
         self.assertNotIn('restricted_attr', json_response['mehs'][0])
 
 
-class TestDHCPNotifierHook(test_functional.PecanFunctionalTest):
+class DHCPNotifierTestBase(test_functional.PecanFunctionalTest):
 
     def setUp(self):
         # the DHCP notifier needs to be mocked so that correct operations can
@@ -232,29 +232,42 @@ class TestDHCPNotifierHook(test_functional.PecanFunctionalTest):
         patcher = mock.patch('neutron.api.rpc.agentnotifiers.'
                              'dhcp_rpc_agent_api.DhcpAgentNotifyAPI.notify')
         self.mock_notifier = patcher.start()
-        super(TestDHCPNotifierHook, self).setUp()
+        super(DHCPNotifierTestBase, self).setUp()
+
+
+class TestDHCPNotifierHookNegative(DHCPNotifierTestBase):
+
+    def setUp(self):
+        cfg.CONF.set_override('dhcp_agent_notification', False)
+        super(TestDHCPNotifierHookNegative, self).setUp()
 
     def test_dhcp_notifications_disabled(self):
-        cfg.CONF.set_override('dhcp_agent_notification', False)
         self.app.post_json(
             '/v2.0/networks.json',
             params={'network': {'name': 'meh'}},
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(0, self.mock_notifier.call_count)
 
+
+class TestDHCPNotifierHook(DHCPNotifierTestBase):
+
     def test_get_does_not_trigger_notification(self):
         self.do_request('/v2.0/networks', tenant_id='tenid')
         self.assertEqual(0, self.mock_notifier.call_count)
 
     def test_post_put_delete_triggers_notification(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+
         req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
         response = self.app.post_json(
             '/v2.0/networks.json',
             params={'network': {'name': 'meh'}}, headers=req_headers)
         self.assertEqual(201, response.status_int)
         json_body = jsonutils.loads(response.body)
+        net = {'network': plugin.get_network(ctx, json_body['network']['id'])}
         self.assertEqual(1, self.mock_notifier.call_count)
-        self.assertEqual(mock.call(mock.ANY, json_body, 'network.create.end'),
+        self.assertEqual(mock.call(mock.ANY, net, 'network.create.end'),
                          self.mock_notifier.mock_calls[-1])
         network_id = json_body['network']['id']
 
@@ -264,8 +277,9 @@ class TestDHCPNotifierHook(test_functional.PecanFunctionalTest):
             headers=req_headers)
         self.assertEqual(200, response.status_int)
         json_body = jsonutils.loads(response.body)
+        net = {'network': plugin.get_network(ctx, json_body['network']['id'])}
         self.assertEqual(2, self.mock_notifier.call_count)
-        self.assertEqual(mock.call(mock.ANY, json_body, 'network.update.end'),
+        self.assertEqual(mock.call(mock.ANY, net, 'network.update.end'),
                          self.mock_notifier.mock_calls[-1])
 
         response = self.app.delete(
