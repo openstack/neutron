@@ -558,6 +558,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.get_snat_port_for_internal_port = mock.Mock(
                 return_value=sn_port)
             ri._snat_redirect_remove = mock.Mock()
+            ri.router['gw_port'] = ""
             ri.external_gateway_removed(ex_gw_port, interface_name)
             if not router.get('distributed'):
                 self.mock_driver.unplug.assert_called_once_with(
@@ -647,8 +648,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(
                 self, ri)
             router['gw_port_host'] = ''
+            ri._snat_redirect_remove = mock.Mock()
             ri.external_gateway_updated(ex_gw_port, interface_name)
             if router['gw_port_host'] != ri.host:
+                self.assertFalse(ri._snat_redirect_remove.called)
                 self.assertEqual(1, snat_ns_delete.call_count)
 
     @mock.patch.object(namespaces.Namespace, 'delete')
