@@ -118,7 +118,10 @@ class IptablesRule(object):
             chain = '%s-%s' % (self.wrap_name, self.chain)
         else:
             chain = self.chain
-        return comment_rule('-A %s %s' % (chain, self.rule), self.comment)
+        rule = '-A %s %s' % (chain, self.rule)
+        # If self.rule is '' the above will cause a trailing space, which
+        # could cause us to not match on save/restore, so strip it now.
+        return comment_rule(rule.strip(), self.comment)
 
 
 class IptablesTable(object):
