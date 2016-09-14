@@ -358,7 +358,7 @@ class SubnetPoolReader(object):
         for prefix in prefix_list:
             ip_set.add(netaddr.IPNetwork(prefix))
         ip_set.compact()
-        return [str(x.cidr) for x in ip_set.iter_cidrs()]
+        return [x.cidr for x in ip_set.iter_cidrs()]
 
 
 class SubnetPoolHelper(object):

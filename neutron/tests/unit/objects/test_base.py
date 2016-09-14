@@ -511,6 +511,11 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         self.model_map = collections.defaultdict(list)
         self.model_map[self._test_class.db_model] = self.db_objs
         self.pager_map = collections.defaultdict(lambda: None)
+        # don't validate refresh and expunge in tests that don't touch database
+        # because otherwise it will fail due to db models not being injected
+        # into active session in the first place
+        mock.patch.object(self.context.session, 'refresh').start()
+        mock.patch.object(self.context.session, 'expunge').start()
 
     # TODO(ihrachys) document the intent of all common test cases in docstrings
     def test_get_object(self):
@@ -755,16 +760,6 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         obj = self._test_class(self.context, **self.obj_fields[0])
         project_id = self.obj_fields[0]['project_id']
         self.assertEqual(project_id, obj.tenant_id)
-
-    @mock.patch.object(obj_db_api, 'update_object')
-    def test_update_no_changes(self, update_mock):
-        with mock.patch.object(base.NeutronDbObject,
-                               '_get_changed_persistent_fields',
-                               return_value={}):
-            obj_keys = self.generate_object_keys(self._test_class)
-            obj = self._test_class(self.context, **obj_keys)
-            obj.update()
-            self.assertFalse(update_mock.called)
 
     @mock.patch.object(obj_db_api, 'update_object')
     def test_update_changes(self, update_mock):
@@ -1245,6 +1240,12 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             objclass = self._get_ovo_object_class(cls_, field)
             if not objclass:
                 continue
+
+            # check that the stored database model does not have non-empty
+            # relationships
+            dbattr = obj.fields_need_translation.get(field, field)
+            self.assertFalse(getattr(obj.db_obj, dbattr, None))
+
             objclass_fields = self._get_non_synth_fields(objclass,
                                                          db_obj[field][0])
 
@@ -1256,17 +1257,19 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             synth_field_obj = objclass(self.context, **objclass_fields)
             synth_field_obj.create()
 
-            # populate the base object synthetic fields with created children
-            if isinstance(cls_.fields[field], obj_fields.ObjectField):
-                setattr(obj, field, synth_field_obj)
-            else:
-                setattr(obj, field, [synth_field_obj])
+            # reload the parent object under test
+            obj = cls_.get_object(self.context, **obj._get_composite_keys())
+
+            # check that the stored database model now has filled relationships
+            dbattr = obj.fields_need_translation.get(field, field)
+            self.assertTrue(getattr(obj.db_obj, dbattr, None))
 
             # reset the object so that we can compare it to other clean objects
             obj.obj_reset_changes([field])
+
         return obj
 
-    def test_get_object_with_synthetic_fields(self):
+    def _test_get_with_synthetic_fields(self, getter):
         object_fields = self._get_object_synthetic_fields(self._test_class)
         if not object_fields:
             self.skipTest(
@@ -1274,10 +1277,20 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                 'in test class %r' % self._test_class
             )
         obj = self._create_object_with_synthetic_fields(self.db_objs[0])
-        listed_obj = self._test_class.get_object(
-            self.context, **obj._get_composite_keys())
+        listed_obj = getter(self.context, **obj._get_composite_keys())
         self.assertTrue(listed_obj)
         self.assertEqual(obj, listed_obj)
+
+    def test_get_object_with_synthetic_fields(self):
+        self._test_get_with_synthetic_fields(self._test_class.get_object)
+
+    def test_get_objects_with_synthetic_fields(self):
+        def getter(*args, **kwargs):
+            objs = self._test_class.get_objects(*args, **kwargs)
+            self.assertEqual(1, len(objs))
+            return objs[0]
+
+        self._test_get_with_synthetic_fields(getter)
 
     # NOTE(korzen) _list method is used in neutron.tests.db.unit.db.
     # test_db_base_plugin_v2.DbOperationBoundMixin in _list_and_count_queries()
@@ -1300,6 +1313,25 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             self._make_object(fields).create()
         self.assertEqual(
             len(self.obj_fields), self._test_class.count(self.context))
+
+    def test_db_obj(self):
+        obj = self._make_object(self.obj_fields[0])
+        self.assertIsNone(obj.db_obj)
+
+        obj.create()
+        self.assertIsNotNone(obj.db_obj)
+
+        fields_to_update = self.get_updatable_fields(self.obj_fields[1])
+        if fields_to_update:
+            old_model = copy.deepcopy(obj.db_obj)
+            for key, val in fields_to_update.items():
+                setattr(obj, key, val)
+            obj.update()
+            self.assertIsNotNone(obj.db_obj)
+            self.assertNotEqual(old_model, obj.db_obj)
+
+        obj.delete()
+        self.assertIsNone(obj.db_obj)
 
 
 class UniqueObjectBase(test_base.BaseTestCase):

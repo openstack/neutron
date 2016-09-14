@@ -56,6 +56,9 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.qos_plugin.notification_driver_manager = mock.Mock()
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
+        mock.patch.object(self.ctxt.session, 'refresh').start()
+        mock.patch.object(self.ctxt.session, 'expunge').start()
+
         self.policy_data = {
             'policy': {'id': uuidutils.generate_uuid(),
                        'tenant_id': uuidutils.generate_uuid(),

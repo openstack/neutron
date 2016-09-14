@@ -58,7 +58,7 @@ class AllowedAddressPairsMixin(object):
 
     def get_allowed_address_pairs(self, context, port_id):
         pairs = self._get_allowed_address_pairs_objs(context, port_id)
-        return [self._make_allowed_address_pairs_dict(pair)
+        return [self._make_allowed_address_pairs_dict(pair.db_obj)
                 for pair in pairs]
 
     def _get_allowed_address_pairs_objs(self, context, port_id):
