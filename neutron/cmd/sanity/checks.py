@@ -154,7 +154,7 @@ def _vf_management_support(required_caps):
                    vf_section, cap):
                 is_supported = False
                 LOG.debug("ip link command does not support "
-                          "vf capability '%(cap)s'", cap)
+                          "vf capability '%(cap)s'", {'cap': cap})
     except ip_link_support.UnsupportedIpLinkCommand:
         LOG.exception(_LE("Unexpected exception while checking supported "
                           "ip link command"))
