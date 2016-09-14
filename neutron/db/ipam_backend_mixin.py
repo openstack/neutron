@@ -433,13 +433,27 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                    for ip in itertools.chain(new_ips, original_ips)
                    if 'ip_address' in ip}
 
+        original_subnets = {ip['subnet_id']: ip['ip_address']
+                            for ip in original_ips}
         new = set()
         for ip in new_ips:
             if ip.get('subnet_id') not in delete_subnet_ids:
                 if 'ip_address' in ip:
                     new.add(ip['ip_address'])
                 else:
-                    add_ips.append(ip)
+                    # A subnet_id is specified without an address
+                    orig_ip = original_subnets.pop(ip['subnet_id'], None)
+                    if orig_ip and not ipv6_utils.is_eui64_address(orig_ip):
+                        # Use the original address on this subnet
+                        new.add(orig_ip)
+                    else:
+                        # In the case where there is no IP, we have to include
+                        # it in add_ips directly. In case of EUI64 address, the
+                        # prefix may have changed so we want to make sure IPAM
+                        # gets a chance to re-allocate it. This is safe in
+                        # general because EUI-64 addresses always come out the
+                        # same given the prefix doesn't change.
+                        add_ips.append(ip)
 
         # Convert original ip addresses to sets
         orig = set(ip['ip_address'] for ip in original_ips)
