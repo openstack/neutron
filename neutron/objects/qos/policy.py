@@ -214,8 +214,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     def obj_make_compatible(self, primitive, target_version):
         def filter_rules(obj_names, rules):
-            return filter(lambda rule:
-                          (rule['versioned_object.name'] in obj_names), rules)
+            return [rule for rule in rules if
+                    rule['versioned_object.name'] in obj_names]
 
         _target_version = versionutils.convert_version_to_tuple(target_version)
         names = []

@@ -75,6 +75,7 @@ log_warn = re.compile(
     r"(.)*LOG\.(warn)\(\s*('|\"|_)")
 unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
 unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
+filter_match = re.compile(r".*filter\(lambda ")
 
 
 @flake8ext
@@ -381,6 +382,17 @@ def check_delayed_string_interpolation(logical_line, filename, noqa):
         yield(0, msg)
 
 
+@flake8ext
+def check_python3_no_filter(logical_line):
+    """N344 - Use list comprehension instead of filter(lambda)."""
+
+    msg = ("N343: Use list comprehension instead of "
+           "filter(lambda obj: test(obj), data) on python3.")
+
+    if filter_match.match(logical_line):
+        yield(0, msg)
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -400,3 +412,4 @@ def factory(register):
     register(check_builtins_gettext)
     register(check_unittest_imports)
     register(check_delayed_string_interpolation)
+    register(check_python3_no_filter)

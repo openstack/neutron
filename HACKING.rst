@@ -29,6 +29,8 @@ Neutron Specific Commandments
 - [N340] Check usage of <module>.i18n (and neutron.i18n)
 - [N341] Check usage of _ from python builtins
 - [N342] String interpolation should be delayed at logging calls.
+- [N344] Python 3: Do not use filter(lambda obj: test(obj), data). Replace it
+  with [obj for obj in data if test(obj)].
 
 Creating Unit Tests
 -------------------

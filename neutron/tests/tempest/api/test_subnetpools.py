@@ -110,13 +110,15 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         body = self._create_subnetpool(description='d1')
         self.assertEqual('d1', body['description'])
         sub_id = body['id']
-        body = filter(lambda x: x['id'] == sub_id,
-                      self.client.list_subnetpools()['subnetpools'])[0]
+        subnet_pools = [x for x in
+            self.client.list_subnetpools()['subnetpools'] if x['id'] == sub_id]
+        body = subnet_pools[0]
         self.assertEqual('d1', body['description'])
         body = self.client.update_subnetpool(sub_id, description='d2')
         self.assertEqual('d2', body['subnetpool']['description'])
-        body = filter(lambda x: x['id'] == sub_id,
-                      self.client.list_subnetpools()['subnetpools'])[0]
+        subnet_pools = [x for x in
+            self.client.list_subnetpools()['subnetpools'] if x['id'] == sub_id]
+        body = subnet_pools[0]
         self.assertEqual('d2', body['description'])
 
     @test.idempotent_id('741d08c2-1e3f-42be-99c7-0ea93c5b728c')
