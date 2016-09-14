@@ -1127,9 +1127,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             self._subnet_check_ip_allocations(context, id)):
                         # allocation found and it was DHCP port
                         # that appeared after autodelete ports were
-                        # removed - need to restart whole operation
-                        raise os_db_exception.RetryRequest(
-                            exc.SubnetInUse(subnet_id=id))
+                        # removed - continue iteration to find offending port
+                        # to update or raise SubnetInUse
+                        continue
                     network = self.get_network(context, subnet['network_id'])
                     mech_context = driver_context.SubnetContext(self, context,
                                                                 subnet,
