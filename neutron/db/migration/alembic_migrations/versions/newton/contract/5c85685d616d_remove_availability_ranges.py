@@ -13,10 +13,16 @@
 
 """Remove availability ranges."""
 
+from alembic import op
+
+from neutron.db import migration
+
+
 revision = '5c85685d616d'
 down_revision = '2e0d7a8a1586'
 
-from alembic import op
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.NEWTON]
 
 
 def upgrade():
