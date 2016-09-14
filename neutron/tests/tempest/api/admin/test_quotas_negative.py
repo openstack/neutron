@@ -71,6 +71,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
 
         subnet_args = {'tenant_id': tenant_id,
                        'network_id': net['id'],
+                       'enable_dhcp': False,
                        'cidr': '10.0.0.0/24',
                        'ip_version': '4'}
         subnet = self.admin_client.create_subnet(**subnet_args)['subnet']
