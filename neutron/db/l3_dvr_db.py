@@ -139,6 +139,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     # router, make sure to create corresponding
                     # snat interface ports that are to be consumed by
                     # the Service Node.
+                    # TODO(haleyb): move this out of transaction
+                    setattr(context, 'GUARD_TRANSACTION', False)
                     if not self._create_snat_intf_ports_if_not_exists(
                         context.elevated(), router_db):
                         LOG.debug("SNAT interface ports not created: %s",
