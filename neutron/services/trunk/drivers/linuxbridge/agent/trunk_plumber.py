@@ -165,11 +165,11 @@ class _InterfaceInfo(object):
             self.devname = name_section
             self.parent_devname = self.vlan_tag = None
         else:
-            self.devname, self.parent_devname = name_section.split('@')
+            self.devname, parent = name_section.split('@')
             m = re.match(r'.*802\.1Q id (\d+).*', line)
             self.vlan_tag = int(m.group(1)) if m else None
-            if self.vlan_tag is None:
-                LOG.warning(_LW("Failed to parse VLAN from: %s"), line)
+            # we only care about parent interfaces if it's a vlan sub-interface
+            self.parent_devname = parent if self.vlan_tag is not None else None
 
     def __repr__(self):
         return ('_InterfaceInfo(devname=%s, parent=%s, vlan=%s)' %
