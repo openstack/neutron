@@ -167,51 +167,6 @@ class TestIpamBackendMixin(base.BaseTestCase):
         self._mock_slaac_subnet_on()
         self._test_get_changed_ips_for_port_no_ip_address()
 
-    def test__get_changed_ips_for_port_subnet_id_no_ip(self):
-        # If a subnet is specified without an IP address only allocate a new
-        # address if one doesn't exist
-        self._mock_slaac_subnet_off()
-        new_ips = [{'subnet_id': 'id-3'}]
-        original_ips = [{'subnet_id': 'id-3', 'ip_address': '4.3.2.1'}]
-
-        expected_change = self.mixin.Changes(
-            add=[],
-            original=[{'subnet_id': 'id-3', 'ip_address': '4.3.2.1'}],
-            remove=[])
-        self._test_get_changed_ips_for_port(expected_change, original_ips,
-                                            new_ips, self.owner_non_router)
-
-    def test__get_changed_ips_for_port_subnet_id_no_ip_ipv6(self):
-        # If a subnet is specified without an IP address only allocate a new
-        # address if one doesn't exist
-        self._mock_slaac_subnet_off()
-        new_ips = [{'subnet_id': 'id-3'}]
-        original_ips = [{'subnet_id': 'id-3', 'ip_address': '2001:db8::8'}]
-
-        expected_change = self.mixin.Changes(
-            add=[],
-            original=[{'subnet_id': 'id-3', 'ip_address': '2001:db8::8'}],
-            remove=[])
-        self._test_get_changed_ips_for_port(expected_change, original_ips,
-                                            new_ips, self.owner_non_router)
-
-    def test__get_changed_ips_for_port_subnet_id_no_ip_eui64(self):
-        # If a subnet is specified without an IP address allocate a new address
-        # if the address is eui-64. This supports changing prefix when prefix
-        # delegation is in use.
-        self._mock_slaac_subnet_off()
-        new_ips = [{'subnet_id': 'id-3'}]
-        original_ips = [{'subnet_id': 'id-3',
-                         'ip_address': '2001::eeb1:d7ff:fe2c:9c5f'}]
-
-        expected_change = self.mixin.Changes(
-            add=[{'subnet_id': 'id-3'}],
-            original=[],
-            remove=[{'subnet_id': 'id-3',
-                     'ip_address': '2001::eeb1:d7ff:fe2c:9c5f'}])
-        self._test_get_changed_ips_for_port(expected_change, original_ips,
-                                            new_ips, self.owner_non_router)
-
     def test__is_ip_required_by_subnet_for_router_port(self):
         # Owner -> router:
         # _get_subnet should not be called,
