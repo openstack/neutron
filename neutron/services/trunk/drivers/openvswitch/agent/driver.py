@@ -10,6 +10,7 @@
 # under the License.
 
 from oslo_log import log as logging
+import oslo_messaging
 
 from neutron._i18n import _LE
 from neutron.api.rpc.callbacks.consumer import registry
@@ -52,10 +53,19 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
             LOG.debug("Event %s for subports: %s", event_type, subports)
             if event_type == events.CREATED:
                 ctx = self.ovsdb_handler.context
-                self.ovsdb_handler.wire_subports_for_trunk(
-                    ctx, trunk_id, subports)
+                try:
+                    self.ovsdb_handler.wire_subports_for_trunk(
+                        ctx, trunk_id, subports)
+                except oslo_messaging.MessagingException as e:
+                    LOG.error(_LE(
+                        "Got an error from trunk rpc when wiring subports "
+                        "%(subports)s for trunk %(trunk_id)s: %(err)s"),
+                        {'subports': subports,
+                         'trunk_id': trunk_id,
+                         'err': e})
             elif event_type == events.DELETED:
                 subport_ids = [subport.port_id for subport in subports]
+                # unwire doesn't use RPC communication
                 self.ovsdb_handler.unwire_subports_for_trunk(
                     trunk_id, subport_ids)
             else:
