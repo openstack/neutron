@@ -14,6 +14,7 @@
 #    under the License.
 
 import abc
+import time
 
 import netaddr
 from neutron_lib import constants
@@ -321,8 +322,20 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         internal = not self.conf.ovs_use_veth
         self._ovs_add_port(bridge, tap_name, port_id, mac_address,
                            internal=internal)
-
-        ns_dev.link.set_address(mac_address)
+        for i in range(9):
+            # workaround for the OVS shy port syndrome. ports sometimes
+            # hide for a bit right after they are first created.
+            # see bug/1618987
+            try:
+                ns_dev.link.set_address(mac_address)
+                break
+            except RuntimeError as e:
+                LOG.warning(_LW("Got error trying to set mac, retrying: %s"),
+                            str(e))
+                time.sleep(1)
+        else:
+            # didn't break, we give it one last shot without catching
+            ns_dev.link.set_address(mac_address)
 
         # Add an interface created by ovs to the namespace.
         if not self.conf.ovs_use_veth and namespace:
