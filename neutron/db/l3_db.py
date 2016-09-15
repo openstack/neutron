@@ -1066,42 +1066,27 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return [ip for ip in port['fixed_ips']
                 if netaddr.IPAddress(ip['ip_address']).version == 4]
 
-    def _internal_fip_assoc_data(self, context, fip):
+    def _internal_fip_assoc_data(self, context, fip, tenant_id):
         """Retrieve internal port data for floating IP.
 
         Retrieve information concerning the internal port where
         the floating IP should be associated to.
         """
         internal_port = self._core_plugin.get_port(context, fip['port_id'])
-        if not internal_port['tenant_id'] == fip['tenant_id']:
+        if not internal_port['tenant_id'] == tenant_id:
             port_id = fip['port_id']
-            if 'id' in fip:
-                floatingip_id = fip['id']
-                data = {'port_id': port_id,
-                        'floatingip_id': floatingip_id}
-                msg = (_('Port %(port_id)s is associated with a different '
-                         'tenant than Floating IP %(floatingip_id)s and '
-                         'therefore cannot be bound.') % data)
-            else:
-                msg = (_('Cannot create floating IP and bind it to '
-                         'Port %s, since that port is owned by a '
-                         'different tenant.') % port_id)
+            msg = (_('Cannot process floating IP association with '
+                     'Port %s, since that port is owned by a '
+                     'different tenant') % port_id)
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
         internal_subnet_id = None
         if fip.get('fixed_ip_address'):
             internal_ip_address = fip['fixed_ip_address']
             if netaddr.IPAddress(internal_ip_address).version != 4:
-                if 'id' in fip:
-                    data = {'floatingip_id': fip['id'],
-                            'internal_ip': internal_ip_address}
-                    msg = (_('Floating IP %(floatingip_id)s is associated '
-                             'with non-IPv4 address %(internal_ip)s and '
-                             'therefore cannot be bound.') % data)
-                else:
-                    msg = (_('Cannot create floating IP and bind it to %s, '
-                             'since that is not an IPv4 address.') %
-                           internal_ip_address)
+                msg = (_('Cannot process floating IP association with %s, '
+                         'since that is not an IPv4 address') %
+                       internal_ip_address)
                 raise n_exc.BadRequest(resource='floatingip', msg=msg)
             for ip in internal_port['fixed_ips']:
                 if ip['ip_address'] == internal_ip_address:
@@ -1126,7 +1111,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             internal_subnet_id = ipv4_fixed_ips[0]['subnet_id']
         return internal_port, internal_subnet_id, internal_ip_address
 
-    def _get_assoc_data(self, context, fip, floating_network_id):
+    def _get_assoc_data(self, context, fip, floatingip_db):
         """Determine/extract data associated with the internal port.
 
         When a floating IP is associated with an internal port,
@@ -1136,11 +1121,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         owns the floating IP will be confirmed by _get_router_for_floatingip.
         """
         (internal_port, internal_subnet_id,
-         internal_ip_address) = self._internal_fip_assoc_data(context, fip)
-        router_id = self._get_router_for_floatingip(context,
-                                                    internal_port,
-                                                    internal_subnet_id,
-                                                    floating_network_id)
+         internal_ip_address) = self._internal_fip_assoc_data(
+            context, fip, floatingip_db['tenant_id'])
+        router_id = self._get_router_for_floatingip(
+            context, internal_port,
+            internal_subnet_id, floatingip_db['floating_network_id'])
 
         return (fip['port_id'], internal_ip_address, router_id)
 
@@ -1153,7 +1138,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port_id, internal_ip_address, router_id = self._get_assoc_data(
                 context,
                 fip,
-                floatingip_db['floating_network_id'])
+                floatingip_db)
 
             if port_id == floatingip_db.fixed_port_id:
                 # Floating IP association is not changed.
@@ -1300,8 +1285,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         with context.session.begin(subtransactions=True):
             floatingip_db = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_db)
-            fip['tenant_id'] = floatingip_db['tenant_id']
-            fip['id'] = id
             fip_port_id = floatingip_db['floating_port_id']
             self._update_fip_assoc(context, fip, floatingip_db,
                                    self._core_plugin.get_port(
