@@ -256,6 +256,16 @@ def check_dhcp_release6():
     return result
 
 
+def check_bridge_firewalling_enabled():
+    result = checks.bridge_firewalling_enabled()
+    if not result:
+        LOG.error(_LE('Bridge firewalling is not enabled. It may be the case '
+                      'that bridge and/or br_netfilter kernel modules are not '
+                      'loaded. Alternatively, corresponding sysctl settings '
+                      'may be overridden to disable it by default.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -298,6 +308,9 @@ OPTS = [
                     help=_('Check ip6tables installation')),
     BoolOptCallback('dhcp_release6', check_dhcp_release6,
                     help=_('Check dhcp_release6 installation')),
+    BoolOptCallback('bridge_firewalling', check_bridge_firewalling_enabled,
+                    help=_('Check bridge firewalling'),
+                    default=False),
 
 ]
 
@@ -343,6 +356,15 @@ def enable_tests_from_config():
     if ('sriovnicswitch' in cfg.CONF.ml2.mechanism_drivers and
         'qos' in cfg.CONF.ml2.extension_drivers):
         cfg.CONF.set_default('vf_extended_management', True)
+    if cfg.CONF.SECURITYGROUP.firewall_driver in (
+        'iptables',
+        'iptables_hybrid',
+        ('neutron.agent.linux.iptables_firewall.'
+         'IptablesFirewallDriver'),
+        ('neutron.agent.linux.iptables_firewall.'
+         'OVSHybridIptablesFirewallDriver'),
+    ):
+        cfg.CONF.set_default('bridge_firewalling', True)
 
 
 def all_tests_passed():
