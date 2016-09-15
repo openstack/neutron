@@ -28,6 +28,7 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 
     of_interface = None
     ovsdb_interface = None
+    arp_responder = False
 
     def setUp(self):
         host_descriptions = [
@@ -42,7 +43,8 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type=self.network_type,
-                l2_pop=self.l2_pop),
+                l2_pop=self.l2_pop,
+                arp_responder=self.arp_responder),
             host_descriptions)
         super(BaseConnectivitySameNetworkTest, self).setUp(env)
 
@@ -76,8 +78,9 @@ class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
     network_scenarios = [
         ('VXLAN', {'network_type': 'vxlan',
                    'l2_pop': False}),
-        ('GRE and l2pop', {'network_type': 'gre',
-                           'l2_pop': True}),
+        ('GRE-l2pop-arp_responder', {'network_type': 'gre',
+                                     'l2_pop': True,
+                                     'arp_responder': True}),
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
     interface_scenarios = [
