@@ -1,0 +1,14 @@
+---
+deprecations:
+    - The iptables firewall driver will no longer enable bridge firewalling in
+      next versions of Neutron. If your distribution overrides the default
+      value for any of relevant sysctl settings
+      (``net.bridge.bridge-nf-call-arptables``,
+      ``net.bridge.bridge-nf-call-ip6tables``, and
+      ``net.bridge.bridge-nf-call-iptables``) then make sure you set them back
+      to upstream kernel default (``1``) using /etc/sysctl.conf or
+      /etc/sysctl.d/* configuration files.
+upgrades:
+    - On newer Linux kernels (3.18+) you will need to load the ``br_netfilter``
+      kernel module before starting an Open vSwitch or Linuxbridge agent using
+      iptables based firewall. Otherwise the agent will fail to start.

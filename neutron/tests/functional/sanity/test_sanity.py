@@ -85,3 +85,6 @@ class SanityTestCaseRoot(functional_base.BaseSudoTestCase):
 
     def test_keepalived_ipv6_support(self):
         checks.keepalived_ipv6_supported()
+
+    def test_bridge_firewalling_enabled(self):
+        checks.bridge_firewalling_enabled()

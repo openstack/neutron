@@ -228,6 +228,17 @@ def dhcp_release6_supported():
     return True
 
 
+def bridge_firewalling_enabled():
+    cmd = ['sysctl', '-N', 'net.bridge']
+    entries = agent_utils.execute(cmd, run_as_root=True)
+    for proto in ('arp', 'ip', 'ip6'):
+        knob = 'net.bridge.bridge-nf-call-%stables' % proto
+        if knob not in entries:
+            LOG.debug("sysctl value %s not present on this system.", knob)
+            return False
+    return True
+
+
 class KeepalivedIPv6Test(object):
     def __init__(self, ha_port, gw_port, gw_vip, default_gw):
         self.ha_port = ha_port
