@@ -1,0 +1,28 @@
+---
+prelude: >
+    The "vlan-aware-vms" feature allows Nova users to launch VMs on a single
+    port (trunk parent port) that connects multiple Neutron logical networks
+    together.
+features:
+  - The feature "vlan-aware-vms" is available. To enable it, a service plugin
+    named 'trunk' must be added to the option ``service_plugins`` in your
+    neutron.conf. The plugin exposes two new extensions ``trunk`` and
+    ``trunk_details``. The plugin can work with multiple backends and in
+    particular Neutron has support for `ML2/openvswitch <http://docs.openstack.org/developer/neutron/devref/openvswitch_agent.html#tackling-the-network-trunking-use-case>`_
+    and ML2/linuxbridge.
+    Even though Neutron API compatibility should be preserved for ports
+    associated to trunks, since this is the first release where the feature
+    is available, it is reasonable to expect possible functionality gaps for
+    one or both drivers. These will be filled over time as being reported.
+    The CLI is available via openstackclient, and python-neutronclient 5.1.0
+    or above. For more details, please check the networking guide.
+security:
+  - |
+    When working with the ML2/openvswitch driver, the "vlan-aware-vms" feature
+    has the following limitations:
+
+    * security groups do not work in conjunction with the iptables-based
+      firewall driver.
+    * if security groups are desired, the use of the stateful OVS firewall is
+      required, however that prevents the use of the DPDK datapath for OVS
+      versions 2.5 or lower.
