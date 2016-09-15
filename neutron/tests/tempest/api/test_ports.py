@@ -47,6 +47,18 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.client.update_subnet(s['id'], enable_dhcp=True)
         self.create_port(self.network)
 
+    @test.idempotent_id('1d6d8683-8691-43c6-a7ba-c69723258726')
+    def test_add_ips_to_port(self):
+        s = self.create_subnet(self.network)
+        port = self.create_port(self.network)
+        # request another IP on the same subnet
+        port['fixed_ips'].append({'subnet_id': s['id']})
+        updated = self.client.update_port(port['id'],
+                                          fixed_ips=port['fixed_ips'])
+        subnets = [ip['subnet_id'] for ip in updated['port']['fixed_ips']]
+        expected = [s['id'], s['id']]
+        self.assertEqual(expected, subnets)
+
 
 class PortsSearchCriteriaTest(base.BaseSearchCriteriaTest):
 
