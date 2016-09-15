@@ -53,6 +53,8 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import constants as lconst
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common \
     import utils as lb_utils
+from neutron.plugins.ml2.drivers.linuxbridge.agent \
+    import linuxbridge_capabilities
 
 
 LOG = logging.getLogger(__name__)
@@ -927,6 +929,7 @@ def main():
     LOG.info(_LI("Bridge mappings: %s"), bridge_mappings)
 
     manager = LinuxBridgeManager(bridge_mappings, interface_mappings)
+    linuxbridge_capabilities.register()
 
     polling_interval = cfg.CONF.AGENT.polling_interval
     quitting_rpc_timeout = cfg.CONF.AGENT.quitting_rpc_timeout
