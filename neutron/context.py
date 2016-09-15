@@ -91,6 +91,26 @@ class ContextBase(oslo_context.RequestContext):
         })
         return context
 
+    def to_policy_values(self):
+        values = super(ContextBase, self).to_policy_values()
+        values['tenant_id'] = self.tenant_id
+        values['is_admin'] = self.is_admin
+
+        # NOTE(jamielennox): These are almost certainly unused and non-standard
+        # but kept for backwards compatibility. Remove them in Pike
+        # (oslo.context from Ocata release already issues deprecation warnings
+        # for non-standard keys).
+        values['user'] = self.user
+        values['tenant'] = self.tenant
+        values['domain'] = self.domain
+        values['user_domain'] = self.user_domain
+        values['project_domain'] = self.project_domain
+        values['tenant_name'] = self.tenant_name
+        values['project_name'] = self.tenant_name
+        values['user_name'] = self.user_name
+
+        return values
+
     @classmethod
     def from_dict(cls, values):
         return cls(user_id=values.get('user_id', values.get('user')),
