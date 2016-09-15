@@ -71,3 +71,33 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         self.assertEqual('d2', body['floatingip']['description'])
         body = self.client.show_floatingip(body['floatingip']['id'])
         self.assertEqual('d2', body['floatingip']['description'])
+        # disassociate
+        body = self.client.update_floatingip(body['floatingip']['id'],
+                                             port_id=None)
+        self.assertEqual('d2', body['floatingip']['description'])
+
+    @test.idempotent_id('fd7161e1-2167-4686-a6ff-0f3df08001bb')
+    @test.requires_ext(extension="standard-attr-description",
+                       service="network")
+    def test_floatingip_update_extra_attributes_port_id_not_changed(self):
+        port_id = self.ports[1]['id']
+        body = self.client.create_floatingip(
+            floating_network_id=self.ext_net_id,
+            port_id=port_id,
+            description='d1'
+        )['floatingip']
+        self.assertEqual('d1', body['description'])
+        body = self.client.show_floatingip(body['id'])['floatingip']
+        self.assertEqual(port_id, body['port_id'])
+        # Update description
+        body = self.client.update_floatingip(body['id'], description='d2')
+        self.assertEqual('d2', body['floatingip']['description'])
+        # Floating IP association is not changed.
+        self.assertEqual(port_id, body['floatingip']['port_id'])
+        body = self.client.show_floatingip(body['floatingip']['id'])
+        self.assertEqual('d2', body['floatingip']['description'])
+        self.assertEqual(port_id, body['floatingip']['port_id'])
+        # disassociate
+        body = self.client.update_floatingip(body['floatingip']['id'],
+                                             port_id=None)
+        self.assertEqual(None, body['floatingip']['port_id'])

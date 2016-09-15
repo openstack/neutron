@@ -209,6 +209,24 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                                        context=mock.ANY,
                                        subnetpool_id='fake_id')
 
+    def test__check_and_get_fip_assoc_with_extra_association_no_change(self):
+        fip = {'extra_key': 'value'}
+        context = mock.MagicMock()
+        floatingip_db = l3_db.FloatingIP(
+            id='fake_fip_id',
+            floating_network_id='fake_floating_network_id',
+            floating_ip_address='8.8.8.8',
+            fixed_port_id='fake_fixed_port_id',
+            floating_port_id='fake_floating_port_id')
+        with mock.patch.object(
+                l3_db.L3_NAT_dbonly_mixin,
+                '_get_assoc_data',
+                return_value=('1', '2', '3')) as mock_get_assoc_data:
+            self.db._check_and_get_fip_assoc(context, fip, floatingip_db)
+            context.session.query.assert_not_called()
+            mock_get_assoc_data.assert_called_once_with(
+                mock.ANY, fip, floatingip_db)
+
 
 class L3_NAT_db_mixin(base.BaseTestCase):
     def setUp(self):
