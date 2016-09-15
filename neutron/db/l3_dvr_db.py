@@ -900,7 +900,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         for p in c_snat_ports:
             if subnet_id is None or not p['fixed_ips']:
                 if not p['fixed_ips']:
-                    LOG.debug("CSNAT port has no IPs: %s", p)
+                    LOG.info(_LI("CSNAT port has no IPs: %s"), p)
                 self._core_plugin.delete_port(context,
                                               p['id'],
                                               l3_port_check=False)
