@@ -1098,6 +1098,17 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.assert_has_calls([mock.call.get_port_by_id('unknown')])
         self.assertEqual(self.call_driver.call_count, 0)
 
+    def test_port_delete_end_agents_port(self):
+        port = dhcp.DictModel(copy.deepcopy(fake_port1))
+        device_id = utils.get_dhcp_agent_device_id(
+            port.network_id, self.dhcp.conf.host)
+        port['device_id'] = device_id
+        self.cache.get_network_by_id.return_value = fake_network
+        self.cache.get_port_by_id.return_value = port
+        self.dhcp.port_delete_end(None, {'port_id': port.id})
+        self.call_driver.assert_has_calls(
+            [mock.call.call_driver('disable', fake_network)])
+
 
 class TestDhcpPluginApiProxy(base.BaseTestCase):
     def _test_dhcp_api(self, method, **kwargs):
