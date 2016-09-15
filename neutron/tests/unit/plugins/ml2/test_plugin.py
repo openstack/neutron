@@ -521,6 +521,36 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
             kwargs = after_create.mock_calls[0][2]
             self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
 
+    def test_port_update_subnetnotfound(self):
+        with self.network() as n:
+            with self.subnet(network=n, cidr='1.1.1.0/24') as s1,\
+                    self.subnet(network=n, cidr='1.1.2.0/24') as s2,\
+                    self.subnet(network=n, cidr='1.1.3.0/24') as s3:
+                fixed_ips = [{'subnet_id': s1['subnet']['id']},
+                             {'subnet_id': s2['subnet']['id']},
+                             {'subnet_id': s3['subnet']['id']}]
+                with self.port(subnet=s1, fixed_ips=fixed_ips,
+                               device_owner=constants.DEVICE_OWNER_DHCP) as p:
+                    plugin = manager.NeutronManager.get_plugin()
+                    orig_update = plugin.update_port
+
+                    def delete_before_update(ctx, *args, **kwargs):
+                        # swap back out with original so only called once
+                        plugin.update_port = orig_update
+                        # delete s2 in the middle of s1 port_update
+                        plugin.delete_subnet(ctx, s2['subnet']['id'])
+                        return plugin.update_port(ctx, *args, **kwargs)
+                    plugin.update_port = delete_before_update
+                    req = self.new_delete_request('subnets',
+                                                  s1['subnet']['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(204, res.status_int)
+                    # ensure port only has 1 IP on s3
+                    port = self._show('ports', p['port']['id'])['port']
+                    self.assertEqual(1, len(port['fixed_ips']))
+                    self.assertEqual(s3['subnet']['id'],
+                                     port['fixed_ips'][0]['subnet_id'])
+
     def test_subnet_after_update_callback(self):
         after_update = mock.Mock()
         registry.subscribe(after_update, resources.SUBNET, events.AFTER_UPDATE)

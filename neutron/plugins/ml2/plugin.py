@@ -1140,7 +1140,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     break
 
             for a in to_deallocate:
-                deallocated.add(a)
                 if a.port:
                     # calling update_port() for each allocation to remove the
                     # IP from the port and call the MechanismDrivers
@@ -1162,11 +1161,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     except exc.PortNotFound:
                         # NOTE Attempting to access a.port_id here is an error.
                         LOG.debug("Port %s deleted concurrently", port_id)
+                    except exc.SubnetNotFound:
+                        # NOTE we hit here if another subnet was concurrently
+                        # removed that the port has a fixed_ip on. we just
+                        # continue so the loop re-iterates and the IPs are
+                        # looked up again
+                        continue
                     except Exception as e:
                         with excutils.save_and_reraise_exception():
                             utils.attach_exc_details(
                                 e, _LE("Exception deleting fixed_ip from "
                                        "port %s"), port_id)
+                deallocated.add(a)
 
         kwargs = {'context': context, 'subnet': subnet}
         registry.notify(resources.SUBNET, events.AFTER_DELETE, self, **kwargs)
