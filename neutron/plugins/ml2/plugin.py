@@ -903,6 +903,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("Deleting network %s", id)
         session = context.session
         while True:
+            # NOTE(kevinbenton): this loop keeps db objects in scope
+            # so we must expire them or risk stale reads.
+            # see bug/1623990
+            session.expire_all()
             try:
                 # REVISIT: Serialize this operation with a semaphore
                 # to prevent deadlock waiting to acquire a DB lock
@@ -1059,6 +1063,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         deallocated = set()
         while True:
+            # NOTE(kevinbenton): this loop keeps db objects in scope
+            # so we must expire them or risk stale reads.
+            # see bug/1623990
+            session.expire_all()
             with session.begin(subtransactions=True):
                 record = self._get_subnet(context, id)
                 subnet = self._make_subnet_dict(record, None, context=context)
