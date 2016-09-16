@@ -19,7 +19,9 @@ import functools
 import ryu.app.ofctl.api  # noqa
 from ryu.base import app_manager
 from ryu.lib import hub
+from ryu.lib import type_desc
 from ryu.ofproto import ofproto_v1_3
+from ryu.ofproto import oxm_fields
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_int
@@ -46,6 +48,11 @@ class OVSNeutronAgentRyuApp(app_manager.RyuApp):
     def start(self):
         # Start Ryu event loop thread
         super(OVSNeutronAgentRyuApp, self).start()
+
+        # patch ryu
+        ofproto_v1_3.oxm_types.append(
+            oxm_fields.NiciraExtended0('vlan_tci', 4, type_desc.Int2))
+        oxm_fields.generate(ofproto_v1_3.__name__)
 
         def _make_br_cls(br_cls):
             return functools.partial(br_cls, ryu_app=self)

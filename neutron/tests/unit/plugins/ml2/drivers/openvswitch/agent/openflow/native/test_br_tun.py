@@ -104,16 +104,16 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                             priority=1,
                             specs=[
                                 ofpp.NXFlowSpecMatch(
-                                    dst=('vlan_vid', 0),
+                                    dst=('vlan_tci', 0),
                                     n_bits=12,
-                                    src=('vlan_vid', 0)),
+                                    src=('vlan_tci', 0)),
                                 ofpp.NXFlowSpecMatch(
                                     dst=('eth_dst', 0),
                                     n_bits=48,
                                     src=('eth_src', 0)),
                                 ofpp.NXFlowSpecLoad(
-                                    dst=('vlan_vid', 0),
-                                    n_bits=12,
+                                    dst=('vlan_tci', 0),
+                                    n_bits=16,
                                     src=0),
                                 ofpp.NXFlowSpecLoad(
                                     dst=('tunnel_id', 0),
@@ -210,16 +210,16 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                             priority=1,
                             specs=[
                                 ofpp.NXFlowSpecMatch(
-                                    dst=('vlan_vid', 0),
+                                    dst=('vlan_tci', 0),
                                     n_bits=12,
-                                    src=('vlan_vid', 0)),
+                                    src=('vlan_tci', 0)),
                                 ofpp.NXFlowSpecMatch(
                                     dst=('eth_dst', 0),
                                     n_bits=48,
                                     src=('eth_src', 0)),
                                 ofpp.NXFlowSpecLoad(
-                                    dst=('vlan_vid', 0),
-                                    n_bits=12,
+                                    dst=('vlan_tci', 0),
+                                    n_bits=16,
                                     src=0),
                                 ofpp.NXFlowSpecLoad(
                                     dst=('tunnel_id', 0),
