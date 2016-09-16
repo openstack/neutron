@@ -24,7 +24,7 @@ class TimeStampPlugin(service_base.ServicePluginBase,
                       ts_db.TimeStamp_db_mixin):
     """Implements Neutron Timestamp Service plugin."""
 
-    supported_extension_aliases = ['timestamp_core', 'timestamp_ext']
+    supported_extension_aliases = ['standard-attr-timestamp']
 
     def __init__(self):
         super(TimeStampPlugin, self).__init__()
@@ -42,7 +42,7 @@ class TimeStampPlugin(service_base.ServicePluginBase,
 
     @classmethod
     def get_plugin_type(cls):
-        return 'timestamp_core'
+        return 'timestamp'
 
     def get_plugin_description(self):
-        return "Neutron core resources timestamp addition support"
+        return "Adds timestamps to Neutron resources with standard attributes"

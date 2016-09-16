@@ -1,0 +1,16 @@
+---
+prelude: >
+  - The created_at and updated_at fields available on Neutron
+    resources now include a timezone indicator at the end.
+    Because this is a change in format, the old 'timestamp_core'
+    extension has been removed and replaced with a 'timestamp'
+    extension.
+upgrade:
+  - The 'timestamp_core' extension has been removed and replaced
+    with the 'standard-attr-timestamp' extension. Objects will still
+    have timestamps in the 'created_at' and 'updated_at' fields, but
+    they will have the timestamp appended to the end of them
+    to be consistent with other OpenStack projects.
+fixes:
+  - Bug 1561200 has been fixed by including the timezone with
+    Neutron 'created_at' and 'updated_at' fields.

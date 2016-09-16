@@ -34,7 +34,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
     larger_prefix = '10.11.0.0/16'
 
     @classmethod
-    @test.requires_ext(extension="timestamp_core", service="network")
+    @test.requires_ext(extension="standard-attr-timestamp", service="network")
     def skip_checks(cls):
         super(TestTimeStamp, cls).skip_checks()
 
@@ -186,8 +186,9 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
     def skip_checks(cls):
         super(TestTimeStampWithL3, cls).skip_checks()
 
-        if not test.is_extension_enabled('timestamp_ext', 'network'):
-            raise cls.skipException("timestamp_ext extension not enabled")
+        if not test.is_extension_enabled('standard-attr-timestamp', 'network'):
+            raise cls.skipException("standard-attr-timestamp extension not "
+                                    "enabled")
 
     @classmethod
     def resource_setup(cls):
@@ -260,8 +261,9 @@ class TestTimeStampWithSecurityGroup(base_security_groups.BaseSecGroupTest):
     def skip_checks(cls):
         super(TestTimeStampWithSecurityGroup, cls).skip_checks()
 
-        if not test.is_extension_enabled('timestamp_ext', 'network'):
-            raise cls.skipException("timestamp_ext extension not enabled")
+        if not test.is_extension_enabled('standard-attr-timestamp', 'network'):
+            raise cls.skipException("standard-attr-timestamp extension not "
+                                    "enabled")
 
     @classmethod
     def resource_setup(cls):
