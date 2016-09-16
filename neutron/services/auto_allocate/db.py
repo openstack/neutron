@@ -345,12 +345,10 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 context, network_id,
                 {'network': {'admin_state_up': True}})
         except db_exc.DBDuplicateEntry:
-            LOG.error(_LE("Multiple auto-allocated networks detected for "
-                          "tenant %(tenant)s. Attempting clean up for "
-                          "network %(network)s and router %(router)s"),
-                      {'tenant': tenant_id,
-                       'network': network_id,
-                       'router': router_id})
+            LOG.debug("Multiple auto-allocated networks detected for "
+                      "tenant %s. Attempting clean up for network %s "
+                      "and router %s.",
+                      tenant_id, network_id, router_id)
             self._cleanup(
                 context, network_id=network_id,
                 router_id=router_id, subnets=subnets)
