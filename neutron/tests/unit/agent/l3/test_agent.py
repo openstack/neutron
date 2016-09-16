@@ -887,6 +887,38 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertNotEqual(test_port, res_ip)
             self.assertIsNone(res_ip)
 
+    def test_get_snat_port_for_internal_port_ipv6_same_port(self):
+        router = l3_test_common.prepare_router_data(ip_version=4,
+                                                    enable_snat=True,
+                                                    num_internal_ports=1)
+        ri = dvr_router.DvrEdgeRouter(mock.sentinel.agent,
+                                      HOSTNAME,
+                                      router['id'],
+                                      router,
+                                      **self.ri_kwargs)
+
+        # Add two additional IPv6 prefixes on the same interface
+        l3_test_common.router_append_interface(router, count=2, ip_version=6,
+                                               same_port=True)
+        internal_ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
+        with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
+            get_interfaces.return_value = internal_ports
+            # get the second internal interface in the list
+            res_port = ri.get_snat_port_for_internal_port(internal_ports[1])
+            self.assertEqual(internal_ports[1], res_port)
+
+            # tweak the first subnet_id, should still find port based
+            # on second subnet_id
+            test_port = copy.deepcopy(res_port)
+            test_port['fixed_ips'][0]['subnet_id'] = 1234
+            res_ip = ri.get_snat_port_for_internal_port(test_port)
+            self.assertEqual(internal_ports[1], res_ip)
+
+            # tweak the second subnet_id, shouldn't match now
+            test_port['fixed_ips'][1]['subnet_id'] = 1234
+            res_ip = ri.get_snat_port_for_internal_port(test_port)
+            self.assertIsNone(res_ip)
+
     def test_process_cent_router(self):
         router = l3_test_common.prepare_router_data()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
