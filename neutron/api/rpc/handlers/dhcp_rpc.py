@@ -118,10 +118,14 @@ class DhcpRpcCallback(object):
                         pass
                     else:
                         ctxt.reraise = True
-                net_id = port['port']['network_id']
-                LOG.warning(_LW("Action %(action)s for network %(net_id)s "
-                                "could not complete successfully: %(reason)s"),
-                            {"action": action, "net_id": net_id, 'reason': e})
+                if ctxt.reraise:
+                    net_id = port['port']['network_id']
+                    LOG.warning(_LW("Action %(action)s for network %(net_id)s "
+                                    "could not complete successfully: "
+                                    "%(reason)s"),
+                                {"action": action,
+                                 "net_id": net_id,
+                                 'reason': e})
 
     def _group_by_network_id(self, res):
         grouped = {}
