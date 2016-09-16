@@ -403,6 +403,8 @@ class TestOVSInterfaceDriver(TestBase):
                                    'replace_port') as replace:
                 ovs = interface.OVSInterfaceDriver(self.conf)
                 self.device_exists.side_effect = device_exists
+                link = self.ip.return_value.device.return_value.link
+                link.set_address.side_effect = (RuntimeError, None)
                 ovs.plug('01234567-1234-1234-99',
                          'port-1234',
                          'tap0',
@@ -421,6 +423,7 @@ class TestOVSInterfaceDriver(TestBase):
             expected = [
                 mock.call(),
                 mock.call().device('tap0'),
+                mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff'),
                 mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
             if namespace:
                 expected.extend(
