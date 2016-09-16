@@ -59,7 +59,7 @@ now has standard attributes. This ensures that an API caller can always
 discover if an attribute will be available.
 
 For example, if Flavors were migrated to include standard attributes, we
-we need a new 'flavor-standardattr' extension. Then as an API caller, I will
+need a new 'flavor-standardattr' extension. Then as an API caller, I will
 know that flavors will have timestamps by checking for 'flavor-standardattr'
 and 'timestamps'.
 
