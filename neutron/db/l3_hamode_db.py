@@ -597,14 +597,17 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     def safe_delete_ha_network(self, context, ha_network, tenant_id):
         try:
+            # reference the attr inside the try block before we attempt
+            # to delete the network and potentially invalidate the
+            # relationship
+            net_id = ha_network.network_id
             self._delete_ha_network(context, ha_network)
         except (n_exc.NetworkNotFound,
                 orm.exc.ObjectDeletedError):
             LOG.debug(
                 "HA network for tenant %s was already deleted.", tenant_id)
         except sa.exc.InvalidRequestError:
-            LOG.info(_LI("HA network %s can not be deleted."),
-                     ha_network.network_id)
+            LOG.info(_LI("HA network %s can not be deleted."), net_id)
         except n_exc.NetworkInUse:
             # network is still in use, this is normal so we don't
             # log anything
@@ -613,7 +616,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             LOG.info(_LI("HA network %(network)s was deleted as "
                          "no HA routers are present in tenant "
                          "%(tenant)s."),
-                     {'network': ha_network.network_id, 'tenant': tenant_id})
+                     {'network': net_id, 'tenant': tenant_id})
 
     @db_api.retry_if_session_inactive()
     def delete_router(self, context, id):
