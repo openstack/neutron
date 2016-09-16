@@ -21,6 +21,7 @@ import oslo_messaging
 
 from neutron._i18n import _
 from neutron.api.rpc.callbacks.consumer import registry as cons_registry
+from neutron.api.rpc.callbacks import exceptions as rpc_exc
 from neutron.api.rpc.callbacks.producer import registry as prod_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.callbacks import version_manager
@@ -112,6 +113,7 @@ class ResourcesPullRpcCallback(object):
     target = oslo_messaging.Target(
         version='1.0', namespace=constants.RPC_NAMESPACE_RESOURCES)
 
+    @oslo_messaging.expected_exceptions(rpc_exc.CallbackNotFound)
     def pull(self, context, resource_type, version, resource_id):
         obj = prod_registry.pull(resource_type, resource_id, context=context)
         if obj:
