@@ -232,7 +232,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
                    ofpp.NXActionRegMove(src_field='eth_src',
                                         dst_field='eth_dst',
                                         n_bits=48),
-                   ofpp.OFPActionSetField(eth_src_nxm=mac),
+                   ofpp.OFPActionSetField(eth_src=mac),
                    ofpp.OFPActionOutput(ofp.OFPP_IN_PORT, 0)]
         self.install_apply_actions(table_id=constants.ARP_RESPONDER,
                                    priority=1,
