@@ -26,12 +26,14 @@ from neutron._i18n import _
 LIBERTY = 'liberty'
 MITAKA = 'mitaka'
 NEWTON = 'newton'
+OCATA = 'ocata'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
     LIBERTY,
     MITAKA,
     NEWTON,
+    # Do not add the milestone until the end of the release
 ]
 
 
