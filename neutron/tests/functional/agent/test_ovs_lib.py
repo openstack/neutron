@@ -159,6 +159,33 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
             "OpenFlow10")
 
+    def test_add_protocols_start_with_one(self):
+        self.br.set_db_attribute('Bridge', self.br.br_name, 'protocols',
+                                 ['OpenFlow10'],
+                                 check_error=True)
+        self.br.add_protocols('OpenFlow13')
+        self.assertEqual(
+            self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
+            ['OpenFlow10', 'OpenFlow13'])
+
+    def test_add_protocols_start_with_two_add_two(self):
+        self.br.set_db_attribute('Bridge', self.br.br_name, 'protocols',
+                                 ['OpenFlow10', 'OpenFlow12'],
+                                 check_error=True)
+        self.br.add_protocols('OpenFlow13', 'OpenFlow14')
+        self.assertEqual(
+            self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
+            ['OpenFlow10', 'OpenFlow12', 'OpenFlow13', 'OpenFlow14'])
+
+    def test_add_protocols_add_existing(self):
+        self.br.set_db_attribute('Bridge', self.br.br_name, 'protocols',
+                                 ['OpenFlow10', 'OpenFlow12', 'OpenFlow13'],
+                                 check_error=True)
+        self.br.add_protocols('OpenFlow13')
+        self.assertEqual(
+            self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
+            ['OpenFlow10', 'OpenFlow12', 'OpenFlow13'])
+
     def test_get_datapath_id(self):
         brdev = ip_lib.IPDevice(self.br.br_name)
         dpid = brdev.link.attributes['link/ether'].replace(':', '')
