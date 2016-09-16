@@ -74,7 +74,7 @@ PARENT_PORT = 'parent_port'
 SUBPORTS = 'subports'
 TRUNK = 'trunk'
 TRUNK_PLUGIN = 'trunk_plugin'
-TRUNK_SUBPORT_OWNER = 'network:trunk_subport'
+TRUNK_SUBPORT_OWNER = 'trunk:subport'
 
 
 # String literals for segmentation types
