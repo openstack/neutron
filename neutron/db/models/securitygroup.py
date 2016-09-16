@@ -19,6 +19,7 @@ from sqlalchemy import orm
 from neutron.api.v2 import attributes
 from neutron.db import models_v2
 from neutron.db import standard_attr
+from neutron.extensions import securitygroup as sg
 
 
 class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -26,6 +27,7 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
     """Represents a v2 neutron security group."""
 
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    api_collections = [sg.SECURITYGROUPS]
 
 
 class DefaultSecurityGroup(model_base.BASEV2, model_base.HasProjectPrimaryKey):
@@ -90,3 +92,4 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
         SecurityGroup,
         backref=orm.backref('source_rules', cascade='all,delete'),
         primaryjoin="SecurityGroup.id==SecurityGroupRule.remote_group_id")
+    api_collections = [sg.SECURITYGROUPRULES]

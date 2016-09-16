@@ -108,6 +108,7 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
             name='uniq_ports0network_id0mac_address'),
         model_base.BASEV2.__table_args__
     )
+    api_collections = [attr.PORTS]
 
     def __init__(self, id=None, tenant_id=None, name=None, network_id=None,
                  mac_address=None, admin_state_up=None, status=None,
@@ -194,6 +195,7 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
         rbac_db_models.NetworkRBAC, lazy='joined', uselist=True,
         foreign_keys='Subnet.network_id',
         primaryjoin='Subnet.network_id==NetworkRBAC.object_id')
+    api_collections = [attr.SUBNETS]
 
 
 class SubnetPoolPrefix(model_base.BASEV2):
@@ -230,6 +232,7 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 backref='subnetpools',
                                 cascade='all, delete, delete-orphan',
                                 lazy='joined')
+    api_collections = [attr.SUBNETPOOLS]
 
 
 class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -251,6 +254,7 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     dhcp_agents = orm.relationship(
         'Agent', lazy='joined', viewonly=True,
         secondary=ndab_model.NetworkDhcpAgentBinding.__table__)
+    api_collections = [attr.NETWORKS]
 
 
 _deprecate._MovedGlobals()

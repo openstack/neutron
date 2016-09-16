@@ -13,26 +13,6 @@
 #    under the License.
 
 from neutron.api import extensions
-from neutron.extensions import l3
-from neutron.extensions import securitygroup as sg
-
-# Attribute Map
-CREATED = 'created_at'
-UPDATED = 'updated_at'
-TIMESTAMP_BODY = {
-    CREATED: {'allow_post': False, 'allow_put': False,
-              'is_visible': True, 'default': None
-              },
-    UPDATED: {'allow_post': False, 'allow_put': False,
-              'is_visible': True, 'default': None
-              },
-}
-EXTENDED_ATTRIBUTES_2_0 = {
-    l3.ROUTERS: TIMESTAMP_BODY,
-    l3.FLOATINGIPS: TIMESTAMP_BODY,
-    sg.SECURITYGROUPS: TIMESTAMP_BODY,
-    sg.SECURITYGROUPRULES: TIMESTAMP_BODY,
-}
 
 
 class Timestamp_ext(extensions.ExtensionDescriptor):
@@ -52,17 +32,16 @@ class Timestamp_ext(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_description(cls):
-        return ("This extension can be used for recording "
-                "create/update timestamps for ext resources "
-                "like router, floatingip, security_group, "
-                "security_group_rule.")
+        return ("This extension adds create/update timestamps for all "
+                "standard neutron resources not included by the "
+                "'timestamp_core' extension.")
 
     @classmethod
     def get_updated(cls):
         return "2016-05-05T10:00:00-00:00"
 
     def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+        # NOTE(kevinbenton): this extension is basically a no-op because
+        # the timestamp_core extension already defines all of the resources
+        # now.
+        return {}
