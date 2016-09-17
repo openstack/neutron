@@ -19,6 +19,7 @@ import testscenarios
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
+from neutron.tests.fullstack import utils
 from neutron.tests.unit import testlib_api
 
 load_tests = testlib_api.module_load_tests
@@ -80,17 +81,8 @@ class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
                            'l2_pop': True}),
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
-    interface_scenarios = [
-        ('openflow-cli_ovsdb-cli', {'of_interface': 'ovs-ofctl',
-                                    'ovsdb_interface': 'vsctl'}),
-        ('openflow-native_ovsdb-cli', {'of_interface': 'native',
-                                       'ovsdb_interface': 'vsctl'}),
-        ('openflow-cli_ovsdb-native', {'of_interface': 'ovs-ofctl',
-                                       'ovsdb_interface': 'native'}),
-        ('openflow-native_ovsdb-native', {'of_interface': 'native',
-                                          'ovsdb_interface': 'native'})]
     scenarios = testscenarios.multiply_scenarios(
-        network_scenarios, interface_scenarios)
+        network_scenarios, utils.get_ovs_interface_scenarios())
 
     def test_connectivity(self):
         self._test_connectivity()
