@@ -16,8 +16,11 @@
 """Base test cases for all neutron tests.
 """
 
+import abc
 import contextlib
+import functools
 import gc
+import inspect
 import os
 import os.path
 import weakref
@@ -143,6 +146,32 @@ class AttributeDict(dict):
         raise AttributeError(_("Unknown attribute '%s'.") % name)
 
 
+def _catch_timeout(f):
+    @functools.wraps(f)
+    def func(self, *args, **kwargs):
+        try:
+            return f(self, *args, **kwargs)
+        except eventlet.timeout.Timeout as e:
+            self.fail('Execution of this test timed out: %s' % e)
+    return func
+
+
+class _CatchTimeoutMetaclass(abc.ABCMeta):
+    def __init__(cls, name, bases, dct):
+        super(_CatchTimeoutMetaclass, cls).__init__(name, bases, dct)
+        for name, method in inspect.getmembers(
+                # NOTE(ihrachys): we should use isroutine because it will catch
+                # both unbound methods (python2) and functions (python3)
+                cls, predicate=inspect.isroutine):
+            if name.startswith('test_'):
+                setattr(cls, name, _catch_timeout(method))
+
+
+# Test worker cannot survive eventlet's Timeout exception, which effectively
+# kills the whole worker, with all test cases scheduled to it. This metaclass
+# makes all test cases convert Timeout exceptions into unittest friendly
+# failure mode (self.fail).
+@six.add_metaclass(_CatchTimeoutMetaclass)
 class DietTestCase(base.BaseTestCase):
     """Same great taste, less filling.
 
