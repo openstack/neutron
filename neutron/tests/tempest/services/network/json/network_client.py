@@ -872,7 +872,7 @@ class NetworkClientJSON(service_client.RestClient):
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
-    def create_network_keystone_v3(self, name, project_id):
+    def create_network_keystone_v3(self, name, project_id, tenant_id=None):
         uri = '%s/networks' % self.uri_prefix
         post_data = {
             'network': {
@@ -880,6 +880,8 @@ class NetworkClientJSON(service_client.RestClient):
                 'project_id': project_id
             }
         }
+        if tenant_id is not None:
+            post_data['network']['tenant_id'] = tenant_id
         resp, body = self.post(uri, self.serialize(post_data))
         body = self.deserialize_single(body)
         self.expected_success(201, resp.status)
