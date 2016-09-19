@@ -17,8 +17,6 @@ import functools
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.agent.common import ovs_lib
-from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import tc_lib
 from neutron.common import utils
 from neutron.services.qos import qos_consts
@@ -26,6 +24,7 @@ from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
+from neutron.tests.fullstack import utils as fullstack_utils
 from neutron.tests.unit import testlib_api
 
 from neutron.conf.plugins.ml2.drivers import linuxbridge as \
@@ -43,11 +42,15 @@ BANDWIDTH_LIMIT = 500
 DSCP_MARK = 16
 
 
-class BaseQoSRuleTestCase(base.BaseFullStackTestCase):
+class BaseQoSRuleTestCase(object):
+    of_interface = None
+    ovsdb_interface = None
 
     def setUp(self):
         host_desc = [environment.HostDescription(
             l3_agent=False,
+            of_interface=self.of_interface,
+            ovsdb_interface=self.ovsdb_interface,
             l2_agent_type=self.l2_agent_type)]
         env_desc = environment.EnvironmentDescription(qos=True)
         env = environment.Environment(env_desc, host_desc)
@@ -91,35 +94,7 @@ class BaseQoSRuleTestCase(base.BaseFullStackTestCase):
         return vm, qos_policy
 
 
-class TestBwLimitQoS(BaseQoSRuleTestCase):
-
-    scenarios = [
-        ("ovs", {'l2_agent_type': constants.AGENT_TYPE_OVS}),
-        ("linuxbridge", {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})
-    ]
-
-    def _wait_for_bw_rule_applied_ovs_agent(self, vm, limit, burst):
-        utils.wait_until_true(
-            lambda: vm.bridge.get_egress_bw_limit_for_port(
-                vm.port.name) == (limit, burst))
-
-    def _wait_for_bw_rule_applied_linuxbridge_agent(self, vm, limit, burst):
-        port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
-            vm.neutron_port['id'])
-        tc = tc_lib.TcCommand(
-            port_name,
-            linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE,
-            namespace=vm.host.host_namespace
-        )
-        utils.wait_until_true(
-            lambda: tc.get_filters_bw_limits() == (limit, burst))
-
-    def _wait_for_bw_rule_applied(self, vm, limit, burst):
-        if isinstance(vm.bridge, ovs_lib.OVSBridge):
-            self._wait_for_bw_rule_applied_ovs_agent(vm, limit, burst)
-        if isinstance(vm.bridge, bridge_lib.BridgeDevice):
-            self._wait_for_bw_rule_applied_linuxbridge_agent(vm, limit, burst)
-
+class _TestBwLimitQoS(BaseQoSRuleTestCase):
     def _wait_for_bw_rule_removed(self, vm):
         # No values are provided when port doesn't have qos policy
         self._wait_for_bw_rule_applied(vm, None, None)
@@ -172,11 +147,34 @@ class TestBwLimitQoS(BaseQoSRuleTestCase):
         self._wait_for_bw_rule_removed(vm)
 
 
-class TestDscpMarkingQoS(BaseQoSRuleTestCase):
+class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
+    l2_agent_type = constants.AGENT_TYPE_OVS
+    scenarios = fullstack_utils.get_ovs_interface_scenarios()
 
-    def setUp(self):
-        self.l2_agent_type = constants.AGENT_TYPE_OVS
-        super(TestDscpMarkingQoS, self).setUp()
+    def _wait_for_bw_rule_applied(self, vm, limit, burst):
+        utils.wait_until_true(
+            lambda: vm.bridge.get_egress_bw_limit_for_port(
+                vm.port.name) == (limit, burst))
+
+
+class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
+    l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
+
+    def _wait_for_bw_rule_applied(self, vm, limit, burst):
+        port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
+            vm.neutron_port['id'])
+        tc = tc_lib.TcCommand(
+            port_name,
+            linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE,
+            namespace=vm.host.host_namespace
+        )
+        utils.wait_until_true(
+            lambda: tc.get_filters_bw_limits() == (limit, burst))
+
+
+class TestDscpMarkingQoSOvs(BaseQoSRuleTestCase, base.BaseFullStackTestCase):
+    scenarios = fullstack_utils.get_ovs_interface_scenarios()
+    l2_agent_type = constants.AGENT_TYPE_OVS
 
     def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
         l2_extensions.wait_until_dscp_marking_rule_applied(
