@@ -1675,8 +1675,6 @@ class TestDnsmasq(TestBase):
                                                            0xff),
                                                  ],
                                                 any_order=True)
-        dnsmasq.device_manager.unplug.assert_has_calls(
-            [mock.call(dnsmasq.interface_name, dnsmasq.network)])
 
     def test_release_for_ipv6_lease(self):
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
