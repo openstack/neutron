@@ -91,9 +91,42 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
         self.assertFalse(self.trunk_manager.wire_subports_for_trunk.called)
         self.assertFalse(self.trunk_manager.unwire_subports_for_trunk.called)
 
+    def test_handle_subports_unknown_event(self):
+        trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
+        # unknown events should be ignored and thus lead to no updates
+        # and no trunk interactions.
+        with mock.patch.object(
+            self.skeleton.ovsdb_handler,
+            'wire_subports_for_trunk') as f,\
+                mock.patch.object(
+                    self.skeleton.ovsdb_handler,
+                    'unwire_subports_for_trunk') as g:
+            self.skeleton.handle_subports(self.subports, events.UPDATED)
+            self.assertFalse(f.called)
+            self.assertFalse(g.called)
+            self.assertFalse(trunk_rpc.update_trunk_status.called)
+
     def test_handle_subports_trunk_rpc_error(self):
         trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
         trunk_rpc.update_subport_bindings.side_effect = (
             oslo_messaging.MessagingException)
         self.skeleton.handle_subports(self.subports, events.CREATED)
         self.assertTrue(trunk_rpc.update_subport_bindings.called)
+
+    def _test_handle_subports_trunk_on_trunk_update(self, event):
+        trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
+        self.skeleton.handle_subports(self.subports, event)
+        # Make sure trunk state is reported to the server
+        self.assertTrue(trunk_rpc.update_trunk_status.called)
+
+    def test_handle_subports_created_trunk_on_trunk_update(self):
+        with mock.patch.object(
+                self.skeleton.ovsdb_handler, 'wire_subports_for_trunk'):
+            self._test_handle_subports_trunk_on_trunk_update(
+                events.CREATED)
+
+    def test_handle_subports_deleted_trunk_on_trunk_update(self):
+        with mock.patch.object(
+                self.skeleton.ovsdb_handler, 'unwire_subports_for_trunk'):
+            self._test_handle_subports_trunk_on_trunk_update(
+                events.DELETED)

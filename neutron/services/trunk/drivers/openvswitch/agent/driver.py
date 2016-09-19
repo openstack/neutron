@@ -50,26 +50,27 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
         trunk_id = subports[0].trunk_id
 
         if self.ovsdb_handler.manages_this_trunk(trunk_id):
-            LOG.debug("Event %s for subports: %s", event_type, subports)
-            if event_type == events.CREATED:
-                ctx = self.ovsdb_handler.context
-                try:
-                    self.ovsdb_handler.wire_subports_for_trunk(
-                        ctx, trunk_id, subports)
-                except oslo_messaging.MessagingException as e:
-                    LOG.error(_LE(
-                        "Got an error from trunk rpc when wiring subports "
-                        "%(subports)s for trunk %(trunk_id)s: %(err)s"),
-                        {'subports': subports,
-                         'trunk_id': trunk_id,
-                         'err': e})
-            elif event_type == events.DELETED:
-                subport_ids = [subport.port_id for subport in subports]
-                # unwire doesn't use RPC communication
-                self.ovsdb_handler.unwire_subports_for_trunk(
-                    trunk_id, subport_ids)
-            else:
-                LOG.error(_LE("Unknown event type %s"), event_type)
+            if event_type not in (events.CREATED, events.DELETED):
+                LOG.error(_LE("Unknown or unimplemented event %s"), event_type)
+                return
+
+            ctx = self.ovsdb_handler.context
+            try:
+                LOG.debug("Event %s for subports: %s", event_type, subports)
+                if event_type == events.CREATED:
+                    status = self.ovsdb_handler.wire_subports_for_trunk(
+                            ctx, trunk_id, subports)
+                elif event_type == events.DELETED:
+                    subport_ids = [subport.port_id for subport in subports]
+                    status = self.ovsdb_handler.unwire_subports_for_trunk(
+                        trunk_id, subport_ids)
+                self.ovsdb_handler.report_trunk_status(ctx, trunk_id, status)
+            except oslo_messaging.MessagingException as e:
+                LOG.error(_LE(
+                    "Error on event %(event)s for subports "
+                    "%(subports)s: %(err)s"),
+                    {'event': event_type, 'subports': subports,
+                     'trunk_id': trunk_id, 'err': e})
 
 
 def init_handler(resource, event, trigger, agent=None):
