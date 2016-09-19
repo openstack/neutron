@@ -272,6 +272,43 @@ class BgpTests(test_plugin.Ml2PluginV2TestCase,
             for key in args:
                 self.assertEqual(args[key], peer[key])
 
+    def test_update_bgp_peer_auth_type_none(self):
+        args = {'tenant_id': _uuid(),
+                'remote_as': '1111',
+                'peer_ip': '10.10.10.10',
+                'auth_type': 'md5'}
+        with self.bgp_peer(tenant_id=args['tenant_id'],
+                           remote_as=args['remote_as'],
+                           peer_ip=args['peer_ip'],
+                           auth_type='none',
+                           name="my-peer") as peer:
+            data = {'bgp_peer': {'password': "my-secret",
+                                 'name': "my-peer1"}}
+            self.assertRaises(bgp.BgpPeerNotAuthenticated,
+                              self.bgp_plugin.update_bgp_peer,
+                              self.context, peer['id'], data)
+
+    def test_update_bgp_peer_password_none(self):
+        args = {'tenant_id': _uuid(),
+                'remote_as': 1111,
+                'peer_ip': '10.10.10.10',
+                'name': 'my-peer',
+                'auth_type': 'none'}
+        with self.bgp_peer(tenant_id=args['tenant_id'],
+                           remote_as=args['remote_as'],
+                           peer_ip=args['peer_ip'],
+                           auth_type=args['auth_type'],
+                           name=args['name']) as peer:
+            data = {'bgp_peer': {'name': "my-peer1"}}
+            updated_peer = self.bgp_plugin.update_bgp_peer(self.context,
+                                                           peer['id'],
+                                                           data)
+            for key in args:
+                if key == 'name':
+                    self.assertEqual('my-peer1', updated_peer[key])
+                else:
+                    self.assertEqual(peer[key], updated_peer[key])
+
     def test_bgp_peer_show_non_existent(self):
         self.assertRaises(bgp.BgpPeerNotFound,
                           self.bgp_plugin.get_bgp_peer,

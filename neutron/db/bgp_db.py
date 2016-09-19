@@ -266,7 +266,7 @@ class BgpDbMixin(common_db.CommonDbMixin):
         bp = bgp_peer[bgp_ext.BGP_PEER_BODY_KEY_NAME]
         with context.session.begin(subtransactions=True):
             bgp_peer_db = self._get_bgp_peer(context, bgp_peer_id)
-            if ((bp['password'] is not None) and
+            if ((bp.get('password') is not None) and
                 (bgp_peer_db['auth_type'] == 'none')):
                 raise bgp_ext.BgpPeerNotAuthenticated(bgp_peer_id=bgp_peer_id)
             bgp_peer_db.update(bp)
