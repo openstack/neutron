@@ -1750,6 +1750,28 @@ class TestOvsNeutronAgent(object):
                                                           'vxlan')
             self.assertEqual([], cleanup.mock_calls)
 
+    def test_tunnel_sync_setup_tunnel_flood_flow_once(self):
+        fake_tunnel_details = {'tunnels': [{'ip_address': '200.200.200.200'},
+                                           {'ip_address': '100.100.100.100'}]}
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'tunnel_sync',
+                               return_value=fake_tunnel_details),\
+                mock.patch.object(
+                    self.agent,
+                    '_setup_tunnel_port') as _setup_tunnel_port_fn,\
+                mock.patch.object(
+                    self.agent,
+                    '_setup_tunnel_flood_flow') as _setup_tunnel_flood_flow:
+            self.agent.tunnel_types = ['vxlan']
+            self.agent.tunnel_sync()
+            expected_calls = [mock.call(self.agent.tun_br, 'vxlan-c8c8c8c8',
+                                        '200.200.200.200', 'vxlan'),
+                              mock.call(self.agent.tun_br, 'vxlan-64646464',
+                                        '100.100.100.100', 'vxlan')]
+            _setup_tunnel_port_fn.assert_has_calls(expected_calls)
+            _setup_tunnel_flood_flow.assert_called_once_with(self.agent.tun_br,
+                                                             'vxlan')
+
     def test_tunnel_update(self):
         kwargs = {'tunnel_ip': '10.10.10.10',
                   'tunnel_type': 'gre'}
@@ -2068,6 +2090,7 @@ class TestOvsNeutronAgent(object):
         bridge.install_flood_to_tun.side_effect = add_new_vlan_mapping
         self.agent._setup_tunnel_port(bridge, 1, '1.2.3.4',
                                       tunnel_type=tunnel_type)
+        self.agent._setup_tunnel_flood_flow(bridge, tunnel_type)
         self.assertIn('bar', self.agent.vlan_manager)
 
     def test_setup_entry_for_arp_reply_ignores_ipv6_addresses(self):

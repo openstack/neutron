@@ -489,6 +489,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         if not self.l2_pop:
             self._setup_tunnel_port(self.tun_br, tun_name, tunnel_ip,
                                     tunnel_type)
+            self._setup_tunnel_flood_flow(self.tun_br, tunnel_type)
 
     def tunnel_delete(self, context, **kwargs):
         LOG.debug("tunnel_delete received")
@@ -1450,7 +1451,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Add flow in default table to resubmit to the right
         # tunneling table (lvid will be set in the latter)
         br.setup_tunnel_port(tunnel_type, ofport)
+        return ofport
 
+    def _setup_tunnel_flood_flow(self, br, tunnel_type):
         ofports = self.tun_br_ofports[tunnel_type].values()
         if ofports and not self.l2_pop:
             # Update flooding flows to include the new tunnel
@@ -1459,7 +1462,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                     br.install_flood_to_tun(vlan_mapping.vlan,
                                             vlan_mapping.segmentation_id,
                                             ofports)
-        return ofport
 
     def setup_tunnel_port(self, br, remote_ip, network_type):
         port_name = self.get_tunnel_name(
@@ -1470,6 +1472,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                          port_name,
                                          remote_ip,
                                          network_type)
+        self._setup_tunnel_flood_flow(br, network_type)
         return ofport
 
     def cleanup_tunnel_port(self, br, tun_ofport, tunnel_type):
@@ -1730,6 +1733,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                     tun_name,
                                                     tunnel['ip_address'],
                                                     tunnel_type)
+                    self._setup_tunnel_flood_flow(self.tun_br, tunnel_type)
         except Exception as e:
             LOG.debug("Unable to sync tunnel IP %(local_ip)s: %(e)s",
                       {'local_ip': self.local_ip, 'e': e})
