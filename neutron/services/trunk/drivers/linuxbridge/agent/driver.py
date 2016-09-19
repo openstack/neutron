@@ -77,7 +77,7 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
             affected_trunks.add(s['trunk_id'])
             method(s['trunk_id'], s)
         for trunk_id in affected_trunks:
-            trunk = self._tapi.get_trunk(context, trunk_id)
+            trunk = self._tapi.get_trunk_by_id(context, trunk_id)
             if not trunk:
                 continue
             self.wire_trunk(context, trunk)
@@ -190,6 +190,10 @@ class _TrunkAPI(object):
         self._trunk_by_id[trunk.id] = trunk
         for sub in trunk.sub_ports:
             self._sub_port_id_to_trunk_port_id[sub.port_id] = trunk.port_id
+
+    def get_trunk_by_id(self, context, trunk_id):
+        """Gets trunk object based on trunk_id. None if not in cache."""
+        return self._trunk_by_id.get(trunk_id)
 
     def get_trunk(self, context, port_id):
         """Gets trunk object for port_id. None if not trunk."""
