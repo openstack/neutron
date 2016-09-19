@@ -158,6 +158,7 @@ class OVSConfigFixture(ConfigFixture):
             },
             'agent': {
                 'l2_population': str(self.env_desc.l2_pop),
+                'arp_responder': str(self.env_desc.arp_responder),
             }
         })
 
