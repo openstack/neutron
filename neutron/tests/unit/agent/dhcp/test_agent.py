@@ -1441,6 +1441,20 @@ class TestDeviceManager(base.BaseTestCase):
         expected = [mock.call.add_rule('POSTROUTING', rule)]
         self.mangle_inst.assert_has_calls(expected)
 
+    def test_setup_dhcp_port_doesnt_orphan_devices(self):
+        with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
+            plugin = mock.Mock()
+            device = mock.Mock()
+            mock_IPDevice.return_value = device
+            device.route.get_gateway.return_value = None
+            net = copy.deepcopy(fake_network)
+            plugin.create_dhcp_port.side_effect = exceptions.Conflict()
+            dh = dhcp.DeviceManager(cfg.CONF, plugin)
+            clean = mock.patch.object(dh, '_cleanup_stale_devices').start()
+            with testtools.ExpectedException(exceptions.Conflict):
+                dh.setup(net)
+            clean.assert_called_once_with(net, dhcp_port=None)
+
     def test_setup_create_dhcp_port(self):
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
             plugin = mock.Mock()
