@@ -14,6 +14,7 @@ from neutron_lib.db import model_base
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import sqlalchemy as sa
+from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LI
@@ -21,6 +22,7 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import segment
 
@@ -54,6 +56,10 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
     segment_index = sa.Column(sa.Integer, nullable=False, server_default='0')
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN),
                      nullable=True)
+    network = orm.relationship(models_v2.Network,
+                               backref=orm.backref("segments",
+                                                   lazy='joined',
+                                                   cascade='delete'))
     api_collections = [segment.SEGMENTS]
 
 

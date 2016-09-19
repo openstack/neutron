@@ -19,6 +19,7 @@ from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.objects import base as obj_base
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import network
 from neutron.objects import ports
 from neutron.objects.qos import policy
 from neutron.tests import tools
@@ -195,6 +196,9 @@ class PortBindingLevelIfaceObjTestCase(
             obj['segment_id'] = None
         self.pager_map[self._test_class.obj_name()] = (
             obj_base.Pager(sorts=[('port_id', True), ('level', True)]))
+        self.pager_map[network.NetworkSegment.obj_name()] = (
+            obj_base.Pager(
+                sorts=[('network_id', True), ('segment_index', True)]))
 
 
 class PortBindingLevelDbObjectTestCase(

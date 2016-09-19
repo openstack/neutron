@@ -16,7 +16,7 @@ from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as pdc
 from neutron.extensions import portsecurity as psec
 from neutron.objects import base as objects_base
-from neutron.objects.network.extensions import port_security as n_ps
+from neutron.objects import network
 from neutron.objects.port.extensions import port_security as p_ps
 from neutron.tests import base
 
@@ -69,7 +69,7 @@ class PortSecurityDbCommonTestCase(base.BaseTestCase):
 
     def test__process_network_port_security_update_no_binding(self):
         self._test__process_security_update_no_binding(
-            'network', n_ps.NetworkPortSecurity,
+            'network', network.NetworkPortSecurity,
             self.plugin._process_network_port_security_update)
 
     def test__extend_port_security_dict_no_port_security(self):

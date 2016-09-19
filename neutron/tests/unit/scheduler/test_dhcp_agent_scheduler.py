@@ -588,6 +588,15 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual('host-c', agent2[0]['host'])
         self.assertEqual('host-d', agent3[0]['host'])
 
+    def _get_network_with_candidate_hosts(self, net_id, seg_id):
+        # expire the session so that the segment is fully reloaded on fetch,
+        # including its new host mapping
+        self.ctx.session.expire_all()
+        net = self.plugin.get_network(self.ctx, net_id)
+        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
+        net['candidate_hosts'] = seg['hosts']
+        return net
+
     def test_schedule_segment_one_hostable_agent(self):
         net_id = self._create_network()
         seg_id = self._create_segment(net_id)
@@ -595,9 +604,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         helpers.register_dhcp_agent(HOST_D)
         segments_service_db.update_segment_host_mapping(
             self.ctx, HOST_C, {seg_id})
-        net = self.plugin.get_network(self.ctx, net_id)
-        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
-        net['candidate_hosts'] = seg['hosts']
+        net = self._get_network_with_candidate_hosts(net_id, seg_id)
         agents = self.plugin.network_scheduler.schedule(
             self.plugin, self.ctx, net)
         self.assertEqual(1, len(agents))
@@ -612,9 +619,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
             self.ctx, HOST_C, {seg_id})
         segments_service_db.update_segment_host_mapping(
             self.ctx, HOST_D, {seg_id})
-        net = self.plugin.get_network(self.ctx, net_id)
-        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
-        net['candidate_hosts'] = seg['hosts']
+        net = self._get_network_with_candidate_hosts(net_id, seg_id)
         agents = self.plugin.network_scheduler.schedule(
             self.plugin, self.ctx, net)
         self.assertEqual(1, len(agents))
@@ -642,9 +647,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
             self.ctx, HOST_C, {seg_id})
         segments_service_db.update_segment_host_mapping(
             self.ctx, HOST_D, {seg_id})
-        net = self.plugin.get_network(self.ctx, net_id)
-        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
-        net['candidate_hosts'] = seg['hosts']
+        net = self._get_network_with_candidate_hosts(net_id, seg_id)
         agents = self.plugin.network_scheduler.schedule(
             self.plugin, self.ctx, net)
         self.assertEqual(2, len(agents))
@@ -659,9 +662,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         helpers.register_dhcp_agent(HOST_D)
         segments_service_db.update_segment_host_mapping(
             self.ctx, HOST_C, {seg_id})
-        net = self.plugin.get_network(self.ctx, net_id)
-        seg = self.segments_plugin.get_segment(self.ctx, seg_id)
-        net['candidate_hosts'] = seg['hosts']
+        net = self._get_network_with_candidate_hosts(net_id, seg_id)
         agents = self.plugin.network_scheduler.schedule(
             self.plugin, self.ctx, net)
         self.assertEqual(1, len(agents))

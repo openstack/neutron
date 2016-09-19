@@ -13,7 +13,7 @@
 #    under the License.
 
 from neutron.extensions import portsecurity as psec
-from neutron.objects.network.extensions import port_security as n_ps
+from neutron.objects import network
 from neutron.objects.port.extensions import port_security as p_ps
 
 
@@ -47,7 +47,7 @@ class PortSecurityDbCommon(object):
     def _process_network_port_security_create(
         self, context, network_req, network_res):
         self._process_port_security_create(
-            context, n_ps.NetworkPortSecurity, 'network',
+            context, network.NetworkPortSecurity, 'network',
             network_req, network_res)
 
     def _get_security_binding(self, context, obj_cls, res_id):
@@ -58,7 +58,7 @@ class PortSecurityDbCommon(object):
 
     def _get_network_security_binding(self, context, network_id):
         return self._get_security_binding(
-            context, n_ps.NetworkPortSecurity, network_id)
+            context, network.NetworkPortSecurity, network_id)
 
     def _get_port_security_binding(self, context, port_id):
         return self._get_security_binding(context, p_ps.PortSecurity, port_id)
@@ -71,7 +71,7 @@ class PortSecurityDbCommon(object):
     def _process_network_port_security_update(
         self, context, network_req, network_res):
         self._process_port_security_update(
-            context, n_ps.NetworkPortSecurity, 'network',
+            context, network.NetworkPortSecurity, 'network',
             network_req, network_res)
 
     def _process_port_security_update(
