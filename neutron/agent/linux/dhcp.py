@@ -1291,14 +1291,22 @@ class DeviceManager(object):
             network.ports.append(port)
 
     def _cleanup_stale_devices(self, network, dhcp_port):
+        """Unplug any devices found in the namespace except for dhcp_port."""
         LOG.debug("Cleaning stale devices for network %s", network.id)
-        dev_name = self.driver.get_device_name(dhcp_port)
+        skip_dev_name = (self.driver.get_device_name(dhcp_port)
+                         if dhcp_port else None)
         ns_ip = ip_lib.IPWrapper(namespace=network.namespace)
+        if not ns_ip.netns.exists(network.namespace):
+            return
         for d in ns_ip.get_devices(exclude_loopback=True):
             # delete all devices except current active DHCP port device
-            if d.name != dev_name:
+            if d.name != skip_dev_name:
                 LOG.debug("Found stale device %s, deleting", d.name)
-                self.unplug(d.name, network)
+                try:
+                    self.unplug(d.name, network)
+                except Exception:
+                    LOG.exception(_LE("Exception during stale "
+                                      "dhcp device cleanup"))
 
     def plug(self, network, port, interface_name):
         """Plug device settings for the network's DHCP on this host."""
@@ -1311,7 +1319,13 @@ class DeviceManager(object):
 
     def setup(self, network):
         """Create and initialize a device for network's DHCP on this host."""
-        port = self.setup_dhcp_port(network)
+        try:
+            port = self.setup_dhcp_port(network)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                # clear everything out so we don't leave dangling interfaces
+                # if setup never succeeds in the future.
+                self._cleanup_stale_devices(network, dhcp_port=None)
         self._update_dhcp_port(network, port)
         interface_name = self.get_interface_name(network, port)
 
@@ -1355,12 +1369,7 @@ class DeviceManager(object):
                             namespace=network.namespace)
 
         self._set_default_route(network, interface_name)
-        try:
-            self._cleanup_stale_devices(network, port)
-        except Exception:
-            # catch everything as we don't want to fail because of
-            # cleanup step
-            LOG.error(_LE("Exception during stale dhcp device cleanup"))
+        self._cleanup_stale_devices(network, port)
 
         return interface_name
 
