@@ -409,7 +409,14 @@ class DhcpAgent(manager.Manager):
         if port:
             network = self.cache.get_network_by_id(port.network_id)
             self.cache.remove_port(port)
-            self.call_driver('reload_allocations', network)
+            if self._is_port_on_this_agent(port):
+                # the agent's port has been deleted. disable the service
+                # and add the network to the resync list to create
+                # (or acquire a reserved) port.
+                self.call_driver('disable', network)
+                self.schedule_resync("Agent port was deleted", port.network_id)
+            else:
+                self.call_driver('reload_allocations', network)
 
     def enable_isolated_metadata_proxy(self, network):
 
