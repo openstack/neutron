@@ -132,15 +132,14 @@ consumers of your code easier.
 Sub-Project Release Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Only members of the `neutron-release
-<https://review.openstack.org/#/admin/groups/150,members>`_ gerrit group can do
-the following release related tasks:
+All subproject releases are managed by `global OpenStack Release Managers team
+<https://review.openstack.org/#/admin/groups/11,members>`_. The
+`neutron-release team
+<https://review.openstack.org/#/admin/groups/150,members>`_ handles only the
+following operations:
 
-* Make releases
 * Create stable branches
 * Make stable branches end of life
-
-Make sure you talk to a member of neutron-release to perform these tasks.
 
 To release a sub-project, follow the following steps:
 
@@ -155,19 +154,12 @@ To release a sub-project, follow the following steps:
   <https://git.openstack.org/cgit/openstack/releases/tree/README.rst>`_ a patch
   to openstack/releases repository with the intended git hash. `The Neutron
   release liaison <https://wiki.openstack.org/wiki/CrossProjectLiaisons#Release_management>`_
-  should be added in Gerrit to the list of reviewers for the patch.
-* If the subproject is not `managed
-  <https://governance.openstack.org/reference/tags/release_managed.html>`_ by
-  OpenStack Release Team, a member of `neutron-release
-  <https://review.openstack.org/#/admin/groups/150,members>`_ `tags the release
-  <http://docs.openstack.org/infra/manual/drivers.html#tagging-a-release>`_ and
-  creates the needed stable branches, if needed.  Note: tagging will release
-  the code to PyPI. Note: new major tag versions should conform to SemVer
+  should be added in Gerrit to the list of reviewers for the patch.  Note: new
+  major tag versions should conform to `SemVer <http://semver.org/>`_
   requirements, meaning no year numbers should be used as a major version. The
   switch to SemVer is advised at earliest convenience for all new major
   releases.
-* The Neutron release liaison votes with +1 for the openstack/releases patch
-  that gives indication to release team the patch is ready to merge.
+* The Neutron release liaison votes with +1 for the openstack/releases patch.
 * The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
   `this <https://pypi.python.org/simple/networking-odl>`_.
