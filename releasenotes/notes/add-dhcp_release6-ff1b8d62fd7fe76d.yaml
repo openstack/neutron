@@ -3,5 +3,18 @@ prelude: >
   - Call dhcp_release6 command line utility when releasing
     unused IPv6 leases for DHCPv6 stateful subnets.
     dhcp_release6 first appeared in dnsmasq 2.76
-fixes:
-  - closes bug 1521666
+upgrade:
+  - A version of dnsmasq that includes dhcp_release6 should
+    be installed on systems running the DHCP agent. Failure
+    to do this could cause DHCPv6 stateful addressing to
+    not function properly.
+  - The rootwrap filters file dhcp.filters must be updated
+    to include dhcp_release6, otherwise trying to run the
+    utility will result in a NoFilterMatched exception.
+issues:
+  - Absence of dhcp_release6 when DHCPv6 stateful addressing
+    is in use may lead to bug `1521666 <https://bugs.launchpad.net/neutron/+bug/1521666>`_.
+    Neutron supports dhcp_release6 now, but if the tool is
+    not available this leads to increased log warnings. Read
+    bug report `1622002 <https://bugs.launchpad.net/neutron/+bug/1622002>`_
+    for more details.
