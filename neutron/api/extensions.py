@@ -646,9 +646,9 @@ class PluginAwareExtensionManager(ExtensionManager):
         alias = extension.get_alias()
         supports_extension = alias in self.get_supported_extension_aliases()
         if not supports_extension:
-            LOG.warning(_LW("Extension %s not supported by any of loaded "
-                            "plugins"),
-                        alias)
+            LOG.info(_LI("Extension %s not supported by any of loaded "
+                         "plugins"),
+                    alias)
         return supports_extension
 
     def _plugins_implement_interface(self, extension):
