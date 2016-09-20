@@ -27,10 +27,10 @@ from testtools.content import text_content
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
+from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt
-from neutron.tests import base as tests_base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent import test_ovs_lib
@@ -391,7 +391,7 @@ class OVSFlowTestCase(OVSAgentTestBase):
             'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
         }
         kwargs = {'vlan': 777, 'tun_id': 888}
-        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        port_name = common_utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         ofport = self.br_tun.add_tunnel_port(port_name, attrs['remote_ip'],
                                              attrs['local_ip'])
         self.br_tun.install_flood_to_tun(ports=[ofport], **kwargs)

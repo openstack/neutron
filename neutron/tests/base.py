@@ -20,12 +20,13 @@ import contextlib
 import gc
 import os
 import os.path
+import sys
 import weakref
 
+from debtcollector import moves
 import eventlet.timeout
 import fixtures
 import mock
-from neutron_lib import constants
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
@@ -67,43 +68,14 @@ def fake_use_fatal_exceptions(*args):
     return True
 
 
-def get_related_rand_names(prefixes, max_length=None):
-    """Returns a list of the prefixes with the same random characters appended
-
-    :param prefixes: A list of prefix strings
-    :param max_length: The maximum length of each returned string
-    :returns: A list with each prefix appended with the same random characters
-    """
-
-    if max_length:
-        length = max_length - max(len(p) for p in prefixes)
-        if length <= 0:
-            raise ValueError("'max_length' must be longer than all prefixes")
-    else:
-        length = 8
-    rndchrs = utils.get_random_string(length)
-    return [p + rndchrs for p in prefixes]
-
-
-def get_rand_name(max_length=None, prefix='test'):
-    """Return a random string.
-
-    The string will start with 'prefix' and will be exactly 'max_length'.
-    If 'max_length' is None, then exactly 8 random characters, each
-    hexadecimal, will be added. In case len(prefix) <= len(max_length),
-    ValueError will be raised to indicate the problem.
-    """
-    return get_related_rand_names([prefix], max_length)[0]
-
-
-def get_rand_device_name(prefix='test'):
-    return get_rand_name(
-        max_length=constants.DEVICE_NAME_MAX_LEN, prefix=prefix)
-
-
-def get_related_rand_device_names(prefixes):
-    return get_related_rand_names(prefixes,
-                                  max_length=constants.DEVICE_NAME_MAX_LEN)
+for _name in ('get_related_rand_names',
+              'get_rand_name',
+              'get_rand_device_name',
+              'get_related_rand_device_names'):
+    setattr(sys.modules[__name__], _name, moves.moved_function(
+        getattr(utils, _name), _name, __name__,
+        message='use "neutron.common.utils.%s" instead' % _name,
+        version='Newton', removal_version='Ocata'))
 
 
 def bool_from_env(key, strict=False, default=False):

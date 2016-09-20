@@ -17,6 +17,7 @@ from neutron_lib import constants as n_const
 import testtools.testcase
 import unittest2.case
 
+from neutron.common import utils
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -39,7 +40,7 @@ def create_resource(prefix, creation_func, *args, **kwargs):
         return creation_func(prefix, *args, **kwargs)
 
     while True:
-        name = base.get_rand_name(
+        name = utils.get_rand_name(
             max_length=n_const.DEVICE_NAME_MAX_LEN,
             prefix=prefix)
         try:

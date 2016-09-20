@@ -18,7 +18,7 @@ import mock
 from neutron.agent.common import ovs_lib
 from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb import impl_idl
-from neutron.tests import base as test_base
+from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
@@ -36,7 +36,7 @@ class ImplIdlTestCase(base.BaseSudoTestCase):
         super(ImplIdlTestCase, self).setUp()
         self.config(group='OVS', ovsdb_interface='native')
         self.ovs = ovs_lib.BaseOVS()
-        self.brname = test_base.get_rand_device_name(net_helpers.BR_PREFIX)
+        self.brname = utils.get_rand_device_name(net_helpers.BR_PREFIX)
         # Make sure exceptions pass through by calling do_post_commit directly
         mock.patch.object(
             impl_idl.NeutronOVSDBTransaction, "post_commit",
