@@ -60,6 +60,7 @@ from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.l3_router import l3_router_plugin
 from neutron.services.qos import qos_consts
+from neutron.services.revisions import revision_plugin
 from neutron.services.segments import db as segments_plugin_db
 from neutron.services.segments import plugin as segments_plugin
 from neutron.tests import base
@@ -1117,6 +1118,30 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         func()
         # make sure that the grenade went off during the commit
         self.assertTrue(listener.except_raised)
+
+
+class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
+
+    def setUp(self):
+        super(TestMl2PortsV2WithRevisionPlugin, self).setUp()
+        self.revision_plugin = revision_plugin.RevisionPlugin()
+
+    def test_update_port_status_bumps_revision(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        host_arg = {portbindings.HOST_ID: HOST}
+        with self.port(arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as port:
+            port = plugin.get_port(ctx, port['port']['id'])
+            updated_ports = []
+            receiver = lambda *a, **k: updated_ports.append(k['port'])
+            registry.subscribe(receiver, resources.PORT,
+                               events.AFTER_UPDATE)
+            plugin.update_port_status(
+                ctx, port['id'],
+                constants.PORT_STATUS_ACTIVE, host=HOST)
+            self.assertGreater(updated_ports[0]['revision_number'],
+                               port['revision_number'])
 
 
 class TestMl2PortsV2WithL3(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
