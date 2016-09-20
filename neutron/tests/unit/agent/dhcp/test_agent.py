@@ -115,7 +115,7 @@ fake_port2 = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
                             device_owner='',
                             mac_address='aa:bb:cc:dd:ee:99',
                             network_id='12345678-1234-5678-1234567890ab',
-                            revision=77,
+                            revision_number=77,
                             fixed_ips=[fake_fixed_ip2]))
 
 fake_ipv6_port = dhcp.DictModel(dict(id='12345678-1234-aaaa-123456789000',
@@ -1163,7 +1163,7 @@ class TestNetworkCache(base.BaseTestCase):
         nc.put(fake_network)
         nc.put_port(fake_port2)
         stale = copy.copy(fake_port2)
-        stale['revision'] = 2
+        stale['revision_number'] = 2
         self.assertTrue(nc.is_port_message_stale(stale))
 
     def test_put_network(self):
