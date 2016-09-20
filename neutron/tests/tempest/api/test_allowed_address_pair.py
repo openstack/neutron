@@ -83,7 +83,7 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
         body = self.client.update_port(
             port_id, allowed_address_pairs=allowed_address_pairs)
         allowed_address_pair = body['port']['allowed_address_pairs']
-        self.assertEqual(allowed_address_pair, allowed_address_pairs)
+        self.assertItemsEqual(allowed_address_pair, allowed_address_pairs)
 
     @test.idempotent_id('9599b337-272c-47fd-b3cf-509414414ac4')
     def test_update_port_with_address_pair(self):
