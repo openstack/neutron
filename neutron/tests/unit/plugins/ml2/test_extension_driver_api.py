@@ -94,14 +94,14 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             # Test list networks
             res = self._list('networks')
             val = res['networks'][0].get('network_extension')
-            self.assertEqual('Test_Network_Extension_extend', val)
+            self.assertEqual('default_network_extension', val)
 
             # Test network update
             data = {'network':
                     {'network_extension': 'Test_Network_Extension_Update'}}
             res = self._update('networks', network['network']['id'], data)
             val = res['network'].get('network_extension')
-            self.assertEqual('Test_Network_Extension_Update_update', val)
+            self.assertEqual('Test_Network_Extension_Update', val)
 
     def test_subnet_attr(self):
         with self.subnet() as subnet:
@@ -112,14 +112,14 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             # Test list subnets
             res = self._list('subnets')
             val = res['subnets'][0].get('subnet_extension')
-            self.assertEqual('Test_Subnet_Extension_extend', val)
+            self.assertEqual('default_subnet_extension', val)
 
             # Test subnet update
             data = {'subnet':
                     {'subnet_extension': 'Test_Subnet_Extension_Update'}}
             res = self._update('subnets', subnet['subnet']['id'], data)
             val = res['subnet'].get('subnet_extension')
-            self.assertEqual('Test_Subnet_Extension_Update_update', val)
+            self.assertEqual('Test_Subnet_Extension_Update', val)
 
     def test_port_attr(self):
         with self.port() as port:
@@ -130,13 +130,13 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             # Test list ports
             res = self._list('ports')
             val = res['ports'][0].get('port_extension')
-            self.assertEqual('Test_Port_Extension_extend', val)
+            self.assertEqual('default_port_extension', val)
 
             # Test port update
             data = {'port': {'port_extension': 'Test_Port_Extension_Update'}}
             res = self._update('ports', port['port']['id'], data)
             val = res['port'].get('port_extension')
-            self.assertEqual('Test_Port_Extension_Update_update', val)
+            self.assertEqual('Test_Port_Extension_Update', val)
 
     def test_extend_network_dict(self):
         with mock.patch.object(ext_test.TestExtensionDriver,
