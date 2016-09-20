@@ -20,7 +20,7 @@ from neutron.tests.tempest import config
 class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
 
     @classmethod
-    @test.requires_ext(extension="revisions", service="network")
+    @test.requires_ext(extension="standard-attr-revisions", service="network")
     def skip_checks(cls):
         super(TestRevisions, cls).skip_checks()
 

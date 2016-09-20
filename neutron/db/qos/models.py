@@ -30,6 +30,7 @@ class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,
     rbac_entries = sa.orm.relationship(rbac_db_models.QosPolicyRBAC,
                                        backref='qos_policy', lazy='joined',
                                        cascade='all, delete, delete-orphan')
+    api_collections = ['policies']
 
 
 class QosNetworkPolicyBinding(model_base.BASEV2):

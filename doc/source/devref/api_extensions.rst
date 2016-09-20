@@ -38,3 +38,41 @@ by studying an existing API extension and explaining the different layers.
    :maxdepth: 1
 
    security_group_api
+
+Extensions for Resources with standard attributes
+-------------------------------------------------
+
+Resources that inherit from the HasStandardAttributes DB class can
+automatically have the extensions written for standard attributes
+(e.g. timestamps, revision number, etc) extend their resources
+by defining the 'api_collections' on their model. These are used
+by extensions for standard attr resources to generate the extended
+resources map.
+
+Any new addition of a resource to the standard attributes collection
+must be accompanied with a new extension to ensure that it is discoverable
+via the API. If it's a completely new resource, the extension describing
+that resource will suffice. If it's an existing resource that was released
+in a previous cycle having the standard attributes added for the first time,
+then a dummy extension needs to be added indicating that the resource
+now has standard attributes. This ensures that an API caller can always
+discover if an attribute will be available.
+
+For example, if Flavors were migrated to include standard attributes, we
+we need a new 'flavor-standardattr' extension. Then as an API caller, I will
+know that flavors will have timestamps by checking for 'flavor-standardattr'
+and 'timestamps'.
+
+Current API resources extended by standard attr extensions:
+
+- subnets: neutron.db.models_v2.Subnet
+- trunks: neutron.services.trunk.models.Trunk
+- routers: neutron.db.l3_db.Router
+- segments: neutron.db.segments_db.NetworkSegment
+- security_group_rules: neutron.db.models.securitygroup.SecurityGroupRule
+- networks: neutron.db.models_v2.Network
+- policies: neutron.db.qos.models.QosPolicy
+- subnetpools: neutron.db.models_v2.SubnetPool
+- ports: neutron.db.models_v2.Port
+- security_groups: neutron.db.models.securitygroup.SecurityGroup
+- floatingips: neutron.db.l3_db.FloatingIP
