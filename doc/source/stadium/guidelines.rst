@@ -125,15 +125,9 @@ stable branches.
 Releases
 --------
 
-It is suggested that sub-projects release new tarballs on PyPI from time to
-time, especially for stable branches. It will make the life of packagers and
-other consumers of your code easier.
-
-It is highly suggested that you do not strip pieces of the source tree (tests,
-executables, tools) before releasing on PyPI: those missing pieces may be
-needed to validate the package, or make the packaging easier or more complete.
-As a rule of thumb, don't strip anything from the source tree unless completely
-needed.
+It is suggested that sub-projects cut off new releases from time to time,
+especially for stable branches. It will make the life of packagers and other
+consumers of your code easier.
 
 Sub-Project Release Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,7 +170,7 @@ To release a sub-project, follow the following steps:
   that gives indication to release team the patch is ready to merge.
 * The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
-  `this <https://pypi.python.org/pypi/networking-odl>`_.
+  `this <https://pypi.python.org/simple/networking-odl>`_.
 * A sub-project owner should next go to Launchpad and release this version
   using the "Release Now" button for the release itself.
 * If a sub-project uses the "delay-release" option, a sub-project owner should
@@ -187,8 +181,6 @@ To release a sub-project, follow the following steps:
   <http://docs.openstack.org/releases/>`_.
 * A sub-project owner should add the next milestone to the Launchpad series, or
   if a new series is required, create the new series and a new milestone.
-* Finally a sub-project owner should send an email to the openstack-announce
-  mailing list announcing the new release.
 
 .. note::
 
