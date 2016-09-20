@@ -61,11 +61,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 raise exc_cls(reason=reason, id=id)
 
     @db_api.retry_if_session_inactive()
-    def create_security_group(self, context, security_group, default_sg=False):
+    def create_security_group(self, context, security_group):
+        return self._create_security_group(context, security_group)
+
+    def _create_security_group(self, context, security_group,
+                               default_sg=False):
         """Create security group.
 
-        If default_sg is true that means we are a default security group for
-        a given tenant if it does not exist.
+        If default_sg is true that means we are creating a default security
+        group for a given tenant if it does not exist.
         """
         s = security_group['security_group']
         kwargs = {
@@ -671,7 +675,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                      'tenant_id': tenant_id,
                      'description': _('Default security group')}
             }
-            return self.create_security_group(
+            return self._create_security_group(
                 context, security_group, default_sg=True)['id']
 
     def _get_security_groups_on_port(self, context, port):
