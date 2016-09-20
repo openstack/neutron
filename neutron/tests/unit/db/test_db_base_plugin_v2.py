@@ -54,6 +54,7 @@ from neutron.db import l3_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import standard_attr
+from neutron.ipam import exceptions as ipam_exc
 from neutron import manager
 from neutron.tests import base
 from neutron.tests import tools
@@ -1333,6 +1334,22 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                           port['port']['id'])
             res = req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+
+    def test_port_update_with_ipam_error(self):
+        with self.network() as network,\
+                self.subnet(), self.subnet(),\
+                self.port(network=network) as port,\
+                mock.patch('neutron.ipam.drivers.neutrondb_ipam.'
+                           'driver.NeutronDbSubnet.deallocate') as f:
+            f.side_effect = [
+                ipam_exc.IpAddressAllocationNotFound(
+                    ip_address='foo_i', subnet_id='foo_s'),
+                None,
+            ]
+            data = {'port': {'name': 'fool-me'}}
+            req = self.new_update_request('ports', data, port['port']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertEqual('fool-me', res['port']['name'])
 
     def test_update_port(self):
         with self.port() as port:
