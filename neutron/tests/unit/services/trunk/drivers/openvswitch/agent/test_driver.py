@@ -76,7 +76,8 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
             for subport in self.subports]
         self.trunk_manager.add_sub_port.assert_has_calls(expected_calls)
 
-    def test_handle_subports_deleted(self):
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_handle_subports_deleted(self, br):
         """Test handler calls into trunk manager for deleting subports."""
         self.skeleton.handle_subports(self.subports, events.DELETED)
         expected_calls = [
