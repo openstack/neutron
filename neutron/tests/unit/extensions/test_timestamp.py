@@ -16,12 +16,13 @@ import datetime
 import six
 
 import mock
+from oslo_utils import timeutils
 
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import models_v2
 from neutron.db import tag_db as tag_module
-from neutron.extensions import timestamp_core as timestamp
+from neutron.extensions import timestamp
 from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -38,7 +39,7 @@ class TimeStampExtensionManager(object):
         return []
 
     def get_extended_resources(self, version):
-        return timestamp.Timestamp_core().get_extended_resources(version)
+        return timestamp.Timestamp().get_extended_resources(version)
 
 
 class TimeStampTestPlugin(db_base_plugin_v2.NeutronDbPluginV2):
@@ -47,7 +48,7 @@ class TimeStampTestPlugin(db_base_plugin_v2.NeutronDbPluginV2):
 
 class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
                                     NeutronDbPluginV2TestCase):
-    plugin = ('neutron.tests.unit.extensions.test_timestamp_core.' +
+    plugin = ('neutron.tests.unit.extensions.test_timestamp.' +
               'TimeStampTestPlugin')
 
     def setUp(self):
@@ -55,14 +56,14 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
         super(TimeStampChangedsinceTestCase, self).setUp(plugin=self.plugin,
                                                          ext_mgr=ext_mgr)
         self.addCleanup(manager.NeutronManager.
-                        get_service_plugins()['timestamp_core'].
+                        get_service_plugins()['timestamp'].
                         unregister_db_events)
         self.addCleanup(manager.NeutronManager.clear_instance)
 
     def setup_coreplugin(self, core_plugin=None):
         super(TimeStampChangedsinceTestCase, self).setup_coreplugin(
             self.plugin)
-        self.patched_default_svc_plugins.return_value = ['timestamp_core']
+        self.patched_default_svc_plugins.return_value = ['timestamp']
 
     def _get_resp_with_changed_since(self, resource_type, changed_since):
         query_params = 'changed_since=%s' % changed_since
@@ -73,18 +74,12 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
 
     def _return_by_timedelay(self, resource, timedelay):
         resource_type = six.next(six.iterkeys(resource))
-        try:
-            time_create = datetime.datetime.strptime(
-                resource[resource_type]['updated_at'],
-                '%Y-%m-%dT%H:%M:%S')
-        except Exception:
-            time_create = datetime.datetime.strptime(
-                resource[resource_type]['updated_at'],
-                '%Y-%m-%d %H:%M:%S.%f')
+        time_create = timeutils.parse_isotime(
+            resource[resource_type]['updated_at'])
         time_before = datetime.timedelta(seconds=timedelay)
         addedtime_string = (datetime.datetime.
                             strftime(time_create + time_before,
-                                     '%Y-%m-%dT%H:%M:%S'))
+                                     '%Y-%m-%dT%H:%M:%S')) + 'Z'
         return self._get_resp_with_changed_since(resource_type,
                                                  addedtime_string)
 

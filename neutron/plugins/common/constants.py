@@ -42,7 +42,7 @@ EXT_TO_SERVICE_MAPPING = {
 DEFAULT_SERVICE_PLUGINS = {
     'auto_allocate': 'auto-allocated-topology',
     'tag': 'tag',
-    'timestamp_core': 'timestamp_core',
+    'timestamp': 'timestamp',
     'network_ip_availability': 'network-ip-availability',
     'flavors': 'flavors',
     'revisions': 'revisions',
