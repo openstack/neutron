@@ -195,6 +195,8 @@ class OVSDBHandler(object):
         :param port: Parent port dict.
         """
         try:
+            # TODO(jlibosva): Investigate how to proceed during removal of
+            # trunk bridge that doesn't have metadata stored.
             parent_port_id, trunk_id, subport_ids = self._get_trunk_metadata(
                 port)
             # NOTE(status_police): we do not report changes in trunk status on
@@ -242,16 +244,14 @@ class OVSDBHandler(object):
                 subport_ids.append(subport.port_id)
 
         try:
-            self._set_trunk_metadata(
+            self._update_trunk_metadata(
                 trunk_bridge, parent_port, trunk_id, subport_ids)
         except RuntimeError:
-            LOG.error(_LE("Failed to set metadata for trunk %s"), trunk_id)
-            # NOTE(status_police): Trunk bridge has missing metadata now, it
-            # will cause troubles during deletion.
-            # TODO(jlibosva): Investigate how to proceed during removal of
-            # trunk bridge that doesn't have metadata stored and whether it's
-            # wise to report DEGRADED status in case we don't have metadata
-            # present on the bridge.
+            LOG.error(_LE("Failed to store metadata for trunk %s"), trunk_id)
+            # NOTE(status_police): Trunk bridge has stale metadata now, it
+            # might cause troubles during deletion. Signal a DEGRADED status;
+            # if the user undo/redo the operation things may go back to
+            # normal.
             return constants.DEGRADED_STATUS
 
         LOG.debug("Added trunk: %s", trunk_id)
@@ -270,6 +270,20 @@ class OVSDBHandler(object):
                           {'subport_id': subport_id,
                            'trunk_id': trunk_id,
                            'err': te})
+        try:
+            # OVS bridge and port to be determined by _update_trunk_metadata
+            bridge = None
+            port = None
+            self._update_trunk_metadata(
+                bridge, port, trunk_id, subport_ids, wire=False)
+        except RuntimeError:
+            # NOTE(status_police): Trunk bridge has stale metadata now, it
+            # might cause troubles during deletion. Signal a DEGRADED status;
+            # if the user undo/redo the operation things may go back to
+            # normal.
+            LOG.error(_LE("Failed to store metadata for trunk %s"), trunk_id)
+            return constants.DEGRADED_STATUS
+
         return self._get_current_status(subport_ids, ids)
 
     def report_trunk_status(self, context, trunk_id, status):
@@ -349,10 +363,31 @@ class OVSDBHandler(object):
         """Get trunk metadata from OVS port."""
         parent_port_id = (
             self.trunk_manager.get_port_uuid_from_external_ids(port))
-        trunk_id = port['external_ids']['trunk_id']
-        subport_ids = jsonutils.loads(port['external_ids']['subport_ids'])
+        trunk_id = port['external_ids'].get('trunk_id')
+        subport_ids = jsonutils.loads(
+            port['external_ids'].get('subport_ids', '[]'))
 
         return parent_port_id, trunk_id, subport_ids
+
+    def _update_trunk_metadata(self, trunk_bridge, port,
+                               trunk_id, subport_ids, wire=True):
+        """Update trunk metadata.
+
+        :param trunk_bridge: OVS trunk bridge.
+        :param port: OVS parent port.
+        :param trunk_id: trunk ID.
+        :param subport_ids: subports affecting the metadata.
+        :param wire: if True subport_ids are added, otherwise removed.
+        """
+        trunk_bridge = trunk_bridge or ovs_lib.OVSBridge(
+            utils.gen_trunk_br_name(trunk_id))
+        port = port or self._get_parent_port(trunk_bridge)
+        _port_id, _trunk_id, old_subports = self._get_trunk_metadata(port)
+        if wire:
+            new_subports = set(old_subports) | set(subport_ids)
+        else:
+            new_subports = set(old_subports) - set(subport_ids)
+        self._set_trunk_metadata(trunk_bridge, port, trunk_id, new_subports)
 
     def _get_current_status(self, expected_subports, actual_subports):
         """Return the current status of the trunk.

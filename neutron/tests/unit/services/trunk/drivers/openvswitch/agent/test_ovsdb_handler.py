@@ -176,22 +176,26 @@ class TestOVSDBHandler(base.BaseTestCase):
                 side_effect=trunk_manager.TrunkManagerError(error='error')):
             self.ovsdb_handler.handle_trunk_remove('foo', self.fake_port)
 
-    def test_handle_trunk_remove_rpc_failure(self):
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_handle_trunk_remove_rpc_failure(self, br):
         self.ovsdb_handler.trunk_rpc.update_trunk_status = (
             oslo_messaging.MessagingException)
         self.ovsdb_handler.handle_trunk_remove('foo', self.fake_port)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_wire_subports_for_trunk_trunk_manager_failure(self, br):
-        trunk_rpc = self.ovsdb_handler.trunk_rpc
-        trunk_rpc.update_subport_bindings.return_value = self.subport_bindings
-        self.trunk_manager.add_sub_port.side_effect = (
-            trunk_manager.TrunkManagerError(error='error'))
+        with mock.patch.object(
+                self.ovsdb_handler, '_update_trunk_metadata') as f:
+            trunk_rpc = self.ovsdb_handler.trunk_rpc
+            trunk_rpc.update_subport_bindings.return_value = (
+                self.subport_bindings)
+            self.trunk_manager.add_sub_port.side_effect = (
+                trunk_manager.TrunkManagerError(error='error'))
 
-        status = self.ovsdb_handler.wire_subports_for_trunk(
-            None, 'trunk_id', self.fake_subports)
-
-        self.assertEqual(constants.DEGRADED_STATUS, status)
+            status = self.ovsdb_handler.wire_subports_for_trunk(
+                None, 'trunk_id', self.fake_subports)
+            self.assertTrue(f.call_count)
+            self.assertEqual(constants.DEGRADED_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_wire_subports_for_trunk_ovsdb_failure(self, br):
@@ -203,12 +207,16 @@ class TestOVSDBHandler(base.BaseTestCase):
                 None, 'trunk_id', self.fake_subports)
         self.assertEqual(constants.DEGRADED_STATUS, status)
 
-    def test_unwire_subports_for_trunk_trunk_manager_failure(self):
-        self.trunk_manager.remove_sub_port.side_effect = (
-            trunk_manager.TrunkManagerError(error='error'))
-        status = self.ovsdb_handler.unwire_subports_for_trunk(
-            mock.ANY, ['subport_id'])
-        self.assertEqual(constants.DEGRADED_STATUS, status)
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_unwire_subports_for_trunk_trunk_manager_failure(self, br):
+        with mock.patch.object(
+            self.ovsdb_handler, '_update_trunk_metadata') as f:
+            self.trunk_manager.remove_sub_port.side_effect = (
+                trunk_manager.TrunkManagerError(error='error'))
+            status = self.ovsdb_handler.unwire_subports_for_trunk(
+                'foo_trunk_id', ['subport_id'])
+            self.assertTrue(f.call_count)
+            self.assertEqual(constants.DEGRADED_STATUS, status)
 
     def test__wire_trunk_get_trunk_details_failure(self):
         self.trunk_manager.get_port_uuid_from_external_ids.side_effect = (
@@ -259,3 +267,40 @@ class TestOVSDBHandler(base.BaseTestCase):
         self.assertEqual(constants.DEGRADED_STATUS,
                          self.ovsdb_handler._get_current_status(
                              [mock.ANY], []))
+
+    def _test__update_trunk_metadata_wire_flag(self, mock_br, wire,
+                                               external_ids,
+                                               subport_ids,
+                                               expected_subport_ids):
+        with mock.patch.object(
+                self.ovsdb_handler, "_get_parent_port",
+                return_value={'name': 'foo', 'external_ids': external_ids}):
+            self.ovsdb_handler._update_trunk_metadata(
+                None, None, 'foo', subport_ids, wire=wire)
+            external_ids = mock_br.set_db_attribute.call_args[0][3]
+            self.assertEqual(1, mock_br.set_db_attribute.call_count)
+            self.assertEqual(
+                sorted(expected_subport_ids),
+                sorted(external_ids['subport_ids']))
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test__update_trunk_metadata_wire(self, br):
+        mock_br = br.return_value
+        external_ids = {
+            'subport_ids': '["foo_subport_1"]'
+        }
+        subport_ids = ['foo_subport_2']
+        expected_subport_ids = '["foo_subport_1", "foo_subport_2"]'
+        self._test__update_trunk_metadata_wire_flag(
+            mock_br, True, external_ids, subport_ids, expected_subport_ids)
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test__update_trunk_metadata_unwire(self, br):
+        mock_br = br.return_value
+        external_ids = {
+            'subport_ids': '["foo_subport_1", "foo_subport_2"]'
+        }
+        subport_ids = ['foo_subport_2']
+        expected_subport_ids = '["foo_subport_1"]'
+        self._test__update_trunk_metadata_wire_flag(
+            mock_br, False, external_ids, subport_ids, expected_subport_ids)
