@@ -93,7 +93,7 @@ class BaseNetworkTest(test.BaseTestCase):
         super(BaseNetworkTest, cls).resource_setup()
 
         cls.networks = []
-        cls.shared_networks = []
+        cls.admin_networks = []
         cls.subnets = []
         cls.ports = []
         cls.routers = []
@@ -162,8 +162,8 @@ class BaseNetworkTest(test.BaseTestCase):
                 cls._try_delete_resource(cls.client.delete_network,
                                          network['id'])
 
-            # Clean up shared networks
-            for network in cls.shared_networks:
+            # Clean up admin networks
+            for network in cls.admin_networks:
                 cls._try_delete_resource(cls.admin_client.delete_network,
                                          network['id'])
 
@@ -222,7 +222,24 @@ class BaseNetworkTest(test.BaseTestCase):
         post_body.update({'name': network_name, 'shared': True})
         body = cls.admin_client.create_network(**post_body)
         network = body['network']
-        cls.shared_networks.append(network)
+        cls.admin_networks.append(network)
+        return network
+
+    @classmethod
+    def create_network_keystone_v3(cls, network_name=None, project_id=None,
+                                   tenant_id=None, client=None):
+        """Wrapper utility that creates a test network with project_id."""
+        client = client or cls.client
+        network_name = network_name or data_utils.rand_name(
+            'test-network-with-project_id')
+        project_id = cls.client.tenant_id
+        body = client.create_network_keystone_v3(network_name, project_id,
+            tenant_id)
+        network = body['network']
+        if client is cls.client:
+            cls.networks.append(network)
+        else:
+            cls.admin_networks.append(network)
         return network
 
     @classmethod
