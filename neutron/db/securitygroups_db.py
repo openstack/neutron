@@ -671,8 +671,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                      'tenant_id': tenant_id,
                      'description': _('Default security group')}
             }
-            return self.create_security_group(
-                context, security_group, default_sg=True)['id']
+            # starting a transaction before create to avoid db retries
+            with context.session.begin(subtransactions=True):
+                sg_id = self.create_security_group(
+                    context, security_group, default_sg=True)['id']
+            return sg_id
 
     def _get_security_groups_on_port(self, context, port):
         """Check that all security groups on port belong to tenant.
