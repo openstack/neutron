@@ -65,7 +65,7 @@ class DriverBase(object):
     def register(self, resource, event, trigger, **kwargs):
         """Register the trunk driver.
 
-        This method should be overriden so that the driver can subscribe
+        This method should be overridden so that the driver can subscribe
         to the required trunk events. The driver should also advertise
         itself as supported driver by calling register_driver() on the
         TrunkPlugin otherwise the trunk plugin may fail to start if no

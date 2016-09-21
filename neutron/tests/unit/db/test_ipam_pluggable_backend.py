@@ -765,7 +765,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._ipam_deallocate_ips = mock.Mock(side_effect=ValueError)
         mocks['ipam']._ipam_allocate_ips = mock.Mock(side_effect=ValueError)
 
-        # Validate original exception (DBDeadlock) is not overriden by
+        # Validate original exception (DBDeadlock) is not overridden by
         # exception raised on rollback (ValueError)
         self.assertRaises(db_exc.DBDeadlock,
                           mocks['ipam'].update_port_with_ips,
