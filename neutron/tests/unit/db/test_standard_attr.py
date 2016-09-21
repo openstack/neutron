@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc
+
 from sqlalchemy.ext import declarative
 import testtools
 
@@ -21,6 +23,9 @@ from neutron.tests.unit import testlib_api
 
 
 class StandardAttrTestCase(base.BaseTestCase):
+    def setUp(self):
+        super(StandardAttrTestCase, self).setUp()
+        self.addCleanup(gc.collect)
 
     def _make_decl_base(self):
         # construct a new base so we don't interfere with the main
