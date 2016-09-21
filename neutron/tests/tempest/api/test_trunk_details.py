@@ -35,15 +35,16 @@ class TestTrunkDetailsJSON(test_trunk.TrunkTestJSONBase):
     @test.idempotent_id('544bcaf2-86fb-4930-93ab-ece1c3cc33df')
     def test_port_resource_trunk_details_with_subport(self):
         subport_network = self.create_network()
-        parent_port = self.create_port(subport_network)
-        subport_data = {'port_id': parent_port['id'],
+        subport = self.create_port(subport_network)
+        subport_data = {'port_id': subport['id'],
                         'segmentation_type': 'vlan',
                         'segmentation_id': 2}
         trunk = self._create_trunk_with_network_and_parent([subport_data])
-        port = self.client.show_port(trunk['trunk']['port_id'])
+        subport_data['mac_address'] = subport['mac_address']
+        parent_port = self.client.show_port(trunk['trunk']['port_id'])
         expected_trunk_details = {'sub_ports': [subport_data],
                                   'trunk_id': trunk['trunk']['id']}
-        observed_trunk_details = port['port'].get('trunk_details')
+        observed_trunk_details = parent_port['port'].get('trunk_details')
         self.assertIsNotNone(observed_trunk_details)
         self.assertEqual(expected_trunk_details,
                          observed_trunk_details)
