@@ -387,7 +387,20 @@ class DhcpAgent(manager.Manager):
                 orig = orig or {'fixed_ips': []}
                 old_ips = {i['ip_address'] for i in orig['fixed_ips'] or []}
                 new_ips = {i['ip_address'] for i in updated_port['fixed_ips']}
-                if old_ips != new_ips:
+                old_subs = {i['subnet_id'] for i in orig['fixed_ips'] or []}
+                new_subs = {i['subnet_id'] for i in updated_port['fixed_ips']}
+                if new_subs != old_subs:
+                    # subnets being serviced by port have changed, this could
+                    # indicate a subnet_delete is in progress. schedule a
+                    # resync rather than an immediate restart so we don't
+                    # attempt to re-allocate IPs at the same time the server
+                    # is deleting them.
+                    self.schedule_resync("Agent port was modified",
+                                         updated_port.network_id)
+                    return
+                elif old_ips != new_ips:
+                    LOG.debug("Agent IPs on network %s changed from %s to %s",
+                              network.id, old_ips, new_ips)
                     driver_action = 'restart'
             self.cache.put_port(updated_port)
             self.call_driver(driver_action, network)
