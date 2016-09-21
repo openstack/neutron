@@ -25,8 +25,8 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
         project_id = self.client.tenant_id  # non-admin
 
         name = 'admin-created-with-project_id'
-        body = self.admin_client.create_network_keystone_v3(name, project_id)
-        new_net = body['network']
+        new_net = self.create_network_keystone_v3(name, project_id,
+            client=self.admin_client)
         self.assertEqual(name, new_net['name'])
         self.assertEqual(project_id, new_net['project_id'])
         self.assertEqual(project_id, new_net['tenant_id'])
@@ -43,9 +43,8 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
         project_id = self.client.tenant_id  # non-admin
 
         name = 'created-with-project-and-tenant'
-        body = self.admin_client.create_network_keystone_v3(
-            name, project_id, tenant_id=project_id)
-        new_net = body['network']
+        new_net = self.create_network_keystone_v3(
+            name, project_id, tenant_id=project_id, client=self.admin_client)
         self.assertEqual(name, new_net['name'])
         self.assertEqual(project_id, new_net['project_id'])
         self.assertEqual(project_id, new_net['tenant_id'])
@@ -64,7 +63,8 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
 
         name = 'created-with-project-and-other-tenant'
         e = self.assertRaises(lib_exc.BadRequest,
-                              self.admin_client.create_network_keystone_v3,
-                              name, project_id, tenant_id=other_tenant)
+                              self.create_network_keystone_v3, name,
+                              project_id, tenant_id=other_tenant,
+                              client=self.admin_client)
         expected_message = "'project_id' and 'tenant_id' do not match"
         self.assertEqual(expected_message, e.resp_body['message'])
