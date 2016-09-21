@@ -44,7 +44,8 @@ def _extend_port_trunk_details(core_plugin, port_res, port_db):
     if port_db.trunk_port:
         subports = [{'segmentation_id': x.segmentation_id,
                      'segmentation_type': x.segmentation_type,
-                     'port_id': x.port_id}
+                     'port_id': x.port_id,
+                     'mac_address': x.port.mac_address}
                     for x in port_db.trunk_port.sub_ports]
         trunk_details = {'trunk_id': port_db.trunk_port.id,
                          'sub_ports': subports}
