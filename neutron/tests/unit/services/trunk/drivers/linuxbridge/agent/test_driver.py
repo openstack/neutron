@@ -66,14 +66,14 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
         self.plumber.delete_trunk_subports.assert_called_once_with(self.trunk)
 
     def test_handle_subports_deleted(self):
-        self.tapi.get_trunk.return_value = self.trunk
+        self.tapi.get_trunk_by_id.return_value = self.trunk
         self.lbd.handle_subports(self.trunk.sub_ports, events.DELETED)
         self.assertEqual(20, len(self.tapi.delete_trunk_subport.mock_calls))
         # should have tried to wire trunk at the end with state
         self.plumber.trunk_on_host.assert_called_once_with(self.trunk)
 
     def test_handle_subports_created(self):
-        self.tapi.get_trunk.return_value = self.trunk
+        self.tapi.get_trunk_by_id.return_value = self.trunk
         self.lbd.handle_subports(self.trunk.sub_ports, events.CREATED)
         self.assertEqual(20, len(self.tapi.put_trunk_subport.mock_calls))
         # should have tried to wire trunk at the end with state
@@ -190,6 +190,12 @@ class TrunkAPITestCase(base.BaseTestCase):
         # trunks not registered are ignored
         self.tapi.put_trunk_subport(
             'non_trunk_id', self.trunk.sub_ports[0])
+
+    def test_get_trunk_by_id(self):
+        self.tapi.put_trunk(self.trunk.port_id, self.trunk)
+        self.assertEqual(self.trunk,
+                         self.tapi.get_trunk_by_id('ctx', self.trunk.id))
+        self.assertIsNone(self.tapi.get_trunk_by_id('ctx', 'other_id'))
 
     def test_put_trunk_subport(self):
         self.tapi.put_trunk(self.trunk.port_id, self.trunk)
