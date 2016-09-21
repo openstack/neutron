@@ -561,8 +561,8 @@ class NetworkCache(object):
         self.deleted_ports = set()
 
     def is_port_message_stale(self, payload):
-        orig = self.get_port_by_id(payload['id'])
-        if orig and orig.get('revision', 0) > payload.get('revision', 0):
+        orig = self.get_port_by_id(payload['id']) or {}
+        if orig.get('revision_number', 0) > payload.get('revision_number', 0):
             return True
         if payload['id'] in self.deleted_ports:
             return True
