@@ -2,6 +2,6 @@
 deprecations:
     - Neutron controller service currently allows to load ``service_providers``
       options from some files that are not passed to it via --config-dir or
-      --config-dir CLI options. This behaviour is now deprecated and will be
+      --config-file CLI options. This behaviour is now deprecated and will be
       disabled in Ocata. Current users are advised to switch to aforementioned
       CLI options.
