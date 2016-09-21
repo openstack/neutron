@@ -465,7 +465,7 @@ class OVSDBHandler(object):
                 bridge_has_port_predicate,
                 timeout=self.timeout)
             return True
-        except eventlet.TimeoutError:
+        except common_utils.WaitTimeout:
             LOG.error(
                 _LE('No port present on trunk bridge %(br_name)s '
                     'in %(timeout)d seconds.'),
