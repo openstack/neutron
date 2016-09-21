@@ -22,6 +22,10 @@ from neutron.common import utils
 from neutron.tests.common import net_helpers
 
 
+class FakeMachineException(Exception):
+    pass
+
+
 class FakeMachineBase(fixtures.Fixture):
     """Create a fake machine.
 
@@ -60,7 +64,11 @@ class FakeMachineBase(fixtures.Fixture):
 
     def block_until_ping(self, dst_ip):
         predicate = functools.partial(self.ping_predicate, dst_ip)
-        utils.wait_until_true(predicate)
+        utils.wait_until_true(
+            predicate,
+            exception=FakeMachineException(
+                "No ICMP reply obtained from IP address %s" % dst_ip)
+        )
 
     def assert_ping(self, dst_ip):
         net_helpers.assert_ping(self.namespace, dst_ip)
