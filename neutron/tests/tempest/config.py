@@ -22,7 +22,12 @@ NeutronPluginOptions = [
     cfg.BoolOpt('specify_floating_ip_address_available',
                 default=True,
                 help='Allow passing an IP Address of the floating ip when '
-                     'creating the floating ip')]
+                     'creating the floating ip'),
+    cfg.ListOpt('available_type_drivers',
+                default=[],
+                help='List of network types available to neutron, '
+                     'e.g. vxlan,vlan,gre.'),
+]
 
 # TODO(amuller): Redo configuration options registration as part of the planned
 # transition to the Tempest plugin architecture
