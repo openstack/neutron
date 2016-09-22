@@ -64,7 +64,7 @@ class Transaction(api.Transaction):
     def commit(self):
         self.ovsdb_connection.queue_txn(self)
         try:
-            result = self.results.get(self.timeout)
+            result = self.results.get(timeout=self.timeout)
         except Queue.Empty:
             raise api.TimeoutException(
                 _("Commands %(commands)s exceeded timeout %(timeout)d "
