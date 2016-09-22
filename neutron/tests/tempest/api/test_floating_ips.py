@@ -100,4 +100,4 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         # disassociate
         body = self.client.update_floatingip(body['floatingip']['id'],
                                              port_id=None)
-        self.assertEqual(None, body['floatingip']['port_id'])
+        self.assertIsNone(body['floatingip']['port_id'])

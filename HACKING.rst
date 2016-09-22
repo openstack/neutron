@@ -32,6 +32,7 @@ Neutron Specific Commandments
 - [N343] Production code must not import from neutron.tests.*
 - [N344] Python 3: Do not use filter(lambda obj: test(obj), data). Replace it
   with [obj for obj in data if test(obj)].
+- [N345] Detect wrong usage with assertEqual(None, A) and assertEqual(A, None).
 
 Creating Unit Tests
 -------------------

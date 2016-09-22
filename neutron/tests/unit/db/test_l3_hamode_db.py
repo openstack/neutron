@@ -756,8 +756,7 @@ class L3HATestCase(L3HATestFramework):
 
     def test_get_active_host_for_ha_router(self):
         router = self._create_router()
-        self.assertEqual(
-            None,
+        self.assertIsNone(
             self.plugin.get_active_host_for_ha_router(
                 self.admin_ctx, router['id']))
         self.plugin.update_routers_states(
