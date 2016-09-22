@@ -20,7 +20,7 @@ import mock
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
-from neutron.tests import base as tests_base
+from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -37,15 +37,15 @@ class OVSBridgeTestBase(base.BaseOVSLinuxTestCase):
         # Convert ((a, b), (c, d)) to {a: b, c: d} and add 'type' by default
         attrs = collections.OrderedDict(interface_attrs)
         attrs.setdefault('type', 'internal')
-        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         return (port_name, self.br.add_port(port_name, *attrs.items()))
 
     def create_ovs_vif_port(self, iface_id=None, mac=None,
                             iface_field='iface-id'):
         if iface_id is None:
-            iface_id = base.get_rand_name()
+            iface_id = utils.get_rand_name()
         if mac is None:
-            mac = base.get_rand_name()
+            mac = utils.get_rand_name()
         attrs = ('external_ids', {iface_field: iface_id, 'attached-mac': mac})
         port_name, ofport = self.create_ovs_port(attrs)
         return ovs_lib.VifPort(port_name, ofport, iface_id, mac, self.br)
@@ -75,7 +75,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertRaises(RuntimeError, cmd.execute, check_error=True)
 
     def test_replace_port(self):
-        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.replace_port(port_name, ('type', 'internal'))
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual('internal',
@@ -148,7 +148,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertIn(dpid, self.br.get_datapath_id())
 
     def _test_add_tunnel_port(self, attrs):
-        port_name = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         self.br.add_tunnel_port(port_name, attrs['remote_ip'],
                                 attrs['local_ip'])
         self.assertEqual('gre',
@@ -172,7 +172,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self._test_add_tunnel_port(attrs)
 
     def test_add_patch_port(self):
-        local = tests_base.get_rand_device_name(net_helpers.PORT_PREFIX)
+        local = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         peer = 'remotepeer'
         self.br.add_patch_port(local, peer)
         self.assertEqual(self.ovs.db_get_val('Interface', local, 'type'),
@@ -342,7 +342,7 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.ovs = ovs_lib.BaseOVS()
 
     def test_bridge_lifecycle_baseovs(self):
-        name = base.get_rand_name(prefix=net_helpers.BR_PREFIX)
+        name = utils.get_rand_name(prefix=net_helpers.BR_PREFIX)
         self.addCleanup(self.ovs.delete_bridge, name)
         br = self.ovs.add_bridge(name)
         self.assertEqual(br.br_name, name)
@@ -357,7 +357,7 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.assertTrue(set(self.ovs.get_bridges()).issuperset(bridges))
 
     def test_bridge_lifecycle_ovsbridge(self):
-        name = base.get_rand_name(prefix=net_helpers.BR_PREFIX)
+        name = utils.get_rand_name(prefix=net_helpers.BR_PREFIX)
         br = ovs_lib.OVSBridge(name)
         self.assertEqual(br.br_name, name)
         # Make sure that instantiating an OVSBridge does not actually create
@@ -374,10 +374,10 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         Makes sure that db_find search queries give the same result for both
         implementations.
         """
-        bridge_name = base.get_rand_name(prefix=net_helpers.BR_PREFIX)
+        bridge_name = utils.get_rand_name(prefix=net_helpers.BR_PREFIX)
         self.addCleanup(self.ovs.delete_bridge, bridge_name)
         br = self.ovs.add_bridge(bridge_name)
-        port_name = base.get_rand_name(prefix=net_helpers.PORT_PREFIX)
+        port_name = utils.get_rand_name(prefix=net_helpers.PORT_PREFIX)
         br.add_port(port_name)
         self.ovs.set_db_attribute('Port', port_name, 'tag', 42)
 

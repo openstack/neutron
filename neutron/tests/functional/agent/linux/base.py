@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from debtcollector import moves
 import testscenarios
 
-from neutron.tests import base as tests_base
+from neutron.common import utils
 from neutron.tests.functional import base
 
 
@@ -26,8 +27,10 @@ MARKED_BLOCK_RULE = '-m mark --mark %s -j DROP' % MARK_VALUE
 ICMP_BLOCK_RULE = '-p icmp -j DROP'
 
 
-#TODO(jschwarz): Move these two functions to neutron/tests/common/
-get_rand_name = tests_base.get_rand_name
+get_rand_name = moves.moved_function(
+    utils.get_rand_name, 'get_rand_name', __name__,
+    message='use "neutron.common.utils.get_rand_name" instead',
+    version='Newton', removal_version='Ocata')
 
 
 # Regarding MRO, it goes BaseOVSLinuxTestCase, WithScenarios,

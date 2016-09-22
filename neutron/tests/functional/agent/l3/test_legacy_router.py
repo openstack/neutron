@@ -24,7 +24,7 @@ from neutron.agent.linux import ip_lib
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.tests import base as tests_base
+from neutron.common import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
@@ -98,7 +98,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         self.assertIsNone(device.route.get_gateway())
 
     def _make_bridge(self):
-        bridge = framework.get_ovs_bridge(tests_base.get_rand_name())
+        bridge = framework.get_ovs_bridge(utils.get_rand_name())
         bridge.create()
         self.addCleanup(bridge.destroy)
         return bridge
