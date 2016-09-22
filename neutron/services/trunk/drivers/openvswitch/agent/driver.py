@@ -69,8 +69,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
                 LOG.error(_LE(
                     "Error on event %(event)s for subports "
                     "%(subports)s: %(err)s"),
-                    {'event': event_type, 'subports': subports,
-                     'trunk_id': trunk_id, 'err': e})
+                    {'event': event_type, 'subports': subports, 'err': e})
 
 
 def init_handler(resource, event, trigger, agent=None):

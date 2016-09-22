@@ -225,3 +225,26 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
         self.trunk_manager.remove_trunk(self.trunk.trunk_id,
                                         self.trunk.port_id)
         self.tester.wait_for_no_connection(self.tester.INGRESS)
+
+
+class TrunkManagerDisposeTrunkTestCase(base.BaseSudoTestCase):
+
+    def setUp(self):
+        super(TrunkManagerDisposeTrunkTestCase, self).setUp()
+        trunk_id = uuidutils.generate_uuid()
+        self.trunk = trunk_manager.TrunkParentPort(
+            trunk_id, uuidutils.generate_uuid())
+        self.trunk.bridge = self.useFixture(
+            net_helpers.OVSTrunkBridgeFixture(
+                self.trunk.bridge.br_name)).bridge
+        self.br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        self.trunk_manager = trunk_manager.TrunkManager(
+            self.br_int)
+
+    def test_dispose_trunk(self):
+        self.trunk.plug(self.br_int)
+        self.trunk_manager.dispose_trunk(self.trunk.bridge)
+        self.assertFalse(
+            self.trunk.bridge.bridge_exists(self.trunk.bridge.br_name))
+        self.assertNotIn(self.trunk.patch_port_int_name,
+                         self.br_int.get_port_name_list())

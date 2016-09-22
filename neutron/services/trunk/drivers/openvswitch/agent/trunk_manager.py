@@ -16,7 +16,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
 
-from neutron._i18n import _
+from neutron._i18n import _, _LE
 from neutron.agent.common import ovs_lib
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions as exc
 from neutron.services.trunk.drivers.openvswitch import utils
@@ -252,6 +252,28 @@ class TrunkManager(object):
                 LOG.debug("Trunk bridge with ID %s does not exist.", trunk_id)
         except RuntimeError as e:
             raise TrunkManagerError(error=e)
+
+    def dispose_trunk(self, trunk_bridge):
+        """Clean up all the OVS resources associated to trunk_bridge."""
+        ovsdb = trunk_bridge.ovsdb
+        patch_peers = []
+        try:
+            patch_peers = trunk_bridge.get_ports_attributes(
+                'Interface', columns=['options'])
+            with trunk_bridge.ovsdb.transaction() as txn:
+                for patch_peer in patch_peers:
+                    peer_name = patch_peer['options'].get('peer')
+                    if peer_name:
+                        txn.add(ovsdb.del_port(peer_name, self.br_int.br_name))
+                txn.add(ovsdb.del_br(trunk_bridge.br_name))
+            LOG.debug("Deleted bridge '%s' and patch peers '%s'.",
+                      trunk_bridge.br_name, patch_peers)
+        except RuntimeError as e:
+            LOG.error(_LE("Could not delete '%(peers)s' associated to "
+                          "trunk bridge %(name)s. Reason: %(reason)s."),
+                      {'peers': patch_peers,
+                       'name': trunk_bridge.br_name,
+                       'reason': e})
 
     def add_sub_port(self, trunk_id, port_id, port_mac, segmentation_id):
         """Create a sub_port.
