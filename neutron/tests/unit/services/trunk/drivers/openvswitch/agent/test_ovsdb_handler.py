@@ -188,11 +188,10 @@ class TestOVSDBHandler(base.BaseTestCase):
         self.trunk_manager.add_sub_port.side_effect = (
             trunk_manager.TrunkManagerError(error='error'))
 
-        self.ovsdb_handler.wire_subports_for_trunk(
+        status = self.ovsdb_handler.wire_subports_for_trunk(
             None, 'trunk_id', self.fake_subports)
 
-        trunk_rpc.update_trunk_status.assert_called_once_with(
-            mock.ANY, mock.ANY, constants.DEGRADED_STATUS)
+        self.assertEqual(constants.DEGRADED_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_wire_subports_for_trunk_ovsdb_failure(self, br):
@@ -200,13 +199,16 @@ class TestOVSDBHandler(base.BaseTestCase):
             self.subport_bindings)
         with mock.patch.object(self.ovsdb_handler, '_set_trunk_metadata',
                 side_effect=RuntimeError):
-            self.ovsdb_handler.wire_subports_for_trunk(
+            status = self.ovsdb_handler.wire_subports_for_trunk(
                 None, 'trunk_id', self.fake_subports)
+        self.assertEqual(constants.DEGRADED_STATUS, status)
 
     def test_unwire_subports_for_trunk_trunk_manager_failure(self):
         self.trunk_manager.remove_sub_port.side_effect = (
             trunk_manager.TrunkManagerError(error='error'))
-        self.ovsdb_handler.unwire_subports_for_trunk(None, ['subport_id'])
+        status = self.ovsdb_handler.unwire_subports_for_trunk(
+            mock.ANY, ['subport_id'])
+        self.assertEqual(constants.DEGRADED_STATUS, status)
 
     def test__wire_trunk_get_trunk_details_failure(self):
         self.trunk_manager.get_port_uuid_from_external_ids.side_effect = (
@@ -218,6 +220,8 @@ class TestOVSDBHandler(base.BaseTestCase):
             resources_rpc.ResourceNotFound(
                 resource_id='id', resource_type='type'))
         self.ovsdb_handler._wire_trunk(mock.Mock(), self.fake_port)
+        trunk_rpc = self.ovsdb_handler.trunk_rpc
+        self.assertFalse(trunk_rpc.update_trunk_status.called)
 
     def test__wire_trunk_create_trunk_failure(self):
         self.trunk_manager.create_trunk.side_effect = (
@@ -226,6 +230,14 @@ class TestOVSDBHandler(base.BaseTestCase):
         trunk_rpc = self.ovsdb_handler.trunk_rpc
         trunk_rpc.update_trunk_status.assert_called_once_with(
             mock.ANY, mock.ANY, constants.ERROR_STATUS)
+
+    def test__wire_trunk_report_trunk_called_on_wiring(self):
+        with mock.patch.object(self.trunk_manager, 'create_trunk'),\
+                mock.patch.object(self.ovsdb_handler,
+                                  'wire_subports_for_trunk'):
+            self.ovsdb_handler._wire_trunk(mock.Mock(), self.fake_port)
+            trunk_rpc = self.ovsdb_handler.trunk_rpc
+            self.assertTrue(trunk_rpc.update_trunk_status.called)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test__set_trunk_metadata_with_None_params(self, br):
@@ -238,3 +250,12 @@ class TestOVSDBHandler(base.BaseTestCase):
                 'Interface', 'foo', 'external_ids',
                 {'bridge_name': mock.ANY, 'trunk_id': 'foo',
                  'subport_ids': '[]'})
+
+    def test__get_current_status_active(self):
+        self.assertEqual(constants.ACTIVE_STATUS,
+                         self.ovsdb_handler._get_current_status([], []))
+
+    def test__get_current_status_degraded(self):
+        self.assertEqual(constants.DEGRADED_STATUS,
+                         self.ovsdb_handler._get_current_status(
+                             [mock.ANY], []))

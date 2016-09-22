@@ -17,7 +17,7 @@ import functools
 
 import eventlet
 from oslo_concurrency import lockutils
-from oslo_context import context
+from oslo_context import context as o_context
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
@@ -108,7 +108,7 @@ class OVSDBHandler(object):
 
     @property
     def context(self):
-        self._context.request_id = context.generate_request_id()
+        self._context.request_id = o_context.generate_request_id()
         return self._context
 
     def process_trunk_port_events(
@@ -197,6 +197,10 @@ class OVSDBHandler(object):
         try:
             parent_port_id, trunk_id, subport_ids = self._get_trunk_metadata(
                 port)
+            # NOTE(status_police): we do not report changes in trunk status on
+            # removal to avoid potential races between agents in case the event
+            # is due to a live migration or reassociation of a trunk to a new
+            # VM.
             self.unwire_subports_for_trunk(trunk_id, subport_ids)
             self.trunk_manager.remove_trunk(trunk_id, parent_port_id)
         except tman.TrunkManagerError as te:
@@ -246,35 +250,31 @@ class OVSDBHandler(object):
             # will cause troubles during deletion.
             # TODO(jlibosva): Investigate how to proceed during removal of
             # trunk bridge that doesn't have metadata stored and whether it's
-            # wise to set DEGRADED status in case we don't have metadata
+            # wise to report DEGRADED status in case we don't have metadata
             # present on the bridge.
-            self.trunk_rpc.update_trunk_status(
-                context, trunk_id, constants.DEGRADED_STATUS)
-            return
-
-        # Set trunk status to DEGRADED if not all subports were created
-        # succesfully
-        status = (constants.ACTIVE_STATUS if len(subport_ids) == len(subports)
-                  else constants.DEGRADED_STATUS)
-        # NOTE(status_police): Set trunk status to ACTIVE if all subports were
-        # added successfully. If some port wasn't added, trunk is set to
-        # DEGRADED.
-        self.trunk_rpc.update_trunk_status(
-            context, trunk_id, status)
+            return constants.DEGRADED_STATUS
 
         LOG.debug("Added trunk: %s", trunk_id)
+        return self._get_current_status(subports, subport_ids)
 
     def unwire_subports_for_trunk(self, trunk_id, subport_ids):
         """Destroy OVS ports associated to the logical subports."""
+        ids = []
         for subport_id in subport_ids:
             try:
                 self.trunk_manager.remove_sub_port(trunk_id, subport_id)
+                ids.append(subport_id)
             except tman.TrunkManagerError as te:
                 LOG.error(_LE("Removing subport %(subport_id)s from trunk "
                               "%(trunk_id)s failed: %(err)s"),
                           {'subport_id': subport_id,
                            'trunk_id': trunk_id,
                            'err': te})
+        return self._get_current_status(subport_ids, ids)
+
+    def report_trunk_status(self, context, trunk_id, status):
+        """Report trunk status to the server."""
+        self.trunk_rpc.update_trunk_status(context, trunk_id, status)
 
     def _get_parent_port(self, trunk_bridge):
         """Return the OVS trunk parent port plugged on trunk_bridge."""
@@ -320,13 +320,15 @@ class OVSDBHandler(object):
                        'err': te})
             # NOTE(status_police): Trunk couldn't be created so it ends in
             # ERROR status and resync can fix that later.
-            self.trunk_rpc.update_trunk_status(context, trunk.id,
-                                               constants.ERROR_STATUS)
+            self.report_trunk_status(ctx, trunk.id, constants.ERROR_STATUS)
             return
 
-        self.wire_subports_for_trunk(
-            ctx, trunk.id, trunk.sub_ports, trunk_bridge=trunk_br,
-            parent_port=port)
+        # NOTE(status_police): inform the server whether the operation
+        # was a partial or complete success. Do not inline status.
+        status = self.wire_subports_for_trunk(
+            ctx, trunk.id, trunk.sub_ports,
+            trunk_bridge=trunk_br, parent_port=port)
+        self.report_trunk_status(ctx, trunk.id, status)
 
     def _set_trunk_metadata(self, trunk_bridge, port, trunk_id, subport_ids):
         """Set trunk metadata in OVS port for trunk parent port."""
@@ -351,3 +353,18 @@ class OVSDBHandler(object):
         subport_ids = jsonutils.loads(port['external_ids']['subport_ids'])
 
         return parent_port_id, trunk_id, subport_ids
+
+    def _get_current_status(self, expected_subports, actual_subports):
+        """Return the current status of the trunk.
+
+        If the number of expected subports to be processed does not match the
+        number of subports successfully processed, the status returned is
+        DEGRADED, ACTIVE otherwise.
+        """
+        # NOTE(status_police): a call to this method should be followed by
+        # a trunk_update_status to report the latest trunk status, but there
+        # can be exceptions (e.g. unwire_subports_for_trunk).
+        if len(expected_subports) != len(actual_subports):
+            return constants.DEGRADED_STATUS
+        else:
+            return constants.ACTIVE_STATUS
