@@ -252,6 +252,7 @@ class ResourcesPushRpcCallback(object):
     target = oslo_messaging.Target(version='1.1',
                                    namespace=constants.RPC_NAMESPACE_RESOURCES)
 
+    @oslo_messaging.expected_exceptions(rpc_exc.CallbackNotFound)
     def push(self, context, **kwargs):
         """Push receiver, will always receive resources of the same type."""
         # TODO(mangelajo): accept single 'resource' parameter for backwards
