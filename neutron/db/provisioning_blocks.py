@@ -150,7 +150,8 @@ def provisioning_complete(context, object_id, object_type, entity):
     records = context.session.query(ProvisioningBlock).filter_by(
         standard_attr_id=standard_attr_id).count()
     if not records:
-        LOG.debug("Provisioning complete for %(otype)s %(oid)s", log_dict)
+        LOG.debug("Provisioning complete for %(otype)s %(oid)s triggered by "
+                  "entity %(entity)s.", log_dict)
         registry.notify(object_type, PROVISIONING_COMPLETE,
                         'neutron.db.provisioning_blocks',
                         context=context, object_id=object_id)
