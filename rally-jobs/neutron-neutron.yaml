@@ -11,7 +11,11 @@
           users_per_tenant: 1
         quotas:
           neutron:
-             network: 100
+             # worst case is other 19 writers have created
+             # resources, but quota reservation hasn't cleared
+             # yet on any of them. This value could be 100
+             # without concurrency. see bug/1623390
+             network: 119
       sla:
         max_avg_duration_per_atomic:
           neutron.list_networks: 15  # reduce as perf is fixed
@@ -83,7 +87,9 @@
              network: -1
              subnet: -1
              router: -1
-             port: 4040  # (ports per network + 1 dhcp) * times
+             # ((ports per net + 1 dhcp) * times) + (concurrency-1)
+             # see bug/1623390 for concurrency explanation
+             port: 4059
       sla:
         max_avg_duration_per_atomic:
           neutron.list_ports: 15  # reduce as perf is fixed
