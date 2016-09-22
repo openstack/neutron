@@ -30,6 +30,7 @@ import subprocess
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
+from neutron.tests import base as test_base
 from neutron.tests.unit import testlib_api
 
 cfg.CONF.import_opt('core_plugin', 'neutron.conf.common')
@@ -129,6 +130,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     '''
 
     BUILD_SCHEMA = False
+    TIMEOUT_SCALING_FACTOR = 4
 
     def setUp(self):
         super(_TestModelsMigrations, self).setUp()
@@ -136,6 +138,9 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         self.cfg.config(core_plugin='ml2')
         self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
+
+        # Migration tests can take a long time
+        self.useFixture(test_base.Timeout(scaling=self.TIMEOUT_SCALING_FACTOR))
 
     def db_sync(self, engine):
         upgrade(engine, self.alembic_config)
