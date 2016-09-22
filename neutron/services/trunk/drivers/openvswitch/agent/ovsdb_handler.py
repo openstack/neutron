@@ -40,7 +40,7 @@ from neutron.services.trunk.rpc import agent
 
 LOG = logging.getLogger(__name__)
 
-WAIT_FOR_PORT_TIMEOUT = 60
+DEFAULT_WAIT_FOR_PORT_TIMEOUT = 60
 
 
 def lock_on_bridge_name(required_parameter):
@@ -114,6 +114,7 @@ class OVSDBHandler(object):
     """
 
     def __init__(self, trunk_manager):
+        self.timeout = DEFAULT_WAIT_FOR_PORT_TIMEOUT
         self._context = n_context.get_admin_context_without_session()
         self.trunk_manager = trunk_manager
         self.trunk_rpc = agent.TrunkStub()
@@ -155,11 +156,7 @@ class OVSDBHandler(object):
 
         :param bridge_name: Name of the created trunk bridge.
         """
-        # Wait for the VM's port, i.e. the trunk parent port, to show up.
-        # If the VM fails to show up, i.e. this fails with a timeout,
-        # then we clean the dangling bridge.
         bridge = ovs_lib.OVSBridge(bridge_name)
-
         # Handle condition when there was bridge in both added and removed
         # events and handle_trunk_remove greenthread was executed before
         # handle_trunk_add
@@ -168,19 +165,15 @@ class OVSDBHandler(object):
                       bridge_name)
             return
 
-        bridge_has_port_predicate = functools.partial(
-            bridge_has_instance_port, bridge)
-        try:
-            common_utils.wait_until_true(
-                bridge_has_port_predicate,
-                timeout=WAIT_FOR_PORT_TIMEOUT)
-        except eventlet.TimeoutError:
-            LOG.error(
-                _LE('No port appeared on trunk bridge %(br_name)s '
-                    'in %(timeout)d seconds. Cleaning up the bridge'),
-                {'br_name': bridge.br_name,
-                 'timeout': WAIT_FOR_PORT_TIMEOUT})
-            bridge.destroy()
+        # Determine the state of the trunk bridge by looking for the VM's port,
+        # i.e. the trunk parent port and/or patch ports to be present. If the
+        # VM is absent, then we clean the dangling bridge. If the VM is present
+        # the value of 'rewire' tells us whether or not the bridge was dealt
+        # with in a previous added event, and thus it has active patch ports.
+        if not self._is_vm_connected(bridge):
+            LOG.debug("No instance port associated to bridge %s could be "
+                      "found. Deleting bridge and its resources.", bridge_name)
+            self.trunk_manager.dispose_trunk(bridge)
             return
 
         # Check if the trunk was provisioned in a previous run. This can happen
@@ -455,3 +448,20 @@ class OVSDBHandler(object):
             return constants.DEGRADED_STATUS
         else:
             return constants.ACTIVE_STATUS
+
+    def _is_vm_connected(self, bridge):
+        """True if an instance is connected to bridge, False otherwise."""
+        bridge_has_port_predicate = functools.partial(
+            bridge_has_instance_port, bridge)
+        try:
+            common_utils.wait_until_true(
+                bridge_has_port_predicate,
+                timeout=self.timeout)
+            return True
+        except eventlet.TimeoutError:
+            LOG.error(
+                _LE('No port present on trunk bridge %(br_name)s '
+                    'in %(timeout)d seconds.'),
+                {'br_name': bridge.br_name,
+                 'timeout': self.timeout})
+        return False

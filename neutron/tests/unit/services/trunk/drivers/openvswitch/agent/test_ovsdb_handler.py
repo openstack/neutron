@@ -143,9 +143,8 @@ class TestOVSDBHandler(base.BaseTestCase):
     @mock.patch('neutron.common.utils.wait_until_true',
                 side_effect=eventlet.TimeoutError)
     def test_handle_trunk_add_interface_wont_appear(self, wut, br):
-        mock_br = br.return_value
         self.ovsdb_handler.handle_trunk_add('foo')
-        self.assertTrue(mock_br.destroy.called)
+        self.assertTrue(self.trunk_manager.dispose_trunk.called)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_handle_trunk_add_rpc_failure(self, br):

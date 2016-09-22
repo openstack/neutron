@@ -121,6 +121,18 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         mock.patch.object(polling_manager, 'get_events',
             side_effect=filter_events).start()
 
+    def _fill_trunk_dict(self, num=3):
+        ports = self.create_test_ports(amount=num)
+        self.trunk_dict['port_id'] = ports[0]['id']
+        self.trunk_dict['sub_ports'] = [trunk_obj.SubPort(
+            id=uuidutils.generate_uuid(),
+            port_id=ports[i]['id'],
+            mac_address=ports[i]['mac_address'],
+            segmentation_id=i,
+            trunk_id=self.trunk_dict['id'])
+            for i in range(1, num)]
+        return ports
+
     def _test_trunk_creation_helper(self, ports):
         self.setup_agent_and_ports(port_dicts=ports)
         self.wait_until_ports_state(self.ports, up=True)
@@ -130,15 +142,7 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
             not self.trunk_br.bridge_exists(self.trunk_br.br_name))
 
     def test_trunk_creation_with_subports(self):
-        ports = self.create_test_ports(amount=3)
-        self.trunk_dict['port_id'] = ports[0]['id']
-        self.trunk_dict['sub_ports'] = [trunk_obj.SubPort(
-            id=uuidutils.generate_uuid(),
-            port_id=ports[i]['id'],
-            mac_address=ports[i]['mac_address'],
-            segmentation_id=i,
-            trunk_id=self.trunk_dict['id'])
-            for i in range(1, 3)]
+        ports = self._fill_trunk_dict()
         self._test_trunk_creation_helper(ports[:1])
 
     def test_trunk_creation_with_no_subports(self):
@@ -147,32 +151,14 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         self._test_trunk_creation_helper(ports)
 
     def test_resync(self):
-        ports = self.create_test_ports(amount=3)
-        self.trunk_dict['port_id'] = ports[0]['id']
-        self.trunk_dict['sub_ports'] = [trunk_obj.SubPort(
-            id=uuidutils.generate_uuid(),
-            port_id=ports[i]['id'],
-            mac_address=ports[i]['mac_address'],
-            segmentation_id=i,
-            trunk_id=self.trunk_dict['id'])
-            for i in range(1, 3)]
-
+        ports = self._fill_trunk_dict()
         self.setup_agent_and_ports(port_dicts=ports)
         self.wait_until_ports_state(self.ports, up=True)
         self.agent.fullsync = True
         self.wait_until_ports_state(self.ports, up=True)
 
-    def test_restart(self):
-        ports = self.create_test_ports(amount=3)
-        self.trunk_dict['port_id'] = ports[0]['id']
-        self.trunk_dict['sub_ports'] = [trunk_obj.SubPort(
-            id=uuidutils.generate_uuid(),
-            port_id=ports[i]['id'],
-            mac_address=ports[i]['mac_address'],
-            segmentation_id=i,
-            trunk_id=self.trunk_dict['id'])
-            for i in range(1, 3)]
-
+    def test_restart_subport_events(self):
+        ports = self._fill_trunk_dict()
         self.setup_agent_and_ports(port_dicts=ports)
         self.wait_until_ports_state(self.ports, up=True)
 
@@ -190,3 +176,19 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         common_utils.wait_until_true(
             lambda: (deleted_sp.patch_port_trunk_name not in
                 self.trunk_br.get_port_name_list()))
+
+    def test_cleanup_on_vm_delete(self):
+        with mock.patch.object(self.ovsdb_handler, 'handle_trunk_remove'):
+            br_int = ovs_lib.OVSBridge(self.br_int)
+            ports = self._fill_trunk_dict()
+            self.setup_agent_and_ports(port_dicts=ports[:1])
+            self.wait_until_ports_state(self.ports, up=True)
+            self.trunk_br.delete_port(self.trunk_port_name)
+            # We do not expect any instance port to show up on the trunk
+            # bridge so we can set a much more aggressive timeout and
+            # fail fast(er).
+            self.ovsdb_handler.timeout = 1
+            self.ovsdb_handler.handle_trunk_add(self.trunk_br.br_name)
+            # Check no resources are left behind.
+            self.assertFalse(self.trunk_br.exists())
+            self.assertFalse(ovsdb_handler.bridge_has_service_port(br_int))
