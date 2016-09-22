@@ -78,17 +78,9 @@ class TestIpamBackendMixin(base.BaseTestCase):
                                                       new_ips,
                                                       owner)
 
-        def assertUnorderedListOfDictEqual(a, b):
-            # Dicts are unorderable in py34. Return something orderable.
-            def key(d):
-                return sorted(d.items())
-
-            # Compare the sorted lists since the order isn't deterministic
-            self.assertEqual(sorted(a, key=key), sorted(b, key=key))
-
-        assertUnorderedListOfDictEqual(expected.add, change.add)
-        assertUnorderedListOfDictEqual(expected.original, change.original)
-        assertUnorderedListOfDictEqual(expected.remove, change.remove)
+        self.assertItemsEqual(expected.add, change.add)
+        self.assertItemsEqual(expected.original, change.original)
+        self.assertItemsEqual(expected.remove, change.remove)
 
     def test__get_changed_ips_for_port(self):
         new_ips = self._prepare_ips(self.default_new_ips)
