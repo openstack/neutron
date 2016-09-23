@@ -140,7 +140,7 @@ class DbQuotaDriver(object):
                                retry_interval=0.1,
                                inc_retry_interval=True,
                                retry_on_request=True,
-                               exception_checker=db_api.is_deadlock)
+                               exception_checker=db_api.is_retriable)
     def make_reservation(self, context, tenant_id, resources, deltas, plugin):
         # Lock current reservation table
         # NOTE(salv-orlando): This routine uses DB write locks.
