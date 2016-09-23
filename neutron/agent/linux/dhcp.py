@@ -1280,6 +1280,19 @@ class DeviceManager(object):
         else:
             raise exceptions.Conflict()
 
+        # FIXME(kevinbenton): ensure we have the IPs we actually need.
+        # can be removed once bug/1627480 is fixed
+        if not self.driver.use_gateway_ips:
+            expected = set(dhcp_subnets)
+            actual = {fip.subnet_id for fip in dhcp_port.fixed_ips}
+            missing = expected - actual
+            if missing:
+                LOG.debug("Requested DHCP port with IPs on subnets "
+                          "%(expected)s but only got IPs on subnets "
+                          "%(actual)s.", {'expected': expected,
+                                          'actual': actual})
+                raise exceptions.SubnetMismatchForPort(
+                    port_id=dhcp_port.id, subnet_id=list(missing)[0])
         # Convert subnet_id to subnet dict
         fixed_ips = [dict(subnet_id=fixed_ip.subnet_id,
                           ip_address=fixed_ip.ip_address,
@@ -1359,7 +1372,7 @@ class DeviceManager(object):
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
-            if not ipv6_utils.is_auto_address_subnet(subnet):
+            if not ipv6_utils.is_slaac_subnet(subnet):
                 net = netaddr.IPNetwork(subnet.cidr)
                 ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
                 ip_cidrs.append(ip_cidr)

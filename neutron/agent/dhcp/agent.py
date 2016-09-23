@@ -120,6 +120,10 @@ class DhcpAgent(manager.Manager):
                       'is a conflict with its current state; please '
                       'check that the network and/or its subnet(s) '
                       'still exist.', {'net_id': network.id, 'action': action})
+        except exceptions.SubnetMismatchForPort as e:
+            # FIXME(kevinbenton): get rid of this once bug/1627480 is fixed
+            LOG.debug("Error configuring DHCP port, scheduling resync: %s", e)
+            self.schedule_resync(e, network.id)
         except Exception as e:
             if getattr(e, 'exc_type', '') != 'IpAddressGenerationFailure':
                 # Don't resync if port could not be created because of an IP

@@ -85,6 +85,8 @@ fake_meta_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
 
 fake_fixed_ip1 = dhcp.DictModel(dict(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.9'))
+fake_fixed_ip_subnet2 = dhcp.DictModel(dict(id='', subnet_id=fake_subnet2.id,
+                                ip_address='172.9.8.9'))
 fake_fixed_ip2 = dhcp.DictModel(dict(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.10'))
 fake_fixed_ipv6 = dhcp.DictModel(dict(id='', subnet_id=fake_ipv6_subnet.id,
@@ -1531,13 +1533,26 @@ class TestDeviceManager(base.BaseTestCase):
                           [{'subnet_id': fake_fixed_ip1.subnet_id}],
                           'device_id': mock.ANY}})])
 
-    def test_create_dhcp_port_update_add_subnet(self):
+    def test_create_dhcp_port_update_add_subnet_bug_1627480(self):
+        # this can go away once bug/1627480 is fixed
         plugin = mock.Mock()
         dh = dhcp.DeviceManager(cfg.CONF, plugin)
         fake_network_copy = copy.deepcopy(fake_network)
         fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
         fake_network_copy.subnets[1].enable_dhcp = True
         plugin.update_dhcp_port.return_value = fake_network.ports[0]
+        with testtools.ExpectedException(exceptions.SubnetMismatchForPort):
+            dh.setup_dhcp_port(fake_network_copy)
+
+    def test_create_dhcp_port_update_add_subnet(self):
+        plugin = mock.Mock()
+        dh = dhcp.DeviceManager(cfg.CONF, plugin)
+        fake_network_copy = copy.deepcopy(fake_network)
+        fake_network_copy.ports[0].device_id = dh.get_device_id(fake_network)
+        fake_network_copy.subnets[1].enable_dhcp = True
+        updated_port = copy.deepcopy(fake_network_copy.ports[0])
+        updated_port.fixed_ips.append(fake_fixed_ip_subnet2)
+        plugin.update_dhcp_port.return_value = updated_port
         dh.setup_dhcp_port(fake_network_copy)
         port_body = {'port': {
                      'network_id': fake_network.id,
