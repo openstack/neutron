@@ -65,6 +65,7 @@ case $VENV in
     # NOTE(ihrachys): note the order of hook post-* sections is significant: [quotas] hook should
     # go before other hooks modifying [DEFAULT]. See LP#1583214 for details.
     load_conf_hook quotas
+    load_rc_hook dns
     load_rc_hook qos
     load_rc_hook trunk
     load_conf_hook osprofiler

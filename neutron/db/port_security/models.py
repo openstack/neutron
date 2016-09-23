@@ -29,6 +29,7 @@ class PortSecurityBinding(model_base.BASEV2):
         models_v2.Port,
         backref=orm.backref("port_security", uselist=False,
                             cascade='delete', lazy='joined'))
+    revises_on_change = ('port',)
 
 
 class NetworkSecurityBinding(model_base.BASEV2):
@@ -44,3 +45,4 @@ class NetworkSecurityBinding(model_base.BASEV2):
         models_v2.Network,
         backref=orm.backref("port_security", uselist=False,
                             cascade='delete', lazy='joined'))
+    revises_on_change = ('network',)

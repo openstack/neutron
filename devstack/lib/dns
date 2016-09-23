@@ -1,0 +1,6 @@
+function configure_dns_extension {
+    enable_ml2_extension_driver "dns"
+}
+function post_config_dns_extension {
+    iniset $NEUTRON_CONF DEFAULT dns_domain openstackgate.local
+}

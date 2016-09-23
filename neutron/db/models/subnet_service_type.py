@@ -40,3 +40,4 @@ class SubnetServiceType(model_base.BASEV2):
         sa.PrimaryKeyConstraint('subnet_id', 'service_type'),
         model_base.BASEV2.__table_args__
     )
+    revises_on_change = ('subnet', )
