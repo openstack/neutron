@@ -90,12 +90,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
         self.client.update_port(
             port['id'], security_groups=[sg['security_group']['id']])
         updated = self.client.show_port(port['id'])
-        self.client.update_port(port['id'], security_groups=[])
-        # TODO(kevinbenton): these extra shows after after the update are
-        # to work around the fact that ML2 creates the result dict before
-        # commit happens if the port is unbound. The update response should
-        # be usable directly once that is fixed.
-        updated2 = self.client.show_port(port['id'])
+        updated2 = self.client.update_port(port['id'], security_groups=[])
         self.assertGreater(updated['port']['revision_number'],
                            port['revision_number'])
         self.assertGreater(updated2['port']['revision_number'],

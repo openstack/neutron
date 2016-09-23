@@ -1422,6 +1422,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             need_port_update_notify |= self._update_extra_dhcp_opts_on_port(
                 context, id, port, updated_port)
             levels = db.get_binding_levels(session, id, binding.host)
+            # one of the operations above may have altered the model call
+            # _make_port_dict again to ensure latest state is reflected so mech
+            # drivers, callback handlers, and the API caller see latest state.
+            # We expire here to reflect changed relationships on the obj.
+            # Repeatable read will ensure we still get the state from this
+            # transaction in spite of concurrent updates/deletes.
+            context.session.expire(port_db)
+            updated_port.update(self._make_port_dict(port_db))
             mech_context = driver_context.PortContext(
                 self, context, updated_port, network, binding, levels,
                 original_port=original_port)
@@ -1719,6 +1727,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE):
                 original_port = self._make_port_dict(port)
                 port.status = status
+                # explicit flush before _make_port_dict to ensure extensions
+                # listening for db events can modify the port if necessary
+                context.session.flush()
                 updated_port = self._make_port_dict(port)
                 network = network or self.get_network(
                     context, original_port['network_id'])
