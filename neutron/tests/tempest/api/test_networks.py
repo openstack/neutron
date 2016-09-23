@@ -106,8 +106,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
         project_id = self.client.tenant_id
 
         name = 'created-with-project_id'
-        body = self.client.create_network_keystone_v3(name, project_id)
-        new_net = body['network']
+        new_net = self.create_network_keystone_v3(name, project_id)
         self.assertEqual(name, new_net['name'])
         self.assertEqual(project_id, new_net['project_id'])
         self.assertEqual(project_id, new_net['tenant_id'])
