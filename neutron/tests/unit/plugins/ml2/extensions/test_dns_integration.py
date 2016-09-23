@@ -369,37 +369,6 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                               previous_dns_name=DNSNAME,
                               original_ips=original_ips)
 
-    def test_update_port_fixed_ips_with_subnet_ids(self, *mocks):
-        net, port, dns_data_db = self._create_port_for_test()
-        original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
-        ctx = context.get_admin_context()
-        kwargs = {'fixed_ips': []}
-        for ip in port['fixed_ips']:
-            # Since this tests using an "any" IP allocation to update the port
-            # IP address, change the allocation pools so that IPAM won't ever
-            # give us back the IP address we originally had.
-            subnet = self.plugin.get_subnet(ctx, ip['subnet_id'])
-            ip_net = netaddr.IPNetwork(subnet['cidr'])
-            subnet_size = ip_net.last - ip_net.first
-            subnet_mid_point = int(ip_net.first + subnet_size / 2)
-            start, end = (netaddr.IPAddress(subnet_mid_point + 1),
-                          netaddr.IPAddress(ip_net.last - 1))
-            allocation_pools = [{'start': str(start), 'end': str(end)}]
-            body = {'allocation_pools': allocation_pools}
-            req = self.new_update_request('subnets', {'subnet': body},
-                                          ip['subnet_id'])
-            req.get_response(self.api)
-            kwargs['fixed_ips'].append(
-                {'subnet_id': ip['subnet_id']})
-
-        port, dns_data_db = self._update_port_for_test(port,
-                                                       new_dns_name=None,
-                                                       **kwargs)
-        self._verify_port_dns(net, port, dns_data_db, delete_records=True,
-                              current_dns_name=DNSNAME,
-                              previous_dns_name=DNSNAME,
-                              original_ips=original_ips)
-
     def test_update_port_fixed_ips_with_new_dns_name(self, *mocks):
         net, port, dns_data_db = self._create_port_for_test()
         original_ips = [ip['ip_address'] for ip in port['fixed_ips']]
