@@ -12,11 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import testtools
-
 from oslo_utils import uuidutils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
+import testtools
 
 from neutron.tests.tempest.api import test_trunk
 
