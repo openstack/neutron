@@ -14,6 +14,7 @@
 
 import abc
 
+from oslo_log import helpers as log_helpers
 import oslo_messaging
 
 from neutron.api.rpc.callbacks.consumer import registry
@@ -85,16 +86,19 @@ class TrunkStub(object):
             namespace=trunk_consts.TRUNK_BASE_NAMESPACE)
         self.rpc_client = n_rpc.get_client(target)
 
+    @log_helpers.log_method_call
     def get_trunk_details(self, context, parent_port_id):
         """Get information about the trunk for the given parent port."""
         return self.stub.pull(context, resources.TRUNK, parent_port_id)
 
+    @log_helpers.log_method_call
     def update_trunk_status(self, context, trunk_id, status):
         """Update the trunk status to reflect outcome of data plane wiring."""
         return self.rpc_client.prepare().call(
             context, 'update_trunk_status',
             trunk_id=trunk_id, status=status)
 
+    @log_helpers.log_method_call
     def update_subport_bindings(self, context, subports):
         """Update subport bindings to match parent port host binding."""
         return self.rpc_client.prepare().call(
