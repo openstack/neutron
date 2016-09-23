@@ -86,7 +86,9 @@ class FakeReservedPort(object):
         self.device_owner = constants.DEVICE_OWNER_DHCP
         self.fixed_ips = [
             FakeIPAllocation('192.168.0.6',
-                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd'),
+            FakeIPAllocation('fdca:3ba5:a17a:4ba3::2',
+                             'ffffffff-ffff-ffff-ffff-ffffffffffff')]
         self.mac_address = '00:00:80:aa:bb:ee'
         self.device_id = n_const.DEVICE_ID_RESERVED_DHCP_PORT
         self.extra_dhcp_opts = []
@@ -2297,11 +2299,11 @@ class TestDeviceManager(TestConfBase):
             plugin.update_dhcp_port.assert_called_with(reserved_port.id,
                                                        mock.ANY)
 
-            except_ips = ['192.168.0.6/24']
+            expect_ips = ['192.168.0.6/24', 'fdca:3ba5:a17a:4ba3::2/64']
             if enable_isolated_metadata or force_metadata:
-                except_ips.append(dhcp.METADATA_DEFAULT_CIDR)
+                expect_ips.append(dhcp.METADATA_DEFAULT_CIDR)
             mgr.driver.init_l3.assert_called_with('ns-XXX',
-                                                  except_ips,
+                                                  expect_ips,
                                                   namespace='qdhcp-ns')
 
     def test_setup_reserved_and_disable_metadata(self):
@@ -2369,9 +2371,9 @@ class TestDeviceManager(TestConfBase):
             plugin.update_dhcp_port.assert_called_with(reserved_port_2.id,
                                                        mock.ANY)
 
-            mgr.driver.init_l3.assert_called_with('ns-XXX',
-                                                  ['192.168.0.6/24'],
-                                                  namespace='qdhcp-ns')
+            mgr.driver.init_l3.assert_called_with(
+                'ns-XXX', ['192.168.0.6/24', 'fdca:3ba5:a17a:4ba3::2/64'],
+                namespace='qdhcp-ns')
 
 
 class TestDictModel(base.BaseTestCase):
