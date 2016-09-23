@@ -16,6 +16,8 @@
 """Tests to test the test framework"""
 
 import sys
+
+import eventlet.timeout
 import unittest2
 
 from neutron.tests import base
@@ -70,3 +72,20 @@ class SystemExitTestCase(base.DietTestCase):
         self.assertEqual([], result.errors)
         self.assertItemsEqual(set(id(t) for t in expectedFails),
                               set(id(t) for (t, traceback) in result.failures))
+
+
+class CatchTimeoutTestCase(base.DietTestCase):
+    # Embedded to hide from the regular test discovery
+    class MyTestCase(base.DietTestCase):
+        def test_case(self):
+            raise eventlet.timeout.Timeout()
+
+        def runTest(self):
+            return self.test_case()
+
+    def test_catch_timeout(self):
+        try:
+            result = self.MyTestCase().run()
+            self.assertFalse(result.wasSuccessful())
+        except eventlet.timeout.Timeout:
+            self.fail('Timeout escaped!')
