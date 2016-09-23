@@ -28,3 +28,4 @@ class AllowedAddressPair(model_base.BASEV2):
         models_v2.Port,
         backref=orm.backref("allowed_address_pairs",
                             lazy="joined", cascade="delete"))
+    revises_on_change = ('port', )
