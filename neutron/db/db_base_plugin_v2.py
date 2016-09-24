@@ -21,6 +21,7 @@ from neutron_lib import constants
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
+from oslo_db import exception as os_db_exc
 from oslo_db.sqlalchemy import utils as sa_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -1214,11 +1215,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # that in.  The problem is that db_base_plugin_common shouldn't
             # know anything about port binding.  This compromise sends IPAM a
             # port_dict with all of the extension data loaded.
-            self.ipam.update_port(
-                context,
-                old_port_db=db_port,
-                old_port=self._make_port_dict(db_port),
-                new_port=new_port)
+            try:
+                self.ipam.update_port(
+                    context,
+                    old_port_db=db_port,
+                    old_port=self._make_port_dict(db_port),
+                    new_port=new_port)
+            except ipam_exc.IpAddressAllocationNotFound as e:
+                # If a port update and a subnet delete interleave, there is a
+                # chance that the IPAM update operation raises this exception.
+                # Rather than throwing that up to the user under some sort of
+                # conflict, bubble up a retry instead that should bring things
+                # back to sanity.
+                raise os_db_exc.RetryRequest(e)
         result = self._make_port_dict(db_port)
         return result
 
