@@ -238,6 +238,9 @@ class DhcpLocalProcess(DhcpBase):
                         self.interface_name)
 
         ns_ip = ip_lib.IPWrapper(namespace=self.network.namespace)
+        if not ns_ip.netns.exists(self.network.namespace):
+            LOG.debug("Namespace already deleted: %s", self.network.namespace)
+            return
         try:
             ns_ip.netns.delete(self.network.namespace)
         except RuntimeError:
