@@ -1202,7 +1202,7 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
                          no_resolv='')
 
-    def test_spawn_cfg_with_local_resolv_overriden(self):
+    def test_spawn_cfg_with_local_resolv_overridden(self):
         self.conf.set_override('dnsmasq_local_resolv', True)
         self.conf.set_override('dnsmasq_dns_servers', ['8.8.8.8'])
 
