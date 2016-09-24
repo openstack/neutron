@@ -850,6 +850,7 @@ class TestBase(TestConfBase):
 
         self.replace_p = mock.patch('neutron.common.utils.replace_file')
         self.execute_p = mock.patch('neutron.agent.common.utils.execute')
+        mock.patch('neutron.agent.linux.utils.execute').start()
         self.safe = self.replace_p.start()
         self.execute = self.execute_p.start()
 
@@ -1704,6 +1705,26 @@ class TestDnsmasq(TestBase):
                                         run_as_root=True)])
         ipw.assert_has_calls([mock.call(['dhcp_release', None, ip2, mac2],
                              run_as_root=True), ])
+
+    def test_release_for_ipv6_lease_no_dhcp_release6(self):
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+
+        ip1 = 'fdca:3ba5:a17a::1'
+        mac1 = '00:00:80:aa:bb:cc'
+
+        old_leases = set([(ip1, mac1, None)])
+        dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
+        dnsmasq._read_v6_leases_file_leases = mock.Mock(
+            return_value={'fdca:3ba5:a17a::1': {'iaid': 0xff,
+                                                'client_id': 'client_id',
+                                                'server_id': 'server_id'}
+                          })
+        ipw = mock.patch(
+            'neutron.agent.linux.ip_lib.IpNetnsCommand.execute').start()
+        dnsmasq._IS_DHCP_RELEASE6_SUPPORTED = False
+        dnsmasq._release_unused_leases()
+        # Verify that dhcp_release6 is not called when it is not present
+        ipw.assert_not_called()
 
     def test_release_unused_leases_with_dhcp_port(self):
         dnsmasq = self._get_dnsmasq(FakeNetworkDhcpPort())
