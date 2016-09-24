@@ -426,6 +426,26 @@ class FirewallTestCase(BaseFirewallTestCase):
     def test_ingress_tcp_rule(self):
         self._test_rule(self.tester.INGRESS, self.tester.TCP)
 
+    def test_next_port_closed(self):
+        # https://bugs.launchpad.net/neutron/+bug/1611991 was caused by wrong
+        # masking in rules which allow traffic to a port with even port number
+        port = 42
+        for direction in (self.tester.EGRESS, self.tester.INGRESS):
+            sg_rules = [{'ethertype': constants.IPv4,
+                         'direction': direction,
+                         'protocol': constants.PROTO_NAME_TCP,
+                         'source_port_range_min': port,
+                         'source_port_range_max': port}]
+            self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID,
+                                             sg_rules)
+
+            self.tester.assert_connection(protocol=self.tester.TCP,
+                                          direction=direction,
+                                          src_port=port)
+            self.tester.assert_no_connection(protocol=self.tester.TCP,
+                                             direction=direction,
+                                             src_port=port + 1)
+
     def test_ingress_udp_rule(self):
         self._test_rule(self.tester.INGRESS, self.tester.UDP)
 
