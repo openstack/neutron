@@ -792,9 +792,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with context.session.begin(subtransactions=True):
             subnet, changes = self.ipam.update_db_subnet(context, id, s,
                                                          db_pools)
+        # we expire here since ipam may have made changes to relationships
+        # that will be stale on any subsequent lookups while the subnet object
+        # is in the session otherwise.
+        context.session.expire(subnet)
         result = self._make_subnet_dict(subnet, context=context)
-        # Keep up with fields that changed
-        result.update(changes)
 
         if update_ports_needed:
             # Find ports that have not yet been updated

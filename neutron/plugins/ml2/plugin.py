@@ -811,7 +811,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(context,
                                                            updated_network)
 
-            updated_network[api.MTU] = self._get_network_mtu(updated_network)
+            updated_network = self.get_network(context, id)
 
             # TODO(QoS): Move out to the extension framework somehow.
             need_network_update_notify = (
@@ -1033,6 +1033,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 context, id, subnet)
             self.extension_manager.process_update_subnet(
                 context, subnet[attributes.SUBNET], updated_subnet)
+            updated_subnet = self.get_subnet(context, id)
             network = self.get_network(context, updated_subnet['network_id'])
             mech_context = driver_context.SubnetContext(
                 self, context, updated_subnet, network,
