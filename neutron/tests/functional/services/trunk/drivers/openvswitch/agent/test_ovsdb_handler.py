@@ -145,3 +145,48 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         ports = self.create_test_ports(amount=1)
         self.trunk_dict['port_id'] = ports[0]['id']
         self._test_trunk_creation_helper(ports)
+
+    def test_resync(self):
+        ports = self.create_test_ports(amount=3)
+        self.trunk_dict['port_id'] = ports[0]['id']
+        self.trunk_dict['sub_ports'] = [trunk_obj.SubPort(
+            id=uuidutils.generate_uuid(),
+            port_id=ports[i]['id'],
+            mac_address=ports[i]['mac_address'],
+            segmentation_id=i,
+            trunk_id=self.trunk_dict['id'])
+            for i in range(1, 3)]
+
+        self.setup_agent_and_ports(port_dicts=ports)
+        self.wait_until_ports_state(self.ports, up=True)
+        self.agent.fullsync = True
+        self.wait_until_ports_state(self.ports, up=True)
+
+    def test_restart(self):
+        ports = self.create_test_ports(amount=3)
+        self.trunk_dict['port_id'] = ports[0]['id']
+        self.trunk_dict['sub_ports'] = [trunk_obj.SubPort(
+            id=uuidutils.generate_uuid(),
+            port_id=ports[i]['id'],
+            mac_address=ports[i]['mac_address'],
+            segmentation_id=i,
+            trunk_id=self.trunk_dict['id'])
+            for i in range(1, 3)]
+
+        self.setup_agent_and_ports(port_dicts=ports)
+        self.wait_until_ports_state(self.ports, up=True)
+
+        # restart and simulate a subport delete
+        deleted_port = self.ports[2]
+        deleted_sp = trunk_manager.SubPort(
+            self.trunk_dict['id'], deleted_port['id'])
+        self.stop_agent(self.agent, self.agent_thread)
+        self.polling_manager.stop()
+        self.trunk_dict['sub_ports'] = self.trunk_dict['sub_ports'][:1]
+        self.setup_agent_and_ports(port_dicts=ports[:2])
+        # NOTE: the port_dicts passed in setup_agent_and_ports is stored in
+        # self.ports so we are waiting here only for ports[:2]
+        self.wait_until_ports_state(self.ports, up=True)
+        common_utils.wait_until_true(
+            lambda: (deleted_sp.patch_port_trunk_name not in
+                self.trunk_br.get_port_name_list()))
