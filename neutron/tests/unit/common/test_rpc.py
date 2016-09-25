@@ -74,11 +74,9 @@ class TestRPC(base.DietTestCase):
         rpc.init(conf)
 
         mock_exmods.assert_called_once_with()
-        mock_trans.assert_called_once_with(conf, allowed_remote_exmods=['foo'],
-                                           aliases=rpc.TRANSPORT_ALIASES)
+        mock_trans.assert_called_once_with(conf, allowed_remote_exmods=['foo'])
         mock_noti_trans.assert_called_once_with(conf,
-                                                allowed_remote_exmods=['foo'],
-                                                aliases=rpc.TRANSPORT_ALIASES)
+                                                allowed_remote_exmods=['foo'])
         mock_not.assert_called_once_with(noti_transport,
                                          serializer=serializer)
         self.assertIsNotNone(rpc.TRANSPORT)

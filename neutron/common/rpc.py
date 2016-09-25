@@ -46,17 +46,6 @@ ALLOWED_EXMODS = [
 EXTRA_EXMODS = []
 
 
-TRANSPORT_ALIASES = {
-    'neutron.openstack.common.rpc.impl_fake': 'fake',
-    'neutron.openstack.common.rpc.impl_qpid': 'qpid',
-    'neutron.openstack.common.rpc.impl_kombu': 'rabbit',
-    'neutron.openstack.common.rpc.impl_zmq': 'zmq',
-    'neutron.rpc.impl_fake': 'fake',
-    'neutron.rpc.impl_qpid': 'qpid',
-    'neutron.rpc.impl_kombu': 'rabbit',
-    'neutron.rpc.impl_zmq': 'zmq',
-}
-
 # NOTE(salv-orlando): I am afraid this is a global variable. While not ideal,
 # they're however widely used throughout the code base. It should be set to
 # true if the RPC server is not running in the current process space. This
@@ -68,10 +57,9 @@ def init(conf):
     global TRANSPORT, NOTIFICATION_TRANSPORT, NOTIFIER
     exmods = get_allowed_exmods()
     TRANSPORT = oslo_messaging.get_transport(conf,
-                                             allowed_remote_exmods=exmods,
-                                             aliases=TRANSPORT_ALIASES)
+                                             allowed_remote_exmods=exmods)
     NOTIFICATION_TRANSPORT = oslo_messaging.get_notification_transport(
-        conf, allowed_remote_exmods=exmods, aliases=TRANSPORT_ALIASES)
+        conf, allowed_remote_exmods=exmods)
     serializer = RequestContextSerializer()
     NOTIFIER = oslo_messaging.Notifier(NOTIFICATION_TRANSPORT,
                                        serializer=serializer)
