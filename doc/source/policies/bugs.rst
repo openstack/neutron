@@ -409,7 +409,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | qos_                          | A bug affecting ML2/QoS                 | Miguel Ajo           |
 +-------------------------------+-----------------------------------------+----------------------+
-| release_                      | A request from a subproject             | Ihar Hrachyshka      |
+| release_                      | A request from a subproject             | Darek Smigiel        |
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
