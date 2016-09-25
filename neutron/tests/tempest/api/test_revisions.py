@@ -148,9 +148,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="dns-integration", service="network")
     def test_update_dns_domain_bumps_revision(self):
         net = self.create_network(dns_domain='example.test.')
-        self.client.update_network(net['id'], dns_domain='exa.test.')
-        # TODO(kevinbenton): use update result after bug/1627628 is fixed
-        updated = self.client.show_network(net['id'])
+        updated = self.client.update_network(net['id'], dns_domain='exa.test.')
         self.assertGreater(updated['network']['revision_number'],
                            net['revision_number'])
         port = self.create_port(net)
@@ -198,13 +196,12 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="port-security", service="network")
     def test_update_port_security_bumps_revisions(self):
         net = self.create_network(port_security_enabled=False)
-        self.client.update_network(net['id'], port_security_enabled=True)
-        # TODO(kevinbenton): use update result after bug/1627628 is fixed
-        updated = self.client.show_network(net['id'])
+        updated = self.client.update_network(net['id'],
+                                             port_security_enabled=True)
         self.assertGreater(updated['network']['revision_number'],
                            net['revision_number'])
-        self.client.update_network(net['id'], port_security_enabled=False)
-        updated2 = self.client.show_network(net['id'])
+        updated2 = self.client.update_network(net['id'],
+                                              port_security_enabled=False)
         self.assertGreater(updated2['network']['revision_number'],
                            updated['network']['revision_number'])
         port = self.create_port(net, port_security_enabled=False)
