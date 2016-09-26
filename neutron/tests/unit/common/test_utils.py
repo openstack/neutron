@@ -13,8 +13,8 @@
 #    under the License.
 
 import errno
-import inspect
 import os.path
+import random
 import re
 import sys
 
@@ -37,6 +37,63 @@ from neutron.tests.common import helpers
 from neutron.tests.unit import tests
 
 load_tests = testscenarios.load_tests_apply_scenarios
+
+
+class _PortRange(object):
+    """A linked list of port ranges."""
+    def __init__(self, base, prev_ref=None):
+        self.base = base
+        self.mask = 0xffff
+        self.prev_ref = prev_ref
+
+    @property
+    def possible_mask_base(self):
+        return self.base & (self.mask << 1)
+
+    @property
+    def can_merge(self):
+        return (self.prev_ref
+                and self.possible_mask_base == self.prev_ref.possible_mask_base
+                and self.mask == self.prev_ref.mask)
+
+    def shake(self):
+        """Try to merge ranges created earlier.
+
+        If previous number in a list can be merged with current item under
+        common mask, it's merged. Then it continues to do the same with the
+        rest of the list.
+        """
+        while self.can_merge:
+            self.mask <<= 1
+            self.base = self.prev_ref.base
+            if self.prev_ref:
+                self.prev_ref = self.prev_ref.prev_ref
+
+    def __str__(self):
+        return _hex_format(self.base, self.mask)
+
+    def get_list(self):
+        if self.prev_ref:
+            return self.prev_ref.get_list() + [str(self)]
+        return [str(self)]
+
+
+_hex_str = lambda num: format(num, '#06x')
+
+
+def _hex_format(port, mask):
+    if mask != 0xffff:
+        return "%s/%s" % (_hex_str(port), _hex_str(0xffff & mask))
+    return _hex_str(port)
+
+
+def _port_rule_masking(port_min, port_max):
+    current = None
+    for num in range(port_min, port_max + 1):
+        port_range = _PortRange(num, prev_ref=current)
+        port_range.shake()
+        current = port_range
+    return current.get_list()
 
 
 class TestParseMappings(base.BaseTestCase):
@@ -689,65 +746,39 @@ class TestSafeDecodeUtf8(base.BaseTestCase):
 
 
 class TestPortRuleMasking(base.BaseTestCase):
-    scenarios = [
-        ('Test 1 (networking-ovs-dpdk)',
-         {'port_min': 5,
-          'port_max': 12,
-          'expected': ['0x0005', '0x0006/0xfffe', '0x0008/0xfffc', '0x000c']}
-         ),
-        ('Test 2 (networking-ovs-dpdk)',
-         {'port_min': 20,
-          'port_max': 130,
-          'expected': ['0x0014/0xfffc', '0x0018/0xfff8',
-                       '0x0020/0xffe0', '0x0040/0xffc0', '0x0080/0xfffe',
-                       '0x0082']}),
-        ('Test 3 (networking-ovs-dpdk)',
-         {'port_min': 4501,
-          'port_max': 33057,
-          'expected': ['0x1195', '0x1196/0xfffe', '0x1198/0xfff8',
-                       '0x11a0/0xffe0', '0x11c0/0xffc0', '0x1200/0xfe00',
-                       '0x1400/0xfc00', '0x1800/0xf800', '0x2000/0xe000',
-                       '0x4000/0xc000', '0x8000/0xff00', '0x8100/0xffe0',
-                       '0x8120/0xfffe']}),
-        ('Test port_max == 2^k-1',
-         {'port_min': 101,
-          'port_max': 127,
-          'expected': ['0x0065', '0x0066/0xfffe', '0x0068/0xfff8',
-                       '0x0070/0xfff0']}),
-        ('Test single even port',
-         {'port_min': 22,
-          'port_max': 22,
-          'expected': ['0x0016']}),
-        ('Test single odd port',
-         {'port_min': 5001,
-          'port_max': 5001,
-          'expected': ['0x1389']}),
-        ('Test full interval',
-         {'port_min': 0,
-          'port_max': 7,
-          'expected': ['0x0000/0xfff8']}),
-        ('Test 2^k interval',
-         {'port_min': 8,
-          'port_max': 15,
-          'expected': ['0x0008/0xfff8']}),
-        ('Test full port range',
-         {'port_min': 0,
-          'port_max': 65535,
-          'expected': ['0x0000/0x0000']}),
-        ('Test bad values',
-         {'port_min': 12,
-          'port_max': 5,
-          'expected': ValueError}),
-    ]
+    def test_port_rule_wrong_input(self):
+        with testtools.ExpectedException(ValueError):
+            utils.port_rule_masking(12, 5)
 
-    def test_port_rule_masking(self):
-        if (inspect.isclass(self.expected)
-                and issubclass(self.expected, Exception)):
-            with testtools.ExpectedException(self.expected):
-                utils.port_rule_masking(self.port_min, self.port_max)
-        else:
-            rules = utils.port_rule_masking(self.port_min, self.port_max)
-            self.assertItemsEqual(self.expected, rules)
+    def compare_port_ranges_results(self, port_min, port_max):
+        observed = utils.port_rule_masking(port_min, port_max)
+        expected = _port_rule_masking(port_min, port_max)
+        self.assertItemsEqual(expected, observed)
+
+    def test_port_rule_masking_random_ranges(self):
+        # calling randint a bunch of times is really slow
+        randports = sorted(random.sample(six.moves.range(1, 65536), 2000))
+        port_max = 0
+        for i in randports:
+            port_min = port_max
+            port_max = i
+            self.compare_port_ranges_results(port_min, port_max)
+
+    def test_port_rule_masking_edge_cases(self):
+        # (port_min, port_max) tuples
+        TESTING_DATA = [
+            (5, 12),
+            (20, 130),
+            (4501, 33057),
+            (0, 65535),
+            (22, 22),
+            (5001, 5001),
+            (0, 7),
+            (8, 15),
+            (1, 127),
+        ]
+        for port_min, port_max in TESTING_DATA:
+            self.compare_port_ranges_results(port_min, port_max)
 
 
 class TestAuthenticEUI(base.BaseTestCase):
