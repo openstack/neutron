@@ -217,8 +217,8 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                     'hosted_agents': agents_dict['hosted_agents']}
         return agents_dict
 
-    def _filter_agents_with_network_access(self, hostable_agents, plugin,
-                                           context, network):
+    def _filter_agents_with_network_access(self, plugin, context,
+                                           network, hostable_agents):
         if 'candidate_hosts' in network:
             hostable_dhcp_hosts = network['candidate_hosts']
         else:
@@ -284,7 +284,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         ]
 
         hostable_dhcp_agents = self._filter_agents_with_network_access(
-            hostable_dhcp_agents, plugin, context, network)
+            plugin, context, network, hostable_dhcp_agents)
 
         if not hostable_dhcp_agents:
             return {'n_agents': 0, 'hostable_agents': [],
