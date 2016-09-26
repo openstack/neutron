@@ -19,7 +19,6 @@ from oslo_config import cfg
 
 import neutron.agent.agent_extensions_manager
 import neutron.agent.common.config
-import neutron.agent.l3.config
 import neutron.agent.l3.ha
 import neutron.agent.linux.interface
 import neutron.agent.linux.pd
