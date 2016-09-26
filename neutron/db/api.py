@@ -32,6 +32,7 @@ from sqlalchemy.orm import exc
 import traceback
 
 from neutron._i18n import _LE
+from neutron.objects import exceptions as obj_exc
 
 
 def set_hook(engine):
@@ -54,7 +55,8 @@ def is_retriable(e):
         return False
     if _is_nested_instance(e, (db_exc.DBDeadlock, exc.StaleDataError,
                                db_exc.DBConnectionError,
-                               db_exc.DBDuplicateEntry, db_exc.RetryRequest)):
+                               db_exc.DBDuplicateEntry, db_exc.RetryRequest,
+                               obj_exc.NeutronDbObjectDuplicateEntry)):
         return True
     # looking savepoints mangled by deadlocks. see bug/1590298 for details.
     return _is_nested_instance(e, db_exc.DBError) and '1305' in str(e)
