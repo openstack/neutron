@@ -228,8 +228,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                                                     subnet_id=subnet_id)
 
     def _get_route_by_subnet(self, context, subnet_id):
-        route_qry = context.session.query(models_v2.SubnetRoute)
-        return route_qry.filter_by(subnet_id=subnet_id).all()
+        return subnet_obj.Route.get_objects(context,
+                                            subnet_id=subnet_id)
 
     def _get_router_gw_ports_by_network(self, context, network_id):
         port_qry = context.session.query(models_v2.Port)

@@ -114,7 +114,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def _update_subnet_host_routes(self, context, id, s):
 
         def _combine(ht):
-            return ht['destination'] + "_" + ht['nexthop']
+            return "{}_{}".format(ht['destination'], ht['nexthop'])
 
         old_route_list = self._get_route_by_subnet(context, id)
 
@@ -127,13 +127,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         for route_str in old_route_set - new_route_set:
             for route in old_route_list:
                 if _combine(route) == route_str:
-                    context.session.delete(route)
+                    route.delete()
         for route_str in new_route_set - old_route_set:
-            route = models_v2.SubnetRoute(
-                destination=route_str.partition("_")[0],
-                nexthop=route_str.partition("_")[2],
+            route = subnet_obj.Route(context,
+                destination=common_utils.AuthenticIPNetwork(
+                    route_str.partition("_")[0]),
+                nexthop=netaddr.IPAddress(route_str.partition("_")[2]),
                 subnet_id=id)
-            context.session.add(route)
+            route.create()
 
         # Gather host routes for result
         new_routes = []
@@ -540,11 +541,13 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         if validators.is_attr_set(host_routes):
             for rt in host_routes:
-                route = models_v2.SubnetRoute(
+                route = subnet_obj.Route(
+                    context,
                     subnet_id=subnet.id,
-                    destination=rt['destination'],
-                    nexthop=rt['nexthop'])
-                context.session.add(route)
+                    destination=common_utils.AuthenticIPNetwork(
+                        rt['destination']),
+                    nexthop=netaddr.IPAddress(rt['nexthop']))
+                route.create()
 
         if validators.is_attr_set(service_types):
             for service_type in service_types:
