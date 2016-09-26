@@ -12,7 +12,13 @@
 
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
+import sqlalchemy as sa
+from sqlalchemy.orm import joinedload
 
+from sqlalchemy import sql
+
+from neutron.db.models import agent as agent_model
+from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent
 from neutron.objects import base
 from neutron.objects import common_types
@@ -33,3 +39,29 @@ class RouterL3AgentBinding(base.NeutronDbObject):
         'binding_index': obj_fields.IntegerField(
                              default=l3agent.LOWEST_BINDING_INDEX),
     }
+
+    # TODO(ihrachys) return OVO objects not models
+    # TODO(ihrachys) move under Agent object class
+    @classmethod
+    def get_l3_agents_by_router_ids(cls, context, router_ids):
+        query = context.session.query(l3agent.RouterL3AgentBinding)
+        query = query.options(joinedload('l3_agent')).filter(
+            l3agent.RouterL3AgentBinding.router_id.in_(router_ids))
+        return [db_obj.l3_agent for db_obj in query.all()]
+
+    @classmethod
+    def get_down_router_bindings(cls, context, cutoff):
+        query = (context.session.query(
+                 l3agent.RouterL3AgentBinding).
+                 join(agent_model.Agent).
+                 filter(agent_model.Agent.heartbeat_timestamp < cutoff,
+                 agent_model.Agent.admin_state_up).outerjoin(
+                     l3_attrs.RouterExtraAttributes,
+                     l3_attrs.RouterExtraAttributes.router_id ==
+                 l3agent.RouterL3AgentBinding.router_id).filter(
+                 sa.or_(
+                     l3_attrs.RouterExtraAttributes.ha == sql.false(),
+                     l3_attrs.RouterExtraAttributes.ha == sql.null())))
+        bindings = [cls._load_object(context, db_obj) for db_obj in
+                query.all()]
+        return bindings

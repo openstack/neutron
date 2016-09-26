@@ -14,9 +14,11 @@
 
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import func
 
 from neutron.agent.common import utils
 from neutron.db.models import agent as agent_model
+from neutron.db.models import l3agent as rb_model
 from neutron.objects import base
 from neutron.objects import common_types
 
@@ -74,3 +76,36 @@ class Agent(base.NeutronDbObject):
     @property
     def is_active(self):
         return not utils.is_agent_down(self.heartbeat_timestamp)
+
+    # TODO(ihrachys) reuse query builder from
+    # get_l3_agents_ordered_by_num_routers
+    @classmethod
+    def get_l3_agent_with_min_routers(cls, context, agent_ids):
+        """Return l3 agent with the least number of routers."""
+        with context.session.begin(subtransactions=True):
+            query = context.session.query(
+                agent_model.Agent,
+                func.count(
+                    rb_model.RouterL3AgentBinding.router_id
+                ).label('count')).outerjoin(
+                    rb_model.RouterL3AgentBinding).group_by(
+                    agent_model.Agent.id,
+                    rb_model.RouterL3AgentBinding
+                    .l3_agent_id).order_by('count')
+            res = query.filter(agent_model.Agent.id.in_(agent_ids)).first()
+        agent_obj = cls._load_object(context, res[0])
+        return agent_obj
+
+    @classmethod
+    def get_l3_agents_ordered_by_num_routers(cls, context, agent_ids):
+        with context.session.begin(subtransactions=True):
+            query = (context.session.query(agent_model.Agent, func.count(
+                rb_model.RouterL3AgentBinding.router_id)
+                .label('count')).
+                outerjoin(rb_model.RouterL3AgentBinding).
+                group_by(agent_model.Agent.id).
+                filter(agent_model.Agent.id.in_(agent_ids)).
+                order_by('count'))
+        agents = [cls._load_object(context, record[0]) for record in query]
+
+        return agents
