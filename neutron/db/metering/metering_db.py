@@ -20,6 +20,7 @@ from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import _deprecate
 from neutron.common import constants
 from neutron.db import common_db_mixin as base_db
+from neutron.db import l3_dvr_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import metering as metering_models
 from neutron.extensions import metering
@@ -180,12 +181,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         return rules
 
     def _make_router_dict(self, router):
+        distributed = l3_dvr_db.is_distributed_router(router)
         res = {'id': router['id'],
                'name': router['name'],
                'tenant_id': router['tenant_id'],
                'admin_state_up': router['admin_state_up'],
                'status': router['status'],
                'gw_port_id': router['gw_port_id'],
+               'distributed': distributed,
                constants.METERING_LABEL_KEY: []}
 
         return res
