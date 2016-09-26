@@ -227,6 +227,18 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             mock_get_assoc_data.assert_called_once_with(
                 mock.ANY, fip, floatingip_db)
 
+    def test__notify_attaching_interface(self):
+        with mock.patch.object(l3_db.registry, 'notify') as mock_notify:
+            context = mock.MagicMock()
+            router_id = 'router_id'
+            net_id = 'net_id'
+            self.db._notify_attaching_interface(context, router_id, net_id)
+            kwargs = {'context': context, 'router_id': router_id,
+                      'network_id': net_id}
+            mock_notify.assert_called_once_with(
+                resources.ROUTER_INTERFACE, events.BEFORE_CREATE, self.db,
+                **kwargs)
+
 
 class L3_NAT_db_mixin(base.BaseTestCase):
     def setUp(self):

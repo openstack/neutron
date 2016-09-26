@@ -653,6 +653,37 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             mock_notify.assert_called_once_with(
                 'router', 'before_update', self.mixin, **kwargs)
 
+    def test_validate_add_router_interface_by_subnet_notify_advanced_services(
+        self):
+        router = {'name': 'foo_router', 'admin_state_up': False}
+        router_db = self._create_router(router)
+        with self.network() as net, \
+                self.subnet(network={'network': net['network']}) as sub, \
+                mock.patch.object(
+                    self.mixin,
+                    '_notify_attaching_interface') as mock_notify:
+            interface_info = {'subnet_id': sub['subnet']['id']}
+            self.mixin.add_router_interface(self.ctx, router_db.id,
+                                            interface_info)
+            mock_notify.assert_called_once_with(self.ctx, router_db.id,
+                                                sub['subnet']['network_id'])
+
+    def test_validate_add_router_interface_by_port_notify_advanced_services(
+        self):
+        router = {'name': 'foo_router', 'admin_state_up': False}
+        router_db = self._create_router(router)
+        with self.network() as net, \
+                self.subnet(network={'network': net['network']}) as sub, \
+                self.port(subnet=sub) as port, \
+                mock.patch.object(
+                    self.mixin,
+                    '_notify_attaching_interface') as mock_notify:
+            interface_info = {'port_id': port['port']['id']}
+            self.mixin.add_router_interface(self.ctx, router_db.id,
+                                            interface_info)
+            mock_notify.assert_called_once_with(self.ctx, router_db.id,
+                                                net['network']['id'])
+
     def _test_update_arp_entry_for_dvr_service_port(
             self, device_owner, action):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
