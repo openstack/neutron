@@ -20,10 +20,11 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import periodic_task
+from oslo_utils import excutils
 from osprofiler import profiler
 import six
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _, _LE, _LI
 from neutron.common import utils
 from neutron.plugins.common import constants
 
@@ -153,7 +154,8 @@ class NeutronManager(object):
             return utils.load_class_by_alias_or_classname(namespace,
                     plugin_provider)
         except ImportError:
-            raise ImportError(_("Plugin '%s' not found.") % plugin_provider)
+            with excutils.save_and_reraise_exception():
+                LOG.error(_LE("Plugin '%s' not found."), plugin_provider)
 
     def _get_plugin_instance(self, namespace, plugin_provider):
         plugin_class = self.load_class_for_provider(namespace, plugin_provider)
