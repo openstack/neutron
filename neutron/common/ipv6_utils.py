@@ -76,6 +76,12 @@ def is_auto_address_subnet(subnet):
             or subnet['ipv6_ra_mode'] in modes)
 
 
+def is_slaac_subnet(subnet):
+    """Check if subnet is a slaac subnet."""
+    return (subnet['ipv6_address_mode'] == const.IPV6_SLAAC
+            or subnet['ipv6_ra_mode'] == const.IPV6_SLAAC)
+
+
 def is_eui64_address(ip_address):
     """Check if ip address is EUI64."""
     ip = netaddr.IPAddress(ip_address)
