@@ -284,8 +284,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def _inherit_service_port_and_arp_update(
         self, context, service_port, allowed_address_port):
         """Function inherits port host bindings for allowed_address_pair."""
-        service_port_dict = self._core_plugin._make_port_dict(service_port,
-                                                              None)
+        service_port_dict = self._core_plugin._make_port_dict(service_port)
         address_pair_list = service_port_dict.get('allowed_address_pairs')
         for address_pair in address_pair_list:
             updated_port = (
@@ -451,7 +450,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             if (p['network_id'] == net_id and
                 p['device_owner'] == device_owner and
                 self._port_has_ipv6_address(p, csnat_port_check=False)):
-                return self._core_plugin._make_port_dict(p, None)
+                return self._core_plugin._make_port_dict(p)
 
     def _check_for_multiprefix_csnat_port_and_update(
         self, context, router, network_id, subnet_id):
@@ -544,7 +543,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         interfaces = collections.defaultdict(list)
         for rp in qry:
             interfaces[rp.router_id].append(
-                self._core_plugin._make_port_dict(rp.port, None))
+                self._core_plugin._make_port_dict(rp.port))
         LOG.debug("Return the SNAT ports: %s", interfaces)
         return interfaces
 
@@ -779,7 +778,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             port_type=const.DEVICE_OWNER_ROUTER_SNAT
         )
 
-        ports = [self._core_plugin._make_port_dict(rp.port, None)
+        ports = [self._core_plugin._make_port_dict(rp.port)
                  for rp in qry]
         return ports
 
