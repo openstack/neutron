@@ -48,6 +48,7 @@ class NetworkDNSDomain(model_base.BASEV2):
                                                    lazy='joined',
                                                    uselist=False,
                                                    cascade='delete'))
+    revises_on_change = ('network', )
 
 
 class FloatingIPDNS(model_base.BASEV2):
@@ -75,6 +76,7 @@ class FloatingIPDNS(model_base.BASEV2):
                                                       lazy='joined',
                                                       uselist=False,
                                                       cascade='delete'))
+    revises_on_change = ('floatingip', )
 
 
 class PortDNS(model_base.BASEV2):
@@ -102,6 +104,7 @@ class PortDNS(model_base.BASEV2):
                                                 lazy='joined',
                                                 uselist=False,
                                                 cascade='delete'))
+    revises_on_change = ('port', )
 
 
 class DNSActionsData(object):
