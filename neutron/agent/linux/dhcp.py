@@ -894,10 +894,10 @@ class Dnsmasq(DhcpLocalProcess):
 
             # Add host routes for isolated network segments
 
-            if (self.conf.force_metadata or
-                (isolated_subnets[subnet.id] and
-                    self.conf.enable_isolated_metadata and
-                    subnet.ip_version == 4)):
+            if ((self.conf.force_metadata or
+                 (isolated_subnets[subnet.id] and
+                     self.conf.enable_isolated_metadata)) and
+                    subnet.ip_version == 4):
                 subnet_dhcp_ip = subnet_to_interface_ip[subnet.id]
                 host_routes.append(
                     '%s/32,%s' % (METADATA_DEFAULT_IP, subnet_dhcp_ip)
@@ -1373,7 +1373,7 @@ class DeviceManager(object):
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
-            if not ipv6_utils.is_slaac_subnet(subnet):
+            if not ipv6_utils.is_auto_address_subnet(subnet):
                 net = netaddr.IPNetwork(subnet.cidr)
                 ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
                 ip_cidrs.append(ip_cidr)
