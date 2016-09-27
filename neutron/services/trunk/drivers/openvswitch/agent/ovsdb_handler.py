@@ -67,6 +67,10 @@ def is_trunk_bridge(port_name):
     return port_name.startswith(t_const.TRUNK_BR_PREFIX)
 
 
+def is_subport(port_name):
+    return port_name.startswith(tman.SubPort.DEV_PREFIX)
+
+
 def is_trunk_service_port(port_name):
     """True if the port is any of the ports used to realize a trunk."""
     return is_trunk_bridge(port_name) or port_name[:2] in (
@@ -74,9 +78,8 @@ def is_trunk_service_port(port_name):
         tman.SubPort.DEV_PREFIX)
 
 
-def bridge_has_instance_port(bridge):
-    """True if there is an OVS port that doesn't have bridge or patch ports
-       prefix.
+def bridge_has_port(bridge, is_port_predicate):
+    """True if there is an OVS port for which is_port_predicate is True.
     """
     try:
         ifaces = bridge.get_iface_name_list()
@@ -87,8 +90,21 @@ def bridge_has_instance_port(bridge):
                    'err': e})
         return False
 
-    return any(iface for iface in ifaces
-               if not is_trunk_service_port(iface))
+    return any(iface for iface in ifaces if is_port_predicate(iface))
+
+
+def bridge_has_instance_port(bridge):
+    """True if there is an OVS port that doesn't have bridge or patch ports
+       prefix.
+    """
+    is_instance_port = lambda p: not is_trunk_service_port(p)
+    return bridge_has_port(bridge, is_instance_port)
+
+
+def bridge_has_service_port(bridge):
+    """True if there is an OVS port that is used to implement a trunk.
+    """
+    return bridge_has_port(bridge, is_trunk_service_port)
 
 
 class OVSDBHandler(object):
@@ -167,10 +183,13 @@ class OVSDBHandler(object):
             bridge.destroy()
             return
 
+        # Check if the trunk was provisioned in a previous run. This can happen
+        # at agent startup when existing trunks are notified as added events.
+        rewire = bridge_has_service_port(bridge)
         # Once we get hold of the trunk parent port, we can provision
         # the OVS dataplane for the trunk.
         try:
-            self._wire_trunk(bridge, self._get_parent_port(bridge))
+            self._wire_trunk(bridge, self._get_parent_port(bridge), rewire)
         except oslo_messaging.MessagingException as e:
             LOG.error(_LE("Got messaging error while processing trunk bridge "
                           "%(bridge_name)s: %(err)s"),
@@ -216,6 +235,23 @@ class OVSDBHandler(object):
         """True if this OVSDB handler manages trunk based on given ID."""
         bridge_name = utils.gen_trunk_br_name(trunk_id)
         return ovs_lib.BaseOVS().bridge_exists(bridge_name)
+
+    def get_connected_subports_for_trunk(self, trunk_id):
+        """Return the list of subports present on the trunk bridge."""
+        bridge = ovs_lib.OVSBridge(utils.gen_trunk_br_name(trunk_id))
+        if not bridge.bridge_exists(bridge.br_name):
+            return []
+        try:
+            ports = bridge.get_ports_attributes(
+                            'Interface', columns=['name', 'external_ids'])
+            return [
+                self.trunk_manager.get_port_uuid_from_external_ids(port)
+                for port in ports if is_subport(port['name'])
+            ]
+        except (RuntimeError, tman.TrunkManagerError) as e:
+            LOG.error(_LE("Failed to get subports for bridge %(bridge)s: "
+                          "%(err)s"), {'bridge': bridge.br_name, 'err': e})
+            return []
 
     def wire_subports_for_trunk(self, context, trunk_id, subports,
                                 trunk_bridge=None, parent_port=None):
@@ -302,14 +338,19 @@ class OVSDBHandler(object):
             "Can't find parent port for trunk bridge %s" %
             trunk_bridge.br_name)
 
-    def _wire_trunk(self, trunk_br, port):
+    def _wire_trunk(self, trunk_br, port, rewire=False):
         """Wire trunk bridge with integration bridge.
 
         The method calls into trunk manager to create patch ports for trunk and
-        patch ports for all subports associated with this trunk.
+        patch ports for all subports associated with this trunk. If rewire is
+        True, a diff is performed between desired state (the one got from the
+        server) and actual state (the patch ports present on the trunk bridge)
+        and subports are wired/unwired accordingly.
 
         :param trunk_br: OVSBridge object representing the trunk bridge.
         :param port: Parent port dict.
+        :param rewire: True if local trunk state must be reconciled with
+            server's state.
         """
         ctx = self.context
         try:
@@ -337,8 +378,19 @@ class OVSDBHandler(object):
             self.report_trunk_status(ctx, trunk.id, constants.ERROR_STATUS)
             return
 
+        # We need to remove stale subports
+        if rewire:
+            old_subport_ids = self.get_connected_subports_for_trunk(trunk.id)
+            subports = {p['port_id'] for p in trunk.sub_ports}
+            subports_to_delete = set(old_subport_ids) - subports
+            if subports_to_delete:
+                self.unwire_subports_for_trunk(trunk.id, subports_to_delete)
+
         # NOTE(status_police): inform the server whether the operation
         # was a partial or complete success. Do not inline status.
+        # NOTE: in case of rewiring we readd ports that are already present on
+        # the bridge because e.g. the segmentation ID might have changed (e.g.
+        # agent crashed, port was removed and readded with a different seg ID)
         status = self.wire_subports_for_trunk(
             ctx, trunk.id, trunk.sub_ports,
             trunk_bridge=trunk_br, parent_port=port)
