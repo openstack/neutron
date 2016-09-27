@@ -50,6 +50,7 @@ class RouterRoute(model_base.BASEV2, models_v2.Route):
                               backref=orm.backref("route_list",
                                                   lazy='joined',
                                                   cascade='delete'))
+    revises_on_change = ('router', )
 
 
 class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):

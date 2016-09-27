@@ -43,3 +43,4 @@ class ExtraDhcpOpt(model_base.BASEV2, model_base.HasId):
     ports = orm.relationship(
         models_v2.Port,
         backref=orm.backref("dhcp_opts", lazy='joined', cascade='delete'))
+    revises_on_change = ('ports', )
