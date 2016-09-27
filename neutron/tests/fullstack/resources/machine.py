@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
+
 import netaddr
 
 from neutron_lib import constants
@@ -20,6 +22,21 @@ from neutron.common import utils
 from neutron.extensions import portbindings as pbs
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
+
+
+class FakeFullstackMachinesList(list):
+    """A list of items implementing the FakeFullstackMachine interface."""
+
+    def block_until_all_boot(self):
+        for vm in self:
+            vm.block_until_boot()
+
+    def ping_all(self):
+        # Generate an iterable of all unique pairs. For example:
+        # itertools.combinations(range(3), 2) results in:
+        # ((0, 1), (0, 2), (1, 2))
+        for vm_1, vm_2 in itertools.combinations(self, 2):
+            vm_1.block_until_ping(vm_2.ip)
 
 
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):

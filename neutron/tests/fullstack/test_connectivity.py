@@ -56,21 +56,17 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
         self.safe_client.create_subnet(
             tenant_uuid, network['id'], '20.0.0.0/24')
 
-        vms = [
+        vms = machine.FakeFullstackMachinesList([
             self.useFixture(
                 machine.FakeFullstackMachine(
                     self.environment.hosts[i],
                     network['id'],
                     tenant_uuid,
                     self.safe_client))
-            for i in range(3)]
+            for i in range(3)])
 
-        for vm in vms:
-            vm.block_until_boot()
-
-        vms[0].block_until_ping(vms[1].ip)
-        vms[0].block_until_ping(vms[2].ip)
-        vms[1].block_until_ping(vms[2].ip)
+        vms.block_until_all_boot()
+        vms.ping_all()
 
 
 class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
