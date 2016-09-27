@@ -114,6 +114,8 @@ class SriovNicSwitchAgent(object):
         self.polling_interval = polling_interval
         self.network_ports = collections.defaultdict(list)
         self.conf = cfg.CONF
+        self.device_mappings = physical_devices_mappings
+        self.exclude_devices = exclude_devices
         self.setup_eswitch_mgr(physical_devices_mappings,
                                exclude_devices)
 
@@ -377,6 +379,8 @@ class SriovNicSwitchAgent(object):
             updated_devices_copy = self.updated_devices
             self.updated_devices = set()
             try:
+                self.eswitch_mgr.discover_devices(self.device_mappings,
+                                                  self.exclude_devices)
                 device_info = self.scan_devices(devices, updated_devices_copy)
                 if self._device_info_has_changes(device_info):
                     LOG.debug("Agent loop found changes! %s", device_info)
