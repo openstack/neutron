@@ -319,7 +319,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         if add_by_port:
             port_id = interface_info['port_id']
-            port = self._check_router_port(context, port_id, '')
+            port = self._check_router_port(context, port_id, '',
+                                           router_id=router_id)
             revert_value = {'device_id': '',
                             'device_owner': port['device_owner']}
             with p_utils.update_port_on_error(

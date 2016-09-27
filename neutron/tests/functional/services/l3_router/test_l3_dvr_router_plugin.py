@@ -16,6 +16,9 @@ import mock
 from neutron_lib import constants
 
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import topics
 from neutron import context
 from neutron.extensions import external_net
@@ -1532,6 +1535,41 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
             self.context, router['id'])
         self.assertEqual(1, len(agents['agents']))
         self.assertEqual(self.l3_agent['id'], agents['agents'][0]['id'])
+
+    def test_add_router_interface_by_subnet_notification(self):
+        notif_handler = mock.Mock()
+        registry.subscribe(notif_handler.callback,
+                           resources.ROUTER_INTERFACE,
+                           events.BEFORE_CREATE)
+        router = self._create_router()
+        with self.network() as net, \
+                self.subnet(network=net) as subnet:
+            self.l3_plugin.add_router_interface(
+                    self.context, router['id'],
+                    {'subnet_id': subnet['subnet']['id']})
+            kwargs = {'context': self.context, 'router_id': router['id'],
+                      'network_id': net['network']['id']}
+            notif_handler.callback.assert_called_once_with(
+                resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
+                mock.ANY, **kwargs)
+
+    def test_add_router_interface_by_port_notification(self):
+        notif_handler = mock.Mock()
+        registry.subscribe(notif_handler.callback,
+                           resources.ROUTER_INTERFACE,
+                           events.BEFORE_CREATE)
+        router = self._create_router()
+        with self.network() as net, \
+                self.subnet(network=net) as subnet, \
+                self.port(subnet=subnet) as port:
+            self.l3_plugin.add_router_interface(
+                    self.context, router['id'],
+                    {'port_id': port['port']['id']})
+            kwargs = {'context': self.context, 'router_id': router['id'],
+                      'network_id': net['network']['id']}
+            notif_handler.callback.assert_called_once_with(
+                resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
+                mock.ANY, **kwargs)
 
 
 class L3DvrTestCaseMigration(L3DvrTestCase):
