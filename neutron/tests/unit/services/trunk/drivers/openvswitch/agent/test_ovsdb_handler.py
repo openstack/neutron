@@ -24,6 +24,7 @@ import testtools
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import trunk as trunk_obj
 from neutron.services.trunk import constants
+from neutron.services.trunk.drivers.openvswitch.agent import exceptions
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.tests import base
@@ -164,6 +165,14 @@ class TestOVSDBHandler(base.BaseTestCase):
                 self.ovsdb_handler.handle_trunk_add('foo')
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_handle_trunk_add_parent_port_not_found(self, br):
+        with mock.patch.object(self.ovsdb_handler, '_get_parent_port',
+                side_effect=exceptions.ParentPortNotFound):
+            # do not wait the default timeout
+            self.ovsdb_handler.timeout = 1
+            self.ovsdb_handler.handle_trunk_add('foo')
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_handle_trunk_add_missing_bridge(self, br):
         br.return_value.bridge_exists.return_value = False
         with mock.patch.object(
@@ -206,6 +215,16 @@ class TestOVSDBHandler(base.BaseTestCase):
             status = self.ovsdb_handler.wire_subports_for_trunk(
                 None, 'trunk_id', self.fake_subports)
         self.assertEqual(constants.DEGRADED_STATUS, status)
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test_unwire_subports_for_trunk_port_not_found(self, br):
+        self.ovsdb_handler.trunk_rpc.update_subport_bindings.return_value = (
+            self.subport_bindings)
+        with mock.patch.object(self.ovsdb_handler, '_update_trunk_metadata',
+                side_effect=exceptions.ParentPortNotFound(bridge='foo_br')):
+            status = self.ovsdb_handler.unwire_subports_for_trunk(
+                'trunk_id', ['subport_id'])
+        self.assertEqual(constants.ACTIVE_STATUS, status)
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_unwire_subports_for_trunk_trunk_manager_failure(self, br):
