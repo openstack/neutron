@@ -17,3 +17,7 @@ from neutron._i18n import _
 
 class TrunkBridgeNotFound(n_exc.NotFound):
     message = _("Trunk bridge %(bridge)s could not be found.")
+
+
+class ParentPortNotFound(n_exc.NotFound):
+    message = _("Parent port for trunk bridge %(bridge)s could not be found.")
