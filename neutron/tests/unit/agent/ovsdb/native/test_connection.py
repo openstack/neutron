@@ -57,3 +57,15 @@ class TestOVSNativeConnection(base.BaseTestCase):
         # a test to cover py34 failure during initialization (LP Bug #1580270)
         # make sure no ValueError: can't have unbuffered text I/O is raised
         connection.TransactionQueue()
+
+    @mock.patch.object(connection, 'TransactionQueue')
+    @mock.patch.object(idlutils, 'get_schema_helper')
+    @mock.patch.object(idlutils, 'wait_for_change')
+    def test_start_with_idl_class(self, wait_for_change, get_schema_helper,
+                                  transaction_queue):
+        idl_class = mock.Mock()
+        self.connection = connection.Connection(
+            mock.sentinel, mock.sentinel, mock.sentinel, idl_class=idl_class)
+        idl_instance = idl_class.return_value
+        self.connection.start()
+        self.assertEqual(idl_instance, self.connection.idl)

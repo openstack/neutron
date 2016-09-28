@@ -53,13 +53,14 @@ class TransactionQueue(Queue.Queue, object):
 
 
 class Connection(object):
-    def __init__(self, connection, timeout, schema_name):
+    def __init__(self, connection, timeout, schema_name, idl_class=None):
         self.idl = None
         self.connection = connection
         self.timeout = timeout
         self.txns = TransactionQueue(1)
         self.lock = threading.Lock()
         self.schema_name = schema_name
+        self.idl_class = idl_class or idl.Idl
 
     def start(self, table_name_list=None):
         """
@@ -93,7 +94,7 @@ class Connection(object):
             else:
                 for table_name in table_name_list:
                     helper.register_table(table_name)
-            self.idl = idl.Idl(self.connection, helper)
+            self.idl = self.idl_class(self.connection, helper)
             idlutils.wait_for_change(self.idl, self.timeout)
             self.poller = poller.Poller()
             self.thread = threading.Thread(target=self.run)
