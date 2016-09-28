@@ -1,0 +1,13 @@
+---
+prelude: >
+    Hyper-V Neutron Agent has been fully decomposed from Neutron. Therefore, the
+    `neutron.plugins.hyperv.agent.security_groups_driver.HyperVSecurityGroupsDriver`
+    firewall driver has been deleted.
+    Update the `neutron_hyperv_agent.conf` / `neutron_ovs_agent.conf` files on the
+    Hyper-V nodes to use `hyperv.neutron.security_groups_driver.HyperVSecurityGroupsDriver`,
+    which is the networking_hyperv security groups driver.
+upgrade:
+  - Update the `neutron_hyperv_agent.conf` / `neutron_ovs_agent.conf` files on the
+    Hyper-V nodes to use `hyperv.neutron.security_groups_driver.HyperVSecurityGroupsDriver`,
+    which is the networking_hyperv security groups driver.
+
