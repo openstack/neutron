@@ -53,7 +53,6 @@ from neutron.db import tag_db  # noqa
 from neutron.ipam.drivers.neutrondb_ipam import db_models  # noqa
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.plugins.ml2.drivers import type_vlan  # noqa
-from neutron.plugins.ml2.drivers import type_vxlan  # noqa
 from neutron.plugins.ml2 import models as ml2_models  # noqa
 from neutron.services.auto_allocate import models as aa_models  # noqa
 from neutron.services.segments import db  # noqa
