@@ -69,4 +69,4 @@ def get_duplicate_floating_ip_for_one_fixed_ip(connection):
                        floatingips.c.fixed_port_id,
                        floatingips.c.fixed_ip_address)
              .having(sa.func.count() > 1)).all()
-    return [q[0] for q in query]
+    return [q[0] for q in query if q[0] is not None]
