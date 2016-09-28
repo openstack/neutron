@@ -398,7 +398,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             self.assertRaises(script.DuplicatePortRecordinRouterPortdatabase,
                               script.check_sanity, conn)
 
-    def test_check_sanity_6b461a21bcfc(self):
+    def test_check_sanity_6b461a21bcfc_dup_on_fixed_ip(self):
         floatingips = sqlalchemy.Table(
             'floatingips', sqlalchemy.MetaData(),
             sqlalchemy.Column('floating_network_id', sqlalchemy.String(36)),
@@ -420,6 +420,28 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             script = script_dir.get_revision("6b461a21bcfc").module
             self.assertRaises(script.DuplicateFloatingIPforOneFixedIP,
                               script.check_sanity, conn)
+
+    def test_check_sanity_6b461a21bcfc_dup_on_no_fixed_ip(self):
+        floatingips = sqlalchemy.Table(
+            'floatingips', sqlalchemy.MetaData(),
+            sqlalchemy.Column('floating_network_id', sqlalchemy.String(36)),
+            sqlalchemy.Column('fixed_port_id', sqlalchemy.String(36)),
+            sqlalchemy.Column('fixed_ip_address', sqlalchemy.String(64)))
+
+        with self.engine.connect() as conn:
+            floatingips.create(conn)
+            conn.execute(floatingips.insert(), [
+                {'floating_network_id': '12345',
+                 'fixed_port_id': '1234567',
+                 'fixed_ip_address': None},
+                {'floating_network_id': '12345',
+                 'fixed_port_id': '1234567',
+                 'fixed_ip_address': None}
+            ])
+            script_dir = alembic_script.ScriptDirectory.from_config(
+                self.alembic_config)
+            script = script_dir.get_revision("6b461a21bcfc").module
+            self.assertIsNone(script.check_sanity(conn))
 
 
 class TestWalkDowngrade(oslotest_base.BaseTestCase):
