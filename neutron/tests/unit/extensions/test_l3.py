@@ -44,6 +44,7 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import external_net
 from neutron.extensions import l3
@@ -2807,18 +2808,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             internal_subnet, external_network_id):
         gw_port = orm.aliased(models_v2.Port, name="gw_port")
         routerport_qry = context.session.query(
-            l3_db.RouterPort.router_id,
+            l3_models.RouterPort.router_id,
             models_v2.IPAllocation.ip_address
         ).join(
             models_v2.Port, models_v2.IPAllocation
         ).filter(
             models_v2.Port.network_id == internal_port['network_id'],
-            l3_db.RouterPort.port_type.in_(
+            l3_models.RouterPort.port_type.in_(
                 lib_constants.ROUTER_INTERFACE_OWNERS
             ),
             models_v2.IPAllocation.subnet_id == internal_subnet['id']
         ).join(
-            gw_port, gw_port.device_id == l3_db.RouterPort.router_id
+            gw_port, gw_port.device_id == l3_models.RouterPort.router_id
         ).filter(
             gw_port.network_id == external_network_id,
         ).distinct()

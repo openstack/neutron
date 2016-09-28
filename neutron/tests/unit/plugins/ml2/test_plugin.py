@@ -38,7 +38,7 @@ from neutron import context
 from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
 from neutron.db import segments_db
@@ -1404,7 +1404,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
 
         # lie to turn the port into an SNAT interface
         with self.context.session.begin():
-            rp = self.context.session.query(l3_db.RouterPort).filter_by(
+            rp = self.context.session.query(l3_models.RouterPort).filter_by(
                 port_id=p['port_id']).first()
             rp.port_type = constants.DEVICE_OWNER_ROUTER_SNAT
 

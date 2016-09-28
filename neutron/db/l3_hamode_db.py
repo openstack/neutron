@@ -39,9 +39,9 @@ from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_attrs_db
-from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
@@ -345,7 +345,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
     def _create_ha_port_binding(self, context, router_id, port_id):
         try:
             with context.session.begin():
-                routerportbinding = l3_db.RouterPort(
+                routerportbinding = l3_models.RouterPort(
                     port_id=port_id, router_id=router_id,
                     port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF)
                 context.session.add(routerportbinding)

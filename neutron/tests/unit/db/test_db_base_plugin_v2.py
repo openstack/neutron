@@ -50,7 +50,7 @@ from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin
-from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import standard_attr
@@ -4474,11 +4474,11 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     # to make this port belong to a router
                     ctx = context.get_admin_context()
                     with ctx.session.begin():
-                        router = l3_db.Router()
+                        router = l3_models.Router()
                         ctx.session.add(router)
                     with ctx.session.begin():
-                        rp = l3_db.RouterPort(router_id=router.id,
-                                              port_id=port['port']['id'])
+                        rp = l3_models.RouterPort(router_id=router.id,
+                                                  port_id=port['port']['id'])
                         ctx.session.add(rp)
                     data = {'subnet': {'gateway_ip': '10.0.0.99'}}
                     req = self.new_update_request('subnets', data,
@@ -6063,15 +6063,15 @@ class DbModelMixin(object):
 
     def _make_floating_ip(self, ctx, port_id):
         with ctx.session.begin():
-            flip = l3_db.FloatingIP(floating_ip_address='1.2.3.4',
-                                    floating_network_id='somenet',
-                                    floating_port_id=port_id)
+            flip = l3_models.FloatingIP(floating_ip_address='1.2.3.4',
+                                        floating_network_id='somenet',
+                                        floating_port_id=port_id)
             ctx.session.add(flip)
         return flip
 
     def _make_router(self, ctx):
         with ctx.session.begin():
-            router = l3_db.Router()
+            router = l3_models.Router()
             ctx.session.add(router)
         return router
 
@@ -6121,7 +6121,7 @@ class DbModelMixin(object):
         ctx = context.get_admin_context()
         router = self._make_router(ctx)
         self._test_staledata_error_on_concurrent_object_update(
-            l3_db.Router, router['id'])
+            l3_models.Router, router['id'])
 
     def test_staledata_error_on_concurrent_object_update_floatingip(self):
         ctx = context.get_admin_context()
@@ -6129,7 +6129,7 @@ class DbModelMixin(object):
         port = self._make_port(ctx, network.id)
         flip = self._make_floating_ip(ctx, port.id)
         self._test_staledata_error_on_concurrent_object_update(
-            l3_db.FloatingIP, flip['id'])
+            l3_models.FloatingIP, flip['id'])
 
     def test_staledata_error_on_concurrent_object_update_sg(self):
         ctx = context.get_admin_context()

@@ -24,6 +24,7 @@ from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import extraroute
 from neutron.extensions import l3
@@ -46,7 +47,7 @@ class RouterRoute(model_base.BASEV2, models_v2.Route):
                                         ondelete="CASCADE"),
                           primary_key=True)
 
-    router = orm.relationship(l3_db.Router,
+    router = orm.relationship(l3_models.Router,
                               backref=orm.backref("route_list",
                                                   lazy='joined',
                                                   cascade='delete'))

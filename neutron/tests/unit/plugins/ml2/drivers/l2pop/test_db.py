@@ -19,8 +19,8 @@ from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context
 from neutron.db import l3_attrs_db
-from neutron.db import l3_db
 from neutron.db import l3_hamode_db
+from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
@@ -51,7 +51,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
 
     def _create_router(self, distributed=True, ha=False):
         with self.ctx.session.begin(subtransactions=True):
-            self.ctx.session.add(l3_db.Router(id=TEST_ROUTER_ID))
+            self.ctx.session.add(l3_models.Router(id=TEST_ROUTER_ID))
             self.ctx.session.add(l3_attrs_db.RouterExtraAttributes(
                 router_id=TEST_ROUTER_ID, distributed=distributed, ha=ha))
 
