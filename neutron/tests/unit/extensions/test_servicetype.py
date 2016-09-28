@@ -21,6 +21,7 @@ import webtest
 
 from neutron.api import extensions
 from neutron import context
+from neutron.db.models import servicetype as st_model
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import servicetype
 from neutron.plugins.common import constants
@@ -135,9 +136,9 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
                                               constants.LOADBALANCER,
                                               'lbaas1', '123-123')
         self.assertEqual(ctx.session.
-                         query(st_db.ProviderResourceAssociation).count(),
+                         query(st_model.ProviderResourceAssociation).count(),
                          1)
-        assoc = ctx.session.query(st_db.ProviderResourceAssociation).one()
+        assoc = ctx.session.query(st_model.ProviderResourceAssociation).one()
         ctx.session.delete(assoc)
 
     def test_invalid_resource_association(self):
