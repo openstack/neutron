@@ -189,12 +189,6 @@ def exc_to_retry(etypes):
                 raise db_exc.RetryRequest(e)
 
 
-@removals.remove(version='Newton', removal_version='Ocata')
-def get_engine():
-    """Helper method to grab engine."""
-    return context_manager.get_legacy_facade().get_engine()
-
-
 @removals.remove(version='newton', removal_version='Ocata')
 def dispose():
     context_manager.dispose_pool()
