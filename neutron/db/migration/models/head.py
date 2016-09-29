@@ -39,7 +39,6 @@ from neutron.db import l3_attrs_db  # noqa
 from neutron.db import l3_dvrscheduler_db  # noqa
 from neutron.db import l3_gwmode_db  # noqa
 from neutron.db import l3_hamode_db  # noqa
-from neutron.db.metering import metering_db  # noqa
 from neutron.db import models
 from neutron.db import models_v2  # noqa
 from neutron.db.port_security import models as ps_models  # noqa
