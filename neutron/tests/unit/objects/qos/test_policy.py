@@ -17,6 +17,7 @@ import testtools
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.objects.db import api as db_api
+from neutron.objects import network as net_obj
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.services.qos import qos_consts
@@ -179,9 +180,9 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_attach_and_get_multiple_policy_networks(self):
 
         net1_id = self._network['id']
-        net2 = db_api.create_object(self.context,
-                                    models_v2.Network,
-                                    {'name': 'test-network2'})
+        net2 = net_obj.Network(self.context,
+                               name='test-network2')
+        net2.create()
         net2_id = net2['id']
 
         obj = self._create_test_policy()
