@@ -223,40 +223,18 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
         '''
         pass
 
-    def _get_lvm_getter(self, local_vlan_map):
-        def get_lvm_from_mapping(net_id, local_vlan_map):
-            """This introduces backward compatibility with local_vlan_map, will
-               be removed in Ocata.
-            """
-            try:
-                return local_vlan_map[net_id]
-            except KeyError:
-                raise vlanmanager.MappingNotFound(net_id=net_id)
-
-        def get_lvm_from_manager(net_id, local_vlan_map):
-            vlan_manager = vlanmanager.LocalVlanManager()
-            return vlan_manager.get(net_id)
-
-        if local_vlan_map is not None:
-            vlanmanager.deprecate_local_vlan_map_in_object(
-                "%s.get_agent_ports()" % self.__class__.__name__,
-                stacklevel_extra=1)
-            return get_lvm_from_mapping
-        return get_lvm_from_manager
-
-    def get_agent_ports(self, fdb_entries, local_vlan_map=None):
+    def get_agent_ports(self, fdb_entries):
         """Generator to yield port info.
 
         For each known (i.e found in VLAN manager) network in
         fdb_entries, yield (lvm, fdb_entries[network_id]['ports']) pair.
 
         :param fdb_entries: l2pop fdb entries
-        :param local_vlan_map: Deprecated.
         """
-        lvm_getter = self._get_lvm_getter(local_vlan_map)
+        vlan_manager = vlanmanager.LocalVlanManager()
         for network_id, values in fdb_entries.items():
             try:
-                lvm = lvm_getter(network_id, local_vlan_map)
+                lvm = vlan_manager.get(network_id)
             except vlanmanager.MappingNotFound:
                 continue
             agent_ports = values.get('ports')
@@ -303,8 +281,7 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
             getattr(self, method)(context, values)
 
     @log_helpers.log_method_call
-    def fdb_chg_ip_tun(self, context, br, fdb_entries, local_ip,
-                       local_vlan_map=None):
+    def fdb_chg_ip_tun(self, context, br, fdb_entries, local_ip):
         '''fdb update when an IP of a port is updated.
 
         The ML2 l2-pop mechanism driver sends an fdb update rpc message when an
@@ -328,12 +305,11 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin):
                              PortInfo has .mac_address and .ip_address attrs.
 
         :param local_ip: local IP address of this agent.
-        :param local_vlan_map: Deprecated.
         '''
-        lvm_getter = self._get_lvm_getter(local_vlan_map)
+        vlan_manager = vlanmanager.LocalVlanManager()
         for network_id, agent_ports in fdb_entries.items():
             try:
-                lvm = lvm_getter(network_id, local_vlan_map)
+                lvm = vlan_manager.get(network_id)
             except vlanmanager.MappingNotFound:
                 continue
 
