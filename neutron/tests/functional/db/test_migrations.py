@@ -356,6 +356,10 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
         self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
+    def _drop_table(self, table):
+        with self.engine.begin() as conn:
+            table.drop(conn)
+
     def test_check_sanity_1df244e556f5(self):
         ha_router_agent_port_bindings = sqlalchemy.Table(
             'ha_router_agent_port_bindings', sqlalchemy.MetaData(),
@@ -365,6 +369,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
 
         with self.engine.connect() as conn:
             ha_router_agent_port_bindings.create(conn)
+            self.addCleanup(self._drop_table, ha_router_agent_port_bindings)
             conn.execute(ha_router_agent_port_bindings.insert(), [
                 {'port_id': '1234', 'router_id': '12345',
                  'l3_agent_id': '123'},
@@ -386,6 +391,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
 
         with self.engine.connect() as conn:
             routerports.create(conn)
+            self.addCleanup(self._drop_table, routerports)
             conn.execute(routerports.insert(), [
                 {'router_id': '1234', 'port_id': '12345',
                  'port_type': '123'},
@@ -407,6 +413,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
 
         with self.engine.connect() as conn:
             floatingips.create(conn)
+            self.addCleanup(self._drop_table, floatingips)
             conn.execute(floatingips.insert(), [
                 {'floating_network_id': '12345',
                  'fixed_port_id': '1234567',
@@ -430,6 +437,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
 
         with self.engine.connect() as conn:
             floatingips.create(conn)
+            self.addCleanup(self._drop_table, floatingips)
             conn.execute(floatingips.insert(), [
                 {'floating_network_id': '12345',
                  'fixed_port_id': '1234567',
