@@ -238,6 +238,8 @@ function _install_post_devstack {
     # NOTE: the package name 'python-openvswitch' is common across
     # supported distros.
     install_package python-openvswitch
+
+    enable_kernel_bridge_firewall
 }
 
 
