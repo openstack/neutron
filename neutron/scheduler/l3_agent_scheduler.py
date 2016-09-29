@@ -66,7 +66,7 @@ class L3Scheduler(object):
 
         return query.count() > 0
 
-    def _filter_unscheduled_routers(self, context, plugin, routers):
+    def _filter_unscheduled_routers(self, plugin, context, routers):
         """Filter from list of routers the ones that are not scheduled."""
         unscheduled_routers = []
         for router in routers:
@@ -81,7 +81,7 @@ class L3Scheduler(object):
                 unscheduled_routers.append(router)
         return unscheduled_routers
 
-    def _get_unscheduled_routers(self, context, plugin):
+    def _get_unscheduled_routers(self, plugin, context):
         """Get routers with no agent binding."""
         # TODO(gongysh) consider the disabled agent's router
         no_agent_binding = ~sql.exists().where(
@@ -97,7 +97,7 @@ class L3Scheduler(object):
                 context, filters={'id': unscheduled_router_ids})
         return []
 
-    def _get_routers_to_schedule(self, context, plugin, router_ids=None):
+    def _get_routers_to_schedule(self, plugin, context, router_ids=None):
         """Verify that the routers specified need to be scheduled.
 
         :param context: the context
@@ -109,13 +109,13 @@ class L3Scheduler(object):
             filters = {'id': router_ids,
                        'status': [constants.ROUTER_STATUS_ACTIVE]}
             routers = plugin.get_routers(context, filters=filters)
-            result = self._filter_unscheduled_routers(context, plugin, routers)
+            result = self._filter_unscheduled_routers(plugin, context, routers)
         else:
-            result = self._get_unscheduled_routers(context, plugin)
+            result = self._get_unscheduled_routers(plugin, context)
         return [r for r in result
                 if plugin.router_supports_scheduling(context, r['id'])]
 
-    def _get_routers_can_schedule(self, context, plugin, routers, l3_agent):
+    def _get_routers_can_schedule(self, plugin, context, routers, l3_agent):
         """Get the subset of routers that can be scheduled on the L3 agent."""
         ids_to_discard = set()
         for router in routers:
@@ -144,7 +144,7 @@ class L3Scheduler(object):
             return
 
         unscheduled_routers = self._get_routers_to_schedule(
-            context, plugin, router_ids)
+            plugin, context, router_ids)
         if not unscheduled_routers:
             if utils.is_extension_supported(
                     plugin, lib_const.L3_HA_MODE_EXT_ALIAS):
@@ -153,13 +153,13 @@ class L3Scheduler(object):
                 return
 
         target_routers = self._get_routers_can_schedule(
-            context, plugin, unscheduled_routers, l3_agent)
+            plugin, context, unscheduled_routers, l3_agent)
         if not target_routers:
             LOG.warning(_LW('No routers compatible with L3 agent '
                             'configuration on host %s'), host)
             return
 
-        self._bind_routers(context, plugin, target_routers, l3_agent)
+        self._bind_routers(plugin, context, target_routers, l3_agent)
 
     def _get_candidates(self, plugin, context, sync_router):
         """Return L3 agents where a router could be scheduled."""
@@ -190,7 +190,7 @@ class L3Scheduler(object):
 
             return candidates
 
-    def _bind_routers(self, context, plugin, routers, l3_agent):
+    def _bind_routers(self, plugin, context, routers, l3_agent):
         for router in routers:
             if router.get('ha'):
                 if not self._router_has_binding(context, router['id'],
@@ -327,7 +327,7 @@ class L3Scheduler(object):
                           'by concurrent operation', router_id)
                 return
 
-    def get_ha_routers_l3_agents_counts(self, context, plugin, filters=None):
+    def get_ha_routers_l3_agents_counts(self, plugin, context, filters=None):
         """Return a mapping (router, # agents) matching specified filters."""
         return plugin.get_ha_routers_l3_agents_count(context)
 
@@ -339,14 +339,14 @@ class L3Scheduler(object):
         is not yet reached.
         """
 
-        routers_agents = self.get_ha_routers_l3_agents_counts(context, plugin,
+        routers_agents = self.get_ha_routers_l3_agents_counts(plugin, context,
                                                               agent)
         admin_ctx = context.elevated()
         underscheduled_routers = [router for router, agents in routers_agents
                                   if (not self.max_ha_agents or
                                       agents < self.max_ha_agents)]
         schedulable_routers = self._get_routers_can_schedule(
-            admin_ctx, plugin, underscheduled_routers, agent)
+            plugin, admin_ctx, underscheduled_routers, agent)
         for router in schedulable_routers:
             if not self._router_has_binding(admin_ctx, router['id'],
                                             agent.id):
@@ -440,7 +440,7 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
         return (router.get(az_ext.AZ_HINTS) or
                 cfg.CONF.default_availability_zones)
 
-    def _get_routers_can_schedule(self, context, plugin, routers, l3_agent):
+    def _get_routers_can_schedule(self, plugin, context, routers, l3_agent):
         """Overwrite L3Scheduler's method to filter by availability zone."""
         target_routers = []
         for r in routers:
@@ -452,7 +452,7 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
             return
 
         return super(AZLeastRoutersScheduler, self)._get_routers_can_schedule(
-            context, plugin, target_routers, l3_agent)
+            plugin, context, target_routers, l3_agent)
 
     def _get_candidates(self, plugin, context, sync_router):
         """Overwrite L3Scheduler's method to filter by availability zone."""
@@ -468,11 +468,11 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
 
         return candidates
 
-    def get_ha_routers_l3_agents_counts(self, context, plugin, filters=None):
+    def get_ha_routers_l3_agents_counts(self, plugin, context, filters=None):
         """Overwrite L3Scheduler's method to filter by availability zone."""
         all_routers_agents = (
             super(AZLeastRoutersScheduler, self).
-            get_ha_routers_l3_agents_counts(context, plugin, filters))
+            get_ha_routers_l3_agents_counts(plugin, context, filters))
         if filters is None:
             return all_routers_agents
 

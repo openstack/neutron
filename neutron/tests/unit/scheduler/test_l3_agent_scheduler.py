@@ -189,7 +189,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
                                '_filter_unscheduled_routers') as mock_filter:
             mock_filter.return_value = expected_routers
             unscheduled_routers = self.scheduler._get_routers_to_schedule(
-                mock.ANY, self.plugin, router_ids)
+                self.plugin, mock.ANY, router_ids)
         mock_filter.assert_called_once_with(
             mock.ANY, self.plugin, expected_routers)
         self.assertEqual(expected_routers, unscheduled_routers)
@@ -202,7 +202,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
                                '_get_unscheduled_routers') as mock_get:
             mock_get.return_value = expected_routers
             unscheduled_routers = self.scheduler._get_routers_to_schedule(
-                mock.ANY, self.plugin)
+                self.plugin, mock.ANY)
         mock_get.assert_called_once_with(mock.ANY, self.plugin)
         self.assertEqual(expected_routers, unscheduled_routers)
 
@@ -217,20 +217,20 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
                                '_get_unscheduled_routers') as mock_get:
             mock_get.return_value = routers
             unscheduled_routers = self.scheduler._get_routers_to_schedule(
-                mock.ANY, self.plugin)
+                self.plugin, mock.ANY)
         mock_get.assert_called_once_with(mock.ANY, self.plugin)
         self.assertEqual(expected_routers, unscheduled_routers)
 
     def _test__get_routers_can_schedule(self, routers, agent, target_routers):
         self.plugin.get_l3_agent_candidates.return_value = agent
         result = self.scheduler._get_routers_can_schedule(
-            mock.ANY, self.plugin, routers, mock.ANY)
+            self.plugin, mock.ANY, routers, mock.ANY)
         self.assertEqual(target_routers, result)
 
     def _test__filter_unscheduled_routers(self, routers, agents, expected):
         self.plugin.get_l3_agents_hosting_routers.return_value = agents
         unscheduled_routers = self.scheduler._filter_unscheduled_routers(
-            mock.ANY, self.plugin, routers)
+            self.plugin, mock.ANY, routers)
         self.assertEqual(expected, unscheduled_routers)
 
     def test__filter_unscheduled_routers_already_scheduled(self):
