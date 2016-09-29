@@ -30,12 +30,12 @@ import testtools
 from neutron import context as n_context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as db_v2
-from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
+from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
@@ -572,7 +572,7 @@ class L3SchedulerTestBaseMixin(object):
     def _test_schedule_bind_router(self, agent, router):
         ctx = self.adminContext
         session = ctx.session
-        db = l3_agentschedulers_db.RouterL3AgentBinding
+        db = rb_model.RouterL3AgentBinding
         scheduler = l3_agent_scheduler.ChanceScheduler()
 
         rid = router['router']['id']
@@ -1457,7 +1457,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
     @staticmethod
     def get_router_l3_agent_binding(context, router_id, l3_agent_id=None,
                                     binding_index=None):
-        model = l3_agentschedulers_db.RouterL3AgentBinding
+        model = rb_model.RouterL3AgentBinding
         query = context.session.query(model)
         query = query.filter(model.router_id == router_id)
         if l3_agent_id:

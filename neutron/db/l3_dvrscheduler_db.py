@@ -24,6 +24,7 @@ from neutron.common import utils as n_utils
 
 from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
+from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.extensions import portbindings
 from neutron import manager
@@ -165,7 +166,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         removed_router_info = []
         for router_id in router_ids:
             snat_binding = context.session.query(
-                l3agent_sch_db.RouterL3AgentBinding).filter_by(
+                rb_model.RouterL3AgentBinding).filter_by(
                     router_id=router_id).filter_by(
                         l3_agent_id=agent.id).first()
             if snat_binding:

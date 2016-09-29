@@ -30,11 +30,11 @@ from neutron.callbacks import resources
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.db import api as db_api
-from neutron.db import l3_agentschedulers_db as l3_sched_db
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
@@ -514,7 +514,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if removed_hosts:
             agents = plugin.get_l3_agents(context,
                                           filters={'host': removed_hosts})
-            binding_table = l3_sched_db.RouterL3AgentBinding
+            binding_table = rb_model.RouterL3AgentBinding
             snat_binding = context.session.query(binding_table).filter_by(
                 router_id=router_id).first()
             for agent in agents:
@@ -557,7 +557,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         if not routers:
             return []
         router_ids = [r['id'] for r in routers]
-        snat_binding = l3_sched_db.RouterL3AgentBinding
+        snat_binding = rb_model.RouterL3AgentBinding
         query = (context.session.query(snat_binding).
                  filter(snat_binding.router_id.in_(router_ids))).all()
         bindings = dict((b.router_id, b) for b in query)
