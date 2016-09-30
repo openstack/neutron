@@ -13,16 +13,16 @@
 #    under the License.
 #
 
-from neutron_lib.db import model_base
 from oslo_log import log as logging
-import sqlalchemy as sa
 
 from neutron._i18n import _LE
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import api as db_api
+
+from neutron.common import _deprecate
+from neutron.db.models import provisioning_block as pb_model
 from neutron.db import models_v2
-from neutron.db import standard_attr
 
 LOG = logging.getLogger(__name__)
 PROVISIONING_COMPLETE = 'provisioning_complete'
@@ -31,16 +31,7 @@ DHCP_ENTITY = 'DHCP'
 L2_AGENT_ENTITY = 'L2'
 _RESOURCE_TO_MODEL_MAP = {resources.PORT: models_v2.Port}
 
-
-class ProvisioningBlock(model_base.BASEV2):
-    # the standard attr id of the thing we want to block
-    standard_attr_id = (
-        sa.Column(sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
-                  sa.ForeignKey(standard_attr.StandardAttribute.id,
-                                ondelete="CASCADE"),
-                  primary_key=True))
-    # the entity that wants to block the status change (e.g. L2 Agent)
-    entity = sa.Column(sa.String(255), nullable=False, primary_key=True)
+_deprecate._moved_global('ProvisioningBlock', new_module=pb_model)
 
 
 def add_model_for_resource(resource, model):
@@ -69,7 +60,7 @@ def add_provisioning_component(context, object_id, object_type, entity):
     standard_attr_id = _get_standard_attr_id(context, object_id, object_type)
     if not standard_attr_id:
         return
-    record = context.session.query(ProvisioningBlock).filter_by(
+    record = context.session.query(pb_model.ProvisioningBlock).filter_by(
         standard_attr_id=standard_attr_id, entity=entity).first()
     if record:
         # an entry could be leftover from a previous transition that hasn't
@@ -78,8 +69,8 @@ def add_provisioning_component(context, object_id, object_type, entity):
                   "%(oid)s by entity %(entity)s.", log_dict)
         return
     with context.session.begin(subtransactions=True):
-        record = ProvisioningBlock(standard_attr_id=standard_attr_id,
-                                   entity=entity)
+        record = pb_model.ProvisioningBlock(standard_attr_id=standard_attr_id,
+                                            entity=entity)
         context.session.add(record)
     LOG.debug("Transition to ACTIVE for %(otype)s object %(oid)s "
               "will not be triggered until provisioned by entity %(entity)s.",
@@ -109,7 +100,7 @@ def remove_provisioning_component(context, object_id, object_type, entity,
             context, object_id, object_type)
         if not standard_attr_id:
             return False
-        record = context.session.query(ProvisioningBlock).filter_by(
+        record = context.session.query(pb_model.ProvisioningBlock).filter_by(
             standard_attr_id=standard_attr_id, entity=entity).first()
         if record:
             context.session.delete(record)
@@ -147,7 +138,7 @@ def provisioning_complete(context, object_id, object_type, entity):
                   "%(entity)s.", log_dict)
     # now with that committed, check if any records are left. if None, emit
     # an event that provisioning is complete.
-    records = context.session.query(ProvisioningBlock).filter_by(
+    records = context.session.query(pb_model.ProvisioningBlock).filter_by(
         standard_attr_id=standard_attr_id).count()
     if not records:
         LOG.debug("Provisioning complete for %(otype)s %(oid)s triggered by "
@@ -170,8 +161,8 @@ def is_object_blocked(context, object_id, object_type):
     if not standard_attr_id:
         # object doesn't exist so it has no blocks
         return False
-    return bool(context.session.query(ProvisioningBlock).filter_by(
-                standard_attr_id=standard_attr_id).count())
+    return bool(context.session.query(pb_model.ProvisioningBlock).filter_by(
+        standard_attr_id=standard_attr_id).count())
 
 
 def _get_standard_attr_id(context, object_id, object_type):
@@ -188,3 +179,6 @@ def _get_standard_attr_id(context, object_id, object_type):
         LOG.debug("Could not find standard attr ID for object %s.", object_id)
         return
     return obj.standard_attr_id
+
+
+_deprecate._MovedGlobals()
