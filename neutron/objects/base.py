@@ -544,7 +544,7 @@ class NeutronDbObject(NeutronObject):
             else:
                 synth_objs = objclass.get_objects(
                     self.obj_context, **{
-                        k: getattr(self, v)
+                        k: getattr(self, v) if v in self else db_obj.get(v)
                         for k, v in foreign_keys.items()})
             if isinstance(self.fields[field], obj_fields.ObjectField):
                 setattr(self, field, synth_objs[0] if synth_objs else None)

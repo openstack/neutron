@@ -77,6 +77,12 @@ class PortBindingLevel(model_base.BASEV2):
                            sa.ForeignKey('networksegments.id',
                                          ondelete="SET NULL"))
 
+    # Add a relationship to the Port model in order to instruct SQLAlchemy to
+    # eagerly load port bindings
+    port = orm.relationship(
+        models_v2.Port,
+        backref=orm.backref("binding_levels", lazy='joined', cascade='delete'))
+
 
 class DistributedPortBinding(model_base.BASEV2):
     """Represent binding-related state of a Distributed Router(DVR, HA) port.

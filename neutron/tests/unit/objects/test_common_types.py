@@ -18,6 +18,7 @@ import random
 from neutron_lib import constants as const
 
 from neutron.common import constants
+from neutron.extensions import dns as dns_ext
 from neutron.objects import common_types
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -162,6 +163,23 @@ class FlowDirectionEnumFieldTest(test_base.BaseTestCase, TestField):
         self.coerce_good_values = [(val, val)
                                    for val in constants.VALID_DIRECTIONS]
         self.coerce_bad_values = ['test', '8', 10, []]
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class DomainNameFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(DomainNameFieldTest, self).setUp()
+        self.field = common_types.DomainNameField()
+        self.coerce_good_values = [
+            (val, val)
+            for val in ('www.google.com', 'hostname', '1abc.com')
+        ]
+        self.coerce_bad_values = ['x' * (dns_ext.FQDN_MAX_LEN + 1), 10, []]
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values
 

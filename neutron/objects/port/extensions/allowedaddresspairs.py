@@ -34,6 +34,10 @@ class AllowedAddressPair(base.NeutronDbObject):
         'ip_address': common_types.IPNetworkField(),
     }
 
+    foreign_keys = {
+        'Port': {'port_id': 'id'},
+    }
+
     # TODO(mhickey): get rid of it once we switch the db model to using
     # custom types.
     @classmethod

@@ -21,6 +21,7 @@ import six
 
 from neutron._i18n import _
 from neutron.common import constants
+from neutron.extensions import dns as dns_ext
 
 
 class NeutronRangeConstrainedIntegerInvalidLimit(exceptions.NeutronException):
@@ -76,6 +77,25 @@ class PortRangeField(obj_fields.AutoTypedField):
 
 class ListOfIPNetworksField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.List(obj_fields.IPNetwork())
+
+
+class SetOfUUIDsField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Set(obj_fields.UUID())
+
+
+class DomainName(obj_fields.String):
+    def coerce(self, obj, attr, value):
+        if not isinstance(value, six.string_types):
+            msg = _("Field value %s is not a string") % value
+            raise ValueError(msg)
+        if len(value) > dns_ext.FQDN_MAX_LEN:
+            msg = _("Domain name %s is too long") % value
+            raise ValueError(msg)
+        return super(DomainName, self).coerce(obj, attr, value)
+
+
+class DomainNameField(obj_fields.AutoTypedField):
+    AUTO_TYPE = DomainName()
 
 
 class IntegerEnum(obj_fields.Integer):

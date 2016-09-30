@@ -22,3 +22,8 @@ class _PortSecurity(base.NeutronDbObject):
         'port_security_enabled': obj_fields.BooleanField(
             default=portsecurity.DEFAULT_PORT_SECURITY),
     }
+
+    foreign_keys = {
+        'Port': {'id': 'id'},
+        'Network': {'id': 'id'},
+    }

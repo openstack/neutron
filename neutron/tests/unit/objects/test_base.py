@@ -13,10 +13,11 @@
 import collections
 import copy
 import itertools
-import netaddr
+import os.path
 import random
 
 import mock
+import netaddr
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
 from oslo_utils import timeutils
@@ -27,14 +28,17 @@ from oslo_versionedobjects import fixture
 import testtools
 
 from neutron.common import constants
+from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import segments_db
+from neutron import objects
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import ports
 from neutron.objects import subnet
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -355,10 +359,6 @@ def get_random_dscp_mark():
     return random.choice(constants.VALID_DSCP_MARKS)
 
 
-def get_random_direction():
-    return random.choice(constants.VALID_DIRECTIONS)
-
-
 def get_list_of_random_networks(num=10):
     for i in range(5):
         res = [tools.get_random_ip_network() for i in range(num)]
@@ -368,6 +368,27 @@ def get_list_of_random_networks(num=10):
     raise Exception('Failed to generate unique networks')
 
 
+def get_random_domain_name():
+    return '.'.join([
+        tools.get_random_string(62)[:random.choice(range(63))]
+        for i in range(4)
+    ])
+
+
+def get_random_dict_of_strings():
+    return {
+        tools.get_random_string(): tools.get_random_string()
+        for i in range(10)
+    }
+
+
+def get_set_of_random_uuids():
+    return {
+        uuidutils.generate_uuid()
+        for i in range(10)
+    }
+
+
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.IntegerField: tools.get_random_integer,
@@ -375,8 +396,9 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.UUIDField: uuidutils.generate_uuid,
     obj_fields.ObjectField: lambda: None,
     obj_fields.ListOfObjectsField: lambda: [],
+    obj_fields.DictOfStringsField: get_random_dict_of_strings,
+    common_types.DomainNameField: get_random_domain_name,
     common_types.DscpMarkField: get_random_dscp_mark,
-    common_types.FlowDirectionEnumField: get_random_direction,
     obj_fields.IPNetworkField: tools.get_random_ip_network,
     common_types.IPNetworkField: tools.get_random_ip_network,
     common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,
@@ -390,6 +412,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.EtherTypeEnumField: tools.get_random_ether_type,
     common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
     common_types.PortRangeField: tools.get_random_port,
+    common_types.SetOfUUIDsField: get_set_of_random_uuids,
 }
 
 
@@ -427,6 +450,8 @@ class _BaseObjectTestCase(object):
         # TODO(ihrachys): revisit plugin setup once we decouple
         # neutron.objects.db.api from core plugin instance
         self.setup_coreplugin(self.CORE_PLUGIN)
+        # make sure all objects are loaded and registered in the registry
+        utils.import_modules_recursively(os.path.dirname(objects.__file__))
         self.context = context.get_admin_context()
         self.db_objs = [
             self._test_class.db_model(**self.get_random_fields())
@@ -457,9 +482,8 @@ class _BaseObjectTestCase(object):
 
     # TODO(ihrachys): rename the method to explicitly reflect it returns db
     # attributes not object fields
-    @classmethod
-    def get_random_fields(cls, obj_cls=None):
-        obj_cls = obj_cls or cls._test_class
+    def get_random_fields(self, obj_cls=None):
+        obj_cls = obj_cls or self._test_class
         fields = {}
         ip_version = tools.get_random_ip_version()
         for field, field_obj in obj_cls.fields.items():
@@ -577,14 +601,16 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 if self._test_class.is_object_field(field):
                     obj_class = self._get_ovo_object_class(self._test_class,
                                                            field)
-                    foreign_keys = obj_class.foreign_keys.get(
-                        self._test_class.__name__)
+                    filter_kwargs = {
+                        obj_class.fields_need_translation.get(k, k): db_obj[v]
+                        for k, v in obj_class.foreign_keys.get(
+                            self._test_class.__name__).items()
+                    }
                     mock_calls.append(
                         mock.call(
                             self.context, obj_class.db_model,
                             _pager=self.pager_map[obj_class.obj_name()],
-                            **{k: db_obj[v]
-                            for k, v in foreign_keys.items()}))
+                            **filter_kwargs))
         return mock_calls
 
     def test_get_objects(self):
@@ -1028,7 +1054,13 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                 continue
             for db_obj in self.db_objs:
                 objclass_fields = self.get_random_fields(objclass)
-                db_obj[synth_field] = [objclass.db_model(**objclass_fields)]
+                if isinstance(self._test_class.fields[synth_field],
+                              obj_fields.ObjectField):
+                    db_obj[synth_field] = objclass.db_model(**objclass_fields)
+                else:
+                    db_obj[synth_field] = [
+                        objclass.db_model(**objclass_fields)
+                    ]
 
     def _create_test_network(self):
         # TODO(ihrachys): replace with network.create() once we get an object
@@ -1060,14 +1092,16 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def _create_port(self, **port_attrs):
         if not hasattr(self, '_mac_address_generator'):
-            self._mac_address_generator = (":".join(["%02x" % i] * 6)
-                                           for i in itertools.count())
+            self._mac_address_generator = (
+                netaddr.EUI(":".join(["%02x" % i] * 6))
+                for i in itertools.count()
+            )
 
         if not hasattr(self, '_port_name_generator'):
             self._port_name_generator = ("test-port%d" % i
                                          for i in itertools.count(1))
 
-        attrs = {'tenant_id': 'fake_tenant_id',
+        attrs = {'project_id': uuidutils.generate_uuid(),
                  'admin_state_up': True,
                  'status': 'ACTIVE',
                  'device_id': 'fake_device',
@@ -1079,9 +1113,9 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         if 'mac_address' not in attrs:
             attrs['mac_address'] = next(self._mac_address_generator)
 
-        # TODO(ihrachys): replace with port.create() once we get an object
-        # implementation for ports
-        return obj_db_api.create_object(self.context, models_v2.Port, attrs)
+        port = ports.Port(self.context, **attrs)
+        port.create()
+        return port
 
     def _create_test_segment(self, network):
         test_segment = {
@@ -1246,8 +1280,12 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             dbattr = obj.fields_need_translation.get(field, field)
             self.assertFalse(getattr(obj.db_obj, dbattr, None))
 
-            objclass_fields = self._get_non_synth_fields(objclass,
-                                                         db_obj[field][0])
+            if isinstance(cls_.fields[field], obj_fields.ObjectField):
+                objclass_fields = self._get_non_synth_fields(objclass,
+                                                             db_obj[field])
+            else:
+                objclass_fields = self._get_non_synth_fields(objclass,
+                                                             db_obj[field][0])
 
             # make sure children point to the base object
             foreign_keys = objclass.foreign_keys.get(obj.__class__.__name__)
