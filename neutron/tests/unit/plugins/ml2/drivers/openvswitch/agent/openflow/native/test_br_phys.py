@@ -115,7 +115,7 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.reclaim_local_vlan(port=port, lvid=lvid)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(
+            call.uninstall_flows(
                 match=ofpp.OFPMatch(
                     in_port=port,
                     vlan_vid=lvid | ofp.OFPVID_PRESENT)),
@@ -146,6 +146,6 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.remove_dvr_mac_vlan(mac=mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(eth_src=mac, table_id=3),
+            call.uninstall_flows(eth_src=mac, table_id=3),
         ]
         self.assertEqual(expected, self.mock.mock_calls)

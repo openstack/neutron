@@ -234,8 +234,8 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
 
     def remove_dvr_mac_tun(self, mac):
         # REVISIT(yamamoto): match in_port as well?
-        self.delete_flows(table_id=constants.DVR_NOT_LEARN,
-                          eth_src=mac)
+        self.delete_flows(table=constants.DVR_NOT_LEARN,
+                          dl_src=mac)
 
     def deferred(self):
         return DeferredOVSTunnelBridge(self)

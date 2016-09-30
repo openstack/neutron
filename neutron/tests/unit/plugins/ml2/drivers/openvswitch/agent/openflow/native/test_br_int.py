@@ -116,7 +116,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.br.reclaim_local_vlan(port=port, segmentation_id=segmentation_id)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(
+            call.uninstall_flows(
                 match=ofpp.OFPMatch(
                     in_port=port,
                     vlan_vid=segmentation_id | ofp.OFPVID_PRESENT)),
@@ -129,7 +129,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.br.reclaim_local_vlan(port=port, segmentation_id=segmentation_id)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(
+            call.uninstall_flows(
                 match=ofpp.OFPMatch(
                     in_port=port,
                     vlan_vid=ofp.OFPVID_NONE)),
@@ -175,7 +175,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                       dst_mac=dst_mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(table_id=1,
+            call.uninstall_flows(table_id=1,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
@@ -221,7 +221,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                       dst_mac=dst_mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(table_id=2,
+            call.uninstall_flows(table_id=2,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
@@ -252,7 +252,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.br.remove_dvr_mac_vlan(mac=mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(eth_src=mac, table_id=0),
+            call.uninstall_flows(eth_src=mac, table_id=0),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -280,7 +280,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         port = 8888
         self.br.remove_dvr_mac_tun(mac=mac, port=port)
         expected = [
-            call.delete_flows(eth_src=mac, in_port=port, table_id=0),
+            call.uninstall_flows(eth_src=mac, in_port=port, table_id=0),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -387,14 +387,14 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.br.delete_arp_spoofing_protection(port)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(table_id=0, match=ofpp.OFPMatch(
+            call.uninstall_flows(table_id=0, match=ofpp.OFPMatch(
                 eth_type=self.ether_types.ETH_TYPE_ARP,
                 in_port=8888)),
-            call.delete_flows(table_id=0, match=ofpp.OFPMatch(
+            call.uninstall_flows(table_id=0, match=ofpp.OFPMatch(
                 eth_type=self.ether_types.ETH_TYPE_IPV6,
                 icmpv6_type=self.icmpv6.ND_NEIGHBOR_ADVERT,
                 in_port=8888,
                 ip_proto=self.in_proto.IPPROTO_ICMPV6)),
-            call.delete_flows(table_id=24, in_port=port),
+            call.uninstall_flows(table_id=24, in_port=port),
         ]
         self.assertEqual(expected, self.mock.mock_calls)

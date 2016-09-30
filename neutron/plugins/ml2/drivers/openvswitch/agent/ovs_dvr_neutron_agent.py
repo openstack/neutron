@@ -209,7 +209,7 @@ class OVSDVRNeutronAgent(object):
                  self.dvr_mac_address)
         # Remove existing flows in integration bridge
         if self.conf.AGENT.drop_flows_on_start:
-            self.int_br.delete_flows()
+            self.int_br.uninstall_flows()
 
         # Add a canary flow to int_br to track OVS restarts
         self.int_br.setup_canary_table()
