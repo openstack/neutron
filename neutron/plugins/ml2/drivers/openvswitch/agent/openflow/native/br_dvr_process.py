@@ -45,7 +45,8 @@ class OVSDVRProcessMixin(object):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_process_ipv4_match(ofp, ofpp,
             vlan_tag=vlan_tag, gateway_ip=gateway_ip)
-        self.delete_flows(table_id=self.dvr_process_table_id, match=match)
+        self.uninstall_flows(table_id=self.dvr_process_table_id,
+                             match=match)
 
     @staticmethod
     def _dvr_process_ipv6_match(ofp, ofpp, vlan_tag, gateway_mac):
@@ -67,7 +68,8 @@ class OVSDVRProcessMixin(object):
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._dvr_process_ipv6_match(ofp, ofpp,
             vlan_tag=vlan_tag, gateway_mac=gateway_mac)
-        self.delete_flows(table_id=self.dvr_process_table_id, match=match)
+        self.uninstall_flows(table_id=self.dvr_process_table_id,
+                             match=match)
 
     @staticmethod
     def _dvr_process_in_match(ofp, ofpp, vlan_tag, vif_mac):
@@ -107,7 +109,7 @@ class OVSDVRProcessMixin(object):
         table_id = self.dvr_process_table_id
         match = self._dvr_process_in_match(ofp, ofpp,
                                            vlan_tag=vlan_tag, vif_mac=vif_mac)
-        self.delete_flows(table_id=table_id, match=match)
+        self.uninstall_flows(table_id=table_id, match=match)
         match = self._dvr_process_out_match(ofp, ofpp,
                                             vlan_tag=vlan_tag, vif_mac=vif_mac)
-        self.delete_flows(table_id=table_id, match=match)
+        self.uninstall_flows(table_id=table_id, match=match)

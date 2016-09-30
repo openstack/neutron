@@ -310,7 +310,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
 
 class CanaryTableTestCase(OVSAgentTestBase):
     def test_canary_table(self):
-        self.br_int.delete_flows()
+        self.br_int.uninstall_flows()
         self.assertEqual(constants.OVS_RESTARTED,
                          self.br_int.check_canary_table())
         self.br_int.setup_canary_table()
