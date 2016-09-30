@@ -54,7 +54,7 @@ class NeutronConfigFixture(ConfigFixture):
         super(NeutronConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
-        service_plugins = ['router']
+        service_plugins = ['router', 'trunk']
         if env_desc.qos:
             service_plugins.append('qos')
 

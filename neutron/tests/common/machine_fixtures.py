@@ -70,6 +70,15 @@ class FakeMachineBase(fixtures.Fixture):
                 "No ICMP reply obtained from IP address %s" % dst_ip)
         )
 
+    def block_until_no_ping(self, dst_ip):
+        predicate = functools.partial(
+            lambda ip: not self.ping_predicate(ip), dst_ip)
+        utils.wait_until_true(
+            predicate,
+            exception=FakeMachineException(
+                "ICMP packets still pass to %s IP address." % dst_ip)
+        )
+
     def assert_ping(self, dst_ip):
         net_helpers.assert_ping(self.namespace, dst_ip)
 
