@@ -1350,14 +1350,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._update_fip_assoc(context, fip, floatingip_db,
                                    self._core_plugin.get_port(
                                        context.elevated(), fip_port_id))
+            floatingip_dict = self._make_floatingip_dict(floatingip_db)
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_update_precommit(
-                    context, floatingip_db)
-        floatingip_dict = self._make_floatingip_dict(floatingip_db)
+                    context, floatingip_dict)
+
         if self._is_dns_integration_supported:
             self._process_dns_floatingip_update_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
+        self._apply_dict_extend_functions(l3.FLOATINGIPS, floatingip_dict,
+                                          floatingip_db)
         return old_floatingip, floatingip_dict
 
     def _floatingips_to_router_ids(self, floatingips):
