@@ -39,6 +39,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import ports
+from neutron.objects import rbac_db
 from neutron.objects import subnet
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -397,6 +398,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.ObjectField: lambda: None,
     obj_fields.ListOfObjectsField: lambda: [],
     obj_fields.DictOfStringsField: get_random_dict_of_strings,
+    obj_fields.ListOfStringsField: tools.get_random_string_list,
     common_types.DomainNameField: get_random_domain_name,
     common_types.DscpMarkField: get_random_dscp_mark,
     obj_fields.IPNetworkField: tools.get_random_ip_network,
@@ -540,6 +542,31 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         # into active session in the first place
         mock.patch.object(self.context.session, 'refresh').start()
         mock.patch.object(self.context.session, 'expunge').start()
+
+        self.get_objects_mock = mock.patch.object(
+            obj_db_api, 'get_objects',
+            side_effect=self.fake_get_objects).start()
+
+        self.get_object_mock = mock.patch.object(
+            obj_db_api, 'get_object',
+            side_effect=self.fake_get_object).start()
+
+        # NOTE(ihrachys): for matters of basic object behaviour validation,
+        # mock out rbac code accessing database. There are separate tests that
+        # cover RBAC, per object type.
+        if getattr(self._test_class, 'rbac_db_model', None):
+            mock.patch.object(
+                rbac_db.RbacNeutronDbObjectMixin,
+                'is_shared_with_tenant', return_value=False).start()
+
+    def fake_get_object(self, context, model, **kwargs):
+        objects = self.model_map[model]
+        if not objects:
+            return None
+        return [obj for obj in objects if obj['id'] == kwargs['id']][0]
+
+    def fake_get_objects(self, context, model, **kwargs):
+        return self.model_map[model]
 
     # TODO(ihrachys) document the intent of all common test cases in docstrings
     def test_get_object(self):
@@ -1247,7 +1274,10 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj.create()
 
         for field in remove_timestamps_from_fields(get_obj_db_fields(obj)):
-            filters = {field: [self.objs[0][field]]}
+            if not isinstance(self.objs[0][field], list):
+                filters = {field: [self.objs[0][field]]}
+            else:
+                filters = {field: self.objs[0][field]}
             new = self._test_class.get_objects(self.context, **filters)
             self.assertItemsEqual(
                 [obj._get_composite_keys()],

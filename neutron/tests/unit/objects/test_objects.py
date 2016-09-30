@@ -24,7 +24,8 @@ from neutron.tests import base as test_base
 
 
 # NOTE: The hashes in this list should only be changed if they come with a
-# corresponding version bump in the affected objects.
+# corresponding version bump in the affected objects. Please keep the list in
+# alphabetic order.
 object_data = {
     '_DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'AddressScope': '1.0-25560799db384acfe1549634959a82b4',
@@ -34,6 +35,7 @@ object_data = {
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'IPAllocation': '1.0-47251b4c6d45c3b5feb0297fe5c461f2',
     'IPAllocationPool': '1.0-371016a6480ed0b4299319cb46d9215d',
+    'Network': '1.0-f2f6308f79731a767b92b26b0f4f3849',
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
     'NetworkSegment': '1.0-40707ef6bd9a0bf095038158d995cc7d',
     'Port': '1.0-638f6b09a3809ebd8b2b46293f56871b',

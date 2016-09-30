@@ -204,6 +204,10 @@ def get_random_string(n=10):
     return ''.join(random.choice(string.ascii_lowercase) for _ in range(n))
 
 
+def get_random_string_list(i=3, n=5):
+    return [get_random_string(n) for _ in range(0, i)]
+
+
 def get_random_boolean():
     return bool(random.getrandbits(1))
 

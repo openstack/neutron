@@ -50,37 +50,24 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             self.get_random_fields(rule.QosMinimumBandwidthRule)
             for _ in range(3)]
 
-        self.model_map = {
+        self.model_map.update({
             self._test_class.db_model: self.db_objs,
-            self._test_class.rbac_db_model: [],
             self._test_class.port_binding_model: [],
             self._test_class.network_binding_model: [],
             rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules,
             rule.QosDscpMarkingRule.db_model: self.db_qos_dscp_rules,
             rule.QosMinimumBandwidthRule.db_model:
-                self.db_qos_minimum_bandwidth_rules}
+                self.db_qos_minimum_bandwidth_rules})
 
-        self.get_object = mock.patch.object(
-            db_api, 'get_object', side_effect=self.fake_get_object).start()
-        self.get_objects = mock.patch.object(
-            db_api, 'get_objects', side_effect=self.fake_get_objects).start()
-
-    def fake_get_objects(self, context, model, **kwargs):
-        return self.model_map[model]
-
-    def fake_get_object(self, context, model, **kwargs):
-        objects = self.model_map[model]
-        if not objects:
-            return None
-        return [obj for obj in objects if obj['id'] == kwargs['id']][0]
-
+    # TODO(ihrachys): stop overriding those test cases, instead base test cases
+    # should be expanded if there are missing bits there to support QoS objects
     def test_get_objects(self):
         admin_context = self.context.elevated()
         with mock.patch.object(self.context, 'elevated',
                                return_value=admin_context) as context_mock:
             objs = self._test_class.get_objects(self.context)
         context_mock.assert_called_once_with()
-        self.get_objects.assert_any_call(
+        self.get_objects_mock.assert_any_call(
             admin_context, self._test_class.db_model, _pager=None)
         self.assertItemsEqual(
             [test_base.get_obj_db_fields(obj) for obj in self.objs],
@@ -137,14 +124,6 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(QosPolicyDbObjectTestCase, self).setUp()
-        self.db_qos_bandwidth_rules = [
-            self.get_random_fields(rule.QosBandwidthLimitRule)
-            for _ in range(3)]
-
-        self.model_map.update({
-            rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules
-        })
-
         self._create_test_network()
         self._create_test_port(self._network)
 
