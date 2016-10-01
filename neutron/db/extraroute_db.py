@@ -14,13 +14,11 @@
 #    under the License.
 
 import netaddr
-from neutron_lib.db import model_base
 from oslo_config import cfg
 from oslo_log import log as logging
-import sqlalchemy as sa
-from sqlalchemy import orm
 
 from neutron._i18n import _
+from neutron.common import _deprecate
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
@@ -29,6 +27,7 @@ from neutron.db import models_v2
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 
+_deprecate._moved_global('RouterRoute', new_module=l3_models)
 
 LOG = logging.getLogger(__name__)
 
@@ -39,19 +38,6 @@ extra_route_opts = [
 ]
 
 cfg.CONF.register_opts(extra_route_opts)
-
-
-class RouterRoute(model_base.BASEV2, models_v2.Route):
-    router_id = sa.Column(sa.String(36),
-                          sa.ForeignKey('routers.id',
-                                        ondelete="CASCADE"),
-                          primary_key=True)
-
-    router = orm.relationship(l3_models.Router,
-                              backref=orm.backref("route_list",
-                                                  lazy='joined',
-                                                  cascade='delete'))
-    revises_on_change = ('router', )
 
 
 class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
@@ -128,7 +114,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                                                  routes)
         LOG.debug('Added routes are %s', added)
         for route in added:
-            router_routes = RouterRoute(
+            router_routes = l3_models.RouterRoute(
                 router_id=router['id'],
                 destination=route['destination'],
                 nexthop=route['nexthop'])
@@ -146,12 +132,12 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 for route in extra_routes]
 
     def _get_extra_routes_by_router_id(self, context, id):
-        query = context.session.query(RouterRoute)
+        query = context.session.query(l3_models.RouterRoute)
         query = query.filter_by(router_id=id)
         return self._make_extra_route_list(query)
 
     def _get_extra_routes_dict_by_router_id(self, context, id):
-        query = context.session.query(RouterRoute)
+        query = context.session.query(l3_models.RouterRoute)
         query = query.filter_by(router_id=id)
         routes = []
         routes_dict = {}
@@ -178,3 +164,6 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 class ExtraRoute_db_mixin(ExtraRoute_dbonly_mixin, l3_db.L3_NAT_db_mixin):
     """Mixin class to support extra route configuration on router with rpc."""
     pass
+
+
+_deprecate._MovedGlobals()

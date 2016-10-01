@@ -103,3 +103,15 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
                  '0fixedportid0fixedipaddress')),
         model_base.BASEV2.__table_args__,)
     api_collections = [l3.FLOATINGIPS]
+
+
+class RouterRoute(model_base.BASEV2, models_v2.Route):
+    router_id = sa.Column(sa.String(36),
+                          sa.ForeignKey('routers.id',
+                                        ondelete="CASCADE"),
+                          primary_key=True)
+
+    router = orm.relationship(Router,
+                              backref=orm.backref("route_list",
+                                                  lazy='joined',
+                                                  cascade='delete'))
