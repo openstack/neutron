@@ -156,11 +156,13 @@ def list_base_agent_opts():
              neutron.agent.common.config.INTERFACE_DRIVER_OPTS,
              neutron.conf.agent.ovs_conf.OPTS)
          ),
-        ('AGENT',
-         itertools.chain(
-             neutron.agent.common.config.AGENT_STATE_OPTS,
-             neutron.agent.common.config.AVAILABILITY_ZONE_OPTS)
-         )
+        ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS),
+    ]
+
+
+def list_az_agent_opts():
+    return [
+        ('AGENT', neutron.agent.common.config.AVAILABILITY_ZONE_OPTS),
     ]
 
 
@@ -230,11 +232,7 @@ def list_metadata_agent_opts():
 
 def list_metering_agent_opts():
     return [
-        ('DEFAULT',
-         itertools.chain(
-             neutron.conf.services.metering_agent.metering_agent_opts,
-             neutron.agent.common.config.INTERFACE_DRIVER_OPTS)
-         )
+        ('DEFAULT', neutron.conf.services.metering_agent.metering_agent_opts),
     ]
 
 
