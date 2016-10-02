@@ -158,6 +158,7 @@ def list_base_agent_opts():
              neutron.conf.agent.ovs_conf.OPTS)
          ),
         ('agent', neutron.agent.common.config.AGENT_STATE_OPTS),
+        ('ovs', neutron.agent.ovsdb.api.OPTS),
     ]
 
 
