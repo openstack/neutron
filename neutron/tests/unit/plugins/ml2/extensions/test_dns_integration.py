@@ -21,10 +21,10 @@ from neutron_lib import constants
 import testtools
 
 from neutron import context
-from neutron.db.models import dns as dns_models
 from neutron.extensions import dns
 from neutron.extensions import providernet as pnet
 from neutron import manager
+from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.extensions import dns_integration
 from neutron.services.externaldns.drivers.designate import driver
@@ -95,9 +95,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(201, res.status_int)
         port = self.deserialize(self.fmt, res)['port']
         ctx = context.get_admin_context()
-        dns_data_db = ctx.session.query(
-            dns_models.PortDNS).filter_by(
-            port_id=port['id']).one_or_none()
+        dns_data_db = port_obj.PortDNS.get_object(ctx, port_id=port['id'])
         return network['network'], port, dns_data_db
 
     def _create_subnet_for_test(self, network_id, cidr):
@@ -137,9 +135,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(200, res.status_int)
         port = self.deserialize(self.fmt, res)['port']
         ctx = context.get_admin_context()
-        dns_data_db = ctx.session.query(
-            dns_models.PortDNS).filter_by(
-            port_id=port['id']).one_or_none()
+        dns_data_db = port_obj.PortDNS.get_object(ctx, port_id=port['id'])
         return port, dns_data_db
 
     def _verify_port_dns(self, net, port, dns_data_db, dns_name=True,
