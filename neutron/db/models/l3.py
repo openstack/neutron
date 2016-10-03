@@ -15,7 +15,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes
-from neutron.db import l3_agentschedulers_db as l3_agt
+from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import l3
@@ -61,7 +61,7 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
         lazy='dynamic')
     l3_agents = orm.relationship(
         'Agent', lazy='joined', viewonly=True,
-        secondary=l3_agt.RouterL3AgentBinding.__table__)
+        secondary=rb_model.RouterL3AgentBinding.__table__)
     api_collections = [l3.ROUTERS]
 
 

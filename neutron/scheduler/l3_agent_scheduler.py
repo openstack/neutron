@@ -30,7 +30,6 @@ from neutron._i18n import _LE, _LW
 from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
-from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3agent as rb_model
@@ -87,7 +86,7 @@ class L3Scheduler(object):
         # TODO(gongysh) consider the disabled agent's router
         no_agent_binding = ~sql.exists().where(
             l3_models.Router.id ==
-            l3_agentschedulers_db.RouterL3AgentBinding.router_id)
+            rb_model.RouterL3AgentBinding.router_id)
         query = context.session.query(
             l3_models.Router.id).filter(no_agent_binding)
         query = query.filter(l3_models.Router.status ==
