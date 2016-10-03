@@ -20,10 +20,10 @@ from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
 from neutron.db.models import l3 as l3_models
-from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
 from neutron.db import models_v2
 from neutron.objects import network as network_obj
+from neutron.objects import router as l3_objs
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2 import models
 from neutron.tests.common import helpers
@@ -35,7 +35,7 @@ HOST_2 = 'HOST_2'
 HOST_3 = 'HOST_3'
 HOST_2_TUNNELING_IP = '20.0.0.2'
 HOST_3_TUNNELING_IP = '20.0.0.3'
-TEST_ROUTER_ID = 'router_id'
+TEST_ROUTER_ID = uuidutils.generate_uuid()
 TEST_NETWORK_ID = uuidutils.generate_uuid()
 TEST_HA_NETWORK_ID = uuidutils.generate_uuid()
 PLUGIN_NAME = 'ml2'
@@ -55,8 +55,10 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
     def _create_router(self, distributed=True, ha=False):
         with self.ctx.session.begin(subtransactions=True):
             self.ctx.session.add(l3_models.Router(id=TEST_ROUTER_ID))
-            self.ctx.session.add(l3_attrs.RouterExtraAttributes(
-                router_id=TEST_ROUTER_ID, distributed=distributed, ha=ha))
+            l3_objs.RouterExtraAttributes(
+                self.ctx,
+                router_id=TEST_ROUTER_ID,
+                distributed=distributed, ha=ha).create()
 
     def _create_ha_router(self, distributed=False):
         helpers.register_l3_agent(HOST_2)
