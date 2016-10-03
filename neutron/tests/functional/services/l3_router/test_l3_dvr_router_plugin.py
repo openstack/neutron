@@ -1536,11 +1536,15 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
         self.assertEqual(1, len(agents['agents']))
         self.assertEqual(self.l3_agent['id'], agents['agents'][0]['id'])
 
-    def test_add_router_interface_by_subnet_notification(self):
-        notif_handler = mock.Mock()
-        registry.subscribe(notif_handler.callback,
+    def test_add_router_interface_by_subnet_notifications(self):
+        notif_handler_before = mock.Mock()
+        notif_handler_after = mock.Mock()
+        registry.subscribe(notif_handler_before.callback,
                            resources.ROUTER_INTERFACE,
                            events.BEFORE_CREATE)
+        registry.subscribe(notif_handler_after.callback,
+                           resources.ROUTER_INTERFACE,
+                           events.AFTER_CREATE)
         router = self._create_router()
         with self.network() as net, \
                 self.subnet(network=net) as subnet:
@@ -1549,15 +1553,30 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                     {'subnet_id': subnet['subnet']['id']})
             kwargs = {'context': self.context, 'router_id': router['id'],
                       'network_id': net['network']['id']}
-            notif_handler.callback.assert_called_once_with(
+            notif_handler_before.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
                 mock.ANY, **kwargs)
+            kwargs_after = {'cidrs': mock.ANY,
+                            'context': mock.ANY,
+                            'gateway_ips': mock.ANY,
+                            'interface_info': mock.ANY,
+                            'network_id': None,
+                            'port': mock.ANY,
+                            'port_id': mock.ANY,
+                            'router_id': router['id']}
+            notif_handler_after.callback.assert_called_once_with(
+                resources.ROUTER_INTERFACE, events.AFTER_CREATE,
+                mock.ANY, **kwargs_after)
 
-    def test_add_router_interface_by_port_notification(self):
-        notif_handler = mock.Mock()
-        registry.subscribe(notif_handler.callback,
+    def test_add_router_interface_by_port_notifications(self):
+        notif_handler_before = mock.Mock()
+        notif_handler_after = mock.Mock()
+        registry.subscribe(notif_handler_before.callback,
                            resources.ROUTER_INTERFACE,
                            events.BEFORE_CREATE)
+        registry.subscribe(notif_handler_after.callback,
+                           resources.ROUTER_INTERFACE,
+                           events.AFTER_CREATE)
         router = self._create_router()
         with self.network() as net, \
                 self.subnet(network=net) as subnet, \
@@ -1567,9 +1586,20 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                     {'port_id': port['port']['id']})
             kwargs = {'context': self.context, 'router_id': router['id'],
                       'network_id': net['network']['id']}
-            notif_handler.callback.assert_called_once_with(
+            notif_handler_before.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
                 mock.ANY, **kwargs)
+            kwargs_after = {'cidrs': mock.ANY,
+                            'context': mock.ANY,
+                            'gateway_ips': mock.ANY,
+                            'interface_info': mock.ANY,
+                            'network_id': None,
+                            'port': mock.ANY,
+                            'port_id': port['port']['id'],
+                            'router_id': router['id']}
+            notif_handler_after.callback.assert_called_once_with(
+                resources.ROUTER_INTERFACE, events.AFTER_CREATE,
+                mock.ANY, **kwargs_after)
 
 
 class L3DvrTestCaseMigration(L3DvrTestCase):
