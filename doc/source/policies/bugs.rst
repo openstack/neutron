@@ -399,7 +399,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | ops_                          | Reported by or affecting operators      | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
-| oslo_                         | An interop/cross-project issue          | Ihar Hrachyshka      |
+| oslo_                         | An interop/cross-project issue          | Henry Gessau         |
 +-------------------------------+-----------------------------------------+----------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
