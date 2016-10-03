@@ -20,7 +20,6 @@ from ovs import poller
 from neutron.agent.ovsdb.native import connection
 from neutron.agent.ovsdb.native import idlutils
 from neutron.tests import base
-from neutron.tests.common import helpers
 
 
 class TestOVSNativeConnection(base.BaseTestCase):
@@ -45,11 +44,9 @@ class TestOVSNativeConnection(base.BaseTestCase):
         self.assertEqual(reg_all_called, helper.register_all.called)
         self.assertEqual(reg_table_called, helper.register_table.called)
 
-    @helpers.requires_py2
     def test_start_without_table_name_list(self):
         self._test_start()
 
-    @helpers.requires_py2
     def test_start_with_table_name_list(self):
         self._test_start(table_name_list=['fake-table1', 'fake-table2'])
 
