@@ -357,15 +357,8 @@ class OVSDVRNeutronAgent(object):
         # IP, directly use fixed_ips[0]
         fixed_ip = fixed_ips[0]
         subnet_uuid = fixed_ip['subnet_id']
-        csnat_ofport = constants.OFPORT_INVALID
-        ldm = None
         if subnet_uuid in self.local_dvr_map:
             ldm = self.local_dvr_map[subnet_uuid]
-            csnat_ofport = ldm.get_csnat_ofport()
-            if csnat_ofport == constants.OFPORT_INVALID:
-                LOG.error(_LE("DVR: Duplicate DVR router interface detected "
-                              "for subnet %s"), subnet_uuid)
-                return
         else:
             # set up LocalDVRSubnetMapping available for this subnet
             subnet_info = self.plugin_rpc.get_subnet_for_dvr(
