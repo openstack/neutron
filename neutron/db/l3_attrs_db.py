@@ -12,44 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.db import model_base
-import sqlalchemy as sa
-from sqlalchemy import orm
-
+from neutron.common import _deprecate
 from neutron.db import db_base_plugin_v2
+from neutron.db.models import l3_attrs
 from neutron.extensions import l3
 
-
-class RouterExtraAttributes(model_base.BASEV2):
-    """Additional attributes for a Virtual Router."""
-
-    # NOTE(armando-migliaccio): this model can be a good place to
-    # add extension attributes to a Router model. Each case needs
-    # to be individually examined, however 'distributed' and other
-    # simple ones fit the pattern well.
-    __tablename__ = "router_extra_attributes"
-    router_id = sa.Column(sa.String(36),
-                          sa.ForeignKey('routers.id', ondelete="CASCADE"),
-                          primary_key=True)
-    # Whether the router is a legacy (centralized) or a distributed one
-    distributed = sa.Column(sa.Boolean, default=False,
-                            server_default=sa.sql.false(),
-                            nullable=False)
-    # Whether the router is to be considered a 'service' router
-    service_router = sa.Column(sa.Boolean, default=False,
-                               server_default=sa.sql.false(),
-                               nullable=False)
-    ha = sa.Column(sa.Boolean, default=False,
-                   server_default=sa.sql.false(),
-                   nullable=False)
-    ha_vr_id = sa.Column(sa.Integer())
-    # Availability Zone support
-    availability_zone_hints = sa.Column(sa.String(255))
-
-    router = orm.relationship(
-        'Router',
-        backref=orm.backref("extra_attributes", lazy='joined',
-                            uselist=False, cascade='delete'))
+_deprecate._moved_global('RouterExtraAttributes', new_module=l3_attrs)
 
 
 class ExtraAttributesMixin(object):
@@ -75,7 +43,7 @@ class ExtraAttributesMixin(object):
         kwargs = self._get_extra_attributes(router_req, self.extra_attributes)
         # extra_attributes reference is populated via backref
         if not router_db['extra_attributes']:
-            attributes_db = RouterExtraAttributes(
+            attributes_db = l3_attrs.RouterExtraAttributes(
                 router_id=router_db['id'], **kwargs)
             context.session.add(attributes_db)
             router_db['extra_attributes'] = attributes_db
@@ -86,3 +54,6 @@ class ExtraAttributesMixin(object):
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         l3.ROUTERS, ['_extend_extra_router_dict'])
+
+
+_deprecate._MovedGlobals()
