@@ -22,6 +22,7 @@ from six import moves
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.common import _deprecate
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import api as db_api
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const
@@ -31,19 +32,9 @@ from neutron.plugins.ml2.drivers import helpers
 
 LOG = log.getLogger(__name__)
 
-vlan_opts = [
-    cfg.ListOpt('network_vlan_ranges',
-                default=[],
-                help=_("List of <physical_network>:<vlan_min>:<vlan_max> or "
-                       "<physical_network> specifying physical_network names "
-                       "usable for VLAN provider and tenant networks, as "
-                       "well as ranges of VLAN tags on each available for "
-                       "allocation to tenant networks."))
-]
-
-cfg.CONF.register_opts(vlan_opts, "ml2_type_vlan")
-
 _deprecate._moved_global('VlanAllocation', new_module=vlan_alloc_model)
+
+driver_type.register_ml2_drivers_vlan_opts()
 
 
 class VlanTypeDriver(helpers.SegmentTypeDriver):

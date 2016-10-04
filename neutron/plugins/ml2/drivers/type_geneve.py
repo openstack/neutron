@@ -18,8 +18,9 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _LE
 from neutron.common import _deprecate
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import geneveallocation \
      as geneve_model
 from neutron.plugins.common import constants as p_const
@@ -30,25 +31,7 @@ LOG = log.getLogger(__name__)
 _deprecate._moved_global('GeneveAllocation', new_module=geneve_model)
 _deprecate._moved_global('GeneveEndpoints', new_module=geneve_model)
 
-geneve_opts = [
-    cfg.ListOpt('vni_ranges',
-                default=[],
-                help=_("Comma-separated list of <vni_min>:<vni_max> tuples "
-                       "enumerating ranges of Geneve VNI IDs that are "
-                       "available for tenant network allocation")),
-    cfg.IntOpt('max_header_size',
-               default=p_const.GENEVE_ENCAP_MIN_OVERHEAD,
-               help=_("Geneve encapsulation header size is dynamic, this "
-                      "value is used to calculate the maximum MTU "
-                      "for the driver. "
-                      "This is the sum of the sizes of the outer "
-                      "ETH + IP + UDP + GENEVE header sizes. "
-                      "The default size for this field is 50, which is the "
-                      "size of the Geneve header without any additional "
-                      "option headers.")),
-]
-
-cfg.CONF.register_opts(geneve_opts, "ml2_type_geneve")
+driver_type.register_ml2_drivers_geneve_opts()
 
 
 class GeneveTypeDriver(type_tunnel.EndpointTunnelTypeDriver):

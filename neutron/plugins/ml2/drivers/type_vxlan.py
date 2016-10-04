@@ -17,8 +17,9 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _LE
 from neutron.common import _deprecate
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import vxlanallocation as vxlan_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
@@ -28,20 +29,7 @@ LOG = log.getLogger(__name__)
 _deprecate._moved_global('VxlanAllocation', new_module=vxlan_model)
 _deprecate._moved_global('VxlanEndpoints', new_module=vxlan_model)
 
-vxlan_opts = [
-    cfg.ListOpt('vni_ranges',
-                default=[],
-                help=_("Comma-separated list of <vni_min>:<vni_max> tuples "
-                       "enumerating ranges of VXLAN VNI IDs that are "
-                       "available for tenant network allocation")),
-    cfg.StrOpt('vxlan_group',
-               help=_("Multicast group for VXLAN. When configured, will "
-                      "enable sending all broadcast traffic to this multicast "
-                      "group. When left unconfigured, will disable multicast "
-                      "VXLAN mode.")),
-]
-
-cfg.CONF.register_opts(vxlan_opts, "ml2_type_vxlan")
+driver_type.register_ml2_drivers_vxlan_opts()
 
 
 class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
