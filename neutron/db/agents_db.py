@@ -128,9 +128,9 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
     def _list_availability_zones(self, context, filters=None):
         result = {}
         query = self._get_collection_query(context, Agent, filters=filters)
-        for agent in query.group_by(Agent.admin_state_up,
-                                    Agent.availability_zone,
-                                    Agent.agent_type):
+        columns = (Agent.admin_state_up, Agent.availability_zone,
+                   Agent.agent_type)
+        for agent in query.with_entities(*columns).group_by(*columns):
             if not agent.availability_zone:
                 continue
             if agent.agent_type == constants.AGENT_TYPE_DHCP:
