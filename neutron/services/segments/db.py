@@ -18,45 +18,25 @@
 import functools
 
 from neutron_lib import constants
-from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.common import _deprecate
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
+from neutron.db.models import segment as segment_model
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
 from neutron.services.segments import exceptions
 
-
-class SegmentHostMapping(model_base.BASEV2):
-
-    segment_id = sa.Column(sa.String(36),
-                           sa.ForeignKey('networksegments.id',
-                                         ondelete="CASCADE"),
-                           primary_key=True,
-                           index=True,
-                           nullable=False)
-    host = sa.Column(sa.String(255),
-                     primary_key=True,
-                     index=True,
-                     nullable=False)
-
-    # Add a relationship to the NetworkSegment model in order to instruct
-    # SQLAlchemy to eagerly load this association
-    network_segment = orm.relationship(
-        db.NetworkSegment, backref=orm.backref("segment_host_mapping",
-                                               lazy='joined',
-                                               cascade='delete'))
+_deprecate._moved_global('SegmentHostMapping', new_module=segment_model)
 
 
 class SegmentDbMixin(common_db_mixin.CommonDbMixin):
@@ -179,8 +159,9 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def get_segments_by_hosts(self, context, hosts):
         if not hosts:
             return []
-        query = context.session.query(SegmentHostMapping).filter(
-            SegmentHostMapping.host.in_(hosts))
+        query = context.session.query(
+            segment_model.SegmentHostMapping).filter(
+                segment_model.SegmentHostMapping.host.in_(hosts))
         return list({mapping.segment_id for mapping in query})
 
     @log_helpers.log_method_call
@@ -211,16 +192,17 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
 def update_segment_host_mapping(context, host, current_segment_ids):
     with context.session.begin(subtransactions=True):
         segments_host_query = context.session.query(
-            SegmentHostMapping).filter_by(host=host)
+            segment_model.SegmentHostMapping).filter_by(host=host)
         previous_segment_ids = {
             seg_host['segment_id'] for seg_host in segments_host_query}
         for segment_id in current_segment_ids - previous_segment_ids:
-            context.session.add(SegmentHostMapping(segment_id=segment_id,
-                                                   host=host))
+            context.session.add(segment_model.SegmentHostMapping(
+                segment_id=segment_id,
+                host=host))
         stale_segment_ids = previous_segment_ids - current_segment_ids
         if stale_segment_ids:
             segments_host_query.filter(
-                SegmentHostMapping.segment_id.in_(
+                segment_model.SegmentHostMapping.segment_id.in_(
                     stale_segment_ids)).delete(synchronize_session=False)
 
 
@@ -230,7 +212,7 @@ def get_hosts_mapped_with_segments(context):
     L2 providers can use this method to get an overview of SegmentHostMapping,
     and then delete the stale SegmentHostMapping.
     """
-    query = context.session.query(SegmentHostMapping.host)
+    query = context.session.query(segment_model.SegmentHostMapping.host)
     return {row.host for row in query}
 
 
@@ -269,8 +251,9 @@ def map_segment_to_hosts(context, segment_id, hosts):
     """Map segment to a collection of hosts."""
     with db_api.autonested_transaction(context.session):
         for host in hosts:
-            context.session.add(SegmentHostMapping(segment_id=segment_id,
-                                                   host=host))
+            context.session.add(
+                segment_model.SegmentHostMapping(segment_id=segment_id,
+                                                 host=host))
 
 
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
@@ -341,3 +324,6 @@ def subscribe():
                        events.PRECOMMIT_DELETE)
 
 subscribe()
+
+
+_deprecate._MovedGlobals()

@@ -33,6 +33,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.db import db_base_plugin_common
+from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
 from neutron.db import segments_db
@@ -42,7 +43,6 @@ from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import subnet as subnet_obj
-from neutron.services.segments import db as segment_svc_db
 from neutron.services.segments import exceptions as segment_exc
 
 LOG = logging.getLogger(__name__)
@@ -612,7 +612,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         *cannot* reach are excluded.
         """
         Subnet = models_v2.Subnet
-        SegmentHostMapping = segment_svc_db.SegmentHostMapping
+        SegmentHostMapping = segment_model.SegmentHostMapping
 
         # A host has been provided.  Consider these two scenarios
         # 1. Not a routed network:  subnets are not on segments
