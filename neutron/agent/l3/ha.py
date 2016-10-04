@@ -13,46 +13,27 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import debtcollector
 import os
 
 import eventlet
-from oslo_config import cfg
 from oslo_log import log as logging
 import webob
 
-from neutron._i18n import _, _LI
-from neutron.agent.linux import keepalived
+from neutron._i18n import _LI
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils as common_utils
+from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.notifiers import batch_notifier
 
 LOG = logging.getLogger(__name__)
 
 KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG = 4096
 
-OPTS = [
-    cfg.StrOpt('ha_confs_path',
-               default='$state_path/ha_confs',
-               help=_('Location to store keepalived/conntrackd '
-                      'config files')),
-    cfg.StrOpt('ha_vrrp_auth_type',
-               default='PASS',
-               choices=keepalived.VALID_AUTH_TYPES,
-               help=_('VRRP authentication type')),
-    cfg.StrOpt('ha_vrrp_auth_password',
-               help=_('VRRP authentication password'),
-               secret=True),
-    cfg.IntOpt('ha_vrrp_advert_int',
-               default=2,
-               help=_('The advertisement interval in seconds')),
-    cfg.IntOpt('ha_keepalived_state_change_server_threads',
-               default=(1 + common_utils.cpu_count()) // 2,
-               min=1,
-               help=_('Number of concurrent threads for '
-                      'keepalived server connection requests.'
-                      'More threads create a higher CPU load '
-                      'on the agent node.')),
-]
+debtcollector.deprecate(
+    'Moved l3 agent ha opts to %s' % ha_conf.__name__,
+    version="newton", removal_version="ocata")
+OPTS = ha_conf.OPTS
 
 
 class KeepalivedStateChangeHandler(object):

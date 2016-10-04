@@ -19,12 +19,12 @@ from oslo_utils import uuidutils
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.l3 import agent as l3_agent
-from neutron.agent.l3 import ha as l3_ha_agent
 from neutron.agent.l3 import router_info
 from neutron.agent.metadata import config
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import constants
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.tests import base
 
 
@@ -76,7 +76,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                    '._init_ha_conf_path').start()
 
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
-        cfg.CONF.register_opts(l3_ha_agent.OPTS)
+        ha_conf.register_l3_agent_ha_opts()
         cfg.CONF.register_opts(config.SHARED_OPTS)
         cfg.CONF.register_opts(config.DRIVER_OPTS)
 
