@@ -36,6 +36,7 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import l3agent as rb_model
+from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
@@ -1734,7 +1735,7 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         self.plugin.remove_router_from_l3_agent(
             self.adminContext, agent.id, router['id'])
         session = self.adminContext.session
-        db = l3_hamode_db.L3HARouterAgentPortBinding
+        db = l3ha_model.L3HARouterAgentPortBinding
         results = session.query(db).filter_by(
             router_id=router['id'])
         results = [binding.l3_agent_id for binding in results.all()]
