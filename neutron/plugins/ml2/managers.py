@@ -32,8 +32,8 @@ from neutron._i18n import _
 from neutron.conf.plugins.ml2 import config
 from neutron.db import api as db_api
 from neutron.db import segments_db
+from neutron.objects import ports
 from neutron.plugins.ml2.common import exceptions as ml2_exc
-from neutron.plugins.ml2 import models
 
 LOG = log.getLogger(__name__)
 
@@ -783,12 +783,15 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 driver.obj.bind_port(context)
                 segment = context._new_bound_segment
                 if segment:
-                    context._push_binding_level(
-                        models.PortBindingLevel(port_id=port_id,
-                                                host=context.host,
-                                                level=level,
-                                                driver=driver.name,
-                                                segment_id=segment))
+                    pbl_obj = ports.PortBindingLevel(
+                        context._plugin_context,
+                        port_id=port_id,
+                        host=context.host,
+                        level=level,
+                        driver=driver.name,
+                        segment_id=segment
+                    )
+                    context._push_binding_level(pbl_obj)
                     next_segments = context._next_segments_to_bind
                     if next_segments:
                         # Continue binding another level.

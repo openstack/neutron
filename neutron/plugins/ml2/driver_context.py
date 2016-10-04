@@ -132,8 +132,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         # NOTE(kevinbenton): InstanceSnapshot can go away once we are working
         # with OVO objects instead of native SQLA objects.
         self._binding = InstanceSnapshot(binding)
-        self._binding_levels = [InstanceSnapshot(l)
-                                for l in (binding_levels or [])]
+        self._binding_levels = binding_levels or []
         self._segments_to_bind = None
         self._new_bound_segment = None
         self._next_segments_to_bind = None
@@ -159,7 +158,9 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._binding_levels = []
 
     def _push_binding_level(self, binding_level):
-        self._binding_levels.append(InstanceSnapshot(binding_level))
+        # NOTE(slaweq): binding_level should be always OVO with no reference
+        # to DB object
+        self._binding_levels.append(binding_level)
 
     def _pop_binding_level(self):
         return self._binding_levels.pop()

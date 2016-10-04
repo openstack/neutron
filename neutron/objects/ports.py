@@ -408,6 +408,16 @@ class Port(base.NeutronDbObject):
                                             **kwargs)
 
     @classmethod
+    def get_port_ids_filter_by_segment_id(cls, context, segment_id):
+        query = context.session.query(models_v2.Port.id)
+        query = query.join(
+            ml2_models.PortBindingLevel,
+            ml2_models.PortBindingLevel.port_id == models_v2.Port.id)
+        query = query.filter(
+            ml2_models.PortBindingLevel.segment_id == segment_id)
+        return [p.id for p in query]
+
+    @classmethod
     def modify_fields_to_db(cls, fields):
         result = super(Port, cls).modify_fields_to_db(fields)
 

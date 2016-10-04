@@ -858,7 +858,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
         with self.port() as port:
-            with mock.patch.object(ml2_db, 'get_binding_levels',
+            with mock.patch.object(ml2_db, 'get_binding_level_objs',
                                    return_value=[]) as mock_gbl:
                 port_id = port['port']['id']
                 short_id = port_id[:11]

@@ -199,6 +199,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                         profile={})],
             binding_levels=[ports.PortBindingLevel(port_id=self._port_id,
                                                    host='host1',
+                                                   level=0,
                                                    segment=self._segment)])
 
     def test__legacy_notifier_resource_delete(self):

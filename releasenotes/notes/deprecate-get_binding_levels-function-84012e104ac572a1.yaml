@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    Function ``get_binding_levels`` from ``neutron.plugins.ml2.db`` module is
+    deprecated and will be removed in the future.
+    New function ``get_binding_levels_objs`` should be used instead.
+    This new function returns ``PortBindingLevel`` OVO objects.

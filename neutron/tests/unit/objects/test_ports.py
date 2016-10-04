@@ -197,9 +197,6 @@ class PortBindingLevelIfaceObjTestCase(
         super(PortBindingLevelIfaceObjTestCase, self).setUp()
         self.pager_map[self._test_class.obj_name()] = (
             obj_base.Pager(sorts=[('port_id', True), ('level', True)]))
-        self.pager_map[network.NetworkSegment.obj_name()] = (
-            obj_base.Pager(
-                sorts=[('network_id', True), ('segment_index', True)]))
 
 
 class PortBindingLevelDbObjectTestCase(
@@ -232,10 +229,13 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(PortDbObjectTestCase, self).setUp()
         network_id = self._create_test_network_id()
+        segment_id = self._create_test_segment_id(network_id)
         subnet_id = self._create_test_subnet_id(network_id)
         self.update_obj_fields(
             {'network_id': network_id,
-             'fixed_ips': {'subnet_id': subnet_id, 'network_id': network_id}})
+             'fixed_ips': {'subnet_id': subnet_id,
+                           'network_id': network_id},
+             'binding_levels': {'segment_id': segment_id}})
 
     def test_security_group_ids(self):
         groups = []

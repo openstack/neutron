@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from debtcollector import removals
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -30,6 +31,7 @@ from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
+from neutron.objects import base as objects_base
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import models
 from neutron.services.segments import exceptions as seg_exc
@@ -53,7 +55,7 @@ def add_port_binding(context, port_id):
 def set_binding_levels(context, levels):
     if levels:
         for level in levels:
-            level.persist_state_to_session(context.session)
+            level.create()
         LOG.debug("For port %(port_id)s, host %(host)s, "
                   "set binding levels %(levels)s",
                   {'port_id': levels[0].port_id,
@@ -63,6 +65,10 @@ def set_binding_levels(context, levels):
         LOG.debug("Attempted to set empty binding levels")
 
 
+@removals.remove(
+    version="Stein", removal_version="T",
+    message="Function get_binding_levels is deprecated. Please use "
+            "get_binding_level_objs instead as it makes use of OVOs.")
 @db_api.context_manager.reader
 def get_binding_levels(context, port_id, host):
     if host:
@@ -78,12 +84,25 @@ def get_binding_levels(context, port_id, host):
         return result
 
 
+@db_api.context_manager.reader
+def get_binding_level_objs(context, port_id, host):
+    if host:
+        pager = objects_base.Pager(sorts=[('level', True)])
+        port_bl_objs = port_obj.PortBindingLevel.get_objects(
+            context, _pager=pager, port_id=port_id, host=host)
+        LOG.debug("For port %(port_id)s, host %(host)s, "
+                  "got binding levels %(levels)s",
+                  {'port_id': port_id,
+                   'host': host,
+                   'levels': port_bl_objs})
+        return port_bl_objs
+
+
 @db_api.context_manager.writer
 def clear_binding_levels(context, port_id, host):
     if host:
-        for l in (context.session.query(models.PortBindingLevel).
-                  filter_by(port_id=port_id, host=host)):
-            context.session.delete(l)
+        port_obj.PortBindingLevel.delete_objects(
+            context, port_id=port_id, host=host)
         LOG.debug("For port %(port_id)s, host %(host)s, "
                   "cleared binding levels",
                   {'port_id': port_id,
@@ -322,20 +341,15 @@ def _prevent_segment_delete_with_port_bound(resource, event, trigger,
         return
 
     with db_api.context_manager.reader.using(context):
-        segment_id = segment['id']
-        query = context.session.query(models_v2.Port.id)
-        query = query.join(
-            models.PortBindingLevel,
-            models.PortBindingLevel.port_id == models_v2.Port.id)
-        query = query.filter(models.PortBindingLevel.segment_id == segment_id)
-        port_ids = [p.id for p in query]
+        port_ids = port_obj.Port.get_port_ids_filter_by_segment_id(
+            context, segment_id=segment['id'])
 
     # There are still some ports in the segment, segment should not be deleted
     # TODO(xiaohhui): Should we delete the dhcp port automatically here?
     if port_ids:
         reason = _("The segment is still bound with port(s) "
                    "%s") % ", ".join(port_ids)
-        raise seg_exc.SegmentInUse(segment_id=segment_id, reason=reason)
+        raise seg_exc.SegmentInUse(segment_id=segment['id'], reason=reason)
 
 
 def subscribe():

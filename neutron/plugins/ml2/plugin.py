@@ -487,7 +487,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return new_context
 
     def _commit_port_binding(self, orig_context, bind_context,
-                             need_notify, try_again):
+                             need_notify, try_again,
+                             update_binding_levels=True):
         port_id = orig_context.current['id']
         plugin_context = orig_context._plugin_context
         orig_binding = orig_context._binding
@@ -584,10 +585,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 else:
                     cur_context_binding.vif_type = new_binding.vif_type
                     cur_context_binding.vif_details = new_binding.vif_details
-                db.clear_binding_levels(plugin_context, port_id,
-                                        cur_binding.host)
-                db.set_binding_levels(plugin_context,
-                                      bind_context._binding_levels)
+                if update_binding_levels:
+                    db.clear_binding_levels(plugin_context, port_id,
+                                            cur_binding.host)
+                    db.set_binding_levels(plugin_context,
+                                          bind_context._binding_levels)
                 # refresh context with a snapshot of updated state
                 cur_context._binding = driver_context.InstanceSnapshot(
                     cur_context_binding)
@@ -1375,7 +1377,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             network = self.get_network(context, original_port['network_id'])
             need_port_update_notify |= self._update_extra_dhcp_opts_on_port(
                 context, id, port, updated_port)
-            levels = db.get_binding_levels(context, id, binding.host)
+            levels = db.get_binding_level_objs(context, id, binding.host)
             # one of the operations above may have altered the model call
             # _make_port_dict again to ensure latest state is reflected so mech
             # drivers, callback handlers, and the API caller see latest state.
@@ -1411,8 +1413,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dist_binding_list = db.get_distributed_port_bindings(context,
                                                                      id)
                 for dist_binding in dist_binding_list:
-                    levels = db.get_binding_levels(context, id,
-                                                   dist_binding.host)
+                    levels = db.get_binding_level_objs(context, id,
+                                                       dist_binding.host)
                     dist_mech_context = driver_context.PortContext(
                         self, context, updated_port, network,
                         dist_binding, levels, original_port=original_port)
@@ -1517,7 +1519,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             context, id, host, router_id=device_id)
                     network = self.get_network(context,
                                                orig_port['network_id'])
-                    levels = db.get_binding_levels(context, id, host)
+                    levels = db.get_binding_level_objs(context, id, host)
                     mech_context = driver_context.PortContext(self,
                         context, orig_port, network,
                         binding, levels, original_port=orig_port)
@@ -1581,8 +1583,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 bindings = db.get_distributed_port_bindings(context,
                                                             id)
                 for bind in bindings:
-                    levels = db.get_binding_levels(context, id,
-                                                   bind.host)
+                    levels = db.get_binding_level_objs(context, id, bind.host)
                     kwargs['bind'] = bind
                     kwargs['levels'] = levels
                     registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
@@ -1592,8 +1593,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.mechanism_manager.delete_port_precommit(mech_context)
                     bound_mech_contexts.append(mech_context)
             else:
-                levels = db.get_binding_levels(context, id,
-                                               binding.host)
+                levels = db.get_binding_level_objs(context, id, binding.host)
                 kwargs['bind'] = None
                 kwargs['levels'] = levels
                 registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
@@ -1669,8 +1669,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     LOG.error("Binding info for DVR port %s not found",
                               port_id)
                     return None
-                levels = db.get_binding_levels(plugin_context,
-                                               port_db.id, host)
+                levels = db.get_binding_level_objs(
+                    plugin_context, port_db.id, host)
                 port_context = driver_context.PortContext(
                     self, plugin_context, port, network, binding, levels)
             else:
@@ -1685,8 +1685,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                              "it might have been deleted already.",
                              port_id)
                     return
-                levels = db.get_binding_levels(plugin_context, port_db.id,
-                                               binding.host)
+                levels = db.get_binding_level_objs(
+                    plugin_context, port_db.id, binding.host)
                 port_context = driver_context.PortContext(
                     self, plugin_context, port, network, binding, levels)
 
@@ -1811,7 +1811,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 binding = p_utils.get_port_binding_by_status_and_host(
                     port.port_bindings, const.ACTIVE, raise_if_not_found=True,
                     port_id=port_id)
-                levels = db.get_binding_levels(context, port.id, binding.host)
+                levels = db.get_binding_level_objs(
+                    context, port.id, binding.host)
                 mech_context = driver_context.PortContext(
                     self, context, updated_port, network, binding, levels,
                     original_port=original_port)
@@ -1840,7 +1841,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port.status = db.generate_distributed_port_status(context,
                                                                   port['id'])
                 updated_port = self._make_port_dict(port)
-                levels = db.get_binding_levels(context, port_id, host)
+                levels = db.get_binding_level_objs(context, port_id, host)
                 mech_context = (driver_context.PortContext(
                     self, context, updated_port, network,
                     binding, levels, original_port=original_port))
@@ -2184,8 +2185,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 raise n_exc.PortBindingNotFound(port_id=port_id, host=host)
             network = self.get_network(context, port_db['network_id'])
             port_dict = self._make_port_dict(port_db)
-            levels = db.get_binding_levels(context, port_id,
-                                           active_binding.host)
+            levels = db.get_binding_level_objs(context, port_id,
+                                               active_binding.host)
             original_context = driver_context.PortContext(self, context,
                                                           port_dict, network,
                                                           active_binding,
@@ -2197,15 +2198,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 context, port_dict['id'],
                 {port_def.RESOURCE_NAME:
                     {'status': const.PORT_STATUS_DOWN}})
-            levels = db.get_binding_levels(context, port_id,
-                                           inactive_binding.host)
+            levels = db.get_binding_level_objs(context, port_id,
+                                               inactive_binding.host)
             bind_context = driver_context.PortContext(self, context, port_dict,
                                                       network,
                                                       inactive_binding, levels)
         for count in range(MAX_BIND_TRIES):
             cur_context, _, try_again = self._commit_port_binding(
                 original_context, bind_context, need_notify=True,
-                try_again=True)
+                try_again=True, update_binding_levels=False)
             if not try_again:
                 self.notifier.binding_deactivate(context, port_id,
                                                  active_binding.host,
