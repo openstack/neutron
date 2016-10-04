@@ -26,6 +26,7 @@ from sqlalchemy import sql
 from neutron._i18n import _LI, _LW
 from neutron.db import agents_db
 from neutron.db import api as db_api
+from neutron.db.models import agent as agent_model
 from neutron.db.models import segment as segment_model
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import availability_zone as az_ext
@@ -58,11 +59,11 @@ class AutoScheduler(object):
             if not net_ids:
                 LOG.debug('No non-hosted networks')
                 return False
-            query = context.session.query(agents_db.Agent)
-            query = query.filter(agents_db.Agent.agent_type ==
-                                 constants.AGENT_TYPE_DHCP,
-                                 agents_db.Agent.host == host,
-                                 agents_db.Agent.admin_state_up == sql.true())
+            query = context.session.query(agent_model.Agent)
+            query = query.filter(
+                agent_model.Agent.agent_type == constants.AGENT_TYPE_DHCP,
+                agent_model.Agent.host == host,
+                agent_model.Agent.admin_state_up == sql.true())
             dhcp_agents = query.all()
 
             query = context.session.query(

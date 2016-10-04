@@ -22,6 +22,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 import testtools
 
+from neutron.agent.common import utils as agent_utils
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as n_const
 from neutron import context
@@ -200,7 +201,7 @@ class L3HATestCase(L3HATestFramework):
         router = self._create_router()
         self.plugin.update_routers_states(
             self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
-        with mock.patch.object(agents_db.AgentDbMixin, 'is_agent_down',
+        with mock.patch.object(agent_utils, 'is_agent_down',
                                return_value=True):
             self._assert_ha_state_for_agent_is_standby(router, self.agent1)
 

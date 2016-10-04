@@ -14,7 +14,7 @@ from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.db import agents_db
+from neutron.db.models import agent as agent_model
 
 
 class NetworkDhcpAgentBinding(model_base.BASEV2):
@@ -23,7 +23,7 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("networks.id", ondelete='CASCADE'),
                            primary_key=True)
-    dhcp_agent = orm.relation(agents_db.Agent)
+    dhcp_agent = orm.relation(agent_model.Agent)
     dhcp_agent_id = sa.Column(sa.String(36),
                               sa.ForeignKey("agents.id",
                                             ondelete='CASCADE'),
