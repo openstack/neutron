@@ -81,7 +81,8 @@ class Transaction(api.Transaction):
         pass
 
     def post_commit(self, txn):
-        pass
+        for command in self.commands:
+            command.post_commit(txn)
 
     def do_commit(self):
         self.start_time = time.time()
@@ -144,6 +145,7 @@ class NeutronOVSDBTransaction(Transaction):
         txn.expected_ifaces = set()
 
     def post_commit(self, txn):
+        super(NeutronOVSDBTransaction, self).post_commit(txn)
         # ovs-vsctl only logs these failures and does not return nonzero
         try:
             self.do_post_commit(txn)

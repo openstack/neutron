@@ -381,4 +381,5 @@ def py_to_val(pyval):
     elif pyval == '':
         return '""'
     else:
-        return pyval
+        # NOTE(twilson) If a Command object, return its record_id as a value
+        return getattr(pyval, "record_id", pyval)

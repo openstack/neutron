@@ -14,6 +14,7 @@
 
 import mock
 
+from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import idlutils
 from neutron.tests import base
 
@@ -45,6 +46,14 @@ class MockRow(object):
         if attr in self._table.columns:
             return self._table.columns[attr].test_value
         return super(MockRow, self).__getattr__(attr)
+
+
+class MockCommand(api.Command):
+    def __init__(self, result):
+        self.result = result
+
+    def execute(self, **kwargs):
+        pass
 
 
 class TestIdlUtils(base.BaseTestCase):
@@ -98,3 +107,38 @@ class TestIdlUtils(base.BaseTestCase):
             row, ("comments", "=", ["c", "b"])))
         self.assertTrue(idlutils.condition_match(
             row, ("comments", "!=", ["d"])))
+
+    def test_db_replace_record_dict(self):
+        obj = {'a': 1, 'b': 2}
+        self.assertIs(obj, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record_dict_cmd(self):
+        obj = {'a': 1, 'b': MockCommand(2)}
+        res = {'a': 1, 'b': 2}
+        self.assertEqual(res, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record_list(self):
+        obj = [1, 2, 3]
+        self.assertIs(obj, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record_list_cmd(self):
+        obj = [1, MockCommand(2), 3]
+        res = [1, 2, 3]
+        self.assertEqual(res, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record_tuple(self):
+        obj = (1, 2, 3)
+        self.assertIs(obj, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record_tuple_cmd(self):
+        obj = (1, MockCommand(2), 3)
+        res = (1, 2, 3)
+        self.assertEqual(res, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record(self):
+        obj = "test"
+        self.assertIs(obj, idlutils.db_replace_record(obj))
+
+    def test_db_replace_record_cmd(self):
+        obj = MockCommand("test")
+        self.assertEqual("test", idlutils.db_replace_record(obj))

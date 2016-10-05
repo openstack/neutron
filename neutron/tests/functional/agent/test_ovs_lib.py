@@ -334,6 +334,24 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertIsNone(max_rate)
         self.assertIsNone(burst)
 
+    def test_db_create_references(self):
+        with self.ovs.ovsdb.transaction(check_error=True) as txn:
+            queue = txn.add(self.ovs.ovsdb.db_create("Queue",
+                                                     other_config={'a': '1'}))
+            qos = txn.add(self.ovs.ovsdb.db_create("QoS", queues={0: queue}))
+            txn.add(self.ovs.ovsdb.db_set("Port", self.br.br_name,
+                                          ('qos', qos)))
+
+        def cleanup():
+            with self.ovs.ovsdb.transaction() as t:
+                t.add(self.ovs.ovsdb.db_destroy("QoS", qos.result))
+                t.add(self.ovs.ovsdb.db_destroy("Queue", queue.result))
+                t.add(self.ovs.ovsdb.db_clear("Port", self.br.br_name, 'qos'))
+
+        self.addCleanup(cleanup)
+        val = self.ovs.ovsdb.db_get("Port", self.br.br_name, 'qos').execute()
+        self.assertEqual(qos.result, val)
+
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 
