@@ -403,6 +403,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
+| ovs-fw_                       | A bug affecting OVS firewall            | Jakub Libosvar       |
++-------------------------------+-----------------------------------------+----------------------+
 | ovs-lib_                      | A bug affecting OVS Lib                 | Terry Wilson         |
 +-------------------------------+-----------------------------------------+----------------------+
 | py34_                         | Issues affecting the Python 3 porting   | Cedric Brandily      |
@@ -677,6 +679,14 @@ OVS
 
 * `OVS - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovs>`_
 * `OVS - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovs>`_
+
+.. _ovs-fw:
+
+OVS Firewall
+++++++++++++
+
+* `OVS Firewall - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovs-fw>`_
+* `OVS Firewall - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovs-fw>`_
 
 .. _ovs-lib:
 
