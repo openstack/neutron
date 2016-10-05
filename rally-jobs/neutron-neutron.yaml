@@ -77,7 +77,7 @@
       runner:
         type: "constant"
         times: 40
-        concurrency: 20
+        concurrency: 4
       context:
         users:
           tenants: 1
