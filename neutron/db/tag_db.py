@@ -12,23 +12,12 @@
 #    under the License.
 #
 
-from neutron_lib.db import model_base
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import aliased
 
-from neutron.db import standard_attr
+from neutron.common import _deprecate
+from neutron.db.models import tag as tag_model
 
-
-class Tag(model_base.BASEV2):
-    standard_attr_id = sa.Column(
-        sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),
-        sa.ForeignKey(standard_attr.StandardAttribute.id, ondelete="CASCADE"),
-        nullable=False, primary_key=True)
-    tag = sa.Column(sa.String(60), nullable=False, primary_key=True)
-    standard_attr = orm.relationship(
-        'StandardAttribute',
-        backref=orm.backref('tags', lazy='joined', viewonly=True))
+_deprecate._moved_global('Tag', new_module=tag_model)
 
 
 def _get_tag_list(tag_strings):
@@ -64,40 +53,43 @@ def apply_tag_filters(model, query, filters):
     if 'tags' in filters:
         tags = _get_tag_list(filters.pop('tags'))
         first_tag = tags.pop(0)
-        query = query.join(Tag,
-            model.standard_attr_id == Tag.standard_attr_id)
-        query = query.filter(Tag.tag == first_tag)
+        query = query.join(tag_model.Tag,
+            model.standard_attr_id == tag_model.Tag.standard_attr_id)
+        query = query.filter(tag_model.Tag.tag == first_tag)
 
         for tag in tags:
-            tag_alias = aliased(Tag)
+            tag_alias = aliased(tag_model.Tag)
             query = query.join(tag_alias,
                 model.standard_attr_id == tag_alias.standard_attr_id)
             query = query.filter(tag_alias.tag == tag)
 
     if 'tags-any' in filters:
         tags = _get_tag_list(filters.pop('tags-any'))
-        query = query.join(Tag,
-            model.standard_attr_id == Tag.standard_attr_id)
-        query = query.filter(Tag.tag.in_(tags))
+        query = query.join(tag_model.Tag,
+            model.standard_attr_id == tag_model.Tag.standard_attr_id)
+        query = query.filter(tag_model.Tag.tag.in_(tags))
 
     if 'not-tags' in filters:
         tags = _get_tag_list(filters.pop('not-tags'))
         first_tag = tags.pop(0)
-        subq = query.session.query(Tag.standard_attr_id)
-        subq = subq.filter(Tag.tag == first_tag)
+        subq = query.session.query(tag_model.Tag.standard_attr_id)
+        subq = subq.filter(tag_model.Tag.tag == first_tag)
 
         for tag in tags:
-            tag_alias = aliased(Tag)
+            tag_alias = aliased(tag_model.Tag)
             subq = subq.join(tag_alias,
-                Tag.standard_attr_id == tag_alias.standard_attr_id)
+                tag_model.Tag.standard_attr_id == tag_alias.standard_attr_id)
             subq = subq.filter(tag_alias.tag == tag)
 
         query = query.filter(~model.standard_attr_id.in_(subq))
 
     if 'not-tags-any' in filters:
         tags = _get_tag_list(filters.pop('not-tags-any'))
-        subq = query.session.query(Tag.standard_attr_id)
-        subq = subq.filter(Tag.tag.in_(tags))
+        subq = query.session.query(tag_model.Tag.standard_attr_id)
+        subq = subq.filter(tag_model.Tag.tag.in_(tags))
         query = query.filter(~model.standard_attr_id.in_(subq))
 
     return query
+
+
+_deprecate._MovedGlobals()

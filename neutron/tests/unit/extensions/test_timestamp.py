@@ -20,8 +20,8 @@ from oslo_utils import timeutils
 
 from neutron import context
 from neutron.db import db_base_plugin_v2
+from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
-from neutron.db import tag_db as tag_module
 from neutron.extensions import timestamp
 from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -256,8 +256,8 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
         ctx = context.get_admin_context()
         for tag in tags:
             with ctx.session.begin(subtransactions=True):
-                tag_db = tag_module.Tag(standard_attr_id=standard_attr_id,
-                                        tag=tag)
+                tag_db = tag_model.Tag(standard_attr_id=standard_attr_id,
+                                       tag=tag)
                 ctx.session.add(tag_db)
 
     def test_update_timpestamp(self):
