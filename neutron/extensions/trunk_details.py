@@ -49,6 +49,9 @@ class Trunk_details(extensions.ExtensionDescriptor):
     def get_updated(cls):
         return "2016-01-01T10:00:00-00:00"
 
+    def get_required_extensions(self):
+        return ["trunk"]
+
     def get_extended_resources(self, version):
         if version == "2.0":
             return EXTENDED_ATTRIBUTES_2_0
