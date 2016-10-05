@@ -16,7 +16,6 @@ from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.db.models import securitygroup as sg_models
-from neutron.db import models_v2
 from neutron.objects import base as obj_base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import network
@@ -98,11 +97,9 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
         return port
 
     def _create_test_network(self):
-        # TODO(ihrachys): replace with network.create() once we get an object
-        # implementation for networks
-        self._network = obj_db_api.create_object(self.context,
-                                                 models_v2.Network,
-                                                 {'name': 'test-network1'})
+        self._network = network.Network(self.context,
+                                        name='test-network1')
+        self._network.create()
 
     def _make_object(self, fields):
         fields = obj_test_base.get_non_synthetic_fields(

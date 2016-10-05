@@ -32,12 +32,12 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
-from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron import objects
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import network as net_obj
 from neutron.objects import ports
 from neutron.objects import rbac_db
 from neutron.objects import subnet
@@ -1090,17 +1090,16 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                     ]
 
     def _create_test_network(self):
-        # TODO(ihrachys): replace with network.create() once we get an object
-        # implementation for networks
-        self._network = obj_db_api.create_object(self.context,
-                                                 models_v2.Network,
-                                                 {'name': 'test-network1'})
+        self._network = net_obj.Network(self.context,
+                                       name='test-network1')
+        self._network.create()
 
     def _create_network(self):
         name = "test-network-%s" % tools.get_random_string(4)
-        return obj_db_api.create_object(self.context,
-                                        models_v2.Network,
-                                        {'name': name})
+        _network = net_obj.Network(self.context,
+                                   name=name)
+        _network.create()
+        return _network
 
     def _create_test_subnet(self, network):
         test_subnet = {
