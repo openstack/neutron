@@ -798,6 +798,22 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             with self.port():
                 self.assertTrue(cp.called)
 
+    def test_create_update_get_port_same_fixed_ips_order(self):
+        ctx = context.get_admin_context()
+        plugin = manager.NeutronManager.get_plugin()
+        initial_fixed_ips = [{'ip_address': '10.0.0.5'},
+                             {'ip_address': '10.0.0.7'},
+                             {'ip_address': '10.0.0.6'}]
+        with self.port(fixed_ips=initial_fixed_ips) as port:
+            show = plugin.get_port(ctx, port['port']['id'])
+            self.assertEqual(port['port']['fixed_ips'], show['fixed_ips'])
+            new_fixed_ips = list(reversed(initial_fixed_ips))
+            port['port']['fixed_ips'] = new_fixed_ips
+            updated = plugin.update_port(ctx, port['port']['id'], port)
+            self.assertEqual(show['fixed_ips'], updated['fixed_ips'])
+            updated = plugin.get_port(ctx, port['port']['id'])
+            self.assertEqual(show['fixed_ips'], updated['fixed_ips'])
+
     def test_update_port_fixed_ip_changed(self):
         ctx = context.get_admin_context()
         plugin = manager.NeutronManager.get_plugin()
