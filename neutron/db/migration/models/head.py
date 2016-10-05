@@ -29,7 +29,6 @@ from neutron.common import utils
 from neutron.db import agents_db  # noqa
 from neutron.db import agentschedulers_db  # noqa
 from neutron.db import dns_db  # noqa
-from neutron.db import dvr_mac_db  # noqa
 from neutron.db.extra_dhcp_opt import models as edo_models  # noqa
 from neutron.db import flavors_db  # noqa
 from neutron.db import l3_dvrscheduler_db  # noqa
