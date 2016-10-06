@@ -33,6 +33,7 @@ from oslo_log import log as logging
 from oslo_rootwrap import client
 from oslo_utils import encodeutils
 from oslo_utils import excutils
+from six import iterbytes
 from six.moves import http_client as httplib
 
 from neutron._i18n import _, _LE
@@ -155,8 +156,7 @@ def get_interface_mac(interface):
     dev = interface[:constants.DEVICE_NAME_MAX_LEN]
     dev = encodeutils.to_utf8(dev)
     info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', dev))
-    return ''.join(['%02x:' % ord(char)
-                    for char in info[MAC_START:MAC_END]])[:-1]
+    return ':'.join(["%02x" % b for b in iterbytes(info[MAC_START:MAC_END])])
 
 
 def find_child_pids(pid):
