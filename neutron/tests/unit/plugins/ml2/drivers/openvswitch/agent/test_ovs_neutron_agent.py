@@ -129,7 +129,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                   'setup_ancillary_bridges',
                                   return_value=[]),\
-                mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
@@ -182,7 +182,7 @@ class TestOvsNeutronAgent(object):
             mock.patch.object(self.mod_agent.OVSNeutronAgent,
                            'setup_ancillary_bridges',
                            return_value=[]), \
-            mock.patch('neutron.agent.linux.utils.get_interface_mac',
+            mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
                     return_value='00:00:00:00:00:01'), \
             mock.patch(
                 'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'), \
@@ -215,7 +215,7 @@ class TestOvsNeutronAgent(object):
             mock.patch.object(self.mod_agent.OVSNeutronAgent,
                               'setup_ancillary_bridges',
                               return_value=[]), \
-            mock.patch('neutron.agent.linux.utils.get_interface_mac',
+            mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
                        return_value='00:00:00:00:00:01'), \
             mock.patch(
                 'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'), \
@@ -2162,7 +2162,7 @@ class AncillaryBridgesTest(object):
 
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
-                mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
                            return_value='00:00:00:00:00:01'),\
                 mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges',
                            return_value=bridges),\
@@ -2271,7 +2271,7 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                   'setup_ancillary_bridges',
                                   return_value=[]),\
-                mock.patch('neutron.agent.linux.utils.get_interface_mac',
+                mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
                            return_value='00:00:00:00:00:01'),\
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\

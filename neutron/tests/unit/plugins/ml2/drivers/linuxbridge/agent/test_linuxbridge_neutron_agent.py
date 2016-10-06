@@ -860,8 +860,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
     def test_get_agent_id_bridge_mappings(self):
         lbm = get_linuxbridge_manager(BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
-        with mock.patch.object(utils,
-                               "get_interface_mac",
+        with mock.patch.object(ip_lib,
+                               "get_device_mac",
                                return_value='16:63:69:10:a0:59') as mock_gim:
 
             agent_id = lbm.get_agent_id()
@@ -881,8 +881,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                               'get_devices',
                               return_value=devices_mock), \
                 mock.patch.object(
-                    utils,
-                    "get_interface_mac",
+                    ip_lib,
+                    "get_device_mac",
                     return_value='16:63:69:10:a0:59') as mock_gim:
 
             agent_id = lbm.get_agent_id()

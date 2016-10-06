@@ -25,7 +25,6 @@ from oslo_service import service
 
 from neutron._i18n import _LE, _LI
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import topics
@@ -114,7 +113,7 @@ class MacvtapManager(amb.CommonAgentManagerBase):
     def get_agent_id(self):
         devices = ip_lib.IPWrapper().get_devices(True)
         if devices:
-            mac = utils.get_interface_mac(devices[0].name)
+            mac = ip_lib.get_device_mac(devices[0].name)
             return 'macvtap%s' % mac.replace(":", "")
         else:
             LOG.error(_LE("Unable to obtain MAC address for unique ID. "
@@ -133,7 +132,7 @@ class MacvtapManager(amb.CommonAgentManagerBase):
         self.mac_device_name_mappings = dict()
         for device_name in all_device_names:
             if device_name.startswith(constants.MACVTAP_DEVICE_PREFIX):
-                mac = utils.get_interface_mac(device_name)
+                mac = ip_lib.get_device_mac(device_name)
                 self.mac_device_name_mappings[mac] = device_name
                 devices.add(mac)
         return devices

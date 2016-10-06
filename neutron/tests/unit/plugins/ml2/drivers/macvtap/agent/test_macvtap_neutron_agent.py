@@ -23,7 +23,6 @@ from oslo_config import cfg
 from oslo_service import service
 
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.common import utils as n_utils
@@ -119,7 +118,7 @@ class TestMacvtapManager(base.BaseTestCase):
         self.mgr.mac_device_name_mappings = {'foo': 'bar'}
         with mock.patch.object(os, 'listdir', return_value=listing)\
             as mock_ld,\
-            mock.patch.object(utils, 'get_interface_mac') as mock_gdn:
+            mock.patch.object(ip_lib, 'get_device_mac') as mock_gdn:
             mock_gdn.side_effect = ['mac0', 'mac1']
 
             result = self.mgr.get_all_devices()
@@ -136,7 +135,7 @@ class TestMacvtapManager(base.BaseTestCase):
         mock_devices = [ip_lib.IPDevice('macvtap1')]
         with mock.patch.object(ip_lib.IPWrapper, 'get_devices',
                                return_value=mock_devices),\
-            mock.patch.object(utils, 'get_interface_mac',
+            mock.patch.object(ip_lib, 'get_device_mac',
                               return_value='foo:bar'):
             self.assertEqual('macvtapfoobar', self.mgr.get_agent_id())
 

@@ -933,6 +933,12 @@ def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
         return True
 
 
+def get_device_mac(device_name, namespace=None):
+    """Return the MAC address of the device."""
+    dev = device_name[:constants.DEVICE_NAME_MAX_LEN]
+    return IPDevice(dev, namespace=namespace).link.address
+
+
 def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
 
