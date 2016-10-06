@@ -282,6 +282,16 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertTrue(fake_str.split.called)
         self.assertEqual(retval, [ip_lib.IPDevice('lo', namespace='foo')])
 
+    @mock.patch('neutron.agent.common.utils.execute')
+    def test_get_devices_exclude_loopback_and_gre(self, mocked_execute):
+        device_name = 'somedevice'
+        mocked_execute.return_value = 'lo gre0 gretap0 ' + device_name
+        devices = ip_lib.IPWrapper(namespace='foo').get_devices(
+            exclude_loopback=True, exclude_gre_devices=True)
+        somedevice = devices.pop()
+        self.assertEqual(device_name, somedevice.name)
+        self.assertFalse(devices)
+
     def test_get_namespaces_non_root(self):
         self.config(group='AGENT', use_helper_for_ns_read=False)
         self.execute.return_value = '\n'.join(NETNS_SAMPLE)
@@ -389,7 +399,7 @@ class TestIpWrapper(base.BaseTestCase):
             get_devices.return_value = []
 
             self.assertTrue(ip.namespace_is_empty())
-            get_devices.assert_called_once_with(exclude_loopback=True)
+            self.assertTrue(get_devices.called)
 
     def test_namespace_is_empty(self):
         ip = ip_lib.IPWrapper(namespace='ns')
@@ -397,7 +407,7 @@ class TestIpWrapper(base.BaseTestCase):
             get_devices.return_value = [mock.Mock()]
 
             self.assertFalse(ip.namespace_is_empty())
-            get_devices.assert_called_once_with(exclude_loopback=True)
+            self.assertTrue(get_devices.called)
 
     def test_garbage_collect_namespace_does_not_exist(self):
         with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd_cls:
