@@ -45,6 +45,13 @@ OPTS = [
     cfg.IntOpt('ha_vrrp_advert_int',
                default=2,
                help=_('The advertisement interval in seconds')),
+    cfg.IntOpt('ha_keepalived_state_change_server_threads',
+               default=(1 + common_utils.cpu_count()) // 2,
+               min=1,
+               help=_('Number of concurrent threads for '
+                      'keepalived server connection requests.'
+                      'More threads create a higher CPU load '
+                      'on the agent node.')),
 ]
 
 
@@ -79,7 +86,8 @@ class L3AgentKeepalivedStateChangeServer(object):
 
     def run(self):
         server = agent_utils.UnixDomainWSGIServer(
-            'neutron-keepalived-state-change')
+            'neutron-keepalived-state-change',
+            num_threads=self.conf.ha_keepalived_state_change_server_threads)
         server.start(KeepalivedStateChangeHandler(self.agent),
                      self.get_keepalived_state_change_socket_path(self.conf),
                      workers=0,
