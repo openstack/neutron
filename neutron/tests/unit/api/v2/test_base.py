@@ -51,7 +51,8 @@ EXTDIR = os.path.join(base.ROOTDIR, 'unit/extensions')
 _uuid = uuidutils.generate_uuid
 
 
-def _get_path(resource, id=None, action=None, fmt=None):
+def _get_path(resource, id=None, action=None,
+              fmt=None, endpoint=None):
     path = '/%s' % resource
 
     if id is not None:
@@ -62,6 +63,9 @@ def _get_path(resource, id=None, action=None, fmt=None):
 
     if fmt is not None:
         path = path + '.%s' % fmt
+
+    if endpoint is not None:
+        path = path + '/%s' % endpoint
 
     return path
 

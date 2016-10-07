@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Implements a new extension, ``quota_details`` which extends existing quota API
+    to show detailed information for a specified tenant. The new API shows
+    details such as ``limits``, ``used``, ``reserved``.

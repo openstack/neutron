@@ -128,6 +128,9 @@ class QuotaSetsController(wsgi.Controller):
 class Quotasv2(api_extensions.ExtensionDescriptor):
     """Quotas management support."""
 
+    extensions.register_custom_supported_check(
+        RESOURCE_COLLECTION, lambda: True, plugin_agnostic=True)
+
     @classmethod
     def get_name(cls):
         return "Quota management support"

@@ -124,7 +124,13 @@ class NetworkClientJSON(service_client.RestClient):
             # list of field's name. An example:
             # {'fields': ['id', 'name']}
             plural = self.pluralize(resource_name)
-            uri = '%s/%s' % (self.get_uri(plural), resource_id)
+            if 'details_quotas' in plural:
+                details, plural = plural.split('_')
+                uri = '%s/%s/%s' % (self.get_uri(plural),
+                                    resource_id, details)
+            else:
+                uri = '%s/%s' % (self.get_uri(plural), resource_id)
+
             if fields:
                 uri += '?' + urlparse.urlencode(fields, doseq=1)
             resp, body = self.get(uri)

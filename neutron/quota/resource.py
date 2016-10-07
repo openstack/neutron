@@ -234,27 +234,17 @@ class TrackedResource(BaseResource):
         # Update quota usage
         return self._resync(context, tenant_id, in_use)
 
-    def count(self, context, _plugin, tenant_id, resync_usage=True):
-        """Return the current usage count for the resource.
+    def count_used(self, context, tenant_id, resync_usage=True):
+        """Returns the current usage count for the resource.
 
-        This method will fetch aggregate information for resource usage
-        data, unless usage data are marked as "dirty".
-        In the latter case resource usage will be calculated counting
-        rows for tenant_id in the resource's database model.
-        Active reserved amount are instead always calculated by summing
-        amounts for matching records in the 'reservations' database model.
-
-        The _plugin and _resource parameters are unused but kept for
-        compatibility with the signature of the count method for
-        CountableResource instances.
+        :param context: The request context.
+        :param tenant_id: The ID of the tenant
+        :param resync_usage: Default value is set to True. Syncs
+            with in_use usage.
         """
         # Load current usage data, setting a row-level lock on the DB
         usage_info = quota_api.get_quota_usage_by_resource_and_tenant(
             context, self.name, tenant_id)
-        # Always fetch reservations, as they are not tracked by usage counters
-        reservations = quota_api.get_reservations_for_resources(
-            context, tenant_id, [self.name])
-        reserved = reservations.get(self.name, 0)
 
         # If dirty or missing, calculate actual resource usage querying
         # the database and set/create usage info data
@@ -287,7 +277,26 @@ class TrackedResource(BaseResource):
                        "Used quota:%(used)d."),
                       {'resource': self.name,
                        'used': usage_info.used})
-        return usage_info.used + reserved
+        return usage_info.used
+
+    def count_reserved(self, context, tenant_id):
+        """Return the current reservation count for the resource."""
+        # NOTE(princenana) Current implementation of reservations
+        # is ephemeral and returns the default value
+        reservations = quota_api.get_reservations_for_resources(
+            context, tenant_id, [self.name])
+        reserved = reservations.get(self.name, 0)
+        return reserved
+
+    def count(self, context, _plugin, tenant_id, resync_usage=True):
+        """Return the count of the resource.
+
+        The _plugin parameter is unused but kept for
+        compatibility with the signature of the count method for
+        CountableResource instances.
+        """
+        return (self.count_used(context, tenant_id, resync_usage) +
+                self.count_reserved(context, tenant_id))
 
     def _except_bulk_delete(self, delete_context):
         if delete_context.mapper.class_ == self._model_class:
