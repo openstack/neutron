@@ -40,6 +40,7 @@ OPTS = [
 
 
 LOOPBACK_DEVNAME = 'lo'
+GRE_TUNNEL_DEVICE_NAMES = ['gre0', 'gretap0']
 
 SYS_NET_PATH = '/sys/class/net'
 DEFAULT_GW_PATTERN = re.compile(r"via (\S+)")
@@ -118,7 +119,7 @@ class IPWrapper(SubProcessBase):
     def device(self, name):
         return IPDevice(name, namespace=self.namespace)
 
-    def get_devices(self, exclude_loopback=False):
+    def get_devices(self, exclude_loopback=False, exclude_gre_devices=False):
         retval = []
         if self.namespace:
             # we call out manually because in order to avoid screen scraping
@@ -137,7 +138,8 @@ class IPWrapper(SubProcessBase):
             )
 
         for name in output:
-            if exclude_loopback and name == LOOPBACK_DEVNAME:
+            if (exclude_loopback and name == LOOPBACK_DEVNAME or
+                    exclude_gre_devices and name in GRE_TUNNEL_DEVICE_NAMES):
                 continue
             retval.append(IPDevice(name, namespace=self.namespace))
 
@@ -201,7 +203,8 @@ class IPWrapper(SubProcessBase):
         return ip
 
     def namespace_is_empty(self):
-        return not self.get_devices(exclude_loopback=True)
+        return not self.get_devices(exclude_loopback=True,
+                                    exclude_gre_devices=True)
 
     def garbage_collect_namespace(self):
         """Conditionally destroy the namespace if it is empty."""
