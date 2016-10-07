@@ -10,62 +10,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.db import model_base
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LI
-from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.db import models_v2
-from neutron.db import standard_attr
-from neutron.extensions import segment
+from neutron.common import _deprecate
+from neutron.db.models import segment as segments_model
+
+_deprecate._moved_global('NetworkSegment', new_module=segments_model)
 
 LOG = logging.getLogger(__name__)
 
-
-"""
-Some standalone plugins need a DB table to store provider
-network information. Initially there was no such table,
-but in Mitaka the ML2 NetworkSegment table was promoted here.
-"""
-
-
-class NetworkSegment(standard_attr.HasStandardAttributes,
-                     model_base.BASEV2, model_base.HasId):
-    """Represent persistent state of a network segment.
-
-    A network segment is a portion of a neutron network with a
-    specific physical realization. A neutron network can consist of
-    one or more segments.
-    """
-
-    network_id = sa.Column(sa.String(36),
-                           sa.ForeignKey('networks.id', ondelete="CASCADE"),
-                           nullable=False)
-    network_type = sa.Column(sa.String(32), nullable=False)
-    physical_network = sa.Column(sa.String(64))
-    segmentation_id = sa.Column(sa.Integer)
-    is_dynamic = sa.Column(sa.Boolean, default=False, nullable=False,
-                           server_default=sa.sql.false())
-    segment_index = sa.Column(sa.Integer, nullable=False, server_default='0')
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN),
-                     nullable=True)
-    network = orm.relationship(models_v2.Network,
-                               backref=orm.backref("segments",
-                                                   lazy='joined',
-                                                   cascade='delete'))
-    api_collections = [segment.SEGMENTS]
-
-
-NETWORK_TYPE = NetworkSegment.network_type.name
-PHYSICAL_NETWORK = NetworkSegment.physical_network.name
-SEGMENTATION_ID = NetworkSegment.segmentation_id.name
+NETWORK_TYPE = segments_model.NetworkSegment.network_type.name
+PHYSICAL_NETWORK = segments_model.NetworkSegment.physical_network.name
+SEGMENTATION_ID = segments_model.NetworkSegment.segmentation_id.name
 
 
 def _make_segment_dict(record):
@@ -79,7 +41,7 @@ def _make_segment_dict(record):
 def add_network_segment(context, network_id, segment, segment_index=0,
                         is_dynamic=False):
     with context.session.begin(subtransactions=True):
-        record = NetworkSegment(
+        record = segments_model.NetworkSegment(
             id=uuidutils.generate_uuid(),
             network_id=network_id,
             network_type=segment.get(NETWORK_TYPE),
@@ -112,9 +74,10 @@ def get_networks_segments(session, network_ids, filter_dynamic=False):
         return {}
 
     with session.begin(subtransactions=True):
-        query = (session.query(NetworkSegment).
-                 filter(NetworkSegment.network_id.in_(network_ids)).
-                 order_by(NetworkSegment.segment_index))
+        query = (session.query(segments_model.NetworkSegment).
+                 filter(segments_model.NetworkSegment.network_id
+                        .in_(network_ids)).
+                 order_by(segments_model.NetworkSegment.segment_index))
         if filter_dynamic is not None:
             query = query.filter_by(is_dynamic=filter_dynamic)
         records = query.all()
@@ -127,7 +90,7 @@ def get_networks_segments(session, network_ids, filter_dynamic=False):
 def get_segment_by_id(session, segment_id):
     with session.begin(subtransactions=True):
         try:
-            record = (session.query(NetworkSegment).
+            record = (session.query(segments_model.NetworkSegment).
                       filter_by(id=segment_id).
                       one())
             return _make_segment_dict(record)
@@ -139,7 +102,7 @@ def get_dynamic_segment(session, network_id, physical_network=None,
                         segmentation_id=None):
         """Return a dynamic segment for the filters provided if one exists."""
         with session.begin(subtransactions=True):
-            query = (session.query(NetworkSegment).
+            query = (session.query(segments_model.NetworkSegment).
                      filter_by(network_id=network_id, is_dynamic=True))
             if physical_network:
                 query = query.filter_by(physical_network=physical_network)
@@ -163,5 +126,8 @@ def get_dynamic_segment(session, network_id, physical_network=None,
 def delete_network_segment(session, segment_id):
     """Release a dynamic segment for the params provided if one exists."""
     with session.begin(subtransactions=True):
-        (session.query(NetworkSegment).
+        (session.query(segments_model.NetworkSegment).
          filter_by(id=segment_id).delete())
+
+
+_deprecate._MovedGlobals()
