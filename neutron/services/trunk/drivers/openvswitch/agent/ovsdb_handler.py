@@ -32,6 +32,7 @@ from neutron import context as n_context
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_agent_constants
 from neutron.services.trunk import constants
+from neutron.services.trunk.drivers.openvswitch.agent import exceptions
 from neutron.services.trunk.drivers.openvswitch.agent \
     import trunk_manager as tman
 from neutron.services.trunk.drivers.openvswitch import constants as t_const
@@ -188,7 +189,7 @@ class OVSDBHandler(object):
                           "%(bridge_name)s: %(err)s"),
                       {'bridge_name': bridge.br_name,
                        'err': e})
-        except RuntimeError as e:
+        except exceptions.ParentPortNotFound as e:
             LOG.error(_LE("Failed to get parent port for bridge "
                           "%(bridge_name)s: %(err)s"),
                       {'bridge_name': bridge.br_name,
@@ -275,8 +276,9 @@ class OVSDBHandler(object):
         try:
             self._update_trunk_metadata(
                 trunk_bridge, parent_port, trunk_id, subport_ids)
-        except RuntimeError:
-            LOG.error(_LE("Failed to store metadata for trunk %s"), trunk_id)
+        except (RuntimeError, exceptions.ParentPortNotFound) as e:
+            LOG.error(_LE("Failed to store metadata for trunk %(trunk_id)s: "
+                          "%(reason)s"), {'trunk_id': trunk_id, 'reason': e})
             # NOTE(status_police): Trunk bridge has stale metadata now, it
             # might cause troubles during deletion. Signal a DEGRADED status;
             # if the user undo/redo the operation things may go back to
@@ -305,13 +307,20 @@ class OVSDBHandler(object):
             port = None
             self._update_trunk_metadata(
                 bridge, port, trunk_id, subport_ids, wire=False)
-        except RuntimeError:
+        except RuntimeError as e:
             # NOTE(status_police): Trunk bridge has stale metadata now, it
             # might cause troubles during deletion. Signal a DEGRADED status;
             # if the user undo/redo the operation things may go back to
             # normal.
-            LOG.error(_LE("Failed to store metadata for trunk %s"), trunk_id)
+            LOG.error(_LE("Failed to store metadata for trunk %(trunk_id)s: "
+                          "%(reason)s"), {'trunk_id': trunk_id, 'reason': e})
             return constants.DEGRADED_STATUS
+        except exceptions.ParentPortNotFound as e:
+            # If a user deletes/migrates a VM and remove subports from a trunk
+            # in short sequence, there is a chance that we hit this spot in
+            # that the trunk may still be momentarily bound to the agent. We
+            # should not mark the status as DEGRADED in this case.
+            LOG.debug(e)
 
         return self._get_current_status(subport_ids, ids)
 
@@ -327,9 +336,7 @@ class OVSDBHandler(object):
         for trunk_br_port in trunk_br_ports:
             if not is_trunk_service_port(trunk_br_port['name']):
                 return trunk_br_port
-        raise RuntimeError(
-            "Can't find parent port for trunk bridge %s" %
-            trunk_bridge.br_name)
+        raise exceptions.ParentPortNotFound(bridge=trunk_bridge.br_name)
 
     def _wire_trunk(self, trunk_br, port, rewire=False):
         """Wire trunk bridge with integration bridge.
