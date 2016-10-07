@@ -470,8 +470,8 @@ class TunnelTest(object):
         self._verify_mock_calls()
 
     def test_port_bound(self):
-        vlan_mapping = {'segmentation_id': LS_ID,
-                        'physical_network': None,
+        vlan_mapping = {'segmentation_id': str(LS_ID),
+                        'physical_network': 'None',
                         'net_uuid': NET_UUID,
                         'network_type': 'gre'}
         self.mock_int_bridge_expected += [
