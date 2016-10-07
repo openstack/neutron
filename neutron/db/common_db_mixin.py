@@ -233,7 +233,6 @@ class CommonDbMixin(object):
                 elif key == 'shared' and hasattr(model, 'rbac_entries'):
                     # translate a filter on shared into a query against the
                     # object's rbac entries
-                    query = query.outerjoin(model.rbac_entries)
                     rbac = model.rbac_entries.property.mapper.class_
                     matches = [rbac.target_tenant == '*']
                     if context:
@@ -260,6 +259,12 @@ class CommonDbMixin(object):
                             query.session.query(rbac.object_id).
                             filter(is_shared)
                         )
+                    elif (not context or
+                          not self.model_query_scope(context, model)):
+                        # we only want to join if we aren't using the subquery
+                        # and if we aren't already joined because this is a
+                        # scoped query
+                        query = query.outerjoin(model.rbac_entries)
                     query = query.filter(is_shared)
             for _nam, hooks in six.iteritems(self._model_query_hooks.get(model,
                                                                          {})):
