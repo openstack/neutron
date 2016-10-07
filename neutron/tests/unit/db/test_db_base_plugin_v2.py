@@ -4092,9 +4092,13 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 mock.patch.object(orm.Session, 'add',
                                   side_effect=db_ref_err_for_ipalloc,
                                   autospec=True).start()
+                v6_subnet = {'ip_version': 6,
+                             'cidr': 'fe80::/64',
+                             'gateway_ip': 'fe80::1',
+                             'tenant_id': v4_subnet['subnet']['tenant_id']}
                 mock.patch.object(db_base_plugin_common.DbBasePluginCommon,
                                   '_get_subnet',
-                                  return_value=mock.Mock()).start()
+                                  return_value=v6_subnet).start()
             # Add an IPv6 auto-address subnet to the network
             with mock.patch.object(manager.NeutronManager.get_plugin(),
                                    'update_port') as mock_updated_port:
