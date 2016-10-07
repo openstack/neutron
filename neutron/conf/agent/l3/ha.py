@@ -37,9 +37,10 @@ OPTS = [
                help=_('The advertisement interval in seconds')),
     cfg.IntOpt('ha_keepalived_state_change_server_threads',
                default=(1 + common_utils.cpu_count()) // 2,
+               sample_default='(1 + <num_of_cpus>) / 2',
                min=1,
                help=_('Number of concurrent threads for '
-                      'keepalived server connection requests.'
+                      'keepalived server connection requests. '
                       'More threads create a higher CPU load '
                       'on the agent node.')),
 ]
