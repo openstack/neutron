@@ -165,7 +165,7 @@ class TestOvsNeutronAgent(object):
         else:
             vlan_mapping = {'net_uuid': net_uuid,
                             'network_type': 'local',
-                            'physical_network': None}
+                            'physical_network': 'None'}
             int_br.set_db_attribute.assert_called_once_with(
                 "Port", mock.ANY, "other_config", vlan_mapping)
             self.assertTrue(needs_binding)

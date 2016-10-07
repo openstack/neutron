@@ -809,9 +809,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         vlan_mapping = {'net_uuid': net_uuid,
                         'network_type': network_type,
-                        'physical_network': physical_network}
+                        'physical_network': str(physical_network)}
         if segmentation_id is not None:
-            vlan_mapping['segmentation_id'] = segmentation_id
+            vlan_mapping['segmentation_id'] = str(segmentation_id)
         port_other_config.update(vlan_mapping)
         self.int_br.set_db_attribute("Port", port.port_name, "other_config",
                                      port_other_config)
@@ -833,7 +833,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             cur_info = info_by_port.get(port.port_name)
             if cur_info is not None and cur_info[0] != lvm.vlan:
                 other_config = cur_info[1] or {}
-                other_config['tag'] = lvm.vlan
+                other_config['tag'] = str(lvm.vlan)
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "other_config", other_config)
 
