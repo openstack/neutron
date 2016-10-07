@@ -87,7 +87,9 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
     fixed_ips = orm.relationship(IPAllocation, backref='port', lazy='joined',
-                                 cascade='all, delete-orphan')
+                                 cascade='all, delete-orphan',
+                                 order_by=(IPAllocation.ip_address,
+                                           IPAllocation.subnet_id))
 
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
