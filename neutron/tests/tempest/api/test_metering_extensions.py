@@ -15,7 +15,10 @@
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
+from neutron.api.v2 import attributes as attr
 from neutron.tests.tempest.api import base
+
+LONG_NAME_OK = 'x' * (attr.NAME_MAX_LEN)
 
 
 class MeteringTestJSON(base.BaseAdminNetworkTest):
@@ -77,6 +80,17 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
                         metering_label['id'])
         # Assert whether created labels are found in labels list or fail
         # if created labels are not found in labels list
+        labels = (self.admin_client.list_metering_labels(
+                  id=metering_label['id']))
+        self.assertEqual(len(labels['metering_labels']), 1)
+
+    @test.idempotent_id('46608f8d-2e27-4eb6-a0b4-dbe405144c4d')
+    def test_create_delete_metering_label_with_name_max_length(self):
+        name = LONG_NAME_OK
+        body = self.admin_client.create_metering_label(name=name)
+        metering_label = body['metering_label']
+        self.addCleanup(self._delete_metering_label,
+                        metering_label['id'])
         labels = (self.admin_client.list_metering_labels(
                   id=metering_label['id']))
         self.assertEqual(len(labels['metering_labels']), 1)
