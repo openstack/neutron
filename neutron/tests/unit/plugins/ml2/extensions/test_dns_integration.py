@@ -21,7 +21,7 @@ from neutron_lib import constants
 import testtools
 
 from neutron import context
-from neutron.db import dns_db
+from neutron.db.models import dns as dns_models
 from neutron.extensions import dns
 from neutron.extensions import providernet as pnet
 from neutron import manager
@@ -96,7 +96,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         port = self.deserialize(self.fmt, res)['port']
         ctx = context.get_admin_context()
         dns_data_db = ctx.session.query(
-            dns_db.PortDNS).filter_by(
+            dns_models.PortDNS).filter_by(
             port_id=port['id']).one_or_none()
         return network['network'], port, dns_data_db
 
@@ -138,7 +138,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         port = self.deserialize(self.fmt, res)['port']
         ctx = context.get_admin_context()
         dns_data_db = ctx.session.query(
-            dns_db.PortDNS).filter_by(
+            dns_models.PortDNS).filter_by(
             port_id=port['id']).one_or_none()
         return port, dns_data_db
 
