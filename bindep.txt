@@ -3,3 +3,17 @@
 
 # tools/misc-sanity-checks.sh validates .po[t] files
 gettext [test]
+
+# MySQL and PostgreSQL databases since some jobs are set up in
+# OpenStack infra that need these like
+# periodic-neutron-py27-with-oslo-master and
+# periodic-neutron-py35-with-neutron-lib-master.
+libmysqlclient-dev [platform:dpkg test]
+mysql [platform:rpm test]
+mysql-client [platform:dpkg test]
+mysql-devel [platform:rpm test]
+mysql-server [test]
+postgresql [test]
+postgresql-client [platform:dpkg test]
+postgresql-devel [platform:rpm test]
+postgresql-server [platform:rpm test]
