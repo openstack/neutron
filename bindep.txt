@@ -1,0 +1,5 @@
+# This file contains runtime (non-python) dependencies
+# More info at: http://docs.openstack.org/infra/bindep/readme.html
+
+# tools/misc-sanity-checks.sh validates .po[t] files
+gettext [test]
