@@ -210,6 +210,27 @@ class API(object):
         # unit tests
 
     @abc.abstractmethod
+    def db_add(self, table, record, column, *values):
+        """Create a command to add a value to a record
+
+        Adds each value or key-value pair to column in record in table. If
+        column is a map, then each value will be a dict, otherwise a base type.
+        If key already exists in a map column, then the current value is not
+        replaced (use the set command to replace an existing value).
+
+        :param table:  The OVS table containing the record to be modified
+        :type table:   string
+        :param record: The record id (name/uuid) to modified
+        :type record:  string
+        :param column: The column name to be modified
+        :type column:  string
+        :param values: The values to be added to the column
+        :type values:  The base type of the column. If column is a map, then
+                       a dict containing the key name and the map's value type
+        :returns:     :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
     def db_clear(self, table, record, column):
         """Create a command to clear a field's value in a record
 
