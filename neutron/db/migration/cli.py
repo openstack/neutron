@@ -29,7 +29,6 @@ import pkg_resources
 import six
 
 from neutron._i18n import _
-from neutron.common import utils
 from neutron.db import migration
 from neutron.db.migration.connection import DBConnection
 
@@ -228,7 +227,7 @@ def _check_bootstrap_new_branch(branch, version_path, addn_kwargs):
     addn_kwargs['head'] = _get_branch_head(branch)
     if not os.path.exists(version_path):
         # Bootstrap initial directory structure
-        utils.ensure_dir(version_path)
+        fileutils.ensure_tree(version_path, mode=0o755)
 
 
 def do_revision(config, cmd):

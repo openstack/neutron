@@ -20,6 +20,7 @@ import signal
 import fixtures
 from neutronclient.common import exceptions as nc_exc
 from neutronclient.v2_0 import client
+from oslo_utils import fileutils
 
 from neutron.agent.linux import async_process
 from neutron.agent.linux import utils
@@ -49,7 +50,7 @@ class ProcessFixture(fixtures.Fixture):
         test_name = base.sanitize_log_path(self.test_name)
 
         log_dir = os.path.join(fullstack_base.DEFAULT_LOG_DIR, test_name)
-        common_utils.ensure_dir(log_dir)
+        fileutils.ensure_tree(log_dir, mode=0o755)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S-%f")
         log_file = "%s--%s.log" % (self.process_name, timestamp)

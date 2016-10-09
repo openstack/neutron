@@ -27,7 +27,6 @@ from neutron._i18n import _, _LW, _LE
 from neutron.agent.common import config as agent_cfg
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.common import utils as common_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -81,7 +80,8 @@ class ProcessManager(MonitoredProcess):
             self.service_pid_fname = 'pid'
             self.service = 'default-service'
 
-        common_utils.ensure_dir(os.path.dirname(self.get_pid_file_name()))
+        fileutils.ensure_tree(os.path.dirname(self.get_pid_file_name()),
+                              mode=0o755)
 
     def enable(self, cmd_callback=None, reload_cfg=False):
         if not self.active:

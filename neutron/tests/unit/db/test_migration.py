@@ -127,7 +127,7 @@ class TestCli(base.BaseTestCase):
         mock_root = mock.patch.object(cli, '_get_package_root_dir').start()
         mock_root.side_effect = mocked_root_dir
         # Avoid creating fake directories
-        mock.patch('neutron.common.utils.ensure_dir').start()
+        mock.patch('oslo_utils.fileutils.ensure_tree').start()
 
         # Set up some configs and entrypoints for tests to chew on
         self.configs = []

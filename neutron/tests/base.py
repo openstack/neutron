@@ -34,6 +34,7 @@ from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
 from oslo_utils import excutils
+from oslo_utils import fileutils
 from oslo_utils import strutils
 from oslotest import base
 import six
@@ -89,7 +90,7 @@ def bool_from_env(key, strict=False, default=False):
 def setup_test_logging(config_opts, log_dir, log_file_path_template):
     # Have each test log into its own log file
     config_opts.set_override('debug', True)
-    utils.ensure_dir(log_dir)
+    fileutils.ensure_tree(log_dir, mode=0o755)
     log_file = sanitize_log_path(
         os.path.join(log_dir, log_file_path_template))
     config_opts.set_override('log_file', log_file)
