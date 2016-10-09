@@ -18,6 +18,7 @@ from itertools import chain as iter_chain
 import jinja2
 import netaddr
 from neutron_lib import constants
+from neutron_lib.utils import file as file_utils
 from oslo_config import cfg
 from oslo_log import log as logging
 import six
@@ -26,7 +27,6 @@ from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.common import constants as n_const
-from neutron.common import utils as common_utils
 
 
 RADVD_SERVICE_NAME = 'radvd'
@@ -139,7 +139,7 @@ class DaemonMonitor(object):
                 max_rtr_adv_interval=self._agent_conf.max_rtr_adv_interval,
                 network_mtu=int(network_mtu)))
 
-        common_utils.replace_file(radvd_conf, buf.getvalue())
+        file_utils.replace_file(radvd_conf, buf.getvalue())
         return radvd_conf
 
     def _get_radvd_process_manager(self, callback=None):

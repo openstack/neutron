@@ -17,6 +17,7 @@ import os
 import shutil
 
 import jinja2
+from neutron_lib.utils import file as file_utils
 from oslo_config import cfg
 from oslo_log import log as logging
 import six
@@ -26,7 +27,6 @@ from neutron.agent.linux import pd
 from neutron.agent.linux import pd_driver
 from neutron.agent.linux import utils
 from neutron.common import constants
-from neutron.common import utils as common_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class PDDibbler(pd_driver.PDDriverBase):
         buf.write('%s' % SCRIPT_TEMPLATE.render(
                              prefix_path=self.prefix_path,
                              l3_agent_pid=os.getpid()))
-        common_utils.replace_file(script_path, buf.getvalue())
+        file_utils.replace_file(script_path, buf.getvalue())
         os.chmod(script_path, 0o744)
 
         dibbler_conf = utils.get_conf_file_name(dcwa, 'client', 'conf', False)
@@ -96,7 +96,7 @@ class PDDibbler(pd_driver.PDDriverBase):
                              interface_name='"%s"' % ex_gw_ifname,
                              bind_address='%s' % lla))
 
-        common_utils.replace_file(dibbler_conf, buf.getvalue())
+        file_utils.replace_file(dibbler_conf, buf.getvalue())
         return dcwa
 
     def _spawn_dibbler(self, pmon, router_ns, dibbler_conf):
