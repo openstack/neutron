@@ -79,6 +79,17 @@ class AddressScopeTest(AddressScopeTestBase):
                          returned_address_scope['name'])
         self.assertFalse(returned_address_scope['shared'])
 
+    @test.idempotent_id('bbd57364-6d57-48e4-b0f1-8b9a998f5e06')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_show_address_scope_project_id(self):
+        address_scope = self._create_address_scope(ip_version=4)
+        body = self.client.show_address_scope(address_scope['id'])
+        show_addr_scope = body['address_scope']
+        self.assertIn('project_id', show_addr_scope)
+        self.assertIn('tenant_id', show_addr_scope)
+        self.assertEqual(self.client.tenant_id, show_addr_scope['project_id'])
+        self.assertEqual(self.client.tenant_id, show_addr_scope['tenant_id'])
+
     @test.idempotent_id('85a259b2-ace6-4e32-9657-a9a392b452aa')
     def test_tenant_update_address_scope(self):
         self._test_update_address_scope_helper()
