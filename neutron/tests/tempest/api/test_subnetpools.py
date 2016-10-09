@@ -133,6 +133,17 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertEqual(prefixlen, subnetpool['default_prefixlen'])
         self.assertFalse(subnetpool['shared'])
 
+    @test.idempotent_id('5bf9f1e2-efc8-4195-acf3-d12b2bd68dd3')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_show_subnetpool_has_project_id(self):
+        subnetpool = self._create_subnetpool()
+        body = self.client.show_subnetpool(subnetpool['id'])
+        show_subnetpool = body['subnetpool']
+        self.assertIn('project_id', show_subnetpool)
+        self.assertIn('tenant_id', show_subnetpool)
+        self.assertEqual(self.client.tenant_id, show_subnetpool['project_id'])
+        self.assertEqual(self.client.tenant_id, show_subnetpool['tenant_id'])
+
     @test.idempotent_id('764f1b93-1c4a-4513-9e7b-6c2fc5e9270c')
     def test_tenant_update_subnetpool(self):
         created_subnetpool = self._create_subnetpool()

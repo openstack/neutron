@@ -46,6 +46,19 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         policies_ids = [p['id'] for p in policies]
         self.assertIn(policy['id'], policies_ids)
 
+    @test.idempotent_id('606a48e2-5403-4052-b40f-4d54b855af76')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_show_policy_has_project_id(self):
+        policy = self.create_qos_policy(name='test-policy', shared=False)
+        body = self.admin_client.show_qos_policy(policy['id'])
+        show_policy = body['policy']
+        self.assertIn('project_id', show_policy)
+        self.assertIn('tenant_id', show_policy)
+        self.assertEqual(self.admin_client.tenant_id,
+                         show_policy['project_id'])
+        self.assertEqual(self.admin_client.tenant_id,
+                         show_policy['tenant_id'])
+
     @test.idempotent_id('f8d20e92-f06d-4805-b54f-230f77715815')
     def test_list_policy_filter_by_name(self):
         self.create_qos_policy(name='test', description='test policy',
