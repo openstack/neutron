@@ -338,6 +338,27 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                           ips)
         mocks['subnets'].allocate.assert_called_once_with(mock.ANY)
 
+    def test_test_fixed_ips_for_port_pd_gateway(self):
+        context = mock.Mock()
+        pluggable_backend = ipam_pluggable_backend.IpamPluggableBackend()
+        with self.subnet(cidr=n_const.PROVISIONAL_IPV6_PD_PREFIX,
+                         ip_version=6) as subnet:
+            subnet = subnet['subnet']
+            fixed_ips = [{'subnet_id': subnet['id'],
+                         'ip_address': '::1'}]
+            filtered_ips = (pluggable_backend.
+                            _test_fixed_ips_for_port(context,
+                                subnet['network_id'],
+                                fixed_ips,
+                                constants.DEVICE_OWNER_ROUTER_INTF,
+                                [subnet]))
+            # Assert that ports created on prefix delegation subnets
+            # will be returned without an ip address. This prevents router
+            # interfaces being given the ::1 gateway address.
+            self.assertEqual(1, len(filtered_ips))
+            self.assertEqual(subnet['id'], filtered_ips[0]['subnet_id'])
+            self.assertNotIn('ip_address', filtered_ips[0])
+
     @mock.patch('neutron.ipam.driver.Pool')
     def test_create_subnet_over_ipam(self, pool_mock):
         mocks = self._prepare_mocks_with_pool_mock(pool_mock)
