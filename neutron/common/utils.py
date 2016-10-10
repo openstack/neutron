@@ -22,7 +22,6 @@ import decimal
 import errno
 import functools
 import importlib
-import multiprocessing
 import os
 import os.path
 import random
@@ -39,6 +38,7 @@ from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib.utils import helpers
+from neutron_lib.utils import host
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -177,11 +177,12 @@ def get_dhcp_agent_device_id(network_id, host):
     return 'dhcp%s-%s' % (host_uuid, network_id)
 
 
+@removals.remove(
+    message="Use cpu_count from neutron_lib.utils.host",
+    version="Ocata",
+    removal_version="Pike")
 def cpu_count():
-    try:
-        return multiprocessing.cpu_count()
-    except NotImplementedError:
-        return 1
+    return host.cpu_count()
 
 
 class exception_logger(object):

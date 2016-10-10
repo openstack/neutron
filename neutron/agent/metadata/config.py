@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.utils import host
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.common import utils
 
 
 SHARED_OPTS = [
@@ -106,7 +106,7 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
                       "'all': set metadata proxy socket mode to 0o666, to use "
                       "otherwise.")),
     cfg.IntOpt('metadata_workers',
-               default=utils.cpu_count() // 2,
+               default=host.cpu_count() // 2,
                help=_('Number of separate worker processes for metadata '
                       'server (defaults to half of the number of CPUs)')),
     cfg.IntOpt('metadata_backlog',
