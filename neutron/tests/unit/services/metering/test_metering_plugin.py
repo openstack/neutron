@@ -17,9 +17,9 @@ from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes as attr
 from neutron import context
-from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db.metering import metering_rpc
+from neutron.db.models import agent as agent_model
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
 from neutron import manager
@@ -367,8 +367,8 @@ class TestMeteringPluginL3AgentScheduler(
                      'id': second_uuid}]
 
         # bind each router to a specific agent
-        agent1 = agents_db.Agent(host='agent1')
-        agent2 = agents_db.Agent(host='agent2')
+        agent1 = agent_model.Agent(host='agent1')
+        agent2 = agent_model.Agent(host='agent2')
 
         agents = {self.uuid: agent1,
                   second_uuid: agent2}

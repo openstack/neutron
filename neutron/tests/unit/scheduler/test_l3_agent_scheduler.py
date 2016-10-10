@@ -28,13 +28,13 @@ import testscenarios
 import testtools
 
 from neutron import context as n_context
-from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as db_v2
 from neutron.db import l3_db
 from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
+from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
@@ -260,7 +260,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def _test__bind_routers_ha(self, has_binding):
         routers = [{'id': 'foo_router', 'ha': True, 'tenant_id': '42'}]
-        agent = agents_db.Agent(id='foo_agent')
+        agent = agent_model.Agent(id='foo_agent')
         with mock.patch.object(self.scheduler,
                                '_router_has_binding',
                                return_value=has_binding) as mock_has_binding,\
@@ -514,7 +514,7 @@ class L3SchedulerTestBaseMixin(object):
 
     def _prepare_schedule_dvr_tests(self):
         scheduler = l3_agent_scheduler.ChanceScheduler()
-        agent = agents_db.Agent()
+        agent = agent_model.Agent()
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         plugin = mock.Mock()
@@ -1413,7 +1413,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.assertEqual(0, len(sub_ids))
 
     def _prepare_schedule_snat_tests(self):
-        agent = agents_db.Agent()
+        agent = agent_model.Agent()
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         router = {

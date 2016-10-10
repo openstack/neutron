@@ -17,8 +17,8 @@ from neutron_lib import constants as const
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 
-from neutron.db import agents_db
 from neutron.db import l3_hamode_db
+from neutron.db.models import agent as agent_model
 from neutron.db import models_v2
 from neutron.plugins.ml2 import models as ml2_models
 
@@ -57,8 +57,8 @@ def get_agent_by_host(session, agent_host):
     """Return a L2 agent on the host."""
 
     with session.begin(subtransactions=True):
-        query = session.query(agents_db.Agent)
-        query = query.filter(agents_db.Agent.host == agent_host)
+        query = session.query(agent_model.Agent)
+        query = query.filter(agent_model.Agent.host == agent_host)
     for agent in query:
         if get_agent_ip(agent):
             return agent
@@ -66,9 +66,9 @@ def get_agent_by_host(session, agent_host):
 
 def _get_active_network_ports(session, network_id):
     with session.begin(subtransactions=True):
-        query = session.query(ml2_models.PortBinding, agents_db.Agent)
-        query = query.join(agents_db.Agent,
-                           agents_db.Agent.host == ml2_models.PortBinding.host)
+        query = session.query(ml2_models.PortBinding, agent_model.Agent)
+        query = query.join(agent_model.Agent,
+            agent_model.Agent.host == ml2_models.PortBinding.host)
         query = query.join(models_v2.Port)
         query = query.filter(models_v2.Port.network_id == network_id,
                              models_v2.Port.status == const.PORT_STATUS_ACTIVE)
@@ -104,9 +104,9 @@ def get_nondistributed_active_network_ports(session, network_id):
 def get_dvr_active_network_ports(session, network_id):
     with session.begin(subtransactions=True):
         query = session.query(ml2_models.DistributedPortBinding,
-                              agents_db.Agent)
-        query = query.join(agents_db.Agent,
-                           agents_db.Agent.host ==
+                              agent_model.Agent)
+        query = query.join(agent_model.Agent,
+                           agent_model.Agent.host ==
                            ml2_models.DistributedPortBinding.host)
         query = query.join(models_v2.Port)
         query = query.filter(models_v2.Port.network_id == network_id,
@@ -128,10 +128,10 @@ def get_ha_active_network_ports(session, network_id):
 
 
 def get_ha_agents(session, network_id=None, router_id=None):
-    query = session.query(agents_db.Agent.host).distinct()
+    query = session.query(agent_model.Agent.host).distinct()
     query = query.join(l3_hamode_db.L3HARouterAgentPortBinding,
                        l3_hamode_db.L3HARouterAgentPortBinding.l3_agent_id ==
-                       agents_db.Agent.id)
+                       agent_model.Agent.id)
     if router_id:
         query = query.filter(
             l3_hamode_db.L3HARouterAgentPortBinding.router_id == router_id)
@@ -145,8 +145,8 @@ def get_ha_agents(session, network_id=None, router_id=None):
         return []
     # L3HARouterAgentPortBinding will have l3 agent ids of hosting agents.
     # But we need l2 agent(for tunneling ip) while creating FDB entries.
-    agents_query = session.query(agents_db.Agent)
-    agents_query = agents_query.filter(agents_db.Agent.host.in_(query))
+    agents_query = session.query(agent_model.Agent)
+    agents_query = agents_query.filter(agent_model.Agent.host.in_(query))
     return [agent for agent in agents_query
             if get_agent_ip(agent)]
 
@@ -187,6 +187,6 @@ def get_ha_router_active_port_count(session, agent_host, network_id):
     # Return num of HA router interfaces on the given network and host
     query = _ha_router_interfaces_on_network_query(session, network_id)
     query = query.filter(models_v2.Port.status == const.PORT_STATUS_ACTIVE)
-    query = query.join(agents_db.Agent)
-    query = query.filter(agents_db.Agent.host == agent_host)
+    query = query.join(agent_model.Agent)
+    query = query.filter(agent_model.Agent.host == agent_host)
     return query.count()

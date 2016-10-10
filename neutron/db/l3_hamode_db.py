@@ -34,12 +34,12 @@ from neutron.api.v2 import attributes
 from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
-from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
+from neutron.db.models import agent as agent_model
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
@@ -592,8 +592,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         query = context.session.query(l3ha_model.L3HARouterAgentPortBinding)
 
         if host:
-            query = query.join(agents_db.Agent).filter(
-                agents_db.Agent.host == host)
+            query = query.join(agent_model.Agent).filter(
+                agent_model.Agent.host == host)
 
         query = query.filter(
             l3ha_model.L3HARouterAgentPortBinding.router_id.in_(router_ids))

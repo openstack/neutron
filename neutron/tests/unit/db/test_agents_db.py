@@ -28,6 +28,7 @@ import testscenarios
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_plugin
+from neutron.db.models import agent as agent_model
 from neutron.tests.unit import testlib_api
 
 # the below code is required for the following reason
@@ -61,7 +62,7 @@ class TestAgentsDbBase(testlib_api.SqlTestCase):
 
     def _get_agents(self, hosts, agent_type):
         return [
-            agents_db.Agent(
+            agent_model.Agent(
                 binary='foo-agent',
                 host=host,
                 agent_type=agent_type,
@@ -359,7 +360,7 @@ class TestAgentExtRpcCallback(TestAgentsDbBase):
 
     def _take_down_agent(self):
         with self.context.session.begin(subtransactions=True):
-            query = self.context.session.query(agents_db.Agent)
+            query = self.context.session.query(agent_model.Agent)
             agt = query.first()
             agt.heartbeat_timestamp = (
                 agt.heartbeat_timestamp - datetime.timedelta(hours=1))

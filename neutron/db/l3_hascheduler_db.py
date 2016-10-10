@@ -19,8 +19,8 @@ from sqlalchemy import sql
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db as l3_sch_db
+from neutron.db.models import agent as agent_model
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
@@ -60,12 +60,12 @@ class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
     def get_l3_agents_ordered_by_num_routers(self, context, agent_ids):
         if not agent_ids:
             return []
-        query = (context.session.query(agents_db.Agent, func.count(
+        query = (context.session.query(agent_model.Agent, func.count(
             rb_model.RouterL3AgentBinding.router_id)
             .label('count')).
             outerjoin(rb_model.RouterL3AgentBinding).
-            group_by(agents_db.Agent.id).
-            filter(agents_db.Agent.id.in_(agent_ids)).
+            group_by(agent_model.Agent.id).
+            filter(agent_model.Agent.id.in_(agent_ids)).
             order_by('count'))
 
         return [record[0] for record in query]

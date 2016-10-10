@@ -479,7 +479,7 @@ class PortContext(object):
         """Get agents of the specified type on port's host.
 
         :param agent_type: Agent type identifier
-        :returns: List of agents_db.Agent records
+        :returns: List of neutron.db.models.agent.Agent records
         """
         pass
 

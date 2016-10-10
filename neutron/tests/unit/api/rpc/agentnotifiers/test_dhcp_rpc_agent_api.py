@@ -23,8 +23,8 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import utils
-from neutron.db import agents_db
 from neutron.db.agentschedulers_db import cfg
+from neutron.db.models import agent as agent_model
 from neutron.tests import base
 
 
@@ -57,7 +57,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.assertEqual(expected_warnings, self.mock_log.warning.call_count)
 
     def test__schedule_network(self):
-        agent = agents_db.Agent()
+        agent = agent_model.Agent()
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_net_id'}
@@ -66,7 +66,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                      expected_casts=1, expected_warnings=0)
 
     def test__schedule_network_no_existing_agents(self):
-        agent = agents_db.Agent()
+        agent = agent_model.Agent()
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_net_id'}
@@ -93,20 +93,20 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.assertEqual(expected_errors, self.mock_log.error.call_count)
 
     def test__get_enabled_agents(self):
-        agent1 = agents_db.Agent()
+        agent1 = agent_model.Agent()
         agent1.admin_state_up = True
         agent1.heartbeat_timestamp = timeutils.utcnow()
-        agent2 = agents_db.Agent()
+        agent2 = agent_model.Agent()
         agent2.admin_state_up = False
         agent2.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_network_id'}
         self._test__get_enabled_agents(network, agents=[agent1])
 
     def test__get_enabled_agents_with_inactive_ones(self):
-        agent1 = agents_db.Agent()
+        agent1 = agent_model.Agent()
         agent1.admin_state_up = True
         agent1.heartbeat_timestamp = timeutils.utcnow()
-        agent2 = agents_db.Agent()
+        agent2 = agent_model.Agent()
         agent2.admin_state_up = True
         # This is effectively an inactive agent
         agent2.heartbeat_timestamp = datetime.datetime(2000, 1, 1, 0, 0)
@@ -117,7 +117,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
 
     def test__get_enabled_agents_with_notification_required(self):
         network = {'id': 'foo_network_id', 'subnets': ['foo_subnet_id']}
-        agent = agents_db.Agent()
+        agent = agent_model.Agent()
         agent.admin_state_up = False
         agent.heartbeat_timestamp = timeutils.utcnow()
         self._test__get_enabled_agents(network, [agent], port_count=20,
@@ -126,10 +126,10 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
     def test__get_enabled_agents_with_admin_state_down(self):
         cfg.CONF.set_override(
             'enable_services_on_agents_with_admin_state_down', True)
-        agent1 = agents_db.Agent()
+        agent1 = agent_model.Agent()
         agent1.admin_state_up = True
         agent1.heartbeat_timestamp = timeutils.utcnow()
-        agent2 = agents_db.Agent()
+        agent2 = agent_model.Agent()
         agent2.admin_state_up = False
         agent2.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_network_id'}
@@ -145,7 +145,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self, function, expected_scheduling=0, expected_casts=0):
         with mock.patch.object(self.notifier, '_schedule_network') as f:
             with mock.patch.object(self.notifier, '_get_enabled_agents') as g:
-                agent = agents_db.Agent()
+                agent = agent_model.Agent()
                 agent.admin_state_up = True
                 agent.heartbeat_timestamp = timeutils.utcnow()
                 g.return_value = [agent]
