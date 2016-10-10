@@ -13,6 +13,7 @@
 
 import functools
 
+from neutron_lib.utils import helpers
 from oslo_cache import core as cache
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -20,7 +21,6 @@ from oslo_utils import reflection
 from six.moves.urllib import parse
 
 from neutron._i18n import _
-from neutron.common import utils
 
 
 cache_opts = [
@@ -112,7 +112,7 @@ class cache_method_results(object):
         }
         key = (func_name,) + args
         if kwargs:
-            key += utils.dict2tuple(kwargs)
+            key += helpers.dict2tuple(kwargs)
         # oslo.cache expects a string or a buffer
         key = str(key)
         try:

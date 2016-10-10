@@ -125,8 +125,8 @@ class RouterInfo(object):
         self._update_routing_table(operation, route, self.ns_name)
 
     def routes_updated(self, old_routes, new_routes):
-        adds, removes = common_utils.diff_list_of_dict(old_routes,
-                                                       new_routes)
+        adds, removes = helpers.diff_list_of_dict(old_routes,
+                                                  new_routes)
         for route in adds:
             LOG.debug("Added route entry is '%s'", route)
             # remove replaced route from deleted route
