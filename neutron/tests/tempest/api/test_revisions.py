@@ -170,12 +170,11 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
         router = self.create_router(router_name='test')
         self.create_router_interface(router['id'], subnet['id'])
         router = self.client.show_router(router['id'])['router']
-        updated = self.client.update_router(
-            router['id'], routes=[{'destination': '2.0.0.0/24',
-                                   'nexthop': str(subgateway + 1)}])
+        updated = self.client.update_extra_routes(
+            router['id'], str(subgateway + 1), '2.0.0.0/24')
         self.assertGreater(updated['router']['revision_number'],
                            router['revision_number'])
-        updated2 = self.client.update_router(router['id'], routes=[])
+        updated2 = self.client.delete_extra_routes(router['id'])
         self.assertGreater(updated2['router']['revision_number'],
                            updated['router']['revision_number'])
 
