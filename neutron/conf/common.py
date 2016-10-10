@@ -13,13 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_service import wsgi
 
 from neutron._i18n import _
 from neutron.common import constants
-from neutron.common import utils
 
 
 core_opts = [
@@ -111,7 +110,7 @@ core_opts = [
                        "Attention: the following parameter MUST be set to "
                        "False if Neutron is being used in conjunction with "
                        "Nova security groups.")),
-    cfg.StrOpt('host', default=utils.get_hostname(),
+    cfg.StrOpt('host', default=net.get_hostname(),
                sample_default='example.domain',
                help=_("Hostname to be used by the Neutron server, agents and "
                       "services running on this machine. All the agents and "
