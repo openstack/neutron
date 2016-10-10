@@ -825,10 +825,10 @@ class RouterInfo(object):
                 ex_gw_port)
             fip_statuses = self.configure_fip_addresses(interface_name)
 
-        except (n_exc.FloatingIpSetupException):
-                # All floating IPs must be put in error state
-                LOG.exception(_LE("Failed to process floating IPs."))
-                fip_statuses = self.put_fips_in_error_state()
+        except n_exc.FloatingIpSetupException:
+            # All floating IPs must be put in error state
+            LOG.exception(_LE("Failed to process floating IPs."))
+            fip_statuses = self.put_fips_in_error_state()
         finally:
             self.update_fip_statuses(agent, fip_statuses)
 

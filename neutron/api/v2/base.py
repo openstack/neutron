@@ -474,8 +474,8 @@ class Controller(object):
                     self._plugin)
                 reservations.append(reservation)
         except n_exc.QuotaResourceUnknown as e:
-                # We don't want to quota this resource
-                LOG.debug(e)
+            # We don't want to quota this resource
+            LOG.debug(e)
 
         def notify(create_result):
             # Ensure usage trackers for all resources affected by this API
