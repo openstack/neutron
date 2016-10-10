@@ -15,6 +15,7 @@
 import collections
 import netaddr
 from neutron_lib import constants as lib_constants
+from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE, _LW
@@ -449,9 +450,9 @@ class RouterInfo(object):
             current_port = current_ports_dict.get(existing_port['id'])
             if current_port:
                 if (sorted(existing_port['fixed_ips'],
-                           key=common_utils.safe_sort_key) !=
+                           key=helpers.safe_sort_key) !=
                         sorted(current_port['fixed_ips'],
-                               key=common_utils.safe_sort_key)):
+                               key=helpers.safe_sort_key)):
                     updated_ports[current_port['id']] = current_port
         return updated_ports
 

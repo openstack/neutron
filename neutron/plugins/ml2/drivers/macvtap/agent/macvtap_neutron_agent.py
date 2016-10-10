@@ -18,6 +18,7 @@ import os
 import sys
 
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -29,7 +30,6 @@ from neutron.agent.linux import utils
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import topics
-from neutron.common import utils as n_utils
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
@@ -174,7 +174,7 @@ class MacvtapManager(amb.CommonAgentManagerBase):
 
 def parse_interface_mappings():
     try:
-        interface_mappings = n_utils.parse_mappings(
+        interface_mappings = helpers.parse_mappings(
             cfg.CONF.macvtap.physical_interface_mappings)
         LOG.info(_LI("Interface mappings: %s"), interface_mappings)
         return interface_mappings

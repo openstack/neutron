@@ -12,12 +12,12 @@
 
 import sys
 
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _LE, _LI
 from neutron.common import config
-from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
     import linuxbridge_neutron_agent
 
@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 
 def remove_empty_bridges():
     try:
-        interface_mappings = n_utils.parse_mappings(
+        interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
     except ValueError as e:
         LOG.error(_LE("Parsing physical_interface_mappings failed: %s."), e)
@@ -35,7 +35,7 @@ def remove_empty_bridges():
     LOG.info(_LI("Interface mappings: %s."), interface_mappings)
 
     try:
-        bridge_mappings = n_utils.parse_mappings(
+        bridge_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.bridge_mappings)
     except ValueError as e:
         LOG.error(_LE("Parsing bridge_mappings failed: %s."), e)

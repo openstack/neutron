@@ -26,6 +26,7 @@ import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_utils import netutils
 import six
 import unittest2
@@ -193,8 +194,8 @@ class UnorderedList(list):
     def __eq__(self, other):
         if not isinstance(other, list):
             return False
-        return (sorted(self, key=utils.safe_sort_key) ==
-                sorted(other, key=utils.safe_sort_key))
+        return (sorted(self, key=helpers.safe_sort_key) ==
+                sorted(other, key=helpers.safe_sort_key))
 
     def __neq__(self, other):
         return not self == other

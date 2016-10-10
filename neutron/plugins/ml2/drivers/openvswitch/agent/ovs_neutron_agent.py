@@ -24,6 +24,7 @@ import time
 import debtcollector
 import netaddr
 from neutron_lib import constants as n_const
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -49,7 +50,6 @@ from neutron.callbacks import registry
 from neutron.common import config
 from neutron.common import constants as c_const
 from neutron.common import topics
-from neutron.common import utils as n_utils
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
@@ -303,7 +303,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def _parse_bridge_mappings(self, bridge_mappings):
         try:
-            return n_utils.parse_mappings(bridge_mappings)
+            return helpers.parse_mappings(bridge_mappings)
         except ValueError as e:
             raise ValueError(_("Parsing bridge_mappings failed: %s.") % e)
 

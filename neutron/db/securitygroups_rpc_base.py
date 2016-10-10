@@ -15,12 +15,12 @@
 
 import netaddr
 from neutron_lib import constants as const
+from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import netutils
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LW
-from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import securitygroup as sg_models
@@ -95,7 +95,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def check_and_notify_security_group_member_changed(
             self, context, original_port, updated_port):
-        sg_change = not utils.compare_elements(
+        sg_change = not helpers.compare_elements(
             original_port.get(ext_sg.SECURITYGROUPS),
             updated_port.get(ext_sg.SECURITYGROUPS))
         if sg_change:
@@ -115,7 +115,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         need_notify = False
         if (original_port['fixed_ips'] != updated_port['fixed_ips'] or
             original_port['mac_address'] != updated_port['mac_address'] or
-            not utils.compare_elements(
+            not helpers.compare_elements(
                 original_port.get(ext_sg.SECURITYGROUPS),
                 updated_port.get(ext_sg.SECURITYGROUPS))):
             need_notify = True

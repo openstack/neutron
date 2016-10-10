@@ -15,6 +15,7 @@
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
@@ -746,7 +747,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         need_notify = False
         port_updates = port['port']
         if (ext_sg.SECURITYGROUPS in port_updates and
-            not utils.compare_elements(
+            not helpers.compare_elements(
                 original_port.get(ext_sg.SECURITYGROUPS),
                 port_updates[ext_sg.SECURITYGROUPS])):
             # delete the port binding and read it with the new rules
