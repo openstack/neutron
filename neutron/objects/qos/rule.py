@@ -17,13 +17,13 @@ import abc
 import sys
 
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import six
 
-from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
@@ -37,7 +37,7 @@ def get_rules(context, qos_policy_id):
     all_rules = []
     with db_api.autonested_transaction(context.session):
         for rule_type in qos_consts.VALID_RULE_TYPES:
-            rule_cls_name = 'Qos%sRule' % utils.camelize(rule_type)
+            rule_cls_name = 'Qos%sRule' % helpers.camelize(rule_type)
             rule_cls = getattr(sys.modules[__name__], rule_cls_name)
 
             rules = rule_cls.get_objects(context, qos_policy_id=qos_policy_id)

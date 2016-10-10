@@ -17,6 +17,7 @@ import signal
 import eventlet
 import eventlet.event
 import eventlet.queue
+from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE
@@ -225,7 +226,7 @@ class AsyncProcess(object):
     def _read(self, stream, queue):
         data = stream.readline()
         if data:
-            data = common_utils.safe_decode_utf8(data.strip())
+            data = helpers.safe_decode_utf8(data.strip())
             queue.put(data)
             return data
 
