@@ -24,6 +24,7 @@ from oslo_utils import excutils
 from sqlalchemy import and_
 
 from neutron._i18n import _, _LE, _LW
+from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
@@ -249,7 +250,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             subnet = self._get_subnet_for_fixed_ip(context, fixed, subnets)
 
             is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
-            if 'ip_address' in fixed:
+            if ('ip_address' in fixed and
+                    subnet['cidr'] != n_const.PROVISIONAL_IPV6_PD_PREFIX):
                 if (is_auto_addr_subnet and device_owner not in
                         constants.ROUTER_INTERFACE_OWNERS):
                     msg = (_("IPv6 address %(address)s can not be directly "
