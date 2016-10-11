@@ -221,8 +221,9 @@ class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
     def test_assigned_value(self):
         namespace = self.useFixture(net_helpers.NamespaceFixture())
         for expected in (0, 1):
+            failed = ip_lib.set_ip_nonlocal_bind(expected, namespace.name)
             try:
-                ip_lib.set_ip_nonlocal_bind(expected, namespace.name)
+                observed = ip_lib.get_ip_nonlocal_bind(namespace.name)
             except RuntimeError as rte:
                 stat_message = (
                     'cannot stat /proc/sys/net/ipv4/ip_nonlocal_bind')
@@ -231,5 +232,6 @@ class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
                         "This kernel doesn't support %s in network "
                         "namespaces." % ip_lib.IP_NONLOCAL_BIND)
                 raise
-            observed = ip_lib.get_ip_nonlocal_bind(namespace.name)
+
+            self.assertFalse(failed)
             self.assertEqual(expected, observed)

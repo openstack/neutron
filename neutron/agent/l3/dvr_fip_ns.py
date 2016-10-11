@@ -138,10 +138,9 @@ class FipNamespace(namespaces.Namespace):
         # Somewhere in the 3.19 kernel timeframe ip_nonlocal_bind was
         # changed to be a per-namespace attribute.  To be backwards
         # compatible we need to try both if at first we fail.
-        try:
-            ip_lib.set_ip_nonlocal_bind(
+        failed = ip_lib.set_ip_nonlocal_bind(
                 value=1, namespace=self.name, log_fail_as_error=False)
-        except RuntimeError:
+        if failed:
             LOG.debug('DVR: fip namespace (%s) does not support setting '
                       'net.ipv4.ip_nonlocal_bind, trying in root namespace',
                       self.name)

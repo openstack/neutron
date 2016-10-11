@@ -36,9 +36,9 @@ class BridgeLibTest(base.BaseTestCase):
         self.execute.assert_called_once_with(cmd, run_as_root=True)
         self.execute.reset_mock()
 
-    def _verify_bridge_mock_check_exit_code(self, cmd):
+    def _verify_bridge_sysctl_mock(self, cmd):
         self.execute.assert_called_once_with(cmd, run_as_root=True,
-                                             check_exit_code=True)
+                                             log_fail_as_error=True)
         self.execute.reset_mock()
 
     def test_is_bridged_interface(self):
@@ -69,7 +69,7 @@ class BridgeLibTest(base.BaseTestCase):
 
         br.disable_ipv6()
         cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % self._BR_NAME
-        self._verify_bridge_mock_check_exit_code(['sysctl', '-w', cmd])
+        self._verify_bridge_sysctl_mock(['sysctl', '-w', cmd])
 
         br.addif(self._IF_NAME)
         self._verify_bridge_mock(
