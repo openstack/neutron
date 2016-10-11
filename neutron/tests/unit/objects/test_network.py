@@ -54,6 +54,27 @@ class NetworkSegmentDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
         network = self._create_network()
         self.update_obj_fields({'network_id': network.id})
 
+    def test_hosts(self):
+        hosts = ['host1', 'host2']
+        obj = self._make_object(self.obj_fields[0])
+        obj.hosts = hosts
+        obj.create()
+
+        obj = network.NetworkSegment.get_object(self.context, id=obj.id)
+        self.assertEqual(hosts, obj.hosts)
+
+        obj.hosts = ['host3']
+        obj.update()
+
+        obj = network.NetworkSegment.get_object(self.context, id=obj.id)
+        self.assertEqual(['host3'], obj.hosts)
+
+        obj.hosts = None
+        obj.update()
+
+        obj = network.NetworkSegment.get_object(self.context, id=obj.id)
+        self.assertFalse(obj.hosts)
+
 
 class NetworkObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = network.Network

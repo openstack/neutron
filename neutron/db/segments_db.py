@@ -12,7 +12,6 @@
 
 from oslo_log import log as logging
 from oslo_utils import uuidutils
-from sqlalchemy.orm import exc
 
 from neutron._i18n import _LI
 from neutron.callbacks import events
@@ -20,6 +19,8 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db.models import segment as segments_model
+from neutron.objects import base as base_obj
+from neutron.objects import network as network_obj
 
 LOG = logging.getLogger(__name__)
 
@@ -28,38 +29,35 @@ PHYSICAL_NETWORK = segments_model.NetworkSegment.physical_network.name
 SEGMENTATION_ID = segments_model.NetworkSegment.segmentation_id.name
 
 
-def _make_segment_dict(record):
-    """Make a segment dictionary out of a DB record."""
-    return {'id': record.id,
-            NETWORK_TYPE: record.network_type,
-            PHYSICAL_NETWORK: record.physical_network,
-            SEGMENTATION_ID: record.segmentation_id}
+def _make_segment_dict(obj):
+    """Make a segment dictionary out of an object."""
+    return {'id': obj.id,
+            NETWORK_TYPE: obj.network_type,
+            PHYSICAL_NETWORK: obj.physical_network,
+            SEGMENTATION_ID: obj.segmentation_id}
 
 
 def add_network_segment(context, network_id, segment, segment_index=0,
                         is_dynamic=False):
     with db_api.context_manager.writer.using(context):
-        record = segments_model.NetworkSegment(
-            id=uuidutils.generate_uuid(),
-            network_id=network_id,
+        netseg_obj = network_obj.NetworkSegment(
+            context, id=uuidutils.generate_uuid(), network_id=network_id,
             network_type=segment.get(NETWORK_TYPE),
             physical_network=segment.get(PHYSICAL_NETWORK),
             segmentation_id=segment.get(SEGMENTATION_ID),
-            segment_index=segment_index,
-            is_dynamic=is_dynamic
-        )
-        context.session.add(record)
+            segment_index=segment_index, is_dynamic=is_dynamic)
+        netseg_obj.create()
         registry.notify(resources.SEGMENT,
                         events.PRECOMMIT_CREATE,
                         trigger=add_network_segment,
                         context=context,
-                        segment=record)
-        segment['id'] = record.id
+                        segment=netseg_obj)
+        segment['id'] = netseg_obj.id
     LOG.info(_LI("Added segment %(id)s of type %(network_type)s for network "
                  "%(network_id)s"),
-             {'id': record.id,
-              'network_type': record.network_type,
-              'network_id': record.network_id})
+             {'id': netseg_obj.id,
+              'network_type': netseg_obj.network_type,
+              'network_id': netseg_obj.network_id})
 
 
 def get_network_segments(context, network_id, filter_dynamic=False):
@@ -72,57 +70,54 @@ def get_networks_segments(context, network_ids, filter_dynamic=False):
         return {}
 
     with db_api.context_manager.reader.using(context):
-        query = (context.session.query(segments_model.NetworkSegment).
-                 filter(segments_model.NetworkSegment.network_id
-                        .in_(network_ids)).
-                 order_by(segments_model.NetworkSegment.segment_index))
+        filters = {
+            'network_id': network_ids,
+        }
         if filter_dynamic is not None:
-            query = query.filter_by(is_dynamic=filter_dynamic)
-        records = query.all()
+            filters['is_dynamic'] = filter_dynamic
+        objs = network_obj.NetworkSegment.get_objects(context, **filters)
         result = {net_id: [] for net_id in network_ids}
-        for record in records:
+        for record in objs:
             result[record.network_id].append(_make_segment_dict(record))
         return result
 
 
 def get_segment_by_id(context, segment_id):
     with db_api.context_manager.reader.using(context):
-        try:
-            record = (context.session.query(segments_model.NetworkSegment).
-                      filter_by(id=segment_id).
-                      one())
-            return _make_segment_dict(record)
-        except exc.NoResultFound:
-            return
+        net_obj = network_obj.NetworkSegment.get_object(context, id=segment_id)
+        if net_obj:
+            return _make_segment_dict(net_obj)
 
 
 def get_dynamic_segment(context, network_id, physical_network=None,
                         segmentation_id=None):
     """Return a dynamic segment for the filters provided if one exists."""
     with db_api.context_manager.reader.using(context):
-        query = (context.session.query(segments_model.NetworkSegment).
-                 filter_by(network_id=network_id, is_dynamic=True))
+        filters = {
+            'network_id': network_id,
+            'is_dynamic': True,
+        }
         if physical_network:
-            query = query.filter_by(physical_network=physical_network)
+            filters['physical_network'] = physical_network
         if segmentation_id:
-            query = query.filter_by(segmentation_id=segmentation_id)
-        record = query.first()
+            filters['segmentation_id'] = segmentation_id
+        pager = base_obj.Pager(limit=1)
+        objs = network_obj.NetworkSegment.get_objects(
+            context, _pager=pager, **filters)
 
-    if record:
-        return _make_segment_dict(record)
-    else:
-        LOG.debug("No dynamic segment found for "
-                  "Network:%(network_id)s, "
-                  "Physical network:%(physnet)s, "
-                  "segmentation_id:%(segmentation_id)s",
-                  {'network_id': network_id,
-                   'physnet': physical_network,
-                   'segmentation_id': segmentation_id})
-        return None
+        if objs:
+            return _make_segment_dict(objs[0])
+        else:
+            LOG.debug("No dynamic segment found for "
+                      "Network:%(network_id)s, "
+                      "Physical network:%(physnet)s, "
+                      "segmentation_id:%(segmentation_id)s",
+                      {'network_id': network_id,
+                       'physnet': physical_network,
+                       'segmentation_id': segmentation_id})
 
 
 def delete_network_segment(context, segment_id):
     """Release a dynamic segment for the params provided if one exists."""
     with db_api.context_manager.writer.using(context):
-        (context.session.query(segments_model.NetworkSegment).
-         filter_by(id=segment_id).delete())
+        network_obj.NetworkSegment.delete_objects(context, id=segment_id)
