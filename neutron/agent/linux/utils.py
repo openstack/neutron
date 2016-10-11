@@ -149,6 +149,10 @@ def execute(cmd, process_input=None, addl_env=None,
     return (_stdout, _stderr) if return_stderr else _stdout
 
 
+@debtcollector.removals.remove(
+    version='Ocata', removal_version='Pike',
+    message="Use 'neutron.agent.linux.ip_lib.get_device_mac' instead."
+)
 def get_interface_mac(interface):
     MAC_START = 18
     MAC_END = 24

@@ -16,6 +16,7 @@
 import collections
 
 import netaddr
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -155,6 +156,30 @@ class IpLibTestCase(IpLibTestFramework):
 
         attr = self.generate_device_details(namespace='wrong_namespace')
         self.assertFalse(ip_lib.device_exists_with_ips_and_mac(*attr))
+
+        device.link.delete()
+
+    def test_get_device_mac(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+
+        mac_address = ip_lib.get_device_mac(attr.name,
+                                            namespace=attr.namespace)
+
+        self.assertEqual(attr.mac_address, mac_address)
+
+        device.link.delete()
+
+    def test_get_device_mac_too_long_name(self):
+        name = utils.get_rand_name(
+            max_length=constants.DEVICE_NAME_MAX_LEN + 5)
+        attr = self.generate_device_details(name=name)
+        device = self.manage_device(attr)
+
+        mac_address = ip_lib.get_device_mac(attr.name,
+                                            namespace=attr.namespace)
+
+        self.assertEqual(attr.mac_address, mac_address)
 
         device.link.delete()
 
