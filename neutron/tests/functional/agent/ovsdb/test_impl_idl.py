@@ -56,7 +56,7 @@ class ImplIdlTestCase(base.BaseSudoTestCase):
         self._add_br()
         ofport = self.ovs.db_get_val("Interface", self.brname, "ofport")
         self.assertTrue(int(ofport))
-        self.assertTrue(ofport > -1)
+        self.assertGreater(ofport, -1)
 
     def test_post_commit_vswitchd_completed_no_failures(self):
         self._add_br_and_test()

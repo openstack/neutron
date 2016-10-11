@@ -3009,7 +3009,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             fip = self._make_floatingip(self.fmt, n['network']['id'])
             fip_set = netaddr.IPSet(netaddr.IPNetwork("192.168.1.0/24"))
             fip_ip = fip['floatingip']['floating_ip_address']
-            self.assertTrue(netaddr.IPAddress(fip_ip) in fip_set)
+            self.assertIn(netaddr.IPAddress(fip_ip), fip_set)
 
     def test_create_floatingip_with_assoc_to_ipv6_subnet(self):
         with self.subnet() as public_sub:

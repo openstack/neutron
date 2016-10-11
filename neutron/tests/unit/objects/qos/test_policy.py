@@ -191,8 +191,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         networks = obj.get_bound_networks()
         self.assertEqual(2, len(networks))
-        self.assertTrue(net1_id in networks)
-        self.assertTrue(net2_id in networks)
+        self.assertIn(net1_id, networks)
+        self.assertIn(net2_id, networks)
 
     def test_attach_port_nonexistent_port(self):
 
@@ -248,8 +248,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         ports = obj.get_bound_ports()
         self.assertEqual(2, len(ports))
-        self.assertTrue(port1_id in ports)
-        self.assertTrue(port2_id in ports)
+        self.assertIn(port1_id, ports)
+        self.assertIn(port2_id, ports)
 
     def test_attach_port_get_policy_port(self):
 

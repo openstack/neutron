@@ -121,9 +121,7 @@ class TestCommonAgentLoop(base.BaseTestCase):
                 self.assertTrue(fn_udd.called)
                 self.assertTrue(fn_rdf.called)
                 self.assertTrue(ext_mgr_delete_port.called)
-                self.assertTrue(
-                    PORT_DATA not in agent.network_ports[NETWORK_ID]
-                )
+                self.assertNotIn(PORT_DATA, agent.network_ports[NETWORK_ID])
 
     def test_treat_devices_removed_with_not_existed_device(self):
         agent = self.agent
@@ -144,9 +142,7 @@ class TestCommonAgentLoop(base.BaseTestCase):
                 self.assertTrue(fn_udd.called)
                 self.assertTrue(fn_rdf.called)
                 self.assertTrue(ext_mgr_delete_port.called)
-                self.assertTrue(
-                    PORT_DATA not in agent.network_ports[NETWORK_ID]
-                )
+                self.assertNotIn(PORT_DATA, agent.network_ports[NETWORK_ID])
 
     def test_treat_devices_removed_failed(self):
         agent = self.agent
@@ -164,9 +160,7 @@ class TestCommonAgentLoop(base.BaseTestCase):
             self.assertTrue(fn_udd.called)
             self.assertTrue(fn_rdf.called)
             self.assertTrue(ext_mgr_delete_port.called)
-            self.assertTrue(
-                PORT_DATA not in agent.network_ports[NETWORK_ID]
-            )
+            self.assertNotIn(PORT_DATA, agent.network_ports[NETWORK_ID])
 
     def test_treat_devices_removed_with_prevent_arp_spoofing_true(self):
         agent = self.agent
@@ -458,9 +452,9 @@ class TestCommonAgentLoop(base.BaseTestCase):
                 constants.DEVICE_OWNER_NETWORK_PREFIX)
             self.assertTrue(agent.plugin_rpc.update_device_up.called)
             self.assertTrue(agent.ext_manager.handle_port.called)
-            self.assertTrue(mock_port_data in agent.network_ports[
+            self.assertIn(mock_port_data, agent.network_ports[
                 mock_details['network_id']]
-                            )
+                          )
 
     def test_treat_devices_added_updated_prevent_arp_spoofing_true(self):
         agent = self.agent
@@ -550,12 +544,8 @@ class TestCommonAgentLoop(base.BaseTestCase):
         self.agent._update_network_ports(
             NETWORK_2_ID, port_2_data['port_id'], port_2_data['device']
         )
-        self.assertTrue(
-            port_2_data not in self.agent.network_ports[NETWORK_ID]
-        )
-        self.assertTrue(
-            port_2_data in self.agent.network_ports[NETWORK_2_ID]
-        )
+        self.assertNotIn(port_2_data, self.agent.network_ports[NETWORK_ID])
+        self.assertIn(port_2_data, self.agent.network_ports[NETWORK_2_ID])
 
     def test_clean_network_ports(self):
         port_1_data = PORT_DATA
@@ -571,21 +561,13 @@ class TestCommonAgentLoop(base.BaseTestCase):
         )
         #check removing port from network when other ports are still there:
         cleaned_port_id = self.agent._clean_network_ports(DEVICE_1)
-        self.assertTrue(
-            NETWORK_ID in self.agent.network_ports.keys()
-        )
-        self.assertTrue(
-            port_1_data not in self.agent.network_ports[NETWORK_ID]
-        )
-        self.assertTrue(
-            port_2_data in self.agent.network_ports[NETWORK_ID]
-        )
+        self.assertIn(NETWORK_ID, self.agent.network_ports.keys())
+        self.assertNotIn(port_1_data, self.agent.network_ports[NETWORK_ID])
+        self.assertIn(port_2_data, self.agent.network_ports[NETWORK_ID])
         self.assertEqual(PORT_1, cleaned_port_id)
         #and now remove last port from network:
         cleaned_port_id = self.agent._clean_network_ports(
             port_2_data['device']
         )
-        self.assertTrue(
-            NETWORK_ID not in self.agent.network_ports.keys()
-        )
+        self.assertNotIn(NETWORK_ID, self.agent.network_ports.keys())
         self.assertEqual(port_2_data['port_id'], cleaned_port_id)

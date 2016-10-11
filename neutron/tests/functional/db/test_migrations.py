@@ -334,8 +334,8 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
             insp = sqlalchemy.engine.reflection.Inspector.from_engine(engine)
             # Test that table creation on MySQL only builds InnoDB tables
             tables = insp.get_table_names()
-            self.assertTrue(len(tables) > 0,
-                            "No tables found. Wrong schema?")
+            self.assertGreater(len(tables), 0,
+                               "No tables found. Wrong schema?")
             res = [table for table in tables if
                    insp.get_table_options(table)['mysql_engine'] != 'InnoDB'
                    and table != 'alembic_version']

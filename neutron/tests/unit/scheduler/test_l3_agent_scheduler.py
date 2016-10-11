@@ -579,7 +579,7 @@ class L3SchedulerTestBaseMixin(object):
         rid = router['router']['id']
         scheduler.bind_router(ctx, rid, agent)
         results = (session.query(db).filter_by(router_id=rid).all())
-        self.assertTrue(len(results) > 0)
+        self.assertGreater(len(results), 0)
         self.assertIn(agent.id, [bind.l3_agent_id for bind in results])
 
     def test_bind_new_router(self):

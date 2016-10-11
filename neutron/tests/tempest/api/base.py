@@ -594,7 +594,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
         }
         body = self.list_method(**pagination_args)
         resources = self._extract_resources(body)
-        self.assertTrue(len(resources) >= len(self.resource_names))
+        self.assertGreaterEqual(len(resources), len(self.resource_names))
 
     def _test_list_pagination_iteratively(self, lister):
         # first, collect all resources for later comparison
@@ -709,7 +709,7 @@ class BaseSearchCriteriaTest(BaseNetworkTest):
                 self.plural_name, uri
             )
             resources_ = self._extract_resources(body)
-            self.assertTrue(page_size >= len(resources_))
+            self.assertGreaterEqual(page_size, len(resources_))
             resources.extend(reversed(resources_))
 
         self.assertSameOrder(expected_resources, reversed(resources))
