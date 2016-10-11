@@ -179,7 +179,6 @@ class Subnet(base.NeutronDbObject):
     fields_no_update = ['project_id']
 
     fields_need_translation = {
-        'project_id': 'tenant_id',
         'host_routes': 'routes'
     }
 
