@@ -106,7 +106,7 @@ mature OpenStack projects:
    tests to fully support Python 3+, and it is important that each Stadium
    project supports Python 3+ the same way Neutron core does. For more
    information on how to do testing, please refer to the
-   `Neutron testing documentation testing documentation <http://docs.openstack.org/developer/neutron/devref/development.environment.html#testing-neutron>`_.
+   `Neutron testing documentation <http://docs.openstack.org/developer/neutron/devref/development.environment.html#testing-neutron>`_.
 
  * Good release footprint, according to the chosen `release model <http://governance.openstack.org/reference/tags/#release-management-tags>`_.
 
