@@ -17,8 +17,8 @@ from neutron_lib import constants as const
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 
-from neutron.db import l3_hamode_db
 from neutron.db.models import agent as agent_model
+from neutron.db.models import l3ha as l3ha_model
 from neutron.db import models_v2
 from neutron.plugins.ml2 import models as ml2_models
 
@@ -77,8 +77,8 @@ def _get_active_network_ports(session, network_id):
 
 def _ha_router_interfaces_on_network_query(session, network_id):
     query = session.query(models_v2.Port)
-    query = query.join(l3_hamode_db.L3HARouterAgentPortBinding,
-        l3_hamode_db.L3HARouterAgentPortBinding.router_id ==
+    query = query.join(l3ha_model.L3HARouterAgentPortBinding,
+        l3ha_model.L3HARouterAgentPortBinding.router_id ==
         models_v2.Port.device_id)
     return query.filter(
         models_v2.Port.network_id == network_id,
@@ -129,15 +129,15 @@ def get_ha_active_network_ports(session, network_id):
 
 def get_ha_agents(session, network_id=None, router_id=None):
     query = session.query(agent_model.Agent.host).distinct()
-    query = query.join(l3_hamode_db.L3HARouterAgentPortBinding,
-                       l3_hamode_db.L3HARouterAgentPortBinding.l3_agent_id ==
+    query = query.join(l3ha_model.L3HARouterAgentPortBinding,
+                       l3ha_model.L3HARouterAgentPortBinding.l3_agent_id ==
                        agent_model.Agent.id)
     if router_id:
         query = query.filter(
-            l3_hamode_db.L3HARouterAgentPortBinding.router_id == router_id)
+            l3ha_model.L3HARouterAgentPortBinding.router_id == router_id)
     elif network_id:
         query = query.join(models_v2.Port, models_v2.Port.device_id ==
-                           l3_hamode_db.L3HARouterAgentPortBinding.router_id)
+                           l3ha_model.L3HARouterAgentPortBinding.router_id)
         query = query.filter(models_v2.Port.network_id == network_id,
                              models_v2.Port.status == const.PORT_STATUS_ACTIVE,
                              models_v2.Port.device_owner.in_(HA_ROUTER_PORTS))
