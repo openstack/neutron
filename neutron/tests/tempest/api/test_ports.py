@@ -25,6 +25,23 @@ class PortsTestJSON(base.BaseNetworkTest):
         super(PortsTestJSON, cls).resource_setup()
         cls.network = cls.create_network()
 
+    def _confirm_dns_assignment(self, port):
+        # NOTE(manjeets) port created with single subnet
+        # would have only one dns_assignment
+        dns_assignment = port['dns_assignment'][0]
+        ip = port['fixed_ips'][0]['ip_address']
+        if port['dns_name']:
+            hostname = port['dns_name']
+        else:
+            hostname = 'host-%s' % ip.replace('.', '-')
+        self.assertEqual(hostname, dns_assignment['hostname'])
+
+        # To avoid hard coding the expected dns_domain value
+        # in neutron.conf we just check that the fqdn starts
+        # with correct hostname
+        self.assertTrue(dns_assignment['fqdn'].startswith(hostname))
+        self.assertEqual(ip, dns_assignment['ip_address'])
+
     @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640bbbb')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")
@@ -39,6 +56,39 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.assertEqual('d2', body['port']['description'])
         body = self.client.list_ports(id=body['port']['id'])['ports'][0]
         self.assertEqual('d2', body['description'])
+
+    @test.idempotent_id('539fbefe-fb36-48aa-9a53-8c5fbd44e492')
+    @test.requires_ext(extension="dns-integration",
+                       service="network")
+    def test_create_update_port_with_dns_name(self):
+        # NOTE(manjeets) dns_domain is set to openstackgate.local
+        # so dns_name for port can be set
+        self.create_subnet(self.network)
+        body = self.create_port(self.network, dns_name='d1')
+        self.assertEqual('d1', body['dns_name'])
+        self._confirm_dns_assignment(body)
+        body = self.client.list_ports(id=body['id'])['ports'][0]
+        self._confirm_dns_assignment(body)
+        self.assertEqual('d1', body['dns_name'])
+        body = self.client.update_port(body['id'],
+                                       dns_name='d2')
+        self.assertEqual('d2', body['port']['dns_name'])
+        self._confirm_dns_assignment(body['port'])
+        body = self.client.show_port(body['port']['id'])['port']
+        self.assertEqual('d2', body['dns_name'])
+        self._confirm_dns_assignment(body)
+
+    @test.idempotent_id('435e89df-a8bb-4b41-801a-9f20d362d777')
+    @test.requires_ext(extension="dns-integration",
+                       service="network")
+    def test_create_update_port_with_no_dns_name(self):
+        self.create_subnet(self.network)
+        body = self.create_port(self.network)
+        self.assertFalse(body['dns_name'])
+        self._confirm_dns_assignment(body)
+        port_body = self.client.show_port(body['id'])
+        self.assertFalse(port_body['port']['dns_name'])
+        self._confirm_dns_assignment(port_body['port'])
 
     @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640c123')
     def test_change_dhcp_flag_then_create_port(self):
