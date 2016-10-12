@@ -23,6 +23,7 @@ import sys
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -39,7 +40,6 @@ from neutron.common import config as common_config
 from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler
 from neutron.common import topics
-from neutron.common import utils as n_utils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
@@ -911,7 +911,7 @@ def main():
 
     common_config.setup_logging()
     try:
-        interface_mappings = n_utils.parse_mappings(
+        interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
     except ValueError as e:
         LOG.error(_LE("Parsing physical_interface_mappings failed: %s. "
@@ -920,7 +920,7 @@ def main():
     LOG.info(_LI("Interface mappings: %s"), interface_mappings)
 
     try:
-        bridge_mappings = n_utils.parse_mappings(
+        bridge_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.bridge_mappings)
     except ValueError as e:
         LOG.error(_LE("Parsing bridge_mappings failed: %s. "

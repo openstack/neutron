@@ -23,6 +23,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.utils import helpers
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -781,8 +782,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             self.assertIn(k, resource[res_name])
             if isinstance(keys[k], list):
                 self.assertEqual(
-                     sorted(resource[res_name][k], key=utils.safe_sort_key),
-                     sorted(keys[k], key=utils.safe_sort_key))
+                     sorted(resource[res_name][k], key=helpers.safe_sort_key),
+                     sorted(keys[k], key=helpers.safe_sort_key))
             else:
                 self.assertEqual(resource[res_name][k], keys[k])
 
@@ -4363,8 +4364,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                           res['subnet']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(
-                sorted(res['subnet']['host_routes'], key=utils.safe_sort_key),
-                sorted(host_routes, key=utils.safe_sort_key))
+                sorted(res['subnet']['host_routes'],
+                       key=helpers.safe_sort_key),
+                sorted(host_routes, key=helpers.safe_sort_key))
             self.assertEqual(dns_nameservers, res['subnet']['dns_nameservers'])
 
     def _test_subnet_update_ipv4_and_ipv6_pd_subnets(self, ra_addr_mode):

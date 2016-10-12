@@ -14,11 +14,11 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron.common import utils
 from neutron import context
 from neutron.db import extraroute_db
 from neutron.extensions import extraroute
@@ -172,8 +172,8 @@ class ExtraRouteDBTestCaseBase(object):
                                                        routes)
                     self.assertEqual(
                         sorted(body['router']['routes'],
-                               key=utils.safe_sort_key),
-                        sorted(routes, key=utils.safe_sort_key))
+                               key=helpers.safe_sort_key),
+                        sorted(routes, key=helpers.safe_sort_key))
                     self._routes_update_cleanup(p['port']['id'],
                                                 None, r['router']['id'], [])
 
@@ -224,16 +224,16 @@ class ExtraRouteDBTestCaseBase(object):
                                                        routes_orig)
                     self.assertEqual(
                         sorted(body['router']['routes'],
-                               key=utils.safe_sort_key),
-                        sorted(routes_orig, key=utils.safe_sort_key))
+                               key=helpers.safe_sort_key),
+                        sorted(routes_orig, key=helpers.safe_sort_key))
                     body = self._routes_update_prepare(r['router']['id'],
                                                        None, p['port']['id'],
                                                        routes_left,
                                                        skip_add=True)
                     self.assertEqual(
                         sorted(body['router']['routes'],
-                               key=utils.safe_sort_key),
-                        sorted(routes_left, key=utils.safe_sort_key))
+                               key=helpers.safe_sort_key),
+                        sorted(routes_left, key=helpers.safe_sort_key))
                     self._routes_update_cleanup(p['port']['id'],
                                                 None, r['router']['id'], [])
 

@@ -17,12 +17,12 @@ import copy
 
 import mock
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 import six
 
 from neutron.agent.l2.extensions.fdb_population import (
         FdbPopulationAgentExtension)
-from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
      constants as linux_bridge_constants)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
@@ -47,7 +47,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         self.DEVICE = self._get_existing_device()
 
     def _get_existing_device(self):
-        device_mappings = n_utils.parse_mappings(
+        device_mappings = helpers.parse_mappings(
             cfg.CONF.FDB.shared_physical_device_mappings, unique_keys=False)
         DEVICES = six.next(six.itervalues(device_mappings))
         return DEVICES[0]
