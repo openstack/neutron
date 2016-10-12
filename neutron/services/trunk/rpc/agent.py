@@ -57,7 +57,7 @@ class TrunkSkeleton(object):
     def handle_trunks(self, trunks, event_type):
         """Handle trunk events."""
         # if common logic may be extracted out, consider making a base
-        # version of this method that can be overidden by the inherited
+        # version of this method that can be overridden by the inherited
         # skeleton.
         # NOTE: If trunk is not managed by the agent, the notification can
         # either be ignored or cached for future use.
@@ -66,7 +66,7 @@ class TrunkSkeleton(object):
     def handle_subports(self, subports, event_type):
         """Handle subports event."""
         # if common logic may be extracted out, consider making a base
-        # version of this method that can be overidden by the inherited
+        # version of this method that can be overridden by the inherited
         # skeleton.
         # NOTE: If the subport belongs to a trunk which the agent does not
         # manage, the notification should be ignored.

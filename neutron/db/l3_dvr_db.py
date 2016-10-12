@@ -155,7 +155,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _delete_current_gw_port(self, context, router_id, router, new_network):
         """
-        Overriden here to handle deletion of dvr internal ports.
+        Overridden here to handle deletion of dvr internal ports.
 
         If there is a valid router update with gateway port to be deleted,
         then go ahead and delete the csnat ports and the floatingip
