@@ -1,0 +1,6 @@
+---
+upgrade:
+  - Server notifies L3 HA agents when HA router interface
+    port status becomes active. Then L3 HA agents spawn
+    keepalived process. So, server has to be restarted
+    before the L3 agents during upgrade.
