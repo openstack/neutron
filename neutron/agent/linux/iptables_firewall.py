@@ -443,16 +443,16 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ipv6_rules += [comment_rule('-p ipv6-icmp -j RETURN',
                                     comment=ic.IPV6_ICMP_ALLOW)]
         ipv6_rules += [comment_rule('-p udp -m udp --sport 546 '
-                                    '-m udp --dport 547 '
+                                    '--dport 547 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
         #Note(nati) Drop dhcp packet from VM
         ipv4_rules += [comment_rule('-p udp -m udp --sport 67 '
-                                    '-m udp --dport 68 '
+                                    '--dport 68 '
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
         ipv6_rules += [comment_rule('-p udp -m udp --sport 547 '
-                                    '-m udp --dport 546 '
+                                    '--dport 546 '
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
 
     def _accept_inbound_icmpv6(self):
@@ -559,7 +559,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _generate_protocol_and_port_args(self, sg_rule):
-        args = self._protocol_arg(sg_rule.get('protocol'))
+        is_port = (sg_rule.get('source_port_range_min') is not None or
+                   sg_rule.get('port_range_min') is not None)
+        args = self._protocol_arg(sg_rule.get('protocol'), is_port)
         args += self._port_arg('sport',
                                sg_rule.get('protocol'),
                                sg_rule.get('source_port_range_min'),
@@ -621,23 +623,24 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             comment=ic.ALLOW_ASSOC)]
         return iptables_rules
 
-    def _protocol_arg(self, protocol):
+    def _protocol_arg(self, protocol, is_port):
         if not protocol:
             return []
         if protocol == 'icmpv6':
             protocol = 'ipv6-icmp'
         iptables_rule = ['-p', protocol]
+
+        if (is_port and protocol in ['udp', 'tcp', 'icmp', 'ipv6-icmp']):
+            protocol_modules = {'udp': 'udp', 'tcp': 'tcp',
+                                'icmp': 'icmp', 'ipv6-icmp': 'icmp6'}
+            # iptables adds '-m protocol' when the port number is specified
+            iptables_rule += ['-m', protocol_modules[protocol]]
         return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
-        if (protocol not in ['udp', 'tcp', 'icmp', 'ipv6-icmp']
-            or port_range_min is None):
-            return []
-
-        protocol_modules = {'udp': 'udp', 'tcp': 'tcp',
-                            'icmp': 'icmp', 'ipv6-icmp': 'icmp6'}
-        # iptables adds '-m protocol' when the port number is specified
-        args = ['-m', protocol_modules[protocol]]
+        args = []
+        if port_range_min is None:
+            return args
 
         if protocol in ['icmp', 'ipv6-icmp']:
             protocol_type = 'icmpv6' if protocol == 'ipv6-icmp' else 'icmp'
