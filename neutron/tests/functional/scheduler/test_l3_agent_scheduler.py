@@ -344,10 +344,6 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
             Maximum number of agents on which a router will be scheduled.
             0 means test for regular router.
 
-        min_l3_agents_per_router
-            Minimum number of agents on which a router will be scheduled.
-            N/A for regular router test.
-
         down_agent_count[each az]
             Number of l3 agents which are down.
 
@@ -361,7 +357,6 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
               router_az_hints=1,
               agent_count=[1, 1],
               max_l3_agents_per_router=0,
-              min_l3_agents_per_router=0,
               down_agent_count=[0, 0],
               expected_scheduled_agent_count=[1, 0])),
 
@@ -370,7 +365,6 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
               router_az_hints=2,
               agent_count=[1, 1, 1],
               max_l3_agents_per_router=2,
-              min_l3_agents_per_router=2,
               down_agent_count=[0, 0, 0],
               expected_scheduled_agent_count=[1, 1, 0])),
 
@@ -379,18 +373,8 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
               router_az_hints=2,
               agent_count=[2, 1],
               max_l3_agents_per_router=3,
-              min_l3_agents_per_router=2,
               down_agent_count=[0, 0],
               expected_scheduled_agent_count=[2, 1])),
-
-        ('HA router, not enough agents',
-         dict(az_count=3,
-              router_az_hints=2,
-              agent_count=[2, 2, 2],
-              max_l3_agents_per_router=3,
-              min_l3_agents_per_router=2,
-              down_agent_count=[1, 1, 0],
-              expected_scheduled_agent_count=[1, 1, 0])),
     ]
 
     def setUp(self):
@@ -402,7 +386,6 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
         ha = False
         if self.max_l3_agents_per_router:
             self.config(max_l3_agents_per_router=self.max_l3_agents_per_router)
-            self.config(min_l3_agents_per_router=self.min_l3_agents_per_router)
             ha = True
 
         # create l3 agents
@@ -451,10 +434,6 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
             Maximum number of agents on which a router will be scheduled.
             0 means test for regular router.
 
-        min_l3_agents_per_router
-            Minimum number of agents on which a router will be scheduled.
-            N/A for regular router test.
-
         down_agent_count[each az]
             Number of l3 agents which are down.
 
@@ -472,7 +451,6 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
               agent_az='az0',
               agent_count=[1, 1],
               max_l3_agents_per_router=0,
-              min_l3_agents_per_router=0,
               down_agent_count=[1, 1],
               scheduled_agent_count=[0, 0],
               expected_scheduled_agent_count=[1, 0])),
@@ -483,7 +461,6 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
               agent_az='az1',
               agent_count=[1, 1],
               max_l3_agents_per_router=0,
-              min_l3_agents_per_router=0,
               down_agent_count=[1, 1],
               scheduled_agent_count=[0, 0],
               expected_scheduled_agent_count=[0, 0])),
@@ -494,7 +471,6 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
               agent_az='az1',
               agent_count=[1, 1, 1],
               max_l3_agents_per_router=2,
-              min_l3_agents_per_router=2,
               down_agent_count=[0, 1, 0],
               scheduled_agent_count=[0, 0, 0],
               expected_scheduled_agent_count=[0, 1, 0])),
@@ -505,7 +481,6 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
               agent_az='az2',
               agent_count=[1, 1, 1],
               max_l3_agents_per_router=2,
-              min_l3_agents_per_router=2,
               down_agent_count=[0, 0, 1],
               scheduled_agent_count=[0, 0, 0],
               expected_scheduled_agent_count=[0, 0, 0])),
@@ -517,7 +492,6 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
         ha = False
         if self.max_l3_agents_per_router:
             self.config(max_l3_agents_per_router=self.max_l3_agents_per_router)
-            self.config(min_l3_agents_per_router=self.min_l3_agents_per_router)
             ha = True
 
         # create l3 agents

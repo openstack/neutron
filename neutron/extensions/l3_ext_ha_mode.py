@@ -18,7 +18,6 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 
 from neutron._i18n import _
-from neutron.common import constants as n_const
 
 HA_INFO = 'ha'
 EXTENDED_ATTRIBUTES_2_0 = {
@@ -76,21 +75,10 @@ class HANetworkCIDRNotValid(exceptions.NeutronException):
                 "isn't valid; %(cidr)s.")
 
 
-class HANotEnoughAvailableAgents(exceptions.NeutronException):
-    message = _("Not enough l3 agents available to ensure HA. Minimum "
-                "required %(min_agents)s, available %(num_agents)s.")
-
-
 class HAMaximumAgentsNumberNotValid(exceptions.NeutronException):
     message = _("max_l3_agents_per_router %(max_agents)s config parameter "
-                "is not valid. It has to be greater than or equal to "
-                "min_l3_agents_per_router %(min_agents)s.")
-
-
-class HAMinimumAgentsNumberNotValid(exceptions.NeutronException):
-    message = (_("min_l3_agents_per_router config parameter is not valid. "
-                 "It has to be greater than or equal to %s for HA.") %
-               n_const.MINIMUM_MINIMUM_AGENTS_FOR_HA)
+                "is not valid as it cannot be negative. It must be 1 or "
+                "greater. Alternatively, it can be 0 to mean unlimited.")
 
 
 class L3_ext_ha_mode(extensions.ExtensionDescriptor):

@@ -39,7 +39,6 @@ from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
-from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron.extensions import portbindings
 from neutron import manager
@@ -1555,7 +1554,6 @@ class VacantBindingIndexTestCase(L3HATestCaseMixin):
     def test_get_vacant_binding_index(self):
         helpers.register_l3_agent('host_3')
         cfg.CONF.set_override('max_l3_agents_per_router', 3)
-        cfg.CONF.set_override('min_l3_agents_per_router', 3)
         router = self._create_ha_router()
 
         if self.binding_index:
@@ -1874,18 +1872,6 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
         self.plugin.auto_schedule_routers(self.adminContext,
                                           'host_3',
                                           routers_to_auto_schedule)
-
-    def test_scheduler_with_ha_enabled_not_enough_agent(self):
-        r1 = self._create_ha_router()
-        agents = self.plugin.get_l3_agents_hosting_routers(
-            self.adminContext, [r1['id']],
-            admin_state_up=True)
-        self.assertEqual(2, len(agents))
-
-        self._set_l3_agent_admin_state(self.adminContext,
-                                       self.agent_id2, False)
-        self.assertRaises(
-            l3_ha.HANotEnoughAvailableAgents, self._create_ha_router)
 
 
 class L3HALeastRoutersSchedulerTestCase(L3HATestCaseMixin):

@@ -72,15 +72,6 @@ L3_HA_OPTS = [
                help=_("Maximum number of L3 agents which a HA router will be "
                       "scheduled on. If it is set to 0 then the router will "
                       "be scheduled on every agent.")),
-    cfg.IntOpt('min_l3_agents_per_router',
-               default=n_const.DEFAULT_MINIMUM_AGENTS_FOR_HA,
-               help=_("DEPRECATED: Minimum number of L3 agents that have to "
-                      "be available in order to allow a new HA router to be "
-                      "scheduled. This option is deprecated in the Newton "
-                      "release and will be removed for the Ocata release "
-                      "where the scheduling of new HA routers will always "
-                      "be allowed."),
-               deprecated_for_removal=True),
     cfg.StrOpt('l3_ha_net_cidr',
                default=n_const.L3_HA_NET_CIDR,
                help=_('Subnet used for the l3 HA admin network.')),
@@ -114,15 +105,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     def _check_num_agents_per_router(self):
         max_agents = cfg.CONF.max_l3_agents_per_router
-        min_agents = cfg.CONF.min_l3_agents_per_router
 
-        if (max_agents != UNLIMITED_AGENTS_PER_ROUTER
-            and max_agents < min_agents):
-            raise l3_ha.HAMaximumAgentsNumberNotValid(
-                max_agents=max_agents, min_agents=min_agents)
-
-        if min_agents < n_const.MINIMUM_MINIMUM_AGENTS_FOR_HA:
-            raise l3_ha.HAMinimumAgentsNumberNotValid()
+        if max_agents != UNLIMITED_AGENTS_PER_ROUTER and max_agents < 1:
+            raise l3_ha.HAMaximumAgentsNumberNotValid(max_agents=max_agents)
 
     def __new__(cls, *args, **kwargs):
         inst = super(L3_HA_NAT_db_mixin, cls).__new__(cls, *args, **kwargs)
@@ -273,14 +258,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return ha_network
 
     def get_number_of_agents_for_scheduling(self, context):
-        """Return the number of agents on which the router will be scheduled.
+        """Return number of agents on which the router will be scheduled."""
 
-        Raises an exception if there are not enough agents available to honor
-        the min_agents config parameter. If the max_agents parameter is set to
-        0 all the agents will be used.
-        """
-
-        min_agents = cfg.CONF.min_l3_agents_per_router
         num_agents = len(self.get_l3_agents(context, active=True,
             filters={'agent_modes': [constants.L3_AGENT_MODE_LEGACY,
                                      constants.L3_AGENT_MODE_DVR_SNAT]}))
@@ -292,10 +271,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                              "available: %s"), num_agents)
             else:
                 num_agents = max_agents
-
-        if num_agents < min_agents:
-            raise l3_ha.HANotEnoughAvailableAgents(min_agents=min_agents,
-                                                   num_agents=num_agents)
 
         return num_agents
 
@@ -474,11 +449,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 msg = _('Cannot change HA attribute of active routers. Please '
                         'set router admin_state_up to False prior to upgrade.')
                 raise n_exc.BadRequest(resource='router', msg=msg)
-
-            if requested_ha_state:
-                # This will throw HANotEnoughAvailableAgents if there aren't
-                # enough l3 agents to handle this router.
-                self.get_number_of_agents_for_scheduling(context)
 
         with context.session.begin(subtransactions=True):
             router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
