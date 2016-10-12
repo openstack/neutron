@@ -100,6 +100,17 @@ class TrunkTestJSON(TrunkTestJSONBase):
         self.client.delete_trunk(trunk_id)
         self.assertRaises(lib_exc.NotFound, self._show_trunk, trunk_id)
 
+    @test.idempotent_id('8d83a6ca-662d-45b8-8062-d513077296aa')
+    @test.requires_ext(extension="project-id", service="network")
+    def test_show_trunk_has_project_id(self):
+        trunk = self._create_trunk_with_network_and_parent(None)
+        body = self._show_trunk(trunk['trunk']['id'])
+        show_trunk = body['trunk']
+        self.assertIn('project_id', show_trunk)
+        self.assertIn('tenant_id', show_trunk)
+        self.assertEqual(self.client.tenant_id, show_trunk['project_id'])
+        self.assertEqual(self.client.tenant_id, show_trunk['tenant_id'])
+
     @test.idempotent_id('4ce46c22-a2b6-4659-bc5a-0ef2463cab32')
     def test_create_update_trunk(self):
         trunk = self._create_trunk_with_network_and_parent(None)
