@@ -26,7 +26,6 @@ import os
 import os.path
 import random
 import signal
-import socket
 import sys
 import tempfile
 import time
@@ -39,6 +38,7 @@ import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib.utils import helpers
 from neutron_lib.utils import host
+from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -92,8 +92,12 @@ def parse_mappings(mapping_list, unique_values=True, unique_keys=True):
                                   unique_keys=unique_keys)
 
 
+@removals.remove(
+    message="Use get_hostname from neutron_lib.utils.net",
+    version="Ocata",
+    removal_version="Pike")
 def get_hostname():
-    return socket.gethostname()
+    return net.get_hostname()
 
 
 def get_first_host_ip(net, ip_version):
