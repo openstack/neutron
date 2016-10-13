@@ -23,6 +23,9 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 
 class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
 
+    l3_plugin = ('neutron.tests.unit.extensions.test_extraroute.'
+                 'TestExtraRouteL3NatServicePlugin')
+
     def get_additional_service_plugins(self):
         p = super(TestRevisionPlugin, self).get_additional_service_plugins()
         p.update({'revision_plugin_name': 'revisions'})
@@ -111,10 +114,24 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
         # add an intf and make sure it bumps rev
-        with self.subnet(tenant_id='some_tenant') as s:
+        with self.subnet(tenant_id='some_tenant', cidr='10.0.1.0/24') as s:
             interface_info = {'subnet_id': s['subnet']['id']}
         self.l3p.add_router_interface(self.ctx, router['id'], interface_info)
         router = updated
+        updated = self.l3p.get_router(self.ctx, router['id'])
+        self.assertGreater(updated['revision_number'],
+                           router['revision_number'])
+        # Add a route and make sure it bumps revision number
+        router = updated
+        body = {'router': {'routes': [{'destination': '192.168.2.0/24',
+                                       'nexthop': '10.0.1.3'}]}}
+        self.l3p.update_router(self.ctx, router['id'], body)
+        updated = self.l3p.get_router(self.ctx, router['id'])
+        self.assertGreater(updated['revision_number'],
+                           router['revision_number'])
+        router = updated
+        body['router']['routes'] = []
+        self.l3p.update_router(self.ctx, router['id'], body)
         updated = self.l3p.get_router(self.ctx, router['id'])
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
