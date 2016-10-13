@@ -57,7 +57,7 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
             # If the agent has provided an agent_api object, this object will
             # be passed to all interested extensions.  This object must be
             # consumed by each such extension before the extension's
-            # intialize() method is called, as the initilization step
+            # initialize() method is called, as the initialization step
             # relies on the agent_api already being available.
 
             extension.obj.consume_api(agent_api)
