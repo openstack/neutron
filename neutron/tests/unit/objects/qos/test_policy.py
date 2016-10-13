@@ -93,7 +93,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             get_objects_mock.assert_any_call(
                 admin_context, self._test_class.db_model, _pager=None,
                 **self.valid_field_filter)
-        self._check_equal(objs[0], self.objs[0])
+        self._check_equal(self.objs[0], objs[0])
 
     def test_get_object(self):
         admin_context = self.context.elevated()
@@ -105,7 +105,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                                    return_value=admin_context) as context_mock:
                 obj = self._test_class.get_object(self.context, id='fake_id')
                 self.assertTrue(self._is_test_class(obj))
-                self._check_equal(obj, self.objs[0])
+                self._check_equal(self.objs[0], obj)
                 context_mock.assert_called_once_with()
                 get_object_mock.assert_called_once_with(
                     admin_context, self._test_class.db_model, id='fake_id')
