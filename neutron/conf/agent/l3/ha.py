@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.utils import host
 from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.agent.linux import keepalived
-from neutron.common import utils as common_utils
 
 
 OPTS = [
@@ -36,7 +36,7 @@ OPTS = [
                default=2,
                help=_('The advertisement interval in seconds')),
     cfg.IntOpt('ha_keepalived_state_change_server_threads',
-               default=(1 + common_utils.cpu_count()) // 2,
+               default=(1 + host.cpu_count()) // 2,
                sample_default='(1 + <num_of_cpus>) / 2',
                min=1,
                help=_('Number of concurrent threads for '
