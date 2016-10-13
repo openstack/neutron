@@ -18,7 +18,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.common import constants as n_const
-from neutron.db import agents_db
+from neutron.db.models import agent as agent_model
 from neutron.db import models_v2
 
 
@@ -49,7 +49,7 @@ class L3HARouterAgentPortBinding(model_base.BASEV2):
     l3_agent_id = sa.Column(sa.String(36),
                             sa.ForeignKey("agents.id",
                                           ondelete='CASCADE'))
-    agent = orm.relationship(agents_db.Agent)
+    agent = orm.relationship(agent_model.Agent)
 
     state = sa.Column(sa.Enum(n_const.HA_ROUTER_STATE_ACTIVE,
                               n_const.HA_ROUTER_STATE_STANDBY,

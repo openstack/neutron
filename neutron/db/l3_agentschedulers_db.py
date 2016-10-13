@@ -28,9 +28,9 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import sql
 
 from neutron._i18n import _, _LI
+from neutron.agent.common import utils as agent_utils
 from neutron.common import _deprecate
 from neutron.common import utils as n_utils
-from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3_attrs
@@ -397,7 +397,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if active is not None:
             l3_agents = [l3_agent for l3_agent in
                          l3_agents if not
-                         agents_db.AgentDbMixin.is_agent_down(
+                         agent_utils.is_agent_down(
                              l3_agent['heartbeat_timestamp'])]
         return l3_agents
 

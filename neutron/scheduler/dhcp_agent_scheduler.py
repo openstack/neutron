@@ -24,7 +24,7 @@ from oslo_log import log as logging
 from sqlalchemy import sql
 
 from neutron._i18n import _LI, _LW
-from neutron.db import agents_db
+from neutron.agent.common import utils as agent_utils
 from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
 from neutron.db.models import segment as segment_model
@@ -72,7 +72,7 @@ class AutoScheduler(object):
             segments_on_host = {s.segment_id for s in query}
 
             for dhcp_agent in dhcp_agents:
-                if agents_db.AgentDbMixin.is_agent_down(
+                if agent_utils.is_agent_down(
                     dhcp_agent.heartbeat_timestamp):
                     LOG.warning(_LW('DHCP agent %s is not active'),
                                 dhcp_agent.id)
