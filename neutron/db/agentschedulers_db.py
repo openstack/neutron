@@ -28,6 +28,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LE, _LI, _LW
+from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context as ncontext
@@ -125,7 +126,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
             #                   filter is set, only agents which are 'up'
             #                   (i.e. have a recent heartbeat timestamp)
             #                   are eligible, even if active is False
-            return not agents_db.AgentDbMixin.is_agent_down(
+            return not agent_utils.is_agent_down(
                 agent['heartbeat_timestamp'])
 
     def update_agent(self, context, id, agent):
