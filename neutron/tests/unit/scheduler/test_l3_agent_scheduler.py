@@ -132,117 +132,11 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         self.scheduler = FakeL3Scheduler()
         self.plugin = mock.Mock()
 
-    def test_auto_schedule_routers(self):
-        self.plugin.get_enabled_agent_on_host.return_value = [mock.ANY]
-        with mock.patch.object(self.scheduler,
-                               '_get_routers_to_schedule') as gs,\
-                mock.patch.object(self.scheduler,
-                                  '_get_routers_can_schedule',) as gr,\
-                mock.patch.object(self.scheduler,
-                                  '_bind_routers') as gb:
-            self.scheduler.auto_schedule_routers(
-                self.plugin, mock.ANY, mock.ANY, mock.ANY)
-            self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-            self.assertTrue(gs.called)
-            self.assertTrue(gr.called)
-            self.assertTrue(gb.called)
-
-    def test_auto_schedule_routers_no_agents(self):
-        self.plugin.get_enabled_agent_on_host.return_value = None
-        result = self.scheduler.auto_schedule_routers(
-            self.plugin, mock.ANY, mock.ANY, mock.ANY)
-        self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-        self.assertFalse(result)
-
-    def test_auto_schedule_routers_no_unscheduled_routers(self):
-        type(self.plugin).supported_extension_aliases = (
-            mock.PropertyMock(return_value=[]))
-        with mock.patch.object(self.scheduler,
-                               '_get_routers_to_schedule') as mock_routers:
-            mock_routers.return_value = []
-            result = self.scheduler.auto_schedule_routers(
-                self.plugin, mock.ANY, mock.ANY, mock.ANY)
-        self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-        self.assertFalse(result)
-
-    def test_auto_schedule_routers_no_target_routers(self):
-        self.plugin.get_enabled_agent_on_host.return_value = [mock.ANY]
-        with mock.patch.object(
-            self.scheduler,
-            '_get_routers_to_schedule') as mock_unscheduled_routers,\
-                mock.patch.object(
-                    self.scheduler,
-                    '_get_routers_can_schedule') as mock_target_routers:
-            mock_unscheduled_routers.return_value = mock.ANY
-            mock_target_routers.return_value = []
-            result = self.scheduler.auto_schedule_routers(
-                self.plugin, mock.ANY, mock.ANY, mock.ANY)
-        self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
-        self.assertFalse(result)
-
-    def test__get_routers_to_schedule_with_router_ids(self):
-        router_ids = ['foo_router_1', 'foo_router_2']
-        expected_routers = [
-            {'id': 'foo_router1'}, {'id': 'foo_router_2'}
-        ]
-        self.plugin.get_routers.return_value = expected_routers
-        with mock.patch.object(self.scheduler,
-                               '_filter_unscheduled_routers') as mock_filter:
-            mock_filter.return_value = expected_routers
-            unscheduled_routers = self.scheduler._get_routers_to_schedule(
-                self.plugin, mock.ANY, router_ids)
-        mock_filter.assert_called_once_with(
-            mock.ANY, self.plugin, expected_routers)
-        self.assertEqual(expected_routers, unscheduled_routers)
-
-    def test__get_routers_to_schedule_without_router_ids(self):
-        expected_routers = [
-            {'id': 'foo_router1'}, {'id': 'foo_router_2'}
-        ]
-        with mock.patch.object(self.scheduler,
-                               '_get_unscheduled_routers') as mock_get:
-            mock_get.return_value = expected_routers
-            unscheduled_routers = self.scheduler._get_routers_to_schedule(
-                self.plugin, mock.ANY)
-        mock_get.assert_called_once_with(mock.ANY, self.plugin)
-        self.assertEqual(expected_routers, unscheduled_routers)
-
-    def test__get_routers_to_schedule_excludes_unsupported(self):
-        routers = [
-            {'id': 'router_1'}, {'id': 'router_2'}, {'id': 'router_3'}
-        ]
-        expected_routers = [{'id': 'router_2'}]
-        # exclude everything except for 2
-        self.plugin.router_supports_scheduling = lambda c, rid: rid[-1] == '2'
-        with mock.patch.object(self.scheduler,
-                               '_get_unscheduled_routers') as mock_get:
-            mock_get.return_value = routers
-            unscheduled_routers = self.scheduler._get_routers_to_schedule(
-                self.plugin, mock.ANY)
-        mock_get.assert_called_once_with(mock.ANY, self.plugin)
-        self.assertEqual(expected_routers, unscheduled_routers)
-
     def _test__get_routers_can_schedule(self, routers, agent, target_routers):
         self.plugin.get_l3_agent_candidates.return_value = agent
         result = self.scheduler._get_routers_can_schedule(
             self.plugin, mock.ANY, routers, mock.ANY)
         self.assertEqual(target_routers, result)
-
-    def _test__filter_unscheduled_routers(self, routers, agents, expected):
-        self.plugin.get_l3_agents_hosting_routers.return_value = agents
-        unscheduled_routers = self.scheduler._filter_unscheduled_routers(
-            self.plugin, mock.ANY, routers)
-        self.assertEqual(expected, unscheduled_routers)
-
-    def test__filter_unscheduled_routers_already_scheduled(self):
-        self._test__filter_unscheduled_routers(
-            [{'id': 'foo_router1'}, {'id': 'foo_router_2'}],
-            [{'id': 'foo_agent_id'}], [])
-
-    def test__filter_unscheduled_routers_non_scheduled(self):
-        self._test__filter_unscheduled_routers(
-            [{'id': 'foo_router1'}, {'id': 'foo_router_2'}],
-            None, [{'id': 'foo_router1'}, {'id': 'foo_router_2'}])
 
     def test__get_routers_can_schedule_with_compat_agent(self):
         routers = [{'id': 'foo_router'}]
@@ -1592,17 +1486,18 @@ class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
         self.agent4 = helpers.register_l3_agent(host='host_4')
         self.agent_id4 = self.agent4.id
 
-    def test_get_ha_routers_l3_agents_count(self):
+    def test_get_routers_l3_agents_count(self):
         router1 = self._create_ha_router()
+        cfg.CONF.set_override('max_l3_agents_per_router', 2)
         router2 = self._create_ha_router()
         router3 = self._create_ha_router(ha=False)
-        result = self.plugin.get_ha_routers_l3_agents_count(self.adminContext)
+        result = self.plugin.get_routers_l3_agents_count(self.adminContext)
 
-        self.assertEqual(2, len(result))
+        self.assertEqual(3, len(result))
         check_result = [(router['id'], agents) for router, agents in result]
         self.assertIn((router1['id'], 4), check_result)
-        self.assertIn((router2['id'], 4), check_result)
-        self.assertNotIn((router3['id'], mock.ANY), check_result)
+        self.assertIn((router2['id'], 2), check_result)
+        self.assertIn((router3['id'], 0), check_result)
 
     def test_get_ordered_l3_agents_by_num_routers(self):
         # Mock scheduling so that the test can control it explicitly
