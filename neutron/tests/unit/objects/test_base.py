@@ -732,6 +732,15 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         self.assertItemsEqual(get_obj_db_fields(expected),
                               get_obj_db_fields(observed))
 
+    def test_count_validate_filters_false(self):
+        if not isinstance(self._test_class, base.NeutronDbObject):
+            self.skipTest('Class %s does not inherit from NeutronDbObject' %
+                          self._test_class)
+        expected = 10
+        with mock.patch.object(obj_db_api, 'count', return_value=expected):
+            self.assertEqual(expected, self._test_class.count(self.context,
+                validate_filters=False, fake_field='xxx'))
+
     def test_create(self):
         with mock.patch.object(obj_db_api, 'create_object',
                                return_value=self.db_objs[0]) as create_mock:
@@ -1387,6 +1396,20 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             self._make_object(fields).create()
         self.assertEqual(
             len(self.obj_fields), self._test_class.count(self.context))
+
+    def test_count_validate_filters_false(self):
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+        self.assertEqual(
+            len(self.obj_fields), self._test_class.count(self.context,
+                validate_filters=False, fake_filter='xxx'))
+
+    def test_count_invalid_filters(self):
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+        self.assertRaises(base.exceptions.InvalidInput,
+                          self._test_class.count, self.context,
+                          fake_field='xxx')
 
     def test_db_obj(self):
         obj = self._make_object(self.obj_fields[0])
