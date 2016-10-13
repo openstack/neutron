@@ -1449,7 +1449,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         result = self._make_router_dict(router, fields)
         if router.get('gw_port'):
             result['gw_port'] = self._core_plugin._make_port_dict(
-                router['gw_port'], None)
+                router['gw_port'])
         return result
 
     def _get_sync_routers(self, context, router_ids=None, active=None):
@@ -1537,7 +1537,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             l3_models.RouterPort.port_type.in_(device_owners)
         )
 
-        interfaces = [self._core_plugin._make_port_dict(rp.port, None)
+        interfaces = [self._core_plugin._make_port_dict(rp.port)
                       for rp in qry]
         return interfaces
 
