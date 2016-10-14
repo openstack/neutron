@@ -161,11 +161,17 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         iface_name = self.get_interface_name(network, port)
         self.assertEqual(dhcp_enabled, ovs.port_exists(iface_name))
         self.assert_dhcp_namespace(network.namespace, dhcp_enabled)
+        self.assert_accept_ra_disabled(network.namespace)
         self.assert_dhcp_device(network.namespace, iface_name, dhcp_enabled)
 
     def assert_dhcp_namespace(self, namespace, dhcp_enabled):
         ip = ip_lib.IPWrapper()
         self.assertEqual(dhcp_enabled, ip.netns.exists(namespace))
+
+    def assert_accept_ra_disabled(self, namespace):
+        actual = ip_lib.IPWrapper(namespace=namespace).netns.execute(
+            ['sysctl', '-b', 'net.ipv6.conf.default.accept_ra'])
+        self.assertEqual('0', actual)
 
     def assert_dhcp_device(self, namespace, dhcp_iface_name, dhcp_enabled):
         dev = ip_lib.IPDevice(dhcp_iface_name, namespace)

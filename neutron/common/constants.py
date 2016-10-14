@@ -126,6 +126,18 @@ IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
 PORT_RANGE_MIN = 1
 PORT_RANGE_MAX = 65535
 
+# Configuration values for accept_ra sysctl, copied from linux kernel
+# networking (netdev) tree, file Documentation/networking/ip-sysctl.txt
+#
+# Possible values are:
+#         0 Do not accept Router Advertisements.
+#         1 Accept Router Advertisements if forwarding is disabled.
+#         2 Overrule forwarding behaviour. Accept Router Advertisements
+#           even if forwarding is enabled.
+ACCEPT_RA_DISABLED = 0
+ACCEPT_RA_WITHOUT_FORWARDING = 1
+ACCEPT_RA_WITH_FORWARDING = 2
+
 # Some components communicate using private address ranges, define
 # them all here. These address ranges should not cause any issues
 # even if they overlap since they are used in disjoint namespaces,

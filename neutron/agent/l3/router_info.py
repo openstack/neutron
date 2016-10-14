@@ -626,7 +626,8 @@ class RouterInfo(object):
             return
 
         # There is no IPv6 gw_ip, use RouterAdvt for default route.
-        self.driver.configure_ipv6_ra(ns_name, interface_name)
+        self.driver.configure_ipv6_ra(ns_name, interface_name,
+                                      n_const.ACCEPT_RA_WITH_FORWARDING)
 
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
