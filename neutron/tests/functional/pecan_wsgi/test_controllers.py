@@ -487,7 +487,7 @@ class TestRequestProcessing(TestRootController):
 
     def setUp(self):
         super(TestRequestProcessing, self).setUp()
-
+        mock.patch('neutron.pecan_wsgi.hooks.notifier.registry').start()
         # request.context is thread-local storage so it has to be accessed by
         # the controller. We can capture it into a list here to assert on after
         # the request finishes.
