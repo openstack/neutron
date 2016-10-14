@@ -17,6 +17,7 @@ import abc
 
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import six
 import webob.exc
@@ -27,8 +28,6 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 from neutron import policy
 from neutron import wsgi
 
@@ -44,8 +43,7 @@ L3_AGENTS = L3_AGENT + 's'
 
 class RouterSchedulerController(wsgi.Controller):
     def get_plugin(self):
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = directory.get_plugin(constants.L3)
         if not plugin:
             LOG.error(_LE('No plugin for L3 routing registered to handle '
                           'router scheduling'))
@@ -87,8 +85,7 @@ class RouterSchedulerController(wsgi.Controller):
 
 class L3AgentsHostingRouterController(wsgi.Controller):
     def get_plugin(self):
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = directory.get_plugin(constants.L3)
         if not plugin:
             LOG.error(_LE('No plugin for L3 routing registered to handle '
                           'router scheduling'))

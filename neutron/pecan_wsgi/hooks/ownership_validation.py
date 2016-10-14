@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
 from pecan import hooks
 import webob
 
 from neutron._i18n import _
-from neutron import manager
 
 
 class OwnershipValidationHook(hooks.PecanHook):
@@ -38,7 +38,7 @@ class OwnershipValidationHook(hooks.PecanHook):
         if (neutron_context.is_admin or neutron_context.is_advsvc or
                 resource not in ('port', 'subnet')):
             return
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         network = plugin.get_network(neutron_context,
                                      resource_item['network_id'])
         # do not perform the check on shared networks

@@ -12,14 +12,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.plugins import directory
+
 from neutron.common import utils
-from neutron import manager
 
 
 def get_agent_types_by_host(context, host):
     """Return the agent types registered on the host."""
     agent_types = []
-    core_plugin = manager.NeutronManager.get_plugin()
+    core_plugin = directory.get_plugin()
     if utils.is_extension_supported(core_plugin, 'agent'):
         agents = core_plugin.get_agents(
             context.elevated(), filters={'host': [host]})

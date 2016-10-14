@@ -15,6 +15,7 @@
 
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -26,8 +27,6 @@ from neutron import context as neutron_context
 from neutron.db import api as db_api
 from neutron.extensions import l3
 from neutron.extensions import portbindings
-from neutron import manager
-from neutron.plugins.common import constants as plugin_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -52,14 +51,13 @@ class L3RpcCallback(object):
     @property
     def plugin(self):
         if not hasattr(self, '_plugin'):
-            self._plugin = manager.NeutronManager.get_plugin()
+            self._plugin = directory.get_plugin()
         return self._plugin
 
     @property
     def l3plugin(self):
         if not hasattr(self, '_l3plugin'):
-            self._l3plugin = manager.NeutronManager.get_service_plugins()[
-                plugin_constants.L3_ROUTER_NAT]
+            self._l3plugin = directory.get_plugin(constants.L3)
         return self._l3plugin
 
     def get_router_ids(self, context, host):
@@ -209,8 +207,7 @@ class L3RpcCallback(object):
         return net_id
 
     def get_service_plugin_list(self, context, **kwargs):
-        plugins = manager.NeutronManager.get_service_plugins()
-        return plugins.keys()
+        return directory.get_plugins().keys()
 
     @db_api.retry_db_errors
     def update_floatingip_statuses(self, context, router_id, fip_statuses):

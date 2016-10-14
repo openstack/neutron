@@ -13,10 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
+
 from neutron.common import exceptions as n_exc
 from neutron.core_extensions import base
 from neutron.db import api as db_api
-from neutron import manager
 from neutron.objects.qos import policy as policy_object
 from neutron.plugins.common import constants as plugin_constants
 from neutron.services.qos import qos_consts
@@ -27,8 +28,8 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
     @property
     def plugin_loaded(self):
         if not hasattr(self, '_plugin_loaded'):
-            service_plugins = manager.NeutronManager.get_service_plugins()
-            self._plugin_loaded = plugin_constants.QOS in service_plugins
+            self._plugin_loaded = (
+                plugin_constants.QOS in directory.get_plugins())
         return self._plugin_loaded
 
     def _get_policy_obj(self, context, policy_id):

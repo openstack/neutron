@@ -17,6 +17,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 
 from neutron.common import constants as n_const
 from neutron import context
@@ -24,7 +25,6 @@ from neutron.ipam.drivers.neutrondb_ipam import db_models
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
-from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_plugin
 from neutron.tests.unit import testlib_api
 
@@ -73,7 +73,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         self.setup_coreplugin(test_db_plugin.DB_PLUGIN_KLASS)
 
         # Prepare environment for tests
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self.network, self.net_id = self._create_network(self.plugin,
                                                          self.ctx)
@@ -264,7 +264,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         self.setup_coreplugin(test_db_plugin.DB_PLUGIN_KLASS)
 
         # Prepare environment for tests
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self.network, self.net_id = self._create_network(self.plugin,
                                                          self.ctx)

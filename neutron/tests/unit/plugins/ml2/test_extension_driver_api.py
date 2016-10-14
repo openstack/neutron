@@ -13,9 +13,9 @@
 import uuid
 
 import mock
+from neutron_lib.plugins import directory
 
 from neutron import context
-from neutron import manager
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2.drivers import ext_test
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -30,7 +30,7 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
                                      self._extension_drivers,
                                      group='ml2')
         super(ExtensionDriverTestCase, self).setUp()
-        self._plugin = manager.NeutronManager.get_plugin()
+        self._plugin = directory.get_plugin()
         self._ctxt = context.get_admin_context()
 
     def _verify_network_create(self, code, exc_reason):
@@ -183,7 +183,7 @@ class DBExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
                                      self._extension_drivers,
                                      group='ml2')
         super(DBExtensionDriverTestCase, self).setUp()
-        self._plugin = manager.NeutronManager.get_plugin()
+        self._plugin = directory.get_plugin()
         self._ctxt = context.get_admin_context()
 
     def test_network_attr(self):

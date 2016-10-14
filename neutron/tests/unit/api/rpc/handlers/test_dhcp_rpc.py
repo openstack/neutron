@@ -16,6 +16,7 @@
 import mock
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 
 from neutron.api.rpc.handlers import dhcp_rpc
@@ -32,10 +33,8 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
     def setUp(self):
         super(TestDhcpRpcCallback, self).setUp()
-        self.plugin_p = mock.patch('neutron.manager.NeutronManager.get_plugin')
-        get_plugin = self.plugin_p.start()
         self.plugin = mock.MagicMock()
-        get_plugin.return_value = self.plugin
+        directory.add_plugin(constants.CORE, self.plugin)
         self.callbacks = dhcp_rpc.DhcpRpcCallback()
         self.log_p = mock.patch('neutron.api.rpc.handlers.dhcp_rpc.LOG')
         self.log = self.log_p.start()
@@ -44,10 +43,8 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.mock_set_dirty = set_dirty_p.start()
         self.utils_p = mock.patch('neutron.plugins.common.utils.create_port')
         self.utils = self.utils_p.start()
-        self.segment_p = mock.patch(
-            'neutron.manager.NeutronManager.get_service_plugins')
-        self.get_service_plugins = self.segment_p.start()
         self.segment_plugin = mock.MagicMock()
+        directory.add_plugin('segments', self.segment_plugin)
 
     def test_group_by_network_id(self):
         port1 = {'network_id': 'a'}
@@ -72,9 +69,6 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.assertEqual(expected, networks)
 
     def test_get_active_networks_info_with_routed_networks(self):
-        self.get_service_plugins.return_value = {
-            'segments': self.segment_plugin
-        }
         plugin_retval = [{'id': 'a'}, {'id': 'b'}]
         port = {'network_id': 'a'}
         subnets = [{'network_id': 'b', 'id': 'c', 'segment_id': '1'},
@@ -213,22 +207,13 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self._test_get_network_info()
 
     def test_get_network_info_with_routed_network(self):
-        self.get_service_plugins.return_value = {
-            'segments': self.segment_plugin
-        }
         self._test_get_network_info(segmented_network=True,
                                     routed_network=True)
 
     def test_get_network_info_with_segmented_network_but_not_routed(self):
-        self.get_service_plugins.return_value = {
-            'segments': self.segment_plugin
-        }
         self._test_get_network_info(segmented_network=True)
 
     def test_get_network_info_with_non_segmented_network(self):
-        self.get_service_plugins.return_value = {
-            'segments': self.segment_plugin
-        }
         self._test_get_network_info()
 
     def test_update_dhcp_port_verify_port_action_port_dict(self):

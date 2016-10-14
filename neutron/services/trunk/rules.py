@@ -15,11 +15,11 @@
 from neutron_lib.api import converters
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 
 from neutron._i18n import _
 from neutron.common import utils as n_utils
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.objects import trunk as trunk_objects
 from neutron.plugins.ml2 import driver_api as api
 from neutron.services.trunk import exceptions as trunk_exc
@@ -102,7 +102,7 @@ class TrunkPortValidator(object):
     def is_bound(self, context):
         """Return true if the port is bound, false otherwise."""
         # Validate that the given port_id does not have a port binding.
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
         self._port = core_plugin.get_port(context, self.port_id)
         return bool(self._port.get(portbindings.HOST_ID))
 
@@ -112,7 +112,7 @@ class TrunkPortValidator(object):
             # An unbound port can be trunked, always.
             return True
 
-        trunk_plugin = manager.NeutronManager.get_service_plugins()['trunk']
+        trunk_plugin = directory.get_plugin('trunk')
         vif_type = self._port.get(portbindings.VIF_TYPE)
         binding_host = self._port.get(portbindings.HOST_ID)
 
@@ -135,7 +135,7 @@ class TrunkPortValidator(object):
 
     def check_not_in_use(self, context):
         """Raises PortInUse for ports assigned for device purposes."""
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
         self._port = core_plugin.get_port(context, self.port_id)
         # NOTE(armax): the trunk extension itself does not make use of the
         # device_id field, because it has no reason to. If need be, this
@@ -175,7 +175,7 @@ class SubPortsValidator(object):
         If the network or port cannot be obtained, or if MTU is not defined,
         returns None.
         """
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
 
         if not n_utils.is_extension_supported(core_plugin, 'net-mtu'):
             return

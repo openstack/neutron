@@ -14,11 +14,11 @@
 # limitations under the License.
 
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron.api.rpc.handlers import l3_rpc
 from neutron import context
-from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
@@ -28,7 +28,7 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestL3RpcCallback, self).setUp()
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         cfg.CONF.set_override('ipv6_pd_enabled', True)
         self.callbacks = l3_rpc.L3RpcCallback()

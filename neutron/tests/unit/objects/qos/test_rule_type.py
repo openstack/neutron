@@ -14,8 +14,8 @@
 # class on the common base class for all objects
 
 import mock
+from neutron_lib.plugins import directory
 
-from neutron import manager
 from neutron.objects.qos import rule_type
 from neutron.services.qos import qos_consts
 from neutron.tests import base as test_base
@@ -27,12 +27,12 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
 
     def setUp(self):
+        super(QosRuleTypeObjectTestCase, self).setUp()
         self.config_parse()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
-        super(QosRuleTypeObjectTestCase, self).setUp()
 
     def test_get_objects(self):
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
         rule_types_mock = mock.PropertyMock(
             return_value=qos_consts.VALID_RULE_TYPES)
         with mock.patch.object(core_plugin, 'supported_qos_rule_types',

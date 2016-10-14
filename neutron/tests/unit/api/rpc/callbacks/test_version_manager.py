@@ -110,7 +110,7 @@ class CachedResourceConsumerTrackerTest(base.BaseTestCase):
                 tracker.set_versions(CONSUMER_1,
                                      {TEST_RESOURCE_TYPE: TEST_VERSION_A})
 
-        self.get_plugin = mock.patch('neutron.manager.NeutronManager'
+        self.get_plugin = mock.patch('neutron_lib.plugins.directory'
                                      '.get_plugin').start()
 
         self.get_plugin.return_value = _FakePlugin()

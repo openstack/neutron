@@ -17,12 +17,12 @@ import six
 
 from neutron_lib.api import converters
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.extensions import providernet
-from neutron import manager
 
 SEGMENT = 'segment'
 SEGMENTS = '%ss' % SEGMENT
@@ -115,7 +115,7 @@ class Segment(extensions.ExtensionDescriptor):
         controller = base.create_resource(
             SEGMENTS,
             SEGMENT,
-            manager.NeutronManager.get_service_plugins()[SEGMENTS],
+            directory.get_plugin(SEGMENTS),
             resource_attributes)
         return [extensions.ResourceExtension(SEGMENTS,
                                              controller,

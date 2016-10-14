@@ -15,9 +15,10 @@
 
 import abc
 
+from neutron_lib.plugins import directory
+
 from neutron.api import extensions
 from neutron.api.v2 import base
-from neutron import manager
 from neutron.quota import resource_registry
 
 
@@ -64,7 +65,7 @@ class Extensionattribute(extensions.ExtensionDescriptor):
     def get_resources(cls):
         """Returns Ext Resources."""
         exts = []
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         resource_name = 'ext_test_resource'
         collection_name = resource_name + "s"
         params = RESOURCE_ATTRIBUTE_MAP.get(collection_name, dict())

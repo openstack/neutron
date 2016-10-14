@@ -16,6 +16,7 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
@@ -24,7 +25,6 @@ from neutron.common import exceptions as n_exc
 from neutron import context
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
-from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
@@ -35,7 +35,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         super(TestSubnetAllocation, self).setUp()
         self._tenant_id = 'test-tenant'
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         cfg.CONF.set_override('allow_overlapping_ips', True)
 

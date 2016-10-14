@@ -14,8 +14,8 @@
 #    under the License.
 
 from collections import defaultdict
-import weakref
-
+from neutron_lib import constants as lib_const
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -102,8 +102,11 @@ class NeutronManager(object):
     Neutron's Manager class is responsible for parsing a config file and
     instantiating the correct plugin that concretely implements
     neutron_plugin_base class.
-    The caller should make sure that NeutronManager is a singleton.
     """
+    # TODO(armax): use of the singleton pattern for this class is vestigial,
+    # and it is mainly relied on by the unit tests. It is safer to get rid
+    # of it once the entire codebase (neutron + subprojects) has switched
+    # entirely to using the plugins directory.
     _instance = None
     __trace_args__ = {"name": "rpc"}
 
@@ -123,18 +126,17 @@ class NeutronManager(object):
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
         LOG.info(_LI("Loading core plugin: %s"), plugin_provider)
-        self.plugin = self._get_plugin_instance(CORE_PLUGINS_NAMESPACE,
-                                                plugin_provider)
+        # NOTE(armax): keep hold of the actual plugin object
+        plugin = self._get_plugin_instance(CORE_PLUGINS_NAMESPACE,
+                                           plugin_provider)
+        directory.add_plugin(lib_const.CORE, plugin)
         msg = validate_post_plugin_load()
         if msg:
             LOG.critical(msg)
             raise Exception(msg)
 
-        # core plugin as a part of plugin collection simplifies
-        # checking extensions
-        # TODO(enikanorov): make core plugin the same as
-        # the rest of service plugins
-        self.service_plugins = {constants.CORE: self.plugin}
+        # load services from the core plugin first
+        self._load_services_from_core_plugin(plugin)
         self._load_service_plugins()
         # Used by pecan WSGI
         self.resource_plugin_mappings = {}
@@ -161,16 +163,15 @@ class NeutronManager(object):
         plugin_class = self.load_class_for_provider(namespace, plugin_provider)
         return plugin_class()
 
-    def _load_services_from_core_plugin(self):
+    def _load_services_from_core_plugin(self, plugin):
         """Puts core plugin in service_plugins for supported services."""
         LOG.debug("Loading services supported by the core plugin")
 
         # supported service types are derived from supported extensions
-        for ext_alias in getattr(self.plugin,
-                                 "supported_extension_aliases", []):
+        for ext_alias in getattr(plugin, "supported_extension_aliases", []):
             if ext_alias in constants.EXT_TO_SERVICE_MAPPING:
                 service_type = constants.EXT_TO_SERVICE_MAPPING[ext_alias]
-                self.service_plugins[service_type] = self.plugin
+                directory.add_plugin(service_type, plugin)
                 LOG.info(_LI("Service %s is supported by the core plugin"),
                          service_type)
 
@@ -184,9 +185,6 @@ class NeutronManager(object):
         Starts from the core plugin and checks if it supports
         advanced services then loads classes provided in configuration.
         """
-        # load services from the core plugin first
-        self._load_services_from_core_plugin()
-
         plugin_providers = cfg.CONF.service_plugins
         plugin_providers.extend(self._get_default_service_plugins())
         LOG.debug("Loading service plugins: %s", plugin_providers)
@@ -201,22 +199,25 @@ class NeutronManager(object):
             # only one implementation of svc_type allowed
             # specifying more than one plugin
             # for the same type is a fatal exception
-            if plugin_inst.get_plugin_type() in self.service_plugins:
+            # TODO(armax): simplify this by moving the conditional into the
+            # directory itself.
+            plugin_type = plugin_inst.get_plugin_type()
+            if directory.get_plugin(plugin_type):
                 raise ValueError(_("Multiple plugins for service "
-                                   "%s were configured") %
-                                 plugin_inst.get_plugin_type())
+                                   "%s were configured") % plugin_type)
 
-            self.service_plugins[plugin_inst.get_plugin_type()] = plugin_inst
+            directory.add_plugin(plugin_type, plugin_inst)
 
             # search for possible agent notifiers declared in service plugin
             # (needed by agent management extension)
-            if (hasattr(self.plugin, 'agent_notifiers') and
+            plugin = directory.get_plugin()
+            if (hasattr(plugin, 'agent_notifiers') and
                     hasattr(plugin_inst, 'agent_notifiers')):
-                self.plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
+                plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
 
             LOG.debug("Successfully loaded %(type)s plugin. "
                       "Description: %(desc)s",
-                      {"type": plugin_inst.get_plugin_type(),
+                      {"type": plugin_type,
                        "desc": plugin_inst.get_plugin_description()})
 
     @classmethod
@@ -239,23 +240,6 @@ class NeutronManager(object):
         if not cls.has_instance():
             cls._create_instance()
         return cls._instance
-
-    @classmethod
-    def get_plugin(cls):
-        # Return a weakref to minimize gc-preventing references.
-        return weakref.proxy(cls.get_instance().plugin)
-
-    @classmethod
-    def get_service_plugins(cls):
-        # Return weakrefs to minimize gc-preventing references.
-        service_plugins = cls.get_instance().service_plugins
-        return dict((x, weakref.proxy(y))
-                    for x, y in six.iteritems(service_plugins))
-
-    @classmethod
-    def get_unique_service_plugins(cls):
-        service_plugins = cls.get_instance().service_plugins
-        return tuple(weakref.proxy(x) for x in set(service_plugins.values()))
 
     @classmethod
     def set_plugin_for_resource(cls, resource, plugin):
@@ -283,7 +267,7 @@ class NeutronManager(object):
     # probably should be removed
     @classmethod
     def get_service_plugin_by_path_prefix(cls, path_prefix):
-        service_plugins = cls.get_unique_service_plugins()
+        service_plugins = directory.get_unique_plugins()
         for service_plugin in service_plugins:
             plugin_path_prefix = getattr(service_plugin, 'path_prefix', None)
             if plugin_path_prefix and plugin_path_prefix == path_prefix:
@@ -298,3 +282,10 @@ class NeutronManager(object):
     @classmethod
     def get_resources_for_path_prefix(cls, path_prefix):
         return cls.get_instance().path_prefix_resource_mappings[path_prefix]
+
+
+def init():
+    """Call to load the plugins (core+services) machinery."""
+    # TODO(armax): use is_loaded() when available
+    if not directory.get_plugins():
+        NeutronManager.get_instance()

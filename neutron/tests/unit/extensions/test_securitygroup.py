@@ -18,6 +18,7 @@ import contextlib
 import mock
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_db.exception as exc
 import six
@@ -31,7 +32,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import standardattrdescription
-from neutron import manager
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -589,7 +589,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     self.assertEqual(sg_rule[0][k], v)
 
     def test_get_security_group_on_port_from_wrong_tenant(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         if not hasattr(plugin, '_get_security_groups_on_port'):
             self.skipTest("plugin doesn't use the mixin with this method")
         neutron_context = context.get_admin_context()

@@ -16,6 +16,7 @@
 import weakref
 
 import fixtures
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron import manager
@@ -42,7 +43,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
     def setUp(self):
         super(NeutronManagerTestCase, self).setUp()
         self.config_parse()
-        self.setup_coreplugin()
+        self.setup_coreplugin(load_plugins=False)
         self.useFixture(
             fixtures.MonkeyPatch('neutron.manager.NeutronManager._instance'))
 
@@ -51,8 +52,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
         cfg.CONF.set_override("service_plugins",
                               ["neutron.tests.unit.dummy_plugin."
                                "DummyServicePlugin"])
-        mgr = manager.NeutronManager.get_instance()
-        plugin = mgr.get_service_plugins()[constants.DUMMY]
+        manager.init()
+        plugin = directory.get_plugin(constants.DUMMY)
 
         self.assertIsInstance(
             plugin, dummy_plugin.DummyServicePlugin,
@@ -61,8 +62,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
     def test_service_plugin_by_name_is_loaded(self):
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins", ["dummy"])
-        mgr = manager.NeutronManager.get_instance()
-        plugin = mgr.get_service_plugins()[constants.DUMMY]
+        manager.init()
+        plugin = directory.get_plugin(constants.DUMMY)
 
         self.assertIsInstance(
             plugin, dummy_plugin.DummyServicePlugin,
@@ -104,8 +105,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
         cfg.CONF.set_override("core_plugin",
                               "neutron.tests.unit.test_manager."
                               "MultiServiceCorePlugin")
-        mgr = manager.NeutronManager.get_instance()
-        svc_plugins = mgr.get_service_plugins()
+        manager.init()
+        svc_plugins = directory.get_plugins()
         self.assertEqual(3, len(svc_plugins))
         self.assertIn(constants.CORE, svc_plugins.keys())
         self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
@@ -116,8 +117,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
             'neutron.tests.unit.dummy_plugin.DummyServicePlugin': 'DUMMY'
         }
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
-        mgr = manager.NeutronManager.get_instance()
-        svc_plugins = mgr.get_service_plugins()
+        manager.init()
+        svc_plugins = directory.get_plugins()
         self.assertIn('DUMMY', svc_plugins)
 
     def test_post_plugin_validation(self):
@@ -147,7 +148,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
         expected = {'l3': 'l3_agent_notifier',
                     'dhcp': 'dhcp_agent_notifier',
                     'dummy': 'dummy_agent_notifier'}
-        core_plugin = manager.NeutronManager.get_plugin()
+        manager.init()
+        core_plugin = directory.get_plugin()
         self.assertEqual(expected, core_plugin.agent_notifiers)
 
     def test_load_class_for_provider(self):
@@ -168,8 +170,8 @@ class NeutronManagerTestCase(base.BaseTestCase):
                 self.path_prefix = path_prefix
 
         x_plugin, y_plugin = pclass('xpa'), pclass('ypa')
-        nm.service_plugins['x'], nm.service_plugins['y'] = x_plugin, y_plugin
-
+        directory.add_plugin('x', x_plugin)
+        directory.add_plugin('y', y_plugin)
         self.assertEqual(weakref.proxy(x_plugin),
                          nm.get_service_plugin_by_path_prefix('xpa'))
         self.assertEqual(weakref.proxy(y_plugin),

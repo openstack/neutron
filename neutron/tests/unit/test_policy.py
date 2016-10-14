@@ -18,6 +18,7 @@
 import mock
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_policy import fixture as op_fixture
 from oslo_policy import policy as oslo_policy
@@ -28,7 +29,6 @@ import neutron
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron import context
-from neutron import manager
 from neutron import policy
 from neutron.tests import base
 
@@ -220,10 +220,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(
             "neutron.db.db_base_plugin_v2.NeutronDbPluginV2")
-        self.manager_patcher = mock.patch('neutron.manager.NeutronManager')
-        fake_manager = self.manager_patcher.start()
-        fake_manager_instance = fake_manager.return_value
-        fake_manager_instance.plugin = plugin_klass()
+        directory.add_plugin(constants.CORE, plugin_klass())
 
     def _set_rules(self, **kwargs):
         rules_dict = {
@@ -515,7 +512,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             return {'tenant_id': 'fake'}
 
         action = "create_port:mac"
-        with mock.patch.object(manager.NeutronManager.get_instance().plugin,
+        with mock.patch.object(directory.get_plugin(),
                                'get_network', new=fakegetnetwork):
             target = {'network_id': 'whatever'}
             result = policy.enforce(self.context, action, target)
@@ -530,7 +527,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         # so long that we verify that, if *f* blows up, the behavior of the
         # policy engine to propagate the exception is preserved
         action = "create_port:mac"
-        with mock.patch.object(manager.NeutronManager.get_instance().plugin,
+        with mock.patch.object(directory.get_plugin(),
                                'get_network', new=fakegetnetwork):
             target = {'network_id': 'whatever'}
             self.assertRaises(NotImplementedError,
@@ -542,7 +539,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_retryrequest_on_notfound(self):
         failure = exceptions.NetworkNotFound(net_id='whatever')
         action = "create_port:mac"
-        with mock.patch.object(manager.NeutronManager.get_instance().plugin,
+        with mock.patch.object(directory.get_plugin(),
                                'get_network', side_effect=failure):
             target = {'network_id': 'whatever'}
             try:
@@ -560,7 +557,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             admin_or_network_owner="role:admin or "
                                    "tenant_id:%(network_tenant_id)s")
         action = "create_port:mac"
-        with mock.patch.object(manager.NeutronManager.get_instance().plugin,
+        with mock.patch.object(directory.get_plugin(),
                                'get_network', new=fakegetnetwork):
             target = {'network_id': 'whatever'}
             result = policy.enforce(self.context, action, target)

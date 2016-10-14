@@ -16,6 +16,7 @@ import collections
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import helpers as log_helper
 from oslo_log import log as logging
@@ -39,8 +40,6 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.ipam import utils as ipam_utils
-from neutron import manager
-from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
 
 
@@ -505,8 +504,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 L3_NAT_with_dvr_db_mixin, self).remove_router_interface(
                     context, router_id, interface_info)
 
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            constants.L3_ROUTER_NAT)
+        plugin = directory.get_plugin(const.L3)
         router_hosts_before = plugin._get_dvr_hosts_for_router(
             context, router_id)
 

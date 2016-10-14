@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -21,7 +22,6 @@ from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.conf import quota
 from neutron.db import rbac_db_models
-from neutron import manager
 from neutron.quota import resource_registry
 
 
@@ -106,7 +106,7 @@ class Rbac(extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         plural_mappings = {'rbac_policies': 'rbac_policy'}
         attr.PLURALS.update(plural_mappings)
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         params = RESOURCE_ATTRIBUTE_MAP['rbac_policies']
         collection_name = 'rbac-policies'
         resource_name = 'rbac_policy'

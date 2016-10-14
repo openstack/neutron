@@ -16,6 +16,7 @@
 import datetime
 import mock
 
+from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
@@ -184,11 +185,10 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.notifier.plugin.get_network.return_value = {'id': network_id}
         segment_sp = mock.Mock()
         segment_sp.get_segment.return_value = segment
-        with mock.patch('neutron.manager.NeutronManager.get_service_plugins',
-                        return_value={'segments': segment_sp}):
-            self._test__notify_agents('subnet_create_end',
-                                      expected_scheduling=1, expected_casts=1,
-                                      payload=subnet)
+        directory.add_plugin('segments', segment_sp)
+        self._test__notify_agents('subnet_create_end',
+                                  expected_scheduling=1, expected_casts=1,
+                                  payload=subnet)
         get_agents = self.notifier.plugin.get_dhcp_agents_hosting_networks
         get_agents.assert_called_once_with(
             mock.ANY, [network_id], hosts=segment['hosts'])

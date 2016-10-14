@@ -55,14 +55,14 @@ Calling the Core Plugin from Services
 
 There are many cases where a service may want to create a resource
 managed by the core plugin (e.g. ports, networks, subnets). This
-can be achieved by importing the Neutron Manager and getting a direct
+can be achieved by importing the plugins directory and getting a direct
 reference to the core plugin:
 
 .. code:: python
 
-   from neutron import manager
+   from neutron_lib.plugins import directory
 
-   plugin = manager.NeutronManager.get_plugin()
+   plugin = directory.get_plugin()
    plugin.create_port(context, port_dict)
 
 

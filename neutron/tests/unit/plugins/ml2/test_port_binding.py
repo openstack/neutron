@@ -15,10 +15,10 @@
 
 import mock
 from neutron_lib import constants as const
+from neutron_lib.plugins import directory
 
 from neutron import context
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import models as ml2_models
@@ -39,7 +39,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                      group='ml2_type_vlan')
         super(PortBindingTestCase, self).setUp('ml2')
         self.port_create_status = 'DOWN'
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.plugin.start_rpc_listeners()
 
     def _check_response(self, port, vif_type, has_port_filter, bound, status):
@@ -176,7 +176,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def test_process_binding_port_host_id_changed(self):
         ctx = context.get_admin_context()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         host_id = {portbindings.HOST_ID: 'host1'}
         with self.port(**host_id) as port:
             # Since the port is DOWN at first

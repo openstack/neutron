@@ -19,6 +19,7 @@ import mock
 from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
@@ -36,7 +37,6 @@ from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
 from neutron.callbacks import registry
 from neutron import context
-from neutron import manager
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
@@ -101,7 +101,7 @@ class APIv2TestBase(base.BaseTestCase):
         # Create the default configurations
         self.config_parse()
         # Update the plugin
-        self.setup_coreplugin(plugin)
+        self.setup_coreplugin(plugin, load_plugins=False)
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         self._plugin_patcher = mock.patch(plugin, autospec=True)
@@ -1160,7 +1160,7 @@ class SubresourceTest(base.BaseTestCase):
         self.useFixture(tools.AttributeMapMemento())
 
         self.config_parse()
-        self.setup_coreplugin(plugin)
+        self.setup_coreplugin(plugin, load_plugins=False)
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
@@ -1188,7 +1188,7 @@ class SubresourceTest(base.BaseTestCase):
         parent = SUB_RESOURCES['dummy'].get('parent')
         params = RESOURCE_ATTRIBUTE_MAP['dummies']
         member_actions = {'mactions': 'GET'}
-        _plugin = manager.NeutronManager.get_plugin()
+        _plugin = directory.get_plugin()
         controller = v2_base.create_resource(collection_name, resource_name,
                                              _plugin, params,
                                              member_actions=member_actions,
@@ -1492,15 +1492,14 @@ class ExtensionTestCase(base.BaseTestCase):
         self.config_parse()
 
         # Update the plugin and extensions path
-        self.setup_coreplugin(plugin)
+        self.setup_coreplugin(plugin, load_plugins=False)
         cfg.CONF.set_override('api_extensions_path', EXTDIR)
 
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
 
         # Instantiate mock plugin and enable the V2attributes extension
-        manager.NeutronManager.get_plugin().supported_extension_aliases = (
-            ["v2attrs"])
+        self.plugin.return_value.supported_extension_aliases = ["v2attrs"]
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)

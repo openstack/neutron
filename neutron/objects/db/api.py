@@ -14,15 +14,14 @@
 # backends
 
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
-
-from neutron import manager
 
 
 # Common database operation implementations
 def _get_filter_query(context, model, **kwargs):
     # TODO(jlibosva): decompose _get_collection_query from plugin instance
-    plugin = manager.NeutronManager.get_plugin()
+    plugin = directory.get_plugin()
     with context.session.begin(subtransactions=True):
         filters = _kwargs_to_filters(**kwargs)
         query = plugin._get_collection_query(context, model, filters)
@@ -46,7 +45,7 @@ def get_objects(context, model, _pager=None, **kwargs):
     with context.session.begin(subtransactions=True):
         filters = _kwargs_to_filters(**kwargs)
         # TODO(ihrachys): decompose _get_collection from plugin instance
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         return plugin._get_collection(
             context, model,
             # TODO(ihrachys): avoid this no-op call per model found

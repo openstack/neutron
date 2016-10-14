@@ -19,6 +19,7 @@ import functools
 
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
@@ -286,7 +287,7 @@ def _add_segment_host_mapping_for_segment(resource, event, trigger,
 
     if not segment.physical_network:
         return
-    cp = manager.NeutronManager.get_plugin()
+    cp = directory.get_plugin()
     check_segment_for_agent = getattr(cp, 'check_segment_for_agent', None)
     if not hasattr(cp, 'get_agents') or not check_segment_for_agent:
         # not an agent-supporting plugin

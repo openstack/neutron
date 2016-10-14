@@ -19,6 +19,7 @@ import abc
 
 import fixtures
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 import six
 
 from neutron import context
@@ -76,6 +77,7 @@ class PluginClientFixture(AbstractClientFixture):
         self.useFixture(testlib_api.StaticSqlFixture())
         self.useFixture(self.plugin_conf)
         self.useFixture(base.PluginFixture(self.plugin_conf.plugin_name))
+        manager.init()
 
     @property
     def ctx(self):
@@ -85,7 +87,7 @@ class PluginClientFixture(AbstractClientFixture):
 
     @property
     def plugin(self):
-        return manager.NeutronManager.get_plugin()
+        return directory.get_plugin()
 
     @property
     def NotFound(self):

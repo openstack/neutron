@@ -14,6 +14,7 @@ import uuid
 
 import mock
 from neutron_lib import constants as n_const
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
@@ -26,7 +27,6 @@ from neutron import context
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
 from neutron.pecan_wsgi.controllers import utils as controller_utils
-from neutron.plugins.common import constants
 from neutron import policy
 from neutron.tests.common import helpers
 from neutron.tests.functional.pecan_wsgi import test_functional
@@ -56,7 +56,7 @@ class TestRootController(test_functional.PecanFunctionalTest):
     def setUp(self):
         super(TestRootController, self).setUp()
         self.setup_service_plugin()
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
 
     def setup_service_plugin(self):
@@ -438,7 +438,7 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
         cfg.CONF.set_override('allow_pagination', True)
         cfg.CONF.set_override('allow_sorting', True)
         super(TestPaginationAndSorting, self).setUp()
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self._create_networks(self.RESOURCE_COUNT)
         self.networks = self._get_collection()['networks']
@@ -658,7 +658,7 @@ class TestRequestProcessing(TestRootController):
         self.assertEqual('router', self.req_stash['resource_type'])
         # make sure the core plugin was identified as the handler for ports
         self.assertEqual(
-            manager.NeutronManager.get_service_plugins()['L3_ROUTER_NAT'],
+            directory.get_plugin(n_const.L3),
             self.req_stash['plugin'])
 
     def test_service_plugin_uri(self):
@@ -684,10 +684,9 @@ class TestRouterController(TestResourceController):
             ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin',
              'neutron.services.flavors.flavors_plugin.FlavorsPlugin'])
         super(TestRouterController, self).setUp()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        service_plugins = manager.NeutronManager.get_service_plugins()
-        l3_plugin = service_plugins[constants.L3_ROUTER_NAT]
+        l3_plugin = directory.get_plugin(n_const.L3)
         network_id = pecan_utils.create_network(ctx, plugin)['id']
         self.subnet = pecan_utils.create_subnet(ctx, plugin, network_id)
         self.router = pecan_utils.create_router(ctx, l3_plugin)
@@ -734,7 +733,7 @@ class TestDHCPAgentShimControllers(test_functional.PecanFunctionalTest):
                  'create_dhcp-networks': 'role:admin',
                  'delete_dhcp-networks': 'role:admin'}),
             overwrite=False)
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         self.network = pecan_utils.create_network(ctx, plugin)
         self.agent = helpers.register_dhcp_agent()
@@ -788,8 +787,7 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
                  'get_l3-routers': 'role:admin'}),
             overwrite=False)
         ctx = context.get_admin_context()
-        service_plugins = manager.NeutronManager.get_service_plugins()
-        l3_plugin = service_plugins[constants.L3_ROUTER_NAT]
+        l3_plugin = directory.get_plugin(n_const.L3)
         self.router = pecan_utils.create_router(ctx, l3_plugin)
         self.agent = helpers.register_l3_agent()
         # NOTE(blogan): Not sending notifications because this test is for

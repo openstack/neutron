@@ -17,6 +17,7 @@ from eventlet import greenthread
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
 from oslo_log import helpers as log_helpers
@@ -71,8 +72,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import db
@@ -1591,8 +1590,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._pre_delete_port(context, id, l3_port_check)
         # TODO(armax): get rid of the l3 dependency in the with block
         router_ids = []
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        l3plugin = directory.get_plugin(const.L3)
 
         session = context.session
         with session.begin(subtransactions=True):

@@ -18,6 +18,7 @@ import random
 
 import netaddr
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
@@ -29,7 +30,6 @@ from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
 from neutron.ipam import utils as ipam_utils
-from neutron import manager
 
 
 LOG = log.getLogger(__name__)
@@ -110,7 +110,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
 
     @classmethod
     def _fetch_subnet(cls, context, id):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         return plugin._get_subnet(context, id)
 
     def __init__(self, internal_id, ctx, cidr=None,

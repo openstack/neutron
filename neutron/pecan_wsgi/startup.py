@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
 from oslo_log import log
 
 from neutron._i18n import _LW
@@ -31,13 +32,14 @@ LOG = log.getLogger(__name__)
 
 
 def initialize_all():
+    manager.init()
     ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
     ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
     # At this stage we have a fully populated resource attribute map;
     # build Pecan controllers and routes for all core resources
     for resource, collection in router.RESOURCES.items():
         resource_registry.register_resource_by_name(resource)
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         new_controller = res_ctrl.CollectionsController(collection, resource,
                                                         plugin=plugin)
         manager.NeutronManager.set_controller_for_resource(

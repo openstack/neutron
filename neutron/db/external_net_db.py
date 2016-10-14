@@ -14,8 +14,9 @@
 #    under the License.
 
 from neutron_lib.api import validators
-from neutron_lib import constants as lib_constants
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from sqlalchemy.orm import exc
 from sqlalchemy.sql import expression as expr
 
@@ -34,11 +35,9 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import external_net
 from neutron.extensions import rbac as rbac_ext
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 
 
-DEVICE_OWNER_ROUTER_GW = lib_constants.DEVICE_OWNER_ROUTER_GW
+DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
 
 _deprecate._moved_global('ExternalNetwork', new_module=ext_net_models)
 
@@ -180,8 +179,7 @@ class External_net_db_mixin(object):
             net_data[external_net.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        l3plugin = directory.get_plugin(constants.L3)
         if l3plugin:
             l3plugin.delete_disassociated_floatingips(context, network_id)
 

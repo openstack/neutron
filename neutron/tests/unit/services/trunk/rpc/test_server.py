@@ -12,6 +12,7 @@
 # under the License.
 
 import mock
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_messaging
 
@@ -19,7 +20,6 @@ from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.trunk import constants
@@ -44,7 +44,7 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
             trunk_plugin.TrunkPlugin, 'check_compatibility').start()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
         self.trunk_plugin.add_segmentation_type('vlan', lambda x: True)
-        self.core_plugin = manager.NeutronManager.get_plugin()
+        self.core_plugin = directory.get_plugin()
 
     def _create_test_trunk(self, port, subports=None):
         subports = subports if subports else []

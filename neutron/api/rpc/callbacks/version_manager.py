@@ -15,11 +15,11 @@ import copy
 import pprint
 import time
 
+from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from oslo_utils import importutils
 
 from neutron.api.rpc.callbacks import exceptions
-from neutron import manager
 
 LOG = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ class CachedResourceConsumerTracker(object):
 
     def _update_consumer_versions(self):
         new_tracker = ResourceConsumerTracker()
-        neutron_plugin = manager.NeutronManager.get_plugin()
+        neutron_plugin = directory.get_plugin()
         agents_db = _import_agents_db()
         # If you use RPC callbacks, your plugin needs to implement
         # AgentsDbMixin so that we know which resource versions your

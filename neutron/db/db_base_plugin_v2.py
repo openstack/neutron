@@ -20,6 +20,7 @@ from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_db.sqlalchemy import utils as sa_utils
@@ -55,11 +56,9 @@ from neutron.extensions import l3
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
-from neutron import manager
 from neutron import neutron_plugin_base_v2
 from neutron.objects import base as base_obj
 from neutron.objects import subnetpool as subnetpool_obj
-from neutron.plugins.common import constants as service_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -584,8 +583,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise exc.BadRequest(resource='subnets', msg=reason)
 
     def _update_router_gw_ports(self, context, network, subnet):
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
+        l3plugin = directory.get_plugin(constants.L3)
         if l3plugin:
             gw_ports = self._get_router_gw_ports_by_network(context,
                     network['id'])
@@ -1343,9 +1341,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     except l3.RouterNotFound:
                         return
                 else:
-                    l3plugin = (
-                        manager.NeutronManager.get_service_plugins().get(
-                            service_constants.L3_ROUTER_NAT))
+                    l3plugin = directory.get_plugin(constants.L3)
                     if l3plugin:
                         try:
                             ctx_admin = context.elevated()

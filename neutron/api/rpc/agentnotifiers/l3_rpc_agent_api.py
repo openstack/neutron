@@ -16,6 +16,7 @@
 import random
 
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
 
@@ -24,8 +25,6 @@ from neutron.api.rpc.agentnotifiers import utils as ag_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 
 
 LOG = logging.getLogger(__name__)
@@ -57,8 +56,7 @@ class L3AgentNotifyAPI(object):
                             shuffle_agents):
         """Notify changed routers to hosting l3 agents."""
         adminContext = context if context.is_admin else context.elevated()
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = directory.get_plugin(constants.L3)
         for router_id in router_ids:
             hosts = plugin.get_hosts_to_notify(adminContext, router_id)
             if shuffle_agents:
@@ -87,8 +85,7 @@ class L3AgentNotifyAPI(object):
     def _notification(self, context, method, router_ids, operation,
                       shuffle_agents, schedule_routers=True):
         """Notify all the agents that are hosting the routers."""
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = directory.get_plugin(constants.L3)
         if not plugin:
             LOG.error(_LE('No plugin for L3 routing registered. Cannot notify '
                           'agents with the message %s'), method)

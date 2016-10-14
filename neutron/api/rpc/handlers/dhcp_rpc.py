@@ -19,6 +19,7 @@ import operator
 
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -34,7 +35,6 @@ from neutron.db import api as db_api
 from neutron.db import provisioning_blocks
 from neutron.extensions import portbindings
 from neutron.extensions import segment as segment_ext
-from neutron import manager
 from neutron.plugins.common import utils as p_utils
 from neutron.quota import resource_registry
 
@@ -79,7 +79,7 @@ class DhcpRpcCallback(object):
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
         host = kwargs.get('host')
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         if utils.is_extension_supported(
             plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.network_auto_schedule:
@@ -140,7 +140,7 @@ class DhcpRpcCallback(object):
         host = kwargs.get('host')
         LOG.debug('get_active_networks_info from %s', host)
         networks = self._get_active_networks(context, **kwargs)
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         filters = {'network_id': [network['id'] for network in networks]}
         ports = plugin.get_ports(context, filters=filters)
         filters['enable_dhcp'] = [True]
@@ -153,7 +153,7 @@ class DhcpRpcCallback(object):
         # inside a segment.  If the segment service plugin is loaded and
         # there are active dhcp enabled subnets, then filter out the subnets
         # that are not on the host's segment.
-        seg_plug = manager.NeutronManager.get_service_plugins().get(
+        seg_plug = directory.get_plugin(
             segment_ext.SegmentPluginBase.get_plugin_type())
         seg_subnets = [subnet for subnet in subnets
                        if subnet.get('segment_id')]
@@ -189,7 +189,7 @@ class DhcpRpcCallback(object):
         LOG.debug('Network %(network_id)s requested from '
                   '%(host)s', {'network_id': network_id,
                                'host': host})
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         try:
             network = plugin.get_network(context, network_id)
         except exceptions.NetworkNotFound:
@@ -198,7 +198,7 @@ class DhcpRpcCallback(object):
             return
         filters = dict(network_id=[network_id])
         subnets = plugin.get_subnets(context, filters=filters)
-        seg_plug = manager.NeutronManager.get_service_plugins().get(
+        seg_plug = directory.get_plugin(
             segment_ext.SegmentPluginBase.get_plugin_type())
         if seg_plug and subnets:
             seg_subnets = [subnet for subnet in subnets
@@ -231,7 +231,7 @@ class DhcpRpcCallback(object):
         LOG.debug('DHCP port deletion for %(network_id)s request from '
                   '%(host)s',
                   {'network_id': network_id, 'host': host})
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         plugin.delete_ports_by_device_id(context, device_id, network_id)
 
     @db_api.retry_db_errors
@@ -255,7 +255,7 @@ class DhcpRpcCallback(object):
         port['port'][portbindings.HOST_ID] = host
         if 'mac_address' not in port['port']:
             port['port']['mac_address'] = constants.ATTR_NOT_SPECIFIED
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         return self._port_action(plugin, context, port, 'create_port')
 
     @db_api.retry_db_errors
@@ -265,7 +265,7 @@ class DhcpRpcCallback(object):
         port = kwargs.get('port')
         port['id'] = kwargs.get('port_id')
         port['port'][portbindings.HOST_ID] = host
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         try:
             old_port = plugin.get_port(context, port['id'])
             if (old_port['device_id'] != n_const.DEVICE_ID_RESERVED_DHCP_PORT

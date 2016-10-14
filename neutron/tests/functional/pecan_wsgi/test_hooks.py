@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.plugins import directory
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 
@@ -283,7 +284,7 @@ class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
     def test_bad_create_doesnt_emit_end(self):
         req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
         payload = {'network': {'name': 'meh'}}
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         with mock.patch.object(plugin, 'create_network',
                                side_effect=ValueError):
             response = self.app.post_json(
@@ -305,7 +306,7 @@ class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
         self.assertEqual(201, response.status_int)
         json_body = jsonutils.loads(response.body)
         self.mock_notifier.reset_mock()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         with mock.patch.object(plugin, 'update_network',
                                side_effect=ValueError):
             response = self.app.put_json(
@@ -327,7 +328,7 @@ class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
         self.assertEqual(201, response.status_int)
         json_body = jsonutils.loads(response.body)
         self.mock_notifier.reset_mock()
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         with mock.patch.object(plugin, 'delete_network',
                                side_effect=ValueError):
             response = self.app.delete(

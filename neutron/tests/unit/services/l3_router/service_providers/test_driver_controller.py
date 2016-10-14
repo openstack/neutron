@@ -13,13 +13,12 @@
 #    under the License.
 
 import mock
-from mock import patch
 from neutron_lib import constants
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.plugins import directory
 import testtools
 
 from neutron import context
-from neutron import manager
 from neutron.plugins.common import constants as p_cons
 from neutron.services.l3_router.service_providers import driver_controller
 from neutron.services import provider_configuration
@@ -125,13 +124,11 @@ class TestDriverController(testlib_api.SqlTestCase):
             self.fake_l3.get_router.side_effect = ValueError
             self.dc._get_provider_for_router(self.ctx, body['id'])
 
-    @patch.object(manager.NeutronManager, "get_service_plugins")
-    def test__flavor_plugin(self, get_service_plugins):
-        _fake_flavor_plugin = mock.sentinel.fla_plugin
-        get_service_plugins.return_value = {p_cons.FLAVORS:
-                                            _fake_flavor_plugin}
+    def test__flavor_plugin(self):
+        directory.add_plugin(p_cons.FLAVORS, mock.Mock())
         _dc = driver_controller.DriverController(self.fake_l3)
-        self.assertEqual(_fake_flavor_plugin, _dc._flavor_plugin)
+        self.assertEqual(
+            directory.get_plugin(p_cons.FLAVORS), _dc._flavor_plugin)
 
 
 class Test_LegacyPlusProviderConfiguration(base.BaseTestCase):

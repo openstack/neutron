@@ -15,6 +15,7 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
@@ -24,7 +25,6 @@ from neutron.db import dvr_mac_db
 from neutron.db.models import dvr as dvr_models
 from neutron.extensions import dvr
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -77,7 +77,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                               self.ctx, "foo_host_2")
 
     def test_mac_not_cleared_on_agent_delete_event_with_remaining_agents(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         self._create_dvr_mac_entry('host_1', 'mac_1')
         self._create_dvr_mac_entry('host_2', 'mac_2')
         agent1 = {'host': 'host_1', 'id': 'a1'}
@@ -91,7 +91,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertFalse(notifier.dvr_mac_address_update.called)
 
     def test_mac_cleared_on_agent_delete_event(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         self._create_dvr_mac_entry('host_1', 'mac_1')
         self._create_dvr_mac_entry('host_2', 'mac_2')
         agent = {'host': 'host_1', 'id': 'a1'}

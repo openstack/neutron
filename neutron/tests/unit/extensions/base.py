@@ -25,6 +25,7 @@ import webtest
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
+from neutron import manager
 from neutron import quota
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -55,8 +56,8 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         # Create the default configurations
         self.config_parse()
 
-        #just stubbing core plugin with plugin
-        self.setup_coreplugin(plugin)
+        # just stubbing core plugin with plugin
+        self.setup_coreplugin(plugin, load_plugins=False)
         cfg.CONF.set_override('core_plugin', plugin)
         if service_type:
             cfg.CONF.set_override('service_plugins', [plugin])
@@ -66,6 +67,8 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         instance = self.plugin.return_value
         if service_type:
             instance.get_plugin_type.return_value = service_type
+        manager.init()
+
         if supported_extension_aliases is not None:
             instance.supported_extension_aliases = supported_extension_aliases
         if allow_pagination:
