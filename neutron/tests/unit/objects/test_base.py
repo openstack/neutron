@@ -578,7 +578,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 obj_keys = self.generate_object_keys(self._test_class)
                 obj = self._test_class.get_object(self.context, **obj_keys)
                 self.assertTrue(self._is_test_class(obj))
-                self._check_equal(obj, self.objs[0])
+                self._check_equal(self.objs[0], obj)
                 get_object_mock.assert_called_once_with(
                     self.context, self._test_class.db_model,
                     **self._test_class.modify_fields_to_db(obj_keys))
@@ -616,7 +616,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     obj = self._test_class.get_object(self.context,
                                                       **obj_keys)
                     self.assertTrue(self._is_test_class(obj))
-                    self._check_equal(obj, self.objs[0])
+                    self._check_equal(self.objs[0], obj)
                     get_object_mock.assert_called_once_with(
                         self.context, self._test_class.db_model,
                         **self._test_class.modify_fields_to_db(obj_keys))
@@ -727,9 +727,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                               self._test_class.count, self.context,
                               fake_field='xxx')
 
-    # TODO(ihrachys) swap the order of arguments to reflect the order of
-    # self.assert* methods
-    def _check_equal(self, observed, expected):
+    def _check_equal(self, expected, observed):
         self.assertItemsEqual(get_obj_db_fields(expected),
                               get_obj_db_fields(observed))
 
@@ -739,9 +737,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             with mock.patch.object(obj_db_api, 'get_objects',
                   side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.obj_fields[0])
-                self._check_equal(obj, self.objs[0])
+                self._check_equal(self.objs[0], obj)
                 obj.create()
-                self._check_equal(obj, self.objs[0])
+                self._check_equal(self.objs[0], obj)
                 create_mock.assert_called_once_with(
                     self.context, self._test_class.db_model,
                     self._test_class.modify_fields_to_db(
@@ -753,7 +751,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             with mock.patch.object(obj_db_api, 'get_objects',
                   side_effect=self.fake_get_objects):
                 self.objs[1].create()
-                self._check_equal(self.objs[1], self.objs[0])
+                self._check_equal(self.objs[0], self.objs[1])
 
     def test_create_duplicates(self):
         with mock.patch.object(obj_db_api, 'create_object',
@@ -870,14 +868,14 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                         obj_db_api, 'get_objects',
                         side_effect=self.fake_get_objects):
                         obj.update()
-                self._check_equal(obj, self.objs[0])
+                self._check_equal(self.objs[0], obj)
 
     @mock.patch.object(obj_db_api, 'delete_object')
     def test_delete(self, delete_mock):
         obj = self._test_class(self.context, **self.obj_fields[0])
-        self._check_equal(obj, self.objs[0])
+        self._check_equal(self.objs[0], obj)
         obj.delete()
-        self._check_equal(obj, self.objs[0])
+        self._check_equal(self.objs[0], obj)
         delete_mock.assert_called_once_with(
             self.context, self._test_class.db_model,
             **self._test_class.modify_fields_to_db(obj._get_composite_keys()))
