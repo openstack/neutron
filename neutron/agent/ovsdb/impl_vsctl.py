@@ -222,6 +222,16 @@ class OvsdbVsctl(ovsdb.API):
         args += _set_colval_args(*col_values)
         return BaseCommand(self.context, 'set', args=args)
 
+    def db_add(self, table, record, column, *values):
+        args = [table, record, column]
+        for value in values:
+            if isinstance(value, collections.Mapping):
+                args += ["{}={}".format(ovsdb.py_to_val(k), ovsdb.py_to_val(v))
+                         for k, v in six.iteritems(value)]
+            else:
+                args.append(ovsdb.py_to_val(value))
+        return BaseCommand(self.context, 'add', args=args)
+
     def db_clear(self, table, record, column):
         return BaseCommand(self.context, 'clear', args=[table, record,
                                                         column])

@@ -16,6 +16,7 @@ import collections
 
 from oslo_log import log as logging
 from oslo_utils import excutils
+import six
 
 from neutron._i18n import _, _LE
 from neutron.agent.ovsdb import api
@@ -203,6 +204,32 @@ class DbSetCommand(BaseCommand):
             if isinstance(val, collections.OrderedDict):
                 val = dict(val)
             setattr(record, col, idlutils.db_replace_record(val))
+
+
+class DbAddCommand(BaseCommand):
+    def __init__(self, api, table, record, column, *values):
+        super(DbAddCommand, self).__init__(api)
+        self.table = table
+        self.record = record
+        self.column = column
+        self.values = values
+
+    def run_idl(self, txn):
+        record = idlutils.row_by_record(self.api.idl, self.table, self.record)
+        for value in self.values:
+            field = getattr(record, self.column)
+            if isinstance(value, collections.Mapping):
+                # We should be doing an add on a 'map' column. If the key is
+                # already set, do nothing, otherwise set the key to the value
+                for k, v in six.iteritems(value):
+                    if k in field:
+                        continue
+                    field[k] = v
+            else:
+                # We should be appending to a 'set' column.
+                field.append(value)
+            record.verify(self.column)
+            setattr(record, self.column, idlutils.db_replace_record(field))
 
 
 class DbClearCommand(BaseCommand):

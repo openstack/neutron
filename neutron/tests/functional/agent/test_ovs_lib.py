@@ -352,6 +352,53 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         val = self.ovs.ovsdb.db_get("Port", self.br.br_name, 'qos').execute()
         self.assertEqual(qos.result, val)
 
+    def test_db_add_set(self):
+        protocols = ["OpenFlow10", "OpenFlow11"]
+        self.br.ovsdb.db_add("Bridge", self.br.br_name, "protocols",
+                             *protocols).execute(check_error=True)
+        self.assertEqual(protocols,
+                         self.br.db_get_val('Bridge',
+                                            self.br.br_name, "protocols"))
+
+    def test_db_add_map(self):
+        key = "testdata"
+        data = {key: "testvalue"}
+        self.br.ovsdb.db_add("Bridge", self.br.br_name, "external_ids",
+                             data).execute(check_error=True)
+        self.assertEqual(data, self.br.db_get_val('Bridge', self.br.br_name,
+                                                  'external_ids'))
+        self.br.ovsdb.db_add("Bridge", self.br.br_name, "external_ids",
+                             {key: "newdata"}).execute(check_error=True)
+        self.assertEqual(data, self.br.db_get_val('Bridge', self.br.br_name,
+                                                  'external_ids'))
+
+    def test_db_add_map_multiple_one_dict(self):
+        data = {"one": "1", "two": "2", "three": "3"}
+        self.br.ovsdb.db_add("Bridge", self.br.br_name, "external_ids",
+                             data).execute(check_error=True)
+        self.assertEqual(data, self.br.db_get_val('Bridge', self.br.br_name,
+                                                  'external_ids'))
+
+    def test_db_add_map_multiple_dicts(self):
+        data = ({"one": "1"}, {"two": "2"}, {"three": "3"})
+        self.br.ovsdb.db_add("Bridge", self.br.br_name, "external_ids",
+                             *data).execute(check_error=True)
+        combined = {k: v for a in data for k, v in a.items()}
+        self.assertEqual(combined, self.br.db_get_val('Bridge',
+                                                      self.br.br_name,
+                                                      'external_ids'))
+
+    def test_db_add_ref(self):
+        ovsdb = self.ovs.ovsdb
+        brname = utils.get_rand_name(prefix=net_helpers.BR_PREFIX)
+        br = ovs_lib.OVSBridge(brname)  # doesn't create
+        self.addCleanup(br.destroy)
+        with ovsdb.transaction(check_error=True) as txn:
+            br = txn.add(ovsdb.db_create('Bridge', name=brname))
+            txn.add(ovsdb.db_add('Open_vSwitch', '.', 'bridges', br))
+
+        self.assertIn(brname, self.ovs.get_bridges())
+
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 

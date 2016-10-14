@@ -244,6 +244,9 @@ class OvsdbIdl(api.API):
     def db_set(self, table, record, *col_values):
         return cmd.DbSetCommand(self, table, record, *col_values)
 
+    def db_add(self, table, record, column, *values):
+        return cmd.DbAddCommand(self, table, record, column, *values)
+
     def db_clear(self, table, record, column):
         return cmd.DbClearCommand(self, table, record, column)
 

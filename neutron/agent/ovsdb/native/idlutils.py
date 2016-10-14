@@ -38,6 +38,7 @@ _LOOKUP_TABLE = {
     'IPFIX': RowLookup('Bridge', 'name', 'ipfix'),
     'Mirror': RowLookup('Mirror', 'name', None),
     'NetFlow': RowLookup('Bridge', 'name', 'netflow'),
+    'Open_vSwitch': RowLookup('Open_vSwitch', None, None),
     'QoS': RowLookup('Port', 'name', 'qos'),
     'Queue': RowLookup(None, None, None),
     'sFlow': RowLookup('Bridge', 'name', 'sflow'),
@@ -76,11 +77,11 @@ def row_by_record(idl_, table, record):
         raise RowNotFound(table=table, col='uuid', match=record)
 
     rl = _LOOKUP_TABLE.get(table, RowLookup(table, get_index_column(t), None))
-    # no table means uuid only, no column is just SSL which we don't need
+    # no table means uuid only, no column means lookup table only has one row
     if rl.table is None:
         raise ValueError(_("Table %s can only be queried by UUID") % table)
     if rl.column is None:
-        raise NotImplementedError(_("'.' searches are not implemented"))
+        return t.rows.values()[0]
     row = row_by_value(idl_, rl.table, rl.column, record)
     if rl.uuid_column:
         rows = getattr(row, rl.uuid_column)
