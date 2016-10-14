@@ -114,12 +114,14 @@ class NeutronModule(object):
         # necessary, if modules are loaded on the fly (DevStack may
         # be an example)
         if not providers:
-            versionutils.report_deprecated_feature(
-                LOG,
-                _LW('Implicit loading of service providers from '
-                    'neutron_*.conf files is deprecated and will be removed '
-                    'in Ocata release.'))
             providers = self.ini().service_providers.service_provider
+
+            if providers:
+                versionutils.report_deprecated_feature(
+                    LOG,
+                    _LW('Implicit loading of service providers from '
+                        'neutron_*.conf files is deprecated and will be '
+                        'removed in Ocata release.'))
 
         return providers
 
