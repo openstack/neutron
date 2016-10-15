@@ -20,7 +20,7 @@ from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common import utils
-from neutron.db import db_base_plugin_v2
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db import models_v2
 from neutron.extensions import extraroute
@@ -48,7 +48,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                                     router_db['route_list']
                                 ))
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         l3.ROUTERS, ['_extend_router_dict_extraroute'])
 
     def update_router(self, context, id, router):

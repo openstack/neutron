@@ -17,9 +17,9 @@ from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
-from neutron.db import db_base_plugin_v2
 from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import address_scope as obj_addr_scope
 from neutron.objects import base as base_obj
@@ -133,5 +133,5 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
                 network_res[ext_address_scope.IPV6_ADDRESS_SCOPE] = as_id
         return network_res
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attr.NETWORKS, ['_extend_network_dict_address_scope'])

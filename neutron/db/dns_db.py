@@ -20,7 +20,7 @@ from oslo_log import log as logging
 
 from neutron._i18n import _, _LE
 from neutron.common import utils
-from neutron.db import db_base_plugin_v2
+from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import dns
 from neutron.extensions import l3
 from neutron.objects import floatingip as fip_obj
@@ -71,8 +71,7 @@ class DNSDbMixin(object):
             floatingip_res['dns_name'] = floatingip_db.dns['dns_name']
         return floatingip_res
 
-    # Register dict extend functions for floating ips
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         l3.FLOATINGIPS, ['_extend_floatingip_dict_dns'])
 
     def _process_dns_floatingip_create_precommit(self, context,

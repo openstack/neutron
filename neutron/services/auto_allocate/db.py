@@ -25,10 +25,10 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import exceptions as c_exc
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
-from neutron.db import db_base_plugin_v2
 from neutron.extensions import l3
 from neutron.objects import auto_allocate as auto_allocate_obj
 from neutron.objects import base as base_obj
@@ -75,7 +75,7 @@ def _ensure_external_network_default_value_callback(
 
 class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attributes.NETWORKS, [_extend_external_network_default])
 
     def __new__(cls, *args, **kwargs):

@@ -16,8 +16,8 @@
 from neutron_lib.api import validators
 
 from neutron.api.v2 import attributes as attr
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
-from neutron.db import db_base_plugin_v2
 
 from neutron.common import utils
 from neutron.extensions import allowedaddresspairs as addr_pair
@@ -73,8 +73,7 @@ class AllowedAddressPairsMixin(object):
         port_res[addr_pair.ADDRESS_PAIRS] = allowed_address_pairs
         return port_res
 
-    # Register dict extend functions for ports
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attr.PORTS, ['_extend_port_dict_allowed_address_pairs'])
 
     def _delete_allowed_address_pairs(self, context, id):

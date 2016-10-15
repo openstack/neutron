@@ -46,6 +46,8 @@ from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
+from neutron.db import _model_query as model_query
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import address_scope_db
 from neutron.db import agents_db
@@ -579,17 +581,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if port_db.port_binding:
             self._update_port_dict_binding(port_res, port_db.port_binding)
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attributes.PORTS, ['_ml2_extend_port_dict_binding'])
 
-    # Register extend dict methods for network and port resources.
-    # Each mechanism driver that supports extend attribute for the resources
-    # can add those attribute to the result.
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    # ML2's resource extend functions allow extension drivers that extend
+    # attributes for the resources to add those attributes to the result.
+    resource_extend.register_funcs(
                attributes.NETWORKS, ['_ml2_md_extend_network_dict'])
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
                attributes.PORTS, ['_ml2_md_extend_port_dict'])
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
                attributes.SUBNETS, ['_ml2_md_extend_subnet_dict'])
 
     def _ml2_md_extend_network_dict(self, result, netdb):
@@ -616,7 +617,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         bind_criteria = models.PortBinding.host.in_(values)
         return query.filter(models_v2.Port.port_binding.has(bind_criteria))
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+    model_query.register_hook(
         models_v2.Port,
         "ml2_port_bindings",
         None,

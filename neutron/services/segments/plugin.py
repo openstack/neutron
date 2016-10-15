@@ -29,7 +29,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import exceptions as n_exc
-from neutron.db import common_db_mixin
+from neutron.db import _resource_extend as resource_extend
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.extensions import ip_allocation
@@ -79,11 +79,11 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
     supported_extension_aliases = ["segment", "ip_allocation", "l2_adjacency"]
 
     def __init__(self):
-        common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+        resource_extend.register_funcs(
             attributes.NETWORKS, [_extend_network_dict_binding])
-        common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+        resource_extend.register_funcs(
             attributes.SUBNETS, [_extend_subnet_dict_binding])
-        common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+        resource_extend.register_funcs(
             attributes.PORTS, [_extend_port_dict_binding])
         self.nova_updater = NovaSegmentNotifier()
 

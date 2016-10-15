@@ -37,6 +37,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
 from neutron.db import dns_db
@@ -616,7 +617,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         def _extend_router_dict_test_attr(*args, **kwargs):
             self.extension_called = True
 
-        db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        resource_extend.register_funcs(
             l3.ROUTERS, [_extend_router_dict_test_attr])
         self.assertFalse(self.extension_called)
         with self.router():

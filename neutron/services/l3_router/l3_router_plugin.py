@@ -22,6 +22,7 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import dns_db
 from neutron.db import extraroute_db
@@ -125,5 +126,5 @@ def add_flavor_id(plugin, router_res, router_db):
     router_res['flavor_id'] = router_db['flavor_id']
 
 
-common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+resource_extend.register_funcs(
     l3.ROUTERS, [add_flavor_id])

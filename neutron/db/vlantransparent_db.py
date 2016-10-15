@@ -13,7 +13,7 @@
 #    under the License.
 
 from neutron.api.v2 import attributes
-from neutron.db import db_base_plugin_v2
+from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import vlantransparent
 
 
@@ -25,5 +25,5 @@ class Vlantransparent_db_mixin(object):
             network_db.vlan_transparent)
         return network_res
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attributes.NETWORKS, ['_extend_network_dict_vlan_transparent'])

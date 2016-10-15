@@ -25,8 +25,9 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import _model_query as model_query
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
-from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
@@ -67,10 +68,7 @@ class External_net_db_mixin(object):
             return query.filter(models_v2.Network.external.has())
         return query.filter(~models_v2.Network.external.has())
 
-    # TODO(salvatore-orlando): Perform this operation without explicitly
-    # referring to db_base_plugin_v2, as plugins that do not extend from it
-    # might exist in the future
-    db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+    model_query.register_hook(
         models_v2.Network,
         "external_net",
         None,
@@ -86,8 +84,7 @@ class External_net_db_mixin(object):
         network_res[external_net.EXTERNAL] = network_db.external is not None
         return network_res
 
-    # Register dict extend functions for networks
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attributes.NETWORKS, ['_extend_network_dict_l3'])
 
     def _process_l3_create(self, context, net_data, req_data):

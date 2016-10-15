@@ -21,6 +21,8 @@ from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
 
 from neutron.api.v2 import attributes
+from neutron.db import _model_query as model_query
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db.models import l3 as l3_model
@@ -31,6 +33,7 @@ from neutron.extensions import l3 as l3_ext
 from neutron.extensions import tag as tag_ext
 
 
+# Taggable resources
 resource_model_map = {
     # When we'll add other resources, we must add new extension for them
     # if we don't have better discovery mechanism instead of it.
@@ -131,13 +134,11 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
     def __new__(cls, *args, **kwargs):
         inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
         inst._filter_methods = []  # prevent GC of our partial functions
-        # support only _apply_dict_extend_functions supported resources
-        # at the moment.
         for resource, model in resource_model_map.items():
-            common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+            resource_extend.register_funcs(
                 resource, [_extend_tags_dict])
             method = functools.partial(tag_methods.apply_tag_filters, model)
             inst._filter_methods.append(method)
-            common_db_mixin.CommonDbMixin.register_model_query_hook(
+            model_query.register_hook(
                 model, "tag", None, None, method)
         return inst

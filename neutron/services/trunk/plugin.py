@@ -22,10 +22,10 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
-from neutron.db import db_base_plugin_v2
 from neutron.extensions import portbindings
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
@@ -69,7 +69,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     __native_sorting_support = True
 
     def __init__(self):
-        db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        resource_extend.register_funcs(
             attributes.PORTS, [_extend_port_trunk_details])
         self._rpc_backend = None
         self._drivers = []

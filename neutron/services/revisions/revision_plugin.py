@@ -17,8 +17,8 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _, _LW
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
-from neutron.db import db_base_plugin_v2
 from neutron.db import standard_attr
 from neutron.services import service_base
 
@@ -33,7 +33,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
     def __init__(self):
         super(RevisionPlugin, self).__init__()
         for resource in standard_attr.get_standard_attr_resource_model_map():
-            db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+            resource_extend.register_funcs(
                 resource, [self.extend_resource_dict_revision])
         db_api.sqla_listen(se.Session, 'before_flush', self.bump_revisions)
 
