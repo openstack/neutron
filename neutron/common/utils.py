@@ -837,3 +837,10 @@ except AttributeError:
 def make_weak_ref(f):
     """Make a weak reference to a function accounting for bound methods."""
     return weak_method(f) if hasattr(f, '__self__') else weakref.ref(f)
+
+
+def resolve_ref(ref):
+    """Handles dereference of weakref."""
+    if isinstance(ref, weakref.ref):
+        ref = ref()
+    return ref
