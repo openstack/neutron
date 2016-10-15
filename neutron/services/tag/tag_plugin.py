@@ -73,7 +73,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
     def _get_resource(self, context, resource, resource_id):
         model = resource_model_map[resource]
         try:
-            return self._get_by_id(context, model, resource_id)
+            return model_query.get_by_id(context, model, resource_id)
         except exc.NoResultFound:
             raise tag_ext.TagResourceNotFound(resource=resource,
                                               resource_id=resource_id)

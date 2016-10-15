@@ -39,6 +39,8 @@ from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
+from neutron.db import _model_query as model_query
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
@@ -161,7 +163,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _get_router(self, context, router_id):
         try:
-            router = self._get_by_id(context, l3_models.Router, router_id)
+            router = model_query.get_by_id(
+                context, l3_models.Router, router_id)
         except exc.NoResultFound:
             raise l3.RouterNotFound(router_id=router_id)
         return router
@@ -184,7 +187,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # class inheriting from CommonDbMixin, which is true for all existing
         # plugins.
         if process_extensions:
-            self._apply_dict_extend_functions(l3.ROUTERS, res, router)
+            resource_extend.apply_funcs(l3.ROUTERS, res, router)
         return db_utils.resource_fields(res, fields)
 
     def _create_router_db(self, context, router, tenant_id):
@@ -559,18 +562,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
         marker_obj = self._get_marker_obj(context, 'router', limit, marker)
-        return self._get_collection(context, l3_models.Router,
-                                    self._make_router_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        return model_query.get_collection(context, l3_models.Router,
+                                          self._make_router_dict,
+                                          filters=filters, fields=fields,
+                                          sorts=sorts,
+                                          limit=limit,
+                                          marker_obj=marker_obj,
+                                          page_reverse=page_reverse)
 
     @db_api.retry_if_session_inactive()
     def get_routers_count(self, context, filters=None):
-        return self._get_collection_count(context, l3_models.Router,
-                                          filters=filters)
+        return model_query.get_collection_count(context, l3_models.Router,
+                                                filters=filters)
 
     def _check_for_dup_router_subnets(self, context, router,
                                       network_id, new_subnets):
@@ -1006,7 +1009,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _get_floatingip(self, context, id):
         try:
-            floatingip = self._get_by_id(context, l3_models.FloatingIP, id)
+            floatingip = model_query.get_by_id(
+                context, l3_models.FloatingIP, id)
         except exc.NoResultFound:
             raise l3.FloatingIPNotFound(floatingip_id=id)
         return floatingip
@@ -1025,7 +1029,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # class inheriting from CommonDbMixin, which is true for all existing
         # plugins.
         if process_extensions:
-            self._apply_dict_extend_functions(l3.FLOATINGIPS, res, floatingip)
+            resource_extend.apply_funcs(l3.FLOATINGIPS, res, floatingip)
         return db_utils.resource_fields(res, fields)
 
     def _get_router_for_floatingip(self, context, internal_port,
@@ -1295,8 +1299,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._process_dns_floatingip_create_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
-        self._apply_dict_extend_functions(l3.FLOATINGIPS, floatingip_dict,
-                                          floatingip_db)
+            resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
+                                        floatingip_db)
         return floatingip_dict
 
     @db_api.retry_if_session_inactive()
@@ -1326,8 +1330,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._process_dns_floatingip_update_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
-        self._apply_dict_extend_functions(l3.FLOATINGIPS, floatingip_dict,
-                                          floatingip_db)
+            resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
+                                        floatingip_db)
         return old_floatingip, floatingip_dict
 
     def _floatingips_to_router_ids(self, floatingips):
@@ -1344,8 +1348,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     @db_api.retry_if_session_inactive()
     def update_floatingip_status(self, context, floatingip_id, status):
         """Update operational status for floating IP in neutron DB."""
-        fip_query = self._model_query(context, l3_models.FloatingIP).filter(
-            l3_models.FloatingIP.id == floatingip_id)
+        fip_query = model_query.query_with_hooks(
+            context, l3_models.FloatingIP).filter(
+                l3_models.FloatingIP.id == floatingip_id)
         fip_query.update({'status': status}, synchronize_session=False)
 
     def _delete_floatingip(self, context, id):
@@ -1382,17 +1387,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 if key in filters:
                     filters[val] = filters.pop(key)
 
-        return self._get_collection(context, l3_models.FloatingIP,
-                                    self._make_floatingip_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        return model_query.get_collection(context, l3_models.FloatingIP,
+                                          self._make_floatingip_dict,
+                                          filters=filters, fields=fields,
+                                          sorts=sorts,
+                                          limit=limit,
+                                          marker_obj=marker_obj,
+                                          page_reverse=page_reverse)
 
     @db_api.retry_if_session_inactive()
     def delete_disassociated_floatingips(self, context, network_id):
-        query = self._model_query(context, l3_models.FloatingIP)
+        query = model_query.query_with_hooks(context, l3_models.FloatingIP)
         query = query.filter_by(floating_network_id=network_id,
                                 fixed_port_id=None,
                                 router_id=None)
@@ -1401,8 +1406,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.retry_if_session_inactive()
     def get_floatingips_count(self, context, filters=None):
-        return self._get_collection_count(context, l3_models.FloatingIP,
-                                          filters=filters)
+        return model_query.get_collection_count(context, l3_models.FloatingIP,
+                                                filters=filters)
 
     def _router_exists(self, context, router_id):
         try:
@@ -1517,7 +1522,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         filters = {'id': router_ids} if router_ids else {}
         if active is not None:
             filters['admin_state_up'] = [active]
-        router_dicts = self._get_collection(
+        router_dicts = model_query.get_collection(
             context, l3_models.Router, self._make_router_dict_with_gw_port,
             filters=filters)
         if not router_dicts:

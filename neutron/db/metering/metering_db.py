@@ -19,6 +19,7 @@ from sqlalchemy import orm
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import constants
+from neutron.db import _model_query as model_query
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin as base_db
@@ -60,9 +61,9 @@ class MeteringDbMixin(metering.MeteringPluginBase,
     def delete_metering_label(self, context, label_id):
         with db_api.context_manager.writer.using(context):
             try:
-                label = self._get_by_id(context,
-                                        metering_models.MeteringLabel,
-                                        label_id)
+                label = model_query.get_by_id(context,
+                                              metering_models.MeteringLabel,
+                                              label_id)
             except orm.exc.NoResultFound:
                 raise metering.MeteringLabelNotFound(label_id=label_id)
 
@@ -70,9 +71,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
 
     def get_metering_label(self, context, label_id, fields=None):
         try:
-            metering_label = self._get_by_id(context,
-                                             metering_models.MeteringLabel,
-                                             label_id)
+            metering_label = model_query.get_by_id(
+                context, metering_models.MeteringLabel, label_id)
         except orm.exc.NoResultFound:
             raise metering.MeteringLabelNotFound(label_id=label_id)
 
@@ -83,13 +83,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                             page_reverse=False):
         marker_obj = self._get_marker_obj(context, 'metering_labels', limit,
                                           marker)
-        return self._get_collection(context, metering_models.MeteringLabel,
-                                    self._make_metering_label_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        return model_query.get_collection(context,
+                                          metering_models.MeteringLabel,
+                                          self._make_metering_label_dict,
+                                          filters=filters, fields=fields,
+                                          sorts=sorts,
+                                          limit=limit,
+                                          marker_obj=marker_obj,
+                                          page_reverse=page_reverse)
 
     @staticmethod
     def _make_metering_label_rule_dict(metering_label_rule, fields=None):
@@ -106,17 +107,18 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         marker_obj = self._get_marker_obj(context, 'metering_label_rules',
                                           limit, marker)
 
-        return self._get_collection(context, metering_models.MeteringLabelRule,
-                                    self._make_metering_label_rule_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        return model_query.get_collection(context,
+                                          metering_models.MeteringLabelRule,
+                                          self._make_metering_label_rule_dict,
+                                          filters=filters, fields=fields,
+                                          sorts=sorts,
+                                          limit=limit,
+                                          marker_obj=marker_obj,
+                                          page_reverse=page_reverse)
 
     def get_metering_label_rule(self, context, rule_id, fields=None):
         try:
-            metering_label_rule = self._get_by_id(
+            metering_label_rule = model_query.get_by_id(
                 context, metering_models.MeteringLabelRule, rule_id)
         except orm.exc.NoResultFound:
             raise metering.MeteringLabelRuleNotFound(rule_id=rule_id)
@@ -167,9 +169,9 @@ class MeteringDbMixin(metering.MeteringPluginBase,
     def delete_metering_label_rule(self, context, rule_id):
         with db_api.context_manager.writer.using(context):
             try:
-                rule = self._get_by_id(context,
-                                       metering_models.MeteringLabelRule,
-                                       rule_id)
+                rule = model_query.get_by_id(context,
+                                             metering_models.MeteringLabelRule,
+                                             rule_id)
             except orm.exc.NoResultFound:
                 raise metering.MeteringLabelRuleNotFound(rule_id=rule_id)
             context.session.delete(rule)
@@ -204,8 +206,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         for label in labels:
             if label.shared:
                 if not all_routers:
-                    all_routers = self._get_collection_query(context,
-                                                             l3_models.Router)
+                    all_routers = model_query.get_collection_query(
+                        context, l3_models.Router)
                 routers = all_routers
             else:
                 routers = label.routers
@@ -232,7 +234,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                 rule['metering_label_id'])
 
         if label.shared:
-            routers = self._get_collection_query(context, l3_models.Router)
+            routers = model_query.get_collection_query(
+                context, l3_models.Router)
         else:
             routers = label.routers
 
