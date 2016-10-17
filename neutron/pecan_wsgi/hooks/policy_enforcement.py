@@ -36,18 +36,20 @@ def _custom_getter(resource, resource_id):
         return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
-def fetch_resource(neutron_context, controller, resource, resource_id,
+def fetch_resource(state, neutron_context, controller, resource, resource_id,
                    parent_id=None):
-    attrs = controller.resource_info
-    if not attrs:
-        # this isn't a request for a normal resource. it could be
-        # an action like removing a network from a dhcp agent.
-        # return None and assume the custom controller for this will
-        # handle the necessary logic.
-        return
-    field_list = [name for (name, value) in attrs.items()
-                  if (value.get('required_by_policy') or
-                      value.get('primary_key') or 'default' not in value)]
+    field_list = []
+    if state.request.method == 'PUT':
+        attrs = controller.resource_info
+        if not attrs:
+            # this isn't a request for a normal resource. it could be
+            # an action like removing a network from a dhcp agent.
+            # return None and assume the custom controller for this will
+            # handle the necessary logic.
+            return
+        field_list = [name for (name, value) in attrs.items()
+                      if (value.get('required_by_policy') or
+                          value.get('primary_key') or 'default' not in value)]
     plugin = manager.NeutronManager.get_plugin_for_resource(resource)
     if plugin:
         if utils.is_member_action(controller):
@@ -107,7 +109,7 @@ class PolicyHook(hooks.PecanHook):
                 item = {}
             resource_id = state.request.context.get('resource_id')
             parent_id = state.request.context.get('parent_id')
-            resource_obj = fetch_resource(neutron_context, controller,
+            resource_obj = fetch_resource(state, neutron_context, controller,
                                           resource, resource_id,
                                           parent_id=parent_id)
             if resource_obj:
