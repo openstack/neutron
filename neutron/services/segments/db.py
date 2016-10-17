@@ -107,14 +107,15 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                 sorts=[('segment_index', True)])
             if segments:
                 # NOTE(xiaohhui): The new index is the last index + 1, this
-                # may casue discontinuous segment_index. But segment_index
+                # may cause discontinuous segment_index. But segment_index
                 # can functionally work as the order index for segments.
                 segment_index = (segments[-1].get('segment_index') + 1)
             args['segment_index'] = segment_index
 
             new_segment = segment_model.NetworkSegment(**args)
             context.session.add(new_segment)
-            # Do some preliminary operations before commiting the segment to db
+            # Do some preliminary operations before committing the segment to
+            # db
             registry.notify(resources.SEGMENT, events.PRECOMMIT_CREATE, self,
                             context=context, segment=new_segment)
             return new_segment
