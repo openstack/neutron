@@ -1,7 +1,7 @@
 [run]
 branch = True
 source = neutron
-omit = neutron/tests/*,neutron/openstack/*
+omit = neutron/tests/*
 
 [report]
 ignore_errors = True
