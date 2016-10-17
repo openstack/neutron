@@ -15,13 +15,13 @@
 
 import netaddr
 from neutron_lib import constants as lib_const
-from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_utils import netutils
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _LE
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
+from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import rules
 from neutron.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
@@ -55,8 +55,21 @@ def create_reg_numbers(flow_params):
     _replace_register(flow_params, ovsfw_consts.REG_NET, 'reg_net')
 
 
-class OVSFWPortNotFound(exceptions.NeutronException):
-    message = _("Port %(port_id)s is not managed by this agent. ")
+def get_tag_from_other_config(bridge, port_name):
+    """Return tag stored in OVSDB other_config metadata.
+
+    :param bridge: OVSBridge instance where port is.
+    :param port_name: Name of the port.
+    :raises OVSFWTagNotFound: In case tag cannot be found in OVSDB.
+    """
+    other_config = None
+    try:
+        other_config = bridge.db_get_val(
+            'Port', port_name, 'other_config')
+        return int(other_config['tag'])
+    except (KeyError, TypeError, ValueError):
+        raise exceptions.OVSFWTagNotFound(
+            port_name=port_name, other_config=other_config)
 
 
 class SecurityGroup(object):
@@ -237,18 +250,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         except KeyError:
             ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
             if not ovs_port:
-                raise OVSFWPortNotFound(port_id=port_id)
-
-            try:
-                other_config = self.int_br.br.db_get_val(
-                    'Port', ovs_port.port_name, 'other_config')
-                port_vlan_id = int(other_config['tag'])
-            except (KeyError, TypeError):
-                LOG.warning(_LW("Cannot get tag for port %(port_id)s from "
-                                "its other_config: %(other_config)s"),
-                            {'port_id': port_id,
-                             'other_config': other_config})
-                port_vlan_id = ovs_consts.DEAD_VLAN_TAG
+                raise exceptions.OVSFWPortNotFound(port_id=port_id)
+            port_vlan_id = get_tag_from_other_config(
+                self.int_br.br, ovs_port.port_name)
             of_port = OFPort(port, ovs_port, port_vlan_id)
             self.sg_port_map.create_port(of_port, port)
         else:

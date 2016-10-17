@@ -800,17 +800,26 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         port_info = self.int_br.get_ports_attributes(
             "Port", columns=["name", "tag", "other_config"],
             ports=port_names, if_exists=True)
-        info_by_port = {x['name']: [x['tag'], x['other_config']]
-                        for x in port_info}
+        info_by_port = {
+            x['name']: {
+                'tag': x['tag'],
+                'other_config': x['other_config'] or {}
+            }
+            for x in port_info
+        }
         for port_detail in need_binding_ports:
             try:
                 lvm = self.vlan_manager.get(port_detail['network_id'])
             except vlanmanager.MappingNotFound:
                 continue
             port = port_detail['vif_port']
-            cur_info = info_by_port.get(port.port_name)
-            if cur_info is not None and cur_info[0] != lvm.vlan:
-                other_config = cur_info[1] or {}
+            try:
+                cur_info = info_by_port[port.port_name]
+            except KeyError:
+                continue
+            other_config = cur_info['other_config']
+            if (cur_info['tag'] != lvm.vlan or
+                    other_config.get('tag') != lvm.vlan):
                 other_config['tag'] = str(lvm.vlan)
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "other_config", other_config)
