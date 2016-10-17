@@ -346,8 +346,10 @@ class OVSFlowTestCase(OVSAgentTestBase):
         self.br_tun.set_secure_mode()
         self.br_tun.setup_controllers(cfg.CONF)
         self.tun_p = self.br_tun.add_patch_port(
-            cfg.CONF.OVS.tun_peer_patch_port,
-            cfg.CONF.OVS.int_peer_patch_port)
+            common_utils.get_rand_device_name(
+                prefix=cfg.CONF.OVS.tun_peer_patch_port),
+            common_utils.get_rand_device_name(
+                prefix=cfg.CONF.OVS.int_peer_patch_port))
         self.br_tun.setup_default_table(self.tun_p, True)
 
     def test_provision_local_vlan(self):
