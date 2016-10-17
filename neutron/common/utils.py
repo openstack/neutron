@@ -120,31 +120,36 @@ def safe_sort_key(value):
     return helpers.safe_sort_key(value)
 
 
+@removals.remove(
+    message="Use dict2str from neutron_lib.utils.helpers",
+    version="Ocata",
+    removal_version="Pike")
 def dict2str(dic):
-    return ','.join("%s=%s" % (key, val)
-                    for key, val in sorted(six.iteritems(dic)))
+    return helpers.dict2str(dic)
 
 
+@removals.remove(
+    message="Use str2dict from neutron_lib.utils.helpers",
+    version="Ocata",
+    removal_version="Pike")
 def str2dict(string):
-    res_dict = {}
-    for keyvalue in string.split(','):
-        (key, value) = keyvalue.split('=', 1)
-        res_dict[key] = value
-    return res_dict
+    return helpers.str2dict(string)
 
 
+@removals.remove(
+    message="Use dict2tuple from neutron_lib.utils.helpers",
+    version="Ocata",
+    removal_version="Pike")
 def dict2tuple(d):
-    items = list(d.items())
-    items.sort()
-    return tuple(items)
+    return helpers.dict2tuple(d)
 
 
+@removals.remove(
+    message="Use diff_list_of_dict from neutron_lib.utils.helpers",
+    version="Ocata",
+    removal_version="Pike")
 def diff_list_of_dict(old_list, new_list):
-    new_set = set([dict2str(l) for l in new_list])
-    old_set = set([dict2str(l) for l in old_list])
-    added = new_set - old_set
-    removed = old_set - new_set
-    return [str2dict(a) for a in added], [str2dict(r) for r in removed]
+    return helpers.diff_list_of_dict(old_list, new_list)
 
 
 def is_extension_supported(plugin, ext_alias):

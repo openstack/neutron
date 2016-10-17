@@ -14,12 +14,12 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common import _deprecate
-from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
@@ -110,8 +110,8 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                               routes)
         old_routes, routes_dict = self._get_extra_routes_dict_by_router_id(
             context, router['id'])
-        added, removed = utils.diff_list_of_dict(old_routes,
-                                                 routes)
+        added, removed = helpers.diff_list_of_dict(old_routes,
+                                                   routes)
         LOG.debug('Added routes are %s', added)
         for route in added:
             router_routes = l3_models.RouterRoute(
