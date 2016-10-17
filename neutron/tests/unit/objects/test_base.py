@@ -801,6 +801,18 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             field = obj.fields[k]
             self.assertEqual(v, field.to_primitive(obj, k, getattr(obj, k)))
 
+    def test_to_dict_with_unset_project_id(self):
+        if 'project_id' not in self._test_class.fields:
+            self.skipTest(
+                'Test class %r has no project_id in fields' % self._test_class)
+        obj_data = copy.copy(self.obj_fields[0])
+        obj_data.pop('project_id')
+        obj = self._test_class(self.context, **obj_data)
+        dict_ = obj.to_dict()
+
+        self.assertNotIn('project_id', dict_)
+        self.assertNotIn('tenant_id', dict_)
+
     def test_fields_no_update(self):
         obj = self._test_class(self.context, **self.obj_fields[0])
         for field in self._test_class.fields_no_update:

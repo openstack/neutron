@@ -150,6 +150,10 @@ class NeutronObject(obj_base.VersionedObject,
             # is included in self.items()
             if name in self.fields and name not in self.synthetic_fields:
                 value = self.fields[name].to_primitive(self, name, value)
+            if name == 'tenant_id':
+                if ('project_id' in self.fields and
+                        not self.obj_attr_is_set('project_id')):
+                    continue
             dict_[name] = value
         for field_name, value in self._synthetic_fields_items():
             field = self.fields[field_name]
@@ -252,7 +256,8 @@ class DeclarativeObject(abc.ABCMeta):
             obj_extra_fields_set = set(cls.obj_extra_fields)
             obj_extra_fields_set.add('tenant_id')
             cls.obj_extra_fields = list(obj_extra_fields_set)
-            setattr(cls, 'tenant_id', property(lambda x: x.project_id))
+            setattr(cls, 'tenant_id',
+                    property(lambda x: x.get('project_id', None)))
 
         fields_no_update_set = set(cls.fields_no_update)
         for base in itertools.chain([cls], bases):
