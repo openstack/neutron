@@ -230,6 +230,11 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                           'icbb': 'agreed'}]
         self._create_port_with_address_pairs(address_pairs, 400)
 
+    def test_create_port_with_unexpected_address_pairs_format(self):
+        address_pairs = {'mac_address': '00:00:00:00:00:01',
+                         'ip_address': '10.0.0.1'}
+        self._create_port_with_address_pairs(address_pairs, 400)
+
     def _create_port_with_address_pairs(self, address_pairs, ret_code):
         with self.network() as net:
             res = self._create_port(self.fmt, net['network']['id'],
@@ -254,6 +259,19 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             self.assertEqual(port['port'][addr_pair.ADDRESS_PAIRS],
                              address_pairs)
             self._delete('ports', port['port']['id'])
+
+    def test_update_add_address_pairs_with_unexpected_format(self):
+        with self.network() as net:
+            res = self._create_port(self.fmt, net['network']['id'])
+            port = self.deserialize(self.fmt, res)
+            address_pairs = {'mac_address': '00:00:00:00:00:01',
+                             'ip_address': '10.0.0.1'}
+            update_port = {'port': {addr_pair.ADDRESS_PAIRS:
+                                    address_pairs}}
+            req = self.new_update_request('ports', update_port,
+                                          port['port']['id'])
+            res = req.get_response(self.api)
+            self.assertEqual(400, res.status_int)
 
     def test_create_address_gets_port_mac(self):
         with self.network() as net:
