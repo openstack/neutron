@@ -25,7 +25,6 @@ from oslo_versionedobjects import fields as obj_fields
 import six
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 from neutron.db import api as db_api
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
@@ -124,7 +123,6 @@ class NeutronObject(obj_base.VersionedObject,
                     dict_[field_name].to_dict() if value else None)
             else:
                 dict_[field_name] = field.to_primitive(self, field_name, value)
-        attributes.populate_project_info(dict_)
         return dict_
 
     @classmethod

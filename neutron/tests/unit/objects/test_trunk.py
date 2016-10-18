@@ -103,7 +103,7 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertRaises(n_exc.PortNotFound, trunk.create)
 
     def _test_create_trunk_with_subports(self, port_id, vids):
-        tenant_id = uuidutils.generate_uuid()
+        project_id = uuidutils.generate_uuid()
 
         sub_ports = []
         for vid in vids:
@@ -112,7 +112,7 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                            segmentation_type='vlan',
                                            segmentation_id=vid))
         trunk = t_obj.Trunk(self.context, port_id=port_id,
-                            sub_ports=sub_ports, tenant_id=tenant_id)
+                            sub_ports=sub_ports, project_id=project_id)
         trunk.create()
         self.assertEqual(sub_ports, trunk.sub_ports)
         return trunk
@@ -169,3 +169,11 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         for k in trunk.fields:
             if k in kwargs:
                 self.assertEqual(kwargs[k], trunk[k])
+
+    def test_v1_1_to_v1_0_drops_project_id(self):
+        trunk_new = self._test_create_trunk_with_subports(
+            self.db_objs[0]['port_id'], [1, 2])
+
+        trunk_v1_0 = trunk_new.obj_to_primitive(target_version='1.0')
+        self.assertNotIn('project_id', trunk_v1_0['versioned_object.data'])
+        self.assertIn('tenant_id', trunk_v1_0['versioned_object.data'])

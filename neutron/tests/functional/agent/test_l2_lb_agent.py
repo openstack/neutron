@@ -147,7 +147,7 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
     def _gen_trunk(self):
         trunk_obj = trunk.Trunk(id=uuidutils.generate_uuid(),
                                 port_id=uuidutils.generate_uuid(),
-                                tenant_id=uuidutils.generate_uuid())
+                                project_id=uuidutils.generate_uuid())
         subports = [trunk.SubPort(id=uuidutils.generate_uuid(),
                                   port_id=uuidutils.generate_uuid(),
                                   segmentation_type='vlan',

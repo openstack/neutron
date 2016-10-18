@@ -39,7 +39,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.1: QosDscpMarkingRule introduced
     # Version 1.2: Added QosMinimumBandwidthRule
     # Version 1.3: Added standard attributes (created_at, revision, etc)
-    VERSION = '1.3'
+    # Version 1.4: Changed tenant_id to project_id
+    VERSION = '1.4'
 
     # required by RbacNeutronMetaclass
     rbac_db_model = QosPolicyRBAC
@@ -50,13 +51,13 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     fields = {
         'id': common_types.UUIDField(),
-        'tenant_id': obj_fields.StringField(),
+        'project_id': obj_fields.StringField(),
         'name': obj_fields.StringField(),
         'shared': obj_fields.BooleanField(default=False),
         'rules': obj_fields.ListOfObjectsField('QosRule', subclasses=True),
     }
 
-    fields_no_update = ['id', 'tenant_id']
+    fields_no_update = ['id', 'project_id']
 
     synthetic_fields = ['rules']
 
@@ -64,6 +65,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                       'port': port_binding_model}
 
     def obj_load_attr(self, attrname):
+        if attrname == 'project_id':
+            return super(QosPolicy, self).obj_load_attr(attrname)
+
         if attrname != 'rules':
             raise exceptions.ObjectActionError(
                 action='obj_load_attr',
@@ -235,3 +239,6 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                 # description was not nullable before
                 raise exception.IncompatibleObjectVersion(
                     objver=target_version, objname='QoSPolicy')
+
+        if _target_version < (1, 4):
+            primitive['tenant_id'] = primitive.pop('project_id')
