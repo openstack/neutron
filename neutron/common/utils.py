@@ -861,8 +861,6 @@ def import_modules_recursively(topdir):
                 importlib.import_module(module)
             modules.append(module)
 
-        for dir_ in dirs:
-            modules.extend(import_modules_recursively(dir_))
     return modules
 
 
