@@ -22,7 +22,7 @@ class AddressScopeIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = address_scope.AddressScope
 
 
-class AddressScopeDbObjectTestCase(obj_test_base._BaseObjectTestCase,
+class AddressScopeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                                    testlib_api.SqlTestCase):
 
     _test_class = address_scope.AddressScope
