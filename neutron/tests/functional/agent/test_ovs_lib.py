@@ -96,6 +96,23 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertEqual([], self.ovs.db_get_val('Port', port_name, 'tag'))
         self.assertEqual([], self.br.get_port_tag_dict()[port_name])
 
+    def test_attribute_map_handling(self):
+        (pname, ofport) = self.create_ovs_port()
+        expected = {'a': 'b'}
+        self.ovs.set_db_attribute('Port', pname, 'other_config', expected)
+        self.assertEqual(expected,
+                         self.ovs.db_get_val('Port', pname, 'other_config'))
+        other = {'c': 'd'}
+        expected.update(other)
+        self.ovs.set_db_attribute('Port', pname, 'other_config', other)
+        self.assertEqual(expected,
+                         self.ovs.db_get_val('Port', pname, 'other_config'))
+        other = {'a': 'x'}
+        expected.update(other)
+        self.ovs.set_db_attribute('Port', pname, 'other_config', other)
+        self.assertEqual(expected,
+                         self.ovs.db_get_val('Port', pname, 'other_config'))
+
     def test_get_bridge_external_bridge_id(self):
         self.ovs.set_db_attribute('Bridge', self.br.br_name,
                                   'external_ids',

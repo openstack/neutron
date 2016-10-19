@@ -203,6 +203,12 @@ class DbSetCommand(BaseCommand):
             # this soon.
             if isinstance(val, collections.OrderedDict):
                 val = dict(val)
+            if isinstance(val, dict):
+                # NOTE(twilson) OVS 2.6's Python IDL has mutate methods that
+                # would make this cleaner, but it's too early to rely on them.
+                existing = getattr(record, col, {})
+                existing.update(val)
+                val = existing
             setattr(record, col, idlutils.db_replace_record(val))
 
 
