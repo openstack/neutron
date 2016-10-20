@@ -13,18 +13,35 @@
 #    under the License.
 
 from neutron.agent.ovsdb.native import connection
+from neutron.agent.ovsdb.native import idlutils
 from neutron.tests.functional import base
 from oslo_config import cfg
+from ovs.db import idl
 
 
 class OVSDBConnectionTestCase(base.BaseSudoTestCase):
-    def setUp(self):
-        super(OVSDBConnectionTestCase, self).setUp()
+
+    def test_limit_tables(self):
         self.connection = connection.Connection(
             cfg.CONF.OVS.ovsdb_connection,
             cfg.CONF.ovs_vsctl_timeout, 'Open_vSwitch')
-
-    def test_limit_tables(self):
         tables = ['Open_vSwitch', 'Bridge', 'Port']
+        self.connection.start(table_name_list=tables)
+        self.assertItemsEqual(tables, self.connection.idl.tables.keys())
+
+    def test_idl_factory(self):
+        tables = ['Open_vSwitch', 'Bridge', 'Port']
+
+        def _idl_factory():
+            connection = cfg.CONF.OVS.ovsdb_connection
+            helper = idlutils.get_schema_helper(connection, 'Open_vSwitch')
+            for table in tables:
+                helper.register_table(table)
+            return idl.Idl(connection, helper)
+
+        self.connection = connection.Connection(
+            idl_factory=_idl_factory,
+            timeout=cfg.CONF.ovs_vsctl_timeout,
+        )
         self.connection.start(table_name_list=tables)
         self.assertItemsEqual(tables, self.connection.idl.tables.keys())
