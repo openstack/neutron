@@ -52,14 +52,15 @@ Steps for implementing the test
 Create a module ``networking_foo/db/models/head.py`` with the following
 content: ::
 
- from neutron.db.migration.models import head
+ from neutron_lib.db import model_base
+
  from networking_foo import models  # noqa
  # Alternatively, import separate modules here if the models are not in one
  # models.py file
 
 
  def get_metadata():
-    return head.model_base.BASEV2.metadata
+    return model_base.BASEV2.metadata
 
 
 2. Implement the test module
