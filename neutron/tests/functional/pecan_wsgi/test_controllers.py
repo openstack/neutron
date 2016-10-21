@@ -894,3 +894,45 @@ class TestMemberActionController(test_functional.PecanFunctionalTest):
         url = '/v2.0/{}/something/put_meh.json'.format(self.collection)
         resp = self.app.get(url, expect_errors=True)
         self.assertEqual(405, resp.status_int)
+
+
+class TestParentSubresourceController(test_functional.PecanFunctionalTest):
+    def setUp(self):
+        fake_ext = pecan_utils.FakeExtension()
+        fake_plugin = pecan_utils.FakePlugin()
+        plugins = {pecan_utils.FakePlugin.PLUGIN_TYPE: fake_plugin}
+        new_extensions = {fake_ext.get_alias(): fake_ext}
+        super(TestParentSubresourceController, self).setUp(
+            service_plugins=plugins, extensions=new_extensions)
+        policy.init()
+        policy._ENFORCER.set_rules(
+            oslo_policy.Rules.from_dict(
+                {'get_fake_duplicate': '',
+                 'get_meh_meh_fake_duplicates': ''}),
+            overwrite=False)
+        self.addCleanup(policy.reset)
+        hyphen_collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
+        self.collection = hyphen_collection.replace('_', '-')
+        self.fake_collection = (pecan_utils.FakeExtension.
+                                FAKE_PARENT_SUBRESOURCE_COLLECTION)
+
+    def test_get_duplicate_parent_resource(self):
+        url = '/v2.0/{}'.format(self.fake_collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({'fake_duplicates': [{'fake': 'fakeduplicates'}]},
+                         resp.json)
+
+    def test_get_duplicate_parent_resource_item(self):
+        url = '/v2.0/{}/something'.format(self.fake_collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({'fake_duplicate': {'fake': 'something'}}, resp.json)
+
+    def test_get_parent_resource_and_duplicate_subresources(self):
+        url = '/v2.0/{0}/something/{1}'.format(self.collection,
+                                             self.fake_collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({'fake_duplicates': [{'fake': 'something'}]},
+                         resp.json)

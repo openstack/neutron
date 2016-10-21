@@ -18,7 +18,7 @@ from oslo_serialization import jsonutils
 from pecan import hooks
 
 from neutron.api.v2 import base as v2_base
-from neutron import manager
+from neutron.pecan_wsgi.hooks import utils
 
 LOG = log.getLogger(__name__)
 
@@ -51,8 +51,7 @@ class BodyValidationHook(hooks.PecanHook):
             # member action is being processed or on agent scheduler operations
             return
         # Prepare data to be passed to the plugin from request body
-        controller = manager.NeutronManager.get_controller_for_resource(
-            collection)
+        controller = utils.get_controller(state)
         data = v2_base.Controller.prepare_request_body(
             neutron_context,
             json_data,
