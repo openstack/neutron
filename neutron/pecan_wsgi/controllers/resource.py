@@ -152,7 +152,7 @@ class CollectionsController(utils.NeutronPecanController):
         return self.create(resources)
 
     def create(self, resources):
-        if len(resources) > 1:
+        if request.context['is_bulk']:
             # Bulk!
             creator = self.plugin_bulk_creator
             key = self.collection
