@@ -26,7 +26,7 @@ from oslo_service import service
 
 from neutron._i18n import _LE, _LI
 from neutron.agent.linux import ip_lib
-from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.plugins.common import constants as p_constants

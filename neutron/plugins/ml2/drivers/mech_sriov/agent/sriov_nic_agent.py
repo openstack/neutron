@@ -32,8 +32,9 @@ import six
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
-from neutron.agent import securitygroups_rpc as sg_rpc
+from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
+from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import profiler as setup_profiler
 from neutron.common import topics
@@ -122,7 +123,7 @@ class SriovNicSwitchAgent(object):
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = sg_rpc.SecurityGroupAgentRpc(self.context,
+        self.sg_agent = agent_sg_rpc.SecurityGroupAgentRpc(self.context,
                 self.sg_plugin_rpc)
         self._setup_rpc()
         self.ext_manager = self._create_agent_extension_manager(

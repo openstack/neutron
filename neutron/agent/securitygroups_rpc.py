@@ -16,6 +16,7 @@
 
 import functools
 
+from debtcollector import moves
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -283,16 +284,24 @@ class SecurityGroupAgentRpc(object):
                 self.refresh_firewall(updated_devices)
 
 
-# TODO(armax): For bw compat with external dependencies; to be dropped in M.
-SG_RPC_VERSION = (
-    securitygroups_rpc.SecurityGroupAgentRpcApiMixin.SG_RPC_VERSION
+# TODO(armax): For bw compat with external dependencies; to be dropped in P.
+# NOTE(dasm): Should be already removed, but didn't have  DeprecationWarning.
+SG_RPC_VERSION = moves.moved_function(
+    securitygroups_rpc.SecurityGroupAgentRpcApiMixin.SG_RPC_VERSION,
+    'SG_RPC_VERSION', __name__, version='Liberty', removal_version='Pike'
 )
-SecurityGroupServerRpcApi = (
-    securitygroups_rpc.SecurityGroupServerRpcApi
+SecurityGroupServerRpcApi = moves.moved_class(
+    securitygroups_rpc.SecurityGroupServerRpcApi,
+    'SecurityGroupServerRpcApi', old_module_name=__name__, version='Liberty',
+    removal_version='Pike'
 )
-SecurityGroupAgentRpcApiMixin = (
-    securitygroups_rpc.SecurityGroupAgentRpcApiMixin
+SecurityGroupAgentRpcApiMixin = moves.moved_class(
+    securitygroups_rpc.SecurityGroupAgentRpcApiMixin,
+    'SecurityGroupAgentRpcApiMixin', old_module_name=__name__,
+    version='Liberty', removal_version='Pike'
 )
-SecurityGroupAgentRpcCallbackMixin = (
-    securitygroups_rpc.SecurityGroupAgentRpcCallbackMixin
+SecurityGroupAgentRpcCallbackMixin = moves.moved_class(
+    securitygroups_rpc.SecurityGroupAgentRpcCallbackMixin,
+    'SecurityGroupAgentRpcCallbackMixin', old_module_name=__name__,
+    version='Liberty', removal_version='Pike'
 )

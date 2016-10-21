@@ -55,7 +55,7 @@ running on the compute nodes, and modifying the IPTables rules on each hyperviso
   * `SecurityGroupServerRpcMixin <https://git.openstack.org/cgit/openstack/neutron/tree/neutron/db/securitygroups_rpc_base.py>`_ - defines the RPC API that the plugin uses to communicate with the agents running on the compute nodes
   * SecurityGroupServerRpcMixin  -  Defines the API methods used to fetch data from the database, in order to return responses to agents via the RPC API
 
-* `Agent RPC classes <https://git.openstack.org/cgit/openstack/neutron/tree/neutron/agent/securitygroups_rpc.py>`_
+* `Agent RPC classes <https://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/rpc/handlers/securitygroups_rpc.py>`_
 
   * The SecurityGroupServerRpcApi defines the API methods that can be called by agents, back to the plugin that runs on the Neutron controller
   * The SecurityGroupAgentRpcCallbackMixin defines methods that a plugin uses to call back to an agent after performing an action called by an agent.

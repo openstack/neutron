@@ -1638,7 +1638,7 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.assertFalse(self.firewall.security_group_updated.called)
 
 
-class FakeSGNotifierAPI(sg_rpc.SecurityGroupAgentRpcApiMixin):
+class FakeSGNotifierAPI(securitygroups_rpc.SecurityGroupAgentRpcApiMixin):
     def __init__(self):
         self.topic = 'fake'
         target = oslo_messaging.Target(topic=self.topic, version='1.0')
