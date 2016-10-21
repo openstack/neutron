@@ -228,6 +228,21 @@ def dhcp_release6_supported():
     return True
 
 
+def bridge_firewalling_enabled():
+    for proto in ('arp', 'ip', 'ip6'):
+        knob = 'net.bridge.bridge-nf-call-%stables' % proto
+        cmd = ['sysctl', '-b', knob]
+        try:
+            out = agent_utils.execute(cmd)
+        except (OSError, RuntimeError, IndexError, ValueError) as e:
+            LOG.debug("Exception while extracting %(knob)s. "
+                      "Exception: %(e)s", {'knob': knob, 'e': e})
+            return False
+        if out == '0':
+            return False
+    return True
+
+
 class KeepalivedIPv6Test(object):
     def __init__(self, ha_port, gw_port, gw_vip, default_gw):
         self.ha_port = ha_port
