@@ -221,9 +221,9 @@ class NeutronObject(obj_base.VersionedObject,
         raise NotImplementedError()
 
     @classmethod
-    def count(cls, context, **kwargs):
+    def count(cls, context, validate_filters=True, **kwargs):
         '''Count the number of objects matching filtering criteria.'''
-        return len(cls.get_objects(context, **kwargs))
+        return len(cls.get_objects(context, validate_filters, **kwargs))
 
 
 def _detach_db_obj(func):
@@ -609,15 +609,18 @@ class NeutronDbObject(NeutronObject):
         self._captured_db_model = None
 
     @classmethod
-    def count(cls, context, **kwargs):
+    def count(cls, context, validate_filters=True, **kwargs):
         """
         Count the number of objects matching filtering criteria.
 
         :param context:
+        :param validate_filters: Raises an error in case of passing an unknown
+                                 filter
         :param kwargs: multiple keys defined by key=value pairs
         :return: number of matching objects
         """
-        cls.validate_filters(**kwargs)
+        if validate_filters:
+            cls.validate_filters(**kwargs)
         return obj_db_api.count(
             context, cls.db_model, **cls.modify_fields_to_db(kwargs)
         )
