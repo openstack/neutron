@@ -18,6 +18,7 @@ import mock
 from neutron_lib import exceptions
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
+import tenacity
 import testtools
 
 from neutron.agent.common import config
@@ -804,6 +805,20 @@ class OVS_Lib_Test(base.BaseTestCase):
         vif_port = self._test_get_vif_port_by_id(
             'tap99id', data, extra_calls_and_values=extra_calls_and_values)
         self._assert_vif_port(vif_port, ofport=1337, mac="de:ad:be:ef:13:37")
+
+    def test_get_port_ofport_retry(self):
+        with mock.patch.object(
+                self.br, 'db_get_val',
+                side_effect=[[], [], [], [], 1]):
+            self.assertEqual(1, self.br._get_port_ofport('1'))
+
+    def test_get_port_ofport_retry_fails(self):
+        # after 16 calls the retry will timeout and raise
+        with mock.patch.object(
+                self.br, 'db_get_val',
+                side_effect=[[] for _ in range(16)]):
+            self.assertRaises(tenacity.RetryError,
+                              self.br._get_port_ofport, '1')
 
 
 class TestDeferredOVSBridge(base.BaseTestCase):

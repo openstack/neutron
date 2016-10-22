@@ -82,3 +82,23 @@ class TestOVSNativeConnection(base.BaseTestCase):
         idl_instance = idl_class.return_value
         self.connection.start()
         self.assertEqual(idl_instance, self.connection.idl)
+
+    @mock.patch.object(connection, 'threading')
+    @mock.patch.object(connection.idlutils, 'wait_for_change')
+    @mock.patch.object(connection, 'idl')
+    @mock.patch.object(connection.helpers, 'enable_connection_uri')
+    @mock.patch.object(connection.idlutils, 'get_schema_helper')
+    def test_do_get_schema_helper_retry(self, mock_get_schema_helper,
+                                        mock_enable_conn,
+                                        mock_idl,
+                                        mock_wait_for_change,
+                                        mock_threading):
+        mock_helper = mock.Mock()
+        # raise until 3rd retry attempt
+        mock_get_schema_helper.side_effect = [Exception(), Exception(),
+                                              mock_helper]
+        conn = connection.Connection(
+            mock.Mock(), mock.Mock(), mock.Mock())
+        conn.start()
+        self.assertEqual(3, len(mock_get_schema_helper.mock_calls))
+        mock_helper.register_all.assert_called_once_with()
