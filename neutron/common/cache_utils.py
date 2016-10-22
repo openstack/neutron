@@ -21,23 +21,14 @@ from oslo_utils import reflection
 from six.moves.urllib import parse
 
 from neutron._i18n import _
+from neutron.conf import cache_utils as cache_utils_config
 
-
-cache_opts = [
-    cfg.StrOpt('cache_url', default='',
-               deprecated_for_removal=True,
-               help=_('URL to connect to the cache back end. '
-                      'This option is deprecated in the Newton release and '
-                      'will be removed. Please add a [cache] group for '
-                      'oslo.cache in your neutron.conf and add "enable" and '
-                      '"backend" options in this section.')),
-]
 
 LOG = logging.getLogger(__name__)
 
 
 def register_oslo_configs(conf):
-    conf.register_opts(cache_opts)
+    cache_utils_config.register_cache_opts(conf)
     cache.configure(conf)
 
 

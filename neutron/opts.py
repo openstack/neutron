@@ -25,11 +25,11 @@ import neutron.agent.linux.ra
 import neutron.agent.metadata.config
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
-import neutron.common.cache_utils
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
 import neutron.conf.agent.ovs_conf
+import neutron.conf.cache_utils
 import neutron.conf.common
 import neutron.conf.extensions.allowedaddresspairs
 import neutron.conf.plugins.ml2.drivers.agent
@@ -222,7 +222,7 @@ def list_metadata_agent_opts():
              neutron.agent.metadata.config.SHARED_OPTS,
              neutron.agent.metadata.config.METADATA_PROXY_HANDLER_OPTS,
              neutron.agent.metadata.config.UNIX_DOMAIN_METADATA_PROXY_OPTS,
-             neutron.common.cache_utils.cache_opts)
+             neutron.conf.cache_utils.cache_opts)
          ),
         ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS)
     ]
