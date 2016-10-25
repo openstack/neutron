@@ -416,6 +416,15 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 
         self.assertIn(brname, self.ovs.get_bridges())
 
+    def test_db_add_to_new_object(self):
+        ovsdb = self.ovs.ovsdb
+        brname = utils.get_rand_name(prefix=net_helpers.BR_PREFIX)
+        br = ovs_lib.OVSBridge(brname)  # doesn't create
+        self.addCleanup(br.destroy)
+        with ovsdb.transaction(check_error=True) as txn:
+            txn.add(ovsdb.add_br(brname))
+            txn.add(ovsdb.db_add('Bridge', brname, 'protocols', 'OpenFlow10'))
+
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 

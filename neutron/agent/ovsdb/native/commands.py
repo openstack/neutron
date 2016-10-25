@@ -223,16 +223,17 @@ class DbAddCommand(BaseCommand):
     def run_idl(self, txn):
         record = idlutils.row_by_record(self.api.idl, self.table, self.record)
         for value in self.values:
-            field = getattr(record, self.column)
             if isinstance(value, collections.Mapping):
                 # We should be doing an add on a 'map' column. If the key is
                 # already set, do nothing, otherwise set the key to the value
+                field = getattr(record, self.column, {})
                 for k, v in six.iteritems(value):
                     if k in field:
                         continue
                     field[k] = v
             else:
                 # We should be appending to a 'set' column.
+                field = getattr(record, self.column, [])
                 field.append(value)
             record.verify(self.column)
             setattr(record, self.column, idlutils.db_replace_record(field))
