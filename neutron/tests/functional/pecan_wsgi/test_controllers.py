@@ -366,6 +366,35 @@ class TestResourceController(TestRootController):
         self._test_method_returns_code('head', 405)
         self._test_method_returns_code('delete', 405)
 
+    def test_bulk_create(self):
+        response = self.app.post_json(
+            '/v2.0/ports.json',
+            params={'ports': [{'network_id': self.port['network_id'],
+                             'admin_state_up': True,
+                             'tenant_id': 'tenid'},
+                             {'network_id': self.port['network_id'],
+                              'admin_state_up': True,
+                              'tenant_id': 'tenid'}]
+                    },
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(response.status_int, 201)
+        json_body = jsonutils.loads(response.body)
+        self.assertIn('ports', json_body)
+        self.assertEqual(2, len(json_body['ports']))
+
+    def test_bulk_create_one_item(self):
+        response = self.app.post_json(
+            '/v2.0/ports.json',
+            params={'ports': [{'network_id': self.port['network_id'],
+                               'admin_state_up': True,
+                               'tenant_id': 'tenid'}]
+                    },
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(response.status_int, 201)
+        json_body = jsonutils.loads(response.body)
+        self.assertIn('ports', json_body)
+        self.assertEqual(1, len(json_body['ports']))
+
 
 class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
 
@@ -535,9 +564,11 @@ class TestRequestProcessing(TestRootController):
         self.assertEqual('network', self.captured_context['resource'])
         self.assertEqual('networks', self.captured_context['collection'])
         resources = self.captured_context['resources']
+        is_bulk = self.captured_context['is_bulk']
         self.assertEqual(1, len(resources))
         self.assertEqual('the_net', resources[0]['name'])
         self.assertTrue(resources[0]['admin_state_up'])
+        self.assertFalse(is_bulk)
 
     def test_resource_processing_post_bulk(self):
         self.app.post_json(
@@ -548,11 +579,24 @@ class TestRequestProcessing(TestRootController):
                                   'admin_state_up': False}]},
             headers={'X-Project-Id': 'tenid'})
         resources = self.captured_context['resources']
+        is_bulk = self.captured_context['is_bulk']
         self.assertEqual(2, len(resources))
         self.assertTrue(resources[0]['admin_state_up'])
         self.assertEqual('the_net_1', resources[0]['name'])
         self.assertFalse(resources[1]['admin_state_up'])
         self.assertEqual('the_net_2', resources[1]['name'])
+        self.assertTrue(is_bulk)
+
+    def test_resource_processing_post_bulk_one_item(self):
+        self.app.post_json(
+            '/v2.0/networks.json',
+            params={'networks': [{'name': 'the_net_1',
+                                  'admin_state_up': True}]},
+            headers={'X-Project-Id': 'tenid'})
+        resources = self.captured_context['resources']
+        is_bulk = self.captured_context['is_bulk']
+        self.assertEqual(1, len(resources))
+        self.assertTrue(is_bulk)
 
     def test_resource_processing_post_unknown_attribute_returns_400(self):
         response = self.app.post_json(

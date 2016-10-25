@@ -63,5 +63,7 @@ class BodyValidationHook(hooks.PecanHook):
         if collection in data:
             state.request.context['resources'] = [item[resource] for item in
                                                   data[collection]]
+            state.request.context['is_bulk'] = True
         else:
             state.request.context['resources'] = [data[resource]]
+            state.request.context['is_bulk'] = False
