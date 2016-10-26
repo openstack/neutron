@@ -42,7 +42,11 @@ ROOT_HELPER_OPTS = [
     # Having a bool use_rootwrap_daemon option precludes specifying the
     # rootwrap daemon command, which may be necessary for Xen?
     cfg.StrOpt('root_helper_daemon',
-               help=_('Root helper daemon application to use when possible.')),
+               help=_("Root helper daemon application to use when possible. "
+                      "For the agent which needs to execute commands in Dom0 "
+                      "in the hypervisor of XenServer, this item should be "
+                      "set to 'xenapi_root_helper', so that it will keep a "
+                      "XenAPI session to pass commands to Dom0.")),
 ]
 
 AGENT_STATE_OPTS = [

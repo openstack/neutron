@@ -21,6 +21,7 @@
 # XenAPI plugin for executing network commands (ovs, iptables, etc) on dom0
 #
 
+import errno
 import gettext
 gettext.install('neutron', unicode=1)
 try:
@@ -31,6 +32,9 @@ import subprocess
 
 import XenAPIPlugin
 
+
+MSG_UNAUTHORIZED = "Unauthorized command"
+MSG_NOT_FOUND = "Executable not found"
 
 ALLOWED_CMDS = [
     'ip',
@@ -58,9 +62,13 @@ def _run_command(cmd, cmd_input):
     returns anything in stderr, a PluginError is raised with that information.
     Otherwise, the output from stdout is returned.
     """
-    pipe = subprocess.PIPE
-    proc = subprocess.Popen(cmd, shell=False, stdin=pipe, stdout=pipe,
-                            stderr=pipe, close_fds=True)
+    try:
+        pipe = subprocess.PIPE
+        proc = subprocess.Popen(cmd, shell=False, stdin=pipe, stdout=pipe,
+                                stderr=pipe, close_fds=True)
+    except OSError, e:
+        if e.errno == errno.ENOENT:
+             raise PluginError(MSG_NOT_FOUND)
     (out, err) = proc.communicate(cmd_input)
     return proc.returncode, out, err
 
@@ -68,8 +76,7 @@ def _run_command(cmd, cmd_input):
 def run_command(session, args):
     cmd = json.loads(args.get('cmd'))
     if cmd and cmd[0] not in ALLOWED_CMDS:
-        msg = _("Dom0 execution of '%s' is not permitted") % cmd[0]
-        raise PluginError(msg)
+        raise PluginError(MSG_UNAUTHORIZED)
     returncode, out, err = _run_command(
                                 cmd, json.loads(args.get('cmd_input', 'null')))
     if not err:
