@@ -41,9 +41,11 @@ HOST_D = 'host-d'
 
 
 class TestDhcpSchedulerBaseTestCase(testlib_api.SqlTestCase):
+    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
     def setUp(self):
         super(TestDhcpSchedulerBaseTestCase, self).setUp()
+        self.setup_coreplugin(self.CORE_PLUGIN)
         self.ctx = context.get_admin_context()
         self.network = {'id': 'foo_network_id'}
         self.network_id = 'foo_network_id'

@@ -219,3 +219,18 @@ class Network(rbac_db.NeutronRbacObject):
     def get_bound_tenant_ids(cls, context, policy_id):
         # TODO(ihrachys): provide actual implementation
         return set()
+
+
+@obj_base.VersionedObjectRegistry.register
+class SegmentHostMapping(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = segment_model.SegmentHostMapping
+
+    fields = {
+        'segment_id': obj_fields.UUIDField(),
+        'host': obj_fields.StringField(),
+    }
+
+    primary_keys = ['segment_id', 'host']

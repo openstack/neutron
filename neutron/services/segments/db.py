@@ -34,6 +34,7 @@ from neutron.db.models import segment as segment_model
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
+from neutron.objects import network
 from neutron.services.segments import exceptions
 
 _deprecate._moved_global('SegmentHostMapping', new_module=segment_model)
@@ -160,10 +161,9 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def get_segments_by_hosts(self, context, hosts):
         if not hosts:
             return []
-        query = context.session.query(
-            segment_model.SegmentHostMapping).filter(
-                segment_model.SegmentHostMapping.host.in_(hosts))
-        return list({mapping.segment_id for mapping in query})
+        segment_host_mapping = network.SegmentHostMapping.get_objects(
+            context, host=hosts)
+        return list({mapping.segment_id for mapping in segment_host_mapping})
 
     @log_helpers.log_method_call
     def delete_segment(self, context, uuid):
@@ -192,19 +192,18 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
 
 def update_segment_host_mapping(context, host, current_segment_ids):
     with context.session.begin(subtransactions=True):
-        segments_host_query = context.session.query(
-            segment_model.SegmentHostMapping).filter_by(host=host)
+        segment_host_mapping = network.SegmentHostMapping.get_objects(
+            context, host=host)
         previous_segment_ids = {
-            seg_host['segment_id'] for seg_host in segments_host_query}
+            seg_host['segment_id'] for seg_host in segment_host_mapping}
         for segment_id in current_segment_ids - previous_segment_ids:
-            context.session.add(segment_model.SegmentHostMapping(
-                segment_id=segment_id,
-                host=host))
+            network.SegmentHostMapping(
+                context, segment_id=segment_id, host=host).create()
         stale_segment_ids = previous_segment_ids - current_segment_ids
         if stale_segment_ids:
-            segments_host_query.filter(
-                segment_model.SegmentHostMapping.segment_id.in_(
-                    stale_segment_ids)).delete(synchronize_session=False)
+            for entry in segment_host_mapping:
+                if entry.segment_id in stale_segment_ids:
+                    entry.delete()
 
 
 def get_hosts_mapped_with_segments(context):
@@ -213,8 +212,8 @@ def get_hosts_mapped_with_segments(context):
     L2 providers can use this method to get an overview of SegmentHostMapping,
     and then delete the stale SegmentHostMapping.
     """
-    query = context.session.query(segment_model.SegmentHostMapping.host)
-    return {row.host for row in query}
+    segment_host_mapping = network.SegmentHostMapping.get_objects(context)
+    return {row.host for row in segment_host_mapping}
 
 
 def _get_phys_nets(agent):
@@ -252,9 +251,8 @@ def map_segment_to_hosts(context, segment_id, hosts):
     """Map segment to a collection of hosts."""
     with db_api.autonested_transaction(context.session):
         for host in hosts:
-            context.session.add(
-                segment_model.SegmentHostMapping(segment_id=segment_id,
-                                                 host=host))
+            network.SegmentHostMapping(
+                context, segment_id=segment_id, host=host).create()
 
 
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
