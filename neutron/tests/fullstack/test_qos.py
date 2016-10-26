@@ -176,6 +176,29 @@ class TestDscpMarkingQoSOvs(BaseQoSRuleTestCase, base.BaseFullStackTestCase):
     scenarios = fullstack_utils.get_ovs_interface_scenarios()
     l2_agent_type = constants.AGENT_TYPE_OVS
 
+    def setUp(self):
+        host_desc = [
+            environment.HostDescription(
+                l3_agent=False,
+                of_interface=self.of_interface,
+                ovsdb_interface=self.ovsdb_interface,
+                l2_agent_type=self.l2_agent_type
+            ) for _ in range(2)]
+        env_desc = environment.EnvironmentDescription(
+            qos=True)
+        env = environment.Environment(env_desc, host_desc)
+        super(BaseQoSRuleTestCase, self).setUp(env)
+
+        self.tenant_id = uuidutils.generate_uuid()
+        self.network = self.safe_client.create_network(self.tenant_id,
+                                                       'network-test')
+        self.subnet = self.safe_client.create_subnet(
+            self.tenant_id, self.network['id'],
+            cidr='10.0.0.0/24',
+            gateway_ip='10.0.0.1',
+            name='subnet-test',
+            enable_dhcp=False)
+
     def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
         l2_extensions.wait_until_dscp_marking_rule_applied(
             vm.bridge, vm.port.name, dscp_mark)
@@ -222,6 +245,31 @@ class TestDscpMarkingQoSOvs(BaseQoSRuleTestCase, base.BaseFullStackTestCase):
             vm.neutron_port['id'],
             body={'port': {'qos_policy_id': None}})
         self._wait_for_dscp_marking_rule_removed(vm)
+
+    def test_dscp_marking_packets(self):
+        # Create port (vm) which will be used to received and test packets
+        receiver_port = self.safe_client.create_port(
+            self.tenant_id, self.network['id'],
+            self.environment.hosts[1].hostname)
+
+        receiver = self.useFixture(
+            machine.FakeFullstackMachine(
+                self.environment.hosts[1],
+                self.network['id'],
+                self.tenant_id,
+                self.safe_client,
+                neutron_port=receiver_port))
+
+        # Create port with qos policy attached
+        sender, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(self._add_dscp_rule, DSCP_MARK)])
+
+        sender.block_until_boot()
+        receiver.block_until_boot()
+
+        self._wait_for_dscp_marking_rule_applied(sender, DSCP_MARK)
+        l2_extensions.wait_for_dscp_marked_packet(
+            sender, receiver, DSCP_MARK)
 
 
 class TestQoSWithL2Population(base.BaseFullStackTestCase):
