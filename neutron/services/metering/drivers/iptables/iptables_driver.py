@@ -74,7 +74,7 @@ class RouterWithMetering(object):
             namespace=self.ns_name,
             binary_name=WRAP_NAME,
             state_less=True,
-            use_ipv6=ipv6_utils.is_enabled())
+            use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
         self.metering_labels = {}
 
 

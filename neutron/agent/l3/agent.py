@@ -250,7 +250,7 @@ class L3NATAgent(ha.AgentMixin,
         super(L3NATAgent, self).__init__(host=self.conf.host)
 
         self.target_ex_net_id = None
-        self.use_ipv6 = ipv6_utils.is_enabled()
+        self.use_ipv6 = ipv6_utils.is_enabled_and_bind_by_default()
 
         self.pd = pd.PrefixDelegation(self.context, self.process_monitor,
                                       self.driver,

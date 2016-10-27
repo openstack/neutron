@@ -18,6 +18,7 @@ IPv6-related utilities and helper functions.
 """
 import os
 
+from debtcollector import moves
 from debtcollector import removals
 import netaddr
 from neutron_lib import constants as const
@@ -53,7 +54,10 @@ def get_ipv6_addr_by_EUI64(prefix, mac):
                           'EUI-64: %s') % prefix)
 
 
-def is_enabled():
+def is_enabled_and_bind_by_default():
+    """Check if host has the IPv6 support and is configured to bind IPv6
+    address to new interfaces by default.
+    """
     global _IS_IPV6_ENABLED
 
     if _IS_IPV6_ENABLED is None:
@@ -65,8 +69,16 @@ def is_enabled():
         else:
             _IS_IPV6_ENABLED = False
         if not _IS_IPV6_ENABLED:
-            LOG.info(_LI("IPv6 is not enabled on this system."))
+            LOG.info(_LI("IPv6 not present or configured not to bind to new "
+                         "interfaces on this system. Please ensure IPv6 is "
+                         "enabled and /proc/sys/net/ipv6/conf/default/"
+                         "disable_ipv6 is set to 1 to enable IPv6."))
     return _IS_IPV6_ENABLED
+
+
+is_enabled = moves.moved_function(is_enabled_and_bind_by_default,
+                                  'is_enabled', __name__, version='Ocata',
+                                  removal_version='Pike')
 
 
 def is_auto_address_subnet(subnet):
