@@ -1,36 +1,15 @@
 Welcome!
 ========
 
-You have come across a cloud computing network fabric controller. It has
-identified itself as "Neutron." It aims to tame your (cloud) networking!
+To learn more about neutron:
 
-External Resources:
-===================
+  * Documentation: http://docs.openstack.org
+  * Features: http://specs.openstack.org/neutron-specs
+  * Defects: http://launchpad.net/neutron
 
-The homepage for Neutron is: http://launchpad.net/neutron.  Use this
-site for asking for help, and filing bugs. Code is available on
-git.openstack.org at <http://git.openstack.org/cgit/openstack/neutron>.
+Get in touch via `email <mailto:openstack-dev@lists.openstack.org>`_. Use
+[Neutron] in your subject.
 
-The latest and most in-depth documentation on how to use Neutron is
-available at: <http://docs.openstack.org>. This includes:
+To learn how to contribute:
 
-Neutron Administrator Guide
-   http://docs.openstack.org/admin-guide/networking.html
-
-Neutron Developer Guide
-   http://docs.openstack.org/developer/neutron/devref/
-
-Networking Guide
-   http://docs.openstack.org/networking-guide/
-
-Neutron API Reference:
-   http://developer.openstack.org/api-ref/networking/v2/
-
-Current Neutron developer documentation is available at:
-   http://wiki.openstack.org/NeutronDevelopment
-
-For help on usage and hacking of Neutron, please send mail to
-<mailto:openstack-dev@lists.openstack.org>.
-
-For information on how to contribute to Neutron, please see the
-contents of the CONTRIBUTING.rst file.
+  CONTRIBUTING.rst
