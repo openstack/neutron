@@ -19,6 +19,7 @@ from sqlalchemy import orm
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import _deprecate
 from neutron.common import constants
+from neutron.db import _utils as db_utils
 from neutron.db import common_db_mixin as base_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import metering as metering_models
@@ -35,13 +36,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
     def __init__(self):
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
 
-    def _make_metering_label_dict(self, metering_label, fields=None):
+    @staticmethod
+    def _make_metering_label_dict(metering_label, fields=None):
         res = {'id': metering_label['id'],
                'name': metering_label['name'],
                'description': metering_label['description'],
                'shared': metering_label['shared'],
                'tenant_id': metering_label['tenant_id']}
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def create_metering_label(self, context, metering_label):
         m = metering_label['metering_label']
@@ -91,13 +93,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                                     marker_obj=marker_obj,
                                     page_reverse=page_reverse)
 
-    def _make_metering_label_rule_dict(self, metering_label_rule, fields=None):
+    @staticmethod
+    def _make_metering_label_rule_dict(metering_label_rule, fields=None):
         res = {'id': metering_label_rule['id'],
                'metering_label_id': metering_label_rule['metering_label_id'],
                'direction': metering_label_rule['direction'],
                'remote_ip_prefix': metering_label_rule['remote_ip_prefix'],
                'excluded': metering_label_rule['excluded']}
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def get_metering_label_rules(self, context, filters=None, fields=None,
                                  sorts=None, limit=None, marker=None,

@@ -17,8 +17,8 @@ from neutron_lib import exceptions
 from oslo_log import log
 
 from neutron.common import exceptions as n_exc
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
-from neutron.db import common_db_mixin as common_db
 from neutron.db.quota import api as quota_api
 from neutron.db.quota import models as quota_models
 
@@ -66,7 +66,7 @@ class DbQuotaDriver(object):
                             for key, resource in resources.items())
 
         # update with tenant specific limits
-        q_qry = common_db.model_query(context, quota_models.Quota).filter_by(
+        q_qry = db_utils.model_query(context, quota_models.Quota).filter_by(
             tenant_id=tenant_id)
         for item in q_qry:
             tenant_quota[item['resource']] = item['limit']

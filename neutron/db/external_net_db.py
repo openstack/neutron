@@ -26,6 +26,7 @@ from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import _deprecate
+from neutron.db import _utils as db_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import external_net as ext_net_models
 from neutron.db.models import l3 as l3_models
@@ -51,12 +52,13 @@ class External_net_db_mixin(object):
                                  ext_net_models.ExternalNetwork.network_id))
         return query
 
-    def _network_filter_hook(self, context, original_model, conditions):
+    @staticmethod
+    def _network_filter_hook(context, original_model, conditions):
         if conditions is not None and not hasattr(conditions, '__iter__'):
             conditions = (conditions, )
         # Apply the external network filter only in non-admin and non-advsvc
         # context
-        if self.model_query_scope(context, original_model):
+        if db_utils.model_query_scope_is_project(context, original_model):
             # the table will already be joined to the rbac entries for the
             # shared check so we don't need to worry about ensuring that
             rbac_model = original_model.rbac_entries.property.mapper.class_

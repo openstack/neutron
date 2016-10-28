@@ -34,9 +34,9 @@ from neutron.api.v2 import attributes
 from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db.availability_zone import router as router_az_db
-from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
 from neutron.db.models import agent as agent_model
@@ -246,7 +246,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         deletion = functools.partial(self._core_plugin.delete_network,
                                      admin_ctx)
 
-        network, ha_network = common_db_mixin.safe_creation(
+        network, ha_network = db_utils.safe_creation(
             context, creation, deletion, content, transaction=False)
         try:
             self._create_ha_subnet(admin_ctx, network['id'], tenant_id)
@@ -327,9 +327,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                     router_id)
         deletion = functools.partial(self._core_plugin.delete_port, context,
                                      l3_port_check=False)
-        port, bindings = common_db_mixin.safe_creation(context, creation,
-                                                       deletion, content,
-                                                       transaction=False)
+        port, bindings = db_utils.safe_creation(context, creation,
+                                                deletion, content,
+                                                transaction=False)
         return bindings
 
     def _create_ha_interfaces(self, context, router, ha_network):

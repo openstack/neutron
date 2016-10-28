@@ -17,6 +17,7 @@ from neutron_lib.api import validators
 from webob import exc
 
 from neutron import context
+from neutron.db import _utils as db_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
@@ -83,7 +84,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             net = super(PortSecurityTestPlugin, self).get_network(
                 context, id)
-        return self._fields(net, fields)
+        return db_utils.resource_fields(net, fields)
 
     def create_port(self, context, port):
         p = port['port']

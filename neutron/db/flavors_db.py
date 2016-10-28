@@ -18,6 +18,7 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron.common import _deprecate
+from neutron.db import _utils as db_utils
 from neutron.db import common_db_mixin
 from neutron.db.models import flavor as flavor_models
 from neutron.db import servicetype_db as sdb
@@ -49,7 +50,8 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         except sa_exc.NoResultFound:
             raise ext_flavors.ServiceProfileNotFound(sp_id=sp_id)
 
-    def _make_flavor_dict(self, flavor_db, fields=None):
+    @staticmethod
+    def _make_flavor_dict(flavor_db, fields=None):
         res = {'id': flavor_db['id'],
                'name': flavor_db['name'],
                'description': flavor_db['description'],
@@ -59,9 +61,10 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         if flavor_db.service_profiles:
             res['service_profiles'] = [sp['service_profile_id']
                                        for sp in flavor_db.service_profiles]
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
-    def _make_service_profile_dict(self, sp_db, fields=None):
+    @staticmethod
+    def _make_service_profile_dict(sp_db, fields=None):
         res = {'id': sp_db['id'],
                'description': sp_db['description'],
                'driver': sp_db['driver'],
@@ -70,7 +73,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         if sp_db.flavors:
             res['flavors'] = [fl['flavor_id']
                               for fl in sp_db.flavors]
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def _ensure_flavor_not_in_use(self, context, flavor_id):
         """Checks that flavor is not associated with service instance."""
@@ -177,7 +180,8 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                     sp_id=service_profile_id, fl_id=flavor_id)
             context.session.delete(binding)
 
-    def get_flavor_service_profile(self, context,
+    @staticmethod
+    def get_flavor_service_profile(context,
                                    service_profile_id, flavor_id, fields=None):
         with context.session.begin(subtransactions=True):
             binding = (
@@ -191,7 +195,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                     sp_id=service_profile_id, fl_id=flavor_id)
         res = {'service_profile_id': service_profile_id,
                'flavor_id': flavor_id}
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     def create_service_profile(self, context, service_profile):
         sp = service_profile['service_profile']
@@ -283,7 +287,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         res = {'driver': sp_db.driver,
                'provider': providers[0].get('name')}
 
-        return [self._fields(res, fields)]
+        return [db_utils.resource_fields(res, fields)]
 
 
 _deprecate._MovedGlobals()

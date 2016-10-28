@@ -20,6 +20,7 @@ from sqlalchemy.orm import exc
 from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
+from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import rbac_db_models as models
@@ -56,11 +57,12 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
             raise ext_rbac.DuplicateRbacPolicy()
         return self._make_rbac_policy_dict(db_entry)
 
-    def _make_rbac_policy_dict(self, db_entry, fields=None):
+    @staticmethod
+    def _make_rbac_policy_dict(db_entry, fields=None):
         res = {f: db_entry[f] for f in ('id', 'tenant_id', 'target_tenant',
                                         'action', 'object_id')}
         res['object_type'] = db_entry.object_type
-        return self._fields(res, fields)
+        return db_utils.resource_fields(res, fields)
 
     @db_api.retry_if_session_inactive()
     def update_rbac_policy(self, context, id, rbac_policy):

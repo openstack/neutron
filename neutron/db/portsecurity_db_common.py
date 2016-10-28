@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.db import _utils as db_utils
 from neutron.extensions import portsecurity as psec
 from neutron.objects import network
 from neutron.objects.port.extensions import port_security as p_ps
@@ -91,7 +92,8 @@ class PortSecurityDbCommon(object):
             self._process_port_security_create(
                 context, obj_cls, res_name, req, res)
 
-    def _make_port_security_dict(self, res, res_name, fields=None):
+    @staticmethod
+    def _make_port_security_dict(res, res_name, fields=None):
         res_ = {'%s_id' % res_name: res.id,
                 psec.PORTSECURITY: res.port_security_enabled}
-        return self._fields(res_, fields)
+        return db_utils.resource_fields(res_, fields)
