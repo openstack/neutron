@@ -16,13 +16,13 @@
 import abc
 import collections
 
+from neutron_lib.agent import l2_extension
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import six
 
-from neutron.agent.l2 import l2_agent_extension
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
@@ -194,7 +194,7 @@ class PortPolicyMap(object):
         del self.known_policies[qos_policy_id]
 
 
-class QosAgentExtension(l2_agent_extension.L2AgentExtension):
+class QosAgentExtension(l2_extension.L2AgentExtension):
     SUPPORTED_RESOURCE_TYPES = [resources.QOS_POLICY]
 
     def initialize(self, connection, driver_type):

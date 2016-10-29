@@ -16,11 +16,11 @@
 import abc
 import contextlib
 
+from neutron_lib.agent import extension
 from neutron_lib import constants
 from oslo_concurrency import lockutils
 import six
 
-from neutron.agent import agent_extension
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
@@ -80,7 +80,7 @@ class LoggingDriver(object):
             self.defer_apply_off()
 
 
-class LoggingExtension(agent_extension.AgentExtension):
+class LoggingExtension(extension.AgentExtension):
     SUPPORTED_RESOURCE_TYPES = [resources.LOGGING_RESOURCE]
 
     def initialize(self, connection, driver_type):

@@ -63,14 +63,14 @@ neutron.agent.l2.extensions namespace.
 
 The relevant modules are:
 
-* neutron.agent.agent_extension:
+* neutron_lib.agent.extension:
   This module defines an abstract extension interface for all agent
   extensions across L2 and L3.
 
-* neutron.agent.l2.l2_agent_extension:
-* neutron.agent.l3.l3_agent_extension:
+* neutron_lib.agent.l2_extension:
+* neutron_lib.agent.l3_extension:
   These modules subclass
-  neutron.agent.agent_extension.AgentExtension and define a
+  neutron_lib.agent.extension.AgentExtension and define a
   layer-specific abstract extension interface.
 
 * neutron.agent.agent_extensions_manager:
@@ -99,9 +99,9 @@ For L3, see :doc:`L3 agent extensions <l3_agent_extensions>`.
 
 The relevant modules are:
 
-* neutron.agent.agent_extension
+* neutron_lib.agent.extension
+* neutron_lib.agent.l2_extension
+* neutron_lib.agent.l3_extension
 * neutron.agent.agent_extensions_manager
-* neutron.agent.l2.l2_agent_extension_api
 * neutron.agent.l2.l2_agent_extensions_manager
-* neutron.agent.l3.l3_agent_extension_api
 * neutron.agent.l3.l3_agent_extensions_manager
