@@ -20,6 +20,7 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+import testtools
 
 from neutron.agent.common import config
 from neutron.agent.linux import interface
@@ -184,16 +185,21 @@ class IpLibTestCase(IpLibTestFramework):
         device.link.delete()
 
     def test_get_routing_table(self):
-        attr = self.generate_device_details()
+        attr = self.generate_device_details(
+            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
+        )
         device = self.manage_device(attr)
         device_ip = attr.ip_cidrs[0].split('/')[0]
         destination = '8.8.8.0/24'
         device.route.add_route(destination, device_ip)
 
+        destination6 = 'fd01::/64'
+        device.route.add_route(destination6, "fd00::2")
+
         expected_routes = [{'nexthop': device_ip,
                             'device': attr.name,
                             'destination': destination,
-                            'scope': None},
+                            'scope': 'universe'},
                            {'nexthop': None,
                             'device': attr.name,
                             'destination': str(
@@ -201,7 +207,25 @@ class IpLibTestCase(IpLibTestFramework):
                             'scope': 'link'}]
 
         routes = ip_lib.get_routing_table(4, namespace=attr.namespace)
-        self.assertEqual(expected_routes, routes)
+        self.assertItemsEqual(expected_routes, routes)
+        self.assertIsInstance(routes, list)
+
+        expected_routes6 = [{'nexthop': "fd00::2",
+                             'device': attr.name,
+                             'destination': destination6,
+                             'scope': 'universe'},
+                            {'nexthop': None,
+                             'device': attr.name,
+                             'destination': str(
+                                 netaddr.IPNetwork(attr.ip_cidrs[1]).cidr),
+                             'scope': 'universe'}]
+        routes6 = ip_lib.get_routing_table(6, namespace=attr.namespace)
+        self.assertItemsEqual(expected_routes6, routes6)
+        self.assertIsInstance(routes6, list)
+
+    def test_get_routing_table_no_namespace(self):
+        with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
+            ip_lib.get_routing_table(4, namespace="nonexistent-netns")
 
     def _check_for_device_name(self, ip, name, should_exist):
         exist = any(d for d in ip.get_devices() if d.name == name)

@@ -69,6 +69,7 @@ class BaseSudoTestCase(BaseLoggingTestCase):
         self.config(group='AGENT',
                     root_helper_daemon=os.environ.get(
                         'OS_ROOTWRAP_DAEMON_CMD'))
+        config.setup_privsep()
 
     @common_base.no_skip_on_missing_deps
     def check_command(self, cmd, error_text, skip_msg, run_as_root=False):

@@ -1,0 +1,4 @@
+---
+features:
+  - Initial support for oslo.privsep has been added. A usage example,
+    including unit tests, exists with ip_lib.get_routing_table.
