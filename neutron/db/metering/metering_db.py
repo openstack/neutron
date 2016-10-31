@@ -13,6 +13,7 @@
 # under the License.
 
 import netaddr
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 from sqlalchemy import orm
 
@@ -144,21 +145,24 @@ class MeteringDbMixin(metering.MeteringPluginBase,
 
     def create_metering_label_rule(self, context, metering_label_rule):
         m = metering_label_rule['metering_label_rule']
-        with context.session.begin(subtransactions=True):
-            label_id = m['metering_label_id']
-            ip_prefix = m['remote_ip_prefix']
-            direction = m['direction']
-            excluded = m['excluded']
+        try:
+            with context.session.begin(subtransactions=True):
+                label_id = m['metering_label_id']
+                ip_prefix = m['remote_ip_prefix']
+                direction = m['direction']
+                excluded = m['excluded']
 
-            self._validate_cidr(context, label_id, ip_prefix, direction,
-                                excluded)
-            metering_db = metering_models.MeteringLabelRule(
-                id=uuidutils.generate_uuid(),
-                metering_label_id=label_id,
-                direction=direction,
-                excluded=m['excluded'],
-                remote_ip_prefix=ip_prefix)
-            context.session.add(metering_db)
+                self._validate_cidr(context, label_id, ip_prefix, direction,
+                                    excluded)
+                metering_db = metering_models.MeteringLabelRule(
+                    id=uuidutils.generate_uuid(),
+                    metering_label_id=label_id,
+                    direction=direction,
+                    excluded=m['excluded'],
+                    remote_ip_prefix=ip_prefix)
+                context.session.add(metering_db)
+        except db_exc.DBReferenceError:
+            raise metering.MeteringLabelNotFound(label_id=label_id)
 
         return self._make_metering_label_rule_dict(metering_db)
 
