@@ -267,7 +267,7 @@ class IPWrapper(SubProcessBase):
 class IPDevice(SubProcessBase):
     def __init__(self, name, namespace=None):
         super(IPDevice, self).__init__(namespace=namespace)
-        self.name = name
+        self._name = name
         self.link = IpLinkCommand(self)
         self.addr = IpAddrCommand(self)
         self.route = IpRouteCommand(self)
@@ -358,6 +358,16 @@ class IPDevice(SubProcessBase):
         sysctl_name = re.sub(r'\.', '/', self.name)
         cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % sysctl_name
         return self._sysctl([cmd])
+
+    @property
+    def name(self):
+        if self._name:
+            return self._name[:constants.DEVICE_NAME_MAX_LEN]
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
 
 
 class IpCommandBase(object):
