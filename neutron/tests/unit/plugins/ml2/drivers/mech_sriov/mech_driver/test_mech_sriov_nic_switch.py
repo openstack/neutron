@@ -13,14 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
 from neutron_lib import constants
-from oslo_config import cfg
 import testtools
 
 from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
@@ -149,79 +146,6 @@ class SriovSwitchMechVnicTypeTestCase(SriovNicSwitchMechanismBaseTestCase):
                                            mech_driver.VIF_TYPE_HOSTDEV_PHY)
 
 
-class SriovSwitchMechProfileTestCase(SriovNicSwitchMechanismBaseTestCase):
-    def _check_vif_for_pci_info(self, pci_vendor_info, expected_vif_type):
-        context = TestFakePortContext(self.AGENT_TYPE,
-                                      self.AGENTS,
-                                      self.VLAN_SEGMENTS,
-                                      portbindings.VNIC_DIRECT,
-                                      {'pci_vendor_info': pci_vendor_info})
-        self.driver.bind_port(context)
-        self.assertEqual(expected_vif_type, context._bound_vif_type)
-
-    def test_profile_supported_pci_info(self):
-        self._check_vif_for_pci_info(MELLANOX_CONNECTX3_PCI_INFO,
-                                     mech_driver.VIF_TYPE_HW_VEB)
-
-    def test_profile_unsupported_pci_info(self):
-        cfg.CONF.set_override('supported_pci_vendor_devs', ['aa:bb'],
-                              'ml2_sriov')
-        self.driver.initialize()
-        with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'
-                        'mech_driver.mech_driver.LOG') as log_mock:
-            self._check_vif_for_pci_info('xxxx:yyyy', None)
-            log_mock.debug.assert_called_with('Refusing to bind due to '
-                                              'unsupported pci_vendor device')
-
-
-class SriovSwitchMechProfileFailTestCase(SriovNicSwitchMechanismBaseTestCase):
-    def _check_for_pci_vendor_info(
-        self, pci_vendor_info, expected_result=False):
-        context = TestFakePortContext(self.AGENT_TYPE,
-                                      self.AGENTS,
-                                      self.VLAN_SEGMENTS,
-                                      portbindings.VNIC_DIRECT,
-                                      pci_vendor_info)
-        self.assertEqual(
-            expected_result,
-            self.driver._check_supported_pci_vendor_device(context))
-
-    def test_profile_missing_profile(self):
-        cfg.CONF.set_override('supported_pci_vendor_devs', ['aa:bb'],
-                              'ml2_sriov')
-        self.driver.initialize()
-        with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'
-                        'mech_driver.mech_driver.LOG') as log_mock:
-            self._check_for_pci_vendor_info({})
-            log_mock.debug.assert_called_with("Missing profile in port"
-                                              " binding")
-
-    def test_profile_missing_pci_vendor_info(self):
-        cfg.CONF.set_override('supported_pci_vendor_devs', ['aa:bb'],
-                              'ml2_sriov')
-        self.driver.initialize()
-        with mock.patch('neutron.plugins.ml2.drivers.mech_sriov.'
-                        'mech_driver.mech_driver.LOG') as log_mock:
-            self._check_for_pci_vendor_info({'aa': 'bb'})
-            log_mock.debug.assert_called_with("Missing pci vendor"
-                                              " info in profile")
-
-    def test_pci_vendor_info_with_none(self):
-            self.driver.initialize()
-            self._check_for_pci_vendor_info(
-                {'aa': 'bb'}, expected_result=True)
-
-    def test_pci_vendor_info(self):
-            cfg.CONF.set_override(
-                'supported_pci_vendor_devs',
-                [MELLANOX_CONNECTX3_PCI_INFO],
-                'ml2_sriov')
-            self.driver.initialize()
-            self._check_for_pci_vendor_info(
-                {'pci_vendor_info': MELLANOX_CONNECTX3_PCI_INFO},
-                expected_result=True)
-
-
 class SriovSwitchMechVifDetailsTestCase(SriovNicSwitchMechanismBaseTestCase):
     VLAN_SEGMENTS = [{api.ID: 'vlan_segment_id',
                       api.NETWORK_TYPE: 'vlan',
@@ -268,47 +192,3 @@ class SriovSwitchMechVifDetailsTestCase(SriovNicSwitchMechanismBaseTestCase):
 
         self.driver.bind_port(context)
         self.assertEqual(constants.PORT_STATUS_ACTIVE, context._bound_state)
-
-
-class SriovSwitchMechConfigTestCase(SriovNicSwitchMechanismBaseTestCase):
-    def _set_config(self, pci_devs=['aa:bb']):
-        cfg.CONF.set_override('mechanism_drivers',
-                              ['logger', 'sriovnicswitch'], 'ml2')
-        if pci_devs:
-            cfg.CONF.set_override('supported_pci_vendor_devs', pci_devs,
-                                  'ml2_sriov')
-
-    def test_pci_vendor_config_single_entry(self):
-        self._set_config()
-        self.driver.initialize()
-        self.assertEqual(['aa:bb'], self.driver.pci_vendor_info)
-
-    def test_pci_vendor_config_multiple_entry(self):
-        self._set_config(['x:y', 'a:b'])
-        self.driver.initialize()
-        self.assertEqual(['x:y', 'a:b'], self.driver.pci_vendor_info)
-
-    def test_pci_vendor_config_wrong_entry(self):
-        self._set_config(['wrong_entry'])
-        self.assertRaises(cfg.Error, self.driver.initialize)
-
-    def test_initialize_missing_product_id(self):
-        self._set_config(['vendor_id:'])
-        self.assertRaises(cfg.Error, self.driver.initialize)
-
-    def test_initialize_missing_vendor_id(self):
-        self._set_config([':product_id'])
-        self.assertRaises(cfg.Error, self.driver.initialize)
-
-    def test_initialize_multiple_colons(self):
-        self._set_config(['foo:bar:baz'])
-        self.assertRaises(cfg.Error, self.driver.initialize)
-
-    def test_initialize_empty_string(self):
-        self._set_config([''])
-        self.assertRaises(cfg.Error, self.driver.initialize)
-
-    def test_initialize_pci_devs_none(self):
-        self._set_config(pci_devs=None)
-        self.driver.initialize()
-        self.assertIsNone(self.driver.pci_vendor_info)

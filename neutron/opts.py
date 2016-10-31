@@ -54,7 +54,6 @@ import neutron.extensions.securitygroup
 import neutron.plugins.ml2.config
 import neutron.plugins.ml2.drivers.macvtap.agent.config
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
-import neutron.plugins.ml2.drivers.mech_sriov.mech_driver.mech_driver
 import neutron.plugins.ml2.drivers.openvswitch.agent.common.config
 import neutron.wsgi
 
@@ -254,14 +253,6 @@ def list_ml2_conf_opts():
          neutron.conf.plugins.ml2.drivers.driver_type.geneve_opts),
         ('securitygroup',
          neutron.conf.agent.securitygroups_rpc.security_group_opts)
-    ]
-
-
-def list_ml2_conf_sriov_opts():
-    return [
-        ('ml2_sriov',
-         neutron.plugins.ml2.drivers.mech_sriov.mech_driver.mech_driver.
-         sriov_opts)
     ]
 
 
