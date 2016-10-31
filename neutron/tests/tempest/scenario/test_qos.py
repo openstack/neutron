@@ -158,7 +158,9 @@ class QoSTest(base.BaseTempestTestCase):
                      'port_range_min': NC_PORT,
                      'port_range_max': NC_PORT,
                      'remote_ip_prefix': '0.0.0.0/0'}]
-        self.create_secgroup_rules(rulesets)
+        self.create_secgroup_rules(rulesets,
+                                   self.security_groups[-1]['id'])
+
         ssh_client = ssh.Client(self.fip['floating_ip_address'],
                                 CONF.validation.image_ssh_user,
                                 pkey=self.keypair['private_key'])

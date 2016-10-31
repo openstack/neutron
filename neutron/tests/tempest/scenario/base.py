@@ -47,13 +47,37 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
 
     @classmethod
     def create_server(cls, flavor_ref, image_ref, key_name, networks,
-                      name=None):
+                      name=None, security_groups=None):
+        """Create a server using tempest lib
+        All the parameters are the ones used in Compute API
+
+        Args:
+           flavor_ref(str): The flavor of the server to be provisioned.
+           image_ref(str):  The image of the server to be provisioned.
+           key_name(str): SSH key to to be used to connect to the
+                            provisioned server.
+           networks(list): List of dictionaries where each represent
+               an interface to be attached to the server. For network
+               it should be {'uuid': network_uuid} and for port it should
+               be {'port': port_uuid}
+           name(str): Name of the server to be provisioned.
+           security_groups(list): List of dictionaries where
+                the keys is 'name' and the value is the name of
+                the security group. If it's not passed the default
+                security group will be used.
+        """
+
         name = name or data_utils.rand_name('server-test')
+        if not security_groups:
+            security_groups = [{'name': 'default'}]
+
         server = cls.manager.servers_client.create_server(
-            name=name, flavorRef=flavor_ref,
+            name=name,
+            flavorRef=flavor_ref,
             imageRef=image_ref,
             key_name=key_name,
-            networks=networks)
+            networks=networks,
+            security_groups=security_groups)
         cls.servers.append(server['server']['id'])
         return server
 
@@ -123,17 +147,28 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
 
     @classmethod
     def setup_network_and_server(cls):
+        """Creating network resources and a server.
+
+        Creating a network, subnet, router, keypair, security group
+        and a server.
+        """
         cls.network = cls.create_network()
         cls.subnet = cls.create_subnet(cls.network)
 
+        secgroup = cls.manager.network_client.create_security_group(
+            name=data_utils.rand_name('secgroup-'))
+        cls.security_groups.append(secgroup['security_group'])
+
         cls.create_router_and_interface(cls.subnet['id'])
         cls.keypair = cls.create_keypair()
-        cls.create_loginable_secgroup_rule()
+        cls.create_loginable_secgroup_rule(
+            secgroup_id=secgroup['security_group']['id'])
         cls.server = cls.create_server(
             flavor_ref=CONF.compute.flavor_ref,
             image_ref=CONF.compute.image_ref,
             key_name=cls.keypair['name'],
-            networks=[{'uuid': cls.network['id']}])
+            networks=[{'uuid': cls.network['id']}],
+            security_groups=[{'name': secgroup['security_group']['name']}])
         waiters.wait_for_server_status(cls.manager.servers_client,
                                        cls.server['server']['id'],
                                        constants.SERVER_STATUS_ACTIVE)

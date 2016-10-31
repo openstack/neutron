@@ -109,6 +109,7 @@ class BaseNetworkTest(test.BaseTestCase):
         cls.admin_address_scopes = []
         cls.subnetpools = []
         cls.admin_subnetpools = []
+        cls.security_groups = []
 
     @classmethod
     def resource_cleanup(cls):
@@ -166,6 +167,11 @@ class BaseNetworkTest(test.BaseTestCase):
             for network in cls.admin_networks:
                 cls._try_delete_resource(cls.admin_client.delete_network,
                                          network['id'])
+
+            # Clean up security groups
+            for secgroup in cls.security_groups:
+                cls._try_delete_resource(cls.client.delete_security_group,
+                                         secgroup['id'])
 
             for subnetpool in cls.subnetpools:
                 cls._try_delete_resource(cls.client.delete_subnetpool,
