@@ -362,8 +362,8 @@ class OVSFlowTestCase(OVSAgentTestBase):
                                 "nw_proto=1,nw_tos=0,nw_ttl=128,"
                                 "icmp_type=8,icmp_code=0,dl_vlan=%(lvid)d"
                                 % kwargs)
-        self.assertTrue(("dl_vlan=%(segmentation_id)d" % kwargs) in
-                        trace["Final flow"])
+        self.assertIn("dl_vlan=%(segmentation_id)d" % kwargs,
+                      trace["Final flow"])
 
     def test_install_dvr_to_src_mac(self):
         other_dvr_mac = 'fa:16:3f:01:de:ad'
