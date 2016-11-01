@@ -55,7 +55,7 @@ class SubnetServiceTypesExtensionTestCase(
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _create_service_subnet(self, service_types=None, cidr=None,
-                               network=None):
+                               network=None, enable_dhcp=False):
         if not network:
             with self.network() as network:
                 pass
@@ -65,7 +65,8 @@ class SubnetServiceTypesExtensionTestCase(
         args = {'net_id': network['id'],
                 'tenant_id': network['tenant_id'],
                 'cidr': cidr,
-                'ip_version': self.IP_VERSION}
+                'ip_version': self.IP_VERSION,
+                'enable_dhcp': enable_dhcp}
         if service_types:
             args['service_types'] = service_types
         return self._create_subnet(self.fmt, **args)
@@ -273,6 +274,24 @@ class SubnetServiceTypesExtensionTestCase(
 
     def test_create_port_exhausted_subnet_no_fallback(self):
         self.test_create_port_exhausted_subnet(fallback=False)
+
+    def test_create_dhcp_port_compute_subnet(self, enable_dhcp=True):
+        with self.network() as network:
+            pass
+        res = self._create_service_subnet(['compute:nova'],
+                                          network=network,
+                                          enable_dhcp=enable_dhcp)
+        subnet = self.deserialize('json', res)['subnet']
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'],
+                                 fixed_ips=[{'subnet_id': subnet['id']}],
+                                 device_owner='network:dhcp')
+        self._assert_port_res(port, 'network:dhcp', subnet, enable_dhcp)
+
+    def test_create_dhcp_port_compute_subnet_no_dhcp(self):
+        self.test_create_dhcp_port_compute_subnet(enable_dhcp=False)
 
 
 class SubnetServiceTypesExtensionTestCasev6(

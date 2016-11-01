@@ -595,12 +595,18 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return query.filter(models_v2.Subnet.network_id == network_id)
 
     def _query_filter_service_subnets(self, query, service_type):
+        Subnet = models_v2.Subnet
         ServiceType = sst_model.SubnetServiceType
         query = query.add_entity(ServiceType)
         query = query.outerjoin(ServiceType)
-        query = query.filter(or_(ServiceType.service_type.is_(None),
-                                 ServiceType.service_type == service_type))
-        return query.from_self(models_v2.Subnet)
+        query = query.filter(or_(
+            ServiceType.service_type.is_(None),
+            ServiceType.service_type == service_type,
+            # Allow DHCP ports to be created on subnets of any
+            # service type when DHCP is enabled on the subnet.
+            and_(Subnet.enable_dhcp.is_(True),
+                 service_type == const.DEVICE_OWNER_DHCP)))
+        return query.from_self(Subnet)
 
     @staticmethod
     def _query_filter_by_segment_host_mapping(query, host):
