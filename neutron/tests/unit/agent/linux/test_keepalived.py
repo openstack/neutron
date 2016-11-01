@@ -14,12 +14,21 @@
 
 from neutron_lib import constants as n_consts
 import testtools
+import textwrap
 
 from neutron.agent.linux import keepalived
 from neutron.tests import base
 
 # Keepalived user guide:
 # http://www.keepalived.org/pdf/UserGuide.pdf
+
+KEEPALIVED_GLOBAL_CONFIG = textwrap.dedent("""\
+    global_defs {
+        notification_email_from %(email_from)s
+        router_id %(router_id)s
+    }""") % dict(
+        email_from=keepalived.KEEPALIVED_EMAIL_FROM,
+        router_id=keepalived.KEEPALIVED_ROUTER_ID)
 
 
 class KeepalivedGetFreeRangeTestCase(base.BaseTestCase):
@@ -110,52 +119,53 @@ class KeepalivedConfBaseMixin(object):
 class KeepalivedConfTestCase(base.BaseTestCase,
                              KeepalivedConfBaseMixin):
 
-    expected = """vrrp_instance VR_1 {
-    state MASTER
-    interface eth0
-    virtual_router_id 1
-    priority 50
-    garp_master_delay 60
-    advert_int 5
-    authentication {
-        auth_type AH
-        auth_pass pass123
-    }
-    track_interface {
-        eth0
-    }
-    virtual_ipaddress {
-        169.254.0.1/24 dev eth0
-    }
-    virtual_ipaddress_excluded {
-        192.168.1.0/24 dev eth1
-        192.168.2.0/24 dev eth2
-        192.168.3.0/24 dev eth2
-        192.168.55.0/24 dev eth10
-    }
-    virtual_routes {
-        0.0.0.0/0 via 192.168.1.1 dev eth1
-    }
-}
-vrrp_instance VR_2 {
-    state MASTER
-    interface eth4
-    virtual_router_id 2
-    priority 50
-    garp_master_delay 60
-    mcast_src_ip 224.0.0.1
-    track_interface {
-        eth4
-    }
-    virtual_ipaddress {
-        169.254.0.2/24 dev eth4
-    }
-    virtual_ipaddress_excluded {
-        192.168.2.0/24 dev eth2
-        192.168.3.0/24 dev eth6
-        192.168.55.0/24 dev eth10
-    }
-}"""
+    expected = KEEPALIVED_GLOBAL_CONFIG + textwrap.dedent("""
+        vrrp_instance VR_1 {
+            state MASTER
+            interface eth0
+            virtual_router_id 1
+            priority 50
+            garp_master_delay 60
+            advert_int 5
+            authentication {
+                auth_type AH
+                auth_pass pass123
+            }
+            track_interface {
+                eth0
+            }
+            virtual_ipaddress {
+                169.254.0.1/24 dev eth0
+            }
+            virtual_ipaddress_excluded {
+                192.168.1.0/24 dev eth1
+                192.168.2.0/24 dev eth2
+                192.168.3.0/24 dev eth2
+                192.168.55.0/24 dev eth10
+            }
+            virtual_routes {
+                0.0.0.0/0 via 192.168.1.1 dev eth1
+            }
+        }
+        vrrp_instance VR_2 {
+            state MASTER
+            interface eth4
+            virtual_router_id 2
+            priority 50
+            garp_master_delay 60
+            mcast_src_ip 224.0.0.1
+            track_interface {
+                eth4
+            }
+            virtual_ipaddress {
+                169.254.0.2/24 dev eth4
+            }
+            virtual_ipaddress_excluded {
+                192.168.2.0/24 dev eth2
+                192.168.3.0/24 dev eth6
+                192.168.55.0/24 dev eth10
+            }
+        }""")
 
     def test_config_generation(self):
         config = self._get_config()
@@ -166,7 +176,7 @@ vrrp_instance VR_2 {
         self.assertEqual(self.expected, config.get_config_str())
 
         config.reset()
-        self.assertEqual('', config.get_config_str())
+        self.assertEqual(KEEPALIVED_GLOBAL_CONFIG, config.get_config_str())
 
     def test_get_existing_vip_ip_addresses_returns_list(self):
         config = self._get_config()
@@ -246,63 +256,65 @@ class KeepalivedInstanceTestCase(base.BaseTestCase,
         instance.remove_vips_vroutes_by_interface('eth2')
         instance.remove_vips_vroutes_by_interface('eth10')
 
-        expected = """vrrp_instance VR_1 {
-    state MASTER
-    interface eth0
-    virtual_router_id 1
-    priority 50
-    garp_master_delay 60
-    advert_int 5
-    authentication {
-        auth_type AH
-        auth_pass pass123
-    }
-    track_interface {
-        eth0
-    }
-    virtual_ipaddress {
-        169.254.0.1/24 dev eth0
-    }
-    virtual_ipaddress_excluded {
-        192.168.1.0/24 dev eth1
-    }
-    virtual_routes {
-        0.0.0.0/0 via 192.168.1.1 dev eth1
-    }
-}
-vrrp_instance VR_2 {
-    state MASTER
-    interface eth4
-    virtual_router_id 2
-    priority 50
-    garp_master_delay 60
-    mcast_src_ip 224.0.0.1
-    track_interface {
-        eth4
-    }
-    virtual_ipaddress {
-        169.254.0.2/24 dev eth4
-    }
-    virtual_ipaddress_excluded {
-        192.168.2.0/24 dev eth2
-        192.168.3.0/24 dev eth6
-        192.168.55.0/24 dev eth10
-    }
-}"""
+        expected = KEEPALIVED_GLOBAL_CONFIG + textwrap.dedent("""
+            vrrp_instance VR_1 {
+                state MASTER
+                interface eth0
+                virtual_router_id 1
+                priority 50
+                garp_master_delay 60
+                advert_int 5
+                authentication {
+                    auth_type AH
+                    auth_pass pass123
+                }
+                track_interface {
+                    eth0
+                }
+                virtual_ipaddress {
+                    169.254.0.1/24 dev eth0
+                }
+                virtual_ipaddress_excluded {
+                    192.168.1.0/24 dev eth1
+                }
+                virtual_routes {
+                    0.0.0.0/0 via 192.168.1.1 dev eth1
+                }
+            }
+            vrrp_instance VR_2 {
+                state MASTER
+                interface eth4
+                virtual_router_id 2
+                priority 50
+                garp_master_delay 60
+                mcast_src_ip 224.0.0.1
+                track_interface {
+                    eth4
+                }
+                virtual_ipaddress {
+                    169.254.0.2/24 dev eth4
+                }
+                virtual_ipaddress_excluded {
+                    192.168.2.0/24 dev eth2
+                    192.168.3.0/24 dev eth6
+                    192.168.55.0/24 dev eth10
+                }
+            }""")
 
         self.assertEqual(expected, config.get_config_str())
 
     def test_build_config_no_vips(self):
-        expected = """vrrp_instance VR_1 {
-    state MASTER
-    interface eth0
-    virtual_router_id 1
-    priority 50
-    garp_master_delay 60
-    virtual_ipaddress {
-        169.254.0.1/24 dev eth0
-    }
-}"""
+        expected = textwrap.dedent("""\
+            vrrp_instance VR_1 {
+                state MASTER
+                interface eth0
+                virtual_router_id 1
+                priority 50
+                garp_master_delay 60
+                virtual_ipaddress {
+                    169.254.0.1/24 dev eth0
+                }
+            }""")
         instance = keepalived.KeepalivedInstance(
             'MASTER', 'eth0', 1, ['169.254.192.0/18'])
         self.assertEqual(expected, '\n'.join(instance.build_config()))

@@ -22,6 +22,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import testtools
+import textwrap
 
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
@@ -29,6 +30,7 @@ from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import keepalived
 from neutron.common import utils as common_utils
 from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
@@ -348,7 +350,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ha_device_name = router.get_ha_device_name()
         external_port = router.get_ex_gw_port()
         ex_port_ipv6 = ip_lib.get_ipv6_lladdr(external_port['mac_address'])
-        external_device_name = router.get_external_device_name(
+        ex_device_name = router.get_external_device_name(
             external_port['id'])
         external_device_cidr = self._port_first_ip_cidr(external_port)
         internal_port = router.router[constants.INTERFACE_KEY][0]
@@ -360,35 +362,42 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             router.get_floating_ips()[0]['floating_ip_address'])
         default_gateway_ip = external_port['subnets'][0].get('gateway_ip')
         extra_subnet_cidr = external_port['extra_subnets'][0].get('cidr')
-        return """vrrp_instance VR_1 {
-    state BACKUP
-    interface %(ha_device_name)s
-    virtual_router_id 1
-    priority 50
-    garp_master_delay 60
-    nopreempt
-    advert_int 2
-    track_interface {
-        %(ha_device_name)s
-    }
-    virtual_ipaddress {
-        169.254.0.1/24 dev %(ha_device_name)s
-    }
-    virtual_ipaddress_excluded {
-        %(floating_ip_cidr)s dev %(external_device_name)s
-        %(external_device_cidr)s dev %(external_device_name)s
-        %(internal_device_cidr)s dev %(internal_device_name)s
-        %(ex_port_ipv6)s dev %(external_device_name)s scope link
-        %(int_port_ipv6)s dev %(internal_device_name)s scope link
-    }
-    virtual_routes {
-        0.0.0.0/0 via %(default_gateway_ip)s dev %(external_device_name)s
-        8.8.8.0/24 via 19.4.4.4
-        %(extra_subnet_cidr)s dev %(external_device_name)s scope link
-    }
-}""" % {
+        return textwrap.dedent("""\
+            global_defs {
+                notification_email_from %(email_from)s
+                router_id %(router_id)s
+            }
+            vrrp_instance VR_1 {
+                state BACKUP
+                interface %(ha_device_name)s
+                virtual_router_id 1
+                priority 50
+                garp_master_delay 60
+                nopreempt
+                advert_int 2
+                track_interface {
+                    %(ha_device_name)s
+                }
+                virtual_ipaddress {
+                    169.254.0.1/24 dev %(ha_device_name)s
+                }
+                virtual_ipaddress_excluded {
+                    %(floating_ip_cidr)s dev %(ex_device_name)s
+                    %(external_device_cidr)s dev %(ex_device_name)s
+                    %(internal_device_cidr)s dev %(internal_device_name)s
+                    %(ex_port_ipv6)s dev %(ex_device_name)s scope link
+                    %(int_port_ipv6)s dev %(internal_device_name)s scope link
+                }
+                virtual_routes {
+                    0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s
+                    8.8.8.0/24 via 19.4.4.4
+                    %(extra_subnet_cidr)s dev %(ex_device_name)s scope link
+                }
+            }""") % {
+            'email_from': keepalived.KEEPALIVED_EMAIL_FROM,
+            'router_id': keepalived.KEEPALIVED_ROUTER_ID,
             'ha_device_name': ha_device_name,
-            'external_device_name': external_device_name,
+            'ex_device_name': ex_device_name,
             'external_device_cidr': external_device_cidr,
             'internal_device_name': internal_device_name,
             'internal_device_cidr': internal_device_cidr,

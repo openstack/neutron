@@ -31,6 +31,8 @@ VALID_AUTH_TYPES = ['AH', 'PASS']
 HA_DEFAULT_PRIORITY = 50
 PRIMARY_VIP_RANGE_SIZE = 24
 KEEPALIVED_SERVICE_NAME = 'keepalived'
+KEEPALIVED_EMAIL_FROM = 'neutron@openstack.local'
+KEEPALIVED_ROUTER_ID = 'neutron'
 GARP_MASTER_DELAY = 60
 
 LOG = logging.getLogger(__name__)
@@ -317,7 +319,11 @@ class KeepalivedConf(object):
         return self.instances.get(vrouter_id)
 
     def build_config(self):
-        config = []
+        config = ['global_defs {',
+                  '    notification_email_from %s' % KEEPALIVED_EMAIL_FROM,
+                  '    router_id %s' % KEEPALIVED_ROUTER_ID,
+                  '}'
+                  ]
 
         for instance in self.instances.values():
             config.extend(instance.build_config())
