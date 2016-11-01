@@ -134,8 +134,10 @@ class PolicyHook(hooks.PecanHook):
                     # If a tenant is modifying it's own object, it's safe to
                     # return a 403. Otherwise, pretend that it doesn't exist
                     # to avoid giving away information.
+                    orig_item_tenant_id = item.get('tenant_id')
                     if (needs_prefetch and
-                        neutron_context.tenant_id != item['tenant_id']):
+                        (neutron_context.tenant_id != orig_item_tenant_id or
+                         orig_item_tenant_id is None)):
                         ctxt.reraise = False
                 msg = _('The resource could not be found.')
                 raise webob.exc.HTTPNotFound(msg)
