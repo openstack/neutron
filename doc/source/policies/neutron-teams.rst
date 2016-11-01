@@ -71,9 +71,11 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 | Client                 | Akihiro Motoki            | amotoki              |
 +------------------------+---------------------------+----------------------+
-| Docs                   | Edgar Magana              | emagana              |
+| Docs                   | Matthew Kassawara         | Sam-I-Am             |
 +------------------------+---------------------------+----------------------+
-| Infra                  | Armando Migliaccio        | armax                |
+| Infra                  | Nate Johnston             | njohnston            |
+|                        +---------------------------+----------------------+
+|                        | Armando Migliaccio        | armax                |
 |                        +---------------------------+----------------------+
 |                        | Doug Wiegley              | dougwig              |
 +------------------------+---------------------------+----------------------+
@@ -81,7 +83,7 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 | Services               | Doug Wiegley              | dougwig              |
 +------------------------+---------------------------+----------------------+
-| Testing                | Assaf Muller              | amuller              |
+| Testing                | Jakub Libosvar            | jlibosva             |
 +------------------------+---------------------------+----------------------+
 
 Some notes on the above:
