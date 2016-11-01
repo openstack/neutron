@@ -122,7 +122,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         self.mock_popen.return_value = ('', '')
         self.process.return_value.returncode = 1
         with mock.patch.object(utils, 'LOG') as log:
-            self.assertRaises(RuntimeError, utils.execute,
+            self.assertRaises(utils.ProcessExecutionError, utils.execute,
                               ['ls'], log_fail_as_error=False)
             self.assertFalse(log.error.called)
 
@@ -185,7 +185,8 @@ class TestFindChildPids(base.BaseTestCase):
 
     def test_returns_empty_list_for_exit_code_1(self):
         with mock.patch.object(utils, 'execute',
-                               side_effect=RuntimeError('Exit code: 1')):
+                               side_effect=utils.ProcessExecutionError(
+                                   '', returncode=1)):
             self.assertEqual([], utils.find_child_pids(-1))
 
     def test_returns_empty_list_for_no_output(self):

@@ -44,6 +44,12 @@ from neutron import wsgi
 LOG = logging.getLogger(__name__)
 
 
+class ProcessExecutionError(RuntimeError):
+    def __init__(self, message, returncode):
+        super(ProcessExecutionError, self).__init__(message)
+        self.returncode = returncode
+
+
 class RootwrapDaemonHelper(object):
     __client = None
     __lock = threading.Lock()
@@ -135,7 +141,7 @@ def execute(cmd, process_input=None, addl_env=None,
             if log_fail_as_error:
                 LOG.error(msg)
             if check_exit_code:
-                raise RuntimeError(msg)
+                raise ProcessExecutionError(msg, returncode=returncode)
         else:
             LOG.debug("Exit code: %d", returncode)
 
@@ -165,11 +171,11 @@ def find_child_pids(pid):
     try:
         raw_pids = execute(['ps', '--ppid', pid, '-o', 'pid='],
                            log_fail_as_error=False)
-    except RuntimeError as e:
+    except ProcessExecutionError as e:
         # Unexpected errors are the responsibility of the caller
         with excutils.save_and_reraise_exception() as ctxt:
             # Exception has already been logged by execute
-            no_children_found = 'Exit code: 1' in str(e)
+            no_children_found = e.returncode == 1
             if no_children_found:
                 ctxt.reraise = False
                 return []
