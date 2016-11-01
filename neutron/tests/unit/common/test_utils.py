@@ -811,10 +811,15 @@ class TestExcDetails(base.BaseTestCase):
 
 class ImportModulesRecursivelyTestCase(base.BaseTestCase):
 
-    def test_object_modules(self):
-        example_module = 'neutron.tests.unit.tests.example.dir.example_module'
-        sys.modules.pop(example_module, None)
+    def test_recursion(self):
+        expected_modules = (
+            'neutron.tests.unit.tests.example.dir.example_module',
+            'neutron.tests.unit.tests.example.dir.subdir.example_module',
+        )
+        for module in expected_modules:
+            sys.modules.pop(module, None)
         modules = utils.import_modules_recursively(
             os.path.dirname(tests.__file__))
-        self.assertIn(example_module, modules)
-        self.assertIn(example_module, sys.modules)
+        for module in expected_modules:
+            self.assertIn(module, modules)
+            self.assertIn(module, sys.modules)
