@@ -947,14 +947,16 @@ class TestOvsNeutronAgent(object):
         self.agent._bind_devices([{'network_id': 'non-existent',
                                    'vif_port': vif_port}])
 
-    def _test_process_network_ports(self, port_info):
+    def _test_process_network_ports(self, port_info, skipped_devices=None):
         failed_devices = {'added': set(), 'removed': set()}
+        skipped_devices = skipped_devices or []
+        added_devices = port_info.get('added', set())
         with mock.patch.object(self.agent.sg_agent,
                                "setup_port_filters") as setup_port_filters,\
                 mock.patch.object(
                     self.agent, "treat_devices_added_or_updated",
                     return_value=(
-                        [], [], [],
+                        skipped_devices, [], [],
                         failed_devices['added'])) as device_added_updated,\
                 mock.patch.object(self.agent.int_br, "get_ports_attributes",
                                   return_value=[]),\
@@ -967,9 +969,9 @@ class TestOvsNeutronAgent(object):
                 failed_devices,
                 self.agent.process_network_ports(port_info, False))
             setup_port_filters.assert_called_once_with(
-                port_info.get('added', set()),
+                added_devices - set(skipped_devices),
                 port_info.get('updated', set()))
-            devices_added_updated = (port_info.get('added', set()) |
+            devices_added_updated = (added_devices |
                                      port_info.get('updated', set()))
             if devices_added_updated:
                 device_added_updated.assert_called_once_with(
@@ -989,6 +991,12 @@ class TestOvsNeutronAgent(object):
              'updated': set(['tap1', 'eth1']),
              'removed': set(['eth0']),
              'added': set(['eth1'])})
+
+    def test_process_network_port_with_skipped_ports(self):
+        port_info = {'current': set(['tap0', 'tap1']),
+                     'removed': set(['eth0']),
+                     'added': set(['eth1', 'eth2'])}
+        self._test_process_network_ports(port_info, skipped_devices=['eth1'])
 
     def test_process_network_port_with_empty_port(self):
         self._test_process_network_ports({})
