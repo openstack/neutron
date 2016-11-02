@@ -358,6 +358,19 @@ http://docs.openstack.org/developer/tempest/field_guide/scenario.html
 Scenario tests, like API tests, are split between the Tempest and Neutron
 repositories according to the Neutron API the test is targeting.
 
+Rally Tests
+~~~~~~~~~~~
+
+Rally tests (rally-jobs/plugins) use the `rally <http://rally.readthedocs.io/>`_
+infrastructure to exercise a neutron deployment. Guidelines for writing a
+good rally test can be found in the `rally plugin documentation <http://rally.readthedocs.io/en/latest/plugins.html>`_.
+There are also some examples in tree; the process for adding rally plugins to
+neutron requires three steps: 1) write a plugin and place it under rally-jobs/plugins/.
+This is your rally scenario; 2) (optional) add a setup file under rally-jobs/extra/.
+This is any devstack configuration required to make sure your environment can
+successfully process your scenario requests; 3) edit neutron-neutron.yaml. This
+is your scenario 'contract' or SLA.
+
 Development Process
 -------------------
 
