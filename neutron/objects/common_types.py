@@ -182,6 +182,10 @@ class MACAddress(obj_fields.FieldType):
             raise ValueError(msg)
         return super(MACAddress, self).coerce(obj, attr, value)
 
+    @staticmethod
+    def to_primitive(obj, attr, value):
+        return str(value)
+
 
 class MACAddressField(obj_fields.AutoTypedField):
     AUTO_TYPE = MACAddress()
@@ -199,6 +203,10 @@ class IPNetwork(obj_fields.FieldType):
             msg = _("Field value %s is not a netaddr.IPNetwork") % value
             raise ValueError(msg)
         return super(IPNetwork, self).coerce(obj, attr, value)
+
+    @staticmethod
+    def to_primitive(obj, attr, value):
+        return str(value)
 
 
 class IPNetworkField(obj_fields.AutoTypedField):

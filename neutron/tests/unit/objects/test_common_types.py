@@ -16,6 +16,7 @@ import itertools
 import random
 
 from neutron_lib import constants as const
+from oslo_serialization import jsonutils
 
 from neutron.common import constants
 from neutron.extensions import dns as dns_ext
@@ -39,6 +40,12 @@ class TestField(object):
         for in_val, prim_val in self.to_primitive_values:
             self.assertEqual(prim_val, self.field.to_primitive('obj', 'attr',
                                                                in_val))
+
+    def test_to_primitive_json_serializable(self):
+        for in_val, _ in self.to_primitive_values:
+            prim = self.field.to_primitive('obj', 'attr', in_val)
+            jsencoded = jsonutils.dumps(prim)
+            self.assertEqual(prim, jsonutils.loads(jsencoded))
 
     def test_from_primitive(self):
         class ObjectLikeThing(object):
@@ -133,7 +140,8 @@ class IPNetworkFieldTest(test_base.BaseTestCase, TestField):
             # if they represent a valid IP network
             '10.0.0.0/24',
         ]
-        self.to_primitive_values = self.coerce_good_values
+        self.to_primitive_values = ((a1, str(a2))
+                                    for a1, a2 in self.coerce_good_values)
         self.from_primitive_values = self.coerce_good_values
 
     def test_stringify(self):
