@@ -21,6 +21,7 @@ from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import _deprecate
 from neutron.common import constants
 from neutron.db import _utils as db_utils
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin as base_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import metering as metering_models
@@ -49,7 +50,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
     def create_metering_label(self, context, metering_label):
         m = metering_label['metering_label']
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             metering_db = metering_models.MeteringLabel(
                 id=uuidutils.generate_uuid(),
                 description=m['description'],
@@ -61,7 +62,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         return self._make_metering_label_dict(metering_db)
 
     def delete_metering_label(self, context, label_id):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             try:
                 label = self._get_by_id(context,
                                         metering_models.MeteringLabel,
@@ -146,7 +147,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
     def create_metering_label_rule(self, context, metering_label_rule):
         m = metering_label_rule['metering_label_rule']
         try:
-            with context.session.begin(subtransactions=True):
+            with db_api.context_manager.writer.using(context):
                 label_id = m['metering_label_id']
                 ip_prefix = m['remote_ip_prefix']
                 direction = m['direction']
@@ -161,13 +162,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                     excluded=m['excluded'],
                     remote_ip_prefix=ip_prefix)
                 context.session.add(metering_db)
+
         except db_exc.DBReferenceError:
             raise metering.MeteringLabelNotFound(label_id=label_id)
 
         return self._make_metering_label_rule_dict(metering_db)
 
     def delete_metering_label_rule(self, context, rule_id):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             try:
                 rule = self._get_by_id(context,
                                        metering_models.MeteringLabelRule,
