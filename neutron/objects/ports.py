@@ -63,7 +63,8 @@ class PortBindingBase(base.NeutronDbObject):
     def modify_fields_from_db(cls, db_obj):
         fields = super(PortBindingBase, cls).modify_fields_from_db(db_obj)
         if 'vif_details' in fields:
-            fields['vif_details'] = jsonutils.loads(fields['vif_details'])
+            if fields['vif_details']:
+                fields['vif_details'] = jsonutils.loads(fields['vif_details'])
             if not fields['vif_details']:
                 fields['vif_details'] = None
         return fields
