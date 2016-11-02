@@ -1,0 +1,13 @@
+#!/bin/bash
+
+RALLY_EXTRA_DIR="$DEST/neutron/rally-jobs/extra"
+
+# If rally has been configured, .setup files can be sourced to control the
+# neutron configuration required to run the scenario plugins.
+if [[ "$DEVSTACK_PLUGINS" =~ "rally" ]];
+then
+    for file in $(ls $RALLY_EXTRA_DIR/*.setup);
+    do
+        source $file
+    done
+fi
