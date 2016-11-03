@@ -31,7 +31,7 @@ class RouterRoute(base.NeutronDbObject):
     db_model = l3.RouterRoute
 
     fields = {
-        'router_id': obj_fields.UUIDField(),
+        'router_id': common_types.UUIDField(),
         'destination': common_types.IPNetworkField(),
         'nexthop': obj_fields.IPAddressField()
     }
@@ -67,7 +67,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
     db_model = l3_attrs.RouterExtraAttributes
 
     fields = {
-        'router_id': obj_fields.UUIDField(),
+        'router_id': common_types.UUIDField(),
         'distributed': obj_fields.BooleanField(default=False),
         'service_router': obj_fields.BooleanField(default=False),
         'ha': obj_fields.BooleanField(default=False),

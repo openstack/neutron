@@ -62,7 +62,7 @@ class PortBinding(PortBindingBase):
     db_model = ml2_models.PortBinding
 
     fields = {
-        'port_id': obj_fields.UUIDField(),
+        'port_id': common_types.UUIDField(),
         'host': obj_fields.StringField(),
         'profile': obj_fields.StringField(),
         'vif_type': obj_fields.StringField(),
@@ -81,7 +81,7 @@ class DistributedPortBinding(PortBindingBase):
     db_model = ml2_models.DistributedPortBinding
 
     fields = {
-        'port_id': obj_fields.UUIDField(),
+        'port_id': common_types.UUIDField(),
         'host': obj_fields.StringField(),
         'profile': obj_fields.StringField(),
         'vif_type': obj_fields.StringField(),
@@ -107,7 +107,7 @@ class PortBindingLevel(base.NeutronDbObject):
     primary_keys = ['port_id', 'host', 'level']
 
     fields = {
-        'port_id': obj_fields.UUIDField(),
+        'port_id': common_types.UUIDField(),
         'host': obj_fields.StringField(),
         'level': obj_fields.IntegerField(),
         'driver': obj_fields.StringField(nullable=True),
@@ -142,9 +142,9 @@ class IPAllocation(base.NeutronDbObject):
     db_model = models_v2.IPAllocation
 
     fields = {
-        'port_id': obj_fields.UUIDField(nullable=True),
-        'subnet_id': obj_fields.UUIDField(),
-        'network_id': obj_fields.UUIDField(),
+        'port_id': common_types.UUIDField(nullable=True),
+        'subnet_id': common_types.UUIDField(),
+        'network_id': common_types.UUIDField(),
         'ip_address': obj_fields.IPAddressField(),
     }
 
@@ -187,7 +187,7 @@ class PortDNS(base.NeutronDbObject):
     }
 
     fields = {
-        'port_id': obj_fields.UUIDField(),
+        'port_id': common_types.UUIDField(),
         'current_dns_name': common_types.DomainNameField(),
         'current_dns_domain': common_types.DomainNameField(),
         'previous_dns_name': common_types.DomainNameField(),
@@ -204,10 +204,10 @@ class Port(base.NeutronDbObject):
     db_model = models_v2.Port
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(nullable=True),
-        'network_id': obj_fields.UUIDField(),
+        'network_id': common_types.UUIDField(),
         'mac_address': common_types.MACAddressField(),
         'admin_state_up': obj_fields.BooleanField(),
         'device_id': obj_fields.StringField(),
@@ -239,7 +239,7 @@ class Port(base.NeutronDbObject):
             # TODO(ihrachys): how do we safely pass a mutable default?
             default=None,
         ),
-        'qos_policy_id': obj_fields.UUIDField(nullable=True, default=None),
+        'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
 
         'binding_levels': obj_fields.ListOfObjectsField(
             'PortBindingLevel', nullable=True

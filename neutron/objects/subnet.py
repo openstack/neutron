@@ -37,7 +37,7 @@ class DNSNameServer(base.NeutronDbObject):
 
     fields = {
         'address': obj_fields.StringField(),
-        'subnet_id': obj_fields.UUIDField(),
+        'subnet_id': common_types.UUIDField(),
         'order': obj_fields.IntegerField()
     }
 
@@ -68,7 +68,7 @@ class Route(base.NeutronDbObject):
     foreign_keys = {'Subnet': {'subnet_id': 'id'}}
 
     fields = {
-        'subnet_id': obj_fields.UUIDField(),
+        'subnet_id': common_types.UUIDField(),
         'destination': common_types.IPNetworkField(),
         'nexthop': obj_fields.IPAddressField()
     }
@@ -110,8 +110,8 @@ class IPAllocationPool(base.NeutronDbObject):
     }
 
     fields = {
-        'id': obj_fields.UUIDField(),
-        'subnet_id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
+        'subnet_id': common_types.UUIDField(),
         'start': obj_fields.IPAddressField(),
         'end': obj_fields.IPAddressField()
     }
@@ -149,7 +149,7 @@ class SubnetServiceType(base.NeutronDbObject):
     primary_keys = ['subnet_id', 'service_type']
 
     fields = {
-        'subnet_id': obj_fields.UUIDField(),
+        'subnet_id': common_types.UUIDField(),
         'service_type': obj_fields.StringField()
     }
 
@@ -169,12 +169,12 @@ class Subnet(base.NeutronDbObject):
     db_model = models_v2.Subnet
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(nullable=True),
-        'network_id': obj_fields.UUIDField(),
-        'segment_id': obj_fields.UUIDField(nullable=True),
-        'subnetpool_id': obj_fields.UUIDField(nullable=True),
+        'network_id': common_types.UUIDField(),
+        'segment_id': common_types.UUIDField(nullable=True),
+        'subnetpool_id': common_types.UUIDField(nullable=True),
         'ip_version': common_types.IPVersionEnumField(),
         'cidr': common_types.IPNetworkField(),
         'gateway_ip': obj_fields.IPAddressField(nullable=True),

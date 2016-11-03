@@ -27,6 +27,7 @@ from neutron.db import models_v2
 from neutron.db.qos import api as qos_db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.db.rbac_db_models import QosPolicyRBAC
+from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac_db
@@ -48,7 +49,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     network_binding_model = qos_db_model.QosNetworkPolicyBinding
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'tenant_id': obj_fields.StringField(),
         'name': obj_fields.StringField(),
         'shared': obj_fields.BooleanField(default=False),

@@ -28,7 +28,7 @@ class SecurityGroup(base.NeutronDbObject):
     db_model = sg_models.SecurityGroup
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'name': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(nullable=True),
         'is_default': obj_fields.BooleanField(default=False),
@@ -74,7 +74,7 @@ class _DefaultSecurityGroup(base.NeutronDbObject):
 
     fields = {
         'project_id': obj_fields.StringField(),
-        'security_group_id': obj_fields.UUIDField(),
+        'security_group_id': common_types.UUIDField(),
     }
 
     fields_no_update = ['security_group_id']
@@ -90,10 +90,10 @@ class SecurityGroupRule(base.NeutronDbObject):
     db_model = sg_models.SecurityGroupRule
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(nullable=True),
-        'security_group_id': obj_fields.UUIDField(),
-        'remote_group_id': obj_fields.UUIDField(nullable=True),
+        'security_group_id': common_types.UUIDField(),
+        'remote_group_id': common_types.UUIDField(nullable=True),
         'direction': common_types.FlowDirectionEnumField(nullable=True),
         'ethertype': common_types.EtherTypeEnumField(nullable=True),
         'protocol': common_types.IpProtocolEnumField(nullable=True),

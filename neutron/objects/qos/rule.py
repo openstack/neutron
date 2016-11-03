@@ -57,8 +57,8 @@ class QosRule(base.NeutronDbObject):
     VERSION = '1.2'
 
     fields = {
-        'id': obj_fields.UUIDField(),
-        'qos_policy_id': obj_fields.UUIDField()
+        'id': common_types.UUIDField(),
+        'qos_policy_id': common_types.UUIDField()
     }
 
     fields_no_update = ['id', 'qos_policy_id']

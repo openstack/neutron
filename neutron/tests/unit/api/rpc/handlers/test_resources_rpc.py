@@ -25,6 +25,7 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import topics
 from neutron import context
 from neutron.objects import base as objects_base
+from neutron.objects import common_types
 from neutron.tests import base
 
 
@@ -55,7 +56,7 @@ class FakeResource(BaseFakeResource):
     VERSION = TEST_VERSION
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'field': obj_fields.StringField()
     }
 
@@ -64,7 +65,7 @@ class FakeResource2(BaseFakeResource):
     VERSION = TEST_VERSION
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'field': obj_fields.StringField()
     }
 
