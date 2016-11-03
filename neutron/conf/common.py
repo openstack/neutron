@@ -117,11 +117,11 @@ core_opts = [
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
-    cfg.StrOpt('web_framework', default='legacy',
+    cfg.StrOpt('web_framework', default='pecan',
                choices=('legacy', 'pecan'),
                help=_("This will choose the web framework in which to run "
-                      "the Neutron API server. 'pecan' is a new experimental "
-                      "rewrite of the API server.")),
+                      "the Neutron API server. 'pecan' is a new "
+                      "rewrite of the API routing components.")),
     cfg.IntOpt('global_physnet_mtu', default=constants.DEFAULT_NETWORK_MTU,
                deprecated_name='segment_mtu', deprecated_group='ml2',
                help=_('MTU of the underlying physical network. Neutron uses '
