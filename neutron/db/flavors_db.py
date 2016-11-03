@@ -19,6 +19,7 @@ from sqlalchemy.orm import exc as sa_exc
 
 from neutron.common import _deprecate
 from neutron.db import _utils as db_utils
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db.models import flavor as flavor_models
 from neutron.db import servicetype_db as sdb
@@ -105,22 +106,22 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def create_flavor(self, context, flavor):
         fl = flavor['flavor']
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             fl_db = flavor_models.Flavor(id=uuidutils.generate_uuid(),
                                          name=fl['name'],
                                          description=fl['description'],
                                          service_type=fl['service_type'],
                                          enabled=fl['enabled'])
             context.session.add(fl_db)
-        return self._make_flavor_dict(fl_db)
+            return self._make_flavor_dict(fl_db)
 
     def update_flavor(self, context, flavor_id, flavor):
         fl = flavor['flavor']
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             self._ensure_flavor_not_in_use(context, flavor_id)
             fl_db = self._get_flavor(context, flavor_id)
             fl_db.update(fl)
-        return self._make_flavor_dict(fl_db)
+            return self._make_flavor_dict(fl_db)
 
     def get_flavor(self, context, flavor_id, fields=None):
         fl = self._get_flavor(context, flavor_id)
@@ -132,7 +133,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         # flavors so for now we just capture the foreign key violation
         # to detect if it's in use.
         try:
-            with context.session.begin(subtransactions=True):
+            with db_api.context_manager.writer.using(context):
                 self._ensure_flavor_not_in_use(context, flavor_id)
                 fl_db = self._get_flavor(context, flavor_id)
                 context.session.delete(fl_db)
@@ -151,7 +152,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def create_flavor_service_profile(self, context,
                                       service_profile, flavor_id):
         sp = service_profile['service_profile']
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             bind_qry = context.session.query(
                 flavor_models.FlavorServiceProfileBinding)
             binding = bind_qry.filter_by(service_profile_id=sp['id'],
@@ -168,7 +169,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
 
     def delete_flavor_service_profile(self, context,
                                       service_profile_id, flavor_id):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             binding = (
                 context.session.query(
                     flavor_models.FlavorServiceProfileBinding).
@@ -183,7 +184,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     @staticmethod
     def get_flavor_service_profile(context,
                                    service_profile_id, flavor_id, fields=None):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.reader.using(context):
             binding = (
                 context.session.query(
                     flavor_models.FlavorServiceProfileBinding).
@@ -206,15 +207,14 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
             if not sp['metainfo']:
                 raise ext_flavors.ServiceProfileEmpty()
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             sp_db = flavor_models.ServiceProfile(id=uuidutils.generate_uuid(),
                                                  description=sp['description'],
                                                  driver=sp['driver'],
                                                  enabled=sp['enabled'],
                                                  metainfo=sp['metainfo'])
             context.session.add(sp_db)
-
-        return self._make_service_profile_dict(sp_db)
+            return self._make_service_profile_dict(sp_db)
 
     def update_service_profile(self, context,
                                service_profile_id, service_profile):
@@ -223,19 +223,19 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         if sp.get('driver'):
             self._validate_driver(context, sp['driver'])
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             self._ensure_service_profile_not_in_use(context,
                                                     service_profile_id)
             sp_db = self._get_service_profile(context, service_profile_id)
             sp_db.update(sp)
-        return self._make_service_profile_dict(sp_db)
+            return self._make_service_profile_dict(sp_db)
 
     def get_service_profile(self, context, sp_id, fields=None):
         sp_db = self._get_service_profile(context, sp_id)
         return self._make_service_profile_dict(sp_db, fields)
 
     def delete_service_profile(self, context, sp_id):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             self._ensure_service_profile_not_in_use(context, sp_id)
             sp_db = self._get_service_profile(context, sp_id)
             context.session.delete(sp_db)
@@ -256,7 +256,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                                  marker=None, page_reverse=False):
         """From flavor, choose service profile and find provider for driver."""
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.reader.using(context):
             bind_qry = context.session.query(
                 flavor_models.FlavorServiceProfileBinding)
             binding = bind_qry.filter_by(flavor_id=flavor_id).first()
