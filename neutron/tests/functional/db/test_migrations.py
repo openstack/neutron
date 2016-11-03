@@ -319,6 +319,22 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     def test_has_offline_migrations_all_heads_upgraded(self):
         self._test_has_offline_migrations('heads', False)
 
+    # NOTE(ihrachys): if this test fails for you, it probably means that you
+    # attempt to add an unsafe contract migration script, that is in
+    # contradiction to blueprint online-upgrades
+    # TODO(ihrachys): revisit later in Pike+ where some contract scripts may be
+    # safe again
+    def test_forbid_offline_migrations_starting_newton(self):
+        engine = self.get_engine()
+        cfg.CONF.set_override('connection', engine.url, group='database')
+        # the following revisions are Newton heads
+        for revision in ('5cd92597d11d', '5c85685d616d'):
+            migration.do_alembic_command(
+                self.alembic_config, 'upgrade', revision)
+        self.assertFalse(migration.has_offline_migrations(
+            self.alembic_config, 'unused'),
+            msg='Offline contract migration scripts are forbidden for Ocata+')
+
 
 class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                                 _TestModelsMigrations,
