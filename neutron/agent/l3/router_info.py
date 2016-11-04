@@ -57,7 +57,7 @@ class RouterInfo(object):
         # Invoke the setter for establishing initial SNAT action
         self.router = router
         self.use_ipv6 = use_ipv6
-        ns = namespaces.RouterNamespace(
+        ns = self.create_router_namespace_object(
             router_id, agent_conf, interface_driver, use_ipv6)
         self.router_namespace = ns
         self.ns_name = ns.name
@@ -93,6 +93,11 @@ class RouterInfo(object):
                                       self.agent_conf)
 
         self.router_namespace.create()
+
+    def create_router_namespace_object(
+            self, router_id, agent_conf, iface_driver, use_ipv6):
+        return namespaces.RouterNamespace(
+            router_id, agent_conf, iface_driver, use_ipv6)
 
     @property
     def router(self):

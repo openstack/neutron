@@ -29,6 +29,12 @@ class SnatNamespace(namespaces.Namespace):
         super(SnatNamespace, self).__init__(
             name, agent_conf, driver, use_ipv6)
 
+    def create(self):
+        super(SnatNamespace, self).create()
+        # This might be an HA router namespaces and it should not have
+        # ip_nonlocal_bind enabled
+        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name)
+
     @classmethod
     def get_snat_ns_name(cls, router_id):
         return namespaces.build_ns_name(SNAT_NS_PREFIX, router_id)
