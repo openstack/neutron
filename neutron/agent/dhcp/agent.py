@@ -175,7 +175,7 @@ class DhcpAgent(manager.Manager):
             pool.waitall()
             # we notify all ports in case some were created while the agent
             # was down
-            self.dhcp_ready_ports |= set(self.cache.get_port_ids())
+            self.dhcp_ready_ports |= set(self.cache.get_port_ids(only_nets))
             LOG.info(_LI('Synchronizing state complete'))
 
         except Exception as e:
@@ -572,8 +572,11 @@ class NetworkCache(object):
             return True
         return False
 
-    def get_port_ids(self):
-        return self.port_lookup.keys()
+    def get_port_ids(self, network_ids=None):
+        if not network_ids:
+            return self.port_lookup.keys()
+        return (p_id for p_id, net in self.port_lookup.items()
+                if net in network_ids)
 
     def get_network_ids(self):
         return self.cache.keys()
