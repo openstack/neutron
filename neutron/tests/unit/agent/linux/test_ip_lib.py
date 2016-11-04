@@ -1409,3 +1409,11 @@ class TestAddNamespaceToCmd(base.BaseTestCase):
     def test_add_namespace_to_cmd_without_namespace(self):
         cmd = ['ping', '8.8.8.8']
         self.assertEqual(cmd, ip_lib.add_namespace_to_cmd(cmd, None))
+
+
+class TestSetIpNonlocalBindForHaNamespace(base.BaseTestCase):
+    def test_setting_failure(self):
+        """Make sure message is formatted correctly."""
+        with mock.patch.object(
+                ip_lib, 'set_ip_nonlocal_bind', side_effect=RuntimeError):
+            ip_lib.set_ip_nonlocal_bind_for_namespace('foo')

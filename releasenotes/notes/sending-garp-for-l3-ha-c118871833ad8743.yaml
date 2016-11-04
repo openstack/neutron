@@ -1,0 +1,18 @@
+---
+issues:
+  - In kernels < 3.19 net.ipv4.ip_nonlocal_bind was not
+    a per-namespace kernel option. L3 HA sets this option
+    to zero to avoid sending gratuitous ARPs for IP addresses
+    that were removed while processing. If this happens then
+    gratuitous ARPs are going to be sent which might populate
+    ARP caches of peer machines with the wrong MAC address.
+fixes:
+  - Versions of keepalived < 1.2.20 don't send gratuitous ARPs
+    when keepalived process receives SIGHUP signal. These
+    versions are not packaged in some Linux distributions like
+    RHEL, CentOS or Ubuntu Xenial. Not sending gratuitous ARPs
+    may lead to peer ARP caches containing wrong information
+    about floating IP addresses until the entry is invalidated.
+    Neutron now sends gratuitous ARPs for all new IP addresses
+    that appear on non-HA interfaces in router namespace which
+    simulates behavior of new versions of keepalived.

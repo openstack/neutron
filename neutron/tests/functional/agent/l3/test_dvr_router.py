@@ -1057,3 +1057,20 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # external networks. SNAT will be used. Direct route will not work
         # here.
         src_machine.assert_no_ping(machine_diff_scope.ip)
+
+    def test_dvr_snat_namespace_has_ip_nonlocal_bind_disabled(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info(
+            enable_ha=True, enable_snat=True)
+        router = self.manage_router(self.agent, router_info)
+        try:
+            ip_nonlocal_bind_value = ip_lib.get_ip_nonlocal_bind(
+                router.snat_namespace.name)
+        except RuntimeError as rte:
+            stat_message = 'cannot stat /proc/sys/net/ipv4/ip_nonlocal_bind'
+            if stat_message in str(rte):
+                raise self.skipException(
+                    "This kernel doesn't support %s in network namespaces." % (
+                        ip_lib.IP_NONLOCAL_BIND))
+            raise
+        self.assertEqual(0, ip_nonlocal_bind_value)

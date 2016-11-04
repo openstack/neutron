@@ -139,19 +139,13 @@ class FipNamespace(namespaces.Namespace):
         # changed to be a per-namespace attribute.  To be backwards
         # compatible we need to try both if at first we fail.
         try:
-            ip_wrapper.netns.execute(['sysctl',
-                                      '-w',
-                                      'net.ipv4.ip_nonlocal_bind=1'],
-                                     log_fail_as_error=False,
-                                     run_as_root=True)
+            ip_lib.set_ip_nonlocal_bind(
+                value=1, namespace=self.name, log_fail_as_error=False)
         except RuntimeError:
             LOG.debug('DVR: fip namespace (%s) does not support setting '
                       'net.ipv4.ip_nonlocal_bind, trying in root namespace',
                       self.name)
-            ip_wrapper_root.netns.execute(['sysctl',
-                                           '-w',
-                                           'net.ipv4.ip_nonlocal_bind=1'],
-                                          run_as_root=True)
+            ip_lib.set_ip_nonlocal_bind(value=1)
 
         ip_wrapper.netns.execute(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
         if self.use_ipv6:

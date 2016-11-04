@@ -19,6 +19,7 @@ import netaddr
 from oslo_log import log as logging
 
 from neutron._i18n import _LE
+from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -32,6 +33,19 @@ HA_DEV_PREFIX = 'ha-'
 IP_MONITOR_PROCESS_SERVICE = 'ip_monitor'
 
 
+class HaRouterNamespace(namespaces.RouterNamespace):
+    """Namespace for HA router.
+
+    This namespace sets the ip_nonlocal_bind to 0 for HA router namespaces.
+    It does so to prevent sending gratuitous ARPs for interfaces that got VIP
+    removed in the middle of processing.
+    """
+    def create(self):
+        super(HaRouterNamespace, self).create()
+        # HA router namespaces should not have ip_nonlocal_bind enabled
+        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name)
+
+
 class HaRouter(router.RouterInfo):
     def __init__(self, state_change_callback, *args, **kwargs):
         super(HaRouter, self).__init__(*args, **kwargs)
@@ -39,6 +53,11 @@ class HaRouter(router.RouterInfo):
         self.ha_port = None
         self.keepalived_manager = None
         self.state_change_callback = state_change_callback
+
+    def create_router_namespace_object(
+            self, router_id, agent_conf, iface_driver, use_ipv6):
+        return HaRouterNamespace(
+            router_id, agent_conf, iface_driver, use_ipv6)
 
     @property
     def ha_priority(self):
