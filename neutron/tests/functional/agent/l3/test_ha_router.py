@@ -285,6 +285,21 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self.agent._process_updated_router(router1.router)
         common_utils.wait_until_true(lambda: router1.ha_state == 'master')
 
+    def test_ha_router_namespace_has_ip_nonlocal_bind_disabled(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
+        try:
+            ip_nonlocal_bind_value = ip_lib.get_ip_nonlocal_bind(
+                router.router_namespace.name)
+        except RuntimeError as rte:
+            stat_message = 'cannot stat /proc/sys/net/ipv4/ip_nonlocal_bind'
+            if stat_message in str(rte):
+                raise self.skipException(
+                    "This kernel doesn't support %s in network namespaces." % (
+                        ip_lib.IP_NONLOCAL_BIND))
+            raise
+        self.assertEqual(0, ip_nonlocal_bind_value)
+
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
