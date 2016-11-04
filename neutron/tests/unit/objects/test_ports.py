@@ -137,6 +137,17 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
             self.context, **obj._get_composite_keys())
         self.assertIsNone(obj.vif_details)
 
+    def test_null_vif_details_in_db(self):
+        # the null case for vif_details in our db model is an
+        # empty string. add that here to simulate it correctly
+        # in the tests
+        kwargs = self.get_random_fields()
+        kwargs['vif_details'] = ''
+        db_obj = self._test_class.db_model(**kwargs)
+        obj_fields = self._test_class.modify_fields_from_db(db_obj)
+        obj = self._test_class(self.context, **obj_fields)
+        self.assertIsNone(obj.vif_details)
+
 
 class IPAllocationIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
