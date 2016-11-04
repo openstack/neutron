@@ -57,9 +57,6 @@ def _get_cache_region_for_legacy(url):
 
     if backend == 'memory':
         query = parsed.query
-        # NOTE(fangzhen): The following NOTE and code is from legacy
-        # oslo-incubator cache module. Previously reside in neutron at
-        # neutron/openstack/common/cache/cache.py:78
         # NOTE(flaper87): We need the following hack
         # for python versions < 2.7.5. Previous versions
         # of python parsed query params just for 'known'
