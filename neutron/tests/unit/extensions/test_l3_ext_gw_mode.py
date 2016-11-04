@@ -15,6 +15,7 @@
 #
 
 import mock
+import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -23,6 +24,7 @@ from oslo_utils import uuidutils
 import testscenarios
 from webob import exc
 
+from neutron.common import utils
 from neutron import context as nctx
 from neutron.db import api as db_api
 from neutron.db import l3_db
@@ -33,6 +35,8 @@ from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
 from neutron import manager
+from neutron.objects import network as net_obj
+from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
@@ -127,17 +131,15 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.int_net_id = _uuid()
         self.int_sub_id = _uuid()
         self.tenant_id = 'the_tenant'
-        self.network = models_v2.Network(
+        self.network = net_obj.Network(
+            self.context,
             id=self.ext_net_id,
-            tenant_id=self.tenant_id,
+            project_id=self.tenant_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.net_ext = ext_net_models.ExternalNetwork(
             network_id=self.ext_net_id)
-        self.context.session.add(self.network)
-        # The following is to avoid complaints from SQLite on
-        # foreign key violations
-        self.context.session.flush()
+        self.network.create()
         self.context.session.add(self.net_ext)
         self.router = l3_models.Router(
             id=_uuid(),
@@ -173,17 +175,18 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             network_id=self.ext_net_id)
         self.context.session.add(self.fip_ext_port)
         self.context.session.flush()
-        self.int_net = models_v2.Network(
+        self.int_net = net_obj.Network(
+            self.context,
             id=self.int_net_id,
-            tenant_id=self.tenant_id,
+            project_id=self.tenant_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
-        self.int_sub = models_v2.Subnet(
+        self.int_sub = subnet_obj.Subnet(self.context,
             id=self.int_sub_id,
-            tenant_id=self.tenant_id,
+            project_id=self.tenant_id,
             ip_version=4,
-            cidr='3.3.3.0/24',
-            gateway_ip='3.3.3.1',
+            cidr=utils.AuthenticIPNetwork('3.3.3.0/24'),
+            gateway_ip=netaddr.IPAddress('3.3.3.1'),
             network_id=self.int_net_id)
         self.router_port = models_v2.Port(
             id=FAKE_ROUTER_PORT_ID,
@@ -199,8 +202,8 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
             ip_address='3.3.3.1')
-        self.context.session.add(self.int_net)
-        self.context.session.add(self.int_sub)
+        self.int_net.create()
+        self.int_sub.create()
         self.context.session.add(self.router_port)
         self.context.session.add(self.router_port_ip_info)
         self.context.session.flush()
