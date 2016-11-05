@@ -1,0 +1,9 @@
+---
+prelude: |
+  ``oslo.messaging.notify.drivers`` entry points have been removed
+other:
+  - |
+    The ``oslo.messaging.notify.drivers`` entry points that were left in
+    tree for backward compatibility with Icehouse have been removed.
+    Configure notifications using the oslo_messaging configuration options
+    in ``neutron.conf``.
