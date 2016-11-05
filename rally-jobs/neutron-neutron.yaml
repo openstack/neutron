@@ -76,7 +76,7 @@
         ports_per_network: 100
       runner:
         type: "constant"
-        times: 40
+        times: 8
         concurrency: 4
       context:
         users:
@@ -89,7 +89,7 @@
              router: -1
              # ((ports per net + 1 dhcp) * times) + (concurrency-1)
              # see bug/1623390 for concurrency explanation
-             port: 4059
+             port: 811
       sla:
         max_avg_duration_per_atomic:
           neutron.list_ports: 15  # reduce as perf is fixed
