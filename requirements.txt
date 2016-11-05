@@ -17,7 +17,7 @@ Jinja2>=2.8 # BSD License (3 clause)
 keystonemiddleware!=4.5.0,>=4.2.0 # Apache-2.0
 netaddr!=0.7.16,>=0.7.13 # BSD
 netifaces>=0.10.4 # MIT
-neutron-lib>=0.4.0 # Apache-2.0
+neutron-lib>=1.0.0 # Apache-2.0
 python-neutronclient>=5.1.0 # Apache-2.0
 tenacity>=3.2.1 # Apache-2.0
 ryu!=4.1,!=4.2,!=4.2.1,!=4.4,>=3.30 # Apache-2.0
