@@ -185,7 +185,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def test_delete_network_check_disassociated_floatingips(self):
         l3_mock = mock.Mock()
-        directory.add_plugin('L3_ROUTER_NAT', l3_mock)
+        directory.add_plugin(constants.L3, l3_mock)
         with self.network() as net:
             req = self.new_delete_request('networks', net['network']['id'])
             res = req.get_response(self.api)

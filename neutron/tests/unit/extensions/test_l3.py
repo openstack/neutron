@@ -51,7 +51,6 @@ from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
-from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import config
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -305,7 +304,7 @@ class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
 
     @classmethod
     def get_plugin_type(cls):
-        return service_constants.L3_ROUTER_NAT
+        return lib_constants.L3
 
     def get_plugin_description(self):
         return "L3 Routing Service Plugin for testing"

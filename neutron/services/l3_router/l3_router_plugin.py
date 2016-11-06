@@ -32,7 +32,6 @@ from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
-from neutron.plugins.common import constants
 from neutron.quota import resource_registry
 from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
@@ -95,7 +94,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     @classmethod
     def get_plugin_type(cls):
-        return constants.L3_ROUTER_NAT
+        return n_const.L3
 
     def get_plugin_description(self):
         """returns string description of the plugin."""

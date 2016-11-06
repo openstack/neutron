@@ -53,7 +53,6 @@ from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf import common as base_config
 from neutron.extensions import portbindings
-from neutron.plugins.common import constants as p_const
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
 
@@ -2281,7 +2280,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(2, mocked_func.call_count)
 
     def test_get_service_plugin_list(self):
-        service_plugins = [p_const.L3_ROUTER_NAT]
+        service_plugins = [lib_constants.L3]
         self.plugin_api.get_service_plugin_list.return_value = service_plugins
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertEqual(service_plugins, agent.neutron_service_plugins)

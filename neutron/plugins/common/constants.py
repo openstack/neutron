@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
+
+
 # Neutron well-known service type constants:
 DUMMY = "DUMMY"
 LOADBALANCER = "LOADBALANCER"
@@ -20,7 +23,6 @@ LOADBALANCERV2 = "LOADBALANCERV2"
 FIREWALL = "FIREWALL"
 VPN = "VPN"
 METERING = "METERING"
-L3_ROUTER_NAT = "L3_ROUTER_NAT"
 FLAVORS = "FLAVORS"
 QOS = "QOS"
 
@@ -33,7 +35,7 @@ EXT_TO_SERVICE_MAPPING = {
     'fwaas': FIREWALL,
     'vpnaas': VPN,
     'metering': METERING,
-    'router': L3_ROUTER_NAT,
+    'router': constants.L3,
     'qos': QOS,
 }
 

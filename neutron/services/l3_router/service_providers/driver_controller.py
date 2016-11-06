@@ -45,7 +45,7 @@ class DriverController(object):
         self.l3_plugin = l3_plugin
         self._stm = st_db.ServiceTypeManager.get_instance()
         self._stm.add_provider_configuration(
-                constants.L3_ROUTER_NAT, _LegacyPlusProviderConfiguration())
+                lib_const.L3, _LegacyPlusProviderConfiguration())
         self._load_drivers()
         registry.subscribe(self._check_router_request,
                            resources.ROUTER, events.BEFORE_CREATE)
@@ -58,7 +58,7 @@ class DriverController(object):
 
     def _load_drivers(self):
         self.drivers, self.default_provider = (
-            service_base.load_drivers(constants.L3_ROUTER_NAT, self.l3_plugin))
+            service_base.load_drivers(lib_const.L3, self.l3_plugin))
         # store the provider name on each driver to make finding inverse easy
         for provider_name, driver in self.drivers.items():
             setattr(driver, 'name', provider_name)
@@ -86,7 +86,7 @@ class DriverController(object):
         if _flavor_specified(router):
             router_db.flavor_id = router['flavor_id']
         drv = self._get_provider_for_create(context, router)
-        self._stm.add_resource_association(context, 'L3_ROUTER_NAT',
+        self._stm.add_resource_association(context, lib_const.L3,
                                            drv.name, router['id'])
 
     def _clear_router_provider(self, resource, event, trigger, context,
@@ -143,7 +143,7 @@ class DriverController(object):
             with context.session.begin(subtransactions=True):
                 self._stm.del_resource_associations(context, [router_id])
                 self._stm.add_resource_association(
-                    context, 'L3_ROUTER_NAT', new_drv.name, router_id)
+                    context, lib_const.L3, new_drv.name, router_id)
 
     def _get_provider_for_router(self, context, router_id):
         """Return the provider driver handle for a router id."""
@@ -155,7 +155,7 @@ class DriverController(object):
             router = self.l3_plugin.get_router(context, router_id)
             driver = self._attrs_to_driver(router)
             driver_name = driver.name
-            self._stm.add_resource_association(context, 'L3_ROUTER_NAT',
+            self._stm.add_resource_association(context, lib_const.L3,
                                                driver_name, router_id)
         return self.drivers[driver_name]
 
@@ -211,7 +211,7 @@ class _LegacyPlusProviderConfiguration(
                              ('single_node', 'single_node.SingleNodeDriver')):
             path = 'neutron.services.l3_router.service_providers.%s' % driver
             try:
-                self.add_provider({'service_type': constants.L3_ROUTER_NAT,
+                self.add_provider({'service_type': lib_const.L3,
                                    'name': name, 'driver': path,
                                    'default': False})
             except lib_exc.Invalid:

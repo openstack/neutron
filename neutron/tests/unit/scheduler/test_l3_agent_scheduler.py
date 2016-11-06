@@ -43,7 +43,6 @@ from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.plugins.common import constants as service_constants
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -1415,7 +1414,7 @@ class L3HAPlugin(db_v2.NeutronDbPluginV2,
 
     @classmethod
     def get_plugin_type(cls):
-        return service_constants.L3_ROUTER_NAT
+        return constants.L3
 
     def get_plugin_description(self):
         return "L3 Routing Service Plugin for testing"

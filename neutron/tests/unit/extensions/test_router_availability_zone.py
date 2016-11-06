@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 import six
 
 from neutron.db.availability_zone import router as router_az_db
@@ -19,7 +20,6 @@ from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_db
 from neutron.extensions import l3
 from neutron.extensions import router_availability_zone as router_az
-from neutron.plugins.common import constants as service_constants
 from neutron.tests.unit.extensions import test_availability_zone as test_az
 from neutron.tests.unit.extensions import test_l3
 
@@ -40,7 +40,7 @@ class AZRouterTestPlugin(common_db_mixin.CommonDbMixin,
 
     @classmethod
     def get_plugin_type(cls):
-        return service_constants.L3_ROUTER_NAT
+        return constants.L3
 
     def get_plugin_description(self):
         return "L3 Routing Service Plugin for testing"
