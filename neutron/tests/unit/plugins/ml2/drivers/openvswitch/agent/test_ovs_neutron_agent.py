@@ -1043,8 +1043,8 @@ class TestOvsNeutronAgent(object):
             'neutron.agent.linux.iptables_firewall.'
             'OVSHybridIptablesFirewallDriver',
             group='SECURITYGROUP')
-        with mock.patch('neutron.agent.linux.iptables_firewall.'
-                        'IptablesFirewallDriver._populate_initial_zone_map'):
+        with mock.patch('neutron.agent.linux.ip_conntrack.'
+                        'IpConntrackManager._populate_initial_zone_map'):
             agt = self._make_agent()
         self.assertTrue(agt.agent_state['configurations']['ovs_hybrid_plug'])
 

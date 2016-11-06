@@ -14,7 +14,6 @@
 #    under the License.
 
 import collections
-import re
 
 import netaddr
 from neutron_lib import constants
@@ -31,7 +30,7 @@ from neutron.agent.linux import ipset_manager
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils
-from neutron.common import exceptions as n_exc
+from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import utils as c_utils
 
@@ -44,15 +43,11 @@ CHAIN_NAME_PREFIX = {firewall.INGRESS_DIRECTION: 'i',
                      SPOOF_FILTER: 's'}
 IPSET_DIRECTION = {firewall.INGRESS_DIRECTION: 'src',
                    firewall.EGRESS_DIRECTION: 'dst'}
-# length of all device prefixes (e.g. qvo, tap, qvb)
-LINUX_DEV_PREFIX_LEN = 3
-LINUX_DEV_LEN = 14
-MAX_CONNTRACK_ZONES = 65535
 comment_rule = iptables_manager.comment_rule
 
 
 def get_hybrid_port_name(port_name):
-    return (constants.TAP_DEVICE_PREFIX + port_name)[:LINUX_DEV_LEN]
+    return (constants.TAP_DEVICE_PREFIX + port_name)[:n_const.LINUX_DEV_LEN]
 
 
 class mac_iptables(netaddr.mac_eui48):
@@ -72,12 +67,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
         # driver composed over this one
         self.ipset = ipset_manager.IpsetManager(namespace=namespace)
-        self.ipconntrack = ip_conntrack.IpConntrackManager(
-            self.get_device_zone, namespace=namespace)
-        self._populate_initial_zone_map()
         # list of port which has security group
         self.filtered_ports = {}
         self.unfiltered_ports = {}
+        self.ipconntrack = ip_conntrack.get_conntrack(
+            self.iptables.get_rules_for_table, self.filtered_ports,
+            self.unfiltered_ports, namespace=namespace)
         self._add_fallback_chain_v4v6()
         self._defer_apply = False
         self._pre_defer_filtered_ports = None
@@ -849,72 +844,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._pre_defer_filtered_ports = None
             self._pre_defer_unfiltered_ports = None
 
-    def _populate_initial_zone_map(self):
-        """Setup the map between devices and zones based on current rules."""
-        self._device_zone_map = {}
-        rules = self.iptables.get_rules_for_table('raw')
-        for rule in rules:
-            match = re.match(r'.* --physdev-in (?P<dev>[a-zA-Z0-9\-]+)'
-                             r'.* -j CT --zone (?P<zone>\d+).*', rule)
-            if match:
-                # strip off any prefix that the interface is using
-                short_port_id = match.group('dev')[LINUX_DEV_PREFIX_LEN:]
-                self._device_zone_map[short_port_id] = int(match.group('zone'))
-        LOG.debug("Populated conntrack zone map: %s", self._device_zone_map)
-
-    def get_device_zone(self, port_id):
-        # we have to key the device_zone_map based on the fragment of the port
-        # UUID that shows up in the interface name. This is because the initial
-        # map is populated strictly based on interface names that we don't know
-        # the full UUID of.
-        short_port_id = port_id[:(LINUX_DEV_LEN - LINUX_DEV_PREFIX_LEN)]
-        try:
-            return self._device_zone_map[short_port_id]
-        except KeyError:
-            return self._generate_device_zone(short_port_id)
-
-    def _free_zones_from_removed_ports(self):
-        """Clears any entries from the zone map of removed ports."""
-        existing_ports = [
-            port['device'][:(LINUX_DEV_LEN - LINUX_DEV_PREFIX_LEN)]
-            for port in (list(self.filtered_ports.values()) +
-                         list(self.unfiltered_ports.values()))
-        ]
-        removed = set(self._device_zone_map) - set(existing_ports)
-        for dev in removed:
-            self._device_zone_map.pop(dev, None)
-
-    def _generate_device_zone(self, short_port_id):
-        """Generates a unique conntrack zone for the passed in ID."""
-        try:
-            zone = self._find_open_zone()
-        except n_exc.CTZoneExhaustedError:
-            # Free some zones and try again, repeat failure will not be caught
-            self._free_zones_from_removed_ports()
-            zone = self._find_open_zone()
-
-        self._device_zone_map[short_port_id] = zone
-        LOG.debug("Assigned CT zone %(z)s to port %(dev)s.",
-                  {'z': zone, 'dev': short_port_id})
-        return self._device_zone_map[short_port_id]
-
-    def _find_open_zone(self):
-        # call set to dedup because old ports may be mapped to the same zone.
-        zones_in_use = sorted(set(self._device_zone_map.values()))
-        if not zones_in_use:
-            return 1
-        # attempt to increment onto the highest used zone first. if we hit the
-        # end, go back and look for any gaps left by removed devices.
-        last = zones_in_use[-1]
-        if last < MAX_CONNTRACK_ZONES:
-            return last + 1
-        for index, used in enumerate(zones_in_use):
-            if used - index != 1:
-                # gap found, let's use it!
-                return index + 1
-        # conntrack zones exhausted :( :(
-        raise n_exc.CTZoneExhaustedError()
-
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
     OVS_HYBRID_TAP_PREFIX = constants.TAP_DEVICE_PREFIX
@@ -925,7 +854,7 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
             '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device']))
 
     def _get_br_device_name(self, port):
-        return ('qvb' + port['device'])[:LINUX_DEV_LEN]
+        return ('qvb' + port['device'])[:n_const.LINUX_DEV_LEN]
 
     def _get_device_name(self, port):
         return get_hybrid_port_name(port['device'])
@@ -936,7 +865,8 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
         else:
             device = self._get_device_name(port)
         jump_rule = '-m physdev --physdev-in %s -j CT --zone %s' % (
-            device, self.get_device_zone(port['device']))
+            device, self.ipconntrack.get_device_zone(
+                port['device']))
         return jump_rule
 
     def _add_raw_chain_rules(self, port, direction):

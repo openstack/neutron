@@ -27,6 +27,7 @@ from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 
 
@@ -48,8 +49,7 @@ OPTS = [
 @six.add_metaclass(abc.ABCMeta)
 class LinuxInterfaceDriver(object):
 
-    # from linux IF_NAMESIZE
-    DEV_NAME_LEN = 14
+    DEV_NAME_LEN = n_const.LINUX_DEV_LEN
     DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
 
     def __init__(self, conf):
