@@ -15,8 +15,6 @@
 
 from neutron_lib import constants as lib_constants
 
-from neutron.common import _deprecate
-
 
 ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
     (lib_constants.DEVICE_OWNER_ROUTER_GW,)
@@ -137,9 +135,3 @@ PRIVATE_CIDR_RANGE = '169.254.0.0/16'
 DVR_FIP_LL_CIDR = '169.254.64.0/18'
 L3_HA_NET_CIDR = '169.254.192.0/18'
 METADATA_CIDR = '169.254.169.254/32'
-
-
-# Neutron-lib migration shim. This will emit a deprecation warning on any
-# reference to constants that have been moved out of this module and into
-# the neutron_lib.constants module.
-_deprecate._MovedGlobals(lib_constants)

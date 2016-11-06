@@ -20,13 +20,10 @@ import six
 import webob.exc
 
 from neutron._i18n import _
-from neutron.common import _deprecate
 
 
 # Defining a constant to avoid repeating string literal in several modules
 SHARED = 'shared'
-
-_deprecate._moved_global('UNLIMITED', new_module=lib_validators)
 
 # TODO(HenryG): use DB field sizes (neutron-lib 0.1.1)
 NAME_MAX_LEN = 255
@@ -35,11 +32,6 @@ DESCRIPTION_MAX_LEN = 255
 LONG_DESCRIPTION_MAX_LEN = 1024
 DEVICE_ID_MAX_LEN = 255
 DEVICE_OWNER_MAX_LEN = 255
-
-_deprecate._moved_global('MAC_PATTERN', new_module=lib_validators)
-
-_deprecate._moved_global('validators', new_module=lib_validators)
-
 
 # Define constants for base resource name
 NETWORK = 'network'
@@ -433,14 +425,3 @@ def verify_attributes(res_dict, attr_info):
     if extra_keys:
         msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
         raise webob.exc.HTTPBadRequest(msg)
-
-
-# Shim added to move the following to neutron_lib.constants:
-# ATTR_NOT_SPECIFIED
-# HEX_ELEM
-# UUID_PATTERN
-#
-# Neutron-lib migration shim. This will emit a deprecation warning on any
-# reference to constants that have been moved out of this module and into
-# the neutron_lib.constants module.
-_deprecate._MovedGlobals(constants)

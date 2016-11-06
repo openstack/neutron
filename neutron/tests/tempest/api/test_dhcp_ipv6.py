@@ -14,10 +14,10 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
-from neutron.common import constants
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
 
