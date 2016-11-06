@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import debtcollector
 import os
 
 import eventlet
@@ -23,17 +22,11 @@ import webob
 
 from neutron._i18n import _LI
 from neutron.agent.linux import utils as agent_utils
-from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.notifiers import batch_notifier
 
 LOG = logging.getLogger(__name__)
 
 KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG = 4096
-
-debtcollector.deprecate(
-    'Moved l3 agent ha opts to %s' % ha_conf.__name__,
-    version="newton", removal_version="ocata")
-OPTS = ha_conf.OPTS
 
 
 class KeepalivedStateChangeHandler(object):
