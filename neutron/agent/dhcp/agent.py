@@ -23,6 +23,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import loopingcall
+from oslo_utils import fileutils
 from oslo_utils import importutils
 
 from neutron._i18n import _, _LE, _LI, _LW
@@ -61,7 +62,7 @@ class DhcpAgent(manager.Manager):
         self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, self.conf.host)
         # create dhcp dir to store dhcp info
         dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
-        utils.ensure_dir(dhcp_dir)
+        fileutils.ensure_tree(dhcp_dir, mode=0o755)
         self.dhcp_version = self.dhcp_driver_cls.check_version()
         self._populate_networks_cache()
         # keep track of mappings between networks and routers for

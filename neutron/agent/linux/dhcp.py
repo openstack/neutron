@@ -27,6 +27,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
+from oslo_utils import fileutils
 from oslo_utils import uuidutils
 import six
 
@@ -183,7 +184,7 @@ class DhcpLocalProcess(DhcpBase):
                                                version, plugin)
         self.confs_dir = self.get_confs_dir(conf)
         self.network_conf_dir = os.path.join(self.confs_dir, network.id)
-        common_utils.ensure_dir(self.network_conf_dir)
+        fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
 
     @staticmethod
     def get_confs_dir(conf):
@@ -208,7 +209,7 @@ class DhcpLocalProcess(DhcpBase):
         if self.active:
             self.restart()
         elif self._enable_dhcp():
-            common_utils.ensure_dir(self.network_conf_dir)
+            fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
             interface_name = self.device_manager.setup(self.network)
             self.interface_name = interface_name
             self.spawn_process()

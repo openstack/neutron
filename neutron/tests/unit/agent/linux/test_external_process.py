@@ -15,8 +15,9 @@
 import mock
 import os.path
 
+from oslo_utils import fileutils
+
 from neutron.agent.linux import external_process as ep
-from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -106,7 +107,7 @@ class TestProcessManager(base.BaseTestCase):
         self.delete_if_exists = mock.patch(
             'oslo_utils.fileutils.delete_if_exists').start()
         self.ensure_dir = mock.patch.object(
-            common_utils, 'ensure_dir').start()
+            fileutils, 'ensure_tree').start()
 
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'
@@ -114,7 +115,8 @@ class TestProcessManager(base.BaseTestCase):
     def test_processmanager_ensures_pid_dir(self):
         pid_file = os.path.join(self.conf.external_pids, 'pid')
         ep.ProcessManager(self.conf, 'uuid', pid_file=pid_file)
-        self.ensure_dir.assert_called_once_with(self.conf.external_pids)
+        self.ensure_dir.assert_called_once_with(self.conf.external_pids,
+                                                mode=0o755)
 
     def test_enable_no_namespace(self):
         callback = mock.Mock()

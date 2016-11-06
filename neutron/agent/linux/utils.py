@@ -33,6 +33,7 @@ from oslo_log import log as logging
 from oslo_rootwrap import client
 from oslo_utils import encodeutils
 from oslo_utils import excutils
+from oslo_utils import fileutils
 from six import iterbytes
 from six.moves import http_client as httplib
 
@@ -192,7 +193,7 @@ def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
     conf_dir = os.path.abspath(os.path.normpath(cfg_root))
     conf_base = os.path.join(conf_dir, uuid)
     if ensure_conf_dir:
-        utils.ensure_dir(conf_dir)
+        fileutils.ensure_tree(conf_dir, mode=0o755)
     return conf_base
 
 
@@ -308,7 +309,7 @@ def ensure_directory_exists_without_file(path):
                 if not os.path.exists(path):
                     ctxt.reraise = False
     else:
-        utils.ensure_dir(dirname)
+        fileutils.ensure_tree(dirname, mode=0o755)
 
 
 def is_effective_user(user_id_or_name):

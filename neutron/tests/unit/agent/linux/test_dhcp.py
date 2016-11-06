@@ -19,12 +19,12 @@ import mock
 import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
+from oslo_utils import fileutils
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
 from neutron.extensions import extra_dhcp_opt as edo_ext
@@ -937,11 +937,11 @@ class TestDhcpLocalProcess(TestBase):
         lp = LocalChild(self.conf, FakeV4Network())
         self.assertEqual(lp.get_conf_file_name('dev'), tpl)
 
-    @mock.patch.object(utils, 'ensure_dir')
+    @mock.patch.object(fileutils, 'ensure_tree')
     def test_ensure_dir_called(self, ensure_dir):
         LocalChild(self.conf, FakeV4Network())
         ensure_dir.assert_called_once_with(
-            '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+            '/dhcp/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', mode=0o755)
 
     def test_enable_already_active(self):
         with mock.patch.object(LocalChild, 'active') as patched:
@@ -952,7 +952,7 @@ class TestDhcpLocalProcess(TestBase):
             self.assertEqual(lp.called, ['restart'])
             self.assertFalse(self.mock_mgr.return_value.setup.called)
 
-    @mock.patch.object(utils, 'ensure_dir')
+    @mock.patch.object(fileutils, 'ensure_tree')
     def test_enable(self, ensure_dir):
         attrs_to_mock = dict(
             [(a, mock.DEFAULT) for a in
@@ -972,7 +972,7 @@ class TestDhcpLocalProcess(TestBase):
             self.assertEqual(lp.called, ['spawn'])
             self.assertTrue(mocks['interface_name'].__set__.called)
             ensure_dir.assert_called_with(
-                '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc')
+                '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc', mode=0o755)
 
     def _assert_disabled(self, lp):
         self.assertTrue(lp.process_monitor.unregister.called)

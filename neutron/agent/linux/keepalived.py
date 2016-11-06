@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import fileutils
 
 from neutron._i18n import _, _LE
 from neutron.agent.linux import external_process
@@ -362,7 +363,7 @@ class KeepalivedManager(object):
     def get_full_config_file_path(self, filename, ensure_conf_dir=True):
         conf_dir = self.get_conf_dir()
         if ensure_conf_dir:
-            common_utils.ensure_dir(conf_dir)
+            fileutils.ensure_tree(conf_dir, mode=0o755)
         return os.path.join(conf_dir, filename)
 
     def _output_config_file(self):
