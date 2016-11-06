@@ -102,7 +102,7 @@ ignore-iface-methods=
 [IMPORTS]
 # Deprecated modules which should not be used, separated by a comma
 deprecated-modules=
-# should use openstack.common.jsonutils
+# should use oslo_serialization.jsonutils
  json
 
 [TYPECHECK]
