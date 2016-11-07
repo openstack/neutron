@@ -13,7 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import re
+
+from neutron.agent.linux import async_process
 from neutron.common import utils as common_utils
+
+
+IPv4_ADDR_REGEX = r"(\d{1,3}\.){3}\d{1,3}"
+
+
+class TcpdumpException(Exception):
+    pass
 
 
 def extract_mod_nw_tos_action(flows):
@@ -52,3 +62,32 @@ def wait_until_dscp_marking_rule_applied(bridge, port_vif, rule):
         return dscp_mark == expected
 
     common_utils.wait_until_true(_dscp_marking_rule_applied)
+
+
+def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
+    cmd = ["tcpdump", "-i", receiver_vm.port.name, "-nlt"]
+    if dscp_mark:
+        cmd += ["(ip[1] & 0xfc == %s)" % (dscp_mark << 2)]
+    tcpdump_async = async_process.AsyncProcess(cmd, run_as_root=True,
+                                               namespace=receiver_vm.namespace)
+    tcpdump_async.start()
+    sender_vm.block_until_ping(receiver_vm.ip)
+    try:
+        tcpdump_async.stop()
+    except async_process.AsyncProcessException:
+        # If it was already stopped than we don't care about it
+        pass
+
+    pattern = (r"IP (?P<src_ip>%(ip_addr_regex)s) > "
+               "(?P<dst_ip>%(ip_addr_regex)s): ICMP .*$" % {
+                   'ip_addr_regex': IPv4_ADDR_REGEX})
+    for line in tcpdump_async.iter_stdout():
+        m = re.match(pattern, line)
+        if m and (m.group("src_ip") == sender_vm.ip and
+            m.group("dst_ip") == receiver_vm.ip):
+            return
+    raise TcpdumpException(
+        "No packets marked with DSCP = %(dscp_mark)s received from %(src)s "
+        "to %(dst)s" % {'dscp_mark': dscp_mark,
+                        'src': sender_vm.ip,
+                        'dst': receiver_vm.ip})
