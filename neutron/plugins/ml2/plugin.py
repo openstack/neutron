@@ -660,40 +660,40 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         objects = []
         collection = "%ss" % resource
         items = request_items[collection]
-        try:
-            with context.session.begin(subtransactions=True):
-                obj_creator = getattr(self, '_create_%s_db' % resource)
-                for item in items:
+        with context.session.begin(subtransactions=True):
+            obj_creator = getattr(self, '_create_%s_db' % resource)
+            for item in items:
+                try:
                     attrs = item[resource]
                     result, mech_context = obj_creator(context, item)
                     objects.append({'mech_context': mech_context,
                                     'result': result,
                                     'attributes': attrs})
 
-        except Exception as e:
-            with excutils.save_and_reraise_exception():
-                utils.attach_exc_details(
-                    e, _LE("An exception occurred while creating "
-                           "the %(resource)s:%(item)s"),
-                    {'resource': resource, 'item': item})
+                except Exception as e:
+                    with excutils.save_and_reraise_exception():
+                        utils.attach_exc_details(
+                            e, _LE("An exception occurred while creating "
+                                   "the %(resource)s:%(item)s"),
+                            {'resource': resource, 'item': item})
 
-        try:
-            postcommit_op = getattr(self.mechanism_manager,
-                                    'create_%s_postcommit' % resource)
-            for obj in objects:
+        postcommit_op = getattr(self.mechanism_manager,
+                                'create_%s_postcommit' % resource)
+        for obj in objects:
+            try:
                 postcommit_op(obj['mech_context'])
-            return objects
-        except ml2_exc.MechanismDriverError:
-            with excutils.save_and_reraise_exception():
-                resource_ids = [res['result']['id'] for res in objects]
-                LOG.exception(_LE("mechanism_manager.create_%(res)s"
-                                  "_postcommit failed for %(res)s: "
-                                  "'%(failed_id)s'. Deleting "
-                                  "%(res)ss %(resource_ids)s"),
-                              {'res': resource,
-                               'failed_id': obj['result']['id'],
-                               'resource_ids': ', '.join(resource_ids)})
-                self._delete_objects(context, resource, objects)
+            except ml2_exc.MechanismDriverError:
+                with excutils.save_and_reraise_exception():
+                    resource_ids = [res['result']['id'] for res in objects]
+                    LOG.exception(_LE("mechanism_manager.create_%(res)s"
+                                      "_postcommit failed for %(res)s: "
+                                      "'%(failed_id)s'. Deleting "
+                                      "%(res)ss %(resource_ids)s"),
+                                  {'res': resource,
+                                   'failed_id': obj['result']['id'],
+                                   'resource_ids': ', '.join(resource_ids)})
+                    self._delete_objects(context, resource, objects)
+        return objects
 
     def _get_network_mtu(self, network):
         mtus = []
