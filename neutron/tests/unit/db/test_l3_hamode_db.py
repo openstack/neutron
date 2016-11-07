@@ -1187,7 +1187,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
                                          interface_info)
         port = self._get_first_interface(router['id'])
         self.assertTrue(l3_hamode_db.is_ha_router_port(
-            port['device_owner'], port['device_id']))
+            self.admin_ctx, port['device_owner'], port['device_id']))
 
     def test_is_ha_router_port_for_normal_port(self):
         network_id = self._create_network(self.core_plugin, self.admin_ctx)
@@ -1206,7 +1206,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
             self.admin_ctx, filters=device_filter)[0]
 
         self.assertFalse(l3_hamode_db.is_ha_router_port(
-            port['device_owner'], port['device_id']))
+            self.admin_ctx, port['device_owner'], port['device_id']))
 
 
 class L3HAUserTestCase(L3HATestFramework):

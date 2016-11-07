@@ -263,7 +263,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             port = ml2_db.get_port(rpc_context.session, port_id)
             if not port:
                 return
-        is_ha_port = l3_hamode_db.is_ha_router_port(port['device_owner'],
+        is_ha_port = l3_hamode_db.is_ha_router_port(rpc_context,
+                                                    port['device_owner'],
                                                     port['device_id'])
         if is_ha_port:
             port_context = plugin.get_bound_port_context(

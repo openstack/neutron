@@ -755,7 +755,7 @@ def is_ha_router(router):
     return cfg.CONF.l3_ha
 
 
-def is_ha_router_port(device_owner, router_id):
+def is_ha_router_port(context, device_owner, router_id):
     session = db_api.get_session()
     if device_owner == constants.DEVICE_OWNER_HA_REPLICATED_INT:
         return True
