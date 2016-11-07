@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib import constants
+from neutron_lib.api.definitions import trunk_details
 
 from neutron.api import extensions
 
@@ -22,38 +22,34 @@ from neutron.api import extensions
 # are parent in a trunk so that consumers of the Neutron API, like Nova
 # can efficiently access trunk information for things like metadata or
 # config-drive configuration.
-EXTENDED_ATTRIBUTES_2_0 = {
-    'ports': {'trunk_details': {'allow_post': False, 'allow_put': False,
-                                'default': constants.ATTR_NOT_SPECIFIED,
-                                'is_visible': True,
-                                'enforce_policy': True,
-                                'required_by_policy': True}},
-}
 
 
 class Trunk_details(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
-        return "Trunk port details"
+        return trunk_details.NAME
 
     @classmethod
     def get_alias(cls):
-        return "trunk-details"
+        return trunk_details.ALIAS
 
     @classmethod
     def get_description(cls):
-        return "Expose trunk port details"
+        return trunk_details.DESCRIPTION
 
     @classmethod
     def get_updated(cls):
-        return "2016-01-01T10:00:00-00:00"
+        return trunk_details.TIMESTAMP
 
     def get_required_extensions(self):
-        return ["trunk"]
+        return trunk_details.REQUIRED_EXTENSIONS or []
+
+    def get_optional_extensions(self):
+        return trunk_details.OPTIONAL_EXTENSIONS or []
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
+            return trunk_details.RESOURCE_ATTRIBUTE_MAP
         else:
             return {}
