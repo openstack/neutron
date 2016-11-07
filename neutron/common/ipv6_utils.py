@@ -19,39 +19,15 @@ IPv6-related utilities and helper functions.
 import os
 
 from debtcollector import moves
-from debtcollector import removals
 import netaddr
 from neutron_lib import constants as const
 from oslo_log import log
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _LI
 
 
 LOG = log.getLogger(__name__)
 _IS_IPV6_ENABLED = None
-
-
-@removals.remove(
-    message="use get_ipv6_addr_by_EUI64 from oslo_utils.netutils",
-    version="Newton",
-    removal_version="Ocata")
-def get_ipv6_addr_by_EUI64(prefix, mac):
-    # Check if the prefix is IPv4 address
-    isIPv4 = netaddr.valid_ipv4(prefix)
-    if isIPv4:
-        msg = _("Unable to generate IP address by EUI64 for IPv4 prefix")
-        raise TypeError(msg)
-    try:
-        eui64 = int(netaddr.EUI(mac).eui64())
-        prefix = netaddr.IPNetwork(prefix)
-        return netaddr.IPAddress(prefix.first + eui64 ^ (1 << 57))
-    except (ValueError, netaddr.AddrFormatError):
-        raise TypeError(_('Bad prefix or mac format for generating IPv6 '
-                          'address by EUI-64: %(prefix)s, %(mac)s:')
-                        % {'prefix': prefix, 'mac': mac})
-    except TypeError:
-        raise TypeError(_('Bad prefix type for generate IPv6 address by '
-                          'EUI-64: %s') % prefix)
 
 
 def is_enabled_and_bind_by_default():
