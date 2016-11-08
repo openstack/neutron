@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from debtcollector import moves
 from neutron_lib.api import converters as lib_converters
 from neutron_lib.api import validators as lib_validators
 from neutron_lib import constants
@@ -36,71 +35,6 @@ DESCRIPTION_MAX_LEN = 255
 LONG_DESCRIPTION_MAX_LEN = 1024
 DEVICE_ID_MAX_LEN = 255
 DEVICE_OWNER_MAX_LEN = 255
-
-
-def _lib(old_name):
-    """Deprecate a function moved to neutron_lib.api.converters/validators."""
-    new_func = getattr(lib_validators, old_name, None)
-    if not new_func:
-        # Try non-private name (without leading underscore)
-        new_func = getattr(lib_validators, old_name[1:], None)
-    if not new_func:
-        # If it isn't a validator, maybe it's a converter
-        new_func = getattr(lib_converters, old_name, None)
-    assert new_func
-    return moves.moved_function(new_func, old_name, __name__,
-                                message='moved to neutron_lib',
-                                version='mitaka', removal_version='ocata')
-
-
-_verify_dict_keys = _lib('_verify_dict_keys')
-is_attr_set = _lib('is_attr_set')
-_validate_list_of_items = _lib('_validate_list_of_items')
-_validate_values = _lib('_validate_values')
-_validate_not_empty_string_or_none = _lib('_validate_not_empty_string_or_none')
-_validate_not_empty_string = _lib('_validate_not_empty_string')
-_validate_string_or_none = _lib('_validate_string_or_none')
-_validate_string = _lib('_validate_string')
-validate_list_of_unique_strings = _lib('validate_list_of_unique_strings')
-_validate_boolean = _lib('_validate_boolean')
-_validate_range = _lib('_validate_range')
-_validate_no_whitespace = _lib('_validate_no_whitespace')
-_validate_mac_address = _lib('_validate_mac_address')
-_validate_mac_address_or_none = _lib('_validate_mac_address_or_none')
-_validate_ip_address = _lib('_validate_ip_address')
-_validate_ip_pools = _lib('_validate_ip_pools')
-_validate_fixed_ips = _lib('_validate_fixed_ips')
-_validate_nameservers = _lib('_validate_nameservers')
-_validate_hostroutes = _lib('_validate_hostroutes')
-_validate_ip_address_or_none = _lib('_validate_ip_address_or_none')
-_validate_subnet = _lib('_validate_subnet')
-_validate_subnet_or_none = _lib('_validate_subnet_or_none')
-_validate_subnet_list = _lib('_validate_subnet_list')
-_validate_regex = _lib('_validate_regex')
-_validate_regex_or_none = _lib('_validate_regex_or_none')
-_validate_subnetpool_id = _lib('_validate_subnetpool_id')
-_validate_subnetpool_id_or_none = _lib('_validate_subnetpool_id_or_none')
-_validate_uuid = _lib('_validate_uuid')
-_validate_uuid_or_none = _lib('_validate_uuid_or_none')
-_validate_uuid_list = _lib('_validate_uuid_list')
-_validate_dict_item = _lib('_validate_dict_item')
-_validate_dict = _lib('_validate_dict')
-_validate_dict_or_none = _lib('_validate_dict_or_none')
-_validate_dict_or_empty = _lib('_validate_dict_or_empty')
-_validate_dict_or_nodata = _lib('_validate_dict_or_nodata')
-_validate_non_negative = _lib('_validate_non_negative')
-
-convert_to_boolean = _lib('convert_to_boolean')
-convert_to_boolean_if_not_none = _lib('convert_to_boolean_if_not_none')
-convert_to_int = _lib('convert_to_int')
-convert_to_int_if_not_none = _lib('convert_to_int_if_not_none')
-convert_to_positive_float_or_none = _lib('convert_to_positive_float_or_none')
-convert_kvp_str_to_list = _lib('convert_kvp_str_to_list')
-convert_kvp_list_to_dict = _lib('convert_kvp_list_to_dict')
-convert_none_to_empty_list = _lib('convert_none_to_empty_list')
-convert_none_to_empty_dict = _lib('convert_none_to_empty_dict')
-convert_to_list = _lib('convert_to_list')
-
 
 _deprecate._moved_global('MAC_PATTERN', new_module=lib_validators)
 
