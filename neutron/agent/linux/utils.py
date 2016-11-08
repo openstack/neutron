@@ -294,11 +294,6 @@ def pid_invoked_with_cmdline(pid, expected_cmd):
     return cmd_matches_expected(cmd, expected_cmd)
 
 
-wait_until_true = debtcollector.moves.moved_function(
-    utils.wait_until_true, 'wait_until_true', __name__,
-    version='Newton', removal_version='Ocata')
-
-
 def ensure_directory_exists_without_file(path):
     dirname = os.path.dirname(path)
     if os.path.isdir(dirname):
