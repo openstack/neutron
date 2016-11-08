@@ -976,6 +976,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.assert_has_calls([mock.call.put(fake_network)])
         self.call_driver.assert_called_once_with('reload_allocations',
                                                  fake_network)
+        # ensure all ports flagged as ready
+        self.assertEqual({p.id for p in fake_network.ports},
+                         self.dhcp.dhcp_ready_ports)
 
     def test_subnet_update_end_restart(self):
         new_state = dhcp.NetModel(dict(id=fake_network.id,
