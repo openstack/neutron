@@ -1340,12 +1340,10 @@ class TestArpPing(TestIPCmdBase):
         spawn_n.side_effect = lambda f: f()
         ARPING_COUNT = 3
         address = '20.0.0.1'
-        config = mock.Mock()
-        config.send_arp_for_ha = ARPING_COUNT
         ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
                                       mock.sentinel.iface_name,
                                       address,
-                                      config)
+                                      ARPING_COUNT)
 
         self.assertTrue(spawn_n.called)
         mIPWrapper.assert_called_once_with(namespace=mock.sentinel.ns_name)
@@ -1364,12 +1362,10 @@ class TestArpPing(TestIPCmdBase):
     @mock.patch('eventlet.spawn_n')
     def test_no_ipv6_addr_notif(self, spawn_n):
         ipv6_addr = 'fd00::1'
-        config = mock.Mock()
-        config.send_arp_for_ha = 3
         ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
                                       mock.sentinel.iface_name,
                                       ipv6_addr,
-                                      config)
+                                      3)
         self.assertFalse(spawn_n.called)
 
 

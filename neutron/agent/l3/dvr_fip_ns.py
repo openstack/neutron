@@ -226,7 +226,7 @@ class FipNamespace(namespaces.Namespace):
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
                                           fixed_ip['ip_address'],
-                                          self.agent_conf)
+                                          self.agent_conf.send_arp_for_ha)
 
         ipd = ip_lib.IPDevice(interface_name, namespace=ns_name)
         for subnet in agent_gateway_port['subnets']:

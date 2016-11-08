@@ -410,7 +410,7 @@ class RouterInfo(object):
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
                                           fixed_ip['ip_address'],
-                                          self.agent_conf)
+                                          self.agent_conf.send_arp_for_ha)
 
     def internal_network_added(self, port):
         network_id = port['network_id']
@@ -663,7 +663,7 @@ class RouterInfo(object):
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
                                           fixed_ip['ip_address'],
-                                          self.agent_conf)
+                                          self.agent_conf.send_arp_for_ha)
 
     def is_v6_gateway_set(self, gateway_ips):
         """Check to see if list of gateway_ips has an IPv6 gateway.
