@@ -36,7 +36,8 @@ from neutron._i18n import _LE
 
 
 def set_hook(engine):
-    if cfg.CONF.profiler.enabled and cfg.CONF.profiler.trace_sqlalchemy:
+    if (profiler_opts.is_trace_enabled() and
+            profiler_opts.is_db_trace_enabled()):
         osprofiler.sqlalchemy.add_tracing(sqlalchemy, engine, 'neutron.db')
 
 
