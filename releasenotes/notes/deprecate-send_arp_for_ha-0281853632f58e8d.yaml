@@ -1,0 +1,5 @@
+---
+deprecations:
+  - L3 agent send_arp_for_ha configuration option is deprecated and will be
+    removed in Pike. The functionality will remain and the agent will send
+    three gratuitious ARPs whenever a new floating IP is configured.

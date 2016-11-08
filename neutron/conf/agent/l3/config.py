@@ -42,6 +42,7 @@ OPTS = [
                 default=9697,
                 help=_("TCP Port used by Neutron metadata namespace proxy.")),
     cfg.IntOpt('send_arp_for_ha',
+               deprecated_for_removal=True,
                default=3,
                help=_("Send this many gratuitous ARPs for HA setup, if "
                       "less than or equal to 0, the feature is disabled")),
