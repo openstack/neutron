@@ -191,6 +191,8 @@ class SriovNicSwitchAgent(object):
         mgr.initialize(connection, 'sriov')
         return mgr
 
+    # Note(edan): setup_eswitch_mgr method will be removed
+    # with 'physical_device_mappings' config option
     def setup_eswitch_mgr(self, device_mappings, exclude_devices=None):
         exclude_devices = exclude_devices or {}
         self.eswitch_mgr = esm.ESwitchManager()

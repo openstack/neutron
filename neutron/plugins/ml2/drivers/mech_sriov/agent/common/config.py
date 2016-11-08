@@ -70,7 +70,10 @@ sriov_nic_opts = [
                        "function to be used for VLAN networks. All physical "
                        "networks listed in network_vlan_ranges on the server "
                        "should have mappings to appropriate interfaces on "
-                       "each agent.")),
+                       "each agent. "
+                       "DEPRECATED: This option is deprecated in the Ocata "
+                       "release and will be removed in the Pike release."),
+                deprecated_for_removal=True),
     cfg.ListOpt('exclude_devices',
                 default=DEFAULT_EXCLUDE_DEVICES,
                 help=_("Comma-separated list of "
