@@ -23,6 +23,7 @@ import time
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.utils import file as file_utils
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -272,7 +273,7 @@ class DhcpLocalProcess(DhcpBase):
     @interface_name.setter
     def interface_name(self, value):
         interface_file_path = self.get_conf_file_name('interface')
-        common_utils.replace_file(interface_file_path, value)
+        file_utils.replace_file(interface_file_path, value)
 
     @property
     def active(self):
@@ -638,7 +639,7 @@ class Dnsmasq(DhcpLocalProcess):
             buf.write('%s %s %s * *\n' %
                       (timestamp, port.mac_address, ip_address))
         contents = buf.getvalue()
-        common_utils.replace_file(filename, contents)
+        file_utils.replace_file(filename, contents)
         LOG.debug('Done building initial lease file %s with contents:\n%s',
                   filename, contents)
         return filename
@@ -708,7 +709,7 @@ class Dnsmasq(DhcpLocalProcess):
                 buf.write('%s,%s,%s\n' %
                           (port.mac_address, name, ip_address))
 
-        common_utils.replace_file(filename, buf.getvalue())
+        file_utils.replace_file(filename, buf.getvalue())
         LOG.debug('Done building host file %s', filename)
         return filename
 
@@ -847,7 +848,7 @@ class Dnsmasq(DhcpLocalProcess):
             if alloc:
                 buf.write('%s\t%s %s\n' % (alloc.ip_address, fqdn, hostname))
         addn_hosts = self.get_conf_file_name('addn_hosts')
-        common_utils.replace_file(addn_hosts, buf.getvalue())
+        file_utils.replace_file(addn_hosts, buf.getvalue())
         return addn_hosts
 
     def _output_opts_file(self):
@@ -856,7 +857,7 @@ class Dnsmasq(DhcpLocalProcess):
         options += self._generate_opts_per_port(subnet_index_map)
 
         name = self.get_conf_file_name('opts')
-        common_utils.replace_file(name, '\n'.join(options))
+        file_utils.replace_file(name, '\n'.join(options))
         return name
 
     def _generate_opts_per_subnet(self):

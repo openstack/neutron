@@ -876,7 +876,7 @@ class TestBase(TestConfBase):
         self.config_parse(self.conf)
         self.conf.set_override('state_path', '')
 
-        self.replace_p = mock.patch('neutron.common.utils.replace_file')
+        self.replace_p = mock.patch('neutron_lib.utils.file.replace_file')
         self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         mock.patch('neutron.agent.linux.utils.execute').start()
         self.safe = self.replace_p.start()
@@ -1036,7 +1036,7 @@ class TestDhcpLocalProcess(TestBase):
         self.assertEqual(lp.interface_name, 'tap0')
 
     def test_set_interface_name(self):
-        with mock.patch('neutron.common.utils.replace_file') as replace:
+        with mock.patch('neutron_lib.utils.file.replace_file') as replace:
             lp = LocalChild(self.conf, FakeDualNetwork())
             with mock.patch.object(lp, 'get_conf_file_name') as conf_file:
                 conf_file.return_value = '/interface'

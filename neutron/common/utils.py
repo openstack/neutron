@@ -26,7 +26,6 @@ import os.path
 import random
 import signal
 import sys
-import tempfile
 import time
 import uuid
 
@@ -35,6 +34,7 @@ import eventlet
 from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
+from neutron_lib.utils import file as file_utils
 from neutron_lib.utils import helpers
 from neutron_lib.utils import host
 from neutron_lib.utils import net
@@ -340,22 +340,10 @@ def round_val(val):
                                              rounding=decimal.ROUND_HALF_UP))
 
 
+@removals.remove(
+    message="Use replace_file from neutron_lib.utils")
 def replace_file(file_name, data, file_mode=0o644):
-    """Replaces the contents of file_name with data in a safe manner.
-
-    First write to a temp file and then rename. Since POSIX renames are
-    atomic, the file is unlikely to be corrupted by competing writes.
-
-    We create the tempfile on the same device to ensure that it can be renamed.
-    """
-
-    base_dir = os.path.dirname(os.path.abspath(file_name))
-    with tempfile.NamedTemporaryFile('w+',
-                                     dir=base_dir,
-                                     delete=False) as tmp_file:
-        tmp_file.write(data)
-    os.chmod(tmp_file.name, file_mode)
-    os.rename(tmp_file.name, file_name)
+    file_utils.replace_file(file_name, data, file_mode=file_mode)
 
 
 def load_class_by_alias_or_classname(namespace, name):

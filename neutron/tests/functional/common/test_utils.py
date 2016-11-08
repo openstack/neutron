@@ -11,46 +11,10 @@
 #    under the License.
 
 import eventlet
-import os.path
-import stat
 import testtools
 
 from neutron.common import utils
 from neutron.tests import base
-
-
-class TestReplaceFile(base.BaseTestCase):
-    def setUp(self):
-        super(TestReplaceFile, self).setUp()
-        temp_dir = self.get_default_temp_dir().path
-        self.file_name = os.path.join(temp_dir, "new_file")
-        self.data = "data to copy"
-
-    def _verify_result(self, file_mode):
-        self.assertTrue(os.path.exists(self.file_name))
-        with open(self.file_name) as f:
-            content = f.read()
-        self.assertEqual(self.data, content)
-        mode = os.stat(self.file_name).st_mode
-        self.assertEqual(file_mode, stat.S_IMODE(mode))
-
-    def test_replace_file_default_mode(self):
-        file_mode = 0o644
-        utils.replace_file(self.file_name, self.data)
-        self._verify_result(file_mode)
-
-    def test_replace_file_custom_mode(self):
-        file_mode = 0o722
-        utils.replace_file(self.file_name, self.data, file_mode)
-        self._verify_result(file_mode)
-
-    def test_replace_file_custom_mode_twice(self):
-        file_mode = 0o722
-        utils.replace_file(self.file_name, self.data, file_mode)
-        self.data = "new data to copy"
-        file_mode = 0o777
-        utils.replace_file(self.file_name, self.data, file_mode)
-        self._verify_result(file_mode)
 
 
 class TestWaitUntilTrue(base.BaseTestCase):
