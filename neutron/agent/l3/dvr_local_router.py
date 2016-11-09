@@ -103,7 +103,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         ip_lib.send_ip_addr_adv_notif(fip_ns_name,
                                       interface_name,
                                       floating_ip,
-                                      self.agent_conf)
+                                      self.agent_conf.send_arp_for_ha)
         # update internal structures
         self.dist_fip_count = self.dist_fip_count + 1
 

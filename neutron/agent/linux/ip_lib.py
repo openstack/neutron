@@ -1022,7 +1022,7 @@ def _arping(ns_name, iface_name, address, count):
                             'ns': ns_name})
 
 
-def send_ip_addr_adv_notif(ns_name, iface_name, address, config):
+def send_ip_addr_adv_notif(ns_name, iface_name, address, count=3):
     """Send advance notification of an IP address assignment.
 
     If the address is in the IPv4 family, send gratuitous ARP.
@@ -1032,9 +1032,12 @@ def send_ip_addr_adv_notif(ns_name, iface_name, address, config):
     Address Discovery (DAD), and (for stateless addresses) router
     advertisements (RAs) are sufficient for address resolution and
     duplicate address detection.
-    """
-    count = config.send_arp_for_ha
 
+    :param ns_name: Namespace name which GARPs are gonna be sent from.
+    :param iface_name: Name of interface which GARPs are gonna be sent from.
+    :param address: Advertised IP address.
+    :param count: (Optional) How many GARPs are gonna be sent. Default is 3.
+    """
     def arping():
         _arping(ns_name, iface_name, address, count)
 
