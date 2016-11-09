@@ -958,6 +958,38 @@ class OVS_Lib_Test(base.BaseTestCase):
             self.assertRaises(tenacity.RetryError,
                               self.br._get_port_val, '1', 'external_ids')
 
+    def test_set_controller_rate_limit(self):
+        with mock.patch.object(
+                self.br, "set_controller_field"
+        ) as set_ctrl_field_mock:
+            self.br.set_controller_rate_limit(200)
+            set_ctrl_field_mock.assert_called_once_with(
+                'controller_rate_limit', 200)
+
+    def test_set_controller_rate_limit_with_value_less_than_min(self):
+        with mock.patch.object(
+                self.br, "set_controller_field"
+        ) as set_ctrl_field_mock:
+            self.br.set_controller_rate_limit(50)
+            set_ctrl_field_mock.assert_called_once_with(
+                'controller_rate_limit', ovs_lib.CTRL_RATE_LIMIT_MIN)
+
+    def test_set_controller_burst_limit(self):
+        with mock.patch.object(
+                self.br, "set_controller_field"
+        ) as set_ctrl_field_mock:
+            self.br.set_controller_burst_limit(100)
+            set_ctrl_field_mock.assert_called_once_with(
+                'controller_burst_limit', 100)
+
+    def test_set_controller_burst_limit_with_value_less_than_min(self):
+        with mock.patch.object(
+                self.br, "set_controller_field"
+        ) as set_ctrl_field_mock:
+            self.br.set_controller_burst_limit(10)
+            set_ctrl_field_mock.assert_called_once_with(
+                'controller_burst_limit', ovs_lib.CTRL_BURST_LIMIT_MIN)
+
 
 class TestDeferredOVSBridge(base.BaseTestCase):
 

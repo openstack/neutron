@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as const
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
@@ -83,6 +84,8 @@ def _get_ports_being_logged(context, sg_log):
     validated_port_ids = []
     ports = port_objects.Port.get_objects(context, id=port_ids)
     for port in ports:
+        if port.status != const.PORT_STATUS_ACTIVE:
+            continue
         if validators.validate_log_type_for_port('security_group', port):
             validated_port_ids.append(port.id)
         else:

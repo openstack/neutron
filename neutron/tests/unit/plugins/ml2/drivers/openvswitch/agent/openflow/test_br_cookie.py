@@ -42,6 +42,12 @@ class TestBRCookieOpenflow(base.BaseTestCase):
         self.assertIn(default_cookie, self.br.reserved_cookies)
         self.assertIn(requested_cookie, self.br.reserved_cookies)
 
+    def test_unset_cookie(self):
+        requested_cookie = self.br.request_cookie()
+        self.assertIn(requested_cookie, self.br.reserved_cookies)
+        self.br.unset_cookie(requested_cookie)
+        self.assertNotIn(requested_cookie, self.br.reserved_cookies)
+
     def test_set_agent_uuid_stamp(self):
         self.br = ovs_bridge.OVSAgentBridge('br-int')
         def_cookie = self.br.default_cookie

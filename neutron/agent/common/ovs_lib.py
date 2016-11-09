@@ -64,6 +64,9 @@ QOS_DEFAULT_QUEUE = 0
 
 _SENTINEL = object()
 
+CTRL_RATE_LIMIT_MIN = 100
+CTRL_BURST_LIMIT_MIN = 25
+
 
 def _ovsdb_result_pending(result):
     """Return True if ovs-vsctl indicates the result is still pending."""
@@ -656,14 +659,7 @@ class OVSBridge(BaseOVS):
 
         :param connection_mode: "out-of-band" or "in-band"
         """
-        attr = [('connection_mode', connection_mode)]
-        controllers = self.db_get_val('Bridge', self.br_name, 'controller')
-        controllers = [controllers] if isinstance(
-            controllers, uuid.UUID) else controllers
-        with self.ovsdb.transaction(check_error=True) as txn:
-            for controller_uuid in controllers:
-                txn.add(self.ovsdb.db_set('Controller',
-                                          controller_uuid, *attr))
+        self.set_controller_field('connection_mode', connection_mode)
 
     def _set_egress_bw_limit_for_port(self, port_name, max_kbps,
                                       max_burst_kbps):
@@ -820,6 +816,38 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_destroy('QoS', qos['_uuid']))
             if queue:
                 txn.add(self.ovsdb.db_destroy('Queue', queue['_uuid']))
+
+    def set_controller_field(self, field, value):
+        attr = [(field, value)]
+        controllers = self.db_get_val('Bridge', self.br_name, 'controller')
+        controllers = [controllers] if isinstance(
+            controllers, uuid.UUID) else controllers
+        with self.ovsdb.transaction(check_error=True) as txn:
+            for controller_uuid in controllers:
+                txn.add(self.ovsdb.db_set(
+                    'Controller', controller_uuid, *attr))
+
+    def set_controller_rate_limit(self, controller_rate_limit):
+        """Set bridge controller_rate_limit
+
+        :param controller_rate_limit: at least 100
+        """
+        if controller_rate_limit < CTRL_RATE_LIMIT_MIN:
+            LOG.info("rate limit's value must be at least 100")
+            controller_rate_limit = CTRL_RATE_LIMIT_MIN
+        self.set_controller_field(
+            'controller_rate_limit', controller_rate_limit)
+
+    def set_controller_burst_limit(self, controller_burst_limit):
+        """Set bridge controller_burst_limit
+
+        :param controller_burst_limit: at least 25
+        """
+        if controller_burst_limit < CTRL_BURST_LIMIT_MIN:
+            LOG.info("burst limit's value must be at least 25")
+            controller_burst_limit = CTRL_BURST_LIMIT_MIN
+        self.set_controller_field(
+            'controller_burst_limit', controller_burst_limit)
 
     def __enter__(self):
         self.create()

@@ -26,6 +26,7 @@ from neutron.agent import securitygroups_rpc
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
+from neutron.services.logapi.drivers.openvswitch import driver as log_driver
 from neutron.services.qos.drivers.openvswitch import driver as ovs_qos_driver
 
 LOG = log.getLogger(__name__)
@@ -62,6 +63,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             vif_details, supported_vnic_types=[portbindings.VNIC_NORMAL,
                                                portbindings.VNIC_DIRECT])
         ovs_qos_driver.register()
+        log_driver.register()
 
     def get_allowed_network_types(self, agent):
         return (agent['configurations'].get('tunnel_types', []) +

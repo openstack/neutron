@@ -41,11 +41,13 @@ class TestCreateRegNumbers(base.BaseTestCase):
         ovsfw.create_reg_numbers(flow)
         self.assertEqual({'foo': 'bar'}, flow)
 
-    def test_both_registers_defined(self):
-        flow = {'foo': 'bar', 'reg_port': 1, 'reg_net': 2}
+    def test_all_registers_defined(self):
+        flow = {'foo': 'bar', 'reg_port': 1, 'reg_net': 2,
+                'reg_remote_group': 3}
         expected_flow = {'foo': 'bar',
                          'reg{:d}'.format(ovsfw_consts.REG_PORT): 1,
-                         'reg{:d}'.format(ovsfw_consts.REG_NET): 2}
+                         'reg{:d}'.format(ovsfw_consts.REG_NET): 2,
+                         'reg{:d}'.format(ovsfw_consts.REG_REMOTE_GROUP): 3}
         ovsfw.create_reg_numbers(flow)
         self.assertEqual(expected_flow, flow)
 
