@@ -275,14 +275,14 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
     def test__verify_ip_succeeds(self):
         cidr = '10.0.0.0/24'
         ipam_subnet = self._create_and_allocate_ipam_subnet(cidr)[0]
-        ipam_subnet._verify_ip(self.ctx.session, '10.0.0.2')
+        ipam_subnet._verify_ip(self.ctx, '10.0.0.2')
 
     def test__verify_ip_not_in_subnet_fails(self):
         cidr = '10.0.0.0/24'
         ipam_subnet = self._create_and_allocate_ipam_subnet(cidr)[0]
         self.assertRaises(ipam_exc.InvalidIpForSubnet,
                           ipam_subnet._verify_ip,
-                          self.ctx.session,
+                          self.ctx,
                           '192.168.0.2')
 
     def test__verify_ip_bcast_and_network_fail(self):
@@ -290,11 +290,11 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         ipam_subnet = self._create_and_allocate_ipam_subnet(cidr)[0]
         self.assertRaises(ipam_exc.InvalidIpForSubnet,
                           ipam_subnet._verify_ip,
-                          self.ctx.session,
+                          self.ctx,
                           '10.0.0.255')
         self.assertRaises(ipam_exc.InvalidIpForSubnet,
                           ipam_subnet._verify_ip,
-                          self.ctx.session,
+                          self.ctx,
                           '10.0.0.0')
 
     def _allocate_address(self, cidr, ip_version, address_request):
@@ -415,7 +415,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
                                               last_ip='192.168.10.60')]
 
         ipam_subnet.subnet_manager.list_pools = mock.Mock(return_value=pools)
-        return ipam_subnet._no_pool_changes(self.ctx.session, new_pools)
+        return ipam_subnet._no_pool_changes(self.ctx, new_pools)
 
     def test__no_pool_changes_negative(self):
         pool_list = [[netaddr.IPRange('192.168.10.2', '192.168.10.254')],
