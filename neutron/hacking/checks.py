@@ -64,9 +64,6 @@ def _regex_for_level(level, hint):
     }
 
 
-log_string_interpolation = re.compile(r".*LOG\.(?:error|warn|warning|info"
-                                      r"|critical|exception|debug)"
-                                      r"\([^,]*%[^,]*[,)]")
 log_translation_hint = re.compile(
     '|'.join('(?:%s)' % _regex_for_level(level, hint)
              for level, hint in six.iteritems(_all_log_levels)))
@@ -365,28 +362,6 @@ def check_unittest_imports(logical_line):
 
 
 @flake8ext
-def check_delayed_string_interpolation(logical_line, filename, noqa):
-    """N342 String interpolation should be delayed at logging calls.
-
-    N342: LOG.debug('Example: %s' % 'bad')
-    Okay: LOG.debug('Example: %s', 'good')
-    """
-    msg = ("N342 String interpolation should be delayed to be "
-           "handled by the logging code, rather than being done "
-           "at the point of the logging call. "
-           "Use ',' instead of '%'.")
-
-    if noqa:
-        return
-
-    if 'neutron/tests/' in filename:
-        return
-
-    if log_string_interpolation.match(logical_line):
-        yield(0, msg)
-
-
-@flake8ext
 def check_no_imports_from_tests(logical_line, filename, noqa):
     """N343 Production code must not import from neutron.tests.*
     """
@@ -432,6 +407,5 @@ def factory(register):
     register(check_oslo_i18n_wrapper)
     register(check_builtins_gettext)
     register(check_unittest_imports)
-    register(check_delayed_string_interpolation)
     register(check_no_imports_from_tests)
     register(check_python3_no_filter)
