@@ -34,6 +34,7 @@ import unittest2
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.plugins.common import constants as p_const
+from neutron.services.logapi.common import constants as log_const
 
 
 class AttributeMapMemento(fixtures.Fixture):
@@ -319,3 +320,7 @@ def reset_random_seed():
 
 def get_random_ipv6_mode():
     return random.choice(constants.IPV6_MODES)
+
+
+def get_random_security_event():
+    return random.choice(log_const.VALID_EVENTS)

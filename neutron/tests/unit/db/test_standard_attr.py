@@ -69,7 +69,8 @@ class StandardAttrAPIImapctTestCase(testlib_api.SqlTestCase):
         # doc/source/devref/api_extensions.rst
         expected = ['subnets', 'trunks', 'routers', 'segments',
                     'security_group_rules', 'networks', 'policies',
-                    'subnetpools', 'ports', 'security_groups', 'floatingips']
+                    'subnetpools', 'ports', 'security_groups', 'floatingips',
+                    'logs']
         self.assertEqual(
             set(expected),
             set(standard_attr.get_standard_attr_resource_model_map().keys())
