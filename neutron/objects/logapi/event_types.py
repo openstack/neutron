@@ -35,4 +35,4 @@ class SecurityEvent(obj_fields.String):
 
 
 class SecurityEventField(obj_fields.AutoTypedField):
-    AUTO_TYPE = SecurityEvent(valid_values=log_const.VALID_EVENTS)
+    AUTO_TYPE = SecurityEvent(valid_values=log_const.LOG_EVENTS)
