@@ -28,6 +28,7 @@ from neutron.services.logapi.common import exceptions as log_exc
 from neutron.tests.unit.services.logapi import base
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+SUPPORTED_LOGGING_TYPES = ['security_group']
 
 
 class TestLoggingPlugin(base.BaseLogTestCase):
@@ -51,6 +52,12 @@ class TestLoggingPlugin(base.BaseLogTestCase):
 
         manager.init()
         self.log_plugin = directory.get_plugin(constants.LOG_API)
+        self.log_plugin.driver_manager = mock.Mock()
+        log_types = mock.PropertyMock(return_value=SUPPORTED_LOGGING_TYPES)
+        self.log_plugin.driver_manager.supported_logging_types = \
+            mock.patch('neutron.services.logapi.drivers.manager.'
+                       'LoggingServiceDriverManager.supported_logging_types',
+                       new_callable=log_types).start()
         self.ctxt = context.Context('fake_user', 'fake_tenant')
         mock.patch.object(self.ctxt.session, 'refresh').start()
         mock.patch.object(self.ctxt.session, 'expunge').start()
@@ -158,6 +165,15 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             init_log_mock.assert_called_once_with(
                 context=self.ctxt, **log_data['log'])
             self.assertTrue(new_log.create.called)
+
+    def test_create_log_with_unsupported_logging_type(self):
+        log = {'log': {'resource_type': 'fake_type',
+                       'enabled': True}}
+        self.assertRaises(
+            log_exc.InvalidLogResourceType,
+            self.log_plugin.create_log,
+            self.ctxt,
+            log)
 
     def test_update_log(self):
         log_data = {'log': {'enabled': True}}

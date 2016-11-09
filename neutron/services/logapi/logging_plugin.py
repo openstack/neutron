@@ -19,6 +19,7 @@ from neutron.extensions import logging as log_ext
 from neutron.objects import base as base_obj
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.services.logapi.common import exceptions as log_exc
+from neutron.services.logapi.drivers import manager as driver_mgr
 
 
 class LoggingPlugin(log_ext.LoggingPluginBase):
@@ -29,11 +30,14 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
     __native_pagination_support = True
     __native_sorting_support = True
 
+    def __init__(self):
+        super(LoggingPlugin, self).__init__()
+        self.driver_manager = driver_mgr.LoggingServiceDriverManager()
+
     @property
     def supported_logging_types(self):
-        # Todo(annp): supported_logging_types will dynamic load from
-        # log_drivers. So return value for this function is a temporary.
-        return []
+        # supported_logging_types are be dynamically loaded from log_drivers
+        return self.driver_manager.supported_logging_types
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
@@ -60,6 +64,10 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
     def create_log(self, context, log):
         """Create a log object"""
         log_data = log['log']
+        resource_type = log_data['resource_type']
+        if resource_type not in self.supported_logging_types:
+            raise log_exc.InvalidLogResourceType(
+                resource_type=resource_type)
         with db_api.context_manager.writer.using(context):
             # body 'log' contains both tenant_id and project_id
             # but only latter needs to be used to create Log object.
