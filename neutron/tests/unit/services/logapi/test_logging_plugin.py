@@ -94,20 +94,22 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                        'enabled': True,
                        'resource_id': uuidutils.generate_uuid(),
                        'target_id': uuidutils.generate_uuid()}}
-        sg = mock.Mock()
         port = mock.Mock()
         new_log = mock.Mock()
-        with mock.patch.object(sg_object.SecurityGroup, 'get_object',
-                               return_value=sg):
+        with mock.patch.object(sg_object.SecurityGroup, 'count',
+                               return_value=1):
             with mock.patch.object(ports.Port, 'get_object',
                                    return_value=port):
-                with mock.patch('neutron.objects.logapi.'
-                                'logging_resource.Log',
-                                return_value=new_log) as init_log_mock:
-                    self.log_plugin.create_log(self.ctxt, log)
-                    init_log_mock.assert_called_once_with(context=self.ctxt,
-                                                          **log['log'])
-                    self.assertTrue(new_log.create.called)
+                with mock.patch('neutron.services.logapi.common.'
+                                'validators.validate_log_type_for_port',
+                                return_value=True):
+                    with mock.patch('neutron.objects.logapi.'
+                                    'logging_resource.Log',
+                                    return_value=new_log) as init_log_mock:
+                        self.log_plugin.create_log(self.ctxt, log)
+                        init_log_mock.assert_called_once_with(
+                            context=self.ctxt, **log['log'])
+                        self.assertTrue(new_log.create.called)
 
     def test_create_log_without_sg_resource(self):
         log = {'log': {'resource_type': 'security_group',
@@ -117,12 +119,15 @@ class TestLoggingPlugin(base.BaseLogTestCase):
         new_log.enabled = True
         port = mock.Mock()
         with mock.patch.object(ports.Port, 'get_object', return_value=port):
-            with mock.patch('neutron.objects.logapi.logging_resource.Log',
-                            return_value=new_log) as init_log_mock:
-                self.log_plugin.create_log(self.ctxt, log)
-                init_log_mock.assert_called_once_with(
-                    context=self.ctxt, **log['log'])
-                self.assertTrue(new_log.create.called)
+            with mock.patch('neutron.services.logapi.common.'
+                            'validators.validate_log_type_for_port',
+                            return_value=True):
+                with mock.patch('neutron.objects.logapi.logging_resource.Log',
+                                return_value=new_log) as init_log_mock:
+                    self.log_plugin.create_log(self.ctxt, log)
+                    init_log_mock.assert_called_once_with(
+                        context=self.ctxt, **log['log'])
+                    self.assertTrue(new_log.create.called)
 
     def test_create_log_without_parent_resource(self):
         log = {'log': {'resource_type': 'security_group',
@@ -130,9 +135,8 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                        'resource_id': uuidutils.generate_uuid()}}
         new_log = mock.Mock()
         new_log.enabled = True
-        sg = mock.Mock()
-        with mock.patch.object(sg_object.SecurityGroup, 'get_object',
-                               return_value=sg):
+        with mock.patch.object(sg_object.SecurityGroup, 'count',
+                               return_value=1):
             with mock.patch('neutron.objects.logapi.logging_resource.Log',
                             return_value=new_log) as init_log_mock:
                 self.log_plugin.create_log(self.ctxt, log)
@@ -152,6 +156,49 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             init_log_mock.assert_called_once_with(context=self.ctxt,
                                                   **log['log'])
             self.assertTrue(new_log.create.called)
+
+    def test_create_log_nonexistent_sg_resource(self):
+        log = {'log': {'resource_type': 'security_group',
+                       'enabled': True,
+                       'resource_id': uuidutils.generate_uuid()}}
+        with mock.patch.object(sg_object.SecurityGroup, 'count',
+                               return_value=0):
+            self.assertRaises(
+                log_exc.ResourceNotFound,
+                self.log_plugin.create_log,
+                self.ctxt,
+                log)
+
+    def test_create_log_nonexistent_target(self):
+        log = {'log': {'resource_type': 'security_group',
+                       'enabled': True,
+                       'target_id': uuidutils.generate_uuid()}}
+        with mock.patch.object(ports.Port, 'get_object',
+                               return_value=None):
+            self.assertRaises(
+                log_exc.TargetResourceNotFound,
+                self.log_plugin.create_log,
+                self.ctxt,
+                log)
+
+    def test_create_log_not_bound_port(self):
+        log = {'log': {'resource_type': 'security_group',
+                       'enabled': True,
+                       'resource_id': uuidutils.generate_uuid(),
+                       'target_id': uuidutils.generate_uuid()}}
+        port = mock.Mock()
+        with mock.patch.object(sg_object.SecurityGroup, 'count',
+                               return_value=1):
+            with mock.patch.object(ports.Port, 'get_object',
+                                   return_value=port):
+                with mock.patch('neutron.services.logapi.common.'
+                                'validators.validate_log_type_for_port',
+                                return_value=True):
+                    self.assertRaises(
+                        log_exc.InvalidResourceConstraint,
+                        self.log_plugin.create_log,
+                        self.ctxt,
+                        log)
 
     def test_create_log_disabled(self):
         log_data = {'log': {'resource_type': 'security_group',
@@ -174,6 +221,24 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             self.log_plugin.create_log,
             self.ctxt,
             log)
+
+    def test_create_log_with_unsupported_logging_type_on_port(self):
+        log = {'log': {'resource_type': 'security_group',
+                       'enabled': True,
+                       'target_id': uuidutils.generate_uuid()}}
+
+        port = mock.Mock()
+        port.id = log['log']['target_id']
+        with mock.patch.object(ports.Port, 'get_object',
+                               return_value=port):
+            with mock.patch('neutron.services.logapi.common.'
+                            'validators.validate_log_type_for_port',
+                            return_value=False):
+                self.assertRaises(
+                    log_exc.LoggingTypeNotSupported,
+                    self.log_plugin.create_log,
+                    self.ctxt,
+                    log)
 
     def test_update_log(self):
         log_data = {'log': {'enabled': True}}

@@ -19,6 +19,7 @@ from neutron.extensions import logging as log_ext
 from neutron.objects import base as base_obj
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.services.logapi.common import exceptions as log_exc
+from neutron.services.logapi.common import validators
 from neutron.services.logapi.drivers import manager as driver_mgr
 
 
@@ -68,6 +69,7 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
         if resource_type not in self.supported_logging_types:
             raise log_exc.InvalidLogResourceType(
                 resource_type=resource_type)
+        validators.validate_request(context, log_data)
         with db_api.context_manager.writer.using(context):
             # body 'log' contains both tenant_id and project_id
             # but only latter needs to be used to create Log object.

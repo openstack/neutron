@@ -18,3 +18,6 @@ DROP_EVENT = 'DROP'
 ALL_EVENT = 'ALL'
 LOG_EVENTS = [ACCEPT_EVENT, DROP_EVENT, ALL_EVENT]
 LOGGING_PLUGIN = 'logging-plugin'
+
+# supported logging types
+SECURITY_GROUP = 'security_group'
