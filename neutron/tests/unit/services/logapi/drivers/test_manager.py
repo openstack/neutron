@@ -13,9 +13,32 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
+from neutron.common import exceptions
+from neutron.services.logapi.common import constants as log_const
+from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.drivers import base as log_driver_base
 from neutron.services.logapi.drivers import manager as driver_mgr
 from neutron.tests.unit.services.logapi import base
+
+
+class TestGetParameter(base.BaseLogTestCase):
+
+    def test__get_param_missing_parameter(self):
+        kwargs = {'context': mock.sentinel.context}
+        self.assertRaises(log_exc.LogapiDriverException,
+                          driver_mgr._get_param,
+                          args=[], kwargs=kwargs,
+                          name='log_obj', index=1)
+        self.assertRaises(log_exc.LogapiDriverException,
+                          driver_mgr._get_param,
+                          args=[mock.sentinel.context], kwargs={},
+                          name='log_obj', index=1)
+        self.assertRaises(log_exc.LogapiDriverException,
+                          driver_mgr._get_param,
+                          args=[], kwargs={'log_obj': mock.sentinel.log_obj},
+                          name='context', index=0)
 
 
 class TestLogDriversManagerBase(base.BaseLogTestCase):
@@ -77,3 +100,29 @@ class TestLogDriversManagerLoggingTypes(TestLogDriversManagerBase):
              })
         self.assertEqual(set(['security_group', 'firewall']),
                          driver_manager.supported_logging_types)
+
+
+class TestLogDriversCalls(TestLogDriversManagerBase):
+    """Test log driver calls"""
+
+    def setUp(self):
+        super(TestLogDriversCalls, self).setUp()
+        self.driver_manager = self._create_manager_with_drivers(
+            {'driver-A': {'is_loaded': True}})
+
+    def test_implemented_call_methods(self):
+        for method in log_const.LOG_CALL_METHODS:
+            with mock.patch.object(log_driver_base.DriverBase, method) as \
+                    method_fnc:
+                context = mock.sentinel.context
+                log_obj = mock.sentinel.log_obj
+                self.driver_manager.call(
+                    method, context=context, log_objs=[log_obj])
+                method_fnc.assert_called_once_with(
+                    context=context, log_objs=[log_obj])
+
+    def test_not_implemented_call_methods(self):
+        context = mock.sentinel.context
+        log_obj = mock.sentinel.log_obj
+        self.assertRaises(exceptions.DriverCallError, self.driver_manager.call,
+                          'wrong_method', context=context, log_objs=[log_obj])

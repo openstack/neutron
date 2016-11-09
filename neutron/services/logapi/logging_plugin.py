@@ -18,6 +18,7 @@ from neutron.db import db_base_plugin_common
 from neutron.extensions import logging as log_ext
 from neutron.objects import base as base_obj
 from neutron.objects.logapi import logging_resource as log_object
+from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 from neutron.services.logapi.drivers import manager as driver_mgr
@@ -77,6 +78,12 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
             log_data.pop('tenant_id', None)
             log_obj = log_object.Log(context=context, **log_data)
             log_obj.create()
+            if log_obj.enabled:
+                self.driver_manager.call(
+                    log_const.CREATE_LOG_PRECOMMIT, context, log_obj)
+        if log_obj.enabled:
+            self.driver_manager.call(
+                log_const.CREATE_LOG, context, log_obj)
         return log_obj
 
     @db_base_plugin_common.convert_result_to_dict
@@ -87,6 +94,13 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
             log_obj = log_object.Log(context, id=log_id)
             log_obj.update_fields(log_data, reset_changes=True)
             log_obj.update()
+            need_notify = 'enabled' in log_data
+            if need_notify:
+                self.driver_manager.call(
+                    log_const.UPDATE_LOG_PRECOMMIT, context, log_obj)
+        if need_notify:
+            self.driver_manager.call(
+                log_const.UPDATE_LOG, context, log_obj)
         return log_obj
 
     def delete_log(self, context, log_id):
@@ -94,6 +108,10 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
         with db_api.context_manager.writer.using(context):
             log_obj = self._get_log(context, log_id)
             log_obj.delete()
+            self.driver_manager.call(
+                log_const.DELETE_LOG_PRECOMMIT, context, log_obj)
+        self.driver_manager.call(
+            log_const.DELETE_LOG, context, log_obj)
 
     def get_loggable_resources(self, context, filters=None, fields=None,
                                sorts=None, limit=None,
