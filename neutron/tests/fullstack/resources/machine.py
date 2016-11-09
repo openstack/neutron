@@ -98,14 +98,15 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         return new_bridge
 
     def _configure_ipaddress(self, fixed_ip):
+        subnet_id = fixed_ip['subnet_id']
+        subnet = self.safe_client.client.show_subnet(subnet_id)
         if (netaddr.IPAddress(fixed_ip['ip_address']).version ==
             constants.IP_VERSION_6):
             # v6Address/default_route is auto-configured.
             self._ipv6 = fixed_ip['ip_address']
+            self.gateway_ipv6 = subnet['subnet']['gateway_ip']
         else:
             self._ip = fixed_ip['ip_address']
-            subnet_id = fixed_ip['subnet_id']
-            subnet = self.safe_client.client.show_subnet(subnet_id)
             prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
             self._ip_cidr = '%s/%s' % (self._ip, prefixlen)
 

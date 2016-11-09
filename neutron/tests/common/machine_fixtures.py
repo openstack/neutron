@@ -100,10 +100,11 @@ class FakeMachineBase(fixtures.Fixture):
 
 class FakeMachine(FakeMachineBase):
 
-    def __init__(self, bridge, ip_cidr, gateway_ip=None):
+    def __init__(self, bridge, ip_cidr, gateway_ip=None, ipv6_cidr=None):
         super(FakeMachine, self).__init__()
         self.bridge = bridge
         self._ip_cidr = ip_cidr
+        self._ipv6_cidr = ipv6_cidr
         self.gateway_ip = gateway_ip
 
     def _setUp(self):
@@ -129,6 +130,21 @@ class FakeMachine(FakeMachineBase):
         self.port.addr.add(ip_cidr)
         self.port.addr.delete(self._ip_cidr)
         self._ip_cidr = ip_cidr
+
+    @property
+    def ipv6(self):
+        return self._ipv6_cidr.partition('/')[0]
+
+    @property
+    def ipv6_cidr(self):
+        return self._ipv6_cidr
+
+    @ipv6_cidr.setter
+    def ipv6_cidr(self, ipv6_cidr):
+        if self._ipv6_cidr:
+            self.port.addr.delete(self._ipv6_cidr)
+        self.port.addr.add(ipv6_cidr)
+        self._ipv6_cidr = ipv6_cidr
 
     @FakeMachineBase.mac_address.setter
     def mac_address(self, mac_address):
