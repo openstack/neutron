@@ -434,3 +434,36 @@ def dibbler_version_supported():
         LOG.debug("Exception while checking minimal dibbler version. "
                   "Exception: %s", e)
         return False
+
+
+def _fix_ip_nonlocal_bind_root_value(original_value):
+    current_value = ip_lib.get_ip_nonlocal_bind(namespace=None)
+    if current_value != original_value:
+        ip_lib.set_ip_nonlocal_bind(value=original_value, namespace=None)
+
+
+def ip_nonlocal_bind():
+    ipw = ip_lib.IPWrapper()
+    nsname1 = "ipnonlocalbind1-" + uuidutils.generate_uuid()
+    nsname2 = "ipnonlocalbind2-" + uuidutils.generate_uuid()
+
+    ipw.netns.add(nsname1)
+    try:
+        ipw.netns.add(nsname2)
+        try:
+            original_value = ip_lib.get_ip_nonlocal_bind(namespace=None)
+            try:
+                ip_lib.set_ip_nonlocal_bind(value=0, namespace=nsname1)
+                ip_lib.set_ip_nonlocal_bind(value=1, namespace=nsname2)
+                ns1_value = ip_lib.get_ip_nonlocal_bind(namespace=nsname1)
+            finally:
+                _fix_ip_nonlocal_bind_root_value(original_value)
+        except RuntimeError as e:
+            LOG.debug("Exception while checking ip_nonlocal_bind. "
+                      "Exception: %s", e)
+            return False
+        finally:
+            ipw.netns.delete(nsname2)
+    finally:
+        ipw.netns.delete(nsname1)
+    return ns1_value == 0

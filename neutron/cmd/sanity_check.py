@@ -263,6 +263,15 @@ def check_bridge_firewalling_enabled():
     return result
 
 
+def check_ip_nonlocal_bind():
+    result = checks.ip_nonlocal_bind()
+    if not result:
+        LOG.error(_LE('This kernel does not isolate ip_nonlocal_bind kernel '
+                      'option in namespaces. Please update to kernel '
+                      'version > 3.19.'))
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -308,7 +317,10 @@ OPTS = [
     BoolOptCallback('bridge_firewalling', check_bridge_firewalling_enabled,
                     help=_('Check bridge firewalling'),
                     default=False),
-
+    BoolOptCallback('ip_nonlocal_bind', check_ip_nonlocal_bind,
+                    help=_('Check ip_nonlocal_bind kernel option works with '
+                           'network namespaces.'),
+                    default=False),
 ]
 
 
@@ -346,6 +358,7 @@ def enable_tests_from_config():
         cfg.CONF.set_default('ovsdb_native', True)
     if cfg.CONF.l3_ha:
         cfg.CONF.set_default('keepalived_ipv6_support', True)
+        cfg.CONF.set_default('ip_nonlocal_bind', True)
     if cfg.CONF.SECURITYGROUP.enable_ipset:
         cfg.CONF.set_default('ipset_installed', True)
     if cfg.CONF.SECURITYGROUP.enable_security_group:
