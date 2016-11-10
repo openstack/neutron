@@ -1,0 +1,12 @@
+function configure_log_service_plugin {
+    neutron_service_plugin_class_add "log"
+}
+
+function configure_log_extension {
+    plugin_agent_add_l2_agent_extension "log"
+}
+
+function configure_log {
+    configure_log_service_plugin
+    configure_log_extension
+}
