@@ -16,7 +16,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import api as db_api
-from neutron.db import dns_db
+from neutron.db.models import dns as dns_models
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.db.port_security import models as ps_models
@@ -167,14 +167,13 @@ class Network(rbac_db.NeutronRbacObject):
         self.obj_reset_changes(['qos_policy_id'])
 
     def _set_dns_domain(self, dns_domain):
-        obj_db_api.delete_objects(
-            self.obj_context, dns_db.NetworkDNSDomain, network_id=self.id,
-        )
+        objs = NetworkDNSDomain.get_objects(self.obj_context,
+                                            network_id=self.id)
+        for obj in objs:
+            obj.delete()
         if dns_domain:
-            obj_db_api.create_object(
-                self.obj_context, dns_db.NetworkDNSDomain,
-                {'network_id': self.id, 'dns_domain': dns_domain}
-            )
+            NetworkDNSDomain(self.obj_context,
+                network_id=self.id, dns_domain=dns_domain).create()
         self.dns_domain = dns_domain
         self.obj_reset_changes(['dns_domain'])
 
@@ -234,3 +233,26 @@ class SegmentHostMapping(base.NeutronDbObject):
     }
 
     primary_keys = ['segment_id', 'host']
+
+
+@obj_base.VersionedObjectRegistry.register
+class NetworkDNSDomain(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = dns_models.NetworkDNSDomain
+
+    primary_keys = ['network_id']
+
+    fields = {
+        'network_id': obj_fields.UUIDField(),
+        'dns_domain': common_types.DomainNameField(),
+    }
+
+    @classmethod
+    def get_net_dns_from_port(cls, context, port_id):
+        net_dns = context.session.query(cls.db_model).join(
+            models_v2.Port, cls.db_model.network_id ==
+            models_v2.Port.network_id).filter_by(
+                id=port_id).one_or_none()
+        return super(NetworkDNSDomain, cls)._load_object(context, net_dns)

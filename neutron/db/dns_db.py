@@ -23,9 +23,11 @@ from neutron.common import _deprecate
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import dns as dns_models
-from neutron.db import models_v2
 from neutron.extensions import dns
 from neutron.extensions import l3
+from neutron.objects import floatingip as fip_obj
+from neutron.objects import network
+from neutron.objects import ports as port_obj
 from neutron.services.externaldns import driver
 
 LOG = logging.getLogger(__name__)
@@ -97,12 +99,12 @@ class DNSDbMixin(object):
                 context, floatingip_data, req_data))
         dns_actions_data = None
         if current_dns_name and current_dns_domain:
-            context.session.add(dns_models.FloatingIPDNS(
+            fip_obj.FloatingIPDNS(context,
                 floatingip_id=floatingip_data['id'],
                 dns_name=req_data[dns.DNSNAME],
                 dns_domain=req_data[dns.DNSDOMAIN],
                 published_dns_name=current_dns_name,
-                published_dns_domain=current_dns_domain))
+                published_dns_domain=current_dns_domain).create()
             dns_actions_data = DNSActionsData(
                 current_dns_name=current_dns_name,
                 current_dns_domain=current_dns_domain)
@@ -128,9 +130,8 @@ class DNSDbMixin(object):
             return
         if not self.dns_driver:
             return
-        dns_data_db = context.session.query(
-            dns_models.FloatingIPDNS).filter_by(
-                floatingip_id=floatingip_data['id']).one_or_none()
+        dns_data_db = fip_obj.FloatingIPDNS.get_object(
+            context, floatingip_id=floatingip_data['id'])
         if dns_data_db and dns_data_db['dns_name']:
             # dns_name and dns_domain assigned for floating ip. It doesn't
             # matter whether they are defined for internal port
@@ -150,17 +151,17 @@ class DNSDbMixin(object):
                     dns_actions_data.current_dns_name = current_dns_name
                     dns_actions_data.current_dns_domain = current_dns_domain
                 else:
-                    context.session.delete(dns_data_db)
+                    dns_data_db.delete()
                 return dns_actions_data
             else:
                 return
         if current_dns_name and current_dns_domain:
-            context.session.add(dns_models.FloatingIPDNS(
+            fip_obj.FloatingIPDNS(context,
                 floatingip_id=floatingip_data['id'],
                 dns_name='',
                 dns_domain='',
                 published_dns_name=current_dns_name,
-                published_dns_domain=current_dns_domain))
+                published_dns_domain=current_dns_domain).create()
             return DNSActionsData(current_dns_name=current_dns_name,
                                   current_dns_domain=current_dns_domain)
 
@@ -184,9 +185,8 @@ class DNSDbMixin(object):
         if not utils.is_extension_supported(self._core_plugin,
                                             dns.Dns.get_alias()):
             return
-        dns_data_db = context.session.query(
-            dns_models.FloatingIPDNS).filter_by(
-                floatingip_id=floatingip_data['id']).one_or_none()
+        dns_data_db = fip_obj.FloatingIPDNS.get_object(context,
+                floatingip_id=floatingip_data['id'])
         if dns_data_db:
             self._delete_floatingip_from_external_dns_service(
                 context, dns_data_db['published_dns_domain'],
@@ -202,15 +202,12 @@ class DNSDbMixin(object):
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
     def _get_internal_port_dns_data(self, context, floatingip_data):
-        port_dns = context.session.query(dns_models.PortDNS).filter_by(
-            port_id=floatingip_data['port_id']).one_or_none()
+        port_dns = port_obj.PortDNS.get_object(
+            context, port_id=floatingip_data['port_id'])
         if not (port_dns and port_dns['dns_name']):
             return None, None
-        net_dns = context.session.query(
-            dns_models.NetworkDNSDomain).join(
-                models_v2.Port, dns_models.NetworkDNSDomain.network_id ==
-                models_v2.Port.network_id).filter_by(
-                    id=floatingip_data['port_id']).one_or_none()
+        net_dns = network.NetworkDNSDomain.get_net_dns_from_port(
+            context=context, port_id=floatingip_data['port_id'])
         if not net_dns:
             return port_dns['dns_name'], None
         return port_dns['dns_name'], net_dns['dns_domain']

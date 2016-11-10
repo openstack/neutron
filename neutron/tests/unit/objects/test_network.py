@@ -173,3 +173,24 @@ class SegmentHostMappingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self._create_test_segment(network=self._network)
         for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
             obj['segment_id'] = self._segment['id']
+
+
+class NetworkDNSDomainIfaceObjectTestcase(
+        obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = network.NetworkDNSDomain
+
+
+class NetworkDNSDomainDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
+                                       testlib_api.SqlTestCase):
+
+    _test_class = network.NetworkDNSDomain
+
+    def setUp(self):
+        super(NetworkDNSDomainDbObjectTestcase, self).setUp()
+        for db_obj, obj_field, obj in zip(self.db_objs,
+                self.obj_fields, self.objs):
+            network = self._create_network()
+            db_obj['network_id'] = network['id']
+            obj_field['network_id'] = network['id']
+            obj['network_id'] = network['id']

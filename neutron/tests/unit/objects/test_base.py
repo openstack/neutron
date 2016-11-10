@@ -32,6 +32,7 @@ from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
+from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import l3 as l3_model
 from neutron.db.models import segment as segments_model
 from neutron import objects
@@ -1120,6 +1121,29 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                                    name=name)
         _network.create()
         return _network
+
+    def _create_external_network(self):
+        test_network = self._create_network()
+        # TODO(manjeets) replace this with ext_net ovo
+        # once it is implemented
+        return obj_db_api.create_object(
+            self.context,
+            ext_net_model.ExternalNetwork,
+            {'network_id': test_network['id']})
+
+    def _create_test_fip(self):
+        fake_fip = '172.23.3.0'
+        ext_net = self._create_external_network()
+        test_port = self._create_port(
+            network_id=ext_net['network_id'])
+        # TODO(manjeets) replace this with fip ovo
+        # once it is implemented
+        return obj_db_api.create_object(
+            self.context,
+            l3_model.FloatingIP,
+            {'floating_ip_address': fake_fip,
+             'floating_network_id': ext_net['network_id'],
+             'floating_port_id': test_port['id']})
 
     def _create_test_subnet(self, network):
         test_subnet = {
