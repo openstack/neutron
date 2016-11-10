@@ -1715,7 +1715,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             # check that the stored database model does not have non-empty
             # relationships
             dbattr = obj.fields_need_translation.get(field, field)
-            self.assertFalse(getattr(obj.db_obj, dbattr, None))
+            # Skipping empty relationships for the following reasons:
+            # 1) db_obj have the related object loaded - In this case we do not
+            #    have to create the related objects and the loop can continue.
+            # 2) when the related objects are not loaded - In this
+            #    case they need to be created because of the foreign key
+            #    relationships.  But we still need to check whether the
+            #    relationships are loaded or not. That is achieved by the
+            #    assertTrue statement after retrieving the dbattr in
+            #    this method.
+            if getattr(obj.db_obj, dbattr, None):
+                continue
 
             if isinstance(cls_.fields[field], obj_fields.ObjectField):
                 objclass_fields = self._get_non_synth_fields(objclass,

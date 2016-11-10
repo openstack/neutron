@@ -18,15 +18,13 @@ import collections
 from operator import itemgetter
 
 from neutron_lib import constants
+from neutron_lib.objects import exceptions
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import sql
 
 from neutron.agent.common import utils as agent_utils
-from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
-from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import network
 from neutron.scheduler import base_resource_filter
@@ -181,15 +179,10 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             # saving agent_id to use it after rollback to avoid
             # DetachedInstanceError
             agent_id = agent.id
-            binding = ndab_model.NetworkDhcpAgentBinding()
-            binding.dhcp_agent_id = agent_id
-            binding.network_id = network_id
             try:
-                with db_api.autonested_transaction(context.session):
-                    context.session.add(binding)
-                    # try to actually write the changes and catch integrity
-                    # DBDuplicateEntry
-            except db_exc.DBDuplicateEntry:
+                network.NetworkDhcpAgentBinding(context,
+                     dhcp_agent_id=agent_id, network_id=network_id).create()
+            except exceptions.NeutronDbObjectDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 bound_agents.remove(agent)
                 LOG.info('Agent %s already present', agent_id)
@@ -273,15 +266,14 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         az_hints = (network.get(az_ext.AZ_HINTS) or
                     cfg.CONF.default_availability_zones)
         active_dhcp_agents = self._get_active_agents(plugin, context, az_hints)
+        hosted_agent_ids = [agent['id'] for agent in hosted_agents]
         if not active_dhcp_agents:
             return {'n_agents': 0, 'hostable_agents': [],
                     'hosted_agents': hosted_agents}
         hostable_dhcp_agents = [
-            agent for agent in set(active_dhcp_agents)
-            if agent not in hosted_agents and plugin.is_eligible_agent(
-                context, True, agent)
-        ]
-
+            agent for agent in active_dhcp_agents
+            if agent.id not in hosted_agent_ids and plugin.is_eligible_agent(
+                context, True, agent)]
         hostable_dhcp_agents = self._filter_agents_with_network_access(
             plugin, context, network, hostable_dhcp_agents)
 

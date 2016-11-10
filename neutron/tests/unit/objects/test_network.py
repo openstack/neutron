@@ -20,6 +20,26 @@ from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
+class NetworkDhcpAgentBindingObjectIfaceTestCase(
+    obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = network.NetworkDhcpAgentBinding
+
+
+class NetworkDhcpAgentBindingDbObjectTestCase(
+    obj_test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase):
+
+    _test_class = network.NetworkDhcpAgentBinding
+
+    def setUp(self):
+        super(NetworkDhcpAgentBindingDbObjectTestCase, self).setUp()
+        self._network = self._create_test_network()
+
+        self.update_obj_fields(
+            {'network_id': self._network.id,
+             'dhcp_agent_id': lambda: self._create_test_agent_id()})
+
+
 class NetworkPortSecurityIfaceObjTestCase(
         obj_test_base.BaseObjectIfaceTestCase):
     _test_class = network.NetworkPortSecurity
