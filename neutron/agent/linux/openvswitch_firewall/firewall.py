@@ -186,18 +186,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._deferred = False
         self._drop_all_unmatched_flows()
 
-    def apply_port_filter(self, port):
-        """We never call this method
-
-        It exists here to override abstract method of parent abstract class.
-        """
-
     def security_group_updated(self, action_type, sec_group_ids,
                                device_ids=None):
-        """This method is obsolete
+        """The current driver doesn't make use of this method.
 
-        The current driver only supports enhanced rpc calls into security group
-        agent. This method is never called from that place.
+        It exists here to avoid NotImplementedError raised from the parent
+        class's method.
         """
 
     def _accept_flow(self, **flow):
