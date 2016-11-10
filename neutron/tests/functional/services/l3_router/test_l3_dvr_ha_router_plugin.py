@@ -17,6 +17,7 @@ from neutron_lib import constants
 
 from neutron.common import topics
 from neutron.extensions import external_net
+from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron.extensions import portbindings
 from neutron.tests.common import helpers
@@ -243,9 +244,10 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         with self.subnet() as subnet, \
                 self.network(**kwargs) as ext_net, \
                 self.subnet(network=ext_net, cidr='20.0.0.0/24'):
-            self.l3_plugin._update_router_gw_info(
+            gw_info = {'network_id': ext_net['network']['id']}
+            self.l3_plugin.update_router(
                 self.context, router['id'],
-                {'network_id': ext_net['network']['id']})
+                {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -273,9 +275,10 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             self.core_plugin.update_port(
                 self.context, port['port']['id'],
                 {'port': {'binding:host_id': self.l3_agent['host']}})
-            self.l3_plugin._update_router_gw_info(
+            gw_info = {'network_id': ext_net['network']['id']}
+            self.l3_plugin.update_router(
                 self.context, router['id'],
-                {'network_id': ext_net['network']['id']})
+                {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -318,13 +321,15 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         return ext_net
 
     def _set_external_gateway(self, router, ext_net):
-        self.l3_plugin._update_router_gw_info(
+        gw_info = {'network_id': ext_net['network']['id']}
+        self.l3_plugin.update_router(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
 
     def _clear_external_gateway(self, router):
-        self.l3_plugin._update_router_gw_info(
-            self.context, router['id'], {})
+        self.l3_plugin.update_router(
+            self.context, router['id'],
+            {'router': {l3.EXTERNAL_GW_INFO: {}}})
 
     def _remove_interface_from_router(self, router, subnet):
         self.l3_plugin.remove_router_interface(
