@@ -22,7 +22,7 @@ from neutron._i18n import _, _LE, _LI
 from neutron.agent.common import config
 from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager
-from neutron.common import constants as constants
+from neutron.common import constants
 from neutron.common import ipv6_utils
 from neutron.services.metering.drivers import abstract_driver
 
