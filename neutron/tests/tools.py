@@ -21,7 +21,6 @@ import string
 import time
 import warnings
 
-from debtcollector import moves
 import fixtures
 import mock
 import netaddr
@@ -33,7 +32,6 @@ import unittest2
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron.db import common_db_mixin
 
 
@@ -304,8 +302,3 @@ def reset_random_seed():
 
 def get_random_ipv6_mode():
     return random.choice(constants.IPV6_MODES)
-
-
-import_modules_recursively = moves.moved_function(
-    utils.import_modules_recursively, 'import_modules_recursively', __name__,
-    version='Newton', removal_version='Ocata')
