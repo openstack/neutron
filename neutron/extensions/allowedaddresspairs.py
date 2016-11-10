@@ -56,6 +56,9 @@ def _validate_allowed_address_pairs(address_pairs, valid_values=None):
             quota=cfg.CONF.max_allowed_address_pair)
 
     for address_pair in address_pairs:
+        msg = validators.validate_dict(address_pair)
+        if msg:
+            return msg
         # mac_address is optional, if not set we use the mac on the port
         if 'mac_address' in address_pair:
             msg = validators.validate_mac_address(address_pair['mac_address'])

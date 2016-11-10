@@ -100,7 +100,8 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
 
     def test_create_port_allowed_address_pairs_bad_format(self):
         with self.network() as net:
-            bad_values = [False, True, 1.1, 1]
+            bad_values = [False, True, 1.1, 1, ['ip_address'],
+                          ['mac_address']]
             for value in bad_values:
                 self._create_port(
                     self.fmt, net['network']['id'],
@@ -244,6 +245,19 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             self.assertEqual(res.status_int, ret_code)
             if ret_code == 201:
                 self._delete('ports', port['port']['id'])
+
+    def test_update_port_allowed_address_pairs_bad_format(self):
+        with self.network() as net:
+            res = self._create_port(self.fmt, net['network']['id'])
+            port = self.deserialize(self.fmt, res)
+            bad_values = [False, True, 1.1, 1, ['ip_address'],
+                          ['mac_address']]
+            for value in bad_values:
+                update_port = {'port': {addr_pair.ADDRESS_PAIRS: value}}
+                req = self.new_update_request('ports', update_port,
+                                              port['port']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(400, res.status_int)
 
     def test_update_add_address_pairs(self):
         with self.network() as net:
