@@ -25,7 +25,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _, _LE, _LW
 from neutron.agent.common import utils
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
@@ -38,6 +38,7 @@ OPTS = [
                 help=_('Force ip_lib calls to use the root helper')),
 ]
 
+IP_NONLOCAL_BIND = 'net.ipv4.ip_nonlocal_bind'
 
 LOOPBACK_DEVNAME = 'lo'
 GRE_TUNNEL_DEVICE_NAMES = ['gre0', 'gretap0']
@@ -1007,22 +1008,27 @@ def iproute_arg_supported(command, arg):
     return any(arg in line for line in stderr.split('\n'))
 
 
-def _arping(ns_name, iface_name, address, count):
+def _arping(ns_name, iface_name, address, count, log_exception):
     # Pass -w to set timeout to ensure exit if interface removed while running
     arping_cmd = ['arping', '-A', '-I', iface_name, '-c', count,
                   '-w', 1.5 * count, address]
     try:
         ip_wrapper = IPWrapper(namespace=ns_name)
         ip_wrapper.netns.execute(arping_cmd, check_exit_code=True)
-    except Exception:
-        msg = _LE("Failed sending gratuitous ARP "
-                  "to %(addr)s on %(iface)s in namespace %(ns)s")
-        LOG.exception(msg, {'addr': address,
+    except Exception as exc:
+        msg = _("Failed sending gratuitous ARP "
+                "to %(addr)s on %(iface)s in namespace %(ns)s: %(err)s")
+        logger_method = LOG.exception
+        if not log_exception:
+            logger_method = LOG.warning
+        logger_method(msg, {'addr': address,
                             'iface': iface_name,
-                            'ns': ns_name})
+                            'ns': ns_name,
+                            'err': exc})
 
 
-def send_ip_addr_adv_notif(ns_name, iface_name, address, count=3):
+def send_ip_addr_adv_notif(
+        ns_name, iface_name, address, count=3, log_exception=True):
     """Send advance notification of an IP address assignment.
 
     If the address is in the IPv4 family, send gratuitous ARP.
@@ -1037,9 +1043,12 @@ def send_ip_addr_adv_notif(ns_name, iface_name, address, count=3):
     :param iface_name: Name of interface which GARPs are gonna be sent from.
     :param address: Advertised IP address.
     :param count: (Optional) How many GARPs are gonna be sent. Default is 3.
+    :param log_exception: (Optional) True if possible failures should be logged
+                          on exception level. Otherwise they are logged on
+                          WARNING level. Default is True.
     """
     def arping():
-        _arping(ns_name, iface_name, address, count)
+        _arping(ns_name, iface_name, address, count, log_exception)
 
     if count > 0 and netaddr.IPAddress(address).version == 4:
         eventlet.spawn_n(arping)
@@ -1057,3 +1066,36 @@ def get_ip_version(ip_or_cidr):
 
 def get_ipv6_lladdr(mac_addr):
     return '%s/64' % netaddr.EUI(mac_addr).ipv6_link_local()
+
+
+def get_ip_nonlocal_bind(namespace=None):
+    """Get kernel option value of ip_nonlocal_bind in given namespace."""
+    cmd = ['sysctl', '-bn', IP_NONLOCAL_BIND]
+    ip_wrapper = IPWrapper(namespace)
+    return int(ip_wrapper.netns.execute(cmd, run_as_root=True))
+
+
+def set_ip_nonlocal_bind(value, namespace=None, log_fail_as_error=True):
+    """Set sysctl knob of ip_nonlocal_bind to given value."""
+    cmd = ['sysctl', '-w', '%s=%d' % (IP_NONLOCAL_BIND, value)]
+    ip_wrapper = IPWrapper(namespace)
+    ip_wrapper.netns.execute(
+        cmd, run_as_root=True, log_fail_as_error=log_fail_as_error)
+
+
+def set_ip_nonlocal_bind_for_namespace(namespace):
+    """Set ip_nonlocal_bind but don't raise exception on failure."""
+    try:
+        set_ip_nonlocal_bind(
+            value=0, namespace=namespace, log_fail_as_error=False)
+    except RuntimeError as rte:
+        LOG.warning(
+            _LW("Setting %(knob)s=0 in namespace %(ns)s failed: %(err)s. It "
+                "will not be set to 0 in the root namespace in order to not "
+                "break DVR, which requires this value be set to 1. This "
+                "may introduce a race between moving a floating IP to a "
+                "different network node, and the peer side getting a "
+                "populated ARP cache for a given floating IP address."),
+            {'knob': IP_NONLOCAL_BIND,
+             'ns': namespace,
+             'err': rte})
