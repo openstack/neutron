@@ -21,7 +21,7 @@ from neutron.db import db_base_plugin_v2
 
 from neutron.common import utils
 from neutron.extensions import allowedaddresspairs as addr_pair
-from neutron.objects import base as obj_base
+from neutron.objects import exceptions
 from neutron.objects.port.extensions import (allowedaddresspairs
     as obj_addr_pair)
 
@@ -50,7 +50,7 @@ class AllowedAddressPairsMixin(object):
                         mac_address=mac_address,
                         ip_address=ip_address)
                     pair_obj.create()
-        except obj_base.NeutronDbObjectDuplicateEntry:
+        except exceptions.NeutronDbObjectDuplicateEntry:
             raise addr_pair.DuplicateAddressPairInRequest(
                 mac_address=address_pair['mac_address'],
                 ip_address=address_pair['ip_address'])
