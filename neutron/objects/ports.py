@@ -182,6 +182,27 @@ class IPAllocation(base.NeutronDbObject):
             fields['ip_address'] = netaddr.IPAddress(fields['ip_address'])
         return fields
 
+    @classmethod
+    def get_alloc_by_subnet_id(cls, context, subnet_id, device_owner,
+                               exclude=True):
+        # need to join with ports table as IPAllocation's port
+        # is not joined eagerly and thus producing query which yields
+        # incorrect results
+        if exclude:
+            alloc_db = (context.session.query(models_v2.IPAllocation).
+                       filter_by(subnet_id=subnet_id).join(models_v2.Port).
+                       filter(~models_v2.Port.device_owner.
+                       in_(device_owner)).first())
+        else:
+            alloc_db = (context.session.query(models_v2.IPAllocation).
+                       filter_by(subnet_id=subnet_id).join(models_v2.Port).
+                       filter(models_v2.Port.device_owner.
+                       in_(device_owner)).first())
+        if exclude and alloc_db:
+            return super(IPAllocation, cls)._load_object(context, alloc_db)
+        if alloc_db:
+            return True
+
 
 @obj_base.VersionedObjectRegistry.register
 class PortDNS(base.NeutronDbObject):

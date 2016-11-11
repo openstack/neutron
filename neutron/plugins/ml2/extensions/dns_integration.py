@@ -22,7 +22,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _LE, _LI
-from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import dns
 from neutron.objects import network as net_obj
@@ -431,8 +430,8 @@ def _delete_port_in_external_dns_service(resource, event, trigger, **kwargs):
     if not dns_data_db:
         return
     if dns_data_db['current_dns_name']:
-        ip_allocations = context.session.query(
-            models_v2.IPAllocation).filter_by(port_id=port_id).all()
+        ip_allocations = port_obj.IPAllocation.get_objects(context,
+                                                           port_id=port_id)
         records = [alloc['ip_address'] for alloc in ip_allocations]
         _remove_data_from_external_dns_service(
             context, dns_driver, dns_data_db['current_dns_domain'],

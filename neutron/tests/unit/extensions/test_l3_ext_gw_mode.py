@@ -31,7 +31,6 @@ from neutron.db import api as db_api
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
-from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
 from neutron.objects import network as net_obj
@@ -200,7 +199,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             status=constants.PORT_STATUS_ACTIVE,
             mac_address=netaddr.EUI(FAKE_ROUTER_PORT_MAC),
             network_id=self.int_net_id)
-        self.router_port_ip_info = models_v2.IPAllocation(
+        self.router_port_ip_info = port_obj.IPAllocation(self.context,
             port_id=self.router_port.id,
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
@@ -208,7 +207,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.int_net.create()
         self.int_sub.create()
         self.router_port.create()
-        self.context.session.add(self.router_port_ip_info)
+        self.router_port_ip_info.create()
         self.context.session.flush()
         self.fip_int_port = port_obj.Port(
             self.context,
@@ -220,7 +219,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             status=constants.PORT_STATUS_ACTIVE,
             mac_address=netaddr.EUI(FAKE_FIP_INT_PORT_MAC),
             network_id=self.int_net_id)
-        self.fip_int_ip_info = models_v2.IPAllocation(
+        self.fip_int_ip_info = port_obj.IPAllocation(self.context,
             port_id=self.fip_int_port.id,
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
@@ -234,7 +233,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             fixed_ip_address=None,
             router_id=None)
         self.fip_int_port.create()
-        self.context.session.add(self.fip_int_ip_info)
+        self.fip_int_ip_info.create()
         self.context.session.add(self.fip)
         self.context.session.flush()
         self.context.session.expire_all()
