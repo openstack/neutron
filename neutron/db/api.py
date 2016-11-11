@@ -16,7 +16,6 @@
 import contextlib
 import copy
 
-from debtcollector import removals
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
@@ -187,11 +186,6 @@ def exc_to_retry(etypes):
             if _is_nested_instance(e, etypes):
                 ctx.reraise = False
                 raise db_exc.RetryRequest(e)
-
-
-@removals.remove(version='newton', removal_version='Ocata')
-def dispose():
-    context_manager.dispose_pool()
 
 
 #TODO(akamyshnikova): when all places in the code, which use sessions/
