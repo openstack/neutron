@@ -12,6 +12,53 @@ Neutron follows the `code review guidelines <https://wiki.openstack.org/wiki/Rev
 set forth for all OpenStack projects. It is expected that all reviewers are following the guidelines
 set forth on that page.
 
+In addition to that, the following rules are to follow:
+
+* Any change that requires a new feature from Neutron runtime dependencies
+  requires special review scrutiny to make sure such a change does not break
+  a supported platform (examples of those platforms are latest Ubuntu LTS or
+  CentOS). Runtime dependencies include but are not limited to: kernel, daemons
+  and tools as defined in ``oslo.rootwrap`` filter files, runlevel management
+  systems, as well as other elements of Neutron execution environment.
+
+  .. note::
+
+     For some components, the list of supported platforms can be wider than
+     usual. For example, Open vSwitch agent is expected to run successfully in
+     Win32 runtime environment.
+
+  #. All such changes must be tagged with ``UpgradeImpact`` in their commit
+     messages.
+
+  #. Reviewers are then advised to make an effort to check if the newly
+     proposed runtime dependency is fulfilled on supported platforms.
+
+  #. Specifically, reviewers and authors are advised to use existing gate and
+     experimental platform specific jobs to validate those patches. To trigger
+     experimental jobs, use the usual protocol (posting ``check experimental``
+     comment in Gerrit). CI will then execute and report back a baseline of
+     Neutron tests for platforms of interest and will provide feedback on the
+     effect of the runtime change required.
+
+  #. If review identifies that the proposed change would break a supported
+     platform, advise to rework the patch so that it's no longer breaking the
+     platform. One of the common ways of achieving that is gracefully falling
+     back to alternative means on older platforms, another is hiding the new
+     code behind a conditional, potentially controlled with a ``oslo.config``
+     option.
+
+     .. note::
+
+        Neutron team retains the right to remove any platform conditionals in
+        future releases. Platform owners are expected to accommodate in due
+        course, or otherwise see their platforms broken. The team also retains
+        the right to discontinue support for unresponsive platforms.
+
+  #. The change should also include a new `sanity check
+     <https://git.openstack.org/cgit/openstack/neutron/tree/neutron/cmd/sanity/checks.py>`_
+     that would help interested parties to identify their platform limitation
+     in timely manner.
+
 Neutron Spec Review Practices
 -----------------------------
 In addition to code reviews, Neutron also maintains a BP specification git repository. Detailed

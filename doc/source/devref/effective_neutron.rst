@@ -207,6 +207,13 @@ System development
 Document common pitfalls as well as good practices done when invoking system commands
 and interacting with linux utils.
 
+* When a patch requires a new platform tool or a new feature in an existing
+  tool, check if common platforms ship packages with the aforementioned
+  feature. Also, tag such a patch with ``UpgradeImpact`` to raise its
+  visibility (as these patches are brought up to the attention of the core team
+  during team meetings). More details in `review guidelines
+  <http://docs.openstack.org/developer/neutron/policies/code-reviews.html#neutron-spec-review-practices>`_.
+
 Eventlet concurrent model
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
