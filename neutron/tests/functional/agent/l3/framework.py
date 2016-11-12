@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import functools
 
 import mock
@@ -46,6 +47,8 @@ def get_ovs_bridge(br_name):
 
 
 class L3AgentTestFramework(base.BaseSudoTestCase):
+    INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
+
     def setUp(self):
         super(L3AgentTestFramework, self).setUp()
         self.mock_plugin_api = mock.patch(
@@ -66,9 +69,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _configure_agent(self, host, agent_mode='dvr_snat'):
         conf = self._get_config_opts()
         l3_agent_main.register_opts(conf)
-        conf.set_override(
-            'interface_driver',
-            'neutron.agent.linux.interface.OVSInterfaceDriver')
+        conf.set_override('interface_driver', self.INTERFACE_DRIVER)
 
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         br_ex = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
@@ -220,11 +221,12 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.assertEqual('2', ra_state)
 
     def _router_lifecycle(self, enable_ha, ip_version=4,
-                          dual_stack=False, v6_ext_gw_with_sub=True):
-        router_info = self.generate_router_info(enable_ha, ip_version,
-                                                dual_stack=dual_stack,
-                                                v6_ext_gw_with_sub=(
-                                                    v6_ext_gw_with_sub))
+                          dual_stack=False, v6_ext_gw_with_sub=True,
+                          router_info=None):
+        router_info = router_info or self.generate_router_info(
+            enable_ha, ip_version, dual_stack=dual_stack,
+            v6_ext_gw_with_sub=(v6_ext_gw_with_sub))
+        return_copy = copy.deepcopy(router_info)
         router = self.manage_router(self.agent, router_info)
 
         # Add multiple-IPv6-prefix internal router port
@@ -292,6 +294,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self._assert_router_does_not_exist(router)
         if enable_ha:
             self.assertFalse(router.keepalived_manager.get_process().active)
+        return return_copy
 
     def manage_router(self, agent, router):
         self.addCleanup(agent._safe_router_removed, router['id'])
