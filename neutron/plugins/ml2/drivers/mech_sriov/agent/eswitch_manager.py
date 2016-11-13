@@ -347,6 +347,8 @@ class ESwitchManager(object):
             embedded_switch.set_device_spoofcheck(pci_slot,
                                                   enabled)
 
+    # Note(edan): discover_devices method will be removed
+    # with 'physical_device_mappings'
     def discover_devices(self, device_mappings, exclude_devices):
         """Discover which Virtual functions to manage.
 
@@ -361,6 +363,8 @@ class ESwitchManager(object):
                 self._create_emb_switch(phys_net, dev_name,
                                         exclude_devices.get(dev_name, set()))
 
+    # Note(edan): phys_net param will be removed with
+    # 'physical_device_mappings' config option.
     def _create_emb_switch(self, phys_net, dev_name, exclude_devices):
         embedded_switch = EmbSwitch(phys_net, dev_name, exclude_devices)
         self.emb_switches_map.setdefault(phys_net, []).append(embedded_switch)
