@@ -16,12 +16,12 @@
 import os
 import re
 
+from neutron_lib.utils import helpers
 from oslo_log import log as logging
 import six
 
 from neutron._i18n import _, _LE, _LW
 from neutron.agent.linux import ip_link_support
-from neutron.common import utils
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
@@ -183,7 +183,7 @@ class EmbSwitch(object):
         if rate_kbps > 0 and rate_kbps < 1000:
             rate_mbps = 1
         else:
-            rate_mbps = utils.round_val(rate_kbps / 1000.0)
+            rate_mbps = helpers.round_val(rate_kbps / 1000.0)
 
         log_dict = {
             'rate_mbps': rate_mbps,

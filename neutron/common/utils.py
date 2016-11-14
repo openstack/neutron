@@ -18,7 +18,6 @@
 
 """Utilities and helper functions."""
 
-import decimal
 import functools
 import importlib
 import os
@@ -167,11 +166,10 @@ def get_random_mac(base_mac):
     return ':'.join(["%02x" % x for x in mac])
 
 
+@removals.remove(
+    message="Use get_random_string from neutron_lib.utils.helpers")
 def get_random_string(length):
-    """Get a random hex string of the specified length.
-    """
-
-    return "{0:0{1}x}".format(random.getrandbits(length * 4), length)
+    return helpers.get_random_string(length)
 
 
 def get_dhcp_agent_device_id(network_id, host):
@@ -329,15 +327,16 @@ class DelayedStringRenderer(object):
         return str(self.function(*self.args, **self.kwargs))
 
 
+@removals.remove(
+    message="Use camelize from neutron_lib.utils.helpers")
 def camelize(s):
-    return ''.join(s.replace('_', ' ').title().split())
+    return helpers.camelize(s)
 
 
+@removals.remove(
+    message="Use round_val from neutron_lib.utils.helpers")
 def round_val(val):
-    # we rely on decimal module since it behaves consistently across Python
-    # versions (2.x vs. 3.x)
-    return int(decimal.Decimal(val).quantize(decimal.Decimal('1'),
-                                             rounding=decimal.ROUND_HALF_UP))
+    return helpers.round_val(val)
 
 
 @removals.remove(
@@ -375,10 +374,10 @@ def load_class_by_alias_or_classname(namespace, name):
     return class_to_load
 
 
+@removals.remove(
+    message="Use safe_decode_utf8 from neutron_lib.utils.helpers")
 def safe_decode_utf8(s):
-    if six.PY3 and isinstance(s, bytes):
-        return s.decode('utf-8', 'surrogateescape')
-    return s
+    return helpers.safe_decode_utf8(s)
 
 
 def _hex_format(port, mask=0):
@@ -857,7 +856,7 @@ def get_related_rand_names(prefixes, max_length=None):
                 _("'max_length' must be longer than all prefixes"))
     else:
         length = 8
-    rndchrs = get_random_string(length)
+    rndchrs = helpers.get_random_string(length)
     return [p + rndchrs for p in prefixes]
 
 

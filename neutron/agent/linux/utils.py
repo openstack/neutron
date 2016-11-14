@@ -28,6 +28,7 @@ import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
 from neutron_lib import constants
+from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_rootwrap import client
@@ -126,8 +127,8 @@ def execute(cmd, process_input=None, addl_env=None,
             _stdout, _stderr = obj.communicate(_process_input)
             returncode = obj.returncode
             obj.stdin.close()
-        _stdout = utils.safe_decode_utf8(_stdout)
-        _stderr = utils.safe_decode_utf8(_stderr)
+        _stdout = helpers.safe_decode_utf8(_stdout)
+        _stderr = helpers.safe_decode_utf8(_stderr)
 
         extra_ok_codes = extra_ok_codes or []
         if returncode and returncode not in extra_ok_codes:

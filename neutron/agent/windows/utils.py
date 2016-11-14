@@ -17,6 +17,7 @@ import os
 
 from eventlet.green import subprocess
 from eventlet import greenthread
+from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 
@@ -57,8 +58,8 @@ def execute(cmd, process_input=None, addl_env=None,
         obj, cmd = create_process(cmd, addl_env=addl_env)
         _stdout, _stderr = obj.communicate(_process_input)
         obj.stdin.close()
-        _stdout = utils.safe_decode_utf8(_stdout)
-        _stderr = utils.safe_decode_utf8(_stderr)
+        _stdout = helpers.safe_decode_utf8(_stdout)
+        _stderr = helpers.safe_decode_utf8(_stderr)
 
         m = _("\nCommand: %(cmd)s\nExit code: %(code)s\nStdin: %(stdin)s\n"
               "Stdout: %(stdout)s\nStderr: %(stderr)s") % \
