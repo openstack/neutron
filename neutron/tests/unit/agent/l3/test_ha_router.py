@@ -16,6 +16,7 @@ import mock
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
+from neutron.agent.l3 import router_info
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
@@ -72,3 +73,14 @@ class TestBasicRouterOperations(base.BaseTestCase):
         subnets[1]['gateway_ip'] = None
         ri._add_default_gw_virtual_route(ex_gw_port, 'qg-abc')
         self.assertEqual(0, len(mock_instance.virtual_routes.gateway_routes))
+
+    @mock.patch.object(router_info.RouterInfo, 'remove_floating_ip')
+    def test_remove_floating_ip(self, super_remove_floating_ip):
+        ri = self._create_router(mock.MagicMock())
+        mock_instance = mock.Mock()
+        ri._get_keepalived_instance = mock.Mock(return_value=mock_instance)
+        device = mock.Mock()
+        fip_cidr = '15.1.2.3/32'
+
+        ri.remove_floating_ip(device, fip_cidr)
+        self.assertTrue(super_remove_floating_ip.called)
