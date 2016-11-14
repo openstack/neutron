@@ -24,7 +24,7 @@ from neutron._i18n import _
 
 interface_map = {
     'vsctl': 'neutron.agent.ovsdb.impl_vsctl.OvsdbVsctl',
-    'native': 'neutron.agent.ovsdb.impl_idl.OvsdbIdl',
+    'native': 'neutron.agent.ovsdb.impl_idl.NeutronOvsdbIdl',
 }
 
 OPTS = [

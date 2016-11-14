@@ -26,6 +26,7 @@ from neutron.agent.ovsdb import api
 from neutron.agent.ovsdb.native import commands as cmd
 from neutron.agent.ovsdb.native import connection
 from neutron.agent.ovsdb.native import idlutils
+from neutron.agent.ovsdb.native import vlog
 
 
 cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
@@ -282,3 +283,9 @@ class OvsdbIdl(api.API):
 
     def list_ifaces(self, bridge):
         return cmd.ListIfacesCommand(self, bridge)
+
+
+class NeutronOvsdbIdl(OvsdbIdl):
+    def __init__(self, context):
+        vlog.use_oslo_logger()
+        super(NeutronOvsdbIdl, self).__init__(context)
