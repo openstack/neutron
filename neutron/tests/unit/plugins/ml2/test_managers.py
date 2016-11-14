@@ -19,7 +19,7 @@ import mock
 from oslo_db import exception as db_exc
 
 from neutron.plugins.ml2.common import exceptions as ml2_exc
-from neutron.plugins.ml2 import config as config
+from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import managers
 from neutron.tests import base
