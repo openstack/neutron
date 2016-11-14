@@ -741,6 +741,17 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         The change however will not be realized until the client renew the
         dns lease or we support gratuitous DHCP offers
         """
+        orig = self.get_subnet(context, id)
+        result = self._update_subnet_precommit(context, id, subnet)
+        return self._update_subnet_postcommit(context, orig, result)
+
+    def _update_subnet_precommit(self, context, id, subnet):
+        """All subnet update operations safe to enclose in a transaction.
+
+        :param context: neutron api request context
+        :param id: subnet id
+        :param subnet: API request dictionary
+        """
         s = subnet['subnet']
         new_cidr = s.get('cidr')
         db_subnet = self._get_subnet(context, id)
@@ -756,12 +767,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         db_pools = [netaddr.IPRange(p['first_ip'], p['last_ip'])
                     for p in db_subnet.allocation_pools]
 
-        update_ports_needed = False
         if new_cidr and ipv6_utils.is_ipv6_pd_enabled(s):
             # This is an ipv6 prefix delegation-enabled subnet being given an
             # updated cidr by the process_prefix_update RPC
             s['cidr'] = new_cidr
-            update_ports_needed = True
             net = netaddr.IPNetwork(s['cidr'], s['ip_version'])
             # Update gateway_ip and allocation pools based on new cidr
             s['gateway_ip'] = utils.get_first_host_ip(net, s['ip_version'])
@@ -797,21 +806,30 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # that will be stale on any subsequent lookups while the subnet object
         # is in the session otherwise.
         context.session.expire(subnet)
-        result = self._make_subnet_dict(subnet, context=context)
+        return self._make_subnet_dict(subnet, context=context)
 
+    def _update_subnet_postcommit(self, context, orig, result):
+        """Subnet update operations that happen after transaction completes.
+
+        :param context: neutron api request context
+        :param orig: subnet dictionary representing state before update
+        :param result: subnet dictionary representing state after update
+        """
+        update_ports_needed = (result['cidr'] != orig['cidr'] and
+                               ipv6_utils.is_ipv6_pd_enabled(result))
         if update_ports_needed:
             # Find ports that have not yet been updated
             # with an IP address by Prefix Delegation, and update them
-            filters = {'fixed_ips': {'subnet_id': [s['id']]}}
+            filters = {'fixed_ips': {'subnet_id': [result['id']]}}
             ports = self.get_ports(context, filters=filters)
             routers = []
             for port in ports:
                 for ip in port['fixed_ips']:
-                    if ip['subnet_id'] == s['id']:
+                    if ip['subnet_id'] == result['id']:
                         if (port['device_owner'] in
                             constants.ROUTER_INTERFACE_OWNERS):
                             routers.append(port['device_id'])
-                            ip['ip_address'] = s['gateway_ip']
+                            ip['ip_address'] = result['gateway_ip']
                         else:
                             # We remove ip_address and pass only PD subnet_id
                             # in port's fixed_ip for port_update. Later, IPAM
@@ -819,18 +837,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             # prefix when they find PD subnet_id in port's
                             # fixed_ip.
                             ip.pop('ip_address', None)
-                # FIXME(kevinbenton): this should not be calling update_port
-                # inside of a transaction.
-                setattr(context, 'GUARD_TRANSACTION', False)
                 self.update_port(context, port['id'], {'port': port})
             # Send router_update to l3_agent
             if routers:
                 l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
                 l3_rpc_notifier.routers_updated(context, routers)
 
-        if gateway_ip_changed:
-            kwargs = {'context': context, 'subnet_id': id,
-                      'network_id': db_subnet.network_id}
+        if orig['gateway_ip'] != result['gateway_ip']:
+            kwargs = {'context': context, 'subnet_id': result['id'],
+                      'network_id': result['network_id']}
             registry.notify(resources.SUBNET_GATEWAY, events.AFTER_UPDATE,
                             self, **kwargs)
 
