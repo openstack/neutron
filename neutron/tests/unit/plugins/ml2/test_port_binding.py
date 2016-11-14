@@ -19,7 +19,7 @@ from neutron_lib import constants as const
 from neutron import context
 from neutron.extensions import portbindings
 from neutron import manager
-from neutron.plugins.ml2 import config as config
+from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import models as ml2_models
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
