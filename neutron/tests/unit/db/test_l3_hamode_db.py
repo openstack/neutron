@@ -1097,6 +1097,39 @@ class L3HAModeDbTestCase(L3HATestFramework):
         port = self._get_first_interface(router['id'])
         self.assertEqual(self.agent1['host'], port[portbindings.HOST_ID])
 
+    def test_is_ha_router_port(self):
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+
+        router = self._create_router()
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+        port = self._get_first_interface(router['id'])
+        self.assertTrue(l3_hamode_db.is_ha_router_port(
+            port['device_owner'], port['device_id']))
+
+    def test_is_ha_router_port_for_normal_port(self):
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+
+        router = self._create_router(ha=False)
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+        device_filter = {'device_id': [router['id']],
+                         'device_owner':
+                         [constants.DEVICE_OWNER_ROUTER_INTF]}
+        port = self.core_plugin.get_ports(
+            self.admin_ctx, filters=device_filter)[0]
+
+        self.assertFalse(l3_hamode_db.is_ha_router_port(
+            port['device_owner'], port['device_id']))
+
 
 class L3HAUserTestCase(L3HATestFramework):
 
