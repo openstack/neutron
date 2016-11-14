@@ -18,6 +18,7 @@ from itertools import chain
 from oslo_log import log as logging
 
 from neutron.common import _deprecate
+from neutron.db import api as db_api
 from neutron.db.models import servicetype as st_model
 from neutron.services import provider_configuration as pconf
 
@@ -86,7 +87,7 @@ class ServiceTypeManager(object):
             raise pconf.ServiceProviderNotFound(provider=provider_name,
                                                 service_type=service_type)
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             # we don't actually need service type for association.
             # resource_id is unique and belongs to specific service
             # which knows its type
@@ -105,7 +106,7 @@ class ServiceTypeManager(object):
     def del_resource_associations(self, context, resource_ids):
         if not resource_ids:
             return
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             (context.session.query(st_model.ProviderResourceAssociation).
              filter(
                  st_model.ProviderResourceAssociation.resource_id.in_(
