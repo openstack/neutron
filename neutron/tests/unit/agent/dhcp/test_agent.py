@@ -1257,6 +1257,30 @@ class TestNetworkCache(base.BaseTestCase):
         self.assertEqual(set([fake_port1['id'], fake_port2['id']]),
                          set(nc.get_port_ids()))
 
+    def test_get_port_ids_limited_nets(self):
+        fake_net = dhcp.NetModel(
+            dict(id='12345678-1234-5678-1234567890ab',
+                 tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                 subnets=[fake_subnet1],
+                 ports=[fake_port1]))
+        fake_port2 = copy.deepcopy(fake_port1)
+        fake_port2['id'] = 'fp2'
+        fake_port2['network_id'] = '12345678-1234-5678-1234567890ac'
+        fake_net2 = dhcp.NetModel(
+            dict(id='12345678-1234-5678-1234567890ac',
+                 tenant_id='aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                 subnets=[fake_subnet1],
+                 ports=[fake_port2]))
+        nc = dhcp_agent.NetworkCache()
+        nc.put(fake_net)
+        nc.put(fake_net2)
+        self.assertEqual(set([fake_port1['id']]),
+                         set(nc.get_port_ids([fake_net.id, 'net2'])))
+        self.assertEqual(set(),
+                         set(nc.get_port_ids(['net2'])))
+        self.assertEqual(set([fake_port2['id']]),
+                         set(nc.get_port_ids([fake_port2.network_id, 'net2'])))
+
     def test_put_port(self):
         fake_net = dhcp.NetModel(
             dict(id='12345678-1234-5678-1234567890ab',
