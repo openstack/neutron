@@ -86,8 +86,8 @@ class AgentStatusCheckWorker(neutron_worker.NeutronWorker):
         super(AgentStatusCheckWorker, self).start()
         if self._loop is None:
             self._loop = loopingcall.FixedIntervalLoopingCall(self._check_func)
-            self._loop.start(interval=self._interval,
-                             initial_delay=self._initial_delay)
+        self._loop.start(interval=self._interval,
+                         initial_delay=self._initial_delay)
 
     def wait(self):
         if self._loop is not None:
@@ -98,10 +98,9 @@ class AgentStatusCheckWorker(neutron_worker.NeutronWorker):
             self._loop.stop()
 
     def reset(self):
-        if self._loop is not None:
-            self.stop()
-            self.wait()
-            self.start()
+        self.stop()
+        self.wait()
+        self.start()
 
 
 class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
