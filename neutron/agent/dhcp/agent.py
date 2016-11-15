@@ -319,6 +319,9 @@ class DhcpAgent(manager.Manager):
             self.cache.put(network)
         elif self.call_driver('restart', network):
             self.cache.put(network)
+        # mark all ports as active in case the sync included
+        # new ports that we hadn't seen yet.
+        self.dhcp_ready_ports |= {p.id for p in network.ports}
 
         # Update the metadata proxy after the dhcp driver has been updated
         self.update_isolated_metadata_proxy(network)
