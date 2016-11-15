@@ -1320,6 +1320,7 @@ class TestGetRoutingTable(base.BaseTestCase):
         ip_route_output = ("""
 default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
 10.0.0.0/8 dev tun0  proto static  scope link  metric 1024
+10.0.1.0/8 dev tun1  proto static  scope link  metric 1024 linkdown
 """)
         expected = [{'destination': 'default',
                      'nexthop': '192.168.3.120',
@@ -1328,17 +1329,26 @@ default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
                     {'destination': '10.0.0.0/8',
                      'nexthop': None,
                      'device': 'tun0',
+                     'scope': 'link'},
+                    {'destination': '10.0.1.0/8',
+                     'nexthop': None,
+                     'device': 'tun1',
                      'scope': 'link'}]
         self._test_get_routing_table(4, ip_route_output, expected)
 
     def test_get_routing_table_6(self):
         ip_route_output = ("""
 2001:db8:0:f101::/64 dev tap-1  proto kernel  metric 256  pref medium
+2001:db8:0:f102::/64 dev tap-2  proto kernel  metric 256  pref medium linkdown
 default via 2001:db8:0:f101::4 dev tap-1  metric 1024  pref medium
 """)
         expected = [{'destination': '2001:db8:0:f101::/64',
                      'nexthop': None,
                      'device': 'tap-1',
+                     'scope': None},
+                    {'destination': '2001:db8:0:f102::/64',
+                     'nexthop': None,
+                     'device': 'tap-2',
                      'scope': None},
                     {'destination': 'default',
                      'nexthop': '2001:db8:0:f101::4',

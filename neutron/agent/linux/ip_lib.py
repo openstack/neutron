@@ -961,6 +961,41 @@ def get_device_mac(device_name, namespace=None):
     return IPDevice(device_name, namespace=namespace).link.address
 
 
+_IP_ROUTE_PARSE_KEYS = {
+    'via': 'nexthop',
+    'dev': 'device',
+    'scope': 'scope'
+}
+
+
+def _parse_ip_route_line(line):
+    """Parse a line output from ip route.
+    Example for output from 'ip route':
+    default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
+    10.0.0.0/8 dev tun0  proto static  scope link  metric 1024
+    10.0.1.0/8 dev tun1  proto static  scope link  metric 1024 linkdown
+    The first column is the destination, followed by key/value pairs and flags.
+    @param line A line output from ip route
+    @return: a dictionary representing a route.
+    """
+    line = line.split()
+    result = {
+        'destination': line[0],
+        'nexthop': None,
+        'device': None,
+        'scope': None
+    }
+    idx = 1
+    while idx < len(line):
+        field = _IP_ROUTE_PARSE_KEYS.get(line[idx])
+        if not field:
+            idx = idx + 1
+        else:
+            result[field] = line[idx + 1]
+            idx = idx + 2
+    return result
+
+
 def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
 
@@ -978,24 +1013,8 @@ def get_routing_table(ip_version, namespace=None):
         ['ip', '-%s' % ip_version, 'route'],
         check_exit_code=True)
 
-    routes = []
-    # Example for route_lines:
-    # default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
-    # 10.0.0.0/8 dev tun0  proto static  scope link  metric 1024
-    # The first column is the destination, followed by key/value pairs.
-    # The generator splits the routing table by newline, then strips and splits
-    # each individual line.
-    route_lines = (line.split() for line in table.split('\n') if line.strip())
-    for route in route_lines:
-        network = route[0]
-        # Create a dict of key/value pairs (For example - 'dev': 'tun0')
-        # excluding the first column.
-        data = dict(route[i:i + 2] for i in range(1, len(route), 2))
-        routes.append({'destination': network,
-                       'nexthop': data.get('via'),
-                       'device': data.get('dev'),
-                       'scope': data.get('scope')})
-    return routes
+    return [_parse_ip_route_line(line)
+            for line in table.split('\n') if line.strip()]
 
 
 def ensure_device_is_ready(device_name, namespace=None):
