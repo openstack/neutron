@@ -20,6 +20,7 @@ import mock
 import netaddr
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
+from oslo_db.sqlalchemy import utils as db_utils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
@@ -31,7 +32,6 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
-from neutron.db import model_base
 from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import l3 as l3_model
 from neutron import objects
@@ -624,7 +624,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     self.assertTrue(self._is_test_class(obj))
                     self._check_equal(self.objs[0], obj)
                     get_object_mock.assert_called_once_with(
-                        self.context, self._test_class.db_model,
+                        mock.ANY, self._test_class.db_model,
                         **self._test_class.modify_fields_to_db(obj_keys))
 
     def _get_synthetic_fields_get_objects_calls(self, db_objs):
@@ -982,7 +982,7 @@ class BaseDbObjectUniqueKeysTestCase(BaseObjectIfaceTestCase):
 class UniqueKeysTestCase(test_base.BaseTestCase):
 
     def test_class_creation(self):
-        m_get_unique_keys = mock.patch.object(model_base, 'get_unique_keys')
+        m_get_unique_keys = mock.patch.object(db_utils, 'get_unique_keys')
         with m_get_unique_keys as get_unique_keys:
             get_unique_keys.return_value = [['field1'],
                                             ['field2', 'db_field3']]
