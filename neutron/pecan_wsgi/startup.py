@@ -44,15 +44,14 @@ def initialize_all():
                                                         plugin=plugin)
         manager.NeutronManager.set_controller_for_resource(
             collection, new_controller)
-        manager.NeutronManager.set_plugin_for_resource(resource, plugin)
+        manager.NeutronManager.set_plugin_for_resource(collection, plugin)
 
     pecanized_resources = ext_mgr.get_pecan_resources()
     for pec_res in pecanized_resources:
-        resource = attributes.PLURALS[pec_res.collection]
         manager.NeutronManager.set_controller_for_resource(
             pec_res.collection, pec_res.controller)
         manager.NeutronManager.set_plugin_for_resource(
-            resource, pec_res.plugin)
+            pec_res.collection, pec_res.plugin)
 
     # Now build Pecan Controllers and routes for all extensions
     resources = ext_mgr.get_resources()
@@ -84,10 +83,16 @@ def initialize_all():
             plugin = legacy_controller.plugin
             attr_info = legacy_controller.attr_info
             member_actions = legacy_controller.member_actions
+            pagination = legacy_controller.allow_pagination
+            sorting = legacy_controller.allow_sorting
             new_controller = res_ctrl.CollectionsController(
                 collection, resource, resource_info=attr_info,
-                parent_resource=parent_resource, member_actions=member_actions)
-            manager.NeutronManager.set_plugin_for_resource(resource, plugin)
+                parent_resource=parent_resource, member_actions=member_actions,
+                plugin=plugin, allow_pagination=pagination,
+                allow_sorting=sorting)
+            # new_controller.collection has replaced hyphens with underscores
+            manager.NeutronManager.set_plugin_for_resource(
+                new_controller.collection, plugin)
             if path_prefix:
                 manager.NeutronManager.add_resource_for_path_prefix(
                     collection, path_prefix)

@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
@@ -156,20 +155,3 @@ class TestHelpers(base.DietTestCase):
 
     def test_get_collection_info_missing(self):
         self.assertFalse(attributes.get_collection_info('meh'))
-
-    def test_get_resource_info(self):
-        attributes.REVERSED_PLURALS.pop('port', None)
-        attrs = attributes.get_resource_info('port')
-        self._verify_port_attributes(attrs)
-        # verify side effect
-        self.assertIn('port', attributes.REVERSED_PLURALS)
-
-    def test_get_resource_info_missing(self):
-        self.assertFalse(attributes.get_resource_info('meh'))
-
-    def test_get_resource_info_cached(self):
-        with mock.patch('neutron.api.v2.attributes.PLURALS') as mock_plurals:
-            attributes.REVERSED_PLURALS['port'] = 'ports'
-            attrs = attributes.get_resource_info('port')
-            self._verify_port_attributes(attrs)
-        self.assertEqual(0, mock_plurals.items.call_count)

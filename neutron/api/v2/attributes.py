@@ -297,9 +297,6 @@ PLURALS = {NETWORKS: NETWORK,
            'allocation_pools': 'allocation_pool',
            'fixed_ips': 'fixed_ip',
            'extensions': 'extension'}
-# Store singular/plural mappings. This dictionary is populated by
-# get_resource_info
-REVERSED_PLURALS = {}
 
 
 def get_collection_info(collection):
@@ -308,20 +305,6 @@ def get_collection_info(collection):
     :param collection: Collection or plural name of the resource
     """
     return RESOURCE_ATTRIBUTE_MAP.get(collection)
-
-
-def get_resource_info(resource):
-    """Helper function to retrieve attribute info
-
-    :param resource: resource name
-    """
-    plural_name = REVERSED_PLURALS.get(resource)
-    if not plural_name:
-        for (plural, singular) in PLURALS.items():
-            if singular == resource:
-                plural_name = plural
-                REVERSED_PLURALS[resource] = plural_name
-    return RESOURCE_ATTRIBUTE_MAP.get(plural_name)
 
 
 def fill_default_value(attr_info, res_dict,

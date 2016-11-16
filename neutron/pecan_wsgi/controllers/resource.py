@@ -122,7 +122,8 @@ class CollectionsController(utils.NeutronPecanController):
             # NOTE(tonytan4ever): item needs to share the same
             # parent as collection
             parent_resource=self.parent,
-            member_actions=self._member_actions), remainder)
+            member_actions=self._member_actions,
+            plugin=self.plugin), remainder)
 
     @utils.expose(generic=True)
     def index(self, *args, **kwargs):

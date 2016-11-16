@@ -75,6 +75,14 @@ class Controller(object):
     def member_actions(self):
         return self._member_actions
 
+    @property
+    def allow_pagination(self):
+        return self._allow_pagination
+
+    @property
+    def allow_sorting(self):
+        return self._allow_sorting
+
     def _init_policy_attrs(self):
         """Create the list of attributes required by policy.
 

@@ -114,7 +114,8 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
         self.mock_plugin = mock.Mock()
         attributes.RESOURCE_ATTRIBUTE_MAP.update(self.FAKE_RESOURCE)
         attributes.PLURALS['mehs'] = 'meh'
-        manager.NeutronManager.set_plugin_for_resource('meh', self.mock_plugin)
+        manager.NeutronManager.set_plugin_for_resource('mehs',
+                                                       self.mock_plugin)
         fake_controller = resource.CollectionsController('mehs', 'meh')
         manager.NeutronManager.set_controller_for_resource(
             'mehs', fake_controller)
