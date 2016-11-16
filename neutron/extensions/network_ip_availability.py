@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from neutron_lib.api import extensions as api_extensions
+
 import neutron.api.extensions as extensions
 import neutron.api.v2.base as base
 import neutron.services.network_ip_availability.plugin as plugin
@@ -41,7 +43,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Network_ip_availability(extensions.ExtensionDescriptor):
+class Network_ip_availability(api_extensions.ExtensionDescriptor):
     """Extension class supporting network ip availability information."""
 
     @classmethod

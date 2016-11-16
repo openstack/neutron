@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
@@ -20,7 +21,6 @@ from oslo_config import cfg
 import webob.exc
 
 from neutron._i18n import _
-from neutron.api import extensions
 from neutron.conf.extensions import allowedaddresspairs as addr_pair
 
 addr_pair.register_allowed_address_pair_opts()

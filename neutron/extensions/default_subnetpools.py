@@ -12,9 +12,9 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 from neutron_lib import constants
 
-from neutron.api import extensions
 from neutron.api.v2 import attributes
 
 

@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import extensions
 from neutron_lib import constants
-
-from neutron.api import extensions
 
 
 class Subnetallocation(extensions.ExtensionDescriptor):

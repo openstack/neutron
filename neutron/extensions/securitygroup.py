@@ -16,6 +16,7 @@
 import abc
 
 import netaddr
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
@@ -281,7 +282,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
 quota.register_quota_opts(quota.security_group_quota_opts)
 
 
-class Securitygroup(extensions.ExtensionDescriptor):
+class Securitygroup(api_extensions.ExtensionDescriptor):
     """Security group extension."""
 
     @classmethod

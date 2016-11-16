@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
@@ -39,7 +40,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Extensionattribute(extensions.ExtensionDescriptor):
+class Extensionattribute(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

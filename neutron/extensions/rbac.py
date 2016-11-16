@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 
@@ -81,7 +82,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 quota.register_quota_opts(quota.rbac_quota_opts)
 
 
-class Rbac(extensions.ExtensionDescriptor):
+class Rbac(api_extensions.ExtensionDescriptor):
     """RBAC policy support."""
 
     @classmethod

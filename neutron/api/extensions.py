@@ -30,7 +30,7 @@ import webob.exc
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.common import exceptions
-import neutron.extensions
+from neutron import extensions as core_extensions
 from neutron.plugins.common import constants as const
 from neutron.services import provider_configuration
 from neutron import wsgi
@@ -83,11 +83,6 @@ class PluginInterface(object):
                 continue
             return NotImplemented
         return True
-
-
-# Temporary redirector to prevent subprojects from breaking.
-# TODO(HenryG): Remove once all subprojects are patched.
-ExtensionDescriptor = api_extensions.ExtensionDescriptor
 
 
 class ActionExtensionController(wsgi.Controller):
@@ -436,7 +431,7 @@ class ExtensionManager(object):
         except AttributeError:
             LOG.exception(_LE("Exception loading extension"))
             return False
-        return isinstance(extension, ExtensionDescriptor)
+        return isinstance(extension, api_extensions.ExtensionDescriptor)
 
     def _load_all_extensions(self):
         """Load extensions from the configured path.
@@ -635,7 +630,7 @@ def get_extensions_path(service_plugins=None):
     paths = collections.OrderedDict()
 
     # Add Neutron core extensions
-    paths[neutron.extensions.__path__[0]] = 1
+    paths[core_extensions.__path__[0]] = 1
     if service_plugins:
         # Add Neutron *-aas extensions
         for plugin in service_plugins.values():

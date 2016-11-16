@@ -14,8 +14,8 @@
 #    under the License.
 
 from neutron_lib.api.definitions import trunk
+from neutron_lib.api import extensions
 
-from neutron.api import extensions
 from neutron.api.v2 import resource_helper
 
 

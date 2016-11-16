@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.api import extensions
+from neutron_lib.api import extensions
 
 SERVICE_TYPE_ID = 'service_type_id'
 EXTENDED_ATTRIBUTES_2_0 = {

@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions
@@ -20,7 +21,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LI
-from neutron.api import extensions
 
 LOG = logging.getLogger(__name__)
 

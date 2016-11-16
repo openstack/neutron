@@ -14,6 +14,7 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -78,7 +79,7 @@ class AvailabilityZoneNotFound(exceptions.NotFound):
     message = _("AvailabilityZone %(availability_zone)s could not be found.")
 
 
-class Availability_zone(extensions.ExtensionDescriptor):
+class Availability_zone(api_extensions.ExtensionDescriptor):
     """Availability zone extension."""
 
     @classmethod

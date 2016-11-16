@@ -13,6 +13,7 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -121,7 +122,7 @@ class TagController(object):
         return self.plugin.delete_tags(request.context, parent, parent_id)
 
 
-class Tag(extensions.ExtensionDescriptor):
+class Tag(api_extensions.ExtensionDescriptor):
     """Extension class supporting tags."""
 
     @classmethod

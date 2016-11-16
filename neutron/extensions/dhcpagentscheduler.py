@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -78,7 +79,7 @@ class DhcpAgentsHostingNetworkController(wsgi.Controller):
             request.context, kwargs['network_id'])
 
 
-class Dhcpagentscheduler(extensions.ExtensionDescriptor):
+class Dhcpagentscheduler(api_extensions.ExtensionDescriptor):
     """Extension class supporting dhcp agent scheduler.
     """
 

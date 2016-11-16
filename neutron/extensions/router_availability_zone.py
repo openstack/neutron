@@ -14,9 +14,9 @@
 
 import abc
 
+from neutron_lib.api import extensions
 import six
 
-from neutron.api import extensions
 from neutron.extensions import availability_zone as az_ext
 
 
