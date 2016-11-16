@@ -1029,8 +1029,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_subnet(self, context, id, subnet):
         session = context.session
         with session.begin(subtransactions=True):
-            original_subnet = super(Ml2Plugin, self).get_subnet(context, id)
-            updated_subnet = super(Ml2Plugin, self).update_subnet(
+            original_subnet = self.get_subnet(context, id)
+            updated_subnet = self._update_subnet_precommit(
                 context, id, subnet)
             self.extension_manager.process_update_subnet(
                 context, subnet[attributes.SUBNET], updated_subnet)
@@ -1041,6 +1041,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 original_subnet=original_subnet)
             self.mechanism_manager.update_subnet_precommit(mech_context)
 
+        self._update_subnet_postcommit(context, original_subnet,
+                                       updated_subnet)
         # TODO(apech) - handle errors raised by update_subnet, potentially
         # by re-calling update_subnet with the previous attributes. For
         # now the error is propagated to the caller, which is expected to
