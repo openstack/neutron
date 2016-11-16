@@ -512,6 +512,19 @@ class FakeV6SubnetStateless(object):
         self.ipv6_ra_mode = None
 
 
+class FakeV6SubnetStatelessBadPrefixLength(object):
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.ip_version = 6
+        self.cidr = 'ffeb:3ba5:a17a:4ba3::/56'
+        self.gateway_ip = 'ffeb:3ba5:a17a:4ba3::1'
+        self.enable_dhcp = True
+        self.dns_nameservers = []
+        self.host_routes = []
+        self.ipv6_address_mode = constants.DHCPV6_STATELESS
+        self.ipv6_ra_mode = None
+
+
 class FakeV4SubnetNoGateway(FakeV4Subnet):
     def __init__(self):
         super(FakeV4SubnetNoGateway, self).__init__()
@@ -824,6 +837,14 @@ class FakeV6NetworkStatelessDHCP(object):
         self.namespace = 'qdhcp-ns'
 
 
+class FakeV6NetworkStatelessDHCPBadPrefixLength(object):
+    def __init__(self):
+        self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        self.subnets = [FakeV6SubnetStatelessBadPrefixLength()]
+        self.ports = [FakeV6PortExtraOpt()]
+        self.namespace = 'qdhcp-ns'
+
+
 class FakeNetworkWithV6SatelessAndV4DHCPSubnets(object):
     def __init__(self):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
@@ -1054,7 +1075,8 @@ class TestDnsmasq(TestBase):
 
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
                     max_leases=16777216, lease_duration=86400,
-                    has_static=True, no_resolv='--no-resolv'):
+                    has_static=True, no_resolv='--no-resolv',
+                    has_stateless=True):
         def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
@@ -1087,7 +1109,7 @@ class TestDnsmasq(TestBase):
         if has_static:
             prefix = '--dhcp-range=set:tag%d,%s,static,%s%s'
             prefix6 = '--dhcp-range=set:tag%d,%s,static,%s,%s%s'
-        else:
+        elif has_stateless:
             prefix = '--dhcp-range=set:tag%d,%s,%s%s'
             prefix6 = '--dhcp-range=set:tag%d,%s,%s,%s%s'
         possible_leases = 0
@@ -1169,6 +1191,13 @@ class TestDnsmasq(TestBase):
         network.subnets = [subnet]
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
                          network, has_static=False)
+
+    def test_spawn_no_dhcp_range_bad_prefix_length(self):
+        network = FakeV6NetworkStatelessDHCPBadPrefixLength()
+        subnet = FakeV6SubnetStatelessBadPrefixLength()
+        network.subnets = [subnet]
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         network, has_static=False, has_stateless=False)
 
     def test_spawn_cfg_dns_server(self):
         self.conf.set_override('dnsmasq_dns_servers', ['8.8.8.8'])
