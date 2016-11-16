@@ -116,8 +116,6 @@ class Address_scope(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
-        attr.PLURALS.update(dict(my_plurals))
         plugin = directory.get_plugin()
         collection_name = ADDRESS_SCOPES.replace('_', '-')
         params = RESOURCE_ATTRIBUTE_MAP.get(ADDRESS_SCOPES, dict())

@@ -287,16 +287,8 @@ RESOURCE_FOREIGN_KEYS = {
     NETWORKS: 'network_id'
 }
 
-# Store plural/singular mappings
-PLURALS = {NETWORKS: NETWORK,
-           PORTS: PORT,
-           SUBNETS: SUBNET,
-           SUBNETPOOLS: SUBNETPOOL,
-           'dns_nameservers': 'dns_nameserver',
-           'host_routes': 'host_route',
-           'allocation_pools': 'allocation_pool',
-           'fixed_ips': 'fixed_ip',
-           'extensions': 'extension'}
+# Removing PLURALS breaks subprojects, but they don't need it so they
+# need to be patched.
 
 
 def get_collection_info(collection):

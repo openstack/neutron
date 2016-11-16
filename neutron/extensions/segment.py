@@ -110,7 +110,6 @@ class Segment(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for service type management."""
-        attributes.PLURALS[SEGMENTS] = SEGMENT
         resource_attributes = RESOURCE_ATTRIBUTE_MAP[SEGMENTS]
         controller = base.create_resource(
             SEGMENTS,
