@@ -235,6 +235,40 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         json_body = jsonutils.loads(response.body)
         self._verify_default_limits(json_body)
 
+    def test_update_list_delete(self):
+        # PUT and DELETE actions are in the same test as a meaningful DELETE
+        # test would require a put anyway
+        url = '%s/foo.json' % self.base_url
+        response = self.app.put_json(url,
+                                     params={'quota': {'network': 99}},
+                                     headers={'X-Project-Id': 'admin',
+                                              'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self._verify_after_update(json_body, {'network': 99})
+
+        response = self.app.get(self.base_url,
+                                headers={'X-Project-Id': 'admin',
+                                         'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        found = False
+        for qs in json_body['quotas']:
+            if qs['tenant_id'] == 'foo':
+                found = True
+        self.assertTrue(found)
+
+        response = self.app.delete(url, headers={'X-Project-Id': 'admin',
+                                                 'X-Roles': 'admin'})
+        self.assertEqual(204, response.status_int)
+        response = self.app.get(self.base_url,
+                                headers={'X-Project-Id': 'admin',
+                                         'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        for qs in json_body['quotas']:
+            self.assertNotEqual('foo', qs['tenant_id'])
+
 
 class TestResourceController(TestRootController):
     """Test generic controller"""
