@@ -379,6 +379,11 @@ class Dnsmasq(DhcpLocalProcess):
                                ('set:', self._TAG_PREFIX % i,
                                 cidr.network, mode, lease))
                 else:
+                    if cidr.prefixlen < 64:
+                        LOG.debug('Ignoring subnet %(subnet)s, CIDR has '
+                                  'prefix length < 64: %(cidr)s',
+                                  {'subnet': subnet.id, 'cidr': cidr})
+                        continue
                     cmd.append('--dhcp-range=%s%s,%s,%s,%d,%s' %
                                ('set:', self._TAG_PREFIX % i,
                                 cidr.network, mode,
