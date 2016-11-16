@@ -150,7 +150,7 @@ class HasStandardAttributes(object):
         # for all other modifications or when relevant children are being
         # modified (e.g. fixed_ips change should bump port revision)
         if self.standard_attr.revision_number is None:
-            # this is a brand new object uncommited so we don't bump now
+            # this is a brand new object uncommitted so we don't bump now
             return
         self.standard_attr.revision_number += 1
 

@@ -311,7 +311,7 @@ def get_collection_info(collection):
 
 
 def get_resource_info(resource):
-    """Helper function to retrive attribute info
+    """Helper function to retrieve attribute info
 
     :param resource: resource name
     """
