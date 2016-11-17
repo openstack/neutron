@@ -1868,17 +1868,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # by unifying segment creation procedure.
             return
 
-        session = context.session
         network_id = segment.get('network_id')
 
         if event == events.PRECOMMIT_CREATE:
             updated_segment = self.type_manager.reserve_network_segment(
-                session, segment)
+                context, segment)
             # The segmentation id might be from ML2 type driver, update it
             # in the original segment.
             segment[api.SEGMENTATION_ID] = updated_segment[api.SEGMENTATION_ID]
         elif event == events.PRECOMMIT_DELETE:
-            self.type_manager.release_network_segment(session, segment)
+            self.type_manager.release_network_segment(context, segment)
 
         try:
             self._notify_mechanism_driver_for_segment_change(

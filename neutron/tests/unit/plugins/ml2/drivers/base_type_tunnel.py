@@ -19,7 +19,7 @@ from six import moves
 import testtools
 from testtools import matchers
 
-from neutron.db import api as db
+from neutron import context
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api
@@ -45,7 +45,7 @@ class TunnelTypeTestMixin(object):
         self.driver = self.DRIVER_CLASS()
         self.driver.tunnel_ranges = TUNNEL_RANGES
         self.driver.sync_allocations()
-        self.session = db.get_session()
+        self.context = context.Context()
 
     def test_tunnel_type(self):
         self.assertEqual(self.TYPE, self.driver.get_type())
@@ -66,47 +66,47 @@ class TunnelTypeTestMixin(object):
 
     def test_sync_tunnel_allocations(self):
         self.assertIsNone(
-            self.driver.get_allocation(self.session, (TUN_MIN - 1)))
+            self.driver.get_allocation(self.context, (TUN_MIN - 1)))
         self.assertFalse(
-            self.driver.get_allocation(self.session, (TUN_MIN)).allocated)
+            self.driver.get_allocation(self.context, (TUN_MIN)).allocated)
         self.assertFalse(
-            self.driver.get_allocation(self.session, (TUN_MIN + 1)).allocated)
+            self.driver.get_allocation(self.context, (TUN_MIN + 1)).allocated)
         self.assertFalse(
-            self.driver.get_allocation(self.session, (TUN_MAX - 1)).allocated)
+            self.driver.get_allocation(self.context, (TUN_MAX - 1)).allocated)
         self.assertFalse(
-            self.driver.get_allocation(self.session, (TUN_MAX)).allocated)
+            self.driver.get_allocation(self.context, (TUN_MAX)).allocated)
         self.assertIsNone(
-            self.driver.get_allocation(self.session, (TUN_MAX + 1)))
+            self.driver.get_allocation(self.context, (TUN_MAX + 1)))
 
         self.driver.tunnel_ranges = UPDATED_TUNNEL_RANGES
         self.driver.sync_allocations()
 
         self.assertIsNone(
-            self.driver.get_allocation(self.session, (TUN_MIN + 5 - 1)))
+            self.driver.get_allocation(self.context, (TUN_MIN + 5 - 1)))
         self.assertFalse(
-            self.driver.get_allocation(self.session, (TUN_MIN + 5)).allocated)
+            self.driver.get_allocation(self.context, (TUN_MIN + 5)).allocated)
         self.assertFalse(
-            self.driver.get_allocation(self.session,
+            self.driver.get_allocation(self.context,
                                        (TUN_MIN + 5 + 1)).allocated)
         self.assertFalse(
-            self.driver.get_allocation(self.session,
+            self.driver.get_allocation(self.context,
                                        (TUN_MAX + 5 - 1)).allocated)
         self.assertFalse(
-            self.driver.get_allocation(self.session, (TUN_MAX + 5)).allocated)
+            self.driver.get_allocation(self.context, (TUN_MAX + 5)).allocated)
         self.assertIsNone(
-            self.driver.get_allocation(self.session, (TUN_MAX + 5 + 1)))
+            self.driver.get_allocation(self.context, (TUN_MAX + 5 + 1)))
 
     def _test_sync_allocations_and_allocated(self, tunnel_id):
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: None,
                    api.SEGMENTATION_ID: tunnel_id}
-        self.driver.reserve_provider_segment(self.session, segment)
+        self.driver.reserve_provider_segment(self.context, segment)
 
         self.driver.tunnel_ranges = UPDATED_TUNNEL_RANGES
         self.driver.sync_allocations()
 
         self.assertTrue(
-            self.driver.get_allocation(self.session, tunnel_id).allocated)
+            self.driver.get_allocation(self.context, tunnel_id).allocated)
 
     def test_sync_allocations_and_allocated_in_initial_range(self):
         self._test_sync_allocations_and_allocated(TUN_MIN + 2)
@@ -141,27 +141,27 @@ class TunnelTypeTestMixin(object):
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: None,
                    api.SEGMENTATION_ID: 101}
-        observed = self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self.driver.get_allocation(self.session,
+        observed = self.driver.reserve_provider_segment(self.context, segment)
+        alloc = self.driver.get_allocation(self.context,
                                            observed[api.SEGMENTATION_ID])
         self.assertTrue(alloc.allocated)
 
         with testtools.ExpectedException(exc.TunnelIdInUse):
-            self.driver.reserve_provider_segment(self.session, segment)
+            self.driver.reserve_provider_segment(self.context, segment)
 
-        self.driver.release_segment(self.session, segment)
-        alloc = self.driver.get_allocation(self.session,
+        self.driver.release_segment(self.context, segment)
+        alloc = self.driver.get_allocation(self.context,
                                            observed[api.SEGMENTATION_ID])
         self.assertFalse(alloc.allocated)
 
         segment[api.SEGMENTATION_ID] = 1000
-        observed = self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self.driver.get_allocation(self.session,
+        observed = self.driver.reserve_provider_segment(self.context, segment)
+        alloc = self.driver.get_allocation(self.context,
                                            observed[api.SEGMENTATION_ID])
         self.assertTrue(alloc.allocated)
 
-        self.driver.release_segment(self.session, segment)
-        alloc = self.driver.get_allocation(self.session,
+        self.driver.release_segment(self.context, segment)
+        alloc = self.driver.get_allocation(self.context,
                                            observed[api.SEGMENTATION_ID])
         self.assertIsNone(alloc)
 
@@ -172,7 +172,7 @@ class TunnelTypeTestMixin(object):
                  api.SEGMENTATION_ID: None}
 
         for x in moves.range(TUN_MIN, TUN_MAX + 1):
-            segment = self.driver.reserve_provider_segment(self.session,
+            segment = self.driver.reserve_provider_segment(self.context,
                                                            specs)
             self.assertEqual(self.TYPE, segment[api.NETWORK_TYPE])
             self.assertThat(segment[api.SEGMENTATION_ID],
@@ -182,14 +182,14 @@ class TunnelTypeTestMixin(object):
             tunnel_ids.add(segment[api.SEGMENTATION_ID])
 
         with testtools.ExpectedException(exc.NoNetworkAvailable):
-            segment = self.driver.reserve_provider_segment(self.session,
+            segment = self.driver.reserve_provider_segment(self.context,
                                                            specs)
 
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: 'None',
                    api.SEGMENTATION_ID: tunnel_ids.pop()}
-        self.driver.release_segment(self.session, segment)
-        segment = self.driver.reserve_provider_segment(self.session, specs)
+        self.driver.release_segment(self.context, segment)
+        segment = self.driver.reserve_provider_segment(self.context, specs)
         self.assertThat(segment[api.SEGMENTATION_ID],
                         matchers.GreaterThan(TUN_MIN - 1))
         self.assertThat(segment[api.SEGMENTATION_ID],
@@ -198,26 +198,26 @@ class TunnelTypeTestMixin(object):
 
         for tunnel_id in tunnel_ids:
             segment[api.SEGMENTATION_ID] = tunnel_id
-            self.driver.release_segment(self.session, segment)
+            self.driver.release_segment(self.context, segment)
 
     def test_allocate_tenant_segment(self):
         tunnel_ids = set()
         for x in moves.range(TUN_MIN, TUN_MAX + 1):
-            segment = self.driver.allocate_tenant_segment(self.session)
+            segment = self.driver.allocate_tenant_segment(self.context)
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.GreaterThan(TUN_MIN - 1))
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.LessThan(TUN_MAX + 1))
             tunnel_ids.add(segment[api.SEGMENTATION_ID])
 
-        segment = self.driver.allocate_tenant_segment(self.session)
+        segment = self.driver.allocate_tenant_segment(self.context)
         self.assertIsNone(segment)
 
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: 'None',
                    api.SEGMENTATION_ID: tunnel_ids.pop()}
-        self.driver.release_segment(self.session, segment)
-        segment = self.driver.allocate_tenant_segment(self.session)
+        self.driver.release_segment(self.context, segment)
+        segment = self.driver.allocate_tenant_segment(self.context)
         self.assertThat(segment[api.SEGMENTATION_ID],
                         matchers.GreaterThan(TUN_MIN - 1))
         self.assertThat(segment[api.SEGMENTATION_ID],
@@ -226,7 +226,7 @@ class TunnelTypeTestMixin(object):
 
         for tunnel_id in tunnel_ids:
             segment[api.SEGMENTATION_ID] = tunnel_id
-            self.driver.release_segment(self.session, segment)
+            self.driver.release_segment(self.context, segment)
 
     def add_endpoint(self, ip=TUNNEL_IP_ONE, host=HOST_ONE):
         return self.driver.add_endpoint(ip, host)
@@ -289,19 +289,19 @@ class TunnelTypeMultiRangeTestMixin(object):
         self.driver = self.DRIVER_CLASS()
         self.driver.tunnel_ranges = self.TUNNEL_MULTI_RANGES
         self.driver.sync_allocations()
-        self.session = db.get_session()
+        self.context = context.Context()
 
     def test_release_segment(self):
-        segments = [self.driver.allocate_tenant_segment(self.session)
+        segments = [self.driver.allocate_tenant_segment(self.context)
                     for i in range(4)]
 
         # Release them in random order. No special meaning.
         for i in (0, 2, 1, 3):
-            self.driver.release_segment(self.session, segments[i])
+            self.driver.release_segment(self.context, segments[i])
 
         for key in (self.TUN_MIN0, self.TUN_MAX0,
                     self.TUN_MIN1, self.TUN_MAX1):
-            alloc = self.driver.get_allocation(self.session, key)
+            alloc = self.driver.get_allocation(self.context, key)
             self.assertFalse(alloc.allocated)
 
 

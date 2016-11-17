@@ -49,16 +49,12 @@ def chunks(iterable, chunk_size):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class TunnelTypeDriver(helpers.SegmentTypeDriver):
-    """Define stable abstract interface for ML2 type drivers.
+class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
 
-    tunnel type networks rely on tunnel endpoints. This class defines abstract
-    methods to manage these endpoints.
-    """
     BULK_SIZE = 100
 
     def __init__(self, model):
-        super(TunnelTypeDriver, self).__init__(model)
+        super(_TunnelTypeDriverBase, self).__init__(model)
         self.segmentation_key = next(iter(self.primary_keys))
 
     @abc.abstractmethod
@@ -193,6 +189,32 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
                        {'key': key, 'tunnel': segment.get(api.NETWORK_TYPE)})
                 raise exc.InvalidInput(error_message=msg)
 
+    def get_mtu(self, physical_network=None):
+        seg_mtu = super(_TunnelTypeDriverBase, self).get_mtu()
+        mtu = []
+        if seg_mtu > 0:
+            mtu.append(seg_mtu)
+        if cfg.CONF.ml2.path_mtu > 0:
+            mtu.append(cfg.CONF.ml2.path_mtu)
+        version = cfg.CONF.ml2.overlay_ip_version
+        ip_header_length = p_const.IP_HEADER_LENGTH[version]
+        return min(mtu) - ip_header_length if mtu else 0
+
+
+@six.add_metaclass(abc.ABCMeta)
+class TunnelTypeDriver(_TunnelTypeDriverBase):
+    """Define stable abstract interface for ML2 type drivers.
+
+    tunnel type networks rely on tunnel endpoints. This class defines abstract
+    methods to manage these endpoints.
+
+    ML2 type driver that passes session to functions:
+    - reserve_provider_segment
+    - allocate_tenant_segment
+    - release_segment
+    - get_allocation
+    """
+
     def reserve_provider_segment(self, session, segment):
         if self.is_partial_segment(segment):
             alloc = self.allocate_partially_specified_segment(session)
@@ -246,19 +268,76 @@ class TunnelTypeDriver(helpers.SegmentTypeDriver):
                 filter_by(**{self.segmentation_key: tunnel_id}).
                 first())
 
-    def get_mtu(self, physical_network=None):
-        seg_mtu = super(TunnelTypeDriver, self).get_mtu()
-        mtu = []
-        if seg_mtu > 0:
-            mtu.append(seg_mtu)
-        if cfg.CONF.ml2.path_mtu > 0:
-            mtu.append(cfg.CONF.ml2.path_mtu)
-        version = cfg.CONF.ml2.overlay_ip_version
-        ip_header_length = p_const.IP_HEADER_LENGTH[version]
-        return min(mtu) - ip_header_length if mtu else 0
+
+@six.add_metaclass(abc.ABCMeta)
+class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
+    """Define stable abstract interface for ML2 type drivers.
+
+    tunnel type networks rely on tunnel endpoints. This class defines abstract
+    methods to manage these endpoints.
+
+    ML2 type driver that passes context as argument to functions:
+    - reserve_provider_segment
+    - allocate_tenant_segment
+    - release_segment
+    - get_allocation
+    """
+
+    def reserve_provider_segment(self, context, segment):
+        if self.is_partial_segment(segment):
+            alloc = self.allocate_partially_specified_segment(context)
+            if not alloc:
+                raise exc.NoNetworkAvailable()
+        else:
+            segmentation_id = segment.get(api.SEGMENTATION_ID)
+            alloc = self.allocate_fully_specified_segment(
+                context, **{self.segmentation_key: segmentation_id})
+            if not alloc:
+                raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
+        return {api.NETWORK_TYPE: self.get_type(),
+                api.PHYSICAL_NETWORK: None,
+                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
+                api.MTU: self.get_mtu()}
+
+    def allocate_tenant_segment(self, context):
+        alloc = self.allocate_partially_specified_segment(context)
+        if not alloc:
+            return
+        return {api.NETWORK_TYPE: self.get_type(),
+                api.PHYSICAL_NETWORK: None,
+                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
+                api.MTU: self.get_mtu()}
+
+    def release_segment(self, context, segment):
+        tunnel_id = segment[api.SEGMENTATION_ID]
+
+        inside = any(lo <= tunnel_id <= hi for lo, hi in self.tunnel_ranges)
+
+        info = {'type': self.get_type(), 'id': tunnel_id}
+        with context.session.begin(subtransactions=True):
+            query = (context.session.query(self.model).
+                     filter_by(**{self.segmentation_key: tunnel_id}))
+            if inside:
+                count = query.update({"allocated": False})
+                if count:
+                    LOG.debug("Releasing %(type)s tunnel %(id)s to pool",
+                              info)
+            else:
+                count = query.delete()
+                if count:
+                    LOG.debug("Releasing %(type)s tunnel %(id)s outside pool",
+                              info)
+
+        if not count:
+            LOG.warning(_LW("%(type)s tunnel %(id)s not found"), info)
+
+    def get_allocation(self, context, tunnel_id):
+        return (context.session.query(self.model).
+                filter_by(**{self.segmentation_key: tunnel_id}).
+                first())
 
 
-class EndpointTunnelTypeDriver(TunnelTypeDriver):
+class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def __init__(self, segment_model, endpoint_model):
         super(EndpointTunnelTypeDriver, self).__init__(segment_model)

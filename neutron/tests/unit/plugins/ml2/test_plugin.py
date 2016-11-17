@@ -1842,7 +1842,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         dynamic_segmentation_id = dynamic_segment[driver_api.SEGMENTATION_ID]
         self.assertGreater(dynamic_segmentation_id, 0)
         self.driver.type_manager.release_dynamic_segment(
-            self.context.session, dynamic_segment[driver_api.ID])
+            self.context, dynamic_segment[driver_api.ID])
         self.assertIsNone(segments_db.get_dynamic_segment(
             self.context.session, network_id, 'physnet1'))
 
@@ -2009,7 +2009,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
             with mock.patch('neutron.plugins.ml2.managers.segments_db') as db:
                 db.get_network_segments.return_value = (segment,)
                 self.driver.type_manager.release_network_segments(
-                    self.context.session, network_id)
+                    self.context, network_id)
 
                 log.error.assert_called_once_with(
                     "Failed to release segment '%s' because "

@@ -17,7 +17,7 @@ import mock
 from neutron_lib import exceptions as exc
 from testtools import matchers
 
-import neutron.db.api as db
+from neutron import context
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
@@ -49,7 +49,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
             NETWORK_VLAN_RANGES)
         self.driver = type_vlan.VlanTypeDriver()
         self.driver._sync_vlan_allocations()
-        self.session = db.get_session()
+        self.context = context.Context()
         self.driver.physnet_mtus = []
 
     def test_parse_network_exception_handling(self):
@@ -59,8 +59,9 @@ class VlanTypeTest(testlib_api.SqlTestCase):
             self.assertRaises(SystemExit,
                               self.driver._parse_network_vlan_ranges)
 
-    def _get_allocation(self, session, segment):
-        return session.query(vlan_alloc_model.VlanAllocation).filter_by(
+    def _get_allocation(self, context, segment):
+        return context.session.query(
+            vlan_alloc_model.VlanAllocation).filter_by(
             physical_network=segment[api.PHYSICAL_NETWORK],
             vlan_id=segment[api.SEGMENTATION_ID]).first()
 
@@ -129,17 +130,17 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
             segment[api.SEGMENTATION_ID] = vlan_min - 1
             self.assertIsNone(
-                self._get_allocation(self.session, segment))
+                self._get_allocation(self.context, segment))
             segment[api.SEGMENTATION_ID] = vlan_max + 1
             self.assertIsNone(
-                self._get_allocation(self.session, segment))
+                self._get_allocation(self.context, segment))
 
             segment[api.SEGMENTATION_ID] = vlan_min
             self.assertFalse(
-                self._get_allocation(self.session, segment).allocated)
+                self._get_allocation(self.context, segment).allocated)
             segment[api.SEGMENTATION_ID] = vlan_max
             self.assertFalse(
-                self._get_allocation(self.session, segment).allocated)
+                self._get_allocation(self.context, segment).allocated)
 
         check_in_ranges(self.network_vlan_ranges)
         self.driver.network_vlan_ranges = UPDATED_VLAN_RANGES
@@ -150,37 +151,37 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.PHYSICAL_NETWORK: PROVIDER_NET,
                    api.SEGMENTATION_ID: 101}
-        alloc = self._get_allocation(self.session, segment)
+        alloc = self._get_allocation(self.context, segment)
         self.assertIsNone(alloc)
-        observed = self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, observed)
+        observed = self.driver.reserve_provider_segment(self.context, segment)
+        alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
 
     def test_reserve_provider_segment_already_allocated(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.PHYSICAL_NETWORK: PROVIDER_NET,
                    api.SEGMENTATION_ID: 101}
-        observed = self.driver.reserve_provider_segment(self.session, segment)
+        observed = self.driver.reserve_provider_segment(self.context, segment)
         self.assertRaises(exc.VlanIdInUse,
                           self.driver.reserve_provider_segment,
-                          self.session,
+                          self.context,
                           observed)
 
     def test_reserve_provider_segment_in_tenant_pools(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.PHYSICAL_NETWORK: TENANT_NET,
                    api.SEGMENTATION_ID: VLAN_MIN}
-        alloc = self._get_allocation(self.session, segment)
+        alloc = self._get_allocation(self.context, segment)
         self.assertFalse(alloc.allocated)
-        observed = self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, observed)
+        observed = self.driver.reserve_provider_segment(self.context, segment)
+        alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
 
     def test_reserve_provider_segment_without_segmentation_id(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                    api.PHYSICAL_NETWORK: TENANT_NET}
-        observed = self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, observed)
+        observed = self.driver.reserve_provider_segment(self.context, segment)
+        alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
         vlan_id = observed[api.SEGMENTATION_ID]
         self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
@@ -188,8 +189,8 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def test_reserve_provider_segment_without_physical_network(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
-        observed = self.driver.reserve_provider_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, observed)
+        observed = self.driver.reserve_provider_segment(self.context, segment)
+        alloc = self._get_allocation(self.context, observed)
         self.assertTrue(alloc.allocated)
         vlan_id = observed[api.SEGMENTATION_ID]
         self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
@@ -198,11 +199,11 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def test_reserve_provider_segment_all_allocateds(self):
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
-            self.driver.allocate_tenant_segment(self.session)
+            self.driver.allocate_tenant_segment(self.context)
         segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN}
         self.assertRaises(exc.NoNetworkAvailable,
                           self.driver.reserve_provider_segment,
-                          self.session,
+                          self.context,
                           segment)
 
     def test_get_mtu(self):
@@ -228,8 +229,8 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def test_allocate_tenant_segment(self):
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
-            segment = self.driver.allocate_tenant_segment(self.session)
-            alloc = self._get_allocation(self.session, segment)
+            segment = self.driver.allocate_tenant_segment(self.context)
+            alloc = self._get_allocation(self.context, segment)
             self.assertTrue(alloc.allocated)
             vlan_id = segment[api.SEGMENTATION_ID]
             self.assertThat(vlan_id, matchers.GreaterThan(VLAN_MIN - 1))
@@ -238,14 +239,14 @@ class VlanTypeTest(testlib_api.SqlTestCase):
 
     def test_allocate_tenant_segment_no_available(self):
         for __ in range(VLAN_MIN, VLAN_MAX + 1):
-            self.driver.allocate_tenant_segment(self.session)
-        segment = self.driver.allocate_tenant_segment(self.session)
+            self.driver.allocate_tenant_segment(self.context)
+        segment = self.driver.allocate_tenant_segment(self.context)
         self.assertIsNone(segment)
 
     def test_release_segment(self):
-        segment = self.driver.allocate_tenant_segment(self.session)
-        self.driver.release_segment(self.session, segment)
-        alloc = self._get_allocation(self.session, segment)
+        segment = self.driver.allocate_tenant_segment(self.context)
+        self.driver.release_segment(self.context, segment)
+        alloc = self._get_allocation(self.context, segment)
         self.assertFalse(alloc.allocated)
 
     def test_release_segment_unallocated(self):
@@ -253,7 +254,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                    api.PHYSICAL_NETWORK: PROVIDER_NET,
                    api.SEGMENTATION_ID: 101}
         with mock.patch.object(type_vlan.LOG, 'warning') as log_warn:
-            self.driver.release_segment(self.session, segment)
+            self.driver.release_segment(self.context, segment)
             log_warn.assert_called_once_with(
                 "No vlan_id %(vlan_id)s found on physical network "
                 "%(physical_network)s",

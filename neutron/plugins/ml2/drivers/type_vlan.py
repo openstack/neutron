@@ -161,7 +161,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 msg = _("%s prohibited for VLAN provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-    def reserve_provider_segment(self, session, segment):
+    def reserve_provider_segment(self, context, segment):
         filters = {}
         physical_network = segment.get(api.PHYSICAL_NETWORK)
         if physical_network is not None:
@@ -172,12 +172,12 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
         if self.is_partial_segment(segment):
             alloc = self.allocate_partially_specified_segment(
-                session, **filters)
+                context, **filters)
             if not alloc:
                 raise exc.NoNetworkAvailable()
         else:
             alloc = self.allocate_fully_specified_segment(
-                session, **filters)
+                context, **filters)
             if not alloc:
                 raise exc.VlanIdInUse(**filters)
 
@@ -186,8 +186,8 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 api.SEGMENTATION_ID: alloc.vlan_id,
                 api.MTU: self.get_mtu(alloc.physical_network)}
 
-    def allocate_tenant_segment(self, session):
-        alloc = self.allocate_partially_specified_segment(session)
+    def allocate_tenant_segment(self, context):
+        alloc = self.allocate_partially_specified_segment(context)
         if not alloc:
             return
         return {api.NETWORK_TYPE: p_const.TYPE_VLAN,
@@ -195,15 +195,15 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 api.SEGMENTATION_ID: alloc.vlan_id,
                 api.MTU: self.get_mtu(alloc.physical_network)}
 
-    def release_segment(self, session, segment):
+    def release_segment(self, context, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
         vlan_id = segment[api.SEGMENTATION_ID]
 
         ranges = self.network_vlan_ranges.get(physical_network, [])
         inside = any(lo <= vlan_id <= hi for lo, hi in ranges)
 
-        with session.begin(subtransactions=True):
-            query = (session.query(vlan_alloc_model.VlanAllocation).
+        with context.session.begin(subtransactions=True):
+            query = (context.session.query(vlan_alloc_model.VlanAllocation).
                      filter_by(physical_network=physical_network,
                                vlan_id=vlan_id))
             if inside:

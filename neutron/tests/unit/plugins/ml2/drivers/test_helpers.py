@@ -17,7 +17,7 @@ import mock
 from oslo_db import exception as exc
 from sqlalchemy.orm import query
 
-import neutron.db.api as db
+from neutron import context
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
@@ -38,7 +38,7 @@ class HelpersTest(testlib_api.SqlTestCase):
         self.driver = type_vlan.VlanTypeDriver()
         self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES
         self.driver._sync_vlan_allocations()
-        self.session = db.get_session()
+        self.context = context.get_admin_context()
 
     def check_raw_segment(self, expected, observed):
         for key, value in expected.items():
@@ -50,15 +50,15 @@ class HelpersTest(testlib_api.SqlTestCase):
 
     def test_allocate_specific_unallocated_segment_in_pools(self):
         expected = dict(physical_network=TENANT_NET, vlan_id=VLAN_MIN)
-        observed = self.driver.allocate_fully_specified_segment(self.session,
+        observed = self.driver.allocate_fully_specified_segment(self.context,
                                                                 **expected)
         self.check_raw_segment(expected, observed)
 
     def test_allocate_specific_allocated_segment_in_pools(self):
         raw_segment = dict(physical_network=TENANT_NET, vlan_id=VLAN_MIN)
-        self.driver.allocate_fully_specified_segment(self.session,
+        self.driver.allocate_fully_specified_segment(self.context,
                                                      **raw_segment)
-        observed = self.driver.allocate_fully_specified_segment(self.session,
+        observed = self.driver.allocate_fully_specified_segment(self.context,
                                                                 **raw_segment)
         self.assertIsNone(observed)
 
@@ -69,20 +69,20 @@ class HelpersTest(testlib_api.SqlTestCase):
         raw_segment = dict(physical_network=TENANT_NET, vlan_id=VLAN_MIN)
         with mock.patch.object(query.Query, 'update', return_value=0):
             observed = self.driver.allocate_fully_specified_segment(
-                self.session, **raw_segment)
+                self.context, **raw_segment)
             self.assertIsNone(observed)
 
     def test_allocate_specific_unallocated_segment_outside_pools(self):
         expected = dict(physical_network=TENANT_NET, vlan_id=VLAN_OUTSIDE)
-        observed = self.driver.allocate_fully_specified_segment(self.session,
+        observed = self.driver.allocate_fully_specified_segment(self.context,
                                                                 **expected)
         self.check_raw_segment(expected, observed)
 
     def test_allocate_specific_allocated_segment_outside_pools(self):
         raw_segment = dict(physical_network=TENANT_NET, vlan_id=VLAN_OUTSIDE)
-        self.driver.allocate_fully_specified_segment(self.session,
+        self.driver.allocate_fully_specified_segment(self.context,
                                                      **raw_segment)
-        observed = self.driver.allocate_fully_specified_segment(self.session,
+        observed = self.driver.allocate_fully_specified_segment(self.context,
                                                                 **raw_segment)
         self.assertIsNone(observed)
 
@@ -93,32 +93,32 @@ class HelpersTest(testlib_api.SqlTestCase):
         expected = dict(physical_network=TENANT_NET, vlan_id=VLAN_MIN)
         with mock.patch.object(self.driver.model, 'save'):
             observed = self.driver.allocate_fully_specified_segment(
-                self.session, **expected)
+                self.context, **expected)
             self.check_raw_segment(expected, observed)
 
     def test_allocate_partial_segment_without_filters(self):
         expected = dict(physical_network=TENANT_NET)
         observed = self.driver.allocate_partially_specified_segment(
-            self.session)
+            self.context)
         self.check_raw_segment(expected, observed)
 
     def test_allocate_partial_segment_with_filter(self):
         expected = dict(physical_network=TENANT_NET)
         observed = self.driver.allocate_partially_specified_segment(
-            self.session, **expected)
+            self.context, **expected)
         self.check_raw_segment(expected, observed)
 
     def test_allocate_partial_segment_no_resource_available(self):
         for i in range(VLAN_MIN, VLAN_MAX + 1):
-            self.driver.allocate_partially_specified_segment(self.session)
+            self.driver.allocate_partially_specified_segment(self.context)
         observed = self.driver.allocate_partially_specified_segment(
-            self.session)
+            self.context)
         self.assertIsNone(observed)
 
     def test_allocate_partial_segment_outside_pools(self):
         raw_segment = dict(physical_network='other_phys_net')
         observed = self.driver.allocate_partially_specified_segment(
-            self.session, **raw_segment)
+            self.context, **raw_segment)
         self.assertIsNone(observed)
 
     def test_allocate_partial_segment_first_attempt_fails(self):
@@ -127,7 +127,7 @@ class HelpersTest(testlib_api.SqlTestCase):
             self.assertRaises(
                 exc.RetryRequest,
                 self.driver.allocate_partially_specified_segment,
-                self.session, **expected)
+                self.context, **expected)
             observed = self.driver.allocate_partially_specified_segment(
-                self.session, **expected)
+                self.context, **expected)
             self.check_raw_segment(expected, observed)
