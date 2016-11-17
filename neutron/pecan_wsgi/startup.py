@@ -59,7 +59,18 @@ def initialize_all():
     for ext_res in resources:
         path_prefix = ext_res.path_prefix.strip('/')
         collection = ext_res.collection
-        if manager.NeutronManager.get_controller_for_resource(collection):
+        # Retrieving the parent resource.  It is expected the format of
+        # the parent resource to be:
+        # {'collection_name': 'name-of-collection',
+        #  'member_name': 'name-of-resource'}
+        # collection_name does not appear to be used in the legacy code
+        # inside the controller logic, so we can assume we do not need it.
+        parent = ext_res.parent or {}
+        parent_resource = parent.get('member_name')
+        collection_key = collection
+        if parent_resource:
+            collection_key = '/'.join([parent_resource, collection])
+        if manager.NeutronManager.get_controller_for_resource(collection_key):
             # This is a collection that already has a pecan controller, we
             # do not need to do anything else
             continue
@@ -71,14 +82,6 @@ def initialize_all():
             plugin = legacy_controller.plugin
             attr_info = legacy_controller.attr_info
             member_actions = legacy_controller.member_actions
-            # Retrieving the parent resource.  It is expected the format of
-            # the parent resource to be:
-            # {'collection_name': 'name-of-collection',
-            #  'member_name': 'name-of-resource'}
-            # collection_name does not appear to be used in the legacy code
-            # inside the controller logic, so we can assume we do not need it.
-            parent = legacy_controller.parent or {}
-            parent_resource = parent.get('member_name')
             new_controller = res_ctrl.CollectionsController(
                 collection, resource, resource_info=attr_info,
                 parent_resource=parent_resource, member_actions=member_actions)
@@ -93,7 +96,7 @@ def initialize_all():
             LOG.warning(_LW("Unknown controller type encountered %s.  It will"
                             "be ignored."), legacy_controller)
         manager.NeutronManager.set_controller_for_resource(
-            collection, new_controller)
+            collection_key, new_controller)
 
     # Certain policy checks require that the extensions are loaded
     # and the RESOURCE_ATTRIBUTE_MAP populated before they can be

@@ -127,8 +127,8 @@ class NeutronPecanController(object):
 
         self.parent = parent_resource
         parent_resource = '_%s' % parent_resource if parent_resource else ''
-        self._parent_id_name = ('%s_id' % parent_resource
-                                if parent_resource else None)
+        self._parent_id_name = ('%s_id' % self.parent
+                                if self.parent else None)
         self._plugin_handlers = {
             self.LIST: 'get%s_%s' % (parent_resource, self.collection),
             self.SHOW: 'get%s_%s' % (parent_resource, self.resource)

@@ -109,23 +109,35 @@ class FakeExtension(extensions.ExtensionDescriptor):
 
     HYPHENATED_RESOURCE = 'meh_meh'
     HYPHENATED_COLLECTION = HYPHENATED_RESOURCE + 's'
+    FAKE_PARENT_SUBRESOURCE_COLLECTION = 'fake_duplicates'
+    FAKE_SUB_RESOURCE_COLLECTION = 'fake_subresources'
+
+    RESOURCE_ATTRIBUTE_MAP = {
+        'meh_mehs': {
+            'fake': {'is_visible': True}
+        },
+        'fake_duplicates': {
+            'fake': {'is_visible': True}
+        }
+    }
 
     SUB_RESOURCE_ATTRIBUTE_MAP = {
         'fake_subresources': {
             'parent': {
                 'collection_name': (
-                    HYPHENATED_COLLECTION),
-                'member_name': HYPHENATED_RESOURCE},
+                    'meh_mehs'),
+                'member_name': 'meh_meh'},
             'parameters': {'foo': {'is_visible': True},
                            'bar': {'is_visible': True}
                            }
-        }
-    }
-    FAKE_SUB_RESOURCE_COLLECTION = 'fake_subresources'
-
-    RAM = {
-        HYPHENATED_COLLECTION: {
-            'fake': {'is_visible': True}
+        },
+        'fake_duplicates': {
+            'parent': {
+                'collection_name': (
+                    'meh_mehs'),
+                'member_name': 'meh_meh'},
+            'parameters': {'fake': {'is_visible': True}
+                           }
         }
     }
 
@@ -146,21 +158,26 @@ class FakeExtension(extensions.ExtensionDescriptor):
         return "meh"
 
     def get_resources(self):
-        collection = self.HYPHENATED_COLLECTION.replace('_', '-')
-        params = self.RAM.get(self.HYPHENATED_COLLECTION, {})
-        attributes.PLURALS.update({self.HYPHENATED_COLLECTION:
-                                   self.HYPHENATED_RESOURCE})
-        member_actions = {'put_meh': 'PUT', 'boo_meh': 'GET'}
+        """Returns Ext Resources."""
+        resources = []
         fake_plugin = FakePlugin()
-        controller = base.create_resource(
-            collection, self.HYPHENATED_RESOURCE, FakePlugin(),
-            params, allow_bulk=True, allow_pagination=True,
-            allow_sorting=True, member_actions=member_actions)
-        resources = [extensions.ResourceExtension(
-            collection, controller, attr_map=params,
-            member_actions=member_actions)]
+        for collection_name in self.RESOURCE_ATTRIBUTE_MAP:
+            resource_name = collection_name[:-1]
+            params = self.RESOURCE_ATTRIBUTE_MAP.get(collection_name, {})
+            attributes.PLURALS.update({collection_name: resource_name})
+            member_actions = {'put_meh': 'PUT', 'boo_meh': 'GET'}
+            if collection_name == self.HYPHENATED_COLLECTION:
+                collection_name = collection_name.replace('_', '-')
+            controller = base.create_resource(
+                collection_name, resource_name, fake_plugin,
+                params, allow_bulk=True, allow_pagination=True,
+                allow_sorting=True, member_actions=member_actions)
+            resource = extensions.ResourceExtension(
+                collection_name, controller, attr_map=params)
+            resources.append(resource)
+
         for collection_name in self.SUB_RESOURCE_ATTRIBUTE_MAP:
-            resource_name = collection_name
+            resource_name = collection_name[:-1]
             parent = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
                 'parent')
             params = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
@@ -170,7 +187,6 @@ class FakeExtension(extensions.ExtensionDescriptor):
                                               fake_plugin, params,
                                               allow_bulk=True,
                                               parent=parent)
-
             resource = extensions.ResourceExtension(
                 collection_name,
                 controller, parent,
@@ -182,7 +198,7 @@ class FakeExtension(extensions.ExtensionDescriptor):
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return self.RAM
+            return self.RESOURCE_ATTRIBUTE_MAP
         else:
             return {}
 
@@ -201,6 +217,16 @@ class FakePlugin(object):
 
     def get_meh_mehs(self, context, filters=None, fields=None):
         return [{'fake': 'fake'}]
+
+    def get_fake_duplicate(self, context, id_, fields=None):
+        return {'fake': id_}
+
+    def get_fake_duplicates(self, context, filters=None, fields=None):
+        return [{'fake': 'fakeduplicates'}]
+
+    def get_meh_meh_fake_duplicates(self, context, id_, fields=None,
+                                    filters=None):
+        return [{'fake': id_}]
 
     def get_meh_meh_fake_subresources(self, context, id_, fields=None,
                                       filters=None):
