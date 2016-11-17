@@ -270,7 +270,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 'precommit_create', mock.ANY, context=mock.ANY,
                 security_group_rule=mock.ANY)])
 
-    def test_security_group_rule_precommit_delete_event(self):
+    def test_sg_rule_before_precommit_and_after_delete_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
@@ -281,8 +281,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             self.mixin.delete_security_group_rule(self.ctx,
                     sg_rule_dict['id'])
             mock_notify.assert_has_calls([mock.call('security_group_rule',
+                'before_delete', mock.ANY, context=mock.ANY,
+                security_group_rule_id=sg_rule_dict['id'])])
+            mock_notify.assert_has_calls([mock.call('security_group_rule',
                 'precommit_delete', mock.ANY, context=mock.ANY,
-                security_group_rule_id=mock.ANY)])
+                security_group_rule_id=sg_rule_dict['id'])])
+            mock_notify.assert_has_calls([mock.call('security_group_rule',
+                'after_delete', mock.ANY, context=mock.ANY,
+                security_group_rule_id=sg_rule_dict['id'],
+                security_group_id=sg_dict['id'])])
 
     def test_get_ip_proto_name_and_num(self):
         protocols = [constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_TCP),
