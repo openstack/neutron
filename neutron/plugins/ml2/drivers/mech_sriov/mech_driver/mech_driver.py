@@ -23,7 +23,7 @@ from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
-from neutron.services.qos import qos_consts
+from neutron.services.qos.drivers.sriov import driver as sriov_qos_driver
 
 
 LOG = log.getLogger(__name__)
@@ -42,11 +42,6 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     VIF Driver via libvirt domain XML.
     L2 Agent presents in  order to manage port update events.
     """
-
-    supported_qos_rule_types = [
-        qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-        qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-    ]
 
     def __init__(self,
                  agent_type=constants.AGENT_TYPE_NIC_SWITCH,
@@ -69,6 +64,7 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 else portbindings.VIF_TYPE_HW_VEB
              for vtype in self.supported_vnic_types})
         self.vif_details = vif_details
+        sriov_qos_driver.register()
 
     def get_allowed_network_types(self, agent):
         return (p_const.TYPE_FLAT, p_const.TYPE_VLAN)

@@ -13,7 +13,6 @@
 #    under the License.
 #
 
-import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib.plugins import directory
@@ -43,8 +42,6 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         config.cfg.CONF.set_override('extension_drivers',
                                      self._extension_drivers,
                                      group='ml2')
-        mock.patch('neutron.services.qos.notification_drivers.message_queue'
-                   '.RpcQosServiceNotificationDriver').start()
         super(TestRevisionPlugin, self).setUp()
         self.cp = directory.get_plugin()
         self.l3p = directory.get_plugin(constants.L3)

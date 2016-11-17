@@ -22,8 +22,7 @@ from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import tc_lib
 import neutron.common.constants as const
-from neutron.plugins.ml2.drivers.linuxbridge.mech_driver import (
-    mech_linuxbridge)
+from neutron.services.qos.drivers.linuxbridge import driver
 from neutron.services.qos import qos_consts
 
 LOG = log.getLogger(__name__)
@@ -36,9 +35,7 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
     #     the delete function, to have the 'direction' parameter. This QoS
     #     extension modification is going to be implemented in
     #     https://review.openstack.org/#/c/341186/
-    SUPPORTED_RULES = (
-        mech_linuxbridge.LinuxbridgeMechanismDriver.supported_qos_rule_types
-    )
+    SUPPORTED_RULES = driver.SUPPORTED_RULES
 
     IPTABLES_DIRECTION = {const.INGRESS_DIRECTION: 'physdev-out',
                           const.EGRESS_DIRECTION: 'physdev-in'}

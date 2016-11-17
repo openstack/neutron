@@ -13,28 +13,10 @@
 from oslo_log import log as logging
 
 from neutron._i18n import _LW
-from neutron.api.rpc.callbacks import events
-from neutron.api.rpc.callbacks.producer import registry
-from neutron.api.rpc.callbacks import resources
-from neutron.api.rpc.handlers import resources_rpc
-from neutron.objects.qos import policy as policy_object
 from neutron.services.qos.notification_drivers import qos_base
 
 
 LOG = logging.getLogger(__name__)
-
-
-def _get_qos_policy_cb(resource, policy_id, **kwargs):
-    context = kwargs.get('context')
-    if context is None:
-        LOG.warning(_LW(
-            'Received %(resource)s %(policy_id)s without context'),
-            {'resource': resource, 'policy_id': policy_id}
-        )
-        return
-
-    policy = policy_object.QosPolicy.get_object(context, id=policy_id)
-    return policy
 
 
 class RpcQosServiceNotificationDriver(
@@ -42,18 +24,18 @@ class RpcQosServiceNotificationDriver(
     """RPC message queue service notification driver for QoS."""
 
     def __init__(self):
-        self.notification_api = resources_rpc.ResourcesPushRpcApi()
-        registry.provide(_get_qos_policy_cb, resources.QOS_POLICY)
+        LOG.warning(_LW("The QoS message_queue notification driver "
+                        "has been ignored, since rpc push is implemented "
+                        "for any QoS driver that requests it."))
 
     def get_description(self):
         return "Message queue updates"
 
     def create_policy(self, context, policy):
-        #No need to update agents on create
         pass
 
     def update_policy(self, context, policy):
-        self.notification_api.push(context, [policy], events.UPDATED)
+        pass
 
     def delete_policy(self, context, policy):
-        self.notification_api.push(context, [policy], events.DELETED)
+        pass
