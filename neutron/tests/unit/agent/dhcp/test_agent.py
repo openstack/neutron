@@ -607,12 +607,10 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
                 mock.call().enable()])
-        elif not enable_isolated_metadata:
+        else:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(ns=None),
                 mock.call().disable()])
-        else:
-            self.assertFalse(self.external_process.call_count)
 
     def test_enable_dhcp_helper_enable_metadata_isolated_network(self):
         self._enable_dhcp_helper(isolated_network,
