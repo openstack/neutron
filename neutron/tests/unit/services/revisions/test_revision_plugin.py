@@ -13,11 +13,13 @@
 #    under the License.
 #
 
+import mock
 import netaddr
 
 from neutron import context as nctx
 from neutron.db import models_v2
 from neutron import manager
+from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -26,12 +28,20 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     l3_plugin = ('neutron.tests.unit.extensions.test_extraroute.'
                  'TestExtraRouteL3NatServicePlugin')
 
+    _extension_drivers = ['qos']
+
     def get_additional_service_plugins(self):
         p = super(TestRevisionPlugin, self).get_additional_service_plugins()
-        p.update({'revision_plugin_name': 'revisions'})
+        p.update({'revision_plugin_name': 'revisions',
+                  'qos_plugin_name': 'qos'})
         return p
 
     def setUp(self):
+        config.cfg.CONF.set_override('extension_drivers',
+                                     self._extension_drivers,
+                                     group='ml2')
+        mock.patch('neutron.services.qos.notification_drivers.message_queue'
+                   '.RpcQosServiceNotificationDriver').start()
         super(TestRevisionPlugin, self).setUp()
         self.cp = manager.NeutronManager.get_plugin()
         self.l3p = (manager.NeutronManager.
@@ -141,3 +151,27 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         updated = self.l3p.get_router(self.ctx, router['id'])
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
+
+    def test_qos_policy_bump_port_revision(self):
+        with self.port() as port:
+            rev = port['port']['revision_number']
+            qos_plugin = manager.NeutronManager.get_service_plugins()['QOS']
+            qos_policy = {'policy': {'name': "policy1",
+                                     'tenant_id': "tenant1"}}
+            qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
+            data = {'port': {'qos_policy_id': qos_obj['id']}}
+            response = self._update('ports', port['port']['id'], data)
+            new_rev = response['port']['revision_number']
+            self.assertGreater(new_rev, rev)
+
+    def test_qos_policy_bump_network_revision(self):
+        with self.network() as network:
+            rev = network['network']['revision_number']
+            qos_plugin = manager.NeutronManager.get_service_plugins()['QOS']
+            qos_policy = {'policy': {'name': "policy1",
+                                     'tenant_id': "tenant1"}}
+            qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
+            data = {'network': {'qos_policy_id': qos_obj['id']}}
+            response = self._update('networks', network['network']['id'], data)
+            new_rev = response['network']['revision_number']
+            self.assertGreater(new_rev, rev)
