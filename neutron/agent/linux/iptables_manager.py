@@ -183,24 +183,18 @@ class IptablesTable(object):
             # so we keep a list of them to be iterated over in apply()
             self.remove_chains.add(name)
 
-            # first, add rules to remove that have a matching chain name
-            self.remove_rules += [str(r) for r in self.rules
-                                  if r.chain == name]
-
-        # next, remove rules from list that have a matching chain name
-        self.rules = [r for r in self.rules if r.chain != name]
-
-        if not wrap:
+            # Add rules to remove that have a matching chain name or
+            # a matching jump chain
             jump_snippet = '-j %s' % name
-            # next, add rules to remove that have a matching jump chain
             self.remove_rules += [str(r) for r in self.rules
-                                  if jump_snippet in r.rule]
+                                  if r.chain == name or jump_snippet in r.rule]
         else:
             jump_snippet = '-j %s-%s' % (self.wrap_name, name)
 
-        # finally, remove rules from list that have a matching jump chain
+        # Remove rules from list that have a matching chain name or
+        # a matching jump chain
         self.rules = [r for r in self.rules
-                      if jump_snippet not in r.rule]
+                      if r.chain != name and jump_snippet not in r.rule]
 
     def add_rule(self, chain, rule, wrap=True, top=False, tag=None,
                  comment=None):
