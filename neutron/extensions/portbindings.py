@@ -89,6 +89,9 @@ VIF_TYPE_OTHER = 'other'
 #                   which is defined further below. E.g. Macvtap agent uses
 #                   vnic_type 'normal'.
 VIF_TYPE_MACVTAP = 'macvtap'
+# SR-IOV VIF types
+VIF_TYPE_HW_VEB = 'hw_veb'
+VIF_TYPE_HOSTDEV_PHY = 'hostdev_physical'
 
 # VNIC_TYPE: It's used to determine which mechanism driver to use to bind a
 #            port. It can be specified via the Neutron API. Default is normal,
