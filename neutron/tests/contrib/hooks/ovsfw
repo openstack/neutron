@@ -1,0 +1,4 @@
+[[post-config|/$Q_PLUGIN_CONF_FILE]]
+
+[securitygroup]
+firewall_driver = openvswitch

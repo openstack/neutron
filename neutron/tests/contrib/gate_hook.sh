@@ -58,7 +58,7 @@ case $VENV in
     sudo chown -R $STACK_USER:$STACK_USER $BASE
     ;;
 
-"api"|"api-pecan"|"full-pecan"|"dsvm-scenario")
+"api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario")
     load_rc_hook api_extensions
     load_conf_hook quotas
     load_rc_hook dns
@@ -71,6 +71,9 @@ case $VENV in
     fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
+    fi
+    if [[ "$VENV" =~ "ovsfw" ]]; then
+        load_conf_hook ovsfw
     fi
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
