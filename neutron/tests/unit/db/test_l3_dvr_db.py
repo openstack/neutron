@@ -19,6 +19,9 @@ from neutron_lib import exceptions
 from oslo_utils import uuidutils
 import testtools
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
@@ -445,8 +448,11 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             grtr.return_value = router_db
             vmp.return_value = 'my-host'
             mvmp.return_value = 'my-future-host'
-            self.mixin._update_fip_assoc(
-                self.ctx, fip, floatingip_db, port)
+            registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
+                            context=mock.Mock(), router_id=router_db['id'],
+                            fixed_port_id=port['id'], floating_ip_id=fip['id'],
+                            floating_network_id=fip['floating_network_id'],
+                            fixed_ip_address='1.2.3.4')
             return c_fip
 
     def test_create_floatingip_agent_gw_port_with_dvr_router(self):
@@ -457,6 +463,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router = {'id': 'foo_router_id', 'distributed': True}
         fip = {
             'id': _uuid(),
+            'floating_network_id': _uuid(),
             'port_id': _uuid()
         }
         create_fip = (
@@ -472,6 +479,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router = {'id': 'foo_router_id', 'distributed': False}
         fip = {
             'id': _uuid(),
+            'floating_network_id': _uuid(),
             'port_id': _uuid()
         }
         create_fip = (

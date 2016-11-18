@@ -1166,18 +1166,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 if addr.version == lib_constants.IP_VERSION_4:
                     next_hop = fixed_ip.ip_address
                     break
-        args = {'fixed_ip_address': internal_ip_address,
+        return {'fixed_ip_address': internal_ip_address,
                 'fixed_port_id': port_id,
                 'router_id': router_id,
                 'last_known_router_id': previous_router_id,
                 'floating_ip_address': floatingip_db.floating_ip_address,
                 'floating_network_id': floatingip_db.floating_network_id,
+                'floating_ip_id': floatingip_db.id,
                 'next_hop': next_hop,
                 'context': context}
-        registry.notify(resources.FLOATING_IP,
-                        events.AFTER_UPDATE,
-                        self._update_fip_assoc,
-                        **args)
 
     def _is_ipv4_network(self, context, net_id):
         net = self._core_plugin._get_network(context, net_id)
@@ -1242,14 +1239,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 description=fip.get('description'))
             # Update association with internal port
             # and define external IP address
-            self._update_fip_assoc(context, fip,
-                                   floatingip_db, external_port)
+            assoc_result = self._update_fip_assoc(context, fip,
+                                                  floatingip_db, external_port)
             context.session.add(floatingip_db)
             floatingip_dict = self._make_floatingip_dict(
                 floatingip_db, process_extensions=False)
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
+        registry.notify(resources.FLOATING_IP,
+                        events.AFTER_UPDATE,
+                        self._update_fip_assoc,
+                        **assoc_result)
 
         if self._is_dns_integration_supported:
             self._process_dns_floatingip_create_postcommit(context,
@@ -1270,13 +1271,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floatingip_db = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_db)
             fip_port_id = floatingip_db['floating_port_id']
-            self._update_fip_assoc(context, fip, floatingip_db,
-                                   self._core_plugin.get_port(
-                                       context.elevated(), fip_port_id))
+            assoc_result = self._update_fip_assoc(
+                context, fip, floatingip_db,
+                self._core_plugin.get_port(context.elevated(), fip_port_id))
             floatingip_dict = self._make_floatingip_dict(floatingip_db)
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_update_precommit(
                     context, floatingip_dict)
+        registry.notify(resources.FLOATING_IP,
+                        events.AFTER_UPDATE,
+                        self._update_fip_assoc,
+                        **assoc_result)
 
         if self._is_dns_integration_supported:
             self._process_dns_floatingip_update_postcommit(context,

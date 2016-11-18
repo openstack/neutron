@@ -2347,6 +2347,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                         {'floatingip': {'port_id': port_id}})
                     fip_addr = fip['floatingip']['floating_ip_address']
                     fip_network_id = fip['floatingip']['floating_network_id']
+                    fip_id = fip['floatingip']['id']
                     router_id = body['floatingip']['router_id']
                     body = self._show('routers', router_id)
                     ext_gw_info = body['router']['external_gateway_info']
@@ -2360,6 +2361,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                            floating_ip_address=fip_addr,
                                            floating_network_id=fip_network_id,
                                            last_known_router_id=None,
+                                           floating_ip_id=fip_id,
                                            router_id=router_id,
                                            next_hop=ext_fixed_ip['ip_address'])
 
@@ -2375,6 +2377,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 with mock.patch.object(registry, 'notify') as notify:
                     fip_addr = fip['floatingip']['floating_ip_address']
                     fip_network_id = fip['floatingip']['floating_network_id']
+                    fip_id = fip['floatingip']['id']
                     router_id = body['floatingip']['router_id']
                     self._update('floatingips',
                                  fip['floatingip']['id'],
@@ -2388,6 +2391,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                            floating_ip_address=fip_addr,
                                            floating_network_id=fip_network_id,
                                            last_known_router_id=router_id,
+                                           floating_ip_id=fip_id,
                                            router_id=None,
                                            next_hop=None)
 
