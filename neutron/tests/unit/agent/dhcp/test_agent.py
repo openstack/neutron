@@ -1098,6 +1098,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.assert_has_calls(
             [mock.call.get_port_by_id(fake_port2.id),
              mock.call.deleted_ports.add(fake_port2.id),
+             mock.call.get_port_by_id(fake_port2.id),
              mock.call.get_network_by_id(fake_network.id),
              mock.call.remove_port(fake_port2)])
         self.call_driver.assert_has_calls(
