@@ -377,10 +377,10 @@ class HaRouter(router.RouterInfo):
                                prefix=router.EXTERNAL_DEV_PREFIX)
 
     def delete(self, agent):
-        super(HaRouter, self).delete(agent)
         self.destroy_state_change_monitor(self.process_monitor)
-        self.ha_network_removed()
         self.disable_keepalived()
+        self.ha_network_removed()
+        super(HaRouter, self).delete(agent)
 
     def process(self, agent):
         super(HaRouter, self).process(agent)
