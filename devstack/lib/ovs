@@ -49,6 +49,67 @@ function is_kernel_supported_for_ovs25 {
     return 1
 }
 
+# is_version_le() - Helper function to test if the first version string is less
+#                   than or equal to the second version string
+function is_version_le {
+    version1=$1
+    version2=$2
+    echo -e "$version1\\n$version2" | sort -VC
+    return $?
+}
+
+
+# is_kernel_supported_for_ovs261() - compilation of openvswitch 2.6.1 kernel
+#                                    module supports only kernels versions
+#                                    between 3.10 and 4.8 (inclusive)
+#                                    Taken from the OVS tree (acinclude.m4)
+function is_kernel_supported_for_ovs261 {
+    major=$(uname -r | cut -d\. -f 1)
+    minor=$(uname -r | cut -d\. -f 2)
+    kversion="$major.$minor"
+    minimum_version="3.10"
+    maximum_version="4.8"
+    if ! is_version_le $minimum_version $kversion; then
+        return 1
+    fi
+    if ! is_version_le $kversion $maximum_version ; then
+        return 1
+    fi
+    return 0
+}
+
+# is_ovs_version_ok() - Verify the OVS version is new enough. Specifically,
+#                       verify the OVS version >= 2.5.1
+function is_ovs_version_ok {
+    minimum_version="2.5.1"
+    version_string=$(ovs-vswitchd -V | awk '/^ovs-vswitchd/ { print $NF}')
+    is_version_le $minimum_version $version_string
+    return $?
+}
+
+# upgrade_ovs_if_necessary() - Check if OVS version is high enough ( >= 2.5.1)
+#                              and upgrade if necessary.
+function upgrade_ovs_if_necessary {
+    if ! is_ovs_version_ok; then
+        if [ "$NEUTRON_OVERRIDE_OVS_BRANCH" ]; then
+            OVS_BRANCH=$NEUTRON_OVERRIDE_OVS_BRANCH
+        elif is_kernel_supported_for_ovs25; then
+            # The order of conditions here is such that on Trusty we install
+            # version 2.5.1, and on Xenial we upgrade to 2.6.1 (Since Xenial
+            # kernel is not compatible with 2.5.1)
+            OVS_BRANCH="v2.5.1"
+        elif is_kernel_supported_for_ovs261; then
+            OVS_BRANCH="v2.6.1"
+        else
+            echo "WARNING: Unsupported kernel for OVS compilation. Trying default branch."
+        fi
+        echo "Compiling OVS branch: $OVS_BRANCH"
+        remove_ovs_packages
+        compile_ovs True /usr /var
+        start_new_ovs
+    fi
+}
+
 # compile_ovs() - Compile OVS from source and load needed modules.
 #                 Accepts two parameters:
 #                   - first one is True, modules are built and installed.
