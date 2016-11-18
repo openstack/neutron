@@ -27,8 +27,6 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import constants as const
 from neutron.common import exceptions
-from neutron.pecan_wsgi import controllers
-from neutron.pecan_wsgi.controllers import utils as pecan_utils
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron import wsgi
@@ -160,12 +158,6 @@ class Quotasv2(api_extensions.ExtensionDescriptor):
             controller,
             member_actions={DEFAULT_QUOTAS_ACTION: 'GET'},
             collection_actions={'tenant': 'GET'})]
-
-    @classmethod
-    def get_pecan_resources(cls):
-        # NOTE: plugin is not needed for quotas
-        return [pecan_utils.PecanResourceExtension(
-            RESOURCE_COLLECTION, controllers.QuotasController(), None)]
 
     def get_extended_resources(self, version):
         if version == "2.0":
