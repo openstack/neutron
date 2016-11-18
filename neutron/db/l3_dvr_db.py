@@ -431,21 +431,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         return router_interface_info
 
-    def _port_has_ipv6_address(self, port, csnat_port_check=True):
-        """Overridden to return False if DVR SNAT port."""
-        if csnat_port_check:
-            if port['device_owner'] == const.DEVICE_OWNER_ROUTER_SNAT:
-                return False
-        return super(L3_NAT_with_dvr_db_mixin,
-                     self)._port_has_ipv6_address(port)
-
     def _find_v6_router_port_by_network_and_device_owner(
         self, router, net_id, device_owner):
         for port in router.attached_ports:
             p = port['port']
             if (p['network_id'] == net_id and
                 p['device_owner'] == device_owner and
-                self._port_has_ipv6_address(p, csnat_port_check=False)):
+                self._port_has_ipv6_address(p)):
                 return self._core_plugin._make_port_dict(p)
 
     def _check_for_multiprefix_csnat_port_and_update(

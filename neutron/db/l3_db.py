@@ -707,9 +707,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if netaddr.IPNetwork(fixed_ip['ip_address']).version == 6:
                 return True
 
-    def _find_ipv6_router_port_by_network(self, router, net_id):
+    def _find_ipv6_router_port_by_network(self, context, router, net_id):
+        router_dev_owner = self._get_device_owner(context, router)
         for port in router.attached_ports:
             p = port['port']
+            if p['device_owner'] != router_dev_owner:
+                # we don't want any special purpose internal ports
+                continue
             if p['network_id'] == net_id and self._port_has_ipv6_address(p):
                 return port
 
@@ -735,7 +739,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             ipv6_utils.is_ipv6_pd_enabled(subnet)):
             # Add new prefix to an existing ipv6 port with the same network id
             # if one exists
-            port = self._find_ipv6_router_port_by_network(router,
+            port = self._find_ipv6_router_port_by_network(context, router,
                                                           subnet['network_id'])
             if port:
                 fixed_ips = list(map(dict, port['port']['fixed_ips']))
