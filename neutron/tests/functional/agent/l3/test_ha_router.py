@@ -78,7 +78,9 @@ class L3HATestCase(framework.L3AgentTestFramework):
                 {router1.router_id: 'standby', router2.router_id: 'active'}))
 
     def test_ha_router_lifecycle(self):
-        self._router_lifecycle(enable_ha=True)
+        router_info = self._router_lifecycle(enable_ha=True)
+        # ensure everything was cleaned up
+        self._router_lifecycle(enable_ha=True, router_info=router_info)
 
     def test_conntrack_disassociate_fip_ha_router(self):
         self._test_conntrack_disassociate_fip(ha=True)
@@ -329,3 +331,7 @@ class L3HATestFailover(framework.L3AgentTestFramework):
 
         common_utils.wait_until_true(lambda: router2.ha_state == 'master')
         common_utils.wait_until_true(lambda: router1.ha_state == 'backup')
+
+
+class LinuxBridgeL3HATestCase(L3HATestCase):
+    INTERFACE_DRIVER = 'neutron.agent.linux.interface.BridgeInterfaceDriver'
