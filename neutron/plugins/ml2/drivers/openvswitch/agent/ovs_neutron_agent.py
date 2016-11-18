@@ -21,7 +21,6 @@ import signal
 import sys
 import time
 
-import debtcollector
 import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib.utils import helpers
@@ -73,10 +72,6 @@ cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
                       'agent.common.config')
 cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
-
-LocalVLANMapping = debtcollector.moves.moved_class(
-    vlanmanager.LocalVLANMapping, 'LocalVLANMapping', __name__,
-    version='Newton', removal_version='Ocata')
 
 
 class _mac_mydialect(netaddr.mac_unix):
@@ -296,12 +291,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
         self.quitting_rpc_timeout = agent_conf.quitting_rpc_timeout
 
-    @debtcollector.removals.removed_property(
-        version='Newton', removal_version='Ocata')
-    def local_vlan_map(self):
-        """Provide backward compatibility with local_vlan_map attribute"""
-        return self.vlan_manager.mapping
-
     def _parse_bridge_mappings(self, bridge_mappings):
         try:
             return helpers.parse_mappings(bridge_mappings)
@@ -401,16 +390,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         self.ext_manager.initialize(
             connection, constants.EXTENSION_DRIVER_TYPE,
             self.agent_api)
-
-    @debtcollector.moves.moved_method(
-        'get_net_uuid',
-        'OVSNeutronAgent.get_net_uuid() moved to vlanmanager.LocalVlanManager',
-        removal_version='Ocata')
-    def get_net_uuid(self, vif_id):
-        try:
-            return self.vlan_manager.get_net_uuid(vif_id)
-        except vlanmanager.VifIdNotFound:
-            pass
 
     def port_update(self, context, **kwargs):
         port = kwargs.get('port')
