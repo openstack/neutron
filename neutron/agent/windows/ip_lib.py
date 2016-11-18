@@ -50,14 +50,15 @@ class IPDevice(object):
     def device_has_ip(self, ip):
         try:
             device_addresses = netifaces.ifaddresses(self.device_name)
-        except ValueError:  # The device does not exist on the system
+        except ValueError:
+            LOG.error(_LE("The device does not exist on the system: %s."),
+                      self.device_name)
             return False
-
-        try:
-            addresses = [ip_addr['addr'] for ip_addr in
-                         device_addresses.get(netifaces.AF_INET, [])]
-            return ip in addresses
         except OSError:
             LOG.error(_LE("Failed to get ip addresses for interface: %s."),
-                self.device_name)
+                      self.device_name)
             return False
+
+        addresses = [ip_addr['addr'] for ip_addr in
+                     device_addresses.get(netifaces.AF_INET, [])]
+        return ip in addresses
