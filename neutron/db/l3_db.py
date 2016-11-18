@@ -562,6 +562,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         #TODO(nati) Refactor here when we have router insertion model
         router = self._ensure_router_not_in_use(context, id)
+        original = self._make_router_dict(router)
         self._delete_current_gw_port(context, id, router, None)
 
         router_ports = router.attached_ports.all()
@@ -571,8 +572,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                           l3_port_check=False)
         with context.session.begin(subtransactions=True):
             registry.notify(resources.ROUTER, events.PRECOMMIT_DELETE,
-                            self, context=context, router_id=id)
+                            self, context=context, router_db=router,
+                            router_id=id)
             context.session.delete(router)
+        registry.notify(resources.ROUTER, events.AFTER_DELETE, self,
+                        context=context, router_id=id, original=original)
 
     @db_api.retry_if_session_inactive()
     def get_router(self, context, id, fields=None):
