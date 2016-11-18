@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_service import loopingcall
 from oslo_service import service
 
 from neutron.callbacks import events
@@ -90,3 +91,35 @@ class NeutronWorker(service.ServiceBase):
     def start(self):
         if self.worker_process_count > 0:
             registry.notify(resources.PROCESS, events.AFTER_INIT, self.start)
+
+
+class PeriodicWorker(NeutronWorker):
+    """A worker that runs a function at a fixed interval."""
+
+    def __init__(self, check_func, interval, initial_delay):
+        super(PeriodicWorker, self).__init__(worker_process_count=0)
+
+        self._check_func = check_func
+        self._loop = None
+        self._interval = interval
+        self._initial_delay = initial_delay
+
+    def start(self):
+        super(PeriodicWorker, self).start()
+        if self._loop is None:
+            self._loop = loopingcall.FixedIntervalLoopingCall(self._check_func)
+        self._loop.start(interval=self._interval,
+                         initial_delay=self._initial_delay)
+
+    def wait(self):
+        if self._loop is not None:
+            self._loop.wait()
+
+    def stop(self):
+        if self._loop is not None:
+            self._loop.stop()
+
+    def reset(self):
+        self.stop()
+        self.wait()
+        self.start()

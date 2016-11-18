@@ -21,7 +21,6 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_service import loopingcall
 from oslo_utils import timeutils
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
@@ -72,37 +71,6 @@ AGENTS_SCHEDULER_OPTS = [
 cfg.CONF.register_opts(AGENTS_SCHEDULER_OPTS)
 
 
-class AgentStatusCheckWorker(neutron_worker.NeutronWorker):
-
-    def __init__(self, check_func, interval, initial_delay):
-        super(AgentStatusCheckWorker, self).__init__(worker_process_count=0)
-
-        self._check_func = check_func
-        self._loop = None
-        self._interval = interval
-        self._initial_delay = initial_delay
-
-    def start(self):
-        super(AgentStatusCheckWorker, self).start()
-        if self._loop is None:
-            self._loop = loopingcall.FixedIntervalLoopingCall(self._check_func)
-        self._loop.start(interval=self._interval,
-                         initial_delay=self._initial_delay)
-
-    def wait(self):
-        if self._loop is not None:
-            self._loop.wait()
-
-    def stop(self):
-        if self._loop is not None:
-            self._loop.stop()
-
-    def reset(self):
-        self.stop()
-        self.wait()
-        self.start()
-
-
 class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
     """Common class for agent scheduler mixins."""
 
@@ -148,9 +116,8 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         # neutron server first starts. random to offset multiple servers
         initial_delay = random.randint(interval, interval * 2)
 
-        check_worker = AgentStatusCheckWorker(function, interval,
-                                              initial_delay)
-
+        check_worker = neutron_worker.PeriodicWorker(function, interval,
+                                                     initial_delay)
         self.add_worker(check_worker)
 
     def agent_dead_limit_seconds(self):

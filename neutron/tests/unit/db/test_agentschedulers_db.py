@@ -29,7 +29,6 @@ from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -40,7 +39,6 @@ from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
 from neutron import manager
 from neutron.plugins.common import constants as service_constants
-from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
 from neutron.tests import tools
@@ -1451,31 +1449,6 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
     def test_unreserved_dhcp_port_creation(self):
         device_id = 'not_reserved'
         self.assertTrue(self._is_schedule_network_called(device_id))
-
-
-class AgentStatusCheckWorkerTestCase(base.BaseTestCase):
-
-    def test_agent_worker_lifecycle(self):
-        check_function = mock.Mock()
-        worker = agentschedulers_db.AgentStatusCheckWorker(
-            check_function, interval=1, initial_delay=1)
-        self.addCleanup(worker.stop)
-        worker.wait()
-        self.assertFalse(check_function.called)
-        worker.start()
-        utils.wait_until_true(
-            lambda: check_function.called,
-            timeout=5,
-            exception=RuntimeError("check_function not called"))
-        worker.stop()
-        check_function.reset_mock()
-        worker.wait()
-        self.assertFalse(check_function.called)
-        worker.reset()
-        utils.wait_until_true(
-            lambda: check_function.called,
-            timeout=5,
-            exception=RuntimeError("check_function not called"))
 
 
 class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
