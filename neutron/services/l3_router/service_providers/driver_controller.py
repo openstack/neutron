@@ -47,6 +47,8 @@ class DriverController(object):
         self._stm.add_provider_configuration(
                 constants.L3_ROUTER_NAT, _LegacyPlusProviderConfiguration())
         self._load_drivers()
+        registry.subscribe(self._check_router_request,
+                           resources.ROUTER, events.BEFORE_CREATE)
         registry.subscribe(self._set_router_provider,
                            resources.ROUTER, events.PRECOMMIT_CREATE)
         registry.subscribe(self._update_router_provider,
@@ -67,6 +69,12 @@ class DriverController(object):
             self._flavor_plugin_ref = directory.get_plugin(constants.FLAVORS)
         return self._flavor_plugin_ref
 
+    def _check_router_request(self, resource, event, trigger, context,
+                              router, **kwargs):
+        """Validates that API request is sane (flags compat with flavor)."""
+        drv = self._get_provider_for_create(context, router)
+        _ensure_driver_supports_request(drv, router)
+
     def _set_router_provider(self, resource, event, trigger, context, router,
                              router_db, **kwargs):
         """Associates a router with a service provider.
@@ -78,7 +86,6 @@ class DriverController(object):
         if _flavor_specified(router):
             router_db.flavor_id = router['flavor_id']
         drv = self._get_provider_for_create(context, router)
-        _ensure_driver_supports_request(drv, router)
         self._stm.add_resource_association(context, 'L3_ROUTER_NAT',
                                            drv.name, router['id'])
 

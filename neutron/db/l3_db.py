@@ -163,6 +163,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _create_router_db(self, context, router, tenant_id):
         """Create the DB object."""
+        registry.notify(resources.ROUTER, events.BEFORE_CREATE,
+                        self, context=context, router=router)
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
