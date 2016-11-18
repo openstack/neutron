@@ -122,6 +122,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                            resources.ROUTER, events.BEFORE_CREATE)
         registry.subscribe(inst._after_router_create,
                            resources.ROUTER, events.AFTER_CREATE)
+        registry.subscribe(inst._validate_migration,
+                           resources.ROUTER, events.PRECOMMIT_UPDATE)
+        registry.subscribe(inst._reconfigure_ha_resources,
+                           resources.ROUTER, events.AFTER_UPDATE)
         return inst
 
     def get_ha_network(self, context, tenant_id):
@@ -433,15 +437,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     context, router_id,
                     {'status': n_const.ROUTER_STATUS_ERROR})['status']
 
-    @db_api.retry_if_session_inactive()
-    def _update_router_db(self, context, router_id, data):
-        router_db = self._get_router(context, router_id)
+    def _validate_migration(self, resource, event, trigger, context,
+                            router_id, router, router_db, old_router,
+                            **kwargs):
+        """Event handler on precommit update to validate migration."""
 
-        original_distributed_state = router_db.extra_attributes.distributed
-        original_ha_state = router_db.extra_attributes.ha
+        original_distributed_state = old_router['distributed']
+        original_ha_state = old_router['ha']
 
-        requested_ha_state = data.pop('ha', None)
-        requested_distributed_state = data.get('distributed', None)
+        requested_ha_state = router.get('ha')
+        requested_distributed_state = router.get('distributed')
         # cvr to dvrha
         if not original_distributed_state and not original_ha_state:
             if (requested_ha_state is True and
@@ -468,27 +473,35 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         ha_changed = (requested_ha_state is not None and
                       requested_ha_state != original_ha_state)
-        if ha_changed:
-            if router_db.admin_state_up:
-                msg = _('Cannot change HA attribute of active routers. Please '
-                        'set router admin_state_up to False prior to upgrade.')
-                raise n_exc.BadRequest(resource='router', msg=msg)
+        if not ha_changed:
+            return
 
-        with context.session.begin(subtransactions=True):
-            router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
-                context, router_id, data)
+        if router_db.admin_state_up:
+            msg = _('Cannot change HA attribute of active routers. Please '
+                    'set router admin_state_up to False prior to upgrade.')
+            raise n_exc.BadRequest(resource='router', msg=msg)
 
-            if not ha_changed:
-                return router_db
+        if requested_ha_state:
+            # This will throw HANotEnoughAvailableAgents if there aren't
+            # enough l3 agents to handle this router.
+            self.get_number_of_agents_for_scheduling(context)
+        else:
 
             ha_network = self.get_ha_network(context,
                                              router_db.tenant_id)
-            router_db.extra_attributes.ha = requested_ha_state
-            if not requested_ha_state:
-                self._delete_vr_id_allocation(
-                    context, ha_network, router_db.extra_attributes.ha_vr_id)
-                router_db.extra_attributes.ha_vr_id = None
+            self._delete_vr_id_allocation(
+                context, ha_network, router_db.extra_attributes.ha_vr_id)
+            router_db.extra_attributes.ha_vr_id = None
+        self.set_extra_attr_value(context, router_db, 'ha', requested_ha_state)
 
+    def _reconfigure_ha_resources(self, resource, event, trigger, context,
+                                  router_id, old_router, router, router_db,
+                                  **kwargs):
+        """Event handler to react to changes after HA flag has been updated."""
+        ha_changed = old_router['ha'] != router['ha']
+        if not ha_changed:
+            return
+        requested_ha_state = router['ha']
         # The HA attribute has changed. First unbind the router from agents
         # to force a proper re-scheduling to agents.
         # TODO(jschwarz): This will have to be more selective to get HA + DVR
@@ -499,8 +512,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             self._delete_ha_interfaces(context, router_db.id)
             # always attempt to cleanup the network as the router is
             # deleted. the core plugin will stop us if its in use
-            self.safe_delete_ha_network(context, ha_network,
-                                        router_db.tenant_id)
+            ha_network = self.get_ha_network(context,
+                                             router_db.tenant_id)
+            if ha_network:
+                self.safe_delete_ha_network(context, ha_network,
+                                            router_db.tenant_id)
             self._migrate_router_ports(
                 context, router_db,
                 old_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
@@ -508,8 +524,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         self.schedule_router(context, router_id)
         self._notify_router_updated(context, router_db.id)
-
-        return router_db
 
     def _delete_ha_network(self, context, net):
         admin_ctx = context.elevated()
