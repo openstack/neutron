@@ -599,8 +599,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 raise n_exc.BadRequest(resource='router', msg=msg)
         return port_id_specified, subnet_id_specified
 
-    def _check_router_port(self, context, port_id, device_id,
-                           router_id=None):
+    def _check_router_port(self, context, port_id, device_id):
         """Check that a port is available for an attachment to a router
 
         :param context: The context of the request.
@@ -608,11 +607,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         :param device_id: This method will check that device_id corresponds to
         the device_id of the port. It raises PortInUse exception if it
         doesn't.
-        :param router_id: This method will use this router_id to notify
-        third party code that an attachment is occurring on this router.
-        Third party code can prevent this attachment by raising an exception
-        that will be caught and reraised with a
-        RouterInterfaceAttachmentConflict exception.
         :returns: The port description returned by the core plugin.
         :raises: PortInUse if the device_id is not the same as the port's one.
         :raises: BadRequest if the port has no fixed IP.
@@ -625,9 +619,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if not port['fixed_ips']:
             msg = _('Router port must have at least one fixed IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
-        if router_id is not None:
-            self._notify_attaching_interface(context, router_id,
-                                             port['network_id'])
         return port
 
     def _validate_router_port_info(self, context, router, port_id):
@@ -667,14 +658,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 raise n_exc.BadRequest(resource='router', msg=msg)
             return port, subnets
 
-    def _notify_attaching_interface(self, context, router_id, network_id):
+    def _notify_attaching_interface(self, context, router_db, port,
+                                    interface_info):
         """Notify third party code that an interface is being attached to a
         router
 
         :param context: The context of the request.
-        :param router_id: The id of the router the interface is being
-        attached to.
-        :param network_id: The id of the network the port belongs to.
+        :param router_db: The router db object having an interface attached.
+        :param port: The port object being attached to the router.
+        :param interface_info: The requested interface attachment info passed
+        to add_router_interface.
         :raises: RouterInterfaceAttachmentConflict if a third party code
         prevent the port to be attach to the router.
         """
@@ -683,9 +676,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             events.BEFORE_CREATE,
                             self,
                             context=context,
-                            router_id=router_id,
-                            network_id=network_id
-                            )
+                            router_db=router_db,
+                            port=port,
+                            interface_info=interface_info,
+                            router_id=router_db.id,
+                            network_id=port['network_id'])
         except exceptions.CallbackFailure as e:
             # raise the underlying exception
             reason = (_('cannot perform router interface attachment '
@@ -715,8 +710,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _add_interface_by_subnet(self, context, router, subnet_id, owner):
         subnet = self._core_plugin.get_subnet(context, subnet_id)
-        self._notify_attaching_interface(context, router.id,
-                                         subnet['network_id'])
         if not subnet['gateway_ip']:
             msg = _('Subnet for router interface must have a gateway IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
@@ -773,13 +766,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         device_owner = self._get_device_owner(context, router_id)
 
         # This should be True unless adding an IPv6 prefix to an existing port
-        new_port = True
+        new_router_intf = True
         cleanup_port = False
 
         if add_by_port:
             port_id = interface_info['port_id']
-            port = self._check_router_port(context, port_id, '',
-                                           router_id=router_id)
+            port = self._check_router_port(context, port_id, '')
             revert_value = {'device_id': '',
                             'device_owner': port['device_owner']}
             with p_utils.update_port_on_error(
@@ -789,9 +781,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # add_by_subnet is not used here, because the validation logic of
         # _validate_interface_info ensures that either of add_by_* is True.
         else:
-            port, subnets, new_port = self._add_interface_by_subnet(
+            port, subnets, new_router_intf = self._add_interface_by_subnet(
                     context, router, interface_info['subnet_id'], device_owner)
-            cleanup_port = new_port  # only cleanup port we created
+            cleanup_port = new_router_intf  # only cleanup port we created
             revert_value = {'device_id': '',
                             'device_owner': port['device_owner']}
 
@@ -802,8 +794,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             mgr = p_utils.update_port_on_error(
                 self._core_plugin, context, port['id'], revert_value)
 
-        if new_port:
+        if new_router_intf:
             with mgr:
+                self._notify_attaching_interface(context, router_db=router,
+                                                 port=port,
+                                                 interface_info=interface_info)
                 with context.session.begin(subtransactions=True):
                     router_port = l3_models.RouterPort(
                         port_id=port['id'],
@@ -823,7 +818,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         gw_network_id = None
         if router.gw_port:
             gw_network_id = router.gw_port.network_id
-            gw_ips = router.gw_port.fixed_ips
+            gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
 
         registry.notify(resources.ROUTER_INTERFACE,
                         events.AFTER_CREATE,
@@ -832,9 +827,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         network_id=gw_network_id,
                         gateway_ips=gw_ips,
                         cidrs=[x['cidr'] for x in subnets],
+                        subnets=subnets,
                         port_id=port['id'],
                         router_id=router_id,
                         port=port,
+                        new_interface=new_router_intf,
                         interface_info=interface_info)
 
         return self._make_router_interface_info(

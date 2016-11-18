@@ -1552,11 +1552,14 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         router = self._create_router()
         with self.network() as net, \
                 self.subnet(network=net) as subnet:
+            interface_info = {'subnet_id': subnet['subnet']['id']}
             self.l3_plugin.add_router_interface(
-                    self.context, router['id'],
-                    {'subnet_id': subnet['subnet']['id']})
+                    self.context, router['id'], interface_info)
             kwargs = {'context': self.context, 'router_id': router['id'],
-                      'network_id': net['network']['id']}
+                      'network_id': net['network']['id'],
+                      'router_db': mock.ANY,
+                      'port': mock.ANY,
+                      'interface_info': interface_info}
             notif_handler_before.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
                 mock.ANY, **kwargs)
@@ -1566,6 +1569,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                             'interface_info': mock.ANY,
                             'network_id': None,
                             'port': mock.ANY,
+                            'new_interface': True,
+                            'subnets': mock.ANY,
                             'port_id': mock.ANY,
                             'router_id': router['id']}
             notif_handler_after.callback.assert_called_once_with(
@@ -1585,11 +1590,14 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         with self.network() as net, \
                 self.subnet(network=net) as subnet, \
                 self.port(subnet=subnet) as port:
+            interface_info = {'port_id': port['port']['id']}
             self.l3_plugin.add_router_interface(
-                    self.context, router['id'],
-                    {'port_id': port['port']['id']})
+                    self.context, router['id'], interface_info)
             kwargs = {'context': self.context, 'router_id': router['id'],
-                      'network_id': net['network']['id']}
+                      'network_id': net['network']['id'],
+                      'router_db': mock.ANY,
+                      'port': mock.ANY,
+                      'interface_info': interface_info}
             notif_handler_before.callback.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE,
                 mock.ANY, **kwargs)
@@ -1599,6 +1607,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                             'interface_info': mock.ANY,
                             'network_id': None,
                             'port': mock.ANY,
+                            'new_interface': True,
+                            'subnets': mock.ANY,
                             'port_id': port['port']['id'],
                             'router_id': router['id']}
             notif_handler_after.callback.assert_called_once_with(
