@@ -29,7 +29,7 @@ import sqlalchemy as sa
 from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
@@ -116,8 +116,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                            resources.ROUTER, events.PRECOMMIT_DELETE)
         registry.subscribe(inst._cleanup_ha_network,
                            resources.ROUTER, events.AFTER_DELETE)
-        registry.subscribe(inst._set_ha_flag,
+        registry.subscribe(inst._precommit_router_create,
                            resources.ROUTER, events.PRECOMMIT_CREATE)
+        registry.subscribe(inst._before_router_create,
+                           resources.ROUTER, events.BEFORE_CREATE)
+        registry.subscribe(inst._after_router_create,
+                           resources.ROUTER, events.AFTER_CREATE)
         return inst
 
     def get_ha_network(self, context, tenant_id):
@@ -379,35 +383,55 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return n_utils.create_object_with_dependency(
             creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)[1]
 
-    def _set_ha_flag(self, resource, event, trigger, context, router,
-                     router_db, **kwargs):
+    @db_api.retry_if_session_inactive()
+    def _before_router_create(self, resource, event, trigger,
+                              context, router, **kwargs):
+        """Event handler to create HA resources before router creation."""
+        if not self._is_ha(router):
+            return
+        # ensure the HA network exists before we start router creation so
+        # we can provide meaningful errors back to the user if no network
+        # can be allocated
+        if not self.get_ha_network(context, router['tenant_id']):
+            self._create_ha_network(context, router['tenant_id'])
+
+    def _precommit_router_create(self, resource, event, trigger, context,
+                                 router, router_db, **kwargs):
         """Event handler to set ha flag and status on creation."""
         is_ha = self._is_ha(router)
         router['ha'] = is_ha
         self.set_extra_attr_value(context, router_db, 'ha', is_ha)
+        if not is_ha:
+            return
+        # This will throw an exception if there aren't enough agents to
+        # handle this HA router
+        self.get_number_of_agents_for_scheduling(context)
+        ha_net = self.get_ha_network(context, router['tenant_id'])
+        if not ha_net:
+            # net was deleted, throw a retry to start over to create another
+            raise db_exc.RetryRequest(
+                    l3_ha.HANetworkConcurrentDeletion(
+                        tenant_id=router['tenant_id']))
 
-    @db_api.retry_if_session_inactive()
-    def create_router(self, context, router):
-        is_ha = self._is_ha(router['router'])
-        if is_ha:
-            # This will throw an exception if there aren't enough agents to
-            # handle this HA router
-            self.get_number_of_agents_for_scheduling(context)
-
-        router_dict = super(L3_HA_NAT_db_mixin,
-                            self).create_router(context, router)
-        if is_ha:
-            try:
-                router_db = self._get_router(context, router_dict['id'])
-
-                self.schedule_router(context, router_dict['id'])
-
-                router_dict['ha_vr_id'] = router_db.extra_attributes.ha_vr_id
-                self._notify_router_updated(context, router_db.id)
-            except Exception:
-                with excutils.save_and_reraise_exception():
-                    self.delete_router(context, router_dict['id'])
-        return router_dict
+    def _after_router_create(self, resource, event, trigger, context,
+                             router_id, router, router_db, **kwargs):
+        if not router['ha']:
+            return
+        try:
+            self.schedule_router(context, router_id)
+            router['ha_vr_id'] = router_db.extra_attributes.ha_vr_id
+            self._notify_router_updated(context, router_id)
+        except Exception as e:
+            with excutils.save_and_reraise_exception() as ctx:
+                if isinstance(e, l3_ha.NoVRIDAvailable):
+                    ctx.reraise = False
+                    LOG.warning(_LW("No more VRIDs for router: %s"), e)
+                else:
+                    LOG.exception(_LE("Failed to schedule HA router %s."),
+                                  router_id)
+                router['status'] = self._update_router_db(
+                    context, router_id,
+                    {'status': n_const.ROUTER_STATUS_ERROR})['status']
 
     @db_api.retry_if_session_inactive()
     def _update_router_db(self, context, router_id, data):
