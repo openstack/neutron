@@ -107,7 +107,8 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
         )
         return self._test_class(
             self.context,
-            **obj_test_base.remove_timestamps_from_fields(fields))
+            **obj_test_base.remove_timestamps_from_fields(
+                fields, self._test_class.fields))
 
     def test_vif_details(self):
         vif_details = {'item1': 'val1', 'item2': 'val2'}

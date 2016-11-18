@@ -11,12 +11,14 @@
 #    under the License.
 
 import abc
+import collections
 import copy
 import functools
 import itertools
 
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
+from oslo_serialization import jsonutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import six
@@ -438,6 +440,20 @@ class NeutronDbObject(NeutronObject):
         if isinstance(value, list):
             return [str(val) for val in value]
         return str(value)
+
+    @staticmethod
+    def filter_to_json_str(value):
+        def _dict_to_json(v):
+            return jsonutils.dumps(
+                collections.OrderedDict(
+                    sorted(v.items(), key=lambda t: t[0])
+                ) if v else {}
+            )
+
+        if isinstance(value, list):
+            return [_dict_to_json(val) for val in value]
+        v = _dict_to_json(value)
+        return v
 
     def _get_changed_persistent_fields(self):
         fields = self.obj_get_changes()

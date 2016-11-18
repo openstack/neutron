@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import datetime
 import os
 import platform
 import random
@@ -27,6 +28,7 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_utils import netutils
+from oslo_utils import timeutils
 import six
 import unittest2
 
@@ -209,6 +211,20 @@ def get_random_string_list(i=3, n=5):
 
 def get_random_boolean():
     return bool(random.getrandbits(1))
+
+
+def get_random_datetime(start_time=None,
+                        end_time=None):
+    start_time = start_time or timeutils.utcnow()
+    end_time = end_time or (start_time + datetime.timedelta(days=1))
+    # calculate the seconds difference between start and end time
+    delta_seconds_difference = int(timeutils.delta_seconds(start_time,
+                                                           end_time))
+    # get a random time_delta_seconds between 0 and
+    # delta_seconds_difference
+    random_time_delta = random.randint(0, delta_seconds_difference)
+    # generate a random datetime between start and end time
+    return start_time + datetime.timedelta(seconds=random_time_delta)
 
 
 def get_random_integer(range_begin=0, range_end=1000):

@@ -29,6 +29,7 @@ from neutron.tests import base as test_base
 object_data = {
     '_DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'AddressScope': '1.0-25560799db384acfe1549634959a82b4',
+    'Agent': '1.0-7a8de4fedc7d318e7b6883b9747d1adb',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'DistributedPortBinding': '1.0-4df058ae1aeae3ae1c15b8f6a4c692d9',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
