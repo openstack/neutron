@@ -1523,7 +1523,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 {'subnet_id': subnet['subnet']['id']})
 
             l3_notifier.router_removed_from_agent.assert_called_once_with(
-                self.context, router['id'], HOST1)
+                mock.ANY, router['id'], HOST1)
 
     def test_router_auto_scheduling(self):
         router = self._create_router()

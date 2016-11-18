@@ -228,6 +228,12 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         are bound
         """
         subnet_ids = self.get_subnet_ids_on_router(context, router_id)
+        hosts = self._get_dvr_hosts_for_subnets(context, subnet_ids)
+        LOG.debug('Hosts for router %s: %s', router_id, hosts)
+        return hosts
+
+    def _get_dvr_hosts_for_subnets(self, context, subnet_ids):
+        """Get a list of hosts with DVR servicable ports on subnet_ids."""
         Binding = ml2_models.PortBinding
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
@@ -242,7 +248,6 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                 n_utils.get_other_dvr_serviced_device_owners()))
         query = query.filter(owner_filter)
         hosts = [item[0] for item in query]
-        LOG.debug('Hosts for router %s: %s', router_id, hosts)
         return hosts
 
     def _get_dvr_subnet_ids_on_host_query(self, context, host):

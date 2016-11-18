@@ -873,12 +873,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port_type=owner
         )
         try:
-            port_db = qry.one().port
-        except exc.NoResultFound:
+            port = self._core_plugin.get_port(context, qry.one().port_id)
+        except (n_exc.PortNotFound, exc.NoResultFound):
             raise l3.RouterInterfaceNotFound(router_id=router_id,
                                              port_id=port_id)
         port_subnet_ids = [fixed_ip['subnet_id']
-                           for fixed_ip in port_db['fixed_ips']]
+                           for fixed_ip in port['fixed_ips']]
         if subnet_id and subnet_id not in port_subnet_ids:
             raise n_exc.SubnetMismatchForPort(
                 port_id=port_id, subnet_id=subnet_id)
@@ -887,9 +887,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         for port_subnet_id in port_subnet_ids:
             self._confirm_router_interface_not_in_use(
                     context, router_id, port_subnet_id)
-        self._core_plugin.delete_port(context, port_db['id'],
+        self._core_plugin.delete_port(context, port['id'],
                                       l3_port_check=False)
-        return (port_db, subnets)
+        return (port, subnets)
 
     def _remove_interface_by_subnet(self, context,
                                     router_id, subnet_id, owner):
@@ -907,6 +907,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             )
 
             for p in ports:
+                try:
+                    p = self._core_plugin.get_port(context, p.id)
+                except n_exc.PortNotFound:
+                    continue
                 port_subnets = [fip['subnet_id'] for fip in p['fixed_ips']]
                 if subnet_id in port_subnets and len(port_subnets) > 1:
                     # multiple prefix port - delete prefix from port
@@ -959,7 +963,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         cidrs=[x['cidr'] for x in subnets],
                         network_id=gw_network_id,
                         gateway_ips=gw_ips,
-                        port=port)
+                        port=port,
+                        router_id=router_id,
+                        interface_info=interface_info)
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], port['network_id'],
                                                 subnets[0]['id'],
