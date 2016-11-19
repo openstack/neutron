@@ -11,13 +11,10 @@
 #    under the License.
 
 from neutron_lib.db import model_base
-from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.api.v2 import attributes as attr
-
-LOG = logging.getLogger(__name__)
 
 
 class Flavor(model_base.BASEV2, model_base.HasId):
