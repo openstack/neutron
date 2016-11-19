@@ -16,11 +16,11 @@ import abc
 
 from neutron_lib.api import converters
 from neutron_lib.api import extensions
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as nexception
 import six
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
 from neutron.plugins.common import constants
 from neutron.services import service_base
@@ -49,15 +49,17 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': False,
-                 'validate': {'type:string': attr.NAME_MAX_LEN},
+                 'validate': {'type:string': db_const.NAME_FIELD_SIZE},
                  'is_visible': True, 'default': ''},
         'description': {'allow_post': True, 'allow_put': False,
                         'validate': {
-                            'type:string': attr.LONG_DESCRIPTION_MAX_LEN},
+                            'type:string':
+                                db_const.LONG_DESCRIPTION_FIELD_SIZE},
                         'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True},
         'shared': {'allow_post': True, 'allow_put': False,
                    'is_visible': True, 'default': False,
@@ -81,7 +83,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'validate': {'type:subnet': None}},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True}
     }
 }

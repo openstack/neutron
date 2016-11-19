@@ -17,13 +17,13 @@ import abc
 
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 import six
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 
 
@@ -55,10 +55,11 @@ RESOURCE_ATTRIBUTE_MAP = {
                   'is_visible': True},
         'configurations': {'allow_post': False, 'allow_put': False,
                            'is_visible': True},
-        'description': {'allow_post': False, 'allow_put': True,
-                        'is_visible': True,
-                        'validate': {
-                            'type:string_or_none': attr.DESCRIPTION_MAX_LEN}},
+        'description': {
+            'allow_post': False, 'allow_put': True,
+            'is_visible': True,
+            'validate': {
+                'type:string_or_none': db_const.DESCRIPTION_FIELD_SIZE}},
     },
 }
 

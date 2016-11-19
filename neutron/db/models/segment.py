@@ -14,12 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.api.v2 import attributes
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import segment
@@ -46,7 +45,7 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
     is_dynamic = sa.Column(sa.Boolean, default=False, nullable=False,
                            server_default=sa.sql.false())
     segment_index = sa.Column(sa.Integer, nullable=False, server_default='0')
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN),
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE),
                      nullable=True)
     network = orm.relationship(models_v2.Network,
                                backref=orm.backref("segments",

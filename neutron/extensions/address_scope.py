@@ -17,6 +17,7 @@ import abc
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as nexception
 from neutron_lib.plugins import directory
 import six
@@ -43,11 +44,12 @@ RESOURCE_ATTRIBUTE_MAP = {
         'name': {'allow_post': True,
                  'allow_put': True,
                  'default': '',
-                 'validate': {'type:string': attr.NAME_MAX_LEN},
+                 'validate': {'type:string': db_const.NAME_FIELD_SIZE},
                  'is_visible': True},
         'tenant_id': {'allow_post': True,
                       'allow_put': False,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'required_by_policy': True,
                       'is_visible': True},
         attr.SHARED: {'allow_post': True,

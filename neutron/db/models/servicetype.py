@@ -13,14 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 
-from neutron.api.v2 import attributes as attr
-
 
 class ProviderResourceAssociation(model_base.BASEV2):
-    provider_name = sa.Column(sa.String(attr.NAME_MAX_LEN),
+    provider_name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE),
                               nullable=False, primary_key=True)
     # should be manually deleted on resource deletion
     resource_id = sa.Column(sa.String(36), nullable=False, primary_key=True,

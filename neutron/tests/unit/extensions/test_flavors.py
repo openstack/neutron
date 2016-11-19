@@ -17,11 +17,11 @@ import copy
 import fixtures
 import mock
 
+from neutron_lib.db import constants as db_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron.api.v2 import attributes as attr
 from neutron import context
 from neutron.db import api as dbapi
 from neutron.db.models import flavor as flavor_models
@@ -42,8 +42,8 @@ _get_path = test_base._get_path
 _driver = ('neutron.tests.unit.extensions.test_flavors.'
            'DummyServiceDriver')
 _provider = 'dummy'
-_long_name = 'x' * (attr.NAME_MAX_LEN + 1)
-_long_description = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN + 1)
+_long_name = 'x' * (db_const.NAME_FIELD_SIZE + 1)
+_long_description = 'x' * (db_const.LONG_DESCRIPTION_FIELD_SIZE + 1)
 
 
 class FlavorExtensionTestCase(extension.ExtensionTestCase):

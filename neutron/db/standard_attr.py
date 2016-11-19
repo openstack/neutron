@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_utils import timeutils
 import sqlalchemy as sa
@@ -19,7 +20,6 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 
 from neutron._i18n import _LE
-from neutron.api.v2 import attributes as attr
 from neutron.db import sqlalchemytypes
 
 
@@ -51,7 +51,7 @@ class StandardAttribute(model_base.BASEV2):
     # before a 2-byte prefix is required. We shouldn't get anywhere near this
     # limit with our table names...
     resource_type = sa.Column(sa.String(255), nullable=False)
-    description = sa.Column(sa.String(attr.DESCRIPTION_MAX_LEN))
+    description = sa.Column(sa.String(db_const.DESCRIPTION_FIELD_SIZE))
 
     revision_number = sa.Column(
         sa.BigInteger().with_variant(sa.Integer(), 'sqlite'),

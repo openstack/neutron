@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
@@ -100,7 +101,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'tenant_id': {'allow_post': True, 'allow_put': False,
                           'required_by_policy': True,
                           'validate': {'type:string':
-                                       attributes.TENANT_ID_MAX_LEN},
+                                       db_const.PROJECT_ID_FIELD_SIZE},
                           'is_visible': True}
         }
     }

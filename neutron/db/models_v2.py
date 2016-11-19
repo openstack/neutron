@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -74,7 +75,7 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
            model_base.HasId, model_base.HasProject):
     """Represents a port on a Neutron v2 network."""
 
-    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
     fixed_ips = orm.relationship(IPAllocation, backref='port', lazy='joined',
@@ -85,8 +86,9 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
     mac_address = sa.Column(sa.String(32), nullable=False)
     admin_state_up = sa.Column(sa.Boolean(), nullable=False)
     status = sa.Column(sa.String(16), nullable=False)
-    device_id = sa.Column(sa.String(attr.DEVICE_ID_MAX_LEN), nullable=False)
-    device_owner = sa.Column(sa.String(attr.DEVICE_OWNER_MAX_LEN),
+    device_id = sa.Column(sa.String(db_const.DEVICE_ID_FIELD_SIZE),
+                          nullable=False)
+    device_owner = sa.Column(sa.String(db_const.DEVICE_OWNER_FIELD_SIZE),
                              nullable=False)
     ip_allocation = sa.Column(sa.String(16))
 
@@ -143,7 +145,7 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
     are used for the IP allocation.
     """
 
-    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     network_id = sa.Column(sa.String(36), sa.ForeignKey('networks.id'))
     # Added by the segments service plugin
     segment_id = sa.Column(sa.String(36), sa.ForeignKey('networksegments.id'))
@@ -211,7 +213,7 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
     """Represents a neutron subnet pool.
     """
 
-    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     ip_version = sa.Column(sa.Integer, nullable=False)
     default_prefixlen = sa.Column(sa.Integer, nullable=False)
     min_prefixlen = sa.Column(sa.Integer, nullable=False)
@@ -233,7 +235,7 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
               model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron network."""
 
-    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     ports = orm.relationship(Port, backref='networks')
     subnets = orm.relationship(
         Subnet, backref=orm.backref('networks', lazy='subquery'),

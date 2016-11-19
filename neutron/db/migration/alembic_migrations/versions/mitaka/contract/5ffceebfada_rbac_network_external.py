@@ -30,26 +30,24 @@ from alembic import op
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 
-from neutron.api.v2 import attributes
-
 
 # A simple model of the external network table with only the fields needed for
 # the migration.
 external = sa.Table('externalnetworks', sa.MetaData(),
                     sa.Column('network_id', sa.String(length=36),
                               nullable=False))
-TENANT_ID_MAX_LEN = attributes.TENANT_ID_MAX_LEN
+
 network = sa.Table('networks', sa.MetaData(),
                    sa.Column('id', sa.String(length=36), nullable=False),
-                   sa.Column('tenant_id', sa.String(length=TENANT_ID_MAX_LEN)))
+                   sa.Column('tenant_id', sa.String(length=255)))
 
 networkrbacs = sa.Table(
     'networkrbacs', sa.MetaData(),
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('object_id', sa.String(length=36), nullable=False),
-    sa.Column('tenant_id', sa.String(length=TENANT_ID_MAX_LEN), nullable=True,
+    sa.Column('tenant_id', sa.String(length=255), nullable=True,
               index=True),
-    sa.Column('target_tenant', sa.String(length=TENANT_ID_MAX_LEN),
+    sa.Column('target_tenant', sa.String(length=255),
               nullable=False),
     sa.Column('action', sa.String(length=255), nullable=False))
 

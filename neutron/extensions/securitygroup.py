@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as nexception
 from neutron_lib.plugins import directory
 from oslo_utils import netutils
@@ -27,7 +28,6 @@ import six
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import exceptions
 from neutron.conf import quota
@@ -224,13 +224,16 @@ RESOURCE_ATTRIBUTE_MAP = {
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
                  'is_visible': True, 'default': '',
-                 'validate': {'type:name_not_default': attr.NAME_MAX_LEN}},
+                 'validate': {
+                     'type:name_not_default': db_const.NAME_FIELD_SIZE}},
         'description': {'allow_post': True, 'allow_put': True,
-                        'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
+                        'validate': {
+                            'type:string': db_const.DESCRIPTION_FIELD_SIZE},
                         'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True},
         SECURITYGROUPRULES: {'allow_post': False, 'allow_put': False,
                              'is_visible': True},
@@ -265,7 +268,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                              'convert_to': convert_ip_prefix_to_cidr},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True},
     }
 }

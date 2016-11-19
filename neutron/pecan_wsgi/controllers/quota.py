@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -32,7 +33,7 @@ TENANT_ID_ATTR = {'tenant_id':
                   {'allow_post': False,
                    'allow_put': False,
                    'required_by_policy': True,
-                   'validate': {'type:string': attributes.TENANT_ID_MAX_LEN},
+                   'validate': {'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                    'is_visible': True}}
 
 

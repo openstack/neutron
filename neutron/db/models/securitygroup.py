@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.api.v2 import attributes
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import securitygroup as sg
@@ -26,7 +26,7 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
                     model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron security group."""
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     api_collections = [sg.SECURITYGROUPS]
 
 

@@ -10,12 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import sql
 
 from neutron.agent.common import utils
-from neutron.api.v2 import attributes
 
 
 class Agent(model_base.BASEV2, model_base.HasId):
@@ -44,7 +44,7 @@ class Agent(model_base.BASEV2, model_base.HasId):
     # updated when agents report
     heartbeat_timestamp = sa.Column(sa.DateTime, nullable=False)
     # description is note for admin user
-    description = sa.Column(sa.String(attributes.DESCRIPTION_MAX_LEN))
+    description = sa.Column(sa.String(db_const.DESCRIPTION_FIELD_SIZE))
     # configurations: a json dict string, I think 4095 is enough
     configurations = sa.Column(sa.String(4095), nullable=False)
     # resource_versions: json dict, 8191 allows for ~256 resource versions

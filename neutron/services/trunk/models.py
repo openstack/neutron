@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import sql
 
-from neutron.api.v2 import attributes
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.services.trunk import constants
@@ -28,7 +28,7 @@ class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
 
     admin_state_up = sa.Column(
         sa.Boolean(), nullable=False, server_default=sql.true())
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id',
                                       ondelete='CASCADE'),

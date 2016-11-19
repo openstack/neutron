@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -23,7 +24,6 @@ from sqlalchemy.ext import declarative
 from sqlalchemy.orm import validates
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes as attr
 
 
 ACCESS_SHARED = 'access_as_shared'
@@ -46,7 +46,7 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
     # the target_tenant is the subject that the policy will affect. this may
     # also be a wildcard '*' to indicate all tenants or it may be a role if
     # neutron gets better integration with keystone
-    target_tenant = sa.Column(sa.String(attr.TENANT_ID_MAX_LEN),
+    target_tenant = sa.Column(sa.String(db_const.PROJECT_ID_FIELD_SIZE),
                               nullable=False)
 
     action = sa.Column(sa.String(255), nullable=False)
