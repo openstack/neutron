@@ -77,6 +77,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                            resources.ROUTER, events.AFTER_UPDATE)
         registry.subscribe(n._create_snat_interfaces_after_change,
                            resources.ROUTER, events.AFTER_CREATE)
+        registry.subscribe(n._delete_dvr_internal_ports,
+                           resources.ROUTER_GATEWAY, events.AFTER_DELETE)
         return n
 
     def _create_router_db(self, context, router, tenant_id):
@@ -173,39 +175,33 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                       router_db['id'])
         return router_db
 
-    def _delete_current_gw_port(self, context, router_id, router, new_network):
+    def _delete_dvr_internal_ports(self, event, trigger, resource,
+                                   context, router, network_id, **kwargs):
         """
-        Overridden here to handle deletion of dvr internal ports.
+        GW port AFTER_DELETE event handler to cleanup DVR ports.
 
-        If there is a valid router update with gateway port to be deleted,
-        then go ahead and delete the csnat ports and the floatingip
+        This event is emitted when a router gateway port is being deleted,
+        so go ahead and delete the csnat ports and the floatingip
         agent gateway port associated with the dvr router.
         """
 
-        gw_ext_net_id = (
-            router.gw_port['network_id'] if router.gw_port else None)
-
-        super(L3_NAT_with_dvr_db_mixin,
-              self)._delete_current_gw_port(context, router_id,
-                                            router, new_network)
-        if (is_distributed_router(router) and
-            gw_ext_net_id != new_network and gw_ext_net_id is not None):
-            self.delete_csnat_router_interface_ports(
-                context.elevated(), router)
-            # NOTE(Swami): Delete the Floatingip agent gateway port
-            # on all hosts when it is the last gateway port in the
-            # given external network.
-            filters = {'network_id': [gw_ext_net_id],
-                       'device_owner': [const.DEVICE_OWNER_ROUTER_GW]}
-            ext_net_gw_ports = self._core_plugin.get_ports(
-                context.elevated(), filters)
-            if not ext_net_gw_ports:
-                self.delete_floatingip_agent_gateway_port(
-                    context.elevated(), None, gw_ext_net_id)
-                # Send the information to all the L3 Agent hosts
-                # to clean up the fip namespace as it is no longer required.
-                self.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
-                    context, gw_ext_net_id)
+        if not is_distributed_router(router):
+            return
+        self.delete_csnat_router_interface_ports(context.elevated(), router)
+        # NOTE(Swami): Delete the Floatingip agent gateway port
+        # on all hosts when it is the last gateway port in the
+        # given external network.
+        filters = {'network_id': [network_id],
+                   'device_owner': [const.DEVICE_OWNER_ROUTER_GW]}
+        ext_net_gw_ports = self._core_plugin.get_ports(
+            context.elevated(), filters)
+        if not ext_net_gw_ports:
+            self.delete_floatingip_agent_gateway_port(
+                context.elevated(), None, network_id)
+            # Send the information to all the L3 Agent hosts
+            # to clean up the fip namespace as it is no longer required.
+            self.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
+                context, network_id)
 
     def _get_device_owner(self, context, router=None):
         """Get device_owner for the specified router."""

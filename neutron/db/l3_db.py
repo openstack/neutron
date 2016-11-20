@@ -382,32 +382,36 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if self.router_gw_port_has_floating_ips(admin_ctx, router_id):
             raise l3.RouterExternalGatewayInUseByFloatingIp(
                 router_id=router_id, net_id=router.gw_port['network_id'])
-        gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
+        gw_ips = [x['ip_address'] for x in router.gw_port['fixed_ips']]
+        gw_port_id = router.gw_port['id']
+        self._delete_router_gw_port_db(context, router)
+        self._core_plugin.delete_port(
+            admin_ctx, gw_port_id, l3_port_check=False)
+        registry.notify(resources.ROUTER_GATEWAY,
+                        events.AFTER_DELETE, self,
+                        router_id=router_id,
+                        context=context,
+                        router=router,
+                        network_id=old_network_id,
+                        gateway_ips=gw_ips)
+
+    def _delete_router_gw_port_db(self, context, router):
         with context.session.begin(subtransactions=True):
             gw_port = router.gw_port
             router.gw_port = None
             context.session.add(router)
             context.session.expire(gw_port)
-            self._check_router_gw_port_in_use(context, router_id)
-        self._core_plugin.delete_port(
-            admin_ctx, gw_port['id'], l3_port_check=False)
-        registry.notify(resources.ROUTER_GATEWAY,
-                        events.AFTER_DELETE, self,
-                        router_id=router_id,
-                        network_id=old_network_id,
-                        gateway_ips=gw_ips)
-
-    def _check_router_gw_port_in_use(self, context, router_id):
-        try:
-            kwargs = {'context': context, 'router_id': router_id}
-            registry.notify(
-                resources.ROUTER_GATEWAY, events.BEFORE_DELETE, self, **kwargs)
-        except exceptions.CallbackFailure as e:
-            with excutils.save_and_reraise_exception():
-                # NOTE(armax): preserve old check's behavior
-                if len(e.errors) == 1:
-                    raise e.errors[0].error
-                raise l3.RouterInUse(router_id=router_id, reason=e)
+            try:
+                kwargs = {'context': context, 'router_id': router.id}
+                registry.notify(
+                    resources.ROUTER_GATEWAY, events.BEFORE_DELETE, self,
+                    **kwargs)
+            except exceptions.CallbackFailure as e:
+                with excutils.save_and_reraise_exception():
+                    # NOTE(armax): preserve old check's behavior
+                    if len(e.errors) == 1:
+                        raise e.errors[0].error
+                    raise l3.RouterInUse(router_id=router.id, reason=e)
 
     def _create_gw_port(self, context, router_id, router, new_network_id,
                         ext_ips):
