@@ -251,6 +251,9 @@ class DeclarativeObject(abc.ABCMeta):
 
         if (hasattr(cls, 'has_standard_attributes') and
                 cls.has_standard_attributes()):
+            setattr(cls, 'standard_attr_id',
+                    property(lambda x: x.db_obj.standard_attr_id
+                             if x.db_obj else None))
             standardattributes.add_standard_attributes(cls)
         # Instantiate extra filters per class
         cls.extra_filter_names = set(cls.extra_filter_names)

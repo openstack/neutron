@@ -1257,6 +1257,26 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             standard_attr.StandardAttribute,
             attrs)
 
+    def test_get_standard_attr_id(self):
+
+        if not self._test_class.has_standard_attributes():
+            self.skipTest(
+                    'No standard attributes found in test class %r'
+                    % self._test_class)
+
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+
+        model = self.context.session.query(obj.db_model).filter_by(
+            **obj._get_composite_keys()).one()
+
+        retrieved_obj = self._test_class.get_object(
+            self.context, **obj._get_composite_keys())
+
+        self.assertIsNotNone(retrieved_obj.standard_attr_id)
+        self.assertEqual(
+            model.standard_attr_id, retrieved_obj.standard_attr_id)
+
     def _make_object(self, fields):
         fields = get_non_synthetic_fields(self._test_class, fields)
         return self._test_class(self.context,
