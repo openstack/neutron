@@ -30,16 +30,18 @@ from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 
-class L3DvrTestCase(ml2_test_base.ML2TestFramework):
+class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework):
     def setUp(self):
-        super(L3DvrTestCase, self).setUp()
+        super(L3DvrTestCaseBase, self).setUp()
         self.l3_agent = helpers.register_l3_agent(
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, distributed=True, ha=False):
-        return (super(L3DvrTestCase, self).
+        return (super(L3DvrTestCaseBase, self).
                 _create_router(distributed=distributed, ha=ha))
 
+
+class L3DvrTestCase(L3DvrTestCaseBase):
     def test_update_router_db_centralized_to_distributed(self):
         router = self._create_router(distributed=False)
         # router needs to be in admin state down in order to be upgraded to DVR
@@ -1602,7 +1604,7 @@ class L3DvrTestCase(ml2_test_base.ML2TestFramework):
                 mock.ANY, **kwargs_after)
 
 
-class L3DvrTestCaseMigration(L3DvrTestCase):
+class L3DvrTestCaseMigration(L3DvrTestCaseBase):
     def test_update_router_db_centralized_to_distributed_with_ports(self):
         with self.subnet() as subnet1:
             kwargs = {'arg_list': (external_net.EXTERNAL,),
