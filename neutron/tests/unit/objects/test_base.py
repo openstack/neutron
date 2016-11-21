@@ -34,7 +34,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import model_base
 from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import l3 as l3_model
-from neutron.db.models import segment as segments_model
 from neutron import objects
 from neutron.objects import base
 from neutron.objects import common_types
@@ -1193,14 +1192,10 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         return port
 
     def _create_test_segment(self, network):
-        test_segment = {
-            'network_id': network['id'],
-            'network_type': 'vxlan',
-        }
-        # TODO(korzen): replace with segment.create() once we get an object
-        # implementation for segments
-        self._segment = obj_db_api.create_object(
-            self.context, segments_model.NetworkSegment, test_segment)
+        self._segment = net_obj.NetworkSegment(self.context,
+            network_id=network['id'],
+            network_type='vxlan')
+        self._segment.create()
 
     def _create_test_router(self):
         attrs = {
