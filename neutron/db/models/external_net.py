@@ -35,3 +35,4 @@ class ExternalNetwork(model_base.BASEV2):
         models_v2.Network,
         backref=orm.backref("external", lazy='joined',
                             uselist=False, cascade='delete'))
+    revises_on_change = ('network', )

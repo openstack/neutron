@@ -261,3 +261,54 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
                            body['revision_number'])
         # disassociate
         self.client.update_floatingip(b2['floatingip']['id'], port_id=None)
+
+    @test.idempotent_id('afb6486c-41b5-483e-a500-3c506f4deb49')
+    @test.requires_ext(extension="router", service="network")
+    @test.requires_ext(extension="dvr", service="network")
+    def test_update_router_extra_attributes_bumps_revision(self):
+        router = self.create_router(router_name='r1')
+        self.assertIn('revision_number', router)
+        rev1 = router['revision_number']
+        router = self.admin_client.update_router(
+            router['id'], admin_state_up=False)['router']
+        self.assertGreater(router['revision_number'], rev1)
+        self.admin_client.update_router(router['id'],
+                                        distributed=True)['router']
+        updated = self.client.show_router(router['id'])['router']
+        self.assertGreater(updated['revision_number'],
+                           router['revision_number'])
+
+    @test.idempotent_id('90743b00-b0e2-40e4-9524-1c884fe3ef23')
+    @test.requires_ext(extension="external-network", service="network")
+    @test.requires_ext(extension="auto-allocated-topology", service="network")
+    @test.requires_ext(extension="subnet_allocation", service="network")
+    @test.requires_ext(extension="router", service="network")
+    def test_update_external_network_bumps_revision(self):
+        net = self.create_network()
+        self.assertIn('revision_number', net)
+        updated = self.admin_client.update_network(net['id'],
+                                                   **{'router:external': True})
+        self.assertGreater(updated['network']['revision_number'],
+                           net['revision_number'])
+
+    @test.idempotent_id('5af6450a-0f61-49c3-b628-38db77c7b856')
+    @test.requires_ext(extension="qos", service="network")
+    def test_update_qos_port_policy_binding_bumps_revision(self):
+        policy = self.create_qos_policy(name='port-policy', shared=False)
+        port = self.create_port(self.create_network())
+        self.addCleanup(self.client.delete_port, port['id'])
+        updated = self.admin_client.update_port(
+            port['id'], qos_policy_id=policy['id'])
+        self.assertGreater(updated['port']['revision_number'],
+                           port['revision_number'])
+
+    @test.idempotent_id('817da343-c6e4-445c-9519-a621f124dfbe')
+    @test.requires_ext(extension="qos", service="network")
+    def test_update_qos_network_policy_binding_bumps_revision(self):
+        policy = self.create_qos_policy(name='network-policy', shared=False)
+        network = self.create_network()
+        self.addCleanup(self.client.delete_network, network['id'])
+        updated = self.admin_client.update_network(
+            network['id'], qos_policy_id=policy['id'])
+        self.assertGreater(updated['network']['revision_number'],
+                           network['revision_number'])
