@@ -91,7 +91,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
     scenarios = scenarios_iptables + scenarios_ovs_fw_interfaces
 
     ip_cidr = None
-    vlan_range = set(range(test_constants.VLAN_COUNT))
+    vlan_range = set(range(1, test_constants.VLAN_COUNT - 1))
 
     def setUp(self):
         security_config.register_securitygroups_opts()

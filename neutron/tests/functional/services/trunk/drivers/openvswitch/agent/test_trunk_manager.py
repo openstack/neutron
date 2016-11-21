@@ -30,7 +30,7 @@ from neutron.tests.functional import constants as test_constants
 
 LOG = logging.getLogger(__name__)
 
-VLAN_RANGE = set(range(test_constants.VLAN_COUNT))
+VLAN_RANGE = set(range(1, test_constants.VLAN_COUNT - 1))
 
 
 class FakeOVSDBException(Exception):
