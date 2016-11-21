@@ -35,6 +35,7 @@ class PortBindingPort(model_base.BASEV2):
         backref=orm.backref("portbinding",
                             lazy='joined', uselist=False,
                             cascade='delete'))
+    revises_on_change = ('port', )
 
 
 class PortBindingMixin(portbindings_base.PortBindingBaseMixin):

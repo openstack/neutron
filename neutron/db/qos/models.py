@@ -50,6 +50,7 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
         models_v2.Network,
         backref=sa.orm.backref("qos_policy_binding", uselist=False,
                                cascade='delete', lazy='joined'))
+    revises_on_change = ('network', )
 
 
 class QosPortPolicyBinding(model_base.BASEV2):
@@ -69,6 +70,7 @@ class QosPortPolicyBinding(model_base.BASEV2):
         models_v2.Port,
         backref=sa.orm.backref("qos_policy_binding", uselist=False,
                                cascade='delete', lazy='joined'))
+    revises_on_change = ('port', )
 
 
 class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):

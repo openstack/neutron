@@ -57,6 +57,7 @@ class SegmentHostMapping(model_base.BASEV2):
         db.NetworkSegment, backref=orm.backref("segment_host_mapping",
                                                lazy='joined',
                                                cascade='delete'))
+    revises_on_change = ('network_segment', )
 
 
 class SegmentDbMixin(common_db_mixin.CommonDbMixin):
