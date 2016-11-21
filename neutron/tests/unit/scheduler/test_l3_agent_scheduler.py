@@ -173,7 +173,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
                     self.scheduler,
                     '_get_routers_can_schedule') as mock_target_routers:
             mock_unscheduled_routers.return_value = mock.ANY
-            mock_target_routers.return_value = None
+            mock_target_routers.return_value = []
             result = self.scheduler.auto_schedule_routers(
                 self.plugin, mock.ANY, mock.ANY, mock.ANY)
         self.assertTrue(self.plugin.get_enabled_agent_on_host.called)
@@ -2127,6 +2127,11 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         expected_hosts = set(['az1-host1', 'az3-host1', 'az3-host2'])
         hosts = set([a['host'] for a in agents])
         self.assertEqual(expected_hosts, hosts)
+
+    def test__get_routers_can_schedule_with_no_target_routers(self):
+        result = self.plugin.router_scheduler._get_routers_can_schedule(
+            self.plugin, mock.ANY, [], mock.ANY)
+        self.assertEqual([], result)
 
 
 class L3DVRHAPlugin(db_v2.NeutronDbPluginV2,
