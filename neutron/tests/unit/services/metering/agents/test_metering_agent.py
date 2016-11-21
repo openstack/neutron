@@ -130,7 +130,6 @@ class TestMeteringOperations(base.BaseTestCase):
 
         now = timeutils.utcnow()
         time_fixture = self.useFixture(utils_fixture.TimeFixture(now))
-        self.addCleanup(timeutils.clear_time_override)
 
         self.agent.routers_updated(None, ROUTERS)
 
