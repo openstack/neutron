@@ -62,6 +62,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             sys.exit(1)
         LOG.info(_LI("Network VLAN ranges: %s"), self.network_vlan_ranges)
 
+    @db_api.retry_db_errors
     def _sync_vlan_allocations(self):
         session = db_api.get_session()
         with session.begin(subtransactions=True):
