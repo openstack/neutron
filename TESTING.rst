@@ -425,57 +425,9 @@ reasonable to exclude their unit tests from the check.
 Running Tests
 -------------
 
-There are three mechanisms for running tests: run_tests.sh, tox,
-and nose2. Before submitting a patch for review you should always
-ensure all test pass; a tox run is triggered by the jenkins gate
-executed on gerrit for each patch pushed for review.
-
-With these mechanisms you can either run the tests in the standard
-environment or create a virtual environment to run them in.
-
-By default after running all of the tests, any pep8 errors
-found in the tree will be reported.
-
-
-With `run_tests.sh`
-~~~~~~~~~~~~~~~~~~~
-
-You can use the `run_tests.sh` script in the root source directory to execute
-tests in a virtualenv::
-
-    ./run_tests -V
-
-
-With `nose2`
-~~~~~~~~~~~~
-
-You can use `nose2`_ to run individual tests, as well as use for debugging
-portions of your code::
-
-    source .venv/bin/activate
-    pip install nose2
-    nose2
-
-There are disadvantages to running nose2 - the tests are run sequentially, so
-race condition bugs will not be triggered, and the full test suite will
-take significantly longer than tox & testr. The upside is that testr has
-some rough edges when it comes to diagnosing errors and failures, and there is
-no easy way to set a breakpoint in the Neutron code, and enter an
-interactive debugging session while using testr.
-
-Note that nose2's predecessor, `nose`_, does not understand
-`load_tests protocol`_ introduced in Python 2.7. This limitation will result in
-errors being reported for modules that depend on load_tests
-(usually due to use of `testscenarios`_). nose, therefore, is not supported,
-while nose2 is.
-
-.. _nose2: http://nose2.readthedocs.org/en/latest/index.html
-.. _nose: https://nose.readthedocs.org/en/latest/index.html
-.. _load_tests protocol: https://docs.python.org/2/library/unittest.html#load-tests-protocol
-.. _testscenarios: https://pypi.python.org/pypi/testscenarios/
-
-With `tox`
-~~~~~~~~~~
+Before submitting a patch for review you should always ensure all tests pass; a
+tox run is triggered by the jenkins gate executed on gerrit for each patch
+pushed for review.
 
 Neutron, like other OpenStack projects, uses `tox`_ for managing the virtual
 environments for running test cases. It uses `Testr`_ for managing the running
@@ -588,12 +540,6 @@ the dot-separated path you want as an argument to it.
 
 For example, the following would run only a single test or test case::
 
-      $ ./run_tests.sh neutron.tests.unit.test_manager
-      $ ./run_tests.sh neutron.tests.unit.test_manager.NeutronManagerTestCase
-      $ ./run_tests.sh neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
-
-or::
-
       $ tox -e py27 neutron.tests.unit.test_manager
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
@@ -610,10 +556,6 @@ need better coverage.
 
 To get a grasp of the areas where tests are needed, you can check
 current unit tests coverage by running::
-
-    $ ./run_tests.sh -c
-
-or by running::
 
     $ tox -ecover
 
@@ -632,11 +574,7 @@ Debugging
 ---------
 
 By default, calls to pdb.set_trace() will be ignored when tests
-are run. For pdb statements to work, invoke run_tests as follows::
-
-    $ ./run_tests.sh -d [test module path]
-
-It's possible to debug tests in a tox environment::
+are run. For pdb statements to work, invoke tox as follows::
 
     $ tox -e venv -- python -m testtools.run [test module path]
 
@@ -662,19 +600,7 @@ overwritten during the next tox run.
 Post-mortem Debugging
 ~~~~~~~~~~~~~~~~~~~~~
 
-Setting OS_POST_MORTEM_DEBUGGER in the shell environment will ensure
-that the debugger .post_mortem() method will be invoked on test failure::
-
-    $ OS_POST_MORTEM_DEBUGGER=pdb ./run_tests.sh -d [test module path]
-
-Supported debuggers are pdb, and pudb. Pudb is full-screen, console-based
-visual debugger for Python which let you inspect variables, the stack,
-and breakpoints in a very visual way, keeping a high degree of compatibility
-with pdb::
-
-    $ ./.venv/bin/pip install pudb
-
-    $ OS_POST_MORTEM_DEBUGGER=pudb ./run_tests.sh -d [test module path]
+TBD: how to do this with tox.
 
 References
 ~~~~~~~~~~
