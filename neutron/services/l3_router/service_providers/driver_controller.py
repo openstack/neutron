@@ -133,7 +133,7 @@ class DriverController(object):
                       "%(new)s provider.", {'id': router_id, 'old': drv,
                                             'new': new_drv})
             _ensure_driver_supports_request(new_drv, router)
-            # TODO(kevinbenton): notify old driver explicity of driver change
+            # TODO(kevinbenton): notify old driver explicitly of driver change
             with context.session.begin(subtransactions=True):
                 self._stm.del_resource_associations(context, [router_id])
                 self._stm.add_resource_association(
