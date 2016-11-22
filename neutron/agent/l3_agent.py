@@ -24,19 +24,19 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import pd
 from neutron.agent.linux import ra
-from neutron.agent.metadata import config as metadata_config
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
+from neutron.conf.agent.metadata import config as meta_conf
 from neutron import service as neutron_service
 
 
 def register_opts(conf):
     l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
-    conf.register_opts(metadata_config.DRIVER_OPTS)
-    conf.register_opts(metadata_config.SHARED_OPTS)
     ha_conf.register_l3_agent_ha_opts(conf)
+    meta_conf.register_meta_conf_opts(meta_conf.DRIVER_OPTS, conf)
+    meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, conf)
     config.register_interface_driver_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     conf.register_opts(interface.OPTS)

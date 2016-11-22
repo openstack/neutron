@@ -17,6 +17,11 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 
+DEDUCE_MODE = 'deduce'
+USER_MODE = 'user'
+GROUP_MODE = 'group'
+ALL_MODE = 'all'
+SOCKET_MODES = (DEDUCE_MODE, USER_MODE, GROUP_MODE, ALL_MODE)
 
 SHARED_OPTS = [
     cfg.StrOpt('metadata_proxy_socket',
@@ -82,12 +87,6 @@ METADATA_PROXY_HANDLER_OPTS = [
                help=_("Private key of client certificate."))
 ]
 
-DEDUCE_MODE = 'deduce'
-USER_MODE = 'user'
-GROUP_MODE = 'group'
-ALL_MODE = 'all'
-SOCKET_MODES = (DEDUCE_MODE, USER_MODE, GROUP_MODE, ALL_MODE)
-
 
 UNIX_DOMAIN_METADATA_PROXY_OPTS = [
     cfg.StrOpt('metadata_proxy_socket_mode',
@@ -114,3 +113,7 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
                help=_('Number of backlog requests to configure the '
                       'metadata server socket with'))
 ]
+
+
+def register_meta_conf_opts(opts, cfg=cfg.CONF):
+    cfg.register_opts(opts)

@@ -22,12 +22,12 @@ import neutron.agent.common.config
 import neutron.agent.linux.interface
 import neutron.agent.linux.pd
 import neutron.agent.linux.ra
-import neutron.agent.metadata.config
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
+import neutron.conf.agent.metadata.config as meta_conf
 import neutron.conf.agent.ovs_conf
 import neutron.conf.cache_utils
 import neutron.conf.common
@@ -86,8 +86,8 @@ def list_agent_opts():
         ('DEFAULT',
          itertools.chain(
              neutron.agent.common.config.INTERFACE_DRIVER_OPTS,
-             neutron.agent.metadata.config.SHARED_OPTS,
-             neutron.agent.metadata.config.DRIVER_OPTS)
+             neutron.conf.agent.metadata.config.SHARED_OPTS,
+             neutron.conf.agent.metadata.config.DRIVER_OPTS)
          )
     ]
 
@@ -220,9 +220,9 @@ def list_metadata_agent_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.agent.metadata.config.SHARED_OPTS,
-             neutron.agent.metadata.config.METADATA_PROXY_HANDLER_OPTS,
-             neutron.agent.metadata.config.UNIX_DOMAIN_METADATA_PROXY_OPTS,
+             meta_conf.SHARED_OPTS,
+             meta_conf.METADATA_PROXY_HANDLER_OPTS,
+             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS,
              neutron.conf.cache_utils.cache_opts)
          ),
         ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS)
