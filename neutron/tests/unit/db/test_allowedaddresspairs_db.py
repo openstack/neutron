@@ -175,6 +175,10 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
                           'ip_address': '10.0.0.1222'}]
         self._create_port_with_address_pairs(address_pairs, 400)
 
+    def test_create_missing_mac_field(self):
+        address_pairs = [{'ip_address': '10.0.0.1'}]
+        self._create_port_with_address_pairs(address_pairs, 201)
+
     def test_create_missing_ip_field(self):
         address_pairs = [{'mac_address': '00:00:00:00:00:01'}]
         self._create_port_with_address_pairs(address_pairs, 400)
