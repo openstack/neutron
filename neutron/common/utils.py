@@ -80,18 +80,14 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
 
 
 @removals.remove(
-    message="Use parse_mappings from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use parse_mappings from neutron_lib.utils.helpers")
 def parse_mappings(mapping_list, unique_values=True, unique_keys=True):
     return helpers.parse_mappings(mapping_list, unique_values=unique_values,
                                   unique_keys=unique_keys)
 
 
 @removals.remove(
-    message="Use get_hostname from neutron_lib.utils.net",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use get_hostname from neutron_lib.utils.net")
 def get_hostname():
     return net.get_hostname()
 
@@ -101,49 +97,37 @@ def get_first_host_ip(net, ip_version):
 
 
 @removals.remove(
-    message="Use compare_elements from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use compare_elements from neutron_lib.utils.helpers")
 def compare_elements(a, b):
     return helpers.compare_elements(a, b)
 
 
 @removals.remove(
-    message="Use safe_sort_key from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use safe_sort_key from neutron_lib.utils.helpers")
 def safe_sort_key(value):
     return helpers.safe_sort_key(value)
 
 
 @removals.remove(
-    message="Use dict2str from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use dict2str from neutron_lib.utils.helpers")
 def dict2str(dic):
     return helpers.dict2str(dic)
 
 
 @removals.remove(
-    message="Use str2dict from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use str2dict from neutron_lib.utils.helpers")
 def str2dict(string):
     return helpers.str2dict(string)
 
 
 @removals.remove(
-    message="Use dict2tuple from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use dict2tuple from neutron_lib.utils.helpers")
 def dict2tuple(d):
     return helpers.dict2tuple(d)
 
 
 @removals.remove(
-    message="Use diff_list_of_dict from neutron_lib.utils.helpers",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use diff_list_of_dict from neutron_lib.utils.helpers")
 def diff_list_of_dict(old_list, new_list):
     return helpers.diff_list_of_dict(old_list, new_list)
 
@@ -182,9 +166,7 @@ def get_dhcp_agent_device_id(network_id, host):
 
 
 @removals.remove(
-    message="Use cpu_count from neutron_lib.utils.host",
-    version="Ocata",
-    removal_version="Pike")
+    message="Use cpu_count from neutron_lib.utils.host")
 def cpu_count():
     return host.cpu_count()
 
