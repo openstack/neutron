@@ -17,13 +17,14 @@ import operator
 from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
 
-import neutron.agent.agent_extensions_manager
 import neutron.agent.common.config
 import neutron.agent.linux.interface
 import neutron.agent.linux.pd
 import neutron.agent.linux.ra
 import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
+import neutron.common.cache_utils
+import neutron.conf.agent.agent_extensions_manager
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
@@ -185,7 +186,8 @@ def list_linux_bridge_opts():
         ('agent',
          itertools.chain(
              neutron.conf.plugins.ml2.drivers.agent.agent_opts,
-             neutron.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
+             neutron.conf.agent.agent_extensions_manager.
+             AGENT_EXT_MANAGER_OPTS)
          ),
         ('securitygroup',
          neutron.conf.agent.securitygroups_rpc.security_group_opts)
@@ -266,7 +268,8 @@ def list_ovs_opts():
          itertools.chain(
              neutron.plugins.ml2.drivers.openvswitch.agent.common.config.
              agent_opts,
-             neutron.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
+             neutron.conf.agent.agent_extensions_manager.
+             AGENT_EXT_MANAGER_OPTS)
          ),
         ('securitygroup',
          neutron.conf.agent.securitygroups_rpc.security_group_opts)
@@ -279,7 +282,7 @@ def list_sriov_agent_opts():
          neutron.plugins.ml2.drivers.mech_sriov.agent.common.config.
          sriov_nic_opts),
         ('agent',
-         neutron.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
+         neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
     ]
 
 

@@ -17,6 +17,7 @@ from oslo_log import log
 
 from neutron._i18n import _LE
 from neutron.agent import agent_extensions_manager as agent_ext_manager
+from neutron.conf.agent import agent_extensions_manager as agent_ext_mgr_config
 
 LOG = log.getLogger(__name__)
 
@@ -25,7 +26,7 @@ L3_AGENT_EXT_MANAGER_NAMESPACE = 'neutron.agent.l3.extensions'
 
 
 def register_opts(conf):
-    agent_ext_manager.register_opts(conf)
+    agent_ext_mgr_config.register_agent_ext_manager_opts(conf)
 
 
 class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
