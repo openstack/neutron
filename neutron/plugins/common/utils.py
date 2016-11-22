@@ -19,7 +19,6 @@ Common utilities and helper functions for OpenStack Networking Plugins.
 import contextlib
 import hashlib
 
-import debtcollector
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -30,9 +29,6 @@ import webob.exc
 
 from neutron._i18n import _, _LE, _LI
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import exceptions as n_exc
 from neutron.plugins.common import constants as p_const
 
@@ -171,21 +167,6 @@ def create_network(core_plugin, context, net, check_allow_post=True):
                                net.get('network', {}),
                                check_allow_post=check_allow_post)
     return core_plugin.create_network(context, {'network': net_data})
-
-
-@debtcollector.removals.remove(
-    message="This will be removed in the O cycle. "
-            "Please call update_network directly on the plugin."
-)
-def update_network(core_plugin, context, network_id, net_data):
-    network = core_plugin.update_network(
-        context, network_id, {resources.NETWORK: net_data})
-    # bundle the plugin API update with any other action required to
-    # reflect a state change on the network, e.g. DHCP notifications
-    registry.notify(resources.NETWORK, events.BEFORE_RESPONSE, core_plugin,
-                    context=context, data={resources.NETWORK: network},
-                    method_name='network.update.end')
-    return network
 
 
 def create_subnet(core_plugin, context, subnet, check_allow_post=True):
