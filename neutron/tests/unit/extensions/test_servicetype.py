@@ -36,6 +36,8 @@ from neutron.tests.unit import testlib_api
 _uuid = test_base._uuid
 _get_path = test_base._get_path
 
+PLUGIN_NAME = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
 
 class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
     def setUp(self):
@@ -43,6 +45,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
             provconf.NeutronModule, 'service_providers').start()
         super(ServiceTypeManagerTestCase, self).setUp()
         self.ctx = context.get_admin_context()
+        self.setup_coreplugin(PLUGIN_NAME)
 
     def _set_override(self, service_providers):
         self.service_providers.return_value = service_providers
