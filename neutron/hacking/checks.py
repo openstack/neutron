@@ -15,7 +15,6 @@
 import os
 import re
 
-from debtcollector import moves
 from hacking import core
 from neutron_lib.hacking import checks
 import pep8
@@ -214,18 +213,6 @@ def check_asserttruefalse(logical_line, filename):
             msg = ("N328: Use assertFalse(observed) instead of "
                    "assertEqual(False, observed)")
             yield (0, msg)
-
-
-check_asserttrue = flake8ext(
-    moves.moved_function(
-        check_asserttruefalse, 'check_asserttrue', __name__,
-        version='Newton', removal_version='Ocata'))
-
-
-check_assertfalse = flake8ext(
-    moves.moved_function(
-        check_asserttruefalse, 'check_assertfalse', __name__,
-        version='Newton', removal_version='Ocata'))
 
 
 @flake8ext
