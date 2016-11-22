@@ -17,7 +17,6 @@ import weakref
 
 from neutron_lib.db import utils as db_utils
 from oslo_db.sqlalchemy import utils as sa_utils
-from oslo_log import log as logging
 import six
 from sqlalchemy import and_
 from sqlalchemy.ext import associationproxy
@@ -26,8 +25,6 @@ from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
 from neutron.db import _utils as ndb_utils
-
-LOG = logging.getLogger(__name__)
 
 
 # TODO(HenryG): Remove these when available in neutron-lib
