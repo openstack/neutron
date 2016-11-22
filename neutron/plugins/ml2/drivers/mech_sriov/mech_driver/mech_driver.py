@@ -27,8 +27,6 @@ from neutron.services.qos import qos_consts
 
 
 LOG = log.getLogger(__name__)
-VIF_TYPE_HW_VEB = 'hw_veb'
-VIF_TYPE_HOSTDEV_PHY = 'hostdev_physical'
 FLAT_VLAN = 0
 
 
@@ -66,9 +64,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         self.supported_vnic_types = supported_vnic_types
         # NOTE(ndipanov): PF passthrough requires a different vif type
         self.vnic_type_for_vif_type = (
-            {vtype: VIF_TYPE_HOSTDEV_PHY
+            {vtype: portbindings.VIF_TYPE_HOSTDEV_PHY
                 if vtype == portbindings.VNIC_DIRECT_PHYSICAL
-                else VIF_TYPE_HW_VEB
+                else portbindings.VIF_TYPE_HW_VEB
              for vtype in self.supported_vnic_types})
         self.vif_details = vif_details
 
@@ -118,8 +116,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def try_to_bind_segment_for_agent(self, context, segment, agent):
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
                                         portbindings.VNIC_DIRECT)
-        vif_type = self.vnic_type_for_vif_type.get(vnic_type,
-                                                   VIF_TYPE_HW_VEB)
+        vif_type = self.vnic_type_for_vif_type.get(
+            vnic_type, portbindings.VIF_TYPE_HW_VEB)
+
         if not self.check_segment_for_agent(segment, agent):
             return False
         port_status = (constants.PORT_STATUS_ACTIVE if agent is None
