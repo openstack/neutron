@@ -200,8 +200,9 @@ class MemberActionController(ItemController):
         if not self._show_action:
             pecan.abort(405)
         neutron_context = request.context['neutron_context']
-        fields = request.context['query_params'].get('fields')
-        return self.plugin_shower(neutron_context, self.item, fields=fields)
+        # NOTE(blogan): The legacy wsgi code did not pass fields to the plugin
+        # on GET member actions.  To maintain compatibility, we'll do the same.
+        return self.plugin_shower(neutron_context, self.item)
 
     @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):

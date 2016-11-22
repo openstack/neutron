@@ -235,5 +235,5 @@ class FakePlugin(object):
     def put_meh(self, context, id_, data):
         return {'poo_yah': id_}
 
-    def boo_meh(self, context, id_, fields=None):
+    def boo_meh(self, context, id_):
         return {'boo_yah': id_}
