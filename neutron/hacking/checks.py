@@ -389,6 +389,19 @@ def check_python3_no_filter(logical_line):
         yield(0, msg)
 
 
+@flake8ext
+def check_assertIsNone(logical_line, filename):
+    """N345 - Enforce using assertIsNone."""
+    if 'neutron/tests/' in filename:
+        asse_eq_end_with_none_re = re.compile(r"assertEqual\(.*?,\s+None\)$")
+        asse_eq_start_with_none_re = re.compile(r"assertEqual\(None,")
+        res = (asse_eq_start_with_none_re.search(logical_line) or
+               asse_eq_end_with_none_re.search(logical_line))
+        if res:
+            yield (0, "N345: assertEqual(A, None) or assertEqual(None, A) "
+                   "sentences not allowed")
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -409,3 +422,4 @@ def factory(register):
     register(check_unittest_imports)
     register(check_no_imports_from_tests)
     register(check_python3_no_filter)
+    register(check_assertIsNone)

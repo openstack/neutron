@@ -327,6 +327,16 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLinePasses(f, "filter(function, range(0,10))")
         self.assertLinePasses(f, "lambda x, y: x+y")
 
+    def test_check_assertIsNone(self):
+        self.assertEqual(1, len(list(checks.check_assertIsNone(
+            "self.assertEqual(A, None)", "neutron/tests/test_assert.py"))))
+
+        self.assertEqual(1, len(list(checks.check_assertIsNone(
+            "self.assertEqual(None, A)", "neutron/tests/test_assert.py"))))
+
+        self.assertEqual(0, len(list(checks.check_assertIsNone(
+            "self.assertIsNone()", "neutron/tests/test_assert.py"))))
+
 
 # The following is borrowed from hacking/tests/test_doctest.py.
 # Tests defined in docstring is easier to understand
