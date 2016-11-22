@@ -114,7 +114,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
@@ -970,7 +969,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback',
                      '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
@@ -1242,7 +1240,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback',
                      '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
@@ -1483,7 +1480,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self.firewall.prepare_port_filter(port_prepare)
         self.firewall.update_port_filter(port_update)
         self.firewall.remove_port_filter(port_update)
-        chain_applies.assert_has_calls([mock.call.remove({}, {}),
+        chain_applies.assert_has_calls([
                                 mock.call.setup({'d1': port_prepare}, {}),
                                 mock.call.remove({'d1': port_prepare}, {}),
                                 mock.call.setup({'d1': port_update}, {}),
@@ -1497,8 +1494,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self.firewall.prepare_port_filter(port)
         with self.firewall.defer_apply():
             self.firewall.remove_port_filter(port)
-        chain_applies.assert_has_calls([mock.call.remove({}, {}),
-                                        mock.call.setup(device2port, {}),
+        chain_applies.assert_has_calls([mock.call.setup(device2port, {}),
                                         mock.call.remove(device2port, {}),
                                         mock.call.setup({}, {})])
 
@@ -1533,7 +1529,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
@@ -1618,7 +1613,6 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule(
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
-                 mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
