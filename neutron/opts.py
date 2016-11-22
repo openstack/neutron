@@ -35,6 +35,7 @@ import neutron.conf.extensions.allowedaddresspairs
 import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.driver_type
 import neutron.conf.plugins.ml2.drivers.linuxbridge
+import neutron.conf.plugins.ml2.drivers.macvtap
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.conf.services.metering_agent
@@ -52,7 +53,6 @@ import neutron.db.migration.cli
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
 import neutron.plugins.ml2.config
-import neutron.plugins.ml2.drivers.macvtap.agent.config
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
 import neutron.plugins.ml2.drivers.openvswitch.agent.common.config
 import neutron.wsgi
@@ -208,7 +208,7 @@ def list_l3_agent_opts():
 def list_macvtap_opts():
     return [
         ('macvtap',
-         neutron.plugins.ml2.drivers.macvtap.agent.config.macvtap_opts),
+         neutron.conf.plugins.ml2.drivers.macvtap.macvtap_opts),
         ('agent',
          neutron.conf.plugins.ml2.drivers.agent.agent_opts),
         ('securitygroup',
