@@ -200,6 +200,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # The patch_int_ofport and patch_tun_ofport are updated
             # here inside the call to setup_tunnel_br()
             self.setup_tunnel_br(ovs_conf.tunnel_bridge)
+            self.setup_tunnel_br_flows()
 
         self.init_extension_manager(self.connection)
 
@@ -217,9 +218,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             host,
             self.enable_tunneling,
             self.enable_distributed_routing)
-
-        if self.enable_tunneling:
-            self.setup_tunnel_br_flows()
 
         if self.enable_distributed_routing:
             self.dvr_agent.setup_dvr_flows()
