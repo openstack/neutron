@@ -205,15 +205,26 @@ class SecurityGroupAgentRpc(object):
             else:
                 self.refresh_firewall(devices)
 
-    def security_groups_provider_updated(self, devices_to_update):
+    def security_groups_provider_updated(self, port_ids_to_update):
         LOG.info(_LI("Provider rule updated"))
-        if self.defer_refresh_firewall:
-            if devices_to_update is None:
+        if port_ids_to_update is None:
+            # Update all devices
+            if self.defer_refresh_firewall:
                 self.global_refresh_firewall = True
             else:
-                self.devices_to_refilter |= set(devices_to_update)
+                self.refresh_firewall()
         else:
-            self.refresh_firewall(devices_to_update)
+            devices = []
+            for device in self.firewall.ports.values():
+                # neutron server will give port ids for update, However, L2
+                # agent will use device name in firewall. Here change port id
+                # to device name, so that the L2 agent can consume it
+                if device['id'] in port_ids_to_update:
+                    devices.append(device['device'])
+            if self.defer_refresh_firewall:
+                self.devices_to_refilter |= set(devices)
+            else:
+                self.refresh_firewall(devices)
 
     def remove_devices_filter(self, device_ids):
         if not device_ids:
