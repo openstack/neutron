@@ -176,6 +176,14 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     @periodic_task.periodic_task(run_immediately=True)
     def _sync_routers_task(self, context):
         routers = self._get_sync_data_metering(self.context)
+
+        routers_on_agent = set(self.routers.keys())
+        routers_on_server = set(
+            [router['id'] for router in routers] if routers else [])
+        for router_id in routers_on_agent - routers_on_server:
+            del self.routers[router_id]
+            self._invoke_driver(context, router_id, 'remove_router')
+
         if not routers:
             return
         self._update_routers(context, routers)

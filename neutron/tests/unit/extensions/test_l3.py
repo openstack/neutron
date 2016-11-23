@@ -335,7 +335,7 @@ class L3NatTestCaseMixin(object):
         data = {'router': {'tenant_id': tenant_id}}
         if name:
             data['router']['name'] = name
-        if admin_state_up:
+        if admin_state_up is not None:
             data['router']['admin_state_up'] = admin_state_up
         for arg in (('admin_state_up', 'tenant_id', 'availability_zone_hints')
                     + (arg_list or ())):

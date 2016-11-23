@@ -213,6 +213,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                 routers = label.routers
 
             for router in routers:
+                if not router['admin_state_up']:
+                    continue
                 router_dict = routers_dict.get(
                     router['id'],
                     self._make_router_dict(router))
@@ -246,15 +248,12 @@ class MeteringDbMixin(metering.MeteringPluginBase,
 
         return list(routers_dict.values())
 
-    def get_sync_data_metering(self, context, label_id=None, router_ids=None):
+    def get_sync_data_metering(self, context, label_id=None):
         labels = context.session.query(metering_models.MeteringLabel)
 
         if label_id:
             labels = labels.filter(
                 metering_models.MeteringLabel.id == label_id)
-        elif router_ids:
-            labels = (labels.join(metering_models.MeteringLabel.routers).
-                      filter(l3_models.Router.id.in_(router_ids)))
 
         return self._process_sync_metering_data(context, labels)
 
