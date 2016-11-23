@@ -18,7 +18,6 @@ import itertools
 
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as obj_exc
-from oslo_db.sqlalchemy import utils as db_utils
 from oslo_serialization import jsonutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
@@ -27,6 +26,7 @@ import six
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.db import api as db_api
+from neutron.db import model_base
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import exceptions as o_exc
@@ -240,8 +240,7 @@ class DeclarativeObject(abc.ABCMeta):
                 model_to_obj_translation = {
                     v: k for (k, v) in cls.fields_need_translation.items()}
 
-                keys = db_utils.get_unique_keys(model) or []
-                for model_unique_key in keys:
+                for model_unique_key in model_base.get_unique_keys(model):
                     obj_unique_key = [model_to_obj_translation.get(key, key)
                                       for key in model_unique_key]
                     if obj_field_names.issuperset(obj_unique_key):
