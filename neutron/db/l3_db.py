@@ -1194,34 +1194,36 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        with context.session.begin(subtransactions=True):
-            # This external port is never exposed to the tenant.
-            # it is used purely for internal system and admin use when
-            # managing floating IPs.
+        # This external port is never exposed to the tenant.
+        # it is used purely for internal system and admin use when
+        # managing floating IPs.
 
-            port = {'tenant_id': '',  # tenant intentionally not set
-                    'network_id': f_net_id,
-                    'admin_state_up': True,
-                    'device_id': fip_id,
-                    'device_owner': DEVICE_OWNER_FLOATINGIP,
-                    'status': lib_constants.PORT_STATUS_NOTAPPLICABLE,
-                    'name': ''}
-            if fip.get('floating_ip_address'):
-                port['fixed_ips'] = [
-                    {'ip_address': fip['floating_ip_address']}]
+        port = {'tenant_id': '',  # tenant intentionally not set
+                'network_id': f_net_id,
+                'admin_state_up': True,
+                'device_id': 'PENDING',
+                'device_owner': DEVICE_OWNER_FLOATINGIP,
+                'status': lib_constants.PORT_STATUS_NOTAPPLICABLE,
+                'name': ''}
+        if fip.get('floating_ip_address'):
+            port['fixed_ips'] = [
+                {'ip_address': fip['floating_ip_address']}]
 
-            if fip.get('subnet_id'):
-                port['fixed_ips'] = [
-                    {'subnet_id': fip['subnet_id']}]
+        if fip.get('subnet_id'):
+            port['fixed_ips'] = [
+                {'subnet_id': fip['subnet_id']}]
 
-            # 'status' in port dict could not be updated by default, use
-            # check_allow_post to stop the verification of system
-            # TODO(kevinbenton): move this out of transaction
-            setattr(context, 'GUARD_TRANSACTION', False)
-            external_port = p_utils.create_port(self._core_plugin,
-                                                context.elevated(),
-                                                {'port': port},
-                                                check_allow_post=False)
+        # 'status' in port dict could not be updated by default, use
+        # check_allow_post to stop the verification of system
+        external_port = p_utils.create_port(self._core_plugin,
+                                            context.elevated(),
+                                            {'port': port},
+                                            check_allow_post=False)
+
+        with p_utils.delete_port_on_error(self._core_plugin,
+                                          context.elevated(),
+                                          external_port['id']),\
+                context.session.begin(subtransactions=True):
             # Ensure IPv4 addresses are allocated on external port
             external_ipv4_ips = self._port_ipv4_fixed_ips(external_port)
             if not external_ipv4_ips:
@@ -1247,6 +1249,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
+
+        # TODO(kevinbenton): garbage collector that deletes ports that didn't
+        # make it this far to handle servers dying in this process
+        self._core_plugin.update_port(context.elevated(), external_port['id'],
+                                      {'port': {'device_id': fip_id}})
         registry.notify(resources.FLOATING_IP,
                         events.AFTER_UPDATE,
                         self._update_fip_assoc,

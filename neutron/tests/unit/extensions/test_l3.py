@@ -2531,7 +2531,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     None)
 
                 with mock.patch(plugin_class + '.create_port') as createport:
-                    createport.return_value = {'fixed_ips': []}
+                    createport.return_value = {'fixed_ips': [], 'id': '44'}
                     res = self._create_floatingip(
                         self.fmt, public_sub['subnet']['network_id'],
                         port_id=p['port']['id'])
