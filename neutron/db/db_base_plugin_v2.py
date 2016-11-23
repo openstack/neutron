@@ -613,29 +613,20 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     external_gateway_info}}
                 l3plugin.update_router(context, id, info)
 
-    def _create_subnet(self, context, subnet, subnetpool_id):
-        s = subnet['subnet']
-
-        with context.session.begin(subtransactions=True):
-            network = self._get_network(context, s["network_id"])
-            subnet, ipam_subnet = self.ipam.allocate_subnet(context,
-                                                            network,
-                                                            s,
-                                                            subnetpool_id)
+    @db_api.retry_if_session_inactive()
+    def _create_subnet_postcommit(self, context, result, network, ipam_subnet):
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
                                          network,
-                                         subnet)
+                                         result)
         # If this subnet supports auto-addressing, then update any
         # internal ports on the network with addresses for this subnet.
-        if ipv6_utils.is_auto_address_subnet(subnet):
+        if ipv6_utils.is_auto_address_subnet(result):
             updated_ports = self.ipam.add_auto_addrs_on_network_ports(context,
-                                subnet, ipam_subnet)
+                                result, ipam_subnet)
             for port_id in updated_ports:
                 port_info = {'port': {'id': port_id}}
                 self.update_port(context, port_id, port_info)
-
-        return self._make_subnet_dict(subnet, context=context)
 
     def _get_subnetpool_id(self, context, subnet):
         """Return the subnetpool id for this request
@@ -682,7 +673,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     @db_api.retry_if_session_inactive()
     def create_subnet(self, context, subnet):
+        result, net, ipam_sub = self._create_subnet_precommit(context, subnet)
+        self._create_subnet_postcommit(context, result, net, ipam_sub)
+        return result
 
+    def _create_subnet_precommit(self, context, subnet):
+        """Creates subnet in DB, returns result, network, and ipam_subnet."""
         s = subnet['subnet']
         cidr = s.get('cidr', constants.ATTR_NOT_SPECIFIED)
         prefixlen = s.get('prefixlen', constants.ATTR_NOT_SPECIFIED)
@@ -723,7 +719,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 raise exc.BadRequest(resource='subnets', msg=msg)
             self._validate_subnet(context, s)
 
-        return self._create_subnet(context, subnet, subnetpool_id)
+        with context.session.begin(subtransactions=True):
+            network = self._get_network(context,
+                                        subnet['subnet']['network_id'])
+            subnet, ipam_subnet = self.ipam.allocate_subnet(context,
+                                                            network,
+                                                            subnet['subnet'],
+                                                            subnetpool_id)
+        result = self._make_subnet_dict(subnet, context=context)
+        return result, network, ipam_subnet
 
     def _update_allocation_pools(self, subnet):
         """Gets new allocation pools and formats them correctly"""
