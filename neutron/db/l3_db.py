@@ -201,8 +201,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         router_db, _unused = common_db_mixin.safe_creation(context, create,
                                                            delete, update_gw,
                                                            transaction=False)
-
-        return self._make_router_dict(router_db)
+        new_router = self._make_router_dict(router_db)
+        registry.notify(resources.ROUTER, events.AFTER_CREATE, self,
+                        context=context, router_id=router_db.id,
+                        router=new_router, request_attrs=r,
+                        router_db=router_db)
+        return new_router
 
     def _update_router_db(self, context, router_id, data):
         """Update the DB object."""
@@ -221,6 +225,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def update_router(self, context, id, router):
         r = router['router']
         gw_info = r.pop(EXTERNAL_GW_INFO, lib_constants.ATTR_NOT_SPECIFIED)
+        original = self.get_router(context, id)
         # check whether router needs and can be rescheduled to the proper
         # l3 agent (associated with given external network);
         # do check before update in DB as an exception will be raised
@@ -239,7 +244,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             l3_plugin = manager.NeutronManager.get_service_plugins().get(
                 constants.L3_ROUTER_NAT)
             l3_plugin.reschedule_router(context, id, candidates)
-        return self._make_router_dict(router_db)
+        updated = self._make_router_dict(router_db)
+        registry.notify(resources.ROUTER, events.AFTER_UPDATE, self,
+                        context=context, router_id=id, old_router=original,
+                        router=updated, request_attrs=r, router_db=router_db)
+        return updated
 
     def _check_router_needs_rescheduling(self, context, router_id, gw_info):
         """Checks whether router's l3 agent can handle the given network

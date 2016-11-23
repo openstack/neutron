@@ -74,6 +74,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         n = super(L3_NAT_with_dvr_db_mixin, cls).__new__(cls, *args, **kwargs)
         registry.subscribe(n._create_dvr_floating_gw_port,
                            resources.FLOATING_IP, events.AFTER_UPDATE)
+        registry.subscribe(n._create_snat_interfaces_after_change,
+                           resources.ROUTER, events.AFTER_UPDATE)
+        registry.subscribe(n._create_snat_interfaces_after_change,
+                           resources.ROUTER, events.AFTER_CREATE)
         return n
 
     def _create_router_db(self, context, router, tenant_id):
@@ -141,23 +145,34 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self._update_distributed_attr(
                 context, router_id, router_db, data)
             if migrating_to_distributed:
-                if router_db['gw_port_id']:
-                    # If the Legacy router is getting migrated to a DVR
-                    # router, make sure to create corresponding
-                    # snat interface ports that are to be consumed by
-                    # the Service Node.
-                    # TODO(haleyb): move this out of transaction
-                    setattr(context, 'GUARD_TRANSACTION', False)
-                    if not self._create_snat_intf_ports_if_not_exists(
-                        context.elevated(), router_db):
-                        LOG.debug("SNAT interface ports not created: %s",
-                                  router_db['id'])
                 cur_agents = self.list_l3_agents_hosting_router(
                     context, router_db['id'])['agents']
                 for agent in cur_agents:
                     self._unbind_router(context, router_db['id'],
                                         agent['id'])
             return router_db
+
+    def _create_snat_interfaces_after_change(self, resource, event, trigger,
+                                             context, router_id, router,
+                                             request_attrs, router_db,
+                                             **kwargs):
+        if not router.get(l3.EXTERNAL_GW_INFO) or not router['distributed']:
+            # we don't care if it's not distributed or not attached to an
+            # external network
+            return
+        if event == events.AFTER_UPDATE:
+            # after an update, we check to see if it was a migration or a
+            # gateway attachment
+            old_router = kwargs['old_router']
+            do_create = (not old_router['distributed'] or
+                         not old_router.get(l3.EXTERNAL_GW_INFO))
+            if not do_create:
+                return
+        if not self._create_snat_intf_ports_if_not_exists(
+            context.elevated(), router_db):
+            LOG.debug("SNAT interface ports not created: %s",
+                      router_db['id'])
+        return router_db
 
     def _delete_current_gw_port(self, context, router_id, router, new_network):
         """
@@ -192,19 +207,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 # to clean up the fip namespace as it is no longer required.
                 self.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                     context, gw_ext_net_id)
-
-    def _create_gw_port(self, context, router_id, router, new_network,
-                        ext_ips):
-        super(L3_NAT_with_dvr_db_mixin,
-              self)._create_gw_port(context, router_id, router, new_network,
-                                    ext_ips)
-        # Make sure that the gateway port exists before creating the
-        # snat interface ports for distributed router.
-        if router.extra_attributes.distributed and router.gw_port:
-            snat_p_list = self._create_snat_intf_ports_if_not_exists(
-                context.elevated(), router)
-            if not snat_p_list:
-                LOG.debug("SNAT interface ports not created: %s", snat_p_list)
 
     def _get_device_owner(self, context, router=None):
         """Get device_owner for the specified router."""

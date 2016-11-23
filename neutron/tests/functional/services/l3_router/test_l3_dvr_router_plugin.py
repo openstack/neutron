@@ -22,6 +22,7 @@ from neutron.callbacks import resources
 from neutron.common import topics
 from neutron import context
 from neutron.extensions import external_net
+from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
@@ -91,9 +92,10 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.l3_plugin.add_router_interface(
                     self.context, router['id'],
                     {'subnet_id': subnet2['subnet']['id']})
-                self.l3_plugin._update_router_gw_info(
+                gw_info = {'network_id': ext_net['network']['id']}
+                self.l3_plugin.update_router(
                     self.context, router['id'],
-                    {'network_id': ext_net['network']['id']})
+                    {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
 
                 snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
                     self.context, [router['id']])
