@@ -141,7 +141,7 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         self.assertIsNone(tos_mark)
 
     def wait_until_dscp_marking_rule_applied(self, port, dscp_mark):
-        l2_extensions.wait_until_dscp_marking_rule_applied(
+        l2_extensions.wait_until_dscp_marking_rule_applied_ovs(
             self.agent.int_br, port['vif_name'], dscp_mark)
 
     def _create_port_with_qos(self):

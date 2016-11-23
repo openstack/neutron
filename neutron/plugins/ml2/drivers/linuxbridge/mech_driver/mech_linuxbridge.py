@@ -32,7 +32,8 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     network.
     """
 
-    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT]
+    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                                qos_consts.RULE_TYPE_DSCP_MARKING]
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
