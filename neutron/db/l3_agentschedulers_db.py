@@ -169,16 +169,17 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         router_id = router['id']
         agent_id = agent['id']
         if self.router_scheduler:
+            plugin = manager.NeutronManager.get_service_plugins().get(
+                service_constants.L3_ROUTER_NAT)
             try:
                 if router.get('ha'):
-                    plugin = manager.NeutronManager.get_service_plugins().get(
-                        service_constants.L3_ROUTER_NAT)
                     self.router_scheduler.create_ha_port_and_bind(
                         plugin, context, router['id'],
-                        router['tenant_id'], agent, is_manual_scheduling=True)
+                        router['tenant_id'], agent,
+                        is_manual_scheduling=True)
                 else:
                     self.router_scheduler.bind_router(
-                        context, router_id, agent)
+                        plugin, context, router_id, agent.id)
             except db_exc.DBError:
                 raise l3agentscheduler.RouterSchedulingFailed(
                     router_id=router_id, agent_id=agent_id)
