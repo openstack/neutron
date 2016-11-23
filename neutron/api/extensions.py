@@ -458,12 +458,6 @@ class ExtensionManager(object):
         """Returns a list of PecanResourceExtension objects."""
         resources = []
         for ext in self.extensions.values():
-            # TODO(blogan): this is being called because there are side effects
-            # that the get_resources method does, like registering plural
-            # mappings and quotas. The side effects that get_resources does
-            # should probably be moved to another extension method, but that
-            # should be done some other time.
-            ext.get_resources()
             resources.extend(ext.get_pecan_resources())
         return resources
 
