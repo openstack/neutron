@@ -320,11 +320,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def _snat_redirect_modify(self, gateway, sn_port, sn_int, is_add):
         """Adds or removes rules and routes for SNAT redirection."""
+        cmd = ['net.ipv4.conf.%s.send_redirects=0' % sn_int]
         try:
             ns_ipr = ip_lib.IPRule(namespace=self.ns_name)
             ns_ipd = ip_lib.IPDevice(sn_int, namespace=self.ns_name)
-            if is_add:
-                ns_ipwrapr = ip_lib.IPWrapper(namespace=self.ns_name)
             for port_fixed_ip in sn_port['fixed_ips']:
                 # Iterate and find the gateway IP address matching
                 # the IP version
@@ -342,9 +341,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                             ns_ipr.rule.add(ip=sn_port_cidr,
                                             table=snat_idx,
                                             priority=snat_idx)
-                            ns_ipwrapr.netns.execute(
-                                ['sysctl', '-w',
-                                 'net.ipv4.conf.%s.send_redirects=0' % sn_int])
+                            ip_lib.sysctl(cmd, namespace=self.ns_name)
                         else:
                             self._delete_gateway_device_if_exists(ns_ipd,
                                                                   gw_ip_addr,
@@ -426,9 +423,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         # TODO(Carl) Refactor external_gateway_added/updated/removed to use
         # super class implementation where possible.  Looks like preserve_ips,
         # and ns_name are the key differences.
-        ip_wrapr = ip_lib.IPWrapper(namespace=self.ns_name)
-        ip_wrapr.netns.execute(['sysctl', '-w',
-                               'net.ipv4.conf.all.send_redirects=0'])
+        cmd = ['net.ipv4.conf.all.send_redirects=0']
+        ip_lib.sysctl(cmd, namespace=self.ns_name)
         for p in self.internal_ports:
             gateway = self.get_snat_port_for_internal_port(p)
             id_name = self.get_internal_device_name(p['id'])

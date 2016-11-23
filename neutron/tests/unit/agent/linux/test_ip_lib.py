@@ -1434,6 +1434,5 @@ class TestAddNamespaceToCmd(base.BaseTestCase):
 class TestSetIpNonlocalBindForHaNamespace(base.BaseTestCase):
     def test_setting_failure(self):
         """Make sure message is formatted correctly."""
-        with mock.patch.object(
-                ip_lib, 'set_ip_nonlocal_bind', side_effect=RuntimeError):
+        with mock.patch.object(ip_lib, 'set_ip_nonlocal_bind', return_value=1):
             ip_lib.set_ip_nonlocal_bind_for_namespace('foo')

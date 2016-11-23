@@ -216,8 +216,8 @@ class LinuxInterfaceDriver(object):
     def configure_ipv6_ra(namespace, dev_name):
         """Configure acceptance of IPv6 route advertisements on an intf."""
         # Learn the default router's IP address via RAs
-        ip_lib.IPWrapper(namespace=namespace).netns.execute(
-            ['sysctl', '-w', 'net.ipv6.conf.%s.accept_ra=2' % dev_name])
+        cmd = ['net.ipv6.conf.%s.accept_ra=2' % dev_name]
+        ip_lib.sysctl(cmd, namespace=namespace)
 
     @abc.abstractmethod
     def plug_new(self, network_id, port_id, device_name, mac_address,

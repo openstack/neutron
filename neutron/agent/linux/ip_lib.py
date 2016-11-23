@@ -329,36 +329,10 @@ class IPDevice(SubProcessBase):
             LOG.exception(_LE("Failed deleting egress connection state of"
                               " floatingip %s"), ip_str)
 
-    def _sysctl(self, cmd):
-        """execute() doesn't return the exit status of the command it runs,
-        it returns stdout and stderr. Setting check_exit_code=True will cause
-        it to raise a RuntimeError if the exit status of the command is
-        non-zero, which in sysctl's case is an error. So we're normalizing
-        that into zero (success) and one (failure) here to mimic what
-        "echo $?" in a shell would be.
-
-        This is all because sysctl is too verbose and prints the value you
-        just set on success, unlike most other utilities that print nothing.
-
-        execute() will have dumped a message to the logs with the actual
-        output on failure, so it's not lost, and we don't need to print it
-        here.
-        """
-        cmd = ['sysctl', '-w'] + cmd
-        ip_wrapper = IPWrapper(self.namespace)
-        try:
-            ip_wrapper.netns.execute(cmd, run_as_root=True,
-                                     check_exit_code=True)
-        except RuntimeError:
-            LOG.exception(_LE("Failed running %s"), cmd)
-            return 1
-
-        return 0
-
     def disable_ipv6(self):
         sysctl_name = re.sub(r'\.', '/', self.name)
-        cmd = 'net.ipv6.conf.%s.disable_ipv6=1' % sysctl_name
-        return self._sysctl([cmd])
+        cmd = ['net.ipv6.conf.%s.disable_ipv6=1' % sysctl_name]
+        return sysctl(cmd, namespace=self.namespace)
 
     @property
     def name(self):
@@ -1085,6 +1059,43 @@ def send_ip_addr_adv_notif(
         eventlet.spawn_n(arping)
 
 
+def sysctl(cmd, namespace=None, log_fail_as_error=True):
+    """Run sysctl command 'cmd'
+
+    @param cmd: a list containing the sysctl command to run
+    @param namespace: network namespace to run command in
+    @param log_fail_as_error: failure logged as LOG.error
+
+    execute() doesn't return the exit status of the command it runs,
+    it returns stdout and stderr. Setting check_exit_code=True will cause
+    it to raise a RuntimeError if the exit status of the command is
+    non-zero, which in sysctl's case is an error. So we're normalizing
+    that into zero (success) and one (failure) here to mimic what
+    "echo $?" in a shell would be.
+
+    This is all because sysctl is too verbose and prints the value you
+    just set on success, unlike most other utilities that print nothing.
+
+    execute() will have dumped a message to the logs with the actual
+    output on failure, so it's not lost, and we don't need to print it
+    here.
+    """
+    cmd = ['sysctl', '-w'] + cmd
+    ip_wrapper = IPWrapper(namespace=namespace)
+    try:
+        ip_wrapper.netns.execute(cmd, run_as_root=True,
+                                 log_fail_as_error=log_fail_as_error)
+    except RuntimeError as rte:
+        LOG.warning(
+            _LW("Setting %(cmd)s in namespace %(ns)s failed: %(err)s."),
+            {'cmd': cmd,
+             'ns': namespace,
+             'err': rte})
+        return 1
+
+    return 0
+
+
 def add_namespace_to_cmd(cmd, namespace=None):
     """Add an optional namespace to the command."""
 
@@ -1108,25 +1119,20 @@ def get_ip_nonlocal_bind(namespace=None):
 
 def set_ip_nonlocal_bind(value, namespace=None, log_fail_as_error=True):
     """Set sysctl knob of ip_nonlocal_bind to given value."""
-    cmd = ['sysctl', '-w', '%s=%d' % (IP_NONLOCAL_BIND, value)]
-    ip_wrapper = IPWrapper(namespace)
-    ip_wrapper.netns.execute(
-        cmd, run_as_root=True, log_fail_as_error=log_fail_as_error)
+    cmd = ['%s=%d' % (IP_NONLOCAL_BIND, value)]
+    return sysctl(cmd, namespace=namespace,
+                  log_fail_as_error=log_fail_as_error)
 
 
 def set_ip_nonlocal_bind_for_namespace(namespace):
     """Set ip_nonlocal_bind but don't raise exception on failure."""
-    try:
-        set_ip_nonlocal_bind(
-            value=0, namespace=namespace, log_fail_as_error=False)
-    except RuntimeError as rte:
+    failed = set_ip_nonlocal_bind(value=0, namespace=namespace,
+                                  log_fail_as_error=False)
+    if failed:
         LOG.warning(
-            _LW("Setting %(knob)s=0 in namespace %(ns)s failed: %(err)s. It "
-                "will not be set to 0 in the root namespace in order to not "
-                "break DVR, which requires this value be set to 1. This "
+            _LW("%s will not be set to 0 in the root namespace in order to "
+                "not break DVR, which requires this value be set to 1. This "
                 "may introduce a race between moving a floating IP to a "
                 "different network node, and the peer side getting a "
                 "populated ARP cache for a given floating IP address."),
-            {'knob': IP_NONLOCAL_BIND,
-             'ns': namespace,
-             'err': rte})
+            IP_NONLOCAL_BIND)
