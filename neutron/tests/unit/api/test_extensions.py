@@ -18,6 +18,7 @@ import copy
 
 import fixtures
 import mock
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -34,7 +35,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import config
 from neutron.common import exceptions
-from neutron import manager
 from neutron.plugins.common import constants
 from neutron import quota
 from neutron.tests import base
@@ -1004,7 +1004,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         # the global attribute map
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             extattr.EXTENDED_ATTRIBUTES_2_0)
-        self.agentscheduler_dbMinxin = manager.NeutronManager.get_plugin()
+        self.agentscheduler_dbMinxin = directory.get_plugin()
         self.addCleanup(self.restore_attribute_map)
 
         quota.QUOTAS._driver = None

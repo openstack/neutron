@@ -23,6 +23,7 @@ import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -56,7 +57,6 @@ from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.ipam import exceptions as ipam_exc
-from neutron import manager
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -93,7 +93,7 @@ def _fake_get_sorting_helper(self, request):
 # instead of directly using NeutronDbPluginV2TestCase
 def _get_create_db_method(resource):
     ml2_method = '_create_%s_db' % resource
-    if hasattr(manager.NeutronManager.get_plugin(), ml2_method):
+    if hasattr(directory.get_plugin(), ml2_method):
         return ml2_method
     else:
         return 'create_%s' % resource
@@ -120,7 +120,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             plugin = DB_PLUGIN_KLASS
 
         # Update the plugin
-        self.setup_coreplugin(plugin)
+        self.setup_coreplugin(plugin, load_plugins=False)
         cfg.CONF.set_override(
             'service_plugins',
             [test_lib.test_config.get(key, default)
@@ -138,7 +138,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self.port_create_status = 'ACTIVE'
 
         def _is_native_bulk_supported():
-            plugin_obj = manager.NeutronManager.get_plugin()
+            plugin_obj = directory.get_plugin()
             native_bulk_attr_name = ("_%s__native_bulk_support"
                                      % plugin_obj.__class__.__name__)
             return getattr(plugin_obj, native_bulk_attr_name, False)
@@ -148,9 +148,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         def _is_native_pagination_support():
             native_pagination_attr_name = (
                 "_%s__native_pagination_support" %
-                manager.NeutronManager.get_plugin().__class__.__name__)
+                directory.get_plugin().__class__.__name__)
             return (cfg.CONF.allow_pagination and
-                    getattr(manager.NeutronManager.get_plugin(),
+                    getattr(directory.get_plugin(),
                             native_pagination_attr_name, False))
 
         self._skip_native_pagination = not _is_native_pagination_support()
@@ -158,12 +158,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         def _is_native_sorting_support():
             native_sorting_attr_name = (
                 "_%s__native_sorting_support" %
-                manager.NeutronManager.get_plugin().__class__.__name__)
+                directory.get_plugin().__class__.__name__)
             return (cfg.CONF.allow_sorting and
-                    getattr(manager.NeutronManager.get_plugin(),
+                    getattr(directory.get_plugin(),
                             native_sorting_attr_name, False))
 
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         self._skip_native_sorting = not _is_native_sorting_support()
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -1083,7 +1083,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             tenid = p['port']['tenant_id']
             ctx = context.Context(user_id=None, tenant_id=tenid,
                                   is_admin=False)
-            pl = manager.NeutronManager.get_plugin()
+            pl = directory.get_plugin()
             count = pl.get_ports_count(ctx, filters={'tenant_id': [tenid]})
             self.assertEqual(4, count)
 
@@ -1098,9 +1098,9 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
 
         with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
-            orig = manager.NeutronManager.get_plugin().create_port
+            orig = directory.get_plugin().create_port
             method_to_patch = _get_create_db_method('port')
-            with mock.patch.object(manager.NeutronManager.get_plugin(),
+            with mock.patch.object(directory.get_plugin(),
                                    method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
@@ -1123,7 +1123,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk port create")
         ctx = context.get_admin_context()
         with self.network() as net:
-            plugin = manager.NeutronManager.get_plugin()
+            plugin = directory.get_plugin()
             orig = plugin.create_port
             method_to_patch = _get_create_db_method('port')
             with mock.patch.object(plugin, method_to_patch) as patched_plugin:
@@ -2443,7 +2443,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  res.status_int)
 
     def test_delete_ports_by_device_id(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         with self.subnet() as subnet:
             with self.port(subnet=subnet, device_id='owner1') as p1,\
@@ -2486,7 +2486,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                            expected_code=webob.exc.HTTPOk.code)
 
     def test_delete_ports_by_device_id_second_call_failure(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         self._test_delete_ports_by_device_id_second_call_failure(plugin)
 
     def _test_delete_ports_ignores_port_not_found(self, plugin):
@@ -2509,7 +2509,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                               "deleting some of the same ports.")
 
     def test_delete_ports_ignores_port_not_found(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         self._test_delete_ports_ignores_port_not_found(plugin)
 
 
@@ -2597,7 +2597,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 # must query db to see whether subnet's shared attribute
                 # has been updated or not
                 ctx = context.Context('', '', is_admin=True)
-                subnet_db = manager.NeutronManager.get_plugin().get_subnet(
+                subnet_db = directory.get_plugin().get_subnet(
                     ctx, subnet['subnet']['id'])
                 self.assertTrue(subnet_db['shared'])
 
@@ -2774,12 +2774,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 return False
             return real_has_attr(item, attr)
 
-        orig = manager.NeutronManager.get_plugin().create_network
+        orig = directory.get_plugin().create_network
         #ensures the API choose the emulation code path
         with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             method_to_patch = _get_create_db_method('network')
-            with mock.patch.object(manager.NeutronManager.get_plugin(),
+            with mock.patch.object(directory.get_plugin(),
                                    method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
@@ -2796,9 +2796,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_create_networks_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
-        orig = manager.NeutronManager.get_plugin().create_network
+        orig = directory.get_plugin().create_network
         method_to_patch = _get_create_db_method('network')
-        with mock.patch.object(manager.NeutronManager.get_plugin(),
+        with mock.patch.object(directory.get_plugin(),
                                method_to_patch) as patched_plugin:
 
             def side_effect(*args, **kwargs):
@@ -3249,9 +3249,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
         with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
-            orig = manager.NeutronManager.get_plugin().create_subnet
+            orig = directory.get_plugin().create_subnet
             method_to_patch = _get_create_db_method('subnet')
-            with mock.patch.object(manager.NeutronManager.get_plugin(),
+            with mock.patch.object(directory.get_plugin(),
                                    method_to_patch) as patched_plugin:
 
                 def side_effect(*args, **kwargs):
@@ -3272,7 +3272,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnets_bulk_native_plugin_failure(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk subnet create")
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         orig = plugin.create_subnet
         method_to_patch = _get_create_db_method('subnet')
         with mock.patch.object(plugin, method_to_patch) as patched_plugin:
@@ -4043,7 +4043,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def _test_validate_subnet_ipv6_modes(self, cur_subnet=None,
                                          expect_success=True, **modes):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         new_subnet = {'ip_version': 6,
                       'cidr': 'fe80::/64',
@@ -4060,7 +4060,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def _test_validate_subnet_ipv6_pd_modes(self, cur_subnet=None,
                                          expect_success=True, **modes):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         new_subnet = {'ip_version': 6,
                       'cidr': n_const.PROVISIONAL_IPV6_PD_PREFIX,
@@ -4252,7 +4252,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                   '_get_subnet',
                                   return_value=v6_subnet).start()
             # Add an IPv6 auto-address subnet to the network
-            with mock.patch.object(manager.NeutronManager.get_plugin(),
+            with mock.patch.object(directory.get_plugin(),
                                    'update_port') as mock_updated_port:
                 v6_subnet = self._make_subnet(self.fmt, network, 'fe80::1',
                                               'fe80::/64', ip_version=6,
@@ -4945,7 +4945,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                       'ip_version': 4,
                       'enable_dhcp': True,
                       'tenant_id': network['network']['tenant_id']}
-            plugin = manager.NeutronManager.get_plugin()
+            plugin = directory.get_plugin()
             if hasattr(plugin, '_validate_subnet'):
                 self.assertRaises(lib_exc.InvalidInput,
                                   plugin._validate_subnet,
@@ -5274,7 +5274,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                       'dns_nameservers': ['8.8.8.8'],
                       'host_routes': [{'destination': '135.207.0.0/16',
                                        'nexthop': '1.2.3.4'}]}
-            plugin = manager.NeutronManager.get_plugin()
+            plugin = directory.get_plugin()
             e = self.assertRaises(exception,
                                   plugin._validate_subnet,
                                   context.get_admin_context(),
@@ -6355,7 +6355,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         self.assertEqual(net['status'], 'BUILD')
 
     def test_get_user_allocation_for_dhcp_port_returns_none(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         with self.network() as net, self.network() as net1:
             with self.subnet(network=net, cidr='10.0.0.0/24') as subnet,\
                     self.subnet(network=net1, cidr='10.0.1.0/24') as subnet1:
@@ -6409,7 +6409,7 @@ class TestNetworks(testlib_api.SqlTestCase):
     def _test_update_shared_net_used(self,
                                      device_owner,
                                      expected_exception=None):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         network, net_id = self._create_network(plugin, ctx)
 

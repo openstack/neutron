@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_service import wsgi as base_wsgi
 import routes as routes_mapper
@@ -73,7 +74,8 @@ class APIRouter(base_wsgi.Router):
 
     def __init__(self, **local_config):
         mapper = routes_mapper.Mapper()
-        plugin = manager.NeutronManager.get_plugin()
+        manager.init()
+        plugin = directory.get_plugin()
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
 

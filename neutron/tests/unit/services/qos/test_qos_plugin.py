@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
@@ -32,7 +33,7 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def setUp(self):
         super(TestQosPlugin, self).setUp()
-        self.setup_coreplugin()
+        self.setup_coreplugin(load_plugins=False)
 
         mock.patch('neutron.objects.db.api.create_object').start()
         mock.patch('neutron.objects.db.api.update_object').start()
@@ -49,10 +50,8 @@ class TestQosPlugin(base.BaseQosTestCase):
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins", ["qos"])
 
-        mgr = manager.NeutronManager.get_instance()
-        self.qos_plugin = mgr.get_service_plugins().get(
-            constants.QOS)
-
+        manager.init()
+        self.qos_plugin = directory.get_plugin(constants.QOS)
         self.qos_plugin.notification_driver_manager = mock.Mock()
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
@@ -375,7 +374,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                           'create_policy_bandwidth_limit_rules')
 
     def test_get_rule_types(self):
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
         rule_types_mock = mock.PropertyMock(
             return_value=qos_consts.VALID_RULE_TYPES)
         filters = {'type': 'type_id'}

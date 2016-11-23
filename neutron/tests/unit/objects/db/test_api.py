@@ -12,10 +12,10 @@
 
 import mock
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 
 from neutron import context
 from neutron.db import models_v2
-from neutron import manager
 from neutron.objects import base
 from neutron.objects.db import api
 from neutron.tests import base as test_base
@@ -40,7 +40,7 @@ class GetObjectsTestCase(test_base.BaseTestCase):
         limit = mock.sentinel.limit
         pager = base.Pager(marker=marker, limit=limit)
 
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         with mock.patch.object(plugin, '_get_collection') as get_collection:
             with mock.patch.object(api, 'get_object') as get_object:
                 api.get_objects(ctxt, model, _pager=pager)

@@ -19,6 +19,7 @@ import debtcollector
 from eventlet import greenthread
 from neutron_lib.api import converters
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -43,7 +44,6 @@ from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
-from neutron import manager
 
 LOG = logging.getLogger(__name__)
 
@@ -455,7 +455,7 @@ class AgentExtRpcCallback(object):
                       "server start timestamp: %(server_time)s", log_dict)
             return
         if not self.plugin:
-            self.plugin = manager.NeutronManager.get_plugin()
+            self.plugin = directory.get_plugin()
         agent_status, agent_state = self.plugin.create_or_update_agent(
             context, agent_state)
         self._update_local_agent_resource_versions(context, agent_state)

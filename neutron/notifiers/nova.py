@@ -16,6 +16,7 @@
 from keystoneauth1 import loading as ks_loading
 from neutron_lib import constants
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import directory
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -28,7 +29,6 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron import context
-from neutron import manager
 from neutron.notifiers import batch_notifier
 
 
@@ -102,15 +102,6 @@ class Notifier(object):
                 'name': VIF_DELETED,
                 'tag': port['id']}
 
-    @property
-    def _plugin(self):
-        # NOTE(arosen): this cannot be set in __init__ currently since
-        # this class is initialized at the same time as NeutronManager()
-        # which is decorated with synchronized()
-        if not hasattr(self, '_plugin_ref'):
-            self._plugin_ref = manager.NeutronManager.get_plugin()
-        return self._plugin_ref
-
     def _send_nova_notification(self, resource, event, trigger,
                                 action=None, original=None, data=None,
                                 **kwargs):
@@ -162,7 +153,7 @@ class Notifier(object):
 
             ctx = context.get_admin_context()
             try:
-                port = self._plugin.get_port(ctx, port_id)
+                port = directory.get_plugin().get_port(ctx, port_id)
             except exc.PortNotFound:
                 LOG.debug("Port %s was deleted, no need to send any "
                           "notification", port_id)

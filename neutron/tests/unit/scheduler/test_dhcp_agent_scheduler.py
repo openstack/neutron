@@ -297,6 +297,7 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
 class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
                                TestDhcpSchedulerBaseTestCase):
     """Unit test scenarios for ChanceScheduler"""
+    CORE_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
     def setUp(self):
         super(TestAutoScheduleSegments, self).setUp()

@@ -14,14 +14,13 @@
 # limitations under the License.
 
 import mock
-
+from neutron_lib.plugins import directory
 import testtools
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants
@@ -76,7 +75,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
                                        exception):
         subport = create_subport_dict(child_port['port']['id'])
         self._create_test_trunk(parent_port, [subport])
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
         self.assertRaises(exception, core_plugin.delete_port,
                           self.context, port_id)
 
@@ -95,7 +94,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_delete_trunk_raise_in_use(self):
         with self.port() as port:
             trunk = self._create_test_trunk(port)
-            core_plugin = manager.NeutronManager.get_plugin()
+            core_plugin = directory.get_plugin()
             port['port']['binding:host_id'] = 'host'
             core_plugin.update_port(self.context, port['port']['id'], port)
             self.assertRaises(trunk_exc.TrunkInUse,

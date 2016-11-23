@@ -18,12 +18,12 @@ import uuid
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 import testtools
 
 from neutron import context
 from neutron.extensions import dns
 from neutron.extensions import providernet as pnet
-from neutron import manager
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.extensions import dns_integration
@@ -57,7 +57,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         super(DNSIntegrationTestCase, self).setUp()
         dns_integration.DNS_DRIVER = None
         dns_integration.subscribe()
-        self.plugin = manager.NeutronManager.get_plugin()
+        self.plugin = directory.get_plugin()
         config.cfg.CONF.set_override('dns_domain', self._domain)
 
     def _create_port_for_test(self, provider_net=True, dns_domain=True,

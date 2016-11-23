@@ -17,6 +17,7 @@ import abc
 
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 import six
 
 from neutron._i18n import _
@@ -25,7 +26,6 @@ from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
-from neutron import manager
 from neutron import policy
 from neutron import wsgi
 
@@ -37,7 +37,7 @@ DHCP_AGENTS = DHCP_AGENT + 's'
 
 class NetworkSchedulerController(wsgi.Controller):
     def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % DHCP_NETS,
                        {})
@@ -45,7 +45,7 @@ class NetworkSchedulerController(wsgi.Controller):
             request.context, kwargs['agent_id'])
 
     def create(self, request, body, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         policy.enforce(request.context,
                        "create_%s" % DHCP_NET,
                        {})
@@ -57,7 +57,7 @@ class NetworkSchedulerController(wsgi.Controller):
         return result
 
     def delete(self, request, id, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         policy.enforce(request.context,
                        "delete_%s" % DHCP_NET,
                        {})
@@ -70,7 +70,7 @@ class NetworkSchedulerController(wsgi.Controller):
 
 class DhcpAgentsHostingNetworkController(wsgi.Controller):
     def index(self, request, **kwargs):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         policy.enforce(request.context,
                        "get_%s" % DHCP_AGENTS,
                        {})

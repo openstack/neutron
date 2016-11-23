@@ -15,6 +15,7 @@ import abc
 
 from neutron_lib.api import validators
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 import six
 import webob.exc
 
@@ -23,7 +24,6 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
-from neutron import manager
 from neutron.services import service_base
 
 
@@ -74,8 +74,7 @@ def validate_tags(body):
 
 class TagController(object):
     def __init__(self):
-        self.plugin = (manager.NeutronManager.get_service_plugins()
-                       [TAG_PLUGIN_TYPE])
+        self.plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
 
     def index(self, request, **kwargs):
         # GET /v2.0/networks/{network_id}/tags

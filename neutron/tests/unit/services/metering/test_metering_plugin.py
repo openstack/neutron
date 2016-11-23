@@ -13,6 +13,7 @@
 # under the License.
 
 import mock
+from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes as attr
@@ -22,7 +23,6 @@ from neutron.db.metering import metering_rpc
 from neutron.db.models import agent as agent_model
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
-from neutron import manager
 from neutron.plugins.common import constants
 from neutron.tests.common import helpers
 from neutron.tests import tools
@@ -433,8 +433,7 @@ class TestMeteringPluginRpcFromL3Agent(
               self).setUp(plugin=plugin, service_plugins=service_plugins,
                           ext_mgr=ext_mgr)
 
-        self.meter_plugin = manager.NeutronManager.get_service_plugins().get(
-            constants.METERING)
+        self.meter_plugin = directory.get_plugin(constants.METERING)
 
         self.tenant_id = 'admin_tenant_id'
         self.tenant_id_1 = 'tenant_id_1'

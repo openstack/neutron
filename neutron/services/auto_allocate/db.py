@@ -14,7 +14,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import sql
@@ -33,8 +35,6 @@ from neutron.db.models import external_net as ext_net_models
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import l3
-from neutron import manager
-from neutron.plugins.common import constants
 from neutron.plugins.common import utils as p_utils
 from neutron.services.auto_allocate import exceptions
 from neutron.services.auto_allocate import models
@@ -101,14 +101,13 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
     @property
     def core_plugin(self):
         if not getattr(self, '_core_plugin', None):
-            self._core_plugin = manager.NeutronManager.get_plugin()
+            self._core_plugin = directory.get_plugin()
         return self._core_plugin
 
     @property
     def l3_plugin(self):
         if not getattr(self, '_l3_plugin', None):
-            self._l3_plugin = manager.NeutronManager.get_service_plugins().get(
-                constants.L3_ROUTER_NAT)
+            self._l3_plugin = directory.get_plugin(constants.L3)
         return self._l3_plugin
 
     def get_auto_allocated_topology(self, context, tenant_id, fields=None):

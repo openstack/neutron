@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from webob import exc as web_exc
 
@@ -23,7 +24,6 @@ from neutron.db import portsecurity_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as secgroup
-from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
@@ -37,7 +37,7 @@ class AllowedAddressPairTestCase(
         super(AllowedAddressPairTestCase, self).setUp(plugin)
 
         # Check if a plugin supports security groups
-        plugin_obj = manager.NeutronManager.get_plugin()
+        plugin_obj = directory.get_plugin()
         self._skip_port_security = ('port-security' not in
                                     plugin_obj.supported_extension_aliases)
 

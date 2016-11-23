@@ -16,13 +16,13 @@ import math
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron.common import utils
 from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import dns
-from neutron import manager
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -125,7 +125,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertIn('mac_address', port['port'])
             ips = port['port']['fixed_ips']
             self.assertEqual(1, len(ips))
-            subnet_db = manager.NeutronManager.get_plugin().get_subnet(
+            subnet_db = directory.get_plugin().get_subnet(
                     context.get_admin_context(), ips[0]['subnet_id'])
             self.assertIn(netaddr.IPAddress(ips[0]['ip_address']),
                           netaddr.IPSet(netaddr.IPNetwork(subnet_db['cidr'])))

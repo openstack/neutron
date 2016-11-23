@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from sqlalchemy import or_
 
@@ -27,8 +28,6 @@ from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.extensions import portbindings
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models as ml2_models
 
@@ -95,8 +94,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             # Make sure we create the floatingip agent gateway port
             # for the destination node if fip is associated with this
             # fixed port
-            l3plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
+            l3plugin = directory.get_plugin(n_const.L3)
             (
                 l3plugin.
                 check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
@@ -372,8 +370,7 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
         return
 
     if n_utils.is_dvr_serviced(port['device_owner']):
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        l3plugin = directory.get_plugin(n_const.L3)
         context = kwargs['context']
         l3plugin.dvr_handle_new_service_port(context, port)
         l3plugin.update_arp_entry_for_dvr_service_port(context, port)
@@ -382,8 +379,7 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
 def _notify_port_delete(event, resource, trigger, **kwargs):
     context = kwargs['context']
     port = kwargs['port']
-    l3plugin = manager.NeutronManager.get_service_plugins().get(
-        service_constants.L3_ROUTER_NAT)
+    l3plugin = directory.get_plugin(n_const.L3)
     if port:
         port_host = port.get(portbindings.HOST_ID)
         allowed_address_pairs_list = port.get('allowed_address_pairs')
@@ -406,8 +402,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         original_device_owner = original_port.get('device_owner', '')
         new_device_owner = new_port.get('device_owner', '')
         is_new_device_dvr_serviced = n_utils.is_dvr_serviced(new_device_owner)
-        l3plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
+        l3plugin = directory.get_plugin(n_const.L3)
         context = kwargs['context']
         is_port_no_longer_serviced = (
             n_utils.is_dvr_serviced(original_device_owner) and

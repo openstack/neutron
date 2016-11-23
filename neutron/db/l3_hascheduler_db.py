@@ -13,6 +13,7 @@
 # under the License.
 
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from sqlalchemy import func
 from sqlalchemy import sql
 
@@ -25,8 +26,6 @@ from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import portbindings
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 
 
 class L3_HA_scheduler_db_mixin(l3_sch_db.AZL3AgentSchedulerDbMixin):
@@ -103,8 +102,7 @@ def _notify_l3_agent_ha_port_update(resource, event, trigger, **kwargs):
         if (new_device_owner == constants.DEVICE_OWNER_ROUTER_HA_INTF and
             new_port['status'] == constants.PORT_STATUS_ACTIVE and
             original_port['status'] != new_port['status']):
-            l3plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
+            l3plugin = directory.get_plugin(constants.L3)
             l3plugin.l3_rpc_notifier.routers_updated_on_host(
                 context, [new_port['device_id']], host)
 

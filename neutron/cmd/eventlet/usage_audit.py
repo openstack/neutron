@@ -19,11 +19,13 @@ subnets.
 
 import sys
 
+from neutron_lib import constants
+from neutron_lib.plugins import directory
+
 from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron import context
 from neutron import manager
-from neutron.plugins.common import constants
 
 
 def main():
@@ -31,9 +33,9 @@ def main():
     config.setup_logging()
 
     cxt = context.get_admin_context()
-    plugin = manager.NeutronManager.get_plugin()
-    l3_plugin = manager.NeutronManager.get_service_plugins().get(
-            constants.L3_ROUTER_NAT)
+    manager.init()
+    plugin = directory.get_plugin()
+    l3_plugin = directory.get_plugin(constants.L3)
     notifier = n_rpc.get_notifier('network')
     for network in plugin.get_networks(cxt):
         notifier.info(cxt, 'network.exists', {'network': network})

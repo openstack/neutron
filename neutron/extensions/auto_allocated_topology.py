@@ -15,10 +15,10 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.plugins import directory
 
 from neutron.api import extensions
 from neutron.api.v2 import base
-from neutron import manager
 
 RESOURCE_NAME = "auto_allocated_topology"
 COLLECTION_NAME = "auto_allocated_topologies"
@@ -67,8 +67,7 @@ class Auto_allocated_topology(extensions.ExtensionDescriptor):
         params = RESOURCE_ATTRIBUTE_MAP.get(COLLECTION_NAME, dict())
         controller = base.create_resource(COLLECTION_NAME,
                                           EXT_ALIAS,
-                                          manager.NeutronManager.
-                                          get_service_plugins()[EXT_ALIAS],
+                                          directory.get_plugin(EXT_ALIAS),
                                           params, allow_bulk=False)
         return [extensions.ResourceExtension(EXT_ALIAS, controller)]
 

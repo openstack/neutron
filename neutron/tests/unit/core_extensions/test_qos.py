@@ -48,7 +48,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
         plugins = {}
         if plugin_loaded:
             plugins[plugin_constants.QOS] = None
-        return mock.patch('neutron.manager.NeutronManager.get_service_plugins',
+        return mock.patch('neutron_lib.plugins.directory.get_plugins',
                           return_value=plugins)
 
     def test_process_fields_no_qos_plugin_loaded(self):

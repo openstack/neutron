@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -36,8 +37,6 @@ from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
-from neutron import manager
-from neutron.plugins.common import constants as service_constants
 
 
 _deprecate._moved_global('RouterL3AgentBinding',
@@ -169,8 +168,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         router_id = router['id']
         agent_id = agent['id']
         if self.router_scheduler:
-            plugin = manager.NeutronManager.get_service_plugins().get(
-                service_constants.L3_ROUTER_NAT)
+            plugin = directory.get_plugin(constants.L3)
             try:
                 if router.get('ha'):
                     self.router_scheduler.create_ha_port_and_bind(
@@ -217,8 +215,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         self._unbind_router(context, router_id, agent_id)
 
         router = self.get_router(context, router_id)
-        plugin = manager.NeutronManager.get_service_plugins().get(
-            service_constants.L3_ROUTER_NAT)
+        plugin = directory.get_plugin(constants.L3)
         if router.get('ha'):
             plugin.delete_ha_interfaces_on_host(context, router_id, agent.host)
         # NOTE(Swami): Need to verify if there are DVR serviceable

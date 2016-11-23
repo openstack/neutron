@@ -17,13 +17,13 @@ import abc
 
 from neutron_lib.api import converters
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 import six
 
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
-from neutron import manager
 
 
 # Attribute Map
@@ -100,7 +100,7 @@ class Agent(extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
         attr.PLURALS.update(dict(my_plurals))
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         params = RESOURCE_ATTRIBUTE_MAP.get(RESOURCE_NAME + 's')
         controller = base.create_resource(RESOURCE_NAME + 's',
                                           RESOURCE_NAME,

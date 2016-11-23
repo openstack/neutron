@@ -10,10 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron import manager
 from neutron.objects import base
 from neutron.services.qos import qos_consts
 
@@ -42,7 +42,7 @@ class QosRuleType(base.NeutronObject):
     def get_objects(cls, validate_filters=True, **kwargs):
         if validate_filters:
             cls.validate_filters(**kwargs)
-        core_plugin = manager.NeutronManager.get_plugin()
+        core_plugin = directory.get_plugin()
         # TODO(ihrachys): apply filters to returned result
         return [cls(type=type_)
                 for type_ in core_plugin.supported_qos_rule_types]

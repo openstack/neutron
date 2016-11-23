@@ -30,6 +30,7 @@ from debtcollector import moves
 import eventlet.timeout
 import fixtures
 import mock
+from neutron_lib.plugins import directory
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
@@ -302,6 +303,7 @@ class BaseTestCase(DietTestCase):
         self.setup_rpc_mocks()
         self.setup_config()
         self.setup_test_registry_instance()
+        self.setup_test_directory_instance()
 
         policy.init()
         self.addCleanup(policy.reset)
@@ -371,6 +373,14 @@ class BaseTestCase(DietTestCase):
         mock.patch.object(registry, '_get_callback_manager',
                           return_value=self._callback_manager).start()
 
+    def setup_test_directory_instance(self):
+        """Give a private copy of the directory to each test."""
+        # TODO(armax): switch to using a fixture to stop relying on stubbing
+        # out _get_plugin_directory directly.
+        self._plugin_directory = directory._PluginDirectory()
+        mock.patch.object(directory, '_get_plugin_directory',
+                          return_value=self._plugin_directory).start()
+
     def setup_config(self, args=None):
         """Tests that need a non-default config can override this method."""
         self.config_parse(args=args)
@@ -391,11 +401,13 @@ class BaseTestCase(DietTestCase):
         for k, v in six.iteritems(kw):
             CONF.set_override(k, v, group)
 
-    def setup_coreplugin(self, core_plugin=None):
+    def setup_coreplugin(self, core_plugin=None, load_plugins=True):
         cp = PluginFixture(core_plugin)
         self.useFixture(cp)
         self.patched_dhcp_periodic = cp.patched_dhcp_periodic
         self.patched_default_svc_plugins = cp.patched_default_svc_plugins
+        if load_plugins:
+            manager.init()
 
     def setup_notification_driver(self, notification_driver=None):
         self.addCleanup(fake_notifier.reset)

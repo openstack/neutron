@@ -18,6 +18,7 @@ import collections
 import imp
 import os
 
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import base
@@ -29,7 +30,6 @@ import webob.exc
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.common import exceptions
 import neutron.extensions
-from neutron import manager
 from neutron.plugins.common import constants as const
 from neutron.services import provider_configuration
 from neutron import wsgi
@@ -665,7 +665,7 @@ class PluginAwareExtensionManager(ExtensionManager):
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            service_plugins = manager.NeutronManager.get_service_plugins()
+            service_plugins = directory.get_plugins()
             cls._instance = cls(get_extensions_path(service_plugins),
                                 service_plugins)
         return cls._instance

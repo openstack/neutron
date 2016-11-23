@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as nexception
+from neutron_lib.plugins import directory
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 import six
@@ -29,7 +30,6 @@ from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import exceptions
 from neutron.conf import quota
-from neutron import manager
 from neutron.quota import resource_registry
 
 
@@ -306,7 +306,7 @@ class Securitygroup(extensions.ExtensionDescriptor):
         my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
         attr.PLURALS.update(dict(my_plurals))
         exts = []
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         for resource_name in ['security_group', 'security_group_rule']:
             collection_name = resource_name.replace('_', '-') + "s"
             params = RESOURCE_ATTRIBUTE_MAP.get(resource_name + "s", dict())

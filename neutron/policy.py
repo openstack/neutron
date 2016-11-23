@@ -18,6 +18,7 @@ import re
 
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -251,11 +252,7 @@ class OwnerCheck(policy.Check):
             # resource is handled by the core plugin. It might be worth
             # having a way to map resources to plugins so to make this
             # check more general
-            # NOTE(ihrachys): if import is put in global, circular
-            # import failure occurs
-            manager = importutils.import_module('neutron.manager')
-            f = getattr(manager.NeutronManager.get_instance().plugin,
-                        'get_%s' % parent_res)
+            f = getattr(directory.get_plugin(), 'get_%s' % parent_res)
             # f *must* exist, if not found it is better to let neutron
             # explode. Check will be performed with admin context
             context = importutils.import_module('neutron.context')

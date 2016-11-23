@@ -18,6 +18,7 @@ import itertools
 import re
 
 from neutron_lib.api import converters
+from neutron_lib.plugins import directory
 import six
 
 from neutron.api import extensions
@@ -25,7 +26,6 @@ from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
 from neutron.common import constants as common_constants
-from neutron import manager
 from neutron.objects.qos import rule as rule_object
 from neutron.plugins.common import constants
 from neutron.services.qos import qos_consts
@@ -169,7 +169,7 @@ class Qos(extensions.ExtensionDescriptor):
                 translate_name=True,
                 allow_bulk=True)
 
-        plugin = manager.NeutronManager.get_service_plugins()[constants.QOS]
+        plugin = directory.get_plugin(constants.QOS)
         for collection_name in SUB_RESOURCE_ATTRIBUTE_MAP:
             resource_name = collection_name[:-1]
             parent = SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get('parent')

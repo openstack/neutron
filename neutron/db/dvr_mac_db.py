@@ -15,6 +15,7 @@
 
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
@@ -33,7 +34,6 @@ from neutron.db.models import dvr as dvr_models
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
 from neutron.extensions import portbindings
-from neutron import manager
 
 _deprecate._moved_global('DistributedVirtualRouterMacAddress',
                          new_module=dvr_models)
@@ -61,7 +61,7 @@ cfg.CONF.register_opts(dvr_mac_address_opts)
 def _delete_mac_associated_with_agent(resource, event, trigger, context, agent,
                                       **kwargs):
     host = agent['host']
-    plugin = manager.NeutronManager.get_plugin()
+    plugin = directory.get_plugin()
     if [a for a in plugin.get_agents(context, filters={'host': [host]})
             if a['id'] != agent['id']]:
         # there are still agents on this host, don't mess with the mac entry
@@ -98,7 +98,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                 return self._plugin
         except AttributeError:
             pass
-        self._plugin = manager.NeutronManager.get_plugin()
+        self._plugin = directory.get_plugin()
         return self._plugin
 
     def _get_dvr_mac_address_by_host(self, context, host):

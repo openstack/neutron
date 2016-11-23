@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
 
@@ -20,7 +21,6 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron import manager
 
 LOG = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class SecurityGroupServerRpcCallback(object):
 
     @property
     def plugin(self):
-        return manager.NeutronManager.get_plugin()
+        return directory.get_plugin()
 
     def _get_devices_info(self, context, devices):
         return dict(

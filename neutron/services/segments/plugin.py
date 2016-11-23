@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
+
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
@@ -24,13 +26,12 @@ from neutron.db import models_v2
 from neutron.extensions import ip_allocation
 from neutron.extensions import l2_adjacency
 from neutron.extensions import segment
-from neutron import manager
 from neutron.services.segments import db
 from neutron.services.segments import exceptions
 
 
 def _extend_network_dict_binding(plugin, network_res, network_db):
-    if not manager.NeutronManager.get_service_plugins().get('segments'):
+    if not directory.get_plugin('segments'):
         return
 
     # TODO(carl_baldwin) Make this work with service subnets when it's a thing.
@@ -44,7 +45,7 @@ def _extend_subnet_dict_binding(plugin, subnet_res, subnet_db):
 
 
 def _extend_port_dict_binding(plugin, port_res, port_db):
-    if not manager.NeutronManager.get_service_plugins().get('segments'):
+    if not directory.get_plugin('segments'):
         return
 
     value = ip_allocation.IP_ALLOCATION_IMMEDIATE

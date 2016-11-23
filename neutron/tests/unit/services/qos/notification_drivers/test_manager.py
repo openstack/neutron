@@ -38,7 +38,7 @@ class TestQosDriversManagerBase(base.BaseQosTestCase):
     def setUp(self):
         super(TestQosDriversManagerBase, self).setUp()
         self.config_parse()
-        self.setup_coreplugin()
+        self.setup_coreplugin(load_plugins=False)
         config = cfg.ConfigOpts()
         driver_mgr_config.register_qos_plugin_opts(config)
         self.policy_data = {'policy': {

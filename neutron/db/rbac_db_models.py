@@ -17,13 +17,13 @@ import abc
 
 from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 import sqlalchemy as sa
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import validates
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
-from neutron import manager
 
 
 ACCESS_SHARED = 'access_as_shared'
@@ -97,7 +97,7 @@ class NetworkRBAC(RBACColumns, model_base.BASEV2):
 
     def get_valid_actions(self):
         actions = (ACCESS_SHARED,)
-        pl = manager.NeutronManager.get_plugin()
+        pl = directory.get_plugin()
         if 'external-net' in pl.supported_extension_aliases:
             actions += (ACCESS_EXTERNAL,)
         return actions

@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -24,7 +25,6 @@ from neutron.callbacks import resources
 from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import dns
-from neutron import manager
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.common import utils as plugin_utils
@@ -264,7 +264,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
                                       dns_data_db)
 
     def _get_network(self, context, network_id):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         return plugin.get_network(context, network_id)
 
 

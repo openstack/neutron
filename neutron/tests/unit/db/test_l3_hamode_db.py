@@ -15,6 +15,7 @@
 import mock
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
@@ -36,7 +37,6 @@ from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
-from neutron import manager
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests.common import helpers
 from neutron.tests.unit import testlib_api
@@ -57,13 +57,14 @@ class L3HATestFramework(testlib_api.SqlTestCase):
 
         self.admin_ctx = context.get_admin_context()
         self.setup_coreplugin('ml2')
-        self.core_plugin = manager.NeutronManager.get_plugin()
+        self.core_plugin = directory.get_plugin()
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
                                     '_notify_ha_interfaces_updated')
         self.notif_m = notif_p.start()
         cfg.CONF.set_override('allow_overlapping_ips', True)
 
         self.plugin = FakeL3PluginWithAgents()
+        directory.add_plugin(constants.L3, self.plugin)
         self.plugin.router_scheduler = l3_agent_scheduler.ChanceScheduler()
         self.agent1 = helpers.register_l3_agent()
         self.agent2 = helpers.register_l3_agent(
@@ -412,14 +413,10 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx, [router['id']])
         self.assertEqual(2, len(bound_agents))
 
-        with mock.patch.object(manager.NeutronManager,
-                               'get_service_plugins') as mock_manager:
-            self.plugin._unbind_ha_router(self.admin_ctx, router['id'])
-
+        self.plugin._unbind_ha_router(self.admin_ctx, router['id'])
         bound_agents = self.plugin.get_l3_agents_hosting_routers(
             self.admin_ctx, [router['id']])
         self.assertEqual(0, len(bound_agents))
-        self.assertEqual(2, mock_manager.call_count)
 
     def test_get_ha_sync_data_for_host_with_non_dvr_agent(self):
         with mock.patch.object(self.plugin,

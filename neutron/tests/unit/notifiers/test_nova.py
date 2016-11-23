@@ -17,6 +17,7 @@
 import mock
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -41,7 +42,7 @@ class TestNovaNotify(base.BaseTestCase):
                         'device_owner': DEVICE_OWNER_COMPUTE}
 
         self.nova_notifier = nova.Notifier()
-        self.nova_notifier._plugin_ref = FakePlugin()
+        directory.add_plugin(n_const.CORE, FakePlugin())
 
     def test_notify_port_status_all_values(self):
         states = [n_const.PORT_STATUS_ACTIVE, n_const.PORT_STATUS_DOWN,
@@ -180,7 +181,7 @@ class TestNovaNotify(base.BaseTestCase):
     def test_delete_floatingip_deleted_port_no_notify(self):
         port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
         with mock.patch.object(
-            self.nova_notifier._plugin_ref, 'get_port',
+            directory.get_plugin(), 'get_port',
             side_effect=n_exc.PortNotFound(port_id=port_id)):
             returned_obj = {'floatingip':
                             {'port_id': port_id}}

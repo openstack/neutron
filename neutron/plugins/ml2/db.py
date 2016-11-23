@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
@@ -28,7 +29,6 @@ from neutron.callbacks import resources
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.plugins.ml2 import models
 from neutron.services.segments import exceptions as seg_exc
 
@@ -215,7 +215,7 @@ def get_sg_ids_grouped_by_port(context, port_ids):
 
 
 def make_port_dict_with_security_groups(port, sec_groups):
-    plugin = manager.NeutronManager.get_plugin()
+    plugin = directory.get_plugin()
     port_dict = plugin._make_port_dict(port)
     port_dict['security_groups'] = sec_groups
     port_dict['security_group_rules'] = []

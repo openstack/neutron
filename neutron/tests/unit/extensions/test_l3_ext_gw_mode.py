@@ -17,6 +17,7 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_serialization import jsonutils
@@ -34,7 +35,6 @@ from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_gw_mode
-from neutron import manager
 from neutron.objects import network as net_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
@@ -400,7 +400,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.router() as r, self.subnet() as s:
             ext_net_id = s['subnet']['network_id']
             self._set_net_external(ext_net_id)
-            plugin = manager.NeutronManager.get_plugin()
+            plugin = directory.get_plugin()
             with mock.patch.object(plugin, '_get_port',
                                    side_effect=ValueError()):
                 self._set_router_external_gateway(r['router']['id'],

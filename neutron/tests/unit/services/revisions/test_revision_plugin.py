@@ -15,10 +15,11 @@
 
 import mock
 import netaddr
+from neutron_lib import constants
+from neutron_lib.plugins import directory
 
 from neutron import context as nctx
 from neutron.db import models_v2
-from neutron import manager
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -43,13 +44,12 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         mock.patch('neutron.services.qos.notification_drivers.message_queue'
                    '.RpcQosServiceNotificationDriver').start()
         super(TestRevisionPlugin, self).setUp()
-        self.cp = manager.NeutronManager.get_plugin()
-        self.l3p = (manager.NeutronManager.
-                    get_service_plugins()['L3_ROUTER_NAT'])
+        self.cp = directory.get_plugin()
+        self.l3p = directory.get_plugin(constants.L3)
         self.ctx = nctx.get_admin_context()
 
     def test_handle_expired_object(self):
-        rp = manager.NeutronManager.get_service_plugins()['revision_plugin']
+        rp = directory.get_plugin('revision_plugin')
         with self.port():
             with self.ctx.session.begin():
                 ipal_obj = self.ctx.session.query(models_v2.IPAllocation).one()
@@ -155,7 +155,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     def test_qos_policy_bump_port_revision(self):
         with self.port() as port:
             rev = port['port']['revision_number']
-            qos_plugin = manager.NeutronManager.get_service_plugins()['QOS']
+            qos_plugin = directory.get_plugin('QOS')
             qos_policy = {'policy': {'name': "policy1",
                                      'tenant_id': "tenant1"}}
             qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
@@ -167,7 +167,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     def test_qos_policy_bump_network_revision(self):
         with self.network() as network:
             rev = network['network']['revision_number']
-            qos_plugin = manager.NeutronManager.get_service_plugins()['QOS']
+            qos_plugin = directory.get_plugin('QOS')
             qos_policy = {'policy': {'name': "policy1",
                                      'tenant_id': "tenant1"}}
             qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)

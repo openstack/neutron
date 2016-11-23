@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from six.moves import http_client as httplib
 from webob import exc
 
 from neutron import context
 from neutron.extensions import portbindings
-from neutron import manager
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
@@ -75,7 +75,7 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self._check_response_no_portbindings(non_admin_port)
 
     def test_ports_vif_details(self):
-        plugin = manager.NeutronManager.get_plugin()
+        plugin = directory.get_plugin()
         cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(), self.port():
             ctx = context.get_admin_context()
