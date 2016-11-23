@@ -13,13 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neutron_lib.db import model_base as lib_mb
 import sqlalchemy as sa
-
-from neutron.common import _deprecate
-
-
-_deprecate._moved_global('HasTenant', new_module=lib_mb, new_name='HasProject')
 
 
 def get_unique_keys(model):
@@ -30,6 +24,3 @@ def get_unique_keys(model):
     return [[c.name for c in constraint.columns]
             for constraint in constraints
             if isinstance(constraint, sa.UniqueConstraint)]
-
-# This shim is used to deprecate the old contents.
-_deprecate._MovedGlobals(lib_mb)
