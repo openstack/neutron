@@ -15,6 +15,7 @@
 
 import itertools
 import re
+import signal
 import time
 
 from neutron_lib import constants
@@ -22,7 +23,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron._i18n import _LE
+from neutron._i18n import _LE, _LW
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as l3_agent
@@ -32,7 +33,9 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils
 from neutron.common import config
+from neutron.common import utils as common_utils
 from neutron.conf.agent import cmd
 from neutron.conf.agent import dhcp as dhcp_config
 
@@ -44,6 +47,12 @@ NS_PREFIXES = {
     'l3': [l3_agent.NS_PREFIX, dvr.SNAT_NS_PREFIX, dvr_fip_ns.FIP_NS_PREFIX],
     'lbaas': [LB_NS_PREFIX],
 }
+SIGTERM_WAITTIME = 10
+NETSTAT_PIDS_REGEX = re.compile(r'.* (?P<pid>\d{2,6})/.*')
+
+
+class PidsInNamespaceException(Exception):
+    pass
 
 
 class FakeDhcpPlugin(object):
@@ -130,6 +139,87 @@ def unplug_device(conf, device):
         device.set_log_fail_as_error(orig_log_fail_as_error)
 
 
+def find_listen_pids_namespace(namespace):
+    """Retrieve a list of pids of listening processes within the given netns.
+
+    It executes netstat -nlp and returns a set of unique pairs
+    """
+    ip = ip_lib.IPWrapper(namespace=namespace)
+    pids = set()
+    cmd = ['netstat', '-nlp']
+    output = ip.netns.execute(cmd, run_as_root=True)
+    for line in output.splitlines():
+        m = NETSTAT_PIDS_REGEX.match(line)
+        if m:
+            pids.add(m.group('pid'))
+    return pids
+
+
+def wait_until_no_listen_pids_namespace(namespace, timeout=SIGTERM_WAITTIME):
+    """Poll listening processes within the given namespace.
+
+    If after timeout seconds, there are remaining processes in the namespace,
+    then a PidsInNamespaceException will be thrown.
+    """
+    # Would be better to handle an eventlet.timeout.Timeout exception
+    # but currently there's a problem importing eventlet since it's
+    # doing a local import from cmd/eventlet which doesn't have a
+    # timeout module
+    common_utils.wait_until_true(
+        lambda: not find_listen_pids_namespace(namespace),
+        timeout=SIGTERM_WAITTIME,
+        exception=PidsInNamespaceException)
+
+
+def _kill_listen_processes(namespace, force=False):
+    """Identify all listening processes within the given namespace.
+
+    Then, for each one, find its top parent with same cmdline (in case this
+    process forked) and issue a SIGTERM to all of them. If force is True,
+    then a SIGKILL will be issued to all parents and all their children. Also,
+    this function returns the number of listening processes.
+    """
+    pids = find_listen_pids_namespace(namespace)
+    pids_to_kill = {utils.find_fork_top_parent(pid) for pid in pids}
+    kill_signal = signal.SIGTERM
+    if force:
+        kill_signal = signal.SIGKILL
+        children = [utils.find_child_pids(pid, True) for pid in pids_to_kill]
+        pids_to_kill.update(itertools.chain.from_iterable(children))
+
+    for pid in pids_to_kill:
+        # Throw a warning since this particular cleanup may need a specific
+        # implementation in the right module. Ideally, netns_cleanup wouldn't
+        # kill any processes as the responsible module should've killed them
+        # before cleaning up the namespace
+        LOG.warning(_LW("Killing (%(signal)d) [%(pid)s] %(cmdline)s"),
+                    {'signal': kill_signal,
+                     'pid': pid,
+                     'cmdline': ' '.join(utils.get_cmdline_from_pid(pid))[:80]
+                     })
+        try:
+            utils.kill_process(pid, kill_signal, run_as_root=True)
+        except Exception as ex:
+            LOG.error(_LE('An error occurred while killing '
+                          '[%(pid)s]: %(msg)s'), {'pid': pid, 'msg': ex})
+    return len(pids)
+
+
+def kill_listen_processes(namespace):
+    """Kill all processes listening within the given namespace.
+
+    First it tries to kill them using SIGTERM, waits until they die gracefully
+    and then kills remaining processes (if any) with SIGKILL
+    """
+    if _kill_listen_processes(namespace, force=False):
+        try:
+            wait_until_no_listen_pids_namespace(namespace)
+        except PidsInNamespaceException:
+            _kill_listen_processes(namespace, force=True)
+            # Allow some time for remaining processes to die
+            wait_until_no_listen_pids_namespace(namespace)
+
+
 def destroy_namespace(conf, namespace, force=False):
     """Destroy a given namespace.
 
@@ -145,6 +235,14 @@ def destroy_namespace(conf, namespace, force=False):
             # NOTE: The dhcp driver will remove the namespace if is it empty,
             # so a second check is required here.
             if ip.netns.exists(namespace):
+                try:
+                    kill_listen_processes(namespace)
+                except PidsInNamespaceException:
+                    # This is unlikely since, at this point, we have SIGKILLed
+                    # all remaining processes but if there are still some, log
+                    # the error and continue with the cleanup
+                    LOG.error(_LE('Not all processes were killed in %s'),
+                              namespace)
                 for device in ip.get_devices(exclude_loopback=True):
                     unplug_device(conf, device)
 
