@@ -992,6 +992,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.extension_manager.process_create_subnet(
                 context, subnet[attributes.SUBNET], result)
             network = self._make_network_dict(net_db, context=context)
+            self.type_manager.extend_network_dict_provider(context, network)
+            network[api.MTU] = self._get_network_mtu(network)
             mech_context = driver_context.SubnetContext(self, context,
                                                         result, network)
             self.mechanism_manager.create_subnet_precommit(mech_context)
