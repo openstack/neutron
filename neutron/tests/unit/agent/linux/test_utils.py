@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import signal
 import socket
 
 import mock
@@ -181,6 +182,100 @@ class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
         self.assertEqual(actual_val, expect_val)
 
 
+class TestFindParentPid(base.BaseTestCase):
+    def setUp(self):
+        super(TestFindParentPid, self).setUp()
+        self.m_execute = mock.patch.object(utils, 'execute').start()
+
+    def test_returns_none_for_no_valid_pid(self):
+        self.m_execute.side_effect = utils.ProcessExecutionError('',
+                                                                 returncode=1)
+        self.assertIsNone(utils.find_parent_pid(-1))
+
+    def test_returns_parent_id_for_good_ouput(self):
+        self.m_execute.return_value = '123 \n'
+        self.assertEqual(utils.find_parent_pid(-1), '123')
+
+    def test_raises_exception_returncode_0(self):
+        with testtools.ExpectedException(utils.ProcessExecutionError):
+            self.m_execute.side_effect = \
+                utils.ProcessExecutionError('', returncode=0)
+            utils.find_parent_pid(-1)
+
+    def test_raises_unknown_exception(self):
+        with testtools.ExpectedException(RuntimeError):
+            self.m_execute.side_effect = RuntimeError()
+            utils.find_parent_pid(-1)
+
+
+class TestFindForkTopParent(base.BaseTestCase):
+    def _test_find_fork_top_parent(self, expected=_marker,
+                                   find_parent_pid_retvals=None,
+                                   pid_invoked_with_cmdline_retvals=None):
+        def _find_parent_pid(x):
+            if find_parent_pid_retvals:
+                return find_parent_pid_retvals.pop(0)
+
+        pid_invoked_with_cmdline = {}
+        if pid_invoked_with_cmdline_retvals:
+            pid_invoked_with_cmdline['side_effect'] = (
+                pid_invoked_with_cmdline_retvals)
+        else:
+            pid_invoked_with_cmdline['return_value'] = False
+        with mock.patch.object(utils, 'find_parent_pid',
+                               side_effect=_find_parent_pid), \
+                mock.patch.object(utils, 'pid_invoked_with_cmdline',
+                                  **pid_invoked_with_cmdline):
+                    actual = utils.find_fork_top_parent(_marker)
+        self.assertEqual(expected, actual)
+
+    def test_returns_own_pid_no_parent(self):
+        self._test_find_fork_top_parent()
+
+    def test_returns_own_pid_nofork(self):
+        self._test_find_fork_top_parent(find_parent_pid_retvals=['2', '3'])
+
+    def test_returns_first_parent_pid_fork(self):
+        self._test_find_fork_top_parent(
+            expected='2',
+            find_parent_pid_retvals=['2', '3', '4'],
+            pid_invoked_with_cmdline_retvals=[True, False, False])
+
+    def test_returns_top_parent_pid_fork(self):
+        self._test_find_fork_top_parent(
+            expected='4',
+            find_parent_pid_retvals=['2', '3', '4'],
+            pid_invoked_with_cmdline_retvals=[True, True, True])
+
+
+class TestKillProcess(base.BaseTestCase):
+    def _test_kill_process(self, pid, exception_message=None,
+                           kill_signal=signal.SIGKILL):
+        if exception_message:
+            exc = utils.ProcessExecutionError(exception_message, returncode=0)
+        else:
+            exc = None
+        with mock.patch.object(utils, 'execute',
+                               side_effect=exc) as mock_execute:
+            utils.kill_process(pid, kill_signal, run_as_root=True)
+
+        mock_execute.assert_called_with(['kill', '-%d' % kill_signal, pid],
+                                        run_as_root=True)
+
+    def test_kill_process_returns_none_for_valid_pid(self):
+        self._test_kill_process('1')
+
+    def test_kill_process_returns_none_for_stale_pid(self):
+        self._test_kill_process('1', 'No such process')
+
+    def test_kill_process_raises_exception_for_execute_exception(self):
+        with testtools.ExpectedException(utils.ProcessExecutionError):
+            self._test_kill_process('1', 'Invalid')
+
+    def test_kill_process_with_different_signal(self):
+        self._test_kill_process('1', kill_signal=signal.SIGTERM)
+
+
 class TestFindChildPids(base.BaseTestCase):
 
     def test_returns_empty_list_for_exit_code_1(self):
@@ -196,6 +291,14 @@ class TestFindChildPids(base.BaseTestCase):
     def test_returns_list_of_child_process_ids_for_good_ouput(self):
         with mock.patch.object(utils, 'execute', return_value=' 123 \n 185\n'):
             self.assertEqual(utils.find_child_pids(-1), ['123', '185'])
+
+    def test_returns_list_of_child_process_ids_recursively(self):
+        with mock.patch.object(utils, 'execute',
+                               side_effect=[' 123 \n 185\n',
+                                            ' 40 \n', '\n',
+                                            '41\n', '\n']):
+            actual = utils.find_child_pids(-1, True)
+            self.assertEqual(actual, ['123', '185', '40', '41'])
 
     def test_raises_unknown_exception(self):
         with testtools.ExpectedException(RuntimeError):

@@ -41,3 +41,9 @@ ovstrace_filter: RegExpFilter, ovs-appctl, root, ovs-appctl, ofproto/trace, .*, 
 # needed for TestGetRootHelperChildPid
 bash_filter: RegExpFilter, /bin/bash, root, bash, -c, \(sleep 100\)
 sleep_kill: KillFilter, root, sleep, -9
+
+#needed by test_netns_cleanup
+process_spawn: EnvFilter, env, root, PATH=, python
+ip_exec: IpNetnsExecFilter, ip, root
+ps: CommandFilter, ps, root
+pid_kill: RegExpFilter, kill, root, kill, -\d+, .*

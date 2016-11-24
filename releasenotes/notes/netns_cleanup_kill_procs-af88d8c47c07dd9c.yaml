@@ -1,0 +1,8 @@
+---
+features:
+  - A new mechanism has been added to netns_cleanup to
+    kill processes that are listening on any port/unix
+    socket within the namespace. This will try to kill
+    them gracefully via SIGTERM and, if they don't die,
+    then a SIGKILL will be sent to the remaining
+    processes to ensure a proper cleanup.
