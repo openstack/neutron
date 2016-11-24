@@ -72,7 +72,8 @@ READ_TIMEOUT = os.environ.get('OS_TEST_READ_TIMEOUT', 5)
 CHILD_PROCESS_TIMEOUT = os.environ.get('OS_TEST_CHILD_PROCESS_TIMEOUT', 20)
 CHILD_PROCESS_SLEEP = os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5)
 
-TRANSPORT_PROTOCOLS = (n_const.PROTO_NAME_TCP, n_const.PROTO_NAME_UDP)
+TRANSPORT_PROTOCOLS = (n_const.PROTO_NAME_TCP, n_const.PROTO_NAME_UDP,
+                       n_const.PROTO_NAME_SCTP)
 
 OVS_MANAGER_TEST_PORT_FIRST = 6610
 OVS_MANAGER_TEST_PORT_LAST = 6639
@@ -403,6 +404,7 @@ class Pinger(object):
 class NetcatTester(object):
     TCP = n_const.PROTO_NAME_TCP
     UDP = n_const.PROTO_NAME_UDP
+    SCTP = n_const.PROTO_NAME_SCTP
     VERSION_TO_ALL_ADDRESS = {
         4: '0.0.0.0',
         6: '::',
@@ -423,7 +425,7 @@ class NetcatTester(object):
                                  will be spawned
         :param address: Server address from client point of view
         :param dst_port: Port on which netcat listens
-        :param protocol: Transport protocol, either 'tcp' or 'udp'
+        :param protocol: Transport protocol, either 'tcp', 'udp' or 'sctp'
         :param server_address: Address in server namespace on which netcat
                                should listen
         :param src_port: Source port of netcat process spawned in client
@@ -515,9 +517,12 @@ class NetcatTester(object):
         cmd = ['ncat', address, self.dst_port]
         if self.protocol == self.UDP:
             cmd.append('-u')
+        elif self.protocol == self.SCTP:
+            cmd.append('--sctp')
+
         if listen:
             cmd.append('-l')
-            if self.protocol == self.TCP:
+            if self.protocol in (self.TCP, self.SCTP):
                 cmd.append('-k')
         else:
             cmd.extend(['-w', '20'])

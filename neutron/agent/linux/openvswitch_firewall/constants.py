@@ -35,12 +35,6 @@ CT_MARK_INVALID = '0x1'
 REG_PORT = 5
 REG_NET = 6
 
-protocol_to_nw_proto = {
-        constants.PROTO_NAME_ICMP: constants.PROTO_NUM_ICMP,
-        constants.PROTO_NAME_TCP: constants.PROTO_NUM_TCP,
-        constants.PROTO_NAME_UDP: constants.PROTO_NUM_UDP,
-}
-
 PROTOCOLS_WITH_PORTS = (constants.PROTO_NAME_TCP, constants.PROTO_NAME_UDP)
 
 ethertype_to_dl_type_map = {

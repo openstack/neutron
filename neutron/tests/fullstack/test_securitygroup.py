@@ -61,15 +61,17 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
 
     def assert_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
-        self.addCleanup(netcat.stop_processes)
-        self.assertTrue(netcat.test_connectivity())
-        netcat.stop_processes()
+        try:
+            self.assertTrue(netcat.test_connectivity())
+        finally:
+            netcat.stop_processes()
 
     def assert_no_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
-        self.addCleanup(netcat.stop_processes)
-        self.assertRaises(RuntimeError, netcat.test_connectivity)
-        netcat.stop_processes()
+        try:
+            self.assertRaises(RuntimeError, netcat.test_connectivity)
+        finally:
+            netcat.stop_processes()
 
 
 class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
@@ -98,14 +100,15 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
     # NOTE(toshii): As a firewall_driver can interfere with others,
     # the recommended way to add test is to expand this method, not
     # adding another.
-    def test_tcp_securitygroup(self):
-        """Tests if a TCP security group rule is working, by confirming
+    def test_securitygroup(self):
+        """Tests if a security group rules are working, by confirming
         that 1. connection from allowed security group is allowed,
              2. connection from elsewhere is blocked,
              3. traffic not explicitly allowed (eg. ICMP) is blocked,
              4. a security group update takes effect,
              5. a remote security group member addition works, and
              6. an established connection stops by deleting a SG rule.
+             7. test other protocol functionality by using SCTP protocol
         """
         index_to_sg = [0, 0, 1]
         if self.firewall_driver == 'iptables_hybrid':
@@ -228,3 +231,19 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             common_utils.wait_until_true(lambda: netcat.test_no_connectivity(),
                                          sleep=8)
             netcat.stop_processes()
+
+        # 7. check SCTP is supported by security group
+        self.assert_no_connection(
+            vms[1].namespace, vms[0].namespace, vms[0].ip, 3366,
+            net_helpers.NetcatTester.SCTP)
+
+        self.safe_client.create_security_group_rule(
+            tenant_uuid, sgs[0]['id'],
+            remote_group_id=sgs[0]['id'], direction='ingress',
+            ethertype=constants.IPv4,
+            protocol=constants.PROTO_NUM_SCTP,
+            port_range_min=3366, port_range_max=3366)
+
+        self.assert_connection(
+            vms[1].namespace, vms[0].namespace, vms[0].ip, 3366,
+            net_helpers.NetcatTester.SCTP)

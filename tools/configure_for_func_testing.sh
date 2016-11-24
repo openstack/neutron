@@ -283,4 +283,5 @@ fi
 
 if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
     _configure_iptables_rules
+    sudo modprobe ip_conntrack_proto_sctp
 fi
