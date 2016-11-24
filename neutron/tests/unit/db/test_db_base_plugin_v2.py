@@ -4226,7 +4226,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def _test_create_subnet_ipv6_auto_addr_with_port_on_network(
             self, addr_mode, device_owner=DEVICE_OWNER_COMPUTE,
-            insert_db_reference_error=False):
+            insert_db_reference_error=False, insert_port_not_found=False):
         # Create a network with one IPv4 subnet and one port
         with self.network() as network,\
             self.subnet(network=network) as v4_subnet,\
@@ -4254,6 +4254,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             # Add an IPv6 auto-address subnet to the network
             with mock.patch.object(directory.get_plugin(),
                                    'update_port') as mock_updated_port:
+                if insert_port_not_found:
+                    mock_updated_port.side_effect = lib_exc.PortNotFound(
+                        port_id=port['port']['id'])
                 v6_subnet = self._make_subnet(self.fmt, network, 'fe80::1',
                                               'fe80::/64', ip_version=6,
                                               ipv6_ra_mode=addr_mode,
@@ -4305,6 +4308,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_ipv6_slaac_with_db_reference_error(self):
         self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
             constants.IPV6_SLAAC, insert_db_reference_error=True)
+
+    def test_create_subnet_ipv6_slaac_with_port_not_found(self):
+        self._test_create_subnet_ipv6_auto_addr_with_port_on_network(
+            constants.IPV6_SLAAC, insert_port_not_found=True)
 
     def test_update_subnet_no_gateway(self):
         with self.subnet() as subnet:

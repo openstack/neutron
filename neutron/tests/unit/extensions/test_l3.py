@@ -871,6 +871,24 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertNotEqual(fip1['ip_address'],
                                     fip2['ip_address'])
 
+    def test_router_concurrent_delete_upon_subnet_create(self):
+        with self.network() as n:
+            with self.subnet(network=n) as s1, self.router() as r:
+                self._set_net_external(n['network']['id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    n['network']['id'],
+                    ext_ips=[{'subnet_id': s1['subnet']['id']}])
+                plugin = directory.get_plugin(lib_constants.L3)
+                mock.patch.object(
+                    plugin, 'update_router',
+                    side_effect=l3.RouterNotFound(router_id='1')).start()
+                # ensure the router disappearing doesn't interfere with subnet
+                # creation
+                self._create_subnet(self.fmt, net_id=n['network']['id'],
+                                    ip_version=6, cidr='2001:db8::/32',
+                                    expected_res_status=(exc.HTTPCreated.code))
+
     def test_router_update_gateway_upon_subnet_create_ipv6(self):
         with self.network() as n:
             with self.subnet(network=n) as s1, self.router() as r:
