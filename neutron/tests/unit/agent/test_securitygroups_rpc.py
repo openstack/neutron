@@ -2746,6 +2746,8 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             context=None, plugin_rpc=self.rpc,
             defer_refresh_firewall=defer_refresh_firewall)
         self._enforce_order_in_firewall(self.agent.firewall)
+        # don't mess with sysctl knobs in unit tests
+        self.agent.firewall._enabled_netfilter_for_bridges = True
 
     def _device(self, device, ip, mac_address, rule):
         return {'device': device,
@@ -2794,12 +2796,6 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             self.assertThat(kwargs['process_input'],
                             matchers.MatchesRegex(expected_regex))
 
-        expected = ['net.bridge.bridge-nf-call-arptables=1',
-                    'net.bridge.bridge-nf-call-ip6tables=1',
-                    'net.bridge.bridge-nf-call-iptables=1']
-        for e in expected:
-            self.utils_exec.assert_any_call(['sysctl', '-w', e],
-                                            run_as_root=True)
         self.assertEqual(exp_fw_sg_updated_call,
                          self.agent.firewall.security_group_updated.called)
 
@@ -3123,6 +3119,8 @@ class TestSecurityGroupAgentWithOVSIptables(
             context=None, plugin_rpc=self.rpc,
             defer_refresh_firewall=defer_refresh_firewall)
         self._enforce_order_in_firewall(self.agent.firewall)
+        # don't mess with sysctl knobs in unit tests
+        self.agent.firewall._enabled_netfilter_for_bridges = True
 
     def test_prepare_remove_port(self):
         self.rpc.security_group_rules_for_devices.return_value = self.devices1

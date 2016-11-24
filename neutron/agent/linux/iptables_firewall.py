@@ -23,7 +23,7 @@ from oslo_log import log as logging
 from oslo_utils import netutils
 import six
 
-from neutron._i18n import _LI
+from neutron._i18n import _, _LI
 from neutron.agent import firewall
 from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
@@ -109,15 +109,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # enabled by default or not (Ubuntu - yes, Redhat - no, for
         # example).
         LOG.debug("Enabling netfilter for bridges")
-        utils.execute(['sysctl', '-w',
-                       'net.bridge.bridge-nf-call-arptables=1'],
-                      run_as_root=True)
-        utils.execute(['sysctl', '-w',
-                       'net.bridge.bridge-nf-call-ip6tables=1'],
-                      run_as_root=True)
-        utils.execute(['sysctl', '-w',
-                       'net.bridge.bridge-nf-call-iptables=1'],
-                      run_as_root=True)
+        entries = utils.execute(['sysctl', '-N', 'net.bridge'],
+                                run_as_root=True).splitlines()
+        for proto in ('arp', 'ip', 'ip6'):
+            knob = 'net.bridge.bridge-nf-call-%stables' % proto
+            if 'net.bridge.bridge-nf-call-%stables' % proto not in entries:
+                raise SystemExit(
+                    _("sysctl value %s not present on this system.") % knob)
+            enabled = utils.execute(['sysctl', '-b', knob])
+            if enabled != '1':
+                utils.execute(
+                    ['sysctl', '-w', '%s=1' % knob], run_as_root=True)
 
     @property
     def ports(self):
