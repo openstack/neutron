@@ -1075,8 +1075,6 @@ class TestDnsmasq(TestBase):
             '--dhcp-optsfile=/dhcp/%s/opts' % network.id,
             '--dhcp-leasefile=/dhcp/%s/leases' % network.id,
             '--dhcp-match=set:ipxe,175',
-            '--enable-ra',
-            '--ra-param=tap0,0,0',
             '--bind-interfaces',
             '--interface=tap0',
         ]
@@ -1092,20 +1090,15 @@ class TestDnsmasq(TestBase):
         else:
             prefix = '--dhcp-range=set:tag%d,%s,%s%s'
             prefix6 = '--dhcp-range=set:tag%d,%s,%s,%s%s'
-        prefix6slaac = '--dhcp-range=set:tag%d,%s,slaac,%s,%s%s'
         possible_leases = 0
         for i, s in enumerate(network.subnets):
-            if s.ip_version == 4:
-                expected.extend([prefix % (
-                    i, s.cidr.split('/')[0], lease_duration, seconds)])
-                possible_leases += netaddr.IPNetwork(s.cidr).size
-            elif s.ip_version == 6:
-                if s.ipv6_address_mode == constants.DHCPV6_STATEFUL:
+            if (s.ip_version != 6
+                or s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
+                if s.ip_version == 4:
+                    expected.extend([prefix % (
+                        i, s.cidr.split('/')[0], lease_duration, seconds)])
+                else:
                     expected.extend([prefix6 % (
-                        i, s.cidr.split('/')[0], s.cidr.split('/')[1],
-                        lease_duration, seconds)])
-                elif s.ipv6_address_mode == constants.IPV6_SLAAC:
-                    expected.extend([prefix6slaac % (
                         i, s.cidr.split('/')[0], s.cidr.split('/')[1],
                         lease_duration, seconds)])
                 possible_leases += netaddr.IPNetwork(s.cidr).size
@@ -1170,7 +1163,7 @@ class TestDnsmasq(TestBase):
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_addn_name, exp_addn_data)])
 
-    def test_spawn_slaac_dhcp_range(self):
+    def test_spawn_no_dhcp_range(self):
         network = FakeV6Network()
         subnet = FakeV6SubnetSlaac()
         network.subnets = [subnet]

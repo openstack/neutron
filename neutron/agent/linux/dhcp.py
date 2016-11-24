@@ -332,8 +332,6 @@ class Dnsmasq(DhcpLocalProcess):
             '--dhcp-optsfile=%s' % self.get_conf_file_name('opts'),
             '--dhcp-leasefile=%s' % self.get_conf_file_name('leases'),
             '--dhcp-match=set:ipxe,175',
-            '--enable-ra',
-            '--ra-param=%s,0,0' % self.interface_name,
         ]
         if self.device_manager.driver.bridged:
             cmd += [
@@ -365,8 +363,6 @@ class Dnsmasq(DhcpLocalProcess):
                                   constants.DHCPV6_STATELESS] or
                         not addr_mode and not ra_mode):
                     mode = 'static'
-                elif addr_mode == constants.IPV6_SLAAC:
-                    mode = 'slaac'
 
             cidr = netaddr.IPNetwork(subnet.cidr)
 
