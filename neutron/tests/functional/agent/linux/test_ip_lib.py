@@ -190,3 +190,21 @@ class IpLibTestCase(IpLibTestFramework):
         self._check_for_device_name(namespace.ip_wrapper, dev_name, True)
         device.link.delete()
         self._check_for_device_name(namespace.ip_wrapper, dev_name, False)
+
+
+class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
+    def test_assigned_value(self):
+        namespace = self.useFixture(net_helpers.NamespaceFixture())
+        for expected in (0, 1):
+            try:
+                ip_lib.set_ip_nonlocal_bind(expected, namespace.name)
+            except RuntimeError as rte:
+                stat_message = (
+                    'cannot stat /proc/sys/net/ipv4/ip_nonlocal_bind')
+                if stat_message in str(rte):
+                    raise self.skipException(
+                        "This kernel doesn't support %s in network "
+                        "namespaces." % ip_lib.IP_NONLOCAL_BIND)
+                raise
+            observed = ip_lib.get_ip_nonlocal_bind(namespace.name)
+            self.assertEqual(expected, observed)
