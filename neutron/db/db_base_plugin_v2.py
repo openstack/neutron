@@ -322,14 +322,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         objects = []
         collection = "%ss" % resource
         items = request_items[collection]
-        context.session.begin(subtransactions=True)
         try:
-            for item in items:
-                obj_creator = getattr(self, 'create_%s' % resource)
-                objects.append(obj_creator(context, item))
-            context.session.commit()
+            with db_api.context_manager.writer.using(context):
+                for item in items:
+                    obj_creator = getattr(self, 'create_%s' % resource)
+                    objects.append(obj_creator(context, item))
         except Exception:
-            context.session.rollback()
             with excutils.save_and_reraise_exception():
                 LOG.error(_LE("An exception occurred while creating "
                               "the %(resource)s:%(item)s"),
@@ -350,7 +348,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_network_db(self, context, network):
         # single request processing
         n = network['network']
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             args = {'tenant_id': n['tenant_id'],
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
@@ -369,7 +367,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.retry_if_session_inactive()
     def update_network(self, context, id, network):
         n = network['network']
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             network = self._get_network(context, id)
             # validate 'shared' parameter
             if 'shared' in n:
@@ -408,9 +406,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         registry.notify(resources.NETWORK, events.BEFORE_DELETE, self,
                         context=context, network_id=id)
         self._ensure_network_not_in_use(context, id)
-        auto_delete_port_ids = [p.id for p in context.session.query(
-            models_v2.Port.id).filter_by(network_id=id).filter(
-            models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))]
+        with db_api.context_manager.reader.using(context):
+            auto_delete_port_ids = [p.id for p in context.session.query(
+                models_v2.Port.id).filter_by(network_id=id).filter(
+                models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))]
         for port_id in auto_delete_port_ids:
             self.delete_port(context.elevated(), port_id)
         # clean up subnets
@@ -420,7 +419,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # cleanup if a network-owned port snuck in without failing
             for subnet in subnets:
                 self.delete_subnet(context, subnet['id'])
-            with context.session.begin(subtransactions=True):
+            with db_api.context_manager.writer.using(context):
                 network_db = self._get_network(context, id)
                 network = self._make_network_dict(network_db, context=context)
                 registry.notify(resources.NETWORK, events.PRECOMMIT_DELETE,
@@ -739,7 +738,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 raise exc.BadRequest(resource='subnets', msg=msg)
             self._validate_subnet(context, s)
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             network = self._get_network(context,
                                         subnet['subnet']['network_id'])
             subnet, ipam_subnet = self.ipam.allocate_subnet(context,
@@ -823,13 +822,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             registry.notify(resources.SUBNET_GATEWAY, events.BEFORE_UPDATE,
                             self, **kwargs)
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             subnet, changes = self.ipam.update_db_subnet(context, id, s,
                                                          db_pools)
         # we expire here since ipam may have made changes to relationships
-        # that will be stale on any subsequent lookups while the subnet object
-        # is in the session otherwise.
-        context.session.expire(subnet)
+        # that will be stale on any subsequent lookups while the subnet
+        # object is in the session otherwise.
+        # Check if subnet attached to session before expire.
+        if subnet in context.session:
+            context.session.expire(subnet)
+
         return self._make_subnet_dict(subnet, context=context)
 
     @property
@@ -962,7 +964,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         self._remove_subnet_ip_allocations_from_ports(context, id)
         # retry integrity errors to catch ip allocation races
         with db_api.exc_to_retry(sql_exc.IntegrityError), \
-                context.session.begin(subtransactions=True):
+                db_api.context_manager.writer.using(context):
             subnet_db = self._get_subnet(context, id)
             subnet = self._make_subnet_dict(subnet_db, context=context)
             registry.notify(resources.SUBNET, events.PRECOMMIT_DELETE,
@@ -1098,7 +1100,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def update_subnetpool(self, context, id, subnetpool):
         new_sp = subnetpool['subnetpool']
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             orig_sp = self._get_subnetpool(context, id=id)
             updated = _update_subnetpool_dict(orig_sp, new_sp)
             reader = subnet_alloc.SubnetPoolReader(updated)
@@ -1161,7 +1163,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     @db_api.retry_if_session_inactive()
     def delete_subnetpool(self, context, id):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             subnetpool = self._get_subnetpool(context, id=id)
             subnets = self._get_subnets_by_subnetpool(context, id)
             if subnets:

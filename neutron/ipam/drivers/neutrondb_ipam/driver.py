@@ -201,6 +201,8 @@ class NeutronDbSubnet(ipam_base.Subnet):
         # The only defined status at this stage is 'ALLOCATED'.
         # More states will be available in the future - e.g.: RECYCLABLE
         try:
+            # TODO(ataraday): revisit this after objects switched to
+            # new enginefacade
             with self._context.session.begin(subtransactions=True):
                 # NOTE(kevinbenton): we use a subtransaction to force
                 # a flush here so we can capture DBReferenceErrors due

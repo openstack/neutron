@@ -30,6 +30,7 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
+from neutron.db import api as db_api
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.extensions import ip_allocation
@@ -102,14 +103,17 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         if for_net_delete:
             # don't check if this is a part of a network delete operation
             return
-        segment_id = segment['id']
-        query = context.session.query(models_v2.Subnet.id)
-        query = query.filter(models_v2.Subnet.segment_id == segment_id)
-        subnet_ids = [s[0] for s in query]
+        with db_api.context_manager.reader.using(context):
+            segment_id = segment['id']
+            query = context.session.query(models_v2.Subnet.id)
+            query = query.filter(models_v2.Subnet.segment_id == segment_id)
+            subnet_ids = [s[0] for s in query]
+
         if subnet_ids:
             reason = _("The segment is still associated with subnet(s) "
                        "%s") % ", ".join(subnet_ids)
-            raise exceptions.SegmentInUse(segment_id=segment_id, reason=reason)
+            raise exceptions.SegmentInUse(segment_id=segment_id,
+                                          reason=reason)
 
 
 class Event(object):
