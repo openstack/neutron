@@ -79,12 +79,13 @@ def create_protocol_flows(direction, flow_template, port, rule):
         flow_template['actions'] = 'resubmit(,{:d})'.format(
             ovs_consts.ACCEPT_OR_INGRESS_TABLE)
     protocol = rule.get('protocol')
-    try:
-        flow_template['nw_proto'] = ovsfw_consts.protocol_to_nw_proto[protocol]
-        if rule['ethertype'] == n_consts.IPv6 and protocol == 'icmp':
+    if protocol:
+        if (rule.get('ethertype') == n_consts.IPv6 and
+                protocol == n_consts.PROTO_NAME_ICMP):
             flow_template['nw_proto'] = n_consts.PROTO_NUM_IPV6_ICMP
-    except KeyError:
-        pass
+        else:
+            flow_template['nw_proto'] = n_consts.IP_PROTOCOL_MAP.get(
+                protocol, protocol)
 
     flows = create_port_range_flows(flow_template, rule)
     return flows or [flow_template]
