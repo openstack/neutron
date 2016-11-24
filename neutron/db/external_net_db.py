@@ -198,7 +198,7 @@ class External_net_db_mixin(object):
         net = self.get_network(context, policy['object_id'])
         if not context.is_admin and net['tenant_id'] != context.tenant_id:
             msg = _("Only admins can manipulate policies on networks they "
-                    "do not own.")
+                    "do not own")
             raise n_exc.InvalidInput(error_message=msg)
         if not self._network_is_external(context, policy['object_id']):
             # we automatically convert the network into an external network

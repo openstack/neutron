@@ -169,7 +169,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # _get_network will succeed on a shared network
             if not context.is_admin and net['tenant_id'] != context.tenant_id:
                 msg = _("Only admins can manipulate policies on networks "
-                        "they do not own.")
+                        "they do not own")
                 raise exc.InvalidInput(error_message=msg)
 
         tenant_to_check = None
@@ -278,7 +278,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if netaddr.IPNetwork(subnet['cidr']).prefixlen != 64:
                 msg = _('Invalid CIDR %s for IPv6 address mode. '
                         'OpenStack uses the EUI-64 address format, '
-                        'which requires the prefix to be /64.')
+                        'which requires the prefix to be /64')
                 raise exc.InvalidInput(
                     error_message=(msg % subnet['cidr']))
 
@@ -293,7 +293,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _validate_ipv6_dhcp(self, ra_mode_set, address_mode_set, enable_dhcp):
         if (ra_mode_set or address_mode_set) and not enable_dhcp:
             msg = _("ipv6_ra_mode or ipv6_address_mode cannot be set when "
-                    "enable_dhcp is set to False.")
+                    "enable_dhcp is set to False")
             raise exc.InvalidInput(error_message=msg)
 
     def _validate_ipv6_update_dhcp(self, subnet, cur_subnet):
@@ -485,7 +485,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if s.get('enable_dhcp') and not dhcp_was_enabled:
             subnet_prefixlen = netaddr.IPNetwork(s['cidr']).prefixlen
             error_message = _("Subnet has a prefix length that is "
-                              "incompatible with DHCP service enabled.")
+                              "incompatible with DHCP service enabled")
             if ((ip_ver == 4 and subnet_prefixlen > 30) or
                 (ip_ver == 6 and subnet_prefixlen > 126)):
                 raise exc.InvalidInput(error_message=error_message)
@@ -493,11 +493,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             net = netaddr.IPNetwork(s['cidr'])
             if net.is_multicast():
                 error_message = _("Multicast IP subnet is not supported "
-                                  "if enable_dhcp is True.")
+                                  "if enable_dhcp is True")
                 raise exc.InvalidInput(error_message=error_message)
             elif net.is_loopback():
                 error_message = _("Loopback IP subnet is not supported "
-                                  "if enable_dhcp is True.")
+                                  "if enable_dhcp is True")
                 raise exc.InvalidInput(error_message=error_message)
 
         if validators.is_attr_set(s.get('gateway_ip')):
