@@ -626,6 +626,21 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     plugin._subnet_check_ip_allocations.assert_has_calls = (
                         calls)
 
+    def test_create_subnet_check_mtu_in_mech_context(self):
+        plugin = directory.get_plugin()
+        plugin.mechanism_manager.create_subnet_precommit = mock.Mock()
+        net_arg = {pnet.NETWORK_TYPE: 'vxlan',
+                   pnet.SEGMENTATION_ID: '1'}
+        network = self._make_network(self.fmt, 'net1', True,
+                                     arg_list=(pnet.NETWORK_TYPE,
+                                               pnet.SEGMENTATION_ID,),
+                                     **net_arg)
+        with self.subnet(network=network):
+            mock_subnet_pre = plugin.mechanism_manager.create_subnet_precommit
+            observerd_mech_context = mock_subnet_pre.call_args_list[0][0][0]
+            self.assertEqual(network['network']['mtu'],
+                             observerd_mech_context.network.current['mtu'])
+
 
 class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
                                Ml2PluginV2TestCase):
