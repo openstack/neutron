@@ -588,28 +588,37 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             gw_ports = self._get_router_gw_ports_by_network(context,
                     network['id'])
             router_ids = [p['device_id'] for p in gw_ports]
-            ctx_admin = context.elevated()
-            ext_subnets_dict = {s['id']: s for s in network['subnets']}
             for id in router_ids:
-                router = l3plugin.get_router(ctx_admin, id)
-                external_gateway_info = router['external_gateway_info']
-                # Get all stateful (i.e. non-SLAAC/DHCPv6-stateless) fixed ips
-                fips = [f for f in external_gateway_info['external_fixed_ips']
-                        if not ipv6_utils.is_auto_address_subnet(
-                            ext_subnets_dict[f['subnet_id']])]
-                num_fips = len(fips)
-                # Don't add the fixed IP to the port if it already
-                # has a stateful fixed IP of the same IP version
-                if num_fips > 1:
-                    continue
-                if num_fips == 1 and netaddr.IPAddress(
-                        fips[0]['ip_address']).version == subnet['ip_version']:
-                    continue
-                external_gateway_info['external_fixed_ips'].append(
-                                             {'subnet_id': subnet['id']})
-                info = {'router': {'external_gateway_info':
-                    external_gateway_info}}
-                l3plugin.update_router(context, id, info)
+                try:
+                    self._update_router_gw_port(context, id, network, subnet)
+                except l3.RouterNotFound:
+                    LOG.debug("Router %(id)s was concurrently deleted while "
+                              "updating GW port for subnet %(s)s",
+                              {'id': id, 's': subnet})
+
+    def _update_router_gw_port(self, context, router_id, network, subnet):
+        l3plugin = directory.get_plugin(constants.L3)
+        ctx_admin = context.elevated()
+        ext_subnets_dict = {s['id']: s for s in network['subnets']}
+        router = l3plugin.get_router(ctx_admin, router_id)
+        external_gateway_info = router['external_gateway_info']
+        # Get all stateful (i.e. non-SLAAC/DHCPv6-stateless) fixed ips
+        fips = [f for f in external_gateway_info['external_fixed_ips']
+                if not ipv6_utils.is_auto_address_subnet(
+                    ext_subnets_dict[f['subnet_id']])]
+        num_fips = len(fips)
+        # Don't add the fixed IP to the port if it already
+        # has a stateful fixed IP of the same IP version
+        if num_fips > 1:
+            return
+        if num_fips == 1 and netaddr.IPAddress(
+                fips[0]['ip_address']).version == subnet['ip_version']:
+            return
+        external_gateway_info['external_fixed_ips'].append(
+                                     {'subnet_id': subnet['id']})
+        info = {'router': {'external_gateway_info':
+            external_gateway_info}}
+        l3plugin.update_router(context, router_id, info)
 
     @db_api.retry_if_session_inactive()
     def _create_subnet_postcommit(self, context, result, network, ipam_subnet):
@@ -624,7 +633,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                 result, ipam_subnet)
             for port_id in updated_ports:
                 port_info = {'port': {'id': port_id}}
-                self.update_port(context, port_id, port_info)
+                try:
+                    self.update_port(context, port_id, port_info)
+                except exc.PortNotFound:
+                    LOG.debug("Port %(p)s concurrently deleted while adding "
+                              "address for new subnet %(s)s.", {'p': port_id,
+                                                                's': result})
 
     def _get_subnetpool_id(self, context, subnet):
         """Return the subnetpool id for this request
