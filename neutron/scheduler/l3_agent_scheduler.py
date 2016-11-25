@@ -467,7 +467,7 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
                 target_routers.append(r)
 
         if not target_routers:
-            return
+            return []
 
         return super(AZLeastRoutersScheduler, self)._get_routers_can_schedule(
             plugin, context, target_routers, l3_agent)
