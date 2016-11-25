@@ -22,6 +22,8 @@ in dom0 via calling XenAPI plugin. The XenAPI plugin is responsible to
 determine whether a command is safe to execute.
 """
 
+from os_xenapi.client import session
+from os_xenapi.client import XenAPI
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_rootwrap import cmd as oslo_rootwrap_cmd
@@ -44,19 +46,17 @@ xenapi_conf.register_xenapi_opts(cfg.CONF)
 
 class XenAPIClient(object):
     def __init__(self):
-        self._session = None
-        self._host = None
-        self._XenAPI = None
+        self._session = self._create_session(
+            cfg.CONF.xenapi.connection_url,
+            cfg.CONF.xenapi.connection_username,
+            cfg.CONF.xenapi.connection_password)
 
     def _call_plugin(self, plugin, fn, args):
-        host = self._this_host()
-        return self.get_session().xenapi.host.call_plugin(
-            host, plugin, fn, args)
+        return self._session.call_plugin(plugin, fn, args)
 
     def _create_session(self, url, username, password):
-        session = self._get_XenAPI().Session(url)
-        session.login_with_password(username, password)
-        return session
+        return session.XenAPISession(url, username, password,
+                                     originator="neutron")
 
     def _get_return_code(self, failure_details):
         # The details will be as:
@@ -71,20 +71,6 @@ class XenAPIClient(object):
         # otherwise we get unexpected exception.
         return RC_UNKNOWN_XENAPI_ERROR
 
-    def _get_XenAPI(self):
-        # Delay importing XenAPI as this module may not exist
-        # for non-XenServer hypervisors.
-        if self._XenAPI is None:
-            import XenAPI
-            self._XenAPI = XenAPI
-        return self._XenAPI
-
-    def _this_host(self):
-        if not self._host:
-            session = self.get_session()
-            self._host = session.xenapi.session.get_this_host(session.handle)
-        return self._host
-
     def execute(self, cmd, stdin=None):
         out = ""
         err = ""
@@ -93,7 +79,7 @@ class XenAPIClient(object):
             return oslo_rootwrap_cmd.RC_NOCOMMAND, out, err
         try:
             result_raw = self._call_plugin(
-                'netwrap', 'run_command',
+                'netwrap.py', 'run_command',
                 {'cmd': jsonutils.dumps(cmd),
                  'cmd_input': jsonutils.dumps(stdin)})
             result = jsonutils.loads(result_raw)
@@ -101,20 +87,7 @@ class XenAPIClient(object):
             out = result['out']
             err = result['err']
             return returncode, out, err
-        except self._get_XenAPI().Failure as failure:
+        except XenAPI.Failure as failure:
             LOG.exception(_LE('Failed to execute command: %s'), cmd)
             returncode = self._get_return_code(failure.details)
             return returncode, out, err
-
-    def get_session(self):
-        if self._session is None:
-            url = cfg.CONF.xenapi.connection_url
-            username = cfg.CONF.xenapi.connection_username
-            password = cfg.CONF.xenapi.connection_password
-            try:
-                self._session = self._create_session(url, username, password)
-            except Exception:
-                # Shouldn't reach here, otherwise it's a fatal error.
-                LOG.exception(_LE("Failed to initiate XenAPI session"))
-                raise SystemExit(1)
-        return self._session

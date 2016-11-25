@@ -25,9 +25,7 @@ class TestXenapiRootHelper(base.BaseTestCase):
     def _get_fake_xenapi_client(self):
         class FakeXenapiClient(helper.XenAPIClient):
             def __init__(self):
-                super(FakeXenapiClient, self).__init__()
-                # Mock XenAPI which may not exist in the unit test env.
-                self.XenAPI = mock.MagicMock()
+                self._session = mock.MagicMock()
 
         return FakeXenapiClient()
 
@@ -75,7 +73,7 @@ class TestXenapiRootHelper(base.BaseTestCase):
             rc, out, err = xenapi_client.execute(cmd)
 
             mock_call_plugin.assert_called_once_with(
-                'netwrap', 'run_command', expect_cmd_args)
+                'netwrap.py', 'run_command', expect_cmd_args)
             self.assertEqual(0, rc)
             self.assertEqual("vif158.2", out)
             self.assertEqual("", err)
@@ -85,9 +83,3 @@ class TestXenapiRootHelper(base.BaseTestCase):
         xenapi_client = self._get_fake_xenapi_client()
         rc, out, err = xenapi_client.execute(cmd)
         self.assertEqual(oslo_rootwrap_cmd.RC_NOCOMMAND, rc)
-
-    def test_get_session_except(self):
-        xenapi_client = self._get_fake_xenapi_client()
-        with mock.patch.object(helper.XenAPIClient, "_create_session",
-                               side_effect=Exception()):
-            self.assertRaises(SystemExit, xenapi_client.get_session)

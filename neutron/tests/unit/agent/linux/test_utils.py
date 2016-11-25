@@ -41,9 +41,12 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
     def test_xenapi_root_helper(self):
         token = utils.xenapi_root_helper.ROOT_HELPER_DAEMON_TOKEN
         self.config(group='AGENT', root_helper_daemon=token)
-        cmd_client = utils.RootwrapDaemonHelper.get_client()
-        self.assertIsInstance(cmd_client,
-                              utils.xenapi_root_helper.XenAPIClient)
+        with mock.patch(
+                'neutron.agent.linux.utils.xenapi_root_helper.XenAPIClient')\
+                as mock_xenapi_class:
+            mock_client = mock_xenapi_class.return_value
+            cmd_client = utils.RootwrapDaemonHelper.get_client()
+            self.assertEqual(cmd_client, mock_client)
 
     def test_without_helper(self):
         expected = "%s\n" % self.test_file

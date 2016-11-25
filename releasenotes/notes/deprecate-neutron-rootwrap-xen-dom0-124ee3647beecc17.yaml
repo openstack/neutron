@@ -1,0 +1,5 @@
+---
+deprecations:
+  - Now that rootwrap daemon mode is supported for XenServer, the
+    ``neutron-rootwrap-xen-dom0`` script is deprecated and will be removed
+    in a next release.

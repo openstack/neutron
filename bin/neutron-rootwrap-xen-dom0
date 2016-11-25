@@ -30,7 +30,7 @@ import os
 import select
 import sys
 
-import XenAPI
+from os_xenapi.client import XenAPI
 
 
 RC_UNAUTHORIZED = 99
@@ -116,7 +116,7 @@ def run_command(url, username, password, user_args, cmd_input):
         try:
             host = session.xenapi.session.get_this_host(session.handle)
             result = session.xenapi.host.call_plugin(
-                host, 'netwrap', 'run_command',
+                host, 'netwrap.py', 'run_command',
                 {'cmd': json.dumps(user_args), 'cmd_input': json.dumps(cmd_input)})
             result_dict = json.loads(result)
             returncode = result_dict.get('returncode')
@@ -133,6 +133,9 @@ def run_command(url, username, password, user_args, cmd_input):
 
 
 def main():
+    # Deprecated: This script is deprecated and will be deleted in next release
+    sys.stderr.write("Deprecated: neutron-rootwrap-xen-dom0 is deprecated, "
+                     "will be deleted in next release.")
     exec_name, config_file, user_args = parse_args()
     config = load_configuration(exec_name, config_file)
     filter_command(exec_name, config['filters_path'], user_args, config['exec_dirs'])
