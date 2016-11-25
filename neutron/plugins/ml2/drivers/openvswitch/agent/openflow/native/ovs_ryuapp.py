@@ -40,11 +40,12 @@ def agent_main_wrapper(bridge_classes):
         ovs_agent.main(bridge_classes)
     except Exception:
         LOG.exception(_LE("Agent main thread died of an exception"))
-    # The following call terminates Ryu's AppManager.run_apps(),
-    # which is needed for clean shutdown of an agent process.
-    # The close() call must be called in another thread, otherwise
-    # it suicides and ends prematurely.
-    hub.spawn(app_manager.AppManager.get_instance().close)
+    finally:
+        # The following call terminates Ryu's AppManager.run_apps(),
+        # which is needed for clean shutdown of an agent process.
+        # The close() call must be called in another thread, otherwise
+        # it suicides and ends prematurely.
+        hub.spawn(app_manager.AppManager.get_instance().close)
 
 
 class OVSNeutronAgentRyuApp(app_manager.RyuApp):
