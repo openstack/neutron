@@ -211,7 +211,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         ranges = self.network_vlan_ranges.get(physical_network, [])
         inside = any(lo <= vlan_id <= hi for lo, hi in ranges)
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             query = (context.session.query(vlan_alloc_model.VlanAllocation).
                      filter_by(physical_network=physical_network,
                                vlan_id=vlan_id))

@@ -2440,14 +2440,14 @@ class TestTransactionGuard(Ml2PluginV2TestCase):
     def test_delete_network_guard(self):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        with ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(ctx):
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_network(ctx, 'id')
 
     def test_delete_subnet_guard(self):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        with ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(ctx):
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_subnet(ctx, 'id')
 

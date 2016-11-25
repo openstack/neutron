@@ -28,6 +28,7 @@ import webob.exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
@@ -203,8 +204,7 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         default_sg = self._ensure_default_security_group(context, tenant_id)
         if not validators.is_attr_set(port['port'].get(ext_sg.SECURITYGROUPS)):
             port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             sgids = self._get_security_groups_on_port(context, port)
             port = super(SecurityGroupTestPlugin, self).create_port(context,
                                                                     port)
@@ -213,8 +213,7 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         return port
 
     def update_port(self, context, id, port):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             if ext_sg.SECURITYGROUPS in port['port']:
                 port['port'][ext_sg.SECURITYGROUPS] = (
                     self._get_security_groups_on_port(context, port))

@@ -15,6 +15,7 @@
 
 from neutron.api.v2 import attributes
 from neutron.db import _resource_extend as resource_extend
+from neutron.db import api as db_api
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.objects.port.extensions import extra_dhcp_opt as obj_extra_dhcp
 
@@ -38,7 +39,7 @@ class ExtraDhcpOptMixin(object):
                                              extra_dhcp_opts):
         if not extra_dhcp_opts:
             return port
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             for dopt in extra_dhcp_opts:
                 if self._is_valid_opt_value(dopt['opt_name'],
                                             dopt['opt_value']):
@@ -76,7 +77,7 @@ class ExtraDhcpOptMixin(object):
                                 context, port_id=id)
             # if there are currently no dhcp_options associated to
             # this port, Then just insert the new ones and be done.
-            with context.session.begin(subtransactions=True):
+            with db_api.context_manager.writer.using(context):
                 for upd_rec in dopts:
                     for opt in opts:
                         if (opt['opt_name'] == upd_rec['opt_name']

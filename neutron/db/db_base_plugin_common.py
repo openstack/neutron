@@ -27,6 +27,7 @@ from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.db import _utils as db_utils
+from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
 from neutron.objects import subnet as subnet_obj
@@ -83,6 +84,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     def _generate_mac():
         return net.get_random_mac(cfg.CONF.base_mac.split(':'))
 
+    @db_api.context_manager.reader
     def _is_mac_in_use(self, context, network_id, mac_address):
         return bool(context.session.query(models_v2.Port).
                     filter(models_v2.Port.network_id == network_id).
@@ -98,7 +100,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                   {'ip_address': ip_address,
                    'network_id': network_id,
                    'subnet_id': subnet_id})
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             for ipal in (context.session.query(models_v2.IPAllocation).
                          filter_by(network_id=network_id,
                                    ip_address=ip_address,
@@ -106,6 +108,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                 context.session.delete(ipal)
 
     @staticmethod
+    @db_api.context_manager.writer
     def _store_ip_allocation(context, ip_address, network_id, subnet_id,
                              port_id):
         LOG.debug("Allocated IP %(ip_address)s "
@@ -233,14 +236,17 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return port_qry.filter_by(network_id=network_id,
                 device_owner=constants.DEVICE_OWNER_ROUTER_GW).all()
 
+    @db_api.context_manager.reader
     def _get_subnets_by_network(self, context, network_id):
         subnet_qry = context.session.query(models_v2.Subnet)
         return subnet_qry.filter_by(network_id=network_id).all()
 
+    @db_api.context_manager.reader
     def _get_subnets_by_subnetpool(self, context, subnetpool_id):
         subnet_qry = context.session.query(models_v2.Subnet)
         return subnet_qry.filter_by(subnetpool_id=subnetpool_id).all()
 
+    @db_api.context_manager.reader
     def _get_all_subnets(self, context):
         # NOTE(salvatore-orlando): This query might end up putting
         # a lot of stress on the db. Consider adding a cache layer
