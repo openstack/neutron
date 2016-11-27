@@ -1857,7 +1857,10 @@ def _notify_routers_callback(resource, event, trigger, **kwargs):
     context = kwargs['context']
     router_ids = kwargs['router_ids']
     l3plugin = directory.get_plugin(constants.L3)
-    l3plugin.notify_routers_updated(context, router_ids)
+    if l3plugin:
+        l3plugin.notify_routers_updated(context, router_ids)
+    else:
+        LOG.debug('%s not configured', constants.L3)
 
 
 def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
@@ -1894,7 +1897,10 @@ def _notify_subnetpool_address_scope_update(resource, event,
 
     router_ids = [r[0] for r in query]
     l3plugin = directory.get_plugin(constants.L3)
-    l3plugin.notify_routers_updated(context, router_ids)
+    if l3plugin:
+        l3plugin.notify_routers_updated(context, router_ids)
+    else:
+        LOG.debug('%s not configured', constants.L3)
 
 
 @removals.remove(
