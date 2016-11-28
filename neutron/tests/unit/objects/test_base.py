@@ -397,6 +397,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.DateTimeField: tools.get_random_datetime,
     obj_fields.IntegerField: tools.get_random_integer,
     obj_fields.StringField: tools.get_random_string,
+    obj_fields.ListOfStringsField: tools.get_random_string_list,
     obj_fields.UUIDField: uuidutils.generate_uuid,
     obj_fields.ObjectField: lambda: None,
     obj_fields.ListOfObjectsField: lambda: [],

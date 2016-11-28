@@ -182,16 +182,16 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return result_pools
 
     def _update_subnet_service_types(self, context, subnet_id, s):
-        old_types = context.session.query(
-            sst_model.SubnetServiceType).filter_by(subnet_id=subnet_id)
+        old_types = subnet_obj.SubnetServiceType.get_objects(
+            context, subnet_id=subnet_id)
         for service_type in old_types:
-            context.session.delete(service_type)
+            service_type.delete()
         updated_types = s.pop('service_types')
         for service_type in updated_types:
-            new_type = sst_model.SubnetServiceType(
-                           subnet_id=subnet_id,
-                           service_type=service_type)
-            context.session.add(new_type)
+            new_type = subnet_obj.SubnetServiceType(context,
+                                                    subnet_id=subnet_id,
+                                                    service_type=service_type)
+            new_type.create()
         return updated_types
 
     def update_db_subnet(self, context, subnet_id, s, oldpools):
@@ -552,10 +552,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         if validators.is_attr_set(service_types):
             for service_type in service_types:
-                service_type_entry = sst_model.SubnetServiceType(
-                    subnet_id=subnet.id,
-                    service_type=service_type)
-                context.session.add(service_type_entry)
+                service_type_obj = subnet_obj.SubnetServiceType(
+                    context, subnet_id=subnet.id, service_type=service_type)
+                service_type_obj.create()
 
         self.save_allocation_pools(context, subnet,
                                    subnet_request.allocation_pools)
@@ -599,6 +598,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return query.filter(models_v2.Subnet.network_id == network_id)
 
     def _query_filter_service_subnets(self, query, service_type):
+        # TODO(korzen) use SubnetServiceType OVO here
         ServiceType = sst_model.SubnetServiceType
         query = query.add_entity(ServiceType)
         query = query.outerjoin(ServiceType)
