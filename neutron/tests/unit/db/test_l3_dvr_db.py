@@ -303,7 +303,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             gw_port_db = {
                 'id': 'my_gw_id',
                 'network_id': 'ext_net_id',
-                'device_owner': const.DEVICE_OWNER_ROUTER_GW
+                'device_owner': const.DEVICE_OWNER_ROUTER_GW,
+                'fixed_ips': [{'ip_address': '1.2.3.4'}]
             }
             router.gw_port = gw_port_db
         else:
@@ -312,7 +313,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = mock.Mock()
         directory.add_plugin(const.CORE, plugin)
         with mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
-                               '_delete_current_gw_port'),\
+                               'router_gw_port_has_floating_ips',
+                               return_value=False),\
+            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
+                              '_delete_router_gw_port_db'),\
             mock.patch.object(
                 self.mixin,
                 '_get_router') as grtr,\
