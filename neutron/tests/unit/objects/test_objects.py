@@ -59,9 +59,10 @@ object_data = {
     'SecurityGroup': '1.0-e26b90c409b31fd2e3c6fcec402ac0b9',
     'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',
     'SegmentHostMapping': '1.0-521597cf82ead26217c3bd10738f00f0',
-    'Subnet': '1.0-b71e720f45fff2a39759940e010be7d1',
+    'Subnet': '1.0-9c19023a61b42d29fbf3766df380e5b7',
     'SubnetPool': '1.0-e8300bfbc4762cc88a7f6205b52da2f8',
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',
+    'SubnetServiceType': '1.0-05ae4cdb2a9026a697b143926a1add8c',
     'SubPort': '1.0-72c8471068db1f0491b5480fe49b52bb',
     'Trunk': '1.0-80ebebb57f2b0dbb510f84d91421ed10',
 }

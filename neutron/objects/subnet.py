@@ -16,6 +16,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
+from neutron.db.models import subnet_service_type
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.objects import base
@@ -136,6 +137,23 @@ class IPAllocationPool(base.NeutronDbObject):
         return result
 
 
+@obj_base.VersionedObjectRegistry.register
+class SubnetServiceType(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = subnet_service_type.SubnetServiceType
+
+    foreign_keys = {'Subnet': {'subnet_id': 'id'}}
+
+    primary_keys = ['subnet_id', 'service_type']
+
+    fields = {
+        'subnet_id': obj_fields.UUIDField(),
+        'service_type': obj_fields.StringField()
+    }
+
+
 # RBAC metaclass is not applied here because 'shared' attribute of Subnet
 # is dependent on Network 'shared' state, and in Subnet object
 # it can be read-only. The necessary changes are applied manually:
@@ -168,11 +186,12 @@ class Subnet(base.NeutronDbObject):
                                                          nullable=True),
         'host_routes': obj_fields.ListOfObjectsField('Route', nullable=True),
         'ipv6_ra_mode': common_types.IPV6ModeEnumField(nullable=True),
-        'ipv6_address_mode': common_types.IPV6ModeEnumField(nullable=True)
+        'ipv6_address_mode': common_types.IPV6ModeEnumField(nullable=True),
+        'service_types': obj_fields.ListOfStringsField(nullable=True)
     }
 
     synthetic_fields = ['allocation_pools', 'dns_nameservers', 'host_routes',
-                        'shared']
+                        'service_types', 'shared']
 
     foreign_keys = {'Network': {'network_id': 'id'}}
 
@@ -189,6 +208,8 @@ class Subnet(base.NeutronDbObject):
     def obj_load_attr(self, attrname):
         if attrname == 'shared':
             return self._load_shared()
+        if attrname == 'service_types':
+            return self._load_service_types()
         super(Subnet, self).obj_load_attr(attrname)
 
     def _load_shared(self, db_obj=None):
@@ -210,9 +231,21 @@ class Subnet(base.NeutronDbObject):
         setattr(self, 'shared', shared)
         self.obj_reset_changes(['shared'])
 
+    def _load_service_types(self, db_obj=None):
+        if db_obj:
+            service_types = db_obj.get('service_types', [])
+        else:
+            service_types = SubnetServiceType.get_objects(self.obj_context,
+                                                          subnet_id=self.id)
+
+        self.service_types = [service_type['service_type'] for
+                              service_type in service_types]
+        self.obj_reset_changes(['service_types'])
+
     def from_db_object(self, db_obj):
         super(Subnet, self).from_db_object(db_obj)
         self._load_shared(db_obj)
+        self._load_service_types(db_obj)
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
