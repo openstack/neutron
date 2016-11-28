@@ -40,7 +40,6 @@ from neutron.agent.linux import iptables_manager
 from neutron.cmd.sanity import checks
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
-from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.ipam import utils as ipam_utils
@@ -1347,6 +1346,15 @@ class DeviceManager(object):
 
     def plug(self, network, port, interface_name):
         """Plug device settings for the network's DHCP on this host."""
+        # Disable acceptance of RAs in the namespace so we don't
+        # auto-configure an IPv6 address since we explicitly configure
+        # them on the device.  This must be done before any interfaces
+        # are plugged since it could receive an RA by the time
+        # plug() returns, so we have to create the namespace first.
+        if network.namespace:
+            ip_lib.IPWrapper().ensure_namespace(network.namespace)
+        self.driver.configure_ipv6_ra(network.namespace, 'default',
+                                      n_const.ACCEPT_RA_DISABLED)
         self.driver.plug(network.id,
                          port.id,
                          interface_name,
@@ -1383,10 +1391,9 @@ class DeviceManager(object):
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
-            if not ipv6_utils.is_auto_address_subnet(subnet):
-                net = netaddr.IPNetwork(subnet.cidr)
-                ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
-                ip_cidrs.append(ip_cidr)
+            net = netaddr.IPNetwork(subnet.cidr)
+            ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
+            ip_cidrs.append(ip_cidr)
 
         if self.driver.use_gateway_ips:
             # For each DHCP-enabled subnet, add that subnet's gateway

@@ -1444,7 +1444,8 @@ class TestDeviceManager(base.BaseTestCase):
                           'device_id': mock.ANY}})])
 
         if port == fake_ipv6_port:
-            expected_ips = ['169.254.169.254/16']
+            expected_ips = ['2001:db8::a8bb:ccff:fedd:ee99/64',
+                            '169.254.169.254/16']
         else:
             expected_ips = ['172.9.9.9/24', '169.254.169.254/16']
         expected = [
@@ -1456,6 +1457,9 @@ class TestDeviceManager(base.BaseTestCase):
 
         if not device_is_ready:
             expected.insert(1,
+                            mock.call.configure_ipv6_ra(net.namespace,
+                                                        'default', 0))
+            expected.insert(2,
                             mock.call.plug(net.id,
                                            port.id,
                                            'tap12345678-12',
