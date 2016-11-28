@@ -27,8 +27,8 @@ import six
 import tenacity
 
 from neutron._i18n import _, _LE, _LI, _LW
+from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
-from neutron.agent.linux import ip_lib
 from neutron.agent.ovsdb import api as ovsdb
 from neutron.conf.agent import ovs_conf
 from neutron.plugins.common import constants as p_const
