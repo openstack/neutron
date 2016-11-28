@@ -604,3 +604,21 @@ class NeutronDbObject(NeutronObject):
         return obj_db_api.count(
             context, cls.db_model, **cls.modify_fields_to_db(kwargs)
         )
+
+    @classmethod
+    def objects_exist(cls, context, validate_filters=True, **kwargs):
+        """
+        Check if objects are present in DB.
+
+        :param context:
+        :param validate_filters: Raises an error in case of passing an unknown
+                                 filter
+        :param kwargs: multiple keys defined by key=value pairs
+        :return: boolean. True if object is present.
+        """
+        if validate_filters:
+            cls.validate_filters(**kwargs)
+        # Succeed if at least a single object matches; no need to fetch more
+        return bool(obj_db_api.get_object(
+            context, cls.db_model, **cls.modify_fields_to_db(kwargs))
+        )

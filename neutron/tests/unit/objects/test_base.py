@@ -1461,6 +1461,25 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                           self._test_class.count, self.context,
                           fake_field='xxx')
 
+    def test_objects_exist(self):
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+        self.assertTrue(self._test_class.objects_exist(self.context))
+
+    def test_objects_exist_false(self):
+        self.assertFalse(self._test_class.objects_exist(self.context))
+
+    def test_objects_exist_validate_filters(self):
+        self.assertRaises(n_exc.InvalidInput,
+                          self._test_class.objects_exist, self.context,
+                          fake_field='xxx')
+
+    def test_objects_exist_validate_filters_false(self):
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+        self.assertTrue(self._test_class.objects_exist(
+            self.context, validate_filters=False, fake_filter='xxx'))
+
     def test_db_obj(self):
         obj = self._make_object(self.obj_fields[0])
         self.assertIsNone(obj.db_obj)
