@@ -16,6 +16,7 @@
 
 import functools
 
+from oslo_log import log as logging
 import ryu.app.ofctl.api  # noqa
 from ryu.base import app_manager
 from ryu.lib import hub
@@ -23,6 +24,7 @@ from ryu.lib import type_desc
 from ryu.ofproto import ofproto_v1_3
 from ryu.ofproto import oxm_fields
 
+from neutron._i18n import _LE
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_int
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -32,9 +34,14 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovs_agent
 
+LOG = logging.getLogger(__name__)
+
 
 def agent_main_wrapper(bridge_classes):
-    ovs_agent.main(bridge_classes)
+    try:
+        ovs_agent.main(bridge_classes)
+    except Exception:
+        LOG.exception(_LE("Agent main thread died of an exception"))
     # The following call terminates Ryu's AppManager.run_apps(),
     # which is needed for clean shutdown of an agent process.
     # The close() call must be called in another thread, otherwise
