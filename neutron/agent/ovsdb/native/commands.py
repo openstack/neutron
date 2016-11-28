@@ -55,6 +55,47 @@ class BaseCommand(api.Command):
     __repr__ = __str__
 
 
+class AddManagerCommand(BaseCommand):
+    def __init__(self, api, target):
+        super(AddManagerCommand, self).__init__(api)
+        self.target = target
+
+    def run_idl(self, txn):
+        row = txn.insert(self.api._tables['Manager'])
+        row.target = self.target
+        self.api._ovs.verify('manager_options')
+        self.api._ovs.manager_options = self.api._ovs.manager_options + [row]
+
+
+class GetManagerCommand(BaseCommand):
+    def __init__(self, api):
+        super(GetManagerCommand, self).__init__(api)
+
+    def run_idl(self, txn):
+        self.result = [m.target for m in
+                       self.api._tables['Manager'].rows.values()]
+
+
+class RemoveManagerCommand(BaseCommand):
+    def __init__(self, api, target):
+        super(RemoveManagerCommand, self).__init__(api)
+        self.target = target
+
+    def run_idl(self, txn):
+        try:
+            manager = idlutils.row_by_value(self.api.idl, 'Manager', 'target',
+                                            self.target)
+        except idlutils.RowNotFound:
+            msg = _("Manager with target %s does not exist") % self.target
+            LOG.error(msg)
+            raise RuntimeError(msg)
+        self.api._ovs.verify('manager_options')
+        manager_list = self.api._ovs.manager_options
+        manager_list.remove(manager)
+        self.api._ovs.manager_options = manager_list
+        self.api._tables['Manager'].rows[manager.uuid].delete()
+
+
 class AddBridgeCommand(BaseCommand):
     def __init__(self, api, name, may_exist, datapath_type):
         super(AddBridgeCommand, self).__init__(api)

@@ -12,7 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.common import utils
+from oslo_config import cfg
+
+from neutron.agent.ovsdb import api as ovsdb
+
+cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
 
 
 def _connection_to_manager_uri(conn_uri):
@@ -25,5 +29,9 @@ def _connection_to_manager_uri(conn_uri):
 
 
 def enable_connection_uri(conn_uri):
+    class OvsdbVsctlContext(object):
+        vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
+
     manager_uri = _connection_to_manager_uri(conn_uri)
-    utils.execute(['ovs-vsctl', 'set-manager', manager_uri], run_as_root=True)
+    api = ovsdb.API.get(OvsdbVsctlContext, 'vsctl')
+    api.add_manager(manager_uri).execute(check_error=False, log_errors=True)

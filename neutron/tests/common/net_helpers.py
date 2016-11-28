@@ -74,6 +74,9 @@ CHILD_PROCESS_SLEEP = os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5)
 
 TRANSPORT_PROTOCOLS = (n_const.PROTO_NAME_TCP, n_const.PROTO_NAME_UDP)
 
+OVS_MANAGER_TEST_PORT_FIRST = 6610
+OVS_MANAGER_TEST_PORT_LAST = 6639
+
 
 def increment_ip_cidr(ip_cidr, offset=1):
     """Increment ip_cidr offset times.
@@ -189,7 +192,7 @@ def get_unused_port(used, start=1024, end=None):
     return random.choice(list(candidates - used))
 
 
-def get_free_namespace_port(protocol, namespace=None):
+def get_free_namespace_port(protocol, namespace=None, start=1024, end=None):
     """Return an unused port from given namespace
 
     WARNING: This function returns a port that is free at the execution time of
@@ -199,6 +202,10 @@ def get_free_namespace_port(protocol, namespace=None):
 
     :param protocol: Return free port for given protocol. Supported protocols
                      are 'tcp' and 'udp'.
+    :param namespace: Namespace in which free port has to be returned.
+    :param start: The starting port number.
+    :param end: The ending port number (free port that is returned would be
+                between (start, end) values.
     """
     if protocol == n_const.PROTO_NAME_TCP:
         param = '-tna'
@@ -211,7 +218,7 @@ def get_free_namespace_port(protocol, namespace=None):
     output = ip_wrapper.netns.execute(['ss', param])
     used_ports = _get_source_ports_from_ss_output(output)
 
-    return get_unused_port(used_ports)
+    return get_unused_port(used_ports, start, end)
 
 
 def create_patch_ports(source, destination):

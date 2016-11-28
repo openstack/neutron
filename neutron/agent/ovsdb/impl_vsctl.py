@@ -180,6 +180,21 @@ class OvsdbVsctl(ovsdb.API):
     def transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self.context, check_error, log_errors, **kwargs)
 
+    def add_manager(self, connection_uri):
+        # This will add a new manager without overriding existing ones.
+        conn_uri = 'target="%s"' % connection_uri
+        args = ['create', 'Manager', conn_uri, '--', 'add', 'Open_vSwitch',
+                '.', 'manager_options', '@manager']
+        return BaseCommand(self.context, '--id=@manager', args=args)
+
+    def get_manager(self):
+        return MultiLineCommand(self.context, 'get-manager')
+
+    def remove_manager(self, connection_uri):
+        args = ['get', 'Manager', connection_uri, '--', 'remove',
+                'Open_vSwitch', '.', 'manager_options', '@manager']
+        return BaseCommand(self.context, '--id=@manager', args=args)
+
     def add_br(self, name, may_exist=True, datapath_type=None):
         opts = ['--may-exist'] if may_exist else None
         params = [name]
