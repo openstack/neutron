@@ -14,6 +14,7 @@
 
 from oslo_log import log as logging
 from tempest.common import waiters
+from tempest.lib.common.utils import data_utils
 from tempest import test
 
 from neutron.common import utils
@@ -38,17 +39,24 @@ class TrunkTest(base.BaseTempestTestCase):
         cls.subnet = cls.create_subnet(cls.network)
         cls.create_router_and_interface(cls.subnet['id'])
         cls.keypair = cls.create_keypair()
-        cls.create_loginable_secgroup_rule()
+        cls.secgroup = cls.manager.network_client.create_security_group(
+            name=data_utils.rand_name('secgroup-'))
+        cls.security_groups.append(cls.secgroup['security_group'])
+        cls.create_loginable_secgroup_rule(
+            secgroup_id=cls.secgroup['security_group']['id'])
 
     def _create_server_with_trunk_port(self):
-        port = self.create_port(self.network)
+        port = self.create_port(self.network, security_groups=[
+            self.secgroup['security_group']['id']])
         trunk = self.client.create_trunk(port['id'], subports=[])['trunk']
         fip = self.create_and_associate_floatingip(port['id'])
         server = self.create_server(
             flavor_ref=CONF.compute.flavor_ref,
             image_ref=CONF.compute.image_ref,
             key_name=self.keypair['name'],
-            networks=[{'port': port['id']}])['server']
+            networks=[{'port': port['id']}],
+            security_groups=[{'name': self.secgroup[
+                'security_group']['name']}])['server']
         self.addCleanup(self._detach_and_delete_trunk, server, trunk)
         return {'port': port, 'trunk': trunk, 'fip': fip,
                 'server': server}
