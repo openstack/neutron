@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 from neutron.objects import base as obj_base
 from neutron.objects import network
 from neutron.objects.qos import policy
@@ -30,12 +28,7 @@ class NetworkPortSecurityDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(NetworkPortSecurityDbObjTestCase, self).setUp()
-        for db_obj, obj_field, obj in zip(
-                self.db_objs, self.obj_fields, self.objs):
-            network = self._create_network()
-            db_obj['network_id'] = network.id
-            obj_field['id'] = network.id
-            obj['id'] = network['id']
+        self.update_obj_fields({'id': lambda: self._create_network().id})
 
 
 class NetworkSegmentIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
@@ -59,8 +52,7 @@ class NetworkSegmentDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(NetworkSegmentDbObjTestCase, self).setUp()
         network = self._create_network()
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['network_id'] = network.id
+        self.update_obj_fields({'network_id': network.id})
 
 
 class NetworkObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
@@ -171,8 +163,7 @@ class SegmentHostMappingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         super(SegmentHostMappingDbObjectTestCase, self).setUp()
         self._create_test_network()
         self._create_test_segment(network=self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['segment_id'] = self._segment['id']
+        self.update_obj_fields({'segment_id': self._segment['id']})
 
 
 class NetworkDNSDomainIfaceObjectTestcase(
@@ -188,9 +179,5 @@ class NetworkDNSDomainDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(NetworkDNSDomainDbObjectTestcase, self).setUp()
-        for db_obj, obj_field, obj in zip(self.db_objs,
-                self.obj_fields, self.objs):
-            network = self._create_network()
-            db_obj['network_id'] = network['id']
-            obj_field['network_id'] = network['id']
-            obj['network_id'] = network['id']
+        self.update_obj_fields(
+            {'network_id': lambda: self._create_network().id})

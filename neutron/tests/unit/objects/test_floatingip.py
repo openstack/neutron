@@ -31,9 +31,5 @@ class FloatingIPDNSDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(FloatingIPDNSDbObjectTestcase, self).setUp()
-        for db_obj, obj_field, obj in zip(self.db_objs,
-                self.obj_fields, self.objs):
-            fip = self._create_test_fip()
-            db_obj['floatingip_id'] = fip['id']
-            obj_field['floatingip_id'] = fip['id']
-            obj['floatingip_id'] = fip['id']
+        self.update_obj_fields(
+            {'floatingip_id': lambda: self._create_test_fip().id})

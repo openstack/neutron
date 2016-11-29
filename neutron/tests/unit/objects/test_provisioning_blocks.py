@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 from neutron.objects import provisioning_blocks
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
@@ -31,5 +29,5 @@ class ProvisioningBlockDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(ProvisioningBlockDbObjectTestCase, self).setUp()
         self._create_test_standard_attribute()
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['standard_attr_id'] = self._standard_attribute['id']
+        self.update_obj_fields(
+            {'standard_attr_id': self._standard_attribute['id']})
