@@ -74,3 +74,4 @@ class SegmentHostMapping(model_base.BASEV2):
         NetworkSegment, backref=orm.backref("segment_host_mapping",
                                             lazy='joined',
                                             cascade='delete'))
+    revises_on_change = ('network_segment', )
