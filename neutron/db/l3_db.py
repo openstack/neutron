@@ -1837,6 +1837,13 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
         super(L3_NAT_db_mixin, self).notify_routers_updated(
             context, list(router_ids), 'disassociate_floatingips', {})
 
+    def _migrate_router_ports(
+        self, context, router_db, old_owner, new_owner):
+        """Update the model to support the dvr case of a router."""
+        for rp in router_db.attached_ports.filter_by(port_type=old_owner):
+            rp.port_type = new_owner
+            rp.port.device_owner = new_owner
+
 
 def _prevent_l3_port_delete_callback(resource, event, trigger, **kwargs):
     context = kwargs['context']

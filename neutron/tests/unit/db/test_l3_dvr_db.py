@@ -113,7 +113,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertFalse(router_db.extra_attributes.distributed)
         self.mixin._get_router = mock.Mock(return_value=router_db)
         self.mixin._validate_router_migration = mock.Mock()
-        self.mixin._update_distributed_attr = mock.Mock()
+        self.mixin._migrate_router_ports = mock.Mock()
         self.mixin.list_l3_agents_hosting_router = mock.Mock(
             return_value={'agents': [agent]})
         self.mixin._unbind_router = mock.Mock()
@@ -122,7 +122,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         # Assert that the DB value has changed
         self.assertTrue(router_db.extra_attributes.distributed)
         self.assertEqual(1,
-                         self.mixin._update_distributed_attr.call_count)
+                         self.mixin._migrate_router_ports.call_count)
 
     def _test_get_device_owner(self, is_distributed=False,
                                expected=l3_const.DEVICE_OWNER_ROUTER_INTF,
