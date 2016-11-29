@@ -244,7 +244,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             # agent did not provide a full one (e.g. Linux Bridge case). We
             # need to look up the full one before calling provisioning_complete
             if not port:
-                port = ml2_db.get_port(rpc_context.session, port_id)
+                port = ml2_db.get_port(rpc_context, port_id)
             if not port:
                 # port doesn't exist, no need to add a provisioning block
                 return
@@ -260,7 +260,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         if not l2pop_driver:
             return
         if not port:
-            port = ml2_db.get_port(rpc_context.session, port_id)
+            port = ml2_db.get_port(rpc_context, port_id)
             if not port:
                 return
         is_ha_port = l3_hamode_db.is_ha_router_port(rpc_context,

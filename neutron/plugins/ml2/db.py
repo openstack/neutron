@@ -38,16 +38,16 @@ LOG = log.getLogger(__name__)
 MAX_PORTS_PER_QUERY = 500
 
 
-def add_port_binding(session, port_id):
-    with session.begin(subtransactions=True):
+def add_port_binding(context, port_id):
+    with context.session.begin(subtransactions=True):
         record = models.PortBinding(
             port_id=port_id,
             vif_type=portbindings.VIF_TYPE_UNBOUND)
-        session.add(record)
+        context.session.add(record)
         return record
 
 
-def get_locked_port_and_binding(session, port_id):
+def get_locked_port_and_binding(context, port_id):
     """Get port and port binding records for update within transaction."""
 
     try:
@@ -55,12 +55,12 @@ def get_locked_port_and_binding(session, port_id):
         # to both be added to the session and locked for update. A
         # single joined query should work, but the combination of left
         # outer joins and postgresql doesn't seem to work.
-        port = (session.query(models_v2.Port).
+        port = (context.session.query(models_v2.Port).
                 enable_eagerloads(False).
                 filter_by(id=port_id).
                 with_lockmode('update').
                 one())
-        binding = (session.query(models.PortBinding).
+        binding = (context.session.query(models.PortBinding).
                    enable_eagerloads(False).
                    filter_by(port_id=port_id).
                    with_lockmode('update').
@@ -70,10 +70,10 @@ def get_locked_port_and_binding(session, port_id):
         return None, None
 
 
-def set_binding_levels(session, levels):
+def set_binding_levels(context, levels):
     if levels:
         for level in levels:
-            session.add(level)
+            context.session.add(level)
         LOG.debug("For port %(port_id)s, host %(host)s, "
                   "set binding levels %(levels)s",
                   {'port_id': levels[0].port_id,
@@ -83,9 +83,9 @@ def set_binding_levels(session, levels):
         LOG.debug("Attempted to set empty binding levels")
 
 
-def get_binding_levels(session, port_id, host):
+def get_binding_levels(context, port_id, host):
     if host:
-        result = (session.query(models.PortBindingLevel).
+        result = (context.session.query(models.PortBindingLevel).
                   filter_by(port_id=port_id, host=host).
                   order_by(models.PortBindingLevel.level).
                   all())
@@ -97,9 +97,9 @@ def get_binding_levels(session, port_id, host):
         return result
 
 
-def clear_binding_levels(session, port_id, host):
+def clear_binding_levels(context, port_id, host):
     if host:
-        (session.query(models.PortBindingLevel).
+        (context.session.query(models.PortBindingLevel).
          filter_by(port_id=port_id, host=host).
          delete())
         LOG.debug("For port %(port_id)s, host %(host)s, "
@@ -108,14 +108,14 @@ def clear_binding_levels(session, port_id, host):
                    'host': host})
 
 
-def ensure_distributed_port_binding(session, port_id, host, router_id=None):
-    record = (session.query(models.DistributedPortBinding).
+def ensure_distributed_port_binding(context, port_id, host, router_id=None):
+    record = (context.session.query(models.DistributedPortBinding).
               filter_by(port_id=port_id, host=host).first())
     if record:
         return record
 
     try:
-        with session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             record = models.DistributedPortBinding(
                 port_id=port_id,
                 host=host,
@@ -123,27 +123,27 @@ def ensure_distributed_port_binding(session, port_id, host, router_id=None):
                 vif_type=portbindings.VIF_TYPE_UNBOUND,
                 vnic_type=portbindings.VNIC_NORMAL,
                 status=n_const.PORT_STATUS_DOWN)
-            session.add(record)
+            context.session.add(record)
             return record
     except db_exc.DBDuplicateEntry:
         LOG.debug("Distributed Port %s already bound", port_id)
-        return (session.query(models.DistributedPortBinding).
+        return (context.session.query(models.DistributedPortBinding).
                 filter_by(port_id=port_id, host=host).one())
 
 
-def delete_distributed_port_binding_if_stale(session, binding):
+def delete_distributed_port_binding_if_stale(context, binding):
     if not binding.router_id and binding.status == n_const.PORT_STATUS_DOWN:
-        with session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             LOG.debug("Distributed port: Deleting binding %s", binding)
-            session.delete(binding)
+            context.session.delete(binding)
 
 
-def get_port(session, port_id):
+def get_port(context, port_id):
     """Get port record for update within transaction."""
 
-    with session.begin(subtransactions=True):
+    with context.session.begin(subtransactions=True):
         try:
-            record = (session.query(models_v2.Port).
+            record = (context.session.query(models_v2.Port).
                       enable_eagerloads(False).
                       filter(models_v2.Port.id.startswith(port_id)).
                       one())
@@ -225,10 +225,10 @@ def make_port_dict_with_security_groups(port, sec_groups):
     return port_dict
 
 
-def get_port_binding_host(session, port_id):
+def get_port_binding_host(context, port_id):
     try:
-        with session.begin(subtransactions=True):
-            query = (session.query(models.PortBinding).
+        with context.session.begin(subtransactions=True):
+            query = (context.session.query(models.PortBinding).
                      filter(models.PortBinding.port_id.startswith(port_id)).
                      one())
     except exc.NoResultFound:
@@ -242,10 +242,10 @@ def get_port_binding_host(session, port_id):
     return query.host
 
 
-def generate_distributed_port_status(session, port_id):
+def generate_distributed_port_status(context, port_id):
     # an OR'ed value of status assigned to parent port from the
     # distributedportbinding bucket
-    query = session.query(models.DistributedPortBinding)
+    query = context.session.query(models.DistributedPortBinding)
     final_status = n_const.PORT_STATUS_BUILD
     for bind in query.filter(models.DistributedPortBinding.port_id == port_id):
         if bind.status == n_const.PORT_STATUS_ACTIVE:
@@ -255,9 +255,9 @@ def generate_distributed_port_status(session, port_id):
     return final_status
 
 
-def get_distributed_port_binding_by_host(session, port_id, host):
-    with session.begin(subtransactions=True):
-        binding = (session.query(models.DistributedPortBinding).
+def get_distributed_port_binding_by_host(context, port_id, host):
+    with context.session.begin(subtransactions=True):
+        binding = (context.session.query(models.DistributedPortBinding).
             filter(models.DistributedPortBinding.port_id.startswith(port_id),
                    models.DistributedPortBinding.host == host).first())
     if not binding:
@@ -266,9 +266,9 @@ def get_distributed_port_binding_by_host(session, port_id, host):
     return binding
 
 
-def get_distributed_port_bindings(session, port_id):
-    with session.begin(subtransactions=True):
-        bindings = (session.query(models.DistributedPortBinding).
+def get_distributed_port_bindings(context, port_id):
+    with context.session.begin(subtransactions=True):
+        bindings = (context.session.query(models.DistributedPortBinding).
                     filter(models.DistributedPortBinding.port_id.startswith(
                            port_id)).all())
     if not bindings:
