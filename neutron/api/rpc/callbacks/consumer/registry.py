@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import debtcollector
+
 from neutron.api.rpc.callbacks import resource_manager
 
 
@@ -19,7 +21,22 @@ def _get_manager():
     return resource_manager.ConsumerResourceCallbacksManager()
 
 
+@debtcollector.removals.remove(
+    message="This will be removed in the future. Please register callbacks "
+            "using the 'register' method in this model and adjust the "
+            "callback to accept the context and resource type as arguments.",
+    version="Ocata"
+)
 def subscribe(callback, resource_type):
+    # temporary hack to differentiate between callback types until the
+    # 'subscribe' method is removed
+    callback.__dict__['_ACCEPTS_CONTEXT'] = False
+    _get_manager().register(callback, resource_type)
+
+
+def register(callback, resource_type):
+    # TODO(kevinbenton): remove this on debt collection
+    callback.__dict__['_ACCEPTS_CONTEXT'] = True
     _get_manager().register(callback, resource_type)
 
 
@@ -27,12 +44,17 @@ def unsubscribe(callback, resource_type):
     _get_manager().unregister(callback, resource_type)
 
 
-def push(resource_type, resource_list, event_type):
+def push(context, resource_type, resource_list, event_type):
     """Push resource list into all registered callbacks for the event type."""
 
     callbacks = _get_manager().get_callbacks(resource_type)
     for callback in callbacks:
-        callback(resource_list, event_type)
+        if callback._ACCEPTS_CONTEXT:
+            callback(context, resource_type, resource_list, event_type)
+        else:
+            # backwards compat for callback listeners that don't take
+            # context and resource_type
+            callback(resource_list, event_type)
 
 
 def clear():

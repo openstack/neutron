@@ -230,7 +230,8 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
             self.qos_ext, '_process_update_policy') as update_mock:
 
             for event_type in set(events.VALID) - {events.UPDATED}:
-                self.qos_ext._handle_notification(object(), event_type)
+                self.qos_ext._handle_notification(mock.Mock(), 'QOS',
+                                                  object(), event_type)
                 self.assertFalse(update_mock.called)
 
     def test__handle_notification_passes_update_events(self):
@@ -238,7 +239,8 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
             self.qos_ext, '_process_update_policy') as update_mock:
 
             policy_obj = mock.Mock()
-            self.qos_ext._handle_notification([policy_obj], events.UPDATED)
+            self.qos_ext._handle_notification(mock.Mock(), 'QOS',
+                                              [policy_obj], events.UPDATED)
             update_mock.assert_called_with(policy_obj)
 
     def test__process_update_policy(self):
@@ -298,7 +300,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
 
 class QosExtensionInitializeTestCase(QosExtensionBaseTestCase):
 
-    @mock.patch.object(registry, 'subscribe')
+    @mock.patch.object(registry, 'register')
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
         self.qos_ext.initialize(

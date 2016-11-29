@@ -37,14 +37,14 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
         self.ovsdb_handler = ovsdb_handler
         registry.unsubscribe(self.handle_trunks, resources.TRUNK)
 
-    def handle_trunks(self, trunk, event_type):
+    def handle_trunks(self, context, resource_type, trunk, event_type):
         """This method is not required by the OVS Agent driver.
 
         Trunk notifications are handled via local OVSDB events.
         """
         raise NotImplementedError()
 
-    def handle_subports(self, subports, event_type):
+    def handle_subports(self, context, resource_type, subports, event_type):
         # Subports are always created with the same trunk_id and there is
         # always at least one item in subports list
         trunk_id = subports[0].trunk_id

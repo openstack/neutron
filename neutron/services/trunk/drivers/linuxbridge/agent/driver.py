@@ -20,7 +20,6 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.callbacks import events as local_events
 from neutron.callbacks import registry
 from neutron.callbacks import resources as local_resources
-from neutron import context as n_ctx
 from neutron.services.trunk import constants as t_const
 from neutron.services.trunk.drivers.linuxbridge.agent import trunk_plumber
 from neutron.services.trunk.rpc import agent as trunk_rpc
@@ -54,9 +53,8 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
                            local_events.AFTER_DELETE)
         super(LinuxBridgeTrunkDriver, self).__init__()
 
-    def handle_trunks(self, trunks, event_type):
+    def handle_trunks(self, context, resource_type, trunks, event_type):
         """Trunk data model change from the server."""
-        context = n_ctx.get_admin_context()
         for trunk in trunks:
             if event_type in (events.UPDATED, events.CREATED):
                 self._tapi.put_trunk(trunk.port_id, trunk)
@@ -65,9 +63,8 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
                 self._tapi.put_trunk(trunk.port_id, None)
                 self._plumber.delete_trunk_subports(trunk)
 
-    def handle_subports(self, subports, event_type):
+    def handle_subports(self, context, resource_type, subports, event_type):
         """Subport data model change from the server."""
-        context = n_ctx.get_admin_context()
         affected_trunks = set()
         if event_type == events.DELETED:
             method = self._tapi.delete_trunk_subport

@@ -286,7 +286,8 @@ class ResourcesPushRpcCallbackTestCase(ResourcesRpcBaseTestCase):
                             resource_list=[resource.obj_to_primitive()
                                            for resource in self.resource_objs],
                             event_type=TEST_EVENT)
-        reg_push_mock.assert_called_once_with(self.resource_objs[0].obj_name(),
+        reg_push_mock.assert_called_once_with(self.context,
+                                              self.resource_objs[0].obj_name(),
                                               self.resource_objs,
                                               TEST_EVENT)
 
@@ -299,6 +300,7 @@ class ResourcesPushRpcCallbackTestCase(ResourcesRpcBaseTestCase):
         self.callbacks.push(self.context,
                             resource=self.resource_objs[0].obj_to_primitive(),
                             event_type=TEST_EVENT)
-        reg_push_mock.assert_called_once_with(self.resource_objs[0].obj_name(),
+        reg_push_mock.assert_called_once_with(self.context,
+                                              self.resource_objs[0].obj_name(),
                                               [self.resource_objs[0]],
                                               TEST_EVENT)
