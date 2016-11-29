@@ -13,7 +13,7 @@
 # String literals representing core resources.
 AGENT = 'agent'
 EXTERNAL_NETWORK = 'external_network'
-FLOATING_IP = 'floating_ip'
+FLOATING_IP = 'floatingip'
 NETWORK = 'network'
 NETWORKS = 'networks'
 PORT = 'port'
