@@ -74,6 +74,7 @@ Neutron Internals
    dns_order
    external_dns_integration
    upgrade
+   objects_usage
    i18n
    address_scopes
    openvswitch_firewall
