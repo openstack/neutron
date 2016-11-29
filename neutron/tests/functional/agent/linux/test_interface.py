@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
@@ -21,15 +23,63 @@ from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron.tests.common import net_helpers
-from neutron.tests.functional.agent.linux import base
+from neutron.tests.functional.agent.linux import base as linux_base
+from neutron.tests.functional import base
 
 
-class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
+class InterfaceDriverTestCaseMixin(object):
+    def _test_mtu_set_after_action(self, device_name, br_name, namespace,
+                                   action=None):
+        mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+
+        plug = functools.partial(
+            self.interface.plug,
+            network_id=uuidutils.generate_uuid(),
+            port_id=uuidutils.generate_uuid(),
+            device_name=device_name,
+            mac_address=mac_address,
+            bridge=self.bridge_name,
+            namespace=namespace)
+        plug(mtu=1500)
+        self.assertTrue(ip_lib.device_exists(device_name, namespace))
+
+        action = action or plug
+        for mtu in (1450, 1500, 9000, 9000, 1450):
+            action(mtu=mtu)
+            self.assertEqual(
+                mtu,
+                ip_lib.IPDevice(device_name, namespace=namespace).link.mtu)
+
+    def test_plug_multiple_calls_update_mtu(self):
+        device_name = utils.get_rand_name()
+        namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+
+        self._test_mtu_set_after_action(
+            device_name, self.bridge_name, namespace)
+
+    def test_set_mtu(self):
+        device_name = utils.get_rand_name()
+        namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+
+        self._test_mtu_set_after_action(
+            device_name, self.bridge_name, namespace,
+            functools.partial(
+                self.interface.set_mtu,
+                device_name=device_name, namespace=namespace))
+
+
+class OVSInterfaceDriverTestCase(linux_base.BaseOVSLinuxTestCase,
+                                 InterfaceDriverTestCaseMixin):
     def setUp(self):
         super(OVSInterfaceDriverTestCase, self).setUp()
         conf = cfg.ConfigOpts()
         conf.register_opts(interface.OPTS)
         self.interface = interface.OVSInterfaceDriver(conf)
+        self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+
+    @property
+    def bridge_name(self):
+        return self.bridge.br_name
 
     def test_plug_checks_if_bridge_exists(self):
         with testtools.ExpectedException(exceptions.BridgeDoesNotExist):
@@ -44,50 +94,45 @@ class OVSInterfaceDriverTestCase(base.BaseOVSLinuxTestCase):
         device_name = utils.get_rand_name()
         mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         namespace = self.useFixture(net_helpers.NamespaceFixture()).name
-        bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
-        self.assertFalse(bridge.get_port_name_list())
+        self.assertFalse(self.bridge.get_port_name_list())
         self.interface.plug(network_id=uuidutils.generate_uuid(),
                             port_id=uuidutils.generate_uuid(),
                             device_name=device_name,
                             mac_address=mac_address,
-                            bridge=bridge.br_name,
+                            bridge=self.bridge.br_name,
                             namespace=namespace)
-        self.assertIn(device_name, bridge.get_port_name_list())
+        self.assertIn(device_name, self.bridge.get_port_name_list())
         self.assertTrue(ip_lib.device_exists(device_name, namespace))
 
     def test_plug_with_namespace_sets_mtu_higher_than_bridge(self):
-        device_mtu = 1450
-
-        # Create a new OVS bridge
-        ovs_bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.assertFalse(ovs_bridge.get_port_name_list())
-
-        # Add a new linuxbridge port with reduced MTU to OVS bridge
+        # First, add a new linuxbridge port with reduced MTU to OVS bridge
         lb_bridge = self.useFixture(
             net_helpers.LinuxBridgeFixture()).bridge
         lb_bridge_port = self.useFixture(
             net_helpers.LinuxBridgePortFixture(lb_bridge))
-        lb_bridge_port.port.link.set_mtu(device_mtu - 1)
-        ovs_bridge.add_port(lb_bridge_port.port.name)
+        lb_bridge_port.port.link.set_mtu(1400)
+        self.bridge.add_port(lb_bridge_port.port.name)
+
+        device_name = utils.get_rand_name()
+        namespace = self.useFixture(net_helpers.NamespaceFixture()).name
 
         # Now plug a device with intended MTU that is higher than for the port
         # above and validate that its MTU is not reduced to the least MTU on
         # the bridge
-        device_name = utils.get_rand_name()
-        mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
-        namespace = self.useFixture(net_helpers.NamespaceFixture()).name
-        self.interface.plug(network_id=uuidutils.generate_uuid(),
-                            port_id=uuidutils.generate_uuid(),
-                            device_name=device_name,
-                            mac_address=mac_address,
-                            bridge=ovs_bridge.br_name,
-                            namespace=namespace,
-                            mtu=device_mtu)
+        self._test_mtu_set_after_action(
+            device_name, self.bridge_name, namespace)
 
-        self.assertIn(device_name, ovs_bridge.get_port_name_list())
-        self.assertTrue(ip_lib.device_exists(device_name, namespace))
-        self.assertEqual(
-            device_mtu,
-            ip_lib.IPDevice(device_name, namespace=namespace).link.mtu
-        )
+
+class BridgeInterfaceDriverTestCase(base.BaseSudoTestCase,
+                                    InterfaceDriverTestCaseMixin):
+    def setUp(self):
+        super(BridgeInterfaceDriverTestCase, self).setUp()
+        conf = cfg.ConfigOpts()
+        conf.register_opts(interface.OPTS)
+        self.interface = interface.BridgeInterfaceDriver(conf)
+        self.bridge = self.useFixture(net_helpers.LinuxBridgeFixture()).bridge
+
+    @property
+    def bridge_name(self):
+        return self.bridge.name
