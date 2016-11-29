@@ -299,6 +299,10 @@ def get_random_ip_protocol():
     return random.choice(list(constants.IP_PROTOCOL_MAP.keys()))
 
 
+def get_random_port_binding_statuses():
+    return random.choice(n_const.PORT_BINDING_STATUSES)
+
+
 def is_bsd():
     """Return True on BSD-based systems."""
 

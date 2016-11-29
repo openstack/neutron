@@ -16,6 +16,7 @@ import netaddr
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
+from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.models import dns as dns_models
@@ -72,9 +73,11 @@ class PortBinding(PortBindingBase):
         'vif_type': obj_fields.StringField(),
         'vif_details': common_types.DictOfMiscValuesField(nullable=True),
         'vnic_type': obj_fields.StringField(),
+        'status': common_types.PortBindingStatusEnumField(
+            default=constants.PORT_BINDING_STATUS_ACTIVE),
     }
 
-    primary_keys = ['port_id']
+    primary_keys = ['port_id', 'host']
 
 
 @obj_base.VersionedObjectRegistry.register
