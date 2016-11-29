@@ -14,6 +14,7 @@ from neutron.api import extensions
 from neutron.common import config
 import neutron.extensions
 from neutron.services.tag import tag_plugin
+from neutron.tests import fake_notifier
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
@@ -87,22 +88,33 @@ class TestTagApiBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         res = self.deserialize(self.fmt, res)
         return res[self.resource]
 
+    def _test_notification_report(self, expect_notify):
+        notify = set(n['event_type'] for n in fake_notifier.NOTIFICATIONS)
+        duplicated_notify = expect_notify & notify
+        self.assertEqual(expect_notify, duplicated_notify)
+
+        fake_notifier.reset()
+
 
 class TestNetworkTagApi(TestTagApiBase):
     resource = 'networks'
     member = 'network'
 
     def test_put_tag(self):
+        expect_notify = set(['tag.create.start',
+                             'tag.create.end'])
         with self.network() as net:
             net_id = net['network']['id']
             res = self._put_tag(net_id, 'red')
             self.assertEqual(201, res.status_int)
             tags = self._get_resource_tags(net_id)
             self._assertEqualTags(['red'], tags)
+            self._test_notification_report(expect_notify)
             res = self._put_tag(net_id, 'blue')
             self.assertEqual(201, res.status_int)
             tags = self._get_resource_tags(net_id)
             self._assertEqualTags(['red', 'blue'], tags)
+            self._test_notification_report(expect_notify)
 
     def test_put_tag_exists(self):
         with self.network() as net:
@@ -113,12 +125,15 @@ class TestNetworkTagApi(TestTagApiBase):
             self.assertEqual(201, res.status_int)
 
     def test_put_tags(self):
+        expect_notify = set(['tag.update.start',
+                             'tag.update.end'])
         with self.network() as net:
             net_id = net['network']['id']
             res = self._put_tags(net_id, ['red', 'green'])
             self.assertEqual(200, res.status_int)
             tags = self._get_resource_tags(net_id)
             self._assertEqualTags(['red', 'green'], tags)
+            self._test_notification_report(expect_notify)
 
     def test_put_tags_replace(self):
         with self.network() as net:
@@ -149,6 +164,8 @@ class TestNetworkTagApi(TestTagApiBase):
             self.assertEqual(404, res.status_int)
 
     def test_delete_tag(self):
+        expect_notify = set(['tag.delete.start',
+                             'tag.delete.end'])
         with self.network() as net:
             net_id = net['network']['id']
             res = self._put_tags(net_id, ['red', 'green'])
@@ -157,6 +174,7 @@ class TestNetworkTagApi(TestTagApiBase):
             self.assertEqual(204, res.status_int)
             tags = self._get_resource_tags(net_id)
             self._assertEqualTags(['green'], tags)
+            self._test_notification_report(expect_notify)
 
     def test_delete_tag_notfound(self):
         with self.network() as net:
@@ -167,6 +185,8 @@ class TestNetworkTagApi(TestTagApiBase):
             self.assertEqual(404, res.status_int)
 
     def test_delete_tags(self):
+        expect_notify = set(['tag.delete_all.start',
+                             'tag.delete_all.end'])
         with self.network() as net:
             net_id = net['network']['id']
             res = self._put_tags(net_id, ['red', 'green'])
@@ -175,6 +195,7 @@ class TestNetworkTagApi(TestTagApiBase):
             self.assertEqual(204, res.status_int)
             tags = self._get_resource_tags(net_id)
             self._assertEqualTags([], tags)
+            self._test_notification_report(expect_notify)
 
 
 class TestNetworkTagFilter(TestTagApiBase):
