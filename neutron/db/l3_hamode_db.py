@@ -582,6 +582,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # deleted. the core plugin will stop us if its in use
             self.safe_delete_ha_network(context, ha_network,
                                         router_db.tenant_id)
+            self._migrate_router_ports(
+                context, router_db,
+                old_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
+                new_owner=constants.DEVICE_OWNER_ROUTER_INTF)
 
         self.schedule_router(context, router_id)
         router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
