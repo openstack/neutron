@@ -72,13 +72,11 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         if supported_extension_aliases is not None:
             instance.supported_extension_aliases = supported_extension_aliases
         if allow_pagination:
-            cfg.CONF.set_override('allow_pagination', True)
             # instance.__native_pagination_support = True
             native_pagination_attr_name = ("_%s__native_pagination_support"
                                            % instance.__class__.__name__)
             setattr(instance, native_pagination_attr_name, True)
         if allow_sorting:
-            cfg.CONF.set_override('allow_sorting', True)
             # instance.__native_sorting_support = True
             native_sorting_attr_name = ("_%s__native_sorting_support"
                                         % instance.__class__.__name__)

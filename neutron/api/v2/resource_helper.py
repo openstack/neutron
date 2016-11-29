@@ -15,7 +15,6 @@
 
 from neutron_lib import constants
 from neutron_lib.plugins import directory
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.api import extensions
@@ -89,8 +88,8 @@ def build_resource_info(plural_mappings, resource_map, which_service,
             collection_name, resource_name, plugin, params,
             member_actions=member_actions,
             allow_bulk=allow_bulk,
-            allow_pagination=cfg.CONF.allow_pagination,
-            allow_sorting=cfg.CONF.allow_sorting)
+            allow_pagination=True,
+            allow_sorting=True)
         resource = extensions.ResourceExtension(
             collection_name,
             controller,

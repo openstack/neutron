@@ -130,8 +130,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
-        cfg.CONF.set_override('allow_pagination', True)
-        cfg.CONF.set_override('allow_sorting', True)
         self.api = router.APIRouter()
         # Set the default status
         self.net_create_status = 'ACTIVE'
@@ -149,9 +147,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             native_pagination_attr_name = (
                 "_%s__native_pagination_support" %
                 directory.get_plugin().__class__.__name__)
-            return (cfg.CONF.allow_pagination and
-                    getattr(directory.get_plugin(),
-                            native_pagination_attr_name, False))
+            return getattr(directory.get_plugin(),
+                           native_pagination_attr_name, False)
 
         self._skip_native_pagination = not _is_native_pagination_support()
 
@@ -159,9 +156,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             native_sorting_attr_name = (
                 "_%s__native_sorting_support" %
                 directory.get_plugin().__class__.__name__)
-            return (cfg.CONF.allow_sorting and
-                    getattr(directory.get_plugin(),
-                            native_sorting_attr_name, False))
+            return getattr(directory.get_plugin(),
+                           native_sorting_attr_name, False)
 
         self.plugin = directory.get_plugin()
         self._skip_native_sorting = not _is_native_sorting_support()

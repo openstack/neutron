@@ -62,8 +62,6 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
 
         # Update the plugin and extensions path
         self.setup_coreplugin(plugin, load_plugins=False)
-        cfg.CONF.set_override('allow_pagination', True)
-        cfg.CONF.set_override('allow_sorting', True)
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
         # Ensure Quota checks never fail because of mock

@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from oslo_config import cfg
-
 from neutron.api import extensions
 
 
@@ -23,7 +21,7 @@ class Sorting(extensions.ExtensionDescriptor):
     """Fake extension that indicates that sorting is enabled."""
 
     extensions.register_custom_supported_check(
-        _ALIAS, lambda: cfg.CONF.allow_sorting, plugin_agnostic=True
+        _ALIAS, lambda: True, plugin_agnostic=True
     )
 
     @classmethod

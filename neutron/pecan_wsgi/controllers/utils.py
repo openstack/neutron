@@ -17,7 +17,6 @@ import copy
 import functools
 
 from neutron_lib import constants
-from oslo_config import cfg
 import pecan
 from pecan import request
 import six
@@ -115,10 +114,10 @@ class NeutronPecanController(object):
             self._mandatory_fields = set()
         self.allow_pagination = allow_pagination
         if self.allow_pagination is None:
-            self.allow_pagination = cfg.CONF.allow_pagination
+            self.allow_pagination = True
         self.allow_sorting = allow_sorting
         if self.allow_sorting is None:
-            self.allow_sorting = cfg.CONF.allow_sorting
+            self.allow_sorting = True
         self.native_pagination = api_common.is_native_pagination_supported(
             self.plugin)
         self.native_sorting = api_common.is_native_sorting_supported(
