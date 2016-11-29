@@ -403,8 +403,9 @@ class TrunkPlugin(service_base.ServicePluginBase,
         new_vif_type = updated_port.get(portbindings.VIF_TYPE)
         vif_type_changed = orig_vif_type != new_vif_type
         if vif_type_changed and new_vif_type == portbindings.VIF_TYPE_UNBOUND:
-            trunk = self._get_trunk(context, trunk_details['trunk_id'])
+            trunk_id = trunk_details['trunk_id']
             # NOTE(status_police) Trunk status goes to DOWN when the parent
             # port is unbound. This means there are no more physical resources
             # associated with the logical resource.
-            trunk.update(status=constants.DOWN_STATUS)
+            self.update_trunk(context, trunk_id,
+                              {'trunk': {'status': constants.DOWN_STATUS}})
