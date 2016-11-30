@@ -37,6 +37,7 @@ import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.driver_type
 import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.plugins.ml2.drivers.macvtap
+import neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.conf.services.metering_agent
@@ -279,7 +280,7 @@ def list_ovs_opts():
 def list_sriov_agent_opts():
     return [
         ('sriov_nic',
-         neutron.plugins.ml2.drivers.mech_sriov.agent.common.config.
+         neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common.
          sriov_nic_opts),
         ('agent',
          neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
