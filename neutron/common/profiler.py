@@ -36,7 +36,7 @@ def setup(name, host='0.0.0.0'):  # nosec
     if CONF.profiler.enabled:
         osprofiler.initializer.init_from_conf(
             conf=CONF,
-            context=context.get_admin_context(),
+            context=context.get_admin_context().to_dict(),
             project="neutron",
             service=name,
             host=host
