@@ -37,9 +37,9 @@ def initialize_all():
     ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
     # At this stage we have a fully populated resource attribute map;
     # build Pecan controllers and routes for all core resources
+    plugin = directory.get_plugin()
     for resource, collection in router.RESOURCES.items():
         resource_registry.register_resource_by_name(resource)
-        plugin = directory.get_plugin()
         new_controller = res_ctrl.CollectionsController(collection, resource,
                                                         plugin=plugin)
         manager.NeutronManager.set_controller_for_resource(
