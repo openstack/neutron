@@ -89,7 +89,11 @@ function is_ovs_version_ok {
 
 # upgrade_ovs_if_necessary() - Check if OVS version is high enough ( >= 2.5.1)
 #                              and upgrade if necessary.
+#                              Accepts one optional parameter for kernel modules compilation:
+#                                 - first parameter is True by default and it means OVS will be
+#                                   compiled with kernel modules. False won't compile kernel modules.
 function upgrade_ovs_if_necessary {
+    local compile_modules=${1:-True}
     if ! is_ovs_version_ok; then
         if [ "$NEUTRON_OVERRIDE_OVS_BRANCH" ]; then
             OVS_BRANCH=$NEUTRON_OVERRIDE_OVS_BRANCH
@@ -105,14 +109,14 @@ function upgrade_ovs_if_necessary {
         fi
         echo "Compiling OVS branch: $OVS_BRANCH"
         remove_ovs_packages
-        compile_ovs True /usr /var
+        compile_ovs $compile_modules /usr /var
         start_new_ovs
     fi
 }
 
 # compile_ovs() - Compile OVS from source and load needed modules.
 #                 Accepts two parameters:
-#                   - first one is True, modules are built and installed.
+#                   - first one is True by default and means that modules are built and installed.
 #                   - second optional parameter defines prefix for ovs compilation
 #                   - third optional parameter defines localstatedir for ovs single machine runtime
 #                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
@@ -175,10 +179,10 @@ function compile_ovs {
         sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
         sudo modprobe -r vport_geneve
         sudo modprobe -r openvswitch
+        load_module openvswitch
+        load_module vport-geneve False
+        dmesg | tail
     fi
-    load_module openvswitch
-    load_module vport-geneve False
-    dmesg | tail
 
     cd $_pwd
 }

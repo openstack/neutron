@@ -44,7 +44,14 @@ case $VENV in
 
     configure_host_for_func_testing
 
-    upgrade_ovs_if_necessary
+    # Kernel modules are not needed for functional job. They are needed only
+    # for fullstack because of bug present in Ubuntu Xenial kernel version
+    # that makes VXLAN local tunneling fail.
+    if [[ "$VENV" =~ "dsvm-functional" ]]; then
+        compile_modules=False
+        NEUTRON_OVERRIDE_OVS_BRANCH=v2.5.1
+    fi
+    upgrade_ovs_if_necessary $compile_modules
 
     load_conf_hook iptables_verify
     # Make the workspace owned by the stack user
