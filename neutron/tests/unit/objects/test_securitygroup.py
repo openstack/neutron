@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 from neutron.objects import securitygroup
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
@@ -117,8 +115,7 @@ class DefaultSecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
             sg_db_obj)
         self.sg_obj = securitygroup.SecurityGroup(self.context, **sg_fields)
         self.sg_obj.create()
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['security_group_id'] = self.sg_obj['id']
+        self.update_obj_fields({'security_group_id': self.sg_obj['id']})
 
 
 class SecurityGroupRuleIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
@@ -138,6 +135,5 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
             sg_db_obj)
         self.sg_obj = securitygroup.SecurityGroup(self.context, **sg_fields)
         self.sg_obj.create()
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['security_group_id'] = self.sg_obj['id']
-            obj['remote_group_id'] = self.sg_obj['id']
+        self.update_obj_fields({'security_group_id': self.sg_obj['id'],
+                                'remote_group_id': self.sg_obj['id']})

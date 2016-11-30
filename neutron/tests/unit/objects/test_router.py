@@ -31,12 +31,12 @@ class RouterRouteDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(RouterRouteDbObjectTestCase, self).setUp()
-        for db_obj, obj_field, obj in zip(
-            self.db_objs, self.obj_fields, self.objs):
+
+        def getter():
             self._create_test_router()
-            db_obj['router_id'] = self._router['id']
-            obj_field['router_id'] = self._router['id']
-            obj['router_id'] = self._router['id']
+            return self._router['id']
+
+        self.update_obj_fields({'router_id': getter})
 
 
 class RouterExtraAttrsIfaceObjTestCase(obj_test_base.
@@ -51,9 +51,8 @@ class RouterExtraAttrsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(RouterExtraAttrsDbObjTestCase, self).setUp()
 
-        for db_obj, obj_field, obj in zip(
-                self.db_objs, self.obj_fields, self.objs):
+        def getter():
             self._create_test_router()
-            db_obj['router_id'] = self._router['id']
-            obj_field['router_id'] = self._router['id']
-            obj['router_id'] = self._router['id']
+            return self._router['id']
+
+        self.update_obj_fields({'router_id': getter})

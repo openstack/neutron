@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 from oslo_utils import uuidutils
 
 from neutron.objects import subnetpool
@@ -87,5 +85,4 @@ class SubnetPoolPrefixDbObjectTestCase(
     def setUp(self):
         super(SubnetPoolPrefixDbObjectTestCase, self).setUp()
         self._create_test_subnetpool()
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['subnetpool_id'] = self._pool.id
+        self.update_obj_fields({'subnetpool_id': self._pool.id})

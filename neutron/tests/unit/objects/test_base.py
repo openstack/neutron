@@ -479,7 +479,7 @@ class _BaseObjectTestCase(object):
         valid_field = [f for f in self._test_class.fields
                        if f not in self._test_class.synthetic_fields][0]
         self.valid_field_filter = {valid_field:
-                                   self.obj_fields[0][valid_field]}
+                                   self.obj_fields[-1][valid_field]}
         self.obj_registry = self.useFixture(
             fixture.VersionedObjectRegistryFixture())
         self.obj_registry.register(FakeSmallNeutronObject)
@@ -501,6 +501,41 @@ class _BaseObjectTestCase(object):
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
                 fields[field] = get_value(generator, ip_version)
         return obj_cls.modify_fields_to_db(fields)
+
+    def update_obj_fields(self, values_dict,
+                          db_objs=None, obj_fields=None, objs=None):
+        '''Update values for test objects with specific values.
+
+        The default behaviour is using random values for all fields of test
+        objects. Sometimes it's not practical, for example, when some fields,
+        often those referencing other objects, require non-random values (None
+        or UUIDs of valid objects). If that's the case, a test subclass may
+        call the method to override some field values for test objects.
+
+        Receives a single ``values_dict`` dict argument where keys are names of
+        test class fields, and values are either actual values for the keys, or
+        callables that will be used to generate different values for each test
+        object.
+
+        Note: if a value is a dict itself, the method will recursively update
+        corresponding embedded objects.
+        '''
+        for k, v in values_dict.items():
+            for db_obj, fields, obj in zip(
+                    db_objs or self.db_objs,
+                    obj_fields or self.obj_fields,
+                    objs or self.objs):
+                val = v() if callable(v) else v
+                db_obj_key = obj.fields_need_translation.get(k, k)
+                if isinstance(val, collections.Mapping):
+                    self.update_obj_fields(
+                        val, db_obj[db_obj_key], fields[k], obj[k])
+                else:
+                    db_obj[db_obj_key] = val
+                    fields[k] = val
+                    obj[k] = val
+            if k in self.valid_field_filter:
+                self.valid_field_filter[k] = val
 
     @classmethod
     def generate_object_keys(cls, obj_cls, field_names=None):

@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 from oslo_utils import uuidutils
 import testscenarios
 
@@ -31,12 +29,8 @@ class BasePortBindingDbObjectTestCase(obj_test_base._BaseObjectTestCase,
     def setUp(self):
         super(BasePortBindingDbObjectTestCase, self).setUp()
         self._create_test_network()
-        for db_obj, fields, obj in zip(
-                self.db_objs, self.obj_fields, self.objs):
-            port = self._create_port(network_id=self._network['id'])
-            db_obj['port_id'] = port.id
-            fields['port_id'] = port.id
-            obj.port_id = port.id
+        getter = lambda: self._create_port(network_id=self._network['id']).id
+        self.update_obj_fields({'port_id': getter})
 
 
 class PortBindingIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
@@ -77,12 +71,8 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
     def setUp(self):
         super(PortBindingVifDetailsTestCase, self).setUp()
         self._create_test_network()
-        for db_obj, fields, obj in zip(
-                self.db_objs, self.obj_fields, self.objs):
-            port = self._create_port(network_id=self._network['id'])
-            db_obj['port_id'] = port.id
-            fields['port_id'] = port.id
-            obj.port_id = port.id
+        getter = lambda: self._create_port(network_id=self._network['id']).id
+        self.update_obj_fields({'port_id': getter})
 
     def _create_port(self, **port_attrs):
         attrs = {'project_id': uuidutils.generate_uuid(),
@@ -165,10 +155,9 @@ class IPAllocationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self._create_test_network()
         self._create_test_subnet(self._network)
         self._create_test_port(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['port_id'] = self._port.id
-            obj['network_id'] = self._network.id
-            obj['subnet_id'] = self._subnet.id
+        self.update_obj_fields({'port_id': self._port.id,
+                                'network_id': self._network.id,
+                                'subnet_id': self._subnet.id})
 
 
 class PortDNSIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
@@ -184,12 +173,8 @@ class PortDNSDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(PortDNSDbObjectTestCase, self).setUp()
         self._create_test_network()
-        for db_obj, fields, obj in zip(
-                self.db_objs, self.obj_fields, self.objs):
-            port_ = self._create_port(network_id=self._network['id'])
-            db_obj['port_id'] = port_.id
-            fields['port_id'] = port_.id
-            obj.port_id = port_.id
+        getter = lambda: self._create_port(network_id=self._network['id']).id
+        self.update_obj_fields({'port_id': getter})
 
 
 class PortBindingLevelIfaceObjTestCase(
@@ -239,12 +224,10 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         super(PortDbObjectTestCase, self).setUp()
         self._create_test_network()
         self._create_test_subnet(self._network)
-        for obj in itertools.chain(self.db_objs, self.obj_fields, self.objs):
-            obj['network_id'] = self._network['id']
-        for obj in self.db_objs:
-            for ipalloc in obj['fixed_ips']:
-                ipalloc['subnet_id'] = self._subnet.id
-                ipalloc['network_id'] = self._network['id']
+        self.update_obj_fields(
+            {'network_id': self._network.id,
+             'fixed_ips': {'subnet_id': self._subnet.id,
+                           'network_id': self._network['id']}})
 
     def test_security_group_ids(self):
         sg1 = self._create_test_security_group()
