@@ -30,7 +30,8 @@ TESTING_VLAN_TAG = 1
 
 
 def create_ofport(port_dict):
-    ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00', port_name="port-name")
+    ovs_port = mock.Mock(vif_mac='00:00:00:00:00:00', ofport=1,
+                         port_name="port-name")
     return ovsfw.OFPort(port_dict, ovs_port, vlan_tag=TESTING_VLAN_TAG)
 
 
@@ -327,6 +328,18 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.assertIn(port, sg1.ports)
         self.assertIn(port, sg2.ports)
 
+    def test_get_or_create_ofport_changed(self):
+        port_dict = {
+            'device': 'port-id',
+            'security_groups': [123, 456]}
+        of_port = create_ofport(port_dict)
+        self.firewall.sg_port_map.ports[of_port.id] = of_port
+        fake_ovs_port = FakeOVSPort('port', 2, '00:00:00:00:00:00')
+        self.mock_bridge.br.get_vif_port_by_id.return_value = \
+            fake_ovs_port
+        port = self.firewall.get_or_create_ofport(port_dict)
+        self.assertEqual(port.ofport, 2)
+
     def test_get_or_create_ofport_missing(self):
         port_dict = {
             'device': 'port-id',
@@ -334,6 +347,14 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.mock_bridge.br.get_vif_port_by_id.return_value = None
         with testtools.ExpectedException(exceptions.OVSFWPortNotFound):
             self.firewall.get_or_create_ofport(port_dict)
+
+    def test_get_or_create_ofport_missing_nocreate(self):
+        port_dict = {
+            'device': 'port-id',
+            'security_groups': [123, 456]}
+        self.mock_bridge.br.get_vif_port_by_id.return_value = None
+        self.assertIsNone(self.firewall.get_ofport(port_dict))
+        self.assertFalse(self.mock_bridge.br.get_vif_port_by_id.called)
 
     def test_is_port_managed_managed_port(self):
         port_dict = {'device': 'port-id'}

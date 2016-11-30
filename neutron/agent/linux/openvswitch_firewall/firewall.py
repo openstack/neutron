@@ -243,19 +243,31 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         for table in ovs_consts.OVS_FIREWALL_TABLES:
             self.int_br.br.add_flow(table=table, priority=0, actions='drop')
 
-    def get_or_create_ofport(self, port):
+    def get_ofport(self, port):
         port_id = port['device']
+        return self.sg_port_map.ports.get(port_id)
+
+    def get_or_create_ofport(self, port):
+        """Get ofport specified by port['device'], checking and reflecting
+        ofport changes.
+        If ofport is nonexistent, create and return one.
+        """
+        port_id = port['device']
+        ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
+        if not ovs_port:
+            raise exceptions.OVSFWPortNotFound(port_id=port_id)
+
         try:
             of_port = self.sg_port_map.ports[port_id]
         except KeyError:
-            ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
-            if not ovs_port:
-                raise exceptions.OVSFWPortNotFound(port_id=port_id)
             port_vlan_id = get_tag_from_other_config(
                 self.int_br.br, ovs_port.port_name)
             of_port = OFPort(port, ovs_port, port_vlan_id)
             self.sg_port_map.create_port(of_port, port)
         else:
+            if of_port.ofport != ovs_port.ofport:
+                self.sg_port_map.remove_port(of_port)
+                of_port = OFPort(port, ovs_port, of_port.vlan_tag)
             self.sg_port_map.update_port(of_port, port)
 
         return of_port
@@ -266,13 +278,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def prepare_port_filter(self, port):
         if not firewall.port_sec_enabled(port):
             return
-        port_exists = self.is_port_managed(port)
+        old_of_port = self.get_ofport(port)
         of_port = self.get_or_create_ofport(port)
-        if port_exists:
+        if old_of_port:
             LOG.error(_LE("Initializing port %s that was already "
                           "initialized."),
                       port['device'])
-            self.delete_all_port_flows(of_port)
+            self.delete_all_port_flows(old_of_port)
         self.initialize_port_flows(of_port)
         self.add_flows_from_rules(of_port)
 
@@ -289,9 +301,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         elif not self.is_port_managed(port):
             self.prepare_port_filter(port)
             return
+        old_of_port = self.get_ofport(port)
         of_port = self.get_or_create_ofport(port)
         # TODO(jlibosva): Handle firewall blink
-        self.delete_all_port_flows(of_port)
+        self.delete_all_port_flows(old_of_port)
         self.initialize_port_flows(of_port)
         self.add_flows_from_rules(of_port)
 
@@ -303,7 +316,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         """
         if self.is_port_managed(port):
-            of_port = self.get_or_create_ofport(port)
+            of_port = self.get_ofport(port)
             self.delete_all_port_flows(of_port)
             self.sg_port_map.remove_port(of_port)
 
