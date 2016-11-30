@@ -1204,6 +1204,27 @@ class L3HAModeDbTestCase(L3HATestFramework):
         self.assertFalse(l3_hamode_db.is_ha_router_port(
             self.admin_ctx, port['device_owner'], port['device_id']))
 
+    def test_migration_from_ha(self):
+        router = self._create_router()
+        self.assertTrue(router['ha'])
+
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+        self.plugin.add_router_interface(self.admin_ctx,
+                                         router['id'],
+                                         interface_info)
+
+        router = self._migrate_router(router['id'], False)
+
+        self.assertFalse(router.extra_attributes['ha'])
+        for routerport in router.attached_ports.all():
+            self.assertEqual(constants.DEVICE_OWNER_ROUTER_INTF,
+                             routerport.port_type)
+            self.assertEqual(constants.DEVICE_OWNER_ROUTER_INTF,
+                             routerport.port.device_owner)
+
 
 class L3HAUserTestCase(L3HATestFramework):
 
