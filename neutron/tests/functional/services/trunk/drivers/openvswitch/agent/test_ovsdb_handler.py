@@ -16,6 +16,7 @@
 import mock
 
 from neutron_lib import constants as n_consts
+from neutron_lib.utils import helpers
 from oslo_utils import uuidutils
 
 from neutron.agent.common import ovs_lib
@@ -27,7 +28,7 @@ from neutron.tests.functional.agent.l2 import base
 
 
 def generate_tap_device_name():
-    return n_consts.TAP_DEVICE_PREFIX + common_utils.get_random_string(
+    return n_consts.TAP_DEVICE_PREFIX + helpers.get_random_string(
         n_consts.DEVICE_NAME_MAX_LEN - len(n_consts.TAP_DEVICE_PREFIX))
 
 

@@ -25,6 +25,7 @@ from alembic.operations import ops as alembic_ops
 from alembic import script as alembic_script
 import fixtures
 import mock
+from neutron_lib.utils import helpers
 from oslo_utils import fileutils
 import pkg_resources
 import sqlalchemy as sa
@@ -51,7 +52,7 @@ class FakeRevision(object):
         self.branch_labels = labels
         self.down_revision = down_revision
         self.is_branch_point = is_branch_point
-        self.revision = tools.get_random_string()
+        self.revision = helpers.get_random_string(10)
         self.module = mock.MagicMock()
 
 

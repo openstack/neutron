@@ -14,9 +14,9 @@
 
 import os
 
+from neutron_lib.utils import helpers
 import testtools
 
-from neutron.common import utils
 from neutron.tests.common.exclusive_resources import resource_allocator
 from neutron.tests.functional import base
 
@@ -32,7 +32,7 @@ class TestResourceAllocator(base.BaseLoggingTestCase):
     def setUp(self):
         super(TestResourceAllocator, self).setUp()
         self.ra = resource_allocator.ResourceAllocator(
-            utils.get_random_string(6), lambda: 42)
+            helpers.get_random_string(6), lambda: 42)
         self.addCleanup(safe_remove_file, self.ra._state_file_path)
 
     def test_allocate_and_release(self):

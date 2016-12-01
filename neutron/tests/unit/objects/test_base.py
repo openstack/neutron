@@ -19,6 +19,7 @@ import random
 import mock
 import netaddr
 from neutron_lib import exceptions as n_exc
+from neutron_lib.utils import helpers
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_utils import timeutils
@@ -374,14 +375,14 @@ def get_list_of_random_networks(num=10):
 
 def get_random_domain_name():
     return '.'.join([
-        tools.get_random_string(62)[:random.choice(range(63))]
+        helpers.get_random_string(62)[:random.choice(range(63))]
         for i in range(4)
     ])
 
 
 def get_random_dict_of_strings():
     return {
-        tools.get_random_string(): tools.get_random_string()
+        helpers.get_random_string(10): helpers.get_random_string(10)
         for i in range(10)
     }
 
@@ -397,7 +398,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.DateTimeField: tools.get_random_datetime,
     obj_fields.IntegerField: tools.get_random_integer,
-    obj_fields.StringField: tools.get_random_string,
+    obj_fields.StringField: lambda: helpers.get_random_string(10),
     obj_fields.ListOfStringsField: tools.get_random_string_list,
     common_types.UUIDField: uuidutils.generate_uuid,
     obj_fields.ObjectField: lambda: None,
@@ -1217,7 +1218,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self._network.create()
 
     def _create_network(self):
-        name = "test-network-%s" % tools.get_random_string(4)
+        name = "test-network-%s" % helpers.get_random_string(4)
         _network = net_obj.Network(self.context,
                                    name=name)
         _network.create()
@@ -1309,7 +1310,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
     def _create_test_standard_attribute(self):
         attrs = {
             'id': tools.get_random_integer(),
-            'resource_type': tools.get_random_string(4),
+            'resource_type': helpers.get_random_string(4),
             'revision_number': tools.get_random_integer()
         }
         self._standard_attribute = obj_db_api.create_object(
