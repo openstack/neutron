@@ -450,7 +450,7 @@ see this wiki page:
 .. _virtualenvs: https://pypi.python.org/pypi/virtualenv
 
 PEP8 and Unit Tests
-+++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~
 
 Running pep8 and unit tests is as easy as executing this in the root
 directory of the Neutron source code::
@@ -471,7 +471,7 @@ To run only the unit tests::
     tox -e py27
 
 Functional Tests
-++++++++++++++++
+~~~~~~~~~~~~~~~~
 
 To run functional tests that do not require sudo privileges or
 specific-system dependencies::
@@ -498,7 +498,7 @@ not necessary to provide this option if DevStack has already been used
 to deploy Neutron to the target host.
 
 Fullstack Tests
-+++++++++++++++
+~~~~~~~~~~~~~~~
 
 To run all the full-stack tests, you may use: ::
 
@@ -519,7 +519,7 @@ Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
 the test machine is available for its usage.
 
 API & Scenario Tests
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 To run the api or scenario tests, deploy Tempest and Neutron with DevStack and
 then run the following command, from the tempest directory: ::
