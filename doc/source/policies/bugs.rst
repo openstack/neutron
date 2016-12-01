@@ -340,33 +340,33 @@ more will be added over time if needed.
 +===============================+=========================================+======================+
 | access-control_               | A bug affecting RBAC and policy.json    | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
-| api_                          | A bug affecting the API layer           | Salvatore Orlando    |
+| api_                          | A bug affecting the API layer           | Akihiro Motoki       |
 +-------------------------------+-----------------------------------------+----------------------+
 | api-ref_                      | A bug affecting the API reference       | Akihiro Motoki       |
 +-------------------------------+-----------------------------------------+----------------------+
-| auto-allocated-topology_      | A bug affecting get-me-a-network        | Henry Gessau         |
+| auto-allocated-topology_      | A bug affecting get-me-a-network        | Armando Migliaccio   |
 +-------------------------------+-----------------------------------------+----------------------+
 | baremetal_                    | A bug affecting Ironic support          | Sukhdev Kapur        |
 +-------------------------------+-----------------------------------------+----------------------+
-| db_                           | A bug affecting the DB layer            | Henry Gessau         |
+| db_                           | A bug affecting the DB layer            | Ann Taraday          |
 +-------------------------------+-----------------------------------------+----------------------+
 | deprecation_                  | To track config/feature deprecations    | Neutron PTL/drivers  |
 +-------------------------------+-----------------------------------------+----------------------+
 | dns_                          | A bug affecting DNS integration         | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
-| doc_                          | A bug affecting in-tree doc             | Edgar Magana         |
+| doc_                          | A bug affecting in-tree doc             | John Davidge         |
 +-------------------------------+-----------------------------------------+----------------------+
-| fullstack_                    | A bug in the fullstack subtree          | Assaf Muller         |
+| fullstack_                    | A bug in the fullstack subtree          | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
-| functional-tests_             | A bug in the functional tests subtree   | Assaf Muller         |
+| functional-tests_             | A bug in the functional tests subtree   | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
 | fwaas_                        | A bug affecting neutron-fwass           | Sridar K.            |
 +-------------------------------+-----------------------------------------+----------------------+
 | gate-failure_                 | A bug affecting gate stability          | Armando Migliaccio   |
 +-------------------------------+-----------------------------------------+----------------------+
-| ipv6_                         | A bug affecting IPv6 support            | Henry Gessau/        |
+| ipv6_                         | A bug affecting IPv6 support            | John Davidge/        |
 |                               |                                         | Sean Collins/        |
-|                               |                                         | Dustin Lundquist     |
+|                               |                                         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 | l2-pop_                       | A bug in L2 Population mech driver      | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -375,17 +375,16 @@ more will be added over time if needed.
 | l3-dvr-backlog_               | A bug affecting distributed routing     | Oleg Bondarev/       |
 |                               |                                         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
-| l3-ha_                        | A bug affecting L3 HA (vrrp)            | Assaf Muller         |
+| l3-ha_                        | A bug affecting L3 HA (vrrp)            | John Schwarz/        |
+|                               |                                         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 | l3-ipam-dhcp_                 | A bug affecting L3/DHCP/metadata        | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
-| lbaas_                        | A bug affecting neutron-lbaas           | Brandon Logan        |
-+-------------------------------+-----------------------------------------+----------------------+
-| lib_                          | An issue affecting neutron-lib          | Henry Gessau         |
+| lib_                          | An issue affecting neutron-lib          | Boden Russell        |
 +-------------------------------+-----------------------------------------+----------------------+
 | linuxbridge_                  | A bug affecting ML2/linuxbridge         | Sean Collins         |
 +-------------------------------+-----------------------------------------+----------------------+
-| loadimpact_                   | Performance penalty/improvements        | Ryan Moats           |
+| loadimpact_                   | Performance penalty/improvements        | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
 | logging_                      | An issue with logging guidelines        | Matt Riedemann       |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -399,7 +398,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | ops_                          | Reported by or affecting operators      | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
-| oslo_                         | An interop/cross-project issue          | Henry Gessau         |
+| oslo_                         | An interop/cross-project issue          | Victor Morales       |
 +-------------------------------+-----------------------------------------+----------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Kevin Benton         |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -421,18 +420,16 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough   | Moshe Levi           |
 +-------------------------------+-----------------------------------------+----------------------+
-| tempest_                      | A bug in tempest subtree tests          | Assaf Muller         |
+| tempest_                      | A bug in tempest subtree tests          | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
-| troubleshooting_              | An issue affecting ease of debugging    | Assaf Muller         |
+| troubleshooting_              | An issue affecting ease of debugging    | Boden Russell        |
 +-------------------------------+-----------------------------------------+----------------------+
-| unittest_                     | A bug affecting the unit test subtree   | Cedric Brandily      |
+| unittest_                     | A bug affecting the unit test subtree   | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
 | usability_                    | UX, interoperability, feature parity    | PTL/Drivers Team     |
 +-------------------------------+-----------------------------------------+----------------------+
-| vpnaas_                       | A bug affecting neutron-vpnaas          | Ryan Moats/          |
-|                               |                                         | John Kasperski       |
-+-------------------------------+-----------------------------------------+----------------------+
-| xxx-backport-potential_       | Cherry-pick request for stable team     | Ihar Hrachyshka      |
+| xxx-backport-potential_       | Cherry-pick request for stable team     | Ihar Hrachyshka/     |
+|                               |                                         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 
 .. _access-control:
