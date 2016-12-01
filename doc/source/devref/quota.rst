@@ -69,7 +69,7 @@ The latter driver is however deprecated.
 The Quota API extension handles quota management, whereas the Quota Engine
 component handles quota enforcement. This API extension is loaded like any
 other extension. For this reason plugins must explicitly support it by including
-"quotas" in the support_extension_aliases attribute.
+"quotas" in the supported_extension_aliases attribute.
 
 In the Quota API simple CRUD operations are used for managing project quotas.
 Please note that the current behaviour when deleting a project quota is to reset
