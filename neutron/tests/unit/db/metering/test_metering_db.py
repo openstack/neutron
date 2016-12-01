@@ -15,13 +15,13 @@
 import contextlib
 
 from neutron_lib import constants as n_consts
+from neutron_lib import context
 from neutron_lib.db import constants as db_const
 from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.api import extensions
 from neutron.common import config
-from neutron import context
 import neutron.extensions
 from neutron.extensions import metering
 from neutron.plugins.common import constants

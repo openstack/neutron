@@ -11,9 +11,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from oslo_utils import uuidutils
 
-from neutron import context
 from neutron.db.quota import api as quota_db_api
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_l3

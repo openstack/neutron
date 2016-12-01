@@ -18,6 +18,7 @@ import os
 
 import eventlet
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -37,7 +38,6 @@ from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron import context
 from neutron import manager
 
 LOG = logging.getLogger(__name__)

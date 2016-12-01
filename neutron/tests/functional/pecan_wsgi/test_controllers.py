@@ -14,6 +14,7 @@ import uuid
 
 import mock
 from neutron_lib import constants as n_const
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -23,7 +24,6 @@ import pecan
 from pecan import request
 
 from neutron.api import extensions
-from neutron import context
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
 from neutron.pecan_wsgi.controllers import utils as controller_utils
@@ -297,6 +297,8 @@ class TestResourceController(TestRootController):
 
     def setUp(self):
         super(TestResourceController, self).setUp()
+        policy.init()
+        self.addCleanup(policy.reset)
         self._gen_port()
 
     def _gen_port(self):
@@ -456,6 +458,8 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
 
     def setUp(self):
         super(TestPaginationAndSorting, self).setUp()
+        policy.init()
+        self.addCleanup(policy.reset)
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self._create_networks(self.RESOURCE_COUNT)
@@ -702,6 +706,8 @@ class TestRouterController(TestResourceController):
             ['neutron.services.l3_router.l3_router_plugin.L3RouterPlugin',
              'neutron.services.flavors.flavors_plugin.FlavorsPlugin'])
         super(TestRouterController, self).setUp()
+        policy.init()
+        self.addCleanup(policy.reset)
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         l3_plugin = directory.get_plugin(n_const.L3)

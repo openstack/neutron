@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 from oslo_policy import policy as oslo_policy
@@ -21,7 +22,6 @@ from oslo_serialization import jsonutils
 
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
-from neutron import context
 from neutron.db.quota import driver as quota_driver
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource

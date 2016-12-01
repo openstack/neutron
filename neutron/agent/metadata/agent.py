@@ -17,6 +17,7 @@ import hmac
 
 import httplib2
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -34,7 +35,6 @@ from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.conf.agent.metadata import config
-from neutron import context
 
 LOG = logging.getLogger(__name__)
 

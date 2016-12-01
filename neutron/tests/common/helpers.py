@@ -19,6 +19,7 @@ import os
 import random
 
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_utils import timeutils
 import six
 import testtools
@@ -26,7 +27,6 @@ import testtools
 import neutron
 from neutron.agent.common import ovs_lib
 from neutron.common import topics
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 

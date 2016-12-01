@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron import context
 from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3

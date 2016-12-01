@@ -17,6 +17,7 @@ import datetime
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -30,7 +31,6 @@ from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
@@ -706,7 +706,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._take_down_agent_and_run_reschedule(L3_HOSTA)  # Exception
 
     def test_router_rescheduler_catches_exceptions_on_fetching_bindings(self):
-        with mock.patch('neutron.context.get_admin_context') as get_ctx:
+        with mock.patch('neutron_lib.context.get_admin_context') as get_ctx:
             mock_ctx = mock.Mock()
             get_ctx.return_value = mock_ctx
             mock_ctx.session.query.side_effect = db_exc.DBError()

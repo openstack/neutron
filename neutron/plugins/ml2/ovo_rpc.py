@@ -14,6 +14,7 @@
 import traceback
 
 import eventlet
+from neutron_lib import context as n_ctx
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
@@ -23,7 +24,6 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron import context as n_ctx
 from neutron.db import api as db_api
 from neutron.objects import network
 from neutron.objects import ports

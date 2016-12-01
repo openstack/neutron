@@ -16,11 +16,11 @@ import math
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron.common import utils
-from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import dns
 from neutron.plugins.ml2 import config

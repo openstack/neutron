@@ -22,6 +22,7 @@ import eventlet
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
@@ -47,7 +48,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import test_lib
 from neutron.common import utils
-from neutron import context
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_backend_mixin

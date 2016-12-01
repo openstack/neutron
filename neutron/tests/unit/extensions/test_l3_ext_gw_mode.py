@@ -17,6 +17,7 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context as nctx
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -26,7 +27,6 @@ import testscenarios
 from webob import exc
 
 from neutron.common import utils
-from neutron import context as nctx
 from neutron.db import api as db_api
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
@@ -121,7 +121,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.setup_coreplugin(plugin)
         self.target_object = TestDbIntPlugin()
         # Patch the context
-        ctx_patcher = mock.patch('neutron.context', autospec=True)
+        ctx_patcher = mock.patch('neutron_lib.context', autospec=True)
         mock_context = ctx_patcher.start()
         self.context = mock_context.get_admin_context()
         # This ensure also calls to elevated work in unit tests

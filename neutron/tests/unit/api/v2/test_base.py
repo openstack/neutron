@@ -18,6 +18,7 @@ import os
 import mock
 from neutron_lib.api import converters
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -36,7 +37,6 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
 from neutron.callbacks import registry
-from neutron import context
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry

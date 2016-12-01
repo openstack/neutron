@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 
 from neutron.common import exceptions as n_exc
-from neutron import context
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config

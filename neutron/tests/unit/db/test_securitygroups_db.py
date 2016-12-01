@@ -13,6 +13,7 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 import sqlalchemy
 import testtools
 
@@ -20,7 +21,6 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron import context
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup

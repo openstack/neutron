@@ -13,11 +13,11 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
 from neutron.common import utils
-from neutron import context
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model

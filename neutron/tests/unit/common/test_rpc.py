@@ -234,46 +234,41 @@ class TestRequestContextSerializer(base.DietTestCase):
 
         context.to_dict.assert_called_once_with()
 
-    @mock.patch('neutron.policy.check_is_advsvc', return_val=False)
-    @mock.patch('neutron.policy.check_is_admin', return_val=False)
-    def test_deserialize_context(self, m, n):
+    def test_deserialize_context(self):
         context_dict = {'foo': 'bar',
                         'user_id': 1,
-                        'tenant_id': 1}
+                        'tenant_id': 1,
+                        'is_admin': True}
 
         c = self.ser.deserialize_context(context_dict)
 
         self.assertEqual(1, c.user_id)
         self.assertEqual(1, c.project_id)
 
-    @mock.patch('neutron.policy.check_is_advsvc', return_val=False)
-    @mock.patch('neutron.policy.check_is_admin', return_val=False)
-    def test_deserialize_context_no_user_id(self, m, n):
+    def test_deserialize_context_no_user_id(self):
         context_dict = {'foo': 'bar',
                         'user': 1,
-                        'tenant_id': 1}
+                        'tenant_id': 1,
+                        'is_admin': True}
 
         c = self.ser.deserialize_context(context_dict)
 
         self.assertEqual(1, c.user_id)
         self.assertEqual(1, c.project_id)
 
-    @mock.patch('neutron.policy.check_is_advsvc', return_val=False)
-    @mock.patch('neutron.policy.check_is_admin', return_val=False)
-    def test_deserialize_context_no_tenant_id(self, m, n):
+    def test_deserialize_context_no_tenant_id(self):
         context_dict = {'foo': 'bar',
                         'user_id': 1,
-                        'project_id': 1}
+                        'project_id': 1,
+                        'is_admin': True}
 
         c = self.ser.deserialize_context(context_dict)
 
         self.assertEqual(1, c.user_id)
         self.assertEqual(1, c.project_id)
 
-    @mock.patch('neutron.policy.check_is_advsvc', return_val=False)
-    @mock.patch('neutron.policy.check_is_admin', return_val=False)
-    def test_deserialize_context_no_ids(self, m, n):
-        context_dict = {'foo': 'bar'}
+    def test_deserialize_context_no_ids(self):
+        context_dict = {'foo': 'bar', 'is_admin': True}
 
         c = self.ser.deserialize_context(context_dict)
 

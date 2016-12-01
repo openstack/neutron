@@ -15,12 +15,12 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron import context
 from neutron.db import api as db_api
 from neutron.db import dvr_mac_db
 from neutron.db.models import dvr as dvr_models

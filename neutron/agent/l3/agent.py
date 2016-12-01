@@ -16,6 +16,7 @@
 import eventlet
 import netaddr
 from neutron_lib import constants as lib_const
+from neutron_lib import context as n_context
 from oslo_config import cfg
 from oslo_context import context as common_context
 from oslo_log import log as logging
@@ -53,7 +54,6 @@ from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
-from neutron import context as n_context
 from neutron import manager
 
 LOG = logging.getLogger(__name__)

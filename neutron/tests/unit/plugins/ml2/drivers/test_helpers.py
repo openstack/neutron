@@ -14,10 +14,10 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from oslo_db import exception as exc
 from sqlalchemy.orm import query
 
-from neutron import context
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 

@@ -14,12 +14,12 @@
 import mock
 import testtools
 
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.common import exceptions as c_exc
-from neutron import context
 from neutron.services.auto_allocate import db
 from neutron.services.auto_allocate import exceptions
 from neutron.tests.unit import testlib_api

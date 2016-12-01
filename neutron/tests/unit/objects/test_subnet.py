@@ -10,9 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context
 from oslo_utils import uuidutils
 
-from neutron import context
 from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base
 from neutron.objects.db import api as obj_db_api

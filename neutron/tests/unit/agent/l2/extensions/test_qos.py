@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
@@ -23,7 +24,6 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron import context
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (

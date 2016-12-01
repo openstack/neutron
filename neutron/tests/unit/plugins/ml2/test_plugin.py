@@ -22,6 +22,7 @@ import testtools
 import webob
 
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
@@ -34,7 +35,6 @@ from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import utils
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db.models import l3 as l3_models

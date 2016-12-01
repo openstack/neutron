@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import context
 from oslo_utils import uuidutils
 from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
@@ -23,7 +24,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.callbacks import version_manager
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import topics
-from neutron import context
 from neutron.objects import base as objects_base
 from neutron.objects import common_types
 from neutron.tests import base

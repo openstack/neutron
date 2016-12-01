@@ -15,9 +15,10 @@
 
 import os.path
 
+from neutron_lib import context
+
 from neutron.api import extensions
 from neutron.api.v2 import attributes
-from neutron import context
 from neutron import policy
 from neutron.tests import base
 from neutron.tests import tools
@@ -41,7 +42,6 @@ class APIPolicyTestCase(base.BaseTestCase):
         self.useFixture(tools.AttributeMapMemento())
         self.extension_path = os.path.abspath(os.path.join(
             TEST_PATH, "../../../extensions"))
-        policy.reset()
         self.addCleanup(policy.reset)
 
     def _network_definition(self):
@@ -79,9 +79,11 @@ class APIPolicyTestCase(base.BaseTestCase):
         populating extensions and extending the resource map results in
         networks with router:external are visible to regular tenants.
         """
+        policy.reset()
         extension_manager = extensions.ExtensionManager(self.extension_path)
         extension_manager.extend_resources(self.api_version,
                                            attributes.RESOURCE_ATTRIBUTE_MAP)
+        policy.init()
         admin_context = context.get_admin_context()
         tenant_context = context.Context('test_user', 'test_tenant_id', False)
         self.assertTrue(self._check_external_router_policy(admin_context))

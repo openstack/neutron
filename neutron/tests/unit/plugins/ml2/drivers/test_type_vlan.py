@@ -14,10 +14,10 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 from testtools import matchers
 
-from neutron import context
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils

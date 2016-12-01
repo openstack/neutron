@@ -15,6 +15,7 @@
 
 import random
 
+from neutron_lib import context as neutron_ctx
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -22,7 +23,6 @@ from oslo_log import log
 
 from neutron._i18n import _LE
 from neutron.common import exceptions as exc
-from neutron import context as neutron_ctx
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2 import driver_api as api
 

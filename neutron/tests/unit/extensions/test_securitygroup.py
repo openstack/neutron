@@ -18,6 +18,7 @@ import contextlib
 import mock
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_db.exception as exc
@@ -27,7 +28,6 @@ import webob.exc
 
 from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
-from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg

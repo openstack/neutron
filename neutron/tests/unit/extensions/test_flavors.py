@@ -17,12 +17,12 @@ import copy
 import fixtures
 import mock
 
+from neutron_lib import context
 from neutron_lib.db import constants as db_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron import context
 from neutron.db import api as dbapi
 from neutron.db.models import l3 as l3_models
 from neutron.db import servicetype_db

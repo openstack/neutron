@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import context
 from oslo_utils import uuidutils
 
 from neutron.common import constants
-from neutron import context
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions

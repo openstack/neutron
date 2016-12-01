@@ -15,12 +15,12 @@
 
 from neutron_lib.api import converters
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.api.v2 import attributes
-from neutron import context
 from neutron.tests import base
 
 

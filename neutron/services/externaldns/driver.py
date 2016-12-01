@@ -46,7 +46,7 @@ class ExternalDNSService(object):
         """Create a record set in the specified zone.
 
         :param context: neutron api request context
-        :type context: neutron.context.Context
+        :type context: neutron_lib.context.Context
         :param dns_domain: the dns_domain where the record set will be created
         :type dns_domain: String
         :param dns_name: the name associated with the record set

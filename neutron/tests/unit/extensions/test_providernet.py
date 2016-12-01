@@ -15,6 +15,7 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -23,7 +24,6 @@ import webtest
 
 from neutron.api import extensions
 from neutron.api.v2 import router
-from neutron import context
 from neutron.extensions import providernet as pnet
 from neutron import quota
 from neutron.tests import tools

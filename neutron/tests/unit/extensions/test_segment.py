@@ -18,6 +18,7 @@ from keystoneauth1 import exceptions as ks_exc
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from novaclient import exceptions as nova_exc
@@ -32,7 +33,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import exceptions as neutron_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2

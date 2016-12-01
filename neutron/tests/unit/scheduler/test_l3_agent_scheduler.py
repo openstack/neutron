@@ -19,6 +19,7 @@ import datetime
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context as n_context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -28,7 +29,6 @@ from sqlalchemy import orm
 import testscenarios
 import testtools
 
-from neutron import context as n_context
 from neutron.db import db_base_plugin_v2 as db_v2
 from neutron.db import l3_db
 from neutron.db import l3_dvr_ha_scheduler_db

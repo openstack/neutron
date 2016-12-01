@@ -14,10 +14,10 @@
 
 import gc
 
+from neutron_lib import context
 from sqlalchemy.ext import declarative
 import testtools
 
-from neutron import context
 from neutron.db import standard_attr
 from neutron.tests import base
 from neutron.tests.unit import testlib_api

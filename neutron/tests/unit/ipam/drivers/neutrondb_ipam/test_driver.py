@@ -16,12 +16,12 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
-from neutron import context
 from neutron.ipam.drivers.neutrondb_ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req

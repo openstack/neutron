@@ -22,7 +22,7 @@ import sys
 import time
 
 import eventlet.wsgi
-from neutron.conf import wsgi as wsgi_config
+from neutron_lib import context
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
 import oslo_i18n
@@ -41,7 +41,7 @@ import webob.exc
 from neutron._i18n import _, _LE, _LI
 from neutron.common import config
 from neutron.common import exceptions as n_exc
-from neutron import context
+from neutron.conf import wsgi as wsgi_config
 from neutron.db import api
 from neutron import worker as neutron_worker
 

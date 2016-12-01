@@ -17,10 +17,10 @@ import collections
 import random
 
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_utils import uuidutils
 import testscenarios
 
-from neutron import context
 from neutron.db.models import external_net as ext_net_models
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.l3_router import l3_router_plugin

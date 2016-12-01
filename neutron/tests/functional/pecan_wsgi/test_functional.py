@@ -17,6 +17,7 @@ import os
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_middleware import base
@@ -27,7 +28,6 @@ import webob.dec
 import webtest
 
 from neutron.api import extensions as exts
-from neutron import context
 from neutron import manager
 from neutron import tests
 from neutron.tests.unit import testlib_api

@@ -15,6 +15,7 @@
 
 import sys
 
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
@@ -22,7 +23,6 @@ from six import moves
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron import context
 from neutron.db import api as db_api
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const

@@ -15,6 +15,7 @@
 
 from keystoneauth1 import loading as ks_loading
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins import directory
 from novaclient import api_versions
@@ -29,7 +30,6 @@ from neutron._i18n import _LE, _LI, _LW
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron import context
 from neutron.notifiers import batch_notifier
 
 

@@ -17,11 +17,11 @@ import contextlib
 import copy
 
 from debtcollector import removals
+from neutron_lib.db import api
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
-from oslo_db.sqlalchemy import enginefacade
 from oslo_log import log as logging
 from oslo_utils import excutils
 from osprofiler import opts as profiler_opts
@@ -44,9 +44,7 @@ def set_hook(engine):
         osprofiler.sqlalchemy.add_tracing(sqlalchemy, engine, 'neutron.db')
 
 
-context_manager = enginefacade.transaction_context()
-
-context_manager.configure(sqlite_fk=True)
+context_manager = api.get_context_manager()
 
 # TODO(ihrachys) the hook assumes options defined by osprofiler, and the only
 # public function that is provided by osprofiler that will register them is

@@ -13,11 +13,11 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 
-from neutron import context
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import requests as ipam_req

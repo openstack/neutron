@@ -14,6 +14,7 @@
 
 import copy
 
+from neutron_lib import context
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
@@ -21,7 +22,6 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron import context
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common

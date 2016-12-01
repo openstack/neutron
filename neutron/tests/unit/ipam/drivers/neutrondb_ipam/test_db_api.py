@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context
 from oslo_utils import uuidutils
 
-from neutron import context
 from neutron.ipam.drivers.neutrondb_ipam import db_api
 from neutron.objects import ipam as ipam_obj
 from neutron.tests.unit import testlib_api

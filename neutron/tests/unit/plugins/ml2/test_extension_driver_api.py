@@ -11,10 +11,10 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
-from neutron import context
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2.drivers import ext_test
 from neutron.tests.unit.plugins.ml2 import test_plugin

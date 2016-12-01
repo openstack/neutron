@@ -15,12 +15,12 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 import testtools
 from webob import exc
 
-from neutron import context
 from neutron.db import models_v2
 from neutron.extensions import external_net as external_net
 from neutron.tests.unit.api.v2 import test_base

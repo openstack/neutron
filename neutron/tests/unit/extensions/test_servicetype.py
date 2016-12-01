@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -21,7 +22,6 @@ import webob.exc as webexc
 import webtest
 
 from neutron.api import extensions
-from neutron import context
 from neutron.db.models import servicetype as st_model
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import servicetype

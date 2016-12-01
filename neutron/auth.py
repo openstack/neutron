@@ -12,14 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import base
 from oslo_middleware import request_id
 import webob.dec
 import webob.exc
-
-from neutron import context
 
 LOG = logging.getLogger(__name__)
 

@@ -16,10 +16,10 @@ import datetime
 import six
 
 import mock
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 
-from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import tag as tag_model
 from neutron.db import models_v2

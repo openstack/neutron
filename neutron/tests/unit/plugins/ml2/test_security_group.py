@@ -18,12 +18,12 @@ import math
 
 import mock
 from neutron_lib import constants as const
+from neutron_lib import context
 from neutron_lib.plugins import directory
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron import context
 from neutron.extensions import securitygroup as ext_sg
 from neutron.tests import tools
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc

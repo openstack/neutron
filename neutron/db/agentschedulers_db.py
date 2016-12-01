@@ -18,6 +18,7 @@ import random
 import time
 
 from neutron_lib import constants
+from neutron_lib import context as ncontext
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -29,7 +30,6 @@ from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as n_const
 from neutron.common import utils
-from neutron import context as ncontext
 from neutron.db import agents_db
 from neutron.db.availability_zone import network as network_az
 from neutron.db.models import agent as agent_model

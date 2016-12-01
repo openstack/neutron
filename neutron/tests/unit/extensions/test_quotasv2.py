@@ -16,6 +16,7 @@
 import sys
 
 import mock
+from neutron_lib import context
 from oslo_config import cfg
 import testtools
 from webob import exc
@@ -26,7 +27,6 @@ from neutron.api.v2 import router
 from neutron.common import config
 from neutron.common import constants
 from neutron.common import exceptions
-from neutron import context
 from neutron.db.quota import driver
 from neutron import quota
 from neutron.quota import resource_registry

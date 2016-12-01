@@ -14,9 +14,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 
 from neutron.common import exceptions as n_exc
-from neutron import context
 from neutron.core_extensions import base as base_core
 from neutron.core_extensions import qos as qos_core
 from neutron.plugins.common import constants as plugin_constants

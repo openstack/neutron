@@ -20,10 +20,10 @@ from keystoneauth1 import session
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 import testtools
 
-from neutron import context
 from neutron.extensions import dns
 from neutron.extensions import providernet as pnet
 from neutron.objects import ports as port_obj

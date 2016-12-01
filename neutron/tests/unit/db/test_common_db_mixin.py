@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 
-from neutron import context
 from neutron.db import _utils as db_utils
 from neutron.tests.unit import testlib_api
 

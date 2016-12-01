@@ -15,8 +15,8 @@
 import datetime
 
 import mock
+from neutron_lib import context
 
-from neutron import context
 from neutron.db.quota import api as quota_api
 from neutron.tests.unit import testlib_api
 

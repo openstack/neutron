@@ -17,10 +17,10 @@ import collections
 from operator import attrgetter
 
 from neutron_lib import constants
+from neutron_lib import context
 import six
 import testscenarios
 
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin

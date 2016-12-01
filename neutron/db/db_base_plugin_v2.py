@@ -18,6 +18,7 @@ import functools
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
+from neutron_lib import context as ctx
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -39,7 +40,6 @@ from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
-from neutron import context as ctx
 from neutron.db import _utils as ndb_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common

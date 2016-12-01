@@ -18,6 +18,7 @@ import collections
 import random
 import time
 
+from neutron_lib import context
 from neutron_lib import exceptions as lib_exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -30,7 +31,6 @@ from osprofiler import profiler
 
 from neutron._i18n import _LE, _LW
 from neutron.common import exceptions
-from neutron import context
 
 
 LOG = logging.getLogger(__name__)

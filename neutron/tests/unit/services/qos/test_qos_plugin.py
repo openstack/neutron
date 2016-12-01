@@ -10,12 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import mock
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exc
-from neutron import context
 from neutron import manager
 from neutron.objects import base as base_object
 from neutron.objects.qos import policy as policy_object

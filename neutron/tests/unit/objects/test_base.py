@@ -18,6 +18,7 @@ import random
 
 import mock
 import netaddr
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
 from oslo_db import exception as obj_exc
@@ -30,7 +31,6 @@ import testtools
 
 from neutron.common import constants
 from neutron.common import utils
-from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import l3 as l3_model

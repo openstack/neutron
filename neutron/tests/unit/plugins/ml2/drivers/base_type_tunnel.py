@@ -14,12 +14,12 @@
 # limitations under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 from six import moves
 import testtools
 from testtools import matchers
 
-from neutron import context
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api

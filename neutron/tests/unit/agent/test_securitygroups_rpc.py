@@ -18,6 +18,7 @@ import contextlib
 
 import mock
 from neutron_lib import constants as const
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_messaging
@@ -30,7 +31,6 @@ from neutron.agent.linux import iptables_manager
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import rpc as n_rpc
-from neutron import context
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import securitygroup as ext_sg

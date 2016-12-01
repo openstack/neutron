@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_log import log as logging
 import osprofiler.initializer
@@ -17,7 +18,6 @@ from osprofiler import opts as profiler_opts
 import osprofiler.web
 
 from neutron._i18n import _LI
-from neutron import context
 
 
 CONF = cfg.CONF

@@ -11,11 +11,11 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.conf.services import qos_driver_manager as driver_mgr_config
-from neutron import context
 from neutron.objects.qos import policy as policy_object
 from neutron.services.qos.notification_drivers import manager as driver_mgr
 from neutron.services.qos.notification_drivers import message_queue

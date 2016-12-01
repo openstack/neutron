@@ -19,6 +19,7 @@ import debtcollector
 from eventlet import greenthread
 from neutron_lib.api import converters
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -37,7 +38,6 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as n_const
-from neutron import context
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model

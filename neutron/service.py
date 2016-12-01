@@ -17,6 +17,7 @@ import inspect
 import os
 import random
 
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
 from oslo_config import cfg
@@ -35,7 +36,6 @@ from neutron.common import config
 from neutron.common import profiler
 from neutron.common import rpc as n_rpc
 from neutron.conf import service
-from neutron import context
 from neutron.db import api as session
 from neutron import worker as neutron_worker
 from neutron import wsgi

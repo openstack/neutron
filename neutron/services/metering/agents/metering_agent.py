@@ -15,6 +15,7 @@
 import sys
 
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -33,7 +34,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
 from neutron.conf.services import metering_agent
-from neutron import context
 from neutron import manager
 from neutron import service as neutron_service
 

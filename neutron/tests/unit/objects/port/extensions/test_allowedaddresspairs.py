@@ -10,7 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron import context
+from neutron_lib import context
+
 from neutron.objects.port.extensions import allowedaddresspairs
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api

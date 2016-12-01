@@ -12,9 +12,9 @@
 # under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib.plugins import directory
 
-from neutron import context
 from neutron.objects import network
 from neutron.objects import securitygroup
 from neutron.objects import subnet

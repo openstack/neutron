@@ -15,10 +15,10 @@
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context as nctx
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
-from neutron import context as nctx
 from neutron.db import models_v2
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2 import test_plugin

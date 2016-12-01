@@ -14,12 +14,12 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 import testtools
 
-from neutron import context
 from neutron.plugins.common import constants as p_cons
 from neutron.services.l3_router.service_providers import driver_controller
 from neutron.services import provider_configuration

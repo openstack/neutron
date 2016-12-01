@@ -15,6 +15,7 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_serialization import jsonutils
@@ -23,7 +24,6 @@ import testtools
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import topics
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db

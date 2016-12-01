@@ -18,11 +18,11 @@ Neutron API via different methods.
 import abc
 
 import fixtures
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 import six
 
-from neutron import context
 from neutron import manager
 from neutron.tests import base
 from neutron.tests.unit import testlib_api

@@ -52,7 +52,7 @@ class QoSPlugin(qos.QoSPluginBase):
         """Create a QoS policy.
 
         :param context: neutron api request context
-        :type context: neutron.context.Context
+        :type context: neutron_lib.context.Context
         :param policy: policy data to be applied
         :type policy: dict
 

@@ -17,8 +17,10 @@
 
 import mock
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import fixture as op_fixture
 from oslo_policy import policy as oslo_policy
@@ -28,7 +30,6 @@ from oslo_utils import importutils
 import neutron
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron import context
 from neutron import policy
 from neutron.tests import base
 
@@ -199,12 +200,11 @@ FAKE_RESOURCES = {"%ss" % FAKE_RESOURCE_NAME:
 class NeutronPolicyTestCase(base.BaseTestCase):
 
     def fakepolicyinit(self, **kwargs):
-        enf = policy._ENFORCER
-        enf.set_rules(oslo_policy.Rules(self.rules))
+        policy._ENFORCER = oslo_policy.Enforcer(cfg.CONF)
+        policy._ENFORCER.set_rules(oslo_policy.Rules(self.rules))
 
     def setUp(self):
         super(NeutronPolicyTestCase, self).setUp()
-        policy.refresh()
         # Add Fake resources to RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCES)
         self._set_rules()
@@ -216,7 +216,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                                          'init',
                                          new=self.fakepolicyinit)
         self.patcher.start()
+        policy.refresh()
         self.addCleanup(remove_fake_resource)
+        self.addCleanup(policy.refresh)
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(
             "neutron.db.db_base_plugin_v2.NeutronDbPluginV2")
@@ -368,37 +370,6 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_nonadmin_read_on_shared_succeeds(self):
         self._test_nonadmin_action_on_attr('get', 'shared', True)
-
-    def test_check_is_admin_with_admin_context_succeeds(self):
-        admin_context = context.get_admin_context()
-        # explicitly set roles as this test verifies user credentials
-        # with the policy engine
-        admin_context.roles = ['admin']
-        self.assertTrue(policy.check_is_admin(admin_context))
-
-    def test_check_is_admin_with_user_context_fails(self):
-        self.assertFalse(policy.check_is_admin(self.context))
-
-    def test_check_is_admin_with_no_admin_policy_fails(self):
-        del self.rules[policy.ADMIN_CTX_POLICY]
-        admin_context = context.get_admin_context()
-        self.assertFalse(policy.check_is_admin(admin_context))
-
-    def test_check_is_advsvc_with_admin_context_fails(self):
-        admin_context = context.get_admin_context()
-        self.assertFalse(policy.check_is_advsvc(admin_context))
-
-    def test_check_is_advsvc_with_svc_context_succeeds(self):
-        svc_context = context.Context('', 'svc', roles=['advsvc'])
-        self.assertTrue(policy.check_is_advsvc(svc_context))
-
-    def test_check_is_advsvc_with_no_advsvc_policy_fails(self):
-        del self.rules[policy.ADVSVC_CTX_POLICY]
-        svc_context = context.Context('', 'svc', roles=['advsvc'])
-        self.assertFalse(policy.check_is_advsvc(svc_context))
-
-    def test_check_is_advsvc_with_user_context_fails(self):
-        self.assertFalse(policy.check_is_advsvc(self.context))
 
     def _test_enforce_adminonly_attribute(self, action, **kwargs):
         admin_context = context.get_admin_context()

@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
 
-from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db import models_v2
 from neutron.tests.unit import testlib_api

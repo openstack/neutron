@@ -17,6 +17,7 @@ import itertools
 import operator
 
 import netaddr
+from neutron_lib import context
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
@@ -28,7 +29,6 @@ from sqlalchemy import or_
 
 from neutron._i18n import _, _LI, _LW
 from neutron.common import topics
-from neutron import context
 from neutron.db import api as db_api
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils

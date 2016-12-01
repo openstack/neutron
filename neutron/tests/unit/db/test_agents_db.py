@@ -19,13 +19,13 @@ import datetime
 import mock
 
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_db import exception as exc
 from oslo_utils import timeutils
 import testscenarios
 
-from neutron import context
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db.models import agent as agent_model

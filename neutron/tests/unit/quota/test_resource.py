@@ -13,11 +13,11 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
 
-from neutron import context
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 from neutron.quota import resource

@@ -16,13 +16,13 @@
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exc
-from neutron import context
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
 from neutron.tests.unit.db import test_db_base_plugin_v2

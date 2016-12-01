@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
 
 from neutron.common import exceptions
-from neutron import context
 from neutron.db import db_base_plugin_v2 as base_plugin
 from neutron.db.quota import driver
 from neutron.tests.unit import testlib_api

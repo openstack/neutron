@@ -11,10 +11,10 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 
-from neutron import context
 from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects.db import api

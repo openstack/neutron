@@ -18,11 +18,11 @@ import warnings
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import query
 
-from neutron import context
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
