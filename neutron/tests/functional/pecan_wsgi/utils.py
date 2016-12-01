@@ -11,7 +11,6 @@
 #    under the License.
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.pecan_wsgi import controllers
 from neutron.pecan_wsgi.controllers import utils as pecan_utils
@@ -164,7 +163,6 @@ class FakeExtension(extensions.ExtensionDescriptor):
         for collection_name in self.RESOURCE_ATTRIBUTE_MAP:
             resource_name = collection_name[:-1]
             params = self.RESOURCE_ATTRIBUTE_MAP.get(collection_name, {})
-            attributes.PLURALS.update({collection_name: resource_name})
             member_actions = {'put_meh': 'PUT', 'boo_meh': 'GET'}
             if collection_name == self.HYPHENATED_COLLECTION:
                 collection_name = collection_name.replace('_', '-')

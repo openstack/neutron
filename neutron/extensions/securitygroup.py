@@ -303,8 +303,6 @@ class Securitygroup(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
-        attr.PLURALS.update(dict(my_plurals))
         exts = []
         plugin = directory.get_plugin()
         for resource_name in ['security_group', 'security_group_rule']:

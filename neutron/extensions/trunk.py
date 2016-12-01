@@ -16,7 +16,6 @@
 from neutron_lib.api.definitions import trunk
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import resource_helper
 
 
@@ -44,7 +43,6 @@ class Trunk(extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         plural_mappings = resource_helper.build_plural_mappings(
             {}, trunk.RESOURCE_ATTRIBUTE_MAP)
-        attr.PLURALS.update(plural_mappings)
         return resource_helper.build_resource_info(
             plural_mappings,
             trunk.RESOURCE_ATTRIBUTE_MAP,

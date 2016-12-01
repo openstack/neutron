@@ -19,7 +19,6 @@ from neutron_lib import exceptions as nexception
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 
 
 # Extra Routes Exceptions
@@ -69,7 +68,6 @@ class Extraroute(extensions.ExtensionDescriptor):
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            attr.PLURALS.update({'routes': 'route'})
             return EXTENDED_ATTRIBUTES_2_0
         else:
             return {}

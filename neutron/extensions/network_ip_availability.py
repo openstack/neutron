@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 import neutron.api.extensions as extensions
-import neutron.api.v2.attributes as attr
 import neutron.api.v2.base as base
 import neutron.services.network_ip_availability.plugin as plugin
 
@@ -64,7 +63,6 @@ class Network_ip_availability(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for service type management."""
-        attr.PLURALS[RESOURCE_PLURAL] = RESOURCE_NAME
         resource_attributes = RESOURCE_ATTRIBUTE_MAP[RESOURCE_PLURAL]
         controller = base.create_resource(
             RESOURCE_PLURAL,

@@ -104,8 +104,6 @@ class Rbac(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        plural_mappings = {'rbac_policies': 'rbac_policy'}
-        attr.PLURALS.update(plural_mappings)
         plugin = directory.get_plugin()
         params = RESOURCE_ATTRIBUTE_MAP['rbac_policies']
         collection_name = 'rbac-policies'

@@ -22,7 +22,6 @@ import six
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 
 
@@ -104,8 +103,6 @@ class Availability_zone(extensions.ExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         """Returns Ext Resources."""
-        my_plurals = [(key, key[:-1]) for key in RESOURCE_ATTRIBUTE_MAP.keys()]
-        attr.PLURALS.update(dict(my_plurals))
         plugin = directory.get_plugin()
         params = RESOURCE_ATTRIBUTE_MAP.get(AVAILABILITY_ZONES)
         controller = base.create_resource(AVAILABILITY_ZONES,

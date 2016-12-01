@@ -160,7 +160,6 @@ class Qos(extensions.ExtensionDescriptor):
         plural_mappings = resource_helper.build_plural_mappings(
             special_mappings, itertools.chain(RESOURCE_ATTRIBUTE_MAP,
                                            SUB_RESOURCE_ATTRIBUTE_MAP))
-        attr.PLURALS.update(plural_mappings)
 
         resources = resource_helper.build_resource_info(
                 plural_mappings,
