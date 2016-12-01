@@ -286,14 +286,18 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
         if enable_ha:
             self._assert_ha_device(router)
-            self.assertTrue(router.keepalived_manager.get_process().active)
+            common_utils.wait_until_true(
+                lambda: router.keepalived_manager.get_process().active,
+                timeout=15)
 
         self._delete_router(self.agent, router.router_id)
 
         self._assert_interfaces_deleted_from_ovs()
         self._assert_router_does_not_exist(router)
         if enable_ha:
-            self.assertFalse(router.keepalived_manager.get_process().active)
+            common_utils.wait_until_true(
+                lambda: not router.keepalived_manager.get_process().active,
+                timeout=15)
         return return_copy
 
     def manage_router(self, agent, router):
