@@ -64,17 +64,17 @@ def add_network_segment(context, network_id, segment, segment_index=0,
               'network_id': record.network_id})
 
 
-def get_network_segments(session, network_id, filter_dynamic=False):
+def get_network_segments(context, network_id, filter_dynamic=False):
     return get_networks_segments(
-        session, [network_id], filter_dynamic)[network_id]
+        context, [network_id], filter_dynamic)[network_id]
 
 
-def get_networks_segments(session, network_ids, filter_dynamic=False):
+def get_networks_segments(context, network_ids, filter_dynamic=False):
     if not network_ids:
         return {}
 
-    with session.begin(subtransactions=True):
-        query = (session.query(segments_model.NetworkSegment).
+    with context.session.begin(subtransactions=True):
+        query = (context.session.query(segments_model.NetworkSegment).
                  filter(segments_model.NetworkSegment.network_id
                         .in_(network_ids)).
                  order_by(segments_model.NetworkSegment.segment_index))
@@ -87,10 +87,10 @@ def get_networks_segments(session, network_ids, filter_dynamic=False):
         return result
 
 
-def get_segment_by_id(session, segment_id):
-    with session.begin(subtransactions=True):
+def get_segment_by_id(context, segment_id):
+    with context.session.begin(subtransactions=True):
         try:
-            record = (session.query(segments_model.NetworkSegment).
+            record = (context.session.query(segments_model.NetworkSegment).
                       filter_by(id=segment_id).
                       one())
             return _make_segment_dict(record)
@@ -98,11 +98,11 @@ def get_segment_by_id(session, segment_id):
             return
 
 
-def get_dynamic_segment(session, network_id, physical_network=None,
+def get_dynamic_segment(context, network_id, physical_network=None,
                         segmentation_id=None):
     """Return a dynamic segment for the filters provided if one exists."""
-    with session.begin(subtransactions=True):
-        query = (session.query(segments_model.NetworkSegment).
+    with context.session.begin(subtransactions=True):
+        query = (context.session.query(segments_model.NetworkSegment).
                  filter_by(network_id=network_id, is_dynamic=True))
         if physical_network:
             query = query.filter_by(physical_network=physical_network)
@@ -123,10 +123,10 @@ def get_dynamic_segment(session, network_id, physical_network=None,
         return None
 
 
-def delete_network_segment(session, segment_id):
+def delete_network_segment(context, segment_id):
     """Release a dynamic segment for the params provided if one exists."""
-    with session.begin(subtransactions=True):
-        (session.query(segments_model.NetworkSegment).
+    with context.session.begin(subtransactions=True):
+        (context.session.query(segments_model.NetworkSegment).
          filter_by(id=segment_id).delete())
 
 

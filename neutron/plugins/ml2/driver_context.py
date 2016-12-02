@@ -43,7 +43,7 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
         self._network = network
         self._original_network = original_network
         self._segments = segments_db.get_network_segments(
-            plugin_context.session, network['id'])
+            plugin_context, network['id'])
 
     @property
     def current(self):
@@ -192,7 +192,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
                 self._original_binding_levels[-1].segment_id)
 
     def _expand_segment(self, segment_id):
-        segment = segments_db.get_segment_by_id(self._plugin_context.session,
+        segment = segments_db.get_segment_by_id(self._plugin_context,
                                                 segment_id)
         if not segment:
             LOG.warning(_LW("Could not expand segment %s"), segment_id)

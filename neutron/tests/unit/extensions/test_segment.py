@@ -276,8 +276,7 @@ class TestSegment(SegmentTestCase):
                               network_id=network['id'],
                               segmentation_id=200)
 
-        network_segments = segments_db.get_network_segments(cxt.session,
-                                                            network['id'])
+        network_segments = segments_db.get_network_segments(cxt, network['id'])
         self.assertEqual([], network_segments)
 
     def test_create_segments_in_certain_order(self):
@@ -290,7 +289,7 @@ class TestSegment(SegmentTestCase):
                 network_id=network['id'], segmentation_id=201)
             segment3 = self.segment(
                 network_id=network['id'], segmentation_id=202)
-            network_segments = segments_db.get_network_segments(cxt.session,
+            network_segments = segments_db.get_network_segments(cxt,
                                                                 network['id'])
             self.assertEqual(segment1['segment']['id'],
                              network_segments[0]['id'])

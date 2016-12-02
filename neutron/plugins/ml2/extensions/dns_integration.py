@@ -306,8 +306,7 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
             return True
         if network['router:external']:
             return True
-        segments = segments_db.get_network_segments(context.session,
-                                                    network['id'])
+        segments = segments_db.get_network_segments(context, network['id'])
         if len(segments) > 1:
             return False
         provider_net = segments[0]

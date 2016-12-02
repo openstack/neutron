@@ -1845,8 +1845,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def filter_hosts_with_network_access(
             self, context, network_id, candidate_hosts):
-        segments = segments_db.get_network_segments(context.session,
-                                                    network_id)
+        segments = segments_db.get_network_segments(context, network_id)
         return self.mechanism_manager.filter_hosts_with_segment_access(
             context, segments, candidate_hosts, self.get_agents)
 
