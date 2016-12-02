@@ -326,7 +326,7 @@ def _prepare_check(context, action, target, pluralized):
     if target is None:
         target = {}
     match_rule = _build_match_rule(action, target, pluralized)
-    credentials = context.to_dict()
+    credentials = context.to_policy_values()
     return match_rule, target, credentials
 
 
@@ -415,7 +415,7 @@ def check_is_admin(context):
     """Verify context has admin rights according to policy settings."""
     init()
     # the target is user-self
-    credentials = context.to_dict()
+    credentials = context.to_policy_values()
     if ADMIN_CTX_POLICY not in _ENFORCER.rules:
         return False
     return _ENFORCER.enforce(ADMIN_CTX_POLICY, credentials, credentials)
@@ -425,7 +425,7 @@ def check_is_advsvc(context):
     """Verify context has advsvc rights according to policy settings."""
     init()
     # the target is user-self
-    credentials = context.to_dict()
+    credentials = context.to_policy_values()
     if ADVSVC_CTX_POLICY not in _ENFORCER.rules:
         return False
     return _ENFORCER.enforce(ADVSVC_CTX_POLICY, credentials, credentials)

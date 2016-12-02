@@ -142,3 +142,28 @@ class TestNeutronContext(base.BaseTestCase):
         ctx_admin = context.get_admin_context()
         self.assertEqual(req_id_before, oslo_context.get_current().request_id)
         self.assertNotEqual(req_id_before, ctx_admin.request_id)
+
+    def test_to_policy_values(self):
+        values = {
+            'user_id': 'user_id',
+            'tenant_id': 'tenant_id',
+            'is_admin': 'is_admin',
+            'tenant_name': 'tenant_name',
+            'user_name': 'user_name',
+            'domain': 'domain',
+            'user_domain': 'user_domain',
+            'project_domain': 'project_domain',
+            'user_name': 'user_name',
+        }
+        additional_values = {
+            'user': 'user_id',
+            'tenant': 'tenant_id',
+            'project_id': 'tenant_id',
+            'project_name': 'tenant_name',
+        }
+        ctx = context.Context(**values)
+        # apply dict() to get a real dictionary, needed for newer oslo.context
+        # that returns _DeprecatedPolicyValues object instead
+        policy_values = dict(ctx.to_policy_values())
+        self.assertDictSupersetOf(values, policy_values)
+        self.assertDictSupersetOf(additional_values, policy_values)
