@@ -25,7 +25,6 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import keepalived_state_change
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
-from neutron.conf.agent.l3 import config
 from neutron.conf.agent.l3 import keepalived as kd
 from neutron.tests.common import machine_fixtures as mf
 from neutron.tests.common import net_helpers
@@ -106,7 +105,6 @@ class TestMonitorDaemon(base.BaseSudoTestCase):
         bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.machines = self.useFixture(mf.PeerMachines(bridge))
         self.router, self.peer = self.machines.machines[:2]
-        config.register_l3_agent_config_opts(config.OPTS)
 
         conf_dir = self.get_default_temp_dir().path
         monitor = keepalived_state_change.MonitorDaemon(
