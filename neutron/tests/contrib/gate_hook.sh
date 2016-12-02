@@ -60,8 +60,6 @@ case $VENV in
 
 "api"|"api-pecan"|"full-pecan"|"dsvm-scenario")
     load_rc_hook api_extensions
-    # NOTE(ihrachys): note the order of hook post-* sections is significant: [quotas] hook should
-    # go before other hooks modifying [DEFAULT]. See LP#1583214 for details.
     load_conf_hook quotas
     load_rc_hook dns
     load_rc_hook qos
