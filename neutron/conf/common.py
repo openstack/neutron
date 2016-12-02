@@ -47,15 +47,6 @@ core_opts = [
                       "will be randomly generated.")),
     cfg.BoolOpt('allow_bulk', default=True,
                 help=_("Allow the usage of the bulk API")),
-    cfg.BoolOpt('allow_pagination', default=True,
-                deprecated_for_removal=True,
-                help=_("Allow the usage of the pagination. This option has "
-                       "been deprecated and will now be enabled "
-                       "unconditionally.")),
-    cfg.BoolOpt('allow_sorting', default=True,
-                deprecated_for_removal=True,
-                help=_("Allow the usage of the sorting. This option has been "
-                       "deprecated and will now be enabled unconditionally.")),
     cfg.StrOpt('pagination_max_limit', default="-1",
                help=_("The maximum number of items returned in a single "
                       "response, value was 'infinite' or negative integer "

@@ -435,8 +435,6 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
     RESOURCE_COUNT = 6
 
     def setUp(self):
-        cfg.CONF.set_override('allow_pagination', True)
-        cfg.CONF.set_override('allow_sorting', True)
         super(TestPaginationAndSorting, self).setUp()
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()

@@ -102,8 +102,6 @@ class APIv2TestBase(base.BaseTestCase):
         self.config_parse()
         # Update the plugin
         self.setup_coreplugin(plugin, load_plugins=False)
-        cfg.CONF.set_override('allow_pagination', True)
-        cfg.CONF.set_override('allow_sorting', True)
         self._plugin_patcher = mock.patch(plugin, autospec=True)
         self.plugin = self._plugin_patcher.start()
         instance = self.plugin.return_value
@@ -517,19 +515,6 @@ class APIv2TestCase(APIv2TestBase):
         instance = self.plugin.return_value
         instance._NeutronPluginBaseV2__native_sorting_support = False
         self.assertRaises(n_exc.Invalid, router.APIRouter)
-
-    def test_native_pagination_without_allow_sorting(self):
-        cfg.CONF.set_override('allow_sorting', False)
-        instance = self.plugin.return_value
-        instance.get_networks.return_value = []
-        api = webtest.TestApp(router.APIRouter())
-        api.get(_get_path('networks'),
-                {'sort_key': ['name', 'admin_state_up'],
-                 'sort_dir': ['desc', 'asc']})
-        kwargs = self._get_collection_kwargs(sorts=[('name', False),
-                                                    ('admin_state_up', True),
-                                                    ('id', True)])
-        instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
 
 # Note: since all resources use the same controller and validation

@@ -1,0 +1,5 @@
+---
+other:
+  - The ``allow_pagination`` and ``allow_sorting`` configuration options are
+    now removed. Now, sorting and pagination are always enabled for plugins
+    that support the features.
