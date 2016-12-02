@@ -101,6 +101,14 @@ SERVICE_PLUGINS_REQUIRED_DRIVERS = {
 }
 
 
+def _ml2_port_result_filter_hook(query, filters):
+    values = filters and filters.get(portbindings.HOST_ID, [])
+    if not values:
+        return query
+    bind_criteria = models.PortBinding.host.in_(values)
+    return query.filter(models_v2.Port.port_binding.has(bind_criteria))
+
+
 @registry.has_registry_receivers
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dvr_mac_db.DVRDbMixin,
@@ -151,6 +159,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             vlantransparent.disable_extension_by_config(aliases)
             self._aliases = aliases
         return self._aliases
+
+    def __new__(cls, *args, **kwargs):
+        model_query.register_hook(
+            models_v2.Port,
+            "ml2_port_bindings",
+            query_hook=None,
+            filter_hook=None,
+            result_filters=_ml2_port_result_filter_hook)
+        return super(Ml2Plugin, cls).__new__(cls, *args, **kwargs)
 
     @resource_registry.tracked_resources(
         network=models_v2.Network,
@@ -620,25 +637,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not session:
             session = db_api.get_reader_session()
         return session
-
-    # Note - The following hook methods have "ml2" in their names so
-    # that they are not called twice during unit tests due to global
-    # registration of hooks in portbindings_db.py used by other
-    # plugins.
-
-    def _ml2_port_result_filter_hook(self, query, filters):
-        values = filters and filters.get(portbindings.HOST_ID, [])
-        if not values:
-            return query
-        bind_criteria = models.PortBinding.host.in_(values)
-        return query.filter(models_v2.Port.port_binding.has(bind_criteria))
-
-    model_query.register_hook(
-        models_v2.Port,
-        "ml2_port_bindings",
-        None,
-        None,
-        '_ml2_port_result_filter_hook')
 
     def _notify_port_updated(self, mech_context):
         port = mech_context.current

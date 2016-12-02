@@ -1245,7 +1245,6 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                            test_db_base_plugin_v2.DbOperationBoundMixin):
     def setUp(self):
         super(BaseDbObjectTestCase, self).setUp()
-        self.useFixture(tools.CommonDbMixinHooksFixture())
         synthetic_fields = self._get_object_synthetic_fields(self._test_class)
         for synth_field in synthetic_fields:
             objclass = self._get_ovo_object_class(self._test_class,
@@ -1514,9 +1513,9 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         model_query.register_hook(
             self._test_class.db_model,
             'foo_filter',
-            None,
-            None,
-            foo_filter)
+            query_hook=None,
+            filter_hook=None,
+            result_filters=foo_filter)
         base.register_filter_hook_on_model(self._test_class.db_model, 'foo')
 
         self._test_class.get_objects(self.context, foo=42)

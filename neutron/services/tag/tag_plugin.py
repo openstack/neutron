@@ -56,6 +56,19 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
 
     supported_extension_aliases = ['tag', 'tag-ext']
 
+    def __new__(cls, *args, **kwargs):
+        inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
+        inst._filter_methods = []  # prevent GC of our partial functions
+        for resource, model in resource_model_map.items():
+            resource_extend.register_funcs(resource, [_extend_tags_dict])
+            method = functools.partial(tag_methods.apply_tag_filters, model)
+            inst._filter_methods.append(method)
+            model_query.register_hook(model, "tag",
+                                      query_hook=None,
+                                      filter_hook=None,
+                                      result_filters=method)
+        return inst
+
     def _get_resource(self, context, resource, resource_id):
         model = resource_model_map[resource]
         try:
@@ -124,15 +137,3 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
         if not tag_obj.Tag.delete_objects(context,
             tag=tag, standard_attr_id=res.standard_attr_id):
             raise tag_ext.TagNotFound(tag=tag)
-
-    def __new__(cls, *args, **kwargs):
-        inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
-        inst._filter_methods = []  # prevent GC of our partial functions
-        for resource, model in resource_model_map.items():
-            resource_extend.register_funcs(
-                resource, [_extend_tags_dict])
-            method = functools.partial(tag_methods.apply_tag_filters, model)
-            inst._filter_methods.append(method)
-            model_query.register_hook(
-                model, "tag", None, None, method)
-        return inst
