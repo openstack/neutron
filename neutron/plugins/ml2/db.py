@@ -29,6 +29,7 @@ from neutron.callbacks import resources
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.extensions import portbindings
+from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import models
 from neutron.services.segments import exceptions as seg_exc
 
@@ -158,9 +159,8 @@ def get_port(context, port_id):
 
 def get_port_from_device_mac(context, device_mac):
     LOG.debug("get_port_from_device_mac() called for mac %s", device_mac)
-    qry = context.session.query(models_v2.Port).filter_by(
-        mac_address=device_mac)
-    return qry.first()
+    ports = port_obj.Port.get_objects(context, mac_address=device_mac)
+    return ports.pop() if ports else None
 
 
 def get_ports_and_sgs(context, port_ids):
