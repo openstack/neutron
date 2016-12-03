@@ -157,13 +157,13 @@ def list_base_agent_opts():
              neutron.agent.common.config.INTERFACE_DRIVER_OPTS,
              neutron.conf.agent.ovs_conf.OPTS)
          ),
-        ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS),
+        ('agent', neutron.agent.common.config.AGENT_STATE_OPTS),
     ]
 
 
 def list_az_agent_opts():
     return [
-        ('AGENT', neutron.agent.common.config.AVAILABILITY_ZONE_OPTS),
+        ('agent', neutron.agent.common.config.AVAILABILITY_ZONE_OPTS),
     ]
 
 
@@ -228,7 +228,7 @@ def list_metadata_agent_opts():
              meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS,
              neutron.conf.cache_utils.cache_opts)
          ),
-        ('AGENT', neutron.agent.common.config.AGENT_STATE_OPTS)
+        ('agent', neutron.agent.common.config.AGENT_STATE_OPTS)
     ]
 
 
