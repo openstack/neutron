@@ -121,9 +121,9 @@ class TestABCDriver(TestBase):
                             extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(filters=['permanent']),
-             mock.call().addr.add('192.168.1.2/24'),
+             mock.call().addr.list(),
              mock.call().addr.delete('172.16.77.240/24'),
+             mock.call().addr.add('192.168.1.2/24'),
              mock.call('tap0', namespace=ns),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
              mock.call().route.list_onlink_routes(constants.IP_VERSION_6),
@@ -155,7 +155,7 @@ class TestABCDriver(TestBase):
                    preserve_ips=['192.168.1.3/32'])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(filters=['permanent']),
+             mock.call().addr.list(),
              mock.call().addr.add('192.168.1.2/24')])
         self.assertFalse(self.ip_dev().addr.delete.called)
         self.assertFalse(self.ip_dev().delete_addr_and_conntrack_state.called)
@@ -198,9 +198,9 @@ class TestABCDriver(TestBase):
         bc.init_router_port('tap0', [new_cidr], **kwargs)
         expected_calls = (
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(filters=['permanent']),
-             mock.call().addr.add('2001:db8:a::124/64'),
-             mock.call().addr.delete('2001:db8:a::123/64')])
+             mock.call().addr.list(),
+             mock.call().addr.delete('2001:db8:a::123/64'),
+             mock.call().addr.add('2001:db8:a::124/64')])
         expected_calls += (
              [mock.call('tap0', namespace=ns),
               mock.call().route.list_onlink_routes(constants.IP_VERSION_4),
@@ -222,7 +222,7 @@ class TestABCDriver(TestBase):
             extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
-             mock.call().addr.list(filters=['permanent']),
+             mock.call().addr.list(),
              mock.call().addr.add('192.168.1.2/24'),
              mock.call().addr.add('2001:db8:a::124/64'),
              mock.call().addr.delete('172.16.77.240/24'),
@@ -268,6 +268,22 @@ class TestABCDriver(TestBase):
                    ['2001:db8:a:0000:0000:0000:0000:0123/64'],
                    namespace=ns)
         self.assertFalse(self.ip_dev().addr.add.called)
+
+    def test_l3_init_with_duplicated_ipv6_dynamic(self):
+        device_name = 'tap0'
+        cidr = '2001:db8:a::123/64'
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        addresses = [dict(scope='global',
+                          dynamic=True,
+                          cidr=cidr)]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        bc = BaseChild(self.conf)
+        bc.init_l3(device_name, [cidr], namespace=ns)
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().addr.list(),
+             mock.call().addr.delete(cidr),
+             mock.call().addr.add(cidr)])
 
     def test_add_ipv6_addr(self):
         device_name = 'tap0'
