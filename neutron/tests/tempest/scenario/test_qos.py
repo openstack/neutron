@@ -22,6 +22,8 @@ from tempest.lib import exceptions
 from tempest import test
 
 from neutron.common import utils
+from neutron.services.qos import qos_consts
+from neutron.tests.tempest.api import base as base_api
 from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import constants
@@ -78,6 +80,7 @@ class QoSTest(base.BaseTempestTestCase):
     FILE_PATH = "/tmp/img"
 
     @classmethod
+    @base_api.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(QoSTest, cls).resource_setup()
