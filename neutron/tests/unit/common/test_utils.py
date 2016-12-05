@@ -703,3 +703,53 @@ class ImportModulesRecursivelyTestCase(base.BaseTestCase):
         for module in expected_modules:
             self.assertIn(module, modules)
             self.assertIn(module, sys.modules)
+
+
+class TestThrottler(base.BaseTestCase):
+    def test_throttler(self):
+        threshold = 1
+        orig_function = mock.Mock()
+        # Add this magic name as it's required by functools
+        orig_function.__name__ = 'mock_func'
+        throttled_func = utils.throttler(threshold)(orig_function)
+
+        throttled_func()
+
+        sleep = utils.eventlet.sleep
+
+        def sleep_mock(amount_to_sleep):
+            sleep(amount_to_sleep)
+            self.assertTrue(threshold > amount_to_sleep)
+
+        with mock.patch.object(utils.eventlet, "sleep",
+                               side_effect=sleep_mock):
+            throttled_func()
+
+        self.assertEqual(2, orig_function.call_count)
+
+        lock_with_timer = six.get_function_closure(
+            throttled_func)[1].cell_contents
+        timestamp = lock_with_timer.timestamp - threshold
+        lock_with_timer.timestamp = timestamp
+
+        throttled_func()
+
+        self.assertEqual(3, orig_function.call_count)
+        self.assertTrue(timestamp < lock_with_timer.timestamp)
+
+    def test_method_docstring_is_preserved(self):
+        class Klass(object):
+            @utils.throttler()
+            def method(self):
+                """Docstring"""
+
+        self.assertEqual("Docstring", Klass.method.__doc__)
+
+    def test_method_still_callable(self):
+        class Klass(object):
+            @utils.throttler()
+            def method(self):
+                pass
+
+        obj = Klass()
+        obj.method()

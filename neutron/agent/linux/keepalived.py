@@ -27,6 +27,7 @@ from oslo_utils import fileutils
 from neutron._i18n import _, _LE
 from neutron.agent.linux import external_process
 from neutron.common import constants
+from neutron.common import utils
 
 VALID_STATES = ['MASTER', 'BACKUP']
 VALID_AUTH_TYPES = ['AH', 'PASS']
@@ -367,12 +368,20 @@ class KeepalivedManager(object):
     """
 
     def __init__(self, resource_id, config, process_monitor, conf_path='/tmp',
-                 namespace=None):
+                 namespace=None, throttle_restart_value=None):
         self.resource_id = resource_id
         self.config = config
         self.namespace = namespace
         self.process_monitor = process_monitor
         self.conf_path = conf_path
+        # configure throttler for spawn to introduce delay between SIGHUPs,
+        # otherwise keepalived master may unnecessarily flip to slave
+        if throttle_restart_value is not None:
+            self._throttle_spawn(throttle_restart_value)
+
+    #pylint: disable=method-hidden
+    def _throttle_spawn(self, threshold):
+        self.spawn = utils.throttler(threshold)(self.spawn)
 
     def get_conf_dir(self):
         confs_dir = os.path.abspath(os.path.normpath(self.conf_path))
