@@ -61,17 +61,13 @@ class NeutronConfigFixture(ConfigFixture):
         super(NeutronConfigFixture, self).__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
-        service_plugins = ['router', 'trunk']
-        if env_desc.qos:
-            service_plugins.append('qos')
-
         self.config.update({
             'DEFAULT': {
                 'host': self._generate_host(),
                 'state_path': self._generate_state_path(self.temp_dir),
                 'api_paste_config': self._generate_api_paste(),
                 'core_plugin': 'ml2',
-                'service_plugins': ','.join(service_plugins),
+                'service_plugins': env_desc.service_plugins,
                 'auth_strategy': 'noauth',
                 'debug': 'True',
                 'agent_down_time': env_desc.agent_down_time,
