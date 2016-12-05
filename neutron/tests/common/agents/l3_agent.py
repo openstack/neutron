@@ -13,6 +13,7 @@
 #    under the License.
 
 import sys
+import types
 
 import mock
 from oslo_config import cfg
@@ -21,6 +22,7 @@ from neutron._i18n import _
 from neutron.agent.l3 import agent
 from neutron.agent.l3 import namespaces
 from neutron.agent import l3_agent
+from neutron.common import constants
 
 
 class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
@@ -58,6 +60,40 @@ class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
         parse_id.side_effect = get_id_from_ns_name
 
         super(L3NATAgentForTest, self).__init__(host, conf)
+
+    def _create_router(self, router_id, router):
+        """Create a router with suffix added to the router namespace name.
+
+        This is needed to be able to run two agents serving the same router
+        on the same node.
+        """
+        router = (
+            super(L3NATAgentForTest, self)._create_router(router_id, router))
+
+        router.get_internal_device_name = types.MethodType(
+            get_internal_device_name, router)
+        router.get_external_device_name = types.MethodType(
+            get_external_device_name, router)
+
+        return router
+
+
+def _append_suffix(dev_name):
+    # If dev_name = 'xyz123' and the suffix is 'hostB' then the result
+    # will be 'xy_stB'
+    return '%s_%s' % (dev_name[:-4], cfg.CONF.test_namespace_suffix[-3:])
+
+
+def get_internal_device_name(ri, port_id):
+    return _append_suffix(
+        (namespaces.INTERNAL_DEV_PREFIX + port_id)
+        [:constants.LINUX_DEV_LEN])
+
+
+def get_external_device_name(ri, port_id):
+    return _append_suffix(
+        (namespaces.EXTERNAL_DEV_PREFIX + port_id)
+        [:constants.LINUX_DEV_LEN])
 
 
 OPTS = [

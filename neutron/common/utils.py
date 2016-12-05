@@ -25,6 +25,7 @@ import os.path
 import random
 import signal
 import sys
+import threading
 import time
 import uuid
 import weakref
@@ -57,6 +58,8 @@ TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
 SYNCHRONIZED_PREFIX = 'neutron-'
 
+DEFAULT_THROTTLER_VALUE = 2
+
 synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
 
 
@@ -74,6 +77,51 @@ class WaitTimeout(Exception, eventlet.TimeoutError):
 
     def __repr__(self):
         return Exception.__repr__(self)
+
+
+class LockWithTimer(object):
+    def __init__(self, threshold):
+        self._threshold = threshold
+        self.timestamp = 0
+        self._lock = threading.Lock()
+
+    def acquire(self):
+        return self._lock.acquire(False)
+
+    def release(self):
+        return self._lock.release()
+
+    def time_to_wait(self):
+        return self.timestamp - time.time() + self._threshold
+
+
+# REVISIT(jlibosva): Some parts of throttler may be similar to what
+#                    neutron.notifiers.batch_notifier.BatchNotifier does. They
+#                    could be refactored and unified.
+def throttler(threshold=DEFAULT_THROTTLER_VALUE):
+    """Throttle number of calls to a function to only once per 'threshold'.
+    """
+    def decorator(f):
+        lock_with_timer = LockWithTimer(threshold)
+
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            if lock_with_timer.acquire():
+                try:
+                    fname = f.__name__
+                    time_to_wait = lock_with_timer.time_to_wait()
+                    if time_to_wait > 0:
+                        LOG.debug("Call of function %s scheduled, sleeping "
+                                  "%.1f seconds", fname, time_to_wait)
+                        # Decorated function has been called recently, wait.
+                        eventlet.sleep(time_to_wait)
+                    lock_with_timer.timestamp = time.time()
+                finally:
+                    lock_with_timer.release()
+                LOG.debug("Calling throttled function %s", fname)
+                return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 @removals.remove(

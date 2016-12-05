@@ -14,10 +14,13 @@
 
 import functools
 import netaddr
+import os
+import time
 
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
+from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
@@ -50,25 +53,34 @@ class TestL3Agent(base.BaseFullStackTestCase):
             return port['port']['status'] == 'ACTIVE'
         common_utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
 
+    def _create_and_attach_subnet(
+            self, tenant_id, subnet_cidr, network_id, router_id):
+        # For IPv6 subnets, enable_dhcp should be set to true.
+        enable_dhcp = (netaddr.IPNetwork(subnet_cidr).version ==
+            constants.IP_VERSION_6)
+        subnet = self.safe_client.create_subnet(
+            tenant_id, network_id, subnet_cidr, enable_dhcp=enable_dhcp)
+
+        router_interface_info = self.safe_client.add_router_interface(
+            router_id, subnet['id'])
+        self.block_until_port_status_active(
+            router_interface_info['port_id'])
+
+    def _boot_fake_vm_in_network(self, host, tenant_id, network_id, wait=True):
+        vm = self.useFixture(
+            machine.FakeFullstackMachine(
+                host, network_id, tenant_id, self.safe_client))
+        if wait:
+            vm.block_until_boot()
+        return vm
+
     def _create_net_subnet_and_vm(self, tenant_id, subnet_cidrs, host, router):
         network = self.safe_client.create_network(tenant_id)
         for cidr in subnet_cidrs:
-            # For IPv6 subnets, enable_dhcp should be set to true.
-            enable_dhcp = (netaddr.IPNetwork(cidr).version ==
-                constants.IP_VERSION_6)
-            subnet = self.safe_client.create_subnet(
-                tenant_id, network['id'], cidr, enable_dhcp=enable_dhcp)
+            self._create_and_attach_subnet(
+                tenant_id, cidr, network['id'], router['id'])
 
-            router_interface_info = self.safe_client.add_router_interface(
-                router['id'], subnet['id'])
-            self.block_until_port_status_active(
-                router_interface_info['port_id'])
-
-        vm = self.useFixture(
-            machine.FakeFullstackMachine(
-                host, network['id'], tenant_id, self.safe_client))
-        vm.block_until_boot()
-        return vm
+        return self._boot_fake_vm_in_network(host, tenant_id, network['id'])
 
 
 class TestLegacyL3Agent(TestL3Agent):
@@ -175,7 +187,7 @@ class TestLegacyL3Agent(TestL3Agent):
         vm.block_until_ping(external_vm.ipv6)
 
 
-class TestHAL3Agent(base.BaseFullStackTestCase):
+class TestHAL3Agent(TestL3Agent):
 
     def setUp(self):
         host_descriptions = [
@@ -206,3 +218,64 @@ class TestHAL3Agent(base.BaseFullStackTestCase):
                 self._is_ha_router_active_on_one_agent,
                 router['id']),
             timeout=90)
+
+    def _get_keepalived_state(self, keepalived_state_file):
+        with open(keepalived_state_file, "r") as fd:
+            return fd.read()
+
+    def _get_state_file_for_master_agent(self, router_id):
+        for host in self.environment.hosts:
+            keepalived_state_file = os.path.join(
+                host.neutron_config.state_path, "ha_confs", router_id, "state")
+
+            if self._get_keepalived_state(keepalived_state_file) == "master":
+                return keepalived_state_file
+
+    def test_keepalived_multiple_sighups_does_not_forfeit_mastership(self):
+        """Setup a complete "Neutron stack" - both an internal and an external
+           network+subnet, and a router connected to both.
+        """
+        tenant_id = uuidutils.generate_uuid()
+        ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
+        router = self.safe_client.create_router(tenant_id, ha=True,
+                                                external_network=ext_net['id'])
+        common_utils.wait_until_true(
+            lambda:
+            len(self.client.list_l3_agent_hosting_routers(
+                router['id'])['agents']) == 2,
+            timeout=90)
+        common_utils.wait_until_true(
+            functools.partial(
+                self._is_ha_router_active_on_one_agent,
+                router['id']),
+            timeout=90)
+        keepalived_state_file = self._get_state_file_for_master_agent(
+            router['id'])
+        self.assertIsNotNone(keepalived_state_file)
+        network = self.safe_client.create_network(tenant_id)
+        self._create_and_attach_subnet(
+            tenant_id, '13.37.0.0/24', network['id'], router['id'])
+
+        # Create 10 fake VMs, each with a floating ip. Each floating ip
+        # association should send a SIGHUP to the keepalived's parent process,
+        # unless the Throttler works.
+        host = self.environment.hosts[0]
+        vms = [self._boot_fake_vm_in_network(host, tenant_id, network['id'],
+                                             wait=False)
+               for i in range(10)]
+        for vm in vms:
+            self.safe_client.create_floatingip(
+                tenant_id, ext_net['id'], vm.ip, vm.neutron_port['id'])
+
+        # Check that the keepalived's state file has not changed and is still
+        # master. This will indicate that the Throttler works. We want to check
+        # for ha_vrrp_advert_int (the default is 2 seconds), plus a bit more.
+        time_to_stop = (time.time() +
+                        (common_utils.DEFAULT_THROTTLER_VALUE *
+                         ha_router.THROTTLER_MULTIPLIER * 1.3))
+        while True:
+            if time.time() > time_to_stop:
+                break
+            self.assertEqual(
+                "master",
+                self._get_keepalived_state(keepalived_state_file))
