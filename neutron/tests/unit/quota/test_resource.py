@@ -12,10 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron import context
 from neutron.db import api as db_api
@@ -63,10 +62,12 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
         session = db_api.get_session()
         with session.begin():
             tenant_id = tenant_id or self.tenant_id
-            session.add(test_quota.MehModel(meh='meh_%s' % uuid.uuid4(),
-                                            tenant_id=tenant_id))
-            session.add(test_quota.MehModel(meh='meh_%s' % uuid.uuid4(),
-                                            tenant_id=tenant_id))
+            session.add(test_quota.MehModel(
+                meh='meh_%s' % uuidutils.generate_uuid(),
+                tenant_id=tenant_id))
+            session.add(test_quota.MehModel(
+                meh='meh_%s' % uuidutils.generate_uuid(),
+                tenant_id=tenant_id))
 
     def _delete_data(self):
         session = db_api.get_session()

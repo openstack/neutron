@@ -10,10 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 import mock
 from neutron_lib.plugins import directory
+from oslo_utils import uuidutils
 
 from neutron import context
 from neutron.plugins.ml2 import config
@@ -34,7 +33,7 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         self._ctxt = context.get_admin_context()
 
     def _verify_network_create(self, code, exc_reason):
-        tenant_id = str(uuid.uuid4())
+        tenant_id = uuidutils.generate_uuid()
         data = {'network': {'name': 'net1',
                             'tenant_id': tenant_id}}
         req = self.new_create_request('networks', data)
