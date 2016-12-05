@@ -132,7 +132,7 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
         # the null case for vif_details in our db model is an
         # empty string. add that here to simulate it correctly
         # in the tests
-        kwargs = self.get_random_fields()
+        kwargs = self.get_random_db_fields()
         kwargs['vif_details'] = ''
         db_obj = self._test_class.db_model(**kwargs)
         obj_fields = self._test_class.modify_fields_from_db(db_obj)

@@ -110,9 +110,7 @@ class DefaultSecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(DefaultSecurityGroupDbObjTestCase, self).setUp()
-        sg_db_obj = self.get_random_fields(securitygroup.SecurityGroup)
-        sg_fields = securitygroup.SecurityGroup.modify_fields_from_db(
-            sg_db_obj)
+        sg_fields = self.get_random_object_fields(securitygroup.SecurityGroup)
         self.sg_obj = securitygroup.SecurityGroup(self.context, **sg_fields)
         self.sg_obj.create()
         self.update_obj_fields({'security_group_id': self.sg_obj['id']})
@@ -130,9 +128,7 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(SecurityGroupRuleDbObjTestCase, self).setUp()
-        sg_db_obj = self.get_random_fields(securitygroup.SecurityGroup)
-        sg_fields = securitygroup.SecurityGroup.modify_fields_from_db(
-            sg_db_obj)
+        sg_fields = self.get_random_object_fields(securitygroup.SecurityGroup)
         self.sg_obj = securitygroup.SecurityGroup(self.context, **sg_fields)
         self.sg_obj.create()
         self.update_obj_fields({'security_group_id': self.sg_obj['id'],
