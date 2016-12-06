@@ -70,12 +70,6 @@ def _format_timestamp(resource_db, result):
                             strftime(TIME_FORMAT_WHOLE_SECONDS)) + 'Z'
 
 
-def _extend_resource_dict_timestamp(plugin_obj, resource_res, resource_db):
-    if (resource_db and resource_db.created_at and
-            resource_db.updated_at):
-        _format_timestamp(resource_db, resource_res)
-
-
 def _add_timestamp(mapper, _conn, target):
     if not target.created_at and not target.updated_at:
         time = timeutils.utcnow()
@@ -84,14 +78,13 @@ def _add_timestamp(mapper, _conn, target):
     return target
 
 
+@resource_extend.has_resource_extenders
 class TimeStamp_db_mixin(object):
     """Mixin class to add Time Stamp methods."""
 
     def __new__(cls, *args, **kwargs):
         rs_model_maps = standard_attr.get_standard_attr_resource_model_map()
-        for rsmap, model in rs_model_maps.items():
-            resource_extend.register_funcs(
-                rsmap, [_extend_resource_dict_timestamp])
+        for model in rs_model_maps.values():
             model_query.register_hook(
                 model,
                 "change_since_query",
@@ -105,3 +98,11 @@ class TimeStamp_db_mixin(object):
         listen(standard_attr.StandardAttribute, 'before_insert',
                _add_timestamp)
         listen(se.Session, 'before_flush', _update_timestamp)
+
+    @staticmethod
+    @resource_extend.extends(
+        list(standard_attr.get_standard_attr_resource_model_map()))
+    def _extend_resource_dict_timestamp(resource_res, resource_db):
+        if (resource_db and resource_db.created_at and
+                resource_db.updated_at):
+            _format_timestamp(resource_db, resource_res)

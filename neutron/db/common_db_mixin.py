@@ -17,7 +17,6 @@ import weakref
 
 from neutron_lib.db import utils as db_utils
 from oslo_db.sqlalchemy import utils as sa_utils
-import six
 from sqlalchemy import and_
 from sqlalchemy.ext import associationproxy
 from sqlalchemy import or_
@@ -34,6 +33,13 @@ safe_creation = ndb_utils.safe_creation
 model_query_scope = ndb_utils.model_query_scope_is_project
 model_query = ndb_utils.model_query
 resource_fields = ndb_utils.resource_fields
+
+
+def _resolve_ref(ref):
+    """Handles dereference of weakref."""
+    if isinstance(ref, weakref.ref):
+        ref = ref()
+    return ref
 
 
 class CommonDbMixin(object):
@@ -85,11 +91,11 @@ class CommonDbMixin(object):
                 query_filter = (model.tenant_id == context.tenant_id)
         # Execute query hooks registered from mixins and plugins
         for hook in _model_query.get_hooks(model):
-            query_hook = self._resolve_ref(hook.get('query'))
+            query_hook = _resolve_ref(hook.get('query'))
             if query_hook:
                 query = query_hook(context, model, query)
 
-            filter_hook = self._resolve_ref(hook.get('filter'))
+            filter_hook = _resolve_ref(hook.get('filter'))
             if filter_hook:
                 query_filter = filter_hook(context, model, query_filter)
 
@@ -164,31 +170,19 @@ class CommonDbMixin(object):
                         query = query.outerjoin(model.rbac_entries)
                     query = query.filter(is_shared)
             for hook in _model_query.get_hooks(model):
-                result_filter = self._resolve_ref(
-                    hook.get('result_filters', None))
+                result_filter = _resolve_ref(hook.get('result_filters', None))
 
                 if result_filter:
                     query = result_filter(query, filters)
         return query
 
-    def _resolve_ref(self, ref):
-        """Finds string ref functions, handles dereference of weakref."""
-        if isinstance(ref, six.string_types):
-            ref = getattr(self, ref, None)
-        if isinstance(ref, weakref.ref):
-            ref = ref()
-        return ref
-
-    def _apply_dict_extend_functions(self, resource_type,
+    @staticmethod
+    def _apply_dict_extend_functions(resource_type,
                                      response, db_object):
         for func in _resource_extend.get_funcs(resource_type):
-            args = (response, db_object)
-            if not isinstance(func, six.string_types):
-                # must call unbound method - use self as 1st argument
-                args = (self,) + args
-            func = self._resolve_ref(func)
-            if func:
-                func(*args)
+            resolved_func = _resolve_ref(func)
+            if resolved_func:
+                resolved_func(response, db_object)
 
     def _get_collection_query(self, context, model, filters=None,
                               sorts=None, limit=None, marker_obj=None,

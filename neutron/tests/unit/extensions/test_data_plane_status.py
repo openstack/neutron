@@ -41,10 +41,17 @@ class DataPlaneStatusTestExtensionManager(object):
         return dps_ext.Data_plane_status.get_extended_resources(version)
 
 
+@resource_extend.has_resource_extenders
 class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                          dps_db.DataPlaneStatusMixin):
 
     supported_extension_aliases = ["data-plane-status"]
+
+    @staticmethod
+    @resource_extend.extends([attrs.PORTS])
+    def _extend_port_data_plane_status(port_res, port_db):
+        return dps_db.DataPlaneStatusMixin._extend_port_data_plane_status(
+            port_res, port_db)
 
     def update_port(self, context, id, port):
         with context.session.begin(subtransactions=True):
@@ -55,9 +62,6 @@ class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                             port['port'],
                                                             ret_port)
         return ret_port
-
-    resource_extend.register_funcs(attrs.PORTS,
-                                   ['_extend_port_data_plane_status'])
 
 
 class DataPlaneStatusExtensionTestCase(

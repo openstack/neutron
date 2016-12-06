@@ -26,6 +26,7 @@ from neutron.objects.port.extensions import (allowedaddresspairs
     as obj_addr_pair)
 
 
+@resource_extend.has_resource_extenders
 class AllowedAddressPairsMixin(object):
     """Mixin class for allowed address pairs."""
 
@@ -63,18 +64,18 @@ class AllowedAddressPairsMixin(object):
         return [self._make_allowed_address_pairs_dict(pair.db_obj)
                 for pair in pairs]
 
-    def _extend_port_dict_allowed_address_pairs(self, port_res, port_db):
+    @staticmethod
+    @resource_extend.extends([attr.PORTS])
+    def _extend_port_dict_allowed_address_pairs(port_res, port_db):
         # If port_db is provided, allowed address pairs will be accessed via
         # sqlalchemy models. As they're loaded together with ports this
         # will not cause an extra query.
         allowed_address_pairs = [
-            self._make_allowed_address_pairs_dict(address_pair) for
+            AllowedAddressPairsMixin._make_allowed_address_pairs_dict(
+                address_pair) for
             address_pair in port_db.allowed_address_pairs]
         port_res[addr_pair.ADDRESS_PAIRS] = allowed_address_pairs
         return port_res
-
-    resource_extend.register_funcs(
-        attr.PORTS, ['_extend_port_dict_allowed_address_pairs'])
 
     def _delete_allowed_address_pairs(self, context, id):
         obj_addr_pair.AllowedAddressPair.delete_objects(

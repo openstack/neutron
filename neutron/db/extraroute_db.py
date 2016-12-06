@@ -39,17 +39,17 @@ extra_route_opts = [
 cfg.CONF.register_opts(extra_route_opts)
 
 
+@resource_extend.has_resource_extenders
 class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to support extra route configuration on router."""
 
-    def _extend_router_dict_extraroute(self, router_res, router_db):
+    @staticmethod
+    @resource_extend.extends([l3.ROUTERS])
+    def _extend_router_dict_extraroute(router_res, router_db):
         router_res['routes'] = (ExtraRoute_dbonly_mixin.
                                 _make_extra_route_list(
                                     router_db['route_list']
                                 ))
-
-    resource_extend.register_funcs(
-        l3.ROUTERS, ['_extend_router_dict_extraroute'])
 
     def update_router(self, context, id, router):
         r = router['router']

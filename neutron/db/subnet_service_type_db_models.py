@@ -20,13 +20,13 @@ from neutron.api.v2 import attributes
 from neutron.db import _resource_extend as resource_extend
 
 
+@resource_extend.has_resource_extenders
 class SubnetServiceTypeMixin(object):
     """Mixin class to extend subnet with service type attribute"""
 
-    def _extend_subnet_service_types(self, subnet_res, subnet_db):
+    @staticmethod
+    @resource_extend.extends([attributes.SUBNETS])
+    def _extend_subnet_service_types(subnet_res, subnet_db):
         subnet_res['service_types'] = [service_type['service_type'] for
                                        service_type in
                                        subnet_db.service_types]
-
-    resource_extend.register_funcs(
-        attributes.SUBNETS, [_extend_subnet_service_types])

@@ -13,6 +13,7 @@
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
+from neutron.db import subnet_service_type_db_models
 from neutron.extensions import subnet_service_types
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -34,7 +35,8 @@ class SubnetServiceTypesExtensionManager(object):
 
 
 class SubnetServiceTypesExtensionTestPlugin(
-        db_base_plugin_v2.NeutronDbPluginV2):
+        db_base_plugin_v2.NeutronDbPluginV2,
+        subnet_service_type_db_models.SubnetServiceTypeMixin):
     """Test plugin to mixin the subnet service_types extension.
     """
 

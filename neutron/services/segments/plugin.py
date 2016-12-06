@@ -49,30 +49,7 @@ SEGMENT_NAME_STUB = 'Neutron segment id %s'
 MAX_INVENTORY_UPDATE_RETRIES = 10
 
 
-def _extend_network_dict_binding(plugin, network_res, network_db):
-    if not directory.get_plugin('segments'):
-        return
-
-    # TODO(carl_baldwin) Make this work with service subnets when it's a thing.
-    is_adjacent = (not network_db.subnets
-                   or not network_db.subnets[0].segment_id)
-    network_res[l2_adjacency.L2_ADJACENCY] = is_adjacent
-
-
-def _extend_subnet_dict_binding(plugin, subnet_res, subnet_db):
-    subnet_res['segment_id'] = subnet_db.get('segment_id')
-
-
-def _extend_port_dict_binding(plugin, port_res, port_db):
-    if not directory.get_plugin('segments'):
-        return
-
-    value = ip_allocation.IP_ALLOCATION_IMMEDIATE
-    if port_db.get('ip_allocation'):
-        value = port_db.get('ip_allocation')
-    port_res[ip_allocation.IP_ALLOCATION] = value
-
-
+@resource_extend.has_resource_extenders
 @registry.has_registry_receivers
 class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
@@ -81,13 +58,35 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
     supported_extension_aliases = ["segment", "ip_allocation", "l2_adjacency"]
 
     def __init__(self):
-        resource_extend.register_funcs(
-            attributes.NETWORKS, [_extend_network_dict_binding])
-        resource_extend.register_funcs(
-            attributes.SUBNETS, [_extend_subnet_dict_binding])
-        resource_extend.register_funcs(
-            attributes.PORTS, [_extend_port_dict_binding])
         self.nova_updater = NovaSegmentNotifier()
+
+    @staticmethod
+    @resource_extend.extends([attributes.NETWORKS])
+    def _extend_network_dict_binding(network_res, network_db):
+        if not directory.get_plugin('segments'):
+            return
+
+        # TODO(carl_baldwin) Make this work with service subnets when
+        #                    it's a thing.
+        is_adjacent = (not network_db.subnets
+                       or not network_db.subnets[0].segment_id)
+        network_res[l2_adjacency.L2_ADJACENCY] = is_adjacent
+
+    @staticmethod
+    @resource_extend.extends([attributes.SUBNETS])
+    def _extend_subnet_dict_binding(subnet_res, subnet_db):
+        subnet_res['segment_id'] = subnet_db.get('segment_id')
+
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _extend_port_dict_binding(port_res, port_db):
+        if not directory.get_plugin('segments'):
+            return
+
+        value = ip_allocation.IP_ALLOCATION_IMMEDIATE
+        if port_db.get('ip_allocation'):
+            value = port_db.get('ip_allocation')
+        port_res[ip_allocation.IP_ALLOCATION] = value
 
     @classmethod
     def get_instance(cls):

@@ -20,6 +20,7 @@ from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.objects.port.extensions import extra_dhcp_opt as obj_extra_dhcp
 
 
+@resource_extend.has_resource_extenders
 class ExtraDhcpOptMixin(object):
     """Mixin class to add extra options to the DHCP opts file
     and associate them to a port.
@@ -114,12 +115,11 @@ class ExtraDhcpOptMixin(object):
 
         return bool(dopts)
 
-    def _extend_port_dict_extra_dhcp_opt(self, res, port):
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _extend_port_dict_extra_dhcp_opt(res, port):
         res[edo_ext.EXTRADHCPOPTS] = [{'opt_name': dho.opt_name,
                                        'opt_value': dho.opt_value,
                                        'ip_version': dho.ip_version}
                                       for dho in port.dhcp_opts]
         return res
-
-    resource_extend.register_funcs(
-        attributes.PORTS, ['_extend_port_dict_extra_dhcp_opt'])

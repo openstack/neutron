@@ -51,6 +51,7 @@ def disable_dvr_extension_by_config(aliases):
             aliases.remove('dvr')
 
 
+@resource_extend.has_resource_extenders
 class L3RouterPlugin(service_base.ServicePluginBase,
                      common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
@@ -141,10 +142,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
             context, floatingip,
             initial_status=n_const.FLOATINGIP_STATUS_DOWN)
 
-
-def add_flavor_id(plugin, router_res, router_db):
-    router_res['flavor_id'] = router_db['flavor_id']
-
-
-resource_extend.register_funcs(
-    l3.ROUTERS, [add_flavor_id])
+    @staticmethod
+    @resource_extend.extends([l3.ROUTERS])
+    def add_flavor_id(router_res, router_db):
+        router_res['flavor_id'] = router_db['flavor_id']

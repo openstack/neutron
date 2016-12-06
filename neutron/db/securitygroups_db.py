@@ -35,6 +35,7 @@ from neutron.db.models import securitygroup as sg_models
 from neutron.extensions import securitygroup as ext_sg
 
 
+@resource_extend.has_resource_extenders
 @registry.has_registry_receivers
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     """Mixin class to add security group to db_base_plugin_v2."""
@@ -662,7 +663,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             resources.SECURITY_GROUP_RULE, events.AFTER_DELETE, self,
             **kwargs)
 
-    def _extend_port_dict_security_group(self, port_res, port_db):
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _extend_port_dict_security_group(port_res, port_db):
         # Security group bindings will be retrieved from the SQLAlchemy
         # model. As they're loaded eagerly with ports because of the
         # joined load they will not cause an extra query.
@@ -670,9 +673,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                               sec_group_mapping in port_db.security_groups]
         port_res[ext_sg.SECURITYGROUPS] = security_group_ids
         return port_res
-
-    resource_extend.register_funcs(
-        attributes.PORTS, ['_extend_port_dict_security_group'])
 
     def _process_port_create_security_group(self, context, port,
                                             security_group_ids):
