@@ -24,6 +24,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron import context
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -461,6 +462,13 @@ class HostSegmentMappingTestCase(SegmentTestCase):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      self._mechanism_drivers,
                                      group='ml2')
+
+        # NOTE(dasm): ml2_type_vlan requires to be registered before used.
+        # This piece was refactored and removed from .config, so it causes
+        # a problem, when tests are executed with pdb.
+        # There is no problem when tests are running without debugger.
+        driver_type.register_ml2_drivers_vlan_opts()
+
         config.cfg.CONF.set_override('network_vlan_ranges',
                                      ['phys_net1', 'phys_net2'],
                                      group='ml2_type_vlan')

@@ -17,6 +17,7 @@ import mock
 from neutron_lib import constants as const
 from neutron_lib.plugins import directory
 
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import config
@@ -34,6 +35,12 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         config.cfg.CONF.set_override('mechanism_drivers',
                                      ['logger', 'test'],
                                      'ml2')
+
+        # NOTE(dasm): ml2_type_vlan requires to be registered before used.
+        # This piece was refactored and removed from .config, so it causes
+        # a problem, when tests are executed with pdb.
+        # There is no problem when tests are running without debugger.
+        driver_type.register_ml2_drivers_vlan_opts()
         config.cfg.CONF.set_override('network_vlan_ranges',
                                      ['physnet1:1000:1099'],
                                      group='ml2_type_vlan')
