@@ -1115,6 +1115,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        filters = filters or {}
         subnetpools = subnetpool_obj.SubnetPool.get_objects(
             context, _pager=pager, validate_filters=False, **filters)
         return [
