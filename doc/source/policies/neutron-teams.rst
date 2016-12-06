@@ -64,7 +64,7 @@ The following are the current Neutron Lieutenants.
 | Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | API                    | Akihiro Motoki            | amotoki              |
-|------------------------+---------------------------+----------------------+
++------------------------+---------------------------+----------------------+
 | DB                     | Ann Taraday               | ataraday             |
 +------------------------+---------------------------+----------------------+
 | Built-In Control Plane | Kevin Benton              | kevinbenton          |
