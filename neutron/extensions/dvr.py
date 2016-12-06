@@ -15,12 +15,12 @@
 import abc
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 from neutron_lib import constants
 from neutron_lib import exceptions
 import six
 
 from neutron._i18n import _
-from neutron.api import extensions
 
 DISTRIBUTED = 'distributed'
 EXTENDED_ATTRIBUTES_2_0 = {

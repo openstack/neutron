@@ -14,8 +14,8 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 
-from neutron.api import extensions
 from neutron.extensions import l3
 
 

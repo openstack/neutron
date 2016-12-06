@@ -16,6 +16,7 @@
 import abc
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 import six
@@ -76,7 +77,7 @@ class MultipleAgentFoundByTypeHost(exceptions.Conflict):
                 "host=%(host)s found")
 
 
-class Agent(extensions.ExtensionDescriptor):
+class Agent(api_extensions.ExtensionDescriptor):
     """Agent management extension."""
 
     @classmethod

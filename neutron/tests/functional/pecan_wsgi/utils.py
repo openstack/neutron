@@ -10,13 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import extensions as api_extensions
+
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.pecan_wsgi import controllers
 from neutron.pecan_wsgi.controllers import utils as pecan_utils
 
 
-class FakeSingularCollectionExtension(extensions.ExtensionDescriptor):
+class FakeSingularCollectionExtension(api_extensions.ExtensionDescriptor):
 
     COLLECTION = 'topologies'
     RESOURCE = 'topology'
@@ -104,7 +106,7 @@ def create_router(context, l3_plugin):
           'admin_state_up': True}})
 
 
-class FakeExtension(extensions.ExtensionDescriptor):
+class FakeExtension(api_extensions.ExtensionDescriptor):
 
     HYPHENATED_RESOURCE = 'meh_meh'
     HYPHENATED_COLLECTION = HYPHENATED_RESOURCE + 's'

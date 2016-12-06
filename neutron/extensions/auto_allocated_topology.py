@@ -15,6 +15,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
@@ -44,7 +45,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Auto_allocated_topology(extensions.ExtensionDescriptor):
+class Auto_allocated_topology(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions as nexception
 from neutron_lib.plugins import directory
@@ -175,7 +176,7 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Flavors(extensions.ExtensionDescriptor):
+class Flavors(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

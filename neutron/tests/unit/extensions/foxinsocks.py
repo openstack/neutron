@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
 from oslo_serialization import jsonutils
 import six
 
@@ -36,7 +37,7 @@ class FoxInSocksPluginInterface(extensions.PluginInterface):
         pass
 
 
-class Foxinsocks(extensions.ExtensionDescriptor):
+class Foxinsocks(api_extensions.ExtensionDescriptor):
 
     def __init__(self):
         pass

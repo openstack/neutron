@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 
 from neutron._i18n import _
-from neutron.api import extensions
 
 
 NETWORK_TYPE = 'provider:network_type'

@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import extensions
 from neutron_lib import constants
 
-from neutron.api import extensions
 
 # The type of vnic that this port should be attached to
 VNIC_TYPE = 'binding:vnic_type'

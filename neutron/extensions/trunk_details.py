@@ -13,8 +13,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import trunk_details
-
-from neutron.api import extensions
+from neutron_lib.api import extensions
 
 
 # NOTE(armax): because of the API machinery, this extension must be on

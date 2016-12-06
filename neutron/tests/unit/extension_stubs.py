@@ -15,11 +15,13 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
+
 from neutron.api import extensions
 from neutron import wsgi
 
 
-class StubExtension(extensions.ExtensionDescriptor):
+class StubExtension(api_extensions.ExtensionDescriptor):
 
     def __init__(self, alias="stub_extension", optional=None):
         self.alias = alias

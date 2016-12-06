@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -126,7 +127,7 @@ class QuotaSetsController(wsgi.Controller):
         return {self._resource_name: self._get_quotas(request, id)}
 
 
-class Quotasv2(extensions.ExtensionDescriptor):
+class Quotasv2(api_extensions.ExtensionDescriptor):
     """Quotas management support."""
 
     @classmethod

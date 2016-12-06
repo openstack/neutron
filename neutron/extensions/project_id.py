@@ -11,13 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import extensions as api_extensions
+
 from neutron.api import extensions
 
 
 _ALIAS = 'project-id'
 
 
-class Project_id(extensions.ExtensionDescriptor):
+class Project_id(api_extensions.ExtensionDescriptor):
     """Extension that indicates that project_id is enabled.
 
     This extension indicates that the Keystone V3 'project_id' field

@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -102,7 +103,7 @@ class L3AgentsHostingRouterController(wsgi.Controller):
             request.context, kwargs['router_id'])
 
 
-class L3agentscheduler(extensions.ExtensionDescriptor):
+class L3agentscheduler(api_extensions.ExtensionDescriptor):
     """Extension class supporting l3 agent scheduler.
     """
 

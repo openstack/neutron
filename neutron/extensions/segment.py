@@ -16,6 +16,7 @@ import abc
 import six
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib.plugins import directory
 
@@ -88,7 +89,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Segment(extensions.ExtensionDescriptor):
+class Segment(api_extensions.ExtensionDescriptor):
     """Extension class supporting Segments."""
 
     @classmethod

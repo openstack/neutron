@@ -13,11 +13,11 @@
 # under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions
 from neutron_lib import constants
 from neutron_lib import exceptions
 
 from neutron._i18n import _
-from neutron.api import extensions
 from neutron.common import constants as n_const
 
 HA_INFO = 'ha'

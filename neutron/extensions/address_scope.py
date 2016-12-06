@@ -15,6 +15,7 @@
 import abc
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib import exceptions as nexception
 from neutron_lib.plugins import directory
@@ -94,7 +95,7 @@ class AddressScopeUpdateError(nexception.BadRequest):
                 "%(reason)s")
 
 
-class Address_scope(extensions.ExtensionDescriptor):
+class Address_scope(api_extensions.ExtensionDescriptor):
     """Extension class supporting Address Scopes."""
 
     @classmethod

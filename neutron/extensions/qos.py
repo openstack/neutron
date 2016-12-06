@@ -18,6 +18,7 @@ import itertools
 import re
 
 from neutron_lib.api import converters
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import directory
 import six
 
@@ -130,7 +131,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                                     'validate': {'type:uuid_or_none': None}}}}
 
 
-class Qos(extensions.ExtensionDescriptor):
+class Qos(api_extensions.ExtensionDescriptor):
     """Quality of Service API extension."""
 
     @classmethod

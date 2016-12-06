@@ -11,13 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import extensions as api_extensions
+
 from neutron.api import extensions
 
 
 _ALIAS = 'pagination'
 
 
-class Pagination(extensions.ExtensionDescriptor):
+class Pagination(api_extensions.ExtensionDescriptor):
     """Fake extension that indicates that pagination is enabled."""
 
     extensions.register_custom_supported_check(
