@@ -476,8 +476,11 @@ class _BaseObjectTestCase(object):
             for fields in self.obj_fields
         ]
 
+        invalid_fields = (
+            set(self._test_class.synthetic_fields).union(set(TIMESTAMP_FIELDS))
+        )
         valid_field = [f for f in self._test_class.fields
-                       if f not in self._test_class.synthetic_fields][0]
+                       if f not in invalid_fields][0]
         self.valid_field_filter = {valid_field:
                                    self.obj_fields[-1][valid_field]}
         self.obj_registry = self.useFixture(
@@ -757,6 +760,34 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 [get_obj_db_fields(obj) for obj in self.objs],
                 [get_obj_db_fields(obj) for obj in objs])
 
+    def test_delete_objects(self):
+        '''Test that delete_objects calls to underlying db_api.'''
+        with mock.patch.object(
+                obj_db_api, 'delete_objects', return_value=0
+        ) as delete_objects_mock:
+            self.assertEqual(0, self._test_class.delete_objects(self.context))
+        delete_objects_mock.assert_any_call(
+            self.context, self._test_class.db_model)
+
+    def test_delete_objects_valid_fields(self):
+        '''Test that a valid filter does not raise an error.'''
+        with mock.patch.object(obj_db_api, 'delete_objects', return_value=0):
+            self._test_class.delete_objects(self.context,
+                                            **self.valid_field_filter)
+
+    def test_delete_objects_invalid_fields(self):
+        with mock.patch.object(obj_db_api, 'delete_objects'):
+            self.assertRaises(n_exc.InvalidInput,
+                              self._test_class.delete_objects, self.context,
+                              fake_field='xxx')
+
+    def test_delete_objects_without_validate_filters(self):
+        with mock.patch.object(
+                obj_db_api, 'delete_objects'):
+            self._test_class.delete_objects(self.context,
+                                            validate_filters=False,
+                                            unknown_filter='value')
+
     def test_count(self):
         if not isinstance(self._test_class, base.NeutronDbObject):
             self.skipTest('Class %s does not inherit from NeutronDbObject' %
@@ -783,7 +814,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertEqual(expected, self._test_class.count(self.context,
                 validate_filters=False, fake_field='xxx'))
 
-    def test_create(self):
+    # Adding delete_objects mock because some objects are using delete_objects
+    # while calling create(), Port for example
+    @mock.patch.object(obj_db_api, 'delete_objects')
+    def test_create(self, *mocks):
         with mock.patch.object(obj_db_api, 'create_object',
                                return_value=self.db_objs[0]) as create_mock:
             with mock.patch.object(obj_db_api, 'get_objects',
@@ -797,7 +831,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     self._test_class.modify_fields_to_db(
                         get_obj_db_fields(self.objs[0])))
 
-    def test_create_updates_from_db_object(self):
+    # Adding delete_objects mock because some objects are using delete_objects
+    # while calling create(), Port for example
+    @mock.patch.object(obj_db_api, 'delete_objects')
+    def test_create_updates_from_db_object(self, *mocks):
         with mock.patch.object(obj_db_api, 'create_object',
                                return_value=self.db_objs[0]):
             with mock.patch.object(obj_db_api, 'get_objects',
@@ -805,7 +842,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 self.objs[1].create()
                 self._check_equal(self.objs[0], self.objs[1])
 
-    def test_create_duplicates(self):
+    # Adding delete_objects mock because some objects are using delete_objects
+    # while calling create(), Port for example
+    @mock.patch.object(obj_db_api, 'delete_objects')
+    def test_create_duplicates(self, delete_object):
         with mock.patch.object(obj_db_api, 'create_object',
                                side_effect=obj_exc.DBDuplicateEntry):
             obj = self._test_class(self.context, **self.obj_fields[0])
@@ -876,8 +916,11 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         project_id = self.obj_fields[0]['project_id']
         self.assertEqual(project_id, obj.tenant_id)
 
+    # Adding delete_objects mock because some objects are using delete_objects
+    # while calling update(), Port for example
+    @mock.patch.object(obj_db_api, 'delete_objects')
     @mock.patch.object(obj_db_api, 'update_object')
-    def test_update_changes(self, update_mock):
+    def test_update_changes(self, update_mock, del_mock):
         fields_to_update = self.get_updatable_fields(
             self._test_class.modify_fields_from_db(self.db_objs[0]))
         if not fields_to_update:
@@ -914,7 +957,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             obj = self._test_class(self.context, **self.obj_fields[0])
             self.assertRaises(o_exc.NeutronObjectUpdateForbidden, obj.update)
 
-    def test_update_updates_from_db_object(self):
+    # Adding delete_objects mock because some objects are using delete_objects
+    # while calling update(), Port and Network for example
+    @mock.patch.object(obj_db_api, 'delete_objects')
+    def test_update_updates_from_db_object(self, *mocks):
         with mock.patch.object(obj_db_api, 'update_object',
                                return_value=self.db_objs[0]):
             with mock.patch.object(obj_db_api, 'get_objects',
@@ -1514,6 +1560,30 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             self._make_object(fields).create()
         self.assertTrue(self._test_class.objects_exist(
             self.context, validate_filters=False, fake_filter='xxx'))
+
+    def test_delete_objects(self):
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+
+        objs = self._test_class.get_objects(
+            self.context, **self.valid_field_filter)
+        for k, v in self.valid_field_filter.items():
+            self.assertEqual(v, objs[0][k])
+
+        count = self._test_class.delete_objects(
+            self.context, **self.valid_field_filter)
+
+        self.assertEqual(len(objs), count)
+
+        new_objs = self._test_class.get_objects(self.context)
+        self.assertEqual(len(self.obj_fields) - len(objs), len(new_objs))
+        for obj in new_objs:
+            for k, v in self.valid_field_filter.items():
+                self.assertNotEqual(v, obj[k])
+
+    def test_delete_objects_nothing_to_delete(self):
+        self.assertEqual(
+            0, self._test_class.delete_objects(self.context))
 
     def test_db_obj(self):
         obj = self._make_object(self.obj_fields[0])

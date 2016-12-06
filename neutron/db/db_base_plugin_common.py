@@ -224,10 +224,6 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
             raise n_exc.PortNotFound(port_id=id)
         return port
 
-    def _get_dns_by_subnet(self, context, subnet_id):
-        return subnet_obj.DNSNameServer.get_objects(context,
-                                                    subnet_id=subnet_id)
-
     def _get_route_by_subnet(self, context, subnet_id):
         return subnet_obj.Route.get_objects(context,
                                             subnet_id=subnet_id)
