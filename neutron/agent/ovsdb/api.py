@@ -34,8 +34,11 @@ OPTS = [
                help=_('The interface for interacting with the OVSDB')),
     cfg.StrOpt('ovsdb_connection',
                default='tcp:127.0.0.1:6640',
-               help=_('The connection string for the native OVSDB backend. '
-                      'Requires the native ovsdb_interface to be enabled.'))
+               help=_('The connection string for the OVSDB backend. '
+                      'Will be used by ovsdb-client when monitoring and '
+                      'used for the all ovsdb commands when native '
+                      'ovsdb_interface is enabled'
+                      ))
 ]
 cfg.CONF.register_opts(OPTS, 'OVS')
 
