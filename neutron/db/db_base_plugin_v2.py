@@ -461,7 +461,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'network', limit, marker)
+        marker_obj = ndb_utils.get_marker_obj(self, context, 'network',
+                                              limit, marker)
         make_network_dict = functools.partial(self._make_network_dict,
                                               context=context)
         return model_query.get_collection(context, models_v2.Network,
@@ -1370,7 +1371,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None,
                   page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'port', limit, marker)
+        marker_obj = ndb_utils.get_marker_obj(self, context, 'port',
+                                              limit, marker)
         query = self._get_ports_query(context, filters=filters,
                                       sorts=sorts, limit=limit,
                                       marker_obj=marker_obj,

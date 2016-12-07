@@ -95,10 +95,9 @@ class CommonDbMixin(object):
     def _get_collection_count(context, model, filters=None):
         return _model_query.get_collection_count(context, model, filters)
 
+    # TODO(HenryG): Remove this when available in neutron-lib
     def _get_marker_obj(self, context, resource, limit, marker):
-        if limit and marker:
-            return getattr(self, '_get_%s' % resource)(context, marker)
-        return None
+        return ndb_utils.get_marker_obj(self, context, resource, limit, marker)
 
     @staticmethod
     def _filter_non_model_columns(data, model):

@@ -251,7 +251,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
     def _get_subnets(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'subnet', limit, marker)
+        marker_obj = db_utils.get_marker_obj(self, context, 'subnet',
+                                             limit, marker)
         make_subnet_dict = functools.partial(self._make_subnet_dict,
                                              context=context)
         return model_query.get_collection(context, models_v2.Subnet,
