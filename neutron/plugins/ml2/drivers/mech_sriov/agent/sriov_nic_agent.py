@@ -170,8 +170,6 @@ class SriovNicSwitchAgent(object):
 
     def _report_state(self):
         try:
-            devices = len(self.eswitch_mgr.get_assigned_devices_info())
-            self.agent_state.get('configurations')['devices'] = devices
             self.state_rpc.report_state(self.context,
                                         self.agent_state)
 
@@ -194,6 +192,7 @@ class SriovNicSwitchAgent(object):
 
     def scan_devices(self, registered_devices, updated_devices):
         curr_devices = self.eswitch_mgr.get_assigned_devices_info()
+        self.agent_state.get('configurations')['devices'] = len(curr_devices)
         device_info = {}
         device_info['current'] = curr_devices
         device_info['added'] = curr_devices - registered_devices
