@@ -79,17 +79,17 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                            resources.ROUTER, events.AFTER_CREATE)
         registry.subscribe(n._delete_dvr_internal_ports,
                            resources.ROUTER_GATEWAY, events.AFTER_DELETE)
+        registry.subscribe(n._set_distributed_flag,
+                           resources.ROUTER, events.PRECOMMIT_CREATE)
+        registry.subscribe(n._handle_distributed_migration,
+                           resources.ROUTER, events.PRECOMMIT_UPDATE)
         return n
 
-    def _create_router_db(self, context, router, tenant_id):
-        """Create a router db object with dvr additions."""
-        with context.session.begin(subtransactions=True):
-            router_db = super(
-                L3_NAT_with_dvr_db_mixin, self)._create_router_db(
-                    context, router, tenant_id)
-            router['distributed'] = is_distributed_router(router)
-            self._process_extra_attr_router_create(context, router_db, router)
-            return router_db
+    def _set_distributed_flag(self, resource, event, trigger, context,
+                              router, router_db, **kwargs):
+        """Event handler to set distributed flag on creation."""
+        router['distributed'] = is_distributed_router(router)
+        self._process_extra_attr_router_create(context, router_db, router)
 
     def _validate_router_migration(self, context, router_db, router_res):
         """Allow centralized -> distributed state transition only."""
@@ -123,28 +123,25 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     raise l3.RouterInUse(router_id=router_db['id'],
                                          reason=e)
 
-    def _update_router_db(self, context, router_id, data):
-        with context.session.begin(subtransactions=True):
-            router_db = super(
-                L3_NAT_with_dvr_db_mixin, self)._update_router_db(
-                    context, router_id, data)
-            migrating_to_distributed = (
-                not router_db.extra_attributes.distributed and
-                data.get('distributed') is True)
-            self._validate_router_migration(context, router_db, data)
-            router_db.extra_attributes.update(data)
-            if data.get('distributed'):
-                self._migrate_router_ports(
-                    context, router_db,
-                    old_owner=const.DEVICE_OWNER_ROUTER_INTF,
-                    new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
-            if migrating_to_distributed:
-                cur_agents = self.list_l3_agents_hosting_router(
-                    context, router_db['id'])['agents']
-                for agent in cur_agents:
-                    self._unbind_router(context, router_db['id'],
-                                        agent['id'])
-            return router_db
+    def _handle_distributed_migration(self, resource, event, trigger, context,
+                                      router_id, router, router_db, **kwargs):
+        """Event handler for router update migration to distributed."""
+        migrating_to_distributed = (
+            not router_db.extra_attributes.distributed and
+            router.get('distributed') is True)
+        self._validate_router_migration(context, router_db, router)
+        router_db.extra_attributes.update(router)
+        if router.get('distributed'):
+            self._migrate_router_ports(
+                context, router_db,
+                old_owner=const.DEVICE_OWNER_ROUTER_INTF,
+                new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
+        if migrating_to_distributed:
+            cur_agents = self.list_l3_agents_hosting_router(
+                context, router_db['id'])['agents']
+            for agent in cur_agents:
+                self._unbind_router(context, router_db['id'],
+                                    agent['id'])
 
     def _create_snat_interfaces_after_change(self, resource, event, trigger,
                                              context, router_id, router,

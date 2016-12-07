@@ -43,6 +43,7 @@ from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron.extensions import portbindings
 from neutron import manager
+from neutron.plugins.common import constants as service_constants
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -1412,6 +1413,13 @@ class L3HAPlugin(db_v2.NeutronDbPluginV2,
                  l3_hascheduler_db.L3_HA_scheduler_db_mixin):
     supported_extension_aliases = ["l3-ha", "router_availability_zone"]
 
+    @classmethod
+    def get_plugin_type(cls):
+        return service_constants.L3_ROUTER_NAT
+
+    def get_plugin_description(self):
+        return "L3 Routing Service Plugin for testing"
+
 
 class L3HATestCaseMixin(testlib_api.SqlTestCase,
                         L3SchedulerBaseMixin):
@@ -1421,19 +1429,19 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
         self.adminContext = n_context.get_admin_context()
         mock.patch('neutron.common.rpc.get_client').start()
-        self.plugin = L3HAPlugin()
 
         self.setup_coreplugin('ml2', load_plugins=False)
         cfg.CONF.set_override('service_plugins',
-                              ['neutron.services.l3_router.'
-                              'l3_router_plugin.L3RouterPlugin'])
+                              ['neutron.tests.unit.scheduler.'
+                               'test_l3_agent_scheduler.L3HAPlugin'])
 
         cfg.CONF.set_override('max_l3_agents_per_router', 0)
+
+        manager.init()
+        self.plugin = directory.get_plugin(constants.L3)
         self.plugin.router_scheduler = importutils.import_object(
             'neutron.scheduler.l3_agent_scheduler.ChanceScheduler'
         )
-
-        manager.init()
         self._register_l3_agents()
 
     @staticmethod
