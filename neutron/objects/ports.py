@@ -36,6 +36,22 @@ class PortBindingBase(base.NeutronDbObject):
         'Port': {'port_id': 'id'},
     }
 
+    def update(self):
+        """Override to handle host update in Port Binding.
+        Delete old Port Binding entry, update the hostname and create new
+        Port Binding with all values saved in DB.
+        This is done due to host being a primary key, and OVO is not able
+        to update primary key fields.
+        """
+        if self.db_obj and self.host != self.db_obj.host:
+            with self.obj_context.session.begin(subtransactions=True):
+                old_obj = self._load_object(self.obj_context, self.db_obj)
+                old_obj.delete()
+                self._changed_fields = set(self.fields.keys())
+                self.create()
+        else:
+            super(PortBindingBase, self).update()
+
     @classmethod
     def modify_fields_to_db(cls, fields):
         result = super(PortBindingBase, cls).modify_fields_to_db(fields)
@@ -69,7 +85,7 @@ class PortBinding(PortBindingBase):
 
     fields = {
         'port_id': common_types.UUIDField(),
-        'host': obj_fields.StringField(),
+        'host': obj_fields.StringField(default=''),
         'profile': common_types.DictOfMiscValuesField(),
         'vif_type': obj_fields.StringField(),
         'vif_details': common_types.DictOfMiscValuesField(nullable=True),

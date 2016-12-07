@@ -27,6 +27,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception as obj_exception
 from oslo_versionedobjects import fields as obj_fields
 import six
+from sqlalchemy import exc as sql_exc
 
 from neutron._i18n import _
 from neutron.db import api as db_api
@@ -303,7 +304,11 @@ def _detach_db_obj(func):
             # TODO(ihrachys) consider refreshing just changed attributes
             self.obj_context.session.refresh(self.db_obj)
         # detach the model so that consequent fetches don't reuse it
-        self.obj_context.session.expunge(self.db_obj)
+        try:
+            self.obj_context.session.expunge(self.db_obj)
+        except sql_exc.InvalidRequestError:
+            # already detached
+            pass
         return res
     return decorator
 
@@ -330,6 +335,8 @@ class DeclarativeObject(abc.ABCMeta):
                 if key in cls.fields or key in cls.obj_extra_fields:
                     fields_no_update_set.add(key)
         cls.fields_no_update = list(fields_no_update_set)
+        if name in ('PortBinding', 'DistributedPortBinding'):
+            cls.fields_no_update.remove('host')
 
         model = getattr(cls, 'db_model', None)
         if model:
@@ -480,7 +487,12 @@ class NeutronDbObject(NeutronObject):
         obj = cls(context)
         obj.from_db_object(db_obj)
         # detach the model so that consequent fetches don't reuse it
-        context.session.expunge(obj.db_obj)
+        # TODO(lujinluo): remove the try block when Port OVO is in place.
+        try:
+            context.session.expunge(obj.db_obj)
+        except sql_exc.InvalidRequestError:
+            # already detached
+            pass
         return obj
 
     def obj_load_attr(self, attrname):

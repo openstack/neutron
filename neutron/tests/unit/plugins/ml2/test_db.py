@@ -23,7 +23,6 @@ from neutron_lib import context
 from neutron_lib.plugins.ml2 import api
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
-from sqlalchemy.orm import query
 
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
@@ -33,7 +32,6 @@ from neutron.db import segments_db
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import db as ml2_db
-from neutron.plugins.ml2 import models
 from neutron.tests.unit import testlib_api
 
 
@@ -64,10 +62,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         return port
 
     def _setup_neutron_portbinding(self, port_id, vif_type, host):
-        with db_api.context_manager.writer.using(self.ctx):
-            self.ctx.session.add(models.PortBinding(port_id=port_id,
-                                                    vif_type=vif_type,
-                                                    host=host))
+        port_obj.PortBinding(
+            self.ctx, port_id=port_id, vif_type=vif_type, host=host).create()
 
     @staticmethod
     def _sort_segments(segments):
@@ -318,44 +314,45 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_distributed_binding(self, network_id,
                                    port_id, router_id, host_id):
-        with db_api.context_manager.writer.using(self.ctx):
-            record = models.DistributedPortBinding(
-                port_id=port_id,
-                host=host_id,
-                router_id=router_id,
-                vif_type=portbindings.VIF_TYPE_UNBOUND,
-                vnic_type=portbindings.VNIC_NORMAL,
-                status='DOWN')
-            self.ctx.session.add(record)
-            return record
+        binding_obj = port_obj.DistributedPortBinding(
+            self.ctx,
+            port_id=port_id,
+            host=host_id,
+            router_id=router_id,
+            vif_type=portbindings.VIF_TYPE_UNBOUND,
+            vnic_type=portbindings.VNIC_NORMAL,
+            status='DOWN')
+        binding_obj.create()
+        return binding_obj
 
     def test_ensure_distributed_port_binding_deals_with_db_duplicate(self):
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
-        router_id = 'foo_router_id'
-        host_id = 'foo_host_id'
+        router_id = uuidutils.generate_uuid()
+        host_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id, [port_id])
-        self._setup_distributed_binding(network_id, port_id,
-                                        router_id, host_id)
-        with mock.patch.object(query.Query, 'first') as query_first:
-            query_first.return_value = []
-            with mock.patch.object(ml2_db.LOG, 'debug') as log_trace:
-                binding = ml2_db.ensure_distributed_port_binding(
-                    self.ctx, port_id, host_id, router_id)
-        self.assertTrue(query_first.called)
-        self.assertTrue(log_trace.called)
+        dpb = self._setup_distributed_binding(network_id, port_id,
+                                              router_id, host_id)
+        with mock.patch.object(port_obj.DistributedPortBinding,
+                'get_object') as get_object:
+            get_object.side_effect = [None, dpb]
+            binding = ml2_db.ensure_distributed_port_binding(
+                self.ctx, port_id, host_id, router_id)
+        self.assertTrue(get_object.called)
         self.assertEqual(port_id, binding.port_id)
 
     def test_ensure_distributed_port_binding(self):
         network_id = uuidutils.generate_uuid()
-        port_id = uuidutils.generate_uuid()
-        self._setup_neutron_network(network_id, [port_id])
+        expected_port_id = uuidutils.generate_uuid()
+        self._setup_neutron_network(network_id, [expected_port_id])
         router = self._setup_neutron_router()
         ml2_db.ensure_distributed_port_binding(
-            self.ctx, port_id, 'foo_host', router.id)
-        expected = (self.ctx.session.query(models.DistributedPortBinding).
-                    filter_by(port_id=port_id).one())
-        self.assertEqual(port_id, expected.port_id)
+            self.ctx, expected_port_id, 'foo_host', router.id)
+        actual_objs = port_obj.DistributedPortBinding.get_objects(
+            self.ctx, port_id=expected_port_id)
+        self.assertEqual(1, len(actual_objs))
+        actual_obj = actual_objs.pop()
+        self.assertEqual(expected_port_id, actual_obj.port_id)
 
     def test_ensure_distributed_port_binding_multiple_bindings(self):
         network_id = uuidutils.generate_uuid()
@@ -366,9 +363,9 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx, port_id, 'foo_host_1', router.id)
         ml2_db.ensure_distributed_port_binding(
             self.ctx, port_id, 'foo_host_2', router.id)
-        bindings = (self.ctx.session.query(models.DistributedPortBinding).
-                    filter_by(port_id=port_id).all())
-        self.assertEqual(2, len(bindings))
+        count_objs = port_obj.DistributedPortBinding.count(
+            self.ctx, port_id=port_id)
+        self.assertEqual(2, count_objs)
 
     def test_delete_distributed_port_binding_if_stale(self):
         network_id = uuidutils.generate_uuid()
@@ -377,21 +374,23 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         binding = self._setup_distributed_binding(
             network_id, port_id, None, 'foo_host_id')
 
-        ml2_db.delete_distributed_port_binding_if_stale(self.ctx,
-                                                        binding)
-        count = (self.ctx.session.query(models.DistributedPortBinding).
-            filter_by(port_id=binding.port_id).count())
-        self.assertFalse(count)
+        ml2_db.delete_distributed_port_binding_if_stale(self.ctx, binding)
+
+        obj_exists = port_obj.DistributedPortBinding.objects_exist(
+            self.ctx, port_id=binding.port_id)
+        self.assertFalse(obj_exists)
 
     def test_get_distributed_port_binding_by_host_not_found(self):
+        port_id = uuidutils.generate_uuid()
+        host_id = uuidutils.generate_uuid()
         port = ml2_db.get_distributed_port_binding_by_host(
-            self.ctx, 'foo_port_id', 'foo_host_id')
+            self.ctx, port_id, host_id)
         self.assertIsNone(port)
 
     def test_get_distributed_port_bindings_not_found(self):
         port = ml2_db.get_distributed_port_bindings(self.ctx,
-                                                    'foo_port_id')
-        self.assertFalse(len(port))
+                                                    uuidutils.generate_uuid())
+        self.assertEqual(0, len(port))
 
     def test_get_distributed_port_bindings(self):
         network_id = uuidutils.generate_uuid()
@@ -412,8 +411,9 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         network_obj.Network(self.ctx, id=network_id).create()
         with db_api.context_manager.writer.using(self.ctx):
             device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
+            port_id = uuidutils.generate_uuid()
             port = models_v2.Port(
-                id='port_id',
+                id=port_id,
                 network_id=network_id,
                 mac_address='00:11:22:33:44:55',
                 admin_state_up=True,
@@ -421,23 +421,20 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
                 device_id='device_id',
                 device_owner=device_owner)
             self.ctx.session.add(port)
-            binding_kwarg = {
-                'port_id': 'port_id',
-                'host': 'host',
-                'vif_type': portbindings.VIF_TYPE_UNBOUND,
-                'vnic_type': portbindings.VNIC_NORMAL,
-                'router_id': 'router_id',
-                'status': constants.PORT_STATUS_DOWN
-            }
-            self.ctx.session.add(models.DistributedPortBinding(
-                **binding_kwarg))
-            binding_kwarg['host'] = 'another-host'
-            self.ctx.session.add(models.DistributedPortBinding(
-                **binding_kwarg))
+        binding_kwarg = {
+            'port_id': port_id,
+            'host': 'host',
+            'vif_type': portbindings.VIF_TYPE_UNBOUND,
+            'vnic_type': portbindings.VNIC_NORMAL,
+            'router_id': 'router_id',
+            'status': constants.PORT_STATUS_DOWN
+        }
+        port_obj.DistributedPortBinding(self.ctx, **binding_kwarg).create()
+        binding_kwarg['host'] = 'another-host'
+        port_obj.DistributedPortBinding(self.ctx, **binding_kwarg).create()
         with warnings.catch_warnings(record=True) as warning_list:
             with db_api.context_manager.writer.using(self.ctx):
                 self.ctx.session.delete(port)
             self.assertEqual([], warning_list)
-        ports = ml2_db.get_distributed_port_bindings(self.ctx,
-                                                     'port_id')
-        self.assertEqual(0, len(ports))
+        bindings = ml2_db.get_distributed_port_bindings(self.ctx, port_id)
+        self.assertEqual(0, len(bindings))

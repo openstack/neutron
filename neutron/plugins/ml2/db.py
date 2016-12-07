@@ -18,8 +18,8 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
+from neutron_lib.objects import exceptions
 from neutron_lib.plugins import directory
-from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
 import six
@@ -31,6 +31,7 @@ from neutron.db import api as db_api
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.objects import ports as port_obj
+from neutron.objects import utils as obj_utils
 from neutron.plugins.ml2 import models
 from neutron.services.segments import exceptions as seg_exc
 
@@ -42,11 +43,10 @@ MAX_PORTS_PER_QUERY = 500
 
 @db_api.context_manager.writer
 def add_port_binding(context, port_id):
-    record = models.PortBinding(
-        port_id=port_id,
-        vif_type=portbindings.VIF_TYPE_UNBOUND)
-    context.session.add(record)
-    return record
+    binding = port_obj.PortBinding(
+        context, port_id=port_id, vif_type=portbindings.VIF_TYPE_UNBOUND)
+    binding.create()
+    return binding
 
 
 @db_api.context_manager.writer
@@ -91,35 +91,32 @@ def clear_binding_levels(context, port_id, host):
 
 
 def ensure_distributed_port_binding(context, port_id, host, router_id=None):
-    with db_api.context_manager.reader.using(context):
-        record = (context.session.query(models.DistributedPortBinding).
-                  filter_by(port_id=port_id, host=host).first())
-    if record:
-        return record
+    binding_obj = port_obj.DistributedPortBinding.get_object(
+        context, port_id=port_id, host=host)
+    if binding_obj:
+        return binding_obj
 
     try:
-        with db_api.context_manager.writer.using(context):
-            record = models.DistributedPortBinding(
-                port_id=port_id,
-                host=host,
-                router_id=router_id,
-                vif_type=portbindings.VIF_TYPE_UNBOUND,
-                vnic_type=portbindings.VNIC_NORMAL,
-                status=n_const.PORT_STATUS_DOWN)
-            context.session.add(record)
-            return record
-    except db_exc.DBDuplicateEntry:
+        binding_obj = port_obj.DistributedPortBinding(
+            context,
+            port_id=port_id,
+            host=host,
+            router_id=router_id,
+            vif_type=portbindings.VIF_TYPE_UNBOUND,
+            vnic_type=portbindings.VNIC_NORMAL,
+            status=n_const.PORT_STATUS_DOWN)
+        binding_obj.create()
+        return binding_obj
+    except exceptions.NeutronDbObjectDuplicateEntry:
         LOG.debug("Distributed Port %s already bound", port_id)
-        with db_api.context_manager.reader.using(context):
-            return (context.session.query(models.DistributedPortBinding).
-                    filter_by(port_id=port_id, host=host).one())
+        return port_obj.DistributedPortBinding.get_object(
+            context, port_id=port_id, host=host)
 
 
 def delete_distributed_port_binding_if_stale(context, binding):
     if not binding.router_id and binding.status == n_const.PORT_STATUS_DOWN:
-        with db_api.context_manager.writer.using(context):
-            LOG.debug("Distributed port: Deleting binding %s", binding)
-            context.session.delete(binding)
+        LOG.debug("Distributed port: Deleting binding %s", binding)
+        binding.delete()
 
 
 def get_port(context, port_id):
@@ -212,29 +209,27 @@ def make_port_dict_with_security_groups(port, sec_groups):
 
 
 def get_port_binding_host(context, port_id):
-    try:
-        with db_api.context_manager.reader.using(context):
-            query = (context.session.query(models.PortBinding).
-                     filter(models.PortBinding.port_id.startswith(port_id)).
-                     one())
-    except exc.NoResultFound:
+    binding = port_obj.PortBinding.get_objects(
+        context, port_id=obj_utils.StringStarts(port_id))
+    if not binding:
         LOG.debug("No binding found for port %(port_id)s",
                   {'port_id': port_id})
         return
-    except exc.MultipleResultsFound:
+    if len(binding) > 1:
         LOG.error("Multiple ports have port_id starting with %s",
                   port_id)
         return
-    return query.host
+    return binding[0].host
 
 
 @db_api.context_manager.reader
 def generate_distributed_port_status(context, port_id):
     # an OR'ed value of status assigned to parent port from the
     # distributedportbinding bucket
-    query = context.session.query(models.DistributedPortBinding)
     final_status = n_const.PORT_STATUS_BUILD
-    for bind in query.filter(models.DistributedPortBinding.port_id == port_id):
+    bindings = port_obj.DistributedPortBinding.get_objects(context,
+                                                           port_id=port_id)
+    for bind in bindings:
         if bind.status == n_const.PORT_STATUS_ACTIVE:
             return bind.status
         elif bind.status == n_const.PORT_STATUS_DOWN:
@@ -243,10 +238,10 @@ def generate_distributed_port_status(context, port_id):
 
 
 def get_distributed_port_binding_by_host(context, port_id, host):
-    with db_api.context_manager.reader.using(context):
-        binding = (context.session.query(models.DistributedPortBinding).
-            filter(models.DistributedPortBinding.port_id.startswith(port_id),
-                   models.DistributedPortBinding.host == host).first())
+    bindings = port_obj.DistributedPortBinding.get_objects(
+        context, port_id=obj_utils.StringStarts(port_id), host=host)
+    binding = bindings.pop() if bindings else None
+
     if not binding:
         LOG.debug("No binding for distributed port %(port_id)s with host "
                   "%(host)s", {'port_id': port_id, 'host': host})
@@ -254,10 +249,8 @@ def get_distributed_port_binding_by_host(context, port_id, host):
 
 
 def get_distributed_port_bindings(context, port_id):
-    with db_api.context_manager.reader.using(context):
-        bindings = (context.session.query(models.DistributedPortBinding).
-                    filter(models.DistributedPortBinding.port_id.startswith(
-                           port_id)).all())
+    bindings = port_obj.DistributedPortBinding.get_objects(
+        context, port_id=obj_utils.StringStarts(port_id))
     if not bindings:
         LOG.debug("No bindings for distributed port %s", port_id)
     return bindings
