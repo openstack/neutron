@@ -34,7 +34,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
                      'agent_conf': mock.ANY,
                      'interface_driver': mock.ANY,
                      'use_ipv6': mock.ANY}
-        ri = router_info.RouterInfo(self.router_id, **ri_kwargs)
+        ri = router_info.RouterInfo(mock.Mock(), self.router_id, **ri_kwargs)
         ri.internal_ports = ports
         return {ri.router_id: ri}, ri
 

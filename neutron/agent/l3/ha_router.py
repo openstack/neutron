@@ -393,14 +393,14 @@ class HaRouter(router.RouterInfo):
                                namespace=self.ns_name,
                                prefix=router.EXTERNAL_DEV_PREFIX)
 
-    def delete(self, agent):
+    def delete(self):
         self.destroy_state_change_monitor(self.process_monitor)
         self.disable_keepalived()
         self.ha_network_removed()
-        super(HaRouter, self).delete(agent)
+        super(HaRouter, self).delete()
 
-    def process(self, agent):
-        super(HaRouter, self).process(agent)
+    def process(self):
+        super(HaRouter, self).process()
 
         self.ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
         if (self.ha_port and

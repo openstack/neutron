@@ -93,7 +93,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         router.ex_gw_port = copy.deepcopy(router.ex_gw_port)
         for subnet in gw_port['subnets']:
             subnet['gateway_ip'] = None
-        router.process(self.agent)
+        router.process()
 
         self.assertIsNone(device.route.get_gateway())
 
@@ -267,7 +267,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         dst_fip = '19.4.4.10'
         router.router[lib_constants.FLOATINGIP_KEY] = []
         self._add_fip(router, dst_fip, fixed_address=dst_machine.ip)
-        router.process(self.agent)
+        router.process()
 
         return src_machine, dst_machine, dst_fip
 
@@ -365,7 +365,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         self._add_fip(router, fip_diff_scope,
                       fixed_address=machine_diff_scope.ip,
                       fixed_ip_address_scope='scope2')
-        router.process(self.agent)
+        router.process()
 
         br_ex = framework.get_ovs_bridge(
             self.agent.conf.external_network_bridge)
@@ -403,7 +403,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         self._add_fip(router, fip,
                       fixed_address=machine_diff_scope.ip,
                       fixed_ip_address_scope='scope2')
-        router.process(self.agent)
+        router.process()
 
         # For the internal networks that are in the same address scope as
         # external network, they should be able to reach the floating ip
