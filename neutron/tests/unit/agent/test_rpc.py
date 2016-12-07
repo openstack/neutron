@@ -16,7 +16,6 @@
 import datetime
 import mock
 from oslo_context import context as oslo_context
-import oslo_messaging
 
 from neutron.agent import rpc
 from neutron.tests import base
@@ -44,21 +43,6 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
     def test_get_devices_details_list(self):
         self._test_rpc_call('get_devices_details_list')
-
-    def test_devices_details_list_unsupported(self):
-        agent = rpc.PluginApi('fake_topic')
-        ctxt = oslo_context.RequestContext(user='fake_user',
-                                           tenant='fake_project')
-        expect_val_get_device_details = 'foo'
-        expect_val = [expect_val_get_device_details]
-        with mock.patch.object(agent.client, 'call') as mock_call, \
-                mock.patch.object(agent.client, 'prepare') as mock_prepare:
-            mock_prepare.return_value = agent.client
-            mock_call.side_effect = [oslo_messaging.UnsupportedVersion('1.2'),
-                                    expect_val_get_device_details]
-            func_obj = getattr(agent, 'get_devices_details_list')
-            actual_val = func_obj(ctxt, ['fake_device'], 'fake_agent_id')
-        self.assertEqual(actual_val, expect_val)
 
     def test_update_device_down(self):
         self._test_rpc_call('update_device_down')

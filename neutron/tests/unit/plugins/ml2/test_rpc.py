@@ -24,7 +24,6 @@ from neutron_lib import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_context import context as oslo_context
-import oslo_messaging
 from sqlalchemy.orm import exc
 
 from neutron.agent import rpc as agent_rpc
@@ -445,30 +444,6 @@ class RpcApiTestCase(base.BaseTestCase):
                            host='fake_host',
                            version='1.5')
 
-    def test_update_device_list_unsupported(self):
-        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        ctxt = oslo_context.RequestContext(user='fake_user',
-                                           tenant='fake_project')
-        devices_up = ['fake_device1', 'fake_device2']
-        devices_down = ['fake_device3', 'fake_device4']
-        expected_ret_val = {'devices_up': ['fake_device2'],
-                            'failed_devices_up': ['fake_device1'],
-                            'devices_down': [
-                                {'device': 'fake_device3', 'exists': True}],
-                            'failed_devices_down': ['fake_device4']}
-        rpcapi.update_device_up = mock.Mock(
-            side_effect=[Exception('fake_device1 fails'), None])
-        rpcapi.update_device_down = mock.Mock(
-            side_effect=[{'device': 'fake_device3', 'exists': True},
-                         Exception('fake_device4 fails')])
-        with mock.patch.object(rpcapi.client, 'call'),\
-                mock.patch.object(rpcapi.client, 'prepare') as prepare_mock:
-            prepare_mock.side_effect = oslo_messaging.UnsupportedVersion(
-                'test')
-            res = rpcapi.update_device_list(ctxt, devices_up, devices_down,
-                                            'fake_agent_id', 'fake_host')
-            self.assertEqual(expected_ret_val, res)
-
     def test_get_devices_details_list_and_failed_devices(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
         self._test_rpc_api(rpcapi, None,
@@ -487,22 +462,3 @@ class RpcApiTestCase(base.BaseTestCase):
                            devices=['fake_device1', 'fake_device2'],
                            agent_id='fake_agent_id', host='fake_host',
                            version='1.5')
-
-    def test_get_devices_details_list_and_failed_devices_unsupported(self):
-        rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
-        ctxt = oslo_context.RequestContext(user='fake_user',
-                                           tenant='fake_project')
-        devices = ['fake_device1', 'fake_device2']
-        dev2_details = {'device': 'fake_device2', 'network_id': 'net_id',
-                        'port_id': 'port_id', 'admin_state_up': True}
-        expected_ret_val = {'devices': [dev2_details],
-                            'failed_devices': ['fake_device1']}
-        rpcapi.get_device_details = mock.Mock(
-            side_effect=[Exception('fake_device1 fails'), dev2_details])
-        with mock.patch.object(rpcapi.client, 'call'),\
-                mock.patch.object(rpcapi.client, 'prepare') as prepare_mock:
-            prepare_mock.side_effect = oslo_messaging.UnsupportedVersion(
-                'test')
-            res = rpcapi.get_devices_details_list_and_failed_devices(
-                ctxt, devices, 'fake_agent_id', 'fake_host')
-            self.assertEqual(expected_ret_val, res)
