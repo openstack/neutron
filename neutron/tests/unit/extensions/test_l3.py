@@ -3689,10 +3689,12 @@ class TestL3DbOperationBounds(test_db_base_plugin_v2.DbOperationBoundMixin,
 
             def router_maker():
                 ext_info = {'network_id': s['subnet']['network_id']}
-                self._create_router(self.fmt,
+                res = self._create_router(
+                                    self.fmt,
                                     arg_list=('external_gateway_info',),
                                     external_gateway_info=ext_info,
                                     **self.kwargs)
+                return self.deserialize(self.fmt, res)
 
             self._assert_object_list_queries_constant(router_maker, 'routers')
 
@@ -3704,7 +3706,7 @@ class TestL3DbOperationBounds(test_db_base_plugin_v2.DbOperationBoundMixin,
             def float_maker():
                 port = self._make_port(
                     self.fmt, internal_net_id, **self.kwargs)
-                self._make_floatingip(
+                return self._make_floatingip(
                     self.fmt, flip['floatingip']['floating_network_id'],
                     port_id=port['port']['id'],
                     **self.kwargs)

@@ -679,6 +679,15 @@ class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
 
     def test_port_list_queries_constant(self):
         self._assert_object_list_queries_constant(self.make_port, 'ports')
+        self._assert_object_list_queries_constant(self.make_port, 'ports',
+                                                  filters=['device_id'])
+        self._assert_object_list_queries_constant(self.make_port, 'ports',
+                                                  filters=['device_id',
+                                                           'device_owner'])
+        self._assert_object_list_queries_constant(self.make_port, 'ports',
+                                                  filters=['tenant_id',
+                                                           'name',
+                                                           'device_id'])
 
 
 class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):

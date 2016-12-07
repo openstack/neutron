@@ -1472,7 +1472,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         iter_db_obj = iter(self.db_objs)
 
         def _create():
-            self._create_object_with_synthetic_fields(next(iter_db_obj))
+            return self._create_object_with_synthetic_fields(next(iter_db_obj))
 
         self._assert_object_list_queries_constant(_create, self._test_class)
 
