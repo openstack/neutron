@@ -50,7 +50,7 @@ class TimeStamp_db_mixin(object):
             raise n_exc.InvalidInput(error_message=msg)
         changed_since = (timeutils.
                          normalize_time(changed_since_string))
-        target_model_class = list(query._mapper_adapter_map.keys())[0]
+        target_model_class = query.column_descriptions[0]['type']
         query = query.join(standard_attr.StandardAttribute,
                            target_model_class.standard_attr_id ==
                            standard_attr.StandardAttribute.id).filter(
