@@ -282,7 +282,7 @@ class SecurityGroupAgentRpc(object):
             LOG.debug("Refreshing firewall for all filtered devices")
             self.refresh_firewall()
         else:
-            if self.use_enhanced_rpc:
+            if self.use_enhanced_rpc and updated_devices:
                 self.firewall.security_group_updated('sg_member', [],
                                                      updated_devices)
             # If a device is both in new and updated devices
