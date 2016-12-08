@@ -729,7 +729,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_ext_gw_updated_dvr_edge_router_host_mismatch(self):
         self._test_ext_gw_updated_dvr_edge_router(host_match=False)
 
-    def test_ext_gw_updated_dvr_dvr_edge_router_snat_rescheduled(self):
+    def test_ext_gw_updated_dvr_edge_router_snat_rescheduled(self):
         self._test_ext_gw_updated_dvr_edge_router(host_match=True,
                                                   snat_hosted_before=False)
 
