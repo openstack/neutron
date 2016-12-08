@@ -215,12 +215,13 @@ class QosAgentExtension(l2_agent_extension.L2AgentExtension):
         for resource_type in self.SUPPORTED_RESOURCE_TYPES:
             # We assume that the neutron server always broadcasts the latest
             # version known to the agent
-            registry.subscribe(self._handle_notification, resource_type)
+            registry.register(self._handle_notification, resource_type)
             topic = resources_rpc.resource_type_versioned_topic(resource_type)
             connection.create_consumer(topic, endpoints, fanout=True)
 
     @lockutils.synchronized('qos-port')
-    def _handle_notification(self, qos_policies, event_type):
+    def _handle_notification(self, context, resource_type,
+                             qos_policies, event_type):
         # server does not allow to remove a policy that is attached to any
         # port, so we ignore DELETED events. Also, if we receive a CREATED
         # event for a policy, it means that there are no ports so far that are

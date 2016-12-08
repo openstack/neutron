@@ -266,4 +266,4 @@ class ResourcesPushRpcCallback(object):
             for resource in resource_list]
 
         resource_type = resources.get_resource_type(resource_objs[0])
-        cons_registry.push(resource_type, resource_objs, event_type)
+        cons_registry.push(context, resource_type, resource_objs, event_type)

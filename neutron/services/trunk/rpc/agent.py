@@ -42,8 +42,8 @@ class TrunkSkeleton(object):
     """Skeleton proxy code for server->agent communication."""
 
     def __init__(self):
-        registry.subscribe(self.handle_trunks, resources.TRUNK)
-        registry.subscribe(self.handle_subports, resources.SUBPORT)
+        registry.register(self.handle_trunks, resources.TRUNK)
+        registry.register(self.handle_subports, resources.SUBPORT)
 
         self._connection = n_rpc.create_connection()
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]
@@ -54,7 +54,7 @@ class TrunkSkeleton(object):
         self._connection.consume_in_threads()
 
     @abc.abstractmethod
-    def handle_trunks(self, trunks, event_type):
+    def handle_trunks(self, context, resource_type, trunks, event_type):
         """Handle trunk events."""
         # if common logic may be extracted out, consider making a base
         # version of this method that can be overridden by the inherited
@@ -63,7 +63,7 @@ class TrunkSkeleton(object):
         # either be ignored or cached for future use.
 
     @abc.abstractmethod
-    def handle_subports(self, subports, event_type):
+    def handle_subports(self, context, resource_type, subports, event_type):
         """Handle subports event."""
         # if common logic may be extracted out, consider making a base
         # version of this method that can be overridden by the inherited

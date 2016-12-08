@@ -69,7 +69,8 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
         trunk_rpc.update_subport_bindings.side_effect = (
                 fake_update_subport_bindings)
 
-        self.skeleton.handle_subports(self.subports, events.CREATED)
+        self.skeleton.handle_subports(mock.Mock(), 'SUBPORTS',
+                                      self.subports, events.CREATED)
         expected_calls = [
             mock.call(subport.trunk_id, subport.port_id, mock.ANY,
                       subport.segmentation_id)
@@ -79,7 +80,8 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
     def test_handle_subports_deleted(self, br):
         """Test handler calls into trunk manager for deleting subports."""
-        self.skeleton.handle_subports(self.subports, events.DELETED)
+        self.skeleton.handle_subports(mock.Mock(), 'SUBPORTS',
+                                      self.subports, events.DELETED)
         expected_calls = [
             mock.call(subport.trunk_id, subport.port_id)
             for subport in self.subports]
@@ -88,7 +90,8 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
     def test_handle_subports_not_for_this_agent(self):
         with mock.patch.object(self.skeleton, 'ovsdb_handler') as handler_m:
             handler_m.manages_this_trunk.return_value = False
-            self.skeleton.handle_subports(self.subports, mock.ANY)
+            self.skeleton.handle_subports(mock.Mock(), 'SUBPORTS',
+                                          self.subports, mock.ANY)
         self.assertFalse(self.trunk_manager.wire_subports_for_trunk.called)
         self.assertFalse(self.trunk_manager.unwire_subports_for_trunk.called)
 
@@ -102,7 +105,8 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
                 mock.patch.object(
                     self.skeleton.ovsdb_handler,
                     'unwire_subports_for_trunk') as g:
-            self.skeleton.handle_subports(self.subports, events.UPDATED)
+            self.skeleton.handle_subports(mock.Mock(), 'SUBPORTS',
+                                          self.subports, events.UPDATED)
             self.assertFalse(f.called)
             self.assertFalse(g.called)
             self.assertFalse(trunk_rpc.update_trunk_status.called)
@@ -111,12 +115,14 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
         trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
         trunk_rpc.update_subport_bindings.side_effect = (
             oslo_messaging.MessagingException)
-        self.skeleton.handle_subports(self.subports, events.CREATED)
+        self.skeleton.handle_subports(mock.Mock(), 'SUBPORTS',
+                                      self.subports, events.CREATED)
         self.assertTrue(trunk_rpc.update_subport_bindings.called)
 
     def _test_handle_subports_trunk_on_trunk_update(self, event):
         trunk_rpc = self.skeleton.ovsdb_handler.trunk_rpc
-        self.skeleton.handle_subports(self.subports, event)
+        self.skeleton.handle_subports(mock.Mock(), 'SUBPORTS',
+                                      self.subports, event)
         # Make sure trunk state is reported to the server
         self.assertTrue(trunk_rpc.update_trunk_status.called)
 

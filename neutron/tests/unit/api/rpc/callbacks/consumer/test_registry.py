@@ -31,6 +31,12 @@ class ConsumerRegistryTestCase(base.BaseTestCase):
         manager_mock().register.assert_called_with(callback, 'TYPE')
 
     @mock.patch.object(registry, '_get_manager')
+    def test_register(self, manager_mock):
+        callback = lambda: None
+        registry.register(callback, 'TYPE')
+        manager_mock().register.assert_called_with(callback, 'TYPE')
+
+    @mock.patch.object(registry, '_get_manager')
     def test_unsubscribe(self, manager_mock):
         callback = lambda: None
         registry.unsubscribe(callback, 'TYPE')
@@ -47,10 +53,17 @@ class ConsumerRegistryTestCase(base.BaseTestCase):
         resource_ = object()
         event_type_ = object()
 
+        context = mock.Mock()
         callback1 = mock.Mock()
         callback2 = mock.Mock()
-        callbacks = {callback1, callback2}
+        legacy_callback = mock.Mock()
+        registry.register(callback1, 'x')
+        registry.register(callback2, 'x')
+        registry.subscribe(legacy_callback, 'x')
+        callbacks = {callback1, callback2, legacy_callback}
         manager_mock().get_callbacks.return_value = callbacks
-        registry.push(resource_type_, [resource_], event_type_)
-        for callback in callbacks:
-            callback.assert_called_with([resource_], event_type_)
+        registry.push(context, resource_type_, [resource_], event_type_)
+        for callback in (callback1, callback2):
+            callback.assert_called_with(context, resource_type_,
+                                        [resource_], event_type_)
+        legacy_callback.assert_called_with([resource_], event_type_)

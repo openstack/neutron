@@ -211,16 +211,16 @@ The agent code processing port updates may look like::
     from neutron.api.rpc.callbacks import resources
 
 
-    def process_resource_updates(resource_type, resource_list, event_type):
+    def process_resource_updates(context, resource_type, resource_list, event_type):
 
         # send to the right handler which will update any control plane
         # details related to the updated resources...
 
 
     def subscribe_resources():
-        registry.subscribe(process_resource_updates, resources.SEC_GROUP)
+        registry.register(process_resource_updates, resources.SEC_GROUP)
 
-        registry.subscribe(process_resource_updates, resources.QOS_POLICY)
+        registry.register(process_resource_updates, resources.QOS_POLICY)
 
     def port_update(port):
 
@@ -232,11 +232,12 @@ The agent code processing port updates may look like::
 
 The relevant function is:
 
-* subscribe(callback, resource_type): subscribes callback to a resource type.
+* register(callback, resource_type): subscribes callback to a resource type.
 
 
 The callback function will receive the following arguments:
 
+* context: the neutron context that triggered the notification.
 * resource_type: the type of resource which is receiving the update.
 * resource_list: list of resources which have been pushed by server.
 * event_type: will be one of CREATED, UPDATED, or DELETED, see
