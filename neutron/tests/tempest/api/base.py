@@ -349,6 +349,11 @@ class BaseNetworkTest(test.BaseTestCase):
         return interface
 
     @classmethod
+    def get_supported_qos_rule_types(cls):
+        body = cls.client.list_qos_rule_types()
+        return [rule_type['type'] for rule_type in body['rule_types']]
+
+    @classmethod
     def create_qos_policy(cls, name, description=None, shared=False,
                           tenant_id=None):
         """Wrapper utility that returns a test QoS policy."""
@@ -490,6 +495,18 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         message = (
             "net(%s) has no usable IP address in allocation pools" % net_id)
         raise exceptions.InvalidConfiguration(message)
+
+
+def require_qos_rule_type(rule_type):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(self, *func_args, **func_kwargs):
+            if rule_type not in self.get_supported_qos_rule_types():
+                raise self.skipException(
+                    "%s rule type is required." % rule_type)
+            return f(self, *func_args, **func_kwargs)
+        return wrapper
+    return decorator
 
 
 def _require_sorting(f):
