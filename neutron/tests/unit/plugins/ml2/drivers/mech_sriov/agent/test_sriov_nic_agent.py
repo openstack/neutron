@@ -55,6 +55,25 @@ class TestSriovAgent(base.BaseTestCase):
 
         self.agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0)
 
+    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.eswitch_manager"
+               ".ESwitchManager.get_assigned_devices_info", return_value=set())
+    @mock.patch.object(agent_rpc.PluginReportStateAPI, 'report_state')
+    def test_cached_device_count_report_state(self, report_state, get_dev):
+        self.agent._report_state()
+        agent_conf = self.agent.agent_state['configurations']
+        # ensure devices aren't calculated until first scan_devices call
+        self.assertNotIn('devices', agent_conf)
+        self.agent.scan_devices(set(), set())
+        self.assertEqual(0, agent_conf['devices'])
+        # ensure report_state doesn't call get_dev
+        get_dev.reset_mock()
+        get_dev.return_value = set(['dev1', 'dev2'])
+        self.agent._report_state()
+        self.assertEqual(0, agent_conf['devices'])
+        # after a device scan, conf should bump to 2
+        self.agent.scan_devices(set(), set())
+        self.assertEqual(2, agent_conf['devices'])
+
     @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
                 "PciDeviceIPWrapper.get_assigned_macs",
                 return_value=[(DEVICE_MAC, PCI_SLOT)])
