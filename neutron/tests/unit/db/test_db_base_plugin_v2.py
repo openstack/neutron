@@ -5541,6 +5541,18 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         self.assertEqual(1, len(admin_res['subnetpools']))
         self.assertEqual(0, len(mortal_res['subnetpools']))
 
+    def test_list_subnetpools_filters_none(self):
+        subnet_pool = self._test_create_subnetpool(['10.10.10.0/24'],
+                                                   None,
+                                                   True,
+                                                   name=self._POOL_NAME,
+                                                   min_prefixlen='24',
+                                                   shared=True)
+        sp_list = self.plugin.get_subnetpools(
+            context.Context('', 'not-the-owner'))
+        self.assertEqual(1, len(sp_list))
+        self.assertEqual(subnet_pool['subnetpool']['id'], sp_list[0]['id'])
+
     def test_delete_subnetpool(self):
         subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
                                                   tenant_id=self._tenant_id,
