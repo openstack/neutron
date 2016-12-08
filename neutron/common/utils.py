@@ -310,12 +310,6 @@ class DelayedStringRenderer(object):
 
 
 @removals.remove(
-    message="Use camelize from neutron_lib.utils.helpers")
-def camelize(s):
-    return helpers.camelize(s)
-
-
-@removals.remove(
     message="Use round_val from neutron_lib.utils.helpers")
 def round_val(val):
     return helpers.round_val(val)

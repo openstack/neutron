@@ -679,17 +679,6 @@ class TestDelayedStringRenderer(base.BaseTestCase):
         self.assertTrue(my_func.called)
 
 
-class TestCamelize(base.BaseTestCase):
-    def test_camelize(self):
-        data = {'bandwidth_limit': 'BandwidthLimit',
-                'test': 'Test',
-                'some__more__dashes': 'SomeMoreDashes',
-                'a_penguin_walks_into_a_bar': 'APenguinWalksIntoABar'}
-
-        for s, expected in data.items():
-            self.assertEqual(expected, utils.camelize(s))
-
-
 class TestRoundVal(base.BaseTestCase):
     def test_round_val_ok(self):
         for expected, value in ((0, 0),
