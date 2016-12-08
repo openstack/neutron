@@ -204,7 +204,9 @@ def list_l3_agent_opts():
              neutron.conf.agent.l3.ha.OPTS,
              neutron.agent.linux.pd.OPTS,
              neutron.agent.linux.ra.OPTS)
-         )
+         ),
+        ('agent',
+         neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS),
     ]
 
 
