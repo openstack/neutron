@@ -69,6 +69,9 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(expected, entry)
 
     def test__create_dvr_mac_address_retries_exceeded_retry_logic(self):
+        # limit retries so test doesn't take 40 seconds
+        mock.patch('neutron.db.api._retry_db_errors.max_retries',
+                   new=2).start()
         self._create_dvr_mac_entry('foo_host_1', 'non_unique_mac')
         with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
             f.return_value = 'non_unique_mac'

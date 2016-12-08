@@ -377,6 +377,8 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
 
     def test_create_network_segment_allocation_fails(self):
         plugin = directory.get_plugin()
+        mock.patch.object(db_api._retry_db_errors, 'max_retries',
+                          new=2).start()
         with mock.patch.object(
             plugin.type_manager, 'create_network_segments',
             side_effect=db_exc.RetryRequest(ValueError())
@@ -386,7 +388,8 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             req = self.new_create_request('networks', data)
             res = req.get_response(self.api)
             self.assertEqual(500, res.status_int)
-            self.assertEqual(db_api.MAX_RETRIES + 1, f.call_count)
+            # 1 + retry count
+            self.assertEqual(3, f.call_count)
 
 
 class TestExternalNetwork(Ml2PluginV2TestCase):
