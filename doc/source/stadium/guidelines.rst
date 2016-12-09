@@ -138,7 +138,6 @@ All subproject releases are managed by `global OpenStack Release Managers team
 <https://review.openstack.org/#/admin/groups/150,members>`_ handles only the
 following operations:
 
-* Create stable branches
 * Make stable branches end of life
 
 To release a sub-project, follow the following steps:
@@ -159,6 +158,9 @@ To release a sub-project, follow the following steps:
   requirements, meaning no year numbers should be used as a major version. The
   switch to SemVer is advised at earliest convenience for all new major
   releases.
+* If your project is release:independent and it's the first release for
+  a branch, you should create the stable branch similarly to
+  `the patch for networking-midonet's stable/newton branch <https://review.openstack.org/#/c/404078/>`_.
 * The Neutron release liaison votes with +1 for the openstack/releases patch.
 * The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
