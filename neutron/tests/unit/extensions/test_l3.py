@@ -3239,6 +3239,14 @@ class L3RpcCallbackTestCase(base.BaseTestCase):
         self.l3_rpc_cb._ensure_host_set_on_port(None, None, port)
         self.assertFalse(self.l3_rpc_cb.plugin.update_port.called)
 
+    def test__ensure_host_set_on_port_bad_bindings(self):
+        for b in (portbindings.VIF_TYPE_BINDING_FAILED,
+                  portbindings.VIF_TYPE_UNBOUND):
+            port = {'id': 'id', portbindings.HOST_ID: 'somehost',
+                    portbindings.VIF_TYPE: b}
+            self.l3_rpc_cb._ensure_host_set_on_port(None, 'somehost', port)
+            self.assertTrue(self.l3_rpc_cb.plugin.update_port.called)
+
     def test__ensure_host_set_on_port_update_on_concurrent_delete(self):
         port_id = 'foo_port_id'
         port = {
