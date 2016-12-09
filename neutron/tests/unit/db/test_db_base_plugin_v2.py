@@ -6480,19 +6480,31 @@ class DbOperationBoundMixin(object):
         context_ = self._get_context()
         return {'set_context': True, 'tenant_id': context_.tenant}
 
-    def _list_and_count_queries(self, resource):
+    def _list_and_count_queries(self, resource, query_params=None):
+        kwargs = {'neutron_context': self._get_context()}
+        if query_params:
+            kwargs['query_params'] = query_params
+        # list once before tracking to flush out any quota recalculations.
+        # otherwise the first list after a create will be different than
+        # a subsequent list with no create.
+        self._list(resource, **kwargs)
         self._db_execute_count = 0
-        self.assertNotEqual([],
-                            self._list(resource,
-                                       neutron_context=self._get_context()))
+        self.assertNotEqual([], self._list(resource, **kwargs))
         query_count = self._db_execute_count
         # sanity check to make sure queries are being observed
         self.assertNotEqual(0, query_count)
         return query_count
 
-    def _assert_object_list_queries_constant(self, obj_creator, plural):
+    def _assert_object_list_queries_constant(self, obj_creator, plural,
+                                             filters=None):
         obj_creator()
         before_count = self._list_and_count_queries(plural)
         # one more thing shouldn't change the db query count
-        obj_creator()
-        self.assertEqual(before_count, self._list_and_count_queries(plural))
+        obj = list(obj_creator().values())[0]
+        after_count = self._list_and_count_queries(plural)
+        self.assertEqual(before_count, after_count)
+        # using filters shouldn't change the count either
+        if filters:
+            query_params = "&".join(["%s=%s" % (f, obj[f]) for f in filters])
+            after_count = self._list_and_count_queries(plural, query_params)
+            self.assertEqual(before_count, after_count)
