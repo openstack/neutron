@@ -307,10 +307,10 @@
   NeutronTrunks.create_and_list_trunk_subports:
     -
       args:
-        subport_count: 50
+        subport_count: 500
       runner:
         type: "constant"
-        times: 10
+        times: 1
         concurrency: 4
       context:
         users:
@@ -319,4 +319,4 @@
         quotas:
           neutron:
             network: -1
-            port: -1
+            port: 1000
