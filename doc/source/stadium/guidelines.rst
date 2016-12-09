@@ -153,14 +153,22 @@ To release a sub-project, follow the following steps:
   <https://git.openstack.org/cgit/openstack/releases/tree/README.rst>`_ a patch
   to openstack/releases repository with the intended git hash. `The Neutron
   release liaison <https://wiki.openstack.org/wiki/CrossProjectLiaisons#Release_management>`_
-  should be added in Gerrit to the list of reviewers for the patch.  Note: new
-  major tag versions should conform to `SemVer <http://semver.org/>`_
-  requirements, meaning no year numbers should be used as a major version. The
-  switch to SemVer is advised at earliest convenience for all new major
-  releases.
-* If your project is release:independent and it's the first release for
-  a branch, you should create the stable branch similarly to
-  `the patch for networking-midonet's stable/newton branch <https://review.openstack.org/#/c/404078/>`_.
+  should be added in Gerrit to the list of reviewers for the patch.
+
+  .. note::
+
+     New major tag versions should conform to `SemVer <http://semver.org/>`_
+     requirements, meaning no year numbers should be used as a major version.
+     The switch to SemVer is advised at earliest convenience for all new major
+     releases.
+
+  .. note::
+
+     Before Ocata, when releasing the very first release in a stable series, a
+     sub-project owner would need to request a new stable branch creation
+     during Gerrit review, but not anymore. `See the following email for more
+     details <http://lists.openstack.org/pipermail/openstack-dev/2016-December/108923.html>`_.
+
 * The Neutron release liaison votes with +1 for the openstack/releases patch.
 * The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
