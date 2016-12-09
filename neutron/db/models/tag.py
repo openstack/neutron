@@ -28,3 +28,4 @@ class Tag(model_base.BASEV2):
     standard_attr = orm.relationship(
         'StandardAttribute',
         backref=orm.backref('tags', lazy='joined', viewonly=True))
+    revises_on_change = ('standard_attr', )

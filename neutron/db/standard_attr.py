@@ -67,6 +67,12 @@ class StandardAttribute(model_base.BASEV2):
         "version_id_col": revision_number
     }
 
+    def bump_revision(self):
+        if self.revision_number is None:
+            # this is a brand new object uncommitted so we don't bump now
+            return
+        self.revision_number += 1
+
 
 class HasStandardAttributes(object):
 
@@ -149,10 +155,7 @@ class HasStandardAttributes(object):
         # standard attr record is being modified, but we must call this
         # for all other modifications or when relevant children are being
         # modified (e.g. fixed_ips change should bump port revision)
-        if self.standard_attr.revision_number is None:
-            # this is a brand new object uncommitted so we don't bump now
-            return
-        self.standard_attr.revision_number += 1
+        self.standard_attr.bump_revision()
 
 
 def get_standard_attr_resource_model_map():
