@@ -18,7 +18,6 @@ from neutron_lib import constants as const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
-import testtools
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
@@ -29,6 +28,7 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_dvr_db
+from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -562,9 +562,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
         with self.subnet(network=net, cidr='fe81::/64',
                          gateway_ip='fe81::1', ip_version=6) as subnet2_v6:
-            with testtools.ExpectedException(RuntimeError):
-                self.mixin.add_router_interface(self.ctx, router['id'],
-                    {'subnet_id': subnet2_v6['subnet']['id']})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet2_v6['subnet']['id']})
             if fail_revert:
                 # a revert failure will mean the interface is still added
                 # so we can't re-add it
@@ -639,8 +638,9 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             interface_info = {'subnet_id': sub['subnet']['id']}
             self.mixin.add_router_interface(self.ctx, router_db.id,
                                             interface_info)
-            mock_notify.assert_called_once_with(self.ctx, router_db.id,
-                                                sub['subnet']['network_id'])
+            mock_notify.assert_called_once_with(self.ctx, router_db=router_db,
+                                                port=mock.ANY,
+                                                interface_info=interface_info)
 
     def test_validate_add_router_interface_by_port_notify_advanced_services(
         self):
@@ -655,8 +655,9 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             interface_info = {'port_id': port['port']['id']}
             self.mixin.add_router_interface(self.ctx, router_db.id,
                                             interface_info)
-            mock_notify.assert_called_once_with(self.ctx, router_db.id,
-                                                net['network']['id'])
+            mock_notify.assert_called_once_with(self.ctx, router_db=router_db,
+                                                port=mock.ANY,
+                                                interface_info=interface_info)
 
     def _test_update_arp_entry_for_dvr_service_port(
             self, device_owner, action):
@@ -722,7 +723,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.mixin, '_add_csnat_router_interface_port') as f:
                 f.side_effect = RuntimeError()
                 self.assertRaises(
-                    RuntimeError,
+                    l3.RouterInterfaceAttachmentConflict,
                     self.mixin.add_router_interface,
                     self.ctx, router['id'],
                     {'subnet_id': subnet['subnet']['id']})

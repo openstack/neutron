@@ -83,6 +83,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                            resources.ROUTER, events.PRECOMMIT_CREATE)
         registry.subscribe(n._handle_distributed_migration,
                            resources.ROUTER, events.PRECOMMIT_UPDATE)
+        registry.subscribe(n._add_csnat_on_interface_create,
+                           resources.ROUTER_INTERFACE, events.BEFORE_CREATE)
+        registry.subscribe(n._update_snat_v6_addrs_after_intf_update,
+                           resources.ROUTER_INTERFACE, events.AFTER_CREATE)
         return n
 
     def _set_distributed_flag(self, resource, event, trigger, context,
@@ -295,141 +299,74 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         return floating_ip.first()
 
     @db_api.retry_if_session_inactive()
-    def add_router_interface(self, context, router_id, interface_info):
-        add_by_port, add_by_sub = self._validate_interface_info(interface_info)
-        router = self._get_router(context, router_id)
-        device_owner = self._get_device_owner(context, router)
+    def _add_csnat_on_interface_create(self, resource, event, trigger,
+                                       context, router_db, port, **kwargs):
+        """Event handler to for csnat port creation on interface creation."""
+        if not router_db.extra_attributes.distributed or not router_db.gw_port:
+            return
+        admin_context = context.elevated()
+        self._add_csnat_router_interface_port(
+            admin_context, router_db, port['network_id'],
+            port['fixed_ips'][-1]['subnet_id'])
 
-        # This should be True unless adding an IPv6 prefix to an existing port
-        new_port = True
-        cleanup_port = False
-
-        if add_by_port:
-            port_id = interface_info['port_id']
-            port = self._check_router_port(context, port_id, '',
-                                           router_id=router_id)
-            revert_value = {'device_id': '',
-                            'device_owner': port['device_owner']}
-            with p_utils.update_port_on_error(
-                    self._core_plugin, context, port_id, revert_value):
-                port, subnets = self._add_interface_by_port(
-                    context, router, port_id, device_owner)
-        elif add_by_sub:
-            port, subnets, new_port = self._add_interface_by_subnet(
-                    context, router, interface_info['subnet_id'], device_owner)
-            cleanup_port = new_port
-            revert_value = {'device_id': '',
-                            'device_owner': port['device_owner']}
-
+    @db_api.retry_if_session_inactive()
+    def _update_snat_v6_addrs_after_intf_update(self, resource, event, triger,
+                                                context, subnets, port,
+                                                router_id, new_interface,
+                                                **kwargs):
+        if new_interface:
+            # _add_csnat_on_interface_create handler deals with new ports
+            return
+        # if not a new interface, the interface was added to a new subnet,
+        # which is the first in this list
         subnet = subnets[0]
-
-        if cleanup_port:
-            mgr = p_utils.delete_port_on_error(
-                self._core_plugin, context, port['id'])
-        else:
-            mgr = p_utils.update_port_on_error(
-                self._core_plugin, context, port['id'], revert_value)
-
-        if new_port:
-            with mgr:
-                if router.extra_attributes.distributed and router.gw_port:
-                    admin_context = context.elevated()
-                    self._add_csnat_router_interface_port(
-                        admin_context, router, port['network_id'],
-                        port['fixed_ips'][-1]['subnet_id'])
-
-                with context.session.begin(subtransactions=True):
-                    router_port = l3_models.RouterPort(
-                        port_id=port['id'],
-                        router_id=router.id,
-                        port_type=device_owner
-                    )
-                    context.session.add(router_port)
-                # Update owner after actual process again in order to
-                # make sure the records in routerports table and ports
-                # table are consistent.
-                self._core_plugin.update_port(
-                    context, port['id'], {'port': {
-                                         'device_id': router.id,
-                                         'device_owner': device_owner}})
-
+        if not subnet or subnet['ip_version'] != 6:
+            return
         # NOTE: For IPv6 additional subnets added to the same
         # network we need to update the CSNAT port with respective
         # IPv6 subnet
-        elif subnet and port:
-            fixed_ip = {'subnet_id': subnet['id']}
-            if subnet['ip_version'] == 6:
-                # Add new prefix to an existing ipv6 csnat port with the
-                # same network id if one exists
-                cs_port = (
-                    self._find_v6_router_port_by_network_and_device_owner(
-                        router, subnet['network_id'],
-                        const.DEVICE_OWNER_ROUTER_SNAT))
-                if cs_port:
-                    fixed_ips = list(cs_port['fixed_ips'])
-                    fixed_ips.append(fixed_ip)
-                    try:
-                        updated_port = self._core_plugin.update_port(
-                            context.elevated(),
-                            cs_port['id'],
-                            {'port': {'fixed_ips': fixed_ips}})
-                    except Exception:
-                        with excutils.save_and_reraise_exception():
-                            # we need to try to undo the updated router
-                            # interface from above so it's not out of sync
-                            # with the csnat port.
-                            # TODO(kevinbenton): switch to taskflow to manage
-                            # these rollbacks.
-                            @db_api.retry_db_errors
-                            def revert():
-                                # TODO(kevinbenton): even though we get the
-                                # port each time, there is a potential race
-                                # where we update the port with stale IPs if
-                                # another interface operation is occuring at
-                                # the same time. This can be fixed in the
-                                # future with a compare-and-swap style update
-                                # using the revision number of the port.
-                                p = self._core_plugin.get_port(
-                                    context.elevated(), port['id'])
-                                upd = {'port': {'fixed_ips': [
-                                    ip for ip in p['fixed_ips']
-                                    if ip['subnet_id'] != fixed_ip['subnet_id']
-                                ]}}
-                                self._core_plugin.update_port(
-                                    context.elevated(), port['id'], upd)
-                            try:
-                                revert()
-                            except Exception:
-                                LOG.exception(_LE("Failed to revert change "
-                                                  "to router port %s."),
-                                              port['id'])
-                    LOG.debug("CSNAT port updated for IPv6 subnet: "
-                              "%s", updated_port)
-        router_interface_info = self._make_router_interface_info(
-            router_id, port['tenant_id'], port['id'], port['network_id'],
-            subnet['id'], [subnet['id']])
-        self.notify_router_interface_action(
-            context, router_interface_info, 'add')
-
-        gw_ips = []
-        gw_network_id = None
-        if router.gw_port:
-            gw_network_id = router.gw_port.network_id
-            gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
-
-        registry.notify(resources.ROUTER_INTERFACE,
-                    events.AFTER_CREATE,
-                    self,
-                    context=context,
-                    network_id=gw_network_id,
-                    gateway_ips=gw_ips,
-                    cidrs=[x['cidr'] for x in subnets],
-                    port_id=port['id'],
-                    router_id=router_id,
-                    port=port,
-                    interface_info=interface_info)
-
-        return router_interface_info
+        # Add new prefix to an existing ipv6 csnat port with the
+        # same network id if one exists
+        admin_ctx = context.elevated()
+        router = self._get_router(admin_ctx, router_id)
+        cs_port = self._find_v6_router_port_by_network_and_device_owner(
+            router, subnet['network_id'], const.DEVICE_OWNER_ROUTER_SNAT)
+        if not cs_port:
+            return
+        new_fixed_ip = {'subnet_id': subnet['id']}
+        fixed_ips = list(cs_port['fixed_ips'])
+        fixed_ips.append(new_fixed_ip)
+        try:
+            updated_port = self._core_plugin.update_port(
+                admin_ctx, cs_port['id'], {'port': {'fixed_ips': fixed_ips}})
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                # we need to try to undo the updated router
+                # interface from above so it's not out of sync
+                # with the csnat port.
+                # TODO(kevinbenton): switch to taskflow to manage
+                # these rollbacks.
+                @db_api.retry_db_errors
+                def revert():
+                    # TODO(kevinbenton): even though we get the
+                    # port each time, there is a potential race
+                    # where we update the port with stale IPs if
+                    # another interface operation is occuring at
+                    # the same time. This can be fixed in the
+                    # future with a compare-and-swap style update
+                    # using the revision number of the port.
+                    p = self._core_plugin.get_port(admin_ctx, port['id'])
+                    rollback_fixed_ips = [ip for ip in p['fixed_ips']
+                                          if ip['subnet_id'] != subnet['id']]
+                    upd = {'port': {'fixed_ips': rollback_fixed_ips}}
+                    self._core_plugin.update_port(admin_ctx, port['id'], upd)
+                try:
+                    revert()
+                except Exception:
+                    LOG.exception(_LE("Failed to revert change "
+                                      "to router port %s."),
+                                  port['id'])
+        LOG.debug("CSNAT port updated for IPv6 subnet: %s", updated_port)
 
     def _find_v6_router_port_by_network_and_device_owner(
         self, router, net_id, device_owner):

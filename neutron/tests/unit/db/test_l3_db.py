@@ -233,9 +233,14 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             context = mock.MagicMock()
             router_id = 'router_id'
             net_id = 'net_id'
-            self.db._notify_attaching_interface(context, router_id, net_id)
+            router_db = mock.Mock()
+            router_db.id = router_id
+            port = {'network_id': net_id}
+            intf = {}
+            self.db._notify_attaching_interface(context, router_db, port, intf)
             kwargs = {'context': context, 'router_id': router_id,
-                      'network_id': net_id}
+                      'network_id': net_id, 'interface_info': intf,
+                      'router_db': router_db, 'port': port}
             mock_notify.assert_called_once_with(
                 resources.ROUTER_INTERFACE, events.BEFORE_CREATE, self.db,
                 **kwargs)
