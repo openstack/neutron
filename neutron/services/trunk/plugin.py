@@ -21,6 +21,7 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron import context
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
@@ -42,13 +43,18 @@ LOG = logging.getLogger(__name__)
 def _extend_port_trunk_details(core_plugin, port_res, port_db):
     """Add trunk details to a port."""
     if port_db.trunk_port:
-        subports = [{'segmentation_id': x.segmentation_id,
-                     'segmentation_type': x.segmentation_type,
-                     'port_id': x.port_id,
-                     'mac_address': x.port.mac_address}
-                    for x in port_db.trunk_port.sub_ports]
+        subports = {
+            x.port_id: {'segmentation_id': x.segmentation_id,
+                        'segmentation_type': x.segmentation_type,
+                        'port_id': x.port_id}
+            for x in port_db.trunk_port.sub_ports
+        }
+        ports = core_plugin.get_ports(
+            context.get_admin_context(), filters={'id': subports})
+        for port in ports:
+            subports[port['id']]['mac_address'] = port['mac_address']
         trunk_details = {'trunk_id': port_db.trunk_port.id,
-                         'sub_ports': subports}
+                         'sub_ports': [x for x in subports.values()]}
         port_res['trunk_details'] = trunk_details
 
     return port_res
