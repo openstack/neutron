@@ -47,6 +47,12 @@ class SnatNamespace(namespaces.Namespace):
                 LOG.debug('Unplugging DVR device %s', d.name)
                 self.driver.unplug(d.name, namespace=self.name,
                                    prefix=SNAT_INT_DEV_PREFIX)
+            elif d.name.startswith(namespaces.EXTERNAL_DEV_PREFIX):
+                self.driver.unplug(
+                    d.name,
+                    bridge=self.agent_conf.external_network_bridge,
+                    namespace=self.name,
+                    prefix=namespaces.EXTERNAL_DEV_PREFIX)
 
         # TODO(mrsmith): delete ext-gw-port
         LOG.debug('DVR: destroy snat ns: %s', self.name)
