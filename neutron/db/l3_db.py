@@ -14,6 +14,7 @@
 
 import functools
 import itertools
+import random
 
 from debtcollector import removals
 import netaddr
@@ -28,7 +29,7 @@ import six
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _, _LE, _LI, _LW
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.callbacks import events
 from neutron.callbacks import exceptions
@@ -39,6 +40,7 @@ from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
+from neutron import context as n_ctx
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
@@ -48,6 +50,7 @@ from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.plugins.common import utils as p_utils
+from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
 
@@ -71,6 +74,7 @@ CORE_ROUTER_ATTRS = ('id', 'name', 'tenant_id', 'admin_state_up', 'status')
 
 
 class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
+                          neutron_worker.WorkerSupportServiceMixin,
                           st_attr.StandardAttrDescriptionMixin):
     """Mixin class to add L3/NAT router methods to db_base_plugin_v2."""
 
@@ -90,7 +94,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     # in each and every l3 plugin out there.
     def __new__(cls):
         L3_NAT_dbonly_mixin._subscribe_callbacks()
-        return super(L3_NAT_dbonly_mixin, cls).__new__(cls)
+        inst = super(L3_NAT_dbonly_mixin, cls).__new__(cls)
+        inst._start_janitor()
+        return inst
 
     @staticmethod
     def _subscribe_callbacks():
@@ -108,6 +114,58 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     @property
     def _core_plugin(self):
         return directory.get_plugin()
+
+    def _start_janitor(self):
+        """Starts the periodic job that cleans up broken complex resources.
+
+        This job will look for things like floating IP ports without an
+        associated floating IP and delete them 5 minutes after detection.
+        """
+        interval = 60 * 5  # only every 5 minutes. cleanups should be rare
+        initial_delay = random.randint(0, interval)  # splay multiple servers
+        janitor = neutron_worker.PeriodicWorker(self._clean_garbage, interval,
+                                                initial_delay)
+        self.add_worker(janitor)
+
+    def _clean_garbage(self):
+        if not hasattr(self, '_candidate_broken_fip_ports'):
+            self._candidate_broken_fip_ports = set()
+        context = n_ctx.get_admin_context()
+        candidates = self._get_dead_floating_port_candidates(context)
+        # just because a port is in 'candidates' doesn't necessarily mean
+        # it's broken, we could have just caught it before it was updated.
+        # We confirm by waiting until the next call of this function to see
+        # if it persists.
+        to_cleanup = candidates & self._candidate_broken_fip_ports
+        self._candidate_broken_fip_ports = candidates - to_cleanup
+        for port_id in to_cleanup:
+            # ensure it wasn't just a failure to update device_id before we
+            # delete it
+            try:
+                self._fix_or_kill_floating_port(context, port_id)
+            except Exception:
+                LOG.exception(_LE("Error cleaning up floating IP port: %s"),
+                              port_id)
+
+    def _fix_or_kill_floating_port(self, context, port_id):
+        fip = (context.session.query(l3_models.FloatingIP).
+               filter_by(floating_port_id=port_id).first())
+        if fip:
+            LOG.warning(_LW("Found incorrect device_id on floating port "
+                            "%(pid)s, correcting to %(fip)s."),
+                        {'pid': port_id, 'fip': fip.id})
+            self._core_plugin.update_port(
+                context, port_id, {'port': {'device_id': fip.id}})
+        else:
+            LOG.warning(_LW("Found floating IP port %s without floating IP, "
+                            "deleting."), port_id)
+            self._core_plugin.delete_port(
+                context, port_id, l3_port_check=False)
+
+    def _get_dead_floating_port_candidates(self, context):
+        filters = {'device_id': ['PENDING'],
+                   'device_owner': [DEVICE_OWNER_FLOATINGIP]}
+        return {p['id'] for p in self._core_plugin.get_ports(context, filters)}
 
     def _get_router(self, context, router_id):
         try:
@@ -1263,8 +1321,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
 
-        # TODO(kevinbenton): garbage collector that deletes ports that didn't
-        # make it this far to handle servers dying in this process
         self._core_plugin.update_port(context.elevated(), external_port['id'],
                                       {'port': {'device_id': fip_id}})
         registry.notify(resources.FLOATING_IP,
