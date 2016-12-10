@@ -234,3 +234,33 @@ class L3AgentFixture(fixtures.Fixture):
 
     def get_namespace_suffix(self):
         return self.plugin_config.DEFAULT.test_namespace_suffix
+
+
+class DhcpAgentFixture(fixtures.Fixture):
+
+    NEUTRON_DHCP_AGENT = "neutron-dhcp-agent"
+
+    def __init__(self, env_desc, host_desc, test_name,
+                 neutron_cfg_fixture, agent_cfg_fixture, namespace=None):
+        super(DhcpAgentFixture, self).__init__()
+        self.env_desc = env_desc
+        self.host_desc = host_desc
+        self.test_name = test_name
+        self.neutron_cfg_fixture = neutron_cfg_fixture
+        self.agent_cfg_fixture = agent_cfg_fixture
+        self.namespace = namespace
+
+    def _setUp(self):
+        self.plugin_config = self.agent_cfg_fixture.config
+
+        config_filenames = [self.neutron_cfg_fixture.filename,
+                            self.agent_cfg_fixture.filename]
+        self.process_fixture = self.useFixture(
+            ProcessFixture(
+                test_name=self.test_name,
+                process_name=self.NEUTRON_DHCP_AGENT,
+                exec_name=self.NEUTRON_DHCP_AGENT,
+                config_filenames=config_filenames,
+                namespace=self.namespace
+            )
+        )

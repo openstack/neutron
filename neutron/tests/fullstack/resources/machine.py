@@ -18,6 +18,7 @@ import netaddr
 
 from neutron_lib import constants
 
+from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.extensions import portbindings as pbs
@@ -43,7 +44,7 @@ class FakeFullstackMachinesList(list):
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
 
     def __init__(self, host, network_id, tenant_id, safe_client,
-                 neutron_port=None, bridge_name=None):
+                 neutron_port=None, bridge_name=None, use_dhcp=False):
         super(FakeFullstackMachine, self).__init__()
         self.host = host
         self.tenant_id = tenant_id
@@ -51,6 +52,8 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         self.safe_client = safe_client
         self.neutron_port = neutron_port
         self.bridge_name = bridge_name
+        self.use_dhcp = use_dhcp
+        self.dhclient_async = None
 
     def _setUp(self):
         super(FakeFullstackMachine, self)._setUp()
@@ -109,13 +112,36 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             self._ip = fixed_ip['ip_address']
             prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
             self._ip_cidr = '%s/%s' % (self._ip, prefixlen)
-
-            # TODO(amuller): Support DHCP
-            self.port.addr.add(self.ip_cidr)
-
             self.gateway_ip = subnet['subnet']['gateway_ip']
-            if self.gateway_ip:
-                net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
+
+            if self.use_dhcp:
+                self._configure_ipaddress_via_dhcp()
+            else:
+                self._configure_static_ipaddress()
+
+    def _configure_static_ipaddress(self):
+        self.port.addr.add(self.ip_cidr)
+        if self.gateway_ip:
+            net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
+
+    def _configure_ipaddress_via_dhcp(self):
+        self._start_async_dhclient()
+        self.addCleanup(self._stop_async_dhclient)
+
+    def _start_async_dhclient(self):
+        cmd = ["dhclient", '--no-pid', '-d', self.port.name]
+        self.dhclient_async = async_process.AsyncProcess(
+            cmd, run_as_root=True, namespace=self.namespace)
+        self.dhclient_async.start()
+
+    def _stop_async_dhclient(self):
+        if not self.dhclient_async:
+            return
+        try:
+            self.dhclient_async.stop()
+        except async_process.AsyncProcessException:
+            # If it was already stopped than we don't care about it
+            pass
 
     @property
     def ipv6(self):
@@ -129,11 +155,32 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     def ip_cidr(self):
         return self._ip_cidr
 
+    def ip_configured(self):
+        for port_ip in self.port.addr.list():
+            if port_ip.get('cidr') == self.ip_cidr:
+                return True
+        return False
+
+    def gateway_configured(self):
+        gateway_info = self.port.route.get_gateway()
+        if not gateway_info:
+            return False
+        return gateway_info.get('gateway') == self.gateway_ip
+
     def block_until_boot(self):
         utils.wait_until_true(
             lambda: (self.safe_client.client.show_port(self.neutron_port['id'])
                      ['port']['status'] == 'ACTIVE'),
             sleep=3)
+
+    def block_until_dhcp_config_done(self):
+        utils.wait_until_true(
+            lambda: self.ip_configured() and self.gateway_configured(),
+            exception=machine_fixtures.FakeMachineException(
+                "Address %s or gateway %s not configured properly on "
+                "port %s" % (self.ip_cidr, self.gateway_ip, self.port.name)
+            )
+        )
 
     def destroy(self):
         """Destroy this fake machine.

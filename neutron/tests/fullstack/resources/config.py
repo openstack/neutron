@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+import shutil
 import tempfile
 
 import fixtures
@@ -292,3 +294,49 @@ class L3ConfigFixture(ConfigFixture):
 
     def _generate_namespace_suffix(self):
         return utils.get_rand_name(prefix='test')
+
+
+class DhcpConfigFixture(ConfigFixture):
+
+    def __init__(self, env_desc, host_desc, temp_dir, integration_bridge=None):
+        super(DhcpConfigFixture, self).__init__(
+            env_desc, host_desc, temp_dir, base_filename='dhcp_agent.ini')
+
+        if host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
+            self._prepare_config_with_ovs_agent(integration_bridge)
+        elif host_desc.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
+            self._prepare_config_with_linuxbridge_agent()
+        self.config['DEFAULT'].update({
+            'debug': 'True',
+            'dhcp_confs': self._generate_dhcp_path(),
+        })
+
+    def _setUp(self):
+        super(DhcpConfigFixture, self)._setUp()
+        self.addCleanup(self._clean_dhcp_path)
+
+    def _prepare_config_with_ovs_agent(self, integration_bridge):
+        self.config.update({
+            'DEFAULT': {
+                'interface_driver': 'openvswitch',
+                'ovs_integration_bridge': integration_bridge,
+            }
+        })
+
+    def _prepare_config_with_linuxbridge_agent(self):
+        self.config.update({
+            'DEFAULT': {
+                'interface_driver': 'linuxbridge',
+            }
+        })
+
+    def _generate_dhcp_path(self):
+        # NOTE(slaweq): dhcp_conf path needs to be directory with read
+        # permission for everyone, otherwise dnsmasq process will not be able
+        # to read his configs
+        self.dhcp_path = tempfile.mkdtemp(prefix="dhcp_configs_", dir="/tmp/")
+        os.chmod(self.dhcp_path, 0o755)
+        return self.dhcp_path
+
+    def _clean_dhcp_path(self):
+        shutil.rmtree(self.dhcp_path, ignore_errors=True)
