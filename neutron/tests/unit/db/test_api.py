@@ -91,6 +91,9 @@ class TestDeadLockDecorator(base.BaseTestCase):
         self.assertIsNone(self._decorated_function(1, e))
 
     def test_multi_exception_raised_on_exceed(self):
+        # limit retries so this doesn't take 40 seconds
+        mock.patch.object(db_api._retry_db_errors, 'max_retries',
+                          new=2).start()
         e = exceptions.MultipleExceptions([ValueError(), db_exc.DBDeadlock()])
         with testtools.ExpectedException(exceptions.MultipleExceptions):
             self._decorated_function(db_api.MAX_RETRIES + 1, e)

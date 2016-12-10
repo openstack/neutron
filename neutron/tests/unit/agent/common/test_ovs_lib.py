@@ -813,10 +813,12 @@ class OVS_Lib_Test(base.BaseTestCase):
             self.assertEqual(1, self.br._get_port_ofport('1'))
 
     def test_get_port_ofport_retry_fails(self):
-        # after 16 calls the retry will timeout and raise
+        # reduce timeout for faster execution
+        self.br.vsctl_timeout = 1
+        # after 7 calls the retry will timeout and raise
         with mock.patch.object(
                 self.br, 'db_get_val',
-                side_effect=[[] for _ in range(16)]):
+                side_effect=[[] for _ in range(7)]):
             self.assertRaises(tenacity.RetryError,
                               self.br._get_port_ofport, '1')
 
