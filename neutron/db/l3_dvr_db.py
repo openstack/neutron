@@ -87,6 +87,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                            resources.ROUTER_INTERFACE, events.BEFORE_CREATE)
         registry.subscribe(n._update_snat_v6_addrs_after_intf_update,
                            resources.ROUTER_INTERFACE, events.AFTER_CREATE)
+        registry.subscribe(n._cleanup_after_interface_removal,
+                           resources.ROUTER_INTERFACE, events.AFTER_DELETE)
         return n
 
     def _set_distributed_flag(self, resource, event, trigger, context,
@@ -412,24 +414,24 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         return False
 
     @db_api.retry_if_session_inactive()
-    def remove_router_interface(self, context, router_id, interface_info):
+    def _cleanup_after_interface_removal(self, resource, event, trigger,
+                                         context, port, interface_info,
+                                         router_id, **kwargs):
+        """Handler to cleanup distributed resources after intf removal."""
         router = self._get_router(context, router_id)
         if not router.extra_attributes.distributed:
-            return super(
-                L3_NAT_with_dvr_db_mixin, self).remove_router_interface(
-                    context, router_id, interface_info)
+            return
 
         plugin = directory.get_plugin(const.L3)
-        router_hosts_before = plugin._get_dvr_hosts_for_router(
-            context, router_id)
 
-        interface_info = super(
-            L3_NAT_with_dvr_db_mixin, self).remove_router_interface(
-                context, router_id, interface_info)
-
+        # we calculate which hosts to notify by checking the hosts for
+        # the removed port's subnets and then subtract out any hosts still
+        # hosting the router for the remaining interfaces
+        router_hosts_for_removed = plugin._get_dvr_hosts_for_subnets(
+            context, subnet_ids={ip['subnet_id'] for ip in port['fixed_ips']})
         router_hosts_after = plugin._get_dvr_hosts_for_router(
             context, router_id)
-        removed_hosts = set(router_hosts_before) - set(router_hosts_after)
+        removed_hosts = set(router_hosts_for_removed) - set(router_hosts_after)
         if removed_hosts:
             agents = plugin.get_l3_agents(context,
                                           filters={'host': removed_hosts})
@@ -442,18 +444,16 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 if not is_this_snat_agent:
                     self.l3_rpc_notifier.router_removed_from_agent(
                         context, router_id, agent['host'])
-
+        # if subnet_id not in interface_info, request was to remove by port
+        sub_id = (interface_info.get('subnet_id') or
+                  port['fixed_ips'][0]['subnet_id'])
         is_multiple_prefix_csport = (
             self._check_for_multiprefix_csnat_port_and_update(
-                context, router, interface_info['network_id'],
-                interface_info['subnet_id']))
+                context, router, port['network_id'], sub_id))
         if not is_multiple_prefix_csport:
             # Single prefix port - go ahead and delete the port
             self.delete_csnat_router_interface_ports(
-                context.elevated(), router,
-                subnet_id=interface_info['subnet_id'])
-
-        return interface_info
+                context.elevated(), router, subnet_id=sub_id)
 
     def _get_snat_sync_interfaces(self, context, router_ids):
         """Query router interfaces that relate to list of router_ids."""
