@@ -17,6 +17,7 @@ from oslo_log import log
 from oslo_utils import excutils
 from sqlalchemy import event
 from sqlalchemy import exc as sql_exc
+from sqlalchemy.orm import session as se
 
 from neutron._i18n import _LE, _LW
 from neutron.db import api as db_api
@@ -289,9 +290,18 @@ class TrackedResource(BaseResource):
                        'used': usage_info.used})
         return usage_info.used + reserved
 
+    def _except_bulk_delete(self, delete_context):
+        if delete_context.mapper.class_ == self._model_class:
+            raise RuntimeError(_LE("%s may not be deleted in bulk because "
+                                   "it is tracked by the quota engine via "
+                                   "SQLAlchemy event handlers, which are not "
+                                   "compatible with bulk deletes.") %
+                               self._model_class)
+
     def register_events(self):
         event.listen(self._model_class, 'after_insert', self._db_event_handler)
         event.listen(self._model_class, 'after_delete', self._db_event_handler)
+        event.listen(se.Session, 'after_bulk_delete', self._except_bulk_delete)
 
     def unregister_events(self):
         try:
@@ -299,6 +309,8 @@ class TrackedResource(BaseResource):
                          self._db_event_handler)
             event.remove(self._model_class, 'after_delete',
                          self._db_event_handler)
+            event.remove(se.Session, 'after_bulk_delete',
+                         self._except_bulk_delete)
         except sql_exc.InvalidRequestError:
             LOG.warning(_LW("No sqlalchemy event for resource %s found"),
                         self.name)

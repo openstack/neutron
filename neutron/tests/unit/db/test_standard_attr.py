@@ -17,6 +17,7 @@ import gc
 from sqlalchemy.ext import declarative
 import testtools
 
+from neutron import context
 from neutron.db import standard_attr
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
@@ -73,3 +74,15 @@ class StandardAttrAPIImapctTestCase(testlib_api.SqlTestCase):
             set(expected),
             set(standard_attr.get_standard_attr_resource_model_map().keys())
         )
+
+
+class StandardAttrRevisesBulkDeleteTestCase(testlib_api.SqlTestCase):
+
+    def test_bulk_delete_protection(self):
+        # security group rules increment security groups so they must not be
+        # allowed to be deleted in bulk
+        mm = standard_attr.get_standard_attr_resource_model_map()
+        sg_rule_model = mm['security_group_rules']
+        with testtools.ExpectedException(RuntimeError):
+            ctx = context.get_admin_context()
+            ctx.session.query(sg_rule_model).delete()

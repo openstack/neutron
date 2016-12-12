@@ -87,8 +87,11 @@ Document common pitfalls as well as good practices done during database developm
 
 * `first() <http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.first>`_
   does not raise an exception.
-* Do not get an object to delete it. If you can `delete() <http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete>`_
-  on the query object. Read the warnings for more details about in-python cascades.
+* Do not use `delete() <http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete>`_
+  to remove objects. A delete query does not load the object so no sqlalchemy events
+  can be triggered that would do things like recalculate quotas or update revision
+  numbers of parent objects. For more details on all of the things that can go wrong
+  using bulk delete operations, see the "Warning" sections in the link above.
 * For PostgreSQL if you're using GROUP BY everything in the SELECT list must be
   an aggregate SUM(...), COUNT(...), etc or used in the GROUP BY.
 

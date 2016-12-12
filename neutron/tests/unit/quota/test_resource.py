@@ -15,6 +15,7 @@
 import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils
+import testtools
 
 from neutron import context
 from neutron.db import api as db_api
@@ -112,6 +113,12 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
             self.other_resource, test_quota.OtherMehModel, meh_quota_flag)
         self._register_events(res)
         return res
+
+    def test_bulk_delete_protection(self):
+        self._create_resource()
+        with testtools.ExpectedException(RuntimeError):
+            ctx = context.get_admin_context()
+            ctx.session.query(test_quota.MehModel).delete()
 
     def test_count_first_call_with_dirty_false(self):
         quota_api.set_quota_usage(
