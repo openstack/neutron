@@ -148,10 +148,11 @@ class NetworkClientJSON(service_client.RestClient):
 
     def _updater(self, resource_name):
         def _update(res_id, **kwargs):
+            headers = kwargs.pop('headers', {})
             plural = self.pluralize(resource_name)
             uri = '%s/%s' % (self.get_uri(plural), res_id)
             post_data = self.serialize({resource_name: kwargs})
-            resp, body = self.put(uri, post_data)
+            resp, body = self.put(uri, post_data, headers=headers)
             body = self.deserialize_single(body)
             self.expected_success(200, resp.status)
             return service_client.ResponseBody(resp, body)

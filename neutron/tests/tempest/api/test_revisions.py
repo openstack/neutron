@@ -13,6 +13,7 @@
 import netaddr
 
 from tempest.lib import decorators
+from tempest.lib import exceptions
 from tempest import test
 
 from neutron.tests.tempest.api import base
@@ -32,6 +33,35 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
         updated = self.client.update_network(net['id'], name='newnet')
         self.assertGreater(updated['network']['revision_number'],
                            net['revision_number'])
+
+    @decorators.idempotent_id('4a26a4be-9c53-483c-bc50-b11111113333')
+    def test_update_network_constrained_by_revision(self):
+        net = self.create_network()
+        current = net['revision_number']
+        stale = current - 1
+        # using a stale number should fail
+        self.assertRaises(
+            exceptions.PreconditionFailed,
+            self.client.update_network,
+            net['id'], name='newnet',
+            headers={'If-Match': 'revision_number=%s' % stale}
+        )
+
+        # using current should pass. in case something is updating the network
+        # on the server at the same time, we have to re-read and update to be
+        # safe
+        for i in range(100):
+            current = (self.client.show_network(net['id'])
+                       ['network']['revision_number'])
+            try:
+                self.client.update_network(
+                    net['id'], name='newnet',
+                    headers={'If-Match': 'revision_number=%s' % current})
+            except exceptions.UnexpectedResponseCode:
+                continue
+            break
+        else:
+            self.fail("Failed to update network after 100 tries.")
 
     @decorators.idempotent_id('cac7ecde-12d5-4331-9a03-420899dea077')
     def test_update_port_bumps_revision(self):

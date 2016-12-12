@@ -17,8 +17,12 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import context as nctx
 from neutron_lib.plugins import directory
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
+from sqlalchemy.orm import session as se
+from webob import exc
 
+from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -82,6 +86,55 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             response = self._update('ports', port['port']['id'], new)
             new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
+
+    def test_constrained_port_update(self):
+        with self.port() as port:
+            rev = port['port']['revision_number']
+            new = {'port': {'name': 'nigiri'}}
+            for val in (rev - 1, rev + 1):
+                # make sure off-by ones are rejected
+                self._update('ports', port['port']['id'], new,
+                             headers={'If-Match': 'revision_number=%s' % val},
+                             expected_code=exc.HTTPPreconditionFailed.code)
+            after_attempt = self._show('ports', port['port']['id'])
+            self.assertEqual(rev, after_attempt['port']['revision_number'])
+            self.assertEqual(port['port']['name'],
+                             after_attempt['port']['name'])
+            # correct revision should work
+            self._update('ports', port['port']['id'], new,
+                         headers={'If-Match': 'revision_number=%s' % rev})
+
+    def test_constrained_port_delete(self):
+        with self.port() as port:
+            rev = port['port']['revision_number']
+            for val in (rev - 1, rev + 1):
+                # make sure off-by ones are rejected
+                self._delete('ports', port['port']['id'],
+                             headers={'If-Match': 'revision_number=%s' % val},
+                             expected_code=exc.HTTPPreconditionFailed.code)
+            # correct revision should work
+            self._delete('ports', port['port']['id'],
+                         headers={'If-Match': 'revision_number=%s' % rev})
+
+    def test_constrained_port_update_handles_db_retries(self):
+        # here we ensure all of the constraint handling logic persists
+        # on retriable failures to commit caused by races with another
+        # update
+        with self.port() as port:
+            rev = port['port']['revision_number']
+            new = {'port': {'name': 'nigiri'}}
+
+            def concurrent_increment(s):
+                db_api.sqla_remove(se.Session, 'before_commit',
+                                   concurrent_increment)
+                # slip in a concurrent update that will bump the revision
+                self._update('ports', port['port']['id'], new)
+                raise db_exc.DBDeadlock()
+            db_api.sqla_listen(se.Session, 'before_commit',
+                               concurrent_increment)
+            self._update('ports', port['port']['id'], new,
+                         headers={'If-Match': 'revision_number=%s' % rev},
+                         expected_code=exc.HTTPPreconditionFailed.code)
 
     def test_port_ip_update_revises(self):
         with self.port() as port:

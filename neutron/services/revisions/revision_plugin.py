@@ -16,6 +16,7 @@ from oslo_log import log as logging
 import sqlalchemy
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import session as se
+import webob.exc
 
 from neutron._i18n import _, _LW
 from neutron.db import _resource_extend as resource_extend
@@ -29,7 +30,8 @@ LOG = logging.getLogger(__name__)
 class RevisionPlugin(service_base.ServicePluginBase):
     """Plugin to populate revision numbers into standard attr resources."""
 
-    supported_extension_aliases = ['standard-attr-revisions']
+    supported_extension_aliases = ['standard-attr-revisions',
+                                   'revision-if-match']
 
     def __init__(self):
         super(RevisionPlugin, self).__init__()
@@ -40,6 +42,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
                            self._clear_rev_bumped_flags)
 
     def bump_revisions(self, session, context, instances):
+        self._enforce_if_match_constraints(session)
         # bump revision number for any updated objects in the session
         for obj in session.dirty:
             if isinstance(obj, standard_attr.HasStandardAttributes):
@@ -117,5 +120,73 @@ class RevisionPlugin(service_base.ServicePluginBase):
         if getattr(obj, '_rev_bumped', False):
             # we've already bumped the revision of this object in this txn
             return
+        instance, match = self._get_constrained_instance_match(session)
+        if instance and instance == obj:
+            # one last check before bumping revision
+            self._enforce_if_match_constraints(session)
         obj.bump_revision()
         setattr(obj, '_rev_bumped', True)
+
+    def _find_instance_by_column_value(self, session, model, column, value):
+        """Lookup object in session or from DB based on a column's value."""
+        for session_obj in session:
+            if not isinstance(session_obj, model):
+                continue
+            if getattr(session_obj, column) == value:
+                return session_obj
+        # object isn't in session so we have to query for it
+        related_obj = (session.query(model).filter_by(**{column: value}).
+                       first())
+        return related_obj
+
+    def _get_constrained_instance_match(self, session):
+        """Returns instance and constraint of if-match criterion if present.
+
+        Checks the context associated with the session for compare-and-swap
+        update revision number constraints. If one is found, this returns the
+        instance that is constrained as well as the requested revision number
+        to match.
+        """
+        criteria = getattr(session.info.get('using_context'),
+                           '_CONSTRAINT', None)
+        if not criteria:
+            return None, None
+        match = criteria['if_revision_match']
+        mmap = standard_attr.get_standard_attr_resource_model_map()
+        model = mmap.get(criteria['resource'])
+        if not model:
+            msg = _("Revision matching not supported for this resource")
+            raise exc.BadRequest(resource=criteria['resource'], msg=msg)
+        instance = self._find_instance_by_column_value(
+            session, model, 'id', criteria['resource_id'])
+        return instance, match
+
+    def _enforce_if_match_constraints(self, session):
+        """Check for if-match constraints and raise exception if violated.
+
+        We determine the collection being modified and look for any
+        objects of the collection type in the dirty/deleted items in
+        the session. If they don't match the revision_number constraint
+        supplied, we throw an exception.
+
+        We are protected from a concurrent update because if we match
+        revision number here and another update commits to the database
+        first, the compare and swap of revision_number will fail and a
+        StaleDataError (or deadlock in galera multi-writer) will be raised,
+        at which point this will be retried and fail to match.
+        """
+        instance, match = self._get_constrained_instance_match(session)
+        if not instance or getattr(instance, '_rev_bumped', False):
+            # no constraints present or constrain satisfied in this transaction
+            return
+        if instance.revision_number != match:
+            raise RevisionNumberConstraintFailed(match,
+                                                 instance.revision_number)
+
+
+class RevisionNumberConstraintFailed(webob.exc.HTTPPreconditionFailed):
+
+    def __init__(self, expected, current):
+        detail = (_("Constrained to %(exp)s, but current revision is %(cur)s")
+                  % {'exp': expected, 'cur': current})
+        super(RevisionNumberConstraintFailed, self).__init__(detail=detail)

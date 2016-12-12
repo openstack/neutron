@@ -18,6 +18,7 @@ from neutron_lib.callbacks import events
 from neutron_lib import context
 from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 
@@ -43,6 +44,51 @@ class TestOwnershipHook(test_functional.PecanFunctionalTest):
                              'admin_state_up': True}},
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(201, port_response.status_int)
+
+
+class TestQueryParamatersHook(test_functional.PecanFunctionalTest):
+
+    def test_if_match_on_update(self):
+        net_response = jsonutils.loads(self.app.post_json(
+            '/v2.0/networks.json',
+            params={'network': {'name': 'meh'}},
+            headers={'X-Project-Id': 'tenid'}).body)
+        network_id = net_response['network']['id']
+        response = self.app.put_json('/v2.0/networks/%s.json' % network_id,
+                                     params={'network': {'name': 'cat'}},
+                                     headers={'X-Project-Id': 'tenid',
+                                              'If-Match': 'revision_number=0'},
+                                     expect_errors=True)
+        # revision plugin not supported by default, so badrequest
+        self.assertEqual(400, response.status_int)
+
+
+class TestQueryParamatersHookWithRevision(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        cfg.CONF.set_override('service_plugins', ['revisions'])
+        super(TestQueryParamatersHookWithRevision, self).setUp()
+
+    def test_if_match_on_update(self):
+        net_response = jsonutils.loads(self.app.post_json(
+            '/v2.0/networks.json',
+            params={'network': {'name': 'meh'}},
+            headers={'X-Project-Id': 'tenid'}).body)
+        network_id = net_response['network']['id']
+        rev = net_response['network']['revision_number']
+        stale = rev - 1
+
+        response = self.app.put_json(
+            '/v2.0/networks/%s.json' % network_id,
+            params={'network': {'name': 'cat'}},
+            headers={'X-Project-Id': 'tenid',
+                     'If-Match': 'revision_number=%s' % stale},
+            expect_errors=True)
+        self.assertEqual(412, response.status_int)
+        self.app.put_json('/v2.0/networks/%s.json' % network_id,
+                          params={'network': {'name': 'cat'}},
+                          headers={'X-Project-Id': 'tenid',
+                                   'If-Match': 'revision_number=%s' % rev})
 
 
 class TestQuotaEnforcementHook(test_functional.PecanFunctionalTest):

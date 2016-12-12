@@ -48,7 +48,8 @@ class ExpectedException(testtools.ExpectedException):
 
 
 def create_request(path, body, content_type, method='GET',
-                   query_string=None, context=None):
+                   query_string=None, context=None, headers=None):
+    headers = headers or {}
     if query_string:
         url = "%s?%s" % (path, query_string)
     else:
@@ -57,6 +58,7 @@ def create_request(path, body, content_type, method='GET',
     req.method = method
     req.headers = {}
     req.headers['Accept'] = content_type
+    req.headers.update(headers)
     if isinstance(body, six.text_type):
         req.body = body.encode()
     else:

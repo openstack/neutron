@@ -177,7 +177,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         super(NeutronDbPluginV2TestCase, self).setup_config(args=args)
 
     def _req(self, method, resource, data=None, fmt=None, id=None, params=None,
-             action=None, subresource=None, sub_id=None, context=None):
+             action=None, subresource=None, sub_id=None, context=None,
+             headers=None):
         fmt = fmt or self.fmt
 
         path = '/%s.%s' % (
@@ -195,7 +196,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if data is not None:  # empty dict is valid
             body = self.serialize(data)
         return testlib_api.create_request(path, body, content_type, method,
-                                          query_string=params, context=context)
+                                          query_string=params, context=context,
+                                          headers=headers)
 
     def new_create_request(self, resource, data, fmt=None, id=None,
                            subresource=None, context=None):
@@ -218,7 +220,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                          params=params, subresource=subresource, sub_id=sub_id)
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
-                           sub_id=None, data=None):
+                           sub_id=None, data=None, headers=None):
         return self._req(
             'DELETE',
             resource,
@@ -226,14 +228,16 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             fmt,
             id=id,
             subresource=subresource,
-            sub_id=sub_id
+            sub_id=sub_id,
+            headers=headers
         )
 
     def new_update_request(self, resource, data, id, fmt=None,
-                           subresource=None, context=None, sub_id=None):
+                           subresource=None, context=None, sub_id=None,
+                           headers=None):
         return self._req(
             'PUT', resource, data, fmt, id=id, subresource=subresource,
-            sub_id=sub_id, context=context
+            sub_id=sub_id, context=context, headers=headers
         )
 
     def new_action_request(self, resource, data, id, action, fmt=None,
@@ -519,8 +523,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _delete(self, collection, id,
                 expected_code=webob.exc.HTTPNoContent.code,
-                neutron_context=None):
-        req = self.new_delete_request(collection, id)
+                neutron_context=None, headers=None):
+        req = self.new_delete_request(collection, id, headers=headers)
         if neutron_context:
             # create a specific auth context for this request
             req.environ['neutron.context'] = neutron_context
@@ -544,8 +548,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _update(self, resource, id, new_data,
                 expected_code=webob.exc.HTTPOk.code,
-                neutron_context=None):
-        req = self.new_update_request(resource, new_data, id)
+                neutron_context=None, headers=None):
+        req = self.new_update_request(resource, new_data, id, headers=headers)
         if neutron_context:
             # create a specific auth context for this request
             req.environ['neutron.context'] = neutron_context
