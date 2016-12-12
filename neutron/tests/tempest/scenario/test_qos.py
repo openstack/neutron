@@ -80,8 +80,8 @@ class QoSTest(base.BaseTempestTestCase):
     FILE_PATH = "/tmp/img"
 
     @classmethod
-    @base_api.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     @test.requires_ext(extension="qos", service="network")
+    @base_api.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     def resource_setup(cls):
         super(QoSTest, cls).resource_setup()
 
