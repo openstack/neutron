@@ -177,8 +177,8 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             self.assertIn(rule, actual_rule_types)
 
     def _disassociate_network(self, client, network_id):
-        client.update_network(network_id, qos_policy_id=None)
-        updated_network = self.admin_client.show_network(network_id)
+        updated_network = client.update_network(network_id,
+                                                qos_policy_id=None)
         self.assertIsNone(updated_network['network']['qos_policy_id'])
 
     @decorators.idempotent_id('65b9ef75-1911-406a-bbdb-ca1d68d528b0')
