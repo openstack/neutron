@@ -1,0 +1,6 @@
+---
+prelude: >
+    The LinuxBridge agent now supports QoS DSCP marking.
+features:
+  - The LinuxBridge agent can now configure DSCP marking for packets outgoing
+    for ports with QoS policy.
