@@ -120,13 +120,14 @@ def _get_pagination_max_limit():
 
 def _get_limit_param(request):
     """Extract integer limit from request or fail."""
+    limit = request.GET.get('limit', 0)
     try:
-        limit = int(request.GET.get('limit', 0))
+        limit = int(limit)
         if limit >= 0:
             return limit
     except ValueError:
         pass
-    msg = _("Limit must be an integer 0 or greater and not '%d'")
+    msg = _("Limit must be an integer 0 or greater and not '%s'") % limit
     raise exceptions.BadRequest(resource='limit', msg=msg)
 
 
