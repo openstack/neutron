@@ -13,14 +13,14 @@
 # jtjang <jang.jitae@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
+"Project-Id-Version: neutron 9.1.2.dev25\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-18 18:59+0000\n"
+"POT-Creation-Date: 2016-12-11 18:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-08-17 10:52+0000\n"
-"Last-Translator: HYUNGBAI PARK <openstack.make@gmail.com>\n"
+"PO-Revision-Date: 2016-12-13 04:04+0000\n"
+"Last-Translator: jtjang <jang.jitae@gmail.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
@@ -98,10 +98,6 @@ msgid ""
 msgstr ""
 "%(method)s이(가) 서브넷 설정 %(current)s과(와) 함께 호출됨(원래 설정 "
 "%(original)s)"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s이(가) 실패함"
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -320,12 +316,6 @@ msgstr "PTR 레코드의 작성 허용"
 msgid "Allow the usage of the bulk API"
 msgstr "벌크 API 사용 허용"
 
-msgid "Allow the usage of the pagination"
-msgstr "페이지 번호 매기기 사용 허용"
-
-msgid "Allow the usage of the sorting"
-msgstr "정렬 사용 허용"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "nova 메타데이터에 대한 비보안 SSL(https) 요청 수행 허용"
 
@@ -496,20 +486,6 @@ msgid ""
 msgstr ""
 "활성 라우터의 HA 속성을 변경할 수 없습니다. 업그레이드 전에 라우터 "
 "admin_state_up을 False로 설정하십시오."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to %s, since that is not an IPv4 "
-"address."
-msgstr "IPv4 주소가 아니므로 부동 IP를 작성하여 %s에 바인드할 수 없습니다. "
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"부동 IP를 작성하여 포트 %s에 바인드할 수 없습니다. 해당 포트를 다른 테넌트가 "
-"소유하기 때문입니다. "
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "ipv6 속성이 설정된 enable_dhcp를 사용할 수 없음"
@@ -707,15 +683,6 @@ msgstr ""
 "<vni_max> 튜플의 쉼표로 구분된 목록입니다. "
 
 msgid ""
-"Comma-separated list of supported PCI vendor devices, as defined by "
-"vendor_id:product_id according to the PCI ID Repository. Default enables "
-"support for Intel and Mellanox SR-IOV capable NICs."
-msgstr ""
-"PCI ID 저장소에 따라 vendor_id:product_id로 정의된 지원되는 PCI 벤더 장치의 "
-"쉼표로 구분된 목록입니다. 기본값은 Intel 및 Mellanox SR-IOV 사용 가능 NIC에 "
-"대한 지원을 사용으로 설정합니다."
-
-msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr "쉼표로 분리된 DNS 서버의 목록이며 전달자로 사용됩니다."
 
@@ -800,34 +767,6 @@ msgid ""
 "migration."
 msgstr ""
 "오프라인 마이그레이션을 사용할 때 스크립트가 생성될 데이터베이스 엔진입니다."
-
-msgid ""
-"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. If not set then no pool will be used "
-"unless passed explicitly to the subnet create. If no pool is used, then a "
-"CIDR must be passed to create a subnet and that subnet will not be allocated "
-"from any pool; it will be considered part of the tenant's private address "
-"space. This option is deprecated for removal in the N release."
-msgstr ""
-"자동 서브넷 CIDR 할당에 사용할 기본 IPv4 서브넷 풀입니다. 서브넷 풀 ID 없이 "
-"서브넷 작성을 호출하는 경우 UUID별로 사용할 풀을 지정합니다.설정하지 않은 경"
-"우, 서브넷 작성에 명시적으로 전달하지 않으면 풀이 사용되지 않습니다. 풀을 사"
-"용하지 않으면 서브넷을 작성하기 위해 CIDR을 전달해야 하며 모든 풀에서 서브넷"
-"이 할당되지 않습니다. 서브넷은 테넌트의 개인 주소 공간의 일부로 간주됩니다. "
-"이 옵션은 N 릴리스에서 제거되기 위해 더 이상 사용되지 않습니다."
-
-msgid ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-msgstr ""
-"자동 서브넷 CIDR 할당에 사용할 기본 IPv6 서브넷 풀입니다. 서브넷 풀 ID 없이 "
-"서브넷 작성이 호출되는 경우 UUID별로 풀을 지정합니다. 자세한 내용은 "
-"default_ipv4_subnet_pool의 설명을 참조하십시오. 이 옵션은 N 릴리스에서 제거"
-"를 위해 더 이상 사용되지 않습니다."
 
 msgid "Default external networks must be shared to everyone."
 msgstr "기본 외부 네트워크를 모든 사용자와 공유해야 합니다."
@@ -918,13 +857,6 @@ msgstr "모든 IPset를 영구 삭제하십시오. "
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "%(mapping)s 맵핑의 %(dev_name)s 디바이스가 고유하지 않음"
-
-#, python-format
-msgid "Device '%(device_name)s' does not exist."
-msgstr "'%(device_name)s' 장치가 없습니다."
-
-msgid "Device has no virtual functions"
-msgstr "디바이스에 가상 기능이 없음"
 
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
@@ -1243,10 +1175,6 @@ msgstr ""
 "어야 합니다."
 
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "%(reason)s 때문에 정책 %(policy)s을(를) 확인하지 못했습니다. "
-
-#, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
@@ -1260,10 +1188,6 @@ msgid ""
 msgstr ""
 "fixed_ips에 올바르지 않은 서브넷 %(subnet_id)s이(가) 포함되어 있어서 네트워"
 "크 %(network_id)s에서 포트를 작성하지 못했습니다. "
-
-#, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s."
-msgstr "%(reason)s 때문에 정책 %(policy)s을(를) 초기화하지 못했습니다. "
 
 #, python-format
 msgid "Failed to locate source for %s."
@@ -1853,13 +1777,6 @@ msgstr ""
 msgid "Maximum number of allowed address pairs"
 msgstr "허용되는 주소 쌍 최대 수"
 
-msgid ""
-"Maximum number of fixed ips per port. This option is deprecated and will be "
-"removed in the N release."
-msgstr ""
-"포트당 최대 Fixed IP 수. 이 옵션은 더 이상 사용되지 않으므로 N 릴리스에서 제"
-"거됩니다."
-
 msgid "Maximum number of host routes per subnet"
 msgstr "서브넷당 호스트 라우트의 최대 수"
 
@@ -2045,23 +1962,11 @@ msgstr "ML2 플러그인에 네트워크 유형 값이 필요함"
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr "에이전트에서 지원하는 네트워크 유형(gre 및/또는 vxlan)입니다."
 
-msgid ""
-"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
-"set (default behavior), no IPAM driver is used. In order to use the "
-"reference implementation of Neutron IPAM driver, use 'internal'."
-msgstr ""
-"사용할 Neutron IPAM(IP 주소 관리) 드라이버입니다. ipam_driver가 설정되지 않"
-"은 경우(기본 동작) IPAM 드라이버가 사용됩니다. Neutron 드라이버의 참조 구현"
-"을 사용하려면 'internal'을 사용하십시오."
-
 msgid "Neutron Service Type Management"
 msgstr "Neutron 서비스 유형 관리"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin이 구성되지 않았습니다"
-
-msgid "New value for first_ip or last_ip has to be specified."
-msgstr "first_ip 또는 last_ip의 새 값을 지정해야 합니다."
 
 msgid "No default router:external network"
 msgstr "기본 router:external 네트워크가 없음"
@@ -2147,6 +2052,13 @@ msgstr ""
 "8, 12, 16,..., 124입니다."
 
 msgid ""
+"Number of concurrent threads for keepalived server connection requests.More "
+"threads create a higher CPU load on the agent node."
+msgstr ""
+"연결 유지 서버 연결 요청에 대한 동시 스레드 수입니다. 더 많은 스레드는 에이전"
+"트 노드에서 더 높은 CPU로드를 생성합니다."
+
+msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
 msgstr "테넌트당 허용된 부동 IP 수입니다. 음수 값은 무제한을 의미합니다."
 
@@ -2211,6 +2123,9 @@ msgid ""
 msgstr ""
 "사용할 OVS 데이터 경로입니다. '시스템'은 기본값이며 커널 데이터 경로에 해당합"
 "니다. 사용자 공간 데이터 경로를 사용하려면 이 값을 'netdev'로 설정하십시오."
+
+msgid "OVS transaction timed out"
+msgstr "OVS 트랜잭션 타임아웃"
 
 msgid "OVS vhost-user socket directory."
 msgstr "OVS vhost-사용자 소켓 디렉토리."
@@ -2326,14 +2241,6 @@ msgstr "%(port)s 포트가 %(bridge)s에 없습니다!"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "다른 DHCP 에이전트에가 이미 포트 %(port_id)s을(를) 확보했습니다."
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"포트 %(port_id)s이(가) 부동 IP %(floatingip_id)s과(와) 다른 테넌트와 연관되"
-"어 있어서 바운드할 수 없습니다. "
 
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
@@ -2798,12 +2705,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "공유 주소 범위는 공유 해제할 수 없음"
-
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"요청에서 인증된 테넌트가 아닌 'tenant_id'를 지정하려면 admin 권한이 필요함"
 
 msgid "String prefix used to match IPset names."
 msgstr "IPset 이름을 일치시키는 데 사용되는 문자열 접두부입니다. "
@@ -3652,6 +3553,9 @@ msgstr "%(reason)s(으)로 인해 %(event)s을(를) 수행할 수 없음"
 
 msgid "cidr and prefixlen must not be supplied together"
 msgstr "cidr 및 prefixlen을 함께 입력하지 않아야 함"
+
+msgid "cidr doesn't contain a '/'"
+msgstr "cidr은 '/'을 포함하지 않는다."
 
 #, python-format
 msgid "dhcp_agents_per_network must be >= 1. '%s' is invalid."

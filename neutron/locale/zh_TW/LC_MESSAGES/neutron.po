@@ -6,9 +6,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
+"Project-Id-Version: neutron 9.1.2.dev25\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-18 18:59+0000\n"
+"POT-Creation-Date: 2016-12-11 18:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -88,10 +88,6 @@ msgid ""
 "%(original)s)"
 msgstr ""
 "已使用子網路設定 %(current)s（原始設定%(original)s）來呼叫了 %(method)s"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s 失敗。"
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -302,12 +298,6 @@ msgstr "容許建立 PTR 記錄"
 msgid "Allow the usage of the bulk API"
 msgstr "容許使用主體 API"
 
-msgid "Allow the usage of the pagination"
-msgstr "容許使用分頁"
-
-msgid "Allow the usage of the sorting"
-msgstr "容許使用排序"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "容許對 Nova meta 資料執行不安全的 SSL (HTTPS) 要求"
 
@@ -475,18 +465,6 @@ msgid ""
 msgstr ""
 "無法變更作用中路由器的 HA 屬性。請先將路由器 admin_state_up 設為 False，然後"
 "再升級。"
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to %s, since that is not an IPv4 "
-"address."
-msgstr "無法建立浮動 IP 並將其連結至 %s，因為這不是一個 IPv4位址。"
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr "無法建立浮動 IP 並將其連結至埠 %s，因為該埠是由其他承租人擁有。"
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "在設定了 ipv6 屬性的情況下，無法停用 enable_dhcp"
@@ -676,14 +654,6 @@ msgstr ""
 "VNI ID 範圍"
 
 msgid ""
-"Comma-separated list of supported PCI vendor devices, as defined by "
-"vendor_id:product_id according to the PCI ID Repository. Default enables "
-"support for Intel and Mellanox SR-IOV capable NICs."
-msgstr ""
-"受支援之 PCI 供應商裝置的逗點區隔清單，根據 PCI ID 儲存庫由 vendor_id:"
-"product_id 定義。預設會啟用對 Intel 及支援 Mellanox SR-IOV 之 NIC 的支援。"
-
-msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr "將用來作為轉遞程式的 DNS 伺服器逗點區隔清單。"
 
@@ -762,32 +732,6 @@ msgid ""
 "Database engine for which script will be generated when using offline "
 "migration."
 msgstr "使用離線移轉時，將對其產生 Script 的資料庫引擎。"
-
-msgid ""
-"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. If not set then no pool will be used "
-"unless passed explicitly to the subnet create. If no pool is used, then a "
-"CIDR must be passed to create a subnet and that subnet will not be allocated "
-"from any pool; it will be considered part of the tenant's private address "
-"space. This option is deprecated for removal in the N release."
-msgstr ""
-"要用於自動子網路 CIDR 配置的預設 IPv4 子網路儲存區。依 UUID 指定要使用的儲存"
-"區，以便於在沒有子網路儲存區 ID 情況下呼叫建立子網路。如果未設定，則將不使用"
-"儲存區，除非明確地將儲存區傳遞至子網路建立作業。如果不使用儲存區，則必須傳遞 "
-"CIDR 以建立子網路，並且將不從任何儲存區中配置該子網路；會將其視為租戶專用位址"
-"空間的一部分。這個選項已遭到淘汰，以在 N 版本中予以移除。"
-
-msgid ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-msgstr ""
-"要用於自動子網路 CIDR 配置的預設 IPv6 子網路儲存區。依 UUID 指定要使用的儲存"
-"區，以便於在沒有子網路儲存區 ID 的情況下呼叫建立子網路。如需相關資訊，請參閱 "
-"default_ipv4_subnet_pool 的說明。這個選項已遭到淘汰，以在 N 版本中予以移除。"
 
 msgid "Default external networks must be shared to everyone."
 msgstr "必須將預設外部網路與所有使用者共用。"
@@ -871,13 +815,6 @@ msgstr "毀損所有 IPset。"
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "對映 %(mapping)s 中的裝置 %(dev_name)s 不是唯一的"
-
-#, python-format
-msgid "Device '%(device_name)s' does not exist."
-msgstr "裝置 '%(device_name)s' 不存在。"
-
-msgid "Device has no virtual functions"
-msgstr "裝置沒有虛擬函數"
 
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
@@ -1175,10 +1112,6 @@ msgid ""
 msgstr "無法與位址範圍建立關聯：位址範圍內的子網路儲存區必須具有唯一字首。"
 
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "無法檢查原則 %(policy)s，原因：%(reason)s。"
-
-#, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
@@ -1193,10 +1126,6 @@ msgid ""
 msgstr ""
 "無法在網路 %(network_id)s 上建立埠，因為 fixed_ips 包含無效的子網路 "
 "%(subnet_id)s"
-
-#, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s."
-msgstr "無法起始設定原則 %(policy)s，原因：%(reason)s。"
 
 #, python-format
 msgid "Failed to locate source for %s."
@@ -1752,12 +1681,6 @@ msgstr ""
 msgid "Maximum number of allowed address pairs"
 msgstr "所容許的位址配對數目上限"
 
-msgid ""
-"Maximum number of fixed ips per port. This option is deprecated and will be "
-"removed in the N release."
-msgstr ""
-"每個埠的固定 IP 數目上限。這個選項已遭到淘汰，且將在 N 版本中予以移除。"
-
 msgid "Maximum number of host routes per subnet"
 msgstr "每個子網路的主機路徑數目上限"
 
@@ -1939,23 +1862,11 @@ msgstr "ML2 外掛程式需要的網路類型值"
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr "代理程式支援的網路類型（GRE 及/或 VXLAN）。"
 
-msgid ""
-"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
-"set (default behavior), no IPAM driver is used. In order to use the "
-"reference implementation of Neutron IPAM driver, use 'internal'."
-msgstr ""
-"要使用的 Neutron IPAM（IP 位址管理）驅動程式。如果未設定 ipam_driver（預設行"
-"為），則將不使用任何 I者這PAM 驅動程式。如果要使用 Neutron IPAM 驅動程式的參"
-"照實作，請使用「內部」。"
-
 msgid "Neutron Service Type Management"
 msgstr "Neutron 服務類型管理"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "未配置 Neutron core_plugin！"
-
-msgid "New value for first_ip or last_ip has to be specified."
-msgstr "必須指定 first_ip 或 last_ip 的新值。"
 
 msgid "No default router:external network"
 msgstr "沒有預設 router:external 網路"
@@ -2209,14 +2120,6 @@ msgstr "埠 %(port)s 不存在於 %(bridge)s 上！"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "另一個 DHCP 代理程式已經獲得了埠 %(port_id)s"
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"埠 %(port_id)s 已與浮動 IP %(floatingip_id)s 之外的 Tenant 產生關聯，因此無法"
-"連結。"
 
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
@@ -2651,11 +2554,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "無法將已共用的位址範圍取消共用"
-
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr "在要求中指定已鑑別 Tenant 之外的 'tenant_id' 時需要管理者專用權"
 
 msgid "String prefix used to match IPset names."
 msgstr "用來符合 IPset 名稱的字串字首。"

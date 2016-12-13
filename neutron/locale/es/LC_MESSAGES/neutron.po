@@ -7,9 +7,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
+"Project-Id-Version: neutron 9.1.2.dev25\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-18 18:59+0000\n"
+"POT-Creation-Date: 2016-12-11 18:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -93,10 +93,6 @@ msgid ""
 msgstr ""
 "%(method)s llamado con ajustes de subred %(current)s (ajustes originales "
 "%(original)s)"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s ha fallado."
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -322,12 +318,6 @@ msgstr "Permitir la creación de registros PTR"
 msgid "Allow the usage of the bulk API"
 msgstr "Permitir el uso de la API masiva"
 
-msgid "Allow the usage of the pagination"
-msgstr "Permitir el uso de la paginación"
-
-msgid "Allow the usage of the sorting"
-msgstr "Permitir el uso de la ordenación"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 "Permitir ejecutar solicitudes SSL (https) no seguras en los metadatos de Nova"
@@ -515,22 +505,6 @@ msgid ""
 msgstr ""
 "No se puede cambiar el atributo HA de los direccionadores activos. Defina "
 "admin_state_up en el direccionador a False antes de actualizar."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to %s, since that is not an IPv4 "
-"address."
-msgstr ""
-"No se puede crear IP flotante y enlazarla a %s, puesto que no es una "
-"dirección IPv4 ."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"No se puede crear IP flotante y enlazarla al puerto %s, porque ese puerto es "
-"propiedad de un arrendatario diferente."
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "No se puede inhabilitar enable_dhcp con atributos ipv6 establecidos"
@@ -737,16 +711,6 @@ msgstr ""
 "asignación de red de arrendatario"
 
 msgid ""
-"Comma-separated list of supported PCI vendor devices, as defined by "
-"vendor_id:product_id according to the PCI ID Repository. Default enables "
-"support for Intel and Mellanox SR-IOV capable NICs."
-msgstr ""
-"Lista separada por comas de dispositivos de proveedor PCI soportados, según "
-"están definidos en vendor_id:product_id según el repositorio de ID de PCI. "
-"El valor predeterminado habilita el soporte de NIC con capacidad Intel y "
-"Mellanox SR-IOV"
-
-msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr ""
 "Lista separada por comas de los servidores DNS que se utilizarán como "
@@ -848,38 +812,6 @@ msgstr ""
 "Motor de base de datos para el cual se generará el script cuando se utilice "
 "la migración fuera de línea."
 
-msgid ""
-"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. If not set then no pool will be used "
-"unless passed explicitly to the subnet create. If no pool is used, then a "
-"CIDR must be passed to create a subnet and that subnet will not be allocated "
-"from any pool; it will be considered part of the tenant's private address "
-"space. This option is deprecated for removal in the N release."
-msgstr ""
-"Agrupación-subred IPv4 predeterminada que se utilizará para la asignación "
-"CIDR de subred automática.  Especifica por UUID la agrupación a utilizar en "
-"caso de que se llame a la creación de una subred sin un ID de agrupación  de "
-"subred. Si no está definido, no se utilizará ninguna agrupación a no ser que "
-"se pase explícitamente a la creación de subred. Si no se utiliza ninguna "
-"agrupación, se debe pasar un CIDR para crear una subred y esa subred no se "
-"asignará desde ninguna agrupación; se consideraá parte del espacio de "
-"direcciones privado del inquilino. Esta opción está en desuso, para ser "
-"eliminada en el relesase N."
-
-msgid ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-msgstr ""
-"Agrupación-subred IPv6 predeterminada que se utilizará para la asignación "
-"CIDR de subred automática. Especifica por UUID la agrupación a utilizar en "
-"caso de que se llame a la creación de una subred sin un ID de agrupación  de "
-"subred. Consulte la descripción de default_ipv4_subnet_pool para obtener más "
-"información. Esta opción está en desuso, para ser eliminada en el relesase N."
-
 msgid "Default external networks must be shared to everyone."
 msgstr ""
 "Las redes externas predeterminadas se deben compartir con todo el mundo."
@@ -977,13 +909,6 @@ msgstr "Destruir todos los IPsets."
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr ""
 "El dispositivo %(dev_name)s en la correlación: %(mapping)s no es exclusivo"
-
-#, python-format
-msgid "Device '%(device_name)s' does not exist."
-msgstr "El dispositivo '%(device_name)s' no existe."
-
-msgid "Device has no virtual functions"
-msgstr "El dispositivo no tiene funciones virtuales"
 
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
@@ -1319,10 +1244,6 @@ msgstr ""
 "dentro de un ámbito de dirección deben tener prefijos exclusivos."
 
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "No se ha podido comprobar la política %(policy)s porque %(reason)s."
-
-#, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
@@ -1337,10 +1258,6 @@ msgid ""
 msgstr ""
 "No se ha podido Se ha encontrado un error al crear un puerto en la red "
 "%(network_id)s, porque fixed_ips incluía una subred no válida %(subnet_id)s"
-
-#, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s."
-msgstr "No se ha podido iniciar la política %(policy)s porque %(reason)s."
 
 #, python-format
 msgid "Failed to locate source for %s."
@@ -1961,13 +1878,6 @@ msgstr ""
 msgid "Maximum number of allowed address pairs"
 msgstr "Número máximo de pares de direcciones permitidos"
 
-msgid ""
-"Maximum number of fixed ips per port. This option is deprecated and will be "
-"removed in the N release."
-msgstr ""
-"El número máximo de IP fijas por puerto. Esta opción está en desuso y se "
-"eliminará en el release N."
-
 msgid "Maximum number of host routes per subnet"
 msgstr "Número máximo de rutas de host por subred"
 
@@ -2168,24 +2078,11 @@ msgstr "El plugin ML2 necesita el valor de tipo de red"
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr "Tipos de red admitidos por el agente (gre o vxlan)."
 
-msgid ""
-"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
-"set (default behavior), no IPAM driver is used. In order to use the "
-"reference implementation of Neutron IPAM driver, use 'internal'."
-msgstr ""
-"Controlador IPAM de Neutron (gestión de direcciones IP) a utilizar. Si "
-"ipam_driver no está definido (comportamiento predeterminado), no se utiliza "
-"ningún controlador IPAM. Para utilizar la implementación de referencia del "
-"controlador IPAM de Neutron, utilice 'internal'."
-
 msgid "Neutron Service Type Management"
 msgstr "Administración del tipo de servicio Neutron"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "¡Neutron core_plugin no está configurado!"
-
-msgid "New value for first_ip or last_ip has to be specified."
-msgstr "Se debe especificar un nuevo valor para  first_ip o last_ip."
 
 msgid "No default router:external network"
 msgstr "No hay ninguna red router:external predeterminada"
@@ -2492,14 +2389,6 @@ msgstr "El puerto %(port)s no existe en %(bridge)s"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "El puerto %(port_id)s ya ha sido adquirido por otro agente DHCP"
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"El puerto %(port_id)s está asociado con un arrendatario diferente a la IP "
-"flotante %(floatingip_id)s y, por lo tanto, no se puede enlazar."
 
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
@@ -2997,13 +2886,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "No se puede dejar de compartir el ámbito de la dirección compartida"
-
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"Para especificar un 'tenant_id' distinto del arrendatario autenticado en la "
-"solicitud requiere privilegios administrativos"
 
 msgid "String prefix used to match IPset names."
 msgstr "Prefijo de serie utilizado para coincidir con nombres IPset."

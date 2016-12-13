@@ -15,9 +15,9 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
+"Project-Id-Version: neutron 9.1.2.dev25\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-18 18:59+0000\n"
+"POT-Creation-Date: 2016-12-11 18:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -100,10 +100,6 @@ msgid ""
 msgstr ""
 "サブネット設定 %(current)s を使用して %(method)s が呼び出されました (元の設"
 "定: %(original)s)"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s が失敗しました。"
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -330,12 +326,6 @@ msgstr "PTR レコードの作成の許可"
 msgid "Allow the usage of the bulk API"
 msgstr "Bulk API の使用を許可"
 
-msgid "Allow the usage of the pagination"
-msgstr "ページ編集の使用を許可"
-
-msgid "Allow the usage of the sorting"
-msgstr "ソートの使用を許可"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 "Nova メタデータに対する非セキュアな SSL (https) 要求を実行することを許可しま"
@@ -521,22 +511,6 @@ msgid ""
 msgstr ""
 "アクティブなルーターの HA 属性を変更することはできません。アップグレードを行"
 "う前に、ルーターの admin_state_up を False に設定してください。"
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to %s, since that is not an IPv4 "
-"address."
-msgstr ""
-"Floating IP は IPv4  アドレスではないため、Floating IP を作成して %s とバイン"
-"ドすることはできません。"
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"ポート %s は別のテナントによって所有されているため、 Floating IP を作成して、"
-"そのポートにバインドすることはできません。"
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "ipv6 属性が設定された状態で enable_dhcp を無効にすることはできません"
@@ -736,15 +710,6 @@ msgstr ""
 "<vni_min>:<vni_max> タプルのコンマ区切りリスト"
 
 msgid ""
-"Comma-separated list of supported PCI vendor devices, as defined by "
-"vendor_id:product_id according to the PCI ID Repository. Default enables "
-"support for Intel and Mellanox SR-IOV capable NICs."
-msgstr ""
-"サポート対象の PCI ベンダーのデバイスに関するコンマで区切られたリスト (PCI "
-"ID のリポジトリーに基づいて、vendor_id:product_id で定義されます)。デフォルト"
-"では、 Intel と Mellanox の SR-IOV に対応した NIC をサポートします。"
-
-msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr "フォワーダーとして使用される DNS サーバーのカンマ区切りのリスト。"
 
@@ -832,37 +797,6 @@ msgid ""
 "Database engine for which script will be generated when using offline "
 "migration."
 msgstr "オフラインで移行を行う際にスクリプトが生成されるデータベースエンジン。"
-
-msgid ""
-"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. If not set then no pool will be used "
-"unless passed explicitly to the subnet create. If no pool is used, then a "
-"CIDR must be passed to create a subnet and that subnet will not be allocated "
-"from any pool; it will be considered part of the tenant's private address "
-"space. This option is deprecated for removal in the N release."
-msgstr ""
-"自動的に サブネットの CIDR を割り当てるために使用されるデフォルトの IPv4 のサ"
-"ブネットプール。サブネットプールの ID を指定せずにサブネットの作成が呼び出さ"
-"れた場合に使用されるプールを、 UUID によって指定します。指定されなかった場"
-"合、サブネットの作成にプールを明示的に渡さない限り、プールは使用されません。"
-"プールが使用されなかった場合、サブネットを作成するために CIDR を渡す必要があ"
-"り、いずれのプールからもこのサブネットの割り当ては行われません。これはテナン"
-"トのプライベートアドレススペースの一部と考えられます。このオプションは N リ"
-"リースでは削除されます。"
-
-msgid ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-msgstr ""
-"自動的に サブネットの CIDR を割り当てるために使用されるデフォルトの IPv6 のサ"
-"ブネットプール。サブネットプールの ID を指定せずにサブネットの作成が呼び出さ"
-"れた場合に使用されるプールを、UUID によって指定します。詳細情報については、"
-"default_ipv4_subnet_pool の説明を参照してください。このオプションは N リリー"
-"スでは削除されます。"
 
 msgid "Default external networks must be shared to everyone."
 msgstr "デフォルトの外部ネットワークは全メンバーに共有する必要があります"
@@ -958,13 +892,6 @@ msgstr "すべての IPset を破棄します。"
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "マッピング: %(mapping)s 内のデバイス %(dev_name)s が一意ではありません"
-
-#, python-format
-msgid "Device '%(device_name)s' does not exist."
-msgstr "デバイス '%(device_name)s' が存在しません。"
-
-msgid "Device has no virtual functions"
-msgstr "デバイスに仮想関数が含まれていません"
 
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
@@ -1295,10 +1222,6 @@ msgstr ""
 "ルは固有のプレフィックスを持つ必要があります。"
 
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "%(reason)s のため、ポリシー %(policy)s の検査が失敗しました。"
-
-#, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
@@ -1313,10 +1236,6 @@ msgid ""
 msgstr ""
 "fixed_ips が無効なサブネット %(subnet_id)s に含まれていたため、ネットワーク "
 "%(network_id)s でポートを作成できませんでした"
-
-#, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s."
-msgstr "%(reason)s のため、ポリシー %(policy)s の初期化が失敗しました。"
 
 #, python-format
 msgid "Failed to locate source for %s."
@@ -1915,13 +1834,6 @@ msgstr ""
 msgid "Maximum number of allowed address pairs"
 msgstr "許可されたアドレスペアの最大数"
 
-msgid ""
-"Maximum number of fixed ips per port. This option is deprecated and will be "
-"removed in the N release."
-msgstr ""
-"ポートごとの 固定 IP の最大数。このオプションは提供を終了しており、N リリース"
-"では削除されます。"
-
 msgid "Maximum number of host routes per subnet"
 msgstr "サブネットごとのホスト経路の最大数"
 
@@ -2123,24 +2035,11 @@ msgstr ""
 "エージェントによってサポートされるネットワークタイプ (gre と vxlan のいずれ"
 "か、または両方)。"
 
-msgid ""
-"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
-"set (default behavior), no IPAM driver is used. In order to use the "
-"reference implementation of Neutron IPAM driver, use 'internal'."
-msgstr ""
-"使用する Netron の IPAM (IP アドレス管理) ドライバー。ipam_driver が設定され"
-"ない場合 (デフォルトの挙動)、IPAM ドライバーは使用されません。Neutron の "
-"IPAM ドライバーのリファレンス実装を使用するには、 'internal' を使用してくださ"
-"い。"
-
 msgid "Neutron Service Type Management"
 msgstr "Neutron サービスタイプ管理"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron の core_plugin が設定されていません。"
-
-msgid "New value for first_ip or last_ip has to be specified."
-msgstr "first_ip または last_ip に対して新規の値を指定する必要があります。"
 
 msgid "No default router:external network"
 msgstr "デフォルトの router:external ネットワークがありません"
@@ -2420,14 +2319,6 @@ msgstr "ポート %(port)s は %(bridge)s に存在しません"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "ポート %(port_id)s は既に別の DHCP エージェントに取得されています。"
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"ポート %(port_id)s は、Floating IP %(floatingip_id)s とは異なるテナントに関連"
-"付けられているため、バインドできません。"
 
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
@@ -2917,13 +2808,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "共有アドレススコープは共有を解除できません"
-
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"認証されているテナント以外の 'tenant_id' を要求で指定するには、管理者特権が必"
-"要です"
 
 msgid "String prefix used to match IPset names."
 msgstr "IPset 名とのマッチングを行うために使用する文字列のプレフィックス。"

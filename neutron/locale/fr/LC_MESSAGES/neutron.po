@@ -10,9 +10,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
+"Project-Id-Version: neutron 9.1.2.dev25\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-18 18:59+0000\n"
+"POT-Creation-Date: 2016-12-11 18:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -95,10 +95,6 @@ msgid ""
 msgstr ""
 "%(method)s a appelé les paramètres de sous-réseau %(current)s (paramètres "
 "d'origine %(original)s)"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s a échoué."
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -329,12 +325,6 @@ msgstr "Autoriser la création d'enregistrements PTR"
 msgid "Allow the usage of the bulk API"
 msgstr "Autoriser l'utilisation de l'API de traitement en bloc"
 
-msgid "Allow the usage of the pagination"
-msgstr "Autoriser l'utilisation de la mise en page"
-
-msgid "Allow the usage of the sorting"
-msgstr "Autoriser l'utilisation du tri"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 "Permet d'effectuer des requêtes (https) non sécurisées aux métadonnées de "
@@ -526,22 +516,6 @@ msgid ""
 msgstr ""
 "Impossible de modifier l'attribut HA des routeurs actifs. Définissez le "
 "paramètre router admin_state_up sur False avant d'effectuer la mise à niveau."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to %s, since that is not an IPv4 "
-"address."
-msgstr ""
-"Impossible de créer une adresse IP flottante et de la lier à %s, car il ne "
-"s'agit pas d'une adresse IPV4. "
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"Impossible de créer une adresse IP flottante et de la lier au port %s, car "
-"ce port appartient à un locataire différent."
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "Impossible de désactiver enable_dhcp avec des attributs ipv6 définis"
@@ -748,16 +722,6 @@ msgstr ""
 "plages d'ID VNI VXLAN disponibles pour l'allocation de réseau locataire"
 
 msgid ""
-"Comma-separated list of supported PCI vendor devices, as defined by "
-"vendor_id:product_id according to the PCI ID Repository. Default enables "
-"support for Intel and Mellanox SR-IOV capable NICs."
-msgstr ""
-"Liste d'unités fournisseurs PCI, séparées par des virgules, prises en "
-"charge, comme défini par vendor_id:product_id d'après le référentiel d'ID "
-"PCI. Permet par défaut la prise en charge des NIC compatibles Intel et "
-"Mellanox SR-IOV."
-
-msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr ""
 "Liste séparée par des virgules des serveurs DNS qui seront utilisés comme "
@@ -862,38 +826,6 @@ msgstr ""
 "Moteur de base de données pour lequel le script va être généré lors de "
 "l'utilisation d'une migration hors ligne."
 
-msgid ""
-"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. If not set then no pool will be used "
-"unless passed explicitly to the subnet create. If no pool is used, then a "
-"CIDR must be passed to create a subnet and that subnet will not be allocated "
-"from any pool; it will be considered part of the tenant's private address "
-"space. This option is deprecated for removal in the N release."
-msgstr ""
-"Pool de sous-réseau IPv4 par défaut à utiliser pour l'allocation CIDR de "
-"sous-réseau automatique. Indique par UUID le pool à utiliser dans le cas où "
-"la création d'un sous-réseau est appelée sans ID de pool de sous-réseau. Si "
-"ce paramètre n'est pas défini, aucun pool ne sera utilisé sauf s'il est "
-"indiqué de manière explicite lors de la création de sous-réseau. Si aucun "
-"pool n'est utilisé, un CIDR doit être transmis pour la création d'un sous-"
-"réseau, et ce dernier ne sera alloué depuis aucun pool ; il sera considéré "
-"comme faisant partie de l'espace d'adresse privé du locataire. Cette option "
-"est obsolète et va être retirée dans la version N."
-
-msgid ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-msgstr ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-
 msgid "Default external networks must be shared to everyone."
 msgstr "Les réseaux externes par défaut doivent être partagés par tous."
 
@@ -991,13 +923,6 @@ msgstr "Destruction de tous les IPsets."
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "Périphérique %(dev_name)s non unique dans le mappage '%(mapping)s'"
-
-#, python-format
-msgid "Device '%(device_name)s' does not exist."
-msgstr "L'unité '%(device_name)s' n'existe pas."
-
-msgid "Device has no virtual functions"
-msgstr "L'unité n'a aucune fonction virtuelle"
 
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
@@ -1337,10 +1262,6 @@ msgstr ""
 "sein d'une portée d'adresse doivent avoir des préfixes uniques."
 
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "Échec pour vérifier la politique %(policy)s car %(reason)s."
-
-#, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
@@ -1355,10 +1276,6 @@ msgid ""
 msgstr ""
 "Echec de la création de port sur le réseau %(network_id)s car les adresses "
 "IP fixes incluent le sous-réseau non valide %(subnet_id)s "
-
-#, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s."
-msgstr "Échec d'initialisation de la stratégie %(policy)s car %(reason)s."
 
 #, python-format
 msgid "Failed to locate source for %s."
@@ -1980,13 +1897,6 @@ msgstr ""
 msgid "Maximum number of allowed address pairs"
 msgstr "Nombre maximal de paires d'adresses autorisé"
 
-msgid ""
-"Maximum number of fixed ips per port. This option is deprecated and will be "
-"removed in the N release."
-msgstr ""
-"Nombre maximum d'IP fixes par port. Cette option est obsolète et elle sera "
-"retirée dans la version N."
-
 msgid "Maximum number of host routes per subnet"
 msgstr "Nombre maximal de routes hôte par sous-réseau"
 
@@ -2191,24 +2101,11 @@ msgstr "Valeur de type de réseau requise par le plug-in ML2"
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr "Types de réseau pris en charge par l'agent (gre et/ou vxlan)."
 
-msgid ""
-"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
-"set (default behavior), no IPAM driver is used. In order to use the "
-"reference implementation of Neutron IPAM driver, use 'internal'."
-msgstr ""
-"Pilote IPAM de Neutron. Si le paramètre ipam_driver n'est pas défini "
-"(comportement par défaut), aucun pilote IPAM n'est utilisé. Pour pouvoir "
-"utiliser l'implémentation de référence du pilote IPAM de Neutron, indiquez "
-"'internal'."
-
 msgid "Neutron Service Type Management"
 msgstr "Gestion du type de service Neutron"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "Neutron core_plugin n'est pas configuré ! "
-
-msgid "New value for first_ip or last_ip has to be specified."
-msgstr "Une nouvelle valeur doit être spécifiée pour first_ip ou last_ip."
 
 msgid "No default router:external network"
 msgstr "Aucun réseau router:external par défaut"
@@ -2512,14 +2409,6 @@ msgstr "Le port %(port)s au sein du pont %(bridge)s"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "Le port %(port_id)s est déjà acquis par un autre agent DHCP"
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"Le port %(port_id)s est associé à un titulaire différent de celui de "
-"l'adresse IP flottante %(floatingip_id)s et ne peut donc pas être lié. "
 
 #, python-format
 msgid "Port %(port_id)s is not managed by this agent. "
@@ -3018,13 +2907,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "Impossible d'annuler le partage d'une portée d'adresse partagée"
-
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"Pour indiquer un 'tenant_id' autre qu'un titulaire authentifié dans la "
-"demande, vous devez disposer de droits admin "
 
 msgid "String prefix used to match IPset names."
 msgstr "Préfixe de chaîne utilisé pour correspondre aux noms IPset."

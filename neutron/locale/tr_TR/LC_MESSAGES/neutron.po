@@ -9,9 +9,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
+"Project-Id-Version: neutron 9.1.2.dev25\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-15 19:53+0000\n"
+"POT-Creation-Date: 2016-12-11 18:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -86,10 +86,6 @@ msgid ""
 msgstr ""
 "%(method)s alt ağ ayarları %(current)s (asıl ayarlar %(original)s) ile "
 "çağrıldı"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s başarısız."
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -197,12 +193,6 @@ msgstr "DHCP ajanına kaynak işlem bildirimi göndermeye izin ver"
 msgid "Allow the usage of the bulk API"
 msgstr "Toplu API'nin kullanımına izin ver"
 
-msgid "Allow the usage of the pagination"
-msgstr "Sayfalama kullanımına izin ver"
-
-msgid "Allow the usage of the sorting"
-msgstr "Sıralama kullanımına izin ver"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "Nova metadata'ya güvensiz SSL (https) istekleri yapmaya izin ver"
 
@@ -296,14 +286,6 @@ msgstr ""
 "Değişken IP %(floating_ip_address)s (%(fip_id)s) sabit IP %(fixed_ip)s "
 "kullanılarak %(port_id)s bağlantı noktasıyla ilişkilendirilemiyor, çünkü bu "
 "sabit IP %(net_id)s harici ağında zaten bir değişken IP'ye sahip."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"Değişken IP oluşturup %s bağlantı noktasına bağlanamıyor, çünkü bu bağlantı "
-"noktası başka bir kiracıya ait."
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "ipv6 öznitelikleri ayarlıyken enable_dhcp kapatılamaz"
@@ -514,9 +496,6 @@ msgstr "Tüm IPset'leri sil."
 #, python-format
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "%(mapping)s eşleştirmesindeki aygıt %(dev_name)s benzersiz"
-
-msgid "Device has no virtual functions"
-msgstr "Aygıt sanal fonksiyonlara sahip değil"
 
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
@@ -1333,14 +1312,6 @@ msgid "Port %(port)s does not exist on %(bridge)s!"
 msgstr "Bağlantı noktası %(port)s %(bridge)s köprüsü üzerinde mevcut değil!"
 
 #, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"%(port_id)s bağlantı noktası %(floatingip_id)s değişken IP'sinden başka bir "
-"kiracı ile ilişkilendirilmiş bu yüzden bağlanamaz."
-
-#, python-format
 msgid "Port %s does not exist"
 msgstr "Bağlantı noktası %s mevcut değil"
 
@@ -1593,13 +1564,6 @@ msgstr ""
 
 msgid "Shared address scope can't be unshared"
 msgstr "Paylaşılan adres kapsamının paylaştırılması durdurulamaz"
-
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"İstekte doğrulanmış kiracıdan başka 'tenant_id' belirtme yönetici yetkileri "
-"gerektirir"
 
 msgid "String prefix used to match IPset names."
 msgstr "IPset isimleriyle eşleştirme için kullanılan karakter dizisi önekleri."
