@@ -15,7 +15,7 @@
 
 import mock
 
-from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import netns_cleanup
@@ -50,7 +50,7 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
         dhcp_namespace = self.useFixture(
             net_helpers.NamespaceFixture(dhcp.NS_PREFIX)).name
         l3_namespace = self.useFixture(
-            net_helpers.NamespaceFixture(l3_agent.NS_PREFIX)).name
+            net_helpers.NamespaceFixture(namespaces.NS_PREFIX)).name
         bridge = self.useFixture(
             net_helpers.VethPortFixture(namespace=dhcp_namespace)).bridge
         self.useFixture(

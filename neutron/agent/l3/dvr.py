@@ -15,12 +15,6 @@
 import weakref
 
 from neutron.agent.l3 import dvr_fip_ns
-from neutron.agent.l3 import dvr_snat_ns
-
-
-# TODO(Carl) Following constants retained to increase SNR during refactoring
-SNAT_INT_DEV_PREFIX = dvr_snat_ns.SNAT_INT_DEV_PREFIX
-SNAT_NS_PREFIX = dvr_snat_ns.SNAT_NS_PREFIX
 
 
 class AgentMixin(object):

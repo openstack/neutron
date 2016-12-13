@@ -18,7 +18,6 @@ import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
@@ -85,7 +84,7 @@ class TestLegacyL3Agent(TestL3Agent):
         super(TestLegacyL3Agent, self).setUp(env)
 
     def _get_namespace(self, router_id):
-        return namespaces.build_ns_name(l3_agent.NS_PREFIX, router_id)
+        return namespaces.build_ns_name(namespaces.NS_PREFIX, router_id)
 
     def _assert_namespace_exists(self, ns_name):
         ip = ip_lib.IPWrapper(ns_name)
