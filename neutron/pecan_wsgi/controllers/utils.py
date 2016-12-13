@@ -127,7 +127,7 @@ class NeutronPecanController(object):
     def __init__(self, collection, resource, plugin=None, resource_info=None,
                  allow_pagination=None, allow_sorting=None,
                  parent_resource=None, member_actions=None,
-                 collection_actions=None, item=None):
+                 collection_actions=None, item=None, action_status=None):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
@@ -167,6 +167,13 @@ class NeutronPecanController(object):
             self._plugin_handlers[action] = '%s%s_%s' % (
                 action, parent_resource, self.resource)
         self.item = item
+        self.action_status = action_status or {}
+
+    def _set_response_code(self, result, method_name):
+        if method_name in self.action_status:
+            pecan.response.status = self.action_status[method_name]
+        else:
+            pecan.response.status = 200 if result else 204
 
     def build_field_list(self, request_fields):
         added_fields = []
@@ -245,10 +252,12 @@ def invert_dict(dictionary):
 class ShimItemController(NeutronPecanController):
 
     def __init__(self, collection, resource, item, controller,
-                 collection_actions=None, member_actions=None):
+                 collection_actions=None, member_actions=None,
+                 action_status=None):
         super(ShimItemController, self).__init__(
             collection, resource, collection_actions=collection_actions,
-            member_actions=member_actions, item=item)
+            member_actions=member_actions, item=item,
+            action_status=action_status)
         self.controller = controller
         self.controller_delete = getattr(controller, 'delete', None)
         self.controller_update = getattr(controller, 'update', None)
@@ -259,15 +268,20 @@ class ShimItemController(NeutronPecanController):
     @expose(generic=True)
     def index(self):
         shim_request = ShimRequest(request.context['neutron_context'])
+        kwargs = request.context['uri_identifiers']
         if self.item in self.inverted_collection_actions['GET']:
             method = getattr(self.controller, self.item, None)
             # collection actions should not take an self.item because they are
             # essentially static items.
-            return method(shim_request)
+            result = method(shim_request, **kwargs)
+            self._set_response_code(result, self.item)
+            return result
         elif not self.controller_show:
             pecan.abort(405)
         else:
-            return self.controller_show(shim_request, self.item)
+            result = self.controller_show(shim_request, self.item, **kwargs)
+            self._set_response_code(result, 'show')
+            return result
 
     @when_delete(index)
     def delete(self):
@@ -275,19 +289,26 @@ class ShimItemController(NeutronPecanController):
             pecan.abort(405)
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
-        return self.controller_delete(shim_request, self.item,
-                                      **uri_identifiers)
+        result = self.controller_delete(shim_request, self.item,
+                                        **uri_identifiers)
+        self._set_response_code(result, 'delete')
+        return result
 
     @when(index, method='PUT')
     def update(self):
         if not self.controller_update:
             pecan.abort(405)
-        pecan.response.status = 200
+        pecan.response.status = self.action_status.get('update', 201)
         shim_request = ShimRequest(request.context['neutron_context'])
-        uri_identifiers = request.context['uri_identifiers']
-        return self.controller_update(shim_request, self.item,
-                                      body=request.json,
-                                      **uri_identifiers)
+        kwargs = request.context['uri_identifiers']
+        try:
+            kwargs['body'] = request.json
+        except ValueError:
+            pass
+        result = self.controller_update(shim_request, self.item,
+                                        **kwargs)
+        self._set_response_code(result, 'update')
+        return result
 
     @expose()
     def _lookup(self, resource, *remainder):
@@ -300,31 +321,57 @@ class ShimItemController(NeutronPecanController):
 class ShimCollectionsController(NeutronPecanController):
 
     def __init__(self, collection, resource, controller,
-                 collection_actions=None, member_actions=None):
+                 collection_actions=None, member_actions=None,
+                 collection_methods=None, action_status=None):
+        collection_methods = collection_methods or {}
         super(ShimCollectionsController, self).__init__(
             collection, resource, member_actions=member_actions,
-            collection_actions=collection_actions)
+            collection_actions=collection_actions,
+            action_status=action_status)
         self.controller = controller
         self.controller_index = getattr(controller, 'index', None)
         self.controller_create = getattr(controller, 'create', None)
+        self.controller_update = getattr(controller, 'update', None)
+        self.collection_methods = {}
+        for action, method in collection_methods.items():
+            controller_method = getattr(controller, action, None)
+            self.collection_methods[method] = (
+                controller_method, self.action_status.get(action, 200))
 
     @expose(generic=True)
     def index(self):
-        if not self.controller_index:
+        if (not self.controller_index and
+                request.method not in self.collection_methods):
             pecan.abort(405)
+        controller_method_status = self.collection_methods.get(request.method)
+        status = None
+        if controller_method_status:
+            controller_method = controller_method_status[0]
+            status = controller_method_status[1]
+        else:
+            controller_method = self.controller_index
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
-        return self.controller_index(shim_request, **uri_identifiers)
+        args = [shim_request]
+        if request.method == 'PUT':
+            args.append(request.json)
+        result = controller_method(*args, **uri_identifiers)
+        if not status:
+            self._set_response_code(result, 'index')
+        else:
+            pecan.response.status = status
+        return result
 
     @when(index, method='POST')
     def create(self):
         if not self.controller_create:
             pecan.abort(405)
-        pecan.response.status = 201
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
-        return self.controller_create(shim_request, request.json,
-                                      **uri_identifiers)
+        result = self.controller_create(shim_request, request.json,
+                                        **uri_identifiers)
+        self._set_response_code(result, 'create')
+        return result
 
     @expose()
     def _lookup(self, item, *remainder):
@@ -334,7 +381,8 @@ class ShimCollectionsController(NeutronPecanController):
             ShimItemController(self.collection, self.resource, item,
                                self.controller,
                                member_actions=self._member_actions,
-                               collection_actions=self._collection_actions),
+                               collection_actions=self._collection_actions,
+                               action_status=self.action_status),
             remainder
         )
 
