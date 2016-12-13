@@ -420,6 +420,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
     common_types.PortRangeField: tools.get_random_port,
     common_types.SetOfUUIDsField: get_set_of_random_uuids,
+    common_types.VlanIdRangeField: tools.get_random_vlan,
 }
 
 

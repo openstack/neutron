@@ -24,6 +24,7 @@ from neutron._i18n import _
 from neutron.common import constants
 from neutron.extensions import dns as dns_ext
 from neutron.objects import exceptions as o_exc
+from neutron.plugins.common import constants as plugin_constants
 
 
 class IPV6ModeEnumField(obj_fields.AutoTypedField):
@@ -70,6 +71,17 @@ class PortRange(RangeConstrainedInteger):
 
 class PortRangeField(obj_fields.AutoTypedField):
     AUTO_TYPE = PortRange()
+
+
+class VlanIdRange(RangeConstrainedInteger):
+    def __init__(self, **kwargs):
+        super(VlanIdRange, self).__init__(start=plugin_constants.MIN_VLAN_TAG,
+                                          end=plugin_constants.MAX_VLAN_TAG,
+                                          **kwargs)
+
+
+class VlanIdRangeField(obj_fields.AutoTypedField):
+    AUTO_TYPE = VlanIdRange()
 
 
 class ListOfIPNetworksField(obj_fields.AutoTypedField):
