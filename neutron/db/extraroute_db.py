@@ -20,12 +20,14 @@ from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common import _deprecate
+from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import extraroute
 from neutron.extensions import l3
+from neutron.objects import router as l3_obj
 
 _deprecate._moved_global('RouterRoute', new_module=l3_models)
 
@@ -114,16 +116,19 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                                                    routes)
         LOG.debug('Added routes are %s', added)
         for route in added:
-            router_routes = l3_models.RouterRoute(
+            l3_obj.RouterRoute(
+                context,
                 router_id=router['id'],
-                destination=route['destination'],
-                nexthop=route['nexthop'])
-            context.session.add(router_routes)
+                destination=utils.AuthenticIPNetwork(route['destination']),
+                nexthop=netaddr.IPAddress(route['nexthop'])).create()
 
         LOG.debug('Removed routes are %s', removed)
         for route in removed:
-            context.session.delete(
-                routes_dict[(route['destination'], route['nexthop'])])
+            l3_obj.RouterRoute.get_object(
+                context,
+                router_id=router['id'],
+                destination=route['destination'],
+                nexthop=route['nexthop']).delete()
 
     @staticmethod
     def _make_extra_route_list(extra_routes):
@@ -132,19 +137,17 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 for route in extra_routes]
 
     def _get_extra_routes_by_router_id(self, context, id):
-        query = context.session.query(l3_models.RouterRoute)
-        query = query.filter_by(router_id=id)
-        return self._make_extra_route_list(query)
+        router_objs = l3_obj.RouterRoute.get_objects(context, router_id=id)
+        return self._make_extra_route_list(router_objs)
 
     def _get_extra_routes_dict_by_router_id(self, context, id):
-        query = context.session.query(l3_models.RouterRoute)
-        query = query.filter_by(router_id=id)
+        router_objs = l3_obj.RouterRoute.get_objects(context, router_id=id)
         routes = []
         routes_dict = {}
-        for route in query:
-            routes.append({'destination': route['destination'],
-                           'nexthop': route['nexthop']})
-            routes_dict[(route['destination'], route['nexthop'])] = route
+        for route in router_objs:
+            routes.append({'destination': route.destination,
+                           'nexthop': route.nexthop})
+            routes_dict[(route.destination, route.nexthop)] = route
         return routes, routes_dict
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
