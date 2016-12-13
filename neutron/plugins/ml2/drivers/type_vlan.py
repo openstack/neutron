@@ -150,6 +150,12 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                            {'min': p_const.MIN_VLAN_TAG,
                             'max': p_const.MAX_VLAN_TAG})
                     raise exc.InvalidInput(error_message=msg)
+            else:
+                if not self.network_vlan_ranges.get(physical_network):
+                    msg = (_("Physical network %s requires segmentation_id "
+                             "to be specified when creating a provider "
+                             "network") % physical_network)
+                    raise exc.InvalidInput(error_message=msg)
         elif segmentation_id:
             msg = _("segmentation_id requires physical_network for VLAN "
                     "provider network")

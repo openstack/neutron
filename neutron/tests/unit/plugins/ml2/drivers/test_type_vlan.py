@@ -122,6 +122,13 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                           self.driver.validate_provider_segment,
                           segment)
 
+    def test_validate_provider_segment_with_physical_network_only(self):
+        segment = {api.NETWORK_TYPE: p_const.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: PROVIDER_NET}
+        self.assertRaises(exc.InvalidInput,
+                          self.driver.validate_provider_segment,
+                          segment)
+
     def test_sync_vlan_allocations(self):
         def check_in_ranges(network_vlan_ranges):
             vlan_min, vlan_max = network_vlan_ranges[TENANT_NET][0]
