@@ -111,30 +111,50 @@ class LinuxInterfaceDriver(object):
         # Neutron, so it would be deleted if we added it to the 'previous'
         # list here
         default_ipv6_lla = ip_lib.get_ipv6_lladdr(device.link.address)
-        previous = {addr['cidr'] for addr in device.addr.list(
-            filters=['permanent'])} - {default_ipv6_lla}
 
-        # add new addresses
+        cidrs = set()
+        remove_ips = set()
+
+        # normalize all the IP addresses first
         for ip_cidr in ip_cidrs:
-
             net = netaddr.IPNetwork(ip_cidr)
             # Convert to compact IPv6 address because the return values of
             # "ip addr list" are compact.
             if net.version == 6:
                 ip_cidr = str(net)
-            if ip_cidr in previous:
-                previous.remove(ip_cidr)
+            cidrs.add(ip_cidr)
+
+        # Determine the addresses that must be added and removed
+        for address in device.addr.list():
+            cidr = address['cidr']
+            dynamic = address['dynamic']
+
+            # skip the IPv6 link-local
+            if cidr == default_ipv6_lla:
                 continue
 
-            device.addr.add(ip_cidr)
+            if cidr in preserve_ips:
+                continue
 
-        # clean up any old addresses
-        for ip_cidr in previous:
-            if ip_cidr not in preserve_ips:
-                if clean_connections:
-                    device.delete_addr_and_conntrack_state(ip_cidr)
-                else:
-                    device.addr.delete(ip_cidr)
+            # Statically created addresses are OK, dynamically created
+            # addresses must be removed and replaced
+            if cidr in cidrs and not dynamic:
+                cidrs.remove(cidr)
+                continue
+
+            remove_ips.add(cidr)
+
+        # Clean up any old addresses.  This must be done first since there
+        # could be a dynamic address being replaced with a static one.
+        for ip_cidr in remove_ips:
+            if clean_connections:
+                device.delete_addr_and_conntrack_state(ip_cidr)
+            else:
+                device.addr.delete(ip_cidr)
+
+        # add any new addresses
+        for ip_cidr in cidrs:
+            device.addr.add(ip_cidr)
 
     def init_router_port(self,
                          device_name,

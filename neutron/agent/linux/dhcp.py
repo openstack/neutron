@@ -1351,15 +1351,6 @@ class DeviceManager(object):
 
     def plug(self, network, port, interface_name):
         """Plug device settings for the network's DHCP on this host."""
-        # Disable acceptance of RAs in the namespace so we don't
-        # auto-configure an IPv6 address since we explicitly configure
-        # them on the device.  This must be done before any interfaces
-        # are plugged since it could receive an RA by the time
-        # plug() returns, so we have to create the namespace first.
-        if network.namespace:
-            ip_lib.IPWrapper().ensure_namespace(network.namespace)
-        self.driver.configure_ipv6_ra(network.namespace, 'default',
-                                      n_const.ACCEPT_RA_DISABLED)
         self.driver.plug(network.id,
                          port.id,
                          interface_name,
@@ -1378,6 +1369,19 @@ class DeviceManager(object):
                 self._cleanup_stale_devices(network, dhcp_port=None)
         self._update_dhcp_port(network, port)
         interface_name = self.get_interface_name(network, port)
+
+        # Disable acceptance of RAs in the namespace so we don't
+        # auto-configure an IPv6 address since we explicitly configure
+        # them on the device.  This must be done before any interfaces
+        # are plugged since it could receive an RA by the time
+        # plug() returns, so we have to create the namespace first.
+        # It must also be done in the case there is an existing IPv6
+        # address here created via SLAAC, since it will be deleted
+        # and added back statically in the call to init_l3() below.
+        if network.namespace:
+            ip_lib.IPWrapper().ensure_namespace(network.namespace)
+        self.driver.configure_ipv6_ra(network.namespace, 'default',
+                                      n_const.ACCEPT_RA_DISABLED)
 
         if ip_lib.ensure_device_is_ready(interface_name,
                                          namespace=network.namespace):
