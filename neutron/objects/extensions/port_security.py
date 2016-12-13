@@ -14,11 +14,12 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.extensions import portsecurity
 from neutron.objects import base
+from neutron.objects import common_types
 
 
 class _PortSecurity(base.NeutronDbObject):
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'port_security_enabled': obj_fields.BooleanField(
             default=portsecurity.DEFAULT_PORT_SECURITY),
     }

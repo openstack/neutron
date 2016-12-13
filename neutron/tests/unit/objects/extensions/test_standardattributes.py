@@ -19,6 +19,7 @@ import sqlalchemy as sa
 
 from neutron.db import standard_attr
 from neutron.objects import base as objects_base
+from neutron.objects import common_types
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -35,7 +36,7 @@ class FakeObjectWithStandardAttributes(objects_base.NeutronDbObject):
     VERSION = '1.0'
     db_model = FakeDbModelWithStandardAttributes
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'item': obj_fields.StringField(),
     }
 

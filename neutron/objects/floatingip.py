@@ -13,7 +13,6 @@
 #    under the License.
 
 from oslo_versionedobjects import base as obj_base
-from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import dns as models
 from neutron.objects import base
@@ -30,7 +29,7 @@ class FloatingIPDNS(base.NeutronDbObject):
     primary_keys = ['floatingip_id']
 
     fields = {
-        'floatingip_id': obj_fields.UUIDField(),
+        'floatingip_id': common_types.UUIDField(),
         'dns_name': common_types.DomainNameField(),
         'dns_domain': common_types.DomainNameField(),
         'published_dns_name': common_types.DomainNameField(),

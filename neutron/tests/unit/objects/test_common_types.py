@@ -246,3 +246,23 @@ class IpProtocolEnumFieldTest(test_base.BaseTestCase, TestField):
     def test_stringify(self):
         for in_val, out_val in self.coerce_good_values:
             self.assertEqual("'%s'" % in_val, self.field.stringify(in_val))
+
+
+class UUIDFieldTest(test_base.BaseTestCase, TestField):
+    def setUp(self):
+        super(UUIDFieldTest, self).setUp()
+        self.field = common_types.UUIDField()
+        self.coerce_good_values = [
+            ('f1d9cb3f-c263-45d3-907c-d12a9ef1629e',
+                'f1d9cb3f-c263-45d3-907c-d12a9ef1629e'),
+            ('7188f6637cbd4097a3b1d1bb7897c7c0',
+                '7188f6637cbd4097a3b1d1bb7897c7c0')]
+        self.coerce_bad_values = [
+            'f1d9cb3f-c263-45d3-907c-d12a9ef16zzz',
+            '7188f6637cbd4097a3b1d1bb7897']
+        self.to_primitive_values = self.coerce_good_values
+        self.from_primitive_values = self.coerce_good_values
+
+    def test_stringify(self):
+        for in_val, out_val in self.coerce_good_values:
+            self.assertEqual('%s' % in_val, self.field.stringify(in_val))

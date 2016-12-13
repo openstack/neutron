@@ -38,8 +38,8 @@ class NetworkSegment(base.NeutronDbObject):
     db_model = segment_model.NetworkSegment
 
     fields = {
-        'id': obj_fields.UUIDField(),
-        'network_id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
+        'network_id': common_types.UUIDField(),
         'name': obj_fields.StringField(),
         'network_type': obj_fields.StringField(),
         'physical_network': obj_fields.StringField(nullable=True),
@@ -85,7 +85,7 @@ class Network(rbac_db.NeutronRbacObject):
     db_model = models_v2.Network
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(nullable=True),
         'status': obj_fields.StringField(nullable=True),
@@ -106,7 +106,7 @@ class Network(rbac_db.NeutronRbacObject):
         'segments': obj_fields.ListOfObjectsField(
             'NetworkSegment', nullable=True),
         'dns_domain': common_types.DomainNameField(nullable=True),
-        'qos_policy_id': obj_fields.UUIDField(nullable=True, default=None),
+        'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
 
         # TODO(ihrachys): add support for tags, probably through a base class
         # since it's a feature that will probably later be added for other
@@ -228,7 +228,7 @@ class SegmentHostMapping(base.NeutronDbObject):
     db_model = segment_model.SegmentHostMapping
 
     fields = {
-        'segment_id': obj_fields.UUIDField(),
+        'segment_id': common_types.UUIDField(),
         'host': obj_fields.StringField(),
     }
 
@@ -245,7 +245,7 @@ class NetworkDNSDomain(base.NeutronDbObject):
     primary_keys = ['network_id']
 
     fields = {
-        'network_id': obj_fields.UUIDField(),
+        'network_id': common_types.UUIDField(),
         'dns_domain': common_types.DomainNameField(),
     }
 

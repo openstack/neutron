@@ -22,6 +22,7 @@ from neutron.callbacks import events
 from neutron import context as n_context
 from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
+from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import rbac_db
 from neutron.tests.unit.objects import test_base
@@ -49,7 +50,7 @@ class FakeNeutronDbObject(rbac_db.NeutronRbacObject):
     db_model = FakeDbModel
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'field1': obj_fields.StringField(),
         'field2': obj_fields.StringField(),
         'shared': obj_fields.BooleanField(default=False),

@@ -11,7 +11,6 @@
 #    under the License.
 
 from oslo_versionedobjects import base as obj_base
-from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
 from neutron.db.models import allowed_address_pair as models
@@ -29,7 +28,7 @@ class AllowedAddressPair(base.NeutronDbObject):
     primary_keys = ['port_id', 'mac_address', 'ip_address']
 
     fields = {
-        'port_id': obj_fields.UUIDField(),
+        'port_id': common_types.UUIDField(),
         'mac_address': common_types.MACAddressField(),
         'ip_address': common_types.IPNetworkField(),
     }

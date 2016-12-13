@@ -15,6 +15,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.extra_dhcp_opt import models
 from neutron.objects import base
+from neutron.objects import common_types
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -25,8 +26,8 @@ class ExtraDhcpOpt(base.NeutronDbObject):
     db_model = models.ExtraDhcpOpt
 
     fields = {
-         'id': obj_fields.UUIDField(),
-         'port_id': obj_fields.UUIDField(),
+         'id': common_types.UUIDField(),
+         'port_id': common_types.UUIDField(),
          'opt_name': obj_fields.StringField(),
          'opt_value': obj_fields.StringField(),
          'ip_version': obj_fields.IntegerField(),

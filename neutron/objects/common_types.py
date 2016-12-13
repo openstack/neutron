@@ -12,6 +12,7 @@
 #    under the License.
 
 import itertools
+import uuid
 
 import netaddr
 from neutron_lib import constants as lib_constants
@@ -207,3 +208,13 @@ class IPNetwork(obj_fields.FieldType):
 
 class IPNetworkField(obj_fields.AutoTypedField):
     AUTO_TYPE = IPNetwork()
+
+
+class UUID(obj_fields.UUID):
+    def coerce(self, obj, attr, value):
+        uuid.UUID(str(value))
+        return str(value)
+
+
+class UUIDField(obj_fields.AutoTypedField):
+    AUTO_TYPE = UUID()

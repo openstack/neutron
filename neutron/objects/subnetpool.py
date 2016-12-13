@@ -31,7 +31,7 @@ class SubnetPool(base.NeutronDbObject):
     db_model = models.SubnetPool
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'tenant_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(nullable=True),
         'ip_version': common_types.IPVersionEnumField(),
@@ -42,7 +42,7 @@ class SubnetPool(base.NeutronDbObject):
         'is_default': obj_fields.BooleanField(),
         'default_quota': obj_fields.IntegerField(nullable=True),
         'hash': obj_fields.StringField(nullable=True),
-        'address_scope_id': obj_fields.UUIDField(nullable=True),
+        'address_scope_id': common_types.UUIDField(nullable=True),
         'prefixes': common_types.ListOfIPNetworksField(nullable=True)
     }
 
@@ -138,7 +138,7 @@ class SubnetPoolPrefix(base.NeutronDbObject):
     db_model = models.SubnetPoolPrefix
 
     fields = {
-        'subnetpool_id': obj_fields.UUIDField(),
+        'subnetpool_id': common_types.UUIDField(),
         'cidr': obj_fields.IPNetworkField(),
     }
 

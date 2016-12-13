@@ -19,6 +19,7 @@ from oslo_versionedobjects import fields as obj_fields
 from neutron.agent.common import utils
 from neutron.db.models import agent as agent_model
 from neutron.objects import base
+from neutron.objects import common_types
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -29,7 +30,7 @@ class Agent(base.NeutronDbObject):
     db_model = agent_model.Agent
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'agent_type': obj_fields.StringField(),
         'binary': obj_fields.StringField(),
         'topic': obj_fields.StringField(),

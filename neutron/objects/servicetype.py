@@ -18,6 +18,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import servicetype as models
 from neutron.objects import base
+from neutron.objects import common_types
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -31,5 +32,5 @@ class ProviderResourceAssociation(base.NeutronDbObject):
 
     fields = {
         'provider_name': obj_fields.StringField(),
-        'resource_id': obj_fields.UUIDField(),
+        'resource_id': common_types.UUIDField(),
     }

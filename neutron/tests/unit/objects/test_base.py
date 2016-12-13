@@ -79,9 +79,9 @@ class FakeSmallNeutronObject(base.NeutronDbObject):
     }
 
     fields = {
-        'field1': obj_fields.UUIDField(),
-        'field2': obj_fields.UUIDField(),
-        'field3': obj_fields.UUIDField(),
+        'field1': common_types.UUIDField(),
+        'field2': common_types.UUIDField(),
+        'field3': common_types.UUIDField(),
     }
 
 
@@ -100,7 +100,7 @@ class FakeSmallNeutronObjectWithMultipleParents(base.NeutronDbObject):
     }
 
     fields = {
-        'field1': obj_fields.UUIDField(),
+        'field1': common_types.UUIDField(),
         'field2': obj_fields.StringField(),
     }
 
@@ -115,7 +115,7 @@ class FakeParent(base.NeutronDbObject):
     primary_keys = ['field1', 'field2']
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'children': obj_fields.ListOfObjectsField(
             'FakeSmallNeutronObjectWithMultipleParents',
             nullable=True)
@@ -139,7 +139,7 @@ class FakeWeirdKeySmallNeutronObject(base.NeutronDbObject):
     }
 
     fields = {
-        'field1': obj_fields.UUIDField(),
+        'field1': common_types.UUIDField(),
         'field2': obj_fields.StringField(),
     }
 
@@ -152,7 +152,7 @@ class FakeNeutronDbObject(base.NeutronDbObject):
     db_model = FakeModel
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'field1': obj_fields.StringField(),
         'obj_field': obj_fields.ObjectField('FakeSmallNeutronObject',
                                             nullable=True)
@@ -175,7 +175,7 @@ class FakeNeutronObjectNonStandardPrimaryKey(base.NeutronDbObject):
     primary_keys = ['weird_key']
 
     fields = {
-        'weird_key': obj_fields.UUIDField(),
+        'weird_key': common_types.UUIDField(),
         'field1': obj_fields.StringField(),
         'obj_field': obj_fields.ListOfObjectsField(
             'FakeWeirdKeySmallNeutronObject'),
@@ -195,7 +195,7 @@ class FakeNeutronObjectCompositePrimaryKey(base.NeutronDbObject):
     primary_keys = ['weird_key', 'field1']
 
     fields = {
-        'weird_key': obj_fields.UUIDField(),
+        'weird_key': common_types.UUIDField(),
         'field1': obj_fields.StringField(),
         'obj_field': obj_fields.ListOfObjectsField(
             'FakeWeirdKeySmallNeutronObject')
@@ -215,8 +215,8 @@ class FakeNeutronObjectUniqueKey(base.NeutronDbObject):
     unique_keys = [['unique_key'], ['id2']]
 
     fields = {
-        'id': obj_fields.UUIDField(),
-        'id2': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
+        'id2': common_types.UUIDField(),
         'unique_key': obj_fields.StringField(),
         'field1': obj_fields.StringField(),
         'obj_field': obj_fields.ObjectField('FakeSmallNeutronObject',
@@ -242,7 +242,7 @@ class FakeNeutronObjectRenamedField(base.NeutronDbObject):
     primary_keys = ['id']
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'field_ovo': obj_fields.StringField(),
         'field2': obj_fields.StringField()
     }
@@ -262,7 +262,7 @@ class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     primary_keys = ['id', 'field1']
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'field1': obj_fields.StringField(),
         'obj_field': obj_fields.ListOfObjectsField('FakeSmallNeutronObject')
     }
@@ -282,8 +282,8 @@ class FakeNeutronObjectMultipleForeignKeys(base.NeutronDbObject):
     }
 
     fields = {
-        'field1': obj_fields.UUIDField(),
-        'field2': obj_fields.UUIDField(),
+        'field1': common_types.UUIDField(),
+        'field2': common_types.UUIDField(),
     }
 
 
@@ -295,7 +295,7 @@ class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
     db_model = FakeModel
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'obj_field': obj_fields.ListOfObjectsField(
             'FakeNeutronObjectMultipleForeignKeys')
     }
@@ -311,7 +311,7 @@ class FakeNeutronObjectSyntheticField2(base.NeutronDbObject):
     db_model = FakeModel
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'obj_field': obj_fields.ObjectField('FakeSmallNeutronObject')
     }
 
@@ -326,9 +326,9 @@ class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
     db_model = FakeModel
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(),
-        'field2': obj_fields.UUIDField(),
+        'field2': common_types.UUIDField(),
     }
 
 
@@ -338,9 +338,9 @@ class FakeNeutronObject(base.NeutronObject):
     VERSION = '1.0'
 
     fields = {
-        'id': obj_fields.UUIDField(),
+        'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(),
-        'field2': obj_fields.UUIDField(),
+        'field2': common_types.UUIDField(),
     }
 
     @classmethod
@@ -399,7 +399,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.IntegerField: tools.get_random_integer,
     obj_fields.StringField: tools.get_random_string,
     obj_fields.ListOfStringsField: tools.get_random_string_list,
-    obj_fields.UUIDField: uuidutils.generate_uuid,
+    common_types.UUIDField: uuidutils.generate_uuid,
     obj_fields.ObjectField: lambda: None,
     obj_fields.ListOfObjectsField: lambda: [],
     obj_fields.DictOfStringsField: get_random_dict_of_strings,
@@ -1034,10 +1034,10 @@ class UniqueKeysTestCase(test_base.BaseTestCase):
                 primary_keys = ['id']
 
                 fields = {
-                    'id': obj_fields.UUIDField(),
-                    'field1': obj_fields.UUIDField(),
-                    'field2': obj_fields.UUIDField(),
-                    'field3': obj_fields.UUIDField(),
+                    'id': common_types.UUIDField(),
+                    'field1': common_types.UUIDField(),
+                    'field2': common_types.UUIDField(),
+                    'field3': common_types.UUIDField(),
                 }
 
                 fields_need_translation = {'field3': 'db_field3'}
