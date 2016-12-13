@@ -2111,8 +2111,7 @@ class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
 class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):
 
     def setUp(self, plugin=None):
-        super(test_dhcpopts.ExtraDhcpOptDBTestCase, self).setUp(
-            plugin=PLUGIN_NAME)
+        super(DHCPOptsTestCase, self).setUp(plugin=PLUGIN_NAME)
 
 
 class Ml2PluginV2FaultyDriverTestCase(test_plugin.NeutronDbPluginV2TestCase):
