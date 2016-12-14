@@ -257,6 +257,19 @@ class TestOVSDBHandler(base.BaseTestCase):
         trunk_rpc.update_trunk_status.assert_called_once_with(
             mock.ANY, mock.ANY, constants.ERROR_STATUS)
 
+    def test__wire_trunk_rewire_trunk_failure(self):
+        with mock.patch.object(self.ovsdb_handler,
+                               'unwire_subports_for_trunk') as f,\
+                mock.patch.object(self.ovsdb_handler,
+                                  'get_connected_subports_for_trunk') as g:
+            g.return_value = ['stale_port']
+            f.return_value = constants.DEGRADED_STATUS
+            self.ovsdb_handler._wire_trunk(
+                mock.Mock(), self.fake_port, rewire=True)
+            trunk_rpc = self.ovsdb_handler.trunk_rpc
+            trunk_rpc.update_trunk_status.assert_called_once_with(
+                mock.ANY, mock.ANY, constants.DEGRADED_STATUS)
+
     def test__wire_trunk_report_trunk_called_on_wiring(self):
         with mock.patch.object(self.trunk_manager, 'create_trunk'),\
                 mock.patch.object(self.ovsdb_handler,
