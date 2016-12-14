@@ -104,12 +104,9 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 cidrs, ips, routes, route['nexthop'])
 
     def _update_extra_routes(self, context, router, routes):
-        self._validate_routes(context, router['id'],
-                              routes)
-        old_routes, routes_dict = self._get_extra_routes_dict_by_router_id(
-            context, router['id'])
-        added, removed = helpers.diff_list_of_dict(old_routes,
-                                                   routes)
+        self._validate_routes(context, router['id'], routes)
+        old_routes = self._get_extra_routes_by_router_id(context, router['id'])
+        added, removed = helpers.diff_list_of_dict(old_routes, routes)
         LOG.debug('Added routes are %s', added)
         for route in added:
             l3_obj.RouterRoute(
@@ -136,16 +133,6 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     def _get_extra_routes_by_router_id(self, context, id):
         router_objs = l3_obj.RouterRoute.get_objects(context, router_id=id)
         return self._make_extra_route_list(router_objs)
-
-    def _get_extra_routes_dict_by_router_id(self, context, id):
-        router_objs = l3_obj.RouterRoute.get_objects(context, router_id=id)
-        routes = []
-        routes_dict = {}
-        for route in router_objs:
-            routes.append({'destination': route.destination,
-                           'nexthop': route.nexthop})
-            routes_dict[(route.destination, route.nexthop)] = route
-        return routes, routes_dict
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet_id):
