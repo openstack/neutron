@@ -70,6 +70,8 @@ The following are the current Neutron Lieutenants.
 | Built-In Control Plane | Kevin Benton              | kevinbenton          |
 +------------------------+---------------------------+----------------------+
 | Client                 | Akihiro Motoki            | amotoki              |
+|                        +---------------------------+----------------------+
+|                        | Abhishek Raut             | abhiraut             |
 +------------------------+---------------------------+----------------------+
 | Docs                   | Matthew Kassawara         | Sam-I-Am             |
 +------------------------+---------------------------+----------------------+
