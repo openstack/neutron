@@ -53,17 +53,16 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
     def update_router(self, context, id, router):
         r = router['router']
-        with context.session.begin(subtransactions=True):
-            #check if route exists and have permission to access
-            router_db = self._get_router(context, id)
-            if 'routes' in r:
+        if 'routes' in r:
+            with context.session.begin(subtransactions=True):
+                #check if route exists and have permission to access
+                router_db = self._get_router(context, id)
                 self._update_extra_routes(context, router_db, r['routes'])
-            routes = self._get_extra_routes_by_router_id(context, id)
-        router_updated = super(ExtraRoute_dbonly_mixin, self).update_router(
+            # NOTE(yamamoto): expire to ensure the following update_router
+            # see the effects of the above _update_extra_routes.
+            context.session.expire(router_db, attribute_names=['route_list'])
+        return super(ExtraRoute_dbonly_mixin, self).update_router(
             context, id, router)
-        router_updated['routes'] = routes
-
-        return router_updated
 
     def _get_subnets_by_cidr(self, context, cidr):
         query_subnets = context.session.query(models_v2.Subnet)
