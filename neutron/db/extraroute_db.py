@@ -132,8 +132,9 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
     @staticmethod
     def _make_extra_route_list(extra_routes):
-        return [{'destination': route['destination'],
-                 'nexthop': route['nexthop']}
+        # NOTE(yamamoto): the extra_routes argument is either object or db row
+        return [{'destination': str(route['destination']),
+                 'nexthop': str(route['nexthop'])}
                 for route in extra_routes]
 
     def _get_extra_routes_by_router_id(self, context, id):
