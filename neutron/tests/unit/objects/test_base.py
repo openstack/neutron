@@ -465,7 +465,7 @@ class _BaseObjectTestCase(object):
         utils.import_modules_recursively(os.path.dirname(objects.__file__))
         self.context = context.get_admin_context()
         self.db_objs = [
-            self._test_class.db_model(**self.get_random_fields())
+            self._test_class.db_model(**self.get_random_db_fields())
             for _ in range(3)
         ]
 
@@ -486,14 +486,13 @@ class _BaseObjectTestCase(object):
         self.obj_registry.register(FakeSmallNeutronObject)
         self.obj_registry.register(FakeWeirdKeySmallNeutronObject)
         self.obj_registry.register(FakeNeutronObjectMultipleForeignKeys)
-        synthetic_obj_fields = self.get_random_fields(FakeSmallNeutronObject)
+        synthetic_obj_fields = self.get_random_db_fields(
+            FakeSmallNeutronObject)
         self.model_map = {
             self._test_class.db_model: self.db_objs,
             ObjectFieldsModel: [ObjectFieldsModel(**synthetic_obj_fields)]}
 
-    # TODO(ihrachys): rename the method to explicitly reflect it returns db
-    # attributes not object fields
-    def get_random_fields(self, obj_cls=None):
+    def get_random_object_fields(self, obj_cls=None):
         obj_cls = obj_cls or self._test_class
         fields = {}
         ip_version = tools.get_random_ip_version()
@@ -501,7 +500,12 @@ class _BaseObjectTestCase(object):
             if field not in obj_cls.synthetic_fields:
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
                 fields[field] = get_value(generator, ip_version)
-        return obj_cls.modify_fields_to_db(fields)
+        return fields
+
+    def get_random_db_fields(self, obj_cls=None):
+        obj_cls = obj_cls or self._test_class
+        return obj_cls.modify_fields_to_db(
+            self.get_random_object_fields(obj_cls))
 
     def update_obj_fields(self, values_dict,
                           db_objs=None, obj_fields=None, objs=None):
@@ -982,7 +986,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
             child = objclass(
                 self.context, **objclass.modify_fields_from_db(
-                    self.get_random_fields(obj_cls=objclass))
+                    self.get_random_db_fields(obj_cls=objclass))
             )
             child_dict = child.to_dict()
             if isinstance(cls_.fields[field], obj_fields.ListOfObjectsField):
@@ -1120,7 +1124,7 @@ class BaseDbObjectMultipleParentsForForeignKeysTestCase(
         fake_children = [
             child_cls(
                 self.context, **child_cls.modify_fields_from_db(
-                    self.get_random_fields(obj_cls=child_cls))
+                    self.get_random_db_fields(obj_cls=child_cls))
             )
             for _ in range(5)
         ]
@@ -1143,7 +1147,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             if not objclass:
                 continue
             for db_obj in self.db_objs:
-                objclass_fields = self.get_random_fields(objclass)
+                objclass_fields = self.get_random_db_fields(objclass)
                 if isinstance(self._test_class.fields[synth_field],
                               obj_fields.ObjectField):
                     db_obj[synth_field] = objclass.db_model(**objclass_fields)

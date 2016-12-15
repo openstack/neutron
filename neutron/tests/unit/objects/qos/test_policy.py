@@ -40,15 +40,15 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         super(QosPolicyObjectTestCase, self).setUp()
         # qos_policy_ids will be incorrect, but we don't care in this test
         self.db_qos_bandwidth_rules = [
-            self.get_random_fields(rule.QosBandwidthLimitRule)
+            self.get_random_db_fields(rule.QosBandwidthLimitRule)
             for _ in range(3)]
 
         self.db_qos_dscp_rules = [
-            self.get_random_fields(rule.QosDscpMarkingRule)
+            self.get_random_db_fields(rule.QosDscpMarkingRule)
             for _ in range(3)]
 
         self.db_qos_minimum_bandwidth_rules = [
-            self.get_random_fields(rule.QosMinimumBandwidthRule)
+            self.get_random_db_fields(rule.QosMinimumBandwidthRule)
             for _ in range(3)]
 
         self.model_map.update({
@@ -137,7 +137,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         rules = []
         for obj_cls in (RULE_OBJ_CLS.get(rule_type)
                         for rule_type in rule_type):
-            rule_fields = self.get_random_fields(obj_cls=obj_cls)
+            rule_fields = self.get_random_object_fields(obj_cls=obj_cls)
             rule_fields['qos_policy_id'] = policy_obj.id
             rule_obj = obj_cls(self.context, **rule_fields)
             rule_obj.create()
