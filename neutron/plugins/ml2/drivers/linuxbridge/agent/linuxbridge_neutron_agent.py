@@ -470,14 +470,11 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
         if network_type == p_const.TYPE_LOCAL:
             self.ensure_local_bridge(network_id, bridge_name)
-        else:
-            phy_dev_name = self.ensure_physical_in_bridge(network_id,
-                                                          network_type,
-                                                          physical_network,
-                                                          segmentation_id)
-            if not phy_dev_name:
-                return False
-            self.ensure_tap_mtu(tap_device_name, phy_dev_name)
+        elif not self.ensure_physical_in_bridge(network_id,
+                                                network_type,
+                                                physical_network,
+                                                segmentation_id):
+            return False
         # Avoid messing with plugging devices into a bridge that the agent
         # does not own
         if device_owner.startswith(constants.DEVICE_OWNER_PREFIXES):
@@ -498,11 +495,6 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       "%(bridge_name)s. It is owned by %(device_owner)s and "
                       "thus added elsewhere.", data)
         return True
-
-    def ensure_tap_mtu(self, tap_dev_name, phy_dev_name):
-        """Ensure the MTU on the tap is the same as the physical device."""
-        phy_dev_mtu = ip_lib.IPDevice(phy_dev_name).link.mtu
-        ip_lib.IPDevice(tap_dev_name).link.set_mtu(phy_dev_mtu)
 
     def plug_interface(self, network_id, network_segment, tap_name,
                        device_owner):

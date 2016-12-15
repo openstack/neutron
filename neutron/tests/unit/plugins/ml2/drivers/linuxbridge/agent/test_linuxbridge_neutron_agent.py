@@ -558,25 +558,13 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                             "tap1",
                                                             dev_owner_prefix))
             with mock.patch.object(self.lbm,
-                                   "ensure_physical_in_bridge") as ens_fn,\
-                    mock.patch.object(self.lbm,
-                                      "ensure_tap_mtu") as en_mtu_fn,\
-                    mock.patch.object(bridge_lib.BridgeDevice,
-                                      "get_interface_bridge") as get_br:
+                                   "ensure_physical_in_bridge") as ens_fn:
                 ens_fn.return_value = False
                 self.assertFalse(self.lbm.add_tap_interface("123",
                                                             p_const.TYPE_VLAN,
                                                             "physnet1", "1",
                                                             "tap1",
                                                             dev_owner_prefix))
-
-                ens_fn.return_value = "eth0.1"
-                get_br.return_value = "brq123"
-                self.lbm.add_tap_interface("123", p_const.TYPE_VLAN,
-                                           "physnet1", "1", "tap1",
-                                           dev_owner_prefix)
-                en_mtu_fn.assert_called_once_with("tap1", "eth0.1")
-                bridge_device.addif.assert_called_once_with("tap1")
 
     def test_add_tap_interface_owner_network(self):
         self._test_add_tap_interface(constants.DEVICE_OWNER_NETWORK_PREFIX)
