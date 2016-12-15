@@ -410,8 +410,6 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | qos_                          | A bug affecting ML2/QoS                 | Miguel Ajo           |
 +-------------------------------+-----------------------------------------+----------------------+
-| release_                      | A request from a subproject             | Darek Smigiel        |
-+-------------------------------+-----------------------------------------+----------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe-approved_                 | Approved feature enhancements           | Drivers Team         |
@@ -708,14 +706,6 @@ QoS
 
 * `QoS - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=qos>`_
 * `QoS - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=qos>`_
-
-.. _release:
-
-Requests from Stadium Subprojects
-+++++++++++++++++++++++++++++++++
-
-* `Requests from Stadium Subprojects - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=release>`_
-* `Requests from Stadium Subprojects - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=release>`_
 
 .. _rfe:
 
