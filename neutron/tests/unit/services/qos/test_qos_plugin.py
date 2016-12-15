@@ -384,3 +384,76 @@ class TestQosPlugin(base.BaseQosTestCase):
             types = self.qos_plugin.get_rule_types(self.ctxt, filters=filters)
             self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))
+
+    @mock.patch('neutron.objects.qos.policy.QosPolicy')
+    def test_policy_notification_ordering(self, qos_policy_mock):
+
+        policy_actions = {'create': [self.ctxt, {'policy': {}}],
+                          'update': [self.ctxt, self.policy.id,
+                                     {'policy': {}}],
+                          'delete': [self.ctxt, self.policy.id]}
+
+        self.qos_plugin.notification_driver_manager = mock.Mock()
+
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(qos_policy_mock, 'QosPolicy')
+        mock_manager.attach_mock(self.qos_plugin.notification_driver_manager,
+                                 'notification_driver')
+
+        for action, arguments in policy_actions.items():
+            mock_manager.reset_mock()
+
+            method = getattr(self.qos_plugin, "%s_policy" % action)
+            method(*arguments)
+
+            policy_mock_call = getattr(mock.call.QosPolicy(), action)()
+            notify_mock_call = getattr(mock.call.notification_driver,
+                                       '%s_policy' % action)(self.ctxt,
+                                                             mock.ANY)
+
+            self.assertTrue(mock_manager.mock_calls.index(policy_mock_call) <
+                            mock_manager.mock_calls.index(notify_mock_call))
+
+    @mock.patch('neutron.objects.qos.policy.QosPolicy')
+    def test_rule_notification_ordering(self, qos_policy_mock):
+        rule_cls_mock = mock.Mock()
+        rule_cls_mock.rule_type = 'fake'
+
+        rule_actions = {'create': [self.ctxt, rule_cls_mock,
+                                   self.policy.id, {'fake_rule': {}}],
+                        'update': [self.ctxt, rule_cls_mock,
+                                   self.rule.id,
+                                   self.policy.id, {'fake_rule': {}}],
+                        'delete': [self.ctxt, rule_cls_mock,
+                                   self.rule.id, self.policy.id]}
+
+        self.qos_plugin.notification_driver_manager = mock.Mock()
+
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(qos_policy_mock, 'QosPolicy')
+        mock_manager.attach_mock(rule_cls_mock, 'RuleCls')
+        mock_manager.attach_mock(self.qos_plugin.notification_driver_manager,
+                                 'notification_driver')
+
+        for action, arguments in rule_actions.items():
+            mock_manager.reset_mock()
+            method = getattr(self.qos_plugin, "%s_policy_rule" % action)
+            method(*arguments)
+
+            # some actions get rule from policy
+            get_rule_mock_call = getattr(
+                mock.call.QosPolicy.get_object().get_rule_by_id(), action)()
+            # some actions construct rule from class reference
+            rule_mock_call = getattr(mock.call.RuleCls(), action)()
+
+            notify_mock_call = mock.call.notification_driver.update_policy(
+                    self.ctxt, mock.ANY)
+
+            if rule_mock_call in mock_manager.mock_calls:
+                action_index = mock_manager.mock_calls.index(rule_mock_call)
+            else:
+                action_index = mock_manager.mock_calls.index(
+                    get_rule_mock_call)
+
+            self.assertTrue(
+                action_index < mock_manager.mock_calls.index(notify_mock_call))
