@@ -83,7 +83,9 @@ The following are the current Neutron Lieutenants.
 +                        +---------------------------+----------------------+
 |                        | Miguel Lavalle            | mlavalle             |
 +------------------------+---------------------------+----------------------+
-| Services               | Doug Wiegley              | dougwig              |
+| Services               | Ryan Tidwell              | tidwellr             |
+|                        +---------------------------+----------------------+
+|                        | Nate Johnston             | njohnston            |
 +------------------------+---------------------------+----------------------+
 | Testing                | Jakub Libosvar            | jlibosva             |
 +------------------------+---------------------------+----------------------+
