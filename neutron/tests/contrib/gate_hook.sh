@@ -77,6 +77,12 @@ case $VENV in
     $BASE/new/devstack-gate/devstack-vm-gate.sh
     ;;
 
+"rally")
+    # NOTE(yamamoto): This is a no-op placeholder to allow
+    # further changes.
+    $BASE/new/devstack-gate/devstack-vm-gate.sh
+    ;;
+
 *)
     echo "Unrecognized environment $VENV".
     exit 1
