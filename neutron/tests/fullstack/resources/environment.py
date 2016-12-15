@@ -53,12 +53,13 @@ class HostDescription(object):
     What agents should the host spawn? What mode should each agent operate
     under?
     """
-    def __init__(self, l3_agent=False, of_interface='ovs-ofctl',
-                 ovsdb_interface='vsctl',
+    def __init__(self, l3_agent=False, dhcp_agent=False,
+                 of_interface='ovs-ofctl', ovsdb_interface='vsctl',
                  l2_agent_type=constants.AGENT_TYPE_OVS,
                  firewall_driver='noop'):
         self.l2_agent_type = l2_agent_type
         self.l3_agent = l3_agent
+        self.dhcp_agent = dhcp_agent
         self.of_interface = of_interface
         self.ovsdb_interface = ovsdb_interface
         self.firewall_driver = firewall_driver
@@ -109,6 +110,15 @@ class Host(fixtures.Fixture):
                     self.neutron_config,
                     self.l3_agent_cfg_fixture))
 
+        if self.host_desc.dhcp_agent:
+            self.dhcp_agent = self.useFixture(
+                process.DhcpAgentFixture(
+                    self.env_desc, self.host_desc,
+                    self.test_name,
+                    self.neutron_config,
+                    self.dhcp_agent_cfg_fixture,
+                    namespace=self.host_namespace))
+
     def setup_host_with_ovs_agent(self):
         agent_cfg_fixture = config.OVSConfigFixture(
             self.env_desc, self.host_desc, self.neutron_config.temp_dir,
@@ -142,6 +152,13 @@ class Host(fixtures.Fixture):
                     self.l3_agent_cfg_fixture.get_external_bridge())).bridge
             self.connect_to_external_network(br_ex)
 
+        if self.host_desc.dhcp_agent:
+            self.dhcp_agent_cfg_fixture = self.useFixture(
+                config.DhcpConfigFixture(
+                    self.env_desc, self.host_desc,
+                    self.neutron_config.temp_dir,
+                    self.ovs_agent.agent_cfg_fixture.get_br_int_name()))
+
     def setup_host_with_linuxbridge_agent(self):
         #First we need to provide connectivity for agent to prepare proper
         #bridge mappings in agent's config:
@@ -170,6 +187,12 @@ class Host(fixtures.Fixture):
         if self.host_desc.l3_agent:
             self.l3_agent_cfg_fixture = self.useFixture(
                 config.L3ConfigFixture(
+                    self.env_desc, self.host_desc,
+                    self.neutron_config.temp_dir))
+
+        if self.host_desc.dhcp_agent:
+            self.dhcp_agent_cfg_fixture = self.useFixture(
+                config.DhcpConfigFixture(
                     self.env_desc, self.host_desc,
                     self.neutron_config.temp_dir))
 
@@ -247,6 +270,14 @@ class Host(fixtures.Fixture):
     @l3_agent.setter
     def l3_agent(self, agent):
         self.agents['l3'] = agent
+
+    @property
+    def dhcp_agent(self):
+        return self.agents['dhcp']
+
+    @dhcp_agent.setter
+    def dhcp_agent(self, agent):
+        self.agents['dhcp'] = agent
 
     @property
     def ovs_agent(self):
