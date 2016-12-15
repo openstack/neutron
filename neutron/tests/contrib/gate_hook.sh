@@ -9,6 +9,7 @@ NEUTRON_PATH=$GATE_DEST/neutron
 GATE_HOOKS=$NEUTRON_PATH/neutron/tests/contrib/hooks
 DEVSTACK_PATH=$GATE_DEST/devstack
 LOCAL_CONF=$DEVSTACK_PATH/local.conf
+RALLY_EXTRA_DIR=$NEUTRON_PATH/rally-jobs/extra
 
 
 # Inject config from hook into localrc
@@ -26,6 +27,18 @@ ${config}
 function load_conf_hook {
     local hook="$1"
     cat $GATE_HOOKS/$hook >> $LOCAL_CONF
+}
+
+
+# Tweak gate configuration for our rally scenarios
+function load_rc_for_rally {
+    for file in $(ls $RALLY_EXTRA_DIR/*.setup); do
+        local config=$(cat $file)
+        export DEVSTACK_LOCAL_CONFIG+="
+# generated from hook '$file'
+${config}
+"
+    done
 }
 
 
@@ -77,8 +90,7 @@ case $VENV in
     ;;
 
 "rally")
-    # NOTE(yamamoto): This is a no-op placeholder to allow
-    # further changes.
+    load_rc_for_rally
     $BASE/new/devstack-gate/devstack-vm-gate.sh
     ;;
 
