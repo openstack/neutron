@@ -35,6 +35,10 @@ object_data = {
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'FloatingIPDNS': '1.0-ee3db848500fa1825235f701828c06d5',
+    'GeneveAllocation': '1.0-d5f76e8eac60a778914d61dd8e23e90f',
+    'GeneveEndpoint': '1.0-040f026996b5952e2ae4ccd40ac61ca6',
+    'GreAllocation': '1.0-9ee1bbc4d999bea84c99425484b11ac5',
+    'GreEndpoint': '1.0-040f026996b5952e2ae4ccd40ac61ca6',
     'IPAllocation': '1.0-47251b4c6d45c3b5feb0297fe5c461f2',
     'IPAllocationPool': '1.0-371016a6480ed0b4299319cb46d9215d',
     'Network': '1.0-f2f6308f79731a767b92b26b0f4f3849',
@@ -66,6 +70,8 @@ object_data = {
     'SubPort': '1.0-72c8471068db1f0491b5480fe49b52bb',
     'Trunk': '1.0-80ebebb57f2b0dbb510f84d91421ed10',
     'VlanAllocation': '1.0-72636c1b7d5c8eef987bd09666e64f3e',
+    'VxlanAllocation': '1.0-934638cd32d00f81d6fbf93c8eb5755a',
+    'VxlanEndpoint': '1.0-40522eafdcf838758711dfa886cbdb2e',
 }
 
 
