@@ -87,13 +87,17 @@ def delete_object(context, model, **kwargs):
         context.session.delete(db_obj)
 
 
-# TODO(ihrachys): expose through objects API
 def delete_objects(context, model, **kwargs):
-    '''Delete matching objects, if any.
+    '''Delete matching objects, if any. Return number of deleted objects.
 
     This function does not raise exceptions if nothing matches.
+
+    :param model: SQL model
+    :param kwargs: multiple filters defined by key=value pairs
+    :return: Number of entries deleted
     '''
     with context.session.begin(subtransactions=True):
         db_objs = get_objects(context, model, **kwargs)
         for db_obj in db_objs:
             context.session.delete(db_obj)
+        return len(db_objs)

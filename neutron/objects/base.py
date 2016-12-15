@@ -175,6 +175,13 @@ class NeutronObject(obj_base.VersionedObject,
                     **kwargs):
         raise NotImplementedError()
 
+    @classmethod
+    def delete_objects(cls, context, validate_filters=True, **kwargs):
+        objs = cls.get_objects(context, validate_filters, **kwargs)
+        for obj in objs:
+            obj.delete()
+        return len(objs)
+
     def create(self):
         raise NotImplementedError()
 
@@ -430,6 +437,23 @@ class NeutronDbObject(NeutronObject):
                 **cls.modify_fields_to_db(kwargs)
             )
             return [cls._load_object(context, db_obj) for db_obj in db_objs]
+
+    @classmethod
+    def delete_objects(cls, context, validate_filters=True, **kwargs):
+        """
+        Delete objects that match filtering criteria from DB.
+
+        :param context:
+        :param validate_filters: Raises an error in case of passing an unknown
+                                 filter
+        :param kwargs: multiple keys defined by key=value pairs
+        :return: Number of entries deleted
+        """
+        if validate_filters:
+            cls.validate_filters(**kwargs)
+        with db_api.autonested_transaction(context.session):
+            return obj_db_api.delete_objects(
+                context, cls.db_model, **cls.modify_fields_to_db(kwargs))
 
     @classmethod
     def is_accessible(cls, context, db_obj):

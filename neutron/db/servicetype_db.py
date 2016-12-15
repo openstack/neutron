@@ -103,10 +103,8 @@ class ServiceTypeManager(object):
     def del_resource_associations(self, context, resource_ids):
         if not resource_ids:
             return
-        objs = servicetype_obj.ProviderResourceAssociation.get_objects(
+        servicetype_obj.ProviderResourceAssociation.delete_objects(
             context, resource_id=resource_ids)
-        for obj in objs:
-            obj.delete()
 
 
 _deprecate._MovedGlobals()

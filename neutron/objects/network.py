@@ -167,10 +167,7 @@ class Network(rbac_db.NeutronRbacObject):
         self.obj_reset_changes(['qos_policy_id'])
 
     def _set_dns_domain(self, dns_domain):
-        objs = NetworkDNSDomain.get_objects(self.obj_context,
-                                            network_id=self.id)
-        for obj in objs:
-            obj.delete()
+        NetworkDNSDomain.delete_objects(self.obj_context, network_id=self.id)
         if dns_domain:
             NetworkDNSDomain(self.obj_context,
                 network_id=self.id, dns_domain=dns_domain).create()

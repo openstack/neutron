@@ -58,14 +58,10 @@ class AllowedAddressPairsMixin(object):
         return allowed_address_pairs
 
     def get_allowed_address_pairs(self, context, port_id):
-        pairs = self._get_allowed_address_pairs_objs(context, port_id)
-        return [self._make_allowed_address_pairs_dict(pair.db_obj)
-                for pair in pairs]
-
-    def _get_allowed_address_pairs_objs(self, context, port_id):
         pairs = obj_addr_pair.AllowedAddressPair.get_objects(
             context, port_id=port_id)
-        return pairs
+        return [self._make_allowed_address_pairs_dict(pair.db_obj)
+                for pair in pairs]
 
     def _extend_port_dict_allowed_address_pairs(self, port_res, port_db):
         # If port_db is provided, allowed address pairs will be accessed via
@@ -82,10 +78,8 @@ class AllowedAddressPairsMixin(object):
         attr.PORTS, ['_extend_port_dict_allowed_address_pairs'])
 
     def _delete_allowed_address_pairs(self, context, id):
-        pairs = self._get_allowed_address_pairs_objs(context, port_id=id)
-        with context.session.begin(subtransactions=True):
-            for pair in pairs:
-                pair.delete()
+        obj_addr_pair.AllowedAddressPair.delete_objects(
+            context, port_id=id)
 
     @staticmethod
     def _make_allowed_address_pairs_dict(allowed_address_pairs,
