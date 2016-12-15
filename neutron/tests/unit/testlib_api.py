@@ -20,6 +20,7 @@ import testscenarios
 import testtools
 
 from neutron_lib.db import model_base
+from oslo_config import cfg
 from oslo_db import exception as oslodb_exception
 from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import provision
@@ -209,11 +210,15 @@ class OpportunisticSqlFixture(SqlFixture):
 
     @classmethod
     def _generate_schema_w_migrations(cls, engine):
-        alembic_config = migration.get_neutron_config()
+        alembic_configs = migration.get_alembic_configs()
         with engine.connect() as conn:
-            alembic_config.attributes['connection'] = conn
-            migration.do_alembic_command(
-                alembic_config, 'upgrade', 'heads')
+            for alembic_config in alembic_configs:
+                alembic_config.attributes['connection'] = conn
+                alembic_config.neutron_config = cfg.CONF
+                alembic_config.neutron_config.set_override(
+                    'connection', str(engine.url), group='database')
+                migration.do_alembic_command(
+                    alembic_config, 'upgrade', 'heads')
 
     def _delete_from_schema(self, engine):
         if self.test.BUILD_SCHEMA:
