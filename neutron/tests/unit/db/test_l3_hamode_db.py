@@ -190,29 +190,51 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx, router['id'])
         self.assertEqual([], bindings)
 
-    def _assert_ha_state_for_agent_is_standby(self, router, agent):
+    def _assert_ha_state_for_agent(self, router, agent,
+                                   state=n_const.HA_ROUTER_STATE_STANDBY):
         bindings = (
             self.plugin.get_l3_bindings_hosting_router_with_ha_states(
                 self.admin_ctx, router['id']))
         agent_ids = [(a[0]['id'], a[1]) for a in bindings]
-        self.assertIn((agent['id'], 'standby'), agent_ids)
+        self.assertIn((agent['id'], state), agent_ids)
 
     def test_get_l3_bindings_hosting_router_with_ha_states_active_and_dead(
             self):
         router = self._create_router()
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent1['host'])
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent2['host'])
         with mock.patch.object(agent_utils, 'is_agent_down',
                                return_value=True):
-            self._assert_ha_state_for_agent_is_standby(router, self.agent1)
+            self._assert_ha_state_for_agent(router, self.agent1)
 
     def test_get_l3_bindings_hosting_router_agents_admin_state_up_is_false(
             self):
         router = self._create_router()
         self.plugin.update_routers_states(
-            self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent1['host'])
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent2['host'])
         helpers.set_agent_admin_state(self.agent1['id'])
-        self._assert_ha_state_for_agent_is_standby(router, self.agent1)
+        self._assert_ha_state_for_agent(router, self.agent1)
+
+    def test_get_l3_bindings_hosting_router_with_ha_states_one_dead(self):
+        router = self._create_router()
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_ACTIVE},
+            self.agent1['host'])
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: n_const.HA_ROUTER_STATE_STANDBY},
+            self.agent2['host'])
+        with mock.patch.object(agent_utils, 'is_agent_down',
+                               return_value=True):
+            self._assert_ha_state_for_agent(
+                router, self.agent1, state=n_const.HA_ROUTER_STATE_ACTIVE)
 
     def test_router_created_in_active_state(self):
         router = self._create_router()
