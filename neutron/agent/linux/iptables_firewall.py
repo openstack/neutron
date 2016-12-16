@@ -61,7 +61,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                           firewall.EGRESS_DIRECTION: 'physdev-in'}
 
     def __init__(self, namespace=None):
-        self.iptables = iptables_manager.IptablesManager(
+        self.iptables = iptables_manager.IptablesManager(state_less=True,
             use_ipv6=ipv6_utils.is_enabled_and_bind_by_default(),
             namespace=namespace)
         # TODO(majopela, shihanzhang): refactor out ipset to a separate
