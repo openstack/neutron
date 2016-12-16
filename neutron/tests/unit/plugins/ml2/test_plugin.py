@@ -1113,7 +1113,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         with self.port() as port:
             port_db, binding = ml2_db.get_locked_port_and_binding(
-                ctx.session, port['port']['id'])
+                ctx, port['port']['id'])
             with mock.patch('neutron.plugins.ml2.plugin.'
                             'db.get_locked_port_and_binding') as lock:
                 lock.side_effect = [db_exc.DBDeadlock,
@@ -1537,7 +1537,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         # create a port and delete it so we have an expired mechanism context
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+            binding = ml2_db.get_locked_port_and_binding(self.context,
                                                          port['port']['id'])[1]
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
@@ -1558,7 +1558,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def _create_port_and_bound_context(self, port_vif_type, bound_vif_type):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+            binding = ml2_db.get_locked_port_and_binding(self.context,
                                                          port['port']['id'])[1]
             binding['host'] = 'fake_host'
             binding['vif_type'] = port_vif_type
@@ -1658,7 +1658,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_none(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+            binding = ml2_db.get_locked_port_and_binding(self.context,
                                                          port['port']['id'])[1]
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
@@ -1675,7 +1675,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_not_changed(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+            binding = ml2_db.get_locked_port_and_binding(self.context,
                                                          port['port']['id'])[1]
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
@@ -2726,7 +2726,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
         ml2_db.subscribe()
         plugin = directory.get_plugin()
         with self.port(device_owner=fake_owner_compute) as port:
-            binding = ml2_db.get_locked_port_and_binding(self.context.session,
+            binding = ml2_db.get_locked_port_and_binding(self.context,
                                                          port['port']['id'])[1]
             binding['host'] = 'host-ovs-no_filter'
             mech_context = driver_context.PortContext(

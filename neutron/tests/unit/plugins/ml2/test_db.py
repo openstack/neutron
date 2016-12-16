@@ -170,7 +170,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_network(network_id)
         self._setup_neutron_port(network_id, port_id)
 
-        port = ml2_db.add_port_binding(self.ctx.session, port_id)
+        port = ml2_db.add_port_binding(self.ctx, port_id)
         self.assertEqual(port_id, port.port_id)
         self.assertEqual(portbindings.VIF_TYPE_UNBOUND, port.vif_type)
 
@@ -183,7 +183,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id)
         self._setup_neutron_portbinding(port_id, vif_type, host)
 
-        port_host = ml2_db.get_port_binding_host(self.ctx.session, port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx, port_id)
         self.assertEqual(host, port_host)
 
     def test_get_port_binding_host_multiple_results_found(self):
@@ -199,13 +199,13 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id_two)
         self._setup_neutron_portbinding(port_id_two, vif_type, host)
 
-        port_host = ml2_db.get_port_binding_host(self.ctx.session, port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx, port_id)
         self.assertIsNone(port_host)
 
     def test_get_port_binding_host_result_not_found(self):
         port_id = uuidutils.generate_uuid()
 
-        port_host = ml2_db.get_port_binding_host(self.ctx.session, port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx, port_id)
         self.assertIsNone(port_host)
 
     def test_get_port(self):
@@ -214,7 +214,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_network(network_id)
         self._setup_neutron_port(network_id, port_id)
 
-        port = ml2_db.get_port(self.ctx.session, port_id)
+        port = ml2_db.get_port(self.ctx, port_id)
         self.assertEqual(port_id, port.id)
 
     def test_get_port_multiple_results_found(self):
@@ -226,12 +226,12 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id_one)
         self._setup_neutron_port(network_id, port_id_two)
 
-        port = ml2_db.get_port(self.ctx.session, port_id)
+        port = ml2_db.get_port(self.ctx, port_id)
         self.assertIsNone(port)
 
     def test_get_port_result_not_found(self):
         port_id = uuidutils.generate_uuid()
-        port = ml2_db.get_port(self.ctx.session, port_id)
+        port = ml2_db.get_port(self.ctx, port_id)
         self.assertIsNone(port)
 
     def test_get_port_from_device_mac(self):
@@ -253,7 +253,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id)
         self._setup_neutron_portbinding(port_id, vif_type, host)
 
-        port, binding = ml2_db.get_locked_port_and_binding(self.ctx.session,
+        port, binding = ml2_db.get_locked_port_and_binding(self.ctx,
                                                            port_id)
         self.assertEqual(port_id, port.id)
         self.assertEqual(port_id, binding.port_id)
@@ -261,7 +261,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
     def test_get_locked_port_and_binding_result_not_found(self):
         port_id = uuidutils.generate_uuid()
 
-        port, binding = ml2_db.get_locked_port_and_binding(self.ctx.session,
+        port, binding = ml2_db.get_locked_port_and_binding(self.ctx,
                                                            port_id)
         self.assertIsNone(port)
         self.assertIsNone(binding)
@@ -322,7 +322,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             query_first.return_value = []
             with mock.patch.object(ml2_db.LOG, 'debug') as log_trace:
                 binding = ml2_db.ensure_distributed_port_binding(
-                    self.ctx.session, port_id, host_id, router_id)
+                    self.ctx, port_id, host_id, router_id)
         self.assertTrue(query_first.called)
         self.assertTrue(log_trace.called)
         self.assertEqual(port_id, binding.port_id)
@@ -333,7 +333,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_network(network_id, [port_id])
         router = self._setup_neutron_router()
         ml2_db.ensure_distributed_port_binding(
-            self.ctx.session, port_id, 'foo_host', router.id)
+            self.ctx, port_id, 'foo_host', router.id)
         expected = (self.ctx.session.query(models.DistributedPortBinding).
                     filter_by(port_id=port_id).one())
         self.assertEqual(port_id, expected.port_id)
@@ -344,9 +344,9 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_network(network_id, [port_id])
         router = self._setup_neutron_router()
         ml2_db.ensure_distributed_port_binding(
-            self.ctx.session, port_id, 'foo_host_1', router.id)
+            self.ctx, port_id, 'foo_host_1', router.id)
         ml2_db.ensure_distributed_port_binding(
-            self.ctx.session, port_id, 'foo_host_2', router.id)
+            self.ctx, port_id, 'foo_host_2', router.id)
         bindings = (self.ctx.session.query(models.DistributedPortBinding).
                     filter_by(port_id=port_id).all())
         self.assertEqual(2, len(bindings))
@@ -358,7 +358,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         binding = self._setup_distributed_binding(
             network_id, port_id, None, 'foo_host_id')
 
-        ml2_db.delete_distributed_port_binding_if_stale(self.ctx.session,
+        ml2_db.delete_distributed_port_binding_if_stale(self.ctx,
                                                         binding)
         count = (self.ctx.session.query(models.DistributedPortBinding).
             filter_by(port_id=binding.port_id).count())
@@ -366,11 +366,11 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def test_get_distributed_port_binding_by_host_not_found(self):
         port = ml2_db.get_distributed_port_binding_by_host(
-            self.ctx.session, 'foo_port_id', 'foo_host_id')
+            self.ctx, 'foo_port_id', 'foo_host_id')
         self.assertIsNone(port)
 
     def test_get_distributed_port_bindings_not_found(self):
-        port = ml2_db.get_distributed_port_bindings(self.ctx.session,
+        port = ml2_db.get_distributed_port_bindings(self.ctx,
                                                     'foo_port_id')
         self.assertFalse(len(port))
 
@@ -384,7 +384,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             network_id, port_id_1, router.id, 'foo_host_id_1')
         self._setup_distributed_binding(
             network_id, port_id_1, router.id, 'foo_host_id_2')
-        ports = ml2_db.get_distributed_port_bindings(self.ctx.session,
+        ports = ml2_db.get_distributed_port_bindings(self.ctx,
                                                      'foo_port_id')
         self.assertEqual(2, len(ports))
 
@@ -418,6 +418,6 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             with self.ctx.session.begin(subtransactions=True):
                 self.ctx.session.delete(port)
             self.assertEqual([], warning_list)
-        ports = ml2_db.get_distributed_port_bindings(self.ctx.session,
+        ports = ml2_db.get_distributed_port_bindings(self.ctx,
                                                      'port_id')
         self.assertEqual(0, len(ports))
