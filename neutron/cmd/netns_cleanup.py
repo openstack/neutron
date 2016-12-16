@@ -25,9 +25,9 @@ from oslo_utils import importutils
 from neutron._i18n import _LE
 from neutron.agent.common import config as agent_config
 from neutron.agent.common import ovs_lib
-from neutron.agent.l3 import agent as l3_agent
-from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_fip_ns
+from neutron.agent.l3 import dvr_snat_ns
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
@@ -41,7 +41,8 @@ LOG = logging.getLogger(__name__)
 LB_NS_PREFIX = 'qlbaas-'
 NS_PREFIXES = {
     'dhcp': [dhcp.NS_PREFIX],
-    'l3': [l3_agent.NS_PREFIX, dvr.SNAT_NS_PREFIX, dvr_fip_ns.FIP_NS_PREFIX],
+    'l3': [namespaces.NS_PREFIX, dvr_snat_ns.SNAT_NS_PREFIX,
+           dvr_fip_ns.FIP_NS_PREFIX],
     'lbaas': [LB_NS_PREFIX],
 }
 

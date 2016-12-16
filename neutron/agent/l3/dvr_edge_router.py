@@ -112,7 +112,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             sn_port['fixed_ips'],
             sn_port['mac_address'],
             interface_name,
-            dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+            lib_constants.SNAT_INT_DEV_PREFIX,
             mtu=sn_port.get('mtu'))
 
     def _dvr_internal_network_removed(self, port):
@@ -130,7 +130,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
         snat_interface = self._get_snat_int_device_name(sn_port['id'])
         ns_name = self.snat_namespace.name
-        prefix = dvr_snat_ns.SNAT_INT_DEV_PREFIX
+        prefix = lib_constants.SNAT_INT_DEV_PREFIX
         if ip_lib.device_exists(snat_interface, namespace=ns_name):
             self.driver.unplug(snat_interface, namespace=ns_name,
                                prefix=prefix)
@@ -141,7 +141,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             self.snat_namespace.name, port['network_id'],
             port['id'], port['fixed_ips'],
             port['mac_address'], interface_name,
-            dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+            lib_constants.SNAT_INT_DEV_PREFIX,
             mtu=port.get('mtu'))
 
     def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
@@ -166,7 +166,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         return self.snat_namespace
 
     def _get_snat_int_device_name(self, port_id):
-        long_name = dvr_snat_ns.SNAT_INT_DEV_PREFIX + port_id
+        long_name = lib_constants.SNAT_INT_DEV_PREFIX + port_id
         return long_name[:self.driver.DEV_NAME_LEN]
 
     def _is_this_snat_host(self):

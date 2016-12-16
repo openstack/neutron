@@ -398,7 +398,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 sn_port['fixed_ips'],
                 sn_port['mac_address'],
                 ri._get_snat_int_device_name(sn_port['id']),
-                dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+                lib_constants.SNAT_INT_DEV_PREFIX,
                 mtu=None)
         elif action == 'remove':
             self.device_exists.return_value = False
@@ -717,7 +717,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                     interface_name,
                     bridge=self.conf.external_network_bridge,
                     namespace=snat_ns_name,
-                    prefix=l3_agent.EXTERNAL_DEV_PREFIX)
+                    prefix=namespaces.EXTERNAL_DEV_PREFIX)
         else:
             if not snat_hosted_before:
                 self.assertIsNotNone(ri.snat_namespace)
@@ -1860,7 +1860,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                              self.mock_driver.unplug.call_count)
             calls = [mock.call(stale_devname,
                                namespace=ri.ns_name,
-                               prefix=l3_agent.INTERNAL_DEV_PREFIX)
+                               prefix=namespaces.INTERNAL_DEV_PREFIX)
                      for stale_devname in stale_devnames]
             self.mock_driver.unplug.assert_has_calls(calls, any_order=True)
 
@@ -1882,7 +1882,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             stale_devnames[0],
             bridge="",
             namespace=ri.ns_name,
-            prefix=l3_agent.EXTERNAL_DEV_PREFIX)
+            prefix=namespaces.EXTERNAL_DEV_PREFIX)
 
     def test_router_deleted(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -1955,10 +1955,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         calls = [mock.call('qg-aaaa',
                            bridge=agent.conf.external_network_bridge,
                            namespace=namespace,
-                           prefix=l3_agent.EXTERNAL_DEV_PREFIX),
+                           prefix=namespaces.EXTERNAL_DEV_PREFIX),
                  mock.call('sg-aaaa',
                            namespace=namespace,
-                           prefix=dvr_snat_ns.SNAT_INT_DEV_PREFIX)]
+                           prefix=lib_constants.SNAT_INT_DEV_PREFIX)]
         self.mock_driver.unplug.assert_has_calls(calls, any_order=True)
 
     def _configure_metadata_proxy(self, enableflag=True):

@@ -16,7 +16,6 @@
 from neutron_lib import constants
 
 from neutron.agent.l3 import dvr_edge_router
-from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
 
@@ -56,7 +55,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         self._plug_ha_router_port(
             sn_port,
             self._get_snat_int_device_name,
-            dvr_snat_ns.SNAT_INT_DEV_PREFIX)
+            constants.SNAT_INT_DEV_PREFIX)
 
     def external_gateway_added(self, ex_gw_port, interface_name):
         super(DvrEdgeHaRouter, self).external_gateway_added(
@@ -114,5 +113,5 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         self.driver.plug(port['network_id'], port['id'],
                          interface_name, port['mac_address'],
                          namespace=self.snat_namespace.name,
-                         prefix=dvr_snat_ns.SNAT_INT_DEV_PREFIX,
+                         prefix=constants.SNAT_INT_DEV_PREFIX,
                          mtu=port.get('mtu'))

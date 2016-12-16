@@ -38,7 +38,6 @@ from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api
 from neutron.agent.l3 import l3_agent_extensions_manager as l3_ext_manager
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
-from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_processing_queue as queue
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -58,10 +57,6 @@ from neutron import context as n_context
 from neutron import manager
 
 LOG = logging.getLogger(__name__)
-# TODO(Carl) Following constants retained to increase SNR during refactoring
-NS_PREFIX = namespaces.NS_PREFIX
-INTERNAL_DEV_PREFIX = namespaces.INTERNAL_DEV_PREFIX
-EXTERNAL_DEV_PREFIX = namespaces.EXTERNAL_DEV_PREFIX
 
 # Number of routers to fetch from server at a time on resync.
 # Needed to reduce load on server side and to speed up resync on agent side.
