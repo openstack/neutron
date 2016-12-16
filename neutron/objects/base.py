@@ -278,11 +278,12 @@ class NeutronDbObject(NeutronObject):
     unique_keys = []
 
     # this is a dict to store the association between the foreign key and the
-    # corresponding key in the main table, e.g. port extension have 'port_id'
-    # as foreign key, that is associated with the key 'id' of the table Port,
-    # so foreign_keys = {'port_id': 'id'}. The assumption is the association is
-    # the same for all object fields. E.g. all the port extension will use
-    # 'port_id' as key.
+    # corresponding key in the main table for a synthetic field of a specific
+    # class, e.g. port extension has 'port_id' as foreign key, that is
+    # associated with the key 'id' of the table Port for the synthetic
+    # field of class Port. So foreign_keys = {'Port': {'port_id': 'id'}}.
+    # The assumption is the association is the same for all object fields.
+    # E.g. all the port extension will use 'port_id' as key.
     foreign_keys = {}
 
     fields_no_update = []
