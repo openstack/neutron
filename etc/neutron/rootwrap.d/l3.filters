@@ -50,3 +50,5 @@ conntrack: CommandFilter, conntrack, root
 
 # keepalived state change monitor
 keepalived_state_change: CommandFilter, neutron-keepalived-state-change, root
+kill_keepalived_state_change: KillFilter, root, python, -15, -9
+kill_keepalived_state_change7: KillFilter, root, python2.7, -15, -9

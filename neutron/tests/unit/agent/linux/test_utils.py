@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import signal
 import socket
 
 import mock
@@ -209,6 +210,34 @@ class AgentUtilsReplaceFile(base.BaseTestCase):
 
     def test_replace_file_with_0o600_perms(self):
         self._test_replace_file_helper(0o600)
+
+
+class TestKillProcess(base.BaseTestCase):
+    def _test_kill_process(self, pid, exception_message=None,
+                           kill_signal=signal.SIGKILL):
+        if exception_message:
+            exc = utils.ProcessExecutionError(exception_message, returncode=0)
+        else:
+            exc = None
+        with mock.patch.object(utils, 'execute',
+                               side_effect=exc) as mock_execute:
+            utils.kill_process(pid, kill_signal, run_as_root=True)
+
+        mock_execute.assert_called_with(['kill', '-%d' % kill_signal, pid],
+                                        run_as_root=True)
+
+    def test_kill_process_returns_none_for_valid_pid(self):
+        self._test_kill_process('1')
+
+    def test_kill_process_returns_none_for_stale_pid(self):
+        self._test_kill_process('1', 'No such process')
+
+    def test_kill_process_raises_exception_for_execute_exception(self):
+        with testtools.ExpectedException(utils.ProcessExecutionError):
+            self._test_kill_process('1', 'Invalid')
+
+    def test_kill_process_with_different_signal(self):
+        self._test_kill_process('1', kill_signal=signal.SIGTERM)
 
 
 class TestFindChildPids(base.BaseTestCase):
