@@ -137,7 +137,7 @@ class SubnetPoolPrefix(base.NeutronDbObject):
 
     fields = {
         'subnetpool_id': common_types.UUIDField(),
-        'cidr': obj_fields.IPNetworkField(),
+        'cidr': common_types.IPNetworkField(),
     }
 
     primary_keys = ['subnetpool_id', 'cidr']

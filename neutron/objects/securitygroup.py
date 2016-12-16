@@ -99,7 +99,7 @@ class SecurityGroupRule(base.NeutronDbObject):
         'protocol': common_types.IpProtocolEnumField(nullable=True),
         'port_range_min': common_types.PortRangeField(nullable=True),
         'port_range_max': common_types.PortRangeField(nullable=True),
-        'remote_ip_prefix': obj_fields.IPNetworkField(nullable=True),
+        'remote_ip_prefix': common_types.IPNetworkField(nullable=True),
     }
 
     foreign_keys = {'SecurityGroup': {'security_group_id': 'id'}}
