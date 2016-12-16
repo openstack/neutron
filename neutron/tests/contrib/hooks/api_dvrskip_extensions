@@ -1,0 +1,43 @@
+NETWORK_API_EXTENSIONS="
+    address-scope, \
+    agent, \
+    allowed-address-pairs, \
+    auto-allocated-topology, \
+    availability_zone, \
+    binding, \
+    default-subnetpools, \
+    dhcp_agent_scheduler, \
+    dns-integration, \
+    ext-gw-mode, \
+    external-net, \
+    extra_dhcp_opt, \
+    extraroute, \
+    flavors, \
+    l3-flavors, \
+    l3-ha, \
+    l3_agent_scheduler, \
+    metering, \
+    multi-provider, \
+    net-mtu, \
+    network-ip-availability, \
+    network_availability_zone, \
+    pagination, \
+    port-security, \
+    project-id, \
+    provider, \
+    qos, \
+    quotas, \
+    rbac-policies, \
+    router, \
+    router_availability_zone, \
+    security-group, \
+    service-type, \
+    sorting, \
+    standard-attr-description, \
+    standard-attr-revisions, \
+    standard-attr-timestamp, \
+    subnet_allocation, \
+    tag, \
+    trunk, \
+    trunk-details"
+NETWORK_API_EXTENSIONS="$(echo $NETWORK_API_EXTENSIONS | tr -d ' ')"

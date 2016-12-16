@@ -3,6 +3,7 @@
 set -ex
 
 VENV=${1:-"dsvm-functional"}
+FLAVOR=${2:-"all"}
 
 GATE_DEST=$BASE/new
 NEUTRON_PATH=$GATE_DEST/neutron
@@ -72,7 +73,7 @@ case $VENV in
     ;;
 
 "api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario")
-    load_rc_hook api_extensions
+    load_rc_hook api_${FLAVOR}_extensions
     load_conf_hook quotas
     load_rc_hook dns
     load_rc_hook qos
