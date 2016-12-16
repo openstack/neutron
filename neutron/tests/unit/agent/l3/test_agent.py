@@ -2399,13 +2399,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                                     ipv6_subnet_modes,
                                                     None,
                                                     network_mtu)
+        # Verify that MTU is advertised
         expected = "AdvLinkMTU 1446"
-        ri.agent_conf.set_override('advertise_mtu', False)
-        ri.radvd._generate_radvd_conf(router[lib_constants.INTERFACE_KEY])
-        self.assertNotIn(expected, self.utils_replace_file.call_args[0][1])
-
-        # Verify that MTU is advertised when advertise_mtu is True
-        ri.agent_conf.set_override('advertise_mtu', True)
         ri.radvd._generate_radvd_conf(router[lib_constants.INTERFACE_KEY])
         self.assertIn(expected, self.utils_replace_file.call_args[0][1])
 

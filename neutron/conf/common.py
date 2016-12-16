@@ -110,11 +110,6 @@ core_opts = [
     cfg.IntOpt('send_events_interval', default=2,
                help=_('Number of seconds between sending events to nova if '
                       'there are any events to send.')),
-    cfg.BoolOpt('advertise_mtu', default=True,
-                deprecated_for_removal=True,
-                help=_('If True, advertise network MTU values if core plugin '
-                       'calculates them. MTU is advertised to running '
-                       'instances via DHCP and RA MTU options.')),
     cfg.StrOpt('ipam_driver', default='internal',
                help=_("Neutron IPAM (IP address management) driver to use. "
                       "By default, the reference implementation of the "

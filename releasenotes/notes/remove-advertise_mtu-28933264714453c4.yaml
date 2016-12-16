@@ -1,0 +1,5 @@
+---
+upgrade:
+  - The ``advertise_mtu`` option is removed. Now Neutron always uses all
+    available means to advertise MTUs to instances (including DHCPv4 and IPv6
+    RA).

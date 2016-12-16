@@ -485,7 +485,6 @@ class TestMl2NetworksWithVlanTransparencyAndMTU(
                                return_value=True):
             config.cfg.CONF.set_override('path_mtu', 1000, group='ml2')
             config.cfg.CONF.set_override('global_physnet_mtu', 1000)
-            config.cfg.CONF.set_override('advertise_mtu', True)
             network_req = self.new_create_request('networks', self.data)
             res = network_req.get_response(self.api)
             self.assertEqual(201, res.status_int)
