@@ -464,6 +464,7 @@ class _BaseObjectTestCase(object):
         # make sure all objects are loaded and registered in the registry
         utils.import_modules_recursively(os.path.dirname(objects.__file__))
         self.context = context.get_admin_context()
+        self._unique_tracker = collections.defaultdict(set)
         self.db_objs = [
             self._test_class.db_model(**self.get_random_db_fields())
             for _ in range(3)
@@ -503,6 +504,14 @@ class _BaseObjectTestCase(object):
             if field not in obj_cls.synthetic_fields:
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
                 fields[field] = get_value(generator, ip_version)
+        for keys in obj_cls.unique_keys:
+            keytup = tuple(keys)
+            unique_values = tuple(fields[k] for k in keytup)
+            if unique_values in self._unique_tracker[keytup]:
+                # if you get a recursion depth error here, it means
+                # your random generator didn't generate unique values
+                return self.get_random_object_fields(obj_cls)
+            self._unique_tracker[keytup].add(unique_values)
         return fields
 
     def get_random_db_fields(self, obj_cls=None):
