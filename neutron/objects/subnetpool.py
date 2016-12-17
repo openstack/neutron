@@ -50,82 +50,41 @@ class SubnetPool(base.NeutronDbObject):
 
     synthetic_fields = ['prefixes']
 
-    @classmethod
-    def modify_fields_from_db(cls, db_obj):
-        fields = super(SubnetPool, cls).modify_fields_from_db(db_obj)
-        if 'prefixes' in fields:
-            fields['prefixes'] = [
-                netaddr.IPNetwork(prefix.cidr)
-                for prefix in fields['prefixes']
+    def from_db_object(self, db_obj):
+        super(SubnetPool, self).from_db_object(db_obj)
+        self.prefixes = []
+        if db_obj['prefixes']:
+            self.prefixes = [
+                prefix.cidr
+                for prefix in db_obj.prefixes
             ]
-        return fields
-
-    @classmethod
-    def modify_fields_to_db(cls, fields):
-        result = super(SubnetPool, cls).modify_fields_to_db(fields)
-        if 'prefixes' in result:
-            result['prefixes'] = [
-                models.SubnetPoolPrefix(cidr=str(prefix),
-                                        subnetpool_id=result['id'])
-                for prefix in result['prefixes']
-            ]
-        return result
-
-    def reload_prefixes(self):
-        prefixes = [
-            obj.cidr
-            for obj in SubnetPoolPrefix.get_objects(
-                self.obj_context,
-                subnetpool_id=self.id)
-        ]
-        setattr(self, 'prefixes', prefixes)
         self.obj_reset_changes(['prefixes'])
 
-    @classmethod
-    def get_object(cls, context, **kwargs):
-        with db_api.autonested_transaction(context.session):
-            pool_obj = super(SubnetPool, cls).get_object(context, **kwargs)
-            if pool_obj is not None:
-                pool_obj.reload_prefixes()
-            return pool_obj
-
-    @classmethod
-    def get_objects(cls, context, _pager=None, validate_filters=True,
-                    **kwargs):
-        with db_api.autonested_transaction(context.session):
-            objs = super(SubnetPool, cls).get_objects(context, _pager,
-                                                      validate_filters,
-                                                      **kwargs)
-            for obj in objs:
-                obj.reload_prefixes()
-            return objs
+    def _attach_prefixes(self, prefixes):
+        SubnetPoolPrefix.delete_objects(self.obj_context,
+                                        subnetpool_id=self.id)
+        for prefix in prefixes:
+            SubnetPoolPrefix(self.obj_context, subnetpool_id=self.id,
+                             cidr=prefix).create()
+        self.prefixes = prefixes
+        self.obj_reset_changes(['prefixes'])
 
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def create(self):
-        synthetic_changes = self._get_changed_synthetic_fields()
+        fields = self.obj_get_changes()
         with db_api.autonested_transaction(self.obj_context.session):
+            prefixes = self.prefixes
             super(SubnetPool, self).create()
-            if 'prefixes' in synthetic_changes:
-                for prefix in self.prefixes:
-                    prefix = SubnetPoolPrefix(
-                        self.obj_context, subnetpool_id=self.id, cidr=prefix)
-                    prefix.create()
-            self.reload_prefixes()
+            if 'prefixes' in fields:
+                self._attach_prefixes(prefixes)
 
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def update(self):
+        fields = self.obj_get_changes()
         with db_api.autonested_transaction(self.obj_context.session):
-            synthetic_changes = self._get_changed_synthetic_fields()
             super(SubnetPool, self).update()
-            if synthetic_changes:
-                if 'prefixes' in synthetic_changes:
-                    SubnetPoolPrefix.delete_objects(self.obj_context,
-                                                    subnetpool_id=self.id)
-                    for prefix in self.prefixes:
-                        prefix_obj = SubnetPoolPrefix(self.obj_context,
-                                                      subnetpool_id=self.id,
-                                                      cidr=prefix)
-                        prefix_obj.create()
+            if 'prefixes' in fields:
+                self._attach_prefixes(fields['prefixes'])
 
 
 @obj_base.VersionedObjectRegistry.register
