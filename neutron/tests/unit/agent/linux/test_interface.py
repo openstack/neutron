@@ -364,6 +364,12 @@ class TestABCDriver(TestBase):
             [mock.call(device_name, namespace=ns),
              mock.call().addr.list(scope='link', ip_version=6)])
 
+    def test_set_mtu_logs_once(self):
+        bc = BaseChild(self.conf)
+        with mock.patch('neutron.agent.linux.interface.LOG.warning') as log:
+            bc.set_mtu('dev', 9999)
+            log.assert_called_once_with(mock.ANY)
+
 
 class TestOVSInterfaceDriver(TestBase):
 
@@ -447,6 +453,8 @@ class TestOVSInterfaceDriver(TestBase):
                      mock.call().ensure_namespace().add_device_to_namespace(
                          mock.ANY)])
             expected.extend([
+                mock.call(namespace=namespace),
+                mock.call().device('tap0'),
                 mock.call().device().link.set_mtu(9000),
                 mock.call().device().link.set_up(),
             ])
@@ -496,6 +504,10 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
             root_dev = mock.Mock()
             ns_dev = mock.Mock()
             self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
+            mock.patch.object(
+                interface, '_get_veth',
+                return_value=(root_dev, ns_dev)).start()
+
             expected = [mock.call(),
                         mock.call().add_veth('tap0', devname,
                                              namespace2=namespace)]
@@ -558,6 +570,9 @@ class TestBridgeInterfaceDriver(TestBase):
         ns_veth = mock.Mock()
 
         self.ip().add_veth = mock.Mock(return_value=(root_veth, ns_veth))
+        mock.patch.object(
+            interface, '_get_veth',
+            return_value=(root_veth, ns_veth)).start()
 
         self.device_exists.side_effect = device_exists
         br = interface.BridgeInterfaceDriver(self.conf)

@@ -46,6 +46,11 @@ OPTS = [
 ]
 
 
+def _get_veth(name1, name2, namespace2):
+    return (ip_lib.IPDevice(name1),
+            ip_lib.IPDevice(name2, namespace=namespace2))
+
+
 @six.add_metaclass(abc.ABCMeta)
 class LinuxInterfaceDriver(object):
 
@@ -54,6 +59,7 @@ class LinuxInterfaceDriver(object):
 
     def __init__(self, conf):
         self.conf = conf
+        self._mtu_update_warn_logged = False
 
     @property
     def use_gateway_ips(self):
@@ -262,6 +268,11 @@ class LinuxInterfaceDriver(object):
                               bridge, namespace, prefix)
         else:
             LOG.info(_LI("Device %s already exists"), device_name)
+            if mtu:
+                self.set_mtu(
+                    device_name, mtu, namespace=namespace, prefix=prefix)
+            else:
+                LOG.warning(_LW("No MTU configured for port %s"), port_id)
 
     @abc.abstractmethod
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
@@ -283,6 +294,12 @@ class LinuxInterfaceDriver(object):
         DHCP port where the IP subnet is defined.
         """
         return True
+
+    def set_mtu(self, device_name, mtu, namespace=None, prefix=None):
+        """Set MTU on the interface."""
+        if not self._mtu_update_warn_logged:
+            LOG.warning(_LW("Interface driver cannot update MTU for ports"))
+            self._mtu_update_warn_logged = True
 
 
 class NullDriver(LinuxInterfaceDriver):
@@ -369,9 +386,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         # allow to set MTU that is higher than the least of all device MTUs on
         # the bridge
         if mtu:
-            ns_dev.link.set_mtu(mtu)
-            if self.conf.ovs_use_veth:
-                root_dev.link.set_mtu(mtu)
+            self.set_mtu(device_name, mtu, namespace=namespace, prefix=prefix)
         else:
             LOG.warning(_LW("No MTU configured for port %s"), port_id)
 
@@ -397,6 +412,16 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         except RuntimeError:
             LOG.error(_LE("Failed unplugging interface '%s'"),
                       device_name)
+
+    def set_mtu(self, device_name, mtu, namespace=None, prefix=None):
+        if self.conf.ovs_use_veth:
+            tap_name = self._get_tap_name(device_name, prefix)
+            root_dev, ns_dev = _get_veth(
+                tap_name, device_name, namespace2=namespace)
+            root_dev.link.set_mtu(mtu)
+        else:
+            ns_dev = ip_lib.IPWrapper(namespace=namespace).device(device_name)
+        ns_dev.link.set_mtu(mtu)
 
 
 class IVSInterfaceDriver(LinuxInterfaceDriver):
@@ -478,8 +503,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         ns_veth.link.set_address(mac_address)
 
         if mtu:
-            root_veth.link.set_mtu(mtu)
-            ns_veth.link.set_mtu(mtu)
+            self.set_mtu(device_name, mtu, namespace=namespace, prefix=prefix)
         else:
             LOG.warning(_LW("No MTU configured for port %s"), port_id)
 
@@ -495,3 +519,11 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         except RuntimeError:
             LOG.error(_LE("Failed unplugging interface '%s'"),
                       device_name)
+
+    def set_mtu(self, device_name, mtu, namespace=None, prefix=None):
+        tap_name = device_name.replace(prefix or self.DEV_NAME_PREFIX,
+                                       constants.TAP_DEVICE_PREFIX)
+        root_dev, ns_dev = _get_veth(
+            tap_name, device_name, namespace2=namespace)
+        root_dev.link.set_mtu(mtu)
+        ns_dev.link.set_mtu(mtu)
