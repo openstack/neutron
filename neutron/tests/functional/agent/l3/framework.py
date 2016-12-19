@@ -458,7 +458,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def _assert_internal_devices(self, router):
         internal_devices = router.router[constants.INTERFACE_KEY]
-        self.assertTrue(len(internal_devices))
+        self.assertGreater(len(internal_devices), 0)
         for device in internal_devices:
             self.assertTrue(self.device_exists_with_ips_and_mac(
                 device, router.get_internal_device_name, router.ns_name))
