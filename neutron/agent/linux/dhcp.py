@@ -39,7 +39,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.cmd.sanity import checks
 from neutron.common import constants as n_const
-from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.ipam import utils as ipam_utils
@@ -1241,7 +1240,7 @@ class DeviceManager(object):
                         port.id, {'port': {'network_id': network.id,
                                            'device_id': device_id}})
                 except oslo_messaging.RemoteError as e:
-                    if e.exc_type == n_exc.DhcpPortInUse:
+                    if e.exc_type == 'DhcpPortInUse':
                         LOG.info(_LI("Skipping DHCP port %s as it is "
                                      "already in use"), port.id)
                         continue
