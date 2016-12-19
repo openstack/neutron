@@ -87,6 +87,34 @@ def when(index, *args, **kwargs):
     return _pecan_generator_wrapper(index.when, *args, **kwargs)
 
 
+def when_delete(index, *args, **kwargs):
+    kwargs['method'] = 'DELETE'
+    deco = _pecan_generator_wrapper(index.when, *args, **kwargs)
+    return _composed(_set_del_code, deco)
+
+
+def _set_del_code(f):
+    """Handle logic of disabling json templating engine and setting HTTP code.
+
+    We return 204 on delete without content. However, pecan defaults empty
+    responses with the json template engine to 'null', which is not empty
+    content. This breaks connection re-use for some clients due to the
+    inconsistency. So we need to detect when there is no response and
+    disable the json templating engine.
+    See https://github.com/pecan/pecan/issues/72
+    """
+
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        f(*args, **kwargs)
+        pecan.response.status = 204
+        pecan.override_template(None)
+        # NOTE(kevinbenton): we are explicitly not returning the DELETE
+        # response from the controller because that is the legacy Neutron
+        # API behavior.
+    return wrapped
+
+
 class NeutronPecanController(object):
 
     LIST = 'list'
@@ -214,11 +242,10 @@ class ShimItemController(NeutronPecanController):
     def index(self):
         pecan.abort(405)
 
-    @when(index, method='DELETE')
+    @when_delete(index)
     def delete(self):
         if not self.controller_delete:
             pecan.abort(405)
-        pecan.response.status = 204
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
         return self.controller_delete(shim_request, self.item,

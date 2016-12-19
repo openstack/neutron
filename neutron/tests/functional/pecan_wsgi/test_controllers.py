@@ -229,6 +229,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         response = self.app.delete(url, headers={'X-Project-Id': 'admin',
                                                  'X-Roles': 'admin'})
         self.assertEqual(204, response.status_int)
+        self.assertFalse(response.body)
         # As DELETE does not return a body we need another GET
         response = self.app.get(url, headers={'X-Project-Id': 'foo'})
         self.assertEqual(200, response.status_int)
@@ -261,6 +262,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         response = self.app.delete(url, headers={'X-Project-Id': 'admin',
                                                  'X-Roles': 'admin'})
         self.assertEqual(204, response.status_int)
+        self.assertFalse(response.body)
         response = self.app.get(self.base_url,
                                 headers={'X-Project-Id': 'admin',
                                          'X-Roles': 'admin'})
@@ -388,6 +390,7 @@ class TestResourceController(TestRootController):
         response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'],
                                    headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 204)
+        self.assertFalse(response.body)
 
     def test_plugin_initialized(self):
         self.assertIsNotNone(manager.NeutronManager._instance)
@@ -819,6 +822,7 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
             '/v2.0/agents/%(a)s/l3-routers/%(n)s.json' % {
                 'a': self.agent.id, 'n': self.router['id']}, headers=headers)
         self.assertEqual(204, response.status_int)
+        self.assertFalse(response.body)
         response = self.app.get(
             '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
             headers=headers)
