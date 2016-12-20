@@ -189,7 +189,6 @@ class L3(extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         plural_mappings = resource_helper.build_plural_mappings(
             {}, RESOURCE_ATTRIBUTE_MAP)
-        plural_mappings['external_fixed_ips'] = 'external_fixed_ip'
         action_map = {'router': {'add_router_interface': 'PUT',
                                  'remove_router_interface': 'PUT'}}
         return resource_helper.build_resource_info(plural_mappings,
