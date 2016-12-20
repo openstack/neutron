@@ -13,17 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import debtcollector
 from neutron_lib import exceptions
 
 from neutron._i18n import _
-
-
-def deprecate_local_vlan_map_in_object(object_name, stacklevel_extra=0):
-    debtcollector.deprecate(
-        "local_vlan_map argument for %s was deprecated." % object_name,
-        version="Newton", removal_version="Ocata",
-        stacklevel=4 + stacklevel_extra)
 
 
 class VifIdNotFound(exceptions.NeutronException):

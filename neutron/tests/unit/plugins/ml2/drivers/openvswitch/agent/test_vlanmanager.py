@@ -118,9 +118,3 @@ class TestLocalVlanManager(base.BaseTestCase):
     def test_pop_non_existing_raises_exception(self):
         with testtools.ExpectedException(vlanmanager.MappingNotFound):
             self.vlan_manager.pop(1)
-
-
-class TestDeprecationMessage(base.BaseTestCase):
-    def test_deprecation_message(self):
-        """Test that calling function doesn't crash"""
-        vlanmanager.deprecate_local_vlan_map_in_object("foo")

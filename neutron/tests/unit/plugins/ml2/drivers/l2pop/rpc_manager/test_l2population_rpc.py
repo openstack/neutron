@@ -221,7 +221,7 @@ class TestL2populationRpcCallBackTunnelMixin(
         m_setup_entry_for_arp_reply = mock.Mock()
         self.fakeagent.setup_entry_for_arp_reply = m_setup_entry_for_arp_reply
         self.fakeagent.fdb_chg_ip_tun(
-            'context', self.fakebr, self.upd_fdb_entry1, self.local_ip, {})
+            'context', self.fakebr, self.upd_fdb_entry1, self.local_ip)
         self.assertFalse(m_setup_entry_for_arp_reply.call_count)
 
     def test__fdb_chg_ip_ip_is_local_ip(self):
