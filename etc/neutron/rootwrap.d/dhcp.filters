@@ -13,8 +13,8 @@ dnsmasq: CommandFilter, dnsmasq, root
 # dhcp-agent uses kill as well, that's handled by the generic KillFilter
 # it looks like these are the only signals needed, per
 # neutron/agent/linux/dhcp.py
-kill_dnsmasq: KillFilter, root, /sbin/dnsmasq, -9, -HUP
-kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP
+kill_dnsmasq: KillFilter, root, /sbin/dnsmasq, -9, -HUP, -15
+kill_dnsmasq_usr: KillFilter, root, /usr/sbin/dnsmasq, -9, -HUP, -15
 
 ovs-vsctl: CommandFilter, ovs-vsctl, root
 ivs-ctl: CommandFilter, ivs-ctl, root
