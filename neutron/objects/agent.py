@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_serialization import jsonutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -41,8 +40,8 @@ class Agent(base.NeutronDbObject):
         'created_at': obj_fields.DateTimeField(tzinfo_aware=False),
         'heartbeat_timestamp': obj_fields.DateTimeField(tzinfo_aware=False),
         'description': obj_fields.StringField(nullable=True),
-        'configurations': obj_fields.DictOfStringsField(),
-        'resource_versions': obj_fields.DictOfStringsField(nullable=True),
+        'configurations': common_types.DictOfMiscValuesField(),
+        'resource_versions': common_types.DictOfMiscValuesField(nullable=True),
         'load': obj_fields.IntegerField(default=0),
     }
 
@@ -50,31 +49,26 @@ class Agent(base.NeutronDbObject):
     def modify_fields_to_db(cls, fields):
         result = super(Agent, cls).modify_fields_to_db(fields)
         if 'configurations' in result:
+            # dump configuration into string, set '' if empty '{}'
             result['configurations'] = (
-                cls.filter_to_json_str(result['configurations']))
+                cls.filter_to_json_str(result['configurations'], default=''))
         if 'resource_versions' in result:
-            if result['resource_versions']:
-                result['resource_versions'] = (
-                    cls.filter_to_json_str(result['resource_versions']))
-            if not fields['resource_versions']:
-                result['resource_versions'] = None
+            # dump resource version into string, set None if empty '{}' or None
+            result['resource_versions'] = (
+                cls.filter_to_json_str(result['resource_versions']))
         return result
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         fields = super(Agent, cls).modify_fields_from_db(db_obj)
         if 'configurations' in fields:
-            if fields['configurations']:
-                fields['configurations'] = jsonutils.loads(
-                    fields['configurations'])
-            if not fields['configurations']:
-                fields['configurations'] = {}
+            # load string from DB, set {} if configuration is ''
+            fields['configurations'] = (
+                cls.load_json_from_str(fields['configurations'], default={}))
         if 'resource_versions' in fields:
-            if fields['resource_versions']:
-                fields['resource_versions'] = jsonutils.loads(
-                    fields['resource_versions'])
-            if not fields['resource_versions']:
-                fields['resource_versions'] = None
+            # load string from DB, set None if resource_version is None or ''
+            fields['resource_versions'] = (
+                cls.load_json_from_str(fields['resource_versions']))
         return fields
 
     @property

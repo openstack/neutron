@@ -110,9 +110,9 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
             self.context, **obj._get_composite_keys())
         self.assertEqual(vif_details, obj.vif_details)
 
-        vif_details['item1'] = 'val2'
+        vif_details['item1'] = 1.23
         del vif_details['item2']
-        vif_details['item3'] = 'val3'
+        vif_details['item3'] = True
 
         obj.vif_details = vif_details
         obj.update()
@@ -123,6 +123,9 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
 
         obj.vif_details = None
         obj.update()
+        # here the obj is reloaded from DB,
+        # so we test if vif_details is still none
+        self.assertIsNone(obj.vif_details)
 
         obj = self._test_class.get_object(
             self.context, **obj._get_composite_keys())

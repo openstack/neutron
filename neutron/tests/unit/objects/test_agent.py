@@ -34,10 +34,15 @@ class AgentDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj.configurations = {}
         obj.update()
 
+        db_fields = obj.modify_fields_to_db(obj)
+        self.assertEqual('', db_fields['configurations'])
+
         obj = agent.Agent.get_object(self.context, id=obj.id)
         self.assertEqual({}, obj.configurations)
 
-        conf = {'key': 'val'}
+        conf = {"tunnel_types": ["vxlan"],
+                "tunneling_ip": "20.0.0.1",
+                "bridge_mappings": {"phys_net1": "br-eth-1"}}
         obj.configurations = conf
         obj.update()
 
@@ -46,7 +51,7 @@ class AgentDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def test_resource_versions(self):
         obj = self.objs[0]
-        versions = {'obj1': 'ver1', 'obj2': 'ver2'}
+        versions = {'obj1': 'ver1', 'obj2': 1.1}
         obj.resource_versions = versions
         obj.create()
 
@@ -56,9 +61,15 @@ class AgentDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj.resource_versions = {}
         obj.update()
 
+        db_fields = obj.modify_fields_to_db(obj)
+        self.assertIsNone(db_fields['resource_versions'])
+
         obj = agent.Agent.get_object(self.context, id=obj.id)
         self.assertIsNone(obj.resource_versions)
 
         obj.resource_versions = None
         obj.update()
         self.assertIsNone(obj.resource_versions)
+
+        db_fields = obj.modify_fields_to_db(obj)
+        self.assertIsNone(db_fields['resource_versions'])
