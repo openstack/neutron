@@ -95,7 +95,6 @@ class DhcpAgent(manager.Manager):
 
     def run(self):
         """Activate the DHCP agent."""
-        self.sync_state()
         self.periodic_resync()
         self.start_ready_ports_loop()
 
