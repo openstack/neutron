@@ -12,16 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import os
 
+from oslo_concurrency import lockutils
 from oslo_log import log as logging
+from oslo_utils import excutils
 
+from neutron._i18n import _, _LE, _LW
 from neutron.agent.l3 import fip_rule_priority_allocator as frpa
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 
@@ -97,9 +102,51 @@ class FipNamespace(namespaces.Namespace):
     def deallocate_rule_priority(self, floating_ip):
         self._rule_priorities.release(floating_ip)
 
-    def _gateway_added(self, ex_gw_port, interface_name):
-        """Add Floating IP gateway port."""
-        LOG.debug("add gateway interface(%s)", interface_name)
+    @contextlib.contextmanager
+    def _fip_port_lock(self, interface_name):
+        # Use a namespace and port-specific lock semaphore to allow for
+        # concurrency
+        lock_name = 'port-lock-' + self.name + '-' + interface_name
+        with lockutils.lock(lock_name, common_utils.SYNCHRONIZED_PREFIX):
+            try:
+                yield
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.error(_LE('DVR: FIP namespace config failure '
+                                  'for interface %s'), interface_name)
+
+    def create_or_update_gateway_port(self, agent_gateway_port):
+        interface_name = self.get_ext_device_name(agent_gateway_port['id'])
+
+        # The lock is used to make sure another thread doesn't call to
+        # update the gateway port before we are done initializing things.
+        with self._fip_port_lock(interface_name):
+            is_first = self.subscribe(agent_gateway_port['network_id'])
+            if is_first:
+                self._create_gateway_port_and_ns(agent_gateway_port,
+                                                 interface_name)
+            else:
+                self._update_gateway_port(agent_gateway_port, interface_name)
+
+    def _create_gateway_port_and_ns(self, agent_gateway_port, interface_name):
+        """Create namespace and Floating IP gateway port."""
+        self.create()
+
+        try:
+            self._create_gateway_port(agent_gateway_port, interface_name)
+        except Exception:
+            # If an exception occurs at this point, then it is
+            # good to clean up the namespace that has been created
+            # and reraise the exception in order to resync the router
+            with excutils.save_and_reraise_exception():
+                self.unsubscribe(agent_gateway_port['network_id'])
+                self.delete()
+                LOG.exception(_LE('DVR: Gateway setup in FIP namespace '
+                                  'failed'))
+
+    def _create_gateway_port(self, ex_gw_port, interface_name):
+        """Request port creation from Plugin then configure gateway port."""
+        LOG.debug("DVR: adding gateway interface: %s", interface_name)
         ns_name = self.get_name()
         self.driver.plug(ex_gw_port['network_id'],
                          ex_gw_port['id'],
@@ -116,6 +163,7 @@ class FipNamespace(namespaces.Namespace):
         for device in devices:
             name = device.name
             if name.startswith(FIP_EXT_DEV_PREFIX) and name != interface_name:
+                LOG.debug('DVR: unplug: %s', name)
                 ext_net_bridge = self.agent_conf.external_network_bridge
                 self.driver.unplug(name,
                                    bridge=ext_net_bridge,
@@ -126,7 +174,7 @@ class FipNamespace(namespaces.Namespace):
         self.driver.init_l3(interface_name, ip_cidrs, namespace=ns_name,
                             clean_connections=True)
 
-        self.update_gateway_port(ex_gw_port)
+        self._update_gateway_port(ex_gw_port, interface_name)
 
         cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
         ip_wrapper.netns.execute(cmd, check_exit_code=False)
@@ -177,17 +225,6 @@ class FipNamespace(namespaces.Namespace):
         LOG.debug('DVR: destroy fip namespace: %s', self.name)
         super(FipNamespace, self).delete()
 
-    def create_gateway_port(self, agent_gateway_port):
-        """Create Floating IP gateway port.
-
-           Request port creation from Plugin then creates
-           Floating IP namespace and adds gateway port.
-        """
-        self.create()
-
-        iface_name = self.get_ext_device_name(agent_gateway_port['id'])
-        self._gateway_added(agent_gateway_port, iface_name)
-
     def _check_for_gateway_ip_change(self, new_agent_gateway_port):
 
         def get_gateway_ips(gateway_port):
@@ -205,22 +242,33 @@ class FipNamespace(namespaces.Namespace):
 
         return new_gw_ips != old_gw_ips
 
-    def update_gateway_port(self, agent_gateway_port):
-        gateway_ip_not_changed = self.agent_gateway_port and (
-            not self._check_for_gateway_ip_change(agent_gateway_port))
-        self.agent_gateway_port = agent_gateway_port
-        if gateway_ip_not_changed:
-            return
+    def _update_gateway_port(self, agent_gateway_port, interface_name):
+        if (self.agent_gateway_port and
+            not self._check_for_gateway_ip_change(agent_gateway_port)):
+                return
 
         ns_name = self.get_name()
-        interface_name = self.get_ext_device_name(agent_gateway_port['id'])
+        ipd = ip_lib.IPDevice(interface_name, namespace=ns_name)
+        # If the 'fg-' device doesn't exist in the namespace then trying
+        # to send advertisements or configure the default route will just
+        # throw exceptions.  Unsubscribe this external network so that
+        # the next call will trigger the interface to be plugged.
+        if not ipd.exists():
+            self.unsubscribe(agent_gateway_port['network_id'])
+            LOG.warning(_LW('DVR: FIP gateway port with interface '
+                            'name: %(device)s does not exist in the given '
+                            'namespace: %(ns)s'), {'device': interface_name,
+                                                   'ns': ns_name})
+            msg = _('DVR: Gateway setup in FIP namespace failed, retry '
+                    'should be attempted on next call')
+            raise n_exc.FloatingIpSetupException(msg)
+
         for fixed_ip in agent_gateway_port['fixed_ips']:
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
                                           fixed_ip['ip_address'],
                                           self.agent_conf.send_arp_for_ha)
 
-        ipd = ip_lib.IPDevice(interface_name, namespace=ns_name)
         for subnet in agent_gateway_port['subnets']:
             gw_ip = subnet.get('gateway_ip')
             if gw_ip:
@@ -233,6 +281,10 @@ class FipNamespace(namespaces.Namespace):
                 current_gateway = ipd.route.get_gateway()
                 if current_gateway and current_gateway.get('gateway'):
                     ipd.route.delete_gateway(current_gateway.get('gateway'))
+        # Cache the agent gateway port after successfully configuring
+        # the gateway, so that checking on self.agent_gateway_port
+        # will be a valid check
+        self.agent_gateway_port = agent_gateway_port
 
     def _add_cidr_to_device(self, device, ip_cidr):
         if not device.addr.list(to=ip_cidr):

@@ -170,7 +170,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.fip_ns.subscribe.return_value = False
         ex_gw_port = {'network_id': 'fake_net_id'}
         ri.create_dvr_fip_interfaces(ex_gw_port)
-        ri.fip_ns.update_gateway_port.assert_called_once_with(
+        ri.fip_ns.create_or_update_gateway_port.assert_called_once_with(
             fip_agent_port)
 
     def test_get_floating_ips_dvr(self):
