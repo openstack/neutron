@@ -343,6 +343,7 @@ class APIv2TestCase(APIv2TestBase):
         res = self.api.get(_get_path('networks'),
                            {'limit': 'abc'}, expect_errors=True)
         self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
+        self.assertIn('abc', res)
 
     def test_limit_with_infinite_pagination_max_limit(self):
         instance = self.plugin.return_value
