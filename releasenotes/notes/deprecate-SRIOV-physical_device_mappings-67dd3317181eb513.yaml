@@ -1,0 +1,7 @@
+---
+deprecations:
+  - The 'physical_device_mappings' option is deprecated
+    and will be removed in Pike. The PCI device validation
+    is made in Nova with the 'pci_whitelist' config option.
+    Therefore it is redundant to validate it in Neutron
+    with physical_device_mappings.
