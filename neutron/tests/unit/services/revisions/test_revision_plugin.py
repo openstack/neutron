@@ -34,7 +34,8 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     def get_additional_service_plugins(self):
         p = super(TestRevisionPlugin, self).get_additional_service_plugins()
         p.update({'revision_plugin_name': 'revisions',
-                  'qos_plugin_name': 'qos'})
+                  'qos_plugin_name': 'qos',
+                  'tag_name': 'tag'})
         return p
 
     def setUp(self):
@@ -175,3 +176,19 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             response = self._update('networks', network['network']['id'], data)
             new_rev = response['network']['revision_number']
             self.assertGreater(new_rev, rev)
+
+    def test_net_tag_bumps_net_revision(self):
+        with self.network() as network:
+            rev = network['network']['revision_number']
+            tag_plugin = directory.get_plugin('TAG')
+            tag_plugin.update_tag(self.ctx, 'networks',
+                                  network['network']['id'], 'mytag')
+            updated = directory.get_plugin().get_network(
+                self.ctx, network['network']['id'])
+            self.assertGreater(updated['revision_number'], rev)
+            tag_plugin.delete_tag(self.ctx, 'networks',
+                                  network['network']['id'], 'mytag')
+            rev = updated['revision_number']
+            updated = directory.get_plugin().get_network(
+                self.ctx, network['network']['id'])
+            self.assertGreater(updated['revision_number'], rev)

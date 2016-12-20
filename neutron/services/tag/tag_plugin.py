@@ -103,8 +103,8 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
         res = self._get_resource(context, resource, resource_id)
         with db_api.context_manager.writer.using(context):
             query = context.session.query(tag_model.Tag)
-            query = query.filter_by(standard_attr_id=res.standard_attr_id)
-            query.delete()
+            for t in query.filter_by(standard_attr_id=res.standard_attr_id):
+                context.session.delete(t)
 
     @log_helpers.log_method_call
     def delete_tag(self, context, resource, resource_id, tag):
@@ -113,7 +113,9 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
             query = context.session.query(tag_model.Tag)
             query = query.filter_by(tag=tag,
                                     standard_attr_id=res.standard_attr_id)
-            if not query.delete():
+            try:
+                context.session.delete(query.one())
+            except exc.NoResultFound:
                 raise tag_ext.TagNotFound(tag=tag)
 
     # support only _apply_dict_extend_functions supported resources
