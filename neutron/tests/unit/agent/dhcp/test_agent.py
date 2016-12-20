@@ -246,42 +246,35 @@ class TestDhcpAgent(base.BaseTestCase):
         # sync_state is needed for this test
         cfg.CONF.set_override('report_interval', 1, 'AGENT')
         with mock.patch.object(dhcp_agent.DhcpAgentWithStateReport,
-                               'sync_state',
-                               autospec=True) as mock_sync_state:
-            with mock.patch.object(dhcp_agent.DhcpAgentWithStateReport,
-                                   'periodic_resync',
-                                   autospec=True) as mock_periodic_resync:
-                with mock.patch(state_rpc_str) as state_rpc:
-                    with mock.patch.object(sys, 'argv') as sys_argv:
-                        sys_argv.return_value = [
-                            'dhcp', '--config-file',
-                            base.etcdir('neutron.conf')]
-                        cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
-                        config.register_interface_driver_opts_helper(cfg.CONF)
-                        config.register_agent_state_opts_helper(cfg.CONF)
-                        cfg.CONF.register_opts(interface.OPTS)
-                        common_config.init(sys.argv[1:])
-                        agent_mgr = dhcp_agent.DhcpAgentWithStateReport(
-                            'testhost')
-                        eventlet.greenthread.sleep(1)
-                        agent_mgr.after_start()
-                        mock_sync_state.assert_called_once_with(agent_mgr)
-                        mock_periodic_resync.assert_called_once_with(agent_mgr)
-                        state_rpc.assert_has_calls(
-                            [mock.call(mock.ANY),
-                             mock.call().report_state(mock.ANY, mock.ANY,
-                                                      mock.ANY)])
+                               'periodic_resync',
+                               autospec=True) as mock_periodic_resync:
+            with mock.patch(state_rpc_str) as state_rpc:
+                with mock.patch.object(sys, 'argv') as sys_argv:
+                    sys_argv.return_value = [
+                        'dhcp', '--config-file',
+                        base.etcdir('neutron.conf')]
+                    cfg.CONF.register_opts(dhcp_config.DHCP_AGENT_OPTS)
+                    config.register_interface_driver_opts_helper(cfg.CONF)
+                    config.register_agent_state_opts_helper(cfg.CONF)
+                    cfg.CONF.register_opts(interface.OPTS)
+                    common_config.init(sys.argv[1:])
+                    agent_mgr = dhcp_agent.DhcpAgentWithStateReport(
+                        'testhost')
+                    eventlet.greenthread.sleep(1)
+                    agent_mgr.after_start()
+                    mock_periodic_resync.assert_called_once_with(agent_mgr)
+                    state_rpc.assert_has_calls(
+                        [mock.call(mock.ANY),
+                         mock.call().report_state(mock.ANY, mock.ANY,
+                                                  mock.ANY)])
 
     def test_run_completes_single_pass(self):
         with mock.patch(DEVICE_MANAGER):
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-            attrs_to_mock = dict(
-                [(a, mock.DEFAULT) for a in
-                 ['sync_state', 'periodic_resync']])
-            with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
+            with mock.patch.object(dhcp,
+                                   'periodic_resync') as periodic_resync_mock:
                 dhcp.run()
-                mocks['sync_state'].assert_called_once_with()
-                mocks['periodic_resync'].assert_called_once_with()
+                periodic_resync_mock.assert_called_once_with()
 
     def test_call_driver(self):
         network = mock.Mock()
