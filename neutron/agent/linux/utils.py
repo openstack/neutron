@@ -219,11 +219,8 @@ def kill_process(pid, signal, run_as_root=False):
     """Kill the process with the given pid using the given signal."""
     try:
         execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root)
-    except ProcessExecutionError as ex:
-        # TODO(dalvarez): this check has i18n issues. Maybe we can use
-        # use gettext module setting a global locale or just pay attention
-        # to returncode instead of checking the ex message.
-        if 'No such process' not in str(ex):
+    except ProcessExecutionError:
+        if process_is_running(pid):
             raise
 
 
@@ -308,8 +305,15 @@ def remove_abs_path(cmd):
     return cmd
 
 
+def process_is_running(pid):
+    """Find if the given PID is running in the system.
+
+    """
+    return pid and os.path.exists('/proc/%s' % pid)
+
+
 def get_cmdline_from_pid(pid):
-    if pid is None or not os.path.exists('/proc/%s' % pid):
+    if not process_is_running(pid):
         return []
     with open('/proc/%s/cmdline' % pid, 'r') as f:
         return f.readline().split('\0')[:-1]
