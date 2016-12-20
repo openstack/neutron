@@ -2167,8 +2167,8 @@ class TestDnsmasq(TestBase):
 
     def test_should_enable_metadata_isolated_meta_disabled_returns_false(self):
         self.conf.set_override('enable_isolated_metadata', False)
-        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(self.conf,
-                                                             mock.ANY))
+        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeV4MetadataNetwork()))
 
     def test_should_enable_metadata_with_metadata_network_returns_true(self):
         self.conf.set_override('enable_metadata_network', True)

@@ -1073,26 +1073,27 @@ class Dnsmasq(DhcpLocalProcess):
         providing access to the metadata service via logical routers built
         with 3rd party backends.
         """
-        if conf.force_metadata:
-            # Only ipv4 subnet, with dhcp enabled, will use metadata proxy.
-            return any(s for s in network.subnets
-                       if s.ip_version == 4 and s.enable_dhcp)
+        # Only IPv4 subnets, with dhcp enabled, will use the metadata proxy.
+        v4_dhcp_subnets = [s for s in network.subnets
+                           if s.ip_version == 4 and s.enable_dhcp]
+        if not v4_dhcp_subnets:
+            return False
 
-        if conf.enable_metadata_network and conf.enable_isolated_metadata:
+        if conf.force_metadata:
+            return True
+
+        if not conf.enable_isolated_metadata:
+            return False
+
+        if conf.enable_metadata_network:
             # check if the network has a metadata subnet
             meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
             if any(netaddr.IPNetwork(s.cidr) in meta_cidr
                    for s in network.subnets):
                 return True
 
-        if not conf.enable_isolated_metadata:
-            return False
-
         isolated_subnets = cls.get_isolated_subnets(network)
-        # Only ipv4 isolated subnet, which has dhcp enabled, will use
-        # metadata proxy.
-        return any(isolated_subnets[s.id] for s in network.subnets
-                   if s.ip_version == 4 and s.enable_dhcp)
+        return any(isolated_subnets[s.id] for s in v4_dhcp_subnets)
 
 
 class DeviceManager(object):
