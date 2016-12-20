@@ -51,21 +51,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         if test.is_extension_enabled('project-id', 'network'):
             self.assertEqual(project_id, network['project_id'])
 
-    @test.idempotent_id('867819bb-c4b6-45f7-acf9-90edcf70aa5e')
-    def test_show_network_fields(self):
-        # Verify specific fields of a network
-        fields = ['id', 'name']
-        if test.is_extension_enabled('net-mtu', 'network'):
-            fields.append('mtu')
-        body = self.client.show_network(self.network['id'],
-                                        fields=fields)
-        network = body['network']
-        self.assertEqual(sorted(network.keys()), sorted(fields))
-        for field_name in fields:
-            self.assertEqual(network[field_name], self.network[field_name])
-        self.assertNotIn('tenant_id', network)
-        self.assertNotIn('project_id', network)
-
     @test.idempotent_id('26f2b7a5-2cd1-4f3a-b11f-ad259b099b11')
     @test.requires_ext(extension="project-id", service="network")
     def test_show_network_fields_keystone_v3(self):
@@ -84,21 +69,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         _check_show_network_fields(['tenant_id'], False, True)
         _check_show_network_fields(['project_id'], True, False)
         _check_show_network_fields(['project_id', 'tenant_id'], True, True)
-
-    @test.idempotent_id('c72c1c0c-2193-4aca-ccc4-b1442640bbbb')
-    @test.requires_ext(extension="standard-attr-description",
-                       service="network")
-    def test_create_update_network_description(self):
-        body = self.create_network(description='d1')
-        self.assertEqual('d1', body['description'])
-        net_id = body['id']
-        body = self.client.list_networks(id=net_id)['networks'][0]
-        self.assertEqual('d1', body['description'])
-        body = self.client.update_network(body['id'],
-                                          description='d2')
-        self.assertEqual('d2', body['network']['description'])
-        body = self.client.list_networks(id=net_id)['networks'][0]
-        self.assertEqual('d2', body['description'])
 
     @test.idempotent_id('0cc0552f-afaf-4231-b7a7-c2a1774616da')
     @test.requires_ext(extension="project-id", service="network")
@@ -136,18 +106,6 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertEqual(domain2, body['network']['dns_domain'])
         body = self.client.show_network(net_id)['network']
         self.assertEqual(domain2, body['dns_domain'])
-
-    @test.idempotent_id('6ae6d24f-9194-4869-9c85-c313cb20e080')
-    def test_list_networks_fields(self):
-        # Verify specific fields of the networks
-        fields = ['id', 'name']
-        if test.is_extension_enabled('net-mtu', 'network'):
-            fields.append('mtu')
-        body = self.client.list_networks(fields=fields)
-        networks = body['networks']
-        self.assertNotEmpty(networks, "Network list returned is empty")
-        for network in networks:
-            self.assertEqual(sorted(network.keys()), sorted(fields))
 
     @test.idempotent_id('a23186b9-aa6f-4b08-b877-35ca3b9cd54c')
     @test.requires_ext(extension="project-id", service="network")
