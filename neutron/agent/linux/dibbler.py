@@ -51,7 +51,13 @@ iface {{ interface_name }} {
 # Bind to generated LLA
 bind-to-address {{ bind_address }}
 # ask for address
+   {% if hint_prefix != None %}
+    pd 1 {
+        prefix {{ hint_prefix }}
+    }
+   {% else %}
     pd 1
+   {% endif %}
 }
 """)
 
@@ -77,7 +83,7 @@ class PDDibbler(pd_driver.PDDriverBase):
     def _is_dibbler_client_running(self):
         return utils.get_value_from_file(self.pid_path)
 
-    def _generate_dibbler_conf(self, ex_gw_ifname, lla):
+    def _generate_dibbler_conf(self, ex_gw_ifname, lla, hint_prefix):
         dcwa = self.dibbler_client_working_area
         script_path = utils.get_conf_file_name(dcwa, 'notify', 'sh', True)
         buf = six.StringIO()
@@ -94,7 +100,8 @@ class PDDibbler(pd_driver.PDDriverBase):
                              va_id='0x%s' % self.converted_subnet_id,
                              script_path='"%s/notify.sh"' % dcwa,
                              interface_name='"%s"' % ex_gw_ifname,
-                             bind_address='%s' % lla))
+                             bind_address='%s' % lla,
+                             hint_prefix=hint_prefix))
 
         file_utils.replace_file(dibbler_conf, buf.getvalue())
         return dcwa
@@ -118,17 +125,18 @@ class PDDibbler(pd_driver.PDDriverBase):
                       service_name=PD_SERVICE_NAME,
                       monitored_process=pm)
 
-    def enable(self, pmon, router_ns, ex_gw_ifname, lla):
+    def enable(self, pmon, router_ns, ex_gw_ifname, lla, prefix=None):
         LOG.debug("Enable IPv6 PD for router %s subnet %s ri_ifname %s",
                   self.router_id, self.subnet_id, self.ri_ifname)
         if not self._is_dibbler_client_running():
-            dibbler_conf = self._generate_dibbler_conf(ex_gw_ifname, lla)
+            dibbler_conf = self._generate_dibbler_conf(ex_gw_ifname,
+                                                       lla, prefix)
             self._spawn_dibbler(pmon, router_ns, dibbler_conf)
             LOG.debug("dibbler client enabled for router %s subnet %s"
                       " ri_ifname %s",
                       self.router_id, self.subnet_id, self.ri_ifname)
 
-    def disable(self, pmon, router_ns):
+    def disable(self, pmon, router_ns, switch_over=False):
         LOG.debug("Disable IPv6 PD for router %s subnet %s ri_ifname %s",
                   self.router_id, self.subnet_id, self.ri_ifname)
         dcwa = self.dibbler_client_working_area
@@ -147,7 +155,10 @@ class PDDibbler(pd_driver.PDDriverBase):
                 service=PD_SERVICE_NAME,
                 conf=cfg.CONF,
                 pid_file=self.pid_path)
-        pm.disable(get_stop_command=callback)
+        if switch_over:
+            pm.disable()
+        else:
+            pm.disable(get_stop_command=callback)
         shutil.rmtree(dcwa, ignore_errors=True)
         LOG.debug("dibbler client disabled for router %s subnet %s "
                   "ri_ifname %s",

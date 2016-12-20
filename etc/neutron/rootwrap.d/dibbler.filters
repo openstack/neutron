@@ -14,3 +14,4 @@
 
 # prefix_delegation_agent
 dibbler-client: CommandFilter, dibbler-client, root
+kill_dibbler-client: KillFilter, root, dibbler-client, -9

@@ -125,6 +125,7 @@ class AgentMixin(object):
         if self.conf.enable_metadata_proxy:
             self._update_metadata_proxy(ri, router_id, state)
         self._update_radvd_daemon(ri, state)
+        self.pd.process_ha_state(router_id, state == 'master')
         self.state_change_notifier.queue_event((router_id, state))
 
     def _configure_ipv6_ra_on_ext_gw_port_if_necessary(self, ri, state):

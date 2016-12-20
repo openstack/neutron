@@ -20,6 +20,7 @@ from oslo_utils import uuidutils
 from six import moves
 
 from neutron.common import constants as n_const
+from neutron.common import ipv6_utils
 
 _uuid = uuidutils.generate_uuid
 
@@ -287,6 +288,26 @@ def router_append_pd_enabled_subnet(router, count=1):
         interfaces.append(intf)
         pd_intfs.append(intf)
         mac_address.value += 1
+
+
+def get_unassigned_pd_interfaces(router):
+    pd_intfs = []
+    for intf in router[lib_constants.INTERFACE_KEY]:
+        for subnet in intf['subnets']:
+            if (ipv6_utils.is_ipv6_pd_enabled(subnet) and
+                subnet['cidr'] == n_const.PROVISIONAL_IPV6_PD_PREFIX):
+                pd_intfs.append(intf)
+    return pd_intfs
+
+
+def assign_prefix_for_pd_interfaces(router):
+    pd_intfs = []
+    for ifno, intf in enumerate(router[lib_constants.INTERFACE_KEY]):
+        for subnet in intf['subnets']:
+            if (ipv6_utils.is_ipv6_pd_enabled(subnet) and
+                subnet['cidr'] == n_const.PROVISIONAL_IPV6_PD_PREFIX):
+                subnet['cidr'] = "2001:db8:%d::/64" % ifno
+                pd_intfs.append(intf)
     return pd_intfs
 
 

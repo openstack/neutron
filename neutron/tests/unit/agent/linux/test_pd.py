@@ -27,8 +27,9 @@ class FakeRouter(object):
 class TestPrefixDelegation(tests_base.DietTestCase):
     def test_remove_router(self):
         l3_agent = mock.Mock()
-        router_id = '1'
-        l3_agent.pd.routers = {router_id: pd.get_router_entry(None)}
+        router_id = 1
+        l3_agent.pd.routers = {router_id:
+                               pd.get_router_entry(None, True)}
         pd.remove_router(None, None, l3_agent, router=FakeRouter(router_id))
         self.assertTrue(l3_agent.pd.delete_router_pd.called)
         self.assertEqual({}, l3_agent.pd.routers)
