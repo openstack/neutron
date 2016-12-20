@@ -150,12 +150,6 @@ def get_random_mac(base_mac):
     return ':'.join(["%02x" % x for x in mac])
 
 
-@removals.remove(
-    message="Use get_random_string from neutron_lib.utils.helpers")
-def get_random_string(length):
-    return helpers.get_random_string(length)
-
-
 def get_dhcp_agent_device_id(network_id, host):
     # Split host so as to always use only the hostname and
     # not the domain name. This will guarantee consistency
