@@ -166,7 +166,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         return router_db
 
     def _delete_dvr_internal_ports(self, event, trigger, resource,
-                                   context, router, network_id, **kwargs):
+                                   context, router, network_id,
+                                   new_network_id, **kwargs):
         """
         GW port AFTER_DELETE event handler to cleanup DVR ports.
 
@@ -177,7 +178,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
         if not is_distributed_router(router):
             return
-        self.delete_csnat_router_interface_ports(context.elevated(), router)
+        if not new_network_id:
+            self.delete_csnat_router_interface_ports(context.elevated(),
+                                                     router)
         # NOTE(Swami): Delete the Floatingip agent gateway port
         # on all hosts when it is the last gateway port in the
         # given external network.
