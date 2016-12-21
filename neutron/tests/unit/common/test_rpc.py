@@ -20,6 +20,7 @@ import mock
 from oslo_config import cfg
 import oslo_messaging as messaging
 from oslo_messaging import conffixture as messaging_conffixture
+from oslo_messaging.rpc import dispatcher
 import testtools
 
 from neutron.common import rpc
@@ -167,8 +168,10 @@ class TestRPC(base.DietTestCase):
         server = rpc.get_server(tgt, ends, serializer='foo')
 
         mock_ser.assert_called_once_with('foo')
+        access_policy = dispatcher.LegacyRPCAccessPolicy
         mock_get.assert_called_once_with(rpc.TRANSPORT, tgt, ends,
-                                         'eventlet', ser)
+                                         'eventlet', ser,
+                                         access_policy=access_policy)
         self.assertEqual('server', server)
 
     def test_get_notifier(self):
