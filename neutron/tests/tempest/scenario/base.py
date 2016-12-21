@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
+
 from tempest.common import waiters
 from tempest.lib.common import ssh
 from tempest.lib.common.utils import data_utils
@@ -22,6 +24,8 @@ from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import constants
 
 CONF = config.CONF
+
+LOG = log.getLogger(__name__)
 
 
 class BaseTempestTestCase(base_api.BaseNetworkTest):
@@ -128,6 +132,7 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         router = cls.create_router(
             data_utils.rand_name('router'), admin_state_up=True,
             external_network_id=CONF.network.public_network_id)
+        LOG.debug("Created router %s", router['name'])
         cls.create_router_interface(router['id'], subnet_id)
         cls.routers.append(router)
         return router
@@ -153,10 +158,14 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         and a server.
         """
         cls.network = cls.create_network()
+        LOG.debug("Created network %s", cls.network['name'])
         cls.subnet = cls.create_subnet(cls.network)
+        LOG.debug("Created subnet %s", cls.subnet['id'])
 
         secgroup = cls.manager.network_client.create_security_group(
             name=data_utils.rand_name('secgroup-'))
+        LOG.debug("Created security group %s",
+                  secgroup['security_group']['name'])
         cls.security_groups.append(secgroup['security_group'])
 
         cls.create_router_and_interface(cls.subnet['id'])
