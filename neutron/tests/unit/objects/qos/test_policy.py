@@ -202,13 +202,13 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def test_attach_network_nonexistent_policy(self):
 
-        policy_obj = policy.QosPolicy(self.context, **self.db_objs[0])
+        policy_obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.NetworkQosBindingNotFound,
                           policy_obj.attach_network, self._network['id'])
 
     def test_attach_port_nonexistent_policy(self):
 
-        policy_obj = policy.QosPolicy(self.context, **self.db_objs[0])
+        policy_obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.PortQosBindingNotFound,
                           policy_obj.attach_port, self._port['id'])
 
@@ -289,12 +289,12 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                           obj.detach_network, 'non-existent-port')
 
     def test_detach_port_nonexistent_policy(self):
-        policy_obj = policy.QosPolicy(self.context, **self.db_objs[0])
+        policy_obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.PortQosBindingNotFound,
                           policy_obj.detach_port, self._port['id'])
 
     def test_detach_network_nonexistent_policy(self):
-        policy_obj = policy.QosPolicy(self.context, **self.db_objs[0])
+        policy_obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.NetworkQosBindingNotFound,
                           policy_obj.detach_network, self._network['id'])
 
@@ -332,7 +332,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertEqual(rule_dict, obj_dict['rules'][0])
 
     def test_shared_default(self):
-        obj = self._test_class(self.context, **self.db_objs[0])
+        obj = self._make_object(self.obj_fields[0])
         self.assertFalse(obj.shared)
 
     def test_delete_not_allowed_if_policy_in_use_by_port(self):
