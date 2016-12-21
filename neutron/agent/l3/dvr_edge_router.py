@@ -242,3 +242,18 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         with self.snat_iptables_manager.defer_apply():
             self._add_address_scope_mark(
                 self.snat_iptables_manager, ports_scopemark)
+
+    def _delete_stale_external_devices(self, interface_name):
+        if not self.snat_namespace.exists():
+            return
+
+        ns_ip = ip_lib.IPWrapper(namespace=self.snat_namespace.name)
+        for d in ns_ip.get_devices(exclude_loopback=True):
+            if (d.name.startswith(router.EXTERNAL_DEV_PREFIX) and
+                    d.name != interface_name):
+                LOG.debug('Deleting stale external router device: %s', d.name)
+                self.driver.unplug(
+                    d.name,
+                    bridge=self.agent_conf.external_network_bridge,
+                    namespace=self.snat_namespace.name,
+                    prefix=router.EXTERNAL_DEV_PREFIX)

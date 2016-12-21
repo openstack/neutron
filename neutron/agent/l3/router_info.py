@@ -713,6 +713,19 @@ class RouterInfo(object):
     def _gateway_ports_equal(port1, port2):
         return port1 == port2
 
+    def _delete_stale_external_devices(self, interface_name):
+        existing_devices = self._get_existing_devices()
+        stale_devs = [dev for dev in existing_devices
+                      if dev.startswith(EXTERNAL_DEV_PREFIX)
+                      and dev != interface_name]
+        for stale_dev in stale_devs:
+            LOG.debug('Deleting stale external router device: %s', stale_dev)
+            self.agent.pd.remove_gw_interface(self.router['id'])
+            self.driver.unplug(stale_dev,
+                               bridge=self.agent_conf.external_network_bridge,
+                               namespace=self.ns_name,
+                               prefix=EXTERNAL_DEV_PREFIX)
+
     def _process_external_gateway(self, ex_gw_port):
         # TODO(Carl) Refactor to clarify roles of ex_gw_port vs self.ex_gw_port
         ex_gw_port_id = (ex_gw_port and ex_gw_port['id'] or
@@ -736,17 +749,7 @@ class RouterInfo(object):
                 interface_name = self.get_internal_device_name(p['id'])
                 self.gateway_redirect_cleanup(interface_name)
 
-        existing_devices = self._get_existing_devices()
-        stale_devs = [dev for dev in existing_devices
-                      if dev.startswith(EXTERNAL_DEV_PREFIX)
-                      and dev != interface_name]
-        for stale_dev in stale_devs:
-            LOG.debug('Deleting stale external router device: %s', stale_dev)
-            self.agent.pd.remove_gw_interface(self.router['id'])
-            self.driver.unplug(stale_dev,
-                               bridge=self.agent_conf.external_network_bridge,
-                               namespace=self.ns_name,
-                               prefix=EXTERNAL_DEV_PREFIX)
+        self._delete_stale_external_devices(interface_name)
 
         # Process SNAT rules for external gateway
         gw_port = self._router.get('gw_port')

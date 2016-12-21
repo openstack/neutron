@@ -1871,6 +1871,35 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             namespace=ri.ns_name,
             prefix=namespaces.EXTERNAL_DEV_PREFIX)
 
+    def test_process_dvr_router_delete_stale_external_devices(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        stale_devlist = [l3_test_common.FakeDev('qg-a1b2c3d4-e5')]
+        stale_devnames = [dev.name for dev in stale_devlist]
+
+        router = l3_test_common.prepare_router_data(enable_snat=True,
+                                                    num_internal_ports=1)
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
+        self.mock_ip.get_devices.return_value = stale_devlist
+
+        ri.process()
+
+        self.mock_driver.unplug.assert_called_with(
+            stale_devnames[0],
+            bridge=agent.conf.external_network_bridge,
+            namespace=ri.snat_namespace.name,
+            prefix=namespaces.EXTERNAL_DEV_PREFIX)
+
+    def test_process_dvr_router_delete_stale_external_devices_no_snat_ns(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = l3_test_common.prepare_router_data(enable_gw=False,
+                                                    num_internal_ports=1)
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
+        self.mock_ip.netns.exists.return_value = False
+        ri._delete_stale_external_devices('qg-a1b2c3d4-e5')
+        self.assertFalse(self.mock_ip.get_devices.called)
+
     def test_router_deleted(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
