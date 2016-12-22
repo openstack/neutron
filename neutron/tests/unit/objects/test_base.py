@@ -22,7 +22,6 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
-from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
@@ -394,34 +393,32 @@ def get_set_of_random_uuids():
     }
 
 
+# NOTE: The keys in this dictionary have alphabetic order.
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
-    obj_fields.BooleanField: tools.get_random_boolean,
-    obj_fields.DateTimeField: tools.get_random_datetime,
-    obj_fields.IntegerField: tools.get_random_integer,
-    obj_fields.StringField: lambda: helpers.get_random_string(10),
-    obj_fields.ListOfStringsField: tools.get_random_string_list,
-    common_types.UUIDField: uuidutils.generate_uuid,
-    obj_fields.ObjectField: lambda: None,
-    obj_fields.ListOfObjectsField: lambda: [],
-    obj_fields.DictOfStringsField: get_random_dict_of_strings,
-    obj_fields.ListOfStringsField: tools.get_random_string_list,
     common_types.DomainNameField: get_random_domain_name,
     common_types.DscpMarkField: get_random_dscp_mark,
-    obj_fields.IPNetworkField: tools.get_random_ip_network,
+    common_types.EtherTypeEnumField: tools.get_random_ether_type,
+    common_types.FlowDirectionEnumField: tools.get_random_flow_direction,
     common_types.IPNetworkField: tools.get_random_ip_network,
     common_types.IPNetworkPrefixLenField: tools.get_random_prefixlen,
-    common_types.ListOfIPNetworksField: get_list_of_random_networks,
-    common_types.IPVersionEnumField: tools.get_random_ip_version,
-    obj_fields.DateTimeField: timeutils.utcnow,
-    obj_fields.IPAddressField: tools.get_random_ip_address,
-    common_types.MACAddressField: tools.get_random_EUI,
     common_types.IPV6ModeEnumField: tools.get_random_ipv6_mode,
-    common_types.FlowDirectionEnumField: tools.get_random_flow_direction,
-    common_types.EtherTypeEnumField: tools.get_random_ether_type,
+    common_types.IPVersionEnumField: tools.get_random_ip_version,
     common_types.IpProtocolEnumField: tools.get_random_ip_protocol,
+    common_types.ListOfIPNetworksField: get_list_of_random_networks,
+    common_types.MACAddressField: tools.get_random_EUI,
     common_types.PortRangeField: tools.get_random_port,
     common_types.SetOfUUIDsField: get_set_of_random_uuids,
+    common_types.UUIDField: uuidutils.generate_uuid,
     common_types.VlanIdRangeField: tools.get_random_vlan,
+    obj_fields.BooleanField: tools.get_random_boolean,
+    obj_fields.DateTimeField: tools.get_random_datetime,
+    obj_fields.DictOfStringsField: get_random_dict_of_strings,
+    obj_fields.IPAddressField: tools.get_random_ip_address,
+    obj_fields.IntegerField: tools.get_random_integer,
+    obj_fields.ListOfObjectsField: lambda: [],
+    obj_fields.ListOfStringsField: tools.get_random_string_list,
+    obj_fields.ObjectField: lambda: None,
+    obj_fields.StringField: lambda: helpers.get_random_string(10),
 }
 
 
