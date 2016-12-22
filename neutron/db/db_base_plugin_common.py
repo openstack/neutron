@@ -151,7 +151,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                                for route in subnet['routes']],
                }
         # The shared attribute for a subnet is the same as its parent network
-        res['shared'] = self._is_network_shared(context, subnet.networks)
+        res['shared'] = self._is_network_shared(context, subnet.rbac_entries)
         # Call auxiliary extend functions, if any
         self._apply_dict_extend_functions(attributes.SUBNETS, res, subnet)
         return db_utils.resource_fields(res, fields)
@@ -270,18 +270,18 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'status': network['status'],
                'subnets': [subnet['id']
                            for subnet in network['subnets']]}
-        res['shared'] = self._is_network_shared(context, network)
+        res['shared'] = self._is_network_shared(context, network.rbac_entries)
         # Call auxiliary extend functions, if any
         if process_extensions:
             self._apply_dict_extend_functions(
                 attributes.NETWORKS, res, network)
         return db_utils.resource_fields(res, fields)
 
-    def _is_network_shared(self, context, network):
+    def _is_network_shared(self, context, rbac_entries):
         # The shared attribute for a network now reflects if the network
         # is shared to the calling tenant via an RBAC entry.
         matches = ('*',) + ((context.tenant_id,) if context else ())
-        for entry in network.rbac_entries:
+        for entry in rbac_entries:
             if (entry.action == 'access_as_shared' and
                     entry.target_tenant in matches):
                 return True
