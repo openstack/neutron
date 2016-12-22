@@ -18,6 +18,7 @@ import traceback
 
 from ovs.db import idl
 from ovs import poller
+import six
 from six.moves import queue as Queue
 import tenacity
 
@@ -44,7 +45,7 @@ class TransactionQueue(Queue.Queue, object):
 
     def put(self, *args, **kwargs):
         super(TransactionQueue, self).put(*args, **kwargs)
-        self.alertout.write('X')
+        self.alertout.write(six.b('X'))
         self.alertout.flush()
 
     @property
