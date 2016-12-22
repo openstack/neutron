@@ -263,4 +263,4 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     def release_dynamic_segment(self, segment_id):
         return self._plugin.type_manager.release_dynamic_segment(
-                self._plugin_context.session, segment_id)
+                self._plugin_context, segment_id)

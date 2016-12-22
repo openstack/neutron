@@ -24,7 +24,7 @@ from neutron.plugins.ml2 import driver_api as api
 LOG = log.getLogger(__name__)
 
 
-class LocalTypeDriver(api.TypeDriver):
+class LocalTypeDriver(api.ML2TypeDriver):
     """Manage state for local networks with ML2.
 
     The LocalTypeDriver implements the 'local' network_type. Local
@@ -52,15 +52,15 @@ class LocalTypeDriver(api.TypeDriver):
                 msg = _("%s prohibited for local provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-    def reserve_provider_segment(self, session, segment):
+    def reserve_provider_segment(self, context, segment):
         # No resources to reserve
         return segment
 
-    def allocate_tenant_segment(self, session):
+    def allocate_tenant_segment(self, context):
         # No resources to allocate
         return {api.NETWORK_TYPE: p_const.TYPE_LOCAL}
 
-    def release_segment(self, session, segment):
+    def release_segment(self, context, segment):
         # No resources to release
         pass
 

@@ -31,7 +31,7 @@ LOG = log.getLogger(__name__)
 IDPOOL_SELECT_SIZE = 100
 
 
-class BaseTypeDriver(api.TypeDriver):
+class BaseTypeDriver(api.ML2TypeDriver):
     """BaseTypeDriver for functions common to Segment and flat."""
 
     def __init__(self):
@@ -60,7 +60,7 @@ class SegmentTypeDriver(BaseTypeDriver):
         self.primary_keys = set(dict(model.__table__.columns))
         self.primary_keys.remove("allocated")
 
-    def allocate_fully_specified_segment(self, session, **raw_segment):
+    def allocate_fully_specified_segment(self, context, **raw_segment):
         """Allocate segment fully specified by raw_segment.
 
         If segment exists, then try to allocate it and return db object
@@ -70,9 +70,10 @@ class SegmentTypeDriver(BaseTypeDriver):
 
         network_type = self.get_type()
         try:
-            with session.begin(subtransactions=True):
-                alloc = (session.query(self.model).filter_by(**raw_segment).
-                         first())
+            with context.session.begin(subtransactions=True):
+                alloc = (
+                    context.session.query(self.model).filter_by(**raw_segment).
+                    first())
                 if alloc:
                     if alloc.allocated:
                         # Segment already allocated
@@ -83,7 +84,7 @@ class SegmentTypeDriver(BaseTypeDriver):
                                   "started ",
                                   {"type": network_type,
                                    "segment": raw_segment})
-                        count = (session.query(self.model).
+                        count = (context.session.query(self.model).
                                  filter_by(allocated=False, **raw_segment).
                                  update({"allocated": True}))
                         if count:
@@ -104,7 +105,7 @@ class SegmentTypeDriver(BaseTypeDriver):
                 LOG.debug("%(type)s segment %(segment)s create started",
                           {"type": network_type, "segment": raw_segment})
                 alloc = self.model(allocated=True, **raw_segment)
-                alloc.save(session)
+                alloc.save(context.session)
                 LOG.debug("%(type)s segment %(segment)s create done",
                           {"type": network_type, "segment": raw_segment})
 
@@ -116,15 +117,15 @@ class SegmentTypeDriver(BaseTypeDriver):
 
         return alloc
 
-    def allocate_partially_specified_segment(self, session, **filters):
+    def allocate_partially_specified_segment(self, context, **filters):
         """Allocate model segment from pool partially specified by filters.
 
         Return allocated db object or None.
         """
 
         network_type = self.get_type()
-        with session.begin(subtransactions=True):
-            select = (session.query(self.model).
+        with context.session.begin(subtransactions=True):
+            select = (context.session.query(self.model).
                       filter_by(allocated=False, **filters))
 
             # Selected segment can be allocated before update by someone else,
@@ -140,7 +141,7 @@ class SegmentTypeDriver(BaseTypeDriver):
                       "started with %(segment)s ",
                       {"type": network_type,
                        "segment": raw_segment})
-            count = (session.query(self.model).
+            count = (context.session.query(self.model).
                      filter_by(allocated=False, **raw_segment).
                      update({"allocated": True}))
             if count:

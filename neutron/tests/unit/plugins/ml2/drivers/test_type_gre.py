@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.db.models.plugins.ml2 import gre_allocation_endpoints as gre_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_gre
 from neutron.tests.unit.plugins.ml2.drivers import base_type_tunnel
@@ -25,16 +24,6 @@ TUNNEL_IP_ONE = "10.10.10.10"
 TUNNEL_IP_TWO = "10.10.10.20"
 HOST_ONE = 'fake_host_one'
 HOST_TWO = 'fake_host_two'
-
-
-def _add_allocation(session, gre_id, allocated=False):
-    allocation = gre_model.GreAllocation(gre_id=gre_id, allocated=allocated)
-    allocation.save(session)
-
-
-def _get_allocation(session, gre_id):
-    return session.query(gre_model.GreAllocation).filter_by(
-        gre_id=gre_id).one()
 
 
 class GreTypeTest(base_type_tunnel.TunnelTypeTestMixin,

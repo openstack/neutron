@@ -90,29 +90,29 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
                 msg = _("%s prohibited for flat provider network") % key
                 raise exc.InvalidInput(error_message=msg)
 
-    def reserve_provider_segment(self, session, segment):
+    def reserve_provider_segment(self, context, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
-        with session.begin(subtransactions=True):
+        with context.session.begin(subtransactions=True):
             try:
                 LOG.debug("Reserving flat network on physical "
                           "network %s", physical_network)
                 alloc = type_flat_model.FlatAllocation(
                     physical_network=physical_network)
-                alloc.save(session)
+                alloc.save(context.session)
             except db_exc.DBDuplicateEntry:
                 raise n_exc.FlatNetworkInUse(
                     physical_network=physical_network)
             segment[api.MTU] = self.get_mtu(alloc.physical_network)
         return segment
 
-    def allocate_tenant_segment(self, session):
+    def allocate_tenant_segment(self, context):
         # Tenant flat networks are not supported.
         return
 
-    def release_segment(self, session, segment):
+    def release_segment(self, context, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
-        with session.begin(subtransactions=True):
-            count = (session.query(type_flat_model.FlatAllocation).
+        with context.session.begin(subtransactions=True):
+            count = (context.session.query(type_flat_model.FlatAllocation).
                      filter_by(physical_network=physical_network).
                      delete())
         if count:
