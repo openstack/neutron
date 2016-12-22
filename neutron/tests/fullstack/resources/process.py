@@ -15,6 +15,7 @@
 import datetime
 from distutils import spawn
 import os
+import re
 import signal
 
 import fixtures
@@ -23,6 +24,7 @@ from neutronclient.v2_0 import client
 from oslo_utils import fileutils
 
 from neutron.agent.linux import async_process
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.tests import base
@@ -66,7 +68,11 @@ class ProcessFixture(fixtures.Fixture):
         self.process.start(block=True)
 
     def stop(self):
-        self.process.stop(block=True, kill_signal=self.kill_signal)
+        try:
+            self.process.stop(block=True, kill_signal=self.kill_signal)
+        except async_process.AsyncProcessException as e:
+            if "Process is not running" not in str(e):
+                raise
 
 
 class RabbitmqEnvironmentFixture(fixtures.Fixture):
@@ -259,8 +265,42 @@ class DhcpAgentFixture(fixtures.Fixture):
             ProcessFixture(
                 test_name=self.test_name,
                 process_name=self.NEUTRON_DHCP_AGENT,
-                exec_name=self.NEUTRON_DHCP_AGENT,
+                exec_name=spawn.find_executable(
+                    'fullstack_dhcp_agent.py',
+                    path=os.path.join(base.ROOTDIR, 'common', 'agents')),
                 config_filenames=config_filenames,
                 namespace=self.namespace
             )
         )
+        self.dhcp_namespace_pattern = re.compile(
+            r"qdhcp-[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}%s" %
+            self.get_namespace_suffix())
+        self.addCleanup(self.clean_dhcp_namespaces)
+
+    def get_agent_hostname(self):
+        return self.neutron_cfg_fixture.config['DEFAULT']['host']
+
+    def get_namespace_suffix(self):
+        return self.plugin_config.DEFAULT.test_namespace_suffix
+
+    def kill(self):
+        self.process_fixture.stop()
+        self.clean_dhcp_namespaces()
+
+    def clean_dhcp_namespaces(self):
+        """Delete all DHCP namespaces created by DHCP agent.
+
+        In some tests for DHCP agent HA agents are killed when handling DHCP
+        service for network(s). In such case DHCP namespace is not deleted by
+        DHCP agent and such namespaces are found and deleted using agent's
+        namespace suffix.
+        """
+
+        ip_wrapper = ip_lib.IPWrapper()
+        for namespace in ip_wrapper.get_namespaces():
+            if self.dhcp_namespace_pattern.match(namespace):
+                try:
+                    ip_wrapper.netns.delete(namespace)
+                except RuntimeError:
+                    # Continue cleaning even if namespace deletions fails
+                    pass
