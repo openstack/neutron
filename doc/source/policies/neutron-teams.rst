@@ -73,7 +73,7 @@ The following are the current Neutron Lieutenants.
 |                        +---------------------------+----------------------+
 |                        | Abhishek Raut             | abhiraut             |
 +------------------------+---------------------------+----------------------+
-| Docs                   | Matthew Kassawara         | Sam-I-Am             |
+| Docs                   | John Davidge              | john-davidge         |
 +------------------------+---------------------------+----------------------+
 | Infra                  | Nate Johnston             | njohnston            |
 |                        +---------------------------+----------------------+
