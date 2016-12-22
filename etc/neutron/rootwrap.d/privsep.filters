@@ -1,0 +1,36 @@
+# Command filters to allow privsep daemon to be started via rootwrap.
+#
+# This file should be owned by (and only-writeable by) the root user
+
+[Filters]
+
+# By installing the following, the local admin is asserting that:
+#
+# 1. The python module load path used by privsep-helper
+#    command as root (as started by sudo/rootwrap) is trusted.
+# 2. Any oslo.config files matching the --config-file
+#    arguments below are trusted.
+# 3. Users allowed to run sudo/rootwrap with this configuration(*) are
+#    also allowed to invoke python "entrypoint" functions from
+#    --privsep_context with the additional (possibly root) privileges
+#    configured for that context.
+#
+# (*) ie: the user is allowed by /etc/sudoers to run rootwrap as root
+#
+# In particular, the oslo.config and python module path must not
+# be writeable by the unprivileged user.
+
+# oslo.privsep default neutron context
+privsep: PathFilter, privsep-helper, root,
+ --config-file, /etc,
+ --privsep_context, neutron.privileged.default,
+ --privsep_sock_path, /
+
+# Same as above with a second `--config-file` arg, since many neutron
+# components are installed like that (eg: by devstack).  Adjust to
+# suit local requirements.
+privsep: PathFilter, privsep-helper, root,
+ --config-file, /etc,
+ --config-file, /etc,
+ --privsep_context, neutron.privileged.default,
+ --privsep_sock_path, /

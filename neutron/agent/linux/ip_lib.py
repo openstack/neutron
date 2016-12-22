@@ -29,6 +29,7 @@ from neutron._i18n import _, _LE, _LW
 from neutron.agent.common import utils
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
+from neutron.privileged.agent.linux import ip_lib as privileged
 
 LOG = logging.getLogger(__name__)
 
@@ -935,39 +936,7 @@ def get_device_mac(device_name, namespace=None):
     return IPDevice(device_name, namespace=namespace).link.address
 
 
-_IP_ROUTE_PARSE_KEYS = {
-    'via': 'nexthop',
-    'dev': 'device',
-    'scope': 'scope'
-}
-
-
-def _parse_ip_route_line(line):
-    """Parse a line output from ip route.
-    Example for output from 'ip route':
-    default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
-    10.0.0.0/8 dev tun0  proto static  scope link  metric 1024
-    10.0.1.0/8 dev tun1  proto static  scope link  metric 1024 linkdown
-    The first column is the destination, followed by key/value pairs and flags.
-    @param line A line output from ip route
-    @return: a dictionary representing a route.
-    """
-    line = line.split()
-    result = {
-        'destination': line[0],
-        'nexthop': None,
-        'device': None,
-        'scope': None
-    }
-    idx = 1
-    while idx < len(line):
-        field = _IP_ROUTE_PARSE_KEYS.get(line[idx])
-        if not field:
-            idx = idx + 1
-        else:
-            result[field] = line[idx + 1]
-            idx = idx + 2
-    return result
+NetworkNamespaceNotFound = privileged.NetworkNamespaceNotFound
 
 
 def get_routing_table(ip_version, namespace=None):
@@ -981,14 +950,8 @@ def get_routing_table(ip_version, namespace=None):
                                'device': device_name,
                                'scope': scope}
     """
-
-    ip_wrapper = IPWrapper(namespace=namespace)
-    table = ip_wrapper.netns.execute(
-        ['ip', '-%s' % ip_version, 'route'],
-        check_exit_code=True)
-
-    return [_parse_ip_route_line(line)
-            for line in table.split('\n') if line.strip()]
+    # oslo.privsep turns lists to tuples in its IPC code. Change it back
+    return list(privileged.get_routing_table(ip_version, namespace))
 
 
 def ensure_device_is_ready(device_name, namespace=None):

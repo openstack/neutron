@@ -13,14 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
+
 import mock
 import netaddr
 from neutron_lib import exceptions
+import pyroute2
 import testtools
 
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as n_exc
+from neutron import privileged
 from neutron.tests import base
 
 NETNS_SAMPLE = [
@@ -1307,54 +1311,268 @@ class TestDeviceExists(base.BaseTestCase):
 
 
 class TestGetRoutingTable(base.BaseTestCase):
-    @mock.patch.object(ip_lib, 'IPWrapper')
-    def _test_get_routing_table(self, version, ip_route_output, expected,
-                                mock_ipwrapper):
-        instance = mock_ipwrapper.return_value
-        mock_netns = instance.netns
-        mock_execute = mock_netns.execute
-        mock_execute.return_value = ip_route_output
+    ip_db_interfaces = {
+        1: {
+            'family': 0,
+            'txqlen': 0,
+            'ipdb_scope': 'system',
+            'index': 1,
+            'operstate': 'DOWN',
+            'num_tx_queues': 1,
+            'group': 0,
+            'carrier_changes': 0,
+            'ipaddr': [],
+            'neighbours': [],
+            'ifname': 'lo',
+            'promiscuity': 0,
+            'linkmode': 0,
+            'broadcast': '00:00:00:00:00:00',
+            'address': '00:00:00:00:00:00',
+            'vlans': [],
+            'ipdb_priority': 0,
+            'qdisc': 'noop',
+            'mtu': 65536,
+            'num_rx_queues': 1,
+            'carrier': 1,
+            'flags': 8,
+            'ifi_type': 772,
+            'ports': []
+        },
+        2: {
+            'family': 0,
+            'txqlen': 500,
+            'ipdb_scope': 'system',
+            'index': 2,
+            'operstate': 'DOWN',
+            'num_tx_queues': 1,
+            'group': 0,
+            'carrier_changes': 1,
+            'ipaddr': ['1111:1111:1111:1111::3/64', '10.0.0.3/24'],
+            'neighbours': [],
+            'ifname': 'tap-1',
+            'promiscuity': 0,
+            'linkmode': 0,
+            'broadcast': 'ff:ff:ff:ff:ff:ff',
+            'address': 'b6:d5:f6:a8:2e:62',
+            'vlans': [],
+            'ipdb_priority': 0,
+            'kind': 'tun',
+            'qdisc': 'fq_codel',
+            'mtu': 1500,
+            'num_rx_queues': 1,
+            'carrier': 0,
+            'flags': 4099,
+            'ifi_type': 1,
+            'ports': []
+        },
+        'tap-1': {
+            'family': 0,
+            'txqlen': 500,
+            'ipdb_scope': 'system',
+            'index': 2,
+            'operstate': 'DOWN',
+            'num_tx_queues': 1,
+            'group': 0,
+            'carrier_changes': 1,
+            'ipaddr': ['1111:1111:1111:1111::3/64', '10.0.0.3/24'],
+            'neighbours': [],
+            'ifname': 'tap-1',
+            'promiscuity': 0,
+            'linkmode': 0,
+            'broadcast': 'ff:ff:ff:ff:ff:ff',
+            'address': 'b6:d5:f6:a8:2e:62',
+            'vlans': [],
+            'ipdb_priority': 0,
+            'kind': 'tun',
+            'qdisc': 'fq_codel',
+            'mtu': 1500,
+            'num_rx_queues': 1,
+            'carrier': 0,
+            'flags': 4099,
+            'ifi_type': 1,
+            'ports': []
+        },
+        'lo': {
+            'family': 0,
+            'txqlen': 0,
+            'ipdb_scope': 'system',
+            'index': 1,
+            'operstate': 'DOWN',
+            'num_tx_queues': 1,
+            'group': 0,
+            'carrier_changes': 0,
+            'ipaddr': [],
+            'neighbours': [],
+            'ifname': 'lo',
+            'promiscuity': 0,
+            'linkmode': 0,
+            'broadcast': '00:00:00:00:00:00',
+            'address': '00:00:00:00:00:00',
+            'vlans': [],
+            'ipdb_priority': 0,
+            'qdisc': 'noop',
+            'mtu': 65536,
+            'num_rx_queues': 1,
+            'carrier': 1,
+            'flags': 8,
+            'ifi_type': 772,
+            'ports': []
+        }
+    }
+
+    ip_db_routes = [
+        {
+            'oif': 2,
+            'dst_len': 24,
+            'family': 2,
+            'proto': 3,
+            'tos': 0,
+            'dst': '10.0.1.0/24',
+            'flags': 16,
+            'ipdb_priority': 0,
+            'metrics': {},
+            'scope': 0,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': [],
+            'type': 1,
+            'gateway': '10.0.0.1',
+            'ipdb_scope': 'system'
+        }, {
+            'oif': 2,
+            'type': 1,
+            'dst_len': 24,
+            'family': 2,
+            'proto': 2,
+            'tos': 0,
+            'dst': '10.0.0.0/24',
+            'ipdb_priority': 0,
+            'metrics': {},
+            'flags': 16,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': [],
+            'prefsrc': '10.0.0.3',
+            'scope': 253,
+            'ipdb_scope': 'system'
+        }, {
+            'oif': 2,
+            'dst_len': 0,
+            'family': 2,
+            'proto': 3,
+            'tos': 0,
+            'dst': 'default',
+            'flags': 16,
+            'ipdb_priority': 0,
+            'metrics': {},
+            'scope': 0,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': [],
+            'type': 1,
+            'gateway': '10.0.0.2',
+            'ipdb_scope': 'system'
+        }, {
+            'metrics': {},
+            'oif': 2,
+            'dst_len': 64,
+            'family': 10,
+            'proto': 2,
+            'tos': 0,
+            'dst': '1111:1111:1111:1111::/64',
+            'pref': '00',
+            'ipdb_priority': 0,
+            'priority': 256,
+            'flags': 0,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': [],
+            'type': 1,
+            'scope': 0,
+            'ipdb_scope': 'system'
+        }, {
+            'metrics': {},
+            'oif': 2,
+            'dst_len': 64,
+            'family': 10,
+            'proto': 3,
+            'tos': 0,
+            'dst': '1111:1111:1111:1112::/64',
+            'pref': '00',
+            'flags': 0,
+            'ipdb_priority': 0,
+            'priority': 1024,
+            'scope': 0,
+            'encap': {},
+            'src_len': 0,
+            'table': 254,
+            'multipath': [],
+            'type': 1,
+            'gateway': '1111:1111:1111:1111::1',
+            'ipdb_scope': 'system'
+        }
+    ]
+
+    def setUp(self):
+        super(TestGetRoutingTable, self).setUp()
+        self.addCleanup(privileged.default.set_client_mode, True)
+        privileged.default.set_client_mode(False)
+
+    @mock.patch.object(pyroute2, 'IPDB')
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_get_routing_table_nonexistent_namespace(self,
+                                                     mock_netns, mock_ip_db):
+        mock_netns.side_effect = OSError(errno.ENOENT, None)
+        with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
+            ip_lib.get_routing_table(4, 'ns')
+
+    @mock.patch.object(pyroute2, 'IPDB')
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_get_routing_table_other_error(self, mock_netns, mock_ip_db):
+        expected_exception = OSError(errno.EACCES, None)
+        mock_netns.side_effect = expected_exception
+        with testtools.ExpectedException(expected_exception.__class__):
+            ip_lib.get_routing_table(4, 'ns')
+
+    @mock.patch.object(pyroute2, 'IPDB')
+    @mock.patch.object(pyroute2, 'NetNS')
+    def _test_get_routing_table(self, version, ip_db_routes, expected,
+                                mock_netns, mock_ip_db):
+        mock_ip_db_instance = mock_ip_db.return_value
+        mock_ip_db_enter = mock_ip_db_instance.__enter__.return_value
+        mock_ip_db_enter.interfaces = self.ip_db_interfaces
+        mock_ip_db_enter.routes = ip_db_routes
         self.assertEqual(expected, ip_lib.get_routing_table(version))
 
     def test_get_routing_table_4(self):
-        ip_route_output = ("""
-default via 192.168.3.120 dev wlp3s0  proto static  metric 1024
-10.0.0.0/8 dev tun0  proto static  scope link  metric 1024
-10.0.1.0/8 dev tun1  proto static  scope link  metric 1024 linkdown
-""")
-        expected = [{'destination': 'default',
-                     'nexthop': '192.168.3.120',
-                     'device': 'wlp3s0',
-                     'scope': None},
-                    {'destination': '10.0.0.0/8',
+        expected = [{'destination': '10.0.1.0/24',
+                     'nexthop': '10.0.0.1',
+                     'device': 'tap-1',
+                     'scope': 'universe'},
+                    {'destination': '10.0.0.0/24',
                      'nexthop': None,
-                     'device': 'tun0',
+                     'device': 'tap-1',
                      'scope': 'link'},
-                    {'destination': '10.0.1.0/8',
-                     'nexthop': None,
-                     'device': 'tun1',
-                     'scope': 'link'}]
-        self._test_get_routing_table(4, ip_route_output, expected)
+                    {'destination': 'default',
+                     'nexthop': '10.0.0.2',
+                     'device': 'tap-1',
+                     'scope': 'universe'}]
+        self._test_get_routing_table(4, self.ip_db_routes, expected)
 
     def test_get_routing_table_6(self):
-        ip_route_output = ("""
-2001:db8:0:f101::/64 dev tap-1  proto kernel  metric 256  pref medium
-2001:db8:0:f102::/64 dev tap-2  proto kernel  metric 256  pref medium linkdown
-default via 2001:db8:0:f101::4 dev tap-1  metric 1024  pref medium
-""")
-        expected = [{'destination': '2001:db8:0:f101::/64',
+        expected = [{'destination': '1111:1111:1111:1111::/64',
                      'nexthop': None,
                      'device': 'tap-1',
-                     'scope': None},
-                    {'destination': '2001:db8:0:f102::/64',
-                     'nexthop': None,
-                     'device': 'tap-2',
-                     'scope': None},
-                    {'destination': 'default',
-                     'nexthop': '2001:db8:0:f101::4',
+                     'scope': 'universe'},
+                    {'destination': '1111:1111:1111:1112::/64',
+                     'nexthop': '1111:1111:1111:1111::1',
                      'device': 'tap-1',
-                     'scope': None}]
-        self._test_get_routing_table(6, ip_route_output, expected)
+                     'scope': 'universe'}]
+        self._test_get_routing_table(6, self.ip_db_routes, expected)
 
 
 class TestIpNeighCommand(TestIPCmdBase):

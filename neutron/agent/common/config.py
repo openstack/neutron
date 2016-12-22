@@ -14,8 +14,10 @@
 #    under the License.
 
 import os
+import shlex
 
 from oslo_config import cfg
+from oslo_privsep import priv_context
 
 from neutron._i18n import _
 from neutron.common import config
@@ -169,3 +171,7 @@ def setup_conf():
 
 # add a logging setup method here for convenience
 setup_logging = config.setup_logging
+
+
+def setup_privsep():
+    priv_context.init(root_helper=shlex.split(get_root_helper(cfg.CONF)))
