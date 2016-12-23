@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from keystoneauth1 import loading
 from oslo_config import cfg
 
 from neutron._i18n import _
@@ -62,3 +63,4 @@ designate_opts = [
 
 def register_designate_opts(cfg=cfg.CONF):
     cfg.register_opts(designate_opts, 'designate')
+    loading.conf.register_conf_options(cfg, 'designate')
