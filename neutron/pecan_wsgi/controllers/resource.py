@@ -69,10 +69,8 @@ class ItemController(utils.NeutronPecanController):
         updater_args.append(data)
         return {self.resource: self.plugin_updater(*updater_args)}
 
-    @utils.when(index, method='DELETE')
+    @utils.when_delete(index)
     def delete(self):
-        # TODO(kevinbenton): setting code could be in a decorator
-        pecan.response.status = 204
         neutron_context = request.context['neutron_context']
         deleter_args = [neutron_context, self.item]
         if 'parent_id' in request.context:
