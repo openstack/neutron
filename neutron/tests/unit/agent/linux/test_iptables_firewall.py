@@ -1416,6 +1416,38 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         self.v4filter_inst.assert_has_calls(calls)
 
+    def test_delete_conntrack_from_delete_port(self):
+        port = self._fake_port()
+        port['security_groups'] = ['fake_sg_id']
+        self.firewall.filtered_ports = {'tapfake_dev': port}
+        self.firewall.devices_with_updated_sg_members['fake_sg_id2'
+                                                      ] = ['tapfake_dev']
+        new_port = copy.deepcopy(port)
+        new_port['security_groups'] = ['fake_sg_id2']
+        new_port['device'] = ['tapfake_dev2']
+        new_port['fixed_ips'] = ['10.0.0.2', 'fe80::2']
+        self.firewall.sg_members['fake_sg_id2'] = {'IPv4': ['10.0.0.2'],
+                                                   'IPv6': ['fe80::2']}
+        self.firewall.remove_port_filter(port)
+        calls = [
+                     mock.call(['conntrack', '-D', '-f', 'ipv4', '-d',
+                                '10.0.0.1', '-w', 10],
+                               run_as_root=True, check_exit_code=True,
+                               extra_ok_codes=[1]),
+                     mock.call(['conntrack', '-D', '-f', 'ipv4', '-s',
+                                '10.0.0.1', '-w', 10],
+                               run_as_root=True, check_exit_code=True,
+                               extra_ok_codes=[1]),
+                     mock.call(['conntrack', '-D', '-f', 'ipv6', '-d',
+                                'fe80::1', '-w', 10],
+                               run_as_root=True, check_exit_code=True,
+                               extra_ok_codes=[1]),
+                     mock.call(['conntrack', '-D', '-f', 'ipv6', '-s',
+                                'fe80::1', '-w', 10],
+                               run_as_root=True, check_exit_code=True,
+                               extra_ok_codes=[1])]
+        self.utils_exec.assert_has_calls(calls)
+
     def test_remove_unknown_port(self):
         port = self._fake_port()
         self.firewall.remove_port_filter(port)

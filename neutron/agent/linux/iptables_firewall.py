@@ -176,6 +176,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.unfiltered_ports.pop(port['device'], None)
         self.filtered_ports.pop(port['device'], None)
 
+    def _remove_conntrack_entries_from_port_deleted(self, port):
+        device_info = self.filtered_ports.get(port['device'])
+        if not device_info:
+            return
+        for ethertype in [constants.IPv4, constants.IPv6]:
+            self.ipconntrack.delete_conntrack_state_by_remote_ips(
+                [device_info], ethertype, set())
+
     def prepare_port_filter(self, port):
         LOG.debug("Preparing device (%s) filter", port['device'])
         self._remove_chains()
@@ -203,6 +211,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                          'filtered %r'), port)
             return
         self._remove_chains()
+        self._remove_conntrack_entries_from_port_deleted(port)
         self._unset_ports(port)
         self._setup_chains()
         return self.iptables.apply()
