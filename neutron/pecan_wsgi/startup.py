@@ -71,6 +71,8 @@ def initialize_all():
         collection_key = collection
         if parent_resource:
             collection_key = '/'.join([parent_resource, collection])
+        collection_actions = ext_res.collection_actions
+        member_actions = ext_res.member_actions
         if manager.NeutronManager.get_controller_for_resource(collection_key):
             # This is a collection that already has a pecan controller, we
             # do not need to do anything else
@@ -85,11 +87,17 @@ def initialize_all():
             member_actions = legacy_controller.member_actions
             pagination = legacy_controller.allow_pagination
             sorting = legacy_controller.allow_sorting
+            # NOTE(blogan): legacy_controller and ext_res both can both have
+            # member_actions.  the member_actions for ext_res are strictly for
+            # routing, while member_actions for legacy_controller are used for
+            # handling the request once the routing has found the controller.
+            # They're always the same so we will just use the ext_res
+            # member_action.
             new_controller = res_ctrl.CollectionsController(
                 collection, resource, resource_info=attr_info,
                 parent_resource=parent_resource, member_actions=member_actions,
                 plugin=plugin, allow_pagination=pagination,
-                allow_sorting=sorting)
+                allow_sorting=sorting, collection_actions=collection_actions)
             # new_controller.collection has replaced hyphens with underscores
             manager.NeutronManager.set_plugin_for_resource(
                 new_controller.collection, plugin)
@@ -98,7 +106,9 @@ def initialize_all():
                     collection, path_prefix)
         elif isinstance(legacy_controller, wsgi.Controller):
             new_controller = utils.ShimCollectionsController(
-                collection, None, legacy_controller)
+                collection, None, legacy_controller,
+                collection_actions=collection_actions,
+                member_actions=member_actions)
         else:
             LOG.warning(_LW("Unknown controller type encountered %s.  It will"
                             "be ignored."), legacy_controller)

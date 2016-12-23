@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import defaultdict
 import copy
 import functools
 
@@ -97,11 +98,13 @@ class NeutronPecanController(object):
 
     def __init__(self, collection, resource, plugin=None, resource_info=None,
                  allow_pagination=None, allow_sorting=None,
-                 parent_resource=None, member_actions=None):
+                 parent_resource=None, member_actions=None,
+                 collection_actions=None, item=None):
         # Ensure dashes are always replaced with underscores
         self.collection = collection and collection.replace('-', '_')
         self.resource = resource and resource.replace('-', '_')
         self._member_actions = member_actions or {}
+        self._collection_actions = collection_actions or {}
         self._resource_info = resource_info
         self._plugin = plugin
         # Controllers for some resources that are not mapped to anything in
@@ -135,6 +138,7 @@ class NeutronPecanController(object):
         for action in [self.CREATE, self.UPDATE, self.DELETE]:
             self._plugin_handlers[action] = '%s%s_%s' % (
                 action, parent_resource, self.resource)
+        self.item = item
 
     def build_field_list(self, request_fields):
         added_fields = []
@@ -203,16 +207,39 @@ class ShimRequest(object):
         self.context = context
 
 
+def invert_dict(dictionary):
+    inverted = defaultdict(list)
+    for k, v in dictionary.items():
+        inverted[v].append(k)
+    return inverted
+
+
 class ShimItemController(NeutronPecanController):
 
-    def __init__(self, collection, resource, item, controller):
-        super(ShimItemController, self).__init__(collection, resource)
-        self.item = item
+    def __init__(self, collection, resource, item, controller,
+                 collection_actions=None, member_actions=None):
+        super(ShimItemController, self).__init__(
+            collection, resource, collection_actions=collection_actions,
+            member_actions=member_actions, item=item)
+        self.controller = controller
         self.controller_delete = getattr(controller, 'delete', None)
+        self.controller_update = getattr(controller, 'update', None)
+        self.controller_show = getattr(controller, 'show', None)
+        self.inverted_collection_actions = invert_dict(
+            self._collection_actions)
 
     @expose(generic=True)
     def index(self):
-        pecan.abort(405)
+        shim_request = ShimRequest(request.context['neutron_context'])
+        if self.item in self.inverted_collection_actions['GET']:
+            method = getattr(self.controller, self.item, None)
+            # collection actions should not take an self.item because they are
+            # essentially static items.
+            return method(shim_request)
+        elif not self.controller_show:
+            pecan.abort(405)
+        else:
+            return self.controller_show(shim_request, self.item)
 
     @when(index, method='DELETE')
     def delete(self):
@@ -224,11 +251,32 @@ class ShimItemController(NeutronPecanController):
         return self.controller_delete(shim_request, self.item,
                                       **uri_identifiers)
 
+    @when(index, method='PUT')
+    def update(self):
+        if not self.controller_update:
+            pecan.abort(405)
+        pecan.response.status = 200
+        shim_request = ShimRequest(request.context['neutron_context'])
+        uri_identifiers = request.context['uri_identifiers']
+        return self.controller_update(shim_request, self.item,
+                                      body=request.json,
+                                      **uri_identifiers)
+
+    @expose()
+    def _lookup(self, resource, *remainder):
+        request.context['resource'] = self.resource
+        return ShimMemberActionController(self.collection, resource, self.item,
+                                          self.controller,
+                                          self._member_actions), remainder
+
 
 class ShimCollectionsController(NeutronPecanController):
 
-    def __init__(self, collection, resource, controller):
-        super(ShimCollectionsController, self).__init__(collection, resource)
+    def __init__(self, collection, resource, controller,
+                 collection_actions=None, member_actions=None):
+        super(ShimCollectionsController, self).__init__(
+            collection, resource, member_actions=member_actions,
+            collection_actions=collection_actions)
         self.controller = controller
         self.controller_index = getattr(controller, 'index', None)
         self.controller_create = getattr(controller, 'create', None)
@@ -255,8 +303,32 @@ class ShimCollectionsController(NeutronPecanController):
     def _lookup(self, item, *remainder):
         request.context['resource'] = self.resource
         request.context['resource_id'] = item
-        return ShimItemController(self.collection, self.resource, item,
-                                  self.controller), remainder
+        return (
+            ShimItemController(self.collection, self.resource, item,
+                               self.controller,
+                               member_actions=self._member_actions,
+                               collection_actions=self._collection_actions),
+            remainder
+        )
+
+
+class ShimMemberActionController(NeutronPecanController):
+
+    def __init__(self, collection, resource, item, controller,
+                 member_actions):
+        super(ShimMemberActionController, self).__init__(
+            collection, resource, member_actions=member_actions, item=item)
+        self.controller = controller
+        self.inverted_member_actions = invert_dict(self._member_actions)
+
+    @expose(generic=True)
+    def index(self):
+        if self.resource not in self.inverted_member_actions['GET']:
+            pecan.abort(404)
+        shim_request = ShimRequest(request.context['neutron_context'])
+        uri_identifiers = request.context['uri_identifiers']
+        method = getattr(self.controller, self.resource)
+        return method(shim_request, self.item, **uri_identifiers)
 
 
 class PecanResourceExtension(object):

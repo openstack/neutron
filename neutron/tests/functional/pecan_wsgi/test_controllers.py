@@ -269,6 +269,23 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         for qs in json_body['quotas']:
             self.assertNotEqual('foo', qs['tenant_id'])
 
+    def test_quotas_get_defaults(self):
+        response = self.app.get('%s/foo/default.json' % self.base_url,
+                                headers={'X-Project-Id': 'admin',
+                                         'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        # As quota limits have not been updated, expect default values
+        json_body = jsonutils.loads(response.body)
+        self._verify_default_limits(json_body)
+
+    def test_get_tenant_info(self):
+        response = self.app.get('%s/tenant.json' % self.base_url,
+                                headers={'X-Project-Id': 'admin',
+                                         'X-Roles': 'admin'})
+        self.assertEqual(200, response.status_int)
+        json_body = jsonutils.loads(response.body)
+        self.assertEqual('admin', json_body['tenant']['tenant_id'])
+
 
 class TestResourceController(TestRootController):
     """Test generic controller"""
