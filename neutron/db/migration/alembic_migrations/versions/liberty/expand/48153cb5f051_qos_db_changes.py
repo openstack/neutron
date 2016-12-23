@@ -28,17 +28,15 @@ down_revision = '1b4c6e320f79'
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.api.v2 import attributes as attrs
-
 
 def upgrade():
     op.create_table(
         'qos_policies',
         sa.Column('id', sa.String(length=36), primary_key=True),
-        sa.Column('name', sa.String(length=attrs.NAME_MAX_LEN)),
-        sa.Column('description', sa.String(length=attrs.DESCRIPTION_MAX_LEN)),
+        sa.Column('name', sa.String(length=255)),
+        sa.Column('description', sa.String(length=255)),
         sa.Column('shared', sa.Boolean(), nullable=False),
-        sa.Column('tenant_id', sa.String(length=attrs.TENANT_ID_MAX_LEN),
+        sa.Column('tenant_id', sa.String(length=255),
                   index=True))
 
     op.create_table(

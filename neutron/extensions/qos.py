@@ -19,11 +19,11 @@ import re
 
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 import six
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
 from neutron.common import constants as common_constants
@@ -52,17 +52,19 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True, 'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
                  'is_visible': True, 'default': '',
-                 'validate': {'type:string': attr.NAME_MAX_LEN}},
+                 'validate': {'type:string': db_const.NAME_FIELD_SIZE}},
         'description': {'allow_post': True, 'allow_put': True,
                         'is_visible': True, 'default': '',
                         'validate':
-                            {'type:string': attr.LONG_DESCRIPTION_MAX_LEN}},
+                            {'type:string':
+                                db_const.LONG_DESCRIPTION_FIELD_SIZE}},
         'shared': {'allow_post': True, 'allow_put': True,
                    'is_visible': True, 'default': False,
                    'convert_to': converters.convert_to_boolean},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True},
         'rules': {'allow_post': False, 'allow_put': False, 'is_visible': True},
     },

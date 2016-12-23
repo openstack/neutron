@@ -15,11 +15,11 @@
 import contextlib
 
 from neutron_lib import constants as n_consts
+from neutron_lib.db import constants as db_const
 from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.common import config
 from neutron import context
 import neutron.extensions
@@ -34,8 +34,8 @@ DB_METERING_PLUGIN_KLASS = (
 )
 
 extensions_path = ':'.join(neutron.extensions.__path__)
-_long_description_ok = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN)
-_long_description_ng = 'x' * (attr.LONG_DESCRIPTION_MAX_LEN + 1)
+_long_description_ok = 'x' * (db_const.LONG_DESCRIPTION_FIELD_SIZE)
+_long_description_ng = 'x' * (db_const.LONG_DESCRIPTION_FIELD_SIZE + 1)
 _fake_uuid = uuidutils.generate_uuid
 
 

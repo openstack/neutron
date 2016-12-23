@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.conf import quota
 from neutron.db import rbac_db_models
@@ -63,15 +63,18 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {'type:uuid': None},
                       'is_visible': True, 'enforce_policy': True},
         'target_tenant': {'allow_post': True, 'allow_put': True,
-                          'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                          'validate': {
+                              'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                           'is_visible': True, 'enforce_policy': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'required_by_policy': True, 'is_visible': True},
         'action': {'allow_post': True, 'allow_put': False,
                    # action depends on type so validation has to occur in
                    # the extension
-                   'validate': {'type:string': attr.DESCRIPTION_MAX_LEN},
+                   'validate': {
+                       'type:string': db_const.DESCRIPTION_FIELD_SIZE},
                    # we set enforce_policy so operators can define policies
                    # that restrict actions
                    'is_visible': True, 'enforce_policy': True}

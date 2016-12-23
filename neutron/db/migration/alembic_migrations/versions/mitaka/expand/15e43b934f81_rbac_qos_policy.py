@@ -24,8 +24,6 @@ Create Date: 2015-11-25 18:45:03.819115
 from alembic import op
 import sqlalchemy as sa
 
-from neutron.api.v2 import attributes as attrs
-
 # revision identifiers, used by Alembic.
 revision = '15e43b934f81'
 down_revision = 'b4caf27aae4'
@@ -35,10 +33,10 @@ def upgrade():
     op.create_table('qospolicyrbacs',
                     sa.Column('id', sa.String(length=36), nullable=False),
                     sa.Column('tenant_id',
-                              sa.String(length=attrs.TENANT_ID_MAX_LEN),
+                              sa.String(length=255),
                               nullable=True),
                     sa.Column('target_tenant',
-                              sa.String(length=attrs.TENANT_ID_MAX_LEN),
+                              sa.String(length=255),
                               nullable=False),
                     sa.Column('action', sa.String(length=255), nullable=False),
                     sa.Column('object_id', sa.String(length=36),

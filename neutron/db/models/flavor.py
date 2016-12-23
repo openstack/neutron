@@ -10,16 +10,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.api.v2 import attributes as attr
-
 
 class Flavor(model_base.BASEV2, model_base.HasId):
-    name = sa.Column(sa.String(attr.NAME_MAX_LEN))
-    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
+    description = sa.Column(sa.String(db_const.LONG_DESCRIPTION_FIELD_SIZE))
     enabled = sa.Column(sa.Boolean, nullable=False, default=True,
                         server_default=sa.sql.true())
     # Make it True for multi-type flavors
@@ -29,7 +28,7 @@ class Flavor(model_base.BASEV2, model_base.HasId):
 
 
 class ServiceProfile(model_base.BASEV2, model_base.HasId):
-    description = sa.Column(sa.String(attr.LONG_DESCRIPTION_MAX_LEN))
+    description = sa.Column(sa.String(db_const.LONG_DESCRIPTION_FIELD_SIZE))
     driver = sa.Column(sa.String(1024), nullable=False)
     enabled = sa.Column(sa.Boolean, nullable=False, default=True,
                         server_default=sa.sql.true())

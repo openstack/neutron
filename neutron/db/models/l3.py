@@ -10,11 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.api.v2 import attributes
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.db import standard_attr
@@ -37,7 +37,7 @@ class RouterPort(model_base.BASEV2):
     # queries on router ports, and also prevents potential error-prone
     # conditions which might originate from users altering the DEVICE_OWNER
     # property of router ports.
-    port_type = sa.Column(sa.String(attributes.DEVICE_OWNER_MAX_LEN))
+    port_type = sa.Column(sa.String(db_const.DEVICE_OWNER_FIELD_SIZE))
     port = orm.relationship(
         models_v2.Port,
         backref=orm.backref('routerport', uselist=False, cascade="all,delete"),
@@ -48,7 +48,7 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
              model_base.HasId, model_base.HasProject):
     """Represents a v2 neutron router."""
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
     gw_port_id = sa.Column(sa.String(36), sa.ForeignKey('ports.id'))

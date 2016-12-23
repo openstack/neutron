@@ -12,13 +12,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.db import constants as db_const
 from tempest.lib.common.utils import data_utils
 from tempest import test
 
-from neutron.api.v2 import attributes as attr
 from neutron.tests.tempest.api import base
 
-LONG_NAME_OK = 'x' * (attr.NAME_MAX_LEN)
+LONG_NAME_OK = 'x' * db_const.NAME_FIELD_SIZE
 
 
 class MeteringTestJSON(base.BaseAdminNetworkTest):

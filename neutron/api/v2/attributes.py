@@ -16,6 +16,7 @@
 from neutron_lib.api import converters as lib_converters
 from neutron_lib.api import validators as lib_validators
 from neutron_lib import constants
+from neutron_lib.db import constants as db_const
 import six
 import webob.exc
 
@@ -24,14 +25,6 @@ from neutron._i18n import _
 
 # Defining a constant to avoid repeating string literal in several modules
 SHARED = 'shared'
-
-# TODO(HenryG): use DB field sizes (neutron-lib 0.1.1)
-NAME_MAX_LEN = 255
-TENANT_ID_MAX_LEN = 255
-DESCRIPTION_MAX_LEN = 255
-LONG_DESCRIPTION_MAX_LEN = 1024
-DEVICE_ID_MAX_LEN = 255
-DEVICE_OWNER_MAX_LEN = 255
 
 # Define constants for base resource name
 NETWORK = 'network'
@@ -72,7 +65,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': NAME_MAX_LEN},
+                 'validate': {'type:string': db_const.NAME_FIELD_SIZE},
                  'default': '', 'is_visible': True},
         'subnets': {'allow_post': False, 'allow_put': False,
                     'default': [],
@@ -84,7 +77,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'status': {'allow_post': False, 'allow_put': False,
                    'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'required_by_policy': True,
                       'is_visible': True},
         SHARED: {'allow_post': True,
@@ -101,7 +95,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
-                 'validate': {'type:string': NAME_MAX_LEN},
+                 'validate': {'type:string': db_const.NAME_FIELD_SIZE},
                  'is_visible': True},
         'network_id': {'allow_post': True, 'allow_put': False,
                        'required_by_policy': True,
@@ -124,15 +118,18 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'enforce_policy': True,
                       'is_visible': True},
         'device_id': {'allow_post': True, 'allow_put': True,
-                      'validate': {'type:string': DEVICE_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.DEVICE_ID_FIELD_SIZE},
                       'default': '',
                       'is_visible': True},
         'device_owner': {'allow_post': True, 'allow_put': True,
-                         'validate': {'type:string': DEVICE_OWNER_MAX_LEN},
+                         'validate': {
+                             'type:string': db_const.DEVICE_OWNER_FIELD_SIZE},
                          'default': '', 'enforce_policy': True,
                          'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'required_by_policy': True,
                       'is_visible': True},
         'status': {'allow_post': False, 'allow_put': False,
@@ -144,7 +141,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                'is_visible': True,
                'primary_key': True},
         'name': {'allow_post': True, 'allow_put': True, 'default': '',
-                 'validate': {'type:string': NAME_MAX_LEN},
+                 'validate': {'type:string': db_const.NAME_FIELD_SIZE},
                  'is_visible': True},
         'ip_version': {'allow_post': True, 'allow_put': False,
                        'convert_to': lib_converters.convert_to_int,
@@ -194,7 +191,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:hostroutes': None},
                         'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:string': TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'required_by_policy': True,
                       'is_visible': True},
         'enable_dhcp': {'allow_post': True, 'allow_put': True,
@@ -230,7 +228,8 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'is_visible': True},
         'tenant_id': {'allow_post': True,
                       'allow_put': False,
-                      'validate': {'type:string': TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'required_by_policy': True,
                       'is_visible': True},
         'prefixes': {'allow_post': True,

@@ -18,6 +18,7 @@ import six
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
+from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
@@ -32,8 +33,8 @@ SEGMENT_ID = 'segment_id'
 NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
-NAME_LEN = attributes.NAME_MAX_LEN
-DESC_LEN = attributes.DESCRIPTION_MAX_LEN
+NAME_LEN = db_const.NAME_FIELD_SIZE
+DESC_LEN = db_const.DESCRIPTION_FIELD_SIZE
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
@@ -46,7 +47,7 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': True,
                       'allow_put': False,
                       'validate': {'type:string':
-                                   attributes.TENANT_ID_MAX_LEN},
+                                   db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': False},
         'network_id': {'allow_post': True,
                        'allow_put': False,
