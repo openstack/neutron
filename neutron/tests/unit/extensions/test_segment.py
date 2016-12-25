@@ -12,10 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from keystoneauth1 import exceptions as ks_exc
 import mock
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
@@ -24,6 +26,7 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.common import exceptions as neutron_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron import context
 from neutron.db import agents_db
@@ -40,6 +43,8 @@ from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import config
 from neutron.services.segments import db
 from neutron.services.segments import exceptions as segment_exc
+from neutron.services.segments import placement_client
+from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -1476,3 +1481,135 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
         agent_hosts = [agent['host'] for agent in dhcp_agents]
         self.assertIn(DHCP_HOSTA, agent_hosts)
         self.assertIn(DHCP_HOSTB, agent_hosts)
+
+
+class PlacementAPIClientTestCase(base.DietTestCase):
+    """Test the Placement API client."""
+
+    def setUp(self):
+        super(PlacementAPIClientTestCase, self).setUp()
+        self.mock_load_auth_p = mock.patch(
+            'keystoneauth1.loading.load_auth_from_conf_options')
+        self.mock_load_auth = self.mock_load_auth_p.start()
+        self.mock_request_p = mock.patch(
+            'keystoneauth1.session.Session.request')
+        self.mock_request = self.mock_request_p.start()
+        self.client = placement_client.PlacementAPIClient()
+
+    @mock.patch('keystoneauth1.session.Session')
+    @mock.patch('keystoneauth1.loading.load_auth_from_conf_options')
+    def test_constructor(self, load_auth_mock, ks_sess_mock):
+        placement_client.PlacementAPIClient()
+
+        load_auth_mock.assert_called_once_with(cfg.CONF, 'placement')
+        ks_sess_mock.assert_called_once_with(auth=load_auth_mock.return_value)
+
+    def test_create_resource_provider(self):
+        expected_payload = 'fake_resource_provider'
+        self.client.create_resource_provider(expected_payload)
+        expected_url = '/resource_providers'
+        self.mock_request.assert_called_once_with(
+                expected_url, 'POST',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'},
+                json=expected_payload)
+
+    def test_delete_resource_provider(self):
+        rp_uuid = uuidutils.generate_uuid()
+        self.client.delete_resource_provider(rp_uuid)
+        expected_url = '/resource_providers/%s' % rp_uuid
+        self.mock_request.assert_called_once_with(
+                expected_url, 'DELETE',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'})
+
+    def test_create_inventory(self):
+        expected_payload = 'fake_inventory'
+        rp_uuid = uuidutils.generate_uuid()
+        self.client.create_inventory(rp_uuid, expected_payload)
+        expected_url = '/resource_providers/%s/inventories' % rp_uuid
+        self.mock_request.assert_called_once_with(
+                expected_url, 'POST',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'},
+                json=expected_payload)
+
+    def test_get_inventory(self):
+        rp_uuid = uuidutils.generate_uuid()
+        resource_class = 'fake_resource_class'
+        self.client.get_inventory(rp_uuid, resource_class)
+        expected_url = '/resource_providers/%s/inventories/%s' % (
+            rp_uuid, resource_class)
+        self.mock_request.assert_called_once_with(
+                expected_url, 'GET',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'})
+
+    def _test_get_inventory_not_found(self, details, expected_exception):
+        rp_uuid = uuidutils.generate_uuid()
+        resource_class = 'fake_resource_class'
+        self.mock_request.side_effect = ks_exc.NotFound(details=details)
+        self.assertRaises(expected_exception, self.client.get_inventory,
+                          rp_uuid, resource_class)
+
+    def test_get_inventory_not_found_no_resource_provider(self):
+        self._test_get_inventory_not_found(
+            "No resource provider with uuid",
+            neutron_exc.PlacementResourceProviderNotFound)
+
+    def test_get_inventory_not_found_no_inventory(self):
+        self._test_get_inventory_not_found(
+            "No inventory of class", neutron_exc.PlacementInventoryNotFound)
+
+    def test_get_inventory_not_found_unknown_cause(self):
+        self._test_get_inventory_not_found("Unknown cause", ks_exc.NotFound)
+
+    def test_update_inventory(self):
+        expected_payload = 'fake_inventory'
+        rp_uuid = uuidutils.generate_uuid()
+        resource_class = 'fake_resource_class'
+        self.client.update_inventory(rp_uuid, expected_payload, resource_class)
+        expected_url = '/resource_providers/%s/inventories/%s' % (
+            rp_uuid, resource_class)
+        self.mock_request.assert_called_once_with(
+                expected_url, 'PUT',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'},
+                json=expected_payload)
+
+    def test_update_inventory_conflict(self):
+        rp_uuid = uuidutils.generate_uuid()
+        expected_payload = 'fake_inventory'
+        resource_class = 'fake_resource_class'
+        self.mock_request.side_effect = ks_exc.Conflict
+        self.assertRaises(neutron_exc.PlacementInventoryUpdateConflict,
+                          self.client.update_inventory, rp_uuid,
+                          expected_payload, resource_class)
+
+    def test_associate_aggregates(self):
+        expected_payload = 'fake_aggregates'
+        rp_uuid = uuidutils.generate_uuid()
+        self.client.associate_aggregates(rp_uuid, expected_payload)
+        expected_url = '/resource_providers/%s/aggregates' % rp_uuid
+        self.mock_request.assert_called_once_with(
+                expected_url, 'PUT',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'},
+                json=expected_payload,
+                headers={'openstack-api-version': 'placement 1.1'})
+
+    def test_list_aggregates(self):
+        rp_uuid = uuidutils.generate_uuid()
+        self.client.list_aggregates(rp_uuid)
+        expected_url = '/resource_providers/%s/aggregates' % rp_uuid
+        self.mock_request.assert_called_once_with(
+                expected_url, 'GET',
+                endpoint_filter={'region_name': mock.ANY,
+                                 'service_type': 'placement'},
+                headers={'openstack-api-version': 'placement 1.1'})
+
+    def test_list_aggregates_not_found(self):
+        rp_uuid = uuidutils.generate_uuid()
+        self.mock_request.side_effect = ks_exc.NotFound
+        self.assertRaises(neutron_exc.PlacementAggregateNotFound,
+                          self.client.list_aggregates, rp_uuid)
