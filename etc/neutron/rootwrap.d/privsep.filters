@@ -26,11 +26,6 @@ privsep: PathFilter, privsep-helper, root,
  --privsep_context, neutron.privileged.default,
  --privsep_sock_path, /
 
-# Same as above with a second `--config-file` arg, since many neutron
-# components are installed like that (eg: by devstack).  Adjust to
-# suit local requirements.
-privsep: PathFilter, privsep-helper, root,
- --config-file, /etc,
- --config-file, /etc,
- --privsep_context, neutron.privileged.default,
- --privsep_sock_path, /
+# NOTE: A second `--config-file` arg can also be added above. Since
+# many neutron components are installed like that (eg: by devstack).
+# Adjust to suit local requirements.
