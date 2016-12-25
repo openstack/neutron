@@ -69,14 +69,16 @@ class SecurityGroupTestExtensionManager(object):
 
 class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
-    def _create_security_group(self, fmt, name, description, **kwargs):
-
+    def _build_security_group(self, name, description, **kwargs):
         data = {
             'security_group': {
                 'name': name,
-                'tenant_id': kwargs.get('tenant_id',
-                                        test_db_base_plugin_v2.TEST_TENANT_ID),
+                'tenant_id': kwargs.get(
+                    'tenant_id', test_db_base_plugin_v2.TEST_TENANT_ID),
                 'description': description}}
+        return data
+
+    def _create_security_group_response(self, fmt, data, **kwargs):
         security_group_req = self.new_create_request('security-groups', data,
                                                      fmt)
         if (kwargs.get('set_context') and 'tenant_id' in kwargs):
@@ -84,6 +86,10 @@ class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             security_group_req.environ['neutron.context'] = (
                 context.Context('', kwargs['tenant_id']))
         return security_group_req.get_response(self.ext_api)
+
+    def _create_security_group(self, fmt, name, description, **kwargs):
+        data = self._build_security_group(name, description, **kwargs)
+        return self._create_security_group_response(fmt, data, **kwargs)
 
     def _build_security_group_rule(
             self, security_group_id, direction, proto,
@@ -283,6 +289,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                     'port_range_max': None,
                     'port_range_min': None}
         self._assert_sg_rule_has_kvs(v6_rule, expected)
+
+    def test_create_security_group_bulk(self):
+            rule1 = self._build_security_group("sg_1", "sec_grp_1")
+            rule2 = self._build_security_group("sg_2", "sec_grp_2")
+            rules = {'security_groups': [rule1['security_group'],
+                                         rule2['security_group']]}
+            res = self._create_security_group_response(self.fmt, rules)
+            ret = self.deserialize(self.fmt, res)
+            self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+            self.assertEqual(2, len(ret['security_groups']))
 
     def test_skip_duplicate_default_sg_error(self):
         num_called = [0]
