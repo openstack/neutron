@@ -16,6 +16,7 @@
 import os
 
 import mock
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -41,7 +42,8 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
         if extensions:
             ext_mgr.extensions = extensions
         if service_plugins:
-            service_plugins['CORE'] = ext_mgr.plugins.get('CORE')
+            service_plugins[constants.CORE] = ext_mgr.plugins.get(
+                constants.CORE)
             ext_mgr.plugins = service_plugins
         self.setup_app()
 

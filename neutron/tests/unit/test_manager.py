@@ -16,6 +16,7 @@
 import weakref
 
 import fixtures
+from neutron_lib import constants as lib_const
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 
@@ -108,7 +109,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
         manager.init()
         svc_plugins = directory.get_plugins()
         self.assertEqual(3, len(svc_plugins))
-        self.assertIn(constants.CORE, svc_plugins.keys())
+        self.assertIn(lib_const.CORE, svc_plugins.keys())
         self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
         self.assertIn(constants.DUMMY, svc_plugins.keys())
 

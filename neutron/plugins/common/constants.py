@@ -14,7 +14,6 @@
 #    under the License.
 
 # Neutron well-known service type constants:
-CORE = "CORE"
 DUMMY = "DUMMY"
 LOADBALANCER = "LOADBALANCER"
 LOADBALANCERV2 = "LOADBALANCERV2"
