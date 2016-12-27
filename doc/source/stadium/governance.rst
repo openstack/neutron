@@ -49,7 +49,7 @@ team.
 In fact, it became harder and harder to ensure consistency in the APIs,
 architecture, design, implementation and testing of the overarching project;
 all aspects of software development, like documentation, integration, release
-management, maintainance, and upgrades started to being neglected for some
+management, maintenance, and upgrades started to being neglected for some
 projects and that led to some unhappy experiences.
 
 The point about uniform APIs is particularly important, because the Neutron
