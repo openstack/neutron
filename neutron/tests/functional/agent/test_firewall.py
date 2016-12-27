@@ -398,7 +398,7 @@ class FirewallTestCase(BaseFirewallTestCase):
         not_allowed_ip = "%s/24" % (allowed_ip + 1)
         self.src_port_desc['allowed_address_pairs'] = [
             {'mac_address': port_mac,
-             'ip_address': allowed_ip}]
+             'ip_address': "%s/32" % allowed_ip}]
         allowed_ip = "%s/24" % allowed_ip
 
         self.firewall.update_port_filter(self.src_port_desc)
