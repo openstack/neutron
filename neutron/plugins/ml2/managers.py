@@ -156,7 +156,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def extend_networks_dict_provider(self, context, networks):
         ids = [network['id'] for network in networks]
-        net_segments = segments_db.get_networks_segments(context.session, ids)
+        net_segments = segments_db.get_networks_segments(context, ids)
         for network in networks:
             segments = net_segments[network['id']]
             self._extend_network_dict_provider(network, segments)
@@ -278,8 +278,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         raise exc.NoNetworkAvailable()
 
     def release_network_segments(self, context, network_id):
-        segments = segments_db.get_network_segments(context.session,
-                                                    network_id,
+        segments = segments_db.get_network_segments(context, network_id,
                                                     filter_dynamic=None)
 
         for segment in segments:
@@ -300,7 +299,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def allocate_dynamic_segment(self, context, network_id, segment):
         """Allocate a dynamic segment using a partial or full segment dict."""
         dynamic_segment = segments_db.get_dynamic_segment(
-            context.session, network_id, segment.get(api.PHYSICAL_NETWORK),
+            context, network_id, segment.get(api.PHYSICAL_NETWORK),
             segment.get(api.SEGMENTATION_ID))
 
         if dynamic_segment:
@@ -313,14 +312,13 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         else:
             dynamic_segment = driver.obj.reserve_provider_segment(
                 context, segment)
-        segments_db.add_network_segment(context,
-                                        network_id, dynamic_segment,
+        segments_db.add_network_segment(context, network_id, dynamic_segment,
                                         is_dynamic=True)
         return dynamic_segment
 
     def release_dynamic_segment(self, context, segment_id):
         """Delete a dynamic segment."""
-        segment = segments_db.get_segment_by_id(context.session, segment_id)
+        segment = segments_db.get_segment_by_id(context, segment_id)
         if segment:
             driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
             if driver:
@@ -328,7 +326,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                     driver.obj.release_segment(context.session, segment)
                 else:
                     driver.obj.release_segment(context, segment)
-                segments_db.delete_network_segment(context.session, segment_id)
+                segments_db.delete_network_segment(context, segment_id)
             else:
                 LOG.error(_LE("Failed to release segment '%s' because "
                               "network type is not supported."), segment)

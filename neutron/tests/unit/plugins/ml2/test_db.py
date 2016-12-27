@@ -74,7 +74,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                 is_dynamic=is_seg_dynamic)
 
         net_segments = segments_db.get_network_segments(
-                           self.ctx.session, network_id,
+                           self.ctx, network_id,
                            filter_dynamic=is_seg_dynamic)
         net_segments = self._sort_segments(net_segments)
 
@@ -120,7 +120,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net1segs = self._create_segments(segments1, network_id='net1')
         net2segs = self._create_segments(segments2, network_id='net2')
         segs = segments_db.get_networks_segments(
-            self.ctx.session, ['net1', 'net2'])
+            self.ctx, ['net1', 'net2'])
         self.assertEqual(net1segs, self._sort_segments(segs['net1']))
         self.assertEqual(net2segs, self._sort_segments(segs['net2']))
 
@@ -128,7 +128,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._create_segments([], network_id='net1')
         self._create_segments([], network_id='net2')
         segs = segments_db.get_networks_segments(
-            self.ctx.session, ['net1', 'net2'])
+            self.ctx, ['net1', 'net2'])
         self.assertEqual([], segs['net1'])
         self.assertEqual([], segs['net2'])
 
@@ -140,13 +140,13 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net_segment = self._create_segments([segment])[0]
         segment_uuid = net_segment[api.ID]
 
-        net_segment = segments_db.get_segment_by_id(self.ctx.session,
+        net_segment = segments_db.get_segment_by_id(self.ctx,
                                                     segment_uuid)
         self.assertEqual(segment, net_segment)
 
     def test_get_segment_by_id_result_not_found(self):
         segment_uuid = uuidutils.generate_uuid()
-        net_segment = segments_db.get_segment_by_id(self.ctx.session,
+        net_segment = segments_db.get_segment_by_id(self.ctx,
                                                     segment_uuid)
         self.assertIsNone(net_segment)
 
@@ -158,9 +158,9 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         net_segment = self._create_segments([segment])[0]
         segment_uuid = net_segment[api.ID]
 
-        segments_db.delete_network_segment(self.ctx.session, segment_uuid)
+        segments_db.delete_network_segment(self.ctx, segment_uuid)
         # Get segment and verify its empty
-        net_segment = segments_db.get_segment_by_id(self.ctx.session,
+        net_segment = segments_db.get_segment_by_id(self.ctx,
                                                     segment_uuid)
         self.assertIsNone(net_segment)
 

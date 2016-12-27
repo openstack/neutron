@@ -23,7 +23,7 @@ from neutron.tests import base
 class TestSegmentsDb(base.BaseTestCase):
 
     def test_get_networks_segments_with_empty_networks(self):
-        session = mock.MagicMock()
-        net_segs = segments_db.get_networks_segments(session, [])
-        self.assertFalse(session.query.called)
+        context = mock.MagicMock()
+        net_segs = segments_db.get_networks_segments(context, [])
+        self.assertFalse(context.session.query.called)
         self.assertEqual({}, net_segs)
