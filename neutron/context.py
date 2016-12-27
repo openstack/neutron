@@ -151,7 +151,7 @@ class Context(ContextBaseWithSession):
         if hasattr(super(Context, self), 'session'):
             return super(Context, self).session
         if self._session is None:
-            self._session = db_api.get_session()
+            self._session = db_api.get_writer_session()
         return self._session
 
 

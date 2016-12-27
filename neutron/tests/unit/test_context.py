@@ -25,7 +25,7 @@ class TestNeutronContext(base.BaseTestCase):
 
     def setUp(self):
         super(TestNeutronContext, self).setUp()
-        db_api = 'neutron.db.api.get_session'
+        db_api = 'neutron.db.api.get_writer_session'
         self._db_api_session_patcher = mock.patch(db_api)
         self.db_api_session = self._db_api_session_patcher.start()
 
