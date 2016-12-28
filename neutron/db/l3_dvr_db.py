@@ -353,7 +353,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     # TODO(kevinbenton): even though we get the
                     # port each time, there is a potential race
                     # where we update the port with stale IPs if
-                    # another interface operation is occuring at
+                    # another interface operation is occurring at
                     # the same time. This can be fixed in the
                     # future with a compare-and-swap style update
                     # using the revision number of the port.
