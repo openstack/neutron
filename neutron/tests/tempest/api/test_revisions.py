@@ -279,7 +279,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
                            router['revision_number'])
 
     @test.idempotent_id('90743b00-b0e2-40e4-9524-1c884fe3ef23')
-    @test.requires_ext(extension="external-network", service="network")
+    @test.requires_ext(extension="external-net", service="network")
     @test.requires_ext(extension="auto-allocated-topology", service="network")
     @test.requires_ext(extension="subnet_allocation", service="network")
     @test.requires_ext(extension="router", service="network")
