@@ -25,7 +25,7 @@ from neutron.objects import common_types
 
 @obj_base.VersionedObjectRegistry.register
 class RouterRoute(base.NeutronDbObject):
-    # Version 1.0: Intial version
+    # Version 1.0: Initial version
     VERSION = '1.0'
 
     db_model = l3.RouterRoute
@@ -61,7 +61,7 @@ class RouterRoute(base.NeutronDbObject):
 
 @obj_base.VersionedObjectRegistry.register
 class RouterExtraAttributes(base.NeutronDbObject):
-    # Version 1.0: Intial version
+    # Version 1.0: Initial version
     VERSION = '1.0'
 
     db_model = l3_attrs.RouterExtraAttributes
