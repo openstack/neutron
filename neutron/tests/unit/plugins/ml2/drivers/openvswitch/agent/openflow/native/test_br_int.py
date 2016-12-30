@@ -35,6 +35,12 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
+                instructions=[],
+                match=ofpp.OFPMatch(),
+                priority=0,
+                table_id=23)),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
                 instructions=[
                     ofpp.OFPInstructionActions(
                         ofp.OFPIT_APPLY_ACTIONS, [
@@ -44,12 +50,6 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 match=ofpp.OFPMatch(),
                 priority=0,
                 table_id=0)),
-            call._send_msg(ofpp.OFPFlowMod(dp,
-                cookie=self.stamp,
-                instructions=[],
-                match=ofpp.OFPMatch(),
-                priority=0,
-                table_id=23)),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[],
