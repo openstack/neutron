@@ -47,7 +47,7 @@ class RouterUpdate(object):
 
         Lower numerical priority always gets precedence.  When comparing two
         updates of the same priority then the one with the earlier timestamp
-        gets procedence.  In the unlikely event that the timestamps are also
+        gets precedence.  In the unlikely event that the timestamps are also
         equal it falls back to a simple comparison of ids meaning the
         precedence is essentially random.
         """
