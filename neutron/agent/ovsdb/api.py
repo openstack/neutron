@@ -14,6 +14,7 @@
 
 import abc
 import collections
+import contextlib
 import uuid
 
 from oslo_config import cfg
@@ -83,6 +84,7 @@ class Transaction(object):
 class API(object):
     def __init__(self, context):
         self.context = context
+        self._nested_txn = None
 
     @staticmethod
     def get(context, iface_name=None):
@@ -92,7 +94,7 @@ class API(object):
         return iface(context)
 
     @abc.abstractmethod
-    def transaction(self, check_error=False, log_errors=True, **kwargs):
+    def create_transaction(self, check_error=False, log_errors=True, **kwargs):
         """Create a transaction
 
         :param check_error: Allow the transaction to raise an exception?
@@ -102,6 +104,28 @@ class API(object):
         :returns: A new transaction
         :rtype: :class:`Transaction`
         """
+
+    @contextlib.contextmanager
+    def transaction(self, check_error=False, log_errors=True, **kwargs):
+        """Create a transaction context.
+
+        :param check_error: Allow the transaction to raise an exception?
+        :type check_error:  bool
+        :param log_errors:  Log an error if the transaction fails?
+        :type log_errors:   bool
+        :returns: Either a new transaction or an existing one.
+        :rtype: :class:`Transaction`
+        """
+        if self._nested_txn:
+            yield self._nested_txn
+        else:
+            with self.create_transaction(
+                    check_error, log_errors, **kwargs) as txn:
+                self._nested_txn = txn
+                try:
+                    yield txn
+                finally:
+                    self._nested_txn = None
 
     @abc.abstractmethod
     def add_manager(self, connection_uri):
