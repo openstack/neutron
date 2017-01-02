@@ -17,7 +17,7 @@ from neutron_lib import exceptions as exc
 
 from neutron.common import exceptions as n_exc
 from neutron import context
-from neutron.db.models.plugins.ml2 import flatallocation as type_flat_model
+from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_api as api
@@ -27,12 +27,14 @@ from neutron.tests.unit import testlib_api
 
 
 FLAT_NETWORKS = ['flat_net1', 'flat_net2']
+CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 
 class FlatTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(FlatTypeTest, self).setUp()
+        self.setup_coreplugin(CORE_PLUGIN)
         config.cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
                               group='ml2_type_flat')
         self.driver = type_flat.FlatTypeDriver()
@@ -40,8 +42,8 @@ class FlatTypeTest(testlib_api.SqlTestCase):
         self.driver.physnet_mtus = []
 
     def _get_allocation(self, context, segment):
-        return context.session.query(type_flat_model.FlatAllocation).filter_by(
-            physical_network=segment[api.PHYSICAL_NETWORK]).first()
+        return flat_obj.FlatAllocation.get_object(
+            context, physical_network=segment[api.PHYSICAL_NETWORK])
 
     def test_is_partial_segment(self):
         segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT,
