@@ -118,7 +118,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def _setup_l3(self):
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
-                                    '_notify_ha_interfaces_updated')
+                                    '_notify_router_updated')
         self.notif_m = notif_p.start()
         self.plugin = FakeL3PluginWithAgents()
         self._register_ml2_agents()
@@ -207,17 +207,18 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             router['distributed'] = distributed
         return self.plugin.create_router(ctx, {'router': router})
 
-    def _bind_router(self, router_id):
-        with self.adminContext.session.begin(subtransactions=True):
-            scheduler = l3_agent_scheduler.ChanceScheduler()
-            filters = {'agent_type': [constants.AGENT_TYPE_L3]}
-            agents_db = self.plugin.get_agents_db(self.adminContext,
-                                                  filters=filters)
-            scheduler._bind_ha_router_to_agents(
+    def _bind_router(self, router_id, tenant_id):
+        scheduler = l3_agent_scheduler.ChanceScheduler()
+        filters = {'agent_type': [constants.AGENT_TYPE_L3]}
+        agents_db = self.plugin.get_agents_db(self.adminContext,
+                                              filters=filters)
+        for agent_db in agents_db:
+            scheduler.create_ha_port_and_bind(
                 self.plugin,
                 self.adminContext,
                 router_id,
-                agents_db)
+                tenant_id,
+                agent_db)
         self._bind_ha_network_ports(router_id)
 
     def _bind_ha_network_ports(self, router_id):
@@ -261,7 +262,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
     def _create_ha_router(self):
         self._setup_l3()
         router = self._create_router()
-        self._bind_router(router['id'])
+        self._bind_router(router['id'], router['tenant_id'])
         return router
 
     def _verify_remove_fdb(self, expected, agent_id, device, host=None):

@@ -277,7 +277,9 @@ class L3Scheduler(object):
             return
         elif sync_router.get('ha', False):
             chosen_agents = self._bind_ha_router(plugin, context,
-                                                 router_id, candidates)
+                                                 router_id,
+                                                 sync_router.get('tenant_id'),
+                                                 candidates)
             if not chosen_agents:
                 return
             chosen_agent = chosen_agents[-1]
@@ -317,11 +319,12 @@ class L3Scheduler(object):
                                 tenant_id, agent, is_manual_scheduling=False):
         """Creates and binds a new HA port for this agent."""
         ctxt = context.elevated()
+        router_db = plugin._get_router(ctxt, router_id)
         creator = functools.partial(self._add_port_from_net,
                                     plugin, ctxt, router_id, tenant_id)
         dep_getter = functools.partial(plugin.get_ha_network, ctxt, tenant_id)
-        dep_creator = functools.partial(plugin._create_ha_network,
-                                        ctxt, tenant_id)
+        dep_creator = functools.partial(plugin._set_vr_id_and_ensure_network,
+                                        ctxt, router_db)
         dep_deleter = functools.partial(plugin._delete_ha_network, ctxt)
         dep_id_attr = 'network_id'
 
@@ -375,28 +378,8 @@ class L3Scheduler(object):
                                              router['tenant_id'],
                                              agent)
 
-    def _bind_ha_router_to_agents(self, plugin, context, router_id,
-                                 chosen_agents):
-        port_bindings = plugin.get_ha_router_port_bindings(context,
-                                                           [router_id])
-        for port_binding, agent in zip(port_bindings, chosen_agents):
-            if not self.bind_router(plugin, context, router_id, agent.id,
-                                    is_ha=True):
-                break
-
-            try:
-                with db_api.autonested_transaction(context.session):
-                    port_binding.l3_agent_id = agent.id
-            except db_exc.DBDuplicateEntry:
-                LOG.debug("Router %(router)s already scheduled for agent "
-                          "%(agent)s", {'router': router_id,
-                                        'agent': agent.id})
-            else:
-                LOG.debug('HA Router %(router_id)s is scheduled to L3 agent '
-                          '%(agent_id)s)',
-                          {'router_id': router_id, 'agent_id': agent.id})
-
-    def _bind_ha_router(self, plugin, context, router_id, candidates):
+    def _bind_ha_router(self, plugin, context, router_id,
+                        tenant_id, candidates):
         """Bind a HA router to agents based on a specific policy."""
 
         if not self._enough_candidates_for_ha(candidates):
@@ -405,8 +388,9 @@ class L3Scheduler(object):
         chosen_agents = self._choose_router_agents_for_ha(
             plugin, context, candidates)
 
-        self._bind_ha_router_to_agents(plugin, context, router_id,
-                                       chosen_agents)
+        for agent in chosen_agents:
+            self.create_ha_port_and_bind(plugin, context, router_id,
+                                         tenant_id, agent)
 
         return chosen_agents
 
