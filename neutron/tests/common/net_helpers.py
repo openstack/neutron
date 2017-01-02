@@ -512,7 +512,7 @@ class NetcatTester(object):
             return True
 
     def _spawn_nc_in_namespace(self, namespace, address, listen=False):
-        cmd = ['nc', address, self.dst_port]
+        cmd = ['ncat', address, self.dst_port]
         if self.protocol == self.UDP:
             cmd.append('-u')
         if listen:
