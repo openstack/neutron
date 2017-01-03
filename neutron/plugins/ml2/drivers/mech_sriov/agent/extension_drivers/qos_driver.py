@@ -15,7 +15,7 @@
 from oslo_log import log as logging
 
 from neutron._i18n import _LE, _LI
-from neutron.agent.l2.extensions import qos
+from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import (
     exceptions as exc)
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
@@ -25,7 +25,7 @@ from neutron.plugins.ml2.drivers.mech_sriov.mech_driver import (
 LOG = logging.getLogger(__name__)
 
 
-class QosSRIOVAgentDriver(qos.QosAgentDriver):
+class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
 
     SUPPORTED_RULES = (
         mech_driver.SriovNicSwitchMechanismDriver.supported_qos_rule_types)
