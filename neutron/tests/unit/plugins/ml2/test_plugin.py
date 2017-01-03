@@ -1741,6 +1741,20 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                 self.context, 'foo_port_id', {'port': port})
         self.assertFalse(mock_dist.called)
 
+    def test__bind_port_original_port_set(self):
+        plugin = directory.get_plugin()
+        plugin.mechanism_manager = mock.Mock()
+        mock_port = {'id': 'port_id'}
+        context = mock.Mock()
+        context.network.current = {'id': 'net_id'}
+        context.original = mock_port
+        with mock.patch.object(plugin, '_update_port_dict_binding'), \
+            mock.patch.object(segments_db, 'get_network_segments',
+                              return_value=[]):
+            new_context = plugin._bind_port(context)
+            self.assertEqual(mock_port, new_context.original)
+            self.assertFalse(new_context == context)
+
 
 class TestMl2PortBindingNoSG(TestMl2PortBinding):
     HAS_PORT_FILTER = False
