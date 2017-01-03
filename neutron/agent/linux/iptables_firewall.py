@@ -144,8 +144,18 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         LOG.debug("Update members of security group (%s)", sg_id)
         self.sg_members[sg_id] = collections.defaultdict(list, sg_members)
         if self.enable_ipset:
-            for ip_version, current_ips in sg_members.items():
-                self.ipset.set_members(sg_id, ip_version, current_ips)
+            self._update_ipset_members(sg_id, sg_members)
+
+    def _update_ipset_members(self, sg_id, sg_members):
+        devices = self.devices_with_updated_sg_members.pop(sg_id, None)
+        for ip_version, current_ips in sg_members.items():
+            add_ips, del_ips = self.ipset.set_members(
+                sg_id, ip_version, current_ips)
+            if devices and del_ips:
+                # remove prefix from del_ips
+                ips = [str(netaddr.IPNetwork(del_ip).ip) for del_ip in del_ips]
+                self.ipconntrack.delete_conntrack_state_by_remote_ips(
+                    devices, ip_version, ips)
 
     def _set_ports(self, port):
         if not firewall.port_sec_enabled(port):
@@ -817,7 +827,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _remove_conntrack_entries_from_sg_updates(self):
         self._clean_deleted_sg_rule_conntrack_entries()
         self._clean_updated_sg_member_conntrack_entries()
-        self._clean_deleted_remote_sg_members_conntrack_entries()
+        if not self.enable_ipset:
+            self._clean_deleted_remote_sg_members_conntrack_entries()
 
     def _get_sg_members(self, sg_info, sg_id, ethertype):
         return set(sg_info.get(sg_id, {}).get(ethertype, []))

@@ -1604,6 +1604,7 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
         self.firewall.ipset.get_name.side_effect = (
             ipset_manager.IpsetManager.get_name)
         self.firewall.ipset.set_name_exists.return_value = True
+        self.firewall.ipset.set_members = mock.Mock(return_value=([], []))
 
     def _fake_port(self, sg_id=FAKE_SGID):
         return {'device': 'tapfake_dev',
