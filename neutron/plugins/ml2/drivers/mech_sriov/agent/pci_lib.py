@@ -186,22 +186,26 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         return vf_details
 
     @classmethod
-    def is_macvtap_assigned(cls, ifname):
+    def link_show(cls):
+        try:
+            out = cls._execute([], "link", ("show", ), run_as_root=True)
+        except Exception as e:
+            LOG.error(_LE("Failed executing ip command: %s"), e)
+            raise exc.IpCommandError(reason=e)
+        return out
+
+    @classmethod
+    def is_macvtap_assigned(cls, ifname, ip_link_show_output):
         """Check if vf has macvtap interface assigned
 
         Parses the output of ip link show command and checks
         if macvtap[0-9]+@<vf interface> regex matches the
         output.
         @param ifname: vf interface name
+        @param ip_link_show_output: 'ip link show' result to parse
         @return: True on match otherwise False
         """
-        try:
-            out = cls._execute([], "link", ("show", ), run_as_root=True)
-        except Exception as e:
-            LOG.error(_LE("Failed executing ip command: %s"), e)
-            raise exc.IpCommandError(reason=e)
-
-        for line in out.splitlines():
+        for line in ip_link_show_output.splitlines():
             pattern_match = cls.MACVTAP_REG_EX.match(line)
             if pattern_match:
                 if ifname == pattern_match.group('vf_interface'):

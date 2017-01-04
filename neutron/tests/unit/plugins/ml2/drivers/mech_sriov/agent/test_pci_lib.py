@@ -176,30 +176,20 @@ class TestPciLib(base.BaseTestCase):
                               state=True)
 
     def test_is_macvtap_assigned(self):
-        with mock.patch.object(pci_lib.PciDeviceIPWrapper,
-                               "_execute") as mock_exec:
-            mock_exec.return_value = self.IP_LINK_SHOW_WITH_MACVTAP
-            self.assertTrue(
-                pci_lib.PciDeviceIPWrapper.is_macvtap_assigned('enp129s0f1'))
+        self.assertTrue(pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
+            'enp129s0f1', self.IP_LINK_SHOW_WITH_MACVTAP))
 
     def test_is_macvtap_assigned_interface_with_underscore(self):
-        with mock.patch.object(pci_lib.PciDeviceIPWrapper,
-                               "_execute") as mock_exec:
-            mock_exec.return_value = self.IP_LINK_SHOW_WITH_MACVTAP2
-            self.assertTrue(
-                pci_lib.PciDeviceIPWrapper.is_macvtap_assigned('p1p2_1'))
+        self.assertTrue(pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
+            'p1p2_1', self.IP_LINK_SHOW_WITH_MACVTAP2))
 
     def test_is_macvtap_assigned_not_assigned(self):
-        with mock.patch.object(pci_lib.PciDeviceIPWrapper,
-                               "_execute") as mock_exec:
-            mock_exec.return_value = self.IP_LINK_SHOW_WITH_MACVTAP
-            self.assertFalse(
-                pci_lib.PciDeviceIPWrapper.is_macvtap_assigned('enp129s0f2'))
+        self.assertFalse(pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
+            'enp129s0f2', self.IP_LINK_SHOW_WITH_MACVTAP))
 
-    def test_is_macvtap_assigned_failed(self):
+    def test_link_show_command_failed(self):
         with mock.patch.object(pci_lib.PciDeviceIPWrapper,
                                "_execute") as mock_exec:
             mock_exec.side_effect = Exception()
             self.assertRaises(exc.IpCommandError,
-                              pci_lib.PciDeviceIPWrapper.is_macvtap_assigned,
-                              'enp129s0f3')
+                              pci_lib.PciDeviceIPWrapper.link_show)
