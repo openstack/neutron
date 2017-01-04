@@ -379,21 +379,29 @@ class OVSDBHandler(object):
             return
 
         # We need to remove stale subports
+        unwire_status = constants.ACTIVE_STATUS
         if rewire:
             old_subport_ids = self.get_connected_subports_for_trunk(trunk.id)
             subports = {p['port_id'] for p in trunk.sub_ports}
             subports_to_delete = set(old_subport_ids) - subports
             if subports_to_delete:
-                self.unwire_subports_for_trunk(trunk.id, subports_to_delete)
+                unwire_status = self.unwire_subports_for_trunk(
+                    trunk.id, subports_to_delete)
 
         # NOTE(status_police): inform the server whether the operation
         # was a partial or complete success. Do not inline status.
         # NOTE: in case of rewiring we readd ports that are already present on
         # the bridge because e.g. the segmentation ID might have changed (e.g.
         # agent crashed, port was removed and readded with a different seg ID)
-        status = self.wire_subports_for_trunk(
+        wire_status = self.wire_subports_for_trunk(
             ctx, trunk.id, trunk.sub_ports,
             trunk_bridge=trunk_br, parent_port=port)
+
+        if (unwire_status == wire_status and
+                wire_status == constants.ACTIVE_STATUS):
+            status = constants.ACTIVE_STATUS
+        else:
+            status = constants.DEGRADED_STATUS
         self.report_trunk_status(ctx, trunk.id, status)
 
     def _set_trunk_metadata(self, trunk_bridge, port, trunk_id, subport_ids):
