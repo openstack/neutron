@@ -253,7 +253,7 @@ Each OVS agent is connected to its own pair of br-int/br-ex, and those bridges
 are then interconnected.
 For LinuxBridge agent each agent is started in its own namespace, called
 "host-<some_random_value>". Such namespaces are connected with OVS "central"
-bridge to eachother.
+bridge to each other.
 
 .. image:: images/fullstack_multinode_simulation.png
 
