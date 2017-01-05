@@ -207,7 +207,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return allocated_vr_ids
 
     @db_api.retry_if_session_inactive()
-    def _allocate_vr_id(self, context, network_id, router_id):
+    def _ensure_vr_id(self, context, router_db, ha_network):
+        router_id = router_db.id
+        network_id = ha_network.network_id
+
         # TODO(kevinbenton): let decorator handle duplicate retry
         # like in review.openstack.org/#/c/367179/1/neutron/db/l3_hamode_db.py
         for count in range(MAX_ALLOCATION_TRIES):
@@ -215,6 +218,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 # NOTE(kevinbenton): we disallow subtransactions because the
                 # retry logic will bust any parent transactions
                 with context.session.begin():
+                    if router_db.extra_attributes.ha_vr_id:
+                        LOG.debug(
+                            "Router %(router_id)s has already been "
+                            "allocated a ha_vr_id %(ha_vr_id)d!",
+                            {'router_id': router_id,
+                             'ha_vr_id': router_db.extra_attributes.ha_vr_id})
+                        return
+
                     allocated_vr_ids = self._get_allocated_vr_id(context,
                                                                  network_id)
                     available_vr_ids = VR_ID_RANGE - allocated_vr_ids
@@ -227,6 +238,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     allocation.vr_id = available_vr_ids.pop()
 
                     context.session.add(allocation)
+                    router_db.extra_attributes.ha_vr_id = allocation.vr_id
+                    LOG.debug(
+                        "Router %(router_id)s has been allocated a ha_vr_id "
+                        "%(ha_vr_id)d.",
+                        {'router_id': router_id, 'ha_vr_id': allocation.vr_id})
 
                     return allocation.vr_id
 
@@ -246,10 +262,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             context.session.query(L3HARouterVRIdAllocation).filter_by(
                 network_id=ha_network.network_id,
                 vr_id=vr_id).delete()
-
-    def _set_vr_id(self, context, router, ha_network):
-        router.extra_attributes.ha_vr_id = self._allocate_vr_id(
-            context, ha_network.network_id, router.id)
 
     def _create_ha_subnet(self, context, network_id, tenant_id):
         args = {'network_id': network_id,
@@ -436,9 +448,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                      self)._get_device_owner(context, router)
 
     @n_utils.transaction_guard
-    def _set_vr_id_and_ensure_network(self, context, router_db):
+    def _ensure_vr_id_and_network(self, context, router_db):
         """Attach vr_id to router while tolerating network deletes."""
-        creator = functools.partial(self._set_vr_id,
+        creator = functools.partial(self._ensure_vr_id,
                                     context, router_db)
         dep_getter = functools.partial(self.get_ha_network,
                                        context, router_db.tenant_id)
@@ -473,7 +485,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             try:
                 router_db = self._get_router(context, router_dict['id'])
 
-                self._set_vr_id_and_ensure_network(context, router_db)
                 self.schedule_router(context, router_dict['id'])
 
                 router_dict['ha_vr_id'] = router_db.extra_attributes.ha_vr_id
@@ -555,9 +566,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         # working (Only unbind from dvr_snat nodes).
         self._unbind_ha_router(context, router_id)
 
-        if requested_ha_state:
-            self._set_vr_id_and_ensure_network(context, router_db)
-        else:
+        if not requested_ha_state:
             self._delete_ha_interfaces(context, router_db.id)
             # always attempt to cleanup the network as the router is
             # deleted. the core plugin will stop us if its in use
