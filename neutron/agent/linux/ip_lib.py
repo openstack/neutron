@@ -131,10 +131,14 @@ class IPWrapper(SubProcessBase):
                 cmd = ['ip', 'netns', 'exec', self.namespace,
                        'find', SYS_NET_PATH, '-maxdepth', '1',
                        '-type', 'l', '-printf', '%f ']
-                output = utils.execute(
+                output_str = utils.execute(
                     cmd,
                     run_as_root=True,
-                    log_fail_as_error=self.log_fail_as_error).split()
+                    log_fail_as_error=self.log_fail_as_error)
+                # NOTE(dalvarez): Logging the output of this call due to
+                # bug1654287.
+                LOG.debug('get_devices(): %s', output_str)
+                output = output_str.split()
             except RuntimeError:
                 # We could be racing with a cron job deleting namespaces.
                 # Just return a empty list if the namespace is deleted.
