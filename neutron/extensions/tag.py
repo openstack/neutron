@@ -25,6 +25,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
+from neutron.common import rpc as n_rpc
 from neutron.services import service_base
 
 
@@ -73,6 +74,17 @@ def validate_tags(body):
         raise exceptions.InvalidInput(error_message=msg)
 
 
+def notify_tag_action(context, action, parent, parent_id, tags=None):
+    notifier = n_rpc.get_notifier('network')
+    tag_event = 'tag.%s' % action
+    # TODO(hichihara): Add 'updated_at' into payload
+    payload = {'parent_resource': parent,
+               'parent_resource_id': parent_id}
+    if tags is not None:
+        payload['tags'] = tags
+    notifier.info(context, tag_event, payload)
+
+
 class TagController(object):
     def __init__(self):
         self.plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
@@ -99,27 +111,47 @@ class TagController(object):
         # id == tag
         validate_tag(id)
         parent, parent_id = get_parent_resource_and_id(kwargs)
-        return self.plugin.update_tag(request.context, parent, parent_id, id)
+        notify_tag_action(request.context, 'create.start',
+                          parent, parent_id, [id])
+        result = self.plugin.update_tag(request.context, parent, parent_id, id)
+        notify_tag_action(request.context, 'create.end',
+                          parent, parent_id, [id])
+        return result
 
     def update_all(self, request, body, **kwargs):
         # PUT /v2.0/networks/{network_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
         validate_tags(body)
         parent, parent_id = get_parent_resource_and_id(kwargs)
-        return self.plugin.update_tags(request.context, parent, parent_id,
-                                       body)
+        notify_tag_action(request.context, 'update.start',
+                          parent, parent_id, body['tags'])
+        result = self.plugin.update_tags(request.context, parent,
+                                         parent_id, body)
+        notify_tag_action(request.context, 'update.end',
+                          parent, parent_id, body['tags'])
+        return result
 
     def delete(self, request, id, **kwargs):
         # DELETE /v2.0/networks/{network_id}/tags/{tag}
         # id == tag
         validate_tag(id)
         parent, parent_id = get_parent_resource_and_id(kwargs)
-        return self.plugin.delete_tag(request.context, parent, parent_id, id)
+        notify_tag_action(request.context, 'delete.start',
+                          parent, parent_id, [id])
+        result = self.plugin.delete_tag(request.context, parent, parent_id, id)
+        notify_tag_action(request.context, 'delete.end',
+                          parent, parent_id, [id])
+        return result
 
     def delete_all(self, request, **kwargs):
         # DELETE /v2.0/networks/{network_id}/tags
         parent, parent_id = get_parent_resource_and_id(kwargs)
-        return self.plugin.delete_tags(request.context, parent, parent_id)
+        notify_tag_action(request.context, 'delete_all.start',
+                          parent, parent_id)
+        result = self.plugin.delete_tags(request.context, parent, parent_id)
+        notify_tag_action(request.context, 'delete_all.end',
+                          parent, parent_id)
+        return result
 
 
 class Tag(api_extensions.ExtensionDescriptor):
