@@ -163,7 +163,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         intf = self.create_router_interface(router['id'], subnet['id'])
         status_active = lambda: self.client.show_port(
             intf['port_id'])['port']['status'] == 'ACTIVE'
-        utils.wait_until_true(status_active)
+        utils.wait_until_true(status_active, exception=AssertionError)
 
     @test.idempotent_id('c86ac3a8-50bd-4b00-a6b8-62af84a0765c')
     @test.requires_ext(extension='extraroute', service='network')
