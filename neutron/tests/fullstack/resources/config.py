@@ -48,6 +48,9 @@ class ConfigFixture(fixtures.Fixture):
         self.useFixture(cfg_fixture)
         self.filename = cfg_fixture.filename
 
+    def _generate_namespace_suffix(self):
+        return utils.get_rand_name(prefix='test')
+
 
 class NeutronConfigFixture(ConfigFixture):
 
@@ -69,6 +72,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'service_plugins': ','.join(service_plugins),
                 'auth_strategy': 'noauth',
                 'debug': 'True',
+                'agent_down_time': env_desc.agent_down_time,
                 'transport_url':
                     'rabbit://%(user)s:%(password)s@%(host)s:5672/%(vhost)s' %
                     {'user': rabbitmq_environment.user,
@@ -292,9 +296,6 @@ class L3ConfigFixture(ConfigFixture):
     def get_external_bridge(self):
         return self.config.DEFAULT.external_network_bridge
 
-    def _generate_namespace_suffix(self):
-        return utils.get_rand_name(prefix='test')
-
 
 class DhcpConfigFixture(ConfigFixture):
 
@@ -309,6 +310,7 @@ class DhcpConfigFixture(ConfigFixture):
         self.config['DEFAULT'].update({
             'debug': 'True',
             'dhcp_confs': self._generate_dhcp_path(),
+            'test_namespace_suffix': self._generate_namespace_suffix()
         })
 
     def _setUp(self):
