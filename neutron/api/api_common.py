@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.db import model_base
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_i18n
@@ -50,7 +51,7 @@ def get_filters_from_dict(data, attr_info, skips=None):
     skips = skips or []
     res = {}
     for key, values in data.items():
-        if key in skips:
+        if key in skips or hasattr(model_base.BASEV2, key):
             continue
         values = [v for v in values if v]
         key_attr_info = attr_info.get(key, {})

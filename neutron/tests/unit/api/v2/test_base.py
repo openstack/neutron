@@ -1613,6 +1613,11 @@ class FiltersTestCase(base.BaseTestCase):
         actual_val = api_common.get_filters(request, attr_info)
         self.assertEqual(expect_val, actual_val)
 
+    def test_attr_info_with_base_db_attributes(self):
+        path = '/?__contains__=1&__class__=2'
+        request = webob.Request.blank(path)
+        self.assertEqual({}, api_common.get_filters(request, {}))
+
 
 class CreateResourceTestCase(base.BaseTestCase):
     def test_resource_creation(self):
