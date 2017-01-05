@@ -838,8 +838,8 @@ class L3HATestCase(L3HATestFramework):
                     self.admin_ctx, states, self.agent1['host'])
 
     def test_exclude_dvr_agents_for_ha_candidates(self):
-        """Test dvr agents configured with "dvr" only, as opposed to "dvr_snat",
-        are excluded.
+        """Test dvr agents configured with "dvr" only, as opposed to
+        "dvr_snat", are excluded.
         This test case tests that when get_number_of_agents_for_scheduling
         is called, it does not count dvr only agents.
         """
