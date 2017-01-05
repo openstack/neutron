@@ -624,7 +624,7 @@ class IptablesManager(object):
             if line in seen_lines:
                 thing = 'chain' if line.startswith(':') else 'rule'
                 LOG.warning(_LW("Duplicate iptables %(thing)s detected. This "
-                                "may indicate a bug in the the iptables "
+                                "may indicate a bug in the iptables "
                                 "%(thing)s generation code. Line: %(line)s"),
                             {'thing': thing, 'line': line})
                 return False
