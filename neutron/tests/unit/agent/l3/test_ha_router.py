@@ -68,3 +68,7 @@ class TestBasicRouterOperations(base.BaseTestCase):
                         'gateway_ip': '30.0.0.1'})
         ri._add_default_gw_virtual_route(ex_gw_port, 'qg-abc')
         self.assertEqual(1, len(mock_instance.virtual_routes.gateway_routes))
+
+        subnets[1]['gateway_ip'] = None
+        ri._add_default_gw_virtual_route(ex_gw_port, 'qg-abc')
+        self.assertEqual(0, len(mock_instance.virtual_routes.gateway_routes))
