@@ -228,6 +228,9 @@ class LinuxBridgeConfigFixture(ConfigFixture):
                 'enable_vxlan': str(self.env_desc.tunneling_enabled),
                 'local_ip': local_ip,
                 'l2_population': str(self.env_desc.l2_pop),
+            },
+            'securitygroup': {
+                'firewall_driver': host_desc.firewall_driver,
             }
         })
         if env_desc.qos:
