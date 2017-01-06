@@ -19,7 +19,9 @@ import mock
 import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
+import oslo_messaging
 from oslo_utils import fileutils
+import testtools
 
 from neutron.agent.common import config
 from neutron.agent.linux import dhcp
@@ -2412,6 +2414,51 @@ class TestDeviceManager(TestConfBase):
             mgr.driver.init_l3.assert_called_with(
                 'ns-XXX', ['192.168.0.6/24', 'fdca:3ba5:a17a:4ba3::2/64'],
                 namespace='qdhcp-ns')
+
+    def test__setup_reserved_dhcp_port_with_fake_remote_error(self):
+        """Test scenario where a fake_network has two reserved ports, and
+        update_dhcp_port fails for the first of those with a RemoteError
+        different than DhcpPortInUse.
+        """
+        # Setup with a reserved DHCP port.
+        fake_network = FakeDualNetworkReserved2()
+        fake_network.tenant_id = 'Tenant A'
+        reserved_port_2 = fake_network.ports[-1]
+
+        mock_plugin = mock.Mock()
+        dh = dhcp.DeviceManager(cfg.CONF, mock_plugin)
+        messaging_error = oslo_messaging.RemoteError(
+            exc_type='FakeRemoteError')
+        mock_plugin.update_dhcp_port.side_effect = [messaging_error,
+                                                    reserved_port_2]
+
+        with testtools.ExpectedException(oslo_messaging.RemoteError):
+            dh.setup_dhcp_port(fake_network)
+
+    def test__setup_reserved_dhcp_port_with_known_remote_error(self):
+        """Test scenario where a fake_network has two reserved ports, and
+        update_dhcp_port fails for the first of those with a DhcpPortInUse
+        RemoteError.
+        """
+        # Setup with a reserved DHCP port.
+        fake_network = FakeDualNetworkReserved2()
+        fake_network.tenant_id = 'Tenant A'
+        reserved_port_1 = fake_network.ports[-2]
+        reserved_port_2 = fake_network.ports[-1]
+
+        mock_plugin = mock.Mock()
+        dh = dhcp.DeviceManager(cfg.CONF, mock_plugin)
+        messaging_error = oslo_messaging.RemoteError(exc_type='DhcpPortInUse')
+        mock_plugin.update_dhcp_port.side_effect = [messaging_error,
+                                                    reserved_port_2]
+
+        with mock.patch.object(dhcp.LOG, 'info') as log:
+            dh.setup_dhcp_port(fake_network)
+            self.assertEqual(1, log.call_count)
+        expected_calls = [mock.call(reserved_port_1.id, mock.ANY),
+                          mock.call(reserved_port_2.id, mock.ANY)]
+        self.assertEqual(expected_calls,
+                         mock_plugin.update_dhcp_port.call_args_list)
 
 
 class TestDictModel(base.BaseTestCase):
