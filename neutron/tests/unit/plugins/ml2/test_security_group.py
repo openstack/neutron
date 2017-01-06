@@ -20,6 +20,9 @@ import mock
 from neutron_lib import constants as const
 from neutron_lib.plugins import directory
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron import context
 from neutron.extensions import securitygroup as ext_sg
 from neutron.tests import tools
@@ -147,6 +150,20 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                                            test_base._uuid()])
             # the or_ function should only have one argument
             or_mock.assert_called_once_with(mock.ANY)
+
+    def test_security_groups_created_outside_transaction(self):
+        def record_after_state(r, e, t, context, *args, **kwargs):
+            self.was_active = context.session.is_active
+
+        registry.subscribe(record_after_state, resources.SECURITY_GROUP,
+                           events.AFTER_CREATE)
+        with self.subnet() as s:
+            self.assertFalse(self.was_active)
+            self._delete(
+                'security-groups',
+                self._list('security-groups')['security_groups'][0]['id'])
+            with self.port(subnet=s):
+                self.assertFalse(self.was_active)
 
 
 class TestMl2SGServerRpcCallBack(
