@@ -33,8 +33,8 @@ Structure of Model Definitions
 ------------------------------
 
 We have decided to move all models definitions to neutron/db/models/
-with no futher nesting after that point. The deprecation method to move
-models is already been added to avoid breakage of third party plugins using
+with no further nesting after that point. The deprecation method to move
+models has already been added to avoid breakage of third party plugins using
 those models. All relocated models need to use deprecate method that
 will generate a warning and return new class for use of old class. Some
 examples of relocated models [2] and [3]. In future if you define new models

@@ -272,7 +272,7 @@ belong to the same resource type, a single push RPC message is sent; if the list
 contains objects of different resource types, resources of each type are grouped
 and sent separately, one push RPC message per type. On the receiver side,
 resources in a list always belong to the same type. In other words, a server-side
-push of a list of heterogenous objects will result into N messages on bus and
+push of a list of heterogeneous objects will result into N messages on bus and
 N client-side callback invocations, where N is the number of unique resource
 types in the given list, e.g. L(A, A, B, C, C, C) would be fragmented into
 L1(A, A), L2(B), L3(C, C, C), and each list pushed separately.

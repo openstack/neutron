@@ -355,7 +355,7 @@ and "contract" categories, as well as some data migrations.  the ``op.create_tab
 directive is an "expand"; it may be run safely while the old version of the
 application still runs, as the old code simply doesn't look for this table.
 The ``op.drop_constraint`` and ``op.drop_column`` directives are
-"contract" directives (the drop column moreso than the drop constraint); running
+"contract" directives (the drop column more so than the drop constraint); running
 at least the ``op.drop_column`` directives means that the old version of the
 application will fail, as it will attempt to access these columns which no longer
 exist.
