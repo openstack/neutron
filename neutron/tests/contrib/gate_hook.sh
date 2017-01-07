@@ -72,4 +72,9 @@ enable_service q-bgp
 "
 
     $BASE/new/devstack-gate/devstack-vm-gate.sh
+elif [ "$VENV" == "rally" ]
+then
+    # NOTE(yamamoto): This is a no-op placeholder to allow
+    # further changes.
+    $BASE/new/devstack-gate/devstack-vm-gate.sh
 fi
