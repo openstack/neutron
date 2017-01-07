@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 import netaddr
+from oslo_utils import uuidutils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
@@ -115,7 +114,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
     @test.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_non_exist_address_scope(self):
         self.assertRaises(lib_exc.NotFound, self._create_subnetpool,
-                          address_scope_id=str(uuid.uuid4()))
+                          address_scope_id=uuidutils.generate_uuid())
 
     @test.attr(type='negative')
     @test.idempotent_id('2dfb4269-8657-485a-a053-b022e911456e')

@@ -14,9 +14,9 @@
 #    under the License.
 #
 
-import uuid
-
 import mock
+
+from oslo_utils import uuidutils
 
 from neutron.agent.l3 import l3_agent_extension_api as l3_agent_api
 from neutron.agent.l3 import router_info
@@ -27,8 +27,8 @@ from neutron.tests import base
 class TestL3AgentExtensionApi(base.BaseTestCase):
 
     def _prepare_router_data(self, ports=None):
-        self.router_id = str(uuid.uuid4())
-        self.project_id = str(uuid.uuid4())
+        self.router_id = uuidutils.generate_uuid()
+        self.project_id = uuidutils.generate_uuid()
         ri_kwargs = {'router': {'id': self.router_id,
                                 'project_id': self.project_id},
                      'agent_conf': mock.ANY,
@@ -90,7 +90,7 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
 
         with mock.patch.object(ip_lib.IPWrapper,
                                'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = [str(uuid.uuid4())]
+            mock_get_namespaces.return_value = [uuidutils.generate_uuid()]
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             router_in_ns = api_object.is_router_in_namespace(ri.router_id)
             self.assertFalse(router_in_ns)

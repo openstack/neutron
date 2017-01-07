@@ -14,8 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
+from oslo_utils import uuidutils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
@@ -382,7 +381,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                 self.admin_client.create_rbac_policy(
                     object_type='network', object_id=net['id'],
                     action='access_as_shared',
-                    target_tenant=str(uuid.uuid4()).replace('-', ''))
+                    target_tenant=uuidutils.generate_uuid().replace('-', ''))
 
     @test.idempotent_id('86c3529b-1231-40de-803c-afffffff7fff')
     def test_regular_client_blocked_from_sharing_with_wildcard(self):

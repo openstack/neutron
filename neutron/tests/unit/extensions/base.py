@@ -16,10 +16,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 from webob import exc
 import webtest
 
@@ -109,7 +108,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
 
     def _test_entity_delete(self, entity):
         """Does the entity deletion based on naming convention."""
-        entity_id = str(uuid.uuid4())
+        entity_id = uuidutils.generate_uuid()
         path = self._resource_prefix + '/' if self._resource_prefix else ''
         path += self._plural_mappings.get(entity, entity + 's')
         if self._translate_resource_name:

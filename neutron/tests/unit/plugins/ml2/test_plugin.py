@@ -14,7 +14,6 @@
 #    under the License.
 
 import functools
-import uuid
 
 import fixtures
 import mock
@@ -2162,7 +2161,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                                'create_network_postcommit',
                                side_effect=(exc.InvalidInput(
                                                 error_message=err_msg))):
-            tenant_id = str(uuid.uuid4())
+            tenant_id = uuidutils.generate_uuid()
             data = {'network': {'name': 'net1',
                                 'tenant_id': tenant_id}}
             req = self.new_create_request('networks', data)
