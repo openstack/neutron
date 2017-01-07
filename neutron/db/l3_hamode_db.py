@@ -101,12 +101,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                          router_az_db.RouterAvailabilityZoneMixin):
     """Mixin class to add high availability capability to routers."""
 
-    extra_attributes = (
-        l3_dvr_db.L3_NAT_with_dvr_db_mixin.extra_attributes +
-        router_az_db.RouterAvailabilityZoneMixin.extra_attributes + [
-            {'name': 'ha', 'default': cfg.CONF.l3_ha},
-            {'name': 'ha_vr_id', 'default': 0}])
-
     def _verify_configuration(self):
         self.ha_cidr = cfg.CONF.l3_ha_net_cidr
         try:
@@ -137,6 +131,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                            resources.ROUTER, events.PRECOMMIT_DELETE)
         registry.subscribe(inst._cleanup_ha_network,
                            resources.ROUTER, events.AFTER_DELETE)
+        registry.subscribe(inst._set_ha_flag,
+                           resources.ROUTER, events.PRECOMMIT_CREATE)
         return inst
 
     def get_ha_network(self, context, tenant_id):
@@ -408,11 +404,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return n_utils.create_object_with_dependency(
             creator, dep_getter, dep_creator, dep_id_attr, dep_deleter)[1]
 
-    def _process_extra_attr_router_create(self, context, router_db,
-                                          router_res):
-        router_res['ha'] = self._is_ha(router_res)
-        super(L3_HA_NAT_db_mixin, self)._process_extra_attr_router_create(
-            context, router_db, router_res)
+    def _set_ha_flag(self, resource, event, trigger, context, router,
+                     router_db, **kwargs):
+        """Event handler to set ha flag and status on creation."""
+        is_ha = self._is_ha(router)
+        router['ha'] = is_ha
+        self.set_extra_attr_value(context, router_db, 'ha', is_ha)
 
     @db_api.retry_if_session_inactive()
     def create_router(self, context, router):

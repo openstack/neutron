@@ -1758,7 +1758,7 @@ class L3RpcNotifierMixin(object):
     # in each and every l3 plugin out there.
     def __new__(cls):
         L3RpcNotifierMixin._subscribe_callbacks()
-        return object.__new__(cls)
+        return super(L3RpcNotifierMixin, cls).__new__(cls)
 
     @staticmethod
     def _subscribe_callbacks():
