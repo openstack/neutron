@@ -959,6 +959,7 @@ class TestParentSubresourceController(test_functional.PecanFunctionalTest):
         policy._ENFORCER.set_rules(
             oslo_policy.Rules.from_dict(
                 {'get_fake_duplicate': '',
+                 'get_fake_duplicates': '',
                  'get_meh_meh_fake_duplicates': ''}),
             overwrite=False)
         self.addCleanup(policy.reset)
@@ -982,7 +983,22 @@ class TestParentSubresourceController(test_functional.PecanFunctionalTest):
 
     def test_get_parent_resource_and_duplicate_subresources(self):
         url = '/v2.0/{0}/something/{1}'.format(self.collection,
-                                             self.fake_collection)
+                                               self.fake_collection)
+        resp = self.app.get(url)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual({'fake_duplicates': [{'fake': 'something'}]},
+                         resp.json)
+
+    def test_get_child_resource_policy_check(self):
+        policy.reset()
+        policy.init()
+        policy._ENFORCER.set_rules(
+            oslo_policy.Rules.from_dict(
+                {'get_meh_meh_fake_duplicates': ''}
+            )
+        )
+        url = '/v2.0/{0}/something/{1}'.format(self.collection,
+                                               self.fake_collection)
         resp = self.app.get(url)
         self.assertEqual(200, resp.status_int)
         self.assertEqual({'fake_duplicates': [{'fake': 'something'}]},
