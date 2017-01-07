@@ -224,11 +224,12 @@ function _install_post_devstack {
 
     if is_ubuntu; then
         install_package isc-dhcp-client
-        install_package netcat-openbsd
+        install_package nmap
     elif is_fedora; then
         install_package dhclient
+        install_package nmap-ncat
     else
-        exit_distro_not_supported "installing dhclient package"
+        exit_distro_not_supported "installing dhclient and ncat packages"
     fi
 
     # Installing python-openvswitch from packages is a stop-gap while
