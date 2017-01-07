@@ -16,8 +16,10 @@
 import warnings
 
 import mock
+import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
+from sqlalchemy.orm import exc
 from sqlalchemy.orm import query
 
 from neutron import context
@@ -26,10 +28,14 @@ from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import portbindings
+from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 from neutron.tests.unit import testlib_api
+
+
+PLUGIN_NAME = 'ml2'
 
 
 class Ml2DBTestCase(testlib_api.SqlTestCase):
@@ -37,6 +43,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         super(Ml2DBTestCase, self).setUp()
         self.ctx = context.get_admin_context()
+        self.setup_coreplugin(PLUGIN_NAME)
 
     def _setup_neutron_network(self, network_id):
         with self.ctx.session.begin(subtransactions=True):
@@ -44,15 +51,15 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
 
     def _setup_neutron_port(self, network_id, port_id):
         mac_address = db_base_plugin_v2.NeutronDbPluginV2._generate_mac()
-        with self.ctx.session.begin(subtransactions=True):
-            port = models_v2.Port(id=port_id,
-                                  network_id=network_id,
-                                  mac_address=mac_address,
-                                  admin_state_up=True,
-                                  status='DOWN',
-                                  device_id='',
-                                  device_owner='')
-            self.ctx.session.add(port)
+        port = port_obj.Port(self.ctx,
+                             id=port_id,
+                             network_id=network_id,
+                             mac_address=netaddr.EUI(mac_address),
+                             admin_state_up=True,
+                             status='DOWN',
+                             device_id='',
+                             device_owner='')
+        port.create()
         return port
 
     def _setup_neutron_portbinding(self, port_id, vif_type, host):
@@ -165,8 +172,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertIsNone(net_segment)
 
     def test_add_port_binding(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id)
         self._setup_neutron_port(network_id, port_id)
 
@@ -175,8 +182,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(portbindings.VIF_TYPE_UNBOUND, port.vif_type)
 
     def test_get_port_binding_host(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         host = 'fake_host'
         vif_type = portbindings.VIF_TYPE_UNBOUND
         self._setup_neutron_network(network_id)
@@ -187,10 +194,14 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(host, port_host)
 
     def test_get_port_binding_host_multiple_results_found(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
-        port_id_one = 'foo-port-id-one'
-        port_id_two = 'foo-port-id-two'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
+        port_id_one = uuidutils.generate_uuid()
+        port_id_two = uuidutils.generate_uuid()
+        # NOTE(manjeets) to check startswith testcase we
+        # need port ids with same prefix
+        port_id_one = port_id[:8] + port_id_one[8:]
+        port_id_two = port_id[:8] + port_id_two[8:]
         host = 'fake_host'
         vif_type = portbindings.VIF_TYPE_UNBOUND
         self._setup_neutron_network(network_id)
@@ -199,7 +210,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._setup_neutron_port(network_id, port_id_two)
         self._setup_neutron_portbinding(port_id_two, vif_type, host)
 
-        port_host = ml2_db.get_port_binding_host(self.ctx, port_id)
+        port_host = ml2_db.get_port_binding_host(self.ctx, port_id[:8])
         self.assertIsNone(port_host)
 
     def test_get_port_binding_host_result_not_found(self):
@@ -209,8 +220,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertIsNone(port_host)
 
     def test_get_port(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id)
         self._setup_neutron_port(network_id, port_id)
 
@@ -218,15 +229,10 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(port_id, port.id)
 
     def test_get_port_multiple_results_found(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
-        port_id_one = 'foo-port-id-one'
-        port_id_two = 'foo-port-id-two'
-        self._setup_neutron_network(network_id)
-        self._setup_neutron_port(network_id, port_id_one)
-        self._setup_neutron_port(network_id, port_id_two)
-
-        port = ml2_db.get_port(self.ctx, port_id)
+        with mock.patch(
+                'sqlalchemy.orm.query.Query.one',
+                side_effect=exc.MultipleResultsFound):
+            port = ml2_db.get_port(self.ctx, 'unused')
         self.assertIsNone(port)
 
     def test_get_port_result_not_found(self):
@@ -235,8 +241,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertIsNone(port)
 
     def test_get_port_from_device_mac(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id)
         port = self._setup_neutron_port(network_id, port_id)
 
@@ -245,8 +251,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(port_id, observed_port.id)
 
     def test_get_locked_port_and_binding(self):
-        network_id = 'foo-network-id'
-        port_id = 'foo-port-id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         host = 'fake_host'
         vif_type = portbindings.VIF_TYPE_UNBOUND
         self._setup_neutron_network(network_id)
@@ -272,6 +278,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         super(Ml2DvrDBTestCase, self).setUp()
         self.ctx = context.get_admin_context()
+        self.setup_coreplugin(PLUGIN_NAME)
 
     def _setup_neutron_network(self, network_id, port_ids):
         with self.ctx.session.begin(subtransactions=True):
@@ -280,14 +287,15 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             for port_id in port_ids:
                 mac_address = (db_base_plugin_v2.NeutronDbPluginV2.
                                _generate_mac())
-                port = models_v2.Port(id=port_id,
-                                      network_id=network_id,
-                                      mac_address=mac_address,
-                                      admin_state_up=True,
-                                      status='ACTIVE',
-                                      device_id='',
-                                      device_owner='')
-                self.ctx.session.add(port)
+                port = port_obj.Port(self.ctx,
+                                     id=port_id,
+                                     network_id=network_id,
+                                     mac_address=netaddr.EUI(mac_address),
+                                     admin_state_up=True,
+                                     status='ACTIVE',
+                                     device_id='',
+                                     device_owner='')
+                port.create()
                 ports.append(port)
             return ports
 
@@ -311,8 +319,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             return record
 
     def test_ensure_distributed_port_binding_deals_with_db_duplicate(self):
-        network_id = 'foo_network_id'
-        port_id = 'foo_port_id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         router_id = 'foo_router_id'
         host_id = 'foo_host_id'
         self._setup_neutron_network(network_id, [port_id])
@@ -328,8 +336,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(port_id, binding.port_id)
 
     def test_ensure_distributed_port_binding(self):
-        network_id = 'foo_network_id'
-        port_id = 'foo_port_id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id, [port_id])
         router = self._setup_neutron_router()
         ml2_db.ensure_distributed_port_binding(
@@ -339,8 +347,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(port_id, expected.port_id)
 
     def test_ensure_distributed_port_binding_multiple_bindings(self):
-        network_id = 'foo_network_id'
-        port_id = 'foo_port_id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id, [port_id])
         router = self._setup_neutron_router()
         ml2_db.ensure_distributed_port_binding(
@@ -352,8 +360,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(2, len(bindings))
 
     def test_delete_distributed_port_binding_if_stale(self):
-        network_id = 'foo_network_id'
-        port_id = 'foo_port_id'
+        network_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id, [port_id])
         binding = self._setup_distributed_binding(
             network_id, port_id, None, 'foo_host_id')
@@ -375,9 +383,9 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self.assertFalse(len(port))
 
     def test_get_distributed_port_bindings(self):
-        network_id = 'foo_network_id'
-        port_id_1 = 'foo_port_id_1'
-        port_id_2 = 'foo_port_id_2'
+        network_id = uuidutils.generate_uuid()
+        port_id_1 = uuidutils.generate_uuid()
+        port_id_2 = uuidutils.generate_uuid()
         self._setup_neutron_network(network_id, [port_id_1, port_id_2])
         router = self._setup_neutron_router()
         self._setup_distributed_binding(
@@ -385,7 +393,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self._setup_distributed_binding(
             network_id, port_id_1, router.id, 'foo_host_id_2')
         ports = ml2_db.get_distributed_port_bindings(self.ctx,
-                                                     'foo_port_id')
+                                                     port_id_1)
         self.assertEqual(2, len(ports))
 
     def test_distributed_port_binding_deleted_by_port_deletion(self):
