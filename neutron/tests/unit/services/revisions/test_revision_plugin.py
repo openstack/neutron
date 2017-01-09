@@ -57,7 +57,10 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                 # load port into our session
                 port_obj = self.ctx.session.query(models_v2.Port).one()
                 # simulate concurrent delete in another session
-                nctx.get_admin_context().session.query(models_v2.Port).delete()
+                other_ctx = nctx.get_admin_context()
+                other_ctx.session.delete(
+                    other_ctx.session.query(models_v2.Port).first()
+                )
                 # expire the port so the revision bumping code will trigger a
                 # lookup on its attributes and encounter an ObjectDeletedError
                 self.ctx.session.expire(port_obj)
