@@ -1,0 +1,5 @@
+DOWNLOAD_DEFAULT_IMAGES=False
+IMAGE_URLS="http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img,"
+DEFAULT_INSTANCE_TYPE="ds1G"
+DEFAULT_INSTANCE_USER="ubuntu"
+BUILD_TIMEOUT=392

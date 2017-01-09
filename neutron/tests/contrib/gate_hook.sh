@@ -82,6 +82,7 @@ case $VENV in
     load_conf_hook osprofiler
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
         load_conf_hook iptables_verify
+        load_rc_hook ubuntu_image
     fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
