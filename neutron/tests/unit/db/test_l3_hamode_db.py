@@ -60,7 +60,6 @@ class L3HATestFramework(testlib_api.SqlTestCase):
     def setUp(self):
         super(L3HATestFramework, self).setUp()
 
-        self.admin_ctx = context.get_admin_context()
         self.setup_coreplugin('ml2')
         self.core_plugin = directory.get_plugin()
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
@@ -74,6 +73,12 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         self.agent1 = helpers.register_l3_agent()
         self.agent2 = helpers.register_l3_agent(
             'host_2', constants.L3_AGENT_MODE_DVR_SNAT)
+
+    @property
+    def admin_ctx(self):
+        # Property generates a new session on each reference so different
+        # API calls don't share a session with possible stale objects
+        return context.get_admin_context()
 
     def _create_router(self, ha=True, tenant_id='tenant1', distributed=None,
                        ctx=None, admin_state_up=True):
@@ -536,7 +541,7 @@ class L3HATestCase(L3HATestFramework):
                                              router['tenant_id'])
         network2 = self.plugin.get_ha_network(self.admin_ctx,
                                               router2['tenant_id'])
-        self.assertEqual(network, network2)
+        self.assertEqual(network.network_id, network2.network_id)
 
         self._migrate_router(router['id'], False)
         self.assertIsNotNone(
@@ -554,9 +559,10 @@ class L3HATestCase(L3HATestFramework):
         self.assertNotEqual(ha0, ha1)
 
     def test_add_ha_port_subtransactions_blocked(self):
-        with self.admin_ctx.session.begin():
+        ctx = self.admin_ctx
+        with ctx.session.begin():
             self.assertRaises(RuntimeError, self.plugin.add_ha_port,
-                              self.admin_ctx, 'id', 'id', 'id')
+                              ctx, 'id', 'id', 'id')
 
     def test_add_ha_port_binding_failure_rolls_back_port(self):
         router = self._create_router()
@@ -724,12 +730,13 @@ class L3HATestCase(L3HATestFramework):
                              router[n_const.HA_ROUTER_STATE_KEY])
 
     def test_sync_ha_router_info_ha_interface_port_concurrently_deleted(self):
+        ctx = self.admin_ctx
         router1 = self._create_router()
         router2 = self._create_router()
 
         # retrieve all router ha port bindings
         bindings = self.plugin.get_ha_router_port_bindings(
-            self.admin_ctx, [router1['id'], router2['id']])
+            ctx, [router1['id'], router2['id']])
         self.assertEqual(4, len(bindings))
 
         routers = self.plugin.get_ha_sync_data_for_host(
@@ -737,7 +744,7 @@ class L3HATestCase(L3HATestFramework):
         self.assertEqual(2, len(routers))
 
         bindings = self.plugin.get_ha_router_port_bindings(
-            self.admin_ctx, [router1['id'], router2['id']],
+            ctx, [router1['id'], router2['id']],
             self.agent1['host'])
         self.assertEqual(2, len(bindings))
 
@@ -748,7 +755,7 @@ class L3HATestCase(L3HATestFramework):
                 self.plugin, "get_ha_router_port_bindings",
                 return_value=[bindings[0], fake_binding]):
             routers = self.plugin.get_ha_sync_data_for_host(
-                self.admin_ctx, self.agent1['host'], self.agent1)
+                ctx, self.agent1['host'], self.agent1)
             self.assertEqual(1, len(routers))
             self.assertIsNotNone(routers[0].get(constants.HA_INTERFACE_KEY))
 
@@ -779,12 +786,13 @@ class L3HATestCase(L3HATestFramework):
     def test_set_router_states_handles_concurrently_deleted_router(self):
         router1 = self._create_router()
         router2 = self._create_router()
+        ctx = self.admin_ctx
         bindings = self.plugin.get_ha_router_port_bindings(
-            self.admin_ctx, [router1['id'], router2['id']])
+            ctx, [router1['id'], router2['id']])
         self.plugin.delete_router(self.admin_ctx, router1['id'])
         self.plugin._set_router_states(
-            self.admin_ctx, bindings, {router1['id']: 'active',
-                                       router2['id']: 'active'})
+            ctx, bindings, {router1['id']: 'active',
+                            router2['id']: 'active'})
         routers = self.plugin.get_ha_sync_data_for_host(
             self.admin_ctx, self.agent1['host'], self.agent1)
         self.assertEqual('active', routers[0][n_const.HA_ROUTER_STATE_KEY])
@@ -1033,10 +1041,11 @@ class L3HAModeDbTestCase(L3HATestFramework):
         self.plugin.add_router_interface(self.admin_ctx,
                                          router['id'],
                                          interface_info)
+        ctx = self.admin_ctx
         bindings = self.plugin.get_ha_router_port_bindings(
-            self.admin_ctx, router_ids=[router['id']],
+            ctx, router_ids=[router['id']],
             host=self.agent2['host'])
-        self.plugin._set_router_states(self.admin_ctx, bindings,
+        self.plugin._set_router_states(ctx, bindings,
                                        {router['id']: 'active'})
         callback = l3_rpc.L3RpcCallback()
         callback._l3plugin = self.plugin

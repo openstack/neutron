@@ -60,7 +60,7 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
         backref='router',
         lazy='dynamic')
     l3_agents = orm.relationship(
-        'Agent', lazy='joined', viewonly=True,
+        'Agent', lazy='subquery', viewonly=True,
         secondary=rb_model.RouterL3AgentBinding.__table__)
     api_collections = [l3.ROUTERS]
 
@@ -113,6 +113,6 @@ class RouterRoute(model_base.BASEV2, models_v2.Route):
 
     router = orm.relationship(Router,
                               backref=orm.backref("route_list",
-                                                  lazy='joined',
+                                                  lazy='subquery',
                                                   cascade='delete'))
     revises_on_change = ('router', )

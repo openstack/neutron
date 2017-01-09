@@ -43,7 +43,7 @@ class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                cascade='delete'))
 
     sub_ports = sa.orm.relationship(
-        'SubPort', lazy='joined', uselist=True, cascade="all, delete-orphan")
+        'SubPort', lazy='subquery', uselist=True, cascade="all, delete-orphan")
     api_collections = ['trunks']
 
 
