@@ -85,7 +85,8 @@ class PortBindingLevel(model_base.BASEV2):
     # eagerly load port bindings
     port = orm.relationship(
         models_v2.Port,
-        backref=orm.backref("binding_levels", lazy='joined', cascade='delete'))
+        backref=orm.backref("binding_levels", lazy='subquery',
+                            cascade='delete'))
 
 
 class DistributedPortBinding(model_base.BASEV2):
@@ -119,5 +120,5 @@ class DistributedPortBinding(model_base.BASEV2):
     port = orm.relationship(
         models_v2.Port,
         backref=orm.backref("distributed_port_binding",
-                            lazy='joined',
+                            lazy='subquery',
                             cascade='delete'))
