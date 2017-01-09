@@ -248,13 +248,13 @@ class L3HATestCase(L3HATestFramework):
                          router['status'])
 
     def test_router_created_allocating_state_during_interface_create(self):
-        _orig = self.plugin._set_vr_id_and_ensure_network
+        _orig = self.plugin._ensure_vr_id
 
-        def check_state(context, router_db):
+        def check_state(context, router, ha_network):
             self.assertEqual(n_const.ROUTER_STATUS_ALLOCATING,
-                             router_db.status)
-            return _orig(context, router_db)
-        with mock.patch.object(self.plugin, '_set_vr_id_and_ensure_network',
+                             router.status)
+            return _orig(context, router, ha_network)
+        with mock.patch.object(self.plugin, '_ensure_vr_id',
                                side_effect=check_state) as vr_id_mock:
             router = self._create_router()
             self.assertTrue(vr_id_mock.called)
@@ -265,6 +265,8 @@ class L3HATestCase(L3HATestFramework):
         self.assertTrue(router['ha'])
 
     def test_ha_router_create_with_distributed(self):
+        helpers.register_l3_agent(
+            'host_3', constants.L3_AGENT_MODE_DVR_SNAT)
         router = self._create_router(ha=True, distributed=True)
         self.assertTrue(router['ha'])
         self.assertTrue(router['distributed'])
@@ -516,12 +518,9 @@ class L3HATestCase(L3HATestFramework):
         network = self.plugin.get_ha_network(self.admin_ctx,
                                              router['tenant_id'])
 
-        with mock.patch.object(self.plugin, '_get_allocated_vr_id',
-                               return_value=set()) as alloc:
-            self.assertRaises(l3_ext_ha_mode.MaxVRIDAllocationTriesReached,
-                              self.plugin._allocate_vr_id, self.admin_ctx,
-                              network.network_id, router['id'])
-            self.assertEqual(2, len(alloc.mock_calls))
+        router_db = self.plugin._get_router(self.admin_ctx, router['id'])
+        self.assertIsNone(self.plugin._ensure_vr_id(self.admin_ctx,
+                                                    router_db, network))
 
     def test_vr_id_allocation_delete_router(self):
         router = self._create_router()
@@ -631,15 +630,15 @@ class L3HATestCase(L3HATestFramework):
         networks_after = self.core_plugin.get_networks(self.admin_ctx)
         self.assertEqual(networks_before, networks_after)
 
-    def test_set_vr_id_and_ensure_network_net_exists(self):
+    def test_ensure_vr_id_and_network_net_exists(self):
         router = self._create_router()
         router_db = self.plugin._get_router(self.admin_ctx, router['id'])
         with mock.patch.object(self.plugin, '_create_ha_network') as create:
-            self.plugin._set_vr_id_and_ensure_network(
+            self.plugin._ensure_vr_id_and_network(
                 self.admin_ctx, router_db)
             self.assertFalse(create.called)
 
-    def test_set_vr_id_and_ensure_network_concurrent_create(self):
+    def test_ensure_vr_id_and_network_concurrent_create(self):
         # create a non-ha router so we can manually invoke the create ha
         # interfaces call down below
         router = self._create_router(ha=False)
@@ -654,56 +653,56 @@ class L3HATestCase(L3HATestFramework):
             raise db_exc.DBDuplicateEntry(columns=['tenant_id'])
         with mock.patch.object(self.plugin, '_create_ha_network',
                                new=_create_ha_network):
-            net = self.plugin._set_vr_id_and_ensure_network(
+            net = self.plugin._ensure_vr_id_and_network(
                 self.admin_ctx, router_db)
         # ensure that it used the concurrently created network
         self.assertEqual([net], created_nets)
 
-    def _test_ensure_with_patched_set_vr_id(self, _set_vr_id):
+    def _test_ensure_with_patched_ensure_vr_id(self, _ensure_vr_id):
         # create a non-ha router so we can manually invoke the create ha
         # interfaces call down below
         router = self._create_router(ha=False)
         router_db = self.plugin._get_router(self.admin_ctx, router['id'])
-        with mock.patch.object(self.plugin, '_set_vr_id',
-                               new=_set_vr_id):
-            self.plugin._set_vr_id_and_ensure_network(
+        with mock.patch.object(self.plugin, '_ensure_vr_id',
+                               new=_ensure_vr_id):
+            self.plugin._ensure_vr_id_and_network(
                 self.admin_ctx, router_db)
-            self.assertTrue(_set_vr_id.called)
+            self.assertTrue(_ensure_vr_id.called)
 
-    def test_set_vr_id_and_ensure_network_interface_failure(self):
+    def test_ensure_vr_id_and_network_interface_failure(self):
 
-        def _set_vr_id(ctx, rdb, ha_net):
+        def _ensure_vr_id(ctx, rdb, ha_net):
             raise ValueError('broken')
         with testtools.ExpectedException(ValueError):
-            self._test_ensure_with_patched_set_vr_id(_set_vr_id)
+            self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
         self.assertEqual([], self.core_plugin.get_networks(self.admin_ctx))
 
-    def test_set_vr_id_and_ensure_network_concurrent_delete(self):
-        orig_create = self.plugin._set_vr_id
+    def test_ensure_vr_id_and_network_concurrent_delete(self):
+        orig_create = self.plugin._ensure_vr_id
 
-        def _set_vr_id(ctx, rdb, ha_net):
+        def _ensure_vr_id(ctx, rdb, ha_net):
             # concurrent delete on the first attempt
-            if not getattr(_set_vr_id, 'called', False):
-                setattr(_set_vr_id, 'called', True)
+            if not getattr(_ensure_vr_id, 'called', False):
+                setattr(_ensure_vr_id, 'called', True)
                 self.core_plugin.delete_network(self.admin_ctx,
                                                 ha_net['network_id'])
             return orig_create(ctx, rdb, ha_net)
-        self._test_ensure_with_patched_set_vr_id(_set_vr_id)
+        self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
 
-    def test_set_vr_id_and_ensure_network_concurrent_swap(self):
-        orig_create = self.plugin._set_vr_id
+    def test_ensure_vr_id_and_network_concurrent_swap(self):
+        orig_create = self.plugin._ensure_vr_id
 
-        def _set_vr_id(ctx, rdb, ha_net):
+        def _ensure_vr_id(ctx, rdb, ha_net):
             # concurrent delete on the first attempt
-            if not getattr(_set_vr_id, 'called', False):
-                setattr(_set_vr_id, 'called', True)
+            if not getattr(_ensure_vr_id, 'called', False):
+                setattr(_ensure_vr_id, 'called', True)
                 self.core_plugin.delete_network(self.admin_ctx,
                                                 ha_net['network_id'])
                 self.plugin._create_ha_network(self.admin_ctx,
                                                rdb.tenant_id)
             return orig_create(ctx, rdb, ha_net)
 
-        self._test_ensure_with_patched_set_vr_id(_set_vr_id)
+        self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
 
     def test_create_ha_network_tenant_binding_raises_duplicate(self):
         router = self._create_router()
@@ -718,7 +717,7 @@ class L3HATestCase(L3HATestFramework):
     def test_create_router_db_ha_attribute_failure_rolls_back_router(self):
         routers_before = self.plugin.get_routers(self.admin_ctx)
 
-        for method in ('_set_vr_id',
+        for method in ('_ensure_vr_id',
                        '_notify_router_updated'):
             with mock.patch.object(self.plugin, method,
                                    side_effect=ValueError):
