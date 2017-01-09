@@ -63,7 +63,7 @@ class PciOsWrapper(object):
         return vf_list
 
     @classmethod
-    def is_assigned_vf(cls, dev_name, vf_index):
+    def is_assigned_vf(cls, dev_name, vf_index, ip_link_show_output):
         """Check if VF is assigned.
 
         Checks if a given vf index of a given device name is assigned
@@ -73,6 +73,7 @@ class PciOsWrapper(object):
             Macvtap VF: macvtap@<vf interface> interface exists in ip link show
         @param dev_name: pf network device name
         @param vf_index: vf index
+        @param ip_link_show_output: 'ip link show' output
         """
         path = cls.PCI_PATH % (dev_name, vf_index)
 
@@ -86,7 +87,8 @@ class PciOsWrapper(object):
         # for macvtap interface. Therefore we workaround it
         # by parsing ip link show and checking if macvtap interface exists
         for ifname in ifname_list:
-            if pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(ifname):
+            if pci_lib.PciDeviceIPWrapper.is_macvtap_assigned(
+                    ifname, ip_link_show_output):
                 return True
         return False
 
@@ -138,8 +140,9 @@ class EmbSwitch(object):
         """
         vf_to_pci_slot_mapping = {}
         assigned_devices_info = []
+        ls = self.pci_dev_wrapper.link_show()
         for pci_slot, vf_index in self.pci_slot_map.items():
-            if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
+            if not PciOsWrapper.is_assigned_vf(self.dev_name, vf_index, ls):
                 continue
             vf_to_pci_slot_mapping[vf_index] = pci_slot
         if vf_to_pci_slot_mapping:
@@ -230,7 +233,8 @@ class EmbSwitch(object):
         vf_index = self.pci_slot_map.get(pci_slot)
         mac = None
         if vf_index is not None:
-            if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index):
+            ls = pci_lib.PciDeviceIPWrapper.link_show()
+            if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index, ls):
                 macs = self.pci_dev_wrapper.get_assigned_macs([vf_index])
                 mac = macs.get(vf_index)
         return mac
