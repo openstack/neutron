@@ -7,7 +7,6 @@ source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/ml2
 source $LIBDIR/qos
 source $LIBDIR/ovs
-source $LIBDIR/rally
 source $LIBDIR/trunk
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
