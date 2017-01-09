@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import signal
+
 import mock
 from oslo_utils import uuidutils
 
@@ -84,3 +86,29 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
         ri.remove_floating_ip(device, fip_cidr)
         self.assertTrue(super_remove_floating_ip.called)
+
+    def test_destroy_state_change_monitor_ok(self):
+        ri = self._create_router(mock.MagicMock())
+        with mock.patch.object(ri,
+                               '_get_state_change_monitor_process_manager')\
+                as m_get_state:
+            mock_pm = m_get_state.return_value
+            mock_pm.active = False
+            ri.destroy_state_change_monitor(mock_pm)
+
+        mock_pm.disable.assert_called_once_with(
+            sig=str(int(signal.SIGTERM)))
+
+    def test_destroy_state_change_monitor_force(self):
+        ri = self._create_router(mock.MagicMock())
+        with mock.patch.object(ri,
+                               '_get_state_change_monitor_process_manager')\
+                as m_get_state:
+            mock_pm = m_get_state.return_value
+            mock_pm.active = False
+            with mock.patch.object(ha_router, 'SIGTERM_TIMEOUT', 0):
+                ri.destroy_state_change_monitor(mock_pm)
+
+        calls = ["sig='str(%d)'" % signal.SIGTERM,
+                 "sig='str(%d)'" % signal.SIGKILL]
+        mock_pm.disable.has_calls(calls)

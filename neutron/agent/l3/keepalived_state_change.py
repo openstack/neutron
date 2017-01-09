@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+import signal
 import sys
 
 import httplib2
@@ -117,6 +118,21 @@ class MonitorDaemon(daemon.Daemon):
             str(netaddr.IPNetwork(event.cidr).ip),
             log_exception=False
         )
+
+    def _kill_monitor(self):
+        if self.monitor:
+            # Kill PID instead of calling self.monitor.stop() because the ip
+            # monitor is running as root while keepalived-state-change is not
+            # (dropped privileges after launching the ip monitor) and will fail
+            # with "Permission denied". Also, we can safely do this because the
+            # monitor was launched with respawn_interval=None so it won't be
+            # automatically respawned
+            agent_utils.kill_process(self.monitor.pid, signal.SIGKILL,
+                                     run_as_root=True)
+
+    def handle_sigterm(self, signum, frame):
+        self._kill_monitor()
+        super(MonitorDaemon, self).handle_sigterm(signum, frame)
 
 
 def configure(conf):
