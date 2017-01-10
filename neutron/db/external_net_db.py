@@ -164,10 +164,12 @@ class External_net_db_mixin(object):
             if port:
                 raise external_net.ExternalNetworkInUse(net_id=net_id)
 
-            context.session.query(ext_net_models.ExternalNetwork).filter_by(
-                network_id=net_id).delete()
-            context.session.query(rbac_db.NetworkRBAC).filter_by(
-                object_id=net_id, action='access_as_external').delete()
+            for edb in (context.session.query(ext_net_models.ExternalNetwork).
+                        filter_by(network_id=net_id)):
+                context.session.delete(edb)
+            for rbdb in (context.session.query(rbac_db.NetworkRBAC).filter_by(
+                         object_id=net_id, action='access_as_external')):
+                context.session.delete(rbdb)
             net_data[external_net.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):
