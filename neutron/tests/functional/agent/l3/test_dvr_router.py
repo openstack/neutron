@@ -1042,7 +1042,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             subnet['gateway_ip'] = None
 
         router.router[n_const.FLOATINGIP_AGENT_INTF_KEY] = [new_fg_port]
-        router.process(self.agent)
+        router.process()
         self.assertIsNone(ex_gw_device.route.get_gateway())
         self.assertIsNone(fg_device.route.get_gateway())
 
@@ -1133,7 +1133,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                       fixed_address=machine_diff_scope.ip,
                       host=self.agent.conf.host,
                       fixed_ip_address_scope='scope2')
-        router.process(self.agent)
+        router.process()
 
         br_ex = framework.get_ovs_bridge(
             self.agent.conf.external_network_bridge)

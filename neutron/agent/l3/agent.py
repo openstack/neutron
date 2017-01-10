@@ -308,6 +308,7 @@ class L3NATAgent(ha.AgentMixin,
     def _create_router(self, router_id, router):
         args = []
         kwargs = {
+            'agent': self,
             'router_id': router_id,
             'router': router,
             'use_ipv6': self.use_ipv6,
@@ -316,7 +317,6 @@ class L3NATAgent(ha.AgentMixin,
         }
 
         if router.get('distributed'):
-            kwargs['agent'] = self
             kwargs['host'] = self.host
 
         if router.get('distributed') and router.get('ha'):
@@ -368,7 +368,7 @@ class L3NATAgent(ha.AgentMixin,
         registry.notify(resources.ROUTER, events.BEFORE_DELETE,
                         self, router=ri)
 
-        ri.delete(self)
+        ri.delete()
         del self.router_info[router_id]
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
@@ -443,7 +443,7 @@ class L3NATAgent(ha.AgentMixin,
         self._router_added(router['id'], router)
         ri = self.router_info[router['id']]
         ri.router = router
-        ri.process(self)
+        ri.process()
         registry.notify(resources.ROUTER, events.AFTER_CREATE, self, router=ri)
         self.l3_ext_manager.add_router(self.context, router)
 
@@ -452,7 +452,7 @@ class L3NATAgent(ha.AgentMixin,
         ri.router = router
         registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
                         self, router=ri)
-        ri.process(self)
+        ri.process()
         registry.notify(resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
         self.l3_ext_manager.update_router(self.context, router)
 

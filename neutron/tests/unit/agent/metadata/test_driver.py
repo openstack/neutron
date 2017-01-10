@@ -86,7 +86,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             agent = l3_agent.L3NATAgent('localhost')
             router_id = _uuid()
             router = {'id': router_id}
-            ri = router_info.RouterInfo(router_id, router,
+            ri = router_info.RouterInfo(mock.Mock(), router_id, router,
                                         agent.conf, mock.ANY)
             agent.router_info[router_id] = ri
             agent._process_updated_router(router)

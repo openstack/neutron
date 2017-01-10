@@ -30,7 +30,8 @@ class BasicRouterTestCaseFramework(base.BaseTestCase):
         self.agent_conf = mock.Mock()
         self.driver = mock.Mock()
         self.router_id = _uuid()
-        return legacy_router.LegacyRouter(self.router_id,
+        return legacy_router.LegacyRouter(mock.Mock(),
+                                          self.router_id,
                                           router,
                                           self.agent_conf,
                                           self.driver,

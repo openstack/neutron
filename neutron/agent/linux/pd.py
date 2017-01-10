@@ -159,6 +159,15 @@ class PrefixDelegation(object):
             self.delete_router_pd(router)
 
     @utils.synchronized("l3-agent-pd")
+    def get_preserve_ips(self, router_id):
+        preserve_ips = []
+        router = self.routers.get(router_id)
+        if router is not None:
+            for subnet_id, pd_info in router['subnets'].items():
+                preserve_ips.append(pd_info.get_bind_lla_with_mask())
+        return preserve_ips
+
+    @utils.synchronized("l3-agent-pd")
     def sync_router(self, router_id):
         router = self.routers.get(router_id)
         if router is not None and router['gw_interface'] is None:

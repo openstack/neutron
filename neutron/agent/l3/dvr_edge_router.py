@@ -27,8 +27,8 @@ LOG = logging.getLogger(__name__)
 
 class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
-    def __init__(self, agent, host, *args, **kwargs):
-        super(DvrEdgeRouter, self).__init__(agent, host, *args, **kwargs)
+    def __init__(self, host, *args, **kwargs):
+        super(DvrEdgeRouter, self).__init__(host, *args, **kwargs)
         self.snat_namespace = dvr_snat_ns.SnatNamespace(
             self.router_id, self.agent_conf, self.driver, self.use_ipv6)
         self.snat_iptables_manager = None
@@ -211,8 +211,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                               "the router."), ns_name)
         super(DvrEdgeRouter, self).update_routing_table(operation, route)
 
-    def delete(self, agent):
-        super(DvrEdgeRouter, self).delete(agent)
+    def delete(self):
+        super(DvrEdgeRouter, self).delete()
         if self.snat_namespace.exists():
             self.snat_namespace.delete()
 

@@ -26,8 +26,8 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
        DVR router with HA capabilities.
     """
 
-    def __init__(self, agent, host, *args, **kwargs):
-        super(DvrEdgeHaRouter, self).__init__(agent, host,
+    def __init__(self, host, *args, **kwargs):
+        super(DvrEdgeHaRouter, self).__init__(host,
                                               *args, **kwargs)
         self.enable_snat = None
 
