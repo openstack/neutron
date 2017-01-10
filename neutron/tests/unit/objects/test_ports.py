@@ -13,9 +13,7 @@
 from oslo_utils import uuidutils
 import testscenarios
 
-from neutron.db.models import securitygroup as sg_models
 from neutron.objects import base as obj_base
-from neutron.objects.db import api as obj_db_api
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.objects.qos import policy
@@ -215,10 +213,6 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                            testlib_api.SqlTestCase):
 
     _test_class = ports.Port
-
-    def _create_test_security_group(self):
-        return obj_db_api.create_object(
-            self.context, sg_models.SecurityGroup, {})
 
     def setUp(self):
         super(PortDbObjectTestCase, self).setUp()
