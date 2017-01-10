@@ -106,7 +106,6 @@ class DaemonMonitor(object):
                                               'radvd.conf',
                                               True)
         buf = six.StringIO()
-        network_mtu = 0
         for p in router_ports:
             subnets = p.get('subnets', [])
             v6_subnets = [subnet for subnet in subnets if
@@ -124,8 +123,7 @@ class DaemonMonitor(object):
                 subnet['ipv6_ra_mode'] == constants.IPV6_SLAAC]
             dns_servers = list(iter_chain(*[subnet['dns_nameservers'] for
                 subnet in slaac_subnets if subnet.get('dns_nameservers')]))
-            if self._agent_conf.advertise_mtu:
-                network_mtu = p.get('mtu', 0)
+            network_mtu = p.get('mtu', 0)
 
             buf.write('%s' % CONFIG_TEMPLATE.render(
                 ra_modes=list(ra_modes),

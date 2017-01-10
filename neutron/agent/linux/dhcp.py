@@ -24,7 +24,6 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.utils import file as file_utils
-from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
@@ -389,11 +388,10 @@ class Dnsmasq(DhcpLocalProcess):
                                 cidr.prefixlen, lease))
                 possible_leases += cidr.size
 
-        if cfg.CONF.advertise_mtu:
-            mtu = getattr(self.network, 'mtu', 0)
-            # Do not advertise unknown mtu
-            if mtu > 0:
-                cmd.append('--dhcp-option-force=option:mtu,%d' % mtu)
+        mtu = getattr(self.network, 'mtu', 0)
+        # Do not advertise unknown mtu
+        if mtu > 0:
+            cmd.append('--dhcp-option-force=option:mtu,%d' % mtu)
 
         # Cap the limit because creating lots of subnets can inflate
         # this possible lease cap.
