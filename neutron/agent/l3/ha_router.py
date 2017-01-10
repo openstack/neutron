@@ -14,7 +14,9 @@
 
 import os
 import shutil
+import signal
 
+import eventlet
 import netaddr
 from neutron_lib import constants as n_consts
 from oslo_log import log as logging
@@ -31,6 +33,7 @@ from neutron.extensions import portbindings
 LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'
 IP_MONITOR_PROCESS_SERVICE = 'ip_monitor'
+SIGTERM_TIMEOUT = 10
 
 
 class HaRouterNamespace(namespaces.RouterNamespace):
@@ -344,7 +347,12 @@ class HaRouter(router.RouterInfo):
         pm = self._get_state_change_monitor_process_manager()
         process_monitor.unregister(
             self.router_id, IP_MONITOR_PROCESS_SERVICE)
-        pm.disable()
+        pm.disable(sig=str(int(signal.SIGTERM)))
+        try:
+            common_utils.wait_until_true(lambda: not pm.active,
+                                         timeout=SIGTERM_TIMEOUT)
+        except eventlet.timeout.Timeout:
+            pm.disable(sig=str(int(signal.SIGKILL)))
 
     def update_initial_state(self, callback):
         ha_device = ip_lib.IPDevice(
