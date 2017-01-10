@@ -195,30 +195,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._apply_dict_extend_functions(l3.ROUTERS, res, router)
         return db_utils.resource_fields(res, fields)
 
-    def filter_allocating_and_missing_routers(self, context, routers):
-        """Filter out routers that shouldn't go to the agent.
-
-        Any routers in the ALLOCATING state will be excluded by
-        this query because this indicates that the server is still
-        building necessary dependent sub-resources for the router and it
-        is not ready for consumption by the agent. It will also filter
-        out any routers that no longer exist to prevent conditions where
-        only part of a router's information was populated in sync_routers
-        due to it being deleted during the sync.
-        """
-        Router = l3_models.Router
-        router_ids = set(r['id'] for r in routers)
-        query = (context.session.query(Router.id).
-                 filter(
-                     Router.id.in_(router_ids),
-                     Router.status != n_const.ROUTER_STATUS_ALLOCATING))
-        valid_routers = set(r.id for r in query)
-        if router_ids - valid_routers:
-            LOG.debug("Removing routers that were either concurrently "
-                      "deleted or are in the ALLOCATING state: %s",
-                      (router_ids - valid_routers))
-        return [r for r in routers if r['id'] in valid_routers]
-
     def _create_router_db(self, context, router, tenant_id):
         """Create the DB object."""
         registry.notify(resources.ROUTER, events.BEFORE_CREATE,
@@ -226,7 +202,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         with context.session.begin(subtransactions=True):
             # pre-generate id so it will be available when
             # configuring external gw port
-            status = router.get('status', n_const.ROUTER_STATUS_ACTIVE)
             router.setdefault('id', uuidutils.generate_uuid())
             router['tenant_id'] = tenant_id
             router_db = l3_models.Router(
@@ -234,7 +209,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 tenant_id=router['tenant_id'],
                 name=router['name'],
                 admin_state_up=router['admin_state_up'],
-                status=status,
+                status=n_const.ROUTER_STATUS_ACTIVE,
                 description=router.get('description'))
             context.session.add(router_db)
             registry.notify(resources.ROUTER, events.PRECOMMIT_CREATE,

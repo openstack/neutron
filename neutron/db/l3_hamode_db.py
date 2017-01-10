@@ -365,11 +365,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             self._core_plugin.delete_port(admin_ctx, port_id,
                                           l3_port_check=False)
 
-    def _notify_router_updated(self, context, router_id,
-                               schedule_routers=True):
+    def _notify_router_updated(self, context, router_id):
         self.l3_rpc_notifier.routers_updated(
-            context, [router_id], shuffle_agents=True,
-            schedule_routers=schedule_routers)
+            context, [router_id], shuffle_agents=True)
 
     @classmethod
     def _is_ha(cls, router):
@@ -416,10 +414,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # handle this HA router
             self.get_number_of_agents_for_scheduling(context)
 
-            # we set the allocating status to hide it from the L3 agents
-            # until we have created all of the requisite interfaces/networks
-            router['router']['status'] = n_const.ROUTER_STATUS_ALLOCATING
-
         router_dict = super(L3_HA_NAT_db_mixin,
                             self).create_router(context, router)
         if is_ha:
@@ -429,11 +423,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 self.schedule_router(context, router_dict['id'])
 
                 router_dict['ha_vr_id'] = router_db.extra_attributes.ha_vr_id
-                router_dict['status'] = self._update_router_db(
-                    context, router_dict['id'],
-                    {'status': n_const.ROUTER_STATUS_ACTIVE})['status']
-                self._notify_router_updated(context, router_db.id,
-                                            schedule_routers=False)
+                self._notify_router_updated(context, router_db.id)
             except Exception:
                 with excutils.save_and_reraise_exception():
                     self.delete_router(context, router_dict['id'])
@@ -485,13 +475,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 # enough l3 agents to handle this router.
                 self.get_number_of_agents_for_scheduling(context)
 
-            # set status to ALLOCATING so this router is no longer
-            # provided to agents while its interfaces are being re-configured.
-            # Keep in mind that if we want conversion to be hitless, this
-            # status cannot be used because agents treat hidden routers as
-            # deleted routers.
-            data['status'] = n_const.ROUTER_STATUS_ALLOCATING
-
         with context.session.begin(subtransactions=True):
             router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
                 context, router_id, data)
@@ -525,10 +508,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 new_owner=constants.DEVICE_OWNER_ROUTER_INTF)
 
         self.schedule_router(context, router_id)
-        router_db = super(L3_HA_NAT_db_mixin, self)._update_router_db(
-            context, router_id, {'status': n_const.ROUTER_STATUS_ACTIVE})
-        self._notify_router_updated(context, router_db.id,
-                                    schedule_routers=False)
+        self._notify_router_updated(context, router_db.id)
 
         return router_db
 

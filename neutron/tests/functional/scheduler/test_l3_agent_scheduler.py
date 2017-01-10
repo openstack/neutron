@@ -393,8 +393,12 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
               expected_scheduled_agent_count=[1, 1, 0])),
     ]
 
+    def setUp(self):
+        super(L3AZLeastRoutersSchedulerTestCase, self).setUp()
+        self.scheduler = l3_agent_scheduler.AZLeastRoutersScheduler()
+        self.l3_plugin.router_scheduler = self.scheduler
+
     def test_schedule_router(self):
-        scheduler = l3_agent_scheduler.AZLeastRoutersScheduler()
         ha = False
         if self.max_l3_agents_per_router:
             self.config(max_l3_agents_per_router=self.max_l3_agents_per_router)
@@ -412,7 +416,8 @@ class L3AZLeastRoutersSchedulerTestCase(L3AZSchedulerBaseTest):
         az_hints = ['az%s' % i for i in range(self.router_az_hints)]
         router = self._create_router(az_hints, ha)
 
-        scheduler.schedule(self.l3_plugin, self.adminContext, router['id'])
+        self.scheduler.schedule(self.l3_plugin, self.adminContext,
+                                router['id'])
         # schedule returns only one agent. so get all agents scheduled.
         scheduled_agents = self.l3_plugin.get_l3_agents_hosting_routers(
             self.adminContext, [router['id']])
