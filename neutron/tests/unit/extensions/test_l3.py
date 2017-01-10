@@ -53,6 +53,7 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import portbindings
 from neutron.plugins.ml2 import config
+from neutron.services.revisions import revision_plugin
 from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
@@ -1030,6 +1031,23 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with self.network() as n:
                 with self.subnet(network=n) as s:
                     self._test_router_add_interface_subnet(r, s)
+
+    def test_router_delete_race_with_interface_add(self):
+        # this test depends on protection from the revision plugin so
+        # we have to initialize it
+        revision_plugin.RevisionPlugin()
+        with self.router() as r, self.subnet() as s:
+
+            def jam_in_interface(*args, **kwargs):
+                self._router_interface_action('add', r['router']['id'],
+                                              s['subnet']['id'], None)
+                # unsubscribe now that the evil is done
+                registry.unsubscribe(jam_in_interface, resources.ROUTER,
+                                     events.PRECOMMIT_DELETE)
+            registry.subscribe(jam_in_interface, resources.ROUTER,
+                               events.PRECOMMIT_DELETE)
+            self._delete('routers', r['router']['id'],
+                         expected_code=exc.HTTPConflict.code)
 
     def test_router_add_interface_ipv6_subnet(self):
         """Test router-interface-add for valid ipv6 subnets.

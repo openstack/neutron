@@ -550,6 +550,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             registry.notify(resources.ROUTER, events.PRECOMMIT_DELETE,
                             self, context=context, router_db=router,
                             router_id=id)
+            # we bump the revision even though we are about to delete to throw
+            # staledataerror if something snuck in with a new interface
+            router.bump_revision()
+            context.session.flush()
             context.session.delete(router)
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self,
                         context=context, router_id=id, original=original)
