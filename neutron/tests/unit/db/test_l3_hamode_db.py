@@ -100,12 +100,6 @@ class L3HATestFramework(testlib_api.SqlTestCase):
             data['admin_state_up'] = admin_state
         return self.plugin._update_router_db(ctx, router_id, data)
 
-    def _bind_router(self, router_id):
-        self.plugin.router_scheduler.schedule(
-            self.plugin,
-            self.admin_ctx,
-            router_id)
-
 
 class L3HATestCase(L3HATestFramework):
 
