@@ -23,3 +23,39 @@ def convert_filters(**kwargs):
 
         result['project_id'] = result.pop('tenant_id')
     return result
+
+
+class StringMatchingFilterObj(object):
+
+    @property
+    def is_contains(self):
+        return bool(getattr(self, "contains"))
+
+    @property
+    def is_starts(self):
+        return bool(getattr(self, "starts"))
+
+    @property
+    def is_ends(self):
+        return bool(getattr(self, "ends"))
+
+
+class StringContains(StringMatchingFilterObj):
+
+    def __init__(self, matching_string):
+        super(StringContains, self).__init__()
+        self.contains = matching_string
+
+
+class StringStarts(StringMatchingFilterObj):
+
+    def __init__(self, matching_string):
+        super(StringStarts, self).__init__()
+        self.starts = matching_string
+
+
+class StringEnds(StringMatchingFilterObj):
+
+    def __init__(self, matching_string):
+        super(StringEnds, self).__init__()
+        self.ends = matching_string

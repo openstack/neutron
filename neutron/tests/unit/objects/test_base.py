@@ -46,6 +46,7 @@ from neutron.objects import ports
 from neutron.objects import rbac_db
 from neutron.objects import securitygroup
 from neutron.objects import subnet
+from neutron.objects import utils as obj_utils
 from neutron.tests import base as test_base
 from neutron.tests import tools
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -835,6 +836,61 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self._test_class.update_objects(
                 self.context, {'unknown_filter': 'new_value'},
                 validate_filters=False, unknown_filter='value')
+
+    def _prep_string_field(self):
+        self.filter_string_field = None
+        # find the first string field to use as string matching filter
+        for field in self.obj_fields[0]:
+            if isinstance(field, obj_fields.StringField):
+                self.filter_string_field = field
+                break
+
+        if self.filter_string_field is None:
+            self.skipTest('There is no string field in this object')
+
+    def test_get_objects_with_string_matching_filters_contains(self):
+        self._prep_string_field()
+
+        filter_dict_contains = {
+            self.filter_string_field: obj_utils.StringContains(
+                "random_thing")}
+
+        with mock.patch.object(
+                obj_db_api, 'get_objects',
+                side_effect=self.fake_get_objects):
+            res = self._test_class.get_objects(self.context,
+                                               **filter_dict_contains)
+            self.assertEqual([], res)
+
+    def test_get_objects_with_string_matching_filters_starts(self):
+        self._prep_string_field()
+
+        filter_dict_starts = {
+            self.filter_string_field: obj_utils.StringStarts(
+                "random_thing")
+        }
+
+        with mock.patch.object(
+                obj_db_api, 'get_objects',
+                side_effect=self.fake_get_objects):
+            res = self._test_class.get_objects(self.context,
+                                               **filter_dict_starts)
+            self.assertEqual([], res)
+
+    def test_get_objects_with_string_matching_filters_ends(self):
+        self._prep_string_field()
+
+        filter_dict_ends = {
+            self.filter_string_field: obj_utils.StringEnds(
+                "random_thing")
+        }
+
+        with mock.patch.object(
+                obj_db_api, 'get_objects',
+                side_effect=self.fake_get_objects):
+            res = self._test_class.get_objects(self.context,
+                                               **filter_dict_ends)
+            self.assertEqual([], res)
 
     def test_delete_objects(self):
         '''Test that delete_objects calls to underlying db_api.'''
