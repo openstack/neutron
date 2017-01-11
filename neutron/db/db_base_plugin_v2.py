@@ -403,10 +403,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with context.session.begin(subtransactions=True):
             network = self._get_network(context, id)
 
-            context.session.query(models_v2.Port).filter_by(
-                network_id=id).filter(
-                models_v2.Port.device_owner.
-                in_(AUTO_DELETE_PORT_OWNERS)).delete(synchronize_session=False)
+            auto_delete_ports = context.session.query(
+                models_v2.Port).filter_by(network_id=id).filter(
+                models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))
+            for port in auto_delete_ports:
+                context.session.delete(port)
 
             port_in_use = context.session.query(models_v2.Port).filter_by(
                 network_id=id).first()
