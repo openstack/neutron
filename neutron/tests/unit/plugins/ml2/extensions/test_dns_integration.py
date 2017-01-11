@@ -16,6 +16,7 @@
 import uuid
 
 from keystoneauth1 import loading
+from keystoneauth1 import session
 import mock
 import netaddr
 from neutron_lib import constants
@@ -566,7 +567,7 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
         # enforce session recalculation
         mock.patch.object(driver, '_SESSION', new=None).start()
         self.driver_session = (
-            mock.patch.object(driver.session, 'Session').start())
+            mock.patch.object(session, 'Session').start())
         self.load_auth = (
             mock.patch.object(driver.loading,
                 'load_auth_from_conf_options').start())
@@ -578,17 +579,21 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
                                      True,
                                      group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(verify=False)
+        self.driver_session.assert_called_with(cert=None,
+                                               timeout=None,
+                                               verify=False)
 
     def test_secure_client(self):
         config.cfg.CONF.set_override('insecure',
                                      False,
                                      group='designate')
-        config.cfg.CONF.set_override('ca_cert',
+        config.cfg.CONF.set_override('cafile',
                                      self.TEST_CA_CERT,
                                      group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(verify=self.TEST_CA_CERT)
+        self.driver_session.assert_called_with(cert=None,
+                                               timeout=None,
+                                               verify=self.TEST_CA_CERT)
 
     def test_auth_type_not_defined(self):
         driver.get_clients(self.TEST_CONTEXT)
@@ -648,7 +653,7 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
         # enforce session recalculation
         mock.patch.object(driver, '_SESSION', new=None).start()
         self.driver_session = (
-            mock.patch.object(driver.session, 'Session').start())
+            mock.patch.object(session, 'Session').start())
         self.load_auth = (
             mock.patch.object(driver.loading,
                 'load_auth_from_conf_options').start())
@@ -666,17 +671,21 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
                                      True,
                                      group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(verify=False)
+        self.driver_session.assert_called_with(cert=None,
+                                               timeout=None,
+                                               verify=False)
 
     def test_secure_client(self):
         config.cfg.CONF.set_override('insecure',
                                      False,
                                      group='designate')
-        config.cfg.CONF.set_override('ca_cert',
+        config.cfg.CONF.set_override('cafile',
                                      self.TEST_CA_CERT,
                                      group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(verify=self.TEST_CA_CERT)
+        self.driver_session.assert_called_with(cert=None,
+                                               timeout=None,
+                                               verify=self.TEST_CA_CERT)
 
     def test_auth_type_password(self):
         driver.get_clients(self.TEST_CONTEXT)

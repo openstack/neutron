@@ -19,7 +19,6 @@ from designateclient import exceptions as d_exc
 from designateclient.v2 import client as d_client
 from keystoneauth1.identity.generic import password
 from keystoneauth1 import loading
-from keystoneauth1 import session
 from keystoneauth1 import token_endpoint
 from neutron_lib import constants
 from oslo_config import cfg
@@ -43,11 +42,8 @@ def get_clients(context):
     global _SESSION
 
     if not _SESSION:
-        if CONF.designate.insecure:
-            verify = False
-        else:
-            verify = CONF.designate.ca_cert or True
-        _SESSION = session.Session(verify=verify)
+        _SESSION = loading.load_session_from_conf_options(
+            CONF, 'designate')
 
     auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
     client = d_client.Client(session=_SESSION, auth=auth)
