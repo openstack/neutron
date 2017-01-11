@@ -77,7 +77,7 @@ def _add_rule(sg_rules, base, port_range_min=None, port_range_max=None):
 
 
 class BaseFirewallTestCase(base.BaseSudoTestCase):
-    FAKE_SECURITY_GROUP_ID = 'fake_sg_id'
+    FAKE_SECURITY_GROUP_ID = uuidutils.generate_uuid()
     MAC_SPOOFED = "fa:16:3e:9a:2f:48"
     scenarios_iptables = testscenarios.multiply_scenarios(
         [('IptablesFirewallDriver', {'initialize': 'initialize_iptables',
