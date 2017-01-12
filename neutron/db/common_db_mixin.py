@@ -24,6 +24,7 @@ from sqlalchemy import or_
 from sqlalchemy import sql
 
 from neutron.api.v2 import attributes
+from neutron.common import utils
 from neutron.db import _utils as ndb_utils
 
 
@@ -65,12 +66,20 @@ class CommonDbMixin(object):
         Filter hooks take as input the filter expression being built and return
         a transformed filter expression
         """
+        if callable(query_hook):
+            query_hook = utils.make_weak_ref(query_hook)
+        if callable(filter_hook):
+            filter_hook = utils.make_weak_ref(filter_hook)
+        if callable(result_filters):
+            result_filters = utils.make_weak_ref(result_filters)
         cls._model_query_hooks.setdefault(model, {})[name] = {
             'query': query_hook, 'filter': filter_hook,
             'result_filters': result_filters}
 
     @classmethod
     def register_dict_extend_funcs(cls, resource, funcs):
+        funcs = [utils.make_weak_ref(f) if callable(f) else f
+                 for f in funcs]
         cls._dict_extend_functions.setdefault(resource, []).extend(funcs)
 
     @property
@@ -108,15 +117,11 @@ class CommonDbMixin(object):
         # Execute query hooks registered from mixins and plugins
         for _name, hooks in six.iteritems(self._model_query_hooks.get(model,
                                                                       {})):
-            query_hook = hooks.get('query')
-            if isinstance(query_hook, six.string_types):
-                query_hook = getattr(self, query_hook, None)
+            query_hook = self._resolve_ref(hooks.get('query'))
             if query_hook:
                 query = query_hook(context, model, query)
 
-            filter_hook = hooks.get('filter')
-            if isinstance(filter_hook, six.string_types):
-                filter_hook = getattr(self, filter_hook, None)
+            filter_hook = self._resolve_ref(hooks.get('filter'))
             if filter_hook:
                 query_filter = filter_hook(context, model, query_filter)
 
@@ -192,24 +197,29 @@ class CommonDbMixin(object):
                     query = query.filter(is_shared)
             for _nam, hooks in six.iteritems(self._model_query_hooks.get(model,
                                                                          {})):
-                result_filter = hooks.get('result_filters', None)
-                if isinstance(result_filter, six.string_types):
-                    result_filter = getattr(self, result_filter, None)
-
+                result_filter = self._resolve_ref(
+                    hooks.get('result_filters', None))
                 if result_filter:
                     query = result_filter(query, filters)
         return query
+
+    def _resolve_ref(self, ref):
+        """Finds string ref functions, handles dereference of weakref."""
+        if isinstance(ref, six.string_types):
+            ref = getattr(self, ref, None)
+        if isinstance(ref, weakref.ref):
+            ref = ref()
+        return ref
 
     def _apply_dict_extend_functions(self, resource_type,
                                      response, db_object):
         for func in self._dict_extend_functions.get(
             resource_type, []):
             args = (response, db_object)
-            if isinstance(func, six.string_types):
-                func = getattr(self, func, None)
-            else:
+            if not isinstance(func, six.string_types):
                 # must call unbound method - use self as 1st argument
                 args = (self,) + args
+            func = self._resolve_ref(func)
             if func:
                 func(*args)
 

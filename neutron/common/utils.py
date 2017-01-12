@@ -27,6 +27,7 @@ import signal
 import sys
 import time
 import uuid
+import weakref
 
 import debtcollector
 from debtcollector import removals
@@ -877,3 +878,17 @@ def get_related_rand_names(prefixes, max_length=None):
 def get_related_rand_device_names(prefixes):
     return get_related_rand_names(prefixes,
                                   max_length=n_const.DEVICE_NAME_MAX_LEN)
+
+
+try:
+    # PY3
+    weak_method = weakref.WeakMethod
+except AttributeError:
+    # PY2
+    import weakrefmethod
+    weak_method = weakrefmethod.WeakMethod
+
+
+def make_weak_ref(f):
+    """Make a weak reference to a function accounting for bound methods."""
+    return weak_method(f) if hasattr(f, '__self__') else weakref.ref(f)

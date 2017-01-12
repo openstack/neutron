@@ -125,7 +125,7 @@ class CommonDbMixinHooksFixture(fixtures.Fixture):
     def _setUp(self):
         self.original_hooks = common_db_mixin.CommonDbMixin._model_query_hooks
         self.addCleanup(self.restore_hooks)
-        common_db_mixin.CommonDbMixin._model_query_hooks = copy.deepcopy(
+        common_db_mixin.CommonDbMixin._model_query_hooks = copy.copy(
             common_db_mixin.CommonDbMixin._model_query_hooks)
 
     def restore_hooks(self):
