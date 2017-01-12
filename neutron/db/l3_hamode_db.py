@@ -31,6 +31,9 @@ from sqlalchemy import orm
 
 from neutron._i18n import _, _LI
 from neutron.api.v2 import attributes
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
@@ -127,9 +130,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if min_agents < n_const.MINIMUM_MINIMUM_AGENTS_FOR_HA:
             raise l3_ha.HAMinimumAgentsNumberNotValid()
 
-    def __init__(self):
-        self._verify_configuration()
-        super(L3_HA_NAT_db_mixin, self).__init__()
+    def __new__(cls, *args, **kwargs):
+        inst = super(L3_HA_NAT_db_mixin, cls).__new__(cls, *args, **kwargs)
+        inst._verify_configuration()
+        registry.subscribe(inst._release_router_vr_id,
+                           resources.ROUTER, events.PRECOMMIT_DELETE)
+        registry.subscribe(inst._cleanup_ha_network,
+                           resources.ROUTER, events.AFTER_DELETE)
+        return inst
 
     def get_ha_network(self, context, tenant_id):
         return (context.session.query(l3ha_model.L3HARouterNetwork).
@@ -539,11 +547,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                          "%(tenant)s."),
                      {'network': net_id, 'tenant': tenant_id})
 
-    @db_api.retry_if_session_inactive()
-    def delete_router(self, context, id):
-        router_db = self._get_router(context, id)
-        super(L3_HA_NAT_db_mixin, self).delete_router(context, id)
-
+    def _release_router_vr_id(self, resource, event, trigger, context,
+                              router_db, **kwargs):
+        """Event handler for removal of VRID during router delete."""
         if router_db.extra_attributes.ha:
             ha_network = self.get_ha_network(context,
                                              router_db.tenant_id)
@@ -551,10 +557,18 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)
 
-                # always attempt to cleanup the network as the router is
-                # deleted. the core plugin will stop us if its in use
-                self.safe_delete_ha_network(context, ha_network,
-                                            router_db.tenant_id)
+    @db_api.retry_if_session_inactive()
+    def _cleanup_ha_network(self, resource, event, trigger, context,
+                            router_id, original, **kwargs):
+        """Event handler to attempt HA network deletion after router delete."""
+        if not original['ha']:
+            return
+        ha_network = self.get_ha_network(context, original['tenant_id'])
+        if not ha_network:
+            return
+        # always attempt to cleanup the network as the router is
+        # deleted. the core plugin will stop us if its in use
+        self.safe_delete_ha_network(context, ha_network, original['tenant_id'])
 
     def _unbind_ha_router(self, context, router_id):
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):
