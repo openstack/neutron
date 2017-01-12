@@ -222,6 +222,21 @@ class CommonDbMixin(object):
         if sorts:
             sort_keys = db_utils.get_and_validate_sort_keys(sorts, model)
             sort_dirs = db_utils.get_sort_dirs(sorts, page_reverse)
+            # we always want deterministic results for subqueries so add pks
+            # to sorting when present.
+            # (http://docs.sqlalchemy.org/en/latest/orm/
+            #  loading_relationships.html#subqueryload-ordering)
+            # (http://docs.sqlalchemy.org/en/latest/faq/
+            #  ormconfiguration.html#faq-subqueryload-limit-sort)
+            uk_sets = sa_utils.get_unique_keys(model)
+            if uk_sets and limit:
+                # just grab first set of unique keys and use them.
+                # if model has no unqiue sets, 'paginate_query' will
+                # warn if sorting is unstable
+                for k in uk_sets[0]:
+                    if k not in sort_keys:
+                        sort_keys.append(k)
+                        sort_dirs.append('asc')
             collection = sa_utils.paginate_query(collection, model, limit,
                                                  marker=marker_obj,
                                                  sort_keys=sort_keys,
