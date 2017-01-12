@@ -63,12 +63,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
          const.DEVICE_OWNER_ROUTER_SNAT,
          const.DEVICE_OWNER_AGENT_GW))
 
-    extra_attributes = (
-        l3_attrs_db.ExtraAttributesMixin.extra_attributes + [{
-            'name': "distributed",
-            'default': cfg.CONF.router_distributed
-        }])
-
     def __new__(cls, *args, **kwargs):
         n = super(L3_NAT_with_dvr_db_mixin, cls).__new__(cls, *args, **kwargs)
         registry.subscribe(n._create_dvr_floating_gw_port,
@@ -94,8 +88,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def _set_distributed_flag(self, resource, event, trigger, context,
                               router, router_db, **kwargs):
         """Event handler to set distributed flag on creation."""
-        router['distributed'] = is_distributed_router(router)
-        self._process_extra_attr_router_create(context, router_db, router)
+        dist = is_distributed_router(router)
+        router['distributed'] = dist
+        self.set_extra_attr_value(context, router_db, 'distributed', dist)
 
     def _validate_router_migration(self, context, router_db, router_res):
         """Allow centralized -> distributed state transition only."""
@@ -136,13 +131,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             not router_db.extra_attributes.distributed and
             router.get('distributed') is True)
         self._validate_router_migration(context, router_db, router)
-        router_db.extra_attributes.update(router)
         if router.get('distributed'):
             self._migrate_router_ports(
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_ROUTER_INTF,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
         if migrating_to_distributed:
+            self.set_extra_attr_value(context, router_db, 'distributed', True)
             cur_agents = self.list_l3_agents_hosting_router(
                 context, router_db['id'])['agents']
             for agent in cur_agents:

@@ -12,45 +12,57 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
+
 from neutron.common import _deprecate
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3_attrs
+from neutron.extensions import availability_zone as az
 from neutron.extensions import l3
 
 _deprecate._moved_global('RouterExtraAttributes', new_module=l3_attrs)
 
 
+def get_attr_info():
+    """Returns api visible attr names and their default values."""
+    return {'distributed': {'default': cfg.CONF.router_distributed},
+            'ha': {'default': cfg.CONF.l3_ha},
+            'ha_vr_id': {'default': 0},
+            'availability_zone_hints': {
+                'default': '[]',
+                'transform_to_db': az.convert_az_list_to_string,
+                'transform_from_db': az.convert_az_string_to_list}
+            }
+
+
 class ExtraAttributesMixin(object):
     """Mixin class to enable router's extra attributes."""
 
-    extra_attributes = []
-
     def _extend_extra_router_dict(self, router_res, router_db):
         extra_attrs = router_db['extra_attributes'] or {}
-        for attr in self.extra_attributes:
-            name = attr['name']
-            default = attr['default']
-            router_res[name] = (
-                extra_attrs[name] if name in extra_attrs else default)
+        for name, info in get_attr_info().items():
+            from_db = info.get('transform_from_db', lambda x: x)
+            router_res[name] = from_db(extra_attrs.get(name, info['default']))
 
-    def _get_extra_attributes(self, router, extra_attributes):
-        return (dict((attr['name'],
-                      router.get(attr['name'], attr['default']))
-                for attr in extra_attributes))
-
-    def _process_extra_attr_router_create(
-        self, context, router_db, router_req):
-        kwargs = self._get_extra_attributes(router_req, self.extra_attributes)
-        # extra_attributes reference is populated via backref
+    def _ensure_extra_attr_model(self, context, router_db):
         if not router_db['extra_attributes']:
-            attributes_db = l3_attrs.RouterExtraAttributes(
-                router_id=router_db['id'], **kwargs)
-            context.session.add(attributes_db)
-            router_db['extra_attributes'] = attributes_db
-        else:
-            # The record will exist if RouterExtraAttributes model's
-            # attributes are added with db migrations over time
-            router_db['extra_attributes'].update(kwargs)
+            kwargs = {k: v['default'] for k, v in get_attr_info().items()}
+            kwargs['router_id'] = router_db['id']
+            new = l3_attrs.RouterExtraAttributes(**kwargs)
+            context.session.add(new)
+            router_db['extra_attributes'] = new
+
+    def set_extra_attr_value(self, context, router_db, key, value):
+        # set a single value explicitly
+        with context.session.begin(subtransactions=True):
+            if key in get_attr_info():
+                info = get_attr_info()[key]
+                to_db = info.get('transform_to_db', lambda x: x)
+                self._ensure_extra_attr_model(context, router_db)
+                router_db['extra_attributes'].update({key: to_db(value)})
+                return
+            raise RuntimeError("Tried to set a key '%s' that doesn't exist in "
+                               "the extra attributes table." % key)
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         l3.ROUTERS, ['_extend_extra_router_dict'])

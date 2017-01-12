@@ -45,15 +45,6 @@ class AZRouterTestPlugin(common_db_mixin.CommonDbMixin,
     def get_plugin_description(self):
         return "L3 Routing Service Plugin for testing"
 
-    def _create_router_db(self, context, router, tenant_id):
-        # l3-plugin using routerextraattributes must call
-        # _process_extra_attr_router_create.
-        with context.session.begin(subtransactions=True):
-            router_db = super(AZRouterTestPlugin, self)._create_router_db(
-                context, router, tenant_id)
-            self._process_extra_attr_router_create(context, router_db, router)
-            return router_db
-
 
 class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
     def setUp(self):

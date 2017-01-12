@@ -26,6 +26,7 @@ from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import uuidutils
 from sqlalchemy import orm
+import testtools
 from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
@@ -62,6 +63,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import base as test_extensions_base
 from neutron.tests.unit.extensions import test_agent
 from neutron.tests.unit.plugins.ml2 import base as ml2_base
+from neutron.tests.unit import testlib_api
 
 
 _uuid = uuidutils.generate_uuid
@@ -548,55 +550,47 @@ class L3NatTestCaseMixin(object):
                 yield f
 
 
-class ExtraAttributesMixinTestCase(base.BaseTestCase):
+class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
         super(ExtraAttributesMixinTestCase, self).setUp()
         self.mixin = l3_attrs_db.ExtraAttributesMixin()
+        self.ctx = context.get_admin_context()
+        self.router = l3_models.Router()
+        with self.ctx.session.begin():
+            self.ctx.session.add(self.router)
 
-    def _test__extend_extra_router_dict(
-        self, extra_attributes, attributes, expected_attributes):
-        self.mixin._extend_extra_router_dict(
-            attributes, {'extra_attributes': extra_attributes})
-        self.assertEqual(expected_attributes, attributes)
+    def _get_default_api_values(self):
+        return {k: v.get('transform_from_db', lambda x: x)(v['default'])
+                for k, v in l3_attrs_db.get_attr_info().items()}
 
-    def test__extend_extra_router_dict_string_default(self):
-        self.mixin.extra_attributes = [{
-            'name': "foo_key",
-            'default': 'foo_default'
-        }]
-        extension_attributes = {'foo_key': 'my_fancy_value'}
-        self._test__extend_extra_router_dict(
-            extension_attributes, {}, extension_attributes)
+    def test_set_extra_attr_key_bad(self):
+        with testtools.ExpectedException(RuntimeError):
+            self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                            'bad', 'value')
 
-    def test__extend_extra_router_dict_booleans_false_default(self):
-        self.mixin.extra_attributes = [{
-            'name': "foo_key",
-            'default': False
-        }]
-        extension_attributes = {'foo_key': True}
-        self._test__extend_extra_router_dict(
-            extension_attributes, {}, extension_attributes)
+    def test__extend_extra_router_dict_defaults(self):
+        rdict = {}
+        self.mixin._extend_extra_router_dict(rdict, self.router)
+        self.assertEqual(self._get_default_api_values(), rdict)
 
-    def test__extend_extra_router_dict_booleans_true_default(self):
-        self.mixin.extra_attributes = [{
-            'name': "foo_key",
-            'default': True
-        }]
-        # Test that the default is overridden
-        extension_attributes = {'foo_key': False}
-        self._test__extend_extra_router_dict(
-            extension_attributes, {}, extension_attributes)
-
-    def test__extend_extra_router_dict_no_extension_attributes(self):
-        self.mixin.extra_attributes = [{
-            'name': "foo_key",
-            'default': 'foo_value'
-        }]
-        self._test__extend_extra_router_dict({}, {}, {'foo_key': 'foo_value'})
-
-    def test__extend_extra_router_dict_none_extension_attributes(self):
-        self._test__extend_extra_router_dict(None, {}, {})
+    def test_set_attrs_and_extend(self):
+        self.mixin.set_extra_attr_value(self.ctx, self.router, 'ha_vr_id', 99)
+        self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                        'availability_zone_hints',
+                                        ['x', 'y', 'z'])
+        expected = self._get_default_api_values()
+        expected.update({'ha_vr_id': 99,
+                         'availability_zone_hints': ['x', 'y', 'z']})
+        rdict = {}
+        self.mixin._extend_extra_router_dict(rdict, self.router)
+        self.assertEqual(expected, rdict)
+        self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                        'availability_zone_hints',
+                                        ['z', 'y', 'z'])
+        expected['availability_zone_hints'] = ['z', 'y', 'z']
+        self.mixin._extend_extra_router_dict(rdict, self.router)
+        self.assertEqual(expected, rdict)
 
 
 class L3NatTestCaseBase(L3NatTestCaseMixin):
