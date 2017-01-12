@@ -22,7 +22,7 @@ from neutron.tests.unit import testlib_api
 
 class SubnetPoolTestMixin(object):
     def _create_test_subnetpool(self):
-        self._pool = subnetpool.SubnetPool(
+        obj = subnetpool.SubnetPool(
             self.context,
             id=uuidutils.generate_uuid(),
             ip_version=4,
@@ -30,7 +30,8 @@ class SubnetPoolTestMixin(object):
             min_prefixlen=0,
             max_prefixlen=32,
             shared=False)
-        self._pool.create()
+        obj.create()
+        return obj
 
 
 class SubnetPoolIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
@@ -45,20 +46,20 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = subnetpool.SubnetPool
 
     def test_subnetpool_prefixes(self):
-        self._create_test_subnetpool()
+        pool = self._create_test_subnetpool()
         prefixes = obj_test_base.get_list_of_random_networks()
-        self._pool.prefixes = prefixes
-        self._pool.update()
+        pool.prefixes = prefixes
+        pool.update()
 
-        pool = self._test_class.get_object(self.context, id=self._pool.id)
-        self.assertItemsEqual(prefixes, pool.prefixes)
+        new_pool = self._test_class.get_object(self.context, id=pool.id)
+        self.assertItemsEqual(prefixes, new_pool.prefixes)
 
         prefixes.pop()
-        self._pool.prefixes = prefixes
-        self._pool.update()
+        pool.prefixes = prefixes
+        pool.update()
 
-        pool = self._test_class.get_object(self.context, id=self._pool.id)
-        self.assertItemsEqual(prefixes, pool.prefixes)
+        new_pool = self._test_class.get_object(self.context, id=pool.id)
+        self.assertItemsEqual(prefixes, new_pool.prefixes)
 
     def test_get_objects_queries_constant(self):
         # TODO(korzen) SubnetPool is using SubnetPoolPrefix object to reload
@@ -84,5 +85,5 @@ class SubnetPoolPrefixDbObjectTestCase(
 
     def setUp(self):
         super(SubnetPoolPrefixDbObjectTestCase, self).setUp()
-        self._create_test_subnetpool()
-        self.update_obj_fields({'subnetpool_id': self._pool.id})
+        self.update_obj_fields(
+            {'subnetpool_id': lambda: self._create_test_subnetpool().id})
