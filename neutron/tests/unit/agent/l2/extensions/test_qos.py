@@ -18,6 +18,7 @@ from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import qos
+from neutron.agent.l2.extensions import qos_linux
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
@@ -55,7 +56,7 @@ FAKE_RULE_ID = uuidutils.generate_uuid()
 REALLY_FAKE_RULE_ID = uuidutils.generate_uuid()
 
 
-class FakeDriver(qos.QosAgentDriver):
+class FakeDriver(qos_linux.QosLinuxAgentDriver):
 
     SUPPORTED_RULES = {qos_consts.RULE_TYPE_BANDWIDTH_LIMIT}
 
@@ -152,7 +153,7 @@ class QosExtensionBaseTestCase(base.BaseTestCase):
         # Don't rely on used driver
         mock.patch(
             'neutron.manager.NeutronManager.load_class_for_provider',
-            return_value=lambda: mock.Mock(spec=qos.QosAgentDriver)
+            return_value=lambda: mock.Mock(spec=qos_linux.QosLinuxAgentDriver)
         ).start()
 
 

@@ -17,7 +17,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log
 
 from neutron._i18n import _LI
-from neutron.agent.l2.extensions import qos
+from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import tc_lib
 import neutron.common.constants as const
@@ -27,7 +27,7 @@ from neutron.plugins.ml2.drivers.linuxbridge.mech_driver import (
 LOG = log.getLogger(__name__)
 
 
-class QosLinuxbridgeAgentDriver(qos.QosAgentDriver):
+class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
 
     SUPPORTED_RULES = (
         mech_linuxbridge.LinuxbridgeMechanismDriver.supported_qos_rule_types
