@@ -274,11 +274,9 @@ class TestNetnsCleanup(base.BaseTestCase):
     def test_kill_listen_processes(self):
         with mock.patch.object(util, '_kill_listen_processes',
                                return_value=1) as mock_kill_listen:
-            with mock.patch('neutron.common.utils.wait_until_true')\
-                    as wait_until_true_mock:
-                wait_until_true_mock.side_effect = [
-                    util.PidsInNamespaceException,
-                    None]
+            with mock.patch.object(util, 'wait_until_no_listen_pids_namespace',
+                                   side_effect=[util.PidsInNamespaceException,
+                                                None]):
                 namespace = mock.ANY
                 util.kill_listen_processes(namespace)
                 mock_kill_listen.assert_has_calls(
@@ -288,10 +286,8 @@ class TestNetnsCleanup(base.BaseTestCase):
     def test_kill_listen_processes_still_procs(self):
         with mock.patch.object(util, '_kill_listen_processes',
                                return_value=1):
-            with mock.patch('neutron.common.utils.wait_until_true')\
-                    as wait_until_true_mock:
-                wait_until_true_mock.side_effect = (
-                    util.PidsInNamespaceException)
+            with mock.patch.object(util, 'wait_until_no_listen_pids_namespace',
+                            side_effect=util.PidsInNamespaceException):
                 namespace = mock.ANY
                 with testtools.ExpectedException(
                         util.PidsInNamespaceException):
@@ -300,13 +296,14 @@ class TestNetnsCleanup(base.BaseTestCase):
     def test_kill_listen_processes_no_procs(self):
         with mock.patch.object(util, '_kill_listen_processes',
                                return_value=0) as mock_kill_listen:
-            with mock.patch('neutron.common.utils.wait_until_true')\
-                    as wait_until_true_mock:
+            with mock.patch.object(util,
+                                   'wait_until_no_listen_pids_namespace')\
+                    as wait_until_mock:
                 namespace = mock.ANY
                 util.kill_listen_processes(namespace)
                 mock_kill_listen.assert_called_once_with(namespace,
                                                          force=False)
-                self.assertFalse(wait_until_true_mock.called)
+                self.assertFalse(wait_until_mock.called)
 
     def _test_destroy_namespace_helper(self, force, num_devices):
         ns = 'qrouter-6e322ac7-ab50-4f53-9cdc-d1d3c1164b6d'
