@@ -212,3 +212,11 @@ def remove_fks_from_table(table, remove_unique_constraints=False):
         yield
     finally:
         create_foreign_keys(table, foreign_keys)
+
+
+def pk_on_alembic_version_table():
+    inspector = reflection.Inspector.from_engine(op.get_bind())
+    pk = inspector.get_pk_constraint('alembic_version')
+    if not pk['constrained_columns']:
+        op.create_primary_key(op.f('pk_alembic_version'),
+                              'alembic_version', ['version_num'])
