@@ -104,7 +104,7 @@ class AsyncProcess(object):
         """Launch a process and monitor it asynchronously.
 
         :param block: Block until the process has started.
-        :raises eventlet.timeout.Timeout if blocking is True and the process
+        :raises utils.WaitTimeout if blocking is True and the process
                 did not start in time.
         """
         LOG.debug('Launching async process [%s].', self.cmd)
@@ -122,7 +122,7 @@ class AsyncProcess(object):
         :param block: Block until the process has stopped.
         :param kill_signal: Number of signal that will be sent to the process
                             when terminating the process
-        :raises eventlet.timeout.Timeout if blocking is True and the process
+        :raises utils.WaitTimeout if blocking is True and the process
                 did not stop in time.
         """
         if self._is_running:

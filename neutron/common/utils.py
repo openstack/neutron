@@ -28,6 +28,7 @@ import sys
 import time
 import uuid
 
+import debtcollector
 from debtcollector import removals
 import eventlet
 from eventlet.green import subprocess
@@ -56,6 +57,17 @@ LOG = logging.getLogger(__name__)
 SYNCHRONIZED_PREFIX = 'neutron-'
 
 synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
+
+
+class WaitTimeout(Exception, eventlet.TimeoutError):
+    """Default exception coming from wait_until_true() function.
+
+    The reason is that eventlet.TimeoutError inherits from BaseException and
+    testtools.TestCase consumes only Exceptions. Which means in case
+    TimeoutError is raised, test runner stops and exits while it still has test
+    cases scheduled for execution.
+    """
+    pass
 
 
 @removals.remove(
@@ -696,12 +708,26 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
     Best practice is to instantiate predicate with functools.partial()
     :param timeout: Timeout in seconds how long should function wait.
     :param sleep: Polling interval for results in seconds.
-    :param exception: Exception class for eventlet.Timeout.
-    (see doc for eventlet.Timeout for more information)
+    :param exception: Exception instance to raise on timeout. If None is passed
+                      (default) then WaitTimeout exception is raised.
     """
-    with eventlet.timeout.Timeout(timeout, exception):
-        while not predicate():
-            eventlet.sleep(sleep)
+    try:
+        with eventlet.timeout.Timeout(timeout):
+            while not predicate():
+                eventlet.sleep(sleep)
+    except eventlet.TimeoutError:
+        if exception is None:
+            debtcollector.deprecate(
+                "Raising eventlet.TimeoutError by default has been deprecated",
+                message="wait_until_true() now raises WaitTimeout error by "
+                        "default.",
+                version="Ocata",
+                removal_version="Pike")
+            exception = WaitTimeout("Timed out after %d seconds" % timeout)
+        #NOTE(jlibosva): In case None is passed exception is instantiated on
+        #                the line above.
+        #pylint: disable=raising-bad-type
+        raise exception
 
 
 class _AuthenticBase(object):

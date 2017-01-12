@@ -16,7 +16,6 @@ import os
 import shutil
 import signal
 
-import eventlet
 import netaddr
 from neutron_lib import constants as n_consts
 from oslo_log import log as logging
@@ -349,7 +348,7 @@ class HaRouter(router.RouterInfo):
         try:
             common_utils.wait_until_true(lambda: not pm.active,
                                          timeout=SIGTERM_TIMEOUT)
-        except eventlet.timeout.Timeout:
+        except common_utils.WaitTimeout:
             pm.disable(sig=str(int(signal.SIGKILL)))
 
     def update_initial_state(self, callback):

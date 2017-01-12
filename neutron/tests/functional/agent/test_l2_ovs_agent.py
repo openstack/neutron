@@ -16,8 +16,6 @@
 
 import time
 
-from eventlet.timeout import Timeout
-
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
@@ -319,8 +317,8 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                          unplug_ports=[self.ports[1]])
         self.wait_until_ports_state([self.ports[0]], up=True)
         self.assertRaises(
-            Timeout, self.wait_until_ports_state, [self.ports[1]], up=True,
-            timeout=10)
+            utils.WaitTimeout, self.wait_until_ports_state, [self.ports[1]],
+            up=True, timeout=10)
 
 
 class TestOVSAgentExtensionConfig(base.OVSAgentTestFramework):

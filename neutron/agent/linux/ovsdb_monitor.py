@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import eventlet
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
 from neutron._i18n import _LE
 from neutron.agent.linux import async_process
 from neutron.agent.ovsdb import api as ovsdb
+from neutron.common import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -113,6 +113,4 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
     def start(self, block=False, timeout=5):
         super(SimpleInterfaceMonitor, self).start()
         if block:
-            with eventlet.timeout.Timeout(timeout):
-                while not self.is_active():
-                    eventlet.sleep()
+            utils.wait_until_true(self.is_active)

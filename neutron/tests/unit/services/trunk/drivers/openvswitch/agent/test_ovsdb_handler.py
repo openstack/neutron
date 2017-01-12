@@ -15,13 +15,13 @@
 
 import mock
 
-import eventlet
 import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import testtools
 
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import utils
 from neutron.objects import trunk as trunk_obj
 from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions
@@ -141,8 +141,8 @@ class TestOVSDBHandler(base.BaseTestCase):
                  'mac_address': 'mac'} for subport in self.fake_subports]}
 
     @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
-    @mock.patch('neutron.common.utils.wait_until_true',
-                side_effect=eventlet.TimeoutError)
+    @mock.patch.object(utils, 'wait_until_true',
+                       side_effect=utils.WaitTimeout)
     def test_handle_trunk_add_interface_wont_appear(self, wut, br):
         self.ovsdb_handler.handle_trunk_add('foo')
         self.assertTrue(self.trunk_manager.dispose_trunk.called)

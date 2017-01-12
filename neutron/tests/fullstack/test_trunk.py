@@ -14,7 +14,6 @@
 
 import functools
 
-import eventlet
 import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
@@ -293,7 +292,9 @@ class TestTrunkPlugin(base.BaseFullStackTestCase):
         )
         try:
             utils.wait_until_true(no_patch_ports_predicate)
-        except eventlet.TimeoutError:
+        except utils.WaitTimeout:
+            # Create exception object after timeout to provide up-to-date list
+            # of interfaces
             raise TrunkTestException(
                 "Integration bridge %s still has following ports while some of"
                 " them are patch ports for trunk that were supposed to be "

@@ -16,7 +16,6 @@ import signal
 
 import eventlet.event
 import eventlet.queue
-import eventlet.timeout
 import mock
 import testtools
 
@@ -88,7 +87,7 @@ class TestAsyncProcess(base.BaseTestCase):
         self.proc._is_running = True
         self.proc._kill_event = kill_event
         # Ensure the test times out eventually if the watcher loops endlessly
-        with eventlet.timeout.Timeout(5):
+        with self.assert_max_execution_time():
             with mock.patch.object(self.proc,
                                    '_handle_process_error') as func:
                 self.proc._watch_process(callback, kill_event)
