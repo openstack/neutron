@@ -1148,7 +1148,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                     do_request)
 
     def _test_operation_resillient_to_ipallocation_failure(self, func):
-        from sqlalchemy import event
 
         class IPAllocationsGrenade(object):
             insert_ip_called = False
@@ -1167,12 +1166,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
         listener = IPAllocationsGrenade()
         engine = db_api.context_manager.writer.get_engine()
-        event.listen(engine, 'before_cursor_execute', listener.execute)
-        event.listen(engine, 'commit', listener.commit)
-        self.addCleanup(event.remove, engine, 'before_cursor_execute',
-                        listener.execute)
-        self.addCleanup(event.remove, engine, 'commit',
-                        listener.commit)
+        db_api.sqla_listen(engine, 'before_cursor_execute', listener.execute)
+        db_api.sqla_listen(engine, 'commit', listener.commit)
         func()
         # make sure that the grenade went off during the commit
         self.assertTrue(listener.except_raised)

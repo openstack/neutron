@@ -16,7 +16,7 @@ from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_utils import timeutils
 import sqlalchemy as sa
-from sqlalchemy import event
+from sqlalchemy import event  # noqa
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import session as se

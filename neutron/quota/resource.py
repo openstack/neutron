@@ -15,7 +15,6 @@
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
-from sqlalchemy import event
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
@@ -299,18 +298,19 @@ class TrackedResource(BaseResource):
                                self._model_class)
 
     def register_events(self):
-        event.listen(self._model_class, 'after_insert', self._db_event_handler)
-        event.listen(self._model_class, 'after_delete', self._db_event_handler)
-        event.listen(se.Session, 'after_bulk_delete', self._except_bulk_delete)
+        listen = db_api.sqla_listen
+        listen(self._model_class, 'after_insert', self._db_event_handler)
+        listen(self._model_class, 'after_delete', self._db_event_handler)
+        listen(se.Session, 'after_bulk_delete', self._except_bulk_delete)
 
     def unregister_events(self):
         try:
-            event.remove(self._model_class, 'after_insert',
-                         self._db_event_handler)
-            event.remove(self._model_class, 'after_delete',
-                         self._db_event_handler)
-            event.remove(se.Session, 'after_bulk_delete',
-                         self._except_bulk_delete)
+            db_api.sqla_remove(self._model_class, 'after_insert',
+                               self._db_event_handler)
+            db_api.sqla_remove(self._model_class, 'after_delete',
+                               self._db_event_handler)
+            db_api.sqla_remove(se.Session, 'after_bulk_delete',
+                               self._except_bulk_delete)
         except sql_exc.InvalidRequestError:
             LOG.warning(_LW("No sqlalchemy event for resource %s found"),
                         self.name)

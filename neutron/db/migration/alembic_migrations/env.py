@@ -16,7 +16,7 @@ from alembic import context
 from neutron_lib.db import model_base
 from oslo_config import cfg
 import sqlalchemy as sa
-from sqlalchemy import event
+from sqlalchemy import event  # noqa
 
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import autogen
