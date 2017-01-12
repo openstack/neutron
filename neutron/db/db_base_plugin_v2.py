@@ -18,12 +18,10 @@ import functools
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants
-from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
-from oslo_db.sqlalchemy import utils as sa_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
@@ -1293,39 +1291,22 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         port = self._get_port(context, id)
         return self._make_port_dict(port, fields)
 
-    def _get_ports_query(self, context, filters=None, sorts=None, limit=None,
-                         marker_obj=None, page_reverse=False):
+    def _get_ports_query(self, context, filters=None, *args, **kwargs):
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
 
-        if not filters:
-            filters = {}
-
-        query = self._model_query(context, Port)
-
+        filters = filters or {}
         fixed_ips = filters.pop('fixed_ips', {})
+        query = self._get_collection_query(context, Port, filters=filters,
+                                           *args, **kwargs)
         ip_addresses = fixed_ips.get('ip_address')
         subnet_ids = fixed_ips.get('subnet_id')
-        if ip_addresses or subnet_ids:
-            if ip_addresses:
-                query = query.filter(
-                    Port.fixed_ips.any(
-                        IPAllocation.ip_address.in_(ip_addresses)
-                    )
-                )
-            if subnet_ids:
-                query = query.filter(
-                    Port.fixed_ips.any(IPAllocation.subnet_id.in_(subnet_ids))
-                )
-
-        query = self._apply_filters_to_query(query, Port, filters, context)
-        if sorts:
-            sort_keys = db_utils.get_and_validate_sort_keys(sorts, Port)
-            sort_dirs = db_utils.get_sort_dirs(sorts, page_reverse)
-            query = sa_utils.paginate_query(query, Port, limit,
-                                            marker=marker_obj,
-                                            sort_keys=sort_keys,
-                                            sort_dirs=sort_dirs)
+        if ip_addresses:
+            query = query.filter(
+                Port.fixed_ips.any(IPAllocation.ip_address.in_(ip_addresses)))
+        if subnet_ids:
+            query = query.filter(
+                Port.fixed_ips.any(IPAllocation.subnet_id.in_(subnet_ids)))
         return query
 
     @db_api.retry_if_session_inactive()
