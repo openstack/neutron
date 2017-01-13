@@ -316,11 +316,19 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                 res_rule_dict = self._create_security_group_rule(
                     context, rule_dict, validate=False)
                 ret.append(res_rule_dict)
-            return ret
+        for rdict in ret:
+            registry.notify(
+                resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, self,
+                context=context, security_group_rule=rdict)
+        return ret
 
     @db_api.retry_if_session_inactive()
     def create_security_group_rule(self, context, security_group_rule):
-        return self._create_security_group_rule(context, security_group_rule)
+        res = self._create_security_group_rule(context, security_group_rule)
+        registry.notify(
+            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, self,
+            context=context, security_group_rule=res)
+        return res
 
     def _create_security_group_rule(self, context, security_group_rule,
                                     validate=True):
@@ -356,12 +364,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             self._registry_notify(resources.SECURITY_GROUP_RULE,
                               events.PRECOMMIT_CREATE,
                               exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
-        res_rule_dict = self._make_security_group_rule_dict(db)
-        kwargs['security_group_rule'] = res_rule_dict
-        registry.notify(
-            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, self,
-            **kwargs)
-        return res_rule_dict
+        return self._make_security_group_rule_dict(db)
 
     def _get_ip_proto_number(self, protocol):
         if protocol is None:
