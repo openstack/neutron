@@ -73,9 +73,6 @@ Neutron logical network setup
 Neutron logical router setup
 ----------------------------
 
-* http://docs.openstack.org/networking-guide/scenario_legacy_ovs.html
-
-
 ::
 
         vagrant@precise64:~/devstack$ neutron router-list
@@ -102,6 +99,9 @@ Neutron logical router setup
         +--------------------------------------+------+-------------------+---------------------------------------------------------------------------------+
         | 0ba8700e-da06-4318-8fe9-00676dd994b8 |      | fa:16:3e:78:43:5b | {"subnet_id": "1a2d26fb-b733-4ab3-992e-88554a87afa6", "ip_address": "10.0.0.1"} |
         +--------------------------------------+------+-------------------+---------------------------------------------------------------------------------+
+
+See the `Networking Guide <http://docs.openstack.org/networking-guide/deploy-ovs-selfservice.html#create-initial-networks/>`_
+for more detail on the creation of networks, subnets, and routers.
 
 Neutron Routers are realized in OpenVSwitch
 -------------------------------------------

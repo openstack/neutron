@@ -34,7 +34,7 @@ What does the test do?
 
 This test compares models with the result of existing migrations. It is based on
 `ModelsMigrationsSync
-<http://docs.openstack.org/developer/oslo.db/api/sqlalchemy/test_migrations.html#oslo_db.sqlalchemy.test_migrations.ModelsMigrationsSync>`_
+<http://docs.openstack.org/developer/oslo.db/api/oslo_db.sqlalchemy.test_migrations.html>`_
 which is provided by oslo.db and was adapted for Neutron. It compares core
 Neutron models and vendor specific models with migrations from Neutron core and
 migrations from the driver/plugin repo. This test is functional - it runs against
