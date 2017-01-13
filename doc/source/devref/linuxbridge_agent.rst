@@ -29,7 +29,7 @@ This Agent uses the `Linux Bridge
 provide L2 connectivity for VM instances running on the compute node to the
 public network.  A graphical illustration of the deployment can be found in
 `Networking Guide
-<http://docs.openstack.org/networking-guide/scenario_legacy_lb.html>`_
+<http://docs.openstack.org/networking-guide/deploy-lb-provider.html#architecture>`_
 
 In most common deployments, there is a compute and a network node. On both the
 compute and the network node, the Linux Bridge Agent will manage virtual
@@ -39,11 +39,11 @@ on the compute node, the Linux Bridge Agent will manage security groups.
 
 Three use cases and their packet flow are documented as follows:
 
-1. `Legacy implementation with Linux Bridge
-   <http://docs.openstack.org/networking-guide/deploy_scenario1b.html>`_
+1. `Linux Bridge: Provider networks
+   <http://docs.openstack.org/networking-guide/deploy-lb-provider.html>`_
 
-2. `High Availability using L3HA with Linux Bridge
-   <http://docs.openstack.org/networking-guide/deploy_scenario3b.html>`_
+2. `Linux Bridge: Self-service networks
+   <http://docs.openstack.org/networking-guide/deploy-lb-selfservice.html>`_
 
-3. `Provider networks with Linux Bridge
-   <http://docs.openstack.org/networking-guide/deploy_scenario4b.html>`_
+3. `Linux Bridge: High availability using VRRP
+   <http://docs.openstack.org/networking-guide/deploy-lb-ha-vrrp.html>`_
