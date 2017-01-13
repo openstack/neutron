@@ -384,6 +384,15 @@ class L3HATestCase(L3HATestFramework):
                           ha=True,
                           distributed=True)
 
+    def test_migrate_legacy_router_to_ha_not_enough_agents(self):
+        router = self._create_router(ha=False, distributed=False)
+        self.assertFalse(router['ha'])
+        self.assertFalse(router['distributed'])
+
+        helpers.set_agent_admin_state(self.agent2['id'], admin_state_up=False)
+        self.assertRaises(l3_ext_ha_mode.HANotEnoughAvailableAgents,
+                          self._migrate_router, router['id'], ha=True)
+
     def test_unbind_ha_router(self):
         router = self._create_router()
 
