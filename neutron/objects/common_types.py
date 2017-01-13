@@ -17,6 +17,7 @@ import uuid
 import netaddr
 from neutron_lib import constants as lib_constants
 
+from oslo_serialization import jsonutils
 from oslo_versionedobjects import fields as obj_fields
 import six
 
@@ -198,6 +199,43 @@ class MACAddress(obj_fields.FieldType):
 
 class MACAddressField(obj_fields.AutoTypedField):
     AUTO_TYPE = MACAddress()
+
+
+class DictOfMiscValues(obj_fields.FieldType):
+    """DictOfMiscValues custom field
+
+    This custom field is handling dictionary with miscellaneous value types,
+    including integer, float, boolean and list and nested dictionaries.
+    """
+    @staticmethod
+    def coerce(obj, attr, value):
+        if isinstance(value, dict):
+            return value
+        if isinstance(value, six.string_types):
+            try:
+                return jsonutils.loads(value)
+            except Exception:
+                msg = _("Field value %s is not stringified JSON") % value
+                raise ValueError(msg)
+        msg = (_("Field value %s is not type of dict or stringified JSON")
+               % value)
+        raise ValueError(msg)
+
+    @staticmethod
+    def from_primitive(obj, attr, value):
+        return DictOfMiscValues.coerce(obj, attr, value)
+
+    @staticmethod
+    def to_primitive(obj, attr, value):
+        return jsonutils.dumps(value)
+
+    @staticmethod
+    def stringify(value):
+        return jsonutils.dumps(value)
+
+
+class DictOfMiscValuesField(obj_fields.AutoTypedField):
+    AUTO_TYPE = DictOfMiscValues
 
 
 class IPNetwork(obj_fields.FieldType):

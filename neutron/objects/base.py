@@ -471,18 +471,27 @@ class NeutronDbObject(NeutronObject):
         return str(value)
 
     @staticmethod
-    def filter_to_json_str(value):
+    def filter_to_json_str(value, default=None):
         def _dict_to_json(v):
-            return jsonutils.dumps(
-                collections.OrderedDict(
-                    sorted(v.items(), key=lambda t: t[0])
-                ) if v else {}
+            return (
+                jsonutils.dumps(
+                    collections.OrderedDict(
+                        sorted(v.items(), key=lambda t: t[0])
+                    )
+                ) if v else default
             )
 
         if isinstance(value, list):
             return [_dict_to_json(val) for val in value]
         v = _dict_to_json(value)
         return v
+
+    @staticmethod
+    def load_json_from_str(field, default=None):
+        value = field or default
+        if value:
+            value = jsonutils.loads(value)
+        return value
 
     def _get_changed_persistent_fields(self):
         fields = self.obj_get_changes()
