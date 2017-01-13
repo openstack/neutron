@@ -43,6 +43,7 @@ from neutron.objects import exceptions as o_exc
 from neutron.objects import network as net_obj
 from neutron.objects import ports
 from neutron.objects import rbac_db
+from neutron.objects import securitygroup
 from neutron.objects import subnet
 from neutron.tests import base as test_base
 from neutron.tests import tools
@@ -1300,6 +1301,13 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self._router = obj_db_api.create_object(self.context,
                                                 l3_model.Router,
                                                 attrs)
+
+    def _create_test_security_group(self):
+        sg_fields = self.get_random_object_fields(securitygroup.SecurityGroup)
+        self._securitygroup = securitygroup.SecurityGroup(self.context,
+                                                          **sg_fields)
+        self._securitygroup.create()
+        return self._securitygroup
 
     def _create_test_port(self, network):
         self._port = self._create_port(network_id=network['id'])
