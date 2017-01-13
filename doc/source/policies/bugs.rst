@@ -138,7 +138,7 @@ called Neutron `stadium <http://governance.openstack.org/reference/projects/neut
 Because of that, their release is managed centrally by the Neutron
 release team; requests for releases need to be funnelled and screened
 properly before they can happen. Release request process is described `here
-<http://docs.openstack.org/developer/neutron/stadium/sub_project_guidelines.html#sub-project-release-process>`_.
+<http://docs.openstack.org/developer/neutron/stadium/guidelines.html#releases>`_.
 
 
 .. _guidelines:
