@@ -1,0 +1,9 @@
+[[local|localrc]]
+# set password, otherwise devstack enters interactive mode and fails
+ADMIN_PASSWORD=secretadmin
+# don't use screen to start services (needed to disable colorization in
+# captured service logs)
+USE_SCREEN=False
+# start with an empty service list, otherwise devstack will configure several
+# 'default' services, including rabbitmq and mysql
+disable_all_services

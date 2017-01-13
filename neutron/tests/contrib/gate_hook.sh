@@ -67,8 +67,17 @@ case $VENV in
     fi
     upgrade_ovs_if_necessary $compile_modules
 
+    # prepare base environment for ./stack.sh
+    load_conf_hook stack_base
+
+    # enable monitoring
+    load_conf_hook dstat
+
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
+
+    # deploy devstack as per local.conf
+    cd $DEVSTACK_PATH && sudo -H -u $GATE_STACK_USER ./stack.sh
     ;;
 
 "api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario")
