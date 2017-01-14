@@ -959,8 +959,7 @@ class TestParentSubresourceController(test_functional.PecanFunctionalTest):
         policy._ENFORCER.set_rules(
             oslo_policy.Rules.from_dict(
                 {'get_fake_duplicate': '',
-                 'get_fake_duplicates': '',
-                 'get_meh_meh_fake_duplicates': ''}),
+                 'get_meh_meh_fake_duplicate': ''}),
             overwrite=False)
         self.addCleanup(policy.reset)
         hyphen_collection = pecan_utils.FakeExtension.HYPHENATED_COLLECTION
@@ -994,7 +993,7 @@ class TestParentSubresourceController(test_functional.PecanFunctionalTest):
         policy.init()
         policy._ENFORCER.set_rules(
             oslo_policy.Rules.from_dict(
-                {'get_meh_meh_fake_duplicates': ''}
+                {'get_meh_meh_fake_duplicate': ''}
             )
         )
         url = '/v2.0/{0}/something/{1}'.format(self.collection,
