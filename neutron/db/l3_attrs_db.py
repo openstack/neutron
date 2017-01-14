@@ -14,6 +14,7 @@
 
 from oslo_config import cfg
 
+from neutron._i18n import _
 from neutron.common import _deprecate
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3_attrs
@@ -61,8 +62,8 @@ class ExtraAttributesMixin(object):
                 self._ensure_extra_attr_model(context, router_db)
                 router_db['extra_attributes'].update({key: to_db(value)})
                 return
-            raise RuntimeError("Tried to set a key '%s' that doesn't exist in "
-                               "the extra attributes table." % key)
+            raise RuntimeError(_("Tried to set a key '%s' that doesn't exist "
+                                 "in the extra attributes table.") % key)
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         l3.ROUTERS, ['_extend_extra_router_dict'])
