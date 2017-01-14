@@ -165,10 +165,8 @@ class PolicyHook(hooks.PecanHook):
             return
         is_single = resource in data
         action_type = pecan_constants.ACTION_MAP[state.request.method]
-        if action_type == 'get' and is_single:
+        if action_type == 'get':
             action = controller.plugin_handlers[controller.SHOW]
-        elif action_type == 'get':
-            action = controller.plugin_handlers[controller.LIST]
         else:
             action = controller.plugin_handlers[action_type]
         key = resource if is_single else collection
