@@ -1,8 +1,8 @@
 ---
 features:
-  - A new mechanism has been added to netns_cleanup to
-    kill processes that are listening on any port/unix
-    socket within the namespace. This will try to kill
-    them gracefully via SIGTERM and, if they don't die,
-    then a SIGKILL will be sent to the remaining
-    processes to ensure a proper cleanup.
+  - A new mechanism has been added to the ``neutron-netns-cleanup`` tool that
+    allows to kill processes listening on any ``Unix`` or network socket within
+    a namespace. The new mechanism will try to kill those processes gracefully
+    using the ``SIGTERM`` signal and, if they refuse to die, then the
+    ``SIGKILL`` signal will be sent to each remaining process to ensure a
+    proper cleanup.

@@ -1,9 +1,7 @@
 ---
-prelude: >
-    Designate driver can use Keystone v3 auth options.
 features:
-  - "[designate] section accepts now auth_type parameter,
-    and the usual keystoneauth options (e.g. auth_url,
-    username, user_domain_name, password, project_name,
-    project_domain_name), so Keystone v3 endpoints can
-    be used."
+  - Designate driver can now use Keystone v3 authentication options.  "The
+    ``[designate]`` section now accepts the ``auth_type`` option, as well as
+    other ``keystoneauth`` options (e.g. ``auth_url``, ``username``,
+    ``user_domain_name``, ``password``, ``project_name``,
+    ``project_domain_name``)."

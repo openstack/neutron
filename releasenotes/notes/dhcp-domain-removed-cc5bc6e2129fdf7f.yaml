@@ -1,5 +1,4 @@
 upgrade:
-  - The configuration option dhcp_domain in the
-    dhcp_agent.ini file was deprecated in the Liberty
-    cycle. This value is no longer supported, dns_domain
-    in neutron.conf should be used instead.
+  - The ``dhcp_domain`` DHCP agent configuration option was deprecated in
+    Liberty cycle, and now is no longer used. The ``dns_domain`` option should
+    be used instead.

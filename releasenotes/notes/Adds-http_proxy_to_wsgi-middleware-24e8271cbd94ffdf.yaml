@@ -1,11 +1,11 @@
 ---
 features:
-  - Middleware was added to parse the X-Forwarded-Proto HTTP header or the
-    Proxy protocol in order to help neutron respond with the correct URL refs
-    when it's put behind a TLS proxy (such as HAProxy). This adds
-    http_proxy_to_wsgi middleware to the pipeline. This middleware is disabled
-    by default, but can be enabled via a configuration option in the
-    oslo_middleware group.
+  - Middleware was added to parse the ``X-Forwarded-Proto`` HTTP header or the
+    Proxy protocol in order to help Neutron respond with the correct URL
+    references when it's put behind a TLS proxy such as ``haproxy``. This adds
+    ``http_proxy_to_wsgi`` middleware to the pipeline. This middleware is
+    disabled by default, but can be enabled via a configuration option in the
+    ``[oslo_middleware]`` group.
 upgrade:
-  - The api-paste.ini configuration file for the paste pipeline was updated to
-    add the http_proxy_to_wsgi middleware.
+  - The ``api-paste.ini`` configuration file for the paste pipeline was updated
+    to add the ``http_proxy_to_wsgi`` middleware.

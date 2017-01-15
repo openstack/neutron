@@ -1,12 +1,12 @@
 ---
 upgrade:
-  - The neutron.conf:min_l3_agents_per_router option was
-    deprecated in Newton and removed in Ocata. HA routers
+  - The ``min_l3_agents_per_router`` configuration option was
+    deprecated in Newton cycle and removed in Ocata. HA routers
     no longer require a minimal number of L3 agents to
-    be created, although obviously require at least
-    two L3 agents to provide HA. The rationale for the
+    be created, although obviously they require at least
+    two L3 agents to provide HA guarantees. The rationale for the
     removal of the option is the case a router was created
     just when an agent was not operational. The creation
-    of the router will now succeed and when a second agent
+    of the router will now succeed, and when a second agent
     resumes operation the router will be scheduled to it
     providing HA.

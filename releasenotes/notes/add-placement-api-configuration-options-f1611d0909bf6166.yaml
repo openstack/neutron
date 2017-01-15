@@ -1,14 +1,11 @@
 ---
-prelude: >
-    Add configuration options to enable the segments plugin to use the
-    placement ReST API. This API enables the segments plugin to influence
-    the placement of instances based on the availability of IPv4 addresses
-    in routed networks.
 features:
-  - A new section is added to neutron.conf, `[placement]`.
-  - The `[placement]` section has two new options.
-  - First option, `region_name`, indicates the placement region to use. This
-    option is useful if keystone manages more than one region.
-  - Second option, `endpoint_type`, indicates the type of the placement
-    endpoint to use. This endpoint will be looked up in the keystone catalog
-    and should be one of 'public', 'internal' or 'admin'.
+  - Add a new configuration section, ``[placement]``, with two new options that
+    allow to make ``segments`` plugin to use the ``Compute`` placement ReST
+    API. This API allows to influence node placement of instances based on
+    availability of IPv4 addresses in routed networks. The first option,
+    `region_name`, indicates the placement region to use. This option is useful
+    if keystone manages more than one region. The second option,
+    `endpoint_type`, determines the type of a placement endpoint to use. This
+    endpoint will be looked up in the keystone catalog and should be one of
+    ``public``, ``internal`` or ``admin``.
