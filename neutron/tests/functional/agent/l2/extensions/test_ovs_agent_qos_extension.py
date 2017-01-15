@@ -84,7 +84,7 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
 
         qos_policy = policy.QosPolicy(
             context=None,
-            tenant_id=uuidutils.generate_uuid(),
+            project_id=uuidutils.generate_uuid(),
             id=policy_id,
             name="Test Policy Name",
             description="This is a policy for testing purposes",

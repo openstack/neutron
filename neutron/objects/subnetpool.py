@@ -32,7 +32,7 @@ class SubnetPool(base.NeutronDbObject):
 
     fields = {
         'id': common_types.UUIDField(),
-        'tenant_id': obj_fields.StringField(nullable=True),
+        'project_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(nullable=True),
         'ip_version': common_types.IPVersionEnumField(),
         'default_prefixlen': common_types.IPNetworkPrefixLenField(),
@@ -46,7 +46,7 @@ class SubnetPool(base.NeutronDbObject):
         'prefixes': common_types.ListOfIPNetworksField(nullable=True)
     }
 
-    fields_no_update = ['id', 'tenant_id']
+    fields_no_update = ['id', 'project_id']
 
     synthetic_fields = ['prefixes']
 

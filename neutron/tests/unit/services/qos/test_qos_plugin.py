@@ -9,7 +9,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import mock
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -60,7 +59,7 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         self.policy_data = {
             'policy': {'id': uuidutils.generate_uuid(),
-                       'tenant_id': uuidutils.generate_uuid(),
+                       'project_id': uuidutils.generate_uuid(),
                        'name': 'test-policy',
                        'description': 'Test policy description',
                        'shared': True}}
@@ -94,6 +93,28 @@ class TestQosPlugin(base.BaseQosTestCase):
     def test_add_policy(self, *mocks):
         self.qos_plugin.create_policy(self.ctxt, self.policy_data)
         self._validate_notif_driver_params('create_policy')
+
+    def test_add_policy_with_extra_tenant_keyword(self, *mocks):
+        policy_id = uuidutils.generate_uuid()
+        project_id = uuidutils.generate_uuid()
+        tenant_policy = {
+            'policy': {'id': policy_id,
+                       'project_id': project_id,
+                       'tenant_id': project_id,
+                       'name': 'test-policy',
+                       'description': 'Test policy description',
+                       'shared': True}}
+
+        policy_details = {'id': policy_id,
+                          'project_id': project_id,
+                          'name': 'test-policy',
+                          'description': 'Test policy description',
+                          'shared': True}
+
+        with mock.patch('neutron.objects.qos.policy.QosPolicy') as QosMocked:
+            self.qos_plugin.create_policy(self.ctxt, tenant_policy)
+
+        QosMocked.assert_called_once_with(self.ctxt, **policy_details)
 
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'

@@ -84,11 +84,14 @@ def _check_subnet_not_used(context, subnet_id):
 
 
 def _update_subnetpool_dict(orig_pool, new_pool):
-    keys_to_update = (
-        set(orig_pool.fields.keys()) - set(orig_pool.synthetic_fields))
-    updated = {k: new_pool.get(k, orig_pool[k]) for k in keys_to_update}
+    updated = dict((k, v) for k, v in orig_pool.to_dict().items()
+                   if k not in orig_pool.synthetic_fields)
 
-    new_prefixes = new_pool.get('prefixes', constants.ATTR_NOT_SPECIFIED)
+    new_pool = new_pool.copy()
+    new_prefixes = new_pool.pop('prefixes', constants.ATTR_NOT_SPECIFIED)
+    for k, v in new_pool.items():
+        if k not in orig_pool.fields_no_update:
+            updated[k] = v
     if new_prefixes is not constants.ATTR_NOT_SPECIFIED:
         orig_ip_set = netaddr.IPSet(orig_pool.prefixes)
         new_ip_set = netaddr.IPSet(new_prefixes)
@@ -1039,15 +1042,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_subnetpool(self, context, subnetpool):
         sp = subnetpool['subnetpool']
         sp_reader = subnet_alloc.SubnetPoolReader(sp)
-        if sp_reader.address_scope_id is constants.ATTR_NOT_SPECIFIED:
-            sp_reader.address_scope_id = None
         if sp_reader.is_default:
             self._check_default_subnetpool_exists(context,
                                                   sp_reader.ip_version)
         self._validate_address_scope_id(context, sp_reader.address_scope_id,
                                         id, sp_reader.prefixes,
                                         sp_reader.ip_version)
-        pool_args = {'tenant_id': sp['tenant_id'],
+        pool_args = {'project_id': sp['tenant_id'],
                      'id': sp_reader.id,
                      'name': sp_reader.name,
                      'ip_version': sp_reader.ip_version,

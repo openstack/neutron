@@ -418,6 +418,13 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertIn(rule_objs[1], policy_obj_v1_1.rules)
         self.assertNotIn(rule_objs[2], policy_obj_v1_1.rules)
 
+    def test_v1_4_to_v1_3_drops_project_id(self):
+        policy_new = self._create_test_policy()
+
+        policy_v1_3 = policy_new.obj_to_primitive(target_version='1.3')
+        self.assertNotIn('project_id', policy_v1_3['versioned_object.data'])
+        self.assertIn('tenant_id', policy_v1_3['versioned_object.data'])
+
     def test_filter_by_shared(self):
         policy_obj = policy.QosPolicy(
             self.context, name='shared-policy', shared=True)

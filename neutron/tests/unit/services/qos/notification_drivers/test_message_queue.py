@@ -34,7 +34,7 @@ class TestQosRpcNotificationDriver(base.BaseQosTestCase):
         policy_id = uuidutils.generate_uuid()
         self.policy_data = {'policy': {
                             'id': policy_id,
-                            'tenant_id': uuidutils.generate_uuid(),
+                            'project_id': uuidutils.generate_uuid(),
                             'name': 'testi-policy',
                             'description': 'test policyi description',
                             'shared': True}}

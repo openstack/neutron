@@ -15,6 +15,7 @@
 
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as o_db_exc
+from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -84,21 +85,22 @@ class SubPort(base.NeutronDbObject):
 @obj_base.VersionedObjectRegistry.register
 class Trunk(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Changed tenant_id to project_id
+    VERSION = '1.1'
 
     db_model = models.Trunk
 
     fields = {
         'admin_state_up': obj_fields.BooleanField(),
         'id': common_types.UUIDField(),
-        'tenant_id': obj_fields.StringField(),
+        'project_id': obj_fields.StringField(),
         'name': obj_fields.StringField(),
         'port_id': common_types.UUIDField(),
         'status': obj_fields.StringField(),
         'sub_ports': obj_fields.ListOfObjectsField(SubPort.__name__),
     }
 
-    fields_no_update = ['tenant_id', 'port_id']
+    fields_no_update = ['project_id', 'port_id']
 
     synthetic_fields = ['sub_ports']
 
@@ -123,3 +125,9 @@ class Trunk(base.NeutronDbObject):
     def update(self, **kwargs):
         self.update_fields(kwargs)
         super(Trunk, self).update()
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+
+        if _target_version < (1, 1):
+            primitive['tenant_id'] = primitive.pop('project_id')

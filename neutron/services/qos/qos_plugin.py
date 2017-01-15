@@ -52,6 +52,13 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: a QosPolicy object
         """
+        # NOTE(dasm): body 'policy' contains both tenant_id and project_id
+        # but only latter needs to be used to create QosPolicy object.
+        # We need to remove redundant keyword.
+        # This cannot be done in other place of stacktrace, because neutron
+        # needs to be backward compatible.
+        policy['policy'].pop('tenant_id', None)
+
         policy_obj = policy_object.QosPolicy(context, **policy['policy'])
         policy_obj.create()
         self.notification_driver_manager.create_policy(context, policy_obj)

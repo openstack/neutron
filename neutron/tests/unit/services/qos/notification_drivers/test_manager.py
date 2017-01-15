@@ -43,7 +43,7 @@ class TestQosDriversManagerBase(base.BaseQosTestCase):
         driver_mgr_config.register_qos_plugin_opts(config)
         self.policy_data = {'policy': {
                             'id': uuidutils.generate_uuid(),
-                            'tenant_id': uuidutils.generate_uuid(),
+                            'project_id': uuidutils.generate_uuid(),
                             'name': 'test-policy',
                             'description': 'test policy description',
                             'shared': True}}

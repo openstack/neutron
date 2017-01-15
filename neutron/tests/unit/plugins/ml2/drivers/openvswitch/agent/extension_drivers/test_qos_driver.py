@@ -74,7 +74,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
     def _create_qos_policy_obj(self, rules):
         policy_dict = {'id': uuidutils.generate_uuid(),
-                'tenant_id': uuidutils.generate_uuid(),
+                'project_id': uuidutils.generate_uuid(),
                 'name': 'test',
                 'description': 'test',
                 'shared': False,

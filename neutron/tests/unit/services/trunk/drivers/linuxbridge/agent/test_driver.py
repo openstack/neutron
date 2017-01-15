@@ -35,7 +35,7 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
         self.lbd = driver.LinuxBridgeTrunkDriver(self.plumber, self.tapi)
         self.trunk = trunk.Trunk(id=uuidutils.generate_uuid(),
                                  port_id=uuidutils.generate_uuid(),
-                                 tenant_id=uuidutils.generate_uuid())
+                                 project_id=uuidutils.generate_uuid())
         self.subports = [trunk.SubPort(id=uuidutils.generate_uuid(),
                                        port_id=uuidutils.generate_uuid(),
                                        segmentation_type='vlan',
@@ -150,7 +150,7 @@ class TrunkAPITestCase(base.BaseTestCase):
         self.tapi = driver._TrunkAPI(self.stub)
         self.trunk = trunk.Trunk(id=uuidutils.generate_uuid(),
                                  port_id=uuidutils.generate_uuid(),
-                                 tenant_id=uuidutils.generate_uuid())
+                                 project_id=uuidutils.generate_uuid())
         self.subports = [trunk.SubPort(id=uuidutils.generate_uuid(),
                                        port_id=uuidutils.generate_uuid(),
                                        segmentation_type='vlan',
