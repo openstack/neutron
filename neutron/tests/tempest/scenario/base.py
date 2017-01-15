@@ -128,12 +128,15 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         cls.create_secgroup_rules(rule_list, secgroup_id=secgroup_id)
 
     @classmethod
-    def create_router_and_interface(cls, subnet_id):
-        router = cls.create_router(
-            data_utils.rand_name('router'), admin_state_up=True,
-            external_network_id=CONF.network.public_network_id)
+    def create_router_by_client(cls, is_admin=False, **kwargs):
+        kwargs.update({'router_name': data_utils.rand_name('router'),
+                       'admin_state_up': True,
+                       'external_network_id': CONF.network.public_network_id})
+        if not is_admin:
+            router = cls.create_router(**kwargs)
+        else:
+            router = cls.create_admin_router(**kwargs)
         LOG.debug("Created router %s", router['name'])
-        cls.create_router_interface(router['id'], subnet_id)
         cls.routers.append(router)
         return router
 
@@ -151,8 +154,8 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         ssh_client.test_connection_auth()
 
     @classmethod
-    def setup_network_and_server(cls):
-        """Creating network resources and a server.
+    def setup_network_and_server(cls, router=None, **kwargs):
+        """Create network resources and a server.
 
         Creating a network, subnet, router, keypair, security group
         and a server.
@@ -167,8 +170,9 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         LOG.debug("Created security group %s",
                   secgroup['security_group']['name'])
         cls.security_groups.append(secgroup['security_group'])
-
-        cls.create_router_and_interface(cls.subnet['id'])
+        if not router:
+            router = cls.create_router_by_client(**kwargs)
+        cls.create_router_interface(router['id'], cls.subnet['id'])
         cls.keypair = cls.create_keypair()
         cls.create_loginable_secgroup_rule(
             secgroup_id=secgroup['security_group']['id'])
