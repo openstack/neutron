@@ -287,11 +287,38 @@ class CommonDbMixin(object):
         if sorts:
             sort_keys = db_utils.get_and_validate_sort_keys(sorts, model)
             sort_dirs = db_utils.get_sort_dirs(sorts, page_reverse)
+            if limit:
+                # we always want deterministic results for limit subqueries
+                # so add unique keys to limit queries when present.
+                # (http://docs.sqlalchemy.org/en/latest/orm/
+                #  loading_relationships.html#subqueryload-ordering)
+                # (http://docs.sqlalchemy.org/en/latest/faq/
+                #  ormconfiguration.html#faq-subqueryload-limit-sort)
+                for k in self._unique_keys(model, marker_obj):
+                    if k not in sort_keys:
+                        sort_keys.append(k)
+                        sort_dirs.append('asc')
             collection = sa_utils.paginate_query(collection, model, limit,
                                                  marker=marker_obj,
                                                  sort_keys=sort_keys,
                                                  sort_dirs=sort_dirs)
         return collection
+
+    def _unique_keys(self, model, marker_obj):
+        # just grab first set of unique keys and use them.
+        # if model has no unqiue sets, 'paginate_query' will
+        # warn if sorting is unstable
+        uk_sets = sa_utils._get_unique_keys(model)
+        for kset in uk_sets:
+            for k in kset:
+                if marker_obj and isinstance(getattr(marker_obj, k), bool):
+                    # TODO(kevinbenton): workaround for bug/1656947.
+                    # we can't use boolean cols until that bug is fixed. return
+                    # first entry in uk_sets once that bug is resolved
+                    break
+            else:
+                return kset
+        return []
 
     def _get_collection(self, context, model, dict_func, filters=None,
                         fields=None, sorts=None, limit=None, marker_obj=None,
