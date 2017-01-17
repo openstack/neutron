@@ -34,7 +34,6 @@ from six import moves
 from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import exceptions
@@ -667,10 +666,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         LOG.debug('Using %s VXLAN mode', self.vxlan_mode)
 
     def fdb_ip_entry_exists(self, mac, ip, interface):
-        entries = utils.execute(['ip', 'neigh', 'show', 'to', ip,
-                                 'dev', interface],
-                                run_as_root=True)
-        return mac in entries
+        ip_version = ip_lib.get_ip_version(ip)
+        entry = ip_lib.dump_neigh_entries(ip_version, interface, dst=ip,
+                                          lladdr=mac)
+        return entry != []
 
     def fdb_bridge_entry_exists(self, mac, interface, agent_ip=None):
         entries = bridge_lib.FdbInterface.show(interface)
@@ -681,11 +680,11 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
     def add_fdb_ip_entry(self, mac, ip, interface):
         if cfg.CONF.VXLAN.arp_responder:
-            ip_lib.IPDevice(interface).neigh.add(ip, mac)
+            ip_lib.add_neigh_entry(ip, mac, interface)
 
     def remove_fdb_ip_entry(self, mac, ip, interface):
         if cfg.CONF.VXLAN.arp_responder:
-            ip_lib.IPDevice(interface).neigh.delete(ip, mac)
+            ip_lib.delete_neigh_entry(ip, mac, interface)
 
     def add_fdb_entries(self, agent_ip, ports, interface):
         for mac, ip in ports:

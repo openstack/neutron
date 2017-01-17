@@ -953,7 +953,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
 
         with mock.patch.object(utils, 'execute',
                                return_value='') as execute_fn, \
-                mock.patch.object(ip_lib.IpNeighCommand, 'add',
+                mock.patch.object(ip_lib, 'add_neigh_entry',
                                   return_value='') as add_fn:
             self.lb_rpc.fdb_add(None, fdb_entries)
 
@@ -972,7 +972,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             ]
             execute_fn.assert_has_calls(expected)
             if proxy_enabled:
-                add_fn.assert_called_with('port_ip', 'port_mac')
+                add_fn.assert_called_with('port_ip', 'port_mac', 'vxlan-1')
             else:
                 add_fn.assert_not_called()
 
@@ -1022,7 +1022,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
 
         with mock.patch.object(utils, 'execute',
                                return_value='') as execute_fn, \
-                mock.patch.object(ip_lib.IpNeighCommand, 'delete',
+                mock.patch.object(ip_lib, 'delete_neigh_entry',
                                   return_value='') as del_fn:
             self.lb_rpc.fdb_remove(None, fdb_entries)
 
@@ -1039,7 +1039,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             ]
             execute_fn.assert_has_calls(expected)
             if proxy_enabled:
-                del_fn.assert_called_with('port_ip', 'port_mac')
+                del_fn.assert_called_with('port_ip', 'port_mac', 'vxlan-1')
             else:
                 del_fn.assert_not_called()
 
@@ -1057,15 +1057,15 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
                          {'before': [['port_mac', 'port_ip_1']],
                           'after': [['port_mac', 'port_ip_2']]}}}}
 
-        with mock.patch.object(ip_lib.IpNeighCommand, 'add',
+        with mock.patch.object(ip_lib, 'add_neigh_entry',
                                return_value='') as add_fn, \
-                mock.patch.object(ip_lib.IpNeighCommand, 'delete',
+                mock.patch.object(ip_lib, 'delete_neigh_entry',
                                   return_value='') as del_fn:
             self.lb_rpc.fdb_update(None, fdb_entries)
 
             if proxy_enabled:
-                del_fn.assert_called_with('port_ip_1', 'port_mac')
-                add_fn.assert_called_with('port_ip_2', 'port_mac')
+                del_fn.assert_called_with('port_ip_1', 'port_mac', 'vxlan-1')
+                add_fn.assert_called_with('port_ip_2', 'port_mac', 'vxlan-1')
             else:
                 del_fn.assert_not_called()
                 add_fn.assert_not_called()

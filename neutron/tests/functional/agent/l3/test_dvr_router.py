@@ -805,9 +805,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         router1 = self.manage_router(self.agent, router_info)
         internal_device = router1.get_internal_device_name(
             router_info['_interfaces'][0]['id'])
-        neighbors = ip_lib.IPDevice(internal_device, router1.ns_name).neigh
-        self.assertEqual(expected_neighbor,
-                         neighbors.show(ip_version=4).split()[0])
+        neighbor = ip_lib.dump_neigh_entries(4, internal_device,
+                                             router1.ns_name,
+                                             dst=expected_neighbor)
+        self.assertNotEqual([], neighbor)
+        self.assertEqual(expected_neighbor, neighbor[0]['dst'])
 
     def _assert_rfp_fpr_mtu(self, router, expected_mtu=1500):
         dev_mtu = self.get_device_mtu(
