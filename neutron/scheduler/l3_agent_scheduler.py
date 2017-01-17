@@ -26,7 +26,7 @@ from oslo_log import log as logging
 import six
 from sqlalchemy import sql
 
-from neutron._i18n import _LE, _LW
+from neutron._i18n import _LW
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
@@ -44,7 +44,6 @@ cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 class L3Scheduler(object):
 
     def __init__(self):
-        self.min_ha_agents = cfg.CONF.min_l3_agents_per_router
         self.max_ha_agents = cfg.CONF.max_l3_agents_per_router
 
     @abc.abstractmethod
@@ -299,13 +298,6 @@ class L3Scheduler(object):
         return (min(self.max_ha_agents, candidates_count) if self.max_ha_agents
                 else candidates_count)
 
-    def _enough_candidates_for_ha(self, candidates):
-        if not candidates or len(candidates) < self.min_ha_agents:
-            LOG.error(_LE("Not enough candidates, a HA router needs at least "
-                          "%s agents"), self.min_ha_agents)
-            return False
-        return True
-
     def _add_port_from_net_and_ensure_vr_id(self, plugin, ctxt, router_db,
                                             tenant_id, ha_net):
         plugin._ensure_vr_id(ctxt, router_db, ha_net)
@@ -378,9 +370,6 @@ class L3Scheduler(object):
     def _bind_ha_router(self, plugin, context, router_id,
                         tenant_id, candidates):
         """Bind a HA router to agents based on a specific policy."""
-
-        if not self._enough_candidates_for_ha(candidates):
-            return
 
         chosen_agents = self._choose_router_agents_for_ha(
             plugin, context, candidates)

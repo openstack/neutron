@@ -119,19 +119,8 @@ class L3HATestCase(L3HATestFramework):
             l3_ext_ha_mode.HANetworkCIDRNotValid,
             self.plugin._verify_configuration)
 
-    def test_verify_configuration_min_l3_agents_per_router_below_minimum(self):
-        cfg.CONF.set_override('min_l3_agents_per_router', 0)
-        self.assertRaises(
-            l3_ext_ha_mode.HAMinimumAgentsNumberNotValid,
-            self.plugin._check_num_agents_per_router)
-
-    def test_verify_configuration_min_l3_agents_per_router_eq_one(self):
-        cfg.CONF.set_override('min_l3_agents_per_router', 1)
-        self.plugin._check_num_agents_per_router()
-
-    def test_verify_configuration_max_l3_agents_below_min_l3_agents(self):
-        cfg.CONF.set_override('max_l3_agents_per_router', 3)
-        cfg.CONF.set_override('min_l3_agents_per_router', 4)
+    def test_verify_configuration_max_l3_agents_below_0(self):
+        cfg.CONF.set_override('max_l3_agents_per_router', -5)
         self.assertRaises(
             l3_ext_ha_mode.HAMaximumAgentsNumberNotValid,
             self.plugin._check_num_agents_per_router)
@@ -322,15 +311,6 @@ class L3HATestCase(L3HATestFramework):
                           router['id'],
                           ha=True,
                           distributed=True)
-
-    def test_migrate_legacy_router_to_ha_not_enough_agents(self):
-        router = self._create_router(ha=False, distributed=False)
-        self.assertFalse(router['ha'])
-        self.assertFalse(router['distributed'])
-
-        helpers.set_agent_admin_state(self.agent2['id'], admin_state_up=False)
-        self.assertRaises(l3_ext_ha_mode.HANotEnoughAvailableAgents,
-                          self._migrate_router, router['id'], ha=True)
 
     def test_unbind_ha_router(self):
         router = self._create_router()
@@ -801,13 +781,6 @@ class L3HATestCase(L3HATestFramework):
         num_ha_candidates = self.plugin.get_number_of_agents_for_scheduling(
             self.admin_ctx)
         self.assertEqual(3, num_ha_candidates)
-
-    def test_get_number_of_agents_for_scheduling_not_enough_agents(self):
-        cfg.CONF.set_override('min_l3_agents_per_router', 3)
-        helpers.kill_agent(helpers.register_l3_agent(host='l3host_3')['id'])
-        self.assertRaises(l3_ext_ha_mode.HANotEnoughAvailableAgents,
-                          self.plugin.get_number_of_agents_for_scheduling,
-                          self.admin_ctx)
 
     def test_ha_network_deleted_if_no_ha_router_present_two_tenants(self):
         # Create two routers in different tenants.
