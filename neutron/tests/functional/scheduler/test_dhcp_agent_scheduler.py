@@ -16,6 +16,7 @@
 import collections
 from operator import attrgetter
 
+from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib import constants
 from neutron_lib import context
 import six
@@ -25,7 +26,6 @@ from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
-from neutron.extensions import providernet
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import test_plugin

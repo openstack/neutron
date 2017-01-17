@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import constants
@@ -21,7 +22,6 @@ from neutron_lib import exceptions as nexception
 import webob.exc
 
 from neutron._i18n import _
-from neutron.extensions import providernet as pnet
 
 SEGMENTS = 'segments'
 

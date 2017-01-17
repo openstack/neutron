@@ -13,6 +13,7 @@
 # under the License.
 
 import mock
+from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -40,7 +41,6 @@ from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron.extensions import portbindings
-from neutron.extensions import providernet
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
 from neutron.tests.common import helpers
