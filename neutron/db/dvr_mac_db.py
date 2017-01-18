@@ -68,7 +68,7 @@ def _delete_mac_associated_with_agent(resource, event, trigger, context, agent,
         # until they are all deleted.
         return
     try:
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             entry = (context.session.query(
                         dvr_models.DistributedVirtualRouterMacAddress).
                      filter(
@@ -101,6 +101,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         self._plugin = directory.get_plugin()
         return self._plugin
 
+    @db_api.context_manager.reader
     def _get_dvr_mac_address_by_host(self, context, host):
         try:
             query = context.session.query(
@@ -115,7 +116,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def _create_dvr_mac_address_retry(self, context, host, base_mac):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             mac_address = utils.get_random_mac(base_mac)
             dvr_mac_binding = dvr_models.DistributedVirtualRouterMacAddress(
                 host=host, mac_address=mac_address)
@@ -139,10 +140,10 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
                       db_api.MAX_RETRIES)
         raise ext_dvr.MacAddressGenerationFailure(host=host)
 
+    @db_api.context_manager.reader
     def get_dvr_mac_address_list(self, context):
-        with context.session.begin(subtransactions=True):
-            return (context.session.
-                    query(dvr_models.DistributedVirtualRouterMacAddress).all())
+        return (context.session.
+                query(dvr_models.DistributedVirtualRouterMacAddress).all())
 
     def get_dvr_mac_address_by_host(self, context, host):
         """Determine the MAC for the DVR port associated to host."""

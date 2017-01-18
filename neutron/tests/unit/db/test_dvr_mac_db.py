@@ -21,6 +21,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron import context
+from neutron.db import api as db_api
 from neutron.db import dvr_mac_db
 from neutron.db.models import dvr as dvr_models
 from neutron.extensions import dvr
@@ -42,17 +43,18 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self.mixin = DVRDbMixinImpl(mock.Mock())
 
     def _create_dvr_mac_entry(self, host, mac_address):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self.ctx):
             entry = dvr_models.DistributedVirtualRouterMacAddress(
                 host=host, mac_address=mac_address)
             self.ctx.session.add(entry)
 
     def test__get_dvr_mac_address_by_host(self):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self.ctx):
             entry = dvr_models.DistributedVirtualRouterMacAddress(
                 host='foo_host', mac_address='foo_mac_address')
             self.ctx.session.add(entry)
-        result = self.mixin._get_dvr_mac_address_by_host(self.ctx, 'foo_host')
+            result = self.mixin._get_dvr_mac_address_by_host(self.ctx,
+                                                             'foo_host')
         self.assertEqual(entry, result)
 
     def test__get_dvr_mac_address_by_host_not_found(self):
@@ -95,13 +97,15 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_mac_cleared_on_agent_delete_event(self):
         plugin = directory.get_plugin()
-        self._create_dvr_mac_entry('host_1', 'mac_1')
-        self._create_dvr_mac_entry('host_2', 'mac_2')
-        agent = {'host': 'host_1', 'id': 'a1'}
-        with mock.patch.object(plugin, 'notifier') as notifier:
-            registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
-                            context=self.ctx, agent=agent)
-        mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
+
+        with db_api.context_manager.writer.using(self.ctx):
+            self._create_dvr_mac_entry('host_1', 'mac_1')
+            self._create_dvr_mac_entry('host_2', 'mac_2')
+            agent = {'host': 'host_1', 'id': 'a1'}
+            with mock.patch.object(plugin, 'notifier') as notifier:
+                registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
+                                context=self.ctx, agent=agent)
+            mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
         self.assertEqual(1, len(mac_list))
         self.assertEqual('host_2', mac_list[0]['host'])
         notifier.dvr_mac_address_update.assert_called_once_with(
