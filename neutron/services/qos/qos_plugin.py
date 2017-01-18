@@ -159,11 +159,13 @@ class QoSPlugin(qos.QoSPluginBase):
         # This cannot be done in other place of stacktrace, because neutron
         # needs to be backward compatible.
         policy['policy'].pop('tenant_id', None)
-
         policy_obj = policy_object.QosPolicy(context, **policy['policy'])
-        policy_obj.create()
+        with db_api.context_manager.writer.using(context):
+            policy_obj.create()
+            self.driver_manager.call(qos_consts.CREATE_POLICY_PRECOMMIT,
+                                     context, policy_obj)
 
-        self.driver_manager.call('create_policy', context, policy_obj)
+        self.driver_manager.call(qos_consts.CREATE_POLICY, context, policy_obj)
 
         return policy_obj
 
@@ -181,11 +183,15 @@ class QoSPlugin(qos.QoSPluginBase):
         :returns: a QosPolicy object
         """
         policy_data = policy['policy']
-        policy_obj = policy_object.QosPolicy(context, id=policy_id)
-        policy_obj.update_fields(policy_data, reset_changes=True)
-        policy_obj.update()
+        with db_api.context_manager.writer.using(context):
+            policy_obj = policy_object.QosPolicy(context, id=policy_id)
+            policy_obj.update_fields(policy_data, reset_changes=True)
+            policy_obj.update()
+            self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
+                                     context, policy_obj)
 
-        self.driver_manager.call('update_policy', context, policy_obj)
+        self.driver_manager.call(qos_consts.UPDATE_POLICY,
+                                 context, policy_obj)
 
         return policy_obj
 
@@ -199,11 +205,15 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: None
         """
-        policy = policy_object.QosPolicy(context)
-        policy.id = policy_id
-        policy.delete()
+        with db_api.context_manager.writer.using(context):
+            policy = policy_object.QosPolicy(context)
+            policy.id = policy_id
+            policy.delete()
+            self.driver_manager.call(qos_consts.DELETE_POLICY_PRECOMMIT,
+                                     context, policy)
 
-        self.driver_manager.call('delete_policy', context, policy)
+        self.driver_manager.call(qos_consts.DELETE_POLICY,
+                                 context, policy)
 
     def _get_policy_obj(self, context, policy_id):
         """Fetch a QoS policy.
@@ -291,8 +301,10 @@ class QoSPlugin(qos.QoSPluginBase):
             rule.create()
             policy.reload_rules()
             self.validate_policy(context, policy)
+            self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
+                                     context, policy)
 
-        self.driver_manager.call('update_policy', context, policy)
+        self.driver_manager.call(qos_consts.UPDATE_POLICY, context, policy)
 
         return rule
 
@@ -328,8 +340,10 @@ class QoSPlugin(qos.QoSPluginBase):
             rule.update()
             policy.reload_rules()
             self.validate_policy(context, policy)
+            self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
+                                     context, policy)
 
-        self.driver_manager.call('update_policy', context, policy)
+        self.driver_manager.call(qos_consts.UPDATE_POLICY, context, policy)
 
         return rule
 
@@ -353,8 +367,10 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = policy.get_rule_by_id(rule_id)
             rule.delete()
             policy.reload_rules()
+            self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
+                                     context, policy)
 
-        self.driver_manager.call('update_policy', context, policy)
+        self.driver_manager.call(qos_consts.UPDATE_POLICY, context, policy)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict

@@ -52,8 +52,9 @@ Service side design
 * neutron.services.qos.drivers.base:
   the interface class for pluggable QoS drivers that are used to update
   backends about new {create, update, delete} events on any rule or policy
-  change. The drivers also declare which QoS rules, VIF drivers and VNIC
-  types are supported.
+  change, including precommit events that some backends could need for
+  synchronization reason. The drivers also declare which QoS rules,
+  VIF drivers and VNIC types are supported.
 
 * neutron.core_extensions.base:
   Contains an interface class to implement core resource (port/network)
