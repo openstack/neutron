@@ -270,8 +270,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self._helper_delete_floatingip_agent_gateway_port(
             'foo_host')
 
-    def _setup_delete_current_gw_port_deletes_fip_agent_gw_port(
-        self, port=None, gw_port=True):
+    def _setup_delete_current_gw_port_deletes_dvr_internal_ports(
+        self, port=None, gw_port=True, new_network_id='ext_net_id_2'):
         router = mock.MagicMock()
         router.extra_attributes.distributed = True
         if gw_port:
@@ -307,17 +307,15 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             plugin.get_ports.return_value = port
             grtr.return_value = router
             self.mixin._delete_current_gw_port(
-                self.ctx, router['id'], router, 'ext_network_id')
+                self.ctx, router['id'], router, new_network_id)
             return router, plugin, del_csnat_port, del_agent_gw_port, del_fip
 
     def test_delete_current_gw_port_deletes_fip_agent_gw_port_and_fipnamespace(
             self):
         rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
-            self._setup_delete_current_gw_port_deletes_fip_agent_gw_port())
-        self.assertTrue(d_csnat_port.called)
+            self._setup_delete_current_gw_port_deletes_dvr_internal_ports())
+        self.assertFalse(d_csnat_port.called)
         self.assertTrue(d_agent_gw_port.called)
-        d_csnat_port.assert_called_once_with(
-            mock.ANY, rtr)
         d_agent_gw_port.assert_called_once_with(mock.ANY, None, 'ext_net_id')
         del_fip.assert_called_once_with(mock.ANY, 'ext_net_id')
 
@@ -333,21 +331,29 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'device_owner': const.DEVICE_OWNER_ROUTER_GW
         }]
         rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
-            self._setup_delete_current_gw_port_deletes_fip_agent_gw_port(
+            self._setup_delete_current_gw_port_deletes_dvr_internal_ports(
                 port=port))
-        self.assertTrue(d_csnat_port.called)
+        self.assertFalse(d_csnat_port.called)
         self.assertFalse(d_agent_gw_port.called)
         self.assertFalse(del_fip.called)
-        d_csnat_port.assert_called_once_with(
-            mock.ANY, rtr)
 
     def test_delete_current_gw_port_never_calls_delete_fipnamespace(self):
         rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
-            self._setup_delete_current_gw_port_deletes_fip_agent_gw_port(
+            self._setup_delete_current_gw_port_deletes_dvr_internal_ports(
                 gw_port=False))
         self.assertFalse(d_csnat_port.called)
         self.assertFalse(d_agent_gw_port.called)
         self.assertFalse(del_fip.called)
+
+    def test_delete_current_gw_port_deletes_csnat_port(self):
+        rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
+            self._setup_delete_current_gw_port_deletes_dvr_internal_ports(
+                new_network_id=None))
+        self.assertTrue(d_csnat_port.called)
+        self.assertTrue(d_agent_gw_port.called)
+        d_csnat_port.assert_called_once_with(mock.ANY, rtr)
+        d_agent_gw_port.assert_called_once_with(mock.ANY, None, 'ext_net_id')
+        del_fip.assert_called_once_with(mock.ANY, 'ext_net_id')
 
     def _floatingip_on_port_test_setup(self, hostid):
         router = {'id': 'foo_router_id', 'distributed': True}
@@ -460,6 +466,38 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self._setup_test_create_floatingip(
                 fip, floatingip, router))
         self.assertFalse(create_fip.called)
+
+    def test_update_router_gw_info_external_network_change(self):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as net_ext_1,\
+                self.network() as net_ext_2,\
+                self.subnet() as subnet:
+            ext_net_1_id = net_ext_1['network']['id']
+            self.core_plugin.update_network(
+                self.ctx, ext_net_1_id,
+                {'network': {'router:external': True}})
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': ext_net_1_id}}})
+            self.mixin.add_router_interface(self.ctx, router['id'],
+                {'subnet_id': subnet['subnet']['id']})
+
+            ext_net_2_id = net_ext_2['network']['id']
+            self.core_plugin.update_network(
+                self.ctx, ext_net_2_id,
+                {'network': {'router:external': True}})
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': ext_net_2_id}}})
+
+            csnat_filters = {'device_owner': [const.DEVICE_OWNER_ROUTER_SNAT]}
+            csnat_ports = self.core_plugin.get_ports(
+                self.ctx, filters=csnat_filters)
+            self.assertEqual(1, len(csnat_ports))
 
     def test_remove_router_interface_csnat_ports_removal(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,

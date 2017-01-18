@@ -428,6 +428,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         context=context,
                         router=router,
                         network_id=old_network_id,
+                        new_network_id=new_network_id,
                         gateway_ips=gw_ips)
 
     def _delete_router_gw_port_db(self, context, router):
