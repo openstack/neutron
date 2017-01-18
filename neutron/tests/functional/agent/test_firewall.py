@@ -573,7 +573,7 @@ class FirewallTestCase(BaseFirewallTestCase):
 
         """
         # Enable ip forwarding on the interface in order to reply with
-        # destionation net unreachable
+        # destination net unreachable
         self.tester._peer.execute([
             'sysctl', '-w', 'net.ipv4.conf.%s.forwarding=1' %
             self.tester._peer.port.name])

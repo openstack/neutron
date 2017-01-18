@@ -608,7 +608,7 @@ class PortContext(object):
         Called by the MechanismDriver.bind_port, create_port or update_port
         to dynamically allocate a segment for the port using the partial
         segment specified. The segment dictionary can be a fully or partially
-        specified segment. At a minumim it needs the network_type populated to
+        specified segment. At a minimum it needs the network_type populated to
         call on the appropriate type driver.
         """
         pass

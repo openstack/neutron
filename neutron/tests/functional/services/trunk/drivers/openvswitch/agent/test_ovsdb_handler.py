@@ -33,7 +33,7 @@ def generate_tap_device_name():
 
 
 class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
-    """Test funcionality of OVSDBHandler.
+    """Test functionality of OVSDBHandler.
 
     This suite aims for interaction between events coming from OVSDB monitor,
     agent and wiring ports via trunk bridge to integration bridge.

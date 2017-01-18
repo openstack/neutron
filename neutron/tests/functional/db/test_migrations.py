@@ -491,7 +491,7 @@ class TestWalkDowngrade(oslotest_base.BaseTestCase):
 
 
 class _TestWalkMigrations(object):
-    '''This will add framework for testing schema migarations
+    '''This will add framework for testing schema migration
        for different backends.
 
     '''
