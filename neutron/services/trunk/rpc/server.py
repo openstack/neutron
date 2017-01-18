@@ -104,7 +104,7 @@ class TrunkSkeleton(object):
 
     def update_trunk_status(self, context, trunk_id, status):
         """Update the trunk status to reflect outcome of data plane wiring."""
-        with db_api.autonested_transaction(context.session):
+        with db_api.context_manager.writer.using(context):
             trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
             if trunk:
                 trunk.update(status=status)
