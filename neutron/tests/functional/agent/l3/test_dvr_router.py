@@ -18,6 +18,7 @@ import functools
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 import testtools
 
@@ -30,7 +31,6 @@ from neutron.agent.linux import iptables_manager
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
-from neutron.extensions import portbindings
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers

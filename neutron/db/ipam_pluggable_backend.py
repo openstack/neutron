@@ -16,6 +16,7 @@
 import copy
 
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
@@ -28,7 +29,6 @@ from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
-from neutron.extensions import portbindings
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
 

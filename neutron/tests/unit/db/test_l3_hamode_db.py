@@ -13,6 +13,8 @@
 # under the License.
 
 import mock
+
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib import constants
 from neutron_lib import context
@@ -40,7 +42,6 @@ from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
-from neutron.extensions import portbindings
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
 from neutron.tests.common import helpers

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 
 from neutron.api.v2 import attributes
@@ -21,7 +22,6 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.db.models import portbinding as pmodels
 from neutron.db import models_v2
 from neutron.db import portbindings_base
-from neutron.extensions import portbindings
 
 
 class PortBindingMixin(portbindings_base.PortBindingBaseMixin):

@@ -18,6 +18,7 @@ import contextlib
 import datetime
 
 import mock
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.plugins import directory
@@ -40,7 +41,6 @@ from neutron.db.models import l3agent as rb_model
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
 from neutron.extensions import l3agentscheduler as l3agent
-from neutron.extensions import portbindings
 from neutron import manager
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base

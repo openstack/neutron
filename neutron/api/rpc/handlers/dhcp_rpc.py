@@ -17,6 +17,7 @@ import copy
 import itertools
 import operator
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -33,7 +34,6 @@ from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import provisioning_blocks
-from neutron.extensions import portbindings
 from neutron.extensions import segment as segment_ext
 from neutron.plugins.common import utils as p_utils
 from neutron.quota import resource_registry

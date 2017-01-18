@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
@@ -27,7 +28,6 @@ from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
-from neutron.extensions import portbindings
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models as ml2_models
 

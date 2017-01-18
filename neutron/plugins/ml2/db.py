@@ -14,6 +14,7 @@
 #    under the License.
 
 from debtcollector import removals
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
@@ -29,7 +30,6 @@ from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
-from neutron.extensions import portbindings
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import models
 from neutron.services.segments import exceptions as seg_exc

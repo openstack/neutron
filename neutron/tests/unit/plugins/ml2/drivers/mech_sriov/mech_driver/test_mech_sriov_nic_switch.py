@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 import testtools
 
-from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \

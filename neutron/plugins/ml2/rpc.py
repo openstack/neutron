@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -28,7 +29,6 @@ from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
-from neutron.extensions import portbindings
 from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api

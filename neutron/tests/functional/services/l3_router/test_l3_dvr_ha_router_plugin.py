@@ -13,12 +13,12 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.common import topics
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.extensions import portbindings
 from neutron.tests.common import helpers
 from neutron.tests.functional.services.l3_router import \
     test_l3_dvr_router_plugin

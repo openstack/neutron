@@ -17,6 +17,7 @@ from keystoneauth1 import exceptions as ks_exc
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -40,7 +41,6 @@ from neutron.db import portbindings_db
 from neutron.db import segments_db
 from neutron.extensions import ip_allocation
 from neutron.extensions import l2_adjacency
-from neutron.extensions import portbindings
 from neutron.extensions import segment as ext_segment
 from neutron.objects import network
 from neutron.plugins.common import constants as p_constants

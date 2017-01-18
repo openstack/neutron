@@ -15,13 +15,13 @@
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
 from neutron.db import portbindings_db
-from neutron.extensions import portbindings
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 

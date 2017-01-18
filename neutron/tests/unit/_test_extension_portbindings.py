@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from six.moves import http_client as httplib
 from webob import exc
 
-from neutron.extensions import portbindings
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 

@@ -22,6 +22,7 @@ import sys
 import time
 
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.utils import helpers
@@ -54,7 +55,6 @@ from neutron.common import config
 from neutron.common import constants as c_const
 from neutron.common import topics
 from neutron.conf.agent import xenapi_conf
-from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import capabilities

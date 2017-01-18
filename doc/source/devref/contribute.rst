@@ -569,7 +569,7 @@ the installer to configure this item in the ``[default]`` section. For example::
     interface_driver = networking_foo.agent.linux.interface.FooInterfaceDriver
 
 **ToDo: Interface Driver port bindings.**
-    ``VIF_TYPE_*`` constants in ``neutron/extensions/portbindings.py`` should be
+    ``VIF_TYPE_*`` constants in ``neutron_lib/api/definitions/portbindings.py`` should be
     moved from neutron core to the repositories where their drivers are
     implemented. We need to provide some config or hook mechanism for VIF types
     to be registered by external interface drivers. For Nova, selecting the VIF

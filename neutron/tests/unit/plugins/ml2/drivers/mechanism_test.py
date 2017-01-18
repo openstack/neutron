@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 
-from neutron.extensions import portbindings
 from neutron.plugins.ml2 import driver_api as api
 
 

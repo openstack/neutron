@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib.api import validators
 from neutron_lib import constants
@@ -48,7 +49,6 @@ from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
-from neutron.extensions import portbindings
 from neutron.plugins.common import utils as p_utils
 
 
