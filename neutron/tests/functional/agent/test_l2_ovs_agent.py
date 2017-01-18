@@ -14,8 +14,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 import time
 
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
@@ -319,6 +323,24 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.assertRaises(
             utils.WaitTimeout, self.wait_until_ports_state, [self.ports[1]],
             up=True, timeout=10)
+
+    def test_ovs_restarted_event(self):
+        callback = mock.Mock()
+
+        self.setup_agent_and_ports(
+            port_dicts=self.create_test_ports())
+
+        registry.subscribe(callback,
+                           resources.AGENT,
+                           events.OVS_RESTARTED)
+
+        self.agent.check_ovs_status.return_value = constants.OVS_RESTARTED
+
+        utils.wait_until_true(lambda: callback.call_count, timeout=10)
+
+        callback.assert_called_with(resources.AGENT,
+                                    events.OVS_RESTARTED,
+                                    mock.ANY)
 
 
 class TestOVSAgentExtensionConfig(base.OVSAgentTestFramework):

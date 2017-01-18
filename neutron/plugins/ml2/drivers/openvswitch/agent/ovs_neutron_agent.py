@@ -47,6 +47,7 @@ from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.callbacks import events as callback_events
 from neutron.callbacks import registry
+from neutron.callbacks import resources as callback_resources
 from neutron.common import config
 from neutron.common import constants as c_const
 from neutron.common import topics
@@ -1966,6 +1967,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                  self.patch_tun_ofport)
                     self.dvr_agent.reset_dvr_parameters()
                     self.dvr_agent.setup_dvr_flows()
+                # notify that OVS has restarted
+                registry.notify(
+                    callback_resources.AGENT,
+                    callback_events.OVS_RESTARTED,
+                    self)
                 # restart the polling manager so that it will signal as added
                 # all the current ports
                 # REVISIT (rossella_s) Define a method "reset" in
