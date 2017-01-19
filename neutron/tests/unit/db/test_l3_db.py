@@ -42,6 +42,16 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
         filtered = l3_db.L3_NAT_dbonly_mixin._each_port_having_fixed_ips(None)
         self.assertEqual([], list(filtered))
 
+    def test__new__passes_args(self):
+        class T(l3_db.L3_NAT_db_mixin):
+            def __init__(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+
+        t = T(1, 2, a=3)
+        self.assertEqual((1, 2), t.args)
+        self.assertEqual({'a': 3}, t.kwargs)
+
     def test__each_port_having_fixed_ips(self):
         """Basic test that ports without fixed ips are filtered out"""
         ports = [{'id': 'a', 'fixed_ips': [mock.sentinel.fixedip]},
