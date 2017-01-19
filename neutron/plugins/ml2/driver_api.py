@@ -69,7 +69,7 @@ class _TypeDriverBase(object):
         """Validate attributes of a provider network segment.
 
         :param segment: segment dictionary using keys defined above
-        :raises: neutron.common.exceptions.InvalidInput if invalid
+        :raises: neutron_lib.exceptions.InvalidInput if invalid
 
         Called outside transaction context to validate the provider
         attributes for a provider network segment. Raise InvalidInput
