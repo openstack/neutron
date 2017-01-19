@@ -1936,6 +1936,30 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ns.delete()
         self.mock_ip.netns.delete.assert_called_once_with("qrouter-bar")
 
+    def test_destroy_snat_namespace(self):
+        namespace = 'snat-bar'
+
+        self.mock_ip.get_namespaces.return_value = [namespace]
+        self.mock_ip.get_devices.return_value = [
+            l3_test_common.FakeDev('qg-aaaa'),
+            l3_test_common.FakeDev('sg-aaaa')]
+
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+
+        ns = dvr_snat_ns.SnatNamespace(
+            'bar', self.conf, agent.driver, agent.use_ipv6)
+        ns.create()
+
+        ns.delete()
+        calls = [mock.call('qg-aaaa',
+                           bridge=agent.conf.external_network_bridge,
+                           namespace=namespace,
+                           prefix=l3_agent.EXTERNAL_DEV_PREFIX),
+                 mock.call('sg-aaaa',
+                           namespace=namespace,
+                           prefix=dvr_snat_ns.SNAT_INT_DEV_PREFIX)]
+        self.mock_driver.unplug.assert_has_calls(calls, any_order=True)
+
     def _configure_metadata_proxy(self, enableflag=True):
         if not enableflag:
             self.conf.set_override('enable_metadata_proxy', False)
