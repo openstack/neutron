@@ -454,8 +454,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
 }
 
 
-# TODO(ihrachys) consider renaming into e.g. get_obj_persistent_fields
-def get_obj_db_fields(obj):
+def get_obj_persistent_fields(obj):
     return {field: getattr(obj, field) for field in obj.fields
             if field not in obj.synthetic_fields
             if field in obj}
@@ -737,8 +736,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 side_effect=self.fake_get_objects) as get_objects_mock:
             objs = self._test_class.get_objects(self.context)
             self.assertItemsEqual(
-                [get_obj_db_fields(obj) for obj in self.objs],
-                [get_obj_db_fields(obj) for obj in objs])
+                [get_obj_persistent_fields(obj) for obj in self.objs],
+                [get_obj_persistent_fields(obj) for obj in objs])
         get_objects_mock.assert_any_call(
             self.context, self._test_class.db_model,
             _pager=self.pager_map[self._test_class.obj_name()]
@@ -801,8 +800,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                                 validate_filters=False,
                                                 unknown_filter='value')
             self.assertItemsEqual(
-                [get_obj_db_fields(obj) for obj in self.objs],
-                [get_obj_db_fields(obj) for obj in objs])
+                [get_obj_persistent_fields(obj) for obj in self.objs],
+                [get_obj_persistent_fields(obj) for obj in objs])
 
     def test_delete_objects(self):
         '''Test that delete_objects calls to underlying db_api.'''
@@ -846,8 +845,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                               fake_field='xxx')
 
     def _check_equal(self, expected, observed):
-        self.assertItemsEqual(get_obj_db_fields(expected),
-                              get_obj_db_fields(observed))
+        self.assertItemsEqual(get_obj_persistent_fields(expected),
+                              get_obj_persistent_fields(observed))
 
     def test_count_validate_filters_false(self):
         if not isinstance(self._test_class, base.NeutronDbObject):
@@ -873,7 +872,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 create_mock.assert_called_once_with(
                     self.context, self._test_class.db_model,
                     self._test_class.modify_fields_to_db(
-                        get_obj_db_fields(self.objs[0])))
+                        get_obj_persistent_fields(self.objs[0])))
 
     # Adding delete_objects mock because some objects are using delete_objects
     # while calling create(), Port for example
@@ -1522,7 +1521,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj = self._make_object(self.obj_fields[0])
         obj.create()
 
-        for field in get_obj_db_fields(obj):
+        for field in get_obj_persistent_fields(obj):
             if not isinstance(obj[field], list):
                 filters = {field: [obj[field]]}
             else:

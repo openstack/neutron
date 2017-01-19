@@ -71,8 +71,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         self.get_objects_mock.assert_any_call(
             admin_context, self._test_class.db_model, _pager=None)
         self.assertItemsEqual(
-            [test_base.get_obj_db_fields(obj) for obj in self.objs],
-            [test_base.get_obj_db_fields(obj) for obj in objs])
+            [test_base.get_obj_persistent_fields(obj) for obj in self.objs],
+            [test_base.get_obj_persistent_fields(obj) for obj in objs])
 
     def test_get_objects_valid_fields(self):
         admin_context = self.context.elevated()
