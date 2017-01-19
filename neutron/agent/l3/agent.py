@@ -575,6 +575,10 @@ class L3NATAgent(ha.AgentMixin,
                             ns_manager.keep_ext_net(ext_net_id)
                         elif is_snat_agent:
                             ns_manager.ensure_snat_cleanup(r['id'])
+                    # For HA routers check that DB state matches actual state
+                    if r.get('ha'):
+                        self.check_ha_state_for_router(
+                            r['id'], r.get(l3_constants.HA_ROUTER_STATE_KEY))
                     update = queue.RouterUpdate(
                         r['id'],
                         queue.PRIORITY_SYNC_ROUTERS_TASK,
