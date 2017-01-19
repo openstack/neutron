@@ -28,7 +28,7 @@ import weakref
 import eventlet.timeout
 import fixtures
 import mock
-from neutron_lib.plugins import directory
+from neutron_lib import fixture
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
 from oslo_messaging import conffixture as messaging_conffixture
@@ -290,7 +290,8 @@ class BaseTestCase(DietTestCase):
         self.setup_rpc_mocks()
         self.setup_config()
         self.setup_test_registry_instance()
-        self.setup_test_directory_instance()
+        # Give a private copy of the directory to each test.
+        self.useFixture(fixture.PluginDirectoryFixture())
 
         policy.init()
         self.addCleanup(policy.reset)
@@ -359,14 +360,6 @@ class BaseTestCase(DietTestCase):
         self._callback_manager = registry_manager.CallbacksManager()
         mock.patch.object(registry, '_get_callback_manager',
                           return_value=self._callback_manager).start()
-
-    def setup_test_directory_instance(self):
-        """Give a private copy of the directory to each test."""
-        # TODO(armax): switch to using a fixture to stop relying on stubbing
-        # out _get_plugin_directory directly.
-        self._plugin_directory = directory._PluginDirectory()
-        mock.patch.object(directory, '_get_plugin_directory',
-                          return_value=self._plugin_directory).start()
 
     def setup_config(self, args=None):
         """Tests that need a non-default config can override this method."""
