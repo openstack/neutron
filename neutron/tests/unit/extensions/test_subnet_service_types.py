@@ -98,6 +98,7 @@ class SubnetServiceTypesExtensionTestCase(
 
     def test_create_subnet_invalid_type(self):
         self._test_create_subnet(['foo'], expect_fail=True)
+        self._test_create_subnet([1], expect_fail=True)
 
     def test_create_subnet_no_type(self):
         res = self._create_service_subnet()
@@ -105,12 +106,12 @@ class SubnetServiceTypesExtensionTestCase(
         subnet = subnet['subnet']
         self.assertFalse(subnet['service_types'])
 
-    def _test_update_subnet(self, subnet, service_types, expect_fail=False):
+    def _test_update_subnet(self, subnet, service_types, fail_code=None):
         data = {'subnet': {'service_types': service_types}}
         req = self.new_update_request('subnets', data, subnet['id'])
         res = self.deserialize(self.fmt, req.get_response(self.api))
-        if expect_fail:
-            self.assertEqual('InvalidSubnetServiceType',
+        if fail_code is not None:
+            self.assertEqual(fail_code,
                              res['NeutronError']['type'])
         else:
             subnet = res['subnet']
@@ -155,12 +156,14 @@ class SubnetServiceTypesExtensionTestCase(
         self._test_update_subnet(subnet, service_types)
 
     def test_update_subnet_invalid_type(self):
-        service_types = ['foo']
         # Create a subnet with no service type
         res = self._create_service_subnet()
         subnet = self.deserialize('json', res)['subnet']
-        # Update it with an invalid service type
-        self._test_update_subnet(subnet, service_types, expect_fail=True)
+        # Update it with invalid service type(s)
+        self._test_update_subnet(subnet, ['foo'],
+                                 fail_code='InvalidSubnetServiceType')
+        self._test_update_subnet(subnet, [2],
+                                 fail_code='InvalidInputSubnetServiceType')
 
     def _assert_port_res(self, port, service_type, subnet, fallback,
                          error='IpAddressGenerationFailureNoMatchingSubnet'):
