@@ -14,6 +14,7 @@
 
 import functools
 
+from neutron_lib.plugins import directory
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
@@ -22,19 +23,28 @@ from sqlalchemy.orm import exc
 from neutron.api.v2 import attributes
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
+from neutron.db.models import l3 as l3_model
 from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
 from neutron.db import tag_db as tag_methods
+from neutron.extensions import l3 as l3_ext
 from neutron.extensions import tag as tag_ext
 
 
 resource_model_map = {
+    # When we'll add other resources, we must add new extension for them
+    # if we don't have better discovery mechanism instead of it.
     attributes.NETWORKS: models_v2.Network,
-    # other resources can be added
+    attributes.SUBNETS: models_v2.Subnet,
+    attributes.PORTS: models_v2.Port,
+    attributes.SUBNETPOOLS: models_v2.SubnetPool,
+    l3_ext.ROUTERS: l3_model.Router,
 }
 
 
 def _extend_tags_dict(plugin, response_data, db_data):
+    if not directory.get_plugin(tag_ext.TAG_PLUGIN_TYPE):
+        return
     tags = [tag_db.tag for tag_db in db_data.standard_attr.tags]
     response_data['tags'] = tags
 
@@ -42,7 +52,7 @@ def _extend_tags_dict(plugin, response_data, db_data):
 class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
     """Implementation of the Neutron Tag Service Plugin."""
 
-    supported_extension_aliases = ['tag']
+    supported_extension_aliases = ['tag', 'tag-ext']
 
     def _get_resource(self, context, resource, resource_id):
         model = resource_model_map[resource]

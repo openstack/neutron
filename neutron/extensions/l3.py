@@ -84,6 +84,7 @@ class RouterInterfaceAttachmentConflict(nexception.Conflict):
     message = _("Error %(reason)s while attempting the operation.")
 
 
+ROUTER = 'router'
 ROUTERS = 'routers'
 FLOATINGIP = 'floatingip'
 FLOATINGIPS = '%ss' % FLOATINGIP
