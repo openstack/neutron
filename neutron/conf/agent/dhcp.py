@@ -65,13 +65,6 @@ DHCP_OPTS = [
     cfg.StrOpt('dhcp_confs',
                default='$state_path/dhcp',
                help=_('Location to store DHCP server config files.')),
-    cfg.StrOpt('dhcp_domain',
-               default='openstacklocal',
-               help=_('Domain to use for building the hostnames. '
-                      'This option is deprecated. It has been moved to '
-                      'neutron.conf as dns_domain. It will be removed '
-                      'in a future release.'),
-               deprecated_for_removal=True),
 ]
 
 DNSMASQ_OPTS = [

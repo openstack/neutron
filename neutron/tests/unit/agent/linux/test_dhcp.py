@@ -1177,11 +1177,11 @@ class TestDnsmasq(TestBase):
         self.conf.set_override('dnsmasq_config_file', '/foo')
         self._test_spawn(['--conf-file=/foo', '--domain=openstacklocal'])
 
-    def test_spawn_no_dhcp_domain(self):
+    def test_spawn_no_dns_domain(self):
         (exp_host_name, exp_host_data,
-         exp_addn_name, exp_addn_data) = self._test_no_dhcp_domain_alloc_data
-        self.conf.set_override('dhcp_domain', '')
-        network = FakeDualNetwork(domain=self.conf.dhcp_domain)
+         exp_addn_name, exp_addn_data) = self._test_no_dns_domain_alloc_data
+        self.conf.set_override('dns_domain', '')
+        network = FakeDualNetwork(domain=self.conf.dns_domain)
         self._test_spawn(['--conf-file='], network=network)
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_addn_name, exp_addn_data)])
@@ -1610,7 +1610,7 @@ class TestDnsmasq(TestBase):
         self._test_output_opts_file(expected, FakeV6Network())
 
     @property
-    def _test_no_dhcp_domain_alloc_data(self):
+    def _test_no_dns_domain_alloc_data(self):
         exp_host_name = '/dhcp/cccccccc-cccc-cccc-cccc-cccccccccccc/host'
         exp_host_data = ('00:00:80:aa:bb:cc,host-192-168-0-2,'
                          '192.168.0.2\n'

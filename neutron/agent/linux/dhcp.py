@@ -402,8 +402,8 @@ class Dnsmasq(DhcpLocalProcess):
         for server in self.conf.dnsmasq_dns_servers:
             cmd.append('--server=%s' % server)
 
-        if self.conf.dhcp_domain:
-            cmd.append('--domain=%s' % self.conf.dhcp_domain)
+        if self.conf.dns_domain:
+            cmd.append('--domain=%s' % self.conf.dns_domain)
 
         if self.conf.dhcp_broadcast_reply:
             cmd.append('--dhcp-broadcast')
@@ -593,8 +593,8 @@ class Dnsmasq(DhcpLocalProcess):
                     hostname = 'host-%s' % alloc.ip_address.replace(
                         '.', '-').replace(':', '-')
                     fqdn = hostname
-                    if self.conf.dhcp_domain:
-                        fqdn = '%s.%s' % (fqdn, self.conf.dhcp_domain)
+                    if self.conf.dns_domain:
+                        fqdn = '%s.%s' % (fqdn, self.conf.dns_domain)
                 yield (port, alloc, hostname, fqdn, no_dhcp, no_opts)
 
     def _get_port_extra_dhcp_opts(self, port):
@@ -885,9 +885,9 @@ class Dnsmasq(DhcpLocalProcess):
                 # dns-server submitted by the server
                 subnet_index_map[subnet.id] = i
 
-            if self.conf.dhcp_domain and subnet.ip_version == 6:
+            if self.conf.dns_domain and subnet.ip_version == 6:
                 options.append('tag:tag%s,option6:domain-search,%s' %
-                               (i, ''.join(self.conf.dhcp_domain)))
+                               (i, ''.join(self.conf.dns_domain)))
 
             gateway = subnet.gateway_ip
             host_routes = []
