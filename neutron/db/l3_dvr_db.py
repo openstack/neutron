@@ -131,12 +131,11 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             not router_db.extra_attributes.distributed and
             router.get('distributed') is True)
         self._validate_router_migration(context, router_db, router)
-        if router.get('distributed'):
+        if migrating_to_distributed:
             self._migrate_router_ports(
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_ROUTER_INTF,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
-        if migrating_to_distributed:
             self.set_extra_attr_value(context, router_db, 'distributed', True)
             cur_agents = self.list_l3_agents_hosting_router(
                 context, router_db['id'])['agents']
