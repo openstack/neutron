@@ -87,6 +87,7 @@ class NetworkClientJSON(service_client.RestClient):
             'quotas': 'quotas',
             'qos_policy': 'policies',
             'rbac_policy': 'rbac_policies',
+            'network_ip_availability': 'network_ip_availabilities',
         }
         return resource_plural_map.get(resource_name, resource_name + 's')
 
