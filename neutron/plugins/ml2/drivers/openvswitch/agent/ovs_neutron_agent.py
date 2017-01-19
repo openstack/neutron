@@ -1481,7 +1481,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def treat_devices_added_or_updated(self, devices, ovs_restarted):
         skipped_devices = []
         need_binding_devices = []
-        security_disabled_devices = []
         devices_details_list = (
             self.plugin_rpc.get_devices_details_list_and_failed_devices(
                 self.context,
@@ -1519,11 +1518,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                                                    ovs_restarted)
                 if need_binding:
                     need_binding_devices.append(details)
-
-                port_security = details['port_security_enabled']
-                has_sgs = 'security_groups' in details
-                if not port_security or not has_sgs:
-                    security_disabled_devices.append(device)
                 self._update_port_network(details['port_id'],
                                           details['network_id'])
                 self.ext_manager.handle_port(self.context, details)
@@ -1534,7 +1528,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 if (port and port.ofport != -1):
                     self.port_dead(port)
         return (skipped_devices, need_binding_devices,
-                security_disabled_devices, failed_devices)
+                failed_devices)
 
     def _update_port_network(self, port_id, network_id):
         self._clean_network_ports(port_id)
@@ -1614,12 +1608,11 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         devices_added_updated = (port_info.get('added', set()) |
                                  port_info.get('updated', set()))
         need_binding_devices = []
-        security_disabled_ports = []
         skipped_devices = set()
         if devices_added_updated:
             start = time.time()
             (skipped_devices, need_binding_devices,
-            security_disabled_ports, failed_devices['added']) = (
+            failed_devices['added']) = (
                 self.treat_devices_added_or_updated(
                     devices_added_updated, ovs_restarted))
             LOG.debug("process_network_ports - iteration:%(iter_num)d - "
@@ -1640,8 +1633,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # unnecessarily, (eg: when there are no IP address changes)
         added_ports = port_info.get('added', set()) - skipped_devices
         self._add_port_tag_info(need_binding_devices)
-        if security_disabled_ports:
-            added_ports -= set(security_disabled_ports)
         self.sg_agent.setup_port_filters(added_ports,
                                          port_info.get('updated', set()))
         failed_devices['added'] |= self._bind_devices(need_binding_devices)
