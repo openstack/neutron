@@ -18,14 +18,17 @@ import time
 import uuid
 
 from neutron_lib import exceptions
+from oslo_utils import excutils
 from ovs.db import idl
 from ovs import jsonrpc
 from ovs import poller
 from ovs import stream
 import six
+import tenacity
 
 from neutron._i18n import _
 from neutron.agent.ovsdb import api
+from neutron.agent.ovsdb.native import helpers
 
 
 RowLookup = collections.namedtuple('RowLookup',
@@ -97,7 +100,7 @@ class ExceptionResult(object):
         self.tb = tb
 
 
-def get_schema_helper(connection, schema_name):
+def _get_schema_helper(connection, schema_name):
     err, strm = stream.Stream.open_block(
         stream.Stream.open(connection))
     if err:
@@ -113,6 +116,26 @@ def get_schema_helper(connection, schema_name):
     elif resp.error:
         raise Exception(resp.error)
     return idl.SchemaHelper(None, resp.result)
+
+
+def get_schema_helper(connection, schema_name, retry=True):
+    try:
+        return _get_schema_helper(connection, schema_name)
+    except Exception:
+        with excutils.save_and_reraise_exception(reraise=False) as ctx:
+            if not retry:
+                ctx.reraise = True
+            # We may have failed due to set-manager not being called
+            helpers.enable_connection_uri(connection)
+
+            # There is a small window for a race, so retry up to a second
+            @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.01),
+                            stop=tenacity.stop_after_delay(1),
+                            reraise=True)
+            def do_get_schema_helper():
+                return _get_schema_helper(connection, schema_name)
+
+            return do_get_schema_helper()
 
 
 def wait_for_change(_idl, timeout, seqno=None):
