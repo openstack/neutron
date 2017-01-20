@@ -311,12 +311,18 @@ class OVSBridge(BaseOVS):
                                self.br_name, 'datapath_id')
 
     def do_action_flows(self, action, kwargs_list):
-        if action != 'del':
-            for kw in kwargs_list:
-                if 'cookie' not in kw:
-                    kw['cookie'] = self._default_cookie
-        flow_strs = [_build_flow_expr_str(kw, action) for kw in kwargs_list]
-        self.run_ofctl('%s-flows' % action, ['-'], '\n'.join(flow_strs))
+        if action == 'del' and {} in kwargs_list:
+            # the 'del' case simplifies itself if kwargs_list has at least
+            # one item that matches everything
+            self.run_ofctl('%s-flows' % action, [])
+        else:
+            if action != 'del':
+                for kw in kwargs_list:
+                    if 'cookie' not in kw:
+                        kw['cookie'] = self._default_cookie
+            flow_strs = [_build_flow_expr_str(kw, action)
+                         for kw in kwargs_list]
+            self.run_ofctl('%s-flows' % action, ['-'], '\n'.join(flow_strs))
 
     def add_flow(self, **kwargs):
         self.do_action_flows('add', [kwargs])

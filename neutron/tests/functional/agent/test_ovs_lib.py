@@ -469,6 +469,11 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertRaises((RuntimeError, idlutils.RowNotFound),
                           del_port_mod_iface)
 
+    def test_delete_flows_no_args(self):
+        self.br.add_flow(in_port=1, actions="output:2")
+        self.br.delete_flows()
+        self.assertEqual([], self.br.dump_all_flows())
+
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 
