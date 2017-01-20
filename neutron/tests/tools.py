@@ -234,8 +234,8 @@ def get_random_prefixlen(version=4):
     return random.randint(0, maxlen)
 
 
-def get_random_port():
-    return random.randint(n_const.PORT_RANGE_MIN, n_const.PORT_RANGE_MAX)
+def get_random_port(start=n_const.PORT_RANGE_MIN):
+    return random.randint(start, n_const.PORT_RANGE_MAX)
 
 
 def get_random_vlan():

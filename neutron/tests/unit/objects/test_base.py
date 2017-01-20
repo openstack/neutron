@@ -439,6 +439,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.ListOfIPNetworksField: get_list_of_random_networks,
     common_types.MACAddressField: tools.get_random_EUI,
     common_types.PortRangeField: tools.get_random_port,
+    common_types.PortRangeWith0Field: lambda: tools.get_random_port(0),
     common_types.SetOfUUIDsField: get_set_of_random_uuids,
     common_types.UUIDField: uuidutils.generate_uuid,
     common_types.VlanIdRangeField: tools.get_random_vlan,

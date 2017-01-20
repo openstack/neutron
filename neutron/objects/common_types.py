@@ -65,13 +65,17 @@ class IPNetworkPrefixLenField(obj_fields.AutoTypedField):
 
 
 class PortRange(RangeConstrainedInteger):
-    def __init__(self, **kwargs):
-        super(PortRange, self).__init__(start=constants.PORT_RANGE_MIN,
+    def __init__(self, start=constants.PORT_RANGE_MIN, **kwargs):
+        super(PortRange, self).__init__(start=start,
                                         end=constants.PORT_RANGE_MAX, **kwargs)
 
 
 class PortRangeField(obj_fields.AutoTypedField):
     AUTO_TYPE = PortRange()
+
+
+class PortRangeWith0Field(obj_fields.AutoTypedField):
+    AUTO_TYPE = PortRange(start=0)
 
 
 class VlanIdRange(RangeConstrainedInteger):

@@ -97,8 +97,8 @@ class SecurityGroupRule(base.NeutronDbObject):
         'direction': common_types.FlowDirectionEnumField(nullable=True),
         'ethertype': common_types.EtherTypeEnumField(nullable=True),
         'protocol': common_types.IpProtocolEnumField(nullable=True),
-        'port_range_min': common_types.PortRangeField(nullable=True),
-        'port_range_max': common_types.PortRangeField(nullable=True),
+        'port_range_min': common_types.PortRangeWith0Field(nullable=True),
+        'port_range_max': common_types.PortRangeWith0Field(nullable=True),
         'remote_ip_prefix': common_types.IPNetworkField(nullable=True),
     }
 
