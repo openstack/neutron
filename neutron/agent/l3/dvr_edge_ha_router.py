@@ -89,9 +89,6 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         self._create_snat_namespace()
         super(DvrEdgeHaRouter, self).initialize(process_monitor)
 
-    def get_router_cidrs(self, device):
-        return router_info.RouterInfo.get_router_cidrs(self, device)
-
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)

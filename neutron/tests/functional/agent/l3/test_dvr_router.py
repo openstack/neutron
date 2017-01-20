@@ -635,6 +635,68 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self._assert_iptables_rules_exist(
                 router.iptables_manager, 'nat', expected_rules)
 
+    def test_dvr_router_with_ha_for_fip_disassociation(self):
+        """Test to validate the fip rules are deleted in dvr_snat_ha router.
+
+        This test validates the fip rules are getting deleted in
+        a router namespace when the router has ha and snat enabled after
+        the floatingip is disassociated.
+        """
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info(
+            enable_snat=True, enable_ha=True, enable_gw=True)
+        fip_agent_gw_port = router_info[n_const.FLOATINGIP_AGENT_INTF_KEY]
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port[0])
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns_name = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns_name))
+        self._assert_snat_namespace_exists(router1)
+        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
+        ip4_rules_list_with_fip = ns_ipr.rule.list_rules(
+            lib_constants.IP_VERSION_4)
+        # The rules_list should have 6 entries:
+        # 3 default rules (local, main and default)
+        # 1 Fip forward rule
+        # 2 interface rules to redirect to snat
+        self.assertEqual(6, len(ip4_rules_list_with_fip))
+        rfp_device_name = router1.fip_ns.get_rtr_ext_device_name(
+            router1.router_id)
+        rfp_device = ip_lib.IPDevice(rfp_device_name,
+                                     namespace=router1.ns_name)
+        rtr_2_fip, fip_2_rtr = router1.rtr_fip_subnet.get_pair()
+        self._assert_default_gateway(
+            fip_2_rtr, rfp_device, rfp_device_name)
+
+        router1.router[lib_constants.FLOATINGIP_KEY] = []
+        self.agent._process_updated_router(router1.router)
+        router_updated = self.agent.router_info[router1.router['id']]
+        self.assertTrue(self._namespace_exists(router_updated.ns_name))
+        self._assert_snat_namespace_exists(router1)
+        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+        self.assertEqual(5, len(ip4_rules_list))
+        interface_rules_list_count = 0
+        fip_rule_count = 0
+        for ip_rule in ip4_rules_list:
+            tbl_index = ip_rule['table']
+            if tbl_index not in ['local', 'default', 'main']:
+                interface_rules_list_count += 1
+                if tbl_index == dvr_fip_ns.FIP_RT_TBL:
+                    fip_rule_count += 1
+        self.assertEqual(2, interface_rules_list_count)
+        self.assertEqual(0, fip_rule_count)
+
+    def _assert_default_gateway(self, fip_2_rtr, rfp_device, device_name):
+        expected_gateway = [{'dev': device_name,
+                             'cidr': '0.0.0.0/0',
+                             'via': str(fip_2_rtr.ip),
+                             'table': dvr_fip_ns.FIP_RT_TBL}]
+        self.assertEqual(expected_gateway, rfp_device.route.list_routes(
+            ip_version=lib_constants.IP_VERSION_4,
+            table=dvr_fip_ns.FIP_RT_TBL,
+            via=str(fip_2_rtr.ip)))
+
     def test_dvr_router_rem_fips_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info()
