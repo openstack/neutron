@@ -17,7 +17,6 @@
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import sql
 
@@ -35,9 +34,10 @@ from neutron.db.models import external_net as ext_net_models
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.extensions import l3
+from neutron.objects import auto_allocate as auto_allocate_obj
+from neutron.objects import exceptions as obj_exc
 from neutron.plugins.common import utils as p_utils
 from neutron.services.auto_allocate import exceptions
-from neutron.services.auto_allocate import models
 
 LOG = logging.getLogger(__name__)
 IS_DEFAULT = 'is_default'
@@ -198,9 +198,8 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
 
     def _get_auto_allocated_topology(self, context, tenant_id):
         """Return the auto allocated topology record if present or None."""
-        with context.session.begin(subtransactions=True):
-            return (context.session.query(models.AutoAllocatedTopology).
-                filter_by(tenant_id=tenant_id).first())
+        return auto_allocate_obj.AutoAllocatedTopology.get_object(
+            context, project_id=tenant_id)
 
     def _get_auto_allocated_network(self, context, tenant_id):
         """Get the auto allocated network for the tenant."""
@@ -331,21 +330,13 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
     def _save(self, context, tenant_id, network_id, router_id, subnets):
         """Save auto-allocated topology, or revert in case of DB errors."""
         try:
-            # NOTE(armax): saving the auto allocated topology in a
-            # separate transaction will keep the Neutron DB and the
-            # Neutron plugin backend in sync, thus allowing for a
-            # more bullet proof cleanup. Any other error will have
-            # to bubble up.
-            with context.session.begin(subtransactions=True):
-                context.session.add(
-                    models.AutoAllocatedTopology(
-                        tenant_id=tenant_id,
-                        network_id=network_id,
-                        router_id=router_id))
+            auto_allocate_obj.AutoAllocatedTopology(
+                context, project_id=tenant_id, network_id=network_id,
+                router_id=router_id).create()
             self.core_plugin.update_network(
                 context, network_id,
                 {'network': {'admin_state_up': True}})
-        except db_exc.DBDuplicateEntry:
+        except obj_exc.NeutronDbObjectDuplicateEntry:
             LOG.debug("Multiple auto-allocated networks detected for "
                       "tenant %s. Attempting clean up for network %s "
                       "and router %s.",
