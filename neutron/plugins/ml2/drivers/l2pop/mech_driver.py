@@ -74,7 +74,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         fdb_entries = self._get_agent_fdb(
             context, context.bottom_bound_segment, port, agent_host)
         if port['device_owner'] in l2pop_db.HA_ROUTER_PORTS and fdb_entries:
-            session = db_api.get_session()
+            session = db_api.get_reader_session()
             network_id = port['network_id']
             other_fdb_ports = self._get_ha_port_agents_fdb(
                 session, network_id, port['device_id'])
@@ -111,7 +111,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         if not agent_host:
             return
 
-        agent_ip = l2pop_db.get_agent_ip_by_host(db_api.get_session(),
+        agent_ip = l2pop_db.get_agent_ip_by_host(db_api.get_reader_session(),
                                                  agent_host)
 
         orig_mac_ip = [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
@@ -255,7 +255,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def update_port_up(self, context):
         port = context.current
         agent_host = context.host
-        session = db_api.get_session()
+        session = db_api.get_reader_session()
         agent = l2pop_db.get_agent_by_host(session, agent_host)
         if not agent:
             LOG.warning(_LW("Unable to retrieve active L2 agent on host %s"),
@@ -306,11 +306,12 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
         network_id = port['network_id']
 
-        session = db_api.get_session()
+        session = db_api.get_reader_session()
         agent_active_ports = l2pop_db.get_agent_network_active_port_count(
             session, agent_host, network_id)
 
-        agent = l2pop_db.get_agent_by_host(db_api.get_session(), agent_host)
+        agent = l2pop_db.get_agent_by_host(session,
+                                           agent_host)
         if not self._validate_segment(segment, port['id'], agent):
             return
 

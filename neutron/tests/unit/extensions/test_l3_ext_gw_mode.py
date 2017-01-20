@@ -126,7 +126,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.context = mock_context.get_admin_context()
         # This ensure also calls to elevated work in unit tests
         self.context.elevated.return_value = self.context
-        self.context.session = db_api.get_session()
+        self.context.session = db_api.get_writer_session()
         # Create sample data for tests
         self.ext_net_id = _uuid()
         self.int_net_id = _uuid()

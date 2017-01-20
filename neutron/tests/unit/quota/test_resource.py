@@ -60,7 +60,7 @@ class TestResource(base.DietTestCase):
 class TestTrackedResource(testlib_api.SqlTestCaseLight):
 
     def _add_data(self, tenant_id=None):
-        session = db_api.get_session()
+        session = db_api.get_writer_session()
         with session.begin():
             tenant_id = tenant_id or self.tenant_id
             session.add(test_quota.MehModel(
@@ -71,7 +71,7 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
                 tenant_id=tenant_id))
 
     def _delete_data(self):
-        session = db_api.get_session()
+        session = db_api.get_writer_session()
         with session.begin():
             query = session.query(test_quota.MehModel).filter_by(
                 tenant_id=self.tenant_id)
@@ -79,7 +79,7 @@ class TestTrackedResource(testlib_api.SqlTestCaseLight):
                 session.delete(item)
 
     def _update_data(self):
-        session = db_api.get_session()
+        session = db_api.get_writer_session()
         with session.begin():
             query = session.query(test_quota.MehModel).filter_by(
                 tenant_id=self.tenant_id)

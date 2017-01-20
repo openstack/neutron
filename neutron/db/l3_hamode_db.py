@@ -752,7 +752,7 @@ def is_ha_router(router):
 
 
 def is_ha_router_port(context, device_owner, router_id):
-    session = db_api.get_session()
+    session = db_api.get_reader_session()
     if device_owner == constants.DEVICE_OWNER_HA_REPLICATED_INT:
         return True
     elif device_owner == constants.DEVICE_OWNER_ROUTER_SNAT:

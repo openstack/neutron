@@ -16,6 +16,7 @@
 import contextlib
 import copy
 
+from debtcollector import removals
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
@@ -200,11 +201,24 @@ def exc_to_retry(etypes):
 
 #TODO(akamyshnikova): when all places in the code, which use sessions/
 # connections will be updated, this won't be needed
+@removals.remove(version='Ocata', removal_version='Pike',
+                 message="Usage of legacy facade is deprecated. Use "
+                         "get_reader_session or get_writer_session instead.")
 def get_session(autocommit=True, expire_on_commit=False, use_slave=False):
     """Helper method to grab session."""
     return context_manager.get_legacy_facade().get_session(
         autocommit=autocommit, expire_on_commit=expire_on_commit,
         use_slave=use_slave)
+
+
+def get_reader_session():
+    """Helper to get reader session"""
+    return context_manager.reader.get_sessionmaker()()
+
+
+def get_writer_session():
+    """Helper to get writer session"""
+    return context_manager.writer.get_sessionmaker()()
 
 
 @contextlib.contextmanager

@@ -23,6 +23,7 @@ from six import moves
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.common import _deprecate
 from neutron.conf.plugins.ml2.drivers import driver_type
+from neutron import context
 from neutron.db import api as db_api
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const
@@ -64,11 +65,11 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
     @db_api.retry_db_errors
     def _sync_vlan_allocations(self):
-        session = db_api.get_session()
-        with session.begin(subtransactions=True):
+        ctx = context.get_admin_context()
+        with db_api.context_manager.writer.using(ctx):
             # get existing allocations for all physical networks
             allocations = dict()
-            allocs = (session.query(vlan_alloc_model.VlanAllocation).
+            allocs = (ctx.session.query(vlan_alloc_model.VlanAllocation).
                       with_lockmode('update'))
             for alloc in allocs:
                 if alloc.physical_network not in allocations:
@@ -101,7 +102,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                           {'vlan_id': alloc.vlan_id,
                                            'physical_network':
                                            physical_network})
-                                session.delete(alloc)
+                                ctx.session.delete(alloc)
                     del allocations[physical_network]
 
                 # add missing allocatable vlans to table
@@ -110,7 +111,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                            physical_network=physical_network,
                                            vlan_id=vlan_id,
                                            allocated=False)
-                    session.add(alloc)
+                    ctx.session.add(alloc)
 
             # remove from table unallocated vlans for any unconfigured
             # physical networks
@@ -122,7 +123,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                   {'vlan_id': alloc.vlan_id,
                                    'physical_network':
                                    alloc.physical_network})
-                        session.delete(alloc)
+                        ctx.session.delete(alloc)
 
     def get_type(self):
         return p_const.TYPE_VLAN

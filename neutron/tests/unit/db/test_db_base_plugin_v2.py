@@ -6466,7 +6466,7 @@ class DbOperationBoundMixin(object):
         def _event_incrementer(*args, **kwargs):
             self._db_execute_count += 1
 
-        engine = db_api.context_manager.get_legacy_facade().get_engine()
+        engine = db_api.context_manager.writer.get_engine()
         event.listen(engine, 'after_execute', _event_incrementer)
         self.addCleanup(event.remove, engine, 'after_execute',
                         _event_incrementer)

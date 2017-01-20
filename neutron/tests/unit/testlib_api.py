@@ -107,7 +107,7 @@ class SqlFixture(fixtures.Fixture):
 
         db_api.context_manager._root_factory = self.enginefacade_factory
 
-        engine = db_api.context_manager.get_legacy_facade().get_engine()
+        engine = db_api.context_manager.writer.get_engine()
 
         self.addCleanup(
             lambda: setattr(

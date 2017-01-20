@@ -67,7 +67,7 @@ class FakeContext(context.ContextBaseWithSession):
     @property
     def session(self):
         if self._session is None:
-            self._session = db_api.get_session()
+            self._session = db_api.get_writer_session()
         return self._session
 
 
