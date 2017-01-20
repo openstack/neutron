@@ -29,7 +29,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
     """Common code for bridges used by OVS agent"""
 
     def setup_controllers(self, conf):
-        self.set_protocols(ovs_consts.OPENFLOW10)
+        self.set_protocols([ovs_consts.OPENFLOW10, ovs_consts.OPENFLOW13])
         self.del_controller()
 
     def drop_port(self, in_port):

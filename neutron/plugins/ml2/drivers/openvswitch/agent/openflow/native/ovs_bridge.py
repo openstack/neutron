@@ -75,7 +75,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                 "port": conf.OVS.of_listen_port,
             }
         ]
-        self.set_protocols(ovs_consts.OPENFLOW13)
+        self.set_protocols([ovs_consts.OPENFLOW10, ovs_consts.OPENFLOW13])
         self.set_controller(controllers)
 
         # NOTE(ivc): Force "out-of-band" controller connection mode (see
