@@ -35,7 +35,6 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import config
-from neutron.common import utils as common_utils
 from neutron.conf.agent import cmd
 from neutron.conf.agent import dhcp as dhcp_config
 
@@ -162,14 +161,19 @@ def wait_until_no_listen_pids_namespace(namespace, timeout=SIGTERM_WAITTIME):
     If after timeout seconds, there are remaining processes in the namespace,
     then a PidsInNamespaceException will be thrown.
     """
-    # Would be better to handle an eventlet.timeout.Timeout exception
-    # but currently there's a problem importing eventlet since it's
-    # doing a local import from cmd/eventlet which doesn't have a
-    # timeout module
-    common_utils.wait_until_true(
-        lambda: not find_listen_pids_namespace(namespace),
-        timeout=SIGTERM_WAITTIME,
-        exception=PidsInNamespaceException)
+    # NOTE(dalvarez): This function can block forever if
+    # find_listen_pids_in_namespace never returns which is really unlikely. We
+    # can't use wait_until_true because we might get interrupted by eventlet
+    # Timeout during our I/O with rootwrap daemon and that will lead to errors
+    # in subsequent calls to utils.execute grabbing always the output of the
+    # previous command
+    start = end = time.time()
+    while end - start < timeout:
+        if not find_listen_pids_namespace(namespace):
+            return
+        time.sleep(1)
+        end = time.time()
+    raise PidsInNamespaceException
 
 
 def _kill_listen_processes(namespace, force=False):
