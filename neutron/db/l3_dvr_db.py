@@ -94,6 +94,9 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
 
     def _validate_router_migration(self, context, router_db, router_res):
         """Allow centralized -> distributed state transition only."""
+        if router_res.get('ha') or router_db.extra_attributes.ha:
+            # leave HA validation to l3_hamode_db
+            return
         if (router_db.extra_attributes.distributed and
             router_res.get('distributed') is False):
             LOG.info(_LI("Centralizing distributed router %s "
