@@ -70,6 +70,10 @@ class NoVRIDAvailable(exceptions.Conflict):
                 "of HA Routers per tenant is 254.")
 
 
+class HANetworkConcurrentDeletion(exceptions.Conflict):
+    message = _("Network for tenant %(tenant_id)s concurrently deleted.")
+
+
 class HANetworkCIDRNotValid(exceptions.NeutronException):
     message = _("The HA Network CIDR specified in the configuration file "
                 "isn't valid; %(cidr)s.")

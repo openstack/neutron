@@ -25,6 +25,7 @@ import testtools
 
 from neutron.agent.common import utils as agent_utils
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.callbacks import exceptions as c_exc
 from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
@@ -442,7 +443,8 @@ class L3HATestCase(L3HATestFramework):
 
     @mock.patch('neutron.db.l3_hamode_db.VR_ID_RANGE', new=set(range(1, 1)))
     def test_vr_id_depleted(self):
-        self.assertRaises(l3_ext_ha_mode.NoVRIDAvailable, self._create_router)
+        self.assertEqual(n_const.ROUTER_STATUS_ERROR,
+                         self._create_router()['status'])
 
     @mock.patch('neutron.db.l3_hamode_db.VR_ID_RANGE', new=set(range(1, 2)))
     def test_vr_id_unique_range_per_tenant(self):
@@ -655,17 +657,13 @@ class L3HATestCase(L3HATestFramework):
             self.plugin._create_ha_network_tenant_binding(
                 self.admin_ctx, 't1', network['network_id'])
 
-    def test_create_router_db_ha_attribute_failure_rolls_back_router(self):
-        routers_before = self.plugin.get_routers(self.admin_ctx)
-
+    def test_create_router_db_vr_id_allocation_goes_to_error(self):
         for method in ('_ensure_vr_id',
                        '_notify_router_updated'):
             with mock.patch.object(self.plugin, method,
                                    side_effect=ValueError):
-                self.assertRaises(ValueError, self._create_router)
-
-        routers_after = self.plugin.get_routers(self.admin_ctx)
-        self.assertEqual(routers_before, routers_after)
+                self.assertEqual(n_const.ROUTER_STATUS_ERROR,
+                                 self._create_router()['status'])
 
     def test_get_active_host_for_ha_router(self):
         router = self._create_router()
@@ -897,10 +895,12 @@ class L3HATestCase(L3HATestFramework):
         # Unable to create HA network
         with mock.patch.object(self.core_plugin, 'create_network',
                                side_effect=n_exc.NoNetworkAvailable):
-            self.assertRaises(n_exc.NoNetworkAvailable,
-                              self._create_router,
-                              True,
-                              tenant_id)
+            e = self.assertRaises(c_exc.CallbackFailure,
+                                  self._create_router,
+                                  True,
+                                  tenant_id)
+            self.assertIsInstance(e.inner_exceptions[0],
+                                  n_exc.NoNetworkAvailable)
             nets_after = self.core_plugin.get_networks(self.admin_ctx)
             self.assertEqual(nets_before, nets_after)
             self.assertNotIn('HA network tenant %s' % tenant_id,
