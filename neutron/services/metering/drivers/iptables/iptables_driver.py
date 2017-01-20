@@ -20,7 +20,10 @@ import six
 
 from neutron._i18n import _, _LE, _LI
 from neutron.agent.common import config
+from neutron.agent.l3 import dvr_snat_ns
+from neutron.agent.l3 import namespaces
 from neutron.agent.linux import interface
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
 from neutron.common import ipv6_utils
@@ -31,6 +34,7 @@ LOG = logging.getLogger(__name__)
 NS_PREFIX = 'qrouter-'
 WRAP_NAME = 'neutron-meter'
 EXTERNAL_DEV_PREFIX = 'qg-'
+ROUTER_2_FIP_DEV_PREFIX = namespaces.ROUTER_2_FIP_DEV_PREFIX
 TOP_CHAIN = WRAP_NAME + "-FORWARD"
 RULE = '-r-'
 LABEL = '-l-'
@@ -70,11 +74,32 @@ class RouterWithMetering(object):
         self.router = router
         # TODO(cbrandily): deduplicate ns_name generation in metering/l3
         self.ns_name = NS_PREFIX + self.id
-        self.iptables_manager = iptables_manager.IptablesManager(
-            namespace=self.ns_name,
-            binary_name=WRAP_NAME,
-            state_less=True,
-            use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+        self.iptables_manager = None
+        self.snat_iptables_manager = None
+        if self.router['distributed']:
+            # If distributed routers then we need to apply the
+            # metering agent label rules in the snat namespace as well.
+            snat_ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+                self.id)
+            # Check for namespace existence before we assign the
+            # snat_iptables_manager
+            if ip_lib.IPWrapper().netns.exists(snat_ns_name):
+                self.snat_iptables_manager = iptables_manager.IptablesManager(
+                    namespace=snat_ns_name,
+                    binary_name=WRAP_NAME,
+                    state_less=True,
+                    use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+        # Check of namespace existence before we assign the iptables_manager
+        # NOTE(Swami): If distributed routers, all external traffic on a
+        # compute node will flow through the rfp interface in the router
+        # namespace.
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
+        if ip_wrapper.netns.exists(self.ns_name):
+            self.iptables_manager = iptables_manager.IptablesManager(
+                namespace=self.ns_name,
+                binary_name=WRAP_NAME,
+                state_less=True,
+                use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
         self.metering_labels = {}
 
 
@@ -117,7 +142,12 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
             if gw_port_id != old_gw_port_id:
                 if old_rm:
-                    with IptablesManagerTransaction(old_rm.iptables_manager):
+                    if router.get('distributed'):
+                        old_rm_im = old_rm.snat_iptables_manager
+                    else:
+                        old_rm_im = old_rm.iptables_manager
+
+                    with IptablesManagerTransaction(old_rm_im):
                         self._process_disassociate_metering_label(router)
                         if gw_port_id:
                             self._process_associate_metering_label(router)
@@ -129,32 +159,34 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         if router_id in self.routers:
             del self.routers[router_id]
 
-    def get_external_device_name(self, port_id):
-        return (EXTERNAL_DEV_PREFIX + port_id)[:self.driver.DEV_NAME_LEN]
+    def get_external_device_names(self, rm):
+        gw_port_id = rm.router.get('gw_port_id')
+        if not gw_port_id:
+            return None, None
 
-    def _process_metering_label_rules(self, rm, rules, label_chain,
-                                      rules_chain):
-        im = rm.iptables_manager
-        ex_gw_port = rm.router.get('gw_port_id')
-        if not ex_gw_port:
-            return
+        # NOTE (Swami): External device 'qg' should be used on the
+        # Router namespace if the router is legacy and should be used on
+        # SNAT namespace if the router is distributed.
+        ext_dev = (EXTERNAL_DEV_PREFIX +
+                   gw_port_id)[:self.driver.DEV_NAME_LEN]
+        ext_snat_dev = (ROUTER_2_FIP_DEV_PREFIX +
+                        rm.id)[:self.driver.DEV_NAME_LEN]
+        return ext_dev, ext_snat_dev
 
-        ext_dev = self.get_external_device_name(ex_gw_port)
+    def _process_metering_label_rules(self, rules, label_chain,
+                                      rules_chain, ext_dev, im):
         if not ext_dev:
             return
-
         for rule in rules:
             self._add_rule_to_chain(ext_dev, rule, im,
                                     label_chain, rules_chain)
 
-    def _process_metering_label_rule_add(self, rm, rule, ext_dev,
-                                         label_chain, rules_chain):
-        im = rm.iptables_manager
+    def _process_metering_label_rule_add(self, rule, ext_dev,
+                                         label_chain, rules_chain, im):
         self._add_rule_to_chain(ext_dev, rule, im, label_chain, rules_chain)
 
-    def _process_metering_label_rule_delete(self, rm, rule, ext_dev,
-                                            label_chain, rules_chain):
-        im = rm.iptables_manager
+    def _process_metering_label_rule_delete(self, rule, ext_dev,
+                                            label_chain, rules_chain, im):
         self._remove_rule_from_chain(ext_dev, rule, im,
                                      label_chain, rules_chain)
 
@@ -191,67 +223,75 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             ipt_rule = '%s -j %s' % (dir_opt, label_chain)
         return ipt_rule
 
-    def _process_associate_metering_label(self, router):
-        self._update_router(router)
+    def _process_ns_specific_metering_label(self, router, ext_dev, im):
+        '''Process metering label based on the associated namespaces.'''
         rm = self.routers.get(router['id'])
-
-        with IptablesManagerTransaction(rm.iptables_manager):
+        with IptablesManagerTransaction(im):
             labels = router.get(constants.METERING_LABEL_KEY, [])
             for label in labels:
                 label_id = label['id']
 
-                label_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              LABEL + label_id,
-                                                              wrap=False)
-                rm.iptables_manager.ipv4['filter'].add_chain(label_chain,
-                                                             wrap=False)
+                label_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + LABEL + label_id, wrap=False)
+                im.ipv4['filter'].add_chain(label_chain, wrap=False)
 
-                rules_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              RULE + label_id,
-                                                              wrap=False)
-                rm.iptables_manager.ipv4['filter'].add_chain(rules_chain,
-                                                             wrap=False)
-                rm.iptables_manager.ipv4['filter'].add_rule(TOP_CHAIN, '-j ' +
-                                                            rules_chain,
-                                                            wrap=False)
+                rules_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + RULE + label_id, wrap=False)
+                im.ipv4['filter'].add_chain(rules_chain, wrap=False)
+                im.ipv4['filter'].add_rule(
+                    TOP_CHAIN, '-j ' + rules_chain, wrap=False)
 
-                rm.iptables_manager.ipv4['filter'].add_rule(label_chain,
-                                                            '',
-                                                            wrap=False)
+                im.ipv4['filter'].add_rule(
+                    label_chain, '', wrap=False)
 
                 rules = label.get('rules')
                 if rules:
-                    self._process_metering_label_rules(rm, rules,
-                                                       label_chain,
-                                                       rules_chain)
+                    self._process_metering_label_rules(
+                        rules, label_chain, rules_chain, ext_dev, im)
 
                 rm.metering_labels[label_id] = label
 
-    def _process_disassociate_metering_label(self, router):
+    def _process_associate_metering_label(self, router):
+        self._update_router(router)
         rm = self.routers.get(router['id'])
-        if not rm:
-            return
 
-        with IptablesManagerTransaction(rm.iptables_manager):
+        ext_dev, ext_snat_dev = self.get_external_device_names(rm)
+        for (im, dev) in [(rm.iptables_manager, ext_dev),
+                          (rm.snat_iptables_manager, ext_snat_dev)]:
+            if im:
+                self._process_ns_specific_metering_label(router, dev, im)
+
+    def _process_ns_specific_disassociate_metering_label(self, router, im):
+        '''Disassociate metering label based on specific namespaces.'''
+        rm = self.routers.get(router['id'])
+        with IptablesManagerTransaction(im):
             labels = router.get(constants.METERING_LABEL_KEY, [])
             for label in labels:
                 label_id = label['id']
                 if label_id not in rm.metering_labels:
                     continue
 
-                label_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              LABEL + label_id,
-                                                              wrap=False)
-                rules_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              RULE + label_id,
-                                                              wrap=False)
+                label_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + LABEL + label_id, wrap=False)
+                rules_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + RULE + label_id, wrap=False)
+                im.ipv4['filter'].remove_chain(label_chain, wrap=False)
+                im.ipv4['filter'].remove_chain(rules_chain, wrap=False)
 
-                rm.iptables_manager.ipv4['filter'].remove_chain(label_chain,
-                                                                wrap=False)
-                rm.iptables_manager.ipv4['filter'].remove_chain(rules_chain,
-                                                                wrap=False)
+    def _process_disassociate_metering_label(self, router):
+        rm = self.routers.get(router['id'])
+        if not rm:
+            return
 
-                del rm.metering_labels[label_id]
+        for im in [rm.iptables_manager, rm.snat_iptables_manager]:
+            if im:
+                self._process_ns_specific_disassociate_metering_label(
+                    router, im)
+
+        labels = router.get(constants.METERING_LABEL_KEY, [])
+        for label in labels:
+            label_id = label['id']
+            del rm.metering_labels[label_id]
 
     @log_helpers.log_method_call
     def add_metering_label(self, context, routers):
@@ -279,61 +319,67 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def _remove_metering_label_rule(self, router):
         self._process_metering_rule_action(router, 'delete')
 
+    def _process_metering_rule_action_based_on_ns(
+        self, router, action, ext_dev, im):
+        '''Process metering rule actions based specific namespaces.'''
+        with IptablesManagerTransaction(im):
+            labels = router.get(constants.METERING_LABEL_KEY, [])
+            for label in labels:
+                label_id = label['id']
+                label_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + LABEL + label_id, wrap=False)
+
+                rules_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + RULE + label_id, wrap=False)
+                rule = label.get('rule')
+                if rule:
+                    if action == 'create':
+                        self._process_metering_label_rule_add(
+                            rule, ext_dev, label_chain, rules_chain, im)
+                    elif action == 'delete':
+                        self._process_metering_label_rule_delete(
+                            rule, ext_dev, label_chain, rules_chain, im)
+
     def _process_metering_rule_action(self, router, action):
         rm = self.routers.get(router['id'])
         if not rm:
             return
-        ext_dev = self.get_external_device_name(rm.router['gw_port_id'])
-        if not ext_dev:
-            return
-        with IptablesManagerTransaction(rm.iptables_manager):
+
+        ext_dev, ext_snat_dev = self.get_external_device_names(rm)
+        for (im, dev) in [(rm.iptables_manager, ext_dev),
+                          (rm.snat_iptables_manager, ext_snat_dev)]:
+            if im and dev:
+                self._process_metering_rule_action_based_on_ns(
+                    router, action, dev, im)
+
+    def _update_metering_label_rules_based_on_ns(self, router, ext_dev, im):
+        '''Update metering lable rules based on namespace.'''
+        with IptablesManagerTransaction(im):
             labels = router.get(constants.METERING_LABEL_KEY, [])
             for label in labels:
                 label_id = label['id']
-                label_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              LABEL + label_id,
-                                                              wrap=False)
 
-                rules_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              RULE + label_id,
-                                                              wrap=False)
-                rule = label.get('rule')
-                if rule:
-                    if action == 'create':
-                        self._process_metering_label_rule_add(rm, rule,
-                                                              ext_dev,
-                                                              label_chain,
-                                                              rules_chain)
-                    elif action == 'delete':
-                        self._process_metering_label_rule_delete(rm, rule,
-                                                                 ext_dev,
-                                                                 label_chain,
-                                                                 rules_chain)
+                label_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + LABEL + label_id, wrap=False)
+                rules_chain = iptables_manager.get_chain_name(
+                    WRAP_NAME + RULE + label_id, wrap=False)
+                im.ipv4['filter'].empty_chain(rules_chain, wrap=False)
+
+                rules = label.get('rules')
+                if rules:
+                    self._process_metering_label_rules(
+                        rules, label_chain, rules_chain, ext_dev, im)
 
     def _update_metering_label_rules(self, router):
         rm = self.routers.get(router['id'])
         if not rm:
             return
 
-        with IptablesManagerTransaction(rm.iptables_manager):
-            labels = router.get(constants.METERING_LABEL_KEY, [])
-            for label in labels:
-                label_id = label['id']
-
-                label_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              LABEL + label_id,
-                                                              wrap=False)
-                rules_chain = iptables_manager.get_chain_name(WRAP_NAME +
-                                                              RULE + label_id,
-                                                              wrap=False)
-                rm.iptables_manager.ipv4['filter'].empty_chain(rules_chain,
-                                                               wrap=False)
-
-                rules = label.get('rules')
-                if rules:
-                    self._process_metering_label_rules(rm, rules,
-                                                       label_chain,
-                                                       rules_chain)
+        ext_dev, ext_snat_dev = self.get_external_device_names(rm)
+        for (im, dev) in [(rm.iptables_manager, ext_dev),
+                          (rm.snat_iptables_manager, ext_snat_dev)]:
+            if im and dev:
+                self._update_metering_label_rules_based_on_ns(router, dev, im)
 
     @log_helpers.log_method_call
     def remove_metering_label(self, context, routers):

@@ -34,6 +34,7 @@ TEST_ROUTERS = [
      'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
      'id': '473ec392-1711-44e3-b008-3251ccfc5099',
      'name': 'router1',
+     'distributed': False,
      'status': 'ACTIVE',
      'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
     {'_metering_labels': [
@@ -49,8 +50,26 @@ TEST_ROUTERS = [
      'id': '373ec392-1711-44e3-b008-3251ccfc5099',
      'name': 'router2',
      'status': 'ACTIVE',
+     'distributed': False,
      'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
 ]
+
+TEST_DVR_ROUTER = [
+    {'_metering_labels': [
+        {'id': 'c5df2fe5-c610-4a2a-b2f4-c0fb6df73c83',
+         'rules': [{
+             'direction': 'ingress',
+             'excluded': False,
+             'id': '7f1a261f-2600-4ed1-870c-a62754501379',
+             'metering_label_id': 'c5df2fe5-c700-4a2a-b2f4-c0fb6df73c83',
+             'remote_ip_prefix': '10.0.0.0/24'}]}],
+     'admin_state_up': True,
+     'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
+     'id': '473ec392-2711-44e3-b008-3251ccfc5099',
+     'name': 'router-test',
+     'distributed': True,
+     'status': 'ACTIVE',
+     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
 
 TEST_ROUTERS_WITH_ONE_RULE = [
     {'_metering_labels': [
@@ -66,6 +85,7 @@ TEST_ROUTERS_WITH_ONE_RULE = [
      'id': '473ec392-1711-44e3-b008-3251ccfc5099',
      'name': 'router1',
      'status': 'ACTIVE',
+     'distributed': False,
      'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
     {'_metering_labels': [
         {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
@@ -79,6 +99,7 @@ TEST_ROUTERS_WITH_ONE_RULE = [
      'gw_port_id': '7d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
      'id': '373ec392-1711-44e3-b008-3251ccfc5099',
      'name': 'router2',
+     'distributed': False,
      'status': 'ACTIVE',
      'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
 ]
@@ -96,6 +117,12 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.iptables_inst = mock.Mock()
         self.v4filter_inst = mock.Mock()
         self.v6filter_inst = mock.Mock()
+        self.namespace_exists_p = mock.patch(
+            'neutron.agent.linux.ip_lib.IpNetnsCommand.exists')
+        self.namespace_exists = self.namespace_exists_p.start()
+        self.snat_ns_name_p = mock.patch(
+            'neutron.agent.l3.dvr_snat_ns.SnatNamespace.get_snat_ns_name')
+        self.snat_ns_name = self.snat_ns_name_p.start()
         self.v4filter_inst.chains = []
         self.v6filter_inst.chains = []
         self.iptables_inst.ipv4 = {'filter': self.v4filter_inst}
@@ -108,16 +135,42 @@ class IptablesDriverTestCase(base.BaseTestCase):
 
     def test_create_stateless_iptables_manager(self):
         routers = TEST_ROUTERS[:1]
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
+        self.assertEqual(1, self.iptables_cls.call_count)
         self.iptables_cls.assert_called_with(
             binary_name=mock.ANY,
             namespace=mock.ANY,
             state_less=True,
             use_ipv6=mock.ANY)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        self.assertTrue(rm.iptables_manager)
+        self.assertIsNone(rm.snat_iptables_manager)
+
+    def test_iptables_manager_never_create_with_no_valid_namespace(self):
+        routers = TEST_ROUTERS[:1]
+        self.namespace_exists.return_value = False
+        self.metering.add_metering_label(None, routers)
+        self.assertFalse(self.iptables_cls.called)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        self.assertIsNone(rm.iptables_manager)
+        self.assertIsNone(rm.snat_iptables_manager)
+
+    def test_create_iptables_manager_for_distributed_routers(self):
+        routers = TEST_DVR_ROUTER[:1]
+        self.namespace_exists.return_value = True
+        snat_ns_name = 'snat-' + routers[0]['id']
+        self.snat_ns_name.return_value = snat_ns_name
+        self.metering.add_metering_label(None, routers)
+        self.assertEqual(2, self.iptables_cls.call_count)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        self.assertTrue(rm.iptables_manager)
+        self.assertTrue(rm.snat_iptables_manager)
 
     def test_add_metering_label(self):
         routers = TEST_ROUTERS[:1]
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
                                      wrap=False),
@@ -132,7 +185,52 @@ class IptablesDriverTestCase(base.BaseTestCase):
 
         self.v4filter_inst.assert_has_calls(calls)
 
+    def test_add_metering_label_dvr_routers(self):
+        routers = TEST_DVR_ROUTER[:1]
+
+        self.namespace_exists.return_value = True
+        snat_ns_name = 'snat-' + routers[0]['id']
+        self.snat_ns_name.return_value = snat_ns_name
+        self.metering._process_ns_specific_metering_label = mock.Mock()
+        self.metering.add_metering_label(None, routers)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        ext_dev, ext_snat_dev = self.metering.get_external_device_names(rm)
+        self.assertEqual(
+            2, self.metering._process_ns_specific_metering_label.call_count)
+        # check and validate the right device being passed based on the
+        # namespace.
+        self.assertEqual(
+            self.metering._process_ns_specific_metering_label.mock_calls,
+            [mock.call(
+                 routers[0], ext_dev, rm.iptables_manager),
+             mock.call(
+                 routers[0], ext_snat_dev, rm.snat_iptables_manager)])
+
+    def test_add_metering_label_legacy_routers(self):
+        routers = TEST_ROUTERS[:1]
+
+        self.namespace_exists.return_value = True
+        self.metering._process_ns_specific_metering_label = mock.Mock()
+        self.metering.add_metering_label(None, routers)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        ext_dev, _ = self.metering.get_external_device_names(rm)
+        self.assertEqual(
+            self.metering._process_ns_specific_metering_label.mock_calls,
+            [mock.call(routers[0], ext_dev, rm.iptables_manager)])
+
+    def test_add_metering_label_when_no_namespace(self):
+        routers = TEST_ROUTERS[:1]
+
+        self.namespace_exists.return_value = False
+        self.metering._process_metering_label = mock.Mock()
+        self.metering.add_metering_label(None, routers)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        self.assertIsNone(rm.iptables_manager)
+        self.assertIsNone(rm.snat_iptables_manager)
+        self.assertFalse(self.metering._process_metering_label.called)
+
     def test_process_metering_label_rules(self):
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, TEST_ROUTERS)
 
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
@@ -171,6 +269,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
         for router in routers:
             router['gw_port_id'] = None
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
 
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
@@ -203,6 +302,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
             'excluded': True,
         })
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
                                      wrap=False),
@@ -238,6 +338,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
     def test_update_metering_label_rules(self):
         routers = TEST_ROUTERS[:1]
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
 
         updates = copy.deepcopy(routers)
@@ -292,6 +393,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
             'remote_ip_prefix': '20.0.0.0/24',
         })
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
 
         del routers[0]['_metering_labels'][0]['rules'][1]
@@ -327,6 +429,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
     def test_add_metering_label_rule(self):
         new_routers_rules = TEST_ROUTERS_WITH_ONE_RULE
         self.metering.update_routers(None, TEST_ROUTERS)
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label_rule(None, new_routers_rules)
         calls = [
                  mock.call.add_rule('neutron-meter-r-c5df2fe5-c60',
@@ -341,9 +444,53 @@ class IptablesDriverTestCase(base.BaseTestCase):
                 ]
         self.v4filter_inst.assert_has_calls(calls)
 
+    def test_add_metering_label_rule_dvr_router(self):
+        routers = TEST_DVR_ROUTER
+        self.metering.update_routers(None, TEST_DVR_ROUTER)
+        self.namespace_exists.return_value = True
+        self.metering._process_metering_rule_action_based_on_ns = mock.Mock()
+        self.metering.add_metering_label_rule(None, routers)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        ext_dev, ext_snat_dev = self.metering.get_external_device_names(rm)
+        self.assertEqual(
+            2,
+            self.metering._process_metering_rule_action_based_on_ns.call_count)
+        # check and validate the right device being passed based on the
+        # namespace.
+        self.assertEqual(
+            self.metering._process_metering_rule_action_based_on_ns.mock_calls,
+            [mock.call(
+                 routers[0], 'create', ext_dev, rm.iptables_manager),
+             mock.call(
+                 routers[0], 'create', ext_snat_dev,
+                 rm.snat_iptables_manager)])
+
+    def test_remove_metering_label_rule_dvr_router(self):
+        routers = TEST_DVR_ROUTER
+        self.metering.update_routers(None, TEST_DVR_ROUTER)
+        self.namespace_exists.return_value = True
+        self.metering.add_metering_label_rule(None, routers)
+        self.metering._process_metering_rule_action_based_on_ns = mock.Mock()
+        self.metering.remove_metering_label_rule(None, routers)
+        rm = iptables_driver.RouterWithMetering(self.metering.conf, routers[0])
+        ext_dev, ext_snat_dev = self.metering.get_external_device_names(rm)
+        self.assertEqual(
+            2,
+            self.metering._process_metering_rule_action_based_on_ns.call_count)
+        # check and validate the right device being passed based on the
+        # namespace.
+        self.assertEqual(
+            self.metering._process_metering_rule_action_based_on_ns.mock_calls,
+            [mock.call(
+                 routers[0], 'delete', ext_dev, rm.iptables_manager),
+             mock.call(
+                 routers[0], 'delete', ext_snat_dev,
+                 rm.snat_iptables_manager)])
+
     def test_remove_metering_label_rule(self):
         new_routers_rules = TEST_ROUTERS_WITH_ONE_RULE
         self.metering.update_routers(None, TEST_ROUTERS)
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label_rule(None, new_routers_rules)
         self.metering.remove_metering_label_rule(None, new_routers_rules)
         calls = [
@@ -361,6 +508,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
     def test_remove_metering_label(self):
         routers = TEST_ROUTERS[:1]
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
         self.metering.remove_metering_label(None, routers)
         calls = [mock.call.add_chain('neutron-meter-l-c5df2fe5-c60',
@@ -384,6 +532,18 @@ class IptablesDriverTestCase(base.BaseTestCase):
 
         self.v4filter_inst.assert_has_calls(calls)
 
+    def test_remove_metering_label_with_dvr_routers(self):
+        routers = TEST_DVR_ROUTER[:1]
+
+        self.namespace_exists.return_value = True
+        self.metering.add_metering_label(None, routers)
+        self.metering._process_ns_specific_disassociate_metering_label = (
+            mock.Mock())
+        self.metering.remove_metering_label(None, routers)
+        self.assertEqual(
+            2, (self.metering.
+                _process_ns_specific_disassociate_metering_label.call_count))
+
     def test_update_routers(self):
         routers = copy.deepcopy(TEST_ROUTERS)
         routers[1]['_metering_labels'][0]['rules'][0].update({
@@ -391,6 +551,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
             'excluded': True,
         })
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
 
         updates = copy.deepcopy(routers)
@@ -449,6 +610,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
     def test_update_routers_removal(self):
         routers = TEST_ROUTERS
 
+        self.namespace_exists.return_value = True
         self.metering.add_metering_label(None, routers)
 
         # Remove router id '373ec392-1711-44e3-b008-3251ccfc5099'
