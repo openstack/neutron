@@ -342,6 +342,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         return num_agents
 
+    @db_api.retry_if_session_inactive()
     def _create_ha_port_binding(self, context, router_id, port_id):
         try:
             with context.session.begin():
