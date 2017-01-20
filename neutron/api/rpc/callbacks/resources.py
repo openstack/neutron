@@ -10,7 +10,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.objects import network
+from neutron.objects import ports
 from neutron.objects.qos import policy
+from neutron.objects import securitygroup
+from neutron.objects import subnet
 from neutron.objects import trunk
 
 
@@ -18,12 +22,21 @@ from neutron.objects import trunk
 TRUNK = trunk.Trunk.obj_name()
 QOS_POLICY = policy.QosPolicy.obj_name()
 SUBPORT = trunk.SubPort.obj_name()
+PORT = ports.Port.obj_name()
+NETWORK = network.Network.obj_name()
+SECURITYGROUP = securitygroup.SecurityGroup.obj_name()
+SECURITYGROUPRULE = securitygroup.SecurityGroupRule.obj_name()
 
 
 _VALID_CLS = (
     policy.QosPolicy,
     trunk.Trunk,
     trunk.SubPort,
+    ports.Port,
+    subnet.Subnet,
+    network.Network,
+    securitygroup.SecurityGroup,
+    securitygroup.SecurityGroupRule,
 )
 
 _TYPE_TO_CLS_MAP = {cls.obj_name(): cls for cls in _VALID_CLS}
