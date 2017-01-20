@@ -164,3 +164,22 @@ nova_opts = [
 
 def register_nova_opts(cfg=cfg.CONF):
     cfg.register_opts(nova_opts, group=NOVA_CONF_SECTION)
+
+
+PLACEMENT_CONF_SECTION = 'placement'
+
+placement_opts = [
+    cfg.StrOpt('region_name',
+               help=_('Name of placement region to use. Useful if keystone '
+                      'manages more than one region.')),
+    cfg.StrOpt('endpoint_type',
+               default='public',
+               choices=['public', 'admin', 'internal'],
+               help=_('Type of the placement endpoint to use.  This endpoint '
+                      'will be looked up in the keystone catalog and should '
+                      'be one of public, internal or admin.')),
+]
+
+
+def register_placement_opts(cfg=cfg.CONF):
+    cfg.register_opts(placement_opts, group=PLACEMENT_CONF_SECTION)

@@ -41,6 +41,20 @@ class NetworkQosBindingNotFound(e.NotFound):
                 "could not be found.")
 
 
+class PlacementResourceProviderNotFound(e.NotFound):
+    message = _("Placement resource provider not found %(resource_provider)s.")
+
+
+class PlacementInventoryNotFound(e.NotFound):
+    message = _("Placement inventory not found for resource provider "
+                "%(resource_provider)s, resource class %(resource_class)s.")
+
+
+class PlacementAggregateNotFound(e.NotFound):
+    message = _("Aggregate not found for resource provider "
+                "%(resource_provider)s.")
+
+
 class PolicyRemoveAuthorizationError(e.NotAuthorized):
     message = _("Failed to remove provided policy %(policy_id)s "
                 "because you are not authorized.")
@@ -101,6 +115,11 @@ class UnsupportedPortDeviceOwner(e.Conflict):
 class OverlappingAllocationPools(e.Conflict):
     message = _("Found overlapping allocation pools: "
                 "%(pool_1)s %(pool_2)s for subnet %(subnet_cidr)s.")
+
+
+class PlacementInventoryUpdateConflict(e.Conflict):
+    message = _("Placement inventory update conflict for resource provider "
+                "%(resource_provider)s, resource class %(resource_class)s.")
 
 
 class OutOfBoundsAllocationPool(e.BadRequest):
