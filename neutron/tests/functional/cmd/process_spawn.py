@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+import random
 import signal
 import socket
 import sys
@@ -23,7 +24,6 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.agent.linux import daemon
-from neutron.tests.common import net_helpers
 
 UNIX_FAMILY = 'UNIX'
 
@@ -77,7 +77,7 @@ class ProcessSpawn(daemon.Daemon):
     of the spawned processes.
     """
 
-    MAX_BIND_RETRIES = 5
+    MAX_BIND_RETRIES = 64
 
     DCT_FAMILY = {
         n_const.IPv4: socket.AF_INET,
@@ -110,6 +110,9 @@ class ProcessSpawn(daemon.Daemon):
 
         self.listen_socket = socket.socket(socket_family, socket_type)
 
+        # Set a different seed per process to increase randomness
+        random.seed(os.getpid())
+
         # Try to listen in a random port which is not currently in use
         retries = 0
         while retries < ProcessSpawn.MAX_BIND_RETRIES:
@@ -120,7 +123,8 @@ class ProcessSpawn(daemon.Daemon):
                 if self.family == UNIX_FAMILY:
                     self.listen_socket.bind('')
                 else:
-                    port = net_helpers.get_free_namespace_port(self.proto)
+                    # Pick a non privileged port
+                    port = random.randint(1024, 65535)
                     self.listen_socket.bind(('', port))
             except socket.error:
                 retries += 1
@@ -146,8 +150,9 @@ class ProcessSpawn(daemon.Daemon):
             children.append(child_pid)
 
         # Install a SIGTERM handler if requested
-        if not self.ignore_sigterm:
-            signal.signal(signal.SIGTERM, self.sigterm_handler)
+        handler = (
+            signal.SIG_IGN if self.ignore_sigterm else self.sigterm_handler)
+        signal.signal(signal.SIGTERM, handler)
 
         self.child_pids = children
         if self.parent_must_listen:
