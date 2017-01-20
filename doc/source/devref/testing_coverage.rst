@@ -65,7 +65,7 @@ such as what L2 agent to use or what type of routers to create.
 +------------------------+------------+------------+------------+------------+------------+------------+
 | DHCP HA                | V          |            |            | amuller    |            |            |
 +------------------------+------------+------------+------------+------------+------------+------------+
-| OVS ARP responder      | V          | X*         |            | X*         |            |            |
+| OVS ARP responder      | V          | X*         |            | Implicit   |            |            |
 +------------------------+------------+------------+------------+------------+------------+------------+
 | OVS agent              | V          | V          |            | V          |            | V          |
 +------------------------+------------+------------+------------+------------+------------+------------+
@@ -90,9 +90,7 @@ such as what L2 agent to use or what type of routers to create.
   layers, nor for the L3 agent changes. This has been an area of repeated
   regressions.
 * The functional job now compiles OVS 2.5 from source, enabling testing
-  features that we previously could not. The OVS ARP responder is one such
-  feature. Modifying the fullstack job to use OVS 2.5 as well will enable
-  testing the OVS ARP responder implicitly.
+  features that we previously could not.
 
 Missing Infrastructure
 ----------------------
