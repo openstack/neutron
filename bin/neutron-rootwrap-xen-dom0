@@ -29,7 +29,6 @@ from oslo_serialization import jsonutils as json
 import os
 import select
 import sys
-import traceback
 
 import XenAPI
 
@@ -45,7 +44,7 @@ def parse_args():
     exec_name = sys.argv.pop(0)
     # argv[0] required; path to conf file
     if len(sys.argv) < 2:
-        print("%s: No command specified" % exec_name)
+        sys.stderr.write("%s: No command specified" % exec_name)
         sys.exit(RC_NOCOMMAND)
 
     config_file = sys.argv.pop(0)
@@ -59,7 +58,7 @@ def _xenapi_section_name(config):
     if len(sections) == 1:
         return sections[0]
 
-    print("Multiple [xenapi] sections or no [xenapi] section found!")
+    sys.stderr.write("Multiple [xenapi] sections or no [xenapi] section found!")
     sys.exit(RC_BADCONFIG)
 
 
@@ -74,13 +73,14 @@ def load_configuration(exec_name, config_file):
         username = config.get(section, "xenapi_connection_username")
         password = config.get(section, "xenapi_connection_password")
     except ConfigParser.Error:
-        print("%s: Incorrect configuration file: %s" % (exec_name, config_file))
+        sys.stderr.write("%s: Incorrect configuration file: %s" %
+                         (exec_name, config_file))
         sys.exit(RC_BADCONFIG)
     if not url or not password:
         msg = ("%s: Must specify xenapi_connection_url, "
                "xenapi_connection_username (optionally), and "
                "xenapi_connection_password in %s") % (exec_name, config_file)
-        print(msg)
+        sys.stderr.write(msg)
         sys.exit(RC_BADCONFIG)
     return dict(
         filters_path=filters_path,
@@ -105,7 +105,7 @@ def filter_command(exec_name, filters_path, user_args, exec_dirs):
     filter_match = wrapper.match_filter(
         filters, user_args, exec_dirs=exec_dirs)
     if not filter_match:
-        print("Unauthorized command: %s" % ' '.join(user_args))
+        sys.stderr.write("Unauthorized command: %s" % ' '.join(user_args))
         sys.exit(RC_UNAUTHORIZED)
 
 
@@ -118,11 +118,17 @@ def run_command(url, username, password, user_args, cmd_input):
             result = session.xenapi.host.call_plugin(
                 host, 'netwrap', 'run_command',
                 {'cmd': json.dumps(user_args), 'cmd_input': json.dumps(cmd_input)})
-            return json.loads(result)
+            result_dict = json.loads(result)
+            returncode = result_dict.get('returncode')
+            captured_stdout = result_dict.get('out')
+            captured_stderr = result_dict.get('err')
+            sys.stdout.write(captured_stdout)
+            sys.stderr.write(captured_stderr)
+            sys.exit(returncode)
         finally:
             session.xenapi.session.logout()
     except Exception as e:
-        traceback.print_exc()
+        sys.stderr.write("Failed to execute command in Dom0, %s" % e)
         sys.exit(RC_XENAPI_ERROR)
 
 
@@ -142,4 +148,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print(main())
+    main()
