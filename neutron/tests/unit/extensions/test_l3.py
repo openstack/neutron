@@ -256,11 +256,6 @@ class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_update(context, net, network['network'])
         return net
 
-    def delete_network(self, context, id):
-        with context.session.begin(subtransactions=True):
-            self._process_l3_delete(context, id)
-            super(TestL3NatBasePlugin, self).delete_network(context, id)
-
     def delete_port(self, context, id, l3_port_check=True):
         plugin = directory.get_plugin(lib_constants.L3)
         if plugin:

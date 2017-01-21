@@ -1522,6 +1522,22 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
 
+    def test_delete_network_port_exists_owned_by_network_race(self):
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        network_id = network['network']['id']
+        self._create_port(self.fmt, network_id,
+                          device_owner=constants.DEVICE_OWNER_DHCP)
+        # skip first port delete to simulate create after auto clean
+        plugin = directory.get_plugin()
+        p = mock.patch.object(plugin, 'delete_port')
+        mock_del_port = p.start()
+        mock_del_port.side_effect = lambda *a, **k: p.stop()
+        req = self.new_delete_request('networks', network_id)
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+
     def test_update_port_delete_ip(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:

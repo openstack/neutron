@@ -863,126 +863,38 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return [db_utils.resource_fields(net, fields) for net in nets]
 
-    def _delete_ports(self, context, port_ids):
-        for port_id in port_ids:
-            try:
-                self.delete_port(context, port_id)
-            except (exc.PortNotFound, sa_exc.ObjectDeletedError):
-                # concurrent port deletion can be performed by
-                # release_dhcp_port caused by concurrent subnet_delete
-                LOG.info(_LI("Port %s was deleted concurrently"), port_id)
-            except Exception as e:
-                with excutils.save_and_reraise_exception():
-                    utils.attach_exc_details(
-                        e,
-                        _LE("Exception auto-deleting port %s"), port_id)
-
-    def _delete_subnets(self, context, subnet_ids):
-        for subnet_id in subnet_ids:
-            try:
-                self.delete_subnet(context, subnet_id)
-            except (exc.SubnetNotFound, sa_exc.ObjectDeletedError):
-                LOG.info(_LI("Subnet %s was deleted concurrently"),
-                         subnet_id)
-            except Exception as e:
-                with excutils.save_and_reraise_exception():
-                    utils.attach_exc_details(
-                        e,
-                        _LE("Exception auto-deleting subnet %s"), subnet_id)
-
     @utils.transaction_guard
-    @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):
-        # REVISIT(rkukura) The super(Ml2Plugin, self).delete_network()
-        # function is not used because it auto-deletes ports and
-        # subnets from the DB without invoking the derived class's
-        # delete_port() or delete_subnet(), preventing mechanism
-        # drivers from being called. This approach should be revisited
-        # when the API layer is reworked during icehouse.
+        # the only purpose of this override is to protect this from being
+        # called inside of a transaction.
+        return super(Ml2Plugin, self).delete_network(context, id)
 
-        LOG.debug("Deleting network %s", id)
-        session = context.session
-        while True:
-            # NOTE(kevinbenton): this loop keeps db objects in scope
-            # so we must expire them or risk stale reads.
-            # see bug/1623990
-            session.expire_all()
-            try:
-                # REVISIT: Serialize this operation with a semaphore
-                # to prevent deadlock waiting to acquire a DB lock
-                # held by another thread in the same process, leading
-                # to 'lock wait timeout' errors.
-                #
-                # Process L3 first, since, depending on the L3 plugin, it may
-                # involve sending RPC notifications, and/or calling delete_port
-                # on this plugin.
-                # Additionally, a rollback may not be enough to undo the
-                # deletion of a floating IP with certain L3 backends.
-                self._process_l3_delete(context, id)
-                # Using query().with_lockmode isn't necessary. Foreign-key
-                # constraints prevent deletion if concurrent creation happens.
-                with session.begin(subtransactions=True):
-                    # Get ports to auto-delete.
-                    ports = (session.query(models_v2.Port).
-                             enable_eagerloads(False).
-                             filter_by(network_id=id).all())
-                    LOG.debug("Ports to auto-delete: %s", ports)
-                    only_auto_del = all(p.device_owner
-                                        in db_base_plugin_v2.
-                                        AUTO_DELETE_PORT_OWNERS
-                                        for p in ports)
-                    if not only_auto_del:
-                        LOG.debug("Tenant-owned ports exist")
-                        raise exc.NetworkInUse(net_id=id)
+    @registry.receives(resources.NETWORK, [events.PRECOMMIT_DELETE])
+    def _network_delete_precommit_handler(self, rtype, event, trigger,
+                                          context, network_id, **kwargs):
+        network = self.get_network(context, network_id)
+        mech_context = driver_context.NetworkContext(self,
+                                                     context,
+                                                     network)
+        # TODO(kevinbenton): move this mech context into something like
+        # a 'delete context' so it's not polluting the real context object
+        setattr(context, '_mech_context', mech_context)
+        self.mechanism_manager.delete_network_precommit(
+            mech_context)
 
-                    # Get subnets to auto-delete.
-                    subnets = (session.query(models_v2.Subnet).
-                               enable_eagerloads(False).
-                               filter_by(network_id=id).all())
-                    LOG.debug("Subnets to auto-delete: %s", subnets)
-
-                    if not (ports or subnets):
-                        network = self.get_network(context, id)
-                        mech_context = driver_context.NetworkContext(self,
-                                                                     context,
-                                                                     network)
-                        self.mechanism_manager.delete_network_precommit(
-                            mech_context)
-
-                        registry.notify(resources.NETWORK,
-                                        events.PRECOMMIT_DELETE,
-                                        self,
-                                        context=context,
-                                        network_id=id)
-                        record = self._get_network(context, id)
-                        LOG.debug("Deleting network record %s", record)
-                        session.delete(record)
-
-                        # The segment records are deleted via cascade from the
-                        # network record, so explicit removal is not necessary.
-                        LOG.debug("Committing transaction")
-                        break
-
-                    port_ids = [port.id for port in ports]
-                    subnet_ids = [subnet.id for subnet in subnets]
-            except os_db_exception.DBDuplicateEntry:
-                LOG.warning(_LW("A concurrent port creation has "
-                                "occurred"))
-                continue
-            self._delete_ports(context, port_ids)
-            self._delete_subnets(context, subnet_ids)
-
-        kwargs = {'context': context, 'network': network}
-        registry.notify(resources.NETWORK, events.AFTER_DELETE, self, **kwargs)
+    @registry.receives(resources.NETWORK, [events.AFTER_DELETE])
+    def _network_delete_after_delete_handler(self, rtype, event, trigger,
+                                             context, network, **kwargs):
         try:
-            self.mechanism_manager.delete_network_postcommit(mech_context)
+            self.mechanism_manager.delete_network_postcommit(
+                context._mech_context)
         except ml2_exc.MechanismDriverError:
             # TODO(apech) - One or more mechanism driver failed to
             # delete the network.  Ideally we'd notify the caller of
             # the fact that an error occurred.
             LOG.error(_LE("mechanism_manager.delete_network_postcommit"
                           " failed"))
-        self.notifier.network_delete(context, id)
+        self.notifier.network_delete(context, network['id'])
 
     def _create_subnet_db(self, context, subnet):
         session = context.session

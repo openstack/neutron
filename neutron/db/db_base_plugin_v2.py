@@ -395,29 +395,38 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 ndb_utils.filter_non_model_columns(n, models_v2.Network))
         return self._make_network_dict(network, context=context)
 
+    def _ensure_network_not_in_use(self, context, net_id):
+        non_auto_ports = context.session.query(
+            models_v2.Port.id).filter_by(network_id=net_id).filter(
+            ~models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))
+        if non_auto_ports.count():
+            raise exc.NetworkInUse(net_id=net_id)
+
     @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):
-        with context.session.begin(subtransactions=True):
-            network = self._get_network(context, id)
-
-            auto_delete_ports = context.session.query(
-                models_v2.Port).filter_by(network_id=id).filter(
-                models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))
-            for port in auto_delete_ports:
-                context.session.delete(port)
-
-            port_in_use = context.session.query(models_v2.Port).filter_by(
-                network_id=id).first()
-
-            if port_in_use:
-                raise exc.NetworkInUse(net_id=id)
-
-            # clean up subnets
-            subnets = self._get_subnets_by_network(context, id)
+        registry.notify(resources.NETWORK, events.BEFORE_DELETE, self,
+                        context=context, network_id=id)
+        self._ensure_network_not_in_use(context, id)
+        auto_delete_port_ids = [p.id for p in context.session.query(
+            models_v2.Port.id).filter_by(network_id=id).filter(
+            models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))]
+        for port_id in auto_delete_port_ids:
+            self.delete_port(context.elevated(), port_id)
+        # clean up subnets
+        subnets = self._get_subnets_by_network(context, id)
+        with db_api.exc_to_retry(os_db_exc.DBReferenceError):
+            # retry reference errors so we can check the port type and
+            # cleanup if a network-owned port snuck in without failing
             for subnet in subnets:
                 self.delete_subnet(context, subnet['id'])
-
-            context.session.delete(network)
+            with context.session.begin(subtransactions=True):
+                network_db = self._get_network(context, id)
+                network = self._make_network_dict(network_db, context=context)
+                registry.notify(resources.NETWORK, events.PRECOMMIT_DELETE,
+                                self, context=context, network_id=id)
+                context.session.delete(network_db)
+        registry.notify(resources.NETWORK, events.AFTER_DELETE,
+                        self, context=context, network=network)
 
     @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):
