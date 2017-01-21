@@ -29,6 +29,8 @@ import osprofiler.sqlalchemy
 from pecan import util as p_util
 import six
 import sqlalchemy
+from sqlalchemy import event  # noqa
+from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc
 import traceback
 
@@ -230,3 +232,32 @@ def autonested_transaction(sess):
         session_context = sess.begin(subtransactions=True)
     with session_context as tx:
         yield tx
+
+
+_REGISTERED_SQLA_EVENTS = []
+
+
+def sqla_listen(*args):
+    """Wrapper to track subscribers for test teardowns.
+
+    SQLAlchemy has no "unsubscribe all" option for its event listener
+    framework so we need to keep track of the subscribers by having
+    them call through here for test teardowns.
+    """
+    event.listen(*args)
+    _REGISTERED_SQLA_EVENTS.append(args)
+
+
+def sqla_remove(*args):
+    event.remove(*args)
+    _REGISTERED_SQLA_EVENTS.remove(args)
+
+
+def sqla_remove_all():
+    for args in _REGISTERED_SQLA_EVENTS:
+        try:
+            event.remove(*args)
+        except sql_exc.InvalidRequestError:
+            # already removed
+            pass
+    del _REGISTERED_SQLA_EVENTS[:]

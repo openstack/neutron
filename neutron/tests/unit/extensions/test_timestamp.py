@@ -56,8 +56,6 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
         ext_mgr = TimeStampExtensionManager()
         super(TimeStampChangedsinceTestCase, self).setUp(plugin=self.plugin,
                                                          ext_mgr=ext_mgr)
-        self.addCleanup(
-            directory.get_plugin('timestamp').unregister_db_events)
         self.addCleanup(manager.NeutronManager.clear_instance)
 
     def setup_coreplugin(self, core_plugin=None, load_plugins=True):

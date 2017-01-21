@@ -12,11 +12,11 @@
 #    under the License.
 
 from oslo_log import log as logging
-from sqlalchemy import event
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _, _LW
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db import standard_attr
 from neutron.services import service_base
@@ -34,7 +34,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
         for resource in standard_attr.get_standard_attr_resource_model_map():
             db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
                 resource, [self.extend_resource_dict_revision])
-        event.listen(se.Session, 'before_flush', self.bump_revisions)
+        db_api.sqla_listen(se.Session, 'before_flush', self.bump_revisions)
 
     def bump_revisions(self, session, context, instances):
         # bump revision number for any updated objects in the session

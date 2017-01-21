@@ -26,7 +26,6 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
 from sqlalchemy import and_
-from sqlalchemy import event
 from sqlalchemy import not_
 
 from neutron._i18n import _, _LE, _LI
@@ -136,12 +135,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # NOTE(arosen) These event listeners are here to hook into when
             # port status changes and notify nova about their change.
             self.nova_notifier = nova.Notifier.get_instance()
-            event.listen(models_v2.Port, 'after_insert',
-                         self.nova_notifier.send_port_status)
-            event.listen(models_v2.Port, 'after_update',
-                         self.nova_notifier.send_port_status)
-            event.listen(models_v2.Port.status, 'set',
-                         self.nova_notifier.record_port_status_changed)
+            db_api.sqla_listen(models_v2.Port, 'after_insert',
+                               self.nova_notifier.send_port_status)
+            db_api.sqla_listen(models_v2.Port, 'after_update',
+                               self.nova_notifier.send_port_status)
+            db_api.sqla_listen(models_v2.Port.status, 'set',
+                               self.nova_notifier.record_port_status_changed)
         for e in (events.BEFORE_CREATE, events.BEFORE_UPDATE,
                   events.BEFORE_DELETE):
             registry.subscribe(self.validate_network_rbac_policy_change,

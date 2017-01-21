@@ -23,7 +23,7 @@ from oslo_db.sqlalchemy import test_migrations
 from oslotest import base as oslotest_base
 import six
 import sqlalchemy
-from sqlalchemy import event
+from sqlalchemy import event  # noqa
 from sqlalchemy.sql import ddl as sqla_ddl
 import subprocess
 

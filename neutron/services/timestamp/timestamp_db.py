@@ -15,11 +15,10 @@
 from neutron_lib import exceptions as n_exc
 from oslo_log import log
 from oslo_utils import timeutils
-from sqlalchemy import event
-from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _LW
+from neutron.db import api as db_api
 from neutron.db import standard_attr
 
 LOG = log.getLogger(__name__)
@@ -68,22 +67,10 @@ class TimeStamp_db_mixin(object):
                 obj.updated_at = timeutils.utcnow()
 
     def register_db_events(self):
-        event.listen(standard_attr.StandardAttribute, 'before_insert',
-                     self._add_timestamp)
-        event.listen(se.Session, 'before_flush', self.update_timestamp)
-
-    def unregister_db_events(self):
-        self._unregister_db_event(standard_attr.StandardAttribute,
-                                  'before_insert', self._add_timestamp)
-        self._unregister_db_event(se.Session, 'before_flush',
-                                  self.update_timestamp)
-
-    def _unregister_db_event(self, listen_obj, listened_event, listen_hander):
-        try:
-            event.remove(listen_obj, listened_event, listen_hander)
-        except sql_exc.InvalidRequestError:
-            LOG.warning(_LW("No sqlalchemy event for resource %s found"),
-                        listen_obj)
+        listen = db_api.sqla_listen
+        listen(standard_attr.StandardAttribute, 'before_insert',
+               self._add_timestamp)
+        listen(se.Session, 'before_flush', self.update_timestamp)
 
     def _format_timestamp(self, resource_db, result):
         result['created_at'] = (resource_db.created_at.

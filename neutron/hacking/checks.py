@@ -389,6 +389,23 @@ def check_assertIsNone(logical_line, filename):
                    "sentences not allowed")
 
 
+@flake8ext
+def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
+    """N346 - Use neutron.db.api.sqla_listen instead of sqlalchemy event."""
+    if noqa:
+        return
+    is_import = (logical_line.startswith('import') or
+                 logical_line.startswith('from'))
+    if not is_import:
+        return
+    for kw in ('sqlalchemy', 'event'):
+        if kw not in logical_line:
+            return
+    yield (0, "N346: Register sqlalchemy events through "
+              "neutron.db.api.sqla_listen so they can be cleaned up between "
+              "unit tests")
+
+
 def factory(register):
     register(validate_log_translations)
     register(use_jsonutils)
@@ -410,3 +427,4 @@ def factory(register):
     register(check_no_imports_from_tests)
     register(check_python3_no_filter)
     register(check_assertIsNone)
+    register(check_no_sqlalchemy_event_import)
