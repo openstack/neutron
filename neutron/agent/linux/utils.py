@@ -402,7 +402,7 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
     disable_nagle_algorithm = False
 
     def __init__(self, request, client_address, server):
-        if client_address == '':
+        if not client_address:
             client_address = ('<local>', 0)
         # base class is old-style, so super does not work properly
         eventlet.wsgi.HttpProtocol.__init__(self, request, client_address,

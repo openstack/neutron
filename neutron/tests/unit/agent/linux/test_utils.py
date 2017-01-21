@@ -468,8 +468,9 @@ class TestUnixDomainHttpConnection(base.BaseTestCase):
 
 class TestUnixDomainHttpProtocol(base.BaseTestCase):
     def test_init_empty_client(self):
-        u = utils.UnixDomainHttpProtocol(mock.Mock(), '', mock.Mock())
-        self.assertEqual(u.client_address, ('<local>', 0))
+        for addr in ('', b''):
+            u = utils.UnixDomainHttpProtocol(mock.Mock(), addr, mock.Mock())
+            self.assertEqual(u.client_address, ('<local>', 0))
 
     def test_init_with_client(self):
         u = utils.UnixDomainHttpProtocol(mock.Mock(), 'foo', mock.Mock())
