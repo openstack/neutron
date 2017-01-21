@@ -30,6 +30,7 @@ import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
 import neutron.conf.agent.metadata.config as meta_conf
 import neutron.conf.agent.ovs_conf
+import neutron.conf.agent.xenapi_conf
 import neutron.conf.cache_utils
 import neutron.conf.common
 import neutron.conf.extensions.allowedaddresspairs
@@ -274,7 +275,7 @@ def list_ovs_opts():
              AGENT_EXT_MANAGER_OPTS)
          ),
         ('securitygroup',
-         neutron.conf.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts),
     ]
 
 
@@ -300,3 +301,10 @@ def list_auth_opts():
                 opt_list.append(plugin_option)
     opt_list.sort(key=operator.attrgetter('name'))
     return [(NOVA_GROUP, opt_list)]
+
+
+def list_xenapi_opts():
+    return [
+        ('xenapi',
+         neutron.conf.agent.xenapi_conf.XENAPI_OPTS)
+    ]
