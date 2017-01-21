@@ -441,8 +441,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # Get the current port state and build a new PortContext
             # reflecting this state as original state for subsequent
             # mechanism driver update_port_*commit() calls.
-            port_db, cur_binding = db.get_locked_port_and_binding(
-                plugin_context, port_id)
+            try:
+                port_db = self._get_port(plugin_context, port_id)
+                cur_binding = port_db.port_binding
+            except exc.PortNotFound:
+                port_db, cur_binding = None, None
+            if not port_db or not cur_binding:
+                # The port has been deleted concurrently, so just
+                # return the unbound result from the initial
+                # transaction that completed before the deletion.
+                LOG.debug("Port %s has been deleted concurrently", port_id)
+                return orig_context, False, False
             # Since the mechanism driver bind_port() calls must be made
             # outside a DB transaction locking the port state, it is
             # possible (but unlikely) that the port's state could change
@@ -452,19 +461,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # used. If attributes such as binding:host_id, binding:profile,
             # or binding:vnic_type are updated concurrently, the try_again
             # flag is returned to indicate that the commit was unsuccessful.
-            if not port_db:
-                # The port has been deleted concurrently, so just
-                # return the unbound result from the initial
-                # transaction that completed before the deletion.
-                LOG.debug("Port %s has been deleted concurrently", port_id)
-                return orig_context, False, False
             oport = self._make_port_dict(port_db)
             port = self._make_port_dict(port_db)
             network = bind_context.network.current
             if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
                 # REVISIT(rkukura): The PortBinding instance from the
                 # ml2_port_bindings table, returned as cur_binding
-                # from db.get_locked_port_and_binding() above, is
+                # from port_db.port_binding above, is
                 # currently not used for DVR distributed ports, and is
                 # replaced here with the DistributedPortBinding instance from
                 # the ml2_distributed_port_bindings table specific to the host
@@ -1394,8 +1397,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         bound_mech_contexts = []
 
         with session.begin(subtransactions=True):
-            port_db, binding = db.get_locked_port_and_binding(context, id)
-            if not port_db:
+            port_db = self._get_port(context, id)
+            binding = port_db.port_binding
+            if not binding:
                 raise exc.PortNotFound(port_id=id)
             mac_address_updated = self._check_mac_update_allowed(
                 port_db, attrs, binding)
@@ -1600,8 +1604,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         session = context.session
         with session.begin(subtransactions=True):
-            port_db, binding = db.get_locked_port_and_binding(context, id)
-            if not port_db:
+            try:
+                port_db = self._get_port(context, id)
+                binding = port_db.port_binding
+            except exc.PortNotFound:
                 LOG.debug("The port '%s' was deleted", id)
                 return
             port = self._make_port_dict(port_db)

@@ -1072,9 +1072,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertIsNone(l3plugin.disassociate_floatingips(ctx, port_id))
 
     def test_create_port_tolerates_db_deadlock(self):
+        plugin = directory.get_plugin()
         with self.network() as net:
             with self.subnet(network=net) as subnet:
-                _orig = ml2_db.get_locked_port_and_binding
+                _orig = plugin._get_port
                 self._failed = False
 
                 def fail_once(*args, **kwargs):
@@ -1082,9 +1083,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                         self._failed = True
                         raise db_exc.DBDeadlock()
                     return _orig(*args, **kwargs)
-                with mock.patch('neutron.plugins.ml2.plugin.'
-                                'db.get_locked_port_and_binding',
-                                side_effect=fail_once) as get_port_mock:
+                with mock.patch.object(plugin, '_get_port',
+                                       side_effect=fail_once) as get_port_mock:
                     port_kwargs = {portbindings.HOST_ID: 'host1',
                                    'subnet': subnet,
                                    'device_id': 'deadlocktest'}
@@ -1103,18 +1103,15 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
         with self.port() as port:
-            port_db, binding = ml2_db.get_locked_port_and_binding(
-                ctx, port['port']['id'])
-            with mock.patch('neutron.plugins.ml2.plugin.'
-                            'db.get_locked_port_and_binding') as lock:
-                lock.side_effect = [db_exc.DBDeadlock,
-                                    (port_db, binding)]
+            port_db = plugin._get_port(ctx, port['port']['id'])
+            with mock.patch.object(plugin, '_get_port') as gp:
+                gp.side_effect = [db_exc.DBDeadlock] + [port_db] * 3
                 req = self.new_delete_request('ports', port['port']['id'])
                 res = req.get_response(self.api)
                 self.assertEqual(204, res.status_int)
-                self.assertEqual(2, lock.call_count)
-                self.assertRaises(
-                    exc.PortNotFound, plugin.get_port, ctx, port['port']['id'])
+                self.assertGreater(gp.call_count, 1)
+            self.assertRaises(
+                exc.PortNotFound, plugin.get_port, ctx, port['port']['id'])
 
     def test_port_create_resillient_to_duplicate_records(self):
 
@@ -1523,29 +1520,29 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         # create a port and delete it so we have an expired mechanism context
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context,
-                                                         port['port']['id'])[1]
+            binding = plugin._get_port(self.context,
+                                       port['port']['id']).port_binding
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
                 binding, None)
-        with mock.patch(
-            'neutron.plugins.ml2.plugin.' 'db.get_locked_port_and_binding',
-            return_value=(None, None)) as glpab_mock,\
+        side = exc.PortNotFound(port_id=port['port']['id'])
+        with mock.patch.object(plugin, '_get_port',
+                               side_effect=side) as gp_mock,\
                 mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
                            '_make_port_dict') as mpd_mock:
             plugin._bind_port_if_needed(mech_context)
             # called during deletion to get port
-            self.assertTrue(glpab_mock.mock_calls)
+            self.assertTrue(gp_mock.mock_calls)
             # should have returned before calling _make_port_dict
             self.assertFalse(mpd_mock.mock_calls)
 
     def _create_port_and_bound_context(self, port_vif_type, bound_vif_type):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context,
-                                                         port['port']['id'])[1]
+            binding = plugin._get_port(
+                self.context, port['port']['id']).port_binding
             binding['host'] = 'fake_host'
             binding['vif_type'] = port_vif_type
             # Generates port context to be used before the bind.
@@ -1644,8 +1641,8 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_none(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context,
-                                                         port['port']['id'])[1]
+            binding = plugin._get_port(
+                self.context, port['port']['id']).port_binding
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
@@ -1661,8 +1658,8 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_not_changed(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = ml2_db.get_locked_port_and_binding(self.context,
-                                                         port['port']['id'])[1]
+            binding = plugin._get_port(
+                self.context, port['port']['id']).port_binding
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
@@ -2600,8 +2597,8 @@ class TestML2Segments(Ml2PluginV2TestCase):
         ml2_db.subscribe()
         plugin = directory.get_plugin()
         with self.port(device_owner=fake_owner_compute) as port:
-            binding = ml2_db.get_locked_port_and_binding(self.context,
-                                                         port['port']['id'])[1]
+            binding = plugin._get_port(
+                self.context, port['port']['id']).port_binding
             binding['host'] = 'host-ovs-no_filter'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
