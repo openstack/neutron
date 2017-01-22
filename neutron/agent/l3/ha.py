@@ -121,25 +121,35 @@ class AgentMixin(object):
         if ri is None:
             return
 
-        self._configure_ipv6_ra_on_ext_gw_port_if_necessary(ri, state)
+        # TODO(dalvarez): Fix bug 1677279 by moving the IPv6 parameters
+        # configuration to keepalived-state-change in order to remove the
+        # dependency that currently exists on l3-agent running for the IPv6
+        # failover.
+        self._configure_ipv6_params_on_ext_gw_port_if_necessary(ri, state)
         if self.conf.enable_metadata_proxy:
             self._update_metadata_proxy(ri, router_id, state)
         self._update_radvd_daemon(ri, state)
         self.state_change_notifier.queue_event((router_id, state))
 
-    def _configure_ipv6_ra_on_ext_gw_port_if_necessary(self, ri, state):
+    def _configure_ipv6_params_on_ext_gw_port_if_necessary(self, ri, state):
         # If ipv6 is enabled on the platform, ipv6_gateway config flag is
         # not set and external_network associated to the router does not
         # include any IPv6 subnet, enable the gateway interface to accept
-        # Router Advts from upstream router for default route.
+        # Router Advts from upstream router for default route on master
+        # instances as well as ipv6 forwarding. Otherwise, disable them.
         ex_gw_port_id = ri.ex_gw_port and ri.ex_gw_port['id']
-        if state == 'master' and ex_gw_port_id:
-            interface_name = ri.get_external_device_name(ex_gw_port_id)
-            if ri.router.get('distributed', False):
-                namespace = ri.ha_namespace
-            else:
-                namespace = ri.ns_name
-            ri._enable_ra_on_gw(ri.ex_gw_port, namespace, interface_name)
+        if not ex_gw_port_id:
+            return
+
+        interface_name = ri.get_external_device_name(ex_gw_port_id)
+        if ri.router.get('distributed', False):
+            namespace = ri.ha_namespace
+        else:
+            namespace = ri.ns_name
+
+        enable = state == 'master'
+        ri._configure_ipv6_params_on_gw(ri.ex_gw_port, namespace,
+                                        interface_name, enable)
 
     def _update_metadata_proxy(self, ri, router_id, state):
         if state == 'master':

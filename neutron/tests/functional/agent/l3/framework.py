@@ -34,6 +34,7 @@ from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
+from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.conf import common as common_config
 from neutron.tests.common import l3_test_common
@@ -217,14 +218,23 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _assert_external_device(self, router):
         self.assertTrue(self._check_external_device(router))
 
-    def _assert_ipv6_accept_ra(self, router):
+    def _assert_ipv6_accept_ra(self, router, enabled=True):
         external_port = router.get_ex_gw_port()
         external_device_name = router.get_external_device_name(
             external_port['id'])
         ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
         ra_state = ip_wrapper.netns.execute(['sysctl', '-b',
             'net.ipv6.conf.%s.accept_ra' % external_device_name])
-        self.assertEqual('2', ra_state)
+        self.assertEqual(enabled, int(ra_state) != n_const.ACCEPT_RA_DISABLED)
+
+    def _assert_ipv6_forwarding(self, router, enabled=True):
+        external_port = router.get_ex_gw_port()
+        external_device_name = router.get_external_device_name(
+            external_port['id'])
+        ip_wrapper = ip_lib.IPWrapper(namespace=router.ns_name)
+        fwd_state = ip_wrapper.netns.execute(['sysctl', '-b',
+            'net.ipv6.conf.%s.forwarding' % external_device_name])
+        self.assertEqual(int(enabled), int(fwd_state))
 
     def _router_lifecycle(self, enable_ha, ip_version=4,
                           dual_stack=False, v6_ext_gw_with_sub=True,

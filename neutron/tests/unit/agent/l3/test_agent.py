@@ -211,6 +211,30 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.enqueue_state_change(router.id, 'master')
         self.assertFalse(agent._update_metadata_proxy.call_count)
 
+    def _test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
+            self, state, enable_expected):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_info = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)
+        router_info.ex_gw_port = {'id': _uuid()}
+        with mock.patch.object(router_info, '_configure_ipv6_params_on_gw'
+                               ) as mock_configure_ipv6:
+            agent._configure_ipv6_params_on_ext_gw_port_if_necessary(
+                router_info, state)
+            interface_name = router_info.get_external_device_name(
+                    router_info.ex_gw_port['id'])
+
+            mock_configure_ipv6.assert_called_once_with(
+                router_info.ex_gw_port, router_info.ns_name, interface_name,
+                enable_expected)
+
+    def test__configure_ipv6_params_on_ext_gw_port_if_necessary_master(self):
+        self._test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
+            'master', True)
+
+    def test__configure_ipv6_params_on_ext_gw_port_if_necessary_backup(self):
+        self._test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
+            'backup', False)
+
     def test_check_ha_state_for_router_master_standby(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = mock.Mock()
