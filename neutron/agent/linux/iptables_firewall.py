@@ -105,8 +105,17 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # enabled by default or not (Ubuntu - yes, Redhat - no, for
         # example).
         LOG.debug("Enabling netfilter for bridges")
-        entries = utils.execute(['sysctl', '-N', 'net.bridge'],
-                                run_as_root=True).splitlines()
+        try:
+            entries = utils.execute(
+                ['sysctl', '-N', 'net.bridge'], run_as_root=True,
+                log_fail_as_error=False).splitlines()
+        except utils.ProcessExecutionError:
+            LOG.info(_LI("Process is probably running in namespace or "
+                         "kernel module br_netfilter is not loaded. "
+                         "Please ensure that netfilter options for bridge "
+                         "are enabled to provide working security groups."))
+            return
+
         for proto in ('ip', 'ip6'):
             knob = 'net.bridge.bridge-nf-call-%stables' % proto
             if 'net.bridge.bridge-nf-call-%stables' % proto not in entries:
