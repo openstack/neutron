@@ -24,6 +24,7 @@ QOS_POLICY = policy.QosPolicy.obj_name()
 SUBPORT = trunk.SubPort.obj_name()
 PORT = ports.Port.obj_name()
 NETWORK = network.Network.obj_name()
+SUBNET = subnet.Subnet.obj_name()
 SECURITYGROUP = securitygroup.SecurityGroup.obj_name()
 SECURITYGROUPRULE = securitygroup.SecurityGroupRule.obj_name()
 
