@@ -151,6 +151,23 @@ class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
             version=TEST_VERSION, resource_id=resource_id)
         self.assertEqual(expected_obj, result)
 
+    def test_bulk_pull(self):
+        self.obj_registry.register(FakeResource)
+        expected_objs = [_create_test_resource(self.context),
+                         _create_test_resource(self.context)]
+        self.cctxt_mock.call.return_value = [
+            e.obj_to_primitive() for e in expected_objs]
+
+        filter_kwargs = {'a': 'b', 'c': 'd'}
+        result = self.rpc.bulk_pull(
+            self.context, FakeResource.obj_name(),
+            filter_kwargs=filter_kwargs)
+
+        self.cctxt_mock.call.assert_called_once_with(
+            self.context, 'bulk_pull', resource_type='FakeResource',
+            version=TEST_VERSION, filter_kwargs=filter_kwargs)
+        self.assertEqual(expected_objs, result)
+
     def test_pull_resource_not_found(self):
         resource_dict = _create_test_dict()
         resource_id = resource_dict['id']
@@ -197,6 +214,29 @@ class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
         self.assertEqual(resource_dict,
                          primitive['versioned_object.data'])
         self.assertEqual(self.resource_obj.obj_to_primitive(), primitive)
+
+    def test_bulk_pull(self):
+        r1 = self.resource_obj
+        r2 = _create_test_resource(self.context)
+
+        @classmethod
+        def get_objs(*args, **kwargs):
+            if 'id' not in kwargs:
+                return [r1, r2]
+            return [r for r in [r1, r2] if r.id == kwargs['id']]
+
+        # the bulk interface currently retrieves directly from the registry
+        with mock.patch.object(FakeResource, 'get_objects', new=get_objs):
+            objs = self.callbacks.bulk_pull(
+                self.context, resource_type=FakeResource.obj_name(),
+                version=TEST_VERSION)
+            self.assertItemsEqual([r1.obj_to_primitive(),
+                                   r2.obj_to_primitive()],
+                                  objs)
+            objs = self.callbacks.bulk_pull(
+                self.context, resource_type=FakeResource.obj_name(),
+                version=TEST_VERSION, filter_kwargs={'id': r1.id})
+            self.assertEqual([r1.obj_to_primitive()], objs)
 
     @mock.patch.object(FakeResource, 'obj_to_primitive')
     def test_pull_backports_to_older_version(self, to_prim_mock):

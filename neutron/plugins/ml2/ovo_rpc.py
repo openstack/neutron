@@ -98,8 +98,6 @@ class OVOServerRpcInterface(object):
     """ML2 server-side RPC interface.
 
     Generates RPC callback notifications on ML2 object changes.
-
-    TODO(kevinbenton): interface to query server for these objects
     """
 
     def __init__(self):
