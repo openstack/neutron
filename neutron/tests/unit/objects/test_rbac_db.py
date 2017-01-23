@@ -281,6 +281,10 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         attach_rbac_mock.assert_called_with(
             obj_id, test_neutron_obj.obj_context.tenant_id)
 
+    def test_shared_field_false_without_context(self):
+        test_neutron_obj = self._test_class()
+        self.assertFalse(test_neutron_obj.to_dict()['shared'])
+
     @mock.patch.object(_test_class, 'attach_rbac')
     @mock.patch.object(obj_db_api, 'get_object',
                        return_value=['fake_rbac_policy'])

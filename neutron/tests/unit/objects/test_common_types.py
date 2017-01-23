@@ -52,8 +52,11 @@ class TestField(object):
             _context = 'context'
 
         for prim_val, out_val in self.from_primitive_values:
-            self.assertEqual(out_val, self.field.from_primitive(
-                ObjectLikeThing, 'attr', prim_val))
+            from_prim = self.field.from_primitive(ObjectLikeThing, 'attr',
+                                                  prim_val)
+            self.assertEqual(out_val, from_prim)
+            # ensure it's coercable for sanity
+            self.field.coerce('obj', 'attr', from_prim)
 
     @abc.abstractmethod
     def test_stringify(self):
@@ -117,8 +120,10 @@ class MACAddressFieldTest(test_base.BaseTestCase, TestField):
             # if they represent a valid MAC address
             tools.get_random_mac(),
         ]
-        self.to_primitive_values = self.coerce_good_values
-        self.from_primitive_values = self.coerce_good_values
+        self.to_primitive_values = ((a1, str(a2))
+                                    for a1, a2 in self.coerce_good_values)
+        self.from_primitive_values = ((a2, a1)
+                                      for a1, a2 in self.to_primitive_values)
 
     def test_stringify(self):
         for in_val, out_val in self.coerce_good_values:
@@ -142,7 +147,8 @@ class IPNetworkFieldTest(test_base.BaseTestCase, TestField):
         ]
         self.to_primitive_values = ((a1, str(a2))
                                     for a1, a2 in self.coerce_good_values)
-        self.from_primitive_values = self.coerce_good_values
+        self.from_primitive_values = ((a2, a1)
+                                      for a1, a2 in self.to_primitive_values)
 
     def test_stringify(self):
         for in_val, out_val in self.coerce_good_values:
