@@ -80,6 +80,9 @@ class TunnelTest(object):
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
+        mock.patch(
+            'neutron.api.rpc.handlers.resources_rpc.ResourcesPullRpcApi'
+        ).start()
         self.addCleanup(conn_patcher.stop)
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
