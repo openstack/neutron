@@ -23,6 +23,8 @@ from alembic import op
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 
+from neutron.common import constants as const
+
 # A simple models for tables with only the fields needed for the migration.
 neutron_subnet = sa.Table('subnets', sa.MetaData(),
                           sa.Column('id', sa.String(length=36),
@@ -125,7 +127,7 @@ def upgrade():
     for ip_alloc in session.query(ip_allocation):
         ipam_allocation_values.append(dict(
             ip_address=ip_alloc.ip_address,
-            status='ALLOCATED',
+            status=const.IPAM_ALLOCATION_STATUS_ALLOCATED,
             ipam_subnet_id=map_neutron_id_to_ipam[ip_alloc.subnet_id]))
     op.bulk_insert(ipam_allocation, ipam_allocation_values)
     session.commit()

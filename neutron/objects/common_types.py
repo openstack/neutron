@@ -163,6 +163,11 @@ class FlowDirectionEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_DIRECTIONS)
 
 
+class IpamAllocationStatusEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(
+        valid_values=constants.VALID_IPAM_ALLOCATION_STATUSES)
+
+
 class EtherTypeEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_ETHERTYPES)
 

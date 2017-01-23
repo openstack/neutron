@@ -16,6 +16,7 @@
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import testtools
 
 from neutron import context
@@ -46,10 +47,10 @@ class IpamTestCase(testlib_api.SqlTestCase):
                                    tenant_id=None,
                                    is_admin=True,
                                    overwrite=False)
-        self.tenant_id = 'test_tenant'
-        self.network_id = 'test_net_id'
-        self.subnet_id = 'test_sub_id'
-        self.port_id = 'test_p_id'
+        self.tenant_id = uuidutils.generate_uuid()
+        self.network_id = uuidutils.generate_uuid()
+        self.subnet_id = uuidutils.generate_uuid()
+        self.port_id = uuidutils.generate_uuid()
         self._create_network()
         self._create_subnet()
 
@@ -128,7 +129,7 @@ class IpamTestCase(testlib_api.SqlTestCase):
     def test_allocate_ip_exausted_pool(self):
         # available from .2 up to .6 -> 5
         for i in range(1, 6):
-            self._create_port(self.port_id + str(i))
+            self._create_port(uuidutils.generate_uuid())
 
         ip_alloc_pool_expected = [{'first_ip': '10.10.10.2',
                                    'last_ip': '10.10.10.6',

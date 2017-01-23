@@ -15,7 +15,8 @@
 
 from oslo_utils import uuidutils
 
-from neutron.ipam.drivers.neutrondb_ipam import db_models
+from neutron.common import constants as const
+from neutron.objects import ipam as ipam_objs
 
 # Database operations for Neutron's DB-backed IPAM driver
 
@@ -24,8 +25,10 @@ class IpamSubnetManager(object):
 
     @classmethod
     def load_by_neutron_subnet_id(cls, context, neutron_subnet_id):
-        return context.session.query(db_models.IpamSubnet).filter_by(
-            neutron_subnet_id=neutron_subnet_id).first()
+
+        objs = ipam_objs.IpamSubnet.get_objects(
+                context, neutron_subnet_id=neutron_subnet_id)
+        return objs.pop() if objs else None
 
     def __init__(self, ipam_subnet_id, neutron_subnet_id):
         self._ipam_subnet_id = ipam_subnet_id
@@ -46,10 +49,9 @@ class IpamSubnetManager(object):
         """
         if not self._ipam_subnet_id:
             self._ipam_subnet_id = uuidutils.generate_uuid()
-        ipam_subnet = db_models.IpamSubnet(
-            id=self._ipam_subnet_id,
-            neutron_subnet_id=self._neutron_subnet_id)
-        context.session.add(ipam_subnet)
+        ipam_objs.IpamSubnet(
+            context, id=self._ipam_subnet_id,
+            neutron_subnet_id=self._neutron_subnet_id).create()
         return self._ipam_subnet_id
 
     @classmethod
@@ -62,8 +64,8 @@ class IpamSubnetManager(object):
         :param context: neutron api request context
         :param neutron_subnet_id: neutron subnet id associated with ipam subnet
         """
-        return context.session.query(db_models.IpamSubnet).filter_by(
-            neutron_subnet_id=neutron_subnet_id).delete()
+        return ipam_objs.IpamSubnet.delete_objects(context,
+             neutron_subnet_id=neutron_subnet_id)
 
     def create_pool(self, context, pool_start, pool_end):
         """Create an allocation pool for the subnet.
@@ -75,62 +77,54 @@ class IpamSubnetManager(object):
         :param pool_end: string expressing the end of the pool
         :return: the newly created pool object.
         """
-        ip_pool = db_models.IpamAllocationPool(
-            ipam_subnet_id=self._ipam_subnet_id,
-            first_ip=pool_start,
+        ip_pool_obj = ipam_objs.IpamAllocationPool(
+            context, ipam_subnet_id=self._ipam_subnet_id, first_ip=pool_start,
             last_ip=pool_end)
-        context.session.add(ip_pool)
-        return ip_pool
+        ip_pool_obj.create()
+        return ip_pool_obj
 
     def delete_allocation_pools(self, context):
         """Remove all allocation pools for the current subnet.
 
         :param context: neutron api request context
         """
-        context.session.query(db_models.IpamAllocationPool).filter_by(
-            ipam_subnet_id=self._ipam_subnet_id).delete()
+        ipam_objs.IpamAllocationPool.delete_objects(
+            context, ipam_subnet_id=self._ipam_subnet_id)
 
     def list_pools(self, context):
         """Return pools for the current subnet."""
-        return context.session.query(
-            db_models.IpamAllocationPool).filter_by(
-            ipam_subnet_id=self._ipam_subnet_id)
+        return ipam_objs.IpamAllocationPool.get_objects(
+            context, ipam_subnet_id=self._ipam_subnet_id)
 
     def check_unique_allocation(self, context, ip_address):
         """Validate that the IP address on the subnet is not in use."""
-        iprequest = context.session.query(db_models.IpamAllocation).filter_by(
-            ipam_subnet_id=self._ipam_subnet_id, status='ALLOCATED',
-            ip_address=ip_address).first()
-        if iprequest:
-            return False
-        return True
+        return not ipam_objs.IpamAllocation.objects_exist(
+                     context, ipam_subnet_id=self._ipam_subnet_id,
+                     status=const.IPAM_ALLOCATION_STATUS_ALLOCATED,
+                     ip_address=ip_address)
 
-    def list_allocations(self, context, status='ALLOCATED'):
+    def list_allocations(self, context,
+                         status=const.IPAM_ALLOCATION_STATUS_ALLOCATED):
         """Return current allocations for the subnet.
 
         :param context: neutron api request context
         :param status: IP allocation status
-        :returns: a list of IP allocation as instance of
-            neutron.ipam.drivers.neutrondb_ipam.db_models.IpamAllocation
+        :returns: a list of IpamAllocation OVO objects
         """
-        return context.session.query(
-            db_models.IpamAllocation).filter_by(
-            ipam_subnet_id=self._ipam_subnet_id,
-            status=status)
+        return ipam_objs.IpamAllocation.get_objects(
+            context, ipam_subnet_id=self._ipam_subnet_id, status=status)
 
     def create_allocation(self, context, ip_address,
-                          status='ALLOCATED'):
+                          status=const.IPAM_ALLOCATION_STATUS_ALLOCATED):
         """Create an IP allocation entry.
 
         :param context: neutron api request context
         :param ip_address: the IP address to allocate
         :param status: IP allocation status
         """
-        ip_request = db_models.IpamAllocation(
-            ip_address=ip_address,
-            status=status,
-            ipam_subnet_id=self._ipam_subnet_id)
-        context.session.add(ip_request)
+        ipam_objs.IpamAllocation(
+            context, ip_address=ip_address, status=status,
+            ipam_subnet_id=self._ipam_subnet_id).create()
 
     def delete_allocation(self, context, ip_address):
         """Remove an IP allocation for this subnet.
@@ -138,8 +132,9 @@ class IpamSubnetManager(object):
         :param context: neutron api request context
         :param ip_address: IP address for which the allocation entry should
             be removed.
+        :returns: number of deleted allocation entries.
         """
-        return context.session.query(db_models.IpamAllocation).filter_by(
-            ip_address=ip_address,
-            ipam_subnet_id=self._ipam_subnet_id).delete(
-                synchronize_session=False)
+        return ipam_objs.IpamAllocation.delete_objects(
+            context,
+            ipam_subnet_id=self._ipam_subnet_id,
+            ip_address=ip_address)

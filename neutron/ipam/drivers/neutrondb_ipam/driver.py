@@ -155,7 +155,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
         """Generate an IP address from the set of available addresses."""
         ip_allocations = netaddr.IPSet()
         for ipallocation in self.subnet_manager.list_allocations(context):
-            ip_allocations.add(netaddr.IPAddress(ipallocation.ip_address))
+            ip_allocations.add(ipallocation.ip_address)
 
         for ip_pool in self.subnet_manager.list_pools(context):
             ip_set = netaddr.IPSet()
