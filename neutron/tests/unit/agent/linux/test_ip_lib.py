@@ -21,6 +21,7 @@ from neutron_lib import exceptions
 import pyroute2
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
+import socket
 import testtools
 
 from neutron.agent.common import utils  # noqa
@@ -1497,7 +1498,7 @@ class TestGetRoutingTable(base.BaseTestCase):
             'metrics': {},
             'oif': 2,
             'dst_len': 64,
-            'family': 10,
+            'family': socket.AF_INET6,
             'proto': 2,
             'tos': 0,
             'dst': '1111:1111:1111:1111::/64',
@@ -1516,7 +1517,7 @@ class TestGetRoutingTable(base.BaseTestCase):
             'metrics': {},
             'oif': 2,
             'dst_len': 64,
-            'family': 10,
+            'family': socket.AF_INET6,
             'proto': 3,
             'tos': 0,
             'dst': '1111:1111:1111:1112::/64',
