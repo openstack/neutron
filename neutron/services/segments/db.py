@@ -275,6 +275,9 @@ def _update_segment_host_mapping_for_agent(resource, event, trigger,
         segment['id'] for segment in segments
         if check_segment_for_agent(segment, agent)}
     update_segment_host_mapping(context, host, current_segment_ids)
+    registry.notify(resources.SEGMENT_HOST_MAPPING, events.AFTER_CREATE,
+                    plugin, context=context, host=host,
+                    current_segment_ids=current_segment_ids)
 
 
 def _add_segment_host_mapping_for_segment(resource, event, trigger,
