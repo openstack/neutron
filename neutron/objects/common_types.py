@@ -16,6 +16,7 @@ import uuid
 
 import netaddr
 from neutron_lib import constants as lib_constants
+from neutron_lib.db import constants as lib_db_const
 
 from oslo_serialization import jsonutils
 from oslo_versionedobjects import fields as obj_fields
@@ -23,7 +24,6 @@ import six
 
 from neutron._i18n import _
 from neutron.common import constants
-from neutron.extensions import dns as dns_ext
 from neutron.objects import exceptions as o_exc
 from neutron.plugins.common import constants as plugin_constants
 
@@ -102,7 +102,7 @@ class DomainName(obj_fields.String):
         if not isinstance(value, six.string_types):
             msg = _("Field value %s is not a string") % value
             raise ValueError(msg)
-        if len(value) > dns_ext.FQDN_MAX_LEN:
+        if len(value) > lib_db_const.FQDN_FIELD_SIZE:
             msg = _("Domain name %s is too long") % value
             raise ValueError(msg)
         return super(DomainName, self).coerce(obj, attr, value)
