@@ -25,6 +25,7 @@ revision = 'kilo'
 down_revision = None
 
 
+from neutron.db import migration
 from neutron.db.migration.alembic_migrations import agent_init_ops
 from neutron.db.migration.alembic_migrations import brocade_init_ops
 from neutron.db.migration.alembic_migrations import cisco_init_ops
@@ -49,6 +50,7 @@ from neutron.db.migration.alembic_migrations import vpn_init_ops
 
 
 def upgrade():
+    migration.pk_on_alembic_version_table()
     agent_init_ops.upgrade()
     core_init_ops.upgrade()
     l3_init_ops.upgrade()
