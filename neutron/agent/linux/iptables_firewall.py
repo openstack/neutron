@@ -186,7 +186,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def prepare_port_filter(self, port):
         LOG.debug("Preparing device (%s) filter", port['device'])
-        self._remove_chains()
         self._set_ports(port)
         self._enable_netfilter_for_bridges()
         # each security group has it own chains
