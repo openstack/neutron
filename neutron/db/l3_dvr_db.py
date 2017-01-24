@@ -93,58 +93,63 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         self.set_extra_attr_value(context, router_db, 'distributed', dist)
 
     def _validate_router_migration(self, context, router_db, router_res):
-        """Allow centralized -> distributed state transition only."""
-        if router_res.get('ha') or router_db.extra_attributes.ha:
-            # leave HA validation to l3_hamode_db
-            return
-        if (router_db.extra_attributes.distributed and
-            router_res.get('distributed') is False):
-            LOG.info(_LI("Centralizing distributed router %s "
-                         "is not supported"), router_db['id'])
-            raise n_exc.BadRequest(
-                resource='router',
-                msg=_("Migration from distributed router to centralized is "
-                      "not supported"))
-        elif (not router_db.extra_attributes.distributed and
-              router_res.get('distributed')):
-            # router should be disabled in order for upgrade
-            if router_db.admin_state_up:
-                msg = _('Cannot upgrade active router to distributed. Please '
-                        'set router admin_state_up to False prior to upgrade.')
-                raise n_exc.BadRequest(resource='router', msg=msg)
+        """Allow transition only when admin_state_up=False"""
+        original_distributed_state = router_db.extra_attributes.distributed
+        requested_distributed_state = router_res.get('distributed', None)
 
-            # Notify advanced services of the imminent state transition
-            # for the router.
-            try:
-                kwargs = {'context': context, 'router': router_db}
-                registry.notify(
-                    resources.ROUTER, events.BEFORE_UPDATE, self, **kwargs)
-            except exceptions.CallbackFailure as e:
-                with excutils.save_and_reraise_exception():
-                    # NOTE(armax): preserve old check's behavior
-                    if len(e.errors) == 1:
-                        raise e.errors[0].error
-                    raise l3.RouterInUse(router_id=router_db['id'],
-                                         reason=e)
+        distributed_changed = (
+            requested_distributed_state is not None and
+            requested_distributed_state != original_distributed_state)
+        if not distributed_changed:
+            return False
+        if router_db.admin_state_up:
+            msg = _("Cannot change the 'distributed' attribute of active "
+                    "routers. Please set router admin_state_up to False "
+                    "prior to upgrade")
+            raise n_exc.BadRequest(resource='router', msg=msg)
+
+        # Notify advanced services of the imminent state transition
+        # for the router.
+        try:
+            kwargs = {'context': context, 'router': router_db}
+            registry.notify(
+                resources.ROUTER, events.BEFORE_UPDATE, self, **kwargs)
+        except exceptions.CallbackFailure as e:
+            with excutils.save_and_reraise_exception():
+                # NOTE(armax): preserve old check's behavior
+                if len(e.errors) == 1:
+                    raise e.errors[0].error
+                raise l3.RouterInUse(router_id=router_db['id'],
+                                     reason=e)
+        return True
 
     def _handle_distributed_migration(self, resource, event, trigger, context,
                                       router_id, router, router_db, **kwargs):
         """Event handler for router update migration to distributed."""
+        if not self._validate_router_migration(context, router_db, router):
+            return
+
         migrating_to_distributed = (
             not router_db.extra_attributes.distributed and
             router.get('distributed') is True)
-        self._validate_router_migration(context, router_db, router)
+
         if migrating_to_distributed:
             self._migrate_router_ports(
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_ROUTER_INTF,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
             self.set_extra_attr_value(context, router_db, 'distributed', True)
-            cur_agents = self.list_l3_agents_hosting_router(
-                context, router_db['id'])['agents']
-            for agent in cur_agents:
-                self._unbind_router(context, router_db['id'],
-                                    agent['id'])
+        else:
+            self._migrate_router_ports(
+                context, router_db,
+                old_owner=const.DEVICE_OWNER_DVR_INTERFACE,
+                new_owner=const.DEVICE_OWNER_ROUTER_INTF)
+            self.set_extra_attr_value(context, router_db, 'distributed', False)
+
+        cur_agents = self.list_l3_agents_hosting_router(
+            context, router_db['id'])['agents']
+        for agent in cur_agents:
+            self._unbind_router(context, router_db['id'], agent['id'])
 
     def _create_snat_interfaces_after_change(self, resource, event, trigger,
                                              context, router_id, router,

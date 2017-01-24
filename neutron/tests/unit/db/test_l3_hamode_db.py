@@ -281,73 +281,63 @@ class L3HATestCase(L3HATestFramework):
         router = self._create_router(ha=True, admin_state_up=False,
                                      distributed=False)
         self.assertTrue(router['ha'])
-        e = self.assertRaises(c_exc.CallbackFailure,
-                              self._update_router,
-                              router['id'],
-                              ha=True,
-                              distributed=True)
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.DVRmodeUpdateOfHaNotSupported)
+
+        after_update = self._update_router(router['id'],
+                                           ha=True, distributed=True)
+        self.assertTrue(after_update.extra_attributes.ha)
+        self.assertTrue(after_update.extra_attributes.distributed)
 
     def test_migrate_ha_router_to_distributed_and_not_ha(self):
         router = self._create_router(ha=True, admin_state_up=False,
                                      distributed=False)
         self.assertTrue(router['ha'])
-        e = self.assertRaises(c_exc.CallbackFailure,
-                              self._update_router,
-                              router['id'],
-                              ha=False,
-                              distributed=True)
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.DVRmodeUpdateOfHaNotSupported)
+
+        after_update = self._update_router(router['id'],
+                                           ha=False, distributed=True)
+        self.assertFalse(after_update.extra_attributes.ha)
+        self.assertTrue(after_update.extra_attributes.distributed)
 
     def test_migrate_dvr_router_to_ha_and_not_dvr(self):
         router = self._create_router(ha=False, admin_state_up=False,
                                      distributed=True)
         self.assertTrue(router['distributed'])
-        e = self.assertRaises(c_exc.CallbackFailure,
-                              self._update_router,
-                              router['id'],
-                              ha=True,
-                              distributed=True)
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported)
+
+        after_update = self._update_router(router['id'],
+                                           ha=True, distributed=False)
+        self.assertTrue(after_update.extra_attributes.ha)
+        self.assertFalse(after_update.extra_attributes.distributed)
 
     def test_migrate_dvr_router_to_ha_and_dvr(self):
         router = self._create_router(ha=False, admin_state_up=False,
                                      distributed=True)
         self.assertTrue(router['distributed'])
-        e = self.assertRaises(c_exc.CallbackFailure,
-                              self._update_router,
-                              router['id'],
-                              ha=True,
-                              distributed=True)
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported)
+
+        after_update = self._update_router(router['id'],
+                                           ha=True, distributed=True)
+        self.assertTrue(after_update.extra_attributes.ha)
+        self.assertTrue(after_update.extra_attributes.distributed)
 
     def test_migrate_distributed_router_to_ha(self):
-        router = self._create_router(ha=False, distributed=True)
+        router = self._create_router(ha=False, admin_state_up=False,
+                                     distributed=True)
         self.assertFalse(router['ha'])
         self.assertTrue(router['distributed'])
 
-        e = self.assertRaises(c_exc.CallbackFailure,
-                              self._update_router,
-                              router['id'],
-                              ha=True)
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported)
+        after_update = self._update_router(router['id'],
+                                           ha=True, distributed=False)
+        self.assertTrue(after_update.extra_attributes.ha)
+        self.assertFalse(after_update.extra_attributes.distributed)
 
     def test_migrate_legacy_router_to_distributed_and_ha(self):
-        router = self._create_router(ha=False, distributed=False)
+        router = self._create_router(ha=False, admin_state_up=False,
+                                     distributed=False)
         self.assertFalse(router['ha'])
         self.assertFalse(router['distributed'])
-        e = self.assertRaises(c_exc.CallbackFailure,
-                              self._update_router,
-                              router['id'],
-                              ha=True,
-                              distributed=True)
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.UpdateToDvrHamodeNotSupported)
+
+        after_update = self._update_router(router['id'],
+                                           ha=True, distributed=True)
+        self.assertTrue(after_update.extra_attributes.ha)
+        self.assertTrue(after_update.extra_attributes.distributed)
 
     def test_unbind_ha_router(self):
         router = self._create_router()

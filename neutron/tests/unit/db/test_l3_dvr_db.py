@@ -81,7 +81,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'distributed': True
         }
         router_db = self._create_router(router)
-        self.assertIsNone(self.mixin._validate_router_migration(
+        self.assertFalse(self.mixin._validate_router_migration(
             self.ctx, router_db, {'name': 'foo_router_2'}))
 
     def test__validate_router_migration_raise_error(self):

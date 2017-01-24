@@ -442,34 +442,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                             **kwargs):
         """Event handler on precommit update to validate migration."""
 
-        original_distributed_state = old_router['distributed']
         original_ha_state = old_router['ha']
-
         requested_ha_state = router.get('ha')
-        requested_distributed_state = router.get('distributed')
-        # cvr to dvrha
-        if not original_distributed_state and not original_ha_state:
-            if (requested_ha_state is True and
-                    requested_distributed_state is True):
-                raise l3_ha.UpdateToDvrHamodeNotSupported()
-
-        # cvrha to any dvr...
-        elif not original_distributed_state and original_ha_state:
-            if requested_distributed_state is True:
-                raise l3_ha.DVRmodeUpdateOfHaNotSupported()
-
-        # dvr to any ha...
-        elif original_distributed_state and not original_ha_state:
-            if requested_ha_state is True:
-                raise l3_ha.HAmodeUpdateOfDvrNotSupported()
-
-        #dvrha to any cvr...
-        elif original_distributed_state and original_ha_state:
-            if requested_distributed_state is False:
-                raise l3_ha.DVRmodeUpdateOfDvrHaNotSupported()
-            #elif dvrha to dvr
-            if requested_ha_state is False:
-                raise l3_ha.HAmodeUpdateOfDvrHaNotSupported()
 
         ha_changed = (requested_ha_state is not None and
                       requested_ha_state != original_ha_state)
@@ -478,7 +452,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         if router_db.admin_state_up:
             msg = _('Cannot change HA attribute of active routers. Please '
-                    'set router admin_state_up to False prior to upgrade.')
+                    'set router admin_state_up to False prior to upgrade')
             raise n_exc.BadRequest(resource='router', msg=msg)
 
         if requested_ha_state:

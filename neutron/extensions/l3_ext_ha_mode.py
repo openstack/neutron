@@ -30,35 +30,6 @@ EXTENDED_ATTRIBUTES_2_0 = {
 }
 
 
-class HAmodeUpdateOfDvrNotSupported(NotImplementedError):
-    message = _("Currently update of HA mode for a distributed router is "
-                "not supported.")
-
-
-class DVRmodeUpdateOfHaNotSupported(NotImplementedError):
-    message = _("Currently update of distributed mode for an HA router is "
-                "not supported.")
-
-
-class HAmodeUpdateOfDvrHaNotSupported(NotImplementedError):
-    message = _("Currently update of HA mode for a DVR/HA router is "
-                "not supported.")
-
-
-class DVRmodeUpdateOfDvrHaNotSupported(NotImplementedError):
-    message = _("Currently update of distributed mode for a DVR/HA router "
-                "is not supported")
-
-
-class UpdateToDvrHamodeNotSupported(NotImplementedError):
-    message = _("Currently updating a router to DVR/HA is not supported.")
-
-
-class UpdateToNonDvrHamodeNotSupported(NotImplementedError):
-    message = _("Currently updating a router from DVR/HA to non-DVR "
-                " non-HA is not supported.")
-
-
 class MaxVRIDAllocationTriesReached(exceptions.NeutronException):
     message = _("Failed to allocate a VRID in the network %(network_id)s "
                 "for the router %(router_id)s after %(max_tries)s tries.")

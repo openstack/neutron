@@ -34,12 +34,12 @@ class ML2TestFramework(test_plugin.Ml2PluginV2TestCase):
         self.core_plugin = directory.get_plugin()
         self.l3_plugin = directory.get_plugin(constants.L3)
 
-    def _create_router(self, distributed=False, ha=False):
+    def _create_router(self, distributed=False, ha=False, admin_state_up=True):
         return self.l3_plugin.create_router(
             self.context,
             {'router':
              {'name': 'router',
-              'admin_state_up': True,
+              'admin_state_up': admin_state_up,
               'tenant_id': self._tenant_id,
               'ha': ha,
               'distributed': distributed}})

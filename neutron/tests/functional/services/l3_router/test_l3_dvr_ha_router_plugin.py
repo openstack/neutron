@@ -15,11 +15,9 @@
 import mock
 from neutron_lib import constants
 
-from neutron.callbacks import exceptions as c_exc
 from neutron.common import topics
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.extensions import l3_ext_ha_mode
 from neutron.extensions import portbindings
 from neutron.tests.common import helpers
 from neutron.tests.functional.services.l3_router import \
@@ -35,100 +33,77 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             host="standby",
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
-    def _create_router(self, distributed=True, ha=True):
+    def _create_router(self, distributed=True, ha=True, admin_state_up=True):
         return (super(L3DvrHATestCase, self).
-                _create_router(distributed=distributed, ha=ha))
+                _create_router(distributed=distributed, ha=ha,
+                               admin_state_up=admin_state_up))
 
     def test_update_router_db_cvr_to_dvrha(self):
-        router = self._create_router(distributed=False, ha=False)
-        e = self.assertRaises(
-            c_exc.CallbackFailure,
-            self.l3_plugin.update_router,
+        router = self._create_router(distributed=False, ha=False,
+                                     admin_state_up=False)
+        self.l3_plugin.update_router(
             self.context,
             router['id'],
-            {'router': {'distributed': True, 'ha': True}}
-        )
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.UpdateToDvrHamodeNotSupported)
+            {'router': {'distributed': True, 'ha': True}})
+        router = self.l3_plugin.get_router(self.context, router['id'])
+        self.assertTrue(router['distributed'])
+        self.assertTrue(router['ha'])
+
+    def test_update_router_db_dvrha_to_cvr(self):
+        router = self._create_router(distributed=True, ha=True,
+                                     admin_state_up=False)
+        self.l3_plugin.update_router(
+            self.context,
+            router['id'],
+            {'router': {'distributed': False, 'ha': False}})
         router = self.l3_plugin.get_router(self.context, router['id'])
         self.assertFalse(router['distributed'])
         self.assertFalse(router['ha'])
 
-    def test_update_router_db_dvrha_to_cvr(self):
-        router = self._create_router(distributed=True, ha=True)
-        e = self.assertRaises(
-            c_exc.CallbackFailure,
-            self.l3_plugin.update_router,
-            self.context,
-            router['id'],
-            {'router': {'distributed': False, 'ha': False}}
-        )
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.DVRmodeUpdateOfDvrHaNotSupported)
-        router = self.l3_plugin.get_router(self.context, router['id'])
-        self.assertTrue(router['distributed'])
-        self.assertTrue(router['ha'])
-
     def test_update_router_db_dvrha_to_dvr(self):
-        router = self._create_router(distributed=True, ha=True)
+        router = self._create_router(distributed=True, ha=True,
+                                     admin_state_up=False)
         self.l3_plugin.update_router(
             self.context, router['id'], {'router': {'admin_state_up': False}})
-        e = self.assertRaises(
-            c_exc.CallbackFailure,
-            self.l3_plugin.update_router,
+        self.l3_plugin.update_router(
             self.context,
             router['id'],
-            {'router': {'distributed': True, 'ha': False}}
-        )
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.HAmodeUpdateOfDvrHaNotSupported)
+            {'router': {'distributed': True, 'ha': False}})
         router = self.l3_plugin.get_router(self.context, router['id'])
         self.assertTrue(router['distributed'])
-        self.assertTrue(router['ha'])
+        self.assertFalse(router['ha'])
 
     def test_update_router_db_dvrha_to_cvrha(self):
-        router = self._create_router(distributed=True, ha=True)
-        e = self.assertRaises(
-            c_exc.CallbackFailure,
-            self.l3_plugin.update_router,
+        router = self._create_router(distributed=True, ha=True,
+                                     admin_state_up=False)
+        self.l3_plugin.update_router(
             self.context,
             router['id'],
-            {'router': {'distributed': False, 'ha': True}}
-        )
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.DVRmodeUpdateOfDvrHaNotSupported)
+            {'router': {'distributed': False, 'ha': True}})
         router = self.l3_plugin.get_router(self.context, router['id'])
-        self.assertTrue(router['distributed'])
+        self.assertFalse(router['distributed'])
         self.assertTrue(router['ha'])
 
     def test_update_router_db_dvr_to_dvrha(self):
-        router = self._create_router(distributed=True, ha=False)
-        e = self.assertRaises(
-            c_exc.CallbackFailure,
-            self.l3_plugin.update_router,
+        router = self._create_router(distributed=True, ha=False,
+                                     admin_state_up=False)
+        self.l3_plugin.update_router(
             self.context,
             router['id'],
-            {'router': {'distributed': True, 'ha': True}}
-        )
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.HAmodeUpdateOfDvrNotSupported)
+            {'router': {'distributed': True, 'ha': True}})
         router = self.l3_plugin.get_router(self.context, router['id'])
         self.assertTrue(router['distributed'])
-        self.assertFalse(router['ha'])
+        self.assertTrue(router['ha'])
 
     def test_update_router_db_cvrha_to_dvrha(self):
-        router = self._create_router(distributed=False, ha=True)
-        e = self.assertRaises(
-            c_exc.CallbackFailure,
-            self.l3_plugin.update_router,
+        router = self._create_router(distributed=False, ha=True,
+                                     admin_state_up=False)
+        self.l3_plugin.update_router(
             self.context,
             router['id'],
-            {'router': {'distributed': True, 'ha': True}}
-        )
-        self.assertIsInstance(e.inner_exceptions[0],
-                              l3_ext_ha_mode.DVRmodeUpdateOfHaNotSupported)
+            {'router': {'distributed': True, 'ha': True}})
         router = self.l3_plugin.get_router(self.context, router['id'])
-        self.assertFalse(router['distributed'])
+        self.assertTrue(router['distributed'])
         self.assertTrue(router['ha'])
 
     def _assert_router_is_hosted_on_both_dvr_snat_agents(self, router):
