@@ -19,6 +19,7 @@ import mock
 import netaddr
 from neutron_lib import exceptions
 import pyroute2
+from pyroute2.netlink.rtnl import ndmsg
 import testtools
 
 from neutron.agent.common import utils  # noqa
@@ -1581,21 +1582,62 @@ class TestIpNeighCommand(TestIPCmdBase):
         self.parent.name = 'tap0'
         self.command = 'neigh'
         self.neigh_cmd = ip_lib.IpNeighCommand(self.parent)
+        self.addCleanup(privileged.default.set_client_mode, True)
+        privileged.default.set_client_mode(False)
 
-    def test_add_entry(self):
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_add_entry(self, mock_netns):
+        mock_netns_instance = mock_netns.return_value
+        mock_netns_enter = mock_netns_instance.__enter__.return_value
+        mock_netns_enter.link_lookup.return_value = [1]
         self.neigh_cmd.add('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
-        self._assert_sudo([4],
-                          ('replace', '192.168.45.100',
-                           'lladdr', 'cc:dd:ee:ff:ab:cd',
-                           'nud', 'permanent',
-                           'dev', 'tap0'))
+        mock_netns_enter.link_lookup.assert_called_once_with(ifname='tap0')
+        mock_netns_enter.neigh.assert_called_once_with(
+            'replace',
+            dst='192.168.45.100',
+            lladdr='cc:dd:ee:ff:ab:cd',
+            family=2,
+            ifindex=1,
+            state=ndmsg.states['permanent'])
 
-    def test_delete_entry(self):
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_add_entry_nonexistent_namespace(self, mock_netns):
+        mock_netns.side_effect = OSError(errno.ENOENT, None)
+        with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
+            self.neigh_cmd.add('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
+
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_add_entry_other_error(self, mock_netns):
+        expected_exception = OSError(errno.EACCES, None)
+        mock_netns.side_effect = expected_exception
+        with testtools.ExpectedException(expected_exception.__class__):
+            self.neigh_cmd.add('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
+
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_delete_entry(self, mock_netns):
+        mock_netns_instance = mock_netns.return_value
+        mock_netns_enter = mock_netns_instance.__enter__.return_value
+        mock_netns_enter.link_lookup.return_value = [1]
         self.neigh_cmd.delete('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
-        self._assert_sudo([4],
-                          ('del', '192.168.45.100',
-                           'lladdr', 'cc:dd:ee:ff:ab:cd',
-                           'dev', 'tap0'))
+        mock_netns_enter.link_lookup.assert_called_once_with(ifname='tap0')
+        mock_netns_enter.neigh.assert_called_once_with(
+            'delete',
+            dst='192.168.45.100',
+            lladdr='cc:dd:ee:ff:ab:cd',
+            family=2,
+            ifindex=1)
+
+    @mock.patch.object(pyroute2, 'NetNS')
+    def test_dump_entries(self, mock_netns):
+        mock_netns_instance = mock_netns.return_value
+        mock_netns_enter = mock_netns_instance.__enter__.return_value
+        mock_netns_enter.link_lookup.return_value = [1]
+        self.neigh_cmd.dump(4)
+        mock_netns_enter.link_lookup.assert_called_once_with(ifname='tap0')
+        mock_netns_enter.neigh.assert_called_once_with(
+            'dump',
+            family=2,
+            ifindex=1)
 
     def test_flush(self):
         self.neigh_cmd.flush(4, '192.168.0.1')

@@ -35,6 +35,7 @@ Device = collections.namedtuple('Device',
 
 WRONG_IP = '0.0.0.0'
 TEST_IP = '240.0.0.1'
+TEST_IP_NEIGH = '240.0.0.2'
 
 
 class IpLibTestFramework(functional_base.BaseSudoTestCase):
@@ -226,6 +227,39 @@ class IpLibTestCase(IpLibTestFramework):
     def test_get_routing_table_no_namespace(self):
         with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
             ip_lib.get_routing_table(4, namespace="nonexistent-netns")
+
+    def test_get_neigh_entries(self):
+        attr = self.generate_device_details(
+            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
+        )
+        mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+        device = self.manage_device(attr)
+        device.neigh.add(TEST_IP_NEIGH, mac_address)
+
+        expected_neighs = [{'dst': TEST_IP_NEIGH,
+                            'lladdr': mac_address,
+                            'device': attr.name}]
+
+        neighs = device.neigh.dump(4)
+        self.assertItemsEqual(expected_neighs, neighs)
+        self.assertIsInstance(neighs, list)
+
+        device.neigh.delete(TEST_IP_NEIGH, mac_address)
+        neighs = device.neigh.dump(4, dst=TEST_IP_NEIGH, lladdr=mac_address)
+        self.assertEqual([], neighs)
+
+    def test_get_neigh_entries_no_namespace(self):
+        with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
+            ip_lib.dump_neigh_entries(4, namespace="nonexistent-netns")
+
+    def test_get_neigh_entries_no_interface(self):
+        attr = self.generate_device_details(
+            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
+        )
+        self.manage_device(attr)
+        with testtools.ExpectedException(ip_lib.NetworkInterfaceNotFound):
+            ip_lib.dump_neigh_entries(4, device="nosuchdevice",
+                                      namespace=attr.namespace)
 
     def _check_for_device_name(self, ip, name, should_exist):
         exist = any(d for d in ip.get_devices() if d.name == name)
