@@ -33,6 +33,9 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             self.router_id, self.agent_conf, self.driver, self.use_ipv6)
         self.snat_iptables_manager = None
 
+    def get_gw_ns_name(self):
+        return self.snat_namespace.name
+
     def external_gateway_added(self, ex_gw_port, interface_name):
         super(DvrEdgeRouter, self).external_gateway_added(
             ex_gw_port, interface_name)
