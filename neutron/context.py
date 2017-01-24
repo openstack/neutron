@@ -47,6 +47,9 @@ class ContextBase(oslo_context.RequestContext):
         super(ContextBase, self).__init__(is_admin=is_admin, **kwargs)
 
         self.user_name = user_name
+        # NOTE(sdague): tenant* is a deprecated set of names from
+        # keystone, and is no longer set in modern keystone middleware
+        # code, as such this is almost always going to be None.
         self.tenant_name = tenant_name
 
         if not timestamp:
@@ -85,8 +88,10 @@ class ContextBase(oslo_context.RequestContext):
             'tenant_id': self.tenant_id,
             'project_id': self.project_id,
             'timestamp': str(self.timestamp),
-            'tenant_name': self.tenant_name,
-            'project_name': self.tenant_name,
+            # prefer project_name, as that's what's going to be set by
+            # keystone. Fall back if for some reason it's blank.
+            'tenant_name': self.project_name or self.tenant_name,
+            'project_name': self.project_name or self.tenant_name,
             'user_name': self.user_name,
         })
         return context
@@ -105,8 +110,10 @@ class ContextBase(oslo_context.RequestContext):
         values['domain'] = self.domain
         values['user_domain'] = self.user_domain
         values['project_domain'] = self.project_domain
-        values['tenant_name'] = self.tenant_name
-        values['project_name'] = self.tenant_name
+        # prefer project_name, as that's what's going to be set by
+        # keystone. Fall back if for some reason it's blank.
+        values['tenant_name'] = self.project_name or self.tenant_name
+        values['project_name'] = self.project_name or self.tenant_name
         values['user_name'] = self.user_name
 
         return values
