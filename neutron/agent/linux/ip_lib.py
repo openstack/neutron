@@ -204,6 +204,15 @@ class IPWrapper(SubProcessBase):
         self._as_root([], 'link', ('add', name, 'type', 'dummy'))
         return IPDevice(name, namespace=self.namespace)
 
+    def add_ifb(self, name):
+        """Create a Linux IFB type interface with the given name."""
+        self._as_root([], 'link', ('add', name, 'type', 'ifb'))
+        return IPDevice(name, namespace=self.namespace)
+
+    def del_ifb(self, name):
+        """Delete a Linux IFB type interface with the given name."""
+        self._as_root([], 'link', ('del', name))
+
     def ensure_namespace(self, name):
         if not self.netns.exists(name):
             ip = self.netns.add(name)

@@ -1,0 +1,6 @@
+---
+features:
+  - Linux Bridge now supports egress minimum bandwidth configuration.
+deprecations:
+  - Configuration parameters ``kernel_hz`` and ``tbf_latency`` in ``QoS``
+    section have been removed, because tc-tbf is no longer used.
