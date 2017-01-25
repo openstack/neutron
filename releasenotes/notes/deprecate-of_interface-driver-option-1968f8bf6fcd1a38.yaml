@@ -1,0 +1,5 @@
+---
+deprecations:
+  - The of_interface Open vSwitch agent configuration option is deprecated and will be removed
+    in the future. After option removal, the current default driver (native) will be the only
+    supported of_interface driver.
