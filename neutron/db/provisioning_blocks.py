@@ -80,7 +80,7 @@ def add_provisioning_component(context, object_id, object_type, entity):
 @db_api.retry_if_session_inactive()
 def remove_provisioning_component(context, object_id, object_type, entity,
                                   standard_attr_id=None):
-    """Removes a provisioning block for an object with triggering a callback.
+    """Remove a provisioning block for an object without triggering a callback.
 
     Removes a provisioning block without triggering a callback. A user of this
     module should call this when a block is no longer correct. If the block has
