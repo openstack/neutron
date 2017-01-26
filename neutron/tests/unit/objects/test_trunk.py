@@ -46,15 +46,14 @@ class SubPortDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(SubPortDbObjectTestCase, self).setUp()
-        self._create_test_network()
+        self._network_id = self._create_test_network_id()
         for obj in self.obj_fields:
-            self._create_port(id=obj['port_id'],
-                              network_id=self._network['id'])
+            self._create_test_port(
+                id=obj['port_id'], network_id=self._network_id)
             self._create_trunk(trunk_id=obj['trunk_id'])
 
     def _create_trunk(self, trunk_id):
-        port_id = uuidutils.generate_uuid()
-        self._create_port(id=port_id, network_id=self._network['id'])
+        port_id = self._create_test_port_id(network_id=self._network_id)
         trunk = t_obj.Trunk(self.context, id=trunk_id, port_id=port_id)
         trunk.create()
 
@@ -86,14 +85,14 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def setUp(self):
         super(TrunkDbObjectTestCase, self).setUp()
 
-        self._create_test_network()
+        self._network_id = self._create_test_network_id()
         sub_ports = []
         for obj in self.db_objs:
             sub_ports.extend(obj['sub_ports'])
 
         for obj in itertools.chain(self.obj_fields, sub_ports):
-            self._create_port(id=obj['port_id'],
-                              network_id=self._network['id'])
+            self._create_test_port(
+                id=obj['port_id'], network_id=self._network_id)
 
     def test_create_port_not_found(self):
         obj = self.obj_fields[0]
@@ -107,12 +106,14 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         sub_ports = []
         for vid in vids:
-            port = self._create_port(network_id=self._network['id'])
-            sub_ports.append(t_obj.SubPort(self.context, port_id=port['id'],
-                                           segmentation_type='vlan',
-                                           segmentation_id=vid))
-        trunk = t_obj.Trunk(self.context, port_id=port_id,
-                            sub_ports=sub_ports, project_id=project_id)
+            vid_port_id = self._create_test_port_id(
+                network_id=self._network_id)
+            sub_ports.append(t_obj.SubPort(
+                self.context, port_id=vid_port_id, segmentation_type='vlan',
+                segmentation_id=vid))
+        trunk = t_obj.Trunk(
+            self.context, port_id=port_id, sub_ports=sub_ports,
+            project_id=project_id)
         trunk.create()
         self.assertEqual(sub_ports, trunk.sub_ports)
         return trunk
@@ -138,8 +139,8 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         trunk1 = self._test_create_trunk_with_subports(port_id1, trunk1_vids)
 
         port_id2 = uuidutils.generate_uuid()
-        self._create_port(id=port_id2,
-                          network_id=self._network['id'])
+        self._create_test_port(
+            id=port_id2, network_id=self._network_id)
         self._test_create_trunk_with_subports(port_id2, trunk2_vids)
 
         listed_trunk1 = t_obj.Trunk.get_object(

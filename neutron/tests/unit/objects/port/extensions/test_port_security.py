@@ -29,7 +29,7 @@ class PortSecurityDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(PortSecurityDbObjTestCase, self).setUp()
-        self._create_test_network()
+        network_id = self._create_test_network_id()
         for obj in self.db_objs:
-            self._create_port(id=obj['port_id'],
-                              network_id=self._network['id'])
+            self._create_test_port(
+                id=obj['port_id'], network_id=network_id)

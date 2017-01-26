@@ -125,8 +125,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(QosPolicyDbObjectTestCase, self).setUp()
-        self._create_test_network()
-        self._create_test_port(self._network)
+        self._network_id = self._create_test_network_id()
+        self._port = self._create_test_port(network_id=self._network_id)
 
     def _create_test_policy(self):
         self.objs[0].create()
@@ -152,14 +152,14 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj = self._create_test_policy()
 
         policy_obj = policy.QosPolicy.get_network_policy(self.context,
-                                                         self._network['id'])
+                                                         self._network_id)
         self.assertIsNone(policy_obj)
 
         # Now attach policy and repeat
-        obj.attach_network(self._network['id'])
+        obj.attach_network(self._network_id)
 
         policy_obj = policy.QosPolicy.get_network_policy(self.context,
-                                                         self._network['id'])
+                                                         self._network_id)
         self.assertEqual(obj, policy_obj)
 
     def test_attach_network_nonexistent_network(self):
@@ -171,15 +171,15 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_attach_network_get_policy_network(self):
 
         obj = self._create_test_policy()
-        obj.attach_network(self._network['id'])
+        obj.attach_network(self._network_id)
 
         networks = obj.get_bound_networks()
         self.assertEqual(1, len(networks))
-        self.assertEqual(self._network['id'], networks[0])
+        self.assertEqual(self._network_id, networks[0])
 
     def test_attach_and_get_multiple_policy_networks(self):
 
-        net1_id = self._network['id']
+        net1_id = self._network_id
         net2 = net_obj.Network(self.context,
                                name='test-network2')
         net2.create()
@@ -204,7 +204,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         policy_obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.NetworkQosBindingNotFound,
-                          policy_obj.attach_network, self._network['id'])
+                          policy_obj.attach_network, self._network_id)
 
     def test_attach_port_nonexistent_policy(self):
 
@@ -217,7 +217,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         obj = self._create_test_policy()
 
         policy_obj = policy.QosPolicy.get_network_policy(self.context,
-                                                         self._network['id'])
+                                                         self._network_id)
 
         self.assertIsNone(policy_obj)
 
@@ -234,7 +234,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         port2 = db_api.create_object(self.context, models_v2.Port,
                                      {'tenant_id': 'fake_tenant_id',
                                      'name': 'test-port2',
-                                     'network_id': self._network['id'],
+                                     'network_id': self._network_id,
                                      'mac_address': 'fake_mac2',
                                      'admin_state_up': True,
                                      'status': 'ACTIVE',
@@ -271,11 +271,11 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def test_detach_network(self):
         obj = self._create_test_policy()
-        obj.attach_network(self._network['id'])
-        obj.detach_network(self._network['id'])
+        obj.attach_network(self._network_id)
+        obj.detach_network(self._network_id)
 
         policy_obj = policy.QosPolicy.get_network_policy(self.context,
-                                                         self._network['id'])
+                                                         self._network_id)
         self.assertIsNone(policy_obj)
 
     def test_detach_port_nonexistent_port(self):
@@ -296,7 +296,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_detach_network_nonexistent_policy(self):
         policy_obj = self._make_object(self.obj_fields[0])
         self.assertRaises(n_exc.NetworkQosBindingNotFound,
-                          policy_obj.detach_network, self._network['id'])
+                          policy_obj.detach_network, self._network_id)
 
     def test_synthetic_rule_fields(self):
         policy_obj, rule_obj = self._create_test_policy_with_rules(
@@ -346,11 +346,11 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def test_delete_not_allowed_if_policy_in_use_by_network(self):
         obj = self._create_test_policy()
-        obj.attach_network(self._network['id'])
+        obj.attach_network(self._network_id)
 
         self.assertRaises(n_exc.QosPolicyInUse, obj.delete)
 
-        obj.detach_network(self._network['id'])
+        obj.detach_network(self._network_id)
         obj.delete()
 
     def test_reload_rules_reloads_rules(self):
