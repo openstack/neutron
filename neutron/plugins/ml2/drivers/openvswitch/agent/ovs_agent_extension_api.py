@@ -13,61 +13,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.agent.common import ovs_lib
-
 
 class OVSCookieBridge(object):
-    '''Passthrough bridge adding cookies before calling the underlying bridge
+    '''Bridge restricting flow operations to its own distinct cookie
 
-    This class creates a bridge that will pass all calls to its underlying
-    bridge, except (add/mod/del/dump)_flow calls for which a cookie (reserved
-    at init from the underlying bridge) will be added before calling the
-    underlying bridge.
+    This class creates a bridge derived from a bridge passed at init (which
+    has to inherit from OVSBridgeCookieMixin), but that has its own cookie,
+    registered to the underlying bridge, and that will use this cookie in all
+    flow operations.
     '''
 
+    def __new__(cls, bridge):
+        cookie_bridge = bridge.clone()
+        cookie_bridge.set_agent_uuid_stamp(bridge.request_cookie())
+
+        return cookie_bridge
+
     def __init__(self, bridge):
-        """:param bridge: underlying bridge
-        :type bridge: OVSBridge
-        """
-        self.bridge = bridge
-        self._cookie = self.bridge.request_cookie()
-
-    @property
-    def default_cookie(self):
-        return self._cookie
-
-    def do_action_flows(self, action, kwargs_list):
-        # NOTE(tmorin): the OVSBridge code is excluding the 'del'
-        # action from this step where a cookie
-        # is added, but I think we need to keep it so that
-        # an extension does not delete flows of another
-        # extension
-        for kw in kwargs_list:
-            kw.setdefault('cookie', self._cookie)
-
-            if action is 'mod' or action is 'del':
-                kw['cookie'] = ovs_lib.check_cookie_mask(str(kw['cookie']))
-
-        self.bridge.do_action_flows(action, kwargs_list)
-
-    def add_flow(self, **kwargs):
-        self.do_action_flows('add', [kwargs])
-
-    def mod_flow(self, **kwargs):
-        self.do_action_flows('mod', [kwargs])
-
-    def delete_flows(self, **kwargs):
-        self.do_action_flows('del', [kwargs])
-
-    def __getattr__(self, name):
-        # for all other methods this class is a passthrough
-        return getattr(self.bridge, name)
-
-    def deferred(self, **kwargs):
-        # NOTE(tmorin): we can't passthrough for deferred() or else the
-        # resulting DeferredOVSBridge apply_flows method would call
-        # the (non-cookie-filtered) do_action_flow of the underlying bridge
-        return ovs_lib.DeferredOVSBridge(self, **kwargs)
+        pass
 
 
 class OVSAgentExtensionAPI(object):
