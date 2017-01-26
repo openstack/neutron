@@ -33,8 +33,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
     def test_setup_default_table(self):
         self.br.setup_default_table()
         expected = [
-            call.add_flow(priority=0, table=0, actions='normal'),
             call.add_flow(priority=0, table=23, actions='drop'),
+            call.add_flow(priority=0, table=0, actions='normal'),
             call.add_flow(priority=0, table=24, actions='drop'),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
