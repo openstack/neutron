@@ -1025,6 +1025,14 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('reload_allocations',
                                                  fake_network)
 
+    def test_port_update_end_grabs_lock(self):
+        payload = dict(port=fake_port2)
+        self.cache.get_network_by_id.return_value = None
+        self.cache.get_port_by_id.return_value = fake_port2
+        with mock.patch('neutron.agent.dhcp.agent._net_lock') as nl:
+            self.dhcp.port_update_end(None, payload)
+            nl.assert_called_once_with(fake_port2.network_id)
+
     def test_port_update_change_ip_on_port(self):
         payload = dict(port=fake_port1)
         self.cache.get_network_by_id.return_value = fake_network

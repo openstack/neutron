@@ -404,13 +404,10 @@ class DhcpAgent(manager.Manager):
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
         updated_port = dhcp.DictModel(payload['port'])
-        if self.cache.is_port_message_stale(payload['port']):
-            LOG.debug("Discarding stale port update: %s", updated_port)
-            return
-        network = self.cache.get_network_by_id(updated_port.network_id)
-        if not network:
-            return
-        with _net_lock(network.id):
+        with _net_lock(updated_port.network_id):
+            if self.cache.is_port_message_stale(payload['port']):
+                LOG.debug("Discarding stale port update: %s", updated_port)
+                return
             network = self.cache.get_network_by_id(updated_port.network_id)
             if not network:
                 return
