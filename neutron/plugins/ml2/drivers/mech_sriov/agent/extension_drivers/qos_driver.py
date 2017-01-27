@@ -19,16 +19,14 @@ from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import (
     exceptions as exc)
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
-from neutron.plugins.ml2.drivers.mech_sriov.mech_driver import (
-    mech_driver)
+from neutron.services.qos.drivers.sriov import driver
 
 LOG = logging.getLogger(__name__)
 
 
 class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
 
-    SUPPORTED_RULES = (
-        mech_driver.SriovNicSwitchMechanismDriver.supported_qos_rule_types)
+    SUPPORTED_RULES = driver.SUPPORTED_RULES
 
     def __init__(self):
         super(QosSRIOVAgentDriver, self).__init__()

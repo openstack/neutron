@@ -27,7 +27,8 @@ from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
-from neutron.services.qos import qos_consts
+from neutron.services.qos.drivers.openvswitch import driver as ovs_qos_driver
+
 
 IPTABLES_FW_DRIVER_FULL = ("neutron.agent.linux.iptables_firewall."
                            "OVSHybridIptablesFirewallDriver")
@@ -43,9 +44,6 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     network.
     """
 
-    supported_qos_rule_types = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-                                qos_consts.RULE_TYPE_DSCP_MARKING]
-
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         hybrid_plug_required = (not cfg.CONF.SECURITYGROUP.firewall_driver or
@@ -57,6 +55,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
             vif_details)
+        ovs_qos_driver.register()
 
     def get_allowed_network_types(self, agent):
         return (agent['configurations'].get('tunnel_types', []) +

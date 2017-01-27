@@ -23,6 +23,8 @@ VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT,
 
 QOS_POLICY_ID = 'qos_policy_id'
 
+QOS_PLUGIN = 'qos_plugin'
+
 # NOTE(slaweq): Value used to calculate burst value for egress bandwidth limit
 # if burst is not given by user. In such case burst value will be calculated
 # as 80% of bw_limit to ensure that at least limits for TCP traffic will work

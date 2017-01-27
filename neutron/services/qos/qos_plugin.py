@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log
+
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
@@ -20,8 +22,11 @@ from neutron.extensions import qos
 from neutron.objects import base as base_obj
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule_type as rule_type_object
+from neutron.services.qos.drivers import manager
 from neutron.services.qos.notification_drivers import manager as driver_mgr
 from neutron.services.qos import qos_consts
+
+LOG = log.getLogger(__name__)
 
 
 class QoSPlugin(qos.QoSPluginBase):
@@ -38,8 +43,13 @@ class QoSPlugin(qos.QoSPluginBase):
 
     def __init__(self):
         super(QoSPlugin, self).__init__()
+
+        # TODO(mangelajo): remove notification_driver_manager in Pike
         self.notification_driver_manager = (
             driver_mgr.QosServiceNotificationDriverManager())
+
+        self.driver_manager = manager.QosServiceDriverManager(enable_rpc=(
+                self.notification_driver_manager.has_message_queue_driver))
 
     @db_base_plugin_common.convert_result_to_dict
     def create_policy(self, context, policy):
@@ -61,7 +71,12 @@ class QoSPlugin(qos.QoSPluginBase):
 
         policy_obj = policy_object.QosPolicy(context, **policy['policy'])
         policy_obj.create()
+
+        self.driver_manager.call('create_policy', context, policy_obj)
+
+        #TODO(majopela): remove notification_driver_manager call in Pike
         self.notification_driver_manager.create_policy(context, policy_obj)
+
         return policy_obj
 
     @db_base_plugin_common.convert_result_to_dict
@@ -81,7 +96,12 @@ class QoSPlugin(qos.QoSPluginBase):
         policy_obj = policy_object.QosPolicy(context, id=policy_id)
         policy_obj.update_fields(policy_data, reset_changes=True)
         policy_obj.update()
+
+        self.driver_manager.call('update_policy', context, policy_obj)
+
+        #TODO(majopela): remove notification_driver_manager call in Pike
         self.notification_driver_manager.update_policy(context, policy_obj)
+
         return policy_obj
 
     def delete_policy(self, context, policy_id):
@@ -97,6 +117,10 @@ class QoSPlugin(qos.QoSPluginBase):
         policy = policy_object.QosPolicy(context)
         policy.id = policy_id
         policy.delete()
+
+        self.driver_manager.call('delete_policy', context, policy)
+
+        #TODO(majopela): remove notification_driver_manager call in Pike
         self.notification_driver_manager.delete_policy(context, policy)
 
     def _get_policy_obj(self, context, policy_id):
@@ -155,6 +179,10 @@ class QoSPlugin(qos.QoSPluginBase):
             filters = {}
         return rule_type_object.QosRuleType.get_objects(**filters)
 
+    @property
+    def supported_rule_types(self):
+        return self.driver_manager.supported_rule_types
+
     @db_base_plugin_common.convert_result_to_dict
     def create_policy_rule(self, context, rule_cls, policy_id, rule_data):
         """Create a QoS policy rule.
@@ -179,7 +207,12 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = rule_cls(context, qos_policy_id=policy_id, **rule_data)
             rule.create()
             policy.reload_rules()
+
+        self.driver_manager.call('update_policy', context, policy)
+
+        #TODO(majopela): remove notification_driver_manager call in Pike
         self.notification_driver_manager.update_policy(context, policy)
+
         return rule
 
     @db_base_plugin_common.convert_result_to_dict
@@ -212,7 +245,12 @@ class QoSPlugin(qos.QoSPluginBase):
             rule.update_fields(rule_data, reset_changes=True)
             rule.update()
             policy.reload_rules()
+
+        self.driver_manager.call('update_policy', context, policy)
+
+        #TODO(majopela): remove notification_driver_manager call in Pike
         self.notification_driver_manager.update_policy(context, policy)
+
         return rule
 
     def delete_policy_rule(self, context, rule_cls, rule_id, policy_id):
@@ -235,6 +273,10 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = policy.get_rule_by_id(rule_id)
             rule.delete()
             policy.reload_rules()
+
+        self.driver_manager.call('update_policy', context, policy)
+
+        #TODO(majopela): remove notification_driver_manager call in Pike
         self.notification_driver_manager.update_policy(context, policy)
 
     @db_base_plugin_common.filter_fields

@@ -12,9 +12,10 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _LI
 from neutron.conf.services import qos_driver_manager as qos_mgr
-from neutron._i18n import _, _LI
 from neutron import manager
+from neutron.services.qos.notification_drivers import message_queue
 
 QOS_DRIVER_NAMESPACE = 'neutron.qos.notification_drivers'
 qos_mgr.register_qos_plugin_opts()
@@ -40,14 +41,23 @@ class QosServiceNotificationDriverManager(object):
         for driver in self.notification_drivers:
             driver.create_policy(context, qos_policy)
 
+    @property
+    def has_message_queue_driver(self):
+        """Determine if we have any message_queue derived driver in the
+        notifications drivers, so the QoS plugin will forcefully enable
+        the rpc notifications for Pike, since our message_queue driver
+        is a dummy which doesn't send any messages.
+        """
+        #TODO(mangelajo): remove this in Pike
+        return any(
+            isinstance(driver, message_queue.RpcQosServiceNotificationDriver)
+            for driver in self.notification_drivers)
+
     def _load_drivers(self, notification_drivers):
         """Load all the instances of the configured QoS notification drivers
 
         :param notification_drivers: comma separated string
         """
-        if not notification_drivers:
-            raise SystemExit(_('A QoS driver must be specified'))
-        LOG.debug("Loading QoS notification drivers: %s", notification_drivers)
         for notification_driver in notification_drivers:
             driver_ins = self._load_driver_instance(notification_driver)
             self.notification_drivers.append(driver_ins)

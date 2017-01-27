@@ -1,0 +1,12 @@
+---
+features:
+  - The QoS driver architecture has been refactored to overcome several
+    previous limitations, the main one was the coupling of QoS details
+    into the mechanism drivers, and the next one was the need of
+    configuration knobs to enable each specific notification driver,
+    that will be handled automatically from now on.
+
+deprecations:
+  - |
+    notification_drivers from [qos] section has been deprecated. It will be
+    removed in a future release.

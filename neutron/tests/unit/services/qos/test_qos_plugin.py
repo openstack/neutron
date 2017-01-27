@@ -51,7 +51,13 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         manager.init()
         self.qos_plugin = directory.get_plugin(constants.QOS)
+
+        #TODO(mangelajo): Remove notification_driver_manager mock in Pike
         self.qos_plugin.notification_driver_manager = mock.Mock()
+        self.qos_plugin.driver_manager = mock.Mock()
+
+        self.rpc_push = mock.patch('neutron.api.rpc.handlers.resources_rpc'
+                                   '.ResourcesPushRpcApi.push').start()
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
         mock.patch.object(self.ctxt.session, 'refresh').start()
@@ -80,19 +86,27 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.dscp_rule = rule_object.QosDscpMarkingRule(
             self.ctxt, **self.rule_data['dscp_marking_rule'])
 
-    def _validate_notif_driver_params(self, method_name):
+    def _validate_driver_params(self, method_name):
         method = getattr(self.qos_plugin.notification_driver_manager,
                          method_name)
         self.assertTrue(method.called)
         self.assertIsInstance(
             method.call_args[0][1], policy_object.QosPolicy)
 
+        self.assertTrue(self.qos_plugin.driver_manager.call.called)
+        self.assertEqual(self.qos_plugin.driver_manager.call.call_args[0][0],
+                         method_name)
+        self.assertIsInstance(
+            self.qos_plugin.driver_manager.call.call_args[0][2],
+            policy_object.QosPolicy
+        )
+
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
         '.create_rbac_policy')
     def test_add_policy(self, *mocks):
         self.qos_plugin.create_policy(self.ctxt, self.policy_data)
-        self._validate_notif_driver_params('create_policy')
+        self._validate_driver_params('create_policy')
 
     def test_add_policy_with_extra_tenant_keyword(self, *mocks):
         policy_id = uuidutils.generate_uuid()
@@ -124,19 +138,19 @@ class TestQosPlugin(base.BaseQosTestCase):
             policy_object.QosPolicy, self.policy_data['policy'])
         self.qos_plugin.update_policy(
             self.ctxt, self.policy.id, {'policy': fields})
-        self._validate_notif_driver_params('update_policy')
+        self._validate_driver_params('update_policy')
 
     @mock.patch('neutron.objects.db.api.get_object', return_value=None)
     def test_delete_policy(self, *mocks):
         self.qos_plugin.delete_policy(self.ctxt, self.policy.id)
-        self._validate_notif_driver_params('delete_policy')
+        self._validate_driver_params('delete_policy')
 
     def test_create_policy_rule(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=self.policy):
             self.qos_plugin.create_policy_bandwidth_limit_rule(
                 self.ctxt, self.policy.id, self.rule_data)
-            self._validate_notif_driver_params('update_policy')
+            self._validate_driver_params('update_policy')
 
     def test_update_policy_rule(self):
         _policy = policy_object.QosPolicy(
@@ -146,7 +160,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, "rules", [self.rule])
             self.qos_plugin.update_policy_bandwidth_limit_rule(
                 self.ctxt, self.rule.id, self.policy.id, self.rule_data)
-            self._validate_notif_driver_params('update_policy')
+            self._validate_driver_params('update_policy')
 
     def test_update_policy_rule_bad_policy(self):
         _policy = policy_object.QosPolicy(
@@ -168,7 +182,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, "rules", [self.rule])
             self.qos_plugin.delete_policy_bandwidth_limit_rule(
                         self.ctxt, self.rule.id, _policy.id)
-            self._validate_notif_driver_params('update_policy')
+            self._validate_driver_params('update_policy')
 
     def test_delete_policy_rule_bad_policy(self):
         _policy = policy_object.QosPolicy(
@@ -250,7 +264,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, "rules", [self.dscp_rule])
             self.qos_plugin.create_policy_dscp_marking_rule(
                 self.ctxt, self.policy.id, self.rule_data)
-            self._validate_notif_driver_params('update_policy')
+            self._validate_driver_params('update_policy')
 
     def test_update_policy_dscp_marking_rule(self):
         _policy = policy_object.QosPolicy(
@@ -260,7 +274,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, "rules", [self.dscp_rule])
             self.qos_plugin.update_policy_dscp_marking_rule(
                 self.ctxt, self.dscp_rule.id, self.policy.id, self.rule_data)
-            self._validate_notif_driver_params('update_policy')
+            self._validate_driver_params('update_policy')
 
     def test_delete_policy_dscp_marking_rule(self):
         _policy = policy_object.QosPolicy(
@@ -270,7 +284,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, "rules", [self.dscp_rule])
             self.qos_plugin.delete_policy_dscp_marking_rule(
                 self.ctxt, self.dscp_rule.id, self.policy.id)
-            self._validate_notif_driver_params('update_policy')
+            self._validate_driver_params('update_policy')
 
     def test_get_policy_dscp_marking_rules(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -436,7 +450,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                             mock_manager.mock_calls.index(notify_mock_call))
 
     @mock.patch('neutron.objects.qos.policy.QosPolicy')
-    def test_rule_notification_ordering(self, qos_policy_mock):
+    def test_rule_notification_and_driver_ordering(self, qos_policy_mock):
         rule_cls_mock = mock.Mock()
         rule_cls_mock.rule_type = 'fake'
 
@@ -448,6 +462,8 @@ class TestQosPlugin(base.BaseQosTestCase):
                         'delete': [self.ctxt, rule_cls_mock,
                                    self.rule.id, self.policy.id]}
 
+        # TODO(mangelajo): Remove notification_driver_manager checks in Pike
+        #                  and rename this test
         self.qos_plugin.notification_driver_manager = mock.Mock()
 
         mock_manager = mock.Mock()
@@ -455,6 +471,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         mock_manager.attach_mock(rule_cls_mock, 'RuleCls')
         mock_manager.attach_mock(self.qos_plugin.notification_driver_manager,
                                  'notification_driver')
+        mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
 
         for action, arguments in rule_actions.items():
             mock_manager.reset_mock()
@@ -470,6 +487,9 @@ class TestQosPlugin(base.BaseQosTestCase):
             notify_mock_call = mock.call.notification_driver.update_policy(
                     self.ctxt, mock.ANY)
 
+            driver_mock_call = mock.call.driver.call('update_policy',
+                                                     self.ctxt, mock.ANY)
+
             if rule_mock_call in mock_manager.mock_calls:
                 action_index = mock_manager.mock_calls.index(rule_mock_call)
             else:
@@ -478,3 +498,6 @@ class TestQosPlugin(base.BaseQosTestCase):
 
             self.assertTrue(
                 action_index < mock_manager.mock_calls.index(notify_mock_call))
+
+            self.assertTrue(
+                action_index < mock_manager.mock_calls.index(driver_mock_call))

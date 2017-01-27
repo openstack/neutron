@@ -16,7 +16,9 @@ from neutron._i18n import _
 QOS_PLUGIN_OPTS = [
     cfg.ListOpt('notification_drivers',
                 default=['message_queue'],
-                help=_('Drivers list to use to send the update notification')),
+                help=_("Drivers list to use to send the update notification. "
+                       "This option will be unused in Pike."),
+                deprecated_for_removal=True),
 ]
 
 

@@ -236,10 +236,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 return
         self.update_port_status(context, port_id, const.PORT_STATUS_ACTIVE)
 
-    @property
-    def supported_qos_rule_types(self):
-        return self.mechanism_manager.supported_qos_rule_types
-
     @log_helpers.log_method_call
     def _start_rpc_notifiers(self):
         """Initialize RPC notifiers for agents."""
