@@ -194,43 +194,38 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             vms[2].namespace, vms[0].namespace, vms[0].ip, 3355,
             net_helpers.NetcatTester.TCP)
 
-        # NOTE(slaweq) iptables driver currently contains a bug
-        # https://bugs.launchpad.net/neutron/+bug/1657260
-        # where established connections are not dropped after security group
-        # rule is removed.  Remove this workaround once bug #1657260 is fixed.
-        if self.firewall_driver != 'iptables':
-            # 6. check if an established connection stops by deleting
-            #    the supporting SG rule.
-            index_to_host.append(index_to_host[2])
-            index_to_sg.append(1)
-            ports.append(
-                self.safe_client.create_port(tenant_uuid, network['id'],
-                                             self.environment.hosts[
-                                                 index_to_host[3]].hostname,
-                                             security_groups=[sgs[1]['id']]))
+        # 6. check if an established connection stops by deleting
+        #    the supporting SG rule.
+        index_to_host.append(index_to_host[2])
+        index_to_sg.append(1)
+        ports.append(
+            self.safe_client.create_port(tenant_uuid, network['id'],
+                                         self.environment.hosts[
+                                             index_to_host[3]].hostname,
+                                         security_groups=[sgs[1]['id']]))
 
-            vms.append(
-                self.useFixture(
-                    machine.FakeFullstackMachine(
-                        self.environment.hosts[index_to_host[3]],
-                        network['id'],
-                        tenant_uuid,
-                        self.safe_client,
-                        neutron_port=ports[3])))
+        vms.append(
+            self.useFixture(
+                machine.FakeFullstackMachine(
+                    self.environment.hosts[index_to_host[3]],
+                    network['id'],
+                    tenant_uuid,
+                    self.safe_client,
+                    neutron_port=ports[3])))
 
-            vms[3].block_until_boot()
+        vms[3].block_until_boot()
 
-            netcat = net_helpers.NetcatTester(vms[3].namespace,
-                vms[0].namespace, vms[0].ip, 3355,
-                net_helpers.NetcatTester.TCP)
+        netcat = net_helpers.NetcatTester(vms[3].namespace,
+            vms[0].namespace, vms[0].ip, 3355,
+            net_helpers.NetcatTester.TCP)
 
-            self.addCleanup(netcat.stop_processes)
-            self.assertTrue(netcat.test_connectivity())
+        self.addCleanup(netcat.stop_processes)
+        self.assertTrue(netcat.test_connectivity())
 
-            self.client.delete_security_group_rule(rule2['id'])
-            common_utils.wait_until_true(lambda: netcat.test_no_connectivity(),
-                                         sleep=8)
-            netcat.stop_processes()
+        self.client.delete_security_group_rule(rule2['id'])
+        common_utils.wait_until_true(lambda: netcat.test_no_connectivity(),
+                                     sleep=8)
+        netcat.stop_processes()
 
         # 7. check SCTP is supported by security group
         self.assert_no_connection(

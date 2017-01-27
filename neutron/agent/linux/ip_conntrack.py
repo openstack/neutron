@@ -74,13 +74,15 @@ class IpConntrackManager(object):
         cmd = self._generate_conntrack_cmd_by_rule(rule, self.namespace)
         ethertype = rule.get('ethertype')
         for device_info in device_info_list:
-            zone_id = self.get_device_zone(device_info['device'])
+            zone_id = self._device_zone_map.get(device_info['device'], None)
             ips = device_info.get('fixed_ips', [])
             for ip in ips:
                 net = netaddr.IPNetwork(ip)
                 if str(net.version) not in ethertype:
                     continue
-                ip_cmd = [str(net.ip), '-w', zone_id]
+                ip_cmd = [str(net.ip)]
+                if zone_id:
+                    ip_cmd.extend(['-w', zone_id])
                 if remote_ip and str(
                         netaddr.IPNetwork(remote_ip).version) in ethertype:
                     if rule.get('direction') == 'ingress':
