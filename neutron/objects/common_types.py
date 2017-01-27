@@ -185,6 +185,10 @@ class IpProtocolEnum(obj_fields.Enum):
             **kwargs)
 
 
+class PortBindingStatusEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.PORT_BINDING_STATUSES)
+
+
 class IpProtocolEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = IpProtocolEnum()
 
