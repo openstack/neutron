@@ -127,6 +127,7 @@ EXTENSION_DRIVER_TYPE = 'ovs'
 OVS_DATAPATH_SYSTEM = 'system'
 OVS_DATAPATH_NETDEV = 'netdev'
 OVS_DPDK_VHOST_USER = 'dpdkvhostuser'
+OVS_DPDK_VHOST_USER_CLIENT = 'dpdkvhostuserclient'
 
 # default ovs vhost-user socket location
 VHOST_USER_SOCKET_DIR = '/var/run/openvswitch'

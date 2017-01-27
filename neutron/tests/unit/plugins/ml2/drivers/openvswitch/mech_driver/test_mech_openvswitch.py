@@ -177,3 +177,62 @@ class OpenvswitchMechanismFirewallUndefinedTestCase(
         cfg.CONF.set_override('firewall_driver', '', 'SECURITYGROUP')
         self.driver = mech_openvswitch.OpenvswitchMechanismDriver()
         self.driver.initialize()
+
+
+class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
+
+    GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
+
+    GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
+
+    VHOST_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'tunnel_types': GOOD_TUNNEL_TYPES,
+                    'datapath_type': a_const.OVS_DATAPATH_NETDEV,
+                    'ovs_capabilities': {
+                        'iface_types': [a_const.OVS_DPDK_VHOST_USER]}}
+
+    VHOST_SERVER_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                    'tunnel_types': GOOD_TUNNEL_TYPES,
+                    'datapath_type': a_const.OVS_DATAPATH_NETDEV,
+                    'ovs_capabilities': {
+                        'iface_types': [a_const.OVS_DPDK_VHOST_USER_CLIENT]}}
+
+    SYSTEM_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
+                      'tunnel_types': GOOD_TUNNEL_TYPES,
+                      'datapath_type': a_const.OVS_DATAPATH_SYSTEM,
+                      'ovs_capabilities': {'iface_types': []}}
+
+    AGENT = {'alive': True,
+             'configurations': VHOST_CONFIGS,
+             'host': 'host'}
+
+    AGENT_SERVER = {'alive': True,
+                    'configurations': VHOST_SERVER_CONFIGS,
+                    'host': 'host'}
+
+    AGENT_SYSTEM = {'alive': True,
+                    'configurations': SYSTEM_CONFIGS,
+                    'host': 'host'}
+
+    def test_get_vhost_mode(self):
+        ifaces = []
+        result = self.driver.get_vhost_mode(ifaces)
+        self.assertEqual(portbindings.VHOST_USER_MODE_CLIENT, result)
+
+        ifaces = [a_const.OVS_DPDK_VHOST_USER]
+        result = self.driver.get_vhost_mode(ifaces)
+        self.assertEqual(portbindings.VHOST_USER_MODE_CLIENT, result)
+
+        ifaces = [a_const.OVS_DPDK_VHOST_USER_CLIENT]
+        result = self.driver.get_vhost_mode(ifaces)
+        self.assertEqual(portbindings.VHOST_USER_MODE_SERVER, result)
+
+    def test_get_vif_type(self):
+        result = self.driver.get_vif_type(self.AGENT, None)
+        self.assertEqual(portbindings.VIF_TYPE_VHOST_USER, result)
+
+        result = self.driver.get_vif_type(self.AGENT_SERVER, None)
+        self.assertEqual(portbindings.VIF_TYPE_VHOST_USER, result)
+
+        result = self.driver.get_vif_type(self.AGENT_SYSTEM, None)
+        self.assertEqual(portbindings.VIF_TYPE_OVS, result)

@@ -80,11 +80,21 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_vif_type(self, agent, context):
         caps = agent['configurations'].get('ovs_capabilities', {})
-        if (a_const.OVS_DPDK_VHOST_USER in caps.get('iface_types', []) and
-                agent['configurations'].get('datapath_type') ==
-                a_const.OVS_DATAPATH_NETDEV):
+        if (any(x in caps.get('iface_types', []) for x
+                in [a_const.OVS_DPDK_VHOST_USER,
+                    a_const.OVS_DPDK_VHOST_USER_CLIENT]) and
+            agent['configurations'].get('datapath_type') ==
+            a_const.OVS_DATAPATH_NETDEV):
             return portbindings.VIF_TYPE_VHOST_USER
         return self.vif_type
+
+    def get_vhost_mode(self, iface_types):
+        # NOTE(sean-k-mooney): this function converts the ovs vhost user
+        # driver mode into the qemu vhost user mode. If OVS is the server,
+        # qemu is the client and vice-versa.
+        if (a_const.OVS_DPDK_VHOST_USER_CLIENT in iface_types):
+            return portbindings.VHOST_USER_MODE_SERVER
+        return portbindings.VHOST_USER_MODE_CLIENT
 
     def get_vif_details(self, agent, context):
         vif_details = self._pre_get_vif_details(agent, context)
@@ -106,7 +116,8 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def _pre_get_vif_details(self, agent, context):
         a_config = agent['configurations']
-        if a_config.get('datapath_type') != a_const.OVS_DATAPATH_NETDEV:
+        vif_type = self.get_vif_type(agent, context)
+        if vif_type != portbindings.VIF_TYPE_VHOST_USER:
             details = dict(self.vif_details)
             hybrid = portbindings.OVS_HYBRID_PLUG
             if hybrid in a_config:
@@ -114,13 +125,14 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 # in the constructor if the agent specifically requests it
                 details[hybrid] = a_config[hybrid]
             return details
-        caps = a_config.get('ovs_capabilities', {})
-        if a_const.OVS_DPDK_VHOST_USER in caps.get('iface_types', []):
+        else:
             sock_path = self.agent_vhu_sockpath(agent, context.current['id'])
+            caps = a_config.get('ovs_capabilities', {})
+            mode = self.get_vhost_mode(caps.get('iface_types', []))
             return {
                 portbindings.CAP_PORT_FILTER: False,
-                portbindings.VHOST_USER_MODE:
-                    portbindings.VHOST_USER_MODE_CLIENT,
+                portbindings.OVS_HYBRID_PLUG: False,
+                portbindings.VHOST_USER_MODE: mode,
                 portbindings.VHOST_USER_OVS_PLUG: True,
                 portbindings.VHOST_USER_SOCKET: sock_path
             }
