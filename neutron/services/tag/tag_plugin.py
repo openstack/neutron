@@ -118,11 +118,16 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
             except exc.NoResultFound:
                 raise tag_ext.TagNotFound(tag=tag)
 
-    # support only _apply_dict_extend_functions supported resources
-    # at the moment.
-    for resource, model in resource_model_map.items():
-        common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
-            resource, [_extend_tags_dict])
-        common_db_mixin.CommonDbMixin.register_model_query_hook(
-            model, "tag", None, None,
-            functools.partial(tag_methods.apply_tag_filters, model))
+    def __new__(cls, *args, **kwargs):
+        inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
+        inst._filter_methods = []  # prevent GC of our partial functions
+        # support only _apply_dict_extend_functions supported resources
+        # at the moment.
+        for resource, model in resource_model_map.items():
+            common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+                resource, [_extend_tags_dict])
+            method = functools.partial(tag_methods.apply_tag_filters, model)
+            inst._filter_methods.append(method)
+            common_db_mixin.CommonDbMixin.register_model_query_hook(
+                model, "tag", None, None, method)
+        return inst
