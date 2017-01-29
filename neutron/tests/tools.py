@@ -78,7 +78,7 @@ class WarningsFixture(fixtures.Fixture):
         self.addCleanup(warnings.resetwarnings)
         for wtype in self.warning_types:
             warnings.filterwarnings(
-                "always", category=wtype, module='^neutron\\.')
+                "once", category=wtype, module='^neutron\\.')
 
 
 class OpenFixture(fixtures.Fixture):
