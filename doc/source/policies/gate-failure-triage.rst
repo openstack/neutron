@@ -40,8 +40,10 @@ story is to check for `uncategorized <http://status.openstack.org/elastic-rechec
 failures. This is where failures for new (unknown) gate breaking bugs end up; on the other hand also infra
 error causing job failures end up here. It should be duty of the diligent Neutron developer to ensure the
 classification rate for neutron jobs is as close as possible to 100%. To this aim, the diligent Neutron
-developer should adopt the following procedure:
+developer should adopt the procedure outlined in the following sections.
 
+Troubleshooting Tempest jobs
+----------------------------
 1. Open logs for failed jobs and look for logs/testr_results.html.gz.
 2. If that file is missing, check console.html and see where the job failed.
     1. If there is a failure in devstack-gate-cleanup-host.txt it's likely to be an infra issue.
@@ -50,9 +52,23 @@ developer should adopt the following procedure:
    logstash.
 4. On logstash, search for occurrences of this error message, and try to identify the root cause for the failure
    (see below).
-5. File a bug for this failure, and push a elastic-recheck query for it (see below).
+5. File a bug for this failure, and push an `Elastic Recheck Query <http://docs.openstack.org/developer/neutron/policies/gate-failure-triage.html#filing-an-elastic-recheck-query>`_ for it.
 6. If you are confident with the area of this bug, and you have time, assign it to yourself; otherwise look for an
     assignee or talk to the Neutron's bug czar to find an assignee.
+
+Troubleshooting functional/fullstack job
+----------------------------------------
+1. Go to the job link provided by Jenkins CI.
+2. Look at logs/testr_results.html.gz for which particular test failed.
+3. More logs from a particular test are stored at
+   logs/dsvm-functional-logs/<path_of_the_test> (or dsvm-fullstack-logs
+   for fullstack job).
+4. Find the error in the logs and search for similar errors in existing
+   launchpad bugs. If no bugs were reported, create a new bug report. Don't
+   forget to put a snippet of the trace into the new launchpad bug. If the
+   log file for a particular job doesn't contain any trace, pick the one
+   from testr_results.html.gz.
+5. Create an `Elastic Recheck Query <http://docs.openstack.org/developer/neutron/policies/gate-failure-triage.html#filing-an-elastic-recheck-query>`_
 
 Root Causing a Gate Failure
 ---------------------------
