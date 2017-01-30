@@ -281,7 +281,7 @@ Agent side design
 -----------------
 
 Reference agents implement QoS functionality using an `L2 agent extension
-<l2_agent_extensions>`_.
+<./l2_agent_extensions.html>`_.
 
 * neutron.agent.l2.extensions.qos
   defines QoS L2 agent extension. It receives handle_port and delete_port
