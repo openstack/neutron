@@ -25,7 +25,10 @@ import testtools
 
 from neutron.agent.common import utils as agent_utils
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import agents_db
@@ -39,6 +42,7 @@ from neutron.extensions import l3_ext_ha_mode
 from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron.scheduler import l3_agent_scheduler
+from neutron.services.revisions import revision_plugin
 from neutron.tests.common import helpers
 from neutron.tests.unit import testlib_api
 
@@ -245,6 +249,24 @@ class L3HATestCase(L3HATestFramework):
 
         router = self._create_router(ha=None)
         self.assertTrue(router['ha'])
+
+    def test_ha_interface_concurrent_create_on_delete(self):
+        # this test depends on protection from the revision plugin so
+        # we have to initialize it
+        revision_plugin.RevisionPlugin()
+        router = self._create_router(ha=True)
+
+        def jam_in_interface(*args, **kwargs):
+            ctx = context.get_admin_context()
+            net = self.plugin._ensure_vr_id_and_network(
+                ctx, self.plugin._get_router(ctx, router['id']))
+            self.plugin.add_ha_port(
+                ctx, router['id'], net.network_id, router['tenant_id'])
+            registry.unsubscribe(jam_in_interface, resources.ROUTER,
+                                 events.PRECOMMIT_DELETE)
+        registry.subscribe(jam_in_interface, resources.ROUTER,
+                           events.PRECOMMIT_DELETE)
+        self.plugin.delete_router(self.admin_ctx, router['id'])
 
     def test_ha_router_delete_with_distributed(self):
         router = self._create_router(ha=True, distributed=True)
