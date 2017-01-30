@@ -10,9 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from oslo_log import log as logging
 from oslo_utils import excutils
-
 
 from neutron._i18n import _LE, _LW
 from neutron.api.rpc.callbacks import events as rpc_events
@@ -28,6 +28,12 @@ from neutron.services.qos import qos_consts
 qos_mgr.register_qos_plugin_opts()
 
 LOG = logging.getLogger(__name__)
+
+
+SKIPPED_VIF_TYPES = [
+    portbindings.VIF_TYPE_UNBOUND,
+    portbindings.VIF_TYPE_BINDING_FAILED
+]
 
 
 class QosServiceDriverManager(object):
@@ -61,6 +67,28 @@ class QosServiceDriverManager(object):
         policy = policy_object.QosPolicy.get_object(context, id=policy_id)
         return policy
 
+    @staticmethod
+    def _validate_vnic_type(driver, vnic_type, port_id):
+        if driver.is_vnic_compatible(vnic_type):
+            return True
+        LOG.debug("vnic_type %(vnic_type)s of port %(port_id)s "
+                  "is not compatible with QoS driver %(driver)s",
+                  {'vnic_type': vnic_type,
+                   'port_id': port_id,
+                   'driver': driver.name})
+        return False
+
+    @staticmethod
+    def _validate_vif_type(driver, vif_type, port_id):
+        if driver.is_vif_type_compatible(vif_type):
+            return True
+        LOG.debug("vif_type %(vif_type)s of port %(port_id)s "
+                  "is not compatible with QoS driver %(driver)s",
+                  {'vif_type': vif_type,
+                   'port_id': port_id,
+                   'driver': driver.name})
+        return False
+
     def call(self, method_name, *args, **kwargs):
         """Helper method for calling a method across all extension drivers."""
         for driver in self._drivers:
@@ -92,6 +120,22 @@ class QosServiceDriverManager(object):
         """
         self._drivers.append(driver)
         self.rpc_notifications_required |= driver.requires_rpc_notifications
+
+    def validate_rule_for_port(self, rule, port):
+        for driver in self._drivers:
+            vif_type = port.binding.vif_type
+            if vif_type not in SKIPPED_VIF_TYPES:
+                if not self._validate_vif_type(driver, vif_type, port['id']):
+                    continue
+            else:
+                vnic_type = port.binding.vnic_type
+                if not self._validate_vnic_type(driver, vnic_type, port['id']):
+                    continue
+
+            if driver.is_rule_supported(rule):
+                return True
+
+        return False
 
     @property
     def supported_rule_types(self):

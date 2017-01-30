@@ -111,6 +111,10 @@ class InvalidAllocationPool(e.BadRequest):
     message = _("The allocation pool %(pool)s is not valid.")
 
 
+class QosRuleNotSupported(e.Conflict):
+    message = _("Rule %(rule_type)s is not supported by port %(port_id)s")
+
+
 class UnsupportedPortDeviceOwner(e.Conflict):
     message = _("Operation %(op)s is not supported for device_owner "
                 "%(device_owner)s on port %(port_id)s.")

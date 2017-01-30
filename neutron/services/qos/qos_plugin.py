@@ -13,11 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.callbacks import events as callbacks_events
+from neutron.callbacks import registry as callbacks_registry
+from neutron.callbacks import resources as callbacks_resources
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
+from neutron.objects import network as network_object
+from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
@@ -46,6 +51,101 @@ class QoSPlugin(qos.QoSPluginBase):
 
         self.driver_manager = manager.QosServiceDriverManager(enable_rpc=(
                 self.notification_driver_manager.has_message_queue_driver))
+
+        callbacks_registry.subscribe(
+            self._validate_create_port_callback,
+            callbacks_resources.PORT,
+            callbacks_events.PRECOMMIT_CREATE)
+        callbacks_registry.subscribe(
+            self._validate_update_port_callback,
+            callbacks_resources.PORT,
+            callbacks_events.PRECOMMIT_UPDATE)
+        callbacks_registry.subscribe(
+            self._validate_update_network_callback,
+            callbacks_resources.NETWORK,
+            callbacks_events.PRECOMMIT_UPDATE)
+
+    def _get_ports_with_policy(self, context, policy):
+        networks_ids = policy.get_bound_networks()
+        ports_with_net_policy = ports_object.Port.get_objects(
+            context, network_id=networks_ids)
+
+        # Filter only this ports which don't have overwritten policy
+        ports_with_net_policy = [
+            port for port in ports_with_net_policy if
+            port.qos_policy_id is None
+        ]
+
+        ports_ids = policy.get_bound_ports()
+        ports_with_policy = ports_object.Port.get_objects(
+            context, id=ports_ids)
+        return list(set(ports_with_policy + ports_with_net_policy))
+
+    def _validate_create_port_callback(self, resource, event, trigger,
+                                       **kwargs):
+        context = kwargs['context']
+        port_id = kwargs['port']['id']
+        port = ports_object.Port.get_object(context, id=port_id)
+        network = network_object.Network.get_object(context,
+                                                    id=port.network_id)
+
+        policy_id = port.qos_policy_id or network.qos_policy_id
+        if policy_id is None:
+            return
+
+        policy = policy_object.QosPolicy.get_object(context, id=policy_id)
+        self.validate_policy_for_port(policy, port)
+
+    def _validate_update_port_callback(self, resource, event, trigger,
+                                       **kwargs):
+        context = kwargs['context']
+        original_policy_id = kwargs['original_port'].get(
+            qos_consts.QOS_POLICY_ID)
+        policy_id = kwargs['port'].get(qos_consts.QOS_POLICY_ID)
+
+        if policy_id is None or policy_id == original_policy_id:
+            return
+
+        updated_port = ports_object.Port.get_object(
+            context, id=kwargs['port']['id'])
+        policy = policy_object.QosPolicy.get_object(context, id=policy_id)
+
+        self.validate_policy_for_port(policy, updated_port)
+
+    def _validate_update_network_callback(self, resource, event, trigger,
+                                          **kwargs):
+        context = kwargs['context']
+        original_network = kwargs['original_network']
+        updated_network = kwargs['network']
+
+        original_policy_id = original_network.get(qos_consts.QOS_POLICY_ID)
+        policy_id = updated_network.get(qos_consts.QOS_POLICY_ID)
+
+        if policy_id is None or policy_id == original_policy_id:
+            return
+
+        policy = policy_object.QosPolicy.get_object(context, id=policy_id)
+        ports = ports_object.Port.get_objects(
+                context, network_id=updated_network['id'])
+        # Filter only this ports which don't have overwritten policy
+        ports = [
+            port for port in ports if port.qos_policy_id is None
+        ]
+        self.validate_policy_for_ports(policy, ports)
+
+    def validate_policy(self, context, policy):
+        ports = self._get_ports_with_policy(context, policy)
+        self.validate_policy_for_ports(policy, ports)
+
+    def validate_policy_for_ports(self, policy, ports):
+        for port in ports:
+            self.validate_policy_for_port(policy, port)
+
+    def validate_policy_for_port(self, policy, port):
+        for rule in policy.rules:
+            if not self.driver_manager.validate_rule_for_port(rule, port):
+                raise n_exc.QosRuleNotSupported(rule_type=rule.rule_type,
+                                                port_id=port['id'])
 
     @db_base_plugin_common.convert_result_to_dict
     def create_policy(self, context, policy):
@@ -203,6 +303,7 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = rule_cls(context, qos_policy_id=policy_id, **rule_data)
             rule.create()
             policy.reload_rules()
+            self.validate_policy(context, policy)
 
         self.driver_manager.call('update_policy', context, policy)
 
@@ -241,6 +342,7 @@ class QoSPlugin(qos.QoSPluginBase):
             rule.update_fields(rule_data, reset_changes=True)
             rule.update()
             policy.reload_rules()
+            self.validate_policy(context, policy)
 
         self.driver_manager.call('update_policy', context, policy)
 
