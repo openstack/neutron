@@ -163,15 +163,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if ext_mgr:
             self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
-    def tearDown(self):
-        self.api = None
-        self._deserializers = None
-        self._skip_native_bulk = None
-        self._skip_native_pagination = None
-        self._skip_native_sortin = None
-        self.ext_api = None
-        super(NeutronDbPluginV2TestCase, self).tearDown()
-
     def setup_config(self):
         # Create the default configurations
         args = ['--config-file', base.etcdir('neutron.conf')]

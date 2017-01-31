@@ -384,9 +384,6 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def restore_l3_attribute_map(self):
         l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
 
-    def tearDown(self):
-        super(ExtGwModeIntTestCase, self).tearDown()
-
     def _set_router_external_gateway(self, router_id, network_id,
                                      snat_enabled=None,
                                      expected_code=exc.HTTPOk.code,

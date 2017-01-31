@@ -45,10 +45,6 @@ class PortSecurityTestCase(
         self._skip_security_group = ('security-group' not in
                                      plugin_obj.supported_extension_aliases)
 
-    def tearDown(self):
-        super(PortSecurityTestCase, self).tearDown()
-        self._skip_security_group = None
-
 
 class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                              securitygroups_db.SecurityGroupDbMixin,
