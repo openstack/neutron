@@ -296,6 +296,31 @@ class SubnetServiceTypesExtensionTestCase(
     def test_create_dhcp_port_compute_subnet_no_dhcp(self):
         self.test_create_dhcp_port_compute_subnet(enable_dhcp=False)
 
+    def test_update_port_fixed_ips(self):
+        with self.network() as network:
+            pass
+        service_type = 'compute:foo'
+        # Create a subnet with a service_type
+        res = self._create_service_subnet([service_type],
+                                          cidr=self.CIDRS[1],
+                                          network=network)
+        service_subnet = self.deserialize('json', res)['subnet']
+        # Create a port with a matching device owner
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'],
+                                 device_owner=service_type)
+        port = self.deserialize('json', port)['port']
+        # Update the port's fixed_ips. It's ok to reuse the same IP it already
+        # has.
+        ip_address = port['fixed_ips'][0]['ip_address']
+        data = {'port': {'fixed_ips': [{'subnet_id': service_subnet['id'],
+                                        'ip_address': ip_address}]}}
+        # self._update will fail with a MismatchError if the update cannot be
+        # applied
+        port = self._update('ports', port['id'], data)
+
 
 class SubnetServiceTypesExtensionTestCasev6(
         SubnetServiceTypesExtensionTestCase):
