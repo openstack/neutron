@@ -39,7 +39,7 @@ ${config}
 # Tweak gate configuration for our rally scenarios
 function load_rc_for_rally {
     for file in $(ls $RALLY_EXTRA_DIR/*.setup); do
-        local config=$(cat $file)
+        config=$(cat $file)
         export DEVSTACK_LOCAL_CONFIG+="
 # generated from hook '$file'
 ${config}

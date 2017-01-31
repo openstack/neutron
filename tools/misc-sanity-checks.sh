@@ -38,8 +38,8 @@ check_pot_files_errors () {
     # obsolete entries duplicate normal entries. Prevent obsolete
     # entries to slip in
     find neutron -type f -regex '.*\.pot?' \
-                 -print0|xargs -0 -n 1 msgfmt --check-format \
-                 -o /dev/null
+        -print0|xargs -0 -n 1 msgfmt --check-format \
+        -o /dev/null
     if [ "$?" -ne 0 ]; then
         echo "PO files syntax is not correct!" >>$FAILURES
     fi

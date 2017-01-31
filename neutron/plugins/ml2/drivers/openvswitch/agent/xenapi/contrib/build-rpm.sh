@@ -8,8 +8,8 @@ export PYTHONPATH=$NEUTRON_ROOT
 
 cd $NEUTRON_ROOT
 VERSION=$(sh -c "(cat $NEUTRON_ROOT/neutron/version.py; \
-                  echo 'print version_info.release_string()') | \
-                  python")
+    echo 'print version_info.release_string()') | \
+    python")
 cd -
 
 PACKAGE=openstack-neutron-xen-plugins

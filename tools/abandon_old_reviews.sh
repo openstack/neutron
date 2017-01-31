@@ -43,10 +43,10 @@ function abandon_review {
     local msg=$@
     # echo ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
     if [ $DRY_RUN -eq 1 ]; then
-	echo "Would abandon $gitid"
+        echo "Would abandon $gitid"
     else
-	echo "Abandoning $gitid"
-	ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
+        echo "Abandoning $gitid"
+        ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
     fi
 }
 

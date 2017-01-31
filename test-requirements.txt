@@ -22,3 +22,4 @@ reno>=1.8.0 # Apache-2.0
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.7.6 # MIT License
 tempest>=14.0.0 # Apache-2.0
+bashate>=0.2 # Apache-2.0

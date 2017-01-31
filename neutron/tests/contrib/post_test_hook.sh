@@ -20,8 +20,7 @@ function generate_testr_results {
     fi
 }
 
-if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]
-then
+if [[ "$venv" == dsvm-functional* ]] || [[ "$venv" == dsvm-fullstack* ]]; then
     owner=stack
     sudo_env=
 

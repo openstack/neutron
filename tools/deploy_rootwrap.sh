@@ -15,7 +15,7 @@
 set -eu
 
 if [ "$#" -ne 3 ]; then
-  >&2 echo "Usage: $0 /path/to/neutron /path/to/target/etc /path/to/target/bin
+    >&2 echo "Usage: $0 /path/to/neutron /path/to/target/etc /path/to/target/bin
 Deploy Neutron's rootwrap configuration.
 
 Warning: Any existing rootwrap files at the specified etc path will be
@@ -23,7 +23,7 @@ removed by this script.
 
 Optional: set OS_SUDO_TESTING=1 to deploy the filters required by
 Neutron's functional testing suite."
-  exit 1
+    exit 1
 fi
 
 OS_SUDO_TESTING=${OS_SUDO_TESTING:-0}
