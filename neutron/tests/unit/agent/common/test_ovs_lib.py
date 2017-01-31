@@ -279,7 +279,9 @@ class OVS_Lib_Test(base.BaseTestCase):
     def test_non_default_datapath(self):
         expected = p_const.OVS_DATAPATH_NETDEV
         self.br = ovs_lib.OVSBridge(self.BR_NAME, datapath_type=expected)
+        br2 = self.br.add_bridge('another-br', datapath_type=expected)
         self.assertEqual(expected, self.br.datapath_type)
+        self.assertEqual(expected, br2.datapath_type)
 
     def test_count_flows(self):
         self.execute.return_value = 'ignore\nflow-1\n'

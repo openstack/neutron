@@ -117,10 +117,9 @@ class BaseOVS(object):
 
     def add_bridge(self, bridge_name,
                    datapath_type=constants.OVS_DATAPATH_SYSTEM):
-
-        self.ovsdb.add_br(bridge_name,
-                          datapath_type).execute()
-        return OVSBridge(bridge_name)
+        br = OVSBridge(bridge_name, datapath_type=datapath_type)
+        br.create()
+        return br
 
     def delete_bridge(self, bridge_name):
         self.ovsdb.del_br(bridge_name).execute()
