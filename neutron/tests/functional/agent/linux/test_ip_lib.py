@@ -261,6 +261,16 @@ class IpLibTestCase(IpLibTestFramework):
             ip_lib.dump_neigh_entries(4, device="nosuchdevice",
                                       namespace=attr.namespace)
 
+    def test_delete_neigh_entries(self):
+        attr = self.generate_device_details(
+            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
+        )
+        mac_address = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+        device = self.manage_device(attr)
+
+        # trying to delete a non-existent entry shouldn't raise an error
+        device.neigh.delete(TEST_IP_NEIGH, mac_address)
+
     def _check_for_device_name(self, ip, name, should_exist):
         exist = any(d for d in ip.get_devices() if d.name == name)
         self.assertEqual(should_exist, exist)

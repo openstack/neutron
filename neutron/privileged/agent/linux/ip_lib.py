@@ -16,6 +16,7 @@ import socket
 import pyroute2
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ndmsg
+from pyroute2 import NetlinkError
 
 from neutron._i18n import _
 from neutron import privileged
@@ -132,13 +133,19 @@ def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
     :param namespace: The name of the namespace in which to delete the entry
     """
     family = _IP_VERSION_FAMILY_MAP[ip_version]
-    _run_iproute('delete',
-                 device,
-                 namespace,
-                 dst=ip_address,
-                 lladdr=mac_address,
-                 family=family,
-                 **kwargs)
+    try:
+        _run_iproute('delete',
+                     device,
+                     namespace,
+                     dst=ip_address,
+                     lladdr=mac_address,
+                     family=family,
+                     **kwargs)
+    except NetlinkError as e:
+        # trying to delete a non-existent entry shouldn't raise an error
+        if e.code == errno.ENOENT:
+            return
+        raise
 
 
 @privileged.default.entrypoint
