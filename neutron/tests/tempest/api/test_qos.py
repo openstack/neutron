@@ -82,7 +82,8 @@ class QosTestJSON(base.BaseAdminNetworkTest):
     def test_policy_update(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='',
-                                        shared=False)
+                                        shared=False,
+                                        tenant_id=self.admin_client.tenant_id)
         self.admin_client.update_qos_policy(policy['id'],
                                             description='test policy desc2',
                                             shared=True)
@@ -119,7 +120,8 @@ class QosTestJSON(base.BaseAdminNetworkTest):
     def test_shared_policy_update(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='',
-                                        shared=True)
+                                        shared=True,
+                                        tenant_id=self.admin_client.tenant_id)
 
         self.admin_client.update_qos_policy(policy['id'],
                                             description='test policy desc2')
@@ -606,7 +608,8 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
     def test_policy_sharing_with_wildcard(self):
         qos_pol = self.create_qos_policy(
             name=data_utils.rand_name('test-policy'),
-            description='test-shared-policy', shared=False)
+            description='test-shared-policy', shared=False,
+            tenant_id=self.admin_client.tenant_id)
         self.assertNotIn(qos_pol, self.client2.list_qos_policies()['policies'])
 
         # test update shared False -> True

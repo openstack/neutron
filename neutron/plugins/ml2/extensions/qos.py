@@ -32,13 +32,15 @@ class QosExtensionDriver(api.ExtensionDriver):
 
     def process_create_network(self, context, data, result):
         self.core_ext_handler.process_fields(
-            context, base_core.NETWORK, data, result)
+            context, base_core.NETWORK, base_core.EVENT_CREATE, data, result)
 
-    process_update_network = process_create_network
+    def process_update_network(self, context, data, result):
+        self.core_ext_handler.process_fields(
+            context, base_core.NETWORK, base_core.EVENT_UPDATE, data, result)
 
     def process_create_port(self, context, data, result):
         self.core_ext_handler.process_fields(
-            context, base_core.PORT, data, result)
+            context, base_core.PORT, base_core.EVENT_UPDATE, data, result)
 
     process_update_port = process_create_port
 

@@ -1,0 +1,6 @@
+---
+prelude: >
+   Add 'default' behaviour to QoS policies
+features:
+  - Neutron now supports having a default QoS policy in a project, assigned
+    automatically to all new networks created.
