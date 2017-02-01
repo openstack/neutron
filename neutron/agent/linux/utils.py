@@ -203,6 +203,18 @@ def find_child_pids(pid):
     return [x.strip() for x in raw_pids.split('\n') if x.strip()]
 
 
+def kill_process(pid, signal, run_as_root=False):
+    """Kill the process with the given pid using the given signal."""
+    try:
+        execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root)
+    except ProcessExecutionError as ex:
+        # TODO(dalvarez): this check has i18n issues. Maybe we can
+        # use gettext module setting a global locale or just pay attention
+        # to returncode instead of checking the ex message.
+        if 'No such process' not in str(ex):
+            raise
+
+
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
     #TODO(mangelajo): separate responsibilities here, ensure_conf_dir
     #                 should be a separate function
