@@ -254,9 +254,14 @@ def _create_hook(self, orig_create):
 
 def _to_dict_hook(self, to_dict_orig):
     dct = to_dict_orig(self)
-    dct['shared'] = self.is_shared_with_tenant(self.obj_context,
-                                               self.id,
-                                               self.obj_context.tenant_id)
+    if self.obj_context:
+        dct['shared'] = self.is_shared_with_tenant(self.obj_context,
+                                                   self.id,
+                                                   self.obj_context.tenant_id)
+    else:
+        # most OVO objects on an agent will not have a context set on the
+        # object because they will be generated from obj_from_primitive.
+        dct['shared'] = False
     return dct
 
 
