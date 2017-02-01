@@ -360,8 +360,8 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
     @classmethod
-    @base.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     @test.requires_ext(extension="qos", service="network")
+    @base.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     def resource_setup(cls):
         super(QosBandwidthLimitRuleTestJSON, cls).resource_setup()
 
@@ -772,8 +772,8 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
     VALID_DSCP_MARK2 = 48
 
     @classmethod
-    @base.require_qos_rule_type(qos_consts.RULE_TYPE_DSCP_MARKING)
     @test.requires_ext(extension="qos", service="network")
+    @base.require_qos_rule_type(qos_consts.RULE_TYPE_DSCP_MARKING)
     def resource_setup(cls):
         super(QosDscpMarkingRuleTestJSON, cls).resource_setup()
 
@@ -906,8 +906,8 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
     RULES_NAME = RULE_NAME + "s"
 
     @classmethod
-    @base.require_qos_rule_type(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH)
     @test.requires_ext(extension="qos", service="network")
+    @base.require_qos_rule_type(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH)
     def resource_setup(cls):
         super(QosMinimumBandwidthRuleTestJSON, cls).resource_setup()
 
