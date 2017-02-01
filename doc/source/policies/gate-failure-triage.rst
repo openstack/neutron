@@ -8,13 +8,8 @@ Spotting Gate Failures
 ----------------------
 This can be achieved using several tools:
 
-* `Joe Gordon's github.io pages <http://jogo.github.io/gate/>`_
+* `Grafana dashboard <http://grafana.openstack.org/dashboard/db/neutron-failure-rate>`_
 * `logstash <http://logstash.openstack.org/>`_
-
-Even though Joe's script is not an "official" OpenStack page it provides a quick snapshot of the current
-status for the most important jobs This page is built using data available at graphite.openstack.org.
-If you want to check how that is done go `here <https://github.com/jogo/jogo.github.io/tree/master/gate>`_
-(caveat: the color of the neutron job is very similar to that of the full job with nova-network).
 
 For checking gate failures with logstash the following query will return failures for a specific job:
 
