@@ -825,6 +825,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         context.session.expire(subnet)
         return self._make_subnet_dict(subnet, context=context)
 
+    @property
+    def l3_rpc_notifier(self):
+        if not hasattr(self, '_l3_rpc_notifier'):
+            self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
+        return self._l3_rpc_notifier
+
+    @l3_rpc_notifier.setter
+    def l3_rpc_notifier(self, value):
+        self._l3_rpc_notifier = value
+
     def _update_subnet_postcommit(self, context, orig, result):
         """Subnet update operations that happen after transaction completes.
 
@@ -857,8 +867,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 self.update_port(context, port['id'], {'port': port})
             # Send router_update to l3_agent
             if routers:
-                l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
-                l3_rpc_notifier.routers_updated(context, routers)
+                self.l3_rpc_notifier.routers_updated(context, routers)
 
         if orig['gateway_ip'] != result['gateway_ip']:
             kwargs = {'context': context, 'subnet_id': result['id'],
