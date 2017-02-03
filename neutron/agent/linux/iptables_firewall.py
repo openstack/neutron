@@ -118,7 +118,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
         for proto in ('ip', 'ip6'):
             knob = 'net.bridge.bridge-nf-call-%stables' % proto
-            if 'net.bridge.bridge-nf-call-%stables' % proto not in entries:
+            if knob not in entries:
                 raise SystemExit(
                     _("sysctl value %s not present on this system.") % knob)
             enabled = utils.execute(['sysctl', '-b', knob])
@@ -333,9 +333,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._remove_rule_from_chain_v4v6('FORWARD', jump_rule, jump_rule)
 
         if direction == firewall.EGRESS_DIRECTION:
-            jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
-                         '-j ACCEPT' % (self.IPTABLES_DIRECTION[direction],
-                                        device)]
             if add:
                 self._add_rules_to_chain_v4v6('INPUT', jump_rule, jump_rule,
                                               comment=ic.PORT_SEC_ACCEPT)
@@ -877,7 +874,6 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
 
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
-    OVS_HYBRID_TAP_PREFIX = constants.TAP_DEVICE_PREFIX
     OVS_HYBRID_PLUG_REQUIRED = True
 
     def _port_chain_name(self, port, direction):
