@@ -1,21 +1,14 @@
 ---
 features:
-  - vhost-user reconnect is a mechanism  which allows
-    a vhost-user frontend to reconnect to a vhost-user
-    backend in the event the backend terminates.
-    This enable a VM utilising a vhost-user interface
-    to reconnect automatically to the backend e.g.
-    a vSwitch without requiring the VM to reboot.
-    In this release, support was added to the neutron
-    Open vSwitch agent and ml2 driver for vhost-user
-    reconnect.
+  - vhost-user reconnect is a mechanism  which allows a vhost-user frontend to
+    reconnect to a vhost-user backend in the event the backend terminates
+    either as a result of a graceful shutdown or a crash.  This allows a VM
+    utilising a vhost-user interface to reconnect automatically to the backend
+    e.g.  Open vSwitch without requiring the VM to reboot.  In this release,
+    support was added to the neutron Open vSwitch agent and ``ml2`` driver for
+    vhost-user reconnect.
 other:
-  - vhost-user reconnect allows VMs using vhost-user
-    interfaces to reconnect to the vhost-user backend if
-    the backend terminates either as a result of a graceful
-    shutdown or a crash without requiring the VM to reboot.
-  - vhost-user reconnect requires dpdk 16.07 and qemu 2.7
-    and ovs 2.6 to function. if an older qemu is used,
-    reconnect will not be available but vhost-user will
-    still function.
+  - vhost-user reconnect requires dpdk 16.07 and qemu 2.7 and openvswitch 2.6
+    to function. if an older qemu is used, reconnect will not be available but
+    vhost-user will still function.
 

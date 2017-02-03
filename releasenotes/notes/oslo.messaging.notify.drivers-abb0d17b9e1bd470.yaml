@@ -1,9 +1,11 @@
 ---
-prelude: |
-  ``oslo.messaging.notify.drivers`` entry points have been removed
-other:
-  - |
-    The ``oslo.messaging.notify.drivers`` entry points that were left in
-    tree for backward compatibility with Icehouse have been removed.
-    Configure notifications using the oslo_messaging configuration options
-    in ``neutron.conf``.
+upgrade:
+  - Obsolete ``oslo.messaging.notify.drivers`` entrypoints that were left
+    in tree for backwards compatibility with pre-Icehouse releases have been
+    removed. Those are ``neutron.openstack.common.notifier.log_notifier``,
+    ``neutron.openstack.common.notifier.no_op_notifier``,
+    ``neutron.openstack.common.notifier.test_notifier``,
+    ``neutron.openstack.common.notifier.rpc_notifier2``,
+    ``neutron.openstack.common.notifier.rpc_notifier``.
+    Use values provided by ``oslo.messaging`` library to configure notification
+    drivers.

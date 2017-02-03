@@ -1,19 +1,12 @@
 ---
-prelude: >
-    IPv6 addresses in DHCP namespaces will now be
-    (correctly) statically configured by the DHCP agent.
 fixes:
-  - There is a race condition when adding ports in
-    DHCP namespaces where an IPv6 address could be
-    dynamically created via SLAAC from a Router
-    Advertisement sent from the L3 agent, leading to
-    a failure to start the DHCP agent. This bug has
-    been fixed, but care must be taken on an upgrade
-    dealing with any possibly stale dynamic addresses.
-    For more information, see bug
-    `1627902 <https://launchpad.net/bugs/1627902>`_.
+  - There is a race condition when adding ports in DHCP namespaces where an
+    IPv6 address could be dynamically created via SLAAC from a Router
+    Advertisement sent from the L3 agent, leading to a failure to start the
+    DHCP agent. This bug has been fixed, but care must be taken on an upgrade
+    dealing with any potentially stale dynamic addresses.  For more
+    information, see bug `1627902 <https://launchpad.net/bugs/1627902>`_.
 upgrade:
-  - On upgrade, IPv6 addresses in the DHCP namespaces
-    that have been created dynmically via SLAAC will be
-    removed, and a static IPv6 address will be added
-    instead.
+  - On upgrade, IPv6 addresses in DHCP namespaces that have been created
+    dynamically via SLAAC will be removed, and static IPv6 addresses will be
+    added instead.

@@ -1,6 +1,6 @@
 ---
 features:
-  - Linux Bridge now supports egress minimum bandwidth configuration.
+  - Linux Bridge driver now supports QoS egress minimum bandwidth limit rules.
 deprecations:
-  - Configuration parameters ``kernel_hz`` and ``tbf_latency`` in ``QoS``
-    section have been removed, because tc-tbf is no longer used.
+  - Configuration options ``kernel_hz`` and ``tbf_latency`` in ``[qos]``
+    section have been removed due to being no longer used.

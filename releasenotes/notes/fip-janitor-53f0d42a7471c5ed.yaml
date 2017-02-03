@@ -1,20 +1,8 @@
 ---
-prelude: >
-    Due to changes in internal L3 logic, a server
-    crash/backend failure during FIP creation may
-    leave dangling ports attached on external
-    networks. These ports can be identified by a
-    'PENDING' device_id. The neutron server will
-    attempt a cleanup periodically to address the issue.
 other:
-  - If a floating IP creation gets interrupted by
-    a server crash or backend failure, a port can
-    be left behind on the external network. Neutron
-    will now automatically clean these up after
-    approximately 10 minutes. This time value is not
-    configurable.
-  - Ports in this state will be visible on the external
-    network to admins, and will have a device_id value
-    of 'PENDING'. They can also be removed manually by
-    an admin if waiting for the periodic job to do it is
-    undesired.
+  - Due to changes in internal L3 logic, a server crash/backend failure during
+    FIP creation may leave dangling ports attached on external networks. These
+    ports can be identified by a ``PENDING`` ``device_id`` parameter. While
+    those ports can also be removed by admins, the ``neutron-server`` service
+    will now also trigger periodic (approximately once in 10 minutes) cleanup
+    to address the issue.
