@@ -125,6 +125,9 @@ class RouterInfo(object):
     def get_external_device_interface_name(self, ex_gw_port):
         return self.get_external_device_name(ex_gw_port['id'])
 
+    def get_gw_ns_name(self):
+        return self.ns_name
+
     def _update_routing_table(self, operation, route, namespace):
         cmd = ['ip', 'route', operation, 'to', route['destination'],
                'via', route['nexthop']]

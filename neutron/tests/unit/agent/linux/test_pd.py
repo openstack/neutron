@@ -12,6 +12,9 @@
 
 import mock
 
+from neutron.agent.l3 import dvr_edge_router
+from neutron.agent.l3 import dvr_local_router
+from neutron.agent.l3 import legacy_router
 from neutron.agent.linux import pd
 from neutron.tests import base as tests_base
 
@@ -24,8 +27,68 @@ class FakeRouter(object):
 class TestPrefixDelegation(tests_base.DietTestCase):
     def test_remove_router(self):
         l3_agent = mock.Mock()
-        router_id = 1
+        router_id = '1'
         l3_agent.pd.routers = {router_id: pd.get_router_entry(None)}
         pd.remove_router(None, None, l3_agent, router=FakeRouter(router_id))
         self.assertTrue(l3_agent.pd.delete_router_pd.called)
         self.assertEqual({}, l3_agent.pd.routers)
+
+    def _test_add_update_pd(self, l3_agent, router, ns_name):
+        # add entry
+        pd.add_router(None, None, l3_agent, router=router)
+        pd_router = l3_agent.pd.routers.get(router.router_id)
+        self.assertEqual(ns_name, pd_router.get('ns_name'))
+
+        # clear namespace name, update entry
+        pd_router['ns_name'] = None
+        pd.update_router(None, None, l3_agent, router=router)
+        pd_router = l3_agent.pd.routers.get(router.router_id)
+        self.assertEqual(ns_name, pd_router.get('ns_name'))
+
+    def test_add_update_dvr_edge_router(self):
+        l3_agent = mock.Mock()
+        l3_agent.pd.routers = {}
+        router_id = '1'
+        ri = dvr_edge_router.DvrEdgeRouter(l3_agent,
+                                           'host',
+                                           router_id,
+                                           mock.Mock(),
+                                           mock.Mock(),
+                                           mock.Mock())
+        ns_name = ri.snat_namespace.name
+        self._test_add_update_pd(l3_agent, ri, ns_name)
+
+    def test_add_update_dvr_local_router(self):
+        l3_agent = mock.Mock()
+        l3_agent.pd.routers = {}
+        router_id = '1'
+        ri = dvr_local_router.DvrLocalRouter(l3_agent,
+                                           'host',
+                                           router_id,
+                                           mock.Mock(),
+                                           mock.Mock(),
+                                           mock.Mock())
+        ns_name = ri.ns_name
+        self._test_add_update_pd(l3_agent, ri, ns_name)
+
+    def test_add_update_legacy_router(self):
+        l3_agent = mock.Mock()
+        l3_agent.pd.routers = {}
+        router_id = '1'
+        ri = legacy_router.LegacyRouter(l3_agent,
+                                        router_id,
+                                        mock.Mock(),
+                                        mock.Mock(),
+                                        mock.Mock())
+        ns_name = ri.ns_name
+        self._test_add_update_pd(l3_agent, ri, ns_name)
+
+    def test_update_no_router_exception(self):
+        l3_agent = mock.Mock()
+        l3_agent.pd.routers = {}
+        router = mock.Mock()
+        router.router_id = '1'
+
+        with mock.patch.object(pd.LOG, 'exception') as log:
+            pd.update_router(None, None, l3_agent, router=router)
+            self.assertTrue(log.called)

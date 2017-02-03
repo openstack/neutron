@@ -670,8 +670,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._set_ri_kwargs(mock.Mock(), router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         # Make sure that ri.snat_namespace object is created when the
-        # router is initialized
+        # router is initialized, and that it's name matches the gw
+        # namespace name
         self.assertIsNotNone(ri.snat_namespace)
+        self.assertEqual(ri.snat_namespace.name, ri.get_gw_ns_name())
 
     def test_ext_gw_updated_calling_snat_ns_delete_if_gw_port_host_none(
         self):

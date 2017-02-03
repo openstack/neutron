@@ -24,7 +24,7 @@ from oslo_utils import netutils
 import six
 from stevedore import driver
 
-from neutron._i18n import _
+from neutron._i18n import _, _LE
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -57,6 +57,9 @@ class PrefixDelegation(object):
         registry.subscribe(add_router,
                            resources.ROUTER,
                            events.BEFORE_CREATE)
+        registry.subscribe(update_router,
+                           resources.ROUTER,
+                           events.AFTER_UPDATE)
         registry.subscribe(remove_router,
                            resources.ROUTER,
                            events.AFTER_DELETE)
@@ -329,12 +332,24 @@ def get_router_entry(ns_name):
 def add_router(resource, event, l3_agent, **kwargs):
     added_router = kwargs['router']
     router = l3_agent.pd.routers.get(added_router.router_id)
+    gw_ns_name = added_router.get_gw_ns_name()
     if not router:
         l3_agent.pd.routers[added_router.router_id] = (
-            get_router_entry(added_router.ns_name))
+            get_router_entry(gw_ns_name))
     else:
         # This will happen during l3 agent restart
-        router['ns_name'] = added_router.ns_name
+        router['ns_name'] = gw_ns_name
+
+
+@utils.synchronized("l3-agent-pd")
+def update_router(resource, event, l3_agent, **kwargs):
+    updated_router = kwargs['router']
+    router = l3_agent.pd.routers.get(updated_router.router_id)
+    if not router:
+        LOG.exception(_LE("Router to be updated is not in internal routers "
+                          "list: %s"), updated_router.router_id)
+    else:
+        router['ns_name'] = updated_router.get_gw_ns_name()
 
 
 class PDInfo(object):

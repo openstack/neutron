@@ -164,6 +164,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.ri_kwargs['router_id'] = router_id
         self.ri_kwargs['router'] = router
 
+    def test_gw_ns_name(self):
+        ri = self._create_router()
+        self.assertEqual(ri.ns_name, ri.get_gw_ns_name())
+
     def test_create_dvr_fip_interfaces_update(self):
         ri = self._create_router()
         fip_agent_port = {'subnets': []}
