@@ -312,12 +312,14 @@ class DhcpAgent(manager.Manager):
         """Disable DHCP for a network known to the agent."""
         network = self.cache.get_network_by_id(network_id)
         if network:
-            if self.conf.enable_isolated_metadata:
-                # NOTE(jschwarz): In the case where a network is deleted, all
-                # the subnets and ports are deleted before this function is
-                # called, so checking if 'should_enable_metadata' is True
-                # for any subnet is false logic here.
-                self.disable_isolated_metadata_proxy(network)
+            # NOTE(yamahata): Kill the metadata proxy process
+            # unconditionally, as in the case where a network
+            # is deleted, all the subnets and ports are deleted
+            # before this function is called, so determining if
+            # the proxy should be terminated is error prone.
+            # destroy_monitored_metadata_proxy() is a noop when
+            # there is no process running.
+            self.disable_isolated_metadata_proxy(network)
             if self.call_driver('disable', network):
                 self.cache.remove(network)
 
