@@ -49,6 +49,14 @@ def _validate_resource_type(resource_type):
         raise InvalidResourceTypeClass(resource_type=resource_type)
 
 
+def _resource_to_class(resource_type):
+    _validate_resource_type(resource_type)
+
+    # we've already validated the resource type, so we are pretty sure the
+    # class is there => no need to validate it specifically
+    return resources.get_resource_cls(resource_type)
+
+
 def resource_type_versioned_topic(resource_type, version=None):
     """Return the topic for a resource type.
 
@@ -74,19 +82,14 @@ class ResourcesPullRpcApi(object):
         if not hasattr(cls, '_instance'):
             cls._instance = super(ResourcesPullRpcApi, cls).__new__(cls)
             target = oslo_messaging.Target(
-                topic=topics.PLUGIN, version='1.0',
+                topic=topics.PLUGIN, version='1.1',
                 namespace=constants.RPC_NAMESPACE_RESOURCES)
             cls._instance.client = n_rpc.get_client(target)
         return cls._instance
 
     @log_helpers.log_method_call
     def pull(self, context, resource_type, resource_id):
-        _validate_resource_type(resource_type)
-
-        # we've already validated the resource type, so we are pretty sure the
-        # class is there => no need to validate it specifically
-        resource_type_cls = resources.get_resource_cls(resource_type)
-
+        resource_type_cls = _resource_to_class(resource_type)
         cctxt = self.client.prepare()
         primitive = cctxt.call(context, 'pull',
             resource_type=resource_type,
@@ -95,8 +98,17 @@ class ResourcesPullRpcApi(object):
         if primitive is None:
             raise ResourceNotFound(resource_type=resource_type,
                                    resource_id=resource_id)
-
         return resource_type_cls.clean_obj_from_primitive(primitive)
+
+    @log_helpers.log_method_call
+    def bulk_pull(self, context, resource_type, filter_kwargs=None):
+        resource_type_cls = _resource_to_class(resource_type)
+        cctxt = self.client.prepare()
+        primitives = cctxt.call(context, 'bulk_pull',
+            resource_type=resource_type,
+            version=resource_type_cls.VERSION, filter_kwargs=filter_kwargs)
+        return [resource_type_cls.clean_obj_from_primitive(primitive)
+                for primitive in primitives]
 
 
 class ResourcesPullRpcCallback(object):
@@ -109,15 +121,26 @@ class ResourcesPullRpcCallback(object):
 
     # History
     #   1.0 Initial version
+    #   1.1 Added bulk_pull
 
     target = oslo_messaging.Target(
-        version='1.0', namespace=constants.RPC_NAMESPACE_RESOURCES)
+        version='1.1', namespace=constants.RPC_NAMESPACE_RESOURCES)
 
     @oslo_messaging.expected_exceptions(rpc_exc.CallbackNotFound)
     def pull(self, context, resource_type, version, resource_id):
         obj = prod_registry.pull(resource_type, resource_id, context=context)
         if obj:
             return obj.obj_to_primitive(target_version=version)
+
+    @oslo_messaging.expected_exceptions(rpc_exc.CallbackNotFound)
+    def bulk_pull(self, context, resource_type, version, filter_kwargs=None):
+        filter_kwargs = filter_kwargs or {}
+        resource_type_cls = _resource_to_class(resource_type)
+        # TODO(kevinbenton): add in producer registry so producers can add
+        # hooks to mangle these things like they can with 'pull'.
+        return [obj.obj_to_primitive(target_version=version)
+                for obj in resource_type_cls.get_objects(context, _pager=None,
+                                                         **filter_kwargs)]
 
 
 class ResourcesPushToServersRpcApi(object):
