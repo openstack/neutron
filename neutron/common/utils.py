@@ -68,7 +68,12 @@ class WaitTimeout(Exception, eventlet.TimeoutError):
     TimeoutError is raised, test runner stops and exits while it still has test
     cases scheduled for execution.
     """
-    pass
+
+    def __str__(self):
+        return Exception.__str__(self)
+
+    def __repr__(self):
+        return Exception.__repr__(self)
 
 
 @removals.remove(
