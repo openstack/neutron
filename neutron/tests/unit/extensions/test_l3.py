@@ -273,6 +273,9 @@ class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,
 class TestL3NatIntPlugin(TestL3NatBasePlugin,
                          l3_db.L3_NAT_db_mixin, dns_db.DNSDbMixin):
 
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     supported_extension_aliases = ["external-net", "router", "dns-integration"]
 
 
@@ -302,6 +305,9 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
 class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
                              l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                              l3_db.L3_NAT_db_mixin, dns_db.DNSDbMixin):
+
+    __native_pagination_support = True
+    __native_sorting_support = True
 
     supported_extension_aliases = ["router", "dns-integration"]
 
