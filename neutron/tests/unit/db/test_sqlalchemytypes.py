@@ -14,7 +14,7 @@ import abc
 import netaddr
 
 from oslo_db import exception
-from oslo_db.sqlalchemy import test_base
+from oslo_db.tests.sqlalchemy import base as test_base
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import six
