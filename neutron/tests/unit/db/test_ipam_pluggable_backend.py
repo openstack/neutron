@@ -112,12 +112,10 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
 
     def _get_allocate_mock(self, subnet_id, auto_ip='10.0.0.2',
                            fail_ip='127.0.0.1',
-                           exception=None):
-        if exception is None:
-            exception = n_exc.InvalidInput(error_message='SomeError')
-
+                           exception=n_exc.InvalidInput(
+                               error_message='SomeError')):
         def allocate_mock(request):
-            if type(request) == ipam_req.SpecificAddressRequest:
+            if isinstance(request, ipam_req.SpecificAddressRequest):
                 if request.address == netaddr.IPAddress(fail_ip):
                     raise exception
                 else:
@@ -127,15 +125,14 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
 
         return allocate_mock
 
-    def _get_deallocate_mock(self, fail_ip='127.0.0.1', exception=None):
-            if exception is None:
-                exception = n_exc.InvalidInput(error_message='SomeError')
+    def _get_deallocate_mock(self, fail_ip='127.0.0.1',
+                             exception=n_exc.InvalidInput(
+                                 error_message='SomeError')):
+        def deallocate_mock(ip):
+            if str(ip) == fail_ip:
+                raise exception
 
-            def deallocate_mock(ip):
-                if str(ip) == fail_ip:
-                    raise exception
-
-            return deallocate_mock
+        return deallocate_mock
 
     def _validate_allocate_calls(self, expected_calls, mocks):
         self.assertTrue(mocks['subnets'].allocate.called)
