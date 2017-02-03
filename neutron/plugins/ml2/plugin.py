@@ -527,6 +527,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # just finished, whether that transaction committed new
             # results or discovered concurrent port state changes.
             # Also, Trigger notification for successful binding commit.
+            kwargs = {
+                'context': plugin_context,
+                'port': port,
+                'mac_address_updated': False,
+                'original_port': oport,
+            }
+            registry.notify(resources.PORT, events.AFTER_UPDATE,
+                            self, **kwargs)
             self.mechanism_manager.update_port_postcommit(cur_context)
             need_notify = True
             try_again = False
