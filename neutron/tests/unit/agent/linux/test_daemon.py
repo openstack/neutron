@@ -181,7 +181,7 @@ class TestPidfile(base.BaseTestCase):
 
         self.os.assert_has_calls([
             mock.call.ftruncate(FAKE_FD, 0),
-            mock.call.write(FAKE_FD, '34'),
+            mock.call.write(FAKE_FD, b'34'),
             mock.call.fsync(FAKE_FD)]
         )
 
