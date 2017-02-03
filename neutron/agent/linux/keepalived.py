@@ -15,6 +15,7 @@
 import errno
 import itertools
 import os
+import six
 
 import netaddr
 from neutron_lib import exceptions
@@ -35,6 +36,7 @@ KEEPALIVED_SERVICE_NAME = 'keepalived'
 KEEPALIVED_EMAIL_FROM = 'neutron@openstack.local'
 KEEPALIVED_ROUTER_ID = 'neutron'
 GARP_MASTER_DELAY = 60
+HEALTH_CHECK_NAME = 'ha_health_check'
 
 LOG = logging.getLogger(__name__)
 
@@ -160,7 +162,9 @@ class KeepalivedInstance(object):
     def __init__(self, state, interface, vrouter_id, ha_cidrs,
                  priority=HA_DEFAULT_PRIORITY, advert_int=None,
                  mcast_src_ip=None, nopreempt=False,
-                 garp_master_delay=GARP_MASTER_DELAY):
+                 garp_master_delay=GARP_MASTER_DELAY,
+                 vrrp_health_check_interval=0,
+                 ha_conf_dir=None):
         self.name = 'VR_%s' % vrouter_id
 
         if state not in VALID_STATES:
@@ -178,11 +182,16 @@ class KeepalivedInstance(object):
         self.vips = []
         self.virtual_routes = KeepalivedInstanceRoutes()
         self.authentication = None
+        self.track_script = None
         self.primary_vip_range = get_free_range(
             parent_range=constants.PRIVATE_CIDR_RANGE,
             excluded_ranges=[constants.METADATA_CIDR,
                              constants.DVR_FIP_LL_CIDR] + ha_cidrs,
             size=PRIMARY_VIP_RANGE_SIZE)
+
+        if vrrp_health_check_interval > 0:
+            self.track_script = KeepalivedTrackScript(
+                vrrp_health_check_interval, ha_conf_dir, self.vrouter_id)
 
     def set_authentication(self, auth_type, password):
         if auth_type not in VALID_AUTH_TYPES:
@@ -267,12 +276,19 @@ class KeepalivedInstance(object):
                                ['    }'])
 
     def build_config(self):
-        config = ['vrrp_instance %s {' % self.name,
-                  '    state %s' % self.state,
-                  '    interface %s' % self.interface,
-                  '    virtual_router_id %s' % self.vrouter_id,
-                  '    priority %s' % self.priority,
-                  '    garp_master_delay %s' % self.garp_master_delay]
+        if self.track_script:
+            config = self.track_script.build_config_preamble()
+            self.track_script.routes = self.virtual_routes.gateway_routes
+            self.track_script.vips = self.vips
+        else:
+            config = []
+
+        config.extend(['vrrp_instance %s {' % self.name,
+                       '    state %s' % self.state,
+                       '    interface %s' % self.interface,
+                       '    virtual_router_id %s' % self.vrouter_id,
+                       '    priority %s' % self.priority,
+                       '    garp_master_delay %s' % self.garp_master_delay])
 
         if self.nopreempt:
             config.append('    nopreempt')
@@ -298,6 +314,9 @@ class KeepalivedInstance(object):
 
         if len(self.virtual_routes):
             config.extend(self.virtual_routes.build_config())
+
+        if self.track_script:
+            config.extend(self.track_script.build_config())
 
         config.append('}')
 
@@ -406,6 +425,10 @@ class KeepalivedManager(object):
 
         keepalived_pm.enable(reload_cfg=True)
 
+        for key, instance in six.iteritems(self.config.instances):
+            if instance.track_script:
+                instance.track_script.write_check_script()
+
         self.process_monitor.register(uuid=self.resource_id,
                                       service_name=KEEPALIVED_SERVICE_NAME,
                                       monitored_process=keepalived_pm)
@@ -453,3 +476,81 @@ class KeepalivedManager(object):
             return cmd
 
         return callback
+
+
+class KeepalivedTrackScript(KeepalivedConf):
+    """Track script generator for Keepalived"""
+
+    def __init__(self, interval, conf_dir, vr_id):
+        self.interval = interval
+        self.conf_dir = conf_dir
+        self.vr_id = vr_id
+        self.routes = []
+        self.vips = []
+
+    def build_config_preamble(self):
+        config = ['',
+                  'vrrp_script %s_%s {' % (HEALTH_CHECK_NAME, self.vr_id),
+                  '    script "%s"' % self._get_script_location(),
+                  '    interval %s' % self.interval,
+                  '    fall 2',
+                  '    rise 2',
+                  '}',
+                  '']
+
+        return config
+
+    def _is_needed(self):
+        """Check if track script is needed by checking amount of routes.
+
+        :return: True/False
+        """
+        return len(self.routes) > 0
+
+    def build_config(self):
+        if not self._is_needed():
+            return ''
+
+        config = ['    track_script {',
+                  '        %s_%s' % (HEALTH_CHECK_NAME, self.vr_id),
+                  '    }']
+
+        return config
+
+    def build_script(self):
+        return itertools.chain(['#!/bin/bash -eu'],
+                               ['%s' % self._check_ip_assigned()],
+                               ('%s' % self._add_ip_addr(route.nexthop)
+                                for route in self.routes if route.nexthop),
+                               )
+
+    def _add_ip_addr(self, ip_addr):
+        cmd = {
+            4: 'ping',
+            6: 'ping6',
+        }.get(netaddr.IPAddress(ip_addr).version)
+
+        return '%s -c 1 -w 1 %s 1>/dev/null || exit 1' % (cmd, ip_addr)
+
+    def _check_ip_assigned(self):
+        cmd = 'ip a | grep %s || exit 0'
+        return cmd % netaddr.IPNetwork(self.vips[0].ip_address).ip if len(
+            self.vips) else ''
+
+    def _get_script_str(self):
+        """Generates and returns bash script to verify connectivity.
+
+        :return: Bash script code
+        """
+        return '\n'.join(self.build_script())
+
+    def _get_script_location(self):
+        return os.path.join(self.conf_dir,
+                            'ha_check_script_%s.sh' % self.vr_id)
+
+    def write_check_script(self):
+        if not self._is_needed():
+            return
+
+        file_utils.replace_file(
+            self._get_script_location(), self._get_script_str(), 0o520)

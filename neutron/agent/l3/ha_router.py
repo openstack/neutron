@@ -129,7 +129,10 @@ class HaRouter(router.RouterInfo):
             ha_port_cidrs,
             nopreempt=True,
             advert_int=self.agent_conf.ha_vrrp_advert_int,
-            priority=self.ha_priority)
+            priority=self.ha_priority,
+            vrrp_health_check_interval=(
+                self.agent_conf.ha_vrrp_health_check_interval),
+            ha_conf_dir=self.keepalived_manager.get_conf_dir())
         instance.track_interfaces.append(interface_name)
 
         if self.agent_conf.ha_vrrp_auth_password:
