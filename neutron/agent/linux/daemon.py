@@ -136,7 +136,7 @@ class Pidfile(object):
 
     def write(self, pid):
         os.ftruncate(self.fd, 0)
-        os.write(self.fd, "%d" % pid)
+        os.write(self.fd, b"%d" % pid)
         os.fsync(self.fd)
 
     def read(self):
