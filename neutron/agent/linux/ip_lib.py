@@ -16,6 +16,7 @@
 import os
 import re
 
+from debtcollector import removals
 import eventlet
 import netaddr
 from neutron_lib import constants
@@ -847,6 +848,9 @@ class IpNeighCommand(IpDeviceCommandBase):
                                   self._parent.namespace,
                                   **kwargs)
 
+    @removals.remove(
+        version='Ocata', removal_version='Pike',
+        message="Use 'dump' in IpNeighCommand() class instead")
     def show(self, ip_version):
         options = [ip_version]
         return self._as_root(options,
