@@ -174,7 +174,6 @@ function _install_agent_deps {
     ENABLED_SERVICES=q-agt,q-dhcp,q-l3
 
     source $DEVSTACK_PATH/lib/neutron
-    source $DEVSTACK_PATH/lib/neutron-legacy
 
     install_neutron_agent_packages
 }
