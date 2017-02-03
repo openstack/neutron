@@ -102,7 +102,8 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
     # adding another.
     def test_securitygroup(self):
         """Tests if a security group rules are working, by confirming
-        that 1. connection from allowed security group is allowed,
+        that 0. traffic is allowed when port security is disabled,
+             1. connection from allowed security group is allowed,
              2. connection from elsewhere is blocked,
              3. traffic not explicitly allowed (eg. ICMP) is blocked,
              4. a security group update takes effect,
@@ -128,8 +129,9 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         ports = [
             self.safe_client.create_port(tenant_uuid, network['id'],
                                          self.environment.hosts[host].hostname,
-                                         security_groups=[sgs[sg]['id']])
-            for host, sg in zip(index_to_host, index_to_sg)]
+                                         security_groups=[],
+                                         port_security_enabled=False)
+            for host in index_to_host]
 
         self.safe_client.create_security_group_rule(
             tenant_uuid, sgs[0]['id'],
@@ -150,6 +152,24 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
 
         for vm in vms:
             vm.block_until_boot()
+
+        # 0. check that traffic is allowed when port security is disabled
+        self.assert_connection(
+            vms[1].namespace, vms[0].namespace, vms[0].ip, 3333,
+            net_helpers.NetcatTester.TCP)
+        self.assert_connection(
+            vms[2].namespace, vms[0].namespace, vms[0].ip, 3333,
+            net_helpers.NetcatTester.TCP)
+        net_helpers.assert_ping(vms[0].namespace, vms[1].ip)
+        net_helpers.assert_ping(vms[0].namespace, vms[2].ip)
+        net_helpers.assert_ping(vms[1].namespace, vms[2].ip)
+
+        # Apply security groups to the ports
+        for port, sg in zip(ports, index_to_sg):
+            self.safe_client.client.update_port(
+                port['id'],
+                body={'port': {'port_security_enabled': True,
+                               'security_groups': [sgs[sg]['id']]}})
 
         # 1. check if connection from allowed security group is allowed
         self.assert_connection(

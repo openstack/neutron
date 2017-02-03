@@ -139,9 +139,10 @@ class ML2ConfigFixture(ConfigFixture):
             },
         })
 
+        extension_drivers = ['port_security']
         if env_desc.qos:
-            self.config['ml2']['extension_drivers'] =\
-                    qos_ext.QOS_EXT_DRIVER_ALIAS
+            extension_drivers.append(qos_ext.QOS_EXT_DRIVER_ALIAS)
+        self.config['ml2']['extension_drivers'] = ','.join(extension_drivers)
 
 
 class OVSConfigFixture(ConfigFixture):
