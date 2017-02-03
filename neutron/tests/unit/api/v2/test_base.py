@@ -1195,9 +1195,6 @@ class SubresourceTest(base.BaseTestCase):
                          member=member_actions)
         self.api = webtest.TestApp(api)
 
-    def tearDown(self):
-        super(SubresourceTest, self).tearDown()
-
     def test_index_sub_resource(self):
         instance = self.plugin.return_value
 
@@ -1493,11 +1490,6 @@ class ExtensionTestCase(base.BaseTestCase):
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
                               group='QUOTAS')
-
-    def tearDown(self):
-        super(ExtensionTestCase, self).tearDown()
-        self.api = None
-        self.plugin = None
 
     def test_extended_create(self):
         net_id = _uuid()

@@ -70,11 +70,6 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         # resources are registered
         router.APIRouter()
 
-    def tearDown(self):
-        self.api = None
-        self.plugin = None
-        super(QuotaExtensionTestCase, self).tearDown()
-
     def _test_quota_default_values(self, expected_values):
         tenant_id = 'tenant_id1'
         env = {'neutron.context': context.Context('', tenant_id)}

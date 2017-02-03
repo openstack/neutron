@@ -42,6 +42,7 @@ class APIPolicyTestCase(base.BaseTestCase):
         self.extension_path = os.path.abspath(os.path.join(
             TEST_PATH, "../../../extensions"))
         policy.reset()
+        self.addCleanup(policy.reset)
 
     def _network_definition(self):
         return {'name': 'test_network',
@@ -85,7 +86,3 @@ class APIPolicyTestCase(base.BaseTestCase):
         tenant_context = context.Context('test_user', 'test_tenant_id', False)
         self.assertTrue(self._check_external_router_policy(admin_context))
         self.assertTrue(self._check_external_router_policy(tenant_context))
-
-    def tearDown(self):
-        policy.reset()
-        super(APIPolicyTestCase, self).tearDown()

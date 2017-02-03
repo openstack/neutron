@@ -44,9 +44,6 @@ class Ml2SecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
         self.useFixture(tools.AttributeMapMemento())
         super(Ml2SecurityGroupsTestCase, self).setUp('ml2')
 
-    def tearDown(self):
-        super(Ml2SecurityGroupsTestCase, self).tearDown()
-
 
 class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                             test_sg.TestSecurityGroups,

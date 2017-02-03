@@ -625,9 +625,12 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
         super(TestDesignateClientKeystoneV3, self).setUp()
         # Register the Password auth plugin options,
         # so we can use CONF.set_override
-        config.cfg.CONF.register_opts(
-            loading.get_auth_plugin_conf_options('password'),
-            group='designate')
+        password_option = loading.get_auth_plugin_conf_options('password')
+        config.cfg.CONF.register_opts(password_option, group='designate')
+        self.addCleanup(
+            config.cfg.CONF.unregister_opts,
+            password_option, group='designate')
+
         config.cfg.CONF.set_override('url',
                                      self.TEST_URL,
                                      group='designate')
@@ -659,12 +662,6 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
                 'load_auth_from_conf_options').start())
         self.password = (
             mock.patch.object(driver.password, 'Password').start())
-
-    def tearDown(self):
-        super(TestDesignateClientKeystoneV3, self).tearDown()
-        config.cfg.CONF.unregister_opts(
-            loading.get_auth_plugin_conf_options('password'),
-            group='designate')
 
     def test_insecure_client(self):
         config.cfg.CONF.set_override('insecure',
