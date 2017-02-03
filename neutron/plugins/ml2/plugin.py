@@ -43,7 +43,6 @@ from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as n_const
-from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.common import utils
@@ -964,142 +963,30 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return updated_subnet
 
     @utils.transaction_guard
-    @db_api.retry_if_session_inactive()
     def delete_subnet(self, context, id):
-        # REVISIT(rkukura) The super(Ml2Plugin, self).delete_subnet()
-        # function is not used because it deallocates the subnet's addresses
-        # from ports in the DB without invoking the derived class's
-        # update_port(), preventing mechanism drivers from being called.
-        # This approach should be revisited when the API layer is reworked
-        # during icehouse.
+        # the only purpose of this override is to protect this from being
+        # called inside of a transaction.
+        return super(Ml2Plugin, self).delete_subnet(context, id)
 
-        LOG.debug("Deleting subnet %s", id)
-        session = context.session
-        deallocated = set()
-        while True:
-            # NOTE(kevinbenton): this loop keeps db objects in scope
-            # so we must expire them or risk stale reads.
-            # see bug/1623990
-            session.expire_all()
-            with session.begin(subtransactions=True):
-                record = self._get_subnet(context, id)
-                subnet = self._make_subnet_dict(record, None, context=context)
-                qry_allocated = (session.query(models_v2.IPAllocation).
-                                 filter_by(subnet_id=id).
-                                 join(models_v2.Port))
-                is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
-                # Remove network owned ports, and delete IP allocations
-                # for IPv6 addresses which were automatically generated
-                # via SLAAC
-                if is_auto_addr_subnet:
-                    self._subnet_check_ip_allocations_internal_router_ports(
-                            context, id)
-                else:
-                    qry_allocated = (
-                        qry_allocated.filter(models_v2.Port.device_owner.
-                        in_(db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS)))
-                allocated = set(qry_allocated.all())
-                LOG.debug("Ports to auto-deallocate: %s", allocated)
-                if not is_auto_addr_subnet:
-                    user_alloc = self._subnet_get_user_allocation(
-                        context, id)
-                    if user_alloc:
-                        LOG.info(_LI("Found port (%(port_id)s, %(ip)s) "
-                                     "having IP allocation on subnet "
-                                     "%(subnet)s, cannot delete"),
-                                 {'ip': user_alloc.ip_address,
-                                  'port_id': user_alloc.port_id,
-                                  'subnet': id})
-                        raise exc.SubnetInUse(subnet_id=id)
+    @registry.receives(resources.SUBNET, [events.PRECOMMIT_DELETE])
+    def _subnet_delete_precommit_handler(self, rtype, event, trigger,
+                                         context, subnet_id, **kwargs):
+        record = self._get_subnet(context, subnet_id)
+        subnet = self._make_subnet_dict(record, context=context)
+        network = self.get_network(context, subnet['network_id'])
+        mech_context = driver_context.SubnetContext(self, context,
+                                                    subnet, network)
+        # TODO(kevinbenton): move this mech context into something like
+        # a 'delete context' so it's not polluting the real context object
+        setattr(context, '_mech_context', mech_context)
+        self.mechanism_manager.delete_subnet_precommit(mech_context)
 
-                db_base_plugin_v2._check_subnet_not_used(context, id)
-
-                # SLAAC allocations currently can not be removed using
-                # update_port workflow, and will persist in 'allocated'.
-                # So for now just make sure update_port is called once for
-                # them so MechanismDrivers is aware of the change.
-                # This way SLAAC allocation is deleted by FK on subnet deletion
-                # TODO(pbondar): rework update_port workflow to allow deletion
-                # of SLAAC allocation via update_port.
-                to_deallocate = allocated - deallocated
-
-                # If to_deallocate is blank, then all known IPAllocations
-                # (except SLAAC allocations) were correctly deleted
-                # during the previous pass.
-                # Check if there are more IP allocations, unless
-                # is_auto_address_subnet is True. If transaction isolation
-                # level is set to READ COMMITTED allocations made
-                # concurrently will be returned by this query and transaction
-                # will be restarted. It works for REPEATABLE READ isolation
-                # level too because this query is executed only once during
-                # transaction, and if concurrent allocations are detected
-                # transaction gets restarted. Executing this query second time
-                # in transaction would result in not seeing allocations
-                # committed by concurrent transactions.
-                if not to_deallocate:
-                    if (not is_auto_addr_subnet and
-                            self._subnet_check_ip_allocations(context, id)):
-                        # allocation found and it was DHCP port
-                        # that appeared after autodelete ports were
-                        # removed - continue iteration to find offending port
-                        # to update or raise SubnetInUse
-                        continue
-                    network = self.get_network(context, subnet['network_id'])
-                    mech_context = driver_context.SubnetContext(self, context,
-                                                                subnet,
-                                                                network)
-                    self.mechanism_manager.delete_subnet_precommit(
-                        mech_context)
-
-                    LOG.debug("Deleting subnet record")
-                    session.delete(record)
-
-                    # The super(Ml2Plugin, self).delete_subnet() is not called,
-                    # so need to manually call delete_subnet for pluggable ipam
-                    self.ipam.delete_subnet(context, id)
-
-                    LOG.debug("Committing transaction")
-                    break
-
-            for a in to_deallocate:
-                if a.port:
-                    # calling update_port() for each allocation to remove the
-                    # IP from the port and call the MechanismDrivers
-                    fixed_ips = [{'subnet_id': ip.subnet_id,
-                                  'ip_address': ip.ip_address}
-                                 for ip in a.port.fixed_ips
-                                 if ip.subnet_id != id]
-                    # By default auto-addressed ips are not removed from port
-                    # on port update, so mark subnet with 'delete_subnet' flag
-                    # to force ip deallocation on port update.
-                    if is_auto_addr_subnet:
-                        fixed_ips.append({'subnet_id': id,
-                                          'delete_subnet': True})
-                    data = {attributes.PORT: {'fixed_ips': fixed_ips}}
-                    try:
-                        # NOTE Don't inline port_id; needed for PortNotFound.
-                        port_id = a.port_id
-                        self.update_port(context, port_id, data)
-                    except exc.PortNotFound:
-                        # NOTE Attempting to access a.port_id here is an error.
-                        LOG.debug("Port %s deleted concurrently", port_id)
-                    except exc.SubnetNotFound:
-                        # NOTE we hit here if another subnet was concurrently
-                        # removed that the port has a fixed_ip on. we just
-                        # continue so the loop re-iterates and the IPs are
-                        # looked up again
-                        continue
-                    except Exception as e:
-                        with excutils.save_and_reraise_exception():
-                            utils.attach_exc_details(
-                                e, _LE("Exception deleting fixed_ip from "
-                                       "port %s"), port_id)
-                deallocated.add(a)
-
-        kwargs = {'context': context, 'subnet': subnet}
-        registry.notify(resources.SUBNET, events.AFTER_DELETE, self, **kwargs)
+    @registry.receives(resources.SUBNET, [events.AFTER_DELETE])
+    def _subnet_delete_after_delete_handler(self, rtype, event, trigger,
+                                            context, subnet, **kwargs):
         try:
-            self.mechanism_manager.delete_subnet_postcommit(mech_context)
+            self.mechanism_manager.delete_subnet_postcommit(
+                context._mech_context)
         except ml2_exc.MechanismDriverError:
             # TODO(apech) - One or more mechanism driver failed to
             # delete the subnet.  Ideally we'd notify the caller of
