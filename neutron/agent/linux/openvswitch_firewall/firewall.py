@@ -236,7 +236,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     @staticmethod
     def initialize_bridge(int_br):
-        int_br.set_protocols(OVSFirewallDriver.REQUIRED_PROTOCOLS)
+        int_br.add_protocols(*OVSFirewallDriver.REQUIRED_PROTOCOLS)
         return int_br.deferred(full_ordered=True)
 
     def _drop_all_unmatched_flows(self):

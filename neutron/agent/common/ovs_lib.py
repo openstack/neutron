@@ -19,6 +19,7 @@ import operator
 import time
 import uuid
 
+from debtcollector import removals
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -205,15 +206,32 @@ class OVSBridge(BaseOVS):
     def set_standalone_mode(self):
         self._set_bridge_fail_mode(FAILMODE_STANDALONE)
 
+    @removals.remove(
+        message=("Consider using add_protocols instead, or if replacing "
+                 "the whole set of supported protocols is the desired "
+                 "behavior, using set_db_attribute"),
+        version="Ocata",
+        removal_version="Queens")
     def set_protocols(self, protocols):
         self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
                               check_error=True)
+
+    def add_protocols(self, *protocols):
+        self.ovsdb.db_add('Bridge', self.br_name,
+                          'protocols', *protocols).execute(check_error=True)
 
     def create(self, secure_mode=False):
         with self.ovsdb.transaction() as txn:
             txn.add(
                 self.ovsdb.add_br(self.br_name,
-                datapath_type=self.datapath_type))
+                                  datapath_type=self.datapath_type))
+            # the ovs-ofctl commands below in run_ofctl use OF10, so we
+            # need to ensure that this version is enabled ; we could reuse
+            # add_protocols, but doing ovsdb.db_add avoids doing two
+            # transactions
+            txn.add(
+                self.ovsdb.db_add('Bridge', self.br_name,
+                                  'protocols', constants.OPENFLOW10))
             if secure_mode:
                 txn.add(self.ovsdb.set_fail_mode(self.br_name,
                                                  FAILMODE_SECURE))
