@@ -64,7 +64,8 @@ class TestGetRootHelperChildPid(functional_base.BaseSudoTestCase):
                 ['pstree', parent_pid], check_exit_code=False)
             processes = [command.strip() for command in proc_tree.split('---')
                          if command]
-            return 'sleep' == processes[-1]
+            if processes:
+                return 'sleep' == processes[-1]
 
         cmd = ['bash', '-c', '(sleep 100)']
         proc = async_process.AsyncProcess(cmd, run_as_root=True)
