@@ -353,8 +353,8 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         self._register_mechanisms()
         self.host_filtering_supported = self.is_host_filtering_supported()
         if not self.host_filtering_supported:
-            LOG.warning(_LW("Host filtering is disabled because at least one "
-                            "mechanism doesn't support it."))
+            LOG.info(_LI("No mechanism drivers provide segment reachability "
+                         "information for agent scheduling."))
 
     def _register_mechanisms(self):
         """Register all mechanism drivers.
