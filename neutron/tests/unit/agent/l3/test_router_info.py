@@ -123,6 +123,28 @@ class TestRouterInfo(base.BaseTestCase):
                     'via', '10.100.10.30']]
         self._check_agent_method_called(expected)
 
+    def test__process_pd_iptables_rules(self):
+        subnet_id = _uuid()
+        ex_gw_port = {'id': _uuid()}
+        prefix = '2001:db8:cafe::/64'
+
+        ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
+
+        ipv6_mangle = ri.iptables_manager.ipv6['mangle'] = mock.MagicMock()
+        ri.get_ex_gw_port = mock.Mock(return_value=ex_gw_port)
+        ri.get_external_device_name = mock.Mock(return_value='fake_device')
+        ri.get_address_scope_mark_mask = mock.Mock(return_value='fake_mark')
+
+        ri._process_pd_iptables_rules(prefix, subnet_id)
+
+        mangle_rule = '-d %s ' % prefix
+        mangle_rule += ri.address_scope_mangle_rule('fake_device', 'fake_mark')
+
+        ipv6_mangle.add_rule.assert_called_once_with(
+            'scope',
+            mangle_rule,
+            tag='prefix_delegation_%s' % subnet_id)
+
     def test_add_ports_address_scope_iptables(self):
         ri = router_info.RouterInfo(mock.Mock(), _uuid(), {}, **self.ri_kwargs)
         port = {
