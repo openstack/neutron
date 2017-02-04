@@ -57,7 +57,7 @@ import yaml
 
 data = urllib2.urlopen("https://raw.githubusercontent.com/openstack/"
                        "governance/master/reference/projects.yaml")
-governance = yaml.load(data)
+governance = yaml.safe_load(data)
 stadium = governance["neutron"]["deliverables"].keys()
 query = ["project:openstack/%s" % p for p in stadium]
 print ' OR '.join(query)
