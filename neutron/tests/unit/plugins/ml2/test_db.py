@@ -399,6 +399,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
     def test_distributed_port_binding_deleted_by_port_deletion(self):
         with self.ctx.session.begin(subtransactions=True):
             self.ctx.session.add(models_v2.Network(id='network_id'))
+        with self.ctx.session.begin(subtransactions=True):
             device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
             port = models_v2.Port(
                 id='port_id',

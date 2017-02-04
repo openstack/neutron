@@ -236,7 +236,6 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     """Represents a v2 neutron network."""
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
-    ports = orm.relationship(Port, backref='networks')
     subnets = orm.relationship(
         Subnet, backref=orm.backref('networks', lazy='subquery'),
         lazy="subquery")
