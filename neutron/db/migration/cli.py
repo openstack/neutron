@@ -38,12 +38,13 @@ HEADS_FILENAME = 'HEADS'
 CONTRACT_HEAD_FILENAME = 'CONTRACT_HEAD'
 EXPAND_HEAD_FILENAME = 'EXPAND_HEAD'
 
-CURRENT_RELEASE = migration.OCATA
+CURRENT_RELEASE = migration.PIKE
 RELEASES = (
     migration.LIBERTY,
     migration.MITAKA,
     migration.NEWTON,
     migration.OCATA,
+    migration.PIKE,
 )
 
 EXPAND_BRANCH = 'expand'
