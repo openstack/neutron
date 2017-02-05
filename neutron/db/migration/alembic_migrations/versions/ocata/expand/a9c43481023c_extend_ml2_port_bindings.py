@@ -30,9 +30,11 @@ import sqlalchemy as sa
 from sqlalchemy.engine.reflection import Inspector as insp
 
 from neutron.common import constants
+from neutron.db import migration
 
 MYSQL_ENGINE = 'mysql'
 ML2_PORT_BINDING = 'ml2_port_bindings'
+neutron_milestone = [migration.OCATA]
 
 
 def upgrade():
