@@ -285,8 +285,12 @@ def is_dhcp_active_on_any_subnet(context, subnet_ids):
 
 
 def _prevent_segment_delete_with_port_bound(resource, event, trigger,
-                                            context, segment):
+                                            context, segment,
+                                            for_net_delete=False):
     """Raise exception if there are any ports bound with segment_id."""
+    if for_net_delete:
+        # don't check for network deletes
+        return
     segment_id = segment['id']
     query = context.session.query(models_v2.Port)
     query = query.join(
