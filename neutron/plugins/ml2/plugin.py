@@ -26,6 +26,7 @@ from oslo_serialization import jsonutils
 from oslo_utils import excutils
 from oslo_utils import importutils
 from oslo_utils import uuidutils
+import sqlalchemy
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron._i18n import _, _LE, _LI, _LW
@@ -596,15 +597,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                attributes.SUBNETS, ['_ml2_md_extend_subnet_dict'])
 
     def _ml2_md_extend_network_dict(self, result, netdb):
-        session = db_api.get_reader_session()
+        session = sqlalchemy.inspect(netdb).session
         self.extension_manager.extend_network_dict(session, netdb, result)
 
     def _ml2_md_extend_port_dict(self, result, portdb):
-        session = db_api.get_reader_session()
+        session = sqlalchemy.inspect(portdb).session
         self.extension_manager.extend_port_dict(session, portdb, result)
 
     def _ml2_md_extend_subnet_dict(self, result, subnetdb):
-        session = db_api.get_reader_session()
+        session = sqlalchemy.inspect(subnetdb).session
         self.extension_manager.extend_subnet_dict(session, subnetdb, result)
 
     # Note - The following hook methods have "ml2" in their names so
