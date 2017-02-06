@@ -35,8 +35,9 @@ MAX_TAG_LEN = 60
 TAG_PLUGIN_TYPE = 'TAG'
 
 TAG_SUPPORTED_RESOURCES = {
+    # We shouldn't add new resources here. If more resources need to be tagged,
+    # we must add them in new extension.
     attributes.NETWORKS: attributes.NETWORK,
-    # other resources can be added
 }
 
 TAG_ATTRIBUTE_MAP = {
@@ -50,14 +51,6 @@ class TagResourceNotFound(exceptions.NotFound):
 
 class TagNotFound(exceptions.NotFound):
     message = _("Tag %(tag)s could not be found.")
-
-
-def get_parent_resource_and_id(kwargs):
-    for key in kwargs:
-        for resource in TAG_SUPPORTED_RESOURCES:
-            if key == TAG_SUPPORTED_RESOURCES[resource] + '_id':
-                return resource, kwargs[key]
-    return None, None
 
 
 def validate_tag(tag):
@@ -88,17 +81,25 @@ def notify_tag_action(context, action, parent, parent_id, tags=None):
 class TagController(object):
     def __init__(self):
         self.plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
+        self.supported_resources = TAG_SUPPORTED_RESOURCES
+
+    def _get_parent_resource_and_id(self, kwargs):
+        for key in kwargs:
+            for resource in self.supported_resources:
+                if key == self.supported_resources[resource] + '_id':
+                    return resource, kwargs[key]
+        return None, None
 
     def index(self, request, **kwargs):
         # GET /v2.0/networks/{network_id}/tags
-        parent, parent_id = get_parent_resource_and_id(kwargs)
+        parent, parent_id = self._get_parent_resource_and_id(kwargs)
         return self.plugin.get_tags(request.context, parent, parent_id)
 
     def show(self, request, id, **kwargs):
         # GET /v2.0/networks/{network_id}/tags/{tag}
         # id == tag
         validate_tag(id)
-        parent, parent_id = get_parent_resource_and_id(kwargs)
+        parent, parent_id = self._get_parent_resource_and_id(kwargs)
         return self.plugin.get_tag(request.context, parent, parent_id, id)
 
     def create(self, request, **kwargs):
@@ -110,7 +111,7 @@ class TagController(object):
         # PUT /v2.0/networks/{network_id}/tags/{tag}
         # id == tag
         validate_tag(id)
-        parent, parent_id = get_parent_resource_and_id(kwargs)
+        parent, parent_id = self._get_parent_resource_and_id(kwargs)
         notify_tag_action(request.context, 'create.start',
                           parent, parent_id, [id])
         result = self.plugin.update_tag(request.context, parent, parent_id, id)
@@ -122,7 +123,7 @@ class TagController(object):
         # PUT /v2.0/networks/{network_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
         validate_tags(body)
-        parent, parent_id = get_parent_resource_and_id(kwargs)
+        parent, parent_id = self._get_parent_resource_and_id(kwargs)
         notify_tag_action(request.context, 'update.start',
                           parent, parent_id, body['tags'])
         result = self.plugin.update_tags(request.context, parent,
@@ -135,7 +136,7 @@ class TagController(object):
         # DELETE /v2.0/networks/{network_id}/tags/{tag}
         # id == tag
         validate_tag(id)
-        parent, parent_id = get_parent_resource_and_id(kwargs)
+        parent, parent_id = self._get_parent_resource_and_id(kwargs)
         notify_tag_action(request.context, 'delete.start',
                           parent, parent_id, [id])
         result = self.plugin.delete_tag(request.context, parent, parent_id, id)
@@ -145,7 +146,7 @@ class TagController(object):
 
     def delete_all(self, request, **kwargs):
         # DELETE /v2.0/networks/{network_id}/tags
-        parent, parent_id = get_parent_resource_and_id(kwargs)
+        parent, parent_id = self._get_parent_resource_and_id(kwargs)
         notify_tag_action(request.context, 'delete_all.start',
                           parent, parent_id)
         result = self.plugin.delete_tags(request.context, parent, parent_id)
