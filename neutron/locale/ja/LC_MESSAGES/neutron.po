@@ -15,9 +15,9 @@
 # 笹原 昌美 <ebb0de1@jp.ibm.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.1.2.dev25\n"
+"Project-Id-Version: neutron 9.2.1.dev14\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-12-11 18:42+0000\n"
+"POT-Creation-Date: 2017-02-03 03:19+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1721,10 +1721,6 @@ msgstr "L3 エージェントによる Floating IP への NAT のセットアッ
 
 msgid "L3 agent failure to setup floating IPs"
 msgstr "L3 エージェントによる Floating IP のセットアップの失敗"
-
-#, python-format
-msgid "Limit must be an integer 0 or greater and not '%d'"
-msgstr "limit は整数 0 以上でなければならず、'%d' にはしないようにしてください"
 
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "Denial-of-Service を防ぐためにリースの数を制限してください。"

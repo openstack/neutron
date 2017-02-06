@@ -6,9 +6,9 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.1.2.dev25\n"
+"Project-Id-Version: neutron 9.2.1.dev14\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-12-11 18:42+0000\n"
+"POT-Creation-Date: 2017-02-03 03:19+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1745,10 +1745,6 @@ msgstr "Errore dell'agent L3 durante la configurazione di NAT per IP mobili"
 
 msgid "L3 agent failure to setup floating IPs"
 msgstr "Errore dell'agent L3 durante la configurazione di IP mobili"
-
-#, python-format
-msgid "Limit must be an integer 0 or greater and not '%d'"
-msgstr "Il limite deve essere un numero intero 0 o superiore e non '%d'"
 
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "Limitare il numero di lease per evitare un denial-of-service."
