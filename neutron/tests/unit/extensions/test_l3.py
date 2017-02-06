@@ -46,6 +46,7 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
+from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import dns
@@ -283,7 +284,8 @@ class TestL3NatIntPlugin(TestL3NatBasePlugin,
 # scheduling.
 class TestL3NatIntAgentSchedulingPlugin(TestL3NatIntPlugin,
                                         l3_agentschedulers_db.
-                                        L3AgentSchedulerDbMixin):
+                                        L3AgentSchedulerDbMixin,
+                                        l3_hamode_db.L3_HA_NAT_db_mixin):
 
     supported_extension_aliases = ["external-net", "router",
                                    "l3_agent_scheduler"]
@@ -323,7 +325,8 @@ class TestL3NatServicePlugin(common_db_mixin.CommonDbMixin,
 # plugins that delegate away L3 routing functionality
 class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
                                             l3_dvrscheduler_db.
-                                            L3_DVRsch_db_mixin):
+                                            L3_DVRsch_db_mixin,
+                                            l3_hamode_db.L3_HA_NAT_db_mixin):
 
     supported_extension_aliases = ["router", "l3_agent_scheduler"]
 

@@ -33,6 +33,7 @@ from neutron.common import _deprecate
 from neutron.common import utils as n_utils
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
+from neutron.db.models import l3 as l3_model
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
@@ -399,6 +400,30 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         return {'agents': [self._make_agent_dict(binding.l3_agent) for
                            binding in bindings]}
 
+    def get_routers_l3_agents_count(self, context):
+        """Return a map between routers and agent counts for all routers."""
+
+        # Postgres requires every column in the select to be present in
+        # the group by statement when using an aggregate function.
+        # One solution is to generate a subquery and join it with the desired
+        # columns.
+        binding_model = rb_model.RouterL3AgentBinding
+        sub_query = (context.session.query(
+            binding_model.router_id,
+            func.count(binding_model.router_id).label('count')).
+            join(l3_attrs.RouterExtraAttributes,
+                 binding_model.router_id ==
+                 l3_attrs.RouterExtraAttributes.router_id).
+            join(l3_model.Router).
+            group_by(binding_model.router_id).subquery())
+
+        query = (context.session.query(l3_model.Router, sub_query.c.count).
+                 outerjoin(sub_query))
+
+        return [(self._make_router_dict(router), agent_count) if agent_count
+                else (self._make_router_dict(router), 0)
+                for router, agent_count in query]
+
     def get_l3_agents(self, context, active=None, filters=None):
         query = context.session.query(agent_model.Agent)
         query = query.filter(
@@ -469,7 +494,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             candidates.append(l3_agent)
         return candidates
 
-    def auto_schedule_routers(self, context, host, router_ids):
+    def auto_schedule_routers(self, context, host, router_ids=None):
         if self.router_scheduler:
             self.router_scheduler.auto_schedule_routers(
                 self, context, host, router_ids)
