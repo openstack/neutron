@@ -286,8 +286,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.assertTrue(fip_ns.destroyed)
         mIPWrapper().del_veth.assert_called_once_with(
             fip_ns.get_int_device_name(router['id']))
-        mIPDevice().route.delete_gateway.assert_called_once_with(
-            str(fip_to_rtr.ip), table=16)
+        self.assertEqual(1, mIPDevice().route.delete_gateway.call_count)
         self.assertFalse(ri.fip_ns.unsubscribe.called)
         ri.fip_ns.local_subnets.allocate.assert_called_once_with(ri.router_id)
 
