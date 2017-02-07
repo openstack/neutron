@@ -103,27 +103,20 @@ class External_net_db_mixin(object):
         if not external_set:
             return
 
-        # TODO(armax): these notifications should switch to *_COMMIT
-        # when the event becomes available, as this block is expected
-        # to be called within a plugin's session
         if external:
-            try:
-                registry.notify(
-                    resources.EXTERNAL_NETWORK, events.BEFORE_CREATE,
-                    self, context=context,
-                    request=req_data, network=net_data)
-            except c_exc.CallbackFailure as e:
-                # raise the underlying exception
-                raise e.errors[0].error
             context.session.add(
                 ext_net_models.ExternalNetwork(network_id=net_data['id']))
             context.session.add(rbac_db.NetworkRBAC(
                   object_id=net_data['id'], action='access_as_external',
                   target_tenant='*', tenant_id=net_data['tenant_id']))
-            registry.notify(
-                resources.EXTERNAL_NETWORK, events.AFTER_CREATE,
-                self, context=context,
-                request=req_data, network=net_data)
+            try:
+                registry.notify(
+                    resources.EXTERNAL_NETWORK, events.PRECOMMIT_CREATE,
+                    self, context=context,
+                    request=req_data, network=net_data)
+            except c_exc.CallbackFailure as e:
+                # raise the underlying exception
+                raise e.errors[0].error
         net_data[external_net.EXTERNAL] = external
 
     def _process_l3_update(self, context, net_data, req_data, allow_all=True):
