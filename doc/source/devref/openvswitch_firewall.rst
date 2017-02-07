@@ -110,8 +110,9 @@ the second security group. Ports have following attributes:
 
 The first ``table 0`` distinguishes the traffic to ingress or egress and loads
 to ``register 5`` value identifying port traffic.
-Ingress flow is determined by switch port number and egress flow is determined
-by destination mac address. ``register 6`` contains
+Egress flow is determined by switch port number and ingress flow is determined
+by destination mac address. ``register 6`` contains port tag to isolate
+connections into separate conntrack zones.
 
 ::
 
