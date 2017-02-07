@@ -189,6 +189,11 @@ class TestMacvtapMain(base.BaseTestCase):
             macvtap_neutron_agent.parse_interface_mappings()
             mock_exit.assert_called_with(1)
 
+    def test_parse_interface_mappings_no_mapping(self):
+        with mock.patch.object(sys, 'exit') as mock_exit:
+            macvtap_neutron_agent.parse_interface_mappings()
+            mock_exit.assert_called_with(1)
+
     def test_validate_firewall_driver_noop_long(self):
         cfg.CONF.set_override('firewall_driver',
                               'neutron.agent.firewall.NoopFirewallDriver',
