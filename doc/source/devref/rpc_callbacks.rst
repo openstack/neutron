@@ -243,7 +243,7 @@ The callback function will receive the following arguments:
 * event_type: will be one of CREATED, UPDATED, or DELETED, see
   neutron.api.rpc.callbacks.events for details.
 
-With the underlaying oslo_messaging support for dynamic topics on the receiver
+With the underlying oslo_messaging support for dynamic topics on the receiver
 we cannot implement a per "resource type + resource id" topic, rabbitmq seems
 to handle 10000's of topics without suffering, but creating 100's of
 oslo_messaging receivers on different topics seems to crash.
