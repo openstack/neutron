@@ -49,7 +49,7 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
                      nullable=True)
     network = orm.relationship(models_v2.Network,
                                backref=orm.backref("segments",
-                                                   lazy='joined',
+                                                   lazy='subquery',
                                                    cascade='delete'))
     api_collections = [segment.SEGMENTS]
 
@@ -71,6 +71,6 @@ class SegmentHostMapping(model_base.BASEV2):
     # SQLAlchemy to eagerly load this association
     network_segment = orm.relationship(
         NetworkSegment, backref=orm.backref("segment_host_mapping",
-                                            lazy='joined',
+                                            lazy='subquery',
                                             cascade='delete'))
     revises_on_change = ('network_segment', )
