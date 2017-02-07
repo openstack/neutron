@@ -83,9 +83,72 @@ class TagNetworkTestJSON(TagTestJSON):
         self._test_tag_operations()
 
 
+class TagSubnetTestJSON(TagTestJSON):
+    resource = 'subnets'
+
+    @classmethod
+    def _create_resource(cls):
+        network = cls.create_network()
+        subnet = cls.create_subnet(network)
+        return subnet['id']
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('2805aabf-a94c-4e70-a0b2-9814f06beb03')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_subnet_tags(self):
+        self._test_tag_operations()
+
+
+class TagPortTestJSON(TagTestJSON):
+    resource = 'ports'
+
+    @classmethod
+    def _create_resource(cls):
+        network = cls.create_network()
+        port = cls.create_port(network)
+        return port['id']
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('c7c44f2c-edb0-4ebd-a386-d37cec155c34')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_port_tags(self):
+        self._test_tag_operations()
+
+
+class TagSubnetPoolTestJSON(TagTestJSON):
+    resource = 'subnetpools'
+
+    @classmethod
+    def _create_resource(cls):
+        subnetpool = cls.create_subnetpool('subnetpool', default_prefixlen=24,
+                                           prefixes=['10.0.0.0/8'])
+        return subnetpool['id']
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('bdc1c24b-c0b5-4835-953c-8f67dc11edfe')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_subnetpool_tags(self):
+        self._test_tag_operations()
+
+
+class TagRouterTestJSON(TagTestJSON):
+    resource = 'routers'
+
+    @classmethod
+    def _create_resource(cls):
+        router = cls.create_router(router_name='test')
+        return router['id']
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('b898ff92-dc33-4232-8ab9-2c6158c80d28')
+    @test.requires_ext(extension="router", service="network")
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_router_tags(self):
+        self._test_tag_operations()
+
+
 class TagFilterTestJSON(base.BaseAdminNetworkTest):
     credentials = ['primary', 'alt', 'admin']
-    resource = 'networks'
 
     @classmethod
     @test.requires_ext(extension="tag", service="network")
@@ -166,9 +229,88 @@ class TagFilterNetworkTestJSON(TagFilterTestJSON):
 
     def _list_resource(self, filters):
         res = self.client.list_networks(**filters)
-        return res['networks']
+        return res[self.resource]
 
     @test.attr(type='smoke')
     @test.idempotent_id('a66b5cca-7db2-40f5-a33d-8ac9f864e53e')
     def test_filter_network_tags(self):
+        self._test_filter_tags()
+
+
+class TagFilterSubnetTestJSON(TagFilterTestJSON):
+    resource = 'subnets'
+
+    @classmethod
+    def _create_resource(cls, name):
+        network = cls.create_network()
+        res = cls.create_subnet(network, name=name)
+        return res['id']
+
+    def _list_resource(self, filters):
+        res = self.client.list_subnets(**filters)
+        return res[self.resource]
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('dd8f9ba7-bcf6-496f-bead-714bd3daac10')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_filter_subnet_tags(self):
+        self._test_filter_tags()
+
+
+class TagFilterPortTestJSON(TagFilterTestJSON):
+    resource = 'ports'
+
+    @classmethod
+    def _create_resource(cls, name):
+        network = cls.create_network()
+        res = cls.create_port(network, name=name)
+        return res['id']
+
+    def _list_resource(self, filters):
+        res = self.client.list_ports(**filters)
+        return res[self.resource]
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('09c036b8-c8d0-4bee-b776-7f4601512898')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_filter_port_tags(self):
+        self._test_filter_tags()
+
+
+class TagFilterSubnetpoolTestJSON(TagFilterTestJSON):
+    resource = 'subnetpools'
+
+    @classmethod
+    def _create_resource(cls, name):
+        res = cls.create_subnetpool(name, default_prefixlen=24,
+                                    prefixes=['10.0.0.0/8'])
+        return res['id']
+
+    def _list_resource(self, filters):
+        res = self.client.list_subnetpools(**filters)
+        return res[self.resource]
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('16ae7ad2-55c2-4821-9195-bfd04ab245b7')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_filter_subnetpool_tags(self):
+        self._test_filter_tags()
+
+
+class TagFilterRouterTestJSON(TagFilterTestJSON):
+    resource = 'routers'
+
+    @classmethod
+    def _create_resource(cls, name):
+        res = cls.create_router(router_name=name)
+        return res['id']
+
+    def _list_resource(self, filters):
+        res = self.client.list_routers(**filters)
+        return res[self.resource]
+
+    @test.attr(type='smoke')
+    @test.idempotent_id('cdd3f3ea-073d-4435-a6cb-826a4064193d')
+    @test.requires_ext(extension="tag-ext", service="network")
+    def test_filter_router_tags(self):
         self._test_filter_tags()
