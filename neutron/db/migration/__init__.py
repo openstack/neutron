@@ -27,6 +27,7 @@ LIBERTY = 'liberty'
 MITAKA = 'mitaka'
 NEWTON = 'newton'
 OCATA = 'ocata'
+PIKE = 'pike'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
