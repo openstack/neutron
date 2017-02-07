@@ -23,7 +23,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy import and_
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _LE, _LW
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
@@ -254,12 +254,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     subnet['cidr'] != n_const.PROVISIONAL_IPV6_PD_PREFIX):
                 if (is_auto_addr_subnet and device_owner not in
                         constants.ROUTER_INTERFACE_OWNERS):
-                    msg = (_("IPv6 address %(address)s can not be directly "
-                            "assigned to a port on subnet %(id)s since the "
-                            "subnet is configured for automatic addresses") %
-                           {'address': fixed['ip_address'],
-                            'id': subnet['id']})
-                    raise n_exc.InvalidInput(error_message=msg)
+                    raise ipam_exc.AllocationOnAutoAddressSubnet(
+                        ip=fixed['ip_address'], subnet_id=subnet['id'])
                 fixed_ip_list.append({'subnet_id': subnet['id'],
                                       'ip_address': fixed['ip_address']})
             else:
