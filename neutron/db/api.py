@@ -185,9 +185,13 @@ def reraise_as_retryrequest(f):
 
 def _is_nested_instance(e, etypes):
     """Check if exception or its inner excepts are an instance of etypes."""
-    return (isinstance(e, etypes) or
-            isinstance(e, exceptions.MultipleExceptions) and
-            any(_is_nested_instance(i, etypes) for i in e.inner_exceptions))
+    if isinstance(e, etypes):
+        return True
+    if isinstance(e, exceptions.MultipleExceptions):
+        return any(_is_nested_instance(i, etypes) for i in e.inner_exceptions)
+    if isinstance(e, db_exc.DBError):
+        return _is_nested_instance(e.inner_exception, etypes)
+    return False
 
 
 @contextlib.contextmanager

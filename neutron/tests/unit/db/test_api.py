@@ -36,6 +36,11 @@ class TestExceptionToRetryContextManager(base.BaseTestCase):
             with db_api.exc_to_retry((ValueError, TypeError)):
                 raise TypeError()
 
+    def test_translates_DBerror_inner_exception(self):
+        with testtools.ExpectedException(db_exc.RetryRequest):
+            with db_api.exc_to_retry(ValueError):
+                raise db_exc.DBError(ValueError())
+
     def test_passes_other_exceptions(self):
         with testtools.ExpectedException(ValueError):
             with db_api.exc_to_retry(TypeError):
