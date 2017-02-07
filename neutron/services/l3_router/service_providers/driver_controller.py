@@ -103,7 +103,7 @@ class DriverController(object):
         'ha' and/or 'distributed' attributes. If we allow updates of flavor_id
         directly in the future those requests will also land here.
         """
-        drv = self._get_provider_for_router(context, router_id)
+        drv = self.get_provider_for_router(context, router_id)
         new_drv = None
         if _flavor_specified(router):
             if router['flavor_id'] != old_router['flavor_id']:
@@ -145,7 +145,7 @@ class DriverController(object):
                 self._stm.add_resource_association(
                     context, lib_const.L3, new_drv.name, router_id)
 
-    def _get_provider_for_router(self, context, router_id):
+    def get_provider_for_router(self, context, router_id):
         """Return the provider driver handle for a router id."""
         driver_name = self._stm.get_provider_names_by_resource_ids(
             context, [router_id]).get(router_id)
@@ -194,7 +194,7 @@ class DriverController(object):
 
     def uses_scheduler(self, context, router_id):
         """Returns True if the integrated L3 scheduler should be used."""
-        return (self._get_provider_for_router(context, router_id).
+        return (self.get_provider_for_router(context, router_id).
                 use_integrated_agent_scheduler)
 
 
