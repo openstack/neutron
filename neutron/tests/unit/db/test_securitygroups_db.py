@@ -133,6 +133,44 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.mixin._check_for_duplicate_rules_in_db,
                 context, rule_dict)
 
+    def test_check_for_duplicate_diff_rules_remote_ip_prefix_ipv4(self):
+        db_rules = {'id': 'fake', 'tenant_id': 'fake', 'ethertype': 'IPv4',
+                    'direction': 'ingress', 'security_group_id': 'fake',
+                    'remote_ip_prefix': None}
+        with mock.patch.object(self.mixin, 'get_security_group_rules',
+                               return_value=[db_rules]):
+            context = mock.Mock()
+            rule_dict = {
+                'security_group_rule': {'id': 'fake2',
+                                        'tenant_id': 'fake',
+                                        'security_group_id': 'fake',
+                                        'ethertype': 'IPv4',
+                                        'direction': 'ingress',
+                                        'remote_ip_prefix': '0.0.0.0/0'}
+            }
+            self.assertRaises(securitygroup.SecurityGroupRuleExists,
+                self.mixin._check_for_duplicate_rules_in_db,
+                context, rule_dict)
+
+    def test_check_for_duplicate_diff_rules_remote_ip_prefix_ipv6(self):
+        db_rules = {'id': 'fake', 'tenant_id': 'fake', 'ethertype': 'IPv6',
+                    'direction': 'ingress', 'security_group_id': 'fake',
+                    'remote_ip_prefix': None}
+        with mock.patch.object(self.mixin, 'get_security_group_rules',
+                               return_value=[db_rules]):
+            context = mock.Mock()
+            rule_dict = {
+                'security_group_rule': {'id': 'fake2',
+                                        'tenant_id': 'fake',
+                                        'security_group_id': 'fake',
+                                        'ethertype': 'IPv6',
+                                        'direction': 'ingress',
+                                        'remote_ip_prefix': '::/0'}
+            }
+            self.assertRaises(securitygroup.SecurityGroupRuleExists,
+                self.mixin._check_for_duplicate_rules_in_db,
+                context, rule_dict)
+
     def test_delete_security_group_rule_in_use(self):
         with mock.patch.object(registry, "notify") as mock_notify:
             mock_notify.side_effect = exceptions.CallbackFailure(Exception())
