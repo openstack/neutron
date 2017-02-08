@@ -99,10 +99,10 @@ class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
 
     def test_vlan_QinQ_subinterfaces(self):
         # the trunk model does not support this right now, but this is to
-        # the plumber on the agent side doesn't explode in their presense
-        # in case an operator does something fancy or we have a race where
-        # a trunk's parent port is converted to a subport while the agent
-        # is offline.
+        # ensure the plumber on the agent side doesn't explode in their
+        # presence in case an operator does something fancy or we have a
+        # race where a trunk's parent port is converted to a subport while
+        # the agent is offline.
         attr = self.generate_device_details()
         device = self.manage_device(attr)
         devname = device.name
