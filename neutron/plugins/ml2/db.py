@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from debtcollector import removals
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
@@ -48,6 +49,11 @@ def add_port_binding(context, port_id):
         return record
 
 
+@removals.remove(
+    message="Use get_port from inside of a transaction. The revision plugin "
+            "provides protection against concurrent updates to the same "
+            "resource with compare and swap updates of the revision_number.",
+    removal_version='Queens')
 def get_locked_port_and_binding(context, port_id):
     """Get port and port binding records for update within transaction."""
 
