@@ -191,4 +191,4 @@ NAMESPACE = None
 
 def ebtables(comm):
     execute = ip_lib.IPWrapper(NAMESPACE).netns.execute
-    return execute(['ebtables'] + comm, run_as_root=True)
+    return execute(['ebtables', '--concurrent'] + comm, run_as_root=True)
