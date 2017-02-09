@@ -2090,6 +2090,9 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def _handle_sigterm(self, signum, frame):
         self.catch_sigterm = True
         if self.quitting_rpc_timeout:
+            LOG.info(
+                _LI('SIGTERM received, capping RPC timeout by %d seconds.'),
+                self.quitting_rpc_timeout)
             self.set_rpc_timeout(self.quitting_rpc_timeout)
 
     def _handle_sighup(self, signum, frame):
@@ -2112,7 +2115,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
     def set_rpc_timeout(self, timeout):
         for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
                         self.dvr_plugin_rpc, self.state_rpc):
-            rpc_api.client.timeout = timeout
+            rpc_api.client.set_max_timeout(timeout)
 
     def _check_agent_configurations(self):
         if (self.enable_distributed_routing and self.enable_tunneling

@@ -433,6 +433,26 @@ class TimeoutTestCase(base.DietTestCase):
                     for call in rpc.TRANSPORT._send.call_args_list]
         self.assertEqual([1, 2], timeouts)
 
+    def test_set_max_timeout_caps_all_methods(self):
+        rpc.TRANSPORT.conf.rpc_response_timeout = 300
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'] = 100
+        rpc.BackingOffClient.set_max_timeout(50)
+        # both explicitly tracked
+        self.assertEqual(50, rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'])
+        # as well as new methods
+        self.assertEqual(50, rpc._ContextWrapper._METHOD_TIMEOUTS['method_2'])
+
+    def test_set_max_timeout_retains_lower_timeouts(self):
+        rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'] = 10
+        rpc.BackingOffClient.set_max_timeout(50)
+        self.assertEqual(10, rpc._ContextWrapper._METHOD_TIMEOUTS['method_1'])
+
+    def test_set_max_timeout_overrides_default_timeout(self):
+        rpc.TRANSPORT.conf.rpc_response_timeout = 10
+        self.assertEqual(10 * 10, rpc._ContextWrapper.get_max_timeout())
+        rpc._ContextWrapper.set_max_timeout(10)
+        self.assertEqual(10, rpc._ContextWrapper.get_max_timeout())
+
 
 class TestConnection(base.DietTestCase):
     def setUp(self):
