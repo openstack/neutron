@@ -28,6 +28,7 @@ from neutron.agent.common import utils
 from neutron.agent.linux import async_process
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as c_const
+from neutron.common import rpc as n_rpc
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -1915,12 +1916,14 @@ class TestOvsNeutronAgent(object):
             self.assertFalse(cleanup.called)
 
     def test_set_rpc_timeout(self):
-        self.agent._handle_sigterm(None, None)
-        for rpc_client in (self.agent.plugin_rpc.client,
-                           self.agent.sg_plugin_rpc.client,
-                           self.agent.dvr_plugin_rpc.client,
-                           self.agent.state_rpc.client):
-            self.assertEqual(10, rpc_client.timeout)
+        with mock.patch.object(
+            n_rpc.BackingOffClient, 'set_max_timeout') as smt:
+            self.agent._handle_sigterm(None, None)
+            for rpc_client in (self.agent.plugin_rpc.client,
+                               self.agent.sg_plugin_rpc.client,
+                               self.agent.dvr_plugin_rpc.client,
+                               self.agent.state_rpc.client):
+                smt.assert_called_with(10)
 
     def test_set_rpc_timeout_no_value(self):
         self.agent.quitting_rpc_timeout = None
