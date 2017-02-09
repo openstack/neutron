@@ -156,6 +156,7 @@ class SecurityGroupAgentRpcApiMixin(object):
     def security_groups_provider_updated(self, context,
                                          devices_to_update=None):
         """Notify provider updated security groups."""
+        # TODO(kevinbenton): remove in Queens
         # NOTE(ihrachys) the version here should really be 1.3, but since we
         # don't support proper version pinning yet, we leave it intact to allow
         # to work with older agents. The reason why we should not require the
@@ -214,9 +215,9 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         self.sg_agent.security_groups_member_updated(security_groups)
 
     def security_groups_provider_updated(self, context, **kwargs):
-        """Callback for security group provider update."""
-        LOG.debug("Provider rule updated")
-        devices_to_update = kwargs.get('devices_to_update')
-        if not self.sg_agent:
-            return self._security_groups_agent_not_set()
-        self.sg_agent.security_groups_provider_updated(devices_to_update)
+        """Callback for security group provider update.
+
+        This is now a NOOP since provider rules are static. The server just
+        generates the notification for agents running older versions that have
+        IP-specific rules.
+        """
