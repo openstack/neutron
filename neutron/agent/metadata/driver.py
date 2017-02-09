@@ -13,22 +13,146 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
+import grp
 import os
+import pwd
 
-from neutron.agent.common import config
+from oslo_config import cfg
+from oslo_log import log as logging
+
+from neutron._i18n import _
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
-from neutron.agent.linux import utils
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions
 
+LOG = logging.getLogger(__name__)
 
 # Access with redirection to metadata proxy iptables mark mask
 METADATA_SERVICE_NAME = 'metadata-proxy'
+
+PROXY_CONFIG_DIR = "ns-metadata-proxy"
+_HAPROXY_CONFIG_TEMPLATE = """
+global
+    log         /dev/log local0 %(log_level)s
+    user        %(user)s
+    group       %(group)s
+    maxconn     1024
+    pidfile     %(pidfile)s
+    daemon
+
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    option http-server-close
+    option forwardfor
+    retries                 3
+    timeout http-request    30s
+    timeout connect         30s
+    timeout client          32s
+    timeout server          32s
+    timeout http-keep-alive 30s
+
+listen listener
+    bind 0.0.0.0:%(port)s
+    server metadata %(unix_socket_path)s
+    http-request add-header X-Neutron-%(res_type)s-ID %(res_id)s
+"""
+
+
+class InvalidUserOrGroupException(Exception):
+    pass
+
+
+class HaproxyConfigurator(object):
+    def __init__(self, network_id, router_id, unix_socket_path, port, user,
+                 group, state_path, pid_file):
+        self.network_id = network_id
+        self.router_id = router_id
+        if network_id is None and router_id is None:
+            raise exceptions.NetworkIdOrRouterIdRequiredError()
+
+        self.port = port
+        self.user = user
+        self.group = group
+        self.state_path = state_path
+        self.unix_socket_path = unix_socket_path
+        self.pidfile = pid_file
+        self.log_level = 'debug' if cfg.CONF.debug else 'info'
+
+    def create_config_file(self):
+        """Create the config file for haproxy."""
+        # Need to convert uid/gid into username/group
+        try:
+            username = pwd.getpwuid(int(self.user)).pw_name
+        except (ValueError, KeyError):
+            try:
+                username = pwd.getpwnam(self.user).pw_name
+            except KeyError:
+                raise InvalidUserOrGroupException(
+                    _("Invalid user/uid: '%s'") % self.user)
+
+        try:
+            groupname = grp.getgrgid(int(self.group)).gr_name
+        except (ValueError, KeyError):
+            try:
+                groupname = grp.getgrnam(self.group).gr_name
+            except KeyError:
+                raise InvalidUserOrGroupException(
+                    _("Invalid group/gid: '%s'") % self.group)
+
+        cfg_info = {
+            'port': self.port,
+            'unix_socket_path': self.unix_socket_path,
+            'user': username,
+            'group': groupname,
+            'pidfile': self.pidfile,
+            'log_level': self.log_level
+        }
+        if self.network_id:
+            cfg_info['res_type'] = 'Network'
+            cfg_info['res_id'] = self.network_id
+        else:
+            cfg_info['res_type'] = 'Router'
+            cfg_info['res_id'] = self.router_id
+
+        haproxy_cfg = _HAPROXY_CONFIG_TEMPLATE % cfg_info
+        LOG.debug("haproxy_cfg = %s", haproxy_cfg)
+        cfg_dir = self.get_config_path(self.state_path)
+        # uuid has to be included somewhere in the command line so that it can
+        # be tracked by process_monitor.
+        self.cfg_path = os.path.join(cfg_dir, "%s.conf" % cfg_info['res_id'])
+        if not os.path.exists(cfg_dir):
+            os.makedirs(cfg_dir)
+        with open(self.cfg_path, "w") as cfg_file:
+            cfg_file.write(haproxy_cfg)
+
+    @staticmethod
+    def get_config_path(state_path):
+        return os.path.join(state_path or cfg.CONF.state_path,
+                            PROXY_CONFIG_DIR)
+
+    @staticmethod
+    def cleanup_config_file(uuid, state_path):
+        """Delete config file created when metadata proxy was spawned."""
+        # Delete config file if it exists
+        cfg_path = os.path.join(
+            HaproxyConfigurator.get_config_path(state_path),
+            "%s.conf" % uuid)
+        try:
+            os.unlink(cfg_path)
+        except OSError as ex:
+            # It can happen that this function is called but metadata proxy
+            # was never spawned so its config file won't exist
+            if ex.errno != errno.ENOENT:
+                raise
 
 
 class MetadataDriver(object):
@@ -72,45 +196,30 @@ class MetadataDriver(object):
                   'port': port})]
 
     @classmethod
-    def _get_metadata_proxy_user_group_watchlog(cls, conf):
+    def _get_metadata_proxy_user_group(cls, conf):
         user = conf.metadata_proxy_user or str(os.geteuid())
         group = conf.metadata_proxy_group or str(os.getegid())
 
-        watch_log = conf.metadata_proxy_watch_log
-        if watch_log is None:
-            # NOTE(cbrandily): Commonly, log watching can be enabled only
-            # when metadata proxy user is agent effective user (id/name).
-            watch_log = utils.is_effective_user(user)
-
-        return user, group, watch_log
+        return user, group
 
     @classmethod
     def _get_metadata_proxy_callback(cls, port, conf, network_id=None,
                                      router_id=None):
-        uuid = network_id or router_id
-        if uuid is None:
-            raise exceptions.NetworkIdOrRouterIdRequiredError()
-
-        if network_id:
-            lookup_param = '--network_id=%s' % network_id
-        else:
-            lookup_param = '--router_id=%s' % router_id
-
         def callback(pid_file):
             metadata_proxy_socket = conf.metadata_proxy_socket
-            user, group, watch_log = (
-                cls._get_metadata_proxy_user_group_watchlog(conf))
-            proxy_cmd = ['neutron-ns-metadata-proxy',
-                         '--pid_file=%s' % pid_file,
-                         '--metadata_proxy_socket=%s' % metadata_proxy_socket,
-                         lookup_param,
-                         '--state_path=%s' % conf.state_path,
-                         '--metadata_port=%s' % port,
-                         '--metadata_proxy_user=%s' % user,
-                         '--metadata_proxy_group=%s' % group]
-            proxy_cmd.extend(config.get_log_args(
-                conf, 'neutron-ns-metadata-proxy-%s.log' % uuid,
-                metadata_proxy_watch_log=watch_log))
+            user, group = (
+                cls._get_metadata_proxy_user_group(conf))
+            haproxy = HaproxyConfigurator(network_id,
+                                          router_id,
+                                          metadata_proxy_socket,
+                                          port,
+                                          user,
+                                          group,
+                                          conf.state_path,
+                                          pid_file)
+            haproxy.create_config_file()
+            proxy_cmd = ['haproxy',
+                         '-f', haproxy.cfg_path]
             return proxy_cmd
 
         return callback
@@ -124,9 +233,30 @@ class MetadataDriver(object):
         pm = cls._get_metadata_proxy_process_manager(uuid, conf,
                                                      ns_name=ns_name,
                                                      callback=callback)
+        # TODO(dalvarez): Remove in Q cycle. This will kill running instances
+        # of old ns-metadata-proxy Python version in order to be replaced by
+        # haproxy. This will help with upgrading and shall be removed in next
+        # cycle.
+        cls._migrate_python_ns_metadata_proxy_if_needed(pm)
+
         pm.enable()
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
         cls.monitors[router_id] = pm
+
+    @staticmethod
+    def _migrate_python_ns_metadata_proxy_if_needed(pm):
+        """Kill running Python version of ns-metadata-proxy.
+
+        This function will detect if the current metadata proxy process is
+        running the old Python version and kill it so that the new haproxy
+        version is spawned instead.
+        """
+        # Read cmdline to a local var to avoid reading twice from /proc file
+        cmdline = pm.cmdline
+        if cmdline and 'haproxy' not in cmdline:
+            LOG.debug("Migrating old instance of python ns-metadata proxy to "
+                      "new one based on haproxy (%s)", cmdline)
+            pm.disable()
 
     @classmethod
     def destroy_monitored_metadata_proxy(cls, monitor, uuid, conf):
@@ -134,6 +264,10 @@ class MetadataDriver(object):
         # No need to pass ns name as it's not needed for disable()
         pm = cls._get_metadata_proxy_process_manager(uuid, conf)
         pm.disable()
+
+        # Delete metadata proxy config file
+        HaproxyConfigurator.cleanup_config_file(uuid, cfg.CONF.state_path)
+
         cls.monitors.pop(uuid, None)
 
     @classmethod

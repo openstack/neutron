@@ -234,7 +234,9 @@ class TestDhcpAgent(base.BaseTestCase):
         self.driver_cls.return_value = self.driver
         self.mock_makedirs_p = mock.patch("os.makedirs")
         self.mock_makedirs = self.mock_makedirs_p.start()
-
+        self.mock_create_metadata_proxy_cfg = mock.patch(
+            "neutron.agent.metadata.driver.HaproxyConfigurator")
+        self.mock_create_metadata_proxy_cfg.start()
         self.mock_ip_wrapper_p = mock.patch("neutron.agent.linux.ip_lib."
                                             "IPWrapper")
         self.mock_ip_wrapper = self.mock_ip_wrapper_p.start()
@@ -676,7 +678,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         if is_isolated_network and enable_isolated_metadata:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
-                mock.call().enable()])
+                mock.call().enable()], any_order=True)
         else:
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(ns=None),
@@ -842,7 +844,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.external_process.assert_has_calls([
             self._process_manager_constructor_call(),
             mock.call().enable()
-        ])
+        ], any_order=True)
 
     def test_disable_isolated_metadata_proxy(self):
         method_path = ('neutron.agent.metadata.driver.MetadataDriver'

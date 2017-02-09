@@ -40,20 +40,6 @@ SHARED_OPTS = [
 ]
 
 
-DRIVER_OPTS = [
-    cfg.BoolOpt('metadata_proxy_watch_log',
-                help=_("Enable/Disable log watch by metadata proxy. It "
-                       "should be disabled when metadata_proxy_user/group "
-                       "is not allowed to read/write its log file and "
-                       "copytruncate logrotate option must be used if "
-                       "logrotate is enabled on metadata proxy log "
-                       "files. Option default value is deduced from "
-                       "metadata_proxy_user: watch log is enabled if "
-                       "metadata_proxy_user is agent effective user "
-                       "id/name.")),
-]
-
-
 METADATA_PROXY_HANDLER_OPTS = [
     cfg.StrOpt('auth_ca_cert',
                help=_("Certificate Authority public key (CA cert) "

@@ -89,8 +89,7 @@ def list_agent_opts():
         ('DEFAULT',
          itertools.chain(
              neutron.agent.common.config.INTERFACE_DRIVER_OPTS,
-             neutron.conf.agent.metadata.config.SHARED_OPTS,
-             neutron.conf.agent.metadata.config.DRIVER_OPTS)
+             neutron.conf.agent.metadata.config.SHARED_OPTS)
          )
     ]
 

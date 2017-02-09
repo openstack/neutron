@@ -16,9 +16,13 @@ sysctl: CommandFilter, sysctl, root
 route: CommandFilter, route, root
 radvd: CommandFilter, radvd, root
 
-# metadata proxy
-metadata_proxy: CommandFilter, neutron-ns-metadata-proxy, root
+# haproxy
+haproxy: RegExpFilter, haproxy, root, haproxy, -f, .*
+kill_haproxy: KillFilter, root, haproxy, -15, -9, -HUP
 # RHEL invocation of the metadata proxy will report /usr/bin/python
+# TODO(dalvarez): Remove kill_metadata* filters in Q release since
+# neutron-ns-metadata-proxy is now replaced by haproxy. We keep them for now
+# for the migration process
 kill_metadata: KillFilter, root, python, -15, -9
 kill_metadata7: KillFilter, root, python2.7, -15, -9
 kill_metadata35: KillFilter, root, python3.5, -15, -9

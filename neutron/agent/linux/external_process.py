@@ -138,16 +138,21 @@ class ProcessManager(MonitoredProcess):
 
     @property
     def active(self):
+        cmdline = self.cmdline
+        return self.uuid in cmdline if cmdline else False
+
+    @property
+    def cmdline(self):
         pid = self.pid
-        if pid is None:
-            return False
+        if not pid:
+            return
 
         cmdline = '/proc/%s/cmdline' % pid
         try:
             with open(cmdline, "r") as f:
-                return self.uuid in f.readline()
+                return f.readline()
         except IOError:
-            return False
+            return
 
 
 ServiceId = collections.namedtuple('ServiceId', ['uuid', 'service'])
