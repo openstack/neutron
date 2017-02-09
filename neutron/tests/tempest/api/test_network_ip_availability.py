@@ -16,6 +16,7 @@
 import netaddr
 
 from tempest.lib.common.utils import data_utils
+from tempest.lib.common.utils import test_utils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -154,7 +155,7 @@ class NetworksIpAvailabilityIPv4Test(NetworksIpAvailabilityTest):
             return used_ip - 1 == used_ip_after_port_delete
 
         self.assertTrue(
-            test.call_until_true(
+            test_utils.call_until_true(
                 get_net_availability, DELETE_TIMEOUT, DELETE_SLEEP),
             msg="IP address did not become available after port delete")
 
