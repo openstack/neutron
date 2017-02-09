@@ -18,7 +18,6 @@ from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import tc_lib
-from neutron.common import constants as common_consts
 from neutron.common import utils
 from neutron.services.qos import qos_consts
 from neutron.tests.common.agents import l2_extensions
@@ -28,6 +27,8 @@ from neutron.tests.fullstack.resources import machine
 from neutron.tests.fullstack import utils as fullstack_utils
 from neutron.tests.unit import testlib_api
 
+from neutron.conf.plugins.ml2.drivers import linuxbridge as \
+    linuxbridge_agent_config
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
 from neutron.services.qos.drivers.openvswitch import driver as ovs_drv
@@ -37,20 +38,7 @@ load_tests = testlib_api.module_load_tests
 
 BANDWIDTH_BURST = 100
 BANDWIDTH_LIMIT = 500
-MINIMUM_BANDWIDTH = 200
 DSCP_MARK = 16
-
-
-def _check_bw_limits(tc, limit, burst, min):
-    # NOTE(ralonsoh): once QoS bw limit rule has 'direction' parameter, this
-    # should be included in the function call. Now EGRESS_DIRECTION is forced.
-    observed = tc.get_limits(common_consts.EGRESS_DIRECTION)
-    if not (limit or burst or min):
-        return observed == (limit, burst, min)
-    elif not min and (limit or burst):
-        return observed == (limit, burst, limit)
-    elif not (limit or burst) and min:
-        return observed[2] == min
 
 
 class BaseQoSRuleTestCase(object):
@@ -115,7 +103,7 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
 
     def _wait_for_bw_rule_removed(self, vm):
         # No values are provided when port doesn't have qos policy
-        self._wait_for_bw_rule_applied(vm)
+        self._wait_for_bw_rule_applied(vm, None, None)
 
     def _add_bw_limit_rule(self, limit, burst, qos_policy):
         qos_policy_id = qos_policy['id']
@@ -135,8 +123,7 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
                                BANDWIDTH_LIMIT, BANDWIDTH_BURST)])
         bw_rule = qos_policy['rules'][0]
 
-        self._wait_for_bw_rule_applied(vm, limit=BANDWIDTH_LIMIT,
-                                       burst=BANDWIDTH_BURST)
+        self._wait_for_bw_rule_applied(vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST)
         qos_policy_id = qos_policy['id']
 
         self.client.delete_bandwidth_limit_rule(bw_rule['id'], qos_policy_id)
@@ -150,64 +137,14 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
         )
         new_rule = self.safe_client.create_bandwidth_limit_rule(
             self.tenant_id, qos_policy_id, new_limit)
-        self._wait_for_bw_rule_applied(vm, limit=new_limit,
-                                       burst=new_expected_burst)
+        self._wait_for_bw_rule_applied(vm, new_limit, new_expected_burst)
 
         # Update qos policy rule id
         self.client.update_bandwidth_limit_rule(
             new_rule['id'], qos_policy_id,
             body={'bandwidth_limit_rule': {'max_kbps': BANDWIDTH_LIMIT,
                                            'max_burst_kbps': BANDWIDTH_BURST}})
-        self._wait_for_bw_rule_applied(vm, limit=BANDWIDTH_LIMIT,
-                                       burst=BANDWIDTH_BURST)
-
-        # Remove qos policy from port
-        self.client.update_port(
-            vm.neutron_port['id'],
-            body={'port': {'qos_policy_id': None}})
-        self._wait_for_bw_rule_removed(vm)
-
-
-class _TestMinimumBwQoS(BaseQoSRuleTestCase):
-
-    number_of_hosts = 1
-
-    def _wait_for_bw_rule_removed(self, vm):
-        # No values are provided when port doesn't have qos policy
-        self._wait_for_bw_rule_applied(vm)
-
-    def _add_min_bw_rule(self, min, qos_policy):
-        qos_policy_id = qos_policy['id']
-        rule = self.safe_client.create_minimum_bandwidth_rule(
-            self.tenant_id, qos_policy_id, min)
-        # Make it consistent with GET reply
-        rule['type'] = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
-        rule['qos_policy_id'] = qos_policy_id
-        qos_policy['rules'].append(rule)
-
-    def test_min_bw_qos_policy_rule_lifecycle(self):
-        new_min = MINIMUM_BANDWIDTH + 100
-
-        # Create port with qos policy attached
-        vm, qos_policy = self._prepare_vm_with_qos_policy(
-            [functools.partial(self._add_min_bw_rule, MINIMUM_BANDWIDTH)])
-        bw_rule = qos_policy['rules'][0]
-
-        self._wait_for_bw_rule_applied(vm, min=MINIMUM_BANDWIDTH)
-        qos_policy_id = qos_policy['id']
-
-        self.client.delete_minimum_bandwidth_rule(bw_rule['id'], qos_policy_id)
-        self._wait_for_bw_rule_removed(vm)
-
-        new_rule = self.safe_client.create_minimum_bandwidth_rule(
-            self.tenant_id, qos_policy_id, new_min)
-        self._wait_for_bw_rule_applied(vm, min=new_min)
-
-        # Update qos policy rule id
-        self.client.update_minimum_bandwidth_rule(
-            new_rule['id'], qos_policy_id,
-            body={'minimum_bandwidth_rule': {'min_kbps': MINIMUM_BANDWIDTH}})
-        self._wait_for_bw_rule_applied(vm, min=MINIMUM_BANDWIDTH)
+        self._wait_for_bw_rule_applied(vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST)
 
         # Remove qos policy from port
         self.client.update_port(
@@ -220,32 +157,25 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_OVS
     scenarios = fullstack_utils.get_ovs_interface_scenarios()
 
-    def _wait_for_bw_rule_applied(self, vm, limit=None, burst=None):
+    def _wait_for_bw_rule_applied(self, vm, limit, burst):
         utils.wait_until_true(
             lambda: vm.bridge.get_egress_bw_limit_for_port(
-                vm.port.name) == (limit, burst),
-            initial_sleep=2)
+                vm.port.name) == (limit, burst))
 
 
 class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
 
-    def _wait_for_bw_rule_applied(self, vm, limit=None, burst=None, min=None):
+    def _wait_for_bw_rule_applied(self, vm, limit, burst):
         port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
             vm.neutron_port['id'])
-        tc = tc_lib.TcCommand(port_name, namespace=vm.host.host_namespace)
-        utils.wait_until_true(lambda: _check_bw_limits(tc, limit, burst, min))
-
-
-class TestMinimumBwQoSLinuxbridge(_TestMinimumBwQoS,
-                                  base.BaseFullStackTestCase):
-    l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
-
-    def _wait_for_bw_rule_applied(self, vm, limit=None, burst=None, min=None):
-        port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
-            vm.neutron_port['id'])
-        tc = tc_lib.TcCommand(port_name, namespace=vm.host.host_namespace)
-        utils.wait_until_true(lambda: _check_bw_limits(tc, limit, burst, min))
+        tc = tc_lib.TcCommand(
+            port_name,
+            linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE,
+            namespace=vm.host.host_namespace
+        )
+        utils.wait_until_true(
+            lambda: tc.get_filters_bw_limits() == (limit, burst))
 
 
 class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
