@@ -49,10 +49,10 @@ can be applicable to any other Neutron resource:
 Which Resources
 ---------------
 
-Tag system uses standardattr mechanism so it's targeting to resources have the
-mechanism. In Mitaka, they are networks, ports, routers, floating IPs, security
-group, security group rules and subnet pools but now tag system supports
-networks only.
+Tag system uses standardattr mechanism so it's targeting to resources that have
+the mechanism. The system is provided by 'tag' extension and 'tag-ext'
+extension. The 'tag' extension supports networks only. The 'tag-ext' extension
+supports subnets, ports, routers, and subnet pools.
 
 Model
 -----
