@@ -191,7 +191,7 @@ One such method creates a virtual device in a namespace,
 and ensures that both the namespace and the device are cleaned up at the
 end of the test run regardless of success or failure using the 'addCleanup'
 method. The test generates details for a temporary device, asserts that
-a device by that name does not exist, create that device, asserts that
+a device by that name does not exist, creates that device, asserts that
 it now exists, deletes it, and asserts that it no longer exists.
 Such a test avoids all three issues mentioned above if it were written
 using the unit testing framework.
@@ -199,7 +199,7 @@ using the unit testing framework.
 Functional tests are also used to target larger scope, such as agents.
 Many good examples exist: See the OVS, L3 and DHCP agents functional tests.
 Such tests target a top level agent method and assert that the system
-interaction that was supposed to be perform was indeed performed.
+interaction that was supposed to be performed was indeed performed.
 For example, to test the DHCP agent's top level method that accepts network
 attributes and configures dnsmasq for that network, the test:
 
