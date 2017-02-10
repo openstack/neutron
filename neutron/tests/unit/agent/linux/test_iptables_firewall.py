@@ -360,6 +360,30 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_ipv4_ingress_dccp_port(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'dccp',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p dccp -m dccp --dport 10 -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_sctp_port(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'sctp',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p sctp -m sctp --dport 10 -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_egress(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress'}

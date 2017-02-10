@@ -654,11 +654,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             protocol = 'ipv6-icmp'
         iptables_rule = ['-p', protocol]
 
-        if (is_port and protocol in ['udp', 'tcp', 'icmp', 'ipv6-icmp']):
-            protocol_modules = {'udp': 'udp', 'tcp': 'tcp',
-                                'icmp': 'icmp', 'ipv6-icmp': 'icmp6'}
+        if (is_port and protocol in n_const.IPTABLES_PROTOCOL_MAP):
             # iptables adds '-m protocol' when the port number is specified
-            iptables_rule += ['-m', protocol_modules[protocol]]
+            iptables_rule += ['-m', n_const.IPTABLES_PROTOCOL_MAP[protocol]]
         return iptables_rule
 
     def _port_arg(self, direction, protocol, port_range_min, port_range_max):
