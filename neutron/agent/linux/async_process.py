@@ -78,6 +78,7 @@ class AsyncProcess(object):
             raise ValueError(_('respawn_interval must be >= 0 if provided.'))
         self.respawn_interval = respawn_interval
         self._process = None
+        self._pid = None
         self._is_running = False
         self._kill_event = None
         self._reset_queues()
@@ -95,8 +96,8 @@ class AsyncProcess(object):
 
     def is_active(self):
         # If using sudo rootwrap as a root_helper, we have to wait until sudo
-        # spawns rootwrap and rootwrap spawns the process.
-
+        # spawns rootwrap and rootwrap spawns the process. self.pid will make
+        # sure to get the correct pid.
         return utils.pid_invoked_with_cmdline(
             self.pid, self.cmd_without_namespace)
 
@@ -137,6 +138,7 @@ class AsyncProcess(object):
     def _spawn(self):
         """Spawn a process and its watchers."""
         self._is_running = True
+        self._pid = None
         self._kill_event = eventlet.event.Event()
         self._process, cmd = utils.create_process(self._cmd,
                                                   run_as_root=self.run_as_root)
@@ -154,16 +156,19 @@ class AsyncProcess(object):
     @property
     def pid(self):
         if self._process:
-            return utils.get_root_helper_child_pid(
-                self._process.pid,
-                self.cmd_without_namespace,
-                run_as_root=self.run_as_root)
+            if not self._pid:
+                self._pid = utils.get_root_helper_child_pid(
+                    self._process.pid,
+                    self.cmd_without_namespace,
+                    run_as_root=self.run_as_root)
+            return self._pid
 
     def _kill(self, kill_signal):
         """Kill the process and the associated watcher greenthreads."""
         pid = self.pid
         if pid:
             self._is_running = False
+            self._pid = None
             self._kill_process(pid, kill_signal)
 
         # Halt the greenthreads if they weren't already.
