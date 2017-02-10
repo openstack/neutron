@@ -16,7 +16,6 @@
 from neutron_lib.plugins import directory
 from oslo_log import log
 
-from neutron._i18n import _LW
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
@@ -26,7 +25,6 @@ from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron.pecan_wsgi.controllers import utils
 from neutron import policy
 from neutron.quota import resource_registry
-from neutron import wsgi
 
 LOG = log.getLogger(__name__)
 
@@ -104,14 +102,14 @@ def initialize_all():
             if path_prefix:
                 manager.NeutronManager.add_resource_for_path_prefix(
                     collection, path_prefix)
-        elif isinstance(legacy_controller, wsgi.Controller):
+        else:
             new_controller = utils.ShimCollectionsController(
                 collection, None, legacy_controller,
                 collection_actions=collection_actions,
-                member_actions=member_actions)
-        else:
-            LOG.warning(_LW("Unknown controller type encountered %s.  It will"
-                            "be ignored."), legacy_controller)
+                member_actions=member_actions,
+                action_status=ext_res.controller.action_status,
+                collection_methods=ext_res.collection_methods)
+
         manager.NeutronManager.set_controller_for_resource(
             collection_key, new_controller)
 
