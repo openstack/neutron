@@ -357,44 +357,17 @@ Linux bridge
 
 The Linux bridge implementation relies on the new tc_lib functions:
 
-* set_bw
-* delete_bw
+* set_bw_limit
+* update_bw_limit
+* delete_bw_limit
 
-Only egress direction traffic shaping, from the instance point of view, is
-implemented. Traffic shaping is done by a classful Traffic Control qdisq
-called Class Based Queueing
-(`Classful Queueing Disciplines <http://lartc.org/howto/lartc.qdisc.classful.html>`_).
-This shaping algorithm is implemented by
-`tc-htb <https://linux.die.net/man/8/tc-htb>`_, replacing the former one used
-`tc-tbf <http://linux.die.net/man/8/tc-tbf>`_.
-
-Traffic shaping is executed only for interface egress traffic. Because the
-traffic coming from the instance is considered as ingress traffic by the
-interface, shaping is not possible. To solve this, a new element is introduced:
-`Intermediate Functional Block <http://linux-ip.net/gl/tc-filters/tc-filters-node3.html>`_,
-a pseudo network interface used to redirect all the ingress traffic from the TAP
-port to the egress IFB queue. The QoS rules are applied on this IFB
-interface associated to the TAP port::
-
-    +-----------------+
-    | [Instance veth] |
-    +-----------------+
-      | (egress traffic, instance point of view)
-      |
-      |                                +--------------------------+
-     \ /        [tap port]             |                [IFB]    \ /
-    +-------------------------------+  |  +-------------------------------+
-    | ingress queue | egress queue  |  |  | ingress queue | egress queue  |
-    | (filter:      |               |  |  |               | (QoS rules,   |
-    |  redir IFB)   |               |  |  |               |  tc-htb)      |
-    +-------------------------------+  |  +-------------------------------+
-      |                                |                          | shaped
-      +--------------------------------+                          | traffic
-                                                                 \ /
-
-Traffic in the tap port is redirected (mirrored) to the IFB using a Traffic
-Control filter
-(`Filter Actions <http://linux-ip.net/gl/tc-filters/tc-filters-node2.html>`_).
+The ingress bandwidth limit is configured on the tap port by setting a simple
+`tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on the
+port. It requires a value of HZ parameter configured in kernel on the host.
+This value is necessary to calculate the minimal burst value which is set in
+tc. Details about how it is calculated can be found in
+`here <http://unix.stackexchange.com/a/100797>`_. This solution is similar to Open
+vSwitch implementation.
 
 QoS driver design
 -----------------

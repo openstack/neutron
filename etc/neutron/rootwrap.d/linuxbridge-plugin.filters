@@ -20,12 +20,9 @@ find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -p
 ip_exec: IpNetnsExecFilter, ip, root
 
 # tc commands needed for QoS support
-tc_add_qdisc: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, (root|parent .+), handle, .+, htb
-tc_add_qdisc_ingress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, ingress, handle, .+
+tc_replace_tbf: RegExpFilter, tc, root, tc, qdisc, replace, dev, .+, root, tbf, rate, .+, latency, .+, burst, .+
+tc_add_ingress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, ingress, handle, .+
+tc_delete: RegExpFilter, tc, root, tc, qdisc, del, dev, .+, .+
 tc_show_qdisc: RegExpFilter, tc, root, tc, qdisc, show, dev, .+
-tc_del_qdisc: RegExpFilter, tc, root, tc, qdisc, del, dev, .+, (root|ingress|parent .+)
-tc_add_class: RegExpFilter, tc, root, tc, class, replace, dev, .+, parent, .+, classid, .+, .+, rate, .+
-tc_add_class_max: RegExpFilter, tc, root, tc, class, replace, dev, .+, parent, .+, classid, .+, .+, rate, .+, ceil, .+, burst, .+
-tc_show_class: RegExpFilter, tc, root, tc, class, show, dev, .+
-tc_show_filter: RegExpFilter, tc, root, tc, filter, show, dev, .+, parent, .+
-tc_add_filter_ifb: RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, all, u32, match, u32, 0, 0, action, mirred, egress, redirect, dev, .+
+tc_show_filters: RegExpFilter, tc, root, tc, filter, show, dev, .+, parent, .+
+tc_add_filter: RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, all, prio, .+, basic, police, rate, .+, burst, .+, mtu, .+, drop

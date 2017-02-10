@@ -17,10 +17,12 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import tc_lib
 from neutron.tests.functional import base as functional_base
 
-BW_LIMIT = 100
-BURST = 50
-BW_MIN = 25
-DIRECTION_EGRESS = 'egress'
+TEST_HZ_VALUE = 250
+LATENCY = 50
+BW_LIMIT = 1024
+BURST = 512
+
+BASE_DEV_NAME = "test_tap"
 
 
 class TcLibTestCase(functional_base.BaseSudoTestCase):
@@ -36,44 +38,48 @@ class TcLibTestCase(functional_base.BaseSudoTestCase):
         self.addCleanup(tap_device.link.delete)
         tap_device.link.set_up()
 
-    def test_bandwidth_limit(self):
-        device_name = "tap_testmax"
+    def test_filters_bandwidth_limit(self):
+        device_name = "%s_filters" % BASE_DEV_NAME
         self.create_device(device_name)
-        tc = tc_lib.TcCommand(device_name)
+        tc = tc_lib.TcCommand(device_name, TEST_HZ_VALUE)
 
-        tc.set_bw(BW_LIMIT, BURST, None, DIRECTION_EGRESS)
-        bw_limit, burst, _ = tc.get_limits(DIRECTION_EGRESS)
+        tc.set_filters_bw_limit(BW_LIMIT, BURST)
+        bw_limit, burst = tc.get_filters_bw_limits()
         self.assertEqual(BW_LIMIT, bw_limit)
         self.assertEqual(BURST, burst)
 
-        new_bw_limit = BW_LIMIT + 100
+        new_bw_limit = BW_LIMIT + 500
         new_burst = BURST + 50
 
-        tc.set_bw(new_bw_limit, new_burst, None, DIRECTION_EGRESS)
-        bw_limit, burst, _ = tc.get_limits(DIRECTION_EGRESS)
+        tc.update_filters_bw_limit(new_bw_limit, new_burst)
+        bw_limit, burst = tc.get_filters_bw_limits()
         self.assertEqual(new_bw_limit, bw_limit)
         self.assertEqual(new_burst, burst)
 
-        tc.delete_bw(DIRECTION_EGRESS)
-        bw_limit, burst, _ = tc.get_limits(DIRECTION_EGRESS)
+        tc.delete_filters_bw_limit()
+        bw_limit, burst = tc.get_filters_bw_limits()
         self.assertIsNone(bw_limit)
         self.assertIsNone(burst)
 
-    def test_minimum_bandwidth(self):
-        device_name = "tap_testmin"
+    def test_tbf_bandwidth_limit(self):
+        device_name = "%s_tbf" % BASE_DEV_NAME
         self.create_device(device_name)
-        tc = tc_lib.TcCommand(device_name)
+        tc = tc_lib.TcCommand(device_name, TEST_HZ_VALUE)
 
-        tc.set_bw(None, None, BW_MIN, DIRECTION_EGRESS)
-        _, _, bw_min = tc.get_limits(DIRECTION_EGRESS)
-        self.assertEqual(BW_MIN, bw_min)
+        tc.set_tbf_bw_limit(BW_LIMIT, BURST, LATENCY)
+        bw_limit, burst = tc.get_tbf_bw_limits()
+        self.assertEqual(BW_LIMIT, bw_limit)
+        self.assertEqual(BURST, burst)
 
-        new_bw_min = BW_MIN + 50
+        new_bw_limit = BW_LIMIT + 500
+        new_burst = BURST + 50
 
-        tc.set_bw(None, None, new_bw_min, DIRECTION_EGRESS)
-        _, _, bw_min = tc.get_limits(DIRECTION_EGRESS)
-        self.assertEqual(new_bw_min, bw_min)
+        tc.update_tbf_bw_limit(new_bw_limit, new_burst, LATENCY)
+        bw_limit, burst = tc.get_tbf_bw_limits()
+        self.assertEqual(new_bw_limit, bw_limit)
+        self.assertEqual(new_burst, burst)
 
-        tc.delete_bw(DIRECTION_EGRESS)
-        _, _, bw_min = tc.get_limits(DIRECTION_EGRESS)
-        self.assertIsNone(bw_min)
+        tc.delete_tbf_bw_limit()
+        bw_limit, burst = tc.get_tbf_bw_limits()
+        self.assertIsNone(bw_limit)
+        self.assertIsNone(burst)

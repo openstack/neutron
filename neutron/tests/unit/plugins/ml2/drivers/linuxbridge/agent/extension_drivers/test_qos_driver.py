@@ -12,68 +12,39 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
 import mock
-import uuid
 
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent.l2.extensions import qos_linux as qos_extensions
 from neutron.agent.linux import tc_lib
 from neutron.objects.qos import rule
+from neutron.plugins.ml2.drivers.linuxbridge.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.linuxbridge.agent.extension_drivers import (
     qos_driver)
-from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 
+TEST_LATENCY_VALUE = 100
 DSCP_VALUE = 32
 
 
-class FakeVifPort(object):
-    ofport = 99
-    port_name = 'name'
-    vif_mac = 'aa:bb:cc:11:22:33'
-
-
 class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
-    POLICY_ID = uuid.uuid4().hex
-    DEVICE_NAME = 'fake_tap'
-    ACTION_CREATE = 'create'
-    ACTION_DELETE = 'delete'
-    RULE_MAX = 4000
-    RULE_MIN = 1000
-    RULE_BURST = 800
-    RULE_DIRECTION_EGRESS = 'egress'
 
     def setUp(self):
         super(QosLinuxbridgeAgentDriverTestCase, self).setUp()
+        cfg.CONF.set_override("tbf_latency", TEST_LATENCY_VALUE, "QOS")
         self.qos_driver = qos_driver.QosLinuxbridgeAgentDriver()
         self.qos_driver.initialize()
         self.rule_bw_limit = self._create_bw_limit_rule_obj()
         self.rule_dscp_marking = self._create_dscp_marking_rule_obj()
-        self.get_egress_burst_value = mock.patch.object(
-            qos_extensions.QosLinuxAgentDriver, "_get_egress_burst_value")
-        self.mock_get_egress_burst_value = self.get_egress_burst_value.start()
-        self.mock_get_egress_burst_value.return_value = self.RULE_BURST
-        self.rule_bw_limit = self._create_bw_limit_rule_obj()
-        self.rule_min_bw = self._create_min_bw_rule_obj()
         self.port = self._create_fake_port(uuidutils.generate_uuid())
-        self._ports = collections.defaultdict(dict)
 
     def _create_bw_limit_rule_obj(self):
         rule_obj = rule.QosBandwidthLimitRule()
         rule_obj.id = uuidutils.generate_uuid()
-        rule_obj.max_kbps = self.RULE_MAX
-        rule_obj.max_burst_kbps = self.RULE_BURST
-        rule_obj.obj_reset_changes()
-        return rule_obj
-
-    def _create_min_bw_rule_obj(self):
-        rule_obj = rule.QosMinimumBandwidthRule()
-        rule_obj.id = uuidutils.generate_uuid()
-        rule_obj.min_kbps = self.RULE_MAX
-        rule_obj.direction = self.RULE_DIRECTION_EGRESS
+        rule_obj.max_kbps = 2
+        rule_obj.max_burst_kbps = 200
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -87,9 +58,7 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
     def _create_fake_port(self, policy_id):
         return {'qos_policy_id': policy_id,
                 'network_qos_policy_id': None,
-                'device': self.DEVICE_NAME,
-                'port_id': uuid.uuid4(),
-                'vif_port': FakeVifPort()}
+                'device': 'fake_tap'}
 
     def _dscp_mark_chain_name(self, device):
         return "qos-o%s" % device[3:]
@@ -104,49 +73,32 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
     def _dscp_rule_tag(self, device):
         return "dscp-%s" % device
 
-    @mock.patch.object(tc_lib.TcCommand, "set_bw")
-    def test_update_bandwidth_limit(self, mock_set_bw):
-        with mock.patch.object(self.qos_driver, '_get_port_bw_parameters') as \
-                mock_bw_param:
-            mock_bw_param.return_value = (self.rule_bw_limit.max_kbps,
-                                          self.rule_bw_limit.max_burst_kbps,
-                                          None)
+    def test_create_bandwidth_limit(self):
+        with mock.patch.object(
+            tc_lib.TcCommand, "set_filters_bw_limit"
+        ) as set_bw_limit:
+            self.qos_driver.create_bandwidth_limit(self.port,
+                                                   self.rule_bw_limit)
+            set_bw_limit.assert_called_once_with(
+                self.rule_bw_limit.max_kbps, self.rule_bw_limit.max_burst_kbps,
+            )
+
+    def test_update_bandwidth_limit(self):
+        with mock.patch.object(
+            tc_lib.TcCommand, "update_filters_bw_limit"
+        ) as update_bw_limit:
             self.qos_driver.update_bandwidth_limit(self.port,
                                                    self.rule_bw_limit)
-            mock_set_bw.assert_called_once_with(
+            update_bw_limit.assert_called_once_with(
                 self.rule_bw_limit.max_kbps, self.rule_bw_limit.max_burst_kbps,
-                None, self.RULE_DIRECTION_EGRESS)
-            mock_bw_param.assert_called_once_with(self.port['port_id'])
+            )
 
-    @mock.patch.object(tc_lib.TcCommand, "delete_bw")
-    def test_delete_bandwidth_limit(self, mock_delete_bw):
-        with mock.patch.object(self.qos_driver, '_get_port_bw_parameters') as \
-                mock_bw_param:
-            mock_bw_param.return_value = (None, None, None)
+    def test_delete_bandwidth_limit(self):
+        with mock.patch.object(
+            tc_lib.TcCommand, "delete_filters_bw_limit"
+        ) as delete_bw_limit:
             self.qos_driver.delete_bandwidth_limit(self.port)
-            mock_delete_bw.assert_called_once_with(self.RULE_DIRECTION_EGRESS)
-            mock_bw_param.assert_called_once_with(self.port['port_id'])
-
-    @mock.patch.object(tc_lib.TcCommand, "set_bw")
-    def test_update_minimum_bandwidth(self, mock_set_bw):
-        with mock.patch.object(self.qos_driver, '_get_port_bw_parameters') as \
-                mock_bw_param:
-            mock_bw_param.return_value = (None, None,
-                                          self.rule_min_bw.min_kbps)
-            self.qos_driver.update_minimum_bandwidth(self.port,
-                                                     self.rule_min_bw)
-            mock_set_bw.assert_called_once_with(None, None,
-                self.rule_min_bw.min_kbps, self.RULE_DIRECTION_EGRESS)
-            mock_bw_param.assert_called_once_with(self.port['port_id'])
-
-    @mock.patch.object(tc_lib.TcCommand, "delete_bw")
-    def test_delete_minimum_bandwidth(self, mock_delete_bw):
-        with mock.patch.object(self.qos_driver, '_get_port_bw_parameters') as \
-                mock_bw_param:
-            mock_bw_param.return_value = (None, None, None)
-            self.qos_driver.delete_minimum_bandwidth(self.port)
-            mock_delete_bw.assert_called_once_with(self.RULE_DIRECTION_EGRESS)
-            mock_bw_param.assert_called_once_with(self.port['port_id'])
+            delete_bw_limit.assert_called_once_with()
 
     def test_create_dscp_marking(self):
         expected_calls = [
@@ -243,23 +195,3 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
             ])
             iptables_manager.ipv4['mangle'].remove_chain.assert_not_called()
             iptables_manager.ipv4['mangle'].remove_rule.assert_not_called()
-
-    def test_get_port_bw_parameters_existing_port(self):
-        port_id = 'port_id_1'
-        self.qos_driver._port_rules[port_id][
-            qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH] = self.rule_min_bw
-        self.qos_driver._port_rules[port_id][
-            qos_consts.RULE_TYPE_BANDWIDTH_LIMIT] = self.rule_bw_limit
-        max, burst, min = self.qos_driver._get_port_bw_parameters(port_id)
-        self.assertEqual(self.rule_bw_limit.max_kbps, max)
-        self.assertEqual(self.rule_bw_limit.max_burst_kbps, burst)
-        self.assertEqual(self.rule_min_bw.min_kbps, min)
-        self.mock_get_egress_burst_value.assert_called_once_with(
-            self.rule_bw_limit)
-
-    def test_get_port_bw_parameters_not_existing_port(self):
-        port_id = 'port_id_1'
-        max, burst, min = self.qos_driver._get_port_bw_parameters(port_id)
-        self.assertIsNone(max)
-        self.assertIsNone(burst)
-        self.assertIsNone(min)
