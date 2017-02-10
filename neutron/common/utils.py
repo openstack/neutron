@@ -724,8 +724,7 @@ def transaction_guard(f):
     return inner
 
 
-def wait_until_true(predicate, timeout=60, sleep=1, exception=None,
-                    initial_sleep=0):
+def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
     """
     Wait until callable predicate is evaluated as True
 
@@ -737,7 +736,6 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None,
                       (default) then WaitTimeout exception is raised.
     """
     try:
-        eventlet.sleep(initial_sleep)
         with eventlet.timeout.Timeout(timeout):
             while not predicate():
                 eventlet.sleep(sleep)
