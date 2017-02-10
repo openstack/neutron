@@ -132,18 +132,29 @@ def get_subnet_id(port):
 
 
 def router_append_interface(router, count=1, ip_version=4, ra_mode=None,
-                            addr_mode=None, dual_stack=False):
+                            addr_mode=None, dual_stack=False, same_port=False):
     interfaces = router[lib_constants.INTERFACE_KEY]
     current = sum(
         [netaddr.IPNetwork(subnet['cidr']).version == ip_version
          for p in interfaces for subnet in p['subnets']])
+
+    # If dual_stack=True, create IPv4 and IPv6 subnets on each port
+    # If same_port=True, create ip_version number of subnets on a single port
+    # Else create just an ip_version subnet on each port
+    if dual_stack:
+        ip_versions = [4, 6]
+    elif same_port:
+        ip_versions = [ip_version] * count
+        count = 1
+    else:
+        ip_versions = [ip_version]
 
     mac_address = netaddr.EUI('ca:fe:de:ad:be:ef')
     mac_address.dialect = netaddr.mac_unix
     for i in range(current, current + count):
         fixed_ips = []
         subnets = []
-        for loop_version in (4, 6):
+        for loop_version in ip_versions:
             if loop_version == 4 and (ip_version == 4 or dual_stack):
                 ip_pool = '35.4.%i.4'
                 cidr_pool = '35.4.%i.0/24'
