@@ -20,7 +20,6 @@ import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_log import versionutils
 import six
 
 from neutron._i18n import _, _LE, _LI, _LW
@@ -256,16 +255,8 @@ class LinuxInterfaceDriver(object):
              bridge=None, namespace=None, prefix=None, mtu=None):
         if not ip_lib.device_exists(device_name,
                                     namespace=namespace):
-            try:
-                self.plug_new(network_id, port_id, device_name, mac_address,
-                              bridge, namespace, prefix, mtu)
-            except TypeError:
-                versionutils.report_deprecated_feature(
-                    LOG,
-                    _LW('Interface driver does not support MTU parameter. '
-                        'This may not work in future releases.'))
-                self.plug_new(network_id, port_id, device_name, mac_address,
-                              bridge, namespace, prefix)
+            self.plug_new(network_id, port_id, device_name, mac_address,
+                          bridge, namespace, prefix, mtu)
         else:
             LOG.info(_LI("Device %s already exists"), device_name)
             if mtu:
