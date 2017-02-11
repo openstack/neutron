@@ -48,8 +48,7 @@ def get_objects(context, model, _pager=None, **kwargs):
         plugin = directory.get_plugin()
         return plugin._get_collection(
             context, model,
-            # TODO(ihrachys): avoid this no-op call per model found
-            lambda obj, fields: obj,
+            dict_func=None,  # return all the data
             filters=filters,
             **(_pager.to_kwargs(context, model) if _pager else {}))
 
