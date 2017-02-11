@@ -17,14 +17,10 @@ from itertools import chain
 
 from oslo_log import log as logging
 
-from neutron.common import _deprecate
-from neutron.db.models import servicetype as st_model
 from neutron.objects import servicetype as servicetype_obj
 from neutron.services import provider_configuration as pconf
 
 LOG = logging.getLogger(__name__)
-
-_deprecate._moved_global('ProviderResourceAssociation', new_module=st_model)
 
 
 class ServiceTypeManager(object):
@@ -105,6 +101,3 @@ class ServiceTypeManager(object):
             return
         servicetype_obj.ProviderResourceAssociation.delete_objects(
             context, resource_id=resource_ids)
-
-
-_deprecate._MovedGlobals()

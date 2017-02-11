@@ -36,7 +36,6 @@ from neutron.api.rpc.callbacks import version_manager
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron import context
 from neutron.db import _utils as db_utils
@@ -77,9 +76,6 @@ cfg.CONF.register_opts(AGENT_OPTS)
 # the agents down for considering their resource versions in the
 # version_manager callback
 DOWNTIME_VERSIONS_RATIO = 2
-
-
-_deprecate._moved_global('Agent', new_module=agent_model)
 
 
 class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
@@ -503,6 +499,3 @@ class AgentExtRpcCallback(object):
                               "%(diff)s seconds, which is more than the "
                               "threshold agent down"
                               "time: %(threshold)s."), log_dict)
-
-
-_deprecate._MovedGlobals()

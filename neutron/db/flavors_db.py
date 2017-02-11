@@ -15,20 +15,13 @@
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
-from neutron.common import _deprecate
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
-from neutron.db.models import flavor as flavor_models
 from neutron.db import servicetype_db as sdb
 from neutron.extensions import flavors as ext_flavors
 from neutron.objects import base as base_obj
 from neutron.objects import flavor as obj_flavor
-
-_deprecate._moved_global('Flavor', new_module=flavor_models)
-_deprecate._moved_global('ServiceProfile', new_module=flavor_models)
-_deprecate._moved_global('FlavorServiceProfileBinding',
-                         new_module=flavor_models)
 
 
 LOG = logging.getLogger(__name__)
@@ -258,6 +251,3 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                'provider': providers[0].get('name')}
 
         return [db_utils.resource_fields(res, fields)]
-
-
-_deprecate._MovedGlobals()

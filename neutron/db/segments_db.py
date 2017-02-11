@@ -18,10 +18,7 @@ from neutron._i18n import _LI
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.db.models import segment as segments_model
-
-_deprecate._moved_global('NetworkSegment', new_module=segments_model)
 
 LOG = logging.getLogger(__name__)
 
@@ -128,6 +125,3 @@ def delete_network_segment(context, segment_id):
     with context.session.begin(subtransactions=True):
         (context.session.query(segments_model.NetworkSegment).
          filter_by(id=segment_id).delete())
-
-
-_deprecate._MovedGlobals()

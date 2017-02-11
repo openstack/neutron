@@ -28,7 +28,6 @@ from sqlalchemy.orm import exc
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
@@ -38,8 +37,6 @@ from neutron.extensions import segment as extension
 from neutron import manager
 from neutron.objects import network
 from neutron.services.segments import exceptions
-
-_deprecate._moved_global('SegmentHostMapping', new_module=segment_model)
 
 
 class SegmentDbMixin(common_db_mixin.CommonDbMixin):
@@ -330,6 +327,3 @@ def subscribe():
                        events.PRECOMMIT_DELETE)
 
 subscribe()
-
-
-_deprecate._MovedGlobals()

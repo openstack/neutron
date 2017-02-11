@@ -21,7 +21,6 @@ from oslo_log import log
 from six import moves
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.common import _deprecate
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron import context
 from neutron.db import api as db_api
@@ -32,8 +31,6 @@ from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import helpers
 
 LOG = log.getLogger(__name__)
-
-_deprecate._moved_global('VlanAllocation', new_module=vlan_alloc_model)
 
 driver_type.register_ml2_drivers_vlan_opts()
 
@@ -236,6 +233,3 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         if physical_network in self.physnet_mtus:
             mtu.append(int(self.physnet_mtus[physical_network]))
         return min(mtu) if mtu else 0
-
-
-_deprecate._MovedGlobals()

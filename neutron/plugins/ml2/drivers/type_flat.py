@@ -19,10 +19,8 @@ from oslo_log import log
 import six
 
 from neutron._i18n import _, _LI, _LW
-from neutron.common import _deprecate
 from neutron.common import exceptions as n_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron.db.models.plugins.ml2 import flatallocation as type_flat_model
 from neutron.objects import exceptions as obj_base
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
@@ -32,9 +30,6 @@ from neutron.plugins.ml2.drivers import helpers
 LOG = log.getLogger(__name__)
 
 driver_type.register_ml2_drivers_flat_opts()
-
-
-_deprecate._moved_global('FlatAllocation', new_module=type_flat_model)
 
 
 class FlatTypeDriver(helpers.BaseTypeDriver):
@@ -133,6 +128,3 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
         if physical_network in self.physnet_mtus:
             mtu.append(int(self.physnet_mtus[physical_network]))
         return min(mtu) if mtu else 0
-
-
-_deprecate._MovedGlobals()

@@ -27,7 +27,6 @@ from neutron._i18n import _, _LE
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.models import dvr as dvr_models
@@ -35,8 +34,6 @@ from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
 from neutron.extensions import portbindings
 
-_deprecate._moved_global('DistributedVirtualRouterMacAddress',
-                         new_module=dvr_models)
 
 LOG = logging.getLogger(__name__)
 
@@ -220,6 +217,3 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             internal_port = internal_gateway_ports[0]
             subnet_info['gateway_mac'] = internal_port['mac_address']
             return subnet_info
-
-
-_deprecate._MovedGlobals()

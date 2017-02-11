@@ -35,7 +35,6 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
@@ -53,11 +52,6 @@ from neutron.plugins.common import utils as p_utils
 from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
-
-
-_deprecate._moved_global('RouterPort', new_module=l3_models)
-_deprecate._moved_global('Router', new_module=l3_models)
-_deprecate._moved_global('FloatingIP', new_module=l3_models)
 
 
 DEVICE_OWNER_HA_REPLICATED_INT = constants.DEVICE_OWNER_HA_REPLICATED_INT
@@ -1957,6 +1951,3 @@ def _notify_subnetpool_address_scope_update(resource, event,
 )
 def subscribe():
     pass
-
-
-_deprecate._MovedGlobals()

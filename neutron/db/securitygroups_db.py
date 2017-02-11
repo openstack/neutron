@@ -26,7 +26,6 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import _utils as db_utils
@@ -34,11 +33,6 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import securitygroup as sg_models
 from neutron.extensions import securitygroup as ext_sg
-
-
-_deprecate._moved_global('DefaultSecurityGroup', new_module=sg_models)
-_deprecate._moved_global('SecurityGroupPortBinding', new_module=sg_models)
-_deprecate._moved_global('SecurityGroupRule', new_module=sg_models)
 
 
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
@@ -793,6 +787,3 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             updated_port[ext_sg.SECURITYGROUPS] = (
                 original_port[ext_sg.SECURITYGROUPS])
         return need_notify
-
-
-_deprecate._MovedGlobals()

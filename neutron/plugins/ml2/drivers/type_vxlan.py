@@ -18,16 +18,12 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron._i18n import _LE
-from neutron.common import _deprecate
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import vxlanallocation as vxlan_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)
-
-_deprecate._moved_global('VxlanAllocation', new_module=vxlan_model)
-_deprecate._moved_global('VxlanEndpoints', new_module=vxlan_model)
 
 driver_type.register_ml2_drivers_vxlan_opts()
 
@@ -63,5 +59,3 @@ class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
     def get_mtu(self, physical_network=None):
         mtu = super(VxlanTypeDriver, self).get_mtu()
         return mtu - p_const.VXLAN_ENCAP_OVERHEAD if mtu else 0
-
-_deprecate._MovedGlobals()

@@ -17,18 +17,13 @@ from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes as attr
-from neutron.common import _deprecate
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
-from neutron.db.models import address_scope as address_scope_model
 from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import address_scope as obj_addr_scope
 from neutron.objects import base as base_obj
 from neutron.objects import subnetpool as subnetpool_obj
-
-
-_deprecate._moved_global('AddressScope', new_module=address_scope_model)
 
 
 class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
@@ -140,6 +135,3 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         attr.NETWORKS, ['_extend_network_dict_address_scope'])
-
-
-_deprecate._MovedGlobals()
