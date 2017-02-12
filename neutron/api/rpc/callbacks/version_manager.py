@@ -81,6 +81,7 @@ class ResourceConsumerTracker(object):
         self._versions = self._get_local_resource_versions()
         self._versions_by_consumer = collections.defaultdict(dict)
         self._needs_recalculation = False
+        self.last_report = None
 
     def _get_local_resource_versions(self):
         resources = _import_resources()
@@ -162,15 +163,15 @@ class ResourceConsumerTracker(object):
 
     def report(self):
         """Output debug information about the consumer versions."""
-        #TODO(mangelajo): report only when pushed_versions differ from
-        #                 previous reports.
         format = lambda versions: pprint.pformat(dict(versions), indent=4)
         debug_dict = {'pushed_versions': format(self._versions),
                       'consumer_versions': format(self._versions_by_consumer)}
-
-        LOG.debug('Tracked resource versions report:\n'
-                  'pushed versions:\n%(pushed_versions)s\n\n'
-                  'consumer versions:\n%(consumer_versions)s\n', debug_dict)
+        if self.last_report != debug_dict:
+            self.last_report = debug_dict
+            LOG.debug('Tracked resource versions report:\n'
+                      'pushed versions:\n%(pushed_versions)s\n\n'
+                      'consumer versions:\n%(consumer_versions)s\n',
+                      debug_dict)
 
     # TODO(mangelajo): Add locking if we ever move out of greenthreads.
     def _recalculate_versions(self):
@@ -207,6 +208,8 @@ class CachedResourceConsumerTracker(object):
         else:
             raise exceptions.NoAgentDbMixinImplemented()
 
+        # preserve last report state so we don't duplicate logs on refresh
+        new_tracker.last_report = self._versions.last_report
         self._versions = new_tracker
         self._versions.report()
 
