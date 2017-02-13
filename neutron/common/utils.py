@@ -35,10 +35,7 @@ import eventlet
 from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
-from neutron_lib.utils import file as file_utils
 from neutron_lib.utils import helpers
-from neutron_lib.utils import host
-from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -97,57 +94,8 @@ def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
                             close_fds=close_fds, env=env)
 
 
-@removals.remove(
-    message="Use parse_mappings from neutron_lib.utils.helpers")
-def parse_mappings(mapping_list, unique_values=True, unique_keys=True):
-    return helpers.parse_mappings(mapping_list, unique_values=unique_values,
-                                  unique_keys=unique_keys)
-
-
-@removals.remove(
-    message="Use get_hostname from neutron_lib.utils.net")
-def get_hostname():
-    return net.get_hostname()
-
-
 def get_first_host_ip(net, ip_version):
     return str(netaddr.IPAddress(net.first + 1, ip_version))
-
-
-@removals.remove(
-    message="Use compare_elements from neutron_lib.utils.helpers")
-def compare_elements(a, b):
-    return helpers.compare_elements(a, b)
-
-
-@removals.remove(
-    message="Use safe_sort_key from neutron_lib.utils.helpers")
-def safe_sort_key(value):
-    return helpers.safe_sort_key(value)
-
-
-@removals.remove(
-    message="Use dict2str from neutron_lib.utils.helpers")
-def dict2str(dic):
-    return helpers.dict2str(dic)
-
-
-@removals.remove(
-    message="Use str2dict from neutron_lib.utils.helpers")
-def str2dict(string):
-    return helpers.str2dict(string)
-
-
-@removals.remove(
-    message="Use dict2tuple from neutron_lib.utils.helpers")
-def dict2tuple(d):
-    return helpers.dict2tuple(d)
-
-
-@removals.remove(
-    message="Use diff_list_of_dict from neutron_lib.utils.helpers")
-def diff_list_of_dict(old_list, new_list):
-    return helpers.diff_list_of_dict(old_list, new_list)
 
 
 def is_extension_supported(plugin, ext_alias):
@@ -175,12 +123,6 @@ def get_dhcp_agent_device_id(network_id, host):
     local_hostname = host.split('.')[0]
     host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))
     return 'dhcp%s-%s' % (host_uuid, network_id)
-
-
-@removals.remove(
-    message="Use cpu_count from neutron_lib.utils.host")
-def cpu_count():
-    return host.cpu_count()
 
 
 class exception_logger(object):
@@ -321,18 +263,6 @@ class DelayedStringRenderer(object):
         return str(self.function(*self.args, **self.kwargs))
 
 
-@removals.remove(
-    message="Use round_val from neutron_lib.utils.helpers")
-def round_val(val):
-    return helpers.round_val(val)
-
-
-@removals.remove(
-    message="Use replace_file from neutron_lib.utils")
-def replace_file(file_name, data, file_mode=0o644):
-    file_utils.replace_file(file_name, data, file_mode=file_mode)
-
-
 class _SilentDriverManager(driver.DriverManager):
     """The lamest of hacks to allow us to pass a kwarg to DriverManager parent.
 
@@ -378,12 +308,6 @@ def load_class_by_alias_or_classname(namespace, name):
                       exc_info=True)
             raise ImportError(_("Class not found."))
     return class_to_load
-
-
-@removals.remove(
-    message="Use safe_decode_utf8 from neutron_lib.utils.helpers")
-def safe_decode_utf8(s):
-    return helpers.safe_decode_utf8(s)
 
 
 def _hex_format(port, mask=0):
