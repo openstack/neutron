@@ -103,8 +103,8 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
     def test_securitygroup(self):
         """Tests if a security group rules are working, by confirming
         that 0. traffic is allowed when port security is disabled,
-             1. connection from allowed security group is allowed,
-             2. connection from elsewhere is blocked,
+             1. connection from outside of allowed security group is blocked
+             2. connection from allowed security group is permitted
              3. traffic not explicitly allowed (eg. ICMP) is blocked,
              4. a security group update takes effect,
              5. a remote security group member addition works, and
@@ -171,14 +171,21 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                 body={'port': {'port_security_enabled': True,
                                'security_groups': [sgs[sg]['id']]}})
 
-        # 1. check if connection from allowed security group is allowed
+        # 1. connection from outside of allowed security group is blocked
+        netcat = net_helpers.NetcatTester(
+            vms[2].namespace, vms[0].namespace, vms[0].ip, 3333,
+            net_helpers.NetcatTester.TCP)
+        # Wait until port update takes effect on the ports
+        common_utils.wait_until_true(
+            netcat.test_no_connectivity,
+            exception=AssertionError(
+                "Still can connect to the VM from different host.")
+        )
+        netcat.stop_processes()
+
+        # 2. check if connection from allowed security group is permitted
         self.assert_connection(
             vms[1].namespace, vms[0].namespace, vms[0].ip, 3333,
-            net_helpers.NetcatTester.TCP)
-
-        # 2. check if connection from elsewhere is blocked
-        self.assert_no_connection(
-            vms[2].namespace, vms[0].namespace, vms[0].ip, 3333,
             net_helpers.NetcatTester.TCP)
 
         # 3. check if traffic not explicitly allowed (eg. ICMP) is blocked
