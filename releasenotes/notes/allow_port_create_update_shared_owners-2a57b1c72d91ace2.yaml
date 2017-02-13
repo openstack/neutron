@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Tenants who can access shared networks, can now create/update
+    ports on a specified subnet instead of the default subnet.
+    This is now the default behavior and can be changed by modifying
+    policy.json file.
