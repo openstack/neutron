@@ -58,3 +58,10 @@ class L3ServiceProvider(object):
 
     def __init__(self, l3plugin):
         self.l3plugin = l3plugin
+
+    def owns_router(self, context, router_id):
+        """Returns True if router is associated with driver, else False."""
+        if not router_id:
+            return False
+        return self.l3plugin.l3_driver_controller.get_provider_for_router(
+            context, router_id) == self
