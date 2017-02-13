@@ -20,7 +20,6 @@ import httplib2
 import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
-import requests
 
 from neutron._i18n import _, _LE
 from neutron.agent.l3 import ha
@@ -105,7 +104,7 @@ class MonitorDaemon(daemon.Daemon):
                      'X-Neutron-State': state},
             connection_type=KeepalivedUnixDomainConnection)
 
-        if resp.status != requests.codes.ok:
+        if resp.status != 200:
             raise Exception(_('Unexpected response: %s') % resp)
 
         LOG.debug('Notified agent router %s, state %s', self.router_id, state)
