@@ -67,7 +67,6 @@ case $VENV in
     fi
     upgrade_ovs_if_necessary $compile_modules
 
-    load_conf_hook iptables_verify
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
     ;;
