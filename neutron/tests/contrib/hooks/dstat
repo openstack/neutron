@@ -1,0 +1,2 @@
+[[local|localrc]]
+enable_service dstat
