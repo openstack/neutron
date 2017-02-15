@@ -348,11 +348,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_network_db(self, context, network):
         # single request processing
         n = network['network']
-        # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
-        #                unneeded db action if the operation raises
-        tenant_id = n['tenant_id']
         with context.session.begin(subtransactions=True):
-            args = {'tenant_id': tenant_id,
+            args = {'tenant_id': n['tenant_id'],
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
                     'admin_state_up': n['admin_state_up'],
@@ -1183,14 +1180,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         p = port['port']
         port_id = p.get('id') or uuidutils.generate_uuid()
         network_id = p['network_id']
-        # NOTE(jkoelker) Get the tenant_id outside of the session to avoid
-        #                unneeded db action if the operation raises
-        tenant_id = p['tenant_id']
         if p.get('device_owner'):
             self._enforce_device_owner_not_router_intf_or_device_id(
-                context, p.get('device_owner'), p.get('device_id'), tenant_id)
+                context, p.get('device_owner'), p.get('device_id'),
+                p['tenant_id'])
 
-        port_data = dict(tenant_id=tenant_id,
+        port_data = dict(tenant_id=p['tenant_id'],
                          name=p['name'],
                          id=port_id,
                          network_id=network_id,
