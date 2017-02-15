@@ -36,7 +36,7 @@ from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.cmd.sanity import checks
+from neutron.cmd import runtime_checks as checks
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
 from neutron.extensions import extra_dhcp_opt as edo_ext

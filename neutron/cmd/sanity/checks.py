@@ -32,6 +32,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import ip_link_support
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
+from neutron.cmd import runtime_checks
 from neutron.common import constants
 from neutron.common import utils as common_utils
 from neutron.plugins.common import constants as const
@@ -217,15 +218,7 @@ def dnsmasq_version_supported():
 
 
 def dhcp_release6_supported():
-    try:
-        cmd = ['dhcp_release6', '--help']
-        env = {'LC_ALL': 'C'}
-        agent_utils.execute(cmd, addl_env=env)
-    except (OSError, RuntimeError, IndexError, ValueError) as e:
-        LOG.debug("Exception while checking dhcp_release6. "
-                  "Exception: %s", e)
-        return False
-    return True
+    return runtime_checks.dhcp_release6_supported()
 
 
 def bridge_firewalling_enabled():
