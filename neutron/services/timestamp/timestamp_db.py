@@ -13,15 +13,12 @@
 #    under the License.
 
 from neutron_lib import exceptions as n_exc
-from oslo_log import log
 from oslo_utils import timeutils
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _LW
 from neutron.db import api as db_api
 from neutron.db import standard_attr
-
-LOG = log.getLogger(__name__)
 
 CHANGED_SINCE = 'changed_since'
 

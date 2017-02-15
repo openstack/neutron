@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log
-
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
@@ -25,8 +23,6 @@ from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
 from neutron.services.qos.notification_drivers import manager as driver_mgr
 from neutron.services.qos import qos_consts
-
-LOG = log.getLogger(__name__)
 
 
 class QoSPlugin(qos.QoSPluginBase):

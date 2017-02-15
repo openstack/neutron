@@ -14,7 +14,6 @@
 #    under the License.
 
 from neutron_lib.plugins import directory
-from oslo_log import log
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
@@ -25,8 +24,6 @@ from neutron.pecan_wsgi.controllers import resource as res_ctrl
 from neutron.pecan_wsgi.controllers import utils
 from neutron import policy
 from neutron.quota import resource_registry
-
-LOG = log.getLogger(__name__)
 
 
 def initialize_all():

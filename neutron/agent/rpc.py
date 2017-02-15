@@ -17,16 +17,12 @@ from datetime import datetime
 import itertools
 
 from neutron_lib import constants
-from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-
-
-LOG = logging.getLogger(__name__)
 
 
 def create_consumers(endpoints, prefix, topic_details, start_listening=True):

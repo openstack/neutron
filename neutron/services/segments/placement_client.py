@@ -19,12 +19,9 @@ from keystoneauth1 import exceptions as ks_exc
 from keystoneauth1 import loading as ks_loading
 from keystoneauth1 import session
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common import exceptions as n_exc
-
-LOG = logging.getLogger(__name__)
 
 PLACEMENT_API_WITH_AGGREGATES = 'placement 1.1'
 

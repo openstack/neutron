@@ -13,7 +13,6 @@
 #    under the License.
 
 import netaddr
-from oslo_log import log as logging
 from tempest.common.utils.linux import remote_client
 from tempest.common import waiters
 from tempest.lib.common.utils import data_utils
@@ -25,7 +24,6 @@ from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import constants
 
 CONF = config.CONF
-LOG = logging.getLogger(__name__)
 
 CONFIGURE_VLAN_INTERFACE_COMMANDS = (
     'IFACE=$(ip l | grep "^[0-9]*: e" | cut -d \: -f 2) && '
