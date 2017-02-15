@@ -26,7 +26,7 @@ The `neutron-specs <http://git.openstack.org/cgit/openstack/neutron-specs>`_
 repository is only meant for specs from Neutron itself, and the advanced
 services repositories as well. This includes FWaaS, LBaaS, and VPNaaS. Other
 sub-projects are encouraged to fold their specs into their own devref code
-in their sub-project gerrit repositories. Please see additional commments
+in their sub-project gerrit repositories. Please see additional comments
 in the Neutron teams `section <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#neutron-specs-core-reviewer-team>`_
 for reviewer requirements of the neutron-specs repository.
 
@@ -73,7 +73,7 @@ The workflow for the life an RFE in Launchpad is as follows:
   available on `specs.o.o. <http://specs.openstack.org/openstack/neutron-specs/>`_
   once it is approved and merged. The blueprint will then be linked to the
   original RFE bug report as a pointer to the discussion that led to the
-  appoval of the RFE.
+  approval of the RFE.
   The blueprint submitter will also need to identify the following:
 
   * Priority: there will be only two priorities to choose from, High and Low.
