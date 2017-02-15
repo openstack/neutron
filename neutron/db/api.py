@@ -31,6 +31,7 @@ import six
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy import exc as sql_exc
+from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _LE
@@ -261,3 +262,33 @@ def sqla_remove_all():
             # already removed
             pass
     del _REGISTERED_SQLA_EVENTS[:]
+
+
+@event.listens_for(orm.session.Session, "before_commit")
+def load_one_to_manys(session):
+    # TODO(kevinbenton): we should be able to remove this after we
+    # have eliminated all places where related objects are constructed
+    # using a key rather than a relationship.
+    for new_object in session.new:
+        state = sqlalchemy.inspect(new_object)
+
+        # set up relationship loading so that we can call lazy
+        # loaders on the object even though the ".key" is not set up yet
+        # (normally happens by in after_flush_postexec, but we're trying
+        # to do this more succinctly).  in this context this is only
+        # setting a simple flag on the object's state.
+        session.enable_relationship_loading(new_object)
+
+        # look for eager relationships and do normal load.
+        # For relationships where the related object is also
+        # in the session these lazy loads will pull from the
+        # identity map and not emit SELECT.  Otherwise, we are still
+        # local in the transaction so a normal SELECT load will work fine.
+        for relationship_attr in state.mapper.relationships:
+            if relationship_attr.lazy not in ('joined', 'subquery'):
+                # we only want to automatically load relationships that would
+                # automatically load during a lookup operation
+                continue
+            if relationship_attr.key not in state.dict:
+                getattr(new_object, relationship_attr.key)
+                assert relationship_attr.key in state.dict
