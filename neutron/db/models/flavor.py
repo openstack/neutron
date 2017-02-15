@@ -24,7 +24,7 @@ class Flavor(model_base.BASEV2, model_base.HasId):
     # Make it True for multi-type flavors
     service_type = sa.Column(sa.String(36), nullable=True)
     service_profiles = orm.relationship("FlavorServiceProfileBinding",
-        cascade="all, delete-orphan")
+        cascade="all, delete-orphan", lazy="subquery")
 
 
 class ServiceProfile(model_base.BASEV2, model_base.HasId):

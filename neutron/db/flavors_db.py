@@ -113,7 +113,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
             fl_obj = self._get_flavor(context, flavor_id)
             fl_obj.update_fields(flavor['flavor'])
             fl_obj.update()
-            return self._make_flavor_dict(fl_obj)
+        return self._make_flavor_dict(fl_obj)
 
     def get_flavor(self, context, flavor_id, fields=None):
         fl = self._get_flavor(context, flavor_id)
