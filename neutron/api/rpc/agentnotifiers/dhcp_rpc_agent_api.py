@@ -241,7 +241,27 @@ class DhcpAgentNotifyAPI(object):
         method_name = '.'.join((resource, action, 'end'))
         payload = kwargs[resource]
         data = {resource: payload}
+        if resource == resources.PORT:
+            if self._only_status_changed(kwargs.get('original_port'),
+                                         kwargs.get('port')):
+                # don't waste time updating the DHCP agent for status updates
+                return
         self.notify(context, data, method_name)
+
+    def _only_status_changed(self, orig, new):
+        # a status change will manifest as a bumped revision number, a new
+        # updated_at timestamp, and a new status. If that's all that changed,
+        # return True, else False
+        if not orig or not new:
+            return False
+        if set(orig.keys()) != set(new.keys()):
+            return False
+        for k in orig.keys():
+            if k in ('status', 'updated_at', 'revision_number'):
+                continue
+            if orig[k] != new[k]:
+                return False
+        return True
 
     def _send_dhcp_notification(self, resource, event, trigger, context=None,
                                 data=None, method_name=None, collection=None,
