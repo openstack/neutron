@@ -21,6 +21,7 @@ from neutron_lib import constants as const
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
+from neutron.agent.ovsdb.native import idlutils
 from neutron.common import utils
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import net_helpers
@@ -453,6 +454,20 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         with ovsdb.transaction(check_error=True) as txn:
             txn.add(ovsdb.add_br(brname))
             txn.add(ovsdb.db_add('Bridge', brname, 'protocols', 'OpenFlow10'))
+
+    def test_cascading_del_in_txn(self):
+        ovsdb = self.ovs.ovsdb
+        port_name, _ = self.create_ovs_port()
+
+        def del_port_mod_iface():
+            with ovsdb.transaction(check_error=True) as txn:
+                txn.add(ovsdb.del_port(port_name, self.br.br_name,
+                                       if_exists=False))
+                txn.add(ovsdb.db_set('Interface', port_name,
+                                     ('type', 'internal')))
+        # native gives a more specific exception than vsctl
+        self.assertRaises((RuntimeError, idlutils.RowNotFound),
+                          del_port_mod_iface)
 
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
