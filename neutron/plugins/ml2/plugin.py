@@ -1747,8 +1747,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # listening for db events can modify the port if necessary
                 context.session.flush()
                 updated_port = self._make_port_dict(port)
-                network = network or self.get_network(
-                    context, original_port['network_id'])
                 levels = db.get_binding_levels(context, port.id,
                                                port.port_binding.host)
                 mech_context = driver_context.PortContext(
