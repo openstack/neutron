@@ -57,7 +57,8 @@ class NetworkDvrTest(base.BaseTempestTestCase):
         The test is done by putting the SNAT port down on controller node.
         """
         router = self.create_router_by_client(
-            distributed=True, tenant_id=self.client.tenant_id, is_admin=True)
+            distributed=True, tenant_id=self.client.tenant_id, is_admin=True,
+            ha=False)
         self.setup_network_and_server(router=router)
         self._check_snat_port_connectivity()
 
@@ -67,7 +68,8 @@ class NetworkDvrTest(base.BaseTempestTestCase):
         """
         # Created a centralized router on a DVR setup
         router = self.create_router_by_client(
-            distributed=False, tenant_id=self.client.tenant_id, is_admin=True)
+            distributed=False, tenant_id=self.client.tenant_id, is_admin=True,
+            ha=False)
         self.setup_network_and_server(router=router)
         self._check_connectivity()
 
