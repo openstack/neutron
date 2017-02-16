@@ -82,13 +82,22 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                       {'device': device, 'agent_id': agent_id})
             return {'device': device}
 
-        segment = port_context.bottom_bound_segment
         port = port_context.current
         # caching information about networks for future use
         if cached_networks is not None:
             if port['network_id'] not in cached_networks:
                 cached_networks[port['network_id']] = (
                     port_context.network.current)
+        return self._get_device_details(rpc_context, agent_id=agent_id,
+                                        host=host, device=device,
+                                        port_context=port_context)
+
+    def _get_device_details(self, rpc_context, agent_id, host, device,
+                            port_context):
+        segment = port_context.bottom_bound_segment
+        port = port_context.current
+        plugin = directory.get_plugin()
+        port_id = port_context.current['id']
 
         if not segment:
             LOG.warning(_LW("Device %(device)s requested by agent "
@@ -148,17 +157,31 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                                                     **kwargs):
         devices = []
         failed_devices = []
-        cached_networks = {}
-        for device in kwargs.pop('devices', []):
+        devices_to_fetch = kwargs.pop('devices', [])
+        plugin = directory.get_plugin()
+        host = kwargs.get('host')
+        bound_contexts = plugin.get_bound_ports_contexts(rpc_context,
+                                                         devices_to_fetch,
+                                                         host)
+        for device in devices_to_fetch:
+            if not bound_contexts.get(device):
+                # unbound bound
+                LOG.debug("Device %(device)s requested by agent "
+                          "%(agent_id)s not found in database",
+                          {'device': device,
+                           'agent_id': kwargs.get('agent_id')})
+                devices.append({'device': device})
+                continue
             try:
-                devices.append(self.get_device_details(
+                devices.append(self._get_device_details(
                                rpc_context,
+                               agent_id=kwargs.get('agent_id'),
+                               host=host,
                                device=device,
-                               cached_networks=cached_networks,
-                               **kwargs))
+                               port_context=bound_contexts[device]))
             except Exception:
-                LOG.error(_LE("Failed to get details for device %s"),
-                          device)
+                LOG.exception(_LE("Failed to get details for device %s"),
+                              device)
                 failed_devices.append(device)
 
         return {'devices': devices,

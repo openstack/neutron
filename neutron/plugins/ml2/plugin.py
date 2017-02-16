@@ -893,7 +893,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                   filters=net_filters)
         }
         segments_by_netid = segments_db.get_networks_segments(
-            context, nets_by_netid.keys())
+            context, list(nets_by_netid.keys()))
         netctxs_by_netid = {
             net_id: driver_context.NetworkContext(
                 self, context, nets_by_netid[net_id],
@@ -1538,6 +1538,52 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self, plugin_context, port, network, binding, levels)
 
         return self._bind_port_if_needed(port_context)
+
+    @utils.transaction_guard
+    @db_api.retry_if_session_inactive(context_var_name='plugin_context')
+    def get_bound_ports_contexts(self, plugin_context, dev_ids, host=None):
+        result = {}
+        with db_api.context_manager.reader.using(plugin_context):
+            dev_to_full_pids = db.partial_port_ids_to_full_ids(
+                plugin_context, dev_ids)
+            # get all port objects for IDs
+            port_dbs_by_id = db.get_port_db_objects(
+                plugin_context, dev_to_full_pids.values())
+            # get all networks for PortContext construction
+            netctxs_by_netid = self.get_network_contexts(
+                plugin_context,
+                {p.network_id for p in port_dbs_by_id.values()})
+            for dev_id in dev_ids:
+                port_id = dev_to_full_pids.get(dev_id)
+                port_db = port_dbs_by_id.get(port_id)
+                if (not port_id or not port_db or
+                        port_db.network_id not in netctxs_by_netid):
+                    result[dev_id] = None
+                    continue
+                port = self._make_port_dict(port_db)
+                if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
+                    binding = db.get_distributed_port_binding_by_host(
+                        plugin_context, port['id'], host)
+                    bindlevelhost_match = host
+                else:
+                    binding = port_db.port_binding
+                    bindlevelhost_match = binding.host if binding else None
+                if not binding:
+                    LOG.info(_LI("Binding info for port %s was not found, "
+                                 "it might have been deleted already."),
+                             port_id)
+                    result[dev_id] = None
+                    continue
+                levels = [l for l in port_db.binding_levels
+                          if l.host == bindlevelhost_match]
+                levels = sorted(levels, key=lambda l: l.level)
+                network_ctx = netctxs_by_netid.get(port_db.network_id)
+                port_context = driver_context.PortContext(
+                    self, plugin_context, port, network_ctx, binding, levels)
+                result[dev_id] = port_context
+
+        return {d: self._bind_port_if_needed(pctx) if pctx else None
+                for d, pctx in result.items()}
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()

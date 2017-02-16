@@ -132,15 +132,6 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                                cached_networks=cached_networks)
             self.assertFalse(self.plugin.get_network.called)
 
-    def test_get_bound_port_context_cache_miss(self):
-        ctx = context.get_admin_context()
-        with self.port(name='name') as port:
-            some_network = {'id': u'2ac23560-7638-44e2-9875-c1888b02af72'}
-            self.plugin.get_network = mock.Mock(return_value=some_network)
-            self.plugin.get_bound_port_context(ctx, port['port']['id'],
-                                               cached_networks={})
-            self.assertEqual(1, self.plugin.get_network.call_count)
-
     def _test_update_port_binding(self, host, new_host=None):
         with mock.patch.object(self.plugin,
                                '_notify_port_updated') as notify_mock:
