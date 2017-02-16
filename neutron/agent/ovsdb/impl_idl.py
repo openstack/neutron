@@ -207,7 +207,7 @@ class OvsdbIdl(api.API):
     def _ovs(self):
         return list(self._tables['Open_vSwitch'].rows.values())[0]
 
-    def transaction(self, check_error=False, log_errors=True, **kwargs):
+    def create_transaction(self, check_error=False, log_errors=True, **kwargs):
         return NeutronOVSDBTransaction(self, OvsdbIdl.ovsdb_connection,
                                        self.context.vsctl_timeout,
                                        check_error, log_errors)

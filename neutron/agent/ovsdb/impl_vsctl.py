@@ -178,7 +178,7 @@ class BrExistsCommand(DbCommand):
 
 
 class OvsdbVsctl(ovsdb.API):
-    def transaction(self, check_error=False, log_errors=True, **kwargs):
+    def create_transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self.context, check_error, log_errors, **kwargs)
 
     def add_manager(self, connection_uri):
