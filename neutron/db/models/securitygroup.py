@@ -86,7 +86,7 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
     remote_ip_prefix = sa.Column(sa.String(255))
     security_group = orm.relationship(
         SecurityGroup,
-        backref=orm.backref('rules', cascade='all,delete', lazy='joined'),
+        backref=orm.backref('rules', cascade='all,delete', lazy='subquery'),
         primaryjoin="SecurityGroup.id==SecurityGroupRule.security_group_id")
     source_group = orm.relationship(
         SecurityGroup,
