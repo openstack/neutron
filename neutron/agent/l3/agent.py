@@ -578,7 +578,7 @@ class L3NATAgent(ha.AgentMixin,
                             lib_const.L3_AGENT_MODE_DVR_SNAT)
                         if ext_net_id:
                             ns_manager.keep_ext_net(ext_net_id)
-                        elif is_snat_agent:
+                        elif is_snat_agent and not r.get('ha'):
                             ns_manager.ensure_snat_cleanup(r['id'])
                     # For HA routers check that DB state matches actual state
                     if r.get('ha'):
