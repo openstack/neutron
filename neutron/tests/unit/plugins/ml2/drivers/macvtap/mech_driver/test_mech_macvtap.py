@@ -71,6 +71,9 @@ class MacvtapMechanismMigrationTestCase(object):
     def test__is_live_migration_false(self):
         self._test__is_live_migration(False, {})
 
+    def test__is_live_migration_false_None_original(self):
+        self._test__is_live_migration(False, None)
+
     def _test__is_live_migration(self, expected, original):
         context = base.FakePortContext(self.AGENT_TYPE,
                                        self.AGENTS,

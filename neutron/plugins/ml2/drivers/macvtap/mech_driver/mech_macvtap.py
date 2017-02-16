@@ -64,6 +64,9 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         # The only safe way to detect a migration is to look into the binding
         # profiles 'migrating_to' attribute, which is set by Nova since patch
         # https://review.openstack.org/#/c/275073/.
+        if not context.original:
+            # new port
+            return False
         port_profile = context.original.get(portbindings.PROFILE)
         if port_profile and port_profile.get('migrating_to', None):
             LOG.debug("Live migration with profile %s detected.", port_profile)
