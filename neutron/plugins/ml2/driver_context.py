@@ -192,6 +192,12 @@ class PortContext(MechanismDriverContext, api.PortContext):
                 self._original_binding_levels[-1].segment_id)
 
     def _expand_segment(self, segment_id):
+        for s in self.network.network_segments:
+            if s['id'] == segment_id:
+                return s
+        # TODO(kevinbenton): eliminate the query below. The above should
+        # always return since the port is bound to a network segment. Leaving
+        # in for now for minimally invasive change for back-port.
         segment = segments_db.get_segment_by_id(self._plugin_context.session,
                                                 segment_id)
         if not segment:
