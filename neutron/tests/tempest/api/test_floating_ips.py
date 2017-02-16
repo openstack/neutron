@@ -51,6 +51,7 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
             port_id=self.ports[0]['id'],
             description='d1'
         )['floatingip']
+        self.floating_ips.append(body)
         self.assertEqual(self.ports[0]['id'], body['port_id'])
         body = self.client.update_floatingip(body['id'])['floatingip']
         self.assertFalse(body['port_id'])
@@ -64,6 +65,7 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
             port_id=self.ports[0]['id'],
             description='d1'
         )['floatingip']
+        self.floating_ips.append(body)
         self.assertEqual('d1', body['description'])
         body = self.client.show_floatingip(body['id'])['floatingip']
         self.assertEqual('d1', body['description'])
@@ -86,6 +88,7 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
             port_id=port_id,
             description='d1'
         )['floatingip']
+        self.floating_ips.append(body)
         self.assertEqual('d1', body['description'])
         body = self.client.show_floatingip(body['id'])['floatingip']
         self.assertEqual(port_id, body['port_id'])

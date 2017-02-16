@@ -255,6 +255,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
             port_id=port['id'],
             description='d1'
         )['floatingip']
+        self.floating_ips.append(body)
         self.assertIn('revision_number', body)
         b2 = self.client.update_floatingip(body['id'], description='d2')
         self.assertGreater(b2['floatingip']['revision_number'],
