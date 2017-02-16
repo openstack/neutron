@@ -238,3 +238,18 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
             registry.notify(res, events.AFTER_CREATE, self,
                             context=mock.Mock(), **kwargs)
             self.assertEqual([res], self.notifier._unsubscribed_resources)
+
+    def test__only_status_changed(self):
+        p1 = {'id': 1, 'status': 'DOWN', 'updated_at': '10:00:00',
+              'revision_number': 1}
+        p2 = dict(p1)
+        p2['status'] = 'ACTIVE'
+        p2['revision_number'] = 2
+        p2['updated_at'] = '10:00:01'
+        self.assertTrue(self.notifier._only_status_changed(p1, p2))
+        p2['name'] = 'test'
+        self.assertFalse(self.notifier._only_status_changed(p1, p2))
+        p1['name'] = 'test'
+        self.assertTrue(self.notifier._only_status_changed(p1, p2))
+        p1['name'] = 'test1'
+        self.assertFalse(self.notifier._only_status_changed(p1, p2))
