@@ -89,7 +89,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._port = port
         self._original_port = original_port
         self._network_context = NetworkContext(plugin, plugin_context,
-                                               network)
+                                               network) if network else None
         self._binding = binding
         self._binding_levels = binding_levels
         self._segments_to_bind = None
@@ -151,6 +151,11 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def network(self):
+        if not self._network_context:
+            network = self._plugin.get_network(
+                self._plugin_context, self.current['network_id'])
+            self._network_context = NetworkContext(
+                self._plugin, self._plugin_context, network)
         return self._network_context
 
     @property
