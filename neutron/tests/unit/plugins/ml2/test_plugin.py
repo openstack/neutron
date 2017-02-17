@@ -889,7 +889,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                          'test', True, context=ctx)
             ports = self.deserialize(self.fmt, res)
             used_sg = ports['ports'][0]['security_groups']
-            m_upd.assert_called_once_with(ctx, used_sg)
+            m_upd.assert_has_calls(
+                [mock.call(ctx, [sg]) for sg in used_sg], any_order=True)
             self.assertFalse(p_upd.called)
 
     def _check_security_groups_provider_updated_args(self, p_upd_mock, net_id):

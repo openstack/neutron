@@ -1090,11 +1090,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.error(_LE("mechanism_manager.create_port_postcommit "
                               "failed, deleting port '%s'"), result['id'])
                 self.delete_port(context, result['id'], l3_port_check=False)
-
-        # REVISIT(rkukura): Is there any point in calling this before
-        # a binding has been successfully established?
-        self.notify_security_groups_member_updated(context, result)
-
         try:
             bound_context = self._bind_port_if_needed(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -1109,11 +1104,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive()
     def create_port_bulk(self, context, ports):
         objects = self._create_bulk_ml2(attributes.PORT, context, ports)
-
-        # REVISIT(rkukura): Is there any point in calling this before
-        # a binding has been successfully established?
-        results = [obj['result'] for obj in objects]
-        self.notify_security_groups_member_updated_bulk(context, results)
 
         for obj in objects:
             attrs = obj['attributes']
@@ -1461,7 +1451,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.error(_LE("mechanism_manager.delete_port_postcommit failed for"
                           " port %s"), port['id'])
         self.notifier.port_delete(context, port['id'])
-        self.notify_security_groups_member_updated(context, port)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive(context_var_name='plugin_context')
