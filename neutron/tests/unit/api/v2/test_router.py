@@ -13,22 +13,22 @@
 import mock
 from oslo_config import cfg
 
-from neutron.cmd.eventlet import server
+from neutron.api.v2 import router
 from neutron.tests import base
 
 
-@mock.patch('neutron.server.wsgi_eventlet.eventlet_wsgi_server')
-@mock.patch('neutron.server.wsgi_pecan.pecan_wsgi_server')
-class TestNeutronServer(base.BaseTestCase):
+@mock.patch('neutron.api.v2.router.APIRouter.__init__', return_value=None)
+@mock.patch('neutron.pecan_wsgi.app.v2_factory')
+class TestRouter(base.BaseTestCase):
 
-    def test_legacy_server(self, pecan_mock, legacy_mock):
+    def test_legacy_factory(self, pecan_mock, legacy_mock):
         cfg.CONF.set_override('web_framework', 'legacy')
-        server._main_neutron_server()
+        router.APIRouter.factory({})
         pecan_mock.assert_not_called()
-        legacy_mock.assert_called_with()
+        legacy_mock.assert_called_once_with()
 
-    def test_pecan_server(self, pecan_mock, legacy_mock):
+    def test_pecan_factory(self, pecan_mock, legacy_mock):
         cfg.CONF.set_override('web_framework', 'pecan')
-        server._main_neutron_server()
-        pecan_mock.assert_called_with()
+        router.APIRouter.factory({})
+        pecan_mock.assert_called_once_with({})
         legacy_mock.assert_not_called()

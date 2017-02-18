@@ -38,7 +38,9 @@ class ExtensionsController(object):
     @utils.when(index, method='HEAD')
     @utils.when(index, method='PATCH')
     def not_supported(self):
-        pecan.abort(405)
+        # NOTE(blogan): Normally we'd return 405 but the legacy extensions
+        # controller returned 404.
+        pecan.abort(404)
 
 
 class ExtensionController(object):
@@ -62,4 +64,6 @@ class ExtensionController(object):
     @utils.when(index, method='HEAD')
     @utils.when(index, method='PATCH')
     def not_supported(self):
-        pecan.abort(405)
+        # NOTE(blogan): Normally we'd return 405 but the legacy extensions
+        # controller returned 404.
+        pecan.abort(404)

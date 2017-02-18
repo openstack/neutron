@@ -81,11 +81,11 @@ class TestRootController(test_functional.PecanFunctionalTest):
             self.assertEqual(value, versions[0][attr])
 
     def test_methods(self):
-        self._test_method_returns_code('post')
-        self._test_method_returns_code('patch')
-        self._test_method_returns_code('delete')
-        self._test_method_returns_code('head')
-        self._test_method_returns_code('put')
+        self._test_method_returns_code('post', 405)
+        self._test_method_returns_code('patch', 405)
+        self._test_method_returns_code('delete', 405)
+        self._test_method_returns_code('head', 405)
+        self._test_method_returns_code('put', 405)
 
 
 class TestV2Controller(TestRootController):
@@ -146,12 +146,12 @@ class TestExtensionsController(TestRootController):
         self.assertEqual(test_alias, json_body['extension']['alias'])
 
     def test_methods(self):
-        self._test_method_returns_code('post', 405)
-        self._test_method_returns_code('put', 405)
-        self._test_method_returns_code('patch', 405)
-        self._test_method_returns_code('delete', 405)
-        self._test_method_returns_code('head', 405)
-        self._test_method_returns_code('delete', 405)
+        self._test_method_returns_code('post', 404)
+        self._test_method_returns_code('put', 404)
+        self._test_method_returns_code('patch', 404)
+        self._test_method_returns_code('delete', 404)
+        self._test_method_returns_code('head', 404)
+        self._test_method_returns_code('delete', 404)
 
 
 class TestQuotasController(test_functional.PecanFunctionalTest):

@@ -28,6 +28,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
+from neutron.pecan_wsgi import app as pecan_app
 from neutron import policy
 from neutron.quota import resource_registry
 from neutron import wsgi
@@ -70,6 +71,8 @@ class APIRouter(base_wsgi.Router):
 
     @classmethod
     def factory(cls, global_config, **local_config):
+        if cfg.CONF.web_framework == 'pecan':
+            return pecan_app.v2_factory(global_config, **local_config)
         return cls(**local_config)
 
     def __init__(self, **local_config):
