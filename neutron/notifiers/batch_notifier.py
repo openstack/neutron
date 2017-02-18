@@ -11,14 +11,17 @@
 #    under the License.
 
 import eventlet
+from oslo_utils import uuidutils
+
+from neutron.common import utils
 
 
 class BatchNotifier(object):
     def __init__(self, batch_interval, callback):
         self.pending_events = []
-        self._waiting_to_send = False
         self.callback = callback
         self.batch_interval = batch_interval
+        self._lock_identifier = 'notifier-%s' % uuidutils.generate_uuid()
 
     def queue_event(self, event):
         """Called to queue sending an event with the next batch of events.
@@ -30,13 +33,12 @@ class BatchNotifier(object):
         problematic.
 
         This replaces the loopingcall with a mechanism that creates a
-        short-lived thread on demand when the first event is queued.  That
-        thread will sleep once for the same batch_duration to allow other
-        events to queue up in pending_events and then will send them when it
-        wakes.
+        short-lived thread on demand whenever an event is queued. That thread
+        will wait for a lock, send all queued events and then sleep for
+        'batch_interval' seconds to allow other events to queue up.
 
-        If a thread is already alive and waiting, this call will simply queue
-        the event and return leaving it up to the thread to send it.
+        This effectively acts as a rate limiter to only allow 1 batch per
+        'batch_interval' seconds.
 
         :param event: the event that occurred.
         """
@@ -45,17 +47,14 @@ class BatchNotifier(object):
 
         self.pending_events.append(event)
 
-        if self._waiting_to_send:
-            return
-
-        self._waiting_to_send = True
-
-        def last_out_sends():
-            eventlet.sleep(self.batch_interval)
-            self._waiting_to_send = False
+        @utils.synchronized(self._lock_identifier)
+        def synced_send():
             self._notify()
+            # sleeping after send while holding the lock allows subsequent
+            # events to batch up
+            eventlet.sleep(self.batch_interval)
 
-        eventlet.spawn_n(last_out_sends)
+        eventlet.spawn_n(synced_send)
 
     def _notify(self):
         if not self.pending_events:
