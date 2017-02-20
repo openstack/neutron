@@ -46,9 +46,10 @@ class TestStatusBarriers(testlib_api.SqlTestCase):
     def _make_port(self):
         net = self._make_net()
         with self.ctx.session.begin():
-            port = models_v2.Port(networks=net, mac_address='1', tenant_id='1',
-                                  admin_state_up=True, status='DOWN',
-                                  device_id='2', device_owner='3')
+            port = models_v2.Port(network_id=net.id, mac_address='1',
+                                  tenant_id='1', admin_state_up=True,
+                                  status='DOWN', device_id='2',
+                                  device_owner='3')
             self.ctx.session.add(port)
         return port
 
