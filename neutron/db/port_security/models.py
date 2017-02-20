@@ -26,7 +26,7 @@ class PortSecurityBinding(model_base.BASEV2):
     # Add a relationship to the Port model in order to be to able to
     # instruct SQLAlchemy to eagerly load port security binding
     port = orm.relationship(
-        models_v2.Port,
+        models_v2.Port, load_on_pending=True,
         backref=orm.backref("port_security", uselist=False,
                             cascade='delete', lazy='joined'))
     revises_on_change = ('port',)
@@ -42,7 +42,7 @@ class NetworkSecurityBinding(model_base.BASEV2):
     # SQLAlchemy to eagerly load default port security setting for ports
     # on this network
     network = orm.relationship(
-        models_v2.Network,
+        models_v2.Network, load_on_pending=True,
         backref=orm.backref("port_security", uselist=False,
                             cascade='delete', lazy='joined'))
     revises_on_change = ('network',)

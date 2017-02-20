@@ -48,7 +48,7 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
                            primary_key=True)
     revises_on_change = ('network', )
     network = sa.orm.relationship(
-        models_v2.Network,
+        models_v2.Network, load_on_pending=True,
         backref=sa.orm.backref("qos_policy_binding", uselist=False,
                                cascade='delete', lazy='joined'))
 
@@ -68,7 +68,7 @@ class QosPortPolicyBinding(model_base.BASEV2):
                         primary_key=True)
     revises_on_change = ('port', )
     port = sa.orm.relationship(
-        models_v2.Port,
+        models_v2.Port, load_on_pending=True,
         backref=sa.orm.backref("qos_policy_binding", uselist=False,
                                cascade='delete', lazy='joined'))
 
@@ -83,7 +83,7 @@ class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
     max_kbps = sa.Column(sa.Integer)
     max_burst_kbps = sa.Column(sa.Integer)
     revises_on_change = ('qos_policy', )
-    qos_policy = sa.orm.relationship(QosPolicy)
+    qos_policy = sa.orm.relationship(QosPolicy, load_on_pending=True)
 
 
 class QosDscpMarkingRule(model_base.HasId, model_base.BASEV2):
@@ -95,7 +95,7 @@ class QosDscpMarkingRule(model_base.HasId, model_base.BASEV2):
                               unique=True)
     dscp_mark = sa.Column(sa.Integer)
     revises_on_change = ('qos_policy', )
-    qos_policy = sa.orm.relationship(QosPolicy)
+    qos_policy = sa.orm.relationship(QosPolicy, load_on_pending=True)
 
 
 class QosMinimumBandwidthRule(model_base.HasId, model_base.BASEV2):
@@ -112,7 +112,7 @@ class QosMinimumBandwidthRule(model_base.HasId, model_base.BASEV2):
                           nullable=False,
                           server_default=constants.EGRESS_DIRECTION)
     revises_on_change = ('qos_policy', )
-    qos_policy = sa.orm.relationship(QosPolicy)
+    qos_policy = sa.orm.relationship(QosPolicy, load_on_pending=True)
 
     __table_args__ = (
         sa.UniqueConstraint(

@@ -70,7 +70,8 @@ class SegmentHostMapping(model_base.BASEV2):
     # Add a relationship to the NetworkSegment model in order to instruct
     # SQLAlchemy to eagerly load this association
     network_segment = orm.relationship(
-        NetworkSegment, backref=orm.backref("segment_host_mapping",
-                                            lazy='subquery',
-                                            cascade='delete'))
+        NetworkSegment, load_on_pending=True,
+        backref=orm.backref("segment_host_mapping",
+                            lazy='subquery',
+                            cascade='delete'))
     revises_on_change = ('network_segment', )

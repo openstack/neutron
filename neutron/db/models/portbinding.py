@@ -26,7 +26,7 @@ class PortBindingPort(model_base.BASEV2):
                         primary_key=True)
     host = sa.Column(sa.String(255), nullable=False)
     port = orm.relationship(
-        models_v2.Port,
+        models_v2.Port, load_on_pending=True,
         backref=orm.backref("portbinding",
                             lazy='joined', uselist=False,
                             cascade='delete'))

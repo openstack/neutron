@@ -26,6 +26,6 @@ class Tag(model_base.BASEV2):
         nullable=False, primary_key=True)
     tag = sa.Column(sa.String(60), nullable=False, primary_key=True)
     standard_attr = orm.relationship(
-        'StandardAttribute',
+        'StandardAttribute', load_on_pending=True,
         backref=orm.backref('tags', lazy='subquery', viewonly=True))
     revises_on_change = ('standard_attr', )

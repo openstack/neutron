@@ -58,7 +58,7 @@ class SecurityGroupPortBinding(model_base.BASEV2):
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly load security group bindings
     ports = orm.relationship(
-        models_v2.Port,
+        models_v2.Port, load_on_pending=True,
         backref=orm.backref("security_groups",
                             lazy='joined', cascade='delete'))
 
@@ -85,7 +85,7 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
     port_range_max = sa.Column(sa.Integer)
     remote_ip_prefix = sa.Column(sa.String(255))
     security_group = orm.relationship(
-        SecurityGroup,
+        SecurityGroup, load_on_pending=True,
         backref=orm.backref('rules', cascade='all,delete', lazy='subquery'),
         primaryjoin="SecurityGroup.id==SecurityGroupRule.security_group_id")
     source_group = orm.relationship(

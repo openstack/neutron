@@ -78,7 +78,10 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     network_id = sa.Column(sa.String(36), sa.ForeignKey("networks.id"),
                            nullable=False)
-    fixed_ips = orm.relationship(IPAllocation, backref='port', lazy='subquery',
+    fixed_ips = orm.relationship(IPAllocation,
+                                 backref=orm.backref('port',
+                                                     load_on_pending=True),
+                                 lazy='subquery',
                                  cascade='all, delete-orphan',
                                  order_by=(IPAllocation.ip_address,
                                            IPAllocation.subnet_id))

@@ -25,7 +25,7 @@ class AllowedAddressPair(model_base.BASEV2):
     ip_address = sa.Column(sa.String(64), nullable=False, primary_key=True)
 
     port = orm.relationship(
-        models_v2.Port,
+        models_v2.Port, load_on_pending=True,
         backref=orm.backref("allowed_address_pairs",
                             lazy="subquery", cascade="delete"))
     revises_on_change = ('port', )
