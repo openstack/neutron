@@ -66,7 +66,7 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
         self._subnet = subnet
         self._original_subnet = original_subnet
         self._network_context = NetworkContext(plugin, plugin_context,
-                                               network)
+                                               network) if network else None
 
     @property
     def current(self):
@@ -78,6 +78,11 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
 
     @property
     def network(self):
+        if self._network_context is None:
+            network = self._plugin.get_network(
+                self._plugin_context, self.current['network_id'])
+            self._network_context = NetworkContext(
+                self._plugin, self._plugin_context, network)
         return self._network_context
 
 
