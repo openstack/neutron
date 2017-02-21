@@ -405,6 +405,11 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
     def add_auto_addrs_on_network_ports(self, context, subnet, ipam_subnet):
         """For an auto-address subnet, add addrs for ports on the net."""
+        # TODO(kevinbenton): remove after bug/1666493 is resolved
+        if subnet['id'] != ipam_subnet.subnet_manager.neutron_id:
+            raise RuntimeError(
+                "Subnet manager doesn't match subnet. %s != %s"
+                % (subnet['id'], ipam_subnet.subnet_manager.neutron_id))
         with context.session.begin(subtransactions=True):
             network_id = subnet['network_id']
             port_qry = context.session.query(models_v2.Port)
@@ -421,6 +426,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                       'eui64_address': True,
                       'mac': port['mac_address']}
                 ip_request = factory.get_request(context, port, ip)
+                # TODO(kevinbenton): remove after bug/1666493 is resolved
+                LOG.debug("Requesting with IP request: %s port: %s ip: %s "
+                          "for subnet %s and ipam_subnet %s", ip_request,
+                          port, ip, subnet, ipam_subnet)
                 ip_address = ipam_subnet.allocate(ip_request)
                 allocated = models_v2.IPAllocation(network_id=network_id,
                                                    port_id=port['id'],
