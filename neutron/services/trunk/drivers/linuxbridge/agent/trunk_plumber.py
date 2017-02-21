@@ -76,25 +76,6 @@ class Plumber(object):
                           dict(name=subname, tag=vlan_id))
                 self._safe_delete_device(subname)
 
-    def set_port_mac(self, port_id, mac_address):
-        """Sets mac address of physical device for port_id to mac_address."""
-        dev_name = self._get_tap_device_name(port_id)
-        ipd = ip_lib.IPDevice(dev_name, namespace=self.namespace)
-        try:
-            if mac_address == ipd.link.address:
-                return False
-            LOG.debug("Changing MAC from %(old)s to %(new)s for device "
-                      "%(dev)s", dict(old=ipd.link.address, new=mac_address,
-                                      dev=dev_name))
-            ipd.link.set_down()
-            ipd.link.set_address(mac_address)
-            ipd.link.set_up()
-        except Exception:
-            with excutils.save_and_reraise_exception() as ectx:
-                ectx.reraise = ip_lib.IPDevice(
-                    dev_name, namespace=self.namespace).exists()
-        return True
-
     def _trunk_lock(self, trunk_dev):
         lock_name = 'trunk-%s' % trunk_dev
         return lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX)
