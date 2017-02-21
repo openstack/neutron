@@ -160,7 +160,11 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
     ip_version = sa.Column(sa.Integer, nullable=False)
     cidr = sa.Column(sa.String(64), nullable=False)
     gateway_ip = sa.Column(sa.String(64))
-    revises_on_change = ('networks', )
+    network_standard_attr = orm.relationship(
+        'StandardAttribute', lazy='subquery', viewonly=True,
+        secondary='networks', uselist=False,
+        load_on_pending=True)
+    revises_on_change = ('network_standard_attr', )
     allocation_pools = orm.relationship(IPAllocationPool,
                                         backref='subnet',
                                         lazy="subquery",
@@ -237,7 +241,7 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     subnets = orm.relationship(
-        Subnet, backref=orm.backref('networks', lazy='subquery'),
+        Subnet,
         lazy="subquery")
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
