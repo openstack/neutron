@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from tempest.lib.common import ssh
 from tempest.lib import exceptions
 from tempest import test
+import testtools
 
 from neutron.common import utils
 from neutron.services.qos import qos_consts
@@ -81,6 +82,7 @@ class QoSTest(base.BaseTempestTestCase):
     @classmethod
     @test.requires_ext(extension="qos", service="network")
     @base_api.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
+    @testtools.skip('bug/1662109')
     def resource_setup(cls):
         super(QoSTest, cls).resource_setup()
 
