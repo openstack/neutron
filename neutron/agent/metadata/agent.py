@@ -172,11 +172,11 @@ class MetadataProxyHandler(object):
             'X-Instance-ID-Signature': self._sign_instance_id(instance_id)
         }
 
-        nova_ip_port = '%s:%s' % (self.conf.nova_metadata_ip,
-                                  self.conf.nova_metadata_port)
+        nova_host_port = '%s:%s' % (self.conf.nova_metadata_host,
+                                    self.conf.nova_metadata_port)
         url = urlparse.urlunsplit((
             self.conf.nova_metadata_protocol,
-            nova_ip_port,
+            nova_host_port,
             req.path_info,
             req.query_string,
             ''))
@@ -188,7 +188,7 @@ class MetadataProxyHandler(object):
         if self.conf.nova_client_cert and self.conf.nova_client_priv_key:
             h.add_certificate(self.conf.nova_client_priv_key,
                               self.conf.nova_client_cert,
-                              nova_ip_port)
+                              nova_host_port)
         resp, content = h.request(url, method=req.method, headers=headers,
                                   body=req.body)
 
@@ -242,7 +242,7 @@ class UnixDomainMetadataProxy(object):
             'topic': 'N/A',
             'configurations': {
                 'metadata_proxy_socket': cfg.CONF.metadata_proxy_socket,
-                'nova_metadata_ip': cfg.CONF.nova_metadata_ip,
+                'nova_metadata_host': cfg.CONF.nova_metadata_host,
                 'nova_metadata_port': cfg.CONF.nova_metadata_port,
                 'log_agent_heartbeats': cfg.CONF.AGENT.log_agent_heartbeats,
             },

@@ -36,7 +36,7 @@ class ConfFixture(config_fixture.Config):
         meta_conf.register_meta_conf_opts(
             meta_conf.METADATA_PROXY_HANDLER_OPTS, self.conf)
         self.config(auth_ca_cert=None,
-                    nova_metadata_ip='9.9.9.9',
+                    nova_metadata_host='9.9.9.9',
                     nova_metadata_port=8775,
                     metadata_proxy_shared_secret='secret',
                     nova_metadata_protocol='http',
@@ -362,7 +362,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                     mock.call().add_certificate(
                         self.fake_conf.nova_client_priv_key,
                         self.fake_conf.nova_client_cert,
-                        "%s:%s" % (self.fake_conf.nova_metadata_ip,
+                        "%s:%s" % (self.fake_conf.nova_metadata_host,
                                    self.fake_conf.nova_metadata_port)
                     ),
                     mock.call().request(
