@@ -169,13 +169,13 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         return list({mapping.segment_id for mapping in segment_host_mapping})
 
     @log_helpers.log_method_call
-    def delete_segment(self, context, uuid):
+    def delete_segment(self, context, uuid, for_net_delete=False):
         """Delete an existing segment."""
         segment = self.get_segment(context, uuid)
         # Do some preliminary operations before deleting the segment
         registry.notify(resources.SEGMENT, events.BEFORE_DELETE,
                         self.delete_segment, context=context,
-                        segment=segment)
+                        segment=segment, for_net_delete=for_net_delete)
 
         # Delete segment in DB
         with context.session.begin(subtransactions=True):
@@ -312,7 +312,8 @@ def _delete_segments_for_network(resource, event, trigger,
     segments = segments_plugin.get_segments(
         admin_ctx, filters={'network_id': [network_id]})
     for segment in segments:
-        segments_plugin.delete_segment(admin_ctx, segment['id'])
+        segments_plugin.delete_segment(admin_ctx, segment['id'],
+                                       for_net_delete=True)
 
 
 def subscribe():
