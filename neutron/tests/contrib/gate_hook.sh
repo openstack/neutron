@@ -23,20 +23,6 @@ then
 
     configure_host_for_func_testing
 
-    if [[ "$VENV" =~ "dsvm-functional" ]]; then
-        # The OVS_BRANCH variable is used by git checkout. In the case below
-        # we use a commit on branch-2.5 that fixes compilation with the
-        # latest ubuntu trusty kernel.
-        OVS_BRANCH="a35342879f1a7d8b1503d4945bd0791c58f5fc87"
-        for package in openvswitch openvswitch-switch openvswitch-common; do
-            if is_package_installed $package; then
-                uninstall_package $package
-            fi
-        done
-        compile_ovs True /usr /var
-        start_new_ovs
-    fi
-
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
 
