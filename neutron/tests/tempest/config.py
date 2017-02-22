@@ -19,6 +19,9 @@ CONF = config.CONF
 
 
 NeutronPluginOptions = [
+    cfg.ListOpt('provider_vlans',
+                default=[],
+                help='List of provider networks available in the deployment.'),
     cfg.BoolOpt('specify_floating_ip_address_available',
                 default=True,
                 help='Allow passing an IP Address of the floating ip when '

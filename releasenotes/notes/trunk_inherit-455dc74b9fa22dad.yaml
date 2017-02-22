@@ -1,0 +1,7 @@
+---
+features:
+  - Subport segmentation details can now accept ``inherit`` as segmentation
+    type during a trunk creation/update request.  The trunk plugin will
+    determine the segmentation type and ID and replace them with those of
+    the network to which the port is connected.  Only single-segment VLAN
+    networks are set to have expected and correct results at this point.

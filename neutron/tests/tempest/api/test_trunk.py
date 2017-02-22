@@ -220,6 +220,53 @@ class TrunkTestJSON(TrunkTestJSONBase):
         self.assertEqual(1, len(observed_subports))
 
 
+class TrunkTestInheritJSONBase(TrunkTestJSONBase):
+
+    required_extensions = ['provider', 'trunk']
+
+    @classmethod
+    def skip_checks(cls):
+        super(TrunkTestInheritJSONBase, cls).skip_checks()
+        for ext in cls.required_extensions:
+            if not test.is_extension_enabled(ext, 'network'):
+                msg = "%s extension not enabled." % ext
+                raise cls.skipException(msg)
+        if not config.CONF.neutron_plugin_options.provider_vlans:
+            raise cls.skipException("No provider VLAN networks available")
+
+    def create_provider_network(self):
+        foo_net = config.CONF.neutron_plugin_options.provider_vlans[0]
+        post_body = {'network_name': data_utils.rand_name('vlan-net-'),
+                     'provider:network_type': 'vlan',
+                     'provider:physical_network': foo_net}
+        return self.create_shared_network(**post_body)
+
+    @decorators.idempotent_id('0f05d98e-41f5-4629-dada-9aee269c9602')
+    def test_add_subport(self):
+        trunk_network = self.create_provider_network()
+        trunk_port = self.create_port(trunk_network)
+        subport_networks = [
+            self.create_provider_network(),
+            self.create_provider_network(),
+        ]
+        subport1 = self.create_port(subport_networks[0])
+        subport2 = self.create_port(subport_networks[1])
+        subports = [{'port_id': subport1['id'],
+                     'segmentation_type': 'inherit',
+                     'segmentation_id': subport1['id']},
+                    {'port_id': subport2['id'],
+                     'segmentation_type': 'inherit',
+                     'segmentation_id': subport2['id']}]
+        trunk = self.client.create_trunk(trunk_port['id'], subports)['trunk']
+        self.trunks.append(trunk)
+        # Validate that subport got segmentation details from the network
+        for i in range(2):
+            self.assertEqual(subport_networks[i]['provider:network_type'],
+                             trunk['sub_ports'][i]['segmentation_type'])
+            self.assertEqual(subport_networks[i]['provider:segmentation_id'],
+                             trunk['sub_ports'][i]['segmentation_id'])
+
+
 class TrunkTestMtusJSONBase(TrunkTestJSONBase):
 
     required_extensions = ['provider', 'trunk']

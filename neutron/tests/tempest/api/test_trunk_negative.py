@@ -103,6 +103,18 @@ class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
                             'segmentation_id': 3}])
 
     @test.attr(type='negative')
+    @decorators.idempotent_id('40aed9be-e976-47d0-dada-bde2c7e74e57')
+    def test_create_subport_invalid_inherit_network_segmentation_type(self):
+        trunk = self._create_trunk_with_network_and_parent([])
+        subport_network = self.create_network()
+        parent_port = self.create_port(subport_network)
+        self.assertRaises(lib_exc.BadRequest, self.client.add_subports,
+                          trunk['trunk']['id'],
+                          [{'port_id': parent_port['id'],
+                            'segmentation_type': 'inherit',
+                            'segmentation_id': -1}])
+
+    @test.attr(type='negative')
     @decorators.idempotent_id('40aed9be-e976-47d0-a555-bde2c7e74e57')
     def test_create_trunk_duplicate_subport_segmentation_ids(self):
         trunk = self._create_trunk_with_network_and_parent([])

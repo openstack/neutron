@@ -14,6 +14,7 @@
 
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -22,6 +23,7 @@ from neutron._i18n import _
 from neutron.common import utils as n_utils
 from neutron.objects import trunk as trunk_objects
 from neutron.plugins.ml2 import driver_api as api
+from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import utils
 
@@ -165,10 +167,40 @@ class SubPortsValidator(object):
 
         if trunk_validation:
             trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
+            self._prepare_subports(context)
             return [self._validate(context, s, trunk_port_mtu)
                     for s in self.subports]
         else:
             return self.subports
+
+    def _prepare_subports(self, context):
+        """Update subports segmentation details if INHERIT is requested."""
+        port_ids = {
+            s['port_id']: i
+            for i, s in enumerate(self.subports)
+            if s.get('segmentation_type') == constants.INHERIT
+        }
+        core_plugin = directory.get_plugin()
+        if not port_ids:
+            return
+        elif not n_utils.is_extension_supported(core_plugin, provider.ALIAS):
+            msg = _("Cannot accept segmentation type %s") % constants.INHERIT
+            raise n_exc.InvalidInput(error_message=msg)
+
+        ports = core_plugin.get_ports(context, filters={'id': port_ids})
+        # this assumes a user does not try to trunk the same network
+        # more than once.
+        network_port_map = {
+            x['network_id']: {'port_id': x['id']}
+            for x in ports
+        }
+        networks = core_plugin.get_networks(
+            context.elevated(), filters={'id': network_port_map})
+        for net in networks:
+            port = network_port_map[net['id']]
+            port.update({'segmentation_id': net[provider.SEGMENTATION_ID],
+                         'segmentation_type': net[provider.NETWORK_TYPE]})
+            self.subports[port_ids[port['port_id']]] = port
 
     def _get_port_mtu(self, context, port_id):
         """
