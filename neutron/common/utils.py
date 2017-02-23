@@ -29,7 +29,6 @@ import time
 import uuid
 import weakref
 
-import debtcollector
 from debtcollector import removals
 import eventlet
 from eventlet.green import subprocess
@@ -58,20 +57,8 @@ SYNCHRONIZED_PREFIX = 'neutron-'
 synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
 
 
-class WaitTimeout(Exception, eventlet.TimeoutError):
-    """Default exception coming from wait_until_true() function.
-
-    The reason is that eventlet.TimeoutError inherits from BaseException and
-    testtools.TestCase consumes only Exceptions. Which means in case
-    TimeoutError is raised, test runner stops and exits while it still has test
-    cases scheduled for execution.
-    """
-
-    def __str__(self):
-        return Exception.__str__(self)
-
-    def __repr__(self):
-        return Exception.__repr__(self)
+class WaitTimeout(Exception):
+    """Default exception coming from wait_until_true() function."""
 
 
 @removals.remove(
@@ -669,18 +656,10 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
             while not predicate():
                 eventlet.sleep(sleep)
     except eventlet.TimeoutError:
-        if exception is None:
-            debtcollector.deprecate(
-                "Raising eventlet.TimeoutError by default has been deprecated",
-                message="wait_until_true() now raises WaitTimeout error by "
-                        "default.",
-                version="Ocata",
-                removal_version="Pike")
-            exception = WaitTimeout("Timed out after %d seconds" % timeout)
-        #NOTE(jlibosva): In case None is passed exception is instantiated on
-        #                the line above.
-        #pylint: disable=raising-bad-type
-        raise exception
+        if exception is not None:
+            #pylint: disable=raising-bad-type
+            raise exception
+        raise WaitTimeout("Timed out after %d seconds" % timeout)
 
 
 class _AuthenticBase(object):
