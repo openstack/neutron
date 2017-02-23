@@ -19,6 +19,7 @@ function load_rc_hook {
     config=$(cat $GATE_HOOKS/$hook)
     export DEVSTACK_LOCAL_CONFIG+="
 # generated from hook '$hook'
+[[local|localrc]]
 ${config}
 "
 }
@@ -27,7 +28,11 @@ ${config}
 # Inject config from hook into local.conf
 function load_conf_hook {
     local hook="$1"
-    cat $GATE_HOOKS/$hook >> $LOCAL_CONF
+    config=$(cat $GATE_HOOKS/$hook)
+    export DEVSTACK_LOCAL_CONFIG+="
+# generated from hook '$hook'
+${config}
+"
 }
 
 
