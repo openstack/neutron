@@ -1,0 +1,5 @@
+---
+deprecations:
+  - The ``gateway_external_network_id`` L3 agent option is deprecated and will
+    be removed in next releases, with ``external_network_bridge`` that it
+    depends on.

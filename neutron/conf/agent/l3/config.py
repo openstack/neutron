@@ -60,7 +60,8 @@ OPTS = [
                       "This value should be set to the UUID of that external "
                       "network. To allow L3 agent support multiple external "
                       "networks, both the external_network_bridge and "
-                      "gateway_external_network_id must be left empty.")),
+                      "gateway_external_network_id must be left empty."),
+               deprecated_for_removal=True),
     cfg.StrOpt('ipv6_gateway', default='',
                help=_("With IPv6, the network used for the external gateway "
                       "does not need to have an associated subnet, since the "
