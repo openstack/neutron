@@ -1,4 +1,3 @@
-[[local|localrc]]
 # set password, otherwise devstack enters interactive mode and fails
 ADMIN_PASSWORD=secretadmin
 # don't use screen to start services (needed to disable colorization in

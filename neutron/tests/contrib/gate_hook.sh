@@ -19,6 +19,7 @@ function load_rc_hook {
     config=$(cat $GATE_HOOKS/$hook)
     export DEVSTACK_LOCAL_CONFIG+="
 # generated from hook '$hook'
+[[local|localrc]]
 ${config}
 "
 }
@@ -27,7 +28,11 @@ ${config}
 # Inject config from hook into local.conf
 function load_conf_hook {
     local hook="$1"
-    cat $GATE_HOOKS/$hook >> $LOCAL_CONF
+    config=$(cat $GATE_HOOKS/$hook)
+    export DEVSTACK_LOCAL_CONFIG+="
+# generated from hook '$hook'
+${config}
+"
 }
 
 
@@ -68,10 +73,15 @@ case $VENV in
     upgrade_ovs_if_necessary $compile_modules
 
     # prepare base environment for ./stack.sh
-    load_conf_hook stack_base
+    load_rc_hook stack_base
 
     # enable monitoring
-    load_conf_hook dstat
+    load_rc_hook dstat
+
+    # Since we don't use devstack-gate to deploy devstack services, we need to
+    # dump DEVSTACK_LOCAL_CONFIG into local.conf ourselves. Note that we should
+    # dump the file before changing the ownership
+    echo "$DEVSTACK_LOCAL_CONFIG" > $LOCAL_CONF
 
     # Make the workspace owned by the stack user
     sudo chown -R $STACK_USER:$STACK_USER $BASE
