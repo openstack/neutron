@@ -124,7 +124,6 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
 
         # Check the expected limits. The quotas can be in any order.
         for quota in quotas:
-            self.assertEqual(3, len(quota))
             project = quota['tenant_id']
             self.assertIn(project, (project_1, project_2))
             if project == project_1:

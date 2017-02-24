@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import attributes
 from neutron_lib import exceptions
 from oslo_log import log
 
@@ -109,6 +110,7 @@ class DbQuotaDriver(object):
             if tenant_quota is None:
                 tenant_quota = tenant_default.copy()
                 tenant_quota['tenant_id'] = tenant_id
+                attributes.populate_project_info(tenant_quota)
                 all_tenant_quotas[tenant_id] = tenant_quota
 
             tenant_quota[quota['resource']] = quota['limit']
