@@ -29,6 +29,10 @@ from neutron.agent.ovsdb import api as ovsdb
 LOG = logging.getLogger(__name__)
 
 
+def api_factory(context):
+    return OvsdbVsctl(context)
+
+
 class Transaction(ovsdb.Transaction):
     def __init__(self, context, check_error=False, log_errors=True, opts=None):
         self.context = context
@@ -178,6 +182,10 @@ class BrExistsCommand(DbCommand):
 
 
 class OvsdbVsctl(ovsdb.API):
+    def __init__(self, context):
+        super(OvsdbVsctl, self).__init__()
+        self.context = context
+
     def create_transaction(self, check_error=False, log_errors=True, **kwargs):
         return Transaction(self.context, check_error, log_errors, **kwargs)
 

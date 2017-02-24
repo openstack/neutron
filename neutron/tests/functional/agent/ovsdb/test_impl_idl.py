@@ -15,9 +15,10 @@
 
 import mock
 
+from ovsdbapp import exceptions as exc
+from ovsdbapp.schema.open_vswitch import impl_idl
+
 from neutron.agent.common import ovs_lib
-from neutron.agent.ovsdb import api
-from neutron.agent.ovsdb import impl_idl
 from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
@@ -26,7 +27,7 @@ from neutron.tests.functional import base
 # NOTE(twilson) functools.partial does not work for this
 def trpatch(*args, **kwargs):
     def wrapped(fn):
-        return mock.patch.object(impl_idl.NeutronOVSDBTransaction,
+        return mock.patch.object(impl_idl.OvsVsctlTransaction,
                                  *args, **kwargs)(fn)
     return wrapped
 
@@ -39,8 +40,8 @@ class ImplIdlTestCase(base.BaseSudoTestCase):
         self.brname = utils.get_rand_device_name(net_helpers.BR_PREFIX)
         # Make sure exceptions pass through by calling do_post_commit directly
         mock.patch.object(
-            impl_idl.NeutronOVSDBTransaction, "post_commit",
-            side_effect=impl_idl.NeutronOVSDBTransaction.do_post_commit,
+            impl_idl.OvsVsctlTransaction, "post_commit",
+            side_effect=impl_idl.OvsVsctlTransaction.do_post_commit,
             autospec=True).start()
 
     def _add_br(self):
@@ -65,11 +66,12 @@ class ImplIdlTestCase(base.BaseSudoTestCase):
     @trpatch("post_commit_failed_interfaces", return_value=["failed_if1"])
     @trpatch("timeout_exceeded", return_value=False)
     def test_post_commit_vswitchd_completed_failures(self, *args):
-        self.assertRaises(impl_idl.VswitchdInterfaceAddException, self._add_br)
+        self.assertRaises(impl_idl.VswitchdInterfaceAddException,
+                          self._add_br)
 
     @trpatch("vswitchd_has_completed", return_value=False)
     def test_post_commit_vswitchd_incomplete_timeout(self, *args):
         # Due to timing issues we may rarely hit the global timeout, which
         # raises RuntimeError to match the vsctl implementation
-        self.ovs.vsctl_timeout = 3
-        self.assertRaises((api.TimeoutException, RuntimeError), self._add_br)
+        self.ovs.ovsdb.connection.timeout = 3
+        self.assertRaises((exc.TimeoutException, RuntimeError), self._add_br)
