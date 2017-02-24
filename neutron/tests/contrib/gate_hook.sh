@@ -78,7 +78,8 @@ case $VENV in
     sudo chown -R $STACK_USER:$STACK_USER $BASE
     ;;
 
-"api"|"api-pecan"|"full-pecan"|"dsvm-scenario")
+# TODO(ihrachys): remove dsvm-scenario from the list when it's no longer used in project-config
+"api"|"api-pecan"|"full-pecan"|"dsvm-scenario"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
     load_rc_hook api_extensions
     # NOTE(ihrachys): note the order of hook post-* sections is significant: [quotas] hook should
     # go before other hooks modifying [DEFAULT]. See LP#1583214 for details.
