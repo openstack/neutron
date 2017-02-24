@@ -27,7 +27,6 @@ from neutron.common import constants
 from neutron.common import exceptions
 
 
-# Access with redirection to metadata proxy iptables mark mask
 METADATA_SERVICE_NAME = 'metadata-proxy'
 
 
