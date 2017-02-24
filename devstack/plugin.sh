@@ -19,6 +19,14 @@ fi
 if [[ "$1" == "stack" ]]; then
     case "$2" in
         install)
+            if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
+               [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
+                remove_ovs_packages
+                compile_ovs True /usr /var
+                start_new_ovs
+            fi
+            ;;
+        post-config)
             if is_service_enabled q-flavors neutron-flavors; then
                 configure_flavors
             fi
@@ -30,20 +38,10 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled q-dns neutron-dns; then
                 configure_dns_extension
+                post_config_dns_extension
             fi
             if is_service_enabled neutron-segments; then
                 configure_segments_extension
-            fi
-            if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
-               [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
-                remove_ovs_packages
-                compile_ovs True /usr /var
-                start_new_ovs
-            fi
-            ;;
-        post-config)
-            if is_service_enabled q-dns neutron-dns; then
-                post_config_dns_extension
             fi
             if is_service_enabled q-agt neutron-agent; then
                 configure_l2_agent
@@ -57,6 +55,9 @@ if [[ "$1" == "stack" ]]; then
                 configure_$NEUTRON_CORE_PLUGIN
                 configure_l2_agent
                 configure_l2_agent_sriovnicswitch
+            fi
+            if [ $NEUTRON_CORE_PLUGIN = ml2 ]; then
+                configure_ml2_extension_drivers
             fi
             ;;
         extra)
