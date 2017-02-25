@@ -13,6 +13,7 @@
 import copy
 
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.tests.tempest.api import base
@@ -51,14 +52,14 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
             kwargs[key] = subnetpool_data[key]
         return self.create_subnetpool(name=name, is_admin=is_admin, **kwargs)
 
-    @test.idempotent_id('462be770-b310-4df9-9c42-773217e4c8b1')
+    @decorators.idempotent_id('462be770-b310-4df9-9c42-773217e4c8b1')
     def test_create_network_with_timestamp(self):
         network = self.create_network()
         # Verifies body contains timestamp fields
         self.assertIsNotNone(network['created_at'])
         self.assertIsNotNone(network['updated_at'])
 
-    @test.idempotent_id('4db5417a-e11c-474d-a361-af00ebef57c5')
+    @decorators.idempotent_id('4db5417a-e11c-474d-a361-af00ebef57c5')
     def test_update_network_with_timestamp(self):
         network = self.create_network()
         origin_updated_at = network['updated_at']
@@ -71,7 +72,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('2ac50ab2-7ebd-4e27-b3ce-a9e399faaea2')
+    @decorators.idempotent_id('2ac50ab2-7ebd-4e27-b3ce-a9e399faaea2')
     def test_show_networks_attribute_with_timestamp(self):
         network = self.create_network()
         body = self.client.show_network(network['id'])
@@ -82,7 +83,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         self.assertEqual(network['updated_at'],
                          show_net['updated_at'])
 
-    @test.idempotent_id('8ee55186-454f-4b97-9f9f-eb2772ee891c')
+    @decorators.idempotent_id('8ee55186-454f-4b97-9f9f-eb2772ee891c')
     def test_create_subnet_with_timestamp(self):
         network = self.create_network()
         subnet = self.create_subnet(network)
@@ -90,7 +91,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         self.assertIsNotNone(subnet['created_at'])
         self.assertIsNotNone(subnet['updated_at'])
 
-    @test.idempotent_id('a490215a-6f4c-4af9-9a4c-57c41f1c4fa1')
+    @decorators.idempotent_id('a490215a-6f4c-4af9-9a4c-57c41f1c4fa1')
     def test_update_subnet_with_timestamp(self):
         network = self.create_network()
         subnet = self.create_subnet(network)
@@ -104,7 +105,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('1836a086-e7cf-4141-bf57-0cfe79e8051e')
+    @decorators.idempotent_id('1836a086-e7cf-4141-bf57-0cfe79e8051e')
     def test_show_subnet_attribute_with_timestamp(self):
         network = self.create_network()
         subnet = self.create_subnet(network)
@@ -116,7 +117,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         self.assertEqual(subnet['updated_at'],
                          show_subnet['updated_at'])
 
-    @test.idempotent_id('e2450a7b-d84f-4600-a093-45e78597bbac')
+    @decorators.idempotent_id('e2450a7b-d84f-4600-a093-45e78597bbac')
     def test_create_port_with_timestamp(self):
         network = self.create_network()
         port = self.create_port(network)
@@ -124,7 +125,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         self.assertIsNotNone(port['created_at'])
         self.assertIsNotNone(port['updated_at'])
 
-    @test.idempotent_id('4241e0d3-54b4-46ce-a9a7-093fc764161b')
+    @decorators.idempotent_id('4241e0d3-54b4-46ce-a9a7-093fc764161b')
     def test_update_port_with_timestamp(self):
         network = self.create_network()
         port = self.create_port(network)
@@ -138,7 +139,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('584c6723-40b6-4f26-81dd-f508f9d9fb51')
+    @decorators.idempotent_id('584c6723-40b6-4f26-81dd-f508f9d9fb51')
     def test_show_port_attribute_with_timestamp(self):
         network = self.create_network()
         port = self.create_port(network)
@@ -150,14 +151,14 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         self.assertEqual(port['updated_at'],
                          show_port['updated_at'])
 
-    @test.idempotent_id('87a8b196-4b90-44f0-b7f3-d2057d7d658e')
+    @decorators.idempotent_id('87a8b196-4b90-44f0-b7f3-d2057d7d658e')
     def test_create_subnetpool_with_timestamp(self):
         sp = self._create_subnetpool()
         # Verifies body contains timestamp fields
         self.assertIsNotNone(sp['created_at'])
         self.assertIsNotNone(sp['updated_at'])
 
-    @test.idempotent_id('d48c7578-c3d2-4f9b-a7a1-be2008c770a0')
+    @decorators.idempotent_id('d48c7578-c3d2-4f9b-a7a1-be2008c770a0')
     def test_update_subnetpool_with_timestamp(self):
         sp = self._create_subnetpool()
         origin_updated_at = sp['updated_at']
@@ -171,7 +172,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('1d3970e6-bcf7-46cd-b7d7-0807759c73b4')
+    @decorators.idempotent_id('1d3970e6-bcf7-46cd-b7d7-0807759c73b4')
     def test_show_subnetpool_attribute_with_timestamp(self):
         sp = self._create_subnetpool()
         body = self.client.show_subnetpool(sp['id'])
@@ -195,14 +196,14 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
         super(TestTimeStampWithL3, cls).resource_setup()
         cls.ext_net_id = CONF.network.public_network_id
 
-    @test.idempotent_id('433ba770-b310-4da9-5d42-733217a1c7b1')
+    @decorators.idempotent_id('433ba770-b310-4da9-5d42-733217a1c7b1')
     def test_create_router_with_timestamp(self):
         router = self.create_router(router_name='test')
         # Verifies body contains timestamp fields
         self.assertIsNotNone(router['created_at'])
         self.assertIsNotNone(router['updated_at'])
 
-    @test.idempotent_id('4a65417a-c11c-4b4d-a351-af01abcf57c6')
+    @decorators.idempotent_id('4a65417a-c11c-4b4d-a351-af01abcf57c6')
     def test_update_router_with_timestamp(self):
         router = self.create_router(router_name='test')
         origin_updated_at = router['updated_at']
@@ -214,7 +215,7 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('1ab50ac2-7cbd-4a17-b23e-a9e36cfa4ec2')
+    @decorators.idempotent_id('1ab50ac2-7cbd-4a17-b23e-a9e36cfa4ec2')
     def test_show_router_attribute_with_timestamp(self):
         router = self.create_router(router_name='test')
         body = self.client.show_router(router['id'])
@@ -225,14 +226,14 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
         self.assertEqual(router['updated_at'],
                          show_router['updated_at'])
 
-    @test.idempotent_id('8ae55186-464f-4b87-1c9f-eb2765ee81ac')
+    @decorators.idempotent_id('8ae55186-464f-4b87-1c9f-eb2765ee81ac')
     def test_create_floatingip_with_timestamp(self):
         fip = self.create_floatingip(self.ext_net_id)
         # Verifies body contains timestamp fields
         self.assertIsNotNone(fip['created_at'])
         self.assertIsNotNone(fip['updated_at'])
 
-    @test.idempotent_id('a3ac215a-61ac-13f9-9d3c-57c51f11afa1')
+    @decorators.idempotent_id('a3ac215a-61ac-13f9-9d3c-57c51f11afa1')
     def test_update_floatingip_with_timestamp(self):
         fip = self.create_floatingip(self.ext_net_id)
         origin_updated_at = fip['updated_at']
@@ -244,7 +245,7 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('32a6a086-e1ef-413b-b13a-0cfe13ef051e')
+    @decorators.idempotent_id('32a6a086-e1ef-413b-b13a-0cfe13ef051e')
     def test_show_floatingip_attribute_with_timestamp(self):
         fip = self.create_floatingip(self.ext_net_id)
         body = self.client.show_floatingip(fip['id'])
@@ -270,14 +271,14 @@ class TestTimeStampWithSecurityGroup(base_security_groups.BaseSecGroupTest):
         super(TestTimeStampWithSecurityGroup, cls).resource_setup()
         cls.ext_net_id = CONF.network.public_network_id
 
-    @test.idempotent_id('a3150a7b-d31a-423a-abf3-45e71c97cbac')
+    @decorators.idempotent_id('a3150a7b-d31a-423a-abf3-45e71c97cbac')
     def test_create_sg_with_timestamp(self):
         sg, _ = self._create_security_group()
         # Verifies body contains timestamp fields
         self.assertIsNotNone(sg['security_group']['created_at'])
         self.assertIsNotNone(sg['security_group']['updated_at'])
 
-    @test.idempotent_id('432ae0d3-32b4-413e-a9b3-091ac76da31b')
+    @decorators.idempotent_id('432ae0d3-32b4-413e-a9b3-091ac76da31b')
     def test_update_sg_with_timestamp(self):
         sgc, _ = self._create_security_group()
         sg = sgc['security_group']
@@ -290,7 +291,7 @@ class TestTimeStampWithSecurityGroup(base_security_groups.BaseSecGroupTest):
         # Verify that origin_updated_at is not same with new_updated_at
         self.assertIsNot(origin_updated_at, new_updated_at)
 
-    @test.idempotent_id('521e6723-43d6-12a6-8c3d-f5042ad9fc32')
+    @decorators.idempotent_id('521e6723-43d6-12a6-8c3d-f5042ad9fc32')
     def test_show_sg_attribute_with_timestamp(self):
         sg, _ = self._create_security_group()
         body = self.client.show_security_group(sg['security_group']['id'])
@@ -320,14 +321,14 @@ class TestTimeStampWithSecurityGroup(base_security_groups.BaseSecGroupTest):
         )
         return rule_create_body['security_group_rule']
 
-    @test.idempotent_id('83e8bd32-43e0-a3f0-1af3-12a5733c653e')
+    @decorators.idempotent_id('83e8bd32-43e0-a3f0-1af3-12a5733c653e')
     def test_create_sgrule_with_timestamp(self):
         sgrule = self._prepare_sgrule_test()
         # Verifies body contains timestamp fields
         self.assertIsNotNone(sgrule['created_at'])
         self.assertIsNotNone(sgrule['updated_at'])
 
-    @test.idempotent_id('143da0e6-ba17-43ad-b3d7-03aa759c3cb4')
+    @decorators.idempotent_id('143da0e6-ba17-43ad-b3d7-03aa759c3cb4')
     def test_show_sgrule_attribute_with_timestamp(self):
         sgrule = self._prepare_sgrule_test()
         body = self.client.show_security_group_rule(sgrule['id'])

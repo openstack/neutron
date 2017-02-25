@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.tests.tempest.api import base
@@ -27,14 +28,14 @@ class ExtensionsTest(base.BaseNetworkTest):
         else:
             self.assertNotIn(ext, extensions)
 
-    @test.idempotent_id('262420b7-a4bb-4a3e-b4b5-e73bad18df8c')
+    @decorators.idempotent_id('262420b7-a4bb-4a3e-b4b5-e73bad18df8c')
     def test_list_extensions_sorting(self):
         self._test_list_extensions_includes('sorting')
 
-    @test.idempotent_id('19db409e-a23f-445d-8bc8-ca3d64c84706')
+    @decorators.idempotent_id('19db409e-a23f-445d-8bc8-ca3d64c84706')
     def test_list_extensions_pagination(self):
         self._test_list_extensions_includes('pagination')
 
-    @test.idempotent_id('155b7bc2-e358-4dd8-bf3e-1774c084567f')
+    @decorators.idempotent_id('155b7bc2-e358-4dd8-bf3e-1774c084567f')
     def test_list_extensions_project_id(self):
         self._test_list_extensions_includes('project-id')

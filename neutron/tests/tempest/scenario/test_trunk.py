@@ -16,6 +16,7 @@ import netaddr
 from tempest.common.utils.linux import remote_client
 from tempest.common import waiters
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.common import utils
@@ -141,7 +142,7 @@ class TrunkTest(base.BaseTempestTestCase):
                                 CONF.validation.image_ssh_user,
                                 self.keypair['private_key'])
 
-    @test.idempotent_id('bb13fe28-f152-4000-8131-37890a40c79e')
+    @decorators.idempotent_id('bb13fe28-f152-4000-8131-37890a40c79e')
     def test_trunk_subport_lifecycle(self):
         """Test trunk creation and subport transition to ACTIVE status.
 
@@ -218,7 +219,7 @@ class TrunkTest(base.BaseTempestTestCase):
                                 CONF.validation.image_ssh_user,
                                 self.keypair['private_key'])
 
-    @test.idempotent_id('a8a02c9b-b453-49b5-89a2-cce7da66aafb')
+    @decorators.idempotent_id('a8a02c9b-b453-49b5-89a2-cce7da66aafb')
     def test_subport_connectivity(self):
         vlan_tag = 10
 

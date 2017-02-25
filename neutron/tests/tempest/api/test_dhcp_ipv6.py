@@ -15,8 +15,8 @@
 
 import netaddr
 from neutron_lib import constants
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -79,7 +79,7 @@ class NetworksTestDHCPv6(base.BaseNetworkTest):
                 self.client.delete_router(router['id'])
                 self._remove_from_list_by_index(self.routers, router)
 
-    @test.idempotent_id('98244d88-d990-4570-91d4-6b25d70d08af')
+    @decorators.idempotent_id('98244d88-d990-4570-91d4-6b25d70d08af')
     def test_dhcp_stateful_fixedips_outrange(self):
         """When port gets IP address from fixed IP range it
         shall be checked if it's from subnets range.

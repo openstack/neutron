@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.db import constants as db_const
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -29,7 +30,7 @@ class MeteringNegativeTestJSON(base.BaseAdminNetworkTest):
         super(MeteringNegativeTestJSON, cls).resource_setup()
 
     @test.attr(type='negative')
-    @test.idempotent_id('8b3f7c84-9d37-4771-8681-bfd2c07f3c2d')
+    @decorators.idempotent_id('8b3f7c84-9d37-4771-8681-bfd2c07f3c2d')
     def test_create_metering_label_with_too_long_name(self):
         self.assertRaises(lib_exc.BadRequest,
                           self.admin_client.create_metering_label,

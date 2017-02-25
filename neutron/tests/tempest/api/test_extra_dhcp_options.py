@@ -14,6 +14,7 @@
 #    under the License.
 
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.tests.tempest.api import base
@@ -52,7 +53,7 @@ class ExtraDHCPOptionsTestJSON(base.BaseNetworkTest):
             {'opt_value': cls.ip_server, 'opt_name': 'server-ip-address'}
         ]
 
-    @test.idempotent_id('d2c17063-3767-4a24-be4f-a23dbfa133c9')
+    @decorators.idempotent_id('d2c17063-3767-4a24-be4f-a23dbfa133c9')
     def test_create_list_port_with_extra_dhcp_options(self):
         # Create a port with Extra DHCP Options
         body = self.client.create_port(
@@ -68,7 +69,7 @@ class ExtraDHCPOptionsTestJSON(base.BaseNetworkTest):
         self.assertTrue(port)
         self._confirm_extra_dhcp_options(port[0], self.extra_dhcp_opts)
 
-    @test.idempotent_id('9a6aebf4-86ee-4f47-b07a-7f7232c55607')
+    @decorators.idempotent_id('9a6aebf4-86ee-4f47-b07a-7f7232c55607')
     def test_update_show_port_with_extra_dhcp_options(self):
         # Update port with extra dhcp options
         name = data_utils.rand_name('new-port-name')

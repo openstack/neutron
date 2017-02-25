@@ -12,6 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.tests.tempest import config
@@ -50,7 +51,7 @@ class NetworkDvrTest(base.BaseTempestTestCase):
         self.admin_manager.network_client.update_port(
             port_id, admin_state_up=False)
 
-    @test.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d344')
+    @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d344')
     def test_vm_reachable_through_compute(self):
         """Check that the VM is reachable through compute node.
 
@@ -61,7 +62,7 @@ class NetworkDvrTest(base.BaseTempestTestCase):
         self.setup_network_and_server(router=router)
         self._check_snat_port_connectivity()
 
-    @test.idempotent_id('23724222-483a-4129-bc15-7a9278f3828b')
+    @decorators.idempotent_id('23724222-483a-4129-bc15-7a9278f3828b')
     def test_update_centralized_router_to_dvr(self):
         """Check that updating centralized router to be distributed works.
         """

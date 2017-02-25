@@ -16,6 +16,7 @@
 import netaddr
 import six
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.common import utils
@@ -41,7 +42,7 @@ class RoutersTest(base_routers.BaseRouterTest):
             if cls._ip_version == 4 else
             config.safe_get_config_value('network', 'project_network_v6_cidr'))
 
-    @test.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')
+    @decorators.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")
     def test_create_update_router_description(self):
@@ -54,7 +55,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         body = self.client.show_router(body['router']['id'])['router']
         self.assertEqual('d2', body['description'])
 
-    @test.idempotent_id('847257cc-6afd-4154-b8fb-af49f5670ce8')
+    @decorators.idempotent_id('847257cc-6afd-4154-b8fb-af49f5670ce8')
     @test.requires_ext(extension='ext-gw-mode', service='network')
     def test_create_router_with_default_snat_value(self):
         # Create a router with default snat rule
@@ -65,7 +66,7 @@ class RoutersTest(base_routers.BaseRouterTest):
             router['id'], {'network_id': CONF.network.public_network_id,
                            'enable_snat': True})
 
-    @test.idempotent_id('ea74068d-09e9-4fd7-8995-9b6a1ace920f')
+    @decorators.idempotent_id('ea74068d-09e9-4fd7-8995-9b6a1ace920f')
     @test.requires_ext(extension='ext-gw-mode', service='network')
     def test_create_router_with_snat_explicit(self):
         name = data_utils.rand_name('snat-router')
@@ -107,7 +108,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         self.assertIn(public_subnet_id,
                       [x['subnet_id'] for x in fixed_ips])
 
-    @test.idempotent_id('b386c111-3b21-466d-880c-5e72b01e1a33')
+    @decorators.idempotent_id('b386c111-3b21-466d-880c-5e72b01e1a33')
     @test.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_set_gateway_with_snat_explicit(self):
         router = self._create_router(data_utils.rand_name('router-'))
@@ -122,7 +123,7 @@ class RoutersTest(base_routers.BaseRouterTest):
              'enable_snat': True})
         self._verify_gateway_port(router['id'])
 
-    @test.idempotent_id('96536bc7-8262-4fb2-9967-5c46940fa279')
+    @decorators.idempotent_id('96536bc7-8262-4fb2-9967-5c46940fa279')
     @test.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_set_gateway_without_snat(self):
         router = self._create_router(data_utils.rand_name('router-'))
@@ -137,7 +138,7 @@ class RoutersTest(base_routers.BaseRouterTest):
              'enable_snat': False})
         self._verify_gateway_port(router['id'])
 
-    @test.idempotent_id('f2faf994-97f4-410b-a831-9bc977b64374')
+    @decorators.idempotent_id('f2faf994-97f4-410b-a831-9bc977b64374')
     @test.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_reset_gateway_without_snat(self):
         router = self._create_router(
@@ -154,7 +155,7 @@ class RoutersTest(base_routers.BaseRouterTest):
              'enable_snat': False})
         self._verify_gateway_port(router['id'])
 
-    @test.idempotent_id('db3093b1-93b6-4893-be83-c4716c251b3e')
+    @decorators.idempotent_id('db3093b1-93b6-4893-be83-c4716c251b3e')
     def test_router_interface_status(self):
         network = self.create_network()
         subnet = self.create_subnet(network)
@@ -165,7 +166,7 @@ class RoutersTest(base_routers.BaseRouterTest):
             intf['port_id'])['port']['status'] == 'ACTIVE'
         utils.wait_until_true(status_active, exception=AssertionError)
 
-    @test.idempotent_id('c86ac3a8-50bd-4b00-a6b8-62af84a0765c')
+    @decorators.idempotent_id('c86ac3a8-50bd-4b00-a6b8-62af84a0765c')
     @test.requires_ext(extension='extraroute', service='network')
     def test_update_extra_route(self):
         self.network = self.create_network()
@@ -199,7 +200,7 @@ class RoutersTest(base_routers.BaseRouterTest):
     def _delete_extra_routes(self, router_id):
         self.client.delete_extra_routes(router_id)
 
-    @test.idempotent_id('01f185d1-d1a6-4cf9-abf7-e0e1384c169c')
+    @decorators.idempotent_id('01f185d1-d1a6-4cf9-abf7-e0e1384c169c')
     def test_network_attached_with_two_routers(self):
         network = self.create_network(data_utils.rand_name('network1'))
         self.create_subnet(network)
@@ -236,7 +237,7 @@ class DvrRoutersTest(base_routers.BaseRouterTest):
     def skip_checks(cls):
         super(DvrRoutersTest, cls).skip_checks()
 
-    @test.idempotent_id('141297aa-3424-455d-aa8d-f2d95731e00a')
+    @decorators.idempotent_id('141297aa-3424-455d-aa8d-f2d95731e00a')
     def test_create_distributed_router(self):
         name = data_utils.rand_name('router')
         create_body = self.admin_client.create_router(
@@ -246,7 +247,7 @@ class DvrRoutersTest(base_routers.BaseRouterTest):
                         self.admin_client)
         self.assertTrue(create_body['router']['distributed'])
 
-    @test.idempotent_id('644d7a4a-01a1-4b68-bb8d-0c0042cb1729')
+    @decorators.idempotent_id('644d7a4a-01a1-4b68-bb8d-0c0042cb1729')
     def test_convert_centralized_router(self):
         router = self._create_router(data_utils.rand_name('router'))
         self.assertNotIn('distributed', router)
@@ -274,38 +275,38 @@ class RoutersSearchCriteriaTest(base.BaseSearchCriteriaTest):
         for name in cls.resource_names:
             cls.create_router(router_name=name)
 
-    @test.idempotent_id('03a69efb-90a7-435b-bb5c-3add3612085a')
+    @decorators.idempotent_id('03a69efb-90a7-435b-bb5c-3add3612085a')
     def test_list_sorts_asc(self):
         self._test_list_sorts_asc()
 
-    @test.idempotent_id('95913d30-ff41-4b17-9f44-5258c651e78c')
+    @decorators.idempotent_id('95913d30-ff41-4b17-9f44-5258c651e78c')
     def test_list_sorts_desc(self):
         self._test_list_sorts_desc()
 
-    @test.idempotent_id('7f7d40b1-e165-4817-8dc5-02f8e2f0dff3')
+    @decorators.idempotent_id('7f7d40b1-e165-4817-8dc5-02f8e2f0dff3')
     def test_list_pagination(self):
         self._test_list_pagination()
 
-    @test.idempotent_id('a5b83e83-3d98-45bb-a2c7-0ee179ffd42c')
+    @decorators.idempotent_id('a5b83e83-3d98-45bb-a2c7-0ee179ffd42c')
     def test_list_pagination_with_marker(self):
         self._test_list_pagination_with_marker()
 
-    @test.idempotent_id('40804af8-c25d-45f8-b8a8-b4c70345215d')
+    @decorators.idempotent_id('40804af8-c25d-45f8-b8a8-b4c70345215d')
     def test_list_pagination_with_href_links(self):
         self._test_list_pagination_with_href_links()
 
-    @test.idempotent_id('77b9676c-d3cb-43af-a0e8-a5b8c6099e70')
+    @decorators.idempotent_id('77b9676c-d3cb-43af-a0e8-a5b8c6099e70')
     def test_list_pagination_page_reverse_asc(self):
         self._test_list_pagination_page_reverse_asc()
 
-    @test.idempotent_id('3133a2c5-1bb9-4fc7-833e-cf9a1d160255')
+    @decorators.idempotent_id('3133a2c5-1bb9-4fc7-833e-cf9a1d160255')
     def test_list_pagination_page_reverse_desc(self):
         self._test_list_pagination_page_reverse_desc()
 
-    @test.idempotent_id('8252e2f0-b3da-4738-8e25-f6f8d878a2da')
+    @decorators.idempotent_id('8252e2f0-b3da-4738-8e25-f6f8d878a2da')
     def test_list_pagination_page_reverse_with_href_links(self):
         self._test_list_pagination_page_reverse_with_href_links()
 
-    @test.idempotent_id('fb102124-20f8-4cb3-8c81-f16f5e41d192')
+    @decorators.idempotent_id('fb102124-20f8-4cb3-8c81-f16f5e41d192')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()

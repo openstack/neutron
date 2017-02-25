@@ -15,6 +15,7 @@
 
 import six
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -75,7 +76,7 @@ class QuotasTest(QuotasTestBase):
     """
 
     @test.attr(type='gate')
-    @test.idempotent_id('2390f766-836d-40ef-9aeb-e810d78207fb')
+    @decorators.idempotent_id('2390f766-836d-40ef-9aeb-e810d78207fb')
     def test_quotas(self):
         tenant_id = self._create_tenant()['id']
         new_quotas = {'network': 0, 'security_group': 0}

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.tests.tempest.api import base
@@ -42,7 +43,7 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.assertTrue(dns_assignment['fqdn'].startswith(hostname))
         self.assertEqual(ip, dns_assignment['ip_address'])
 
-    @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640bbbb')
+    @decorators.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640bbbb')
     @test.requires_ext(extension="standard-attr-description",
                        service="network")
     def test_create_update_port_description(self):
@@ -57,7 +58,7 @@ class PortsTestJSON(base.BaseNetworkTest):
         body = self.client.list_ports(id=body['port']['id'])['ports'][0]
         self.assertEqual('d2', body['description'])
 
-    @test.idempotent_id('539fbefe-fb36-48aa-9a53-8c5fbd44e492')
+    @decorators.idempotent_id('539fbefe-fb36-48aa-9a53-8c5fbd44e492')
     @test.requires_ext(extension="dns-integration",
                        service="network")
     def test_create_update_port_with_dns_name(self):
@@ -78,7 +79,7 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.assertEqual('d2', body['dns_name'])
         self._confirm_dns_assignment(body)
 
-    @test.idempotent_id('435e89df-a8bb-4b41-801a-9f20d362d777')
+    @decorators.idempotent_id('435e89df-a8bb-4b41-801a-9f20d362d777')
     @test.requires_ext(extension="dns-integration",
                        service="network")
     def test_create_update_port_with_no_dns_name(self):
@@ -90,14 +91,14 @@ class PortsTestJSON(base.BaseNetworkTest):
         self.assertFalse(port_body['port']['dns_name'])
         self._confirm_dns_assignment(port_body['port'])
 
-    @test.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640c123')
+    @decorators.idempotent_id('c72c1c0c-2193-4aca-bbb4-b1442640c123')
     def test_change_dhcp_flag_then_create_port(self):
         s = self.create_subnet(self.network, enable_dhcp=False)
         self.create_port(self.network)
         self.client.update_subnet(s['id'], enable_dhcp=True)
         self.create_port(self.network)
 
-    @test.idempotent_id('1d6d8683-8691-43c6-a7ba-c69723258726')
+    @decorators.idempotent_id('1d6d8683-8691-43c6-a7ba-c69723258726')
     def test_add_ips_to_port(self):
         s = self.create_subnet(self.network)
         port = self.create_port(self.network)
@@ -121,38 +122,38 @@ class PortsSearchCriteriaTest(base.BaseSearchCriteriaTest):
         for name in cls.resource_names:
             cls.create_port(net, name=name)
 
-    @test.idempotent_id('9ab73df4-960a-4ae3-87d3-60992b8d3e2d')
+    @decorators.idempotent_id('9ab73df4-960a-4ae3-87d3-60992b8d3e2d')
     def test_list_sorts_asc(self):
         self._test_list_sorts_asc()
 
-    @test.idempotent_id('b426671d-7270-430f-82ff-8f33eec93010')
+    @decorators.idempotent_id('b426671d-7270-430f-82ff-8f33eec93010')
     def test_list_sorts_desc(self):
         self._test_list_sorts_desc()
 
-    @test.idempotent_id('a202fdc8-6616-45df-b6a0-463932de6f94')
+    @decorators.idempotent_id('a202fdc8-6616-45df-b6a0-463932de6f94')
     def test_list_pagination(self):
         self._test_list_pagination()
 
-    @test.idempotent_id('f4723b8e-8186-4b9a-bf9e-57519967e048')
+    @decorators.idempotent_id('f4723b8e-8186-4b9a-bf9e-57519967e048')
     def test_list_pagination_with_marker(self):
         self._test_list_pagination_with_marker()
 
-    @test.idempotent_id('fcd02a7a-f07e-4d5e-b0ca-b58e48927a9b')
+    @decorators.idempotent_id('fcd02a7a-f07e-4d5e-b0ca-b58e48927a9b')
     def test_list_pagination_with_href_links(self):
         self._test_list_pagination_with_href_links()
 
-    @test.idempotent_id('3afe7024-77ab-4cfe-824b-0b2bf4217727')
+    @decorators.idempotent_id('3afe7024-77ab-4cfe-824b-0b2bf4217727')
     def test_list_no_pagination_limit_0(self):
         self._test_list_no_pagination_limit_0()
 
-    @test.idempotent_id('b8857391-dc44-40cc-89b7-2800402e03ce')
+    @decorators.idempotent_id('b8857391-dc44-40cc-89b7-2800402e03ce')
     def test_list_pagination_page_reverse_asc(self):
         self._test_list_pagination_page_reverse_asc()
 
-    @test.idempotent_id('4e51e9c9-ceae-4ec0-afd4-147569247699')
+    @decorators.idempotent_id('4e51e9c9-ceae-4ec0-afd4-147569247699')
     def test_list_pagination_page_reverse_desc(self):
         self._test_list_pagination_page_reverse_desc()
 
-    @test.idempotent_id('74293e59-d794-4a93-be09-38667199ef68')
+    @decorators.idempotent_id('74293e59-d794-4a93-be09-38667199ef68')
     def test_list_pagination_page_reverse_with_href_links(self):
         self._test_list_pagination_page_reverse_with_href_links()

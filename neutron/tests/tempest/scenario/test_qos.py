@@ -18,6 +18,7 @@ import time
 
 from oslo_log import log as logging
 from tempest.lib.common import ssh
+from tempest.lib import decorators
 from tempest.lib import exceptions
 from tempest import test
 import testtools
@@ -127,7 +128,7 @@ class QoSTest(base.BaseTempestTestCase):
 
         return bytes_per_second <= QoSTest.LIMIT_BYTES_SEC
 
-    @test.idempotent_id('1f7ed39b-428f-410a-bd2b-db9f465680df')
+    @decorators.idempotent_id('1f7ed39b-428f-410a-bd2b-db9f465680df')
     def test_qos(self):
         """This is a basic test that check that a QoS policy with
 
