@@ -69,8 +69,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         with db_api.context_manager.writer.using(ctx):
             # get existing allocations for all physical networks
             allocations = dict()
-            allocs = (ctx.session.query(vlan_alloc_model.VlanAllocation).
-                      with_lockmode('update'))
+            allocs = ctx.session.query(vlan_alloc_model.VlanAllocation)
             for alloc in allocs:
                 if alloc.physical_network not in allocations:
                     allocations[alloc.physical_network] = set()
@@ -102,7 +101,19 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                           {'vlan_id': alloc.vlan_id,
                                            'physical_network':
                                            physical_network})
-                                ctx.session.delete(alloc)
+                                # This UPDATE WHERE statement blocks anyone
+                                # from concurrently changing the allocation
+                                # values to True while our transaction is
+                                # open so we don't accidentally delete
+                                # allocated segments. If someone has already
+                                # allocated, count will return 0 so we don't
+                                # delete.
+                                count = allocs.filter_by(
+                                    allocated=False, vlan_id=alloc.vlan_id,
+                                    physical_network=physical_network
+                                ).update({"allocated": False})
+                                if count:
+                                    ctx.session.delete(alloc)
                     del allocations[physical_network]
 
                 # add missing allocatable vlans to table
