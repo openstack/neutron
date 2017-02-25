@@ -3,26 +3,26 @@
 set -eu
 
 usage () {
-  echo "Usage: $0 [OPTION]..."
-  echo "Run Neutron's coding check(s)"
-  echo ""
-  echo "  -Y, --pylint [<basecommit>] Run pylint check on the entire neutron module or just files changed in basecommit (e.g. HEAD~1)"
-  echo "  -h, --help                  Print this usage message"
-  echo
-  exit 0
+    echo "Usage: $0 [OPTION]..."
+    echo "Run Neutron's coding check(s)"
+    echo ""
+    echo "  -Y, --pylint [<basecommit>] Run pylint check on the entire neutron module or just files changed in basecommit (e.g. HEAD~1)"
+    echo "  -h, --help                  Print this usage message"
+    echo
+    exit 0
 }
 
 process_options () {
-  i=1
-  while [ $i -le $# ]; do
-    eval opt=\$$i
-    case $opt in
-      -h|--help) usage;;
-      -Y|--pylint) pylint=1;;
-      *) scriptargs="$scriptargs $opt"
-    esac
-    i=$((i+1))
-  done
+    i=1
+    while [ $i -le $# ]; do
+        eval opt=\$$i
+        case $opt in
+            -h|--help) usage;;
+            -Y|--pylint) pylint=1;;
+            *) scriptargs="$scriptargs $opt"
+        esac
+        i=$((i+1))
+    done
 }
 
 run_pylint () {
@@ -31,10 +31,10 @@ run_pylint () {
     if [ "$target" = "all" ]; then
         files="neutron"
     else
-      case "$target" in
-        *HEAD~[0-9]*) files=$(git diff --diff-filter=AM --name-only $target -- "*.py");;
-        *) echo "$target is an unrecognized basecommit"; exit 1;;
-      esac
+        case "$target" in
+            *HEAD~[0-9]*) files=$(git diff --diff-filter=AM --name-only $target -- "*.py");;
+            *) echo "$target is an unrecognized basecommit"; exit 1;;
+        esac
     fi
 
     echo "Running pylint..."
