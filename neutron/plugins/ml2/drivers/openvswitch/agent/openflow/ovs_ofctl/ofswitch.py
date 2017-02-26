@@ -78,11 +78,8 @@ class OpenFlowSwitchMixin(object):
     def delete_flows(self, **kwargs):
         # NOTE(yamamoto): super() points to ovs_lib.OVSBridge.
         # See ovs_bridge.py how this class is actually used.
-        if kwargs:
-            super(OpenFlowSwitchMixin, self).delete_flows(
-                **self._conv_args(kwargs))
-        else:
-            super(OpenFlowSwitchMixin, self).remove_all_flows()
+        super(OpenFlowSwitchMixin, self).delete_flows(
+              **self._conv_args(kwargs))
 
     def _filter_flows(self, flows):
         cookie_list = self.reserved_cookies

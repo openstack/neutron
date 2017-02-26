@@ -296,6 +296,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.br.delete_flows(in_port=ofport)
         self.br.delete_flows(tun_id=lsw_id)
         self.br.delete_flows(dl_vlan=vid)
+        self.br.delete_flows()
         expected_calls = [
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input="in_port=" + ofport),
@@ -303,6 +304,26 @@ class OVS_Lib_Test(base.BaseTestCase):
                              process_input="tun_id=%s" % lsw_id),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input="dl_vlan=%s" % vid),
+            self._ofctl_mock("del-flows", self.BR_NAME,
+                             process_input=None),
+        ]
+        self.execute.assert_has_calls(expected_calls)
+
+    def test_do_action_flows_delete_flows(self):
+        # test what the deffered bridge implementation calls in the case of a
+        # delete_flows() among calls to delete_flows(foo=bar)
+        self.br.do_action_flows('del', [{'in_port': 5}, {}])
+        expected_calls = [
+            self._ofctl_mock("del-flows", self.BR_NAME,
+                             process_input=None),
+        ]
+        self.execute.assert_has_calls(expected_calls)
+
+    def test_do_action_flows_delete_flows_empty(self):
+        self.br.delete_flows()
+        expected_calls = [
+            self._ofctl_mock("del-flows", self.BR_NAME,
+                             process_input=None),
         ]
         self.execute.assert_has_calls(expected_calls)
 
