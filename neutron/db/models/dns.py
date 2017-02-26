@@ -29,6 +29,7 @@ class NetworkDNSDomain(model_base.BASEV2):
     # Add a relationship to the Network model in order to instruct
     # SQLAlchemy to eagerly load this association
     network = orm.relationship(models_v2.Network,
+                               load_on_pending=True,
                                backref=orm.backref("dns_domain",
                                                    lazy='joined',
                                                    uselist=False,
@@ -57,6 +58,7 @@ class FloatingIPDNS(model_base.BASEV2):
     # Add a relationship to the FloatingIP model in order to instruct
     # SQLAlchemy to eagerly load this association
     floatingip = orm.relationship(l3_models.FloatingIP,
+                                  load_on_pending=True,
                                   backref=orm.backref("dns",
                                                       lazy='joined',
                                                       uselist=False,
@@ -85,6 +87,7 @@ class PortDNS(model_base.BASEV2):
     # Add a relationship to the Port model in order to instruct
     # SQLAlchemy to eagerly load this association
     port = orm.relationship(models_v2.Port,
+                            load_on_pending=True,
                             backref=orm.backref("dns",
                                                 lazy='joined',
                                                 uselist=False,

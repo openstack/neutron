@@ -57,7 +57,7 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
                           sa.ForeignKey("flavors.id"), nullable=True)
     attached_ports = orm.relationship(
         RouterPort,
-        backref='router',
+        backref=orm.backref('router', load_on_pending=True),
         lazy='dynamic')
     l3_agents = orm.relationship(
         'Agent', lazy='subquery', viewonly=True,
@@ -111,7 +111,7 @@ class RouterRoute(model_base.BASEV2, models_v2.Route):
                                         ondelete="CASCADE"),
                           primary_key=True)
 
-    router = orm.relationship(Router,
+    router = orm.relationship(Router, load_on_pending=True,
                               backref=orm.backref("route_list",
                                                   lazy='subquery',
                                                   cascade='delete'))

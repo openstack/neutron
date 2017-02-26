@@ -32,7 +32,7 @@ class ExternalNetwork(model_base.BASEV2):
     # Add a relationship to the Network model in order to instruct
     # SQLAlchemy to eagerly load this association
     network = orm.relationship(
-        models_v2.Network,
+        models_v2.Network, load_on_pending=True,
         backref=orm.backref("external", lazy='joined',
                             uselist=False, cascade='delete'))
     revises_on_change = ('network', )

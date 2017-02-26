@@ -31,7 +31,7 @@ class SubnetServiceType(model_base.BASEV2):
     # Service types must be valid device owners, therefore share max length
     service_type = sa.Column(sa.String(
                                 length=db_const.DEVICE_OWNER_FIELD_SIZE))
-    subnet = orm.relationship(models_v2.Subnet,
+    subnet = orm.relationship(models_v2.Subnet, load_on_pending=True,
                               backref=orm.backref('service_types',
                                                   lazy='subquery',
                                                   cascade='all, delete-orphan',
