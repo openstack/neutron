@@ -80,6 +80,11 @@ def has_registry_receivers(cls):
 
     def replacement_new(cls, *args, **kwargs):
         instance = orig_new(*args, **kwargs)
+        if getattr(instance, '_DECORATED_METHODS_SUBSCRIBED', False):
+            # Avoid running this logic twice for classes inheriting other
+            # classes with this same decorator. Only one needs to execute
+            # to subscribe all decorated methods.
+            return instance
         for name, unbound_method in inspect.getmembers(cls):
             if (not inspect.ismethod(unbound_method) and
                     not inspect.isfunction(unbound_method)):
@@ -91,6 +96,7 @@ def has_registry_receivers(cls):
             for resource, event in _REGISTERED_CLASS_METHODS[func]:
                 # subscribe the bound method
                 subscribe(getattr(instance, name), resource, event)
+        setattr(instance, '_DECORATED_METHODS_SUBSCRIBED', True)
         return instance
     cls.__new__ = classmethod(replacement_new)
     return cls
