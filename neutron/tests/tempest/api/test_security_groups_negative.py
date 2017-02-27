@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -27,7 +28,7 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
         super(NegativeSecGroupTest, cls).resource_setup()
 
     @test.attr(type='negative')
-    @test.idempotent_id('55100aa8-b24f-333c-0bef-64eefd85f15c')
+    @decorators.idempotent_id('55100aa8-b24f-333c-0bef-64eefd85f15c')
     def test_update_default_security_group_name(self):
         sg_list = self.client.list_security_groups(name='default')
         sg = sg_list['security_groups'][0]

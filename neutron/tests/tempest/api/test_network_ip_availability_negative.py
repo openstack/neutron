@@ -13,6 +13,7 @@
 #    under the License.
 
 from oslo_utils import uuidutils
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -22,7 +23,7 @@ from neutron.tests.tempest.api import test_network_ip_availability as net_ip
 class NetworksIpAvailabilityNegativeTest(net_ip.NetworksIpAvailabilityTest):
 
     @test.attr(type='negative')
-    @test.idempotent_id('3b8693eb-6c57-4ea1-ab84-3730c9ee9c84')
+    @decorators.idempotent_id('3b8693eb-6c57-4ea1-ab84-3730c9ee9c84')
     def test_network_availability_nonexistent_network_id(self):
         self.assertRaises(lib_exc.NotFound,
                           self.admin_client.show_network_ip_availability,

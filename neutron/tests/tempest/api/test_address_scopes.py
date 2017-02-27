@@ -13,6 +13,7 @@
 #    under the License.
 
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -56,7 +57,7 @@ class AddressScopeTestBase(base.BaseAdminNetworkTest):
 
 class AddressScopeTest(AddressScopeTestBase):
 
-    @test.idempotent_id('045f9294-8b1a-4848-b6a8-edf1b41e9d06')
+    @decorators.idempotent_id('045f9294-8b1a-4848-b6a8-edf1b41e9d06')
     def test_tenant_create_list_address_scope(self):
         address_scope = self._create_address_scope(ip_version=4)
         body = self.client.list_address_scopes()
@@ -68,7 +69,7 @@ class AddressScopeTest(AddressScopeTestBase):
                       [a_s['name'] for a_s in returned_address_scopes],
                       "Created address scope name should be in the list")
 
-    @test.idempotent_id('85e0326b-4c75-4b92-bd6e-7c7de6aaf05c')
+    @decorators.idempotent_id('85e0326b-4c75-4b92-bd6e-7c7de6aaf05c')
     def test_show_address_scope(self):
         address_scope = self._create_address_scope(ip_version=4)
         body = self.client.show_address_scope(
@@ -79,7 +80,7 @@ class AddressScopeTest(AddressScopeTestBase):
                          returned_address_scope['name'])
         self.assertFalse(returned_address_scope['shared'])
 
-    @test.idempotent_id('bbd57364-6d57-48e4-b0f1-8b9a998f5e06')
+    @decorators.idempotent_id('bbd57364-6d57-48e4-b0f1-8b9a998f5e06')
     @test.requires_ext(extension="project-id", service="network")
     def test_show_address_scope_project_id(self):
         address_scope = self._create_address_scope(ip_version=4)
@@ -90,18 +91,18 @@ class AddressScopeTest(AddressScopeTestBase):
         self.assertEqual(self.client.tenant_id, show_addr_scope['project_id'])
         self.assertEqual(self.client.tenant_id, show_addr_scope['tenant_id'])
 
-    @test.idempotent_id('85a259b2-ace6-4e32-9657-a9a392b452aa')
+    @decorators.idempotent_id('85a259b2-ace6-4e32-9657-a9a392b452aa')
     def test_tenant_update_address_scope(self):
         self._test_update_address_scope_helper()
 
-    @test.idempotent_id('22b3b600-72a8-4b60-bc94-0f29dd6271df')
+    @decorators.idempotent_id('22b3b600-72a8-4b60-bc94-0f29dd6271df')
     def test_delete_address_scope(self):
         address_scope = self._create_address_scope(ip_version=4)
         self.client.delete_address_scope(address_scope['id'])
         self.assertRaises(lib_exc.NotFound, self.client.show_address_scope,
                           address_scope['id'])
 
-    @test.idempotent_id('5a06c287-8036-4d04-9d78-def8e06d43df')
+    @decorators.idempotent_id('5a06c287-8036-4d04-9d78-def8e06d43df')
     def test_admin_create_shared_address_scope(self):
         address_scope = self._create_address_scope(is_admin=True, shared=True,
                                                    ip_version=4)
@@ -112,7 +113,7 @@ class AddressScopeTest(AddressScopeTestBase):
                          returned_address_scope['name'])
         self.assertTrue(returned_address_scope['shared'])
 
-    @test.idempotent_id('e9e1ccdd-9ccd-4076-9503-71820529508b')
+    @decorators.idempotent_id('e9e1ccdd-9ccd-4076-9503-71820529508b')
     def test_admin_update_shared_address_scope(self):
         address_scope = self._test_update_address_scope_helper(is_admin=True,
                                                                shared=True)

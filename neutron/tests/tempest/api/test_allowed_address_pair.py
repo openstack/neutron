@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from tempest.lib import decorators
 from tempest import test
 
 from neutron.tests.tempest.api import base
@@ -48,7 +49,7 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
         cls.ip_address = port['fixed_ips'][0]['ip_address']
         cls.mac_address = port['mac_address']
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-00e40882f043')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-00e40882f043')
     def test_create_list_port_with_address_pair(self):
         # Create port with allowed address pair attribute
         allowed_address_pairs = [{'ip_address': self.ip_address,
@@ -85,12 +86,12 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
         allowed_address_pair = body['port']['allowed_address_pairs']
         self.assertItemsEqual(allowed_address_pair, allowed_address_pairs)
 
-    @test.idempotent_id('9599b337-272c-47fd-b3cf-509414414ac4')
+    @decorators.idempotent_id('9599b337-272c-47fd-b3cf-509414414ac4')
     def test_update_port_with_address_pair(self):
         # Update port with allowed address pair
         self._update_port_with_address(self.ip_address)
 
-    @test.idempotent_id('4d6d178f-34f6-4bff-a01c-0a2f8fe909e4')
+    @decorators.idempotent_id('4d6d178f-34f6-4bff-a01c-0a2f8fe909e4')
     def test_update_port_with_cidr_address_pair(self):
         # Update allowed address pair with cidr
         cidr = str(
@@ -98,7 +99,7 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
                 'network', 'project_network_cidr')))
         self._update_port_with_address(cidr)
 
-    @test.idempotent_id('b3f20091-6cd5-472b-8487-3516137df933')
+    @decorators.idempotent_id('b3f20091-6cd5-472b-8487-3516137df933')
     def test_update_port_with_multiple_ip_mac_address_pair(self):
         # Create an ip _address and mac_address through port create
         resp = self.client.create_port(network_id=self.network['id'])

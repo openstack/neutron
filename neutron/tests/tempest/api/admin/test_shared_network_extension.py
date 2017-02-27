@@ -16,6 +16,7 @@
 
 from oslo_utils import uuidutils
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 import testtools
@@ -30,7 +31,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         super(SharedNetworksTest, cls).resource_setup()
         cls.shared_network = cls.create_shared_network()
 
-    @test.idempotent_id('6661d219-b96d-4597-ad10-55766123421a')
+    @decorators.idempotent_id('6661d219-b96d-4597-ad10-55766123421a')
     def test_filtering_shared_networks(self):
         # this test is necessary because the 'shared' column does not actually
         # exist on networks so the filter function has to translate it into
@@ -49,7 +50,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertNotEmpty(items)
         self.assertTrue(all(n['shared'] == shared for n in items))
 
-    @test.idempotent_id('6661d219-b96d-4597-ad10-51672353421a')
+    @decorators.idempotent_id('6661d219-b96d-4597-ad10-51672353421a')
     def test_filtering_shared_subnets(self):
         # shared subnets need to be tested because their shared status isn't
         # visible as a regular API attribute and it's solely dependent on the
@@ -73,7 +74,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertNotIn(shared,
             self.admin_client.list_subnets(shared=False)['subnets'])
 
-    @test.idempotent_id('6661d219-b96d-4597-ad10-55766ce4abf7')
+    @decorators.idempotent_id('6661d219-b96d-4597-ad10-55766ce4abf7')
     def test_create_update_shared_network(self):
         shared_network = self.create_shared_network()
         net_id = shared_network['id']
@@ -89,7 +90,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertFalse(updated_net['shared'])
         self.assertFalse(updated_net['admin_state_up'])
 
-    @test.idempotent_id('9c31fabb-0181-464f-9ace-95144fe9ca77')
+    @decorators.idempotent_id('9c31fabb-0181-464f-9ace-95144fe9ca77')
     def test_create_port_shared_network_as_non_admin_tenant(self):
         # create a port as non admin
         body = self.client.create_port(network_id=self.shared_network['id'])
@@ -99,7 +100,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertNotEqual(self.shared_network['tenant_id'],
                             port['tenant_id'])
 
-    @test.idempotent_id('3e39c4a6-9caf-4710-88f1-d20073c6dd76')
+    @decorators.idempotent_id('3e39c4a6-9caf-4710-88f1-d20073c6dd76')
     def test_create_bulk_shared_network(self):
         # Creates 2 networks in one request
         net_nm = [data_utils.rand_name('network'),
@@ -117,7 +118,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertIn(self.shared_network['id'], networks_list)
         self.assertTrue(self.shared_network['shared'])
 
-    @test.idempotent_id('a064a9fd-e02f-474a-8159-f828cd636a28')
+    @decorators.idempotent_id('a064a9fd-e02f-474a-8159-f828cd636a28')
     def test_list_shared_networks(self):
         # List the shared networks and confirm that
         # shared network extension attribute is returned for those networks
@@ -132,7 +133,7 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertEqual(self.shared_network['id'], show_shared_net['id'])
         self.assertTrue(show_shared_net['shared'])
 
-    @test.idempotent_id('e03c92a2-638d-4bfa-b50a-b1f66f087e58')
+    @decorators.idempotent_id('e03c92a2-638d-4bfa-b50a-b1f66f087e58')
     def test_show_shared_networks_attribute(self):
         # Show a shared network and confirm that
         # shared network extension attribute is returned.
@@ -154,13 +155,13 @@ class AllowedAddressPairSharedNetworkTest(base.BaseAdminNetworkTest):
         cls.network = cls.create_shared_network()
         cls.create_subnet(cls.network, client=cls.admin_client)
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-ffffffff1fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-ffffffff1fff')
     def test_create_with_address_pair_blocked_on_other_network(self):
         with testtools.ExpectedException(lib_exc.Forbidden):
             self.create_port(self.network,
                              allowed_address_pairs=self.allowed_address_pairs)
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-ffffffff2fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-ffffffff2fff')
     def test_update_with_address_pair_blocked_on_other_network(self):
         port = self.create_port(self.network)
         with testtools.ExpectedException(lib_exc.Forbidden):
@@ -192,14 +193,14 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         return {'network': net, 'subnet': subnet, 'policy': pol}
 
     @test.attr(type='smoke')
-    @test.idempotent_id('86c3529b-1231-40de-803c-bfffffff1eee')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-bfffffff1eee')
     def test_create_rbac_policy_with_target_tenant_none(self):
         with testtools.ExpectedException(lib_exc.BadRequest):
             self._make_admin_net_and_subnet_shared_to_tenant_id(
                 tenant_id=None)
 
     @test.attr(type='smoke')
-    @test.idempotent_id('86c3529b-1231-40de-803c-bfffffff1fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-bfffffff1fff')
     def test_create_rbac_policy_with_target_tenant_too_long_id(self):
         with testtools.ExpectedException(lib_exc.BadRequest):
             target_tenant = '1234' * 100
@@ -207,7 +208,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                 tenant_id=target_tenant)
 
     @test.attr(type='smoke')
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff1fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff1fff')
     def test_network_only_visible_to_policy_target(self):
         net = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)['network']
@@ -216,7 +217,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             # client2 has not been granted access
             self.client2.show_network(net['id'])
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff2fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff2fff')
     def test_subnet_on_network_only_visible_to_policy_target(self):
         sub = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)['subnet']
@@ -225,7 +226,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             # client2 has not been granted access
             self.client2.show_subnet(sub['id'])
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff2eee')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff2eee')
     def test_policy_target_update(self):
         res = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)
@@ -239,7 +240,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         update_res['rbac_policy'].pop('target_tenant')
         self.assertEqual(res['policy'], update_res['rbac_policy'])
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-affefefef321')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-affefefef321')
     def test_duplicate_policy_error(self):
         res = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)
@@ -248,7 +249,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                 object_type='network', object_id=res['network']['id'],
                 action='access_as_shared', target_tenant=self.client.tenant_id)
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff3fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff3fff')
     def test_port_presence_prevents_network_rbac_policy_deletion(self):
         res = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)
@@ -278,7 +279,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         # anchor is gone, delete should pass
         self.admin_client.delete_rbac_policy(wild['id'])
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-beefbeefbeef')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-beefbeefbeef')
     def test_tenant_can_delete_port_on_own_network(self):
         net = self.create_network()  # owned by self.client
         self.client.create_rbac_policy(
@@ -287,7 +288,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         port = self.client2.create_port(network_id=net['id'])['port']
         self.client.delete_port(port['id'])
 
-    @test.idempotent_id('f7539232-389a-4e9c-9e37-e42a129eb541')
+    @decorators.idempotent_id('f7539232-389a-4e9c-9e37-e42a129eb541')
     def test_tenant_cant_delete_other_tenants_ports(self):
         net = self.create_network()
         port = self.client.create_port(network_id=net['id'])['port']
@@ -295,7 +296,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         with testtools.ExpectedException(lib_exc.NotFound):
             self.client2.delete_port(port['id'])
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff4fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff4fff')
     def test_regular_client_shares_to_another_regular_client(self):
         net = self.create_network()  # owned by self.client
         with testtools.ExpectedException(lib_exc.NotFound):
@@ -313,7 +314,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             [p['id']
              for p in self.client2.list_rbac_policies()['rbac_policies']])
 
-    @test.idempotent_id('bf5052b8-b11e-407c-8e43-113447404d3e')
+    @decorators.idempotent_id('bf5052b8-b11e-407c-8e43-113447404d3e')
     def test_filter_fields(self):
         net = self.create_network()
         self.client.create_rbac_policy(
@@ -325,7 +326,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             res = self.client.list_rbac_policies(fields=fields)
             self.assertEqual(set(fields), set(res['rbac_policies'][0].keys()))
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff5fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff5fff')
     def test_policy_show(self):
         res = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)
@@ -340,7 +341,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertEqual(
             p2, self.admin_client.show_rbac_policy(p2['id'])['rbac_policy'])
 
-    @test.idempotent_id('e7bcb1ea-4877-4266-87bb-76f68b421f31')
+    @decorators.idempotent_id('e7bcb1ea-4877-4266-87bb-76f68b421f31')
     def test_filter_policies(self):
         net = self.create_network()
         pol1 = self.client.create_rbac_policy(
@@ -358,7 +359,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         self.assertEqual(pol1['id'], res1[0]['id'])
         self.assertEqual(pol2['id'], res2[0]['id'])
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff6fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff6fff')
     def test_regular_client_blocked_from_sharing_anothers_network(self):
         net = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)['network']
@@ -367,7 +368,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                 object_type='network', object_id=net['id'],
                 action='access_as_shared', target_tenant=self.client.tenant_id)
 
-    @test.idempotent_id('c5f8f785-ce8d-4430-af7e-a236205862fb')
+    @decorators.idempotent_id('c5f8f785-ce8d-4430-af7e-a236205862fb')
     @test.requires_ext(extension="quotas", service="network")
     def test_rbac_policy_quota(self):
         quota = self.client.show_quotas(self.client.tenant_id)['quota']
@@ -383,7 +384,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                     action='access_as_shared',
                     target_tenant=uuidutils.generate_uuid().replace('-', ''))
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-afffffff7fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-afffffff7fff')
     def test_regular_client_blocked_from_sharing_with_wildcard(self):
         net = self.create_network()
         with testtools.ExpectedException(lib_exc.Forbidden):
@@ -398,7 +399,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
             self.client.update_rbac_policy(pol['rbac_policy']['id'],
                                            target_tenant='*')
 
-    @test.idempotent_id('86c3529b-1231-40de-803c-aeeeeeee7fff')
+    @decorators.idempotent_id('86c3529b-1231-40de-803c-aeeeeeee7fff')
     def test_filtering_works_with_rbac_records_present(self):
         resp = self._make_admin_net_and_subnet_shared_to_tenant_id(
             self.client.tenant_id)

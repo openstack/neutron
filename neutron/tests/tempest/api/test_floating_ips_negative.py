@@ -15,6 +15,7 @@
 #    under the License.
 
 from tempest.lib.common.utils import data_utils
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -39,7 +40,7 @@ class FloatingIPNegativeTestJSON(base.BaseNetworkTest):
         cls.port = cls.create_port(cls.network)
 
     @test.attr(type='negative')
-    @test.idempotent_id('0b5b8797-6de7-4191-905c-a48b888eb429')
+    @decorators.idempotent_id('0b5b8797-6de7-4191-905c-a48b888eb429')
     def test_associate_floatingip_with_port_with_floatingip(self):
         net = self.create_network()
         subnet = self.create_subnet(net)

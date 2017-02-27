@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 from tempest import test
 
@@ -78,7 +79,7 @@ class TagNetworkTestJSON(TagTestJSON):
         return network['id']
 
     @test.attr(type='smoke')
-    @test.idempotent_id('5621062d-fbfb-4437-9d69-138c78ea4188')
+    @decorators.idempotent_id('5621062d-fbfb-4437-9d69-138c78ea4188')
     def test_network_tags(self):
         self._test_tag_operations()
 
@@ -93,7 +94,7 @@ class TagSubnetTestJSON(TagTestJSON):
         return subnet['id']
 
     @test.attr(type='smoke')
-    @test.idempotent_id('2805aabf-a94c-4e70-a0b2-9814f06beb03')
+    @decorators.idempotent_id('2805aabf-a94c-4e70-a0b2-9814f06beb03')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_subnet_tags(self):
         self._test_tag_operations()
@@ -109,7 +110,7 @@ class TagPortTestJSON(TagTestJSON):
         return port['id']
 
     @test.attr(type='smoke')
-    @test.idempotent_id('c7c44f2c-edb0-4ebd-a386-d37cec155c34')
+    @decorators.idempotent_id('c7c44f2c-edb0-4ebd-a386-d37cec155c34')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_port_tags(self):
         self._test_tag_operations()
@@ -125,7 +126,7 @@ class TagSubnetPoolTestJSON(TagTestJSON):
         return subnetpool['id']
 
     @test.attr(type='smoke')
-    @test.idempotent_id('bdc1c24b-c0b5-4835-953c-8f67dc11edfe')
+    @decorators.idempotent_id('bdc1c24b-c0b5-4835-953c-8f67dc11edfe')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_subnetpool_tags(self):
         self._test_tag_operations()
@@ -140,7 +141,7 @@ class TagRouterTestJSON(TagTestJSON):
         return router['id']
 
     @test.attr(type='smoke')
-    @test.idempotent_id('b898ff92-dc33-4232-8ab9-2c6158c80d28')
+    @decorators.idempotent_id('b898ff92-dc33-4232-8ab9-2c6158c80d28')
     @test.requires_ext(extension="router", service="network")
     @test.requires_ext(extension="tag-ext", service="network")
     def test_router_tags(self):
@@ -232,7 +233,7 @@ class TagFilterNetworkTestJSON(TagFilterTestJSON):
         return res[self.resource]
 
     @test.attr(type='smoke')
-    @test.idempotent_id('a66b5cca-7db2-40f5-a33d-8ac9f864e53e')
+    @decorators.idempotent_id('a66b5cca-7db2-40f5-a33d-8ac9f864e53e')
     def test_filter_network_tags(self):
         self._test_filter_tags()
 
@@ -251,7 +252,7 @@ class TagFilterSubnetTestJSON(TagFilterTestJSON):
         return res[self.resource]
 
     @test.attr(type='smoke')
-    @test.idempotent_id('dd8f9ba7-bcf6-496f-bead-714bd3daac10')
+    @decorators.idempotent_id('dd8f9ba7-bcf6-496f-bead-714bd3daac10')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_filter_subnet_tags(self):
         self._test_filter_tags()
@@ -271,7 +272,7 @@ class TagFilterPortTestJSON(TagFilterTestJSON):
         return res[self.resource]
 
     @test.attr(type='smoke')
-    @test.idempotent_id('09c036b8-c8d0-4bee-b776-7f4601512898')
+    @decorators.idempotent_id('09c036b8-c8d0-4bee-b776-7f4601512898')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_filter_port_tags(self):
         self._test_filter_tags()
@@ -291,7 +292,7 @@ class TagFilterSubnetpoolTestJSON(TagFilterTestJSON):
         return res[self.resource]
 
     @test.attr(type='smoke')
-    @test.idempotent_id('16ae7ad2-55c2-4821-9195-bfd04ab245b7')
+    @decorators.idempotent_id('16ae7ad2-55c2-4821-9195-bfd04ab245b7')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_filter_subnetpool_tags(self):
         self._test_filter_tags()
@@ -310,7 +311,7 @@ class TagFilterRouterTestJSON(TagFilterTestJSON):
         return res[self.resource]
 
     @test.attr(type='smoke')
-    @test.idempotent_id('cdd3f3ea-073d-4435-a6cb-826a4064193d')
+    @decorators.idempotent_id('cdd3f3ea-073d-4435-a6cb-826a4064193d')
     @test.requires_ext(extension="tag-ext", service="network")
     def test_filter_router_tags(self):
         self._test_filter_tags()
