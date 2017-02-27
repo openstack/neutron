@@ -97,6 +97,7 @@ SERVICE_PLUGINS_REQUIRED_DRIVERS = {
 }
 
 
+@registry.has_registry_receivers
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dvr_mac_db.DVRDbMixin,
                 external_net_db.External_net_db_mixin,
@@ -163,16 +164,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.type_manager.initialize()
         self.extension_manager.initialize()
         self.mechanism_manager.initialize()
-        registry.subscribe(self._port_provisioned, resources.PORT,
-                           provisioning_blocks.PROVISIONING_COMPLETE)
-        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
-                           events.PRECOMMIT_CREATE)
-        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
-                           events.PRECOMMIT_DELETE)
-        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
-                           events.AFTER_CREATE)
-        registry.subscribe(self._handle_segment_change, resources.SEGMENT,
-                           events.AFTER_DELETE)
         self._setup_dhcp()
         self._start_rpc_notifiers()
         self.add_agent_status_check_worker(self.agent_health_check)
@@ -210,6 +201,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         driver=extension_driver, service_plugin=service_plugin
                     )
 
+    @registry.receives(resources.PORT,
+                       [provisioning_blocks.PROVISIONING_COMPLETE])
     def _port_provisioned(self, rtype, event, trigger, context, object_id,
                           **kwargs):
         port_id = object_id
@@ -1859,6 +1852,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     return True
         return False
 
+    @registry.receives(resources.SEGMENT, (events.PRECOMMIT_CREATE,
+                                           events.PRECOMMIT_DELETE,
+                                           events.AFTER_CREATE,
+                                           events.AFTER_DELETE))
     def _handle_segment_change(self, rtype, event, trigger, context, segment):
         if (event == events.PRECOMMIT_CREATE and
             not isinstance(trigger, segments_plugin.Plugin)):
