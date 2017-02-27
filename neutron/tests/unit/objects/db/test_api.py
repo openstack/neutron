@@ -46,7 +46,7 @@ class GetObjectsTestCase(test_base.BaseTestCase):
                 api.get_objects(ctxt, model, _pager=pager)
         get_object.assert_called_with(ctxt, model, id=marker)
         get_collection.assert_called_with(
-            ctxt, model, mock.ANY,
+            ctxt, model, dict_func=None,
             filters={},
             limit=limit,
             marker_obj=get_object.return_value)

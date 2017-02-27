@@ -272,8 +272,11 @@ class CommonDbMixin(object):
                                            limit=limit,
                                            marker_obj=marker_obj,
                                            page_reverse=page_reverse)
-        items = [attributes.populate_project_info(dict_func(c, fields))
-                 for c in query]
+        items = [
+            attributes.populate_project_info(
+                dict_func(c, fields) if dict_func else c)
+            for c in query
+        ]
         if limit and page_reverse:
             items.reverse()
         return items
