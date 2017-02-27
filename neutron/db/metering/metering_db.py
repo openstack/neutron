@@ -18,7 +18,6 @@ from oslo_utils import uuidutils
 from sqlalchemy import orm
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
-from neutron.common import _deprecate
 from neutron.common import constants
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
@@ -27,10 +26,6 @@ from neutron.db import l3_dvr_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import metering as metering_models
 from neutron.extensions import metering
-
-
-_deprecate._moved_global('MeteringLabelRule', new_module=metering_models)
-_deprecate._moved_global('MeteringLabel', new_module=metering_models)
 
 
 class MeteringDbMixin(metering.MeteringPluginBase,
@@ -259,6 +254,3 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                 metering_models.MeteringLabel.id == label_id)
 
         return self._process_sync_metering_data(context, labels)
-
-
-_deprecate._MovedGlobals()

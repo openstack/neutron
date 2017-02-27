@@ -26,7 +26,6 @@ from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.db import _utils as db_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import external_net as ext_net_models
@@ -38,8 +37,6 @@ from neutron.extensions import rbac as rbac_ext
 
 
 DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
-
-_deprecate._moved_global('ExternalNetwork', new_module=ext_net_models)
 
 
 class External_net_db_mixin(object):
@@ -269,6 +266,3 @@ class External_net_db_mixin(object):
         new = super(External_net_db_mixin, cls).__new__(cls, *args, **kwargs)
         new._register_external_net_rbac_hooks()
         return new
-
-
-_deprecate._MovedGlobals()

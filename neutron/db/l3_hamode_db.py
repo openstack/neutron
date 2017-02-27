@@ -34,7 +34,6 @@ from neutron.api.v2 import attributes
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.db import _utils as db_utils
@@ -52,10 +51,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet
 from neutron.plugins.common import utils as p_utils
 
-
-_deprecate._moved_global('L3HARouterAgentPortBinding', new_module=l3ha_model)
-_deprecate._moved_global('L3HARouterNetwork', new_module=l3ha_model)
-_deprecate._moved_global('L3HARouterVRIdAllocation', new_module=l3ha_model)
 
 VR_ID_RANGE = set(range(1, 255))
 MAX_ALLOCATION_TRIES = 10
@@ -737,6 +732,3 @@ def is_ha_router_port(context, device_owner, router_id):
         return bool(query.limit(1).count())
     else:
         return False
-
-
-_deprecate._MovedGlobals()

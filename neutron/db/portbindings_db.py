@@ -16,15 +16,11 @@
 from neutron_lib.api import validators
 
 from neutron.api.v2 import attributes
-from neutron.common import _deprecate
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import portbinding as pmodels
 from neutron.db import models_v2
 from neutron.db import portbindings_base
 from neutron.extensions import portbindings
-
-
-_deprecate._moved_global('PortBindingPort', new_module=pmodels)
 
 
 class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
@@ -109,6 +105,3 @@ def _extend_port_dict_binding(plugin, port_res, port_db):
 # Register dict extend functions for ports
 db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
     attributes.PORTS, [_extend_port_dict_binding])
-
-
-_deprecate._MovedGlobals()

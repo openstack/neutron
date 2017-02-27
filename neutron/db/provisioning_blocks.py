@@ -18,9 +18,7 @@ from oslo_log import log as logging
 from neutron._i18n import _LE
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.common import _deprecate
 from neutron.db import api as db_api
-from neutron.db.models import provisioning_block as pb_model
 from neutron.db import models_v2
 from neutron.objects import provisioning_blocks as pb_obj
 
@@ -34,8 +32,6 @@ L2_AGENT_ENTITY = 'L2'
 # OVO is complete. Currently 'extend_port_dict' in ext_test fails when changed
 # to OVO here.
 _RESOURCE_TO_MODEL_MAP = {resources.PORT: models_v2.Port}
-
-_deprecate._moved_global('ProvisioningBlock', new_module=pb_model)
 
 
 def add_model_for_resource(resource, model):
@@ -177,6 +173,3 @@ def _get_standard_attr_id(context, object_id, object_type):
         LOG.debug("Could not find standard attr ID for object %s.", object_id)
         return
     return obj.standard_attr_id
-
-
-_deprecate._MovedGlobals()

@@ -19,17 +19,14 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import _deprecate
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import l3_db
-from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.objects import router as l3_obj
 
-_deprecate._moved_global('RouterRoute', new_module=l3_models)
 
 LOG = logging.getLogger(__name__)
 
@@ -168,6 +165,3 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 class ExtraRoute_db_mixin(ExtraRoute_dbonly_mixin, l3_db.L3_NAT_db_mixin):
     """Mixin class to support extra route configuration on router with rpc."""
     pass
-
-
-_deprecate._MovedGlobals()

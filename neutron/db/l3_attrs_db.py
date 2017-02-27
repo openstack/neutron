@@ -15,13 +15,10 @@
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.common import _deprecate
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3_attrs
 from neutron.extensions import availability_zone as az
 from neutron.extensions import l3
-
-_deprecate._moved_global('RouterExtraAttributes', new_module=l3_attrs)
 
 
 def get_attr_info():
@@ -67,6 +64,3 @@ class ExtraAttributesMixin(object):
 
     db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
         l3.ROUTERS, ['_extend_extra_router_dict'])
-
-
-_deprecate._MovedGlobals()

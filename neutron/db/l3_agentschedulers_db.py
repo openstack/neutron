@@ -29,7 +29,6 @@ from sqlalchemy import sql
 
 from neutron._i18n import _, _LI
 from neutron.agent.common import utils as agent_utils
-from neutron.common import _deprecate
 from neutron.common import utils as n_utils
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
@@ -39,9 +38,6 @@ from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
 
-
-_deprecate._moved_global('RouterL3AgentBinding',
-                         new_module=rb_model)
 
 LOG = logging.getLogger(__name__)
 
@@ -575,6 +571,3 @@ class AZL3AgentSchedulerDbMixin(L3AgentSchedulerDbMixin,
 
     def get_router_availability_zones(self, router):
         return list({agent.availability_zone for agent in router.l3_agents})
-
-
-_deprecate._MovedGlobals()
