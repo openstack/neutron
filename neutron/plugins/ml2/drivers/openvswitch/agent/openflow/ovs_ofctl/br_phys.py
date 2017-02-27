@@ -56,5 +56,5 @@ class OVSPhysicalBridge(ovs_bridge.OVSAgentBridge,
 
     def remove_dvr_mac_vlan(self, mac):
         # REVISIT(yamamoto): match in_port as well?
-        self.delete_flows(table_id=constants.DVR_NOT_LEARN_VLAN,
-            eth_src=mac)
+        self.delete_flows(table=constants.DVR_NOT_LEARN_VLAN,
+                          dl_src=mac)

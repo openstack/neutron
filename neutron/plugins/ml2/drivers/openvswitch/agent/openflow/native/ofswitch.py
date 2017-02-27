@@ -99,9 +99,9 @@ class OpenFlowSwitchMixin(object):
             return match
         return ofpp.OFPMatch(**match_kwargs)
 
-    def delete_flows(self, table_id=None, strict=False, priority=0,
-                     cookie=0, cookie_mask=0,
-                     match=None, **match_kwargs):
+    def uninstall_flows(self, table_id=None, strict=False, priority=0,
+                        cookie=0, cookie_mask=0,
+                        match=None, **match_kwargs):
         (dp, ofp, ofpp) = self._get_dp()
         if table_id is None:
             table_id = ofp.OFPTT_ALL
@@ -140,7 +140,7 @@ class OpenFlowSwitchMixin(object):
         for c in cookies:
             LOG.warning(_LW("Deleting flow with cookie 0x%(cookie)x"),
                         {'cookie': c})
-            self.delete_flows(cookie=c, cookie_mask=((1 << 64) - 1))
+            self.uninstall_flows(cookie=c, cookie_mask=((1 << 64) - 1))
 
     def install_goto_next(self, table_id):
         self.install_goto(table_id=table_id, dest_table_id=table_id + 1)

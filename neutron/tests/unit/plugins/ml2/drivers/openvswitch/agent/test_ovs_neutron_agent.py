@@ -1380,7 +1380,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent, 'patch_tun_ofport', new=2),\
                 mock.patch.object(self.agent, 'patch_int_ofport', new=2),\
                 mock.patch.object(self.agent.tun_br,
-                                  'delete_flows') as delete,\
+                                  'uninstall_flows') as delete,\
                 mock.patch.object(self.agent.int_br,
                                   "add_patch_port") as int_patch_port,\
                 mock.patch.object(self.agent.tun_br,
@@ -1445,7 +1445,7 @@ class TestOvsNeutronAgent(object):
         fdb_entry = {'net3': {}}
         with mock.patch.object(self.agent.tun_br, 'add_flow') as add_flow_fn,\
                 mock.patch.object(self.agent.tun_br,
-                                  'delete_flows') as del_flow_fn,\
+                                  'uninstall_flows') as del_flow_fn,\
                 mock.patch.object(self.agent,
                                   '_setup_tunnel_port') as add_tun_fn,\
                 mock.patch.object(self.agent,
@@ -1583,11 +1583,11 @@ class TestOvsNeutronAgent(object):
         lvm.tun_ofports = set(['1', '2'])
         with mock.patch.object(self.agent.tun_br, 'mod_flow') as mod_flow_fn,\
                 mock.patch.object(self.agent.tun_br,
-                                  'delete_flows') as delete_flows_fn:
+                                  'uninstall_flows') as uninstall_flows_fn:
             self.agent.del_fdb_flow(self.agent.tun_br, n_const.FLOODING_ENTRY,
                                     '1.1.1.1', lvm, '3')
             self.assertFalse(mod_flow_fn.called)
-            self.assertFalse(delete_flows_fn.called)
+            self.assertFalse(uninstall_flows_fn.called)
 
     def test_recl_lv_port_to_preserve(self):
         self._prepare_l2_pop_ofports()
@@ -2051,7 +2051,8 @@ class TestOvsNeutronAgent(object):
         expected = [
             mock.call(in_port=1)
         ]
-        self.assertEqual(expected, self.agent.int_br.delete_flows.mock_calls)
+        self.assertEqual(expected,
+                         self.agent.int_br.uninstall_flows.mock_calls)
         self.assertEqual(newmap, self.agent.vifname_to_ofport_map)
         self.assertFalse(
             self.agent.int_br.delete_arp_spoofing_protection.called)
@@ -2115,9 +2116,9 @@ class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
     def test_cleanup_stale_flows(self):
         uint64_max = (1 << 64) - 1
         with mock.patch.object(self.agent.int_br,
-                              'dump_flows') as dump_flows,\
+                               'dump_flows') as dump_flows,\
                 mock.patch.object(self.agent.int_br,
-                                  'delete_flows') as del_flow:
+                                  'uninstall_flows') as uninstall_flows:
             self.agent.int_br.set_agent_uuid_stamp(1234)
             dump_flows.return_value = [
                 # mock ryu.ofproto.ofproto_v1_3_parser.OFPFlowStats
@@ -2132,8 +2133,8 @@ class TestOvsNeutronAgentRyu(TestOvsNeutronAgent,
                                   cookie_mask=uint64_max),
                         mock.call(cookie=9029,
                                   cookie_mask=uint64_max)]
-            del_flow.assert_has_calls(expected, any_order=True)
-            self.assertEqual(len(expected), len(del_flow.mock_calls))
+            uninstall_flows.assert_has_calls(expected, any_order=True)
+            self.assertEqual(len(expected), len(uninstall_flows.mock_calls))
 
 
 class AncillaryBridgesTest(object):

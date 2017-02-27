@@ -291,7 +291,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                                    segmentation_id=segmentation_id)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(
+            call.uninstall_flows(
                 table_id=4,
                 match=ofpp.OFPMatch(tunnel_id=segmentation_id)),
         ]
@@ -325,7 +325,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.delete_flood_to_tun(vlan=vlan)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(table_id=22,
+            call.uninstall_flows(table_id=22,
                 match=ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT)),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -363,7 +363,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.delete_unicast_to_tun(vlan=vlan, mac=mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(table_id=20,
+            call.uninstall_flows(table_id=20,
                 match=ofpp.OFPMatch(
                     eth_dst=mac, vlan_vid=vlan | ofp.OFPVID_PRESENT)),
         ]
@@ -375,7 +375,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.delete_unicast_to_tun(vlan=vlan, mac=mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(table_id=20,
+            call.uninstall_flows(table_id=20,
                 match=ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT)),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -424,7 +424,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.delete_arp_responder(vlan=vlan, ip=ip)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(
+            call.uninstall_flows(
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_ARP,
                     arp_tpa=ip,
@@ -439,7 +439,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.delete_arp_responder(vlan=vlan, ip=ip)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(
+            call.uninstall_flows(
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_ARP,
                     vlan_vid=vlan | ofp.OFPVID_PRESENT),
@@ -469,7 +469,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.cleanup_tunnel_port(port=port)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(in_port=port),
+            call.uninstall_flows(in_port=port),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -497,6 +497,6 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.br.remove_dvr_mac_tun(mac=mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.delete_flows(eth_src=mac, table_id=9),
+            call.uninstall_flows(eth_src=mac, table_id=9),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
