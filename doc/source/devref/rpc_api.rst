@@ -188,7 +188,7 @@ exposed.
 
 Similarly, there is an RPC interface defined that allows the Neutron plugin to
 remotely invoke methods in the DHCP agent.  The client side is defined in
-neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.DhcpAgentNotifyApi.  The
+neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.DhcpAgentNotifyAPI.  The
 server side of this interface that runs in the DHCP agent is
 neutron.agent.dhcp.agent.DhcpAgent.
 
