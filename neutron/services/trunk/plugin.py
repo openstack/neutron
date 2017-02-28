@@ -60,6 +60,7 @@ def _extend_port_trunk_details(core_plugin, port_res, port_db):
     return port_res
 
 
+@registry.has_registry_receivers
 class TrunkPlugin(service_base.ServicePluginBase,
                   common_db_mixin.CommonDbMixin):
 
@@ -79,11 +80,6 @@ class TrunkPlugin(service_base.ServicePluginBase,
         drivers.register()
         registry.subscribe(rules.enforce_port_deletion_rules,
                            resources.PORT, events.BEFORE_DELETE)
-        # NOTE(tidwellr) Consider keying off of PRECOMMIT_UPDATE if we find
-        # AFTER_UPDATE to be problematic for setting trunk status when a
-        # a parent port becomes unbound.
-        registry.subscribe(self._trigger_trunk_status_change,
-                           resources.PORT, events.AFTER_UPDATE)
         registry.notify(constants.TRUNK_PLUGIN, events.AFTER_INIT, self)
         for driver in self._drivers:
             LOG.debug('Trunk plugin loaded with driver %s', driver.name)
@@ -396,6 +392,10 @@ class TrunkPlugin(service_base.ServicePluginBase,
 
         return obj
 
+    # NOTE(tidwellr) Consider keying off of PRECOMMIT_UPDATE if we find
+    # AFTER_UPDATE to be problematic for setting trunk status when a
+    # a parent port becomes unbound.
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE])
     def _trigger_trunk_status_change(self, resource, event, trigger, **kwargs):
         updated_port = kwargs['port']
         trunk_details = updated_port.get('trunk_details')
