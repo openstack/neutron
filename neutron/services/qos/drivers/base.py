@@ -19,6 +19,7 @@ from neutron.callbacks import registry
 from neutron.services.qos import qos_consts
 
 
+@registry.has_registry_receivers
 class DriverBase(object):
 
     def __init__(self, name, vif_types, vnic_types,
@@ -39,10 +40,8 @@ class DriverBase(object):
         self.vnic_types = vnic_types
         self.supported_rules = supported_rules
         self.requires_rpc_notifications = requires_rpc_notifications
-        registry.subscribe(self._register,
-                           qos_consts.QOS_PLUGIN,
-                           events.AFTER_INIT)
 
+    @registry.receives(qos_consts.QOS_PLUGIN, [events.AFTER_INIT])
     def _register(self, resource, event, trigger, **kwargs):
         if self.is_loaded:
             # trigger is the QosServiceDriverManager
