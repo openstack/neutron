@@ -11,6 +11,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
+
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
@@ -28,6 +30,18 @@ class ObjectWithDecoratedCallback(object):
     @registry.receives(resources.NETWORK, [events.AFTER_DELETE])
     def callback(self, *args, **kwargs):
         self.counter += 1
+
+
+@registry.has_registry_receivers
+class AnotherObjectWithDecoratedCallback(ObjectWithDecoratedCallback):
+
+    def __init__(self):
+        super(AnotherObjectWithDecoratedCallback, self).__init__()
+        self.counter2 = 0
+
+    @registry.receives(resources.NETWORK, [events.AFTER_DELETE])
+    def callback2(self, *args, **kwargs):
+        self.counter2 += 1
 
 
 class CallBacksManagerTestCase(base.BaseTestCase):
@@ -49,3 +63,10 @@ class CallBacksManagerTestCase(base.BaseTestCase):
         registry.notify(resources.NETWORK, events.AFTER_DELETE, self)
         self.assertEqual(4, i1.counter)
         self.assertEqual(1, i2.counter)
+
+    def test_object_inheriting_others_no_double_subscribe(self):
+        with mock.patch.object(registry, 'subscribe') as sub:
+            AnotherObjectWithDecoratedCallback()
+            # there are 3 methods (2 in parent and one in child) and 1
+            # subscribes to 2 events, so we expect 4 subscribes
+            self.assertEqual(4, len(sub.mock_calls))
