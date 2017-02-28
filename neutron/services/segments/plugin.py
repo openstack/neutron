@@ -72,6 +72,7 @@ def _extend_port_dict_binding(plugin, port_res, port_db):
     port_res[ip_allocation.IP_ALLOCATION] = value
 
 
+@registry.has_registry_receivers
 class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     _instance = None
@@ -87,17 +88,13 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
             attributes.PORTS, [_extend_port_dict_binding])
         self.nova_updater = NovaSegmentNotifier()
 
-        registry.subscribe(
-            self._prevent_segment_delete_with_subnet_associated,
-            resources.SEGMENT,
-            events.BEFORE_DELETE)
-
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
+    @registry.receives(resources.SEGMENT, [events.BEFORE_DELETE])
     def _prevent_segment_delete_with_subnet_associated(
             self, resource, event, trigger, context, segment,
             for_net_delete=False):
@@ -130,27 +127,13 @@ class Event(object):
         self.host = host
 
 
+@registry.has_registry_receivers
 class NovaSegmentNotifier(object):
 
     def __init__(self):
         self.p_client, self.n_client = self._get_clients()
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self._send_notifications)
-
-        registry.subscribe(self._notify_subnet_created, resources.SUBNET,
-                           events.AFTER_CREATE)
-        registry.subscribe(self._notify_subnet_updated, resources.SUBNET,
-                           events.AFTER_UPDATE)
-        registry.subscribe(self._notify_subnet_deleted, resources.SUBNET,
-                           events.AFTER_DELETE)
-        registry.subscribe(self._notify_host_addition_to_aggregate,
-                           resources.SEGMENT_HOST_MAPPING, events.AFTER_CREATE)
-        registry.subscribe(self._notify_port_created_or_deleted,
-                           resources.PORT, events.AFTER_CREATE)
-        registry.subscribe(self._notify_port_updated, resources.PORT,
-                           events.AFTER_UPDATE)
-        registry.subscribe(self._notify_port_created_or_deleted,
-                           resources.PORT, events.AFTER_DELETE)
 
     def _get_clients(self):
         p_client = placement_client.PlacementAPIClient()
@@ -181,6 +164,7 @@ class NovaSegmentNotifier(object):
                           'update routed networks IPv4 inventories')
                 return
 
+    @registry.receives(resources.SUBNET, [events.AFTER_CREATE])
     def _notify_subnet_created(self, resource, event, trigger, context,
                                subnet, **kwargs):
         segment_id = subnet.get('segment_id')
@@ -253,6 +237,7 @@ class NovaSegmentNotifier(object):
                 reserved += 1
         return total, reserved
 
+    @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
     def _notify_subnet_updated(self, resource, event, trigger, context,
                                subnet, original_subnet, **kwargs):
         segment_id = subnet.get('segment_id')
@@ -285,6 +270,7 @@ class NovaSegmentNotifier(object):
                 reserved=reserved,
                 segment_host_mappings=segment_host_mappings))
 
+    @registry.receives(resources.SUBNET, [events.AFTER_DELETE])
     def _notify_subnet_deleted(self, resource, event, trigger, context,
                                subnet, **kwargs):
         segment_id = subnet.get('segment_id')
@@ -320,6 +306,7 @@ class NovaSegmentNotifier(object):
         self.n_client.aggregates.delete(aggregate_id)
         self.p_client.delete_resource_provider(event.segment_id)
 
+    @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_CREATE])
     def _notify_host_addition_to_aggregate(self, resource, event, trigger,
                                            context, host, current_segment_ids,
                                            **kwargs):
@@ -346,6 +333,8 @@ class NovaSegmentNotifier(object):
                              'routed network segment %(segment_id)s'),
                          {'host': event.host, 'segment_id': segment_id})
 
+    @registry.receives(resources.PORT,
+                       [events.AFTER_CREATE, events.AFTER_DELETE])
     def _notify_port_created_or_deleted(self, resource, event, trigger,
                                         context, port, **kwargs):
         if not self._does_port_require_nova_inventory_update(port):
@@ -358,6 +347,7 @@ class NovaSegmentNotifier(object):
             self.batch_notifier.queue_event(Event(self._update_nova_inventory,
                 segment_id, reserved=ipv4_subnets_number))
 
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE])
     def _notify_port_updated(self, resource, event, trigger, context,
                              **kwargs):
         port = kwargs.get('port')
