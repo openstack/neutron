@@ -107,6 +107,7 @@ def _update_subnetpool_dict(orig_pool, new_pool):
     return updated
 
 
+@registry.has_registry_receivers
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         neutron_plugin_base_v2.NeutronPluginBaseV2,
                         rbac_mixin.RbacPluginMixin,
@@ -141,11 +142,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                self.nova_notifier.send_port_status)
             db_api.sqla_listen(models_v2.Port.status, 'set',
                                self.nova_notifier.record_port_status_changed)
-        for e in (events.BEFORE_CREATE, events.BEFORE_UPDATE,
-                  events.BEFORE_DELETE):
-            registry.subscribe(self.validate_network_rbac_policy_change,
-                               rbac_mixin.RBAC_POLICY, e)
 
+    @registry.receives(rbac_mixin.RBAC_POLICY, [events.BEFORE_CREATE,
+                                                events.BEFORE_UPDATE,
+                                                events.BEFORE_DELETE])
     @db_api.retry_if_session_inactive()
     def validate_network_rbac_policy_change(self, resource, event, trigger,
                                             context, object_type, policy,
