@@ -32,8 +32,16 @@ class ObjectWithDecoratedCallback(object):
         self.counter += 1
 
 
+class MixinWithNew(object):
+    def __new__(cls):
+        i = super(MixinWithNew, cls).__new__(cls)
+        i.new_called = True
+        return i
+
+
 @registry.has_registry_receivers
-class AnotherObjectWithDecoratedCallback(ObjectWithDecoratedCallback):
+class AnotherObjectWithDecoratedCallback(ObjectWithDecoratedCallback,
+                                         MixinWithNew):
 
     def __init__(self):
         super(AnotherObjectWithDecoratedCallback, self).__init__()
@@ -70,3 +78,6 @@ class CallBacksManagerTestCase(base.BaseTestCase):
             # there are 3 methods (2 in parent and one in child) and 1
             # subscribes to 2 events, so we expect 4 subscribes
             self.assertEqual(4, len(sub.mock_calls))
+
+    def test_new_inheritance_not_broken(self):
+        self.assertTrue(AnotherObjectWithDecoratedCallback().new_called)

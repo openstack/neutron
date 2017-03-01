@@ -69,17 +69,23 @@ def receives(resource, events):
     return decorator
 
 
-def has_registry_receivers(cls):
+def has_registry_receivers(klass):
     """Decorator to setup __new__ method in classes to subscribe bound methods.
 
     Any method decorated with @receives above is an unbound method on a class.
     This decorator sets up the class __new__ method to subscribe the bound
     method in the callback registry after object instantiation.
     """
-    orig_new = cls.__new__
+    orig_new = klass.__new__
+    new_inherited = '__new__' not in klass.__dict__
 
+    @staticmethod
     def replacement_new(cls, *args, **kwargs):
-        instance = orig_new(*args, **kwargs)
+        if new_inherited:
+            # class didn't define __new__ so we need to call inherited __new__
+            instance = super(klass, cls).__new__(cls, *args, **kwargs)
+        else:
+            instance = orig_new(cls, *args, **kwargs)
         if getattr(instance, '_DECORATED_METHODS_SUBSCRIBED', False):
             # Avoid running this logic twice for classes inheriting other
             # classes with this same decorator. Only one needs to execute
@@ -98,5 +104,5 @@ def has_registry_receivers(cls):
                 subscribe(getattr(instance, name), resource, event)
         setattr(instance, '_DECORATED_METHODS_SUBSCRIBED', True)
         return instance
-    cls.__new__ = classmethod(replacement_new)
-    return cls
+    klass.__new__ = replacement_new
+    return klass
