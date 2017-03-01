@@ -52,6 +52,13 @@ class AnotherObjectWithDecoratedCallback(ObjectWithDecoratedCallback,
         self.counter2 += 1
 
 
+@registry.has_registry_receivers
+class CallbackClassWithParameters(object):
+
+    def __init__(self, dummy):
+        pass
+
+
 class CallBacksManagerTestCase(base.BaseTestCase):
 
     def test_decorated_inst_method_receives(self):
@@ -81,3 +88,6 @@ class CallBacksManagerTestCase(base.BaseTestCase):
 
     def test_new_inheritance_not_broken(self):
         self.assertTrue(AnotherObjectWithDecoratedCallback().new_called)
+
+    def test_object_new_not_broken(self):
+        CallbackClassWithParameters('dummy')
