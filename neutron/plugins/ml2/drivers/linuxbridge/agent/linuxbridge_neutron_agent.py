@@ -716,8 +716,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                 list(self.bridge_mappings.values())[0])
         else:
             devices = ip_lib.IPWrapper().get_devices(True)
-            if devices:
-                mac = ip_lib.get_device_mac(devices[0].name)
+            for device in devices:
+                mac = ip_lib.get_device_mac(device.name)
+                if mac:
+                    break
             else:
                 LOG.error(_LE("Unable to obtain MAC address for unique ID. "
                               "Agent terminated!"))
