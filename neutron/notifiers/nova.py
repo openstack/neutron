@@ -43,6 +43,7 @@ NEUTRON_NOVA_EVENT_STATUS_MAP = {constants.PORT_STATUS_ACTIVE: 'completed',
 NOVA_API_VERSION = "2"
 
 
+@registry.has_registry_receivers
 class Notifier(object):
 
     _instance = None
@@ -74,15 +75,6 @@ class Notifier(object):
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self.send_events)
 
-        # register callbacks for events pertaining resources affecting Nova
-        callback_resources = (
-            resources.FLOATING_IP,
-            resources.PORT,
-        )
-        for resource in callback_resources:
-            registry.subscribe(self._send_nova_notification,
-                               resource, events.BEFORE_RESPONSE)
-
     def _is_compute_port(self, port):
         try:
             if (port['device_id'] and uuidutils.is_uuid_like(port['device_id'])
@@ -103,6 +95,8 @@ class Notifier(object):
                 'name': VIF_DELETED,
                 'tag': port['id']}
 
+    @registry.receives(resources.PORT, events.BEFORE_RESPONSE)
+    @registry.receives(resources.FLOATING_IP, events.BEFORE_RESPONSE)
     def _send_nova_notification(self, resource, event, trigger,
                                 action=None, original=None, data=None,
                                 **kwargs):
