@@ -51,10 +51,12 @@ def _extend_external_network_default(core_plugin, net_res, net_db):
 
 @db_api.retry_if_session_inactive()
 def _ensure_external_network_default_value_callback(
-    resource, event, trigger, context, request, network):
+    resource, event, trigger, context, request, network, **kwargs):
     """Ensure the is_default db field matches the create/update request."""
     is_default = request.get(IS_DEFAULT)
-    if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE) and is_default:
+    if is_default is None:
+        return
+    if is_default:
         # ensure there is only one default external network at any given time
         pager = base_obj.Pager(limit=1)
         objs = net_obj.ExternalNetwork.get_objects(context,
@@ -64,13 +66,16 @@ def _ensure_external_network_default_value_callback(
                 raise exceptions.DefaultExternalNetworkExists(
                     net_id=objs[0].network_id)
 
+    orig = kwargs.get('original_network')
+    if orig and orig.get(IS_DEFAULT) == is_default:
+        return
+    network[IS_DEFAULT] = is_default
     # Reflect the status of the is_default on the create/update request
-    if is_default is not None:
-        obj = net_obj.ExternalNetwork.get_object(context,
-                                                 network_id=network['id'])
-        if obj:
-            obj.is_default = is_default
-            obj.update()
+    obj = net_obj.ExternalNetwork.get_object(context,
+                                             network_id=network['id'])
+    if obj:
+        obj.is_default = is_default
+        obj.update()
 
 
 class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
@@ -84,9 +89,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         new = super(AutoAllocatedTopologyMixin, cls).__new__(cls, *args,
                                                              **kwargs)
         registry.subscribe(_ensure_external_network_default_value_callback,
-            resources.EXTERNAL_NETWORK, events.PRECOMMIT_CREATE)
+            resources.NETWORK, events.PRECOMMIT_UPDATE)
         registry.subscribe(_ensure_external_network_default_value_callback,
-            resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE)
+            resources.NETWORK, events.PRECOMMIT_CREATE)
         return new
 
     # TODO(armax): if a tenant modifies auto allocated resources under
