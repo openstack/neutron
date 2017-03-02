@@ -21,14 +21,13 @@ from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import l3
 
 
+@registry.has_registry_receivers
 class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
     """Mixin class to enable router's availability zone attributes."""
 
     def __new__(cls, *args, **kwargs):
         inst = super(RouterAvailabilityZoneMixin, cls).__new__(
             cls, *args, **kwargs)
-        registry.subscribe(inst._process_az_request,
-                           resources.ROUTER, events.PRECOMMIT_CREATE)
         db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
             l3.ROUTERS, [inst._add_az_to_response])
         return inst
@@ -39,6 +38,7 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
         router_res['availability_zones'] = (
             self.get_router_availability_zones(router_db))
 
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _process_az_request(self, resource, event, trigger, context,
                             router, router_db, **kwargs):
         if az_ext.AZ_HINTS in router:
