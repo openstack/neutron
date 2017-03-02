@@ -435,21 +435,6 @@ class TestDhcpAgent(base.BaseTestCase):
                         dhcp._dhcp_ready_ports_loop()
         self.assertFalse(lex.called)
 
-    def test__dhcp_ready_ports_disables_on_incompatible_server(self):
-        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
-        dhcp.agent_state = dict(configurations=dict(notifies_port_ready=True))
-        dhcp.dhcp_ready_ports = set(range(4))
-
-        side_effect = oslo_messaging.RemoteError(exc_type='NoSuchMethod')
-        with mock.patch.object(dhcp.plugin_rpc, 'dhcp_ready_on_ports',
-                               side_effect=side_effect):
-            with mock.patch.object(dhcp_agent.eventlet, 'sleep',
-                                   side_effect=[None, RuntimeError]) as sleep:
-                with testtools.ExpectedException(RuntimeError):
-                    dhcp._dhcp_ready_ports_loop()
-                # should have slept for 5 minutes
-                sleep.assert_called_with(300)
-
     def test__dhcp_ready_ports_loop(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         dhcp.dhcp_ready_ports = set(range(4))
