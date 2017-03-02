@@ -83,7 +83,12 @@ def has_registry_receivers(klass):
     def replacement_new(cls, *args, **kwargs):
         if new_inherited:
             # class didn't define __new__ so we need to call inherited __new__
-            instance = super(klass, cls).__new__(cls, *args, **kwargs)
+            super_new = super(klass, cls).__new__
+            if super_new is object.__new__:
+                # object.__new__ doesn't accept args nor kwargs
+                instance = super_new(cls)
+            else:
+                instance = super_new(cls, *args, **kwargs)
         else:
             instance = orig_new(cls, *args, **kwargs)
         if getattr(instance, '_DECORATED_METHODS_SUBSCRIBED', False):
