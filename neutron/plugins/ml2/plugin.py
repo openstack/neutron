@@ -1221,10 +1221,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if utils.is_port_trusted(port):
             return
         subnet_ids = [f['subnet_id'] for f in port['fixed_ips']]
-        if (db.is_dhcp_active_on_any_subnet(context, subnet_ids) and
-            any(self.get_configuration_dict(a).get('notifies_port_ready')
-                for a in self.get_dhcp_agents_hosting_networks(
-                    context, [port['network_id']]))):
+        if db.is_dhcp_active_on_any_subnet(context, subnet_ids):
             # at least one of the agents will tell us when the dhcp config
             # is ready so we setup a provisioning component to prevent the
             # port from going ACTIVE until a dhcp_ready_on_port

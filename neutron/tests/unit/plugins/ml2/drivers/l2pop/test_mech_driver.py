@@ -115,6 +115,9 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         uptime = ('neutron.plugins.ml2.drivers.l2pop.db.get_agent_uptime')
         uptime_patch = mock.patch(uptime, return_value=190)
         uptime_patch.start()
+        # don't wait for DHCP provisioning block to clear
+        mock.patch('neutron.plugins.ml2.db.is_dhcp_active_on_any_subnet',
+                   return_value=False).start()
 
     def _setup_l3(self):
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
