@@ -283,6 +283,10 @@ class IPDevice(SubProcessBase):
     def __str__(self):
         return self.name
 
+    def __repr__(self):
+        return "<IPDevice(name=%s, namespace=%s)>" % (self._name,
+                                                      self.namespace)
+
     def exists(self):
         """Return True if the device exists in the namespace."""
         # we must save and restore this before returning
