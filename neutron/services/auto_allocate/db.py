@@ -81,9 +81,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         new = super(AutoAllocatedTopologyMixin, cls).__new__(cls, *args,
                                                              **kwargs)
         registry.subscribe(_ensure_external_network_default_value_callback,
-            resources.EXTERNAL_NETWORK, events.BEFORE_CREATE)
-        registry.subscribe(_ensure_external_network_default_value_callback,
-            resources.EXTERNAL_NETWORK, events.AFTER_CREATE)
+            resources.EXTERNAL_NETWORK, events.PRECOMMIT_CREATE)
         registry.subscribe(_ensure_external_network_default_value_callback,
             resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE)
         return new
