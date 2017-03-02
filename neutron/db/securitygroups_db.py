@@ -35,6 +35,7 @@ from neutron.db.models import securitygroup as sg_models
 from neutron.extensions import securitygroup as ext_sg
 
 
+@registry.has_registry_receivers
 class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     """Mixin class to add security group to db_base_plugin_v2."""
 
@@ -684,6 +685,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             return default_group['security_group_id']
         except exc.NoResultFound:
             pass
+
+    @registry.receives(resources.PORT, [events.BEFORE_CREATE])
+    @registry.receives(resources.NETWORK, [events.BEFORE_CREATE])
+    def _ensure_default_security_group_handler(self, resource, event, trigger,
+                                               context, **kwargs):
+        tenant_id = kwargs[resource]['tenant_id']
+        self._ensure_default_security_group(context, tenant_id)
 
     def _ensure_default_security_group(self, context, tenant_id):
         """Create a default security group if one doesn't exist.

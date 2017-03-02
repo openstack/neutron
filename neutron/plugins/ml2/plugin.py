@@ -734,6 +734,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         net_data = network[attributes.NETWORK]
         tenant_id = net_data['tenant_id']
         session = context.session
+        registry.notify(resources.NETWORK, events.BEFORE_CREATE, self,
+                        context=context, network=net_data)
         with session.begin(subtransactions=True):
             net_db = self.create_network_db(context, network)
             result = self._make_network_dict(net_db, process_extensions=False,
@@ -770,8 +772,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def create_network(self, context, network):
-        self._ensure_default_security_group(context,
-                                            network['network']['tenant_id'])
         result, mech_context = self._create_network_db(context, network)
         kwargs = {'context': context, 'network': result}
         registry.notify(resources.NETWORK, events.AFTER_CREATE, self, **kwargs)
@@ -788,8 +788,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def create_network_bulk(self, context, networks):
-        tenants = {n['network']['tenant_id'] for n in networks['networks']}
-        map(lambda t: self._ensure_default_security_group(context, t), tenants)
         objects = self._create_bulk_ml2(attributes.NETWORK, context, networks)
         return [obj['result'] for obj in objects]
 
@@ -1242,9 +1240,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not attrs.get('status'):
             attrs['status'] = const.PORT_STATUS_DOWN
 
-        # NOTE(kevinbenton): triggered outside of transaction since it
-        # emits 'AFTER' events if it creates.
-        self._ensure_default_security_group(context, attrs['tenant_id'])
+        registry.notify(resources.PORT, events.BEFORE_CREATE, self,
+                        context=context, port=attrs)
         session = context.session
         with session.begin(subtransactions=True):
             dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
