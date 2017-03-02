@@ -115,12 +115,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             registry.notify(
                 resources.ROUTER, events.BEFORE_UPDATE, self, **kwargs)
         except exceptions.CallbackFailure as e:
-            with excutils.save_and_reraise_exception():
-                # NOTE(armax): preserve old check's behavior
-                if len(e.errors) == 1:
-                    raise e.errors[0].error
-                raise l3.RouterInUse(router_id=router_db['id'],
-                                     reason=e)
+            # NOTE(armax): preserve old check's behavior
+            if len(e.errors) == 1:
+                raise e.errors[0].error
+            raise l3.RouterInUse(router_id=router_db['id'], reason=e)
         return True
 
     def _handle_distributed_migration(self, resource, event, trigger, context,
