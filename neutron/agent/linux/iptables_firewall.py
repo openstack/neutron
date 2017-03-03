@@ -58,6 +58,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     """Driver which enforces security groups through iptables rules."""
     IPTABLES_DIRECTION = {firewall.INGRESS_DIRECTION: 'physdev-out',
                           firewall.EGRESS_DIRECTION: 'physdev-in'}
+    CONNTRACK_ZONE_PER_PORT = False
 
     def __init__(self, namespace=None):
         self.iptables = iptables_manager.IptablesManager(
@@ -72,7 +73,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.unfiltered_ports = {}
         self.ipconntrack = ip_conntrack.get_conntrack(
             self.iptables.get_rules_for_table, self.filtered_ports,
-            self.unfiltered_ports, namespace=namespace)
+            self.unfiltered_ports, namespace=namespace,
+            zone_per_port=self.CONNTRACK_ZONE_PER_PORT)
         self._add_fallback_chain_v4v6()
         self._defer_apply = False
         self._pre_defer_filtered_ports = None
@@ -235,6 +237,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # agent restarts and don't cause unnecessary rule differences
         for pname in sorted(ports):
             port = ports[pname]
+            self._add_conntrack_jump(port)
             self._setup_chain(port, firewall.INGRESS_DIRECTION)
             self._setup_chain(port, firewall.EGRESS_DIRECTION)
         self.iptables.ipv4['filter'].add_rule(SG_CHAIN, '-j ACCEPT')
@@ -255,6 +258,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._remove_chain(port, firewall.INGRESS_DIRECTION)
             self._remove_chain(port, firewall.EGRESS_DIRECTION)
             self._remove_chain(port, SPOOF_FILTER)
+            self._remove_conntrack_jump(port)
         for port in unfiltered_ports.values():
             self._remove_rule_port_sec(port, firewall.INGRESS_DIRECTION)
             self._remove_rule_port_sec(port, firewall.EGRESS_DIRECTION)
@@ -358,6 +362,43 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if direction == firewall.EGRESS_DIRECTION:
             self._add_rules_to_chain_v4v6('INPUT', jump_rule, jump_rule,
                                           comment=ic.INPUT_TO_SG)
+
+    def _get_br_device_name(self, port):
+        return ('brq' + port['network_id'])[:n_const.LINUX_DEV_LEN]
+
+    def _get_jump_rules(self, port):
+        zone = self.ipconntrack.get_device_zone(port)
+        br_dev = self._get_br_device_name(port)
+        port_dev = self._get_device_name(port)
+        # match by interface for bridge input
+        match_interface = '-i %s'
+        match_physdev = '-m physdev --physdev-in %s'
+        # comment to prevent duplicate warnings for different devices using
+        # same bridge. truncate start to remove prefixes
+        comment = '-m comment --comment "Set zone for %s"' % port['device'][4:]
+        rules = []
+        for dev, match in ((br_dev, match_physdev), (br_dev, match_interface),
+                           (port_dev, match_physdev)):
+            match = match % dev
+            rule = '%s %s -j CT --zone %s' % (match, comment, zone)
+            rules.append(rule)
+        return rules
+
+    def _add_conntrack_jump(self, port):
+        for jump_rule in self._get_jump_rules(port):
+            self._add_raw_rule('PREROUTING', jump_rule)
+
+    def _remove_conntrack_jump(self, port):
+        for jump_rule in self._get_jump_rules(port):
+            self._remove_raw_rule('PREROUTING', jump_rule)
+
+    def _add_raw_rule(self, chain, rule, comment=None):
+        self.iptables.ipv4['raw'].add_rule(chain, rule, comment=comment)
+        self.iptables.ipv6['raw'].add_rule(chain, rule, comment=comment)
+
+    def _remove_raw_rule(self, chain, rule):
+        self.iptables.ipv4['raw'].remove_rule(chain, rule)
+        self.iptables.ipv6['raw'].remove_rule(chain, rule)
 
     def _split_sgr_by_ethertype(self, security_group_rules):
         ipv4_sg_rules = []
@@ -862,6 +903,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
     OVS_HYBRID_TAP_PREFIX = constants.TAP_DEVICE_PREFIX
     OVS_HYBRID_PLUG_REQUIRED = True
+    CONNTRACK_ZONE_PER_PORT = True
 
     def _port_chain_name(self, port, direction):
         return iptables_manager.get_chain_name(
@@ -872,37 +914,3 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
 
     def _get_device_name(self, port):
         return get_hybrid_port_name(port['device'])
-
-    def _get_jump_rule(self, port, direction):
-        if direction == firewall.INGRESS_DIRECTION:
-            device = self._get_br_device_name(port)
-        else:
-            device = self._get_device_name(port)
-        jump_rule = '-m physdev --physdev-in %s -j CT --zone %s' % (
-            device, self.ipconntrack.get_device_zone(
-                port['device']))
-        return jump_rule
-
-    def _add_raw_chain_rules(self, port, direction):
-        jump_rule = self._get_jump_rule(port, direction)
-        self.iptables.ipv4['raw'].add_rule('PREROUTING', jump_rule)
-        self.iptables.ipv6['raw'].add_rule('PREROUTING', jump_rule)
-
-    def _remove_raw_chain_rules(self, port, direction):
-        jump_rule = self._get_jump_rule(port, direction)
-        self.iptables.ipv4['raw'].remove_rule('PREROUTING', jump_rule)
-        self.iptables.ipv6['raw'].remove_rule('PREROUTING', jump_rule)
-
-    def _add_chain(self, port, direction):
-        super(OVSHybridIptablesFirewallDriver, self)._add_chain(port,
-                                                                direction)
-        if direction in [firewall.INGRESS_DIRECTION,
-                         firewall.EGRESS_DIRECTION]:
-            self._add_raw_chain_rules(port, direction)
-
-    def _remove_chain(self, port, direction):
-        super(OVSHybridIptablesFirewallDriver, self)._remove_chain(port,
-                                                                   direction)
-        if direction in [firewall.INGRESS_DIRECTION,
-                         firewall.EGRESS_DIRECTION]:
-            self._remove_raw_chain_rules(port, direction)

@@ -24,12 +24,14 @@ import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.agent import firewall
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import openvswitch_firewall
 from neutron.cmd.sanity import checks
+from neutron.common import constants as n_const
 from neutron.conf.agent import securitygroups_rpc as security_config
 from neutron.tests.common import conn_testers
 from neutron.tests.common import helpers
@@ -95,6 +97,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
         security_config.register_securitygroups_opts()
+        self.net_id = uuidutils.generate_uuid()
         super(BaseFirewallTestCase, self).setUp()
         self.tester, self.firewall = getattr(self, self.initialize)()
         if self.firewall_name == "openvswitch":
@@ -103,7 +106,8 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
             self.tester.vm_port_id,
             [self.tester.vm_ip_address],
             self.tester.vm_mac_address,
-            [self.FAKE_SECURITY_GROUP_ID])
+            [self.FAKE_SECURITY_GROUP_ID],
+            self.net_id)
         # FIXME(jlibosva): We should consider to call prepare_port_filter with
         # deferred bridge depending on its performance
         self.firewall.prepare_port_filter(self.src_port_desc)
@@ -111,8 +115,10 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
     def initialize_iptables(self):
         cfg.CONF.set_override('enable_ipset', self.enable_ipset,
                               'SECURITYGROUP')
+        br_name = ('brq' + self.net_id)[:n_const.LINUX_DEV_LEN]
         tester = self.useFixture(
-            conn_testers.LinuxBridgeConnectionTester(self.ip_cidr))
+            conn_testers.LinuxBridgeConnectionTester(self.ip_cidr,
+                                                     bridge_name=br_name))
         firewall_drv = iptables_firewall.IptablesFirewallDriver(
             namespace=tester.bridge_namespace)
         return tester, firewall_drv
@@ -140,7 +146,8 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
         self.tester.set_peer_tag(vlan)
 
     @staticmethod
-    def _create_port_description(port_id, ip_addresses, mac_address, sg_ids):
+    def _create_port_description(port_id, ip_addresses, mac_address, sg_ids,
+                                 net_id):
         return {'admin_state_up': True,
                 'device': port_id,
                 'device_owner': DEVICE_OWNER_COMPUTE,
@@ -148,7 +155,8 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
                 'mac_address': mac_address,
                 'port_security_enabled': True,
                 'security_groups': sg_ids,
-                'status': 'ACTIVE'}
+                'status': 'ACTIVE',
+                'network_id': net_id}
 
     def _apply_security_group_rules(self, sg_id, sg_rules):
         with self.firewall.defer_apply():
@@ -539,7 +547,8 @@ class FirewallTestCase(BaseFirewallTestCase):
             self.tester.peer_port_id,
             [self.tester.peer_ip_address],
             self.tester.peer_mac_address,
-            [remote_sg_id])
+            [remote_sg_id],
+            self.net_id)
 
         vm_sg_members = {'IPv4': [self.tester.peer_ip_address]}
         peer_sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress',

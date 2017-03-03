@@ -126,6 +126,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
                  mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -981,6 +987,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      '-j DROP',
                      comment=ic.UNMATCH_DROP),
                  mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -1103,7 +1115,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
              'protocol': protocol}]
 
         with mock.patch.dict(self.firewall.ipconntrack._device_zone_map,
-                             {port['device']: ct_zone}):
+                             {port['network_id']: ct_zone}):
             self.firewall.filter_defer_apply_on()
             self.firewall.sg_rules['fake_sg_id'] = []
             self.firewall.filter_defer_apply_off()
@@ -1188,7 +1200,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self.firewall.filtered_ports[port['device']] = port
         self.firewall.updated_sg_members = set(['tapfake_dev'])
         with mock.patch.dict(self.firewall.ipconntrack._device_zone_map,
-                             {port['device']: ct_zone}):
+                             {port['network_id']: ct_zone}):
             self.firewall.filter_defer_apply_on()
             new_port = copy.deepcopy(port)
             new_port['security_groups'] = ['fake_sg_id2']
@@ -1250,7 +1262,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             members_after_delete = {'IPv6': ['fe80::3']}
 
         with mock.patch.dict(self.firewall.ipconntrack._device_zone_map,
-                             {port['device']: ct_zone}):
+                             {port['network_id']: ct_zone}):
             # add ['10.0.0.2', '10.0.0.3'] or ['fe80::2', 'fe80::3']
             self.firewall.security_group_updated('sg_member', ['fake_sg_id2'])
             self.firewall.update_security_group_members(
@@ -1307,6 +1319,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      '-j DROP',
                      comment=ic.UNMATCH_DROP),
                  mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,
+                                    comment=None),  # zone set
+                 mock.call.add_rule('PREROUTING', mock.ANY,
+                                    comment=None),  # zone set
+                 mock.call.add_rule('PREROUTING', mock.ANY,
+                                    comment=None),  # zone set
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
                      'FORWARD',
@@ -1384,8 +1402,17 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.remove_chain('ifake_dev'),
                  mock.call.remove_chain('ofake_dev'),
                  mock.call.remove_chain('sfake_dev'),
+                 mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
+                 mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
+                 mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
                  mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,
+                                    comment=None),  # zone set
+                 mock.call.add_rule('PREROUTING', mock.ANY,
+                                    comment=None),  # zone set
+                 mock.call.add_rule('PREROUTING', mock.ANY,
+                                    comment=None),  # zone set
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule(
                      'FORWARD',
@@ -1463,6 +1490,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.remove_chain('ifake_dev'),
                  mock.call.remove_chain('ofake_dev'),
                  mock.call.remove_chain('sfake_dev'),
+                 mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
+                 mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
+                 mock.call.remove_rule('PREROUTING', mock.ANY),  # zone set
                  mock.call.remove_chain('sg-chain'),
                  mock.call.add_chain('sg-chain')]
 
@@ -1486,11 +1516,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         new_port['fixed_ips'] = ['10.0.0.2', 'fe80::2']
         self.firewall.sg_members['fake_sg_id2'] = {'IPv4': ['10.0.0.2'],
                                                    'IPv6': ['fe80::2']}
-        if ct_zone:
-            self.firewall.ipconntrack._device_zone_map['tapfake_dev'] = ct_zone
-        else:
-            self.firewall.ipconntrack._device_zone_map.pop('tapfake_dev', None)
-
+        mock.patch.object(self.firewall.ipconntrack, 'get_device_zone',
+                          return_value=ct_zone).start()
         self.firewall.remove_port_filter(port)
         if not ct_zone:
             self.assertFalse(self.utils_exec.called)
@@ -1540,8 +1567,10 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def test_mock_chain_applies(self):
         chain_applies = self._mock_chain_applies()
-        port_prepare = {'device': 'd1', 'mac_address': 'prepare'}
-        port_update = {'device': 'd1', 'mac_address': 'update'}
+        port_prepare = {'device': 'd1', 'mac_address': 'prepare',
+                        'network_id': 'fake_net'}
+        port_update = {'device': 'd1', 'mac_address': 'update',
+                       'network_id': 'fake_net'}
         self.firewall.prepare_port_filter(port_prepare)
         self.firewall.update_port_filter(port_update)
         self.firewall.remove_port_filter(port_update)
@@ -1595,6 +1624,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
                  mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -1679,6 +1714,12 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                      'sg-fallback', '-j DROP',
                      comment=ic.UNMATCH_DROP),
                  mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
                  mock.call.add_chain('ifake_dev'),
                  mock.call.add_rule('FORWARD',
                                     '-m physdev --physdev-out tapfake_dev '
@@ -2064,9 +2105,9 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                    self.firewall.ipconntrack._device_zone_map)
 
     def test_get_device_zone(self):
+        dev = {'device': 'tap1234', 'network_id': '12345678901234567'}
         # initial data has 1, 2, and 9 in use.
-        self.assertEqual(10,
-               self.firewall.ipconntrack.get_device_zone('12345678901234567'))
+        self.assertEqual(10, self.firewall.ipconntrack.get_device_zone(dev))
         # should have been truncated to 11 chars
         self._dev_zone_map.update({'12345678901': 10})
         self.assertEqual(self._dev_zone_map,

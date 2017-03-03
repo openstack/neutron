@@ -517,9 +517,18 @@ class LinuxBridgeConnectionTester(ConnectionTester):
 
     """
 
+    def __init__(self, *args, **kwargs):
+        self.bridge_name = kwargs.pop('bridge_name', None)
+        super(LinuxBridgeConnectionTester, self).__init__(*args, **kwargs)
+
     def _setUp(self):
         super(LinuxBridgeConnectionTester, self)._setUp()
-        self.bridge = self.useFixture(net_helpers.LinuxBridgeFixture()).bridge
+        bridge_args = {}
+        if self.bridge_name:
+            bridge_args = {'prefix': self.bridge_name,
+                           'prefix_is_full_name': True}
+        self.bridge = self.useFixture(
+            net_helpers.LinuxBridgeFixture(**bridge_args)).bridge
         machines = self.useFixture(
             machine_fixtures.PeerMachines(
                 self.bridge, self.ip_cidr)).machines
