@@ -16,10 +16,15 @@ import mock
 
 from neutron.agent.common import base_polling
 from neutron.agent.linux import polling
+from neutron.agent.ovsdb.native import helpers
 from neutron.tests import base
 
 
 class TestGetPollingManager(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestGetPollingManager, self).setUp()
+        mock.patch.object(helpers, 'enable_connection_uri').start()
 
     def test_return_always_poll_by_default(self):
         with polling.get_polling_manager() as pm:
@@ -40,6 +45,7 @@ class TestInterfacePollingMinimizer(base.BaseTestCase):
 
     def setUp(self):
         super(TestInterfacePollingMinimizer, self).setUp()
+        mock.patch.object(helpers, 'enable_connection_uri').start()
         self.pm = polling.InterfacePollingMinimizer()
 
     def test_start_calls_monitor_start(self):

@@ -114,6 +114,8 @@ class TestOvsNeutronAgent(object):
         cfg.CONF.set_default('prevent_arp_spoofing', False, 'AGENT')
         cfg.CONF.set_default('local_ip', '127.0.0.1', 'OVS')
         mock.patch(
+            'neutron.agent.ovsdb.native.helpers.enable_connection_uri').start()
+        mock.patch(
             'neutron.agent.common.ovs_lib.OVSBridge.get_ports_attributes',
             return_value=[]).start()
 
