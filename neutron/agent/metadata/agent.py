@@ -193,9 +193,9 @@ class MetadataProxyHandler(object):
                                   body=req.body)
 
         if resp.status == 200:
-            LOG.debug(str(resp))
             req.response.content_type = resp['content-type']
             req.response.body = content
+            LOG.debug(str(resp))
             return req.response
         elif resp.status == 403:
             LOG.warning(_LW(
