@@ -27,14 +27,15 @@ class IPConntrackTestCase(base.BaseTestCase):
         self.unfiltered_port = {}
         self.mgr = ip_conntrack.IpConntrackManager(
                      self._get_rule_for_table, self.filtered_port,
-                     self.unfiltered_port, self.execute)
+                     self.unfiltered_port, self.execute,
+                     zone_per_port=True)
 
     def _get_rule_for_table(self, table):
         return ['test --physdev-in tapdevice -j CT --zone 100']
 
     def test_delete_conntrack_state_dedupes(self):
         rule = {'ethertype': 'IPv4', 'direction': 'ingress'}
-        dev_info = {'device': 'device', 'fixed_ips': ['1.2.3.4']}
+        dev_info = {'device': 'tapdevice', 'fixed_ips': ['1.2.3.4']}
         dev_info_list = [dev_info for _ in range(10)]
         self.mgr._delete_conntrack_state(dev_info_list, rule)
         self.assertEqual(1, len(self.execute.mock_calls))
