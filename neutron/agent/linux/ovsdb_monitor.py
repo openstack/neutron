@@ -18,6 +18,7 @@ from oslo_serialization import jsonutils
 from neutron._i18n import _LE
 from neutron.agent.linux import async_process
 from neutron.agent.ovsdb import api as ovsdb
+from neutron.agent.ovsdb.native import helpers
 from neutron.common import utils
 
 
@@ -37,6 +38,7 @@ class OvsdbMonitor(async_process.AsyncProcess):
         if ovsdb_connection:
             # if ovsdb connection is configured (e.g. tcp:ip:port), use it,
             # and there is no need to run as root
+            helpers.enable_connection_uri(ovsdb_connection)
             cmd = ['ovsdb-client', 'monitor', ovsdb_connection, table_name]
             run_as_root = False
         else:

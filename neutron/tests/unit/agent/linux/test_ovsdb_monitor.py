@@ -16,10 +16,15 @@ import mock
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
+from neutron.agent.ovsdb.native import helpers
 from neutron.tests import base
 
 
 class TestOvsdbMonitor(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestOvsdbMonitor, self).setUp()
+        mock.patch.object(helpers, 'enable_connection_uri').start()
 
     def test___init__(self):
         ovsdb_monitor.OvsdbMonitor('Interface')
