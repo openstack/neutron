@@ -42,6 +42,13 @@ class QosRuleObjectTestCase(neutron_test_base.BaseTestCase):
             device_owner=constants.DEVICE_OWNER_ROUTER_INTF,
             expected_result=False)
 
+    def test_should_apply_to_port_with_network_port_and_only_net_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_B,
+            port_policy_id=None,
+            device_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+            expected_result=False)
+
     def test_should_apply_to_port_with_network_port_and_port_policy(self):
         self._test_should_apply_to_port(
             rule_policy_id=POLICY_ID_A,
@@ -50,9 +57,18 @@ class QosRuleObjectTestCase(neutron_test_base.BaseTestCase):
             expected_result=True)
 
     def test_should_apply_to_port_with_compute_port_and_net_policy(self):
+        # NOTE(ralonsoh): in this case the port has a port QoS policy; the
+        # network QoS policy can't be applied.
         self._test_should_apply_to_port(
             rule_policy_id=POLICY_ID_B,
             port_policy_id=POLICY_ID_A,
+            device_owner=DEVICE_OWNER_COMPUTE,
+            expected_result=False)
+
+    def test_should_apply_to_port_with_compute_port_and_only_net_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_B,
+            port_policy_id=None,
             device_owner=DEVICE_OWNER_COMPUTE,
             expected_result=True)
 

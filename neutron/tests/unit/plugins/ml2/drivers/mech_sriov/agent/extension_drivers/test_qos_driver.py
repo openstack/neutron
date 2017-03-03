@@ -54,6 +54,7 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
         self.qos_policy_min_tx_rate = self._create_qos_policy_obj(
             [self.rule_min_tx_rate])
         self.port = self._create_fake_port(self.qos_policy.id)
+        self.port_min = self._create_fake_port(self.qos_policy_min_tx_rate.id)
 
     def _create_bw_limit_rule_obj(self):
         rule_obj = rule.QosBandwidthLimitRule()
@@ -124,21 +125,21 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
             self.assertFalse(self.max_rate_mock.called)
 
     def test_create_minimum_bandwidth(self):
-        self.qos_driver.create(self.port, self.qos_policy_min_tx_rate)
+        self.qos_driver.create(self.port_min, self.qos_policy_min_tx_rate)
         self.min_tx_rate_mock.assert_called_once_with(
             self.ASSIGNED_MAC, self.PCI_SLOT, self.rule_min_tx_rate.min_kbps)
 
     def test_update_minimum_bandwidth(self):
-        self.qos_driver.update(self.port, self.qos_policy_min_tx_rate)
+        self.qos_driver.update(self.port_min, self.qos_policy_min_tx_rate)
         self.min_tx_rate_mock.assert_called_once_with(
             self.ASSIGNED_MAC, self.PCI_SLOT, self.rule_min_tx_rate.min_kbps)
 
     def test_delete_minimum_bandwidth_on_assigned_vf(self):
-        self.qos_driver.delete(self.port, self.qos_policy_min_tx_rate)
+        self.qos_driver.delete(self.port_min, self.qos_policy_min_tx_rate)
         self.min_tx_rate_mock.assert_called_once_with(
             self.ASSIGNED_MAC, self.PCI_SLOT, 0)
 
     def test_delete_minimum_bandwidth_on_released_vf(self):
-        del self.port['device_owner']
-        self.qos_driver.delete(self.port, self.qos_policy_min_tx_rate)
+        del self.port_min['device_owner']
+        self.qos_driver.delete(self.port_min, self.qos_policy_min_tx_rate)
         self.clear_min_tx_rate_mock.assert_called_once_with(self.PCI_SLOT)
