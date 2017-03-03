@@ -126,7 +126,7 @@ def get_schema_helper(connection, schema_name, retry=True):
             if not retry:
                 ctx.reraise = True
             # We may have failed due to set-manager not being called
-            helpers.enable_connection_uri(connection)
+            helpers.enable_connection_uri(connection, set_timeout=True)
 
             # There is a small window for a race, so retry up to a second
             @tenacity.retry(wait=tenacity.wait_exponential(multiplier=0.01),
