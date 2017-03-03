@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import abc
 import collections
 import imp
 import os
@@ -58,31 +57,6 @@ def register_custom_supported_check(alias, f, plugin_agnostic=False):
     EXTENSION_SUPPORTED_CHECK_MAP[alias] = f
     if plugin_agnostic:
         _PLUGIN_AGNOSTIC_EXTENSIONS.add(alias)
-
-
-@six.add_metaclass(abc.ABCMeta)
-class PluginInterface(object):
-
-    @classmethod
-    def __subclasshook__(cls, klass):
-        """Checking plugin class.
-
-        The __subclasshook__ method is a class method
-        that will be called every time a class is tested
-        using issubclass(klass, PluginInterface).
-        In that case, it will check that every method
-        marked with the abstractmethod decorator is
-        provided by the plugin class.
-        """
-
-        if not cls.__abstractmethods__:
-            return NotImplemented
-
-        for method in cls.__abstractmethods__:
-            if any(method in base.__dict__ for base in klass.__mro__):
-                continue
-            return NotImplemented
-        return True
 
 
 class ActionExtensionController(wsgi.Controller):

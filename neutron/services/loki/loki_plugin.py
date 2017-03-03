@@ -15,8 +15,8 @@ import random
 import time
 
 from neutron.db import api as db_api
-from neutron.services import service_base
 
+from neutron_lib.services import base as service_base
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy.orm import session as se

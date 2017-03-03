@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_utils import importutils
@@ -36,7 +37,6 @@ from neutron.extensions import l3
 from neutron.quota import resource_registry
 from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
-from neutron.services import service_base
 
 
 class L3RouterPlugin(service_base.ServicePluginBase,

@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 import sqlalchemy
 from sqlalchemy.orm import exc
@@ -20,7 +21,6 @@ from neutron._i18n import _, _LW
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import standard_attr
-from neutron.services import service_base
 
 LOG = logging.getLogger(__name__)
 

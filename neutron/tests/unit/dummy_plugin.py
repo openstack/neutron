@@ -15,6 +15,7 @@
 
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from neutron_lib.services import base as service_base
 from oslo_utils import uuidutils
 
 from neutron.api import extensions
@@ -22,7 +23,6 @@ from neutron.api.v2 import base
 from neutron.db import servicetype_db
 from neutron.extensions import servicetype
 from neutron.plugins.common import constants
-from neutron.services import service_base
 
 
 RESOURCE_NAME = "dummy"

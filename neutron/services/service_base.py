@@ -13,40 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import abc
-
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
-import six
 
 from neutron._i18n import _LE, _LI
-from neutron.api import extensions
 from neutron.db import servicetype_db as sdb
 from neutron.services import provider_configuration as pconf
-from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
-
-
-@six.add_metaclass(abc.ABCMeta)
-class ServicePluginBase(extensions.PluginInterface,
-                        neutron_worker.WorkerSupportServiceMixin):
-    """Define base interface for any Advanced Service plugin."""
-    supported_extension_aliases = []
-
-    @abc.abstractmethod
-    def get_plugin_type(self):
-        """Return one of predefined service types.
-
-        See neutron/plugins/common/constants.py
-        """
-        pass
-
-    @abc.abstractmethod
-    def get_plugin_description(self):
-        """Return string description of the plugin."""
-        pass
 
 
 def load_drivers(service_type, plugin):

@@ -15,6 +15,7 @@
 import copy
 
 from neutron_lib import context
+from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
@@ -29,7 +30,6 @@ from neutron.db import db_base_plugin_common
 from neutron.extensions import portbindings
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
-from neutron.services import service_base
 from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
