@@ -54,39 +54,9 @@ dvr_mac_address_opts = [
 cfg.CONF.register_opts(dvr_mac_address_opts)
 
 
-@db_api.retry_if_session_inactive()
-def _delete_mac_associated_with_agent(resource, event, trigger, context, agent,
-                                      **kwargs):
-    host = agent['host']
-    plugin = directory.get_plugin()
-    if [a for a in plugin.get_agents(context, filters={'host': [host]})
-            if a['id'] != agent['id']]:
-        # there are still agents on this host, don't mess with the mac entry
-        # until they are all deleted.
-        return
-    try:
-        with db_api.context_manager.writer.using(context):
-            entry = (context.session.query(
-                        dvr_models.DistributedVirtualRouterMacAddress).
-                     filter(
-                        dvr_models.DistributedVirtualRouterMacAddress.host ==
-                        host).
-                     one())
-            context.session.delete(entry)
-    except exc.NoResultFound:
-        return
-    # notify remaining agents so they cleanup flows
-    dvr_macs = plugin.get_dvr_mac_address_list(context)
-    plugin.notifier.dvr_mac_address_update(context, dvr_macs)
-
-
+@registry.has_registry_receivers
 class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
     """Mixin class to add dvr mac address to db_plugin_base_v2."""
-
-    def __new__(cls, *args, **kwargs):
-        registry.subscribe(_delete_mac_associated_with_agent,
-                           resources.AGENT, events.BEFORE_DELETE)
-        return super(DVRDbMixin, cls).__new__(cls)
 
     @property
     def plugin(self):
@@ -97,6 +67,31 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             pass
         self._plugin = directory.get_plugin()
         return self._plugin
+
+    @staticmethod
+    @registry.receives(resources.AGENT, [events.BEFORE_DELETE])
+    @db_api.retry_if_session_inactive()
+    def _delete_mac_associated_with_agent(resource, event, trigger, context,
+                                          agent, **kwargs):
+        host = agent['host']
+        plugin = directory.get_plugin()
+        if [a for a in plugin.get_agents(context, filters={'host': [host]})
+                if a['id'] != agent['id']]:
+            # there are still agents on this host, don't mess with the mac
+            # entry until they are all deleted.
+            return
+        try:
+            with db_api.context_manager.writer.using(context):
+                entry = (context.session.
+                         query(dvr_models.DistributedVirtualRouterMacAddress).
+                         filter_by(host=host).
+                         one())
+                context.session.delete(entry)
+        except exc.NoResultFound:
+            return
+        # notify remaining agents so they cleanup flows
+        dvr_macs = plugin.get_dvr_mac_address_list(context)
+        plugin.notifier.dvr_mac_address_update(context, dvr_macs)
 
     @db_api.context_manager.reader
     def _get_dvr_mac_address_by_host(self, context, host):
