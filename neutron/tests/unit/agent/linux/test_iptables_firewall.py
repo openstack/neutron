@@ -1107,6 +1107,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             self.firewall.filter_defer_apply_on()
             self.firewall.sg_rules['fake_sg_id'] = []
             self.firewall.filter_defer_apply_off()
+            if not ct_zone:
+                self.assertFalse(self.utils_exec.called)
+                return
             cmd = ['conntrack', '-D']
             if protocol:
                 cmd.extend(['-p', protocol])
@@ -1123,8 +1126,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 else:
                     cmd.extend(['-s', 'fe80::1'])
 
-            if ct_zone:
-                cmd.extend(['-w', ct_zone])
+            cmd.extend(['-w', ct_zone])
             calls = [
                 mock.call(cmd, run_as_root=True, check_exit_code=True,
                           extra_ok_codes=[1])]
@@ -1193,6 +1195,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
             self.firewall.filtered_ports[port['device']] = new_port
             self.firewall.filter_defer_apply_off()
+            if not ct_zone:
+                self.assertFalse(self.utils_exec.called)
+                return
             calls = self._get_expected_conntrack_calls(
                 [('ipv4', '10.0.0.1'), ('ipv6', 'fe80::1')], ct_zone)
             self.utils_exec.assert_has_calls(calls)
@@ -1266,8 +1271,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                 remote_ip_direction = '-s' if direction == '-d' else '-d'
                 conntrack_cmd = ['conntrack', '-D', '-f', ethertype,
                                  direction, ips[ethertype][0]]
-                if ct_zone:
-                    conntrack_cmd.extend(['-w', 10])
+                if not ct_zone:
+                    continue
+                conntrack_cmd.extend(['-w', 10])
                 conntrack_cmd.extend([remote_ip_direction, ips[ethertype][1]])
 
                 calls.append(mock.call(conntrack_cmd,
@@ -1486,7 +1492,9 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             self.firewall.ipconntrack._device_zone_map.pop('tapfake_dev', None)
 
         self.firewall.remove_port_filter(port)
-
+        if not ct_zone:
+            self.assertFalse(self.utils_exec.called)
+            return
         calls = self._get_expected_conntrack_calls(
             [('ipv4', '10.0.0.1'), ('ipv6', 'fe80::1')], ct_zone)
         self.utils_exec.assert_has_calls(calls)
