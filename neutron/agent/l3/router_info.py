@@ -1105,10 +1105,8 @@ class RouterInfo(object):
         self.routes_updated(self.routes, self.router['routes'])
         self.routes = self.router['routes']
 
-        # Update ex_gw_port and enable_snat on the router info cache
+        # Update ex_gw_port on the router info cache
         self.ex_gw_port = self.get_ex_gw_port()
         self.fip_map = dict([(fip['floating_ip_address'],
                               fip['fixed_ip_address'])
                              for fip in self.get_floating_ips()])
-        # TODO(Carl) FWaaS uses this.  Why is it set after processing is done?
-        self.enable_snat = self.router.get('enable_snat')
