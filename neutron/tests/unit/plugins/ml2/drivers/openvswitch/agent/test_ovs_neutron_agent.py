@@ -211,6 +211,20 @@ class TestOvsNeutronAgent(object):
         self.assertEqual(expected,
                          self.agent.agent_state['agent_type'])
 
+    def test_agent_available_local_vlans(self):
+        expected = [p_const.MIN_VLAN_TAG,
+                    p_const.MIN_VLAN_TAG + 1,
+                    p_const.MAX_VLAN_TAG - 1,
+                    p_const.MAX_VLAN_TAG]
+        exception = [p_const.MIN_VLAN_TAG - 1,
+                     p_const.MAX_VLAN_TAG + 1,
+                     p_const.MAX_VLAN_TAG + 2]
+        available_vlan = self.agent.available_local_vlans
+        for tag in expected:
+            self.assertIn(tag, available_vlan)
+        for tag in exception:
+            self.assertNotIn(tag, available_vlan)
+
     def test_agent_type_alt(self):
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
