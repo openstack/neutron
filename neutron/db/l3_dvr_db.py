@@ -53,6 +53,7 @@ router_distributed_opts = [
 cfg.CONF.register_opts(router_distributed_opts)
 
 
+@registry.has_registry_receivers
 class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                l3_attrs_db.ExtraAttributesMixin):
     """Mixin class to enable DVR support."""
@@ -63,28 +64,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
          const.DEVICE_OWNER_ROUTER_SNAT,
          const.DEVICE_OWNER_AGENT_GW))
 
-    def __new__(cls, *args, **kwargs):
-        n = super(L3_NAT_with_dvr_db_mixin, cls).__new__(cls, *args, **kwargs)
-        registry.subscribe(n._create_dvr_floating_gw_port,
-                           resources.FLOATING_IP, events.AFTER_UPDATE)
-        registry.subscribe(n._create_snat_interfaces_after_change,
-                           resources.ROUTER, events.AFTER_UPDATE)
-        registry.subscribe(n._create_snat_interfaces_after_change,
-                           resources.ROUTER, events.AFTER_CREATE)
-        registry.subscribe(n._delete_dvr_internal_ports,
-                           resources.ROUTER_GATEWAY, events.AFTER_DELETE)
-        registry.subscribe(n._set_distributed_flag,
-                           resources.ROUTER, events.PRECOMMIT_CREATE)
-        registry.subscribe(n._handle_distributed_migration,
-                           resources.ROUTER, events.PRECOMMIT_UPDATE)
-        registry.subscribe(n._add_csnat_on_interface_create,
-                           resources.ROUTER_INTERFACE, events.BEFORE_CREATE)
-        registry.subscribe(n._update_snat_v6_addrs_after_intf_update,
-                           resources.ROUTER_INTERFACE, events.AFTER_CREATE)
-        registry.subscribe(n._cleanup_after_interface_removal,
-                           resources.ROUTER_INTERFACE, events.AFTER_DELETE)
-        return n
-
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _set_distributed_flag(self, resource, event, trigger, context,
                               router, router_db, **kwargs):
         """Event handler to set distributed flag on creation."""
@@ -121,6 +101,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             raise l3.RouterInUse(router_id=router_db['id'], reason=e)
         return True
 
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
     def _handle_distributed_migration(self, resource, event, trigger, context,
                                       router_id, router, router_db, **kwargs):
         """Event handler for router update migration to distributed."""
@@ -149,6 +130,8 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         for agent in cur_agents:
             self._unbind_router(context, router_db['id'], agent['id'])
 
+    @registry.receives(resources.ROUTER,
+                       [events.AFTER_CREATE, events.AFTER_UPDATE])
     def _create_snat_interfaces_after_change(self, resource, event, trigger,
                                              context, router_id, router,
                                              request_attrs, router_db,
@@ -171,6 +154,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                       router_db['id'])
         return router_db
 
+    @registry.receives(resources.ROUTER_GATEWAY, [events.AFTER_DELETE])
     def _delete_dvr_internal_ports(self, event, trigger, resource,
                                    context, router, network_id,
                                    new_network_id, **kwargs):
@@ -223,6 +207,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 models_v2.Port.admin_state_up == True)  # noqa
         return query.all()
 
+    @registry.receives(resources.FLOATING_IP, [events.AFTER_UPDATE])
     def _create_dvr_floating_gw_port(self, resource, event, trigger, context,
                                      router_id, fixed_port_id, floating_ip_id,
                                      floating_network_id, fixed_ip_address,
@@ -303,6 +288,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         floating_ip = fip_qry.filter_by(fixed_port_id=port_id)
         return floating_ip.first()
 
+    @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     @db_api.retry_if_session_inactive()
     def _add_csnat_on_interface_create(self, resource, event, trigger,
                                        context, router_db, port, **kwargs):
@@ -314,6 +300,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             admin_context, router_db, port['network_id'],
             port['fixed_ips'][-1]['subnet_id'])
 
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
     @db_api.retry_if_session_inactive()
     def _update_snat_v6_addrs_after_intf_update(self, resource, event, triger,
                                                 context, subnets, port,
@@ -416,6 +403,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                     return True
         return False
 
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_DELETE])
     @db_api.retry_if_session_inactive()
     def _cleanup_after_interface_removal(self, resource, event, trigger,
                                          context, port, interface_info,
