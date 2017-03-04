@@ -58,8 +58,9 @@ METADATA_PROXY_HANDLER_OPTS = [
     cfg.StrOpt('auth_ca_cert',
                help=_("Certificate Authority public key (CA cert) "
                       "file for ssl")),
-    cfg.StrOpt('nova_metadata_ip', default='127.0.0.1',
-               help=_("IP address used by Nova metadata server.")),
+    cfg.StrOpt('nova_metadata_host', default='127.0.0.1',
+               deprecated_name='nova_metadata_ip',
+               help=_("IP address or DNS name of Nova metadata server.")),
     cfg.PortOpt('nova_metadata_port',
                 default=8775,
                 help=_("TCP Port used by Nova metadata server.")),

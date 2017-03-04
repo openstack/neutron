@@ -1,0 +1,6 @@
+deprecations:
+  - |
+    The ``nova_metadata_ip`` option is deprecated and will be removed in
+    Queens. It is deprecated in favor of the new ``nova_metadata_host`` option
+    because it reflects better that the option accepts an IP address and also
+    a DNS name.
