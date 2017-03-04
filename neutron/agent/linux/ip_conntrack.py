@@ -74,15 +74,20 @@ class IpConntrackManager(object):
         cmd = self._generate_conntrack_cmd_by_rule(rule, self.namespace)
         ethertype = rule.get('ethertype')
         for device_info in device_info_list:
-            zone_id = self._device_zone_map.get(device_info['device'], None)
+            zone_id = self._device_zone_map.get(
+                self._port_key(device_info['device']), None)
+            if not zone_id:
+                LOG.debug("No zone for device %(dev)s. Will not try to "
+                          "clear conntrack state. Zone map: %(zm)s",
+                          {'dev': device_info['device'],
+                           'zm': self._device_zone_map})
+                continue
             ips = device_info.get('fixed_ips', [])
             for ip in ips:
                 net = netaddr.IPNetwork(ip)
                 if str(net.version) not in ethertype:
                     continue
-                ip_cmd = [str(net.ip)]
-                if zone_id:
-                    ip_cmd.extend(['-w', zone_id])
+                ip_cmd = [str(net.ip), '-w', zone_id]
                 if remote_ip and str(
                         netaddr.IPNetwork(remote_ip).version) in ethertype:
                     if rule.get('direction') == 'ingress':
@@ -134,13 +139,17 @@ class IpConntrackManager(object):
                 self._device_zone_map[short_port_id] = int(match.group('zone'))
         LOG.debug("Populated conntrack zone map: %s", self._device_zone_map)
 
-    def get_device_zone(self, port_id):
+    @staticmethod
+    def _port_key(port_id):
         # we have to key the device_zone_map based on the fragment of the port
         # UUID that shows up in the interface name. This is because the initial
         # map is populated strictly based on interface names that we don't know
         # the full UUID of.
-        short_port_id = port_id[:(n_const.LINUX_DEV_LEN -
-                                  n_const.LINUX_DEV_PREFIX_LEN)]
+        return port_id[:(n_const.LINUX_DEV_LEN -
+                         n_const.LINUX_DEV_PREFIX_LEN)]
+
+    def get_device_zone(self, port_id):
+        short_port_id = self._port_key(port_id)
         try:
             return self._device_zone_map[short_port_id]
         except KeyError:
@@ -149,8 +158,7 @@ class IpConntrackManager(object):
     def _free_zones_from_removed_ports(self):
         """Clears any entries from the zone map of removed ports."""
         existing_ports = [
-            port['device'][:(n_const.LINUX_DEV_LEN -
-                             n_const.LINUX_DEV_PREFIX_LEN)]
+            self._port_key(port['device'])
             for port in (list(self.filtered_ports.values()) +
                          list(self.unfiltered_ports.values()))
         ]
