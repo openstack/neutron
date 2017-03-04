@@ -214,8 +214,6 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
                'segmentation_id': network.get('segmentation_id', 1),
                'fixed_ips': port['fixed_ips'],
                'device_owner': 'compute',
-               'port_security_enabled': True,
-               'security_groups': ['default'],
                'admin_state_up': True}
         return dev
 
