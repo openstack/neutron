@@ -251,6 +251,18 @@ class NetworkClientJSON(service_client.RestClient):
         self.expected_success(201, resp.status)
         return service_client.ResponseBody(resp, body)
 
+    def create_bulk_security_groups(self, security_group_list):
+        group_list = [{'security_group': {'name': name}}
+                      for name in security_group_list]
+        post_data = {'security_groups': group_list}
+        body = self.serialize_list(post_data, 'security_groups',
+                                   'security_group')
+        uri = self.get_uri("security-groups")
+        resp, body = self.post(uri, body)
+        body = {'security_groups': self.deserialize_list(body)}
+        self.expected_success(201, resp.status)
+        return service_client.ResponseBody(resp, body)
+
     def wait_for_resource_deletion(self, resource_type, id):
         """Waits for a resource to be deleted."""
         start_time = int(time.time())
