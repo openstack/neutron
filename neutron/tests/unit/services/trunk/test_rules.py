@@ -86,7 +86,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
             validator.validate(self.context)
             f.assert_called_once_with(self.context, parent_port=False)
 
-    def test_validate_subport_subport_invalid_segmenation_type(self):
+    def test_validate_subport_subport_invalid_segmentation_type(self):
         validator = rules.SubPortsValidator(
             self.segmentation_types,
             [{'port_id': uuidutils.generate_uuid(),
@@ -96,7 +96,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
                           validator.validate,
                           self.context)
 
-    def test_validate_subport_missing_segmenation_type(self):
+    def test_validate_subport_missing_segmentation_type(self):
         validator = rules.SubPortsValidator(
             self.segmentation_types,
             [{'port_id': uuidutils.generate_uuid(),
@@ -105,7 +105,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
                           validator.validate,
                           self.context)
 
-    def test_validate_subport_missing_segmenation_id(self):
+    def test_validate_subport_missing_segmentation_id(self):
         validator = rules.SubPortsValidator(
             self.segmentation_types,
             [{'port_id': uuidutils.generate_uuid(),
