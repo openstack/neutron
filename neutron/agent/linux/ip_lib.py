@@ -1135,7 +1135,7 @@ def add_namespace_to_cmd(cmd, namespace=None):
 
 
 def get_ip_version(ip_or_cidr):
-    return netaddr.IPNetwork(ip_or_cidr).version
+    return common_utils.get_ip_version(ip_or_cidr)
 
 
 def get_ipv6_lladdr(mac_addr):
