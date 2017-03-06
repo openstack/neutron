@@ -18,6 +18,7 @@ import mock
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from novaclient import api_versions
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -342,21 +343,21 @@ class TestNovaNotify(base.BaseTestCase):
     def test_endpoint_types(self, mock_client):
         nova.Notifier()
         mock_client.assert_called_once_with(
-                                        nova.NOVA_API_VERSION,
-                                        session=mock.ANY,
-                                        region_name=cfg.CONF.nova.region_name,
-                                        endpoint_type='public',
-                                        extensions=mock.ANY)
+                                api_versions.APIVersion(nova.NOVA_API_VERSION),
+                                session=mock.ANY,
+                                region_name=cfg.CONF.nova.region_name,
+                                endpoint_type='public',
+                                extensions=mock.ANY)
 
         mock_client.reset_mock()
         cfg.CONF.set_override('endpoint_type', 'internal', 'nova')
         nova.Notifier()
         mock_client.assert_called_once_with(
-                                        nova.NOVA_API_VERSION,
-                                        session=mock.ANY,
-                                        region_name=cfg.CONF.nova.region_name,
-                                        endpoint_type='internal',
-                                        extensions=mock.ANY)
+                                api_versions.APIVersion(nova.NOVA_API_VERSION),
+                                session=mock.ANY,
+                                region_name=cfg.CONF.nova.region_name,
+                                endpoint_type='internal',
+                                extensions=mock.ANY)
 
     def test_notify_port_active_direct(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'

@@ -17,6 +17,7 @@ from keystoneauth1 import loading as ks_loading
 from neutron_lib import constants
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins import directory
+from novaclient import api_versions
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exceptions
 from oslo_config import cfg
@@ -40,7 +41,7 @@ VIF_DELETED = 'network-vif-deleted'
 NEUTRON_NOVA_EVENT_STATUS_MAP = {constants.PORT_STATUS_ACTIVE: 'completed',
                                  constants.PORT_STATUS_ERROR: 'failed',
                                  constants.PORT_STATUS_DOWN: 'completed'}
-NOVA_API_VERSION = "2"
+NOVA_API_VERSION = "2.1"
 
 
 class Notifier(object):
@@ -66,7 +67,7 @@ class Notifier(object):
                                                            only_contrib=True)
             if ext.name == "server_external_events"]
         self.nclient = nova_client.Client(
-            NOVA_API_VERSION,
+            api_versions.APIVersion(NOVA_API_VERSION),
             session=session,
             region_name=cfg.CONF.nova.region_name,
             endpoint_type=cfg.CONF.nova.endpoint_type,
