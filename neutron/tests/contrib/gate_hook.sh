@@ -84,8 +84,7 @@ case $VENV in
     cd $DEVSTACK_PATH && sudo -H -u $GATE_STACK_USER ./stack.sh
     ;;
 
-# TODO(ihrachys): remove dsvm-scenario from the list when it's no longer used in project-config
-"api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
+"api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
     load_rc_hook api_${FLAVOR}_extensions
     load_conf_hook quotas
     load_rc_hook dns
@@ -94,8 +93,10 @@ case $VENV in
     load_conf_hook mtu
     load_conf_hook osprofiler
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
-        load_conf_hook iptables_verify
         load_rc_hook ubuntu_image
+    fi
+    if [[ "$VENV" =~ "dsvm-scenario-linuxbridge" ]]; then
+        load_conf_hook iptables_verify
     fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
