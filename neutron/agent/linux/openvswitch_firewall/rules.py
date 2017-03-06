@@ -18,7 +18,6 @@ from neutron_lib import constants as n_consts
 from oslo_log import log as logging
 
 from neutron.agent import firewall
-from neutron.agent.linux import ip_lib
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
@@ -49,15 +48,15 @@ def create_flows_from_rule_and_port(rule, port):
     }
 
     if is_valid_prefix(dst_ip_prefix):
-        if ip_lib.get_ip_version(dst_ip_prefix) == n_consts.IP_VERSION_4:
+        if utils.get_ip_version(dst_ip_prefix) == n_consts.IP_VERSION_4:
             flow_template["nw_dst"] = dst_ip_prefix
-        elif ip_lib.get_ip_version(dst_ip_prefix) == n_consts.IP_VERSION_6:
+        elif utils.get_ip_version(dst_ip_prefix) == n_consts.IP_VERSION_6:
             flow_template["ipv6_dst"] = dst_ip_prefix
 
     if is_valid_prefix(src_ip_prefix):
-        if ip_lib.get_ip_version(src_ip_prefix) == n_consts.IP_VERSION_4:
+        if utils.get_ip_version(src_ip_prefix) == n_consts.IP_VERSION_4:
             flow_template["nw_src"] = src_ip_prefix
-        elif ip_lib.get_ip_version(src_ip_prefix) == n_consts.IP_VERSION_6:
+        elif utils.get_ip_version(src_ip_prefix) == n_consts.IP_VERSION_6:
             flow_template["ipv6_src"] = src_ip_prefix
 
     flows = create_protocol_flows(direction, flow_template, port, rule)
