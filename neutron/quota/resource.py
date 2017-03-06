@@ -250,7 +250,7 @@ class TrackedResource(BaseResource):
         """
         # Load current usage data, setting a row-level lock on the DB
         usage_info = quota_api.get_quota_usage_by_resource_and_tenant(
-            context, self.name, tenant_id, lock_for_update=True)
+            context, self.name, tenant_id)
         # Always fetch reservations, as they are not tracked by usage counters
         reservations = quota_api.get_reservations_for_resources(
             context, tenant_id, [self.name])

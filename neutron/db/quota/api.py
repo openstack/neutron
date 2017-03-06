@@ -41,22 +41,21 @@ class ReservationInfo(collections.namedtuple(
 
 
 @db_api.retry_if_session_inactive()
-def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id,
-                                           lock_for_update=False):
+def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id):
     """Return usage info for a given resource and tenant.
 
     :param context: Request context
     :param resource: Name of the resource
     :param tenant_id: Tenant identifier
-    :param lock_for_update: if True sets a write-intent lock on the query
     :returns: a QuotaUsageInfo instance
     """
 
     query = db_utils.model_query(context, quota_models.QuotaUsage)
     query = query.filter_by(resource=resource, tenant_id=tenant_id)
 
-    if lock_for_update:
-        query = query.with_lockmode('update')
+    # NOTE(manjeets) as lock mode was just for protecting dirty bits
+    # an update on dirty will prevent the race.
+    query.filter_by(dirty=True).update({'dirty': True})
 
     result = query.first()
     if not result:
