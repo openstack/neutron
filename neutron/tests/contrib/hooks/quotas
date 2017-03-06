@@ -2,9 +2,6 @@
 
 [quotas]
 # x10 of default quotas (at the time of writing)
-quota_network=100
-quota_subnet=100
-quota_port=500
 quota_router=100
 quota_floatingip=500
 quota_security_group=100
