@@ -474,25 +474,15 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                                 physical_network,
                                                 segmentation_id):
             return False
-        # Avoid messing with plugging devices into a bridge that the agent
-        # does not own
-        if not device_owner.startswith(constants.DEVICE_OWNER_COMPUTE_PREFIX):
-            # Check if device needs to be added to bridge
-            if not bridge_lib.BridgeDevice.get_interface_bridge(
-                tap_device_name):
-                data = {'tap_device_name': tap_device_name,
-                        'bridge_name': bridge_name}
-                LOG.debug("Adding device %(tap_device_name)s to bridge "
-                          "%(bridge_name)s", data)
-                if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
-                    return False
-        else:
+        # Check if device needs to be added to bridge
+        if not bridge_lib.BridgeDevice.get_interface_bridge(
+            tap_device_name):
             data = {'tap_device_name': tap_device_name,
-                    'device_owner': device_owner,
                     'bridge_name': bridge_name}
-            LOG.debug("Skip adding device %(tap_device_name)s to "
-                      "%(bridge_name)s. It is owned by %(device_owner)s and "
-                      "thus added elsewhere.", data)
+            LOG.debug("Adding device %(tap_device_name)s to bridge "
+                      "%(bridge_name)s", data)
+            if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
+                return False
         return True
 
     def plug_interface(self, network_id, network_segment, tap_name,
