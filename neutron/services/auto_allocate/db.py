@@ -53,7 +53,7 @@ def _extend_external_network_default(core_plugin, net_res, net_db):
 def _ensure_external_network_default_value_callback(
     resource, event, trigger, context, request, network):
     """Ensure the is_default db field matches the create/update request."""
-    is_default = request.get(IS_DEFAULT, False)
+    is_default = request.get(IS_DEFAULT)
     if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE) and is_default:
         # ensure there is only one default external network at any given time
         pager = base_obj.Pager(limit=1)
@@ -65,11 +65,12 @@ def _ensure_external_network_default_value_callback(
                     net_id=objs[0].network_id)
 
     # Reflect the status of the is_default on the create/update request
-    obj = net_obj.ExternalNetwork.get_object(context,
-                                             network_id=network['id'])
-    if obj:
-        obj.is_default = is_default
-        obj.update()
+    if is_default is not None:
+        obj = net_obj.ExternalNetwork.get_object(context,
+                                                 network_id=network['id'])
+        if obj:
+            obj.is_default = is_default
+            obj.update()
 
 
 class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):

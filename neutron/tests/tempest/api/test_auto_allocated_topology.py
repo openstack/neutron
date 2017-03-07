@@ -54,6 +54,9 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
         # Ensure the public external network is the default external network
         public_net_id = cfg.CONF.network.public_network_id
         cls.admin_client.update_network(public_net_id, is_default=True)
+        # Ensure that is_default does not accidentally flip back to False
+        # because of network_update requests that do not contain is_default.
+        cls.admin_client.update_network(public_net_id, description="gman")
 
     def _count_topology_resources(self):
         '''Count the resources whose names begin with 'auto_allocated_'.'''
