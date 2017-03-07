@@ -13,7 +13,6 @@
 import collections
 import copy
 import itertools
-import os.path
 import random
 
 import mock
@@ -30,7 +29,6 @@ from oslo_versionedobjects import fixture
 import testtools
 
 from neutron.common import constants
-from neutron.common import utils
 from neutron.db import _model_query as model_query
 from neutron.db.models import l3 as l3_model
 from neutron.db import standard_attr
@@ -494,7 +492,7 @@ class _BaseObjectTestCase(object):
         # neutron.objects.db.api from core plugin instance
         self.setup_coreplugin(self.CORE_PLUGIN)
         # make sure all objects are loaded and registered in the registry
-        utils.import_modules_recursively(os.path.dirname(objects.__file__))
+        objects.register_objects()
         self.context = context.get_admin_context()
         self._unique_tracker = collections.defaultdict(set)
         self.db_objs = [
@@ -652,10 +650,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 'is_shared_with_tenant', return_value=False).start()
 
     def fake_get_object(self, context, model, **kwargs):
-        objects = self.model_map[model]
-        if not objects:
+        objs = self.model_map[model]
+        if not objs:
             return None
-        return [obj for obj in objects if obj['id'] == kwargs['id']][0]
+        return [obj for obj in objs if obj['id'] == kwargs['id']][0]
 
     def fake_get_objects(self, context, model, **kwargs):
         return self.model_map[model]
