@@ -26,6 +26,7 @@ from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
+from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -126,7 +127,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
              for key, default in six.iteritems(service_plugins or {})]
         )
 
-        cfg.CONF.set_override('base_mac', "12:34:56:78:90:ab")
+        cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
         self.api = router.APIRouter()
@@ -1729,7 +1730,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         # simulate duplicate mac generation to make sure DBDuplicate is retried
         responses = ['12:34:56:78:00:00', '12:34:56:78:00:00',
                      '12:34:56:78:00:01']
-        with mock.patch('neutron.common.utils.get_random_mac',
+        with mock.patch.object(net, 'get_random_mac',
                         side_effect=responses) as grand_mac:
             with self.subnet() as s:
                 with self.port(subnet=s) as p1, self.port(subnet=s) as p2:

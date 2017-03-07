@@ -64,7 +64,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test__create_dvr_mac_address_success(self):
         entry = {'host': 'foo_host', 'mac_address': '00:11:22:33:44:55:66'}
-        with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
+        with mock.patch.object(dvr_mac_db.net, 'get_random_mac') as f:
             f.return_value = entry['mac_address']
             expected = self.mixin._create_dvr_mac_address(
                 self.ctx, entry['host'])
@@ -75,7 +75,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         mock.patch('neutron.db.api._retry_db_errors.max_retries',
                    new=2).start()
         self._create_dvr_mac_entry('foo_host_1', 'non_unique_mac')
-        with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
+        with mock.patch.object(dvr_mac_db.net, 'get_random_mac') as f:
             f.return_value = 'non_unique_mac'
             self.assertRaises(dvr.MacAddressGenerationFailure,
                               self.mixin._create_dvr_mac_address,

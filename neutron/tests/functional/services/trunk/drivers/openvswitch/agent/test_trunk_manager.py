@@ -15,11 +15,11 @@
 
 import mock
 
+from neutron_lib.utils import net
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import testtools
 
-from neutron.common import utils as common_utils
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.services.trunk.drivers.openvswitch import utils
 from neutron.tests.common import conn_testers
@@ -42,7 +42,7 @@ class TrunkParentPortTestCase(base.BaseSudoTestCase):
         super(TrunkParentPortTestCase, self).setUp()
         trunk_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
-        port_mac = common_utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+        port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         self.trunk = trunk_manager.TrunkParentPort(trunk_id, port_id, port_mac)
         self.trunk.bridge = self.useFixture(
             net_helpers.OVSTrunkBridgeFixture(
@@ -95,7 +95,7 @@ class SubPortTestCase(base.BaseSudoTestCase):
         super(SubPortTestCase, self).setUp()
         trunk_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
-        port_mac = common_utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+        port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         trunk_bridge_name = utils.gen_trunk_br_name(trunk_id)
         trunk_bridge = self.useFixture(
             net_helpers.OVSTrunkBridgeFixture(trunk_bridge_name)).bridge
@@ -174,9 +174,8 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
         """
         vlan_net1 = helpers.get_not_used_vlan(self.tester.bridge, VLAN_RANGE)
         vlan_net2 = helpers.get_not_used_vlan(self.tester.bridge, VLAN_RANGE)
-        trunk_mac = common_utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
-        sub_port_mac = common_utils.get_random_mac(
-            'fa:16:3e:00:00:00'.split(':'))
+        trunk_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+        sub_port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         sub_port_segmentation_id = helpers.get_not_used_vlan(
             self.tester.bridge, VLAN_RANGE)
         LOG.debug("Using %(n1)d vlan tag as local vlan ID for net1 and %(n2)d "

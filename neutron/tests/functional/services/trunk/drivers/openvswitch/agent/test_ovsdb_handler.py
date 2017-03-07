@@ -17,6 +17,7 @@ import mock
 
 from neutron_lib import constants as n_consts
 from neutron_lib.utils import helpers
+from neutron_lib.utils import net
 from oslo_utils import uuidutils
 
 from neutron.agent.common import ovs_lib
@@ -50,8 +51,7 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         trunk_id = uuidutils.generate_uuid()
         self.trunk_dict = {
             'id': trunk_id,
-            'mac_address': common_utils.get_random_mac(
-                'fa:16:3e:00:00:00'.split(':')),
+            'mac_address': net.get_random_mac('fa:16:3e:00:00:00'.split(':')),
             'sub_ports': []}
         self.trunk_port_name = generate_tap_device_name()
         self.trunk_br = trunk_manager.TrunkBridge(trunk_id)
