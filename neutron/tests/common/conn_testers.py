@@ -20,7 +20,6 @@ from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent import firewall
-from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
 from neutron.tests.common import machine_fixtures
@@ -174,7 +173,7 @@ class ConnectionTester(fixtures.Fixture):
 
     def _test_icmp_connectivity(self, direction, protocol, src_port, dst_port):
         src_namespace, ip_address = self._get_namespace_and_address(direction)
-        ip_version = ip_lib.get_ip_version(ip_address)
+        ip_version = common_utils.get_ip_version(ip_address)
         icmp_timeout = ICMP_VERSION_TIMEOUTS[ip_version]
         try:
             net_helpers.assert_ping(src_namespace, ip_address,
