@@ -1,5 +1,12 @@
 LIBDIR=$DEST/neutron/devstack/lib
 
+if is_neutron_legacy_enabled; then
+    NEUTRON_CORE_PLUGIN=$Q_PLUGIN
+    NEUTRON_AGENT=$Q_AGENT
+    NEUTRON_CORE_PLUGIN_CONF_PATH=$Q_PLUGIN_CONF_PATH
+    NEUTRON_CORE_PLUGIN_CONF=$Q_PLUGIN_CONF_FILE
+fi
+
 source $LIBDIR/dns
 source $LIBDIR/flavors
 source $LIBDIR/l2_agent
@@ -11,8 +18,8 @@ source $LIBDIR/trunk
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
-if [ -f $LIBDIR/${Q_AGENT}_agent ]; then
-    source $LIBDIR/${Q_AGENT}_agent
+if [ -f $LIBDIR/${NEUTRON_AGENT}_agent ]; then
+    source $LIBDIR/${NEUTRON_AGENT}_agent
 fi
 
 if [[ "$1" == "stack" ]]; then
@@ -30,7 +37,7 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-dns; then
                 configure_dns_extension
             fi
-            if [[ "$Q_AGENT" == "openvswitch" ]] && \
+            if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
                [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
                 remove_ovs_packages
                 compile_ovs True /usr /var
@@ -50,7 +57,7 @@ if [[ "$1" == "stack" ]]; then
             #Therefore we create new service, q-sriov-agt, and the q-agt should be OVS
             #or linux bridge.
             if is_service_enabled q-sriov-agt; then
-                configure_$Q_PLUGIN
+                configure_$NEUTRON_CORE_PLUGIN
                 configure_l2_agent
                 configure_l2_agent_sriovnicswitch
             fi
