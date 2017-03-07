@@ -23,24 +23,34 @@ QUOTA_DB_DRIVER = '%s.DbQuotaDriver' % QUOTA_DB_MODULE
 QUOTA_CONF_DRIVER = 'neutron.quota.ConfDriver'
 QUOTAS_CFG_GROUP = 'QUOTAS'
 
+DEFAULT_QUOTA = -1
+DEFAULT_QUOTA_NETWORK = 10
+DEFAULT_QUOTA_SUBNET = 10
+DEFAULT_QUOTA_PORT = 50
+DEFAULT_QUOTA_SG = 10
+DEFAULT_QUOTA_SG_RULE = 100
+DEFAULT_QUOTA_ROUTER = 10
+DEFAULT_QUOTA_FIP = 50
+DEFAULT_QUOTA_RBAC = 10
+
 
 # quota_opts from neutron/quota/__init__.py
 # renamed quota_opts to core_quota_opts
 core_quota_opts = [
     cfg.IntOpt('default_quota',
-               default=-1,
+               default=DEFAULT_QUOTA,
                help=_('Default number of resource allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_network',
-               default=10,
+               default=DEFAULT_QUOTA_NETWORK,
                help=_('Number of networks allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_subnet',
-               default=10,
+               default=DEFAULT_QUOTA_SUBNET,
                help=_('Number of subnets allowed per tenant, '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_port',
-               default=50,
+               default=DEFAULT_QUOTA_PORT,
                help=_('Number of ports allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.StrOpt('quota_driver',
@@ -56,11 +66,11 @@ core_quota_opts = [
 # security_group_quota_opts from neutron/extensions/securitygroup.py
 security_group_quota_opts = [
     cfg.IntOpt('quota_security_group',
-               default=10,
+               default=DEFAULT_QUOTA_SG,
                help=_('Number of security groups allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_security_group_rule',
-               default=100,
+               default=DEFAULT_QUOTA_SG_RULE,
                help=_('Number of security rules allowed per tenant. '
                       'A negative value means unlimited.')),
 ]
@@ -68,18 +78,18 @@ security_group_quota_opts = [
 # l3_quota_opts from neutron/extensions/l3.py
 l3_quota_opts = [
     cfg.IntOpt('quota_router',
-               default=10,
+               default=DEFAULT_QUOTA_ROUTER,
                help=_('Number of routers allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_floatingip',
-               default=50,
+               default=DEFAULT_QUOTA_FIP,
                help=_('Number of floating IPs allowed per tenant. '
                       'A negative value means unlimited.')),
 ]
 
 # rbac_quota_opts from neutron/extensions/rbac.py
 rbac_quota_opts = [
-    cfg.IntOpt('quota_rbac_policy', default=10,
+    cfg.IntOpt('quota_rbac_policy', default=DEFAULT_QUOTA_RBAC,
                deprecated_name='quota_rbac_entry',
                help=_('Default number of RBAC entries allowed per tenant. '
                       'A negative value means unlimited.'))

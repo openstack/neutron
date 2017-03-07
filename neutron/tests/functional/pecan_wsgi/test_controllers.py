@@ -24,6 +24,7 @@ import pecan
 from pecan import request
 
 from neutron.api import extensions
+from neutron.conf import quota as qconf
 from neutron import manager
 from neutron.pecan_wsgi.controllers import root as controllers
 from neutron.pecan_wsgi.controllers import utils as controller_utils
@@ -159,9 +160,9 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
 
     base_url = '/v2.0/quotas'
     default_expected_limits = {
-        'network': 10,
-        'port': 50,
-        'subnet': 10}
+        'network': qconf.DEFAULT_QUOTA_NETWORK,
+        'port': qconf.DEFAULT_QUOTA_PORT,
+        'subnet': qconf.DEFAULT_QUOTA_SUBNET}
 
     def _verify_limits(self, response, limits):
         for resource, limit in limits.items():
