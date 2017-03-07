@@ -33,7 +33,7 @@ function neutron_plugin_configure_l3_agent {
 function neutron_plugin_configure_plugin_agent {
     # Only the NooPFirewallDriver is supported. If not set, the agent will
     # terminate.
-    iniset /$Q_PLUGIN_CONF_FILE securitygroup firewall_driver noop
+    iniset /$NEUTRON_CORE_PLUGIN_CONF securitygroup firewall_driver noop
     AGENT_BINARY="$NEUTRON_BIN_DIR/neutron-macvtap-agent"
 }
 
