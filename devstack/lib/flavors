@@ -4,5 +4,5 @@
 FLAVORS_PLUGIN=flavors
 
 function configure_flavors {
-    _neutron_service_plugin_class_add $FLAVORS_PLUGIN
+    neutron_service_plugin_class_add $FLAVORS_PLUGIN
 }

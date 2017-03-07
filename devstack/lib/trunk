@@ -1,5 +1,5 @@
 function configure_trunk_service_plugin {
-    _neutron_service_plugin_class_add "trunk"
+    neutron_service_plugin_class_add "trunk"
 }
 
 function configure_trunk_extension {
