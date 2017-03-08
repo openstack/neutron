@@ -221,6 +221,17 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
         json_response = jsonutils.loads(response.body)
         self.assertNotIn('restricted_attr', json_response['mehs'][0])
 
+    def test_after_inits_policy(self):
+        self.mock_plugin.get_mehs.return_value = [{
+            'id': 'xxx',
+            'attr': 'meh',
+            'restricted_attr': '',
+            'tenant_id': 'tenid'}]
+        policy.reset()
+        response = self.app.get('/v2.0/mehs',
+                                headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(200, response.status_int)
+
 
 class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
 
