@@ -1138,8 +1138,12 @@ def add_namespace_to_cmd(cmd, namespace=None):
     return ['ip', 'netns', 'exec', namespace] + cmd if namespace else cmd
 
 
+@removals.remove(
+    message="This will be removed in the future. "
+            "Please use 'neutron.common.utils.get_ip_version' instead.",
+    version='Pike', removal_version='Queens')
 def get_ip_version(ip_or_cidr):
-    return netaddr.IPNetwork(ip_or_cidr).version
+    return common_utils.get_ip_version(ip_or_cidr)
 
 
 def get_ipv6_lladdr(mac_addr):
