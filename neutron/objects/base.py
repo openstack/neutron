@@ -61,6 +61,15 @@ class Pager(object):
     specify sorting and pagination criteria.
     '''
     def __init__(self, sorts=None, limit=None, page_reverse=None, marker=None):
+        '''
+        :param sorts: A list of (key, direction) tuples.
+                      direction: True == ASC, False == DESC
+        :param limit: maximum number of items to return
+        :param page_reverse: True if sort direction is reversed.
+        :param marker: the last item of the previous page; when used, returns
+                       next results after the marker resource.
+        '''
+
         self.sorts = sorts
         self.limit = limit
         self.page_reverse = page_reverse
