@@ -1,0 +1,6 @@
+prelude: >
+    Network QoS policies are now supported for network:router_gateway ports.
+features:
+  - |
+    Neutron QoS policies set on an external network now apply to external
+    router ports (DVR or not).
