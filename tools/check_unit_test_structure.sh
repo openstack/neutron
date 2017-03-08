@@ -42,14 +42,14 @@ for test_file in ${test_files[@]}; do
     if [ ! -f "$filename" ] && [ ! -d "$package_dir" ]; then
         for ignore_regex in ${ignore_regexes[@]}; do
             if [[ "$relative_path" =~ $ignore_regex ]]; then
-                ((ignore_count++))
+                ignore_count=$((ignore_count + 1))
                 continue 2
             fi
         done
         echo "Unexpected test file: $base_test_path/$relative_path"
-        ((error_count++))
+        error_count=$((error_count + 1))
     fi
-    ((total_count++))
+    total_count=$((total_count + 1))
 done
 
 if [ "$ignore_count" -ne 0 ]; then
