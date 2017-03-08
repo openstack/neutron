@@ -152,8 +152,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
             # remove from table unallocated tunnels not currently allocatable
             # fetch results as list via all() because we'll be iterating
             # through them twice
-            allocs = (ctx.session.query(self.model).
-                      with_lockmode("update").all())
+            allocs = ctx.session.query(self.model).all()
 
             # collect those vnis that needs to be deleted from db
             unallocateds = (
@@ -162,8 +161,8 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
             # Immediately delete tunnels in chunks. This leaves no work for
             # flush at the end of transaction
             for chunk in chunks(to_remove, self.BULK_SIZE):
-                ctx.session.query(self.model).filter(
-                    tunnel_col.in_(chunk)).delete(synchronize_session=False)
+                (ctx.session.query(self.model).filter(tunnel_col.in_(chunk)).
+                 filter_by(allocated=False).delete(synchronize_session=False))
 
             # collect vnis that need to be added
             existings = {tunnel_id_getter(a) for a in allocs}
