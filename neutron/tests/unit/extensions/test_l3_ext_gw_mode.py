@@ -30,7 +30,6 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
-from neutron.db.models import external_net as ext_net_models
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
@@ -138,10 +137,10 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             project_id=self.tenant_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
-        self.net_ext = ext_net_models.ExternalNetwork(
-            network_id=self.ext_net_id)
+        self.net_ext = net_obj.ExternalNetwork(
+            self.context, network_id=self.ext_net_id)
         self.network.create()
-        self.context.session.add(self.net_ext)
+        self.net_ext.create()
         self.router = l3_models.Router(
             id=_uuid(),
             name=None,

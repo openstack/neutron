@@ -34,6 +34,7 @@ object_data = {
     'AutoAllocatedTopology': '1.0-74642e58c53bf3610dc224c59f81b242',
     'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
+    'ExternalNetwork': '1.0-53d885e033cb931f9bb3bdd6bbe3f0ce',
     'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
     'FlatAllocation': '1.0-bf666f24f4642b047eeca62311fbcb41',
     'Flavor': '1.0-82194de5c9aafce08e8527bb7977f5c6',

@@ -181,3 +181,20 @@ class NetworkDNSDomainDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
         super(NetworkDNSDomainDbObjectTestcase, self).setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_network().id})
+
+
+class ExternalNetworkIfaceObjectTestCase(
+    obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = network.ExternalNetwork
+
+
+class ExternalNetworkDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
+                                      testlib_api.SqlTestCase):
+
+    _test_class = network.ExternalNetwork
+
+    def setUp(self):
+        super(ExternalNetworkDbObjectTestCase, self).setUp()
+        self.update_obj_fields(
+            {'network_id': lambda: self._create_network().id})
