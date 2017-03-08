@@ -21,6 +21,7 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import fileutils
+import psutil
 import six
 
 from neutron._i18n import _, _LW, _LE
@@ -146,12 +147,9 @@ class ProcessManager(MonitoredProcess):
         pid = self.pid
         if not pid:
             return
-
-        cmdline = '/proc/%s/cmdline' % pid
         try:
-            with open(cmdline, "r") as f:
-                return f.readline()
-        except IOError:
+            return ' '.join(psutil.Process(pid).cmdline())
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             return
 
 
