@@ -79,7 +79,8 @@ case $VENV in
     sudo chown -R $STACK_USER:$STACK_USER $BASE
     ;;
 
-"api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario")
+# TODO(ihrachys): remove dsvm-scenario from the list when it's no longer used in project-config
+"api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
     load_rc_hook api_${FLAVOR}_extensions
     load_conf_hook quotas
     load_rc_hook dns
@@ -94,7 +95,7 @@ case $VENV in
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
     fi
-    if [[ "$VENV" =~ "ovsfw" ]]; then
+    if [[ "$VENV" =~ "ovs" ]]; then
         load_conf_hook ovsfw
     fi
 
