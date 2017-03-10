@@ -1925,7 +1925,10 @@ def _notify_routers_callback(resource, event, trigger, **kwargs):
     router_ids = kwargs['router_ids']
     l3plugin = manager.NeutronManager.get_service_plugins().get(
         constants.L3_ROUTER_NAT)
-    l3plugin.notify_routers_updated(context, router_ids)
+    if l3plugin:
+        l3plugin.notify_routers_updated(context, router_ids)
+    else:
+        LOG.debug('%s not configured', constants.L3_ROUTER_NAT)
 
 
 def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
@@ -1964,7 +1967,10 @@ def _notify_subnetpool_address_scope_update(resource, event,
     router_ids = [r[0] for r in query]
     l3plugin = manager.NeutronManager.get_service_plugins().get(
         constants.L3_ROUTER_NAT)
-    l3plugin.notify_routers_updated(context, router_ids)
+    if l3plugin:
+        l3plugin.notify_routers_updated(context, router_ids)
+    else:
+        LOG.debug('%s not configured', constants.L3_ROUTER_NAT)
 
 
 @removals.remove(
