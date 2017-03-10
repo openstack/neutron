@@ -23,6 +23,7 @@ from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
 from neutron.db import models_v2
 from neutron.extensions import portbindings
+from neutron.objects import network as network_obj
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2 import models
 from neutron.tests.common import helpers
@@ -35,19 +36,21 @@ HOST_3 = 'HOST_3'
 HOST_2_TUNNELING_IP = '20.0.0.2'
 HOST_3_TUNNELING_IP = '20.0.0.3'
 TEST_ROUTER_ID = 'router_id'
-TEST_NETWORK_ID = 'network_id'
-TEST_HA_NETWORK_ID = 'ha_network_id'
+TEST_NETWORK_ID = uuidutils.generate_uuid()
+TEST_HA_NETWORK_ID = uuidutils.generate_uuid()
+PLUGIN_NAME = 'ml2'
 
 
 class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
+
     def setUp(self):
         super(TestL2PopulationDBTestCase, self).setUp()
+        self.setup_coreplugin(PLUGIN_NAME)
         self.ctx = context.get_admin_context()
         self._create_network()
 
     def _create_network(self, network_id=TEST_NETWORK_ID):
-        with self.ctx.session.begin(subtransactions=True):
-            self.ctx.session.add(models_v2.Network(id=network_id))
+        network_obj.Network(self.ctx, id=network_id).create()
 
     def _create_router(self, distributed=True, ha=False):
         with self.ctx.session.begin(subtransactions=True):
@@ -63,7 +66,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_l3_agent(HOST_3)
         helpers.register_ovs_agent(HOST_3, tunneling_ip=HOST_3_TUNNELING_IP)
         with self.ctx.session.begin(subtransactions=True):
-            self.ctx.session.add(models_v2.Network(id=TEST_HA_NETWORK_ID))
+            network_obj.Network(self.ctx, id=TEST_HA_NETWORK_ID).create()
             self._create_router(distributed=distributed, ha=True)
             for state, host in [(n_const.HA_ROUTER_STATE_ACTIVE, HOST),
                                 (n_const.HA_ROUTER_STATE_STANDBY, HOST_2)]:

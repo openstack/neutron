@@ -28,6 +28,7 @@ from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import portbindings
+from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_api as api
@@ -46,8 +47,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self.setup_coreplugin(PLUGIN_NAME)
 
     def _setup_neutron_network(self, network_id):
-        with self.ctx.session.begin(subtransactions=True):
-            self.ctx.session.add(models_v2.Network(id=network_id))
+        network_obj.Network(self.ctx, id=network_id).create()
 
     def _setup_neutron_port(self, network_id, port_id):
         mac_address = db_base_plugin_v2.NeutronDbPluginV2._generate_mac()
@@ -73,7 +73,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         return sorted(segments, key=lambda d: d['segmentation_id'])
 
     def _create_segments(self, segments, is_seg_dynamic=False,
-                         network_id='foo-network-id'):
+                         network_id=uuidutils.generate_uuid()):
         self._setup_neutron_network(network_id)
         for segment in segments:
             segments_db.add_network_segment(
@@ -112,6 +112,8 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         self._create_segments(segments)
 
     def test_get_networks_segments(self):
+        net_id1 = uuidutils.generate_uuid()
+        net_id2 = uuidutils.generate_uuid()
         segments1 = [{api.NETWORK_TYPE: 'vlan',
                       api.PHYSICAL_NETWORK: 'physnet1',
                       api.SEGMENTATION_ID: 1},
@@ -124,20 +126,22 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                      {api.NETWORK_TYPE: 'vlan',
                       api.PHYSICAL_NETWORK: 'physnet1',
                       api.SEGMENTATION_ID: 4}]
-        net1segs = self._create_segments(segments1, network_id='net1')
-        net2segs = self._create_segments(segments2, network_id='net2')
+        net1segs = self._create_segments(segments1, network_id=net_id1)
+        net2segs = self._create_segments(segments2, network_id=net_id2)
         segs = segments_db.get_networks_segments(
-            self.ctx, ['net1', 'net2'])
-        self.assertEqual(net1segs, self._sort_segments(segs['net1']))
-        self.assertEqual(net2segs, self._sort_segments(segs['net2']))
+            self.ctx, [net_id1, net_id2])
+        self.assertEqual(net1segs, self._sort_segments(segs[net_id1]))
+        self.assertEqual(net2segs, self._sort_segments(segs[net_id2]))
 
     def test_get_networks_segments_no_segments(self):
-        self._create_segments([], network_id='net1')
-        self._create_segments([], network_id='net2')
+        net_id1 = uuidutils.generate_uuid()
+        net_id2 = uuidutils.generate_uuid()
+        self._create_segments([], network_id=net_id1)
+        self._create_segments([], network_id=net_id2)
         segs = segments_db.get_networks_segments(
-            self.ctx, ['net1', 'net2'])
-        self.assertEqual([], segs['net1'])
-        self.assertEqual([], segs['net2'])
+            self.ctx, [net_id1, net_id2])
+        self.assertEqual([], segs[net_id1])
+        self.assertEqual([], segs[net_id2])
 
     def test_get_segment_by_id(self):
         segment = {api.NETWORK_TYPE: 'vlan',
@@ -282,7 +286,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_neutron_network(self, network_id, port_ids):
         with self.ctx.session.begin(subtransactions=True):
-            self.ctx.session.add(models_v2.Network(id=network_id))
+            network_obj.Network(self.ctx, id=network_id).create()
             ports = []
             for port_id in port_ids:
                 mac_address = (db_base_plugin_v2.NeutronDbPluginV2.
@@ -397,13 +401,13 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self.assertEqual(2, len(ports))
 
     def test_distributed_port_binding_deleted_by_port_deletion(self):
-        with self.ctx.session.begin(subtransactions=True):
-            self.ctx.session.add(models_v2.Network(id='network_id'))
+        network_id = uuidutils.generate_uuid()
+        network_obj.Network(self.ctx, id=network_id).create()
         with self.ctx.session.begin(subtransactions=True):
             device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
             port = models_v2.Port(
                 id='port_id',
-                network_id='network_id',
+                network_id=network_id,
                 mac_address='00:11:22:33:44:55',
                 admin_state_up=True,
                 status=constants.PORT_STATUS_ACTIVE,
