@@ -100,8 +100,7 @@ class SqlFixture(fixtures.Fixture):
         self.sessionmaker = session.get_maker(engine)
 
         self.enginefacade_factory = enginefacade._TestTransactionFactory(
-            self.engine, self.sessionmaker, apply_global=False,
-            synchronous_reader=True)
+            self.engine, self.sessionmaker, apply_global=False)
 
         _restore_factory = db_api.context_manager._root_factory
 
