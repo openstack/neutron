@@ -965,7 +965,7 @@ class RouterInfo(object):
             device_name = name_generator(p['id'])
             ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
             port_as_marks = self.get_port_address_scope_mark(p)
-            for ip_version in {ip_lib.get_ip_version(cidr)
+            for ip_version in {common_utils.get_ip_version(cidr)
                                for cidr in ip_cidrs}:
                 devicename_scopemark[ip_version][device_name] = (
                     port_as_marks[ip_version])

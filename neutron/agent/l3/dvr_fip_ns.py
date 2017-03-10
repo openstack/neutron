@@ -231,7 +231,7 @@ class FipNamespace(namespaces.Namespace):
                 for subnet in gateway_port.get('subnets', []):
                     gateway_ip = subnet.get('gateway_ip', None)
                     if gateway_ip:
-                        ip_version = ip_lib.get_ip_version(gateway_ip)
+                        ip_version = common_utils.get_ip_version(gateway_ip)
                         gw_ips[ip_version] = gateway_ip
             return gw_ips
 
@@ -254,7 +254,7 @@ class FipNamespace(namespaces.Namespace):
     def _add_default_gateway_for_fip(self, gw_ip, ip_device, tbl_index):
         """Adds default gateway for fip based on the tbl_index passed."""
         if tbl_index is None:
-            ip_version = ip_lib.get_ip_version(gw_ip)
+            ip_version = common_utils.get_ip_version(gw_ip)
             tbl_index_list = self.get_fip_table_indexes(ip_version)
             for tbl_index in tbl_index_list:
                 ip_device.route.add_gateway(gw_ip, table=tbl_index)

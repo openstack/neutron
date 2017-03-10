@@ -379,7 +379,7 @@ class Pinger(object):
     def start(self):
         if self.proc and self.proc.is_running:
             raise RuntimeError("This pinger has already a running process")
-        ip_version = ip_lib.get_ip_version(self.address)
+        ip_version = common_utils.get_ip_version(self.address)
         ping_exec = 'ping' if ip_version == 4 else 'ping6'
         cmd = [ping_exec, self.address, '-W', str(self.timeout)]
         if self.count:
