@@ -16,6 +16,7 @@ import itertools
 import random
 
 from neutron_lib import constants as const
+from neutron_lib.utils import net
 from oslo_serialization import jsonutils
 
 from neutron.common import constants
@@ -118,7 +119,7 @@ class MACAddressFieldTest(test_base.BaseTestCase, TestField):
             'XXXX', 'ypp', 'g3:vvv',
             # the field type is strict and does not allow to pass strings, even
             # if they represent a valid MAC address
-            tools.get_random_mac(),
+            net.get_random_mac('fe:16:3e:00:00:00'.split(':')),
         ]
         self.to_primitive_values = ((a1, str(a2))
                                     for a1, a2 in self.coerce_good_values)

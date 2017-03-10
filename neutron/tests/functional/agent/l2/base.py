@@ -19,6 +19,7 @@ import random
 import eventlet
 import mock
 from neutron_lib import constants as n_const
+from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
@@ -169,7 +170,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def _create_test_port_dict(self):
         return {'id': uuidutils.generate_uuid(),
-                'mac_address': utils.get_random_mac(
+                'mac_address': net.get_random_mac(
                     'fa:16:3e:00:00:00'.split(':')),
                 'fixed_ips': [{
                     'ip_address': '10.%d.%d.%d' % (

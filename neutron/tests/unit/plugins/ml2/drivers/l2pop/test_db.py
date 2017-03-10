@@ -14,10 +14,10 @@
 
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.utils import net
 from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
@@ -99,7 +99,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_port_binding(self, **kwargs):
         with self.ctx.session.begin(subtransactions=True):
-            mac = utils.get_random_mac('fa:16:3e:00:00:00'.split(':'))
+            mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
             port_id = uuidutils.generate_uuid()
             network_id = kwargs.get('network_id', TEST_NETWORK_ID)
             device_owner = kwargs.get('device_owner', '')

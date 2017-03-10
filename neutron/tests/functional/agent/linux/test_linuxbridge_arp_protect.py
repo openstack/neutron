@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.common import utils
 from neutron_lib import constants
+from neutron_lib.utils import net
 
 from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
 from neutron.tests.common import machine_fixtures
@@ -72,7 +72,7 @@ class LinuxBridgeARPSpoofTestCase(functional_base.BaseSudoTestCase):
         # make sure a large number of allowed address pairs works
         for i in range(100000):
             port['allowed_address_pairs'].append(
-                {'mac_address': utils.get_random_mac(
+                {'mac_address': net.get_random_mac(
                      'fa:16:3e:00:00:00'.split(':')),
                  'ip_address': '10.10.10.10'})
         self._add_arp_protection(self.source, ['1.2.2.2'], port)
