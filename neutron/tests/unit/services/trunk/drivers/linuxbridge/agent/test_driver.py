@@ -107,10 +107,6 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
                                     'mac_address': 'mac_addr'})
         self.plumber.delete_subports_by_port_id.assert_called_once_with(
             self.trunk.sub_ports[0].port_id)
-        self.tapi.get_trunk_for_subport.assert_called_once_with(
-            mock.ANY, self.trunk.sub_ports[0].port_id)
-        self.plumber.set_port_mac.assert_called_once_with(
-            self.trunk.sub_ports[0].port_id, 'mac_addr')
 
     def test_wire_trunk_happy_path(self):
         self.lbd.wire_trunk('ctx', self.trunk)

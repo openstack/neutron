@@ -99,12 +99,6 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
         # clear any VLANs in case this was a trunk that changed status while
         # agent was offline.
         self._plumber.delete_subports_by_port_id(device_details['port_id'])
-        if self._tapi.get_trunk_for_subport(context,
-                                            device_details['port_id']):
-            # This is a subport. We need to ensure the correct mac address is
-            # set now that we have the port data to see the data model MAC.
-            self._plumber.set_port_mac(device_details['port_id'],
-                                       device_details['mac_address'])
 
     def wire_trunk(self, context, trunk):
         """Wire up subports while keeping the server trunk status apprised."""

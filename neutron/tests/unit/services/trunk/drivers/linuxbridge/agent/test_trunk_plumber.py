@@ -68,16 +68,6 @@ class PlumberTestCase(base.BaseTestCase):
                                  mock.call('dev1')],
                                 any_order=True)
 
-    def test_set_port_mac(self):
-        ipd = mock.patch.object(trunk_plumber.ip_lib, 'IPDevice').start()
-        ipdi = ipd.return_value
-        self.plumber.set_port_mac('port_id', mac_address='44')
-        ipdi.link.set_address.assert_called_once_with('44')
-        ipdi.exists.return_value = False
-        ipdi.link.set_address.side_effect = ValueError()
-        # exception suppressed since it no longer 'exists'
-        self.plumber.set_port_mac('port_id', mac_address='44')
-
     def test__get_vlan_children(self):
         expected = [('tap47198374-5a', 777),
                     ('tap47198374-5b', 2),
