@@ -32,6 +32,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt
 from neutron.tests.common import base as common_base
+from neutron.tests.common import helpers
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent import test_ovs_lib
 from neutron.tests.functional import base
@@ -387,6 +388,7 @@ class OVSFlowTestCase(OVSAgentTestBase):
         self.assertTrue(("dl_src=%(gateway_mac)s" % kwargs) in
                         trace["Final flow"])
 
+    @helpers.skip_if_ovs_older_than("2.5.1")
     def test_install_flood_to_tun(self):
         attrs = {
             'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
