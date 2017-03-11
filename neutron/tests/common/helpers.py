@@ -13,6 +13,8 @@
 #    under the License.
 
 import datetime
+from distutils import version
+import functools
 import os
 import random
 
@@ -22,6 +24,7 @@ import six
 import testtools
 
 import neutron
+from neutron.agent.common import ovs_lib
 from neutron.common import topics
 from neutron import context
 from neutron.db import agents_db
@@ -220,3 +223,21 @@ def get_not_used_vlan(bridge, vlan_range):
     used_vlan_tags = {val['tag'] for val in port_vlans}
     available_vlans = vlan_range - used_vlan_tags
     return random.choice(list(available_vlans))
+
+
+def skip_if_ovs_older_than(ovs_version):
+    """Decorator for test method to skip if OVS version doesn't meet
+       minimal requirement.
+    """
+    def skip_if_bad_ovs(f):
+        @functools.wraps(f)
+        def check_ovs_and_skip(test):
+            ovs = ovs_lib.BaseOVS()
+            current_ovs_version = version.StrictVersion(
+                ovs.config['ovs_version'])
+            if current_ovs_version < version.StrictVersion(ovs_version):
+                test.skip("This test requires OVS version %s or higher." %
+                          ovs_version)
+            return f(test)
+        return check_ovs_and_skip
+    return skip_if_bad_ovs
