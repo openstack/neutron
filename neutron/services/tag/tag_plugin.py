@@ -24,11 +24,12 @@ from neutron.api.v2 import attributes
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db.models import l3 as l3_model
-from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
 from neutron.db import tag_db as tag_methods
 from neutron.extensions import l3 as l3_ext
 from neutron.extensions import tag as tag_ext
+from neutron.objects import exceptions as obj_exc
+from neutron.objects import tag as tag_obj
 
 
 resource_model_map = {
@@ -86,13 +87,14 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
             old_tags = {tag_db.tag for tag_db in res.standard_attr.tags}
             tags_added = new_tags - old_tags
             tags_removed = old_tags - new_tags
-            for tag_db in res.standard_attr.tags:
-                if tag_db.tag in tags_removed:
-                    context.session.delete(tag_db)
+            tag_obj.Tag.delete_objects(context, tag=[
+                tag_db.tag
+                for tag_db in res.standard_attr.tags
+                if tag_db.tag in tags_removed
+            ])
             for tag in tags_added:
-                tag_db = tag_model.Tag(standard_attr_id=res.standard_attr_id,
-                                       tag=tag)
-                context.session.add(tag_db)
+                tag_obj.Tag(context, standard_attr_id=res.standard_attr_id,
+                            tag=tag).create()
         return body
 
     @log_helpers.log_method_call
@@ -101,32 +103,23 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
         if any(tag == tag_db.tag for tag_db in res.standard_attr.tags):
             return
         try:
-            with db_api.context_manager.writer.using(context):
-                tag_db = tag_model.Tag(standard_attr_id=res.standard_attr_id,
-                                       tag=tag)
-                context.session.add(tag_db)
-        except db_exc.DBDuplicateEntry:
+            tag_obj.Tag(context, standard_attr_id=res.standard_attr_id,
+                tag=tag).create()
+        except obj_exc.NeutronDbObjectDuplicateEntry:
             pass
 
     @log_helpers.log_method_call
     def delete_tags(self, context, resource, resource_id):
         res = self._get_resource(context, resource, resource_id)
-        with db_api.context_manager.writer.using(context):
-            query = context.session.query(tag_model.Tag)
-            for t in query.filter_by(standard_attr_id=res.standard_attr_id):
-                context.session.delete(t)
+        tag_obj.Tag.delete_objects(context,
+                                   standard_attr_id=res.standard_attr_id)
 
     @log_helpers.log_method_call
     def delete_tag(self, context, resource, resource_id, tag):
         res = self._get_resource(context, resource, resource_id)
-        with db_api.context_manager.writer.using(context):
-            query = context.session.query(tag_model.Tag)
-            query = query.filter_by(tag=tag,
-                                    standard_attr_id=res.standard_attr_id)
-            try:
-                context.session.delete(query.one())
-            except exc.NoResultFound:
-                raise tag_ext.TagNotFound(tag=tag)
+        if not tag_obj.Tag.delete_objects(context,
+            tag=tag, standard_attr_id=res.standard_attr_id):
+            raise tag_ext.TagNotFound(tag=tag)
 
     def __new__(cls, *args, **kwargs):
         inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)

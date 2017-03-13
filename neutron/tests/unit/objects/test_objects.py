@@ -77,6 +77,7 @@ object_data = {
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',
     'SubnetServiceType': '1.0-05ae4cdb2a9026a697b143926a1add8c',
     'SubPort': '1.0-72c8471068db1f0491b5480fe49b52bb',
+    'Tag': '1.0-1a0d20379920ffa3cebfd3e016d2f7a0',
     'Trunk': '1.1-aa3922b39e37fbb89886c2ee8715cf49',
     'VlanAllocation': '1.0-72636c1b7d5c8eef987bd09666e64f3e',
     'VxlanAllocation': '1.0-934638cd32d00f81d6fbf93c8eb5755a',

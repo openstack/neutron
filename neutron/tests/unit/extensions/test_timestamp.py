@@ -21,10 +21,10 @@ from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 
 from neutron.db import db_base_plugin_v2
-from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
 from neutron.extensions import timestamp
 from neutron import manager
+from neutron.objects import tag as tag_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
@@ -254,10 +254,8 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
     def _save_tag(self, tags, standard_attr_id):
         ctx = context.get_admin_context()
         for tag in tags:
-            with ctx.session.begin(subtransactions=True):
-                tag_db = tag_model.Tag(standard_attr_id=standard_attr_id,
-                                       tag=tag)
-                ctx.session.add(tag_db)
+            tag_obj.Tag(ctx, standard_attr_id=standard_attr_id,
+                        tag=tag).create()
 
     def test_update_timpestamp(self):
         network_id = "foo_network_id"
