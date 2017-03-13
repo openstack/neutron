@@ -21,7 +21,7 @@ from neutron._i18n import _
 l2_population_options = [
     cfg.IntOpt('agent_boot_time', default=180,
                help=_('Delay within which agent is expected to update '
-                      'existing ports whent it restarts')),
+                      'existing ports when it restarts')),
 ]
 
 

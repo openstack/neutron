@@ -124,7 +124,7 @@ class PolicyHook(hooks.PecanHook):
                 resources_copy.append(obj)
         # TODO(salv-orlando): as other hooks might need to prefetch resources,
         # store them in the request context. However, this should be done in a
-        # separate hook which is conventietly called before all other hooks
+        # separate hook which is conveniently called before all other hooks
         state.request.context['original_resources'] = original_resources
         for item in resources_copy:
             try:
