@@ -178,17 +178,6 @@ class AgentUtilsExecuteEncodeTest(base.BaseTestCase):
         self.assertEqual((str_data, ''), result)
 
 
-class AgentUtilsGetInterfaceMAC(base.BaseTestCase):
-    def test_get_interface_mac(self):
-        expect_val = '01:02:03:04:05:06'
-        with mock.patch('fcntl.ioctl') as ioctl:
-            ioctl.return_value = b''.join([b'\x00' * 18,
-                                           b'\x01\x02\x03\x04\x05\x06',
-                                           b'\x00' * 232])
-            actual_val = utils.get_interface_mac('eth0')
-        self.assertEqual(actual_val, expect_val)
-
-
 class TestFindParentPid(base.BaseTestCase):
     def setUp(self):
         super(TestFindParentPid, self).setUp()
