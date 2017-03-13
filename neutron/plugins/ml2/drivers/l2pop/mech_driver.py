@@ -312,6 +312,10 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
         agent = l2pop_db.get_agent_by_host(session,
                                            agent_host)
+        if not agent:
+            LOG.warning(_LW("Unable to retrieve active L2 agent on host %s"),
+                        agent_host)
+            return
         if not self._validate_segment(segment, port['id'], agent):
             return
 
