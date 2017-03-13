@@ -13,21 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import fcntl
 import glob
 import grp
 import os
 import pwd
 import shlex
 import socket
-import struct
 import threading
 
-import debtcollector
 import eventlet
 from eventlet.green import subprocess
 from eventlet import greenthread
-from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -35,7 +31,6 @@ from oslo_rootwrap import client
 from oslo_utils import encodeutils
 from oslo_utils import excutils
 from oslo_utils import fileutils
-from six import iterbytes
 from six.moves import http_client as httplib
 
 from neutron._i18n import _, _LE
@@ -160,20 +155,6 @@ def execute(cmd, process_input=None, addl_env=None,
         greenthread.sleep(0)
 
     return (_stdout, _stderr) if return_stderr else _stdout
-
-
-@debtcollector.removals.remove(
-    version='Ocata', removal_version='Pike',
-    message="Use 'neutron.agent.linux.ip_lib.get_device_mac' instead."
-)
-def get_interface_mac(interface):
-    MAC_START = 18
-    MAC_END = 24
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    dev = interface[:constants.DEVICE_NAME_MAX_LEN]
-    dev = encodeutils.to_utf8(dev)
-    info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', dev))
-    return ':'.join(["%02x" % b for b in iterbytes(info[MAC_START:MAC_END])])
 
 
 def find_child_pids(pid, recursive=False):
