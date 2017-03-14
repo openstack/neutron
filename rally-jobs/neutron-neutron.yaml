@@ -73,7 +73,7 @@
       args:
         network_create_args:
         port_create_args:
-        ports_per_network: 100
+        ports_per_network: 50
       runner:
         type: "constant"
         times: 8
@@ -130,7 +130,7 @@
             name: "_subnet_updated"
       runner:
         type: "constant"
-        times: 400
+        times: 100
         concurrency: 20
       context:
         users:
@@ -308,7 +308,7 @@
   NeutronTrunks.create_and_list_trunk_subports:
     -
       args:
-        subport_count: 500
+        subport_count: 250
       runner:
         type: "constant"
         times: 4
