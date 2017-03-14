@@ -221,6 +221,7 @@ class Server(object):
                              max_size=self.num_threads,
                              log=LOG,
                              keepalive=CONF.wsgi_keep_alive,
+                             log_format=CONF.wsgi_log_format,
                              socket_timeout=self.client_socket_timeout)
 
 
