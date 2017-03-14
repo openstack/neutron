@@ -162,6 +162,7 @@ class SubPortsValidator(object):
             msg = validators.validate_subports(self.subports)
             if msg:
                 raise n_exc.InvalidInput(error_message=msg)
+
         if trunk_validation:
             trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
             return [self._validate(context, s, trunk_port_mtu)
@@ -182,7 +183,8 @@ class SubPortsValidator(object):
 
         try:
             port = core_plugin.get_port(context, port_id)
-            net = core_plugin.get_network(context, port['network_id'])
+            return core_plugin.get_network(
+                context, port['network_id'])[api.MTU]
         except (n_exc.PortNotFound, n_exc.NetworkNotFound):
             # A concurrent request might have made the port or network
             # disappear; though during DB insertion, the subport request
@@ -190,15 +192,11 @@ class SubPortsValidator(object):
             # a None MTU here.
             return
 
-        return net[api.MTU]
-
-    def _validate(self, context, subport, trunk_port_mtu):
-        # Check that the subport doesn't reference the same port_id as a
-        # trunk we may be in the middle of trying to create, in other words
-        # make the validation idiot proof.
+    def _raise_subport_is_parent_port(self, context, subport):
         if subport['port_id'] == self.trunk_port_id:
             raise trunk_exc.ParentPortInUse(port_id=subport['port_id'])
 
+    def _raise_subport_invalid_mtu(self, context, subport, trunk_port_mtu):
         # Check MTU sanity - subport MTU must not exceed trunk MTU.
         # If for whatever reason trunk_port_mtu is not available,
         # the MTU sanity check cannot be enforced.
@@ -212,14 +210,12 @@ class SubPortsValidator(object):
                     trunk_mtu=trunk_port_mtu
                 )
 
-        # If the segmentation details are missing, we will need to
-        # figure out defaults when the time comes to support Ironic.
-        # We can reasonably expect segmentation details to be provided
-        # in all other cases for now.
+    def _raise_if_segmentation_details_missing(self, subport):
         try:
             segmentation_type = subport["segmentation_type"]
             segmentation_id = (
                 converters.convert_to_int(subport["segmentation_id"]))
+            return (segmentation_type, segmentation_id)
         except KeyError:
             msg = _("Invalid subport details '%s': missing segmentation "
                     "information. Must specify both segmentation_id and "
@@ -230,6 +226,9 @@ class SubPortsValidator(object):
                     "not an integer") % subport["segmentation_id"]
             raise n_exc.InvalidInput(error_message=msg)
 
+    def _raise_if_segmentation_details_invalid(self,
+                                               segmentation_type,
+                                               segmentation_id):
         if segmentation_type not in self._segmentation_types:
             msg = _("Unknown segmentation_type '%s'") % segmentation_type
             raise n_exc.InvalidInput(error_message=msg)
@@ -238,7 +237,20 @@ class SubPortsValidator(object):
             msg = _("Segmentation ID '%s' is not in range") % segmentation_id
             raise n_exc.InvalidInput(error_message=msg)
 
-        # Check if the subport is already participating in an active trunk
+    def _raise_if_subport_is_used_in_other_trunk(self, context, subport):
         trunk_validator = TrunkPortValidator(subport['port_id'])
         trunk_validator.validate(context, parent_port=False)
+
+    def _validate(self, context, subport, trunk_port_mtu):
+        self._raise_subport_is_parent_port(context, subport)
+
+        self._raise_subport_invalid_mtu(context, subport, trunk_port_mtu)
+
+        segmentation_type, segmentation_id = (
+            self._raise_if_segmentation_details_missing(subport))
+
+        self._raise_if_segmentation_details_invalid(
+            segmentation_type, segmentation_id)
+
+        self._raise_if_subport_is_used_in_other_trunk(context, subport)
         return subport
