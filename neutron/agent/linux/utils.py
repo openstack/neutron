@@ -432,4 +432,5 @@ class UnixDomainWSGIServer(wsgi.Server):
                              application,
                              max_size=self.num_threads,
                              protocol=UnixDomainHttpProtocol,
-                             log=logger)
+                             log=logger,
+                             log_format=cfg.CONF.wsgi_log_format)
