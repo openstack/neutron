@@ -162,8 +162,8 @@ class SubPortsValidator(object):
             msg = validators.validate_subports(self.subports)
             if msg:
                 raise n_exc.InvalidInput(error_message=msg)
-        trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
         if trunk_validation:
+            trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
             return [self._validate(context, s, trunk_port_mtu)
                     for s in self.subports]
         else:
