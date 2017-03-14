@@ -25,6 +25,7 @@ from neutron.tests import tools
 TEST_UUID = 'test-uuid'
 TEST_SERVICE = 'testsvc'
 TEST_PID = 1234
+TEST_CMDLINE = 'python foo --router_id=%s'
 
 
 class BaseTestProcessMonitor(base.BaseTestCase):
@@ -264,32 +265,42 @@ class TestProcessManager(base.BaseTestCase):
             self.assertIsNone(manager.pid)
 
     def test_active(self):
-        mock_open = self.useFixture(
-            tools.OpenFixture('/proc/4/cmdline', 'python foo --router_id=uuid')
-        ).mock_open
-        with mock.patch.object(ep.ProcessManager, 'pid') as pid:
-            pid.__get__ = mock.Mock(return_value=4)
+        with mock.patch.object(ep.ProcessManager, 'cmdline') as cmdline:
+            cmdline.__get__ = mock.Mock(
+                return_value=TEST_CMDLINE % 'uuid')
             manager = ep.ProcessManager(self.conf, 'uuid')
             self.assertTrue(manager.active)
 
-        mock_open.assert_called_once_with('/proc/4/cmdline', 'r')
-
     def test_active_none(self):
-        dummy_cmd_line = 'python foo --router_id=uuid'
-        self.execute.return_value = dummy_cmd_line
-        with mock.patch.object(ep.ProcessManager, 'pid') as pid:
-            pid.__get__ = mock.Mock(return_value=None)
+        with mock.patch.object(ep.ProcessManager, 'cmdline') as cmdline:
+            cmdline.__get__ = mock.Mock(return_value=None)
             manager = ep.ProcessManager(self.conf, 'uuid')
             self.assertFalse(manager.active)
 
     def test_active_cmd_mismatch(self):
+        with mock.patch.object(ep.ProcessManager, 'cmdline') as cmdline:
+            cmdline.__get__ = mock.Mock(
+                return_value=TEST_CMDLINE % 'anotherid')
+            manager = ep.ProcessManager(self.conf, 'uuid')
+            self.assertFalse(manager.active)
+
+    def test_cmdline(self):
         mock_open = self.useFixture(
-            tools.OpenFixture('/proc/4/cmdline',
-                              'python foo --router_id=anotherid')
+            tools.OpenFixture('/proc/4/cmdline', TEST_CMDLINE % 'uuid')
         ).mock_open
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
             pid.__get__ = mock.Mock(return_value=4)
             manager = ep.ProcessManager(self.conf, 'uuid')
-            self.assertFalse(manager.active)
+            self.assertEqual(TEST_CMDLINE % 'uuid', manager.cmdline)
+        mock_open.assert_called_once_with('/proc/4/cmdline', 'r')
 
+    def test_cmdline_none(self):
+        mock_open = self.useFixture(
+            tools.OpenFixture('/proc/4/cmdline', TEST_CMDLINE % 'uuid')
+        ).mock_open
+        mock_open.side_effect = IOError()
+        with mock.patch.object(ep.ProcessManager, 'pid') as pid:
+            pid.__get__ = mock.Mock(return_value=4)
+            manager = ep.ProcessManager(self.conf, 'uuid')
+            self.assertIsNone(manager.cmdline)
         mock_open.assert_called_once_with('/proc/4/cmdline', 'r')

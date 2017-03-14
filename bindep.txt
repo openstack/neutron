@@ -8,6 +8,7 @@ gettext [test]
 # OpenStack infra that need these like
 # periodic-neutron-py27-with-oslo-master and
 # periodic-neutron-py35-with-neutron-lib-master.
+haproxy
 libmysqlclient-dev [platform:dpkg test]
 mysql [platform:rpm test]
 mysql-client [platform:dpkg test]

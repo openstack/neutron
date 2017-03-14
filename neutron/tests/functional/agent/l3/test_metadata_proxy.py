@@ -12,20 +12,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import os.path
 import time
 
+import fixtures
+from oslo_config import cfg
 import webob
 import webob.dec
 import webob.exc
 
 from neutron.agent.linux import dhcp
+from neutron.agent.linux import external_process
 from neutron.agent.linux import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
 from neutron.tests.functional.agent.linux import helpers
-
+from neutron.tests.functional.agent.linux import simple_daemon
 
 METADATA_REQUEST_TIMEOUT = 60
 METADATA_REQUEST_SLEEP = 5
@@ -118,6 +122,57 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
         # Check status code
         self.assertIn(str(webob.exc.HTTPOk.code), firstline.split())
 
+    @staticmethod
+    def _make_cmdline_callback(uuid):
+        def _cmdline_callback(pidfile):
+            cmdline = ["python", simple_daemon.__file__,
+                       "--uuid=%s" % uuid,
+                       "--pid_file=%s" % pidfile]
+            return cmdline
+        return _cmdline_callback
+
+    def test_haproxy_migration_path(self):
+        """Test the migration path for haproxy.
+
+        This test will launch the simple_daemon Python process before spawning
+        haproxy. When launching haproxy, it will be detected and killed, as
+        it's running on the same pidfile and with the router uuid in its
+        cmdline.
+        """
+        # Make sure that external_pids configuration option is the same for
+        # simple_daemon and haproxy so that both work on the same pid_file.
+        get_temp_file_path = functools.partial(
+            self.get_temp_file_path,
+            root=self.useFixture(fixtures.TempDir()))
+        cfg.CONF.set_override('external_pids',
+                              get_temp_file_path('external/pids'))
+        self.agent.conf.set_override('external_pids',
+                                     get_temp_file_path('external/pids'))
+
+        router_info = self.generate_router_info(enable_ha=False)
+
+        # Spawn the simple_daemon process in the background using the generated
+        # router uuid. We are not registering it within ProcessMonitor so that
+        # it doesn't get respawned once killed.
+        _callback = self._make_cmdline_callback(router_info['id'])
+        pm = external_process.ProcessManager(
+            conf=cfg.CONF,
+            uuid=router_info['id'],
+            default_cmd_callback=_callback)
+        pm.enable()
+        self.addCleanup(pm.disable)
+
+        # Make sure that simple_daemon is running
+        self.assertIn('simple_daemon', pm.cmdline)
+
+        # Create the router. This is expected to launch haproxy after killing
+        # the simple_daemon process.
+        self.manage_router(self.agent, router_info)
+
+        # Make sure that it was killed and replaced by haproxy
+        self.assertNotIn('simple_daemon', pm.cmdline)
+        self.assertIn('haproxy', pm.cmdline)
+
 
 class UnprivilegedUserMetadataL3AgentTestCase(MetadataL3AgentTestCase):
     """Test metadata proxy with least privileged user.
@@ -131,7 +186,6 @@ class UnprivilegedUserMetadataL3AgentTestCase(MetadataL3AgentTestCase):
     def setUp(self):
         super(UnprivilegedUserMetadataL3AgentTestCase, self).setUp()
         self.agent.conf.set_override('metadata_proxy_user', '65534')
-        self.agent.conf.set_override('metadata_proxy_watch_log', False)
 
 
 class UnprivilegedUserGroupMetadataL3AgentTestCase(MetadataL3AgentTestCase):
@@ -149,4 +203,3 @@ class UnprivilegedUserGroupMetadataL3AgentTestCase(MetadataL3AgentTestCase):
         super(UnprivilegedUserGroupMetadataL3AgentTestCase, self).setUp()
         self.agent.conf.set_override('metadata_proxy_user', '65534')
         self.agent.conf.set_override('metadata_proxy_group', '65534')
-        self.agent.conf.set_override('metadata_proxy_watch_log', False)

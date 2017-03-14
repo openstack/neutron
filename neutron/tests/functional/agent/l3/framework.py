@@ -83,8 +83,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         get_temp_file_path = functools.partial(self.get_temp_file_path,
                                                root=temp_dir)
         conf.set_override('state_path', temp_dir.path)
-        # NOTE(cbrandily): log_file or log_dir must be set otherwise
-        # metadata_proxy_watch_log has no effect
         conf.set_override('log_file',
                           get_temp_file_path('log_file'))
         conf.set_override('metadata_proxy_socket',

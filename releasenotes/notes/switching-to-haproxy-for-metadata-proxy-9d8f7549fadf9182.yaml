@@ -1,0 +1,12 @@
+---
+features:
+  - In order to reduce metadata proxy memory footprint, ``haproxy`` is now used
+    as a replacement for ``neutron-ns-metadata-proxy`` Python implementation.
+upgrade:
+  - Since ``haproxy`` was not used before by ``neutron-l3-agent`` and
+    ``neutron-dhcp-agent``, rootwrap filters for both agents have to be copied
+    over when upgrading.
+  - To upgrade to the ``haproxy`` based metadata proxy, ``neutron-l3-agent``
+    and ``neutron-dhcp-agent`` have to be restarted. On startup, old proxy
+    processes will be detected and replaced with ``haproxy``.
+
