@@ -297,6 +297,13 @@ class Host(fixtures.Fixture):
     def linuxbridge_agent(self, agent):
         self.agents['linuxbridge'] = agent
 
+    @property
+    def l2_agent(self):
+        if self.host_desc.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
+            return self.linuxbridge_agent
+        elif self.host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
+            return self.ovs_agent
+
 
 class Environment(fixtures.Fixture):
     """Represents a deployment topology.

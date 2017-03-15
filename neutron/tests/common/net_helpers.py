@@ -128,9 +128,10 @@ def assert_async_ping(src_namespace, dst_ip, timeout=1, count=1, interval=1):
 
 
 @contextlib.contextmanager
-def async_ping(namespace, ips):
+def async_ping(namespace, ips, timeout=1, count=10):
     with futures.ThreadPoolExecutor(max_workers=len(ips)) as executor:
-        fs = [executor.submit(assert_async_ping, namespace, ip, count=10)
+        fs = [executor.submit(assert_async_ping, namespace, ip, count=count,
+                              timeout=timeout)
               for ip in ips]
         yield lambda: all(f.done() for f in fs)
         futures.wait(fs)
