@@ -14,7 +14,6 @@
 
 import functools
 
-from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
@@ -64,9 +63,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
             raise tag_ext.TagNotFound(tag=tag)
 
     @log_helpers.log_method_call
-    @oslo_db_api.wrap_db_retry(
-        max_retries=db_api.MAX_RETRIES,
-        exception_checker=lambda e: isinstance(e, db_exc.DBDuplicateEntry))
+    @db_api.retry_if_session_inactive()
     def update_tags(self, context, resource, resource_id, body):
         res = self._get_resource(context, resource, resource_id)
         new_tags = set(body['tags'])
