@@ -522,6 +522,32 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
             kwargs = after_create.mock_calls[0][2]
             self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
 
+    def test_subnet_delete_no_DetachedInstanceError_for_port_update(self):
+        mock_check_subnet_not_used = mock.patch.object(
+            base_plugin, '_check_subnet_not_used').start()
+        with self.network() as n:
+            with self.subnet(network=n, cidr='1.1.1.0/24') as s1,\
+                 self.subnet(network=n, cidr='1.1.2.0/24') as s2:
+                fixed_ips = [{'subnet_id': s1['subnet']['id']},
+                             {'subnet_id': s2['subnet']['id']}]
+                with self.port(subnet=s1, fixed_ips=fixed_ips,
+                               device_owner=constants.DEVICE_OWNER_DHCP) as p:
+
+                    def subnet_not_used(ctx, subnet_id):
+                        # Make the session invalid after the query.
+                        ctx.session.expunge_all()
+                        mock_check_subnet_not_used.side_effect = None
+                    mock_check_subnet_not_used.side_effect = subnet_not_used
+                    req = self.new_delete_request('subnets',
+                                                  s1['subnet']['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(204, res.status_int)
+                    # ensure port only has 1 IP on s2
+                    port = self._show('ports', p['port']['id'])['port']
+                    self.assertEqual(1, len(port['fixed_ips']))
+                    self.assertEqual(s2['subnet']['id'],
+                                     port['fixed_ips'][0]['subnet_id'])
+
     def test_port_update_subnetnotfound(self):
         with self.network() as n:
             with self.subnet(network=n, cidr='1.1.1.0/24') as s1,\
