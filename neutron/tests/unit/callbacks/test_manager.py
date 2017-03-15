@@ -239,7 +239,7 @@ class CallBacksManagerTestCase(base.BaseTestCase):
         self.manager._notify_loop(
             resources.PORT, events.PRECOMMIT_CREATE, mock.ANY)
         self.assertFalse(_logger.exception.call_count)
-        self.assertTrue(_logger.error.call_count)
+        self.assertTrue(_logger.debug.call_count)
 
     def test_object_instances_as_subscribers(self):
         """Ensures that the manager doesn't think these are equivalent."""
