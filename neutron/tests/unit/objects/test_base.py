@@ -31,7 +31,7 @@ import testtools
 
 from neutron.common import constants
 from neutron.common import utils
-from neutron.db import db_base_plugin_v2
+from neutron.db import _model_query as model_query
 from neutron.db.models import l3 as l3_model
 from neutron.db import standard_attr
 from neutron import objects
@@ -1507,7 +1507,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             return query
 
         self.obj_registry.register(self._test_class)
-        db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
+        model_query.register_hook(
             self._test_class.db_model,
             'foo_filter',
             None,

@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.db import common_db_mixin
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import standard_attr
 
 
@@ -26,7 +26,7 @@ class StandardAttrDescriptionMixin(object):
 
     def __new__(cls, *args, **kwargs):
         for resource in standard_attr.get_standard_attr_resource_model_map():
-            common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+            resource_extend.register_funcs(
                 resource, ['_extend_standard_attr_description'])
         return super(StandardAttrDescriptionMixin, cls).__new__(cls, *args,
                                                                 **kwargs)

@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron.api.v2 import attributes
-from neutron.db import db_base_plugin_v2
+from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.objects.port.extensions import extra_dhcp_opt as obj_extra_dhcp
 
@@ -120,5 +120,5 @@ class ExtraDhcpOptMixin(object):
                                       for dho in port.dhcp_opts]
         return res
 
-    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attributes.PORTS, ['_extend_port_dict_extra_dhcp_opt'])

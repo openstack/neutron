@@ -41,6 +41,7 @@ from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
+from neutron.db import _model_query as model_query
 from neutron.db import _utils as ndb_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
@@ -1388,7 +1389,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 if tenant_id != router['tenant_id']:
                     raise n_exc.DeviceIDNotOwnedByTenant(device_id=device_id)
 
-    db_base_plugin_common.DbBasePluginCommon.register_model_query_hook(
+    model_query.register_hook(
         models_v2.Port,
         "port",
         None,

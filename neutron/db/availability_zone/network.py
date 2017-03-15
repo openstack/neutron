@@ -12,7 +12,7 @@
 #    under the License.
 
 from neutron.api.v2 import attributes
-from neutron.db import common_db_mixin
+from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import network_availability_zone as net_az
 
@@ -26,5 +26,5 @@ class NetworkAvailabilityZoneMixin(net_az.NetworkAvailabilityZonePluginBase):
         net_res[az_ext.AVAILABILITY_ZONES] = (
             self.get_network_availability_zones(net_db))
 
-    common_db_mixin.CommonDbMixin.register_dict_extend_funcs(
+    resource_extend.register_funcs(
         attributes.NETWORKS, ['_extend_availability_zone'])
