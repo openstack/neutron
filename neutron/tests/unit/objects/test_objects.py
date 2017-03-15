@@ -18,7 +18,6 @@ import pprint
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fixture
 
-from neutron.common import utils
 from neutron import objects
 from neutron.tests import base as test_base
 
@@ -91,7 +90,7 @@ class TestObjectVersions(test_base.BaseTestCase):
         super(TestObjectVersions, self).setUp()
         # NOTE(ihrachys): seed registry with all objects under neutron.objects
         # before validating the hashes
-        utils.import_modules_recursively(os.path.dirname(objects.__file__))
+        objects.register_objects()
 
     def test_versions(self):
         checker = fixture.ObjectVersionChecker(
