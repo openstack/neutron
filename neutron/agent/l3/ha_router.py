@@ -95,6 +95,15 @@ class HaRouter(router.RouterInfo):
     def ha_namespace(self):
         return self.ns_name
 
+    def is_router_master(self):
+        """this method is normally called before the ha_router object is fully
+        initialized
+        """
+        if self.router.get('_ha_state') == 'active':
+            return True
+        else:
+            return False
+
     def initialize(self, process_monitor):
         super(HaRouter, self).initialize(process_monitor)
         ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
