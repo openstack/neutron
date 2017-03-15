@@ -324,21 +324,6 @@ class TestNovaNotify(base.BaseTestCase):
                                                              {}, returned_obj)
         self.assertEqual(expected_event, event)
 
-    def test_delete_baremetal_port_notify(self):
-        device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
-        returned_obj = {'port':
-                        {'device_owner': DEVICE_OWNER_BAREMETAL,
-                         'id': port_id,
-                         'device_id': device_id}}
-
-        expected_event = {'server_uuid': device_id,
-                          'name': nova.VIF_DELETED,
-                          'tag': port_id}
-        event = self.nova_notifier.create_port_changed_event('delete_port',
-                                                             {}, returned_obj)
-        self.assertEqual(expected_event, event)
-
     @mock.patch('novaclient.client.Client')
     def test_endpoint_types(self, mock_client):
         nova.Notifier()
