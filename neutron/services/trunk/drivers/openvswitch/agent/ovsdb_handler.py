@@ -108,6 +108,7 @@ def bridge_has_service_port(bridge):
     return bridge_has_port(bridge, is_trunk_service_port)
 
 
+@registry.has_registry_receivers
 class OVSDBHandler(object):
     """It listens to OVSDB events to create the physical resources associated
     to a logical trunk in response to OVSDB events (such as VM boot and/or
@@ -120,15 +121,12 @@ class OVSDBHandler(object):
         self.trunk_manager = trunk_manager
         self.trunk_rpc = agent.TrunkStub()
 
-        registry.subscribe(self.process_trunk_port_events,
-                           ovs_agent_constants.OVSDB_RESOURCE,
-                           events.AFTER_READ)
-
     @property
     def context(self):
         self._context.request_id = o_context.generate_request_id()
         return self._context
 
+    @registry.receives(ovs_agent_constants.OVSDB_RESOURCE, [events.AFTER_READ])
     def process_trunk_port_events(
             self, resource, event, trigger, ovsdb_events):
         """Process added and removed port events coming from OVSDB monitor."""
