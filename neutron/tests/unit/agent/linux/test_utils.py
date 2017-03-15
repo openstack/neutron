@@ -245,15 +245,17 @@ class TestFindForkTopParent(base.BaseTestCase):
 
 
 class TestKillProcess(base.BaseTestCase):
-    def _test_kill_process(self, pid, exception_message=None,
-                           kill_signal=signal.SIGKILL):
-        if exception_message:
-            exc = utils.ProcessExecutionError(exception_message, returncode=0)
+    def _test_kill_process(self, pid, raise_exception=False,
+                           kill_signal=signal.SIGKILL, pid_killed=True):
+        if raise_exception:
+            exc = utils.ProcessExecutionError('', returncode=0)
         else:
             exc = None
         with mock.patch.object(utils, 'execute',
                                side_effect=exc) as mock_execute:
-            utils.kill_process(pid, kill_signal, run_as_root=True)
+            with mock.patch.object(utils, 'process_is_running',
+                                   return_value=not pid_killed):
+                utils.kill_process(pid, kill_signal, run_as_root=True)
 
         mock_execute.assert_called_with(['kill', '-%d' % kill_signal, pid],
                                         run_as_root=True)
@@ -262,11 +264,14 @@ class TestKillProcess(base.BaseTestCase):
         self._test_kill_process('1')
 
     def test_kill_process_returns_none_for_stale_pid(self):
-        self._test_kill_process('1', 'No such process')
+        self._test_kill_process('1', raise_exception=True)
 
     def test_kill_process_raises_exception_for_execute_exception(self):
         with testtools.ExpectedException(utils.ProcessExecutionError):
-            self._test_kill_process('1', 'Invalid')
+            # Simulate that the process is running after trying to kill due to
+            # any reason such as, for example, Permission denied
+            self._test_kill_process('1', raise_exception=True,
+                                    pid_killed=False)
 
     def test_kill_process_with_different_signal(self):
         self._test_kill_process('1', kill_signal=signal.SIGTERM)
