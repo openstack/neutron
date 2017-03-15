@@ -29,7 +29,9 @@ function generate_log_index {
     /tmp/os-log-merger/bin/pip install -U os-log-merger==1.0.6
     files=$(find /opt/stack/logs/$venv-logs -name '*.txt' -o -name '*.log')
     # -a3 to truncate common path prefix
-    contents=$(/tmp/os-log-merger/bin/os-log-merger -a3 $files)
+    # || true to avoid the whole run failure because of os-log-merger crashes and such
+    # TODO(ihrachys) remove || true when we have more trust in os-log-merger
+    contents=$(/tmp/os-log-merger/bin/os-log-merger -a3 $files || true)
     # don't store DEBUG level messages because they are not very useful,
     # and are not indexed by logstash anyway
     echo "$contents" | grep -v DEBUG | sudo tee /opt/stack/logs/$venv-index.txt > /dev/null
