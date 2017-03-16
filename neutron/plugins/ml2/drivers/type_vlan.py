@@ -149,7 +149,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         if physical_network:
             if physical_network not in self.network_vlan_ranges:
                 msg = (_("physical_network '%s' unknown "
-                         " for VLAN provider network") % physical_network)
+                         "for VLAN provider network") % physical_network)
                 raise exc.InvalidInput(error_message=msg)
             if segmentation_id:
                 if not plugin_utils.is_valid_vlan_tag(segmentation_id):
