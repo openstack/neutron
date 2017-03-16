@@ -32,7 +32,6 @@ import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import exc
-import traceback
 
 from neutron._i18n import _LE
 from neutron.objects import exceptions as obj_exc
@@ -125,8 +124,7 @@ def retry_db_errors(f):
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 if is_retriable(e):
-                    LOG.debug("Retry wrapper got retriable exception: %s",
-                              traceback.format_exc())
+                    LOG.debug("Retry wrapper got retriable exception: %s", e)
     return wrapped
 
 
