@@ -26,7 +26,7 @@ function generate_log_index {
     set +o xtrace
 
     virtualenv /tmp/os-log-merger
-    /tmp/os-log-merger/bin/pip install -U os-log-merger==1.0.6
+    /tmp/os-log-merger/bin/pip install -U os-log-merger==1.1.0
     files=$(find /opt/stack/logs/$venv-logs -name '*.txt' -o -name '*.log')
     # -a3 to truncate common path prefix
     # || true to avoid the whole run failure because of os-log-merger crashes and such
