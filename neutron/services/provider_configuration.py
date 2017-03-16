@@ -221,7 +221,7 @@ class ProviderConfiguration(object):
             self.add_provider(prov)
 
     def _ensure_driver_unique(self, driver):
-        for k, v in self.providers.items():
+        for v in self.providers.values():
             if v['driver'] == driver:
                 msg = (_("Driver %s is not unique across providers") %
                        driver)

@@ -395,7 +395,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             if not rm:
                 continue
 
-            for label_id, label in rm.metering_labels.items():
+            for label_id in rm.metering_labels:
                 try:
                     chain = iptables_manager.get_chain_name(WRAP_NAME +
                                                             LABEL +
