@@ -50,7 +50,9 @@ class BaseScheduler(object):
         chosen_agents = self.select(plugin, context, hostable_agents,
                                     hosted_agents, num_agents)
         # bind the resource to the agents
-        self.resource_filter.bind(context, chosen_agents, resource['id'])
+        force_scheduling = bool(resource.get('candidate_hosts'))
+        self.resource_filter.bind(
+            context, chosen_agents, resource['id'], force_scheduling)
         debug_data = ['(%s, %s, %s)' %
                       (agent['agent_type'], agent['host'], resource['id'])
                       for agent in chosen_agents]

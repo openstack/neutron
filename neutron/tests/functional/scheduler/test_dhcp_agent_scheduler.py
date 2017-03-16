@@ -283,15 +283,12 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                                     'network-3'],
                                         'agent-1': ['network-0',
                                                     'network-1',
-                                                    'network-2',
                                                     'network-3'],
                                         'agent-2': ['network-1',
                                                     'network-2',
                                                     'network-3'],
                                         'agent-3': ['network-0',
-                                                    'network-1',
-                                                    'network-2',
-                                                    'network-3']})),
+                                                    'network-2']})),
 
         ('No agents scheduled if networks already hosted and'
          ' max_agents_per_network reached',
@@ -340,25 +337,18 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
               no_network_with_az_match=True)),
     ]
 
-    def _strip_host_index(self, name):
-        """Strips the host index.
-
-        Eg. if name = '2-agent-3', then 'agent-3' is returned.
-        """
-        return name[name.find('-') + 1:]
-
     def _extract_index(self, name):
         """Extracts the index number and returns.
 
-        Eg. if name = '2-agent-3', then 3 is returned
+        Eg. if name = 'agent-3', then 3 is returned
         """
         return int(name.split('-')[-1])
 
     def get_subnets(self, context, fields=None):
         subnets = []
         for net in self._networks:
-            enable_dhcp = (self._strip_host_index(net['name']) not in
-                           self.networks_with_dhcp_disabled)
+            enable_dhcp = (net['name'] not in
+              self.networks_with_dhcp_disabled)
             subnets.append({'network_id': net.id,
                             'enable_dhcp': enable_dhcp,
                             'segment_id': None})
@@ -375,15 +365,13 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
             self.ctx, dhcp_agent_id=agent_id)
         return [item.network_id for item in binding_objs]
 
-    def _test_auto_schedule(self, host_index):
+    def test_auto_schedule(self):
         self.config(dhcp_agents_per_network=self.max_agents_per_network)
         scheduler = dhcp_agent_scheduler.ChanceScheduler()
         self.ctx = context.get_admin_context()
-        msg = 'host_index = %s' % host_index
 
         # create dhcp agents
-        hosts = ['%s-agent-%s' % (host_index, i)
-                 for i in range(self.agent_count)]
+        hosts = ['agent-%s' % i for i in range(self.agent_count)]
         dhcp_agents = self._create_and_set_agents_down(hosts)
 
         # create networks
@@ -391,7 +379,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
             network.Network(
                 self.ctx,
                 id=uuidutils.generate_uuid(),
-                name='%s-network-%s' % (host_index, i))
+                name='network-%s' % i)
             for i in range(self.network_count)
         ]
         for i in range(len(self._networks)):
@@ -407,26 +395,22 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                 scheduler.resource_filter.bind(self.ctx,
                                                [dhcp_agents[agent_index]],
                                                network_ids[net_index])
+        for host_index in range(self.agent_count):
+            msg = 'host_index = %s' % host_index
+            retval = scheduler.auto_schedule_networks(self, self.ctx,
+                                                      hosts[host_index])
+            self.assertEqual(self.expected_auto_schedule_return_value, retval,
+                             message=msg)
 
-        retval = scheduler.auto_schedule_networks(self, self.ctx,
-                                                  hosts[host_index])
-        self.assertEqual(self.expected_auto_schedule_return_value, retval,
-                         message=msg)
-
-        agent_id = dhcp_agents[host_index].id
-        hosted_networks = self._get_hosted_networks_on_dhcp_agent(agent_id)
-        hosted_net_names = [
-            self._strip_host_index(net['name'])
-            for net in network.Network.get_objects(
-                self.ctx, id=hosted_networks)
-        ]
-        expected_hosted_networks = self.expected_hosted_networks['agent-%s' %
-                                                                 host_index]
-        self.assertItemsEqual(hosted_net_names, expected_hosted_networks, msg)
-
-    def test_auto_schedule(self):
-        for i in range(self.agent_count):
-            self._test_auto_schedule(i)
+            agent_id = dhcp_agents[host_index].id
+            hosted_net_ids = self._get_hosted_networks_on_dhcp_agent(agent_id)
+            hosted_net_names = [
+                net['name'] for net in
+                network.Network.get_objects(self.ctx, id=hosted_net_ids)]
+            expected_hosted_networks = self.expected_hosted_networks[
+                'agent-%s' % host_index]
+            self.assertItemsEqual(
+                hosted_net_names, expected_hosted_networks, msg)
 
 
 class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,

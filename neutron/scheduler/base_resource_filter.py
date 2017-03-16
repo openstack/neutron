@@ -26,7 +26,7 @@ class BaseResourceFilter(object):
     def filter_agents(self, plugin, context, resource):
         """Return the agents that can host the resource."""
 
-    def bind(self, context, agents, resource_id):
+    def bind(self, context, agents, resource_id, force_scheduling=False):
         """Bind the resource to the agents."""
         with db_api.CONTEXT_WRITER.using(context):
             for agent in agents:

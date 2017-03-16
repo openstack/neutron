@@ -72,7 +72,9 @@ class NetworkRBAC(rbac.RBACBaseObject):
 @base.NeutronObjectRegistry.register
 class NetworkDhcpAgentBinding(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Added 'binding_index'
+
+    VERSION = '1.1'
 
     db_model = ndab_models.NetworkDhcpAgentBinding
 
@@ -81,6 +83,7 @@ class NetworkDhcpAgentBinding(base.NeutronDbObject):
     fields = {
         'network_id': common_types.UUIDField(),
         'dhcp_agent_id': common_types.UUIDField(),
+        'binding_index': obj_fields.IntegerField(),
     }
 
     # NOTE(ndahiwade): The join was implemented this way as get_objects

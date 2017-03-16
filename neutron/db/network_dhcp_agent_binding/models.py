@@ -17,8 +17,18 @@ from sqlalchemy import orm
 from neutron.db.models import agent as agent_model
 
 
+LOWEST_BINDING_INDEX = 1
+
+
 class NetworkDhcpAgentBinding(model_base.BASEV2):
     """Represents binding between neutron networks and DHCP agents."""
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'network_id', 'binding_index',
+            name='uniq_network_dhcp_agent_binding0network_id0binding_index0'),
+        model_base.BASEV2.__table_args__
+    )
 
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("networks.id", ondelete='CASCADE'),
@@ -28,3 +38,6 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
                               sa.ForeignKey("agents.id",
                                             ondelete='CASCADE'),
                               primary_key=True)
+    binding_index = sa.Column(sa.Integer, nullable=False,
+                              server_default=str(LOWEST_BINDING_INDEX),
+                              autoincrement=True)
