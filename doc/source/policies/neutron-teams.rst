@@ -130,8 +130,6 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-odl         | Isaku Yamahata            | yamahata             |
 +------------------------+---------------------------+----------------------+
-| networking-ofagent (*) | YAMAMOTO Takashi          | yamamoto             |
-+------------------------+---------------------------+----------------------+
 | networking-ovn         | Russell Bryant            | russellb             |
 +------------------------+---------------------------+----------------------+
 | networking-sfc         | Cathy Zhang               | cathy                |
@@ -168,7 +166,7 @@ reviewers:
 Neutron Teams
 =============
 
-Given all of the above, Neutron has the following core reviewer teams with
+Given all of the above, Neutron has a number of core reviewer teams with
 responsibility over the areas of code listed below:
 
 Neutron Core Reviewer Team
@@ -182,34 +180,6 @@ merge rights to the following git repositories:
 Please note that as we adopt to the system above with core specialty in
 particular areas, we expect this broad core team to shrink as people naturally
 evolve into an area of specialization.
-
-Neutron Dynamic Routing Core Reviewer Team
-------------------------------------------
-Neutron `Dynamic Routing core reviewers <https://review.openstack.org/#/admin/groups/1366,members>`_
-have merge rights to the following git repositories:
-
-* `openstack/neutron-dynamic-routing <https://git.openstack.org/cgit/openstack/neutron-dynamic-routing/>`_
-
-Neutron FWaaS Core Reviewer Team
---------------------------------
-Neutron `FWaaS core reviewers <https://review.openstack.org/#/admin/groups/500,members>`_
-have merge rights to the following git repositories:
-
-* `openstack/neutron-fwaas <https://git.openstack.org/cgit/openstack/neutron-fwaas/>`_
-
-Neutron LBaaS Core Reviewer Team
---------------------------------
-Neutron `LBaaS core reviewers <https://review.openstack.org/#/admin/groups/501,members>`_
-have merge rights to the following git repositories:
-
-* `openstack/neutron-lbaas <https://git.openstack.org/cgit/openstack/neutron-lbaas/>`_
-
-Neutron VPNaaS Core Reviewer Team
----------------------------------
-Neutron `VPNaaS core reviewers <https://review.openstack.org/#/admin/groups/502,members>`_
-have merge rights to the following git repositories:
-
-* `openstack/neutron-vpnaas <https://git.openstack.org/cgit/openstack/neutron-vpnaas/>`_
 
 Neutron Core Reviewer Teams for Plugins and Drivers
 ---------------------------------------------------
