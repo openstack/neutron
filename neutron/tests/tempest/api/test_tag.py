@@ -315,3 +315,35 @@ class TagFilterRouterTestJSON(TagFilterTestJSON):
     @test.requires_ext(extension="tag-ext", service="network")
     def test_filter_router_tags(self):
         self._test_filter_tags()
+
+
+class UpdateTagsTest(base.BaseAdminNetworkTest):
+
+    @classmethod
+    @test.requires_ext(extension="tag", service="network")
+    def resource_setup(cls):
+        super(UpdateTagsTest, cls).resource_setup()
+
+    def _get_and_compare_tags(self, tags, res_id):
+        # nothing specific about networks here, just a resource that is
+        # available in all setups
+        res_body = self.client.get_tags('networks', res_id)
+        self.assertItemsEqual(tags, res_body['tags'])
+
+    @test.attr(type='smoke')
+    @decorators.idempotent_id('74c56fb1-a3b1-4a62-a8d2-d04dca6bd4cd')
+    def test_update_tags_affects_only_updated_resource(self):
+        res1 = self.create_network()
+        res2 = self.create_network()
+
+        self.client.update_tags('networks', res1['id'], ['red', 'blue'])
+        self._get_and_compare_tags(['red', 'blue'], res1['id'])
+
+        self.client.update_tags('networks', res2['id'], ['red'])
+        self._get_and_compare_tags(['red'], res2['id'])
+
+        self.client.update_tags('networks', res2['id'], [])
+        self._get_and_compare_tags([], res2['id'])
+
+        # check that updates on res2 hasn't dropped tags from res1
+        self._get_and_compare_tags(['red', 'blue'], res1['id'])

@@ -90,11 +90,16 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
             old_tags = {tag_db.tag for tag_db in res.standard_attr.tags}
             tags_added = new_tags - old_tags
             tags_removed = old_tags - new_tags
-            tag_obj.Tag.delete_objects(context, tag=[
-                tag_db.tag
-                for tag_db in res.standard_attr.tags
-                if tag_db.tag in tags_removed
-            ])
+            if tags_removed:
+                tag_obj.Tag.delete_objects(
+                    context,
+                    standard_attr_id=res.standard_attr_id,
+                    tag=[
+                        tag_db.tag
+                        for tag_db in res.standard_attr.tags
+                        if tag_db.tag in tags_removed
+                    ]
+                )
             for tag in tags_added:
                 tag_obj.Tag(context, standard_attr_id=res.standard_attr_id,
                             tag=tag).create()
