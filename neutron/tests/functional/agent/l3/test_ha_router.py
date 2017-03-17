@@ -21,7 +21,6 @@ import six
 import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
-from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
@@ -305,8 +304,6 @@ class L3HATestCase(framework.L3AgentTestFramework):
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
-    NESTED_NAMESPACE_SEPARATOR = '@'
-
     def setUp(self):
         super(L3HATestFailover, self).setUp()
         conf = self._configure_agent('agent2')
@@ -317,35 +314,26 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         br_int_2 = self._get_agent_ovs_integration_bridge(self.failover_agent)
 
         veth1, veth2 = self.useFixture(net_helpers.VethFixture()).ports
+        veth1.link.set_up()
+        veth2.link.set_up()
         br_int_1.add_port(veth1.name)
         br_int_2.add_port(veth2.name)
 
     def test_ha_router_failover(self):
-        router_info = self.generate_router_info(enable_ha=True)
-        get_ns_name = mock.patch.object(
-            namespaces.RouterNamespace, '_get_ns_name').start()
-        get_ns_name.return_value = "%s%s%s" % (
-            'qrouter-' + router_info['id'],
-            self.NESTED_NAMESPACE_SEPARATOR, self.agent.host)
-        router1 = self.manage_router(self.agent, router_info)
+        router1, router2 = self.create_ha_routers()
 
-        router_info_2 = copy.deepcopy(router_info)
-        router_info_2[constants.HA_INTERFACE_KEY] = (
-            l3_test_common.get_ha_interface(ip='169.254.192.2',
-                                            mac='22:22:22:22:22:22'))
-
-        get_ns_name.return_value = "%s%s%s" % (
-            namespaces.RouterNamespace._get_ns_name(router_info_2['id']),
-            self.NESTED_NAMESPACE_SEPARATOR, self.failover_agent.host)
-        router2 = self.manage_router(self.failover_agent, router_info_2)
-
-        common_utils.wait_until_true(lambda: router1.ha_state == 'master')
-        common_utils.wait_until_true(lambda: router2.ha_state == 'backup')
+        master_router, slave_router = self._get_master_and_slave_routers(
+            router1, router2)
 
         self.fail_ha_router(router1)
 
-        common_utils.wait_until_true(lambda: router2.ha_state == 'master')
-        common_utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        # NOTE: passing slave_router as first argument, because we expect
+        # that this router should be the master
+        new_master, new_slave = self._get_master_and_slave_routers(
+            slave_router, master_router)
+
+        self.assertEqual(master_router, new_slave)
+        self.assertEqual(slave_router, new_master)
 
 
 class LinuxBridgeL3HATestCase(L3HATestCase):
