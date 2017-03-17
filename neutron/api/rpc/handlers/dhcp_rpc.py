@@ -234,6 +234,7 @@ class DhcpRpcCallback(object):
         plugin = directory.get_plugin()
         plugin.delete_ports_by_device_id(context, device_id, network_id)
 
+    @oslo_messaging.expected_exceptions(exceptions.IpAddressGenerationFailure)
     @db_api.retry_db_errors
     @resource_registry.mark_resources_dirty
     def create_dhcp_port(self, context, **kwargs):
@@ -258,6 +259,7 @@ class DhcpRpcCallback(object):
         plugin = directory.get_plugin()
         return self._port_action(plugin, context, port, 'create_port')
 
+    @oslo_messaging.expected_exceptions(exceptions.IpAddressGenerationFailure)
     @db_api.retry_db_errors
     def update_dhcp_port(self, context, **kwargs):
         """Update the dhcp port."""
