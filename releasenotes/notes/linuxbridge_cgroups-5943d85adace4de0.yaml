@@ -1,0 +1,10 @@
+---
+prelude: >
+    The Linux Bridge driver now informs Nova to use the 'tap' interface type
+    to wire interfaces. This requires '/dev/net/tun' to be added to the
+    'cgroup_device_acl' in 'qemu.conf' before upgrading.
+upgrade:
+  - |
+    The Linux Bridge driver now informs Nova to use the 'tap' interface type
+    to wire interfaces. This requires '/dev/net/tun' to be added to the
+    'cgroup_device_acl' in 'qemu.conf' before upgrading.
