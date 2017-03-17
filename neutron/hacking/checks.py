@@ -369,7 +369,7 @@ def check_no_imports_from_tests(logical_line, filename, noqa):
 def check_python3_no_filter(logical_line):
     """N344 - Use list comprehension instead of filter(lambda)."""
 
-    msg = ("N343: Use list comprehension instead of "
+    msg = ("N344: Use list comprehension instead of "
            "filter(lambda obj: test(obj), data) on python3.")
 
     if filter_match.match(logical_line):
