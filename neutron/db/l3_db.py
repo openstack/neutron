@@ -775,7 +775,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         port['port_id'], {'port':
                             {'fixed_ips': fixed_ips}}), [subnet], False
 
-        port_data = {'tenant_id': subnet['tenant_id'],
+        port_data = {'tenant_id': router.tenant_id,
                      'network_id': subnet['network_id'],
                      'fixed_ips': [fixed_ip],
                      'admin_state_up': True,
