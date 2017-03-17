@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context
 from pecan import hooks
 
 
@@ -21,5 +22,6 @@ class ContextHook(hooks.PecanHook):
     priority = 95
 
     def before(self, state):
-        ctx = state.request.environ['neutron.context']
+        ctx = (state.request.environ.get('neutron.context') or
+            context.get_admin_context())
         state.request.context['neutron_context'] = ctx
