@@ -255,24 +255,6 @@ class DelayedStringRenderer(object):
         return str(self.function(*self.args, **self.kwargs))
 
 
-class _SilentDriverManager(driver.DriverManager):
-    """The lamest of hacks to allow us to pass a kwarg to DriverManager parent.
-
-    DriverManager doesn't accept the warn_on_missing_entrypoint param
-    to pass to its parent on __init__ so we mirror the __init__ here and bypass
-    the one in DriverManager in order to silence the warnings.
-    TODO(kevinbenton): remove once Ia6f5f749fc2f73ca6091fa6d58506fddb058902a
-    is released or we stop supporting loading by class path.
-    """
-    def __init__(self, namespace, name):
-        p = super(driver.DriverManager, self)  # pylint: disable=bad-super-call
-        p.__init__(
-            namespace=namespace, names=[name],
-            on_load_failure_callback=self._default_on_load_failure,
-            warn_on_missing_entrypoint=False
-        )
-
-
 def load_class_by_alias_or_classname(namespace, name):
     """Load class using stevedore alias or the class name
     :param namespace: namespace where the alias is defined
@@ -286,7 +268,8 @@ def load_class_by_alias_or_classname(namespace, name):
         raise ImportError(_("Class not found."))
     try:
         # Try to resolve class by alias
-        mgr = _SilentDriverManager(namespace, name)
+        mgr = driver.DriverManager(
+            namespace, name, warn_on_missing_entrypoint=False)
         class_to_load = mgr.driver
     except RuntimeError:
         e1_info = sys.exc_info()
