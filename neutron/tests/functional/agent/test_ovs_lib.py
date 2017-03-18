@@ -505,6 +505,9 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.addCleanup(self.ovs.remove_manager, conn_uri)
         self.ovs.add_manager(conn_uri)
         self.assertIn(conn_uri, self.ovs.get_manager())
+        self.assertEqual(self.ovs.db_get_val('Manager', conn_uri,
+                                             'inactivity_probe'),
+                         self.ovs.vsctl_timeout * 1000)
         self.ovs.remove_manager(conn_uri)
         self.assertNotIn(conn_uri, self.ovs.get_manager())
 

@@ -55,6 +55,8 @@ OVS_DEFAULT_CAPS = {
     'iface_types': [],
 }
 
+_SENTINEL = object()
+
 
 def _ofport_result_pending(result):
     """Return True if ovs-vsctl indicates the result is still pending."""
@@ -107,8 +109,21 @@ class BaseOVS(object):
         self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
         self.ovsdb = ovsdb.API.get(self)
 
-    def add_manager(self, connection_uri):
-        self.ovsdb.add_manager(connection_uri).execute()
+    def add_manager(self, connection_uri, timeout=_SENTINEL):
+        """Have ovsdb-server listen for manager connections
+
+        :param connection_uri: Manager target string
+        :param timeout: The Manager probe_interval timeout value
+                        (defaults to ovs_vsctl_timeout)
+        """
+        if timeout is _SENTINEL:
+            timeout = cfg.CONF.ovs_vsctl_timeout
+        with self.ovsdb.transaction() as txn:
+            txn.add(self.ovsdb.add_manager(connection_uri))
+            if timeout:
+                txn.add(
+                    self.ovsdb.db_set('Manager', connection_uri,
+                                      ('inactivity_probe', timeout * 1000)))
 
     def get_manager(self):
         return self.ovsdb.get_manager().execute()
