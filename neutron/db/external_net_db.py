@@ -61,12 +61,6 @@ class ExternalNetwork(model_base.BASEV2):
 class External_net_db_mixin(object):
     """Mixin class to add external network methods to db_base_plugin_v2."""
 
-    def _network_model_hook(self, context, original_model, query):
-        query = query.outerjoin(ExternalNetwork,
-                                (original_model.id ==
-                                 ExternalNetwork.network_id))
-        return query
-
     def _network_filter_hook(self, context, original_model, conditions):
         if conditions is not None and not hasattr(conditions, '__iter__'):
             conditions = (conditions, )
@@ -88,8 +82,8 @@ class External_net_db_mixin(object):
         if not vals:
             return query
         if vals[0]:
-            return query.filter((ExternalNetwork.network_id != expr.null()))
-        return query.filter((ExternalNetwork.network_id == expr.null()))
+            return query.filter(models_v2.Network.external.has())
+        return query.filter(~models_v2.Network.external.has())
 
     # TODO(salvatore-orlando): Perform this operation without explicitly
     # referring to db_base_plugin_v2, as plugins that do not extend from it
@@ -97,7 +91,7 @@ class External_net_db_mixin(object):
     db_base_plugin_v2.NeutronDbPluginV2.register_model_query_hook(
         models_v2.Network,
         "external_net",
-        '_network_model_hook',
+        None,
         '_network_filter_hook',
         '_network_result_filter_hook')
 
