@@ -17,6 +17,7 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from neutron_lib.services import base as service_base
 import six
 import webob.exc
 
@@ -26,7 +27,6 @@ from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
 from neutron.common import rpc as n_rpc
-from neutron.services import service_base
 
 
 TAG = 'tag'

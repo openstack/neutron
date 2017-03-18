@@ -12,12 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services import base as service_base
+
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import models_v2
 from neutron.db import standard_attr
 from neutron.objects import base as base_obj
-from neutron.services import service_base
 from neutron.services.timestamp import timestamp_db as ts_db
 
 

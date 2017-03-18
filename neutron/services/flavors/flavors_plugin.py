@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services import base as service_base
+
 from neutron.db import flavors_db
 from neutron.plugins.common import constants
-from neutron.services import service_base
 
 
 class FlavorsPlugin(service_base.ServicePluginBase,
