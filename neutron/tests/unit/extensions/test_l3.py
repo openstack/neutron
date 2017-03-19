@@ -226,6 +226,17 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
         self.assertEqual(port_id, res['port_id'])
         self.assertEqual(subnet_id, res['subnet_id'])
 
+    def test_router_add_interface_empty_body(self):
+        router_id = _uuid()
+        instance = self.plugin.return_value
+
+        path = _get_path('routers', id=router_id,
+                         action="add_router_interface",
+                         fmt=self.fmt)
+        res = self.api.put(path)
+        self.assertEqual(exc.HTTPOk.code, res.status_int)
+        instance.add_router_interface.assert_called_with(mock.ANY, router_id)
+
 
 # This base plugin class is for tests.
 class TestL3NatBasePlugin(db_base_plugin_v2.NeutronDbPluginV2,

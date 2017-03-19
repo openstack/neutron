@@ -822,7 +822,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         }
 
     @db_api.retry_if_session_inactive()
-    def add_router_interface(self, context, router_id, interface_info):
+    def add_router_interface(self, context, router_id, interface_info=None):
         router = self._get_router(context, router_id)
         add_by_port, add_by_sub = self._validate_interface_info(interface_info)
         device_owner = self._get_device_owner(context, router_id)
@@ -1852,7 +1852,7 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
         notifier.info(context, router_event,
                       {'router_interface': router_interface_info})
 
-    def add_router_interface(self, context, router_id, interface_info):
+    def add_router_interface(self, context, router_id, interface_info=None):
         router_interface_info = super(
             L3_NAT_db_mixin, self).add_router_interface(
                 context, router_id, interface_info)
