@@ -33,6 +33,7 @@ from neutron.db import _model_query as model_query
 from neutron.db.models import l3 as l3_model
 from neutron.db import standard_attr
 from neutron import objects
+from neutron.objects import agent
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
@@ -1357,6 +1358,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                                                           **sg_fields)
         self._securitygroup.create()
         return self._securitygroup
+
+    def _create_test_agent(self):
+        attrs = self.get_random_object_fields(obj_cls=agent.Agent)
+        self._agent = agent.Agent(self.context, **attrs)
+        self._agent.create()
 
     def _create_test_port(self, network):
         self._port = self._create_port(network_id=network['id'])
