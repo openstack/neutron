@@ -35,6 +35,8 @@ class RouterL3AgentBindingDbObjTestCase(test_base.BaseDbObjectTestCase,
             self._create_test_agent()
             return self._agent['id']
 
+        index = iter(range(1, len(self.objs) + 1))
         self.update_obj_fields(
             {'router_id': self._router.id,
+             'binding_index': lambda: next(index),
              'l3_agent_id': getter})
