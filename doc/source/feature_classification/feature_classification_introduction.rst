@@ -9,8 +9,8 @@ Goals
 ~~~~~
 
 The object of this document is to inform users whether or not
-features are complete, well-documented, stable, and tested.
-This approach ensures a good user-experience for those well-maintained features.
+features are complete, well documented, stable, and tested.
+This approach ensures good user experience for those well maintained features.
 
 .. note::
 
@@ -35,7 +35,7 @@ Feature status
 Immature
 --------
 
-Immature features do not have enough functionality to satisfy real-world
+Immature features do not have enough functionality to satisfy real world
 use cases.
 
 An immature feature is a feature being actively developed, which is only
@@ -54,14 +54,14 @@ A feature is considered mature if it satisfies the following criteria:
 * Complete API documentation including concept and REST call definition.
 * Complete Administrator documentation.
 * Tempest tests that define the correct functionality of the feature.
-* Enough functionality and reliability to be useful in real-world scenarios.
+* Enough functionality and reliability to be useful in real world scenarios.
 * Low probability of support for the feature being dropped.
 
 Required
 --------
 
 Required features are core networking principles that have been thoroughly
-tested and have been implemented in real-world use cases.
+tested and have been implemented in real world use cases.
 
 In addition they satisfy the same criteria for any mature features.
 
