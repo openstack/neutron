@@ -1683,25 +1683,29 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             gateway_ip=constants.ATTR_NOT_SPECIFIED) as subnet:
             with self.port(subnet=subnet) as port:
                 ips = port['port']['fixed_ips']
+                ip_address = '2607:f0d0:1002:51::5'
                 self.assertEqual(1, len(ips))
                 port_mac = port['port']['mac_address']
+                subnet_id = subnet['subnet']['id']
                 subnet_cidr = subnet['subnet']['cidr']
                 eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
                                                                port_mac))
                 self.assertEqual(ips[0]['ip_address'], eui_addr)
-                self.assertEqual(ips[0]['subnet_id'], subnet['subnet']['id'])
+                self.assertEqual(ips[0]['subnet_id'], subnet_id)
 
-                data = {'port': {'fixed_ips': [{'subnet_id':
-                                                subnet['subnet']['id'],
-                                                'ip_address':
-                                                '2607:f0d0:1002:51::5'}]}}
+                data = {'port': {'fixed_ips': [{'subnet_id': subnet_id,
+                                                'ip_address': ip_address}]}}
                 req = self.new_update_request('ports', data,
                                               port['port']['id'])
                 res = req.get_response(self.api)
                 err = self.deserialize(self.fmt, res)
                 self.assertEqual(webob.exc.HTTPClientError.code,
                                  res.status_int)
-                self.assertEqual('InvalidInput', err['NeutronError']['type'])
+                self.assertEqual('AllocationOnAutoAddressSubnet',
+                                 err['NeutronError']['type'])
+                msg = str(ipam_exc.AllocationOnAutoAddressSubnet(
+                    ip=ip_address, subnet_id=subnet_id))
+                self.assertEqual(err['NeutronError']['message'], msg)
 
     def test_requested_duplicate_mac(self):
         with self.port() as port:
