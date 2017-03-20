@@ -23,7 +23,6 @@ from debtcollector import removals
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import excutils
 import six
 import tenacity
 
@@ -412,17 +411,6 @@ class OVSBridge(BaseOVS):
     def get_port_stats(self, port_name):
         return self.db_get_val("Interface", port_name, "statistics")
 
-    def get_xapi_iface_id(self, xs_vif_uuid):
-        args = ["xe", "vif-param-get", "param-name=other-config",
-                "param-key=nicira-iface-id", "uuid=%s" % xs_vif_uuid]
-        try:
-            return utils.execute(args, run_as_root=True).strip()
-        except Exception as e:
-            with excutils.save_and_reraise_exception():
-                LOG.error(_LE("Unable to execute %(cmd)s. "
-                              "Exception: %(exception)s"),
-                          {'cmd': args, 'exception': e})
-
     def get_ports_attributes(self, table, columns=None, ports=None,
                              check_error=True, log_errors=True,
                              if_exists=False):
@@ -447,14 +435,6 @@ class OVSBridge(BaseOVS):
                 continue
             if "iface-id" in external_ids and "attached-mac" in external_ids:
                 p = VifPort(name, ofport, external_ids["iface-id"],
-                            external_ids["attached-mac"], self)
-                edge_ports.append(p)
-            elif ("xs-vif-uuid" in external_ids and
-                  "attached-mac" in external_ids):
-                # if this is a xenserver and iface-id is not automatically
-                # synced to OVS from XAPI, we grab it from XAPI directly
-                iface_id = self.get_xapi_iface_id(external_ids["xs-vif-uuid"])
-                p = VifPort(name, ofport, iface_id,
                             external_ids["attached-mac"], self)
                 edge_ports.append(p)
 
@@ -496,10 +476,6 @@ class OVSBridge(BaseOVS):
     def portid_from_external_ids(self, external_ids):
         if 'iface-id' in external_ids:
             return external_ids['iface-id']
-        if 'xs-vif-uuid' in external_ids:
-            iface_id = self.get_xapi_iface_id(
-                external_ids['xs-vif-uuid'])
-            return iface_id
 
     def get_port_tag_dict(self):
         """Get a dict of port names and associated vlan tags.

@@ -486,29 +486,6 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def _test_get_vif_ports(self, is_xen=False):
-        pname = "tap99"
-        ofport = 6
-        vif_id = uuidutils.generate_uuid()
-        mac = "ca:fe:de:ad:be:ef"
-        id_field = 'xs-vif-uuid' if is_xen else 'iface-id'
-        external_ids = {"attached-mac": mac, id_field: vif_id}
-        self.br.get_ports_attributes = mock.Mock(return_value=[{
-            'name': pname, 'ofport': ofport, 'external_ids': external_ids}])
-        self.br.get_xapi_iface_id = mock.Mock(return_value=vif_id)
-
-        ports = self.br.get_vif_ports()
-        self.assertEqual(1, len(ports))
-        self.assertEqual(ports[0].port_name, pname)
-        self.assertEqual(ports[0].ofport, ofport)
-        self.assertEqual(ports[0].vif_id, vif_id)
-        self.assertEqual(ports[0].vif_mac, mac)
-        self.assertEqual(ports[0].switch.br_name, self.BR_NAME)
-        self.br.get_ports_attributes.assert_called_once_with(
-            'Interface',
-            columns=['name', 'external_ids', 'ofport'],
-            if_exists=True)
-
     def _encode_ovs_json(self, headings, data):
         # See man ovs-vsctl(8) for the encoding details.
         r = {"data": [],
@@ -528,12 +505,36 @@ class OVS_Lib_Test(base.BaseTestCase):
                                     type(cell))
         return jsonutils.dumps(r)
 
-    def _test_get_vif_port_set(self, is_xen):
-        if is_xen:
-            id_key = 'xs-vif-uuid'
-        else:
-            id_key = 'iface-id'
+    def test_get_vif_port_to_ofport_map(self):
+        self.execute.return_value = OVSLIST_WITH_UNSET_PORT
+        results = self.br.get_vif_port_to_ofport_map()
+        expected = {'2ab72a72-4407-4ef3-806a-b2172f3e4dc7': 2, 'patch-tun': 1}
+        self.assertEqual(expected, results)
 
+    def test_get_vif_ports(self):
+        pname = "tap99"
+        ofport = 6
+        vif_id = uuidutils.generate_uuid()
+        mac = "ca:fe:de:ad:be:ef"
+        id_field = 'iface-id'
+        external_ids = {"attached-mac": mac, id_field: vif_id}
+        self.br.get_ports_attributes = mock.Mock(return_value=[{
+            'name': pname, 'ofport': ofport, 'external_ids': external_ids}])
+
+        ports = self.br.get_vif_ports()
+        self.assertEqual(1, len(ports))
+        self.assertEqual(ports[0].port_name, pname)
+        self.assertEqual(ports[0].ofport, ofport)
+        self.assertEqual(ports[0].vif_id, vif_id)
+        self.assertEqual(ports[0].vif_mac, mac)
+        self.assertEqual(ports[0].switch.br_name, self.BR_NAME)
+        self.br.get_ports_attributes.assert_called_once_with(
+            'Interface',
+            columns=['name', 'external_ids', 'ofport'],
+            if_exists=True)
+
+    def test_get_vif_port_set(self):
+        id_key = 'iface-id'
         headings = ['name', 'external_ids', 'ofport']
         data = [
             # A vif port on this bridge:
@@ -558,34 +559,9 @@ class OVS_Lib_Test(base.BaseTestCase):
         ]
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
-        if is_xen:
-            get_xapi_iface_id = mock.patch.object(self.br,
-                                                  'get_xapi_iface_id').start()
-            get_xapi_iface_id.return_value = 'tap99id'
-
         port_set = self.br.get_vif_port_set()
         self.assertEqual(set(['tap99id']), port_set)
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
-        if is_xen:
-            get_xapi_iface_id.assert_called_once_with('tap99id')
-
-    def test_get_vif_port_to_ofport_map(self):
-        self.execute.return_value = OVSLIST_WITH_UNSET_PORT
-        results = self.br.get_vif_port_to_ofport_map()
-        expected = {'2ab72a72-4407-4ef3-806a-b2172f3e4dc7': 2, 'patch-tun': 1}
-        self.assertEqual(expected, results)
-
-    def test_get_vif_ports_nonxen(self):
-        self._test_get_vif_ports(is_xen=False)
-
-    def test_get_vif_ports_xen(self):
-        self._test_get_vif_ports(is_xen=True)
-
-    def test_get_vif_port_set_nonxen(self):
-        self._test_get_vif_port_set(False)
-
-    def test_get_vif_port_set_xen(self):
-        self._test_get_vif_port_set(True)
 
     def test_get_vif_ports_list_ports_error(self):
         expected_calls_and_values = [
