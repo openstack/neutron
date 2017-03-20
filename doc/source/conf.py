@@ -37,6 +37,7 @@ import warnings
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NEUTRON_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 sys.path.insert(0, NEUTRON_DIR)
+sys.path.append(os.path.abspath("ext"))
 
 # -- General configuration ---------------------------------------------------
 
@@ -47,7 +48,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.graphviz',
               'sphinx.ext.todo',
-              'oslosphinx']
+              'oslosphinx',
+              'support_matrix']
 
 todo_include_todos = True
 
@@ -152,7 +154,7 @@ modindex_common_prefix = ['neutron.']
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
