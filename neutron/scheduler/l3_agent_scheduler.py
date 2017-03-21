@@ -281,9 +281,10 @@ class L3Scheduler(object):
             return False
         return True
 
-    def _add_port_from_net(self, plugin, ctxt, router_id, tenant_id, ha_net):
-        """small wrapper function to unpack network id from ha_network"""
-        return plugin.add_ha_port(ctxt, router_id, ha_net.network.id,
+    def _add_port_from_net_and_ensure_vr_id(self, plugin, ctxt, router_db,
+                                            tenant_id, ha_net):
+        plugin._ensure_vr_id(ctxt, router_db, ha_net)
+        return plugin.add_ha_port(ctxt, router_db.id, ha_net.network.id,
                                   tenant_id)
 
     def create_ha_port_and_bind(self, plugin, context, router_id,
@@ -291,11 +292,11 @@ class L3Scheduler(object):
         """Creates and binds a new HA port for this agent."""
         ctxt = context.elevated()
         router_db = plugin._get_router(ctxt, router_id)
-        creator = functools.partial(self._add_port_from_net,
-                                    plugin, ctxt, router_id, tenant_id)
+        creator = functools.partial(self._add_port_from_net_and_ensure_vr_id,
+                                    plugin, ctxt, router_db, tenant_id)
         dep_getter = functools.partial(plugin.get_ha_network, ctxt, tenant_id)
-        dep_creator = functools.partial(plugin._set_vr_id_and_ensure_network,
-                                        ctxt, router_db)
+        dep_creator = functools.partial(plugin._create_ha_network,
+                                        ctxt, tenant_id)
         dep_deleter = functools.partial(plugin._delete_ha_network, ctxt)
         dep_id_attr = 'network_id'
 
