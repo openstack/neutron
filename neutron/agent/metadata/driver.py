@@ -303,8 +303,14 @@ def after_router_added(resource, event, l3_agent, **kwargs):
 def after_router_updated(resource, event, l3_agent, **kwargs):
     router = kwargs['router']
     proxy = l3_agent.metadata_driver
-    if not proxy.monitors.get(router.router_id):
-        after_router_added(resource, event, l3_agent, **kwargs)
+    if (not proxy.monitors.get(router.router_id) and
+            not isinstance(router, ha_router.HaRouter)):
+        proxy.spawn_monitored_metadata_proxy(
+            l3_agent.process_monitor,
+            router.ns_name,
+            proxy.metadata_port,
+            l3_agent.conf,
+            router_id=router.router_id)
 
 
 def before_router_removed(resource, event, l3_agent, **kwargs):
