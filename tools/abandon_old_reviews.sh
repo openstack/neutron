@@ -36,18 +36,34 @@ else
 fi
 
 set -o errexit
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 function abandon_review {
     local gitid=$1
     shift
     local msg=$@
     # echo ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
+    unassign_and_new_bug $gitid
     if [ $DRY_RUN -eq 1 ]; then
         echo "Would abandon $gitid"
     else
         echo "Abandoning $gitid"
         ssh review.openstack.org gerrit review $gitid --abandon --message \"$msg\"
     fi
+}
+
+function unassign_and_new_bug {
+    # unassign current assignee and set bug to 'new' status
+    local gitid=$1
+    cm=$(ssh review.openstack.org "gerrit query $gitid --current-patch-set --format json" | jq .commitMessage)
+    for closes in $(echo -e $cm | grep -i "closes" | grep -i "bug" | grep -o -E '[0-9]+'); do
+        if [ $DRY_RUN -eq 1 ]; then
+            echo "Would unassign and tag 'timeout-abandon' $closes"
+        else
+            echo "Attempting to change status of bug $closes to New"
+            python "$DIR/unassign_bug.py" $closes
+        fi
+    done
 }
 
 PROJECTS="($(
