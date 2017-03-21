@@ -9,5 +9,5 @@ function plugin_agent_add_l2_agent_extension {
 
 
 function configure_l2_agent {
-    iniset /$Q_PLUGIN_CONF_FILE agent extensions "$L2_AGENT_EXTENSIONS"
+    iniset /$NEUTRON_CORE_PLUGIN_CONF agent extensions "$L2_AGENT_EXTENSIONS"
 }
