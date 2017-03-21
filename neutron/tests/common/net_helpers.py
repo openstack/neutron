@@ -253,12 +253,11 @@ class RootHelperProcess(subprocess.Popen):
     @staticmethod
     def _read_stream(stream, timeout):
         if timeout:
-            poller = select.poll()
-            poller.register(stream.fileno())
-            poll_predicate = functools.partial(poller.poll, 1)
-            utils.wait_until_true(poll_predicate, timeout, 0.1,
-                                  RuntimeError(
-                                      'No output in %.2f seconds' % timeout))
+            poll_predicate = functools.partial(
+                select.select, [stream], [], [], 1)
+            utils.wait_until_true(
+                lambda: poll_predicate()[0], timeout, 0.1,
+                RuntimeError('No output in %.2f seconds' % timeout))
         return stream.readline()
 
     def writeline(self, data):
