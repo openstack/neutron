@@ -18,6 +18,7 @@ from oslo_log import log
 from tempest.common import waiters
 from tempest.lib.common import ssh
 from tempest.lib.common.utils import data_utils
+from tempest.lib import exceptions as lib_exc
 
 from neutron.tests.tempest.api import base as base_api
 from neutron.tests.tempest import config
@@ -149,11 +150,6 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         return fip
 
     @classmethod
-    def check_connectivity(cls, host, ssh_user, ssh_key=None):
-        ssh_client = ssh.Client(host, ssh_user, pkey=ssh_key)
-        ssh_client.test_connection_auth()
-
-    @classmethod
     def setup_network_and_server(cls, router=None, **kwargs):
         """Create network resources and a server.
 
@@ -189,3 +185,30 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
                                      device_id=cls.server[
                                           'server']['id'])['ports'][0]
         cls.fip = cls.create_and_associate_floatingip(port['id'])
+
+    def check_connectivity(self, host, ssh_user, ssh_key, servers=None):
+        ssh_client = ssh.Client(host, ssh_user, pkey=ssh_key)
+        try:
+            ssh_client.test_connection_auth()
+        except lib_exc.SSHTimeout as ssh_e:
+            LOG.debug(ssh_e)
+            self._log_console_output(servers)
+            raise
+
+    def _log_console_output(self, servers=None):
+        if not CONF.compute_feature_enabled.console_output:
+            LOG.debug('Console output not supported, cannot log')
+            return
+        if not servers:
+            servers = self.manager.servers_client.list_servers()
+            servers = servers['servers']
+        for server in servers:
+            try:
+                console_output = (
+                    self.manager.servers_client.get_console_output(
+                        server['id'])['output'])
+                LOG.debug('Console output for %s\nbody=\n%s',
+                          server['id'], console_output)
+            except lib_exc.NotFound:
+                LOG.debug("Server %s disappeared(deleted) while looking "
+                          "for the console log", server['id'])
