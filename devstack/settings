@@ -1,1 +1,10 @@
 L2_AGENT_EXTENSIONS=${L2_AGENT_EXTENSIONS:-}
+
+if is_neutron_legacy_enabled; then
+    NEUTRON_CORE_PLUGIN=$Q_PLUGIN
+    NEUTRON_AGENT=$Q_AGENT
+    # NOTE(ihrachys) those values are defined same way as in
+    # lib/neutron_plugins/ml2:neutron_plugin_configure_common
+    NEUTRON_CORE_PLUGIN_CONF_PATH=etc/neutron/plugins/ml2
+    NEUTRON_CORE_PLUGIN_CONF=$NEUTRON_CORE_PLUGIN_CONF_PATH/ml2_conf.ini
+fi
