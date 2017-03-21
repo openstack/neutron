@@ -12,7 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from oslo_log import log as logging
+from tempest.common.utils.linux import remote_client
 from tempest.common import waiters
 from tempest.lib.common.utils import data_utils
 from tempest import test
@@ -24,6 +26,17 @@ from neutron.tests.tempest.scenario import constants
 
 CONF = config.CONF
 LOG = logging.getLogger(__name__)
+
+CONFIGURE_VLAN_INTERFACE_COMMANDS = (
+    'IFACE=$(ip l | grep "^[0-9]*: e" | cut -d \: -f 2) && '
+    'sudo su -c '
+    '"ip l a link $IFACE name $IFACE.%(tag)d type vlan id %(tag)d && '
+    'ip l s up dev $IFACE.%(tag)d && '
+    'dhclient $IFACE.%(tag)d"')
+
+
+def get_next_subnet(cidr):
+    return netaddr.IPNetwork(cidr).next()
 
 
 class TrunkTest(base.BaseTempestTestCase):
@@ -50,17 +63,23 @@ class TrunkTest(base.BaseTempestTestCase):
         port = self.create_port(self.network, security_groups=[
             self.secgroup['security_group']['id']])
         trunk = self.client.create_trunk(port['id'], subports=[])['trunk']
-        fip = self.create_and_associate_floatingip(port['id'])
-        server = self.create_server(
-            flavor_ref=CONF.compute.flavor_ref,
-            image_ref=CONF.compute.image_ref,
-            key_name=self.keypair['name'],
-            networks=[{'port': port['id']}],
-            security_groups=[{'name': self.secgroup[
-                'security_group']['name']}])['server']
+        server, fip = self._create_server_with_fip(port['id'])
         self.addCleanup(self._detach_and_delete_trunk, server, trunk)
         return {'port': port, 'trunk': trunk, 'fip': fip,
                 'server': server}
+
+    def _create_server_with_fip(self, port_id, **server_kwargs):
+        fip = self.create_and_associate_floatingip(port_id)
+        return (
+            self.create_server(
+                flavor_ref=CONF.compute.flavor_ref,
+                image_ref=CONF.compute.image_ref,
+                key_name=self.keypair['name'],
+                networks=[{'port': port_id}],
+                security_groups=[{'name': self.secgroup[
+                    'security_group']['name']}],
+                **server_kwargs)['server'],
+            fip)
 
     def _detach_and_delete_trunk(self, server, trunk):
         # we have to detach the interface from the server before
@@ -86,6 +105,44 @@ class TrunkTest(base.BaseTempestTestCase):
         t = self.client.show_trunk(trunk_id)['trunk']
         return t['status'] == 'ACTIVE'
 
+    def _create_server_with_port_and_subport(self, vlan_network, vlan_tag):
+        parent_port = self.create_port(self.network, security_groups=[
+            self.secgroup['security_group']['id']])
+        port_for_subport = self.create_port(
+            vlan_network,
+            security_groups=[self.secgroup['security_group']['id']],
+            mac_address=parent_port['mac_address'])
+        subport = {
+            'port_id': port_for_subport['id'],
+            'segmentation_type': 'vlan',
+            'segmentation_id': vlan_tag}
+        trunk = self.client.create_trunk(
+            parent_port['id'], subports=[subport])['trunk']
+
+        server, fip = self._create_server_with_fip(parent_port['id'])
+        self.addCleanup(self._detach_and_delete_trunk, server, trunk)
+
+        server_ssh_client = remote_client.RemoteClient(
+            fip['floating_ip_address'],
+            CONF.validation.image_ssh_user,
+            pkey=self.keypair['private_key'],
+            server=server)
+
+        return {
+            'server': server,
+            'fip': fip,
+            'ssh_client': server_ssh_client,
+            'subport': port_for_subport,
+        }
+
+    def _wait_for_server(self, server):
+        waiters.wait_for_server_status(self.manager.servers_client,
+                                       server['server']['id'],
+                                       constants.SERVER_STATUS_ACTIVE)
+        self.check_connectivity(server['fip']['floating_ip_address'],
+                                CONF.validation.image_ssh_user,
+                                self.keypair['private_key'])
+
     @test.idempotent_id('bb13fe28-f152-4000-8131-37890a40c79e')
     def test_trunk_subport_lifecycle(self):
         """Test trunk creation and subport transition to ACTIVE status.
@@ -102,12 +159,7 @@ class TrunkTest(base.BaseTempestTestCase):
         server1 = self._create_server_with_trunk_port()
         server2 = self._create_server_with_trunk_port()
         for server in (server1, server2):
-            waiters.wait_for_server_status(self.manager.servers_client,
-                                           server['server']['id'],
-                                           constants.SERVER_STATUS_ACTIVE)
-            self.check_connectivity(server['fip']['floating_ip_address'],
-                                    CONF.validation.image_ssh_user,
-                                    self.keypair['private_key'])
+            self._wait_for_server(server)
         trunk1_id, trunk2_id = server1['trunk']['id'], server2['trunk']['id']
         # trunks should transition to ACTIVE without any subports
         utils.wait_until_true(
@@ -167,3 +219,26 @@ class TrunkTest(base.BaseTempestTestCase):
         self.check_connectivity(server2['fip']['floating_ip_address'],
                                 CONF.validation.image_ssh_user,
                                 self.keypair['private_key'])
+
+    @test.idempotent_id('a8a02c9b-b453-49b5-89a2-cce7da66aafb')
+    def test_subport_connectivity(self):
+        vlan_tag = 10
+
+        vlan_network = self.create_network()
+        new_subnet_cidr = get_next_subnet(
+            config.safe_get_config_value('network', 'project_network_cidr'))
+        self.create_subnet(vlan_network, cidr=new_subnet_cidr)
+
+        servers = [
+            self._create_server_with_port_and_subport(vlan_network, vlan_tag)
+            for i in range(2)]
+
+        for server in servers:
+            self._wait_for_server(server)
+            # Configure VLAN interfaces on server
+            command = CONFIGURE_VLAN_INTERFACE_COMMANDS % {'tag': vlan_tag}
+            server['ssh_client'].exec_command(command)
+
+        # Ping from server1 to server2 via VLAN interface
+        servers[0]['ssh_client'].ping_host(
+            servers[1]['subport']['fixed_ips'][0]['ip_address'])
