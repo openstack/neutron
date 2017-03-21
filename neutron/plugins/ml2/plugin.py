@@ -813,6 +813,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             updated_network = self.get_network(context, id)
 
+            kwargs = {'context': context, 'network': updated_network,
+                      'original_network': original_network}
+            registry.notify(
+                resources.NETWORK, events.PRECOMMIT_UPDATE, self, **kwargs)
+
             # TODO(QoS): Move out to the extension framework somehow.
             need_network_update_notify = (
                 qos_consts.QOS_POLICY_ID in net_data and
@@ -1063,6 +1068,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     attrs.get(addr_pair.ADDRESS_PAIRS)))
             self._process_port_create_extra_dhcp_opts(context, result,
                                                       dhcp_opts)
+            kwargs = {'context': context, 'port': result}
+            registry.notify(
+                resources.PORT, events.PRECOMMIT_CREATE, self, **kwargs)
             self.mechanism_manager.create_port_precommit(mech_context)
             self._setup_dhcp_agent_provisioning_component(context, result)
 
@@ -1229,6 +1237,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 original_port=original_port)
             need_port_update_notify |= self._process_port_binding(
                 mech_context, attrs)
+
+            kwargs = {
+                'context': context,
+                'port': updated_port,
+                'original_port': original_port,
+            }
+            registry.notify(
+                resources.PORT, events.PRECOMMIT_UPDATE, self, **kwargs)
+
             # For DVR router interface ports we need to retrieve the
             # DVRPortbinding context instead of the normal port context.
             # The normal Portbinding context does not have the status
