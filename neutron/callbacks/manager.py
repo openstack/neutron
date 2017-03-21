@@ -155,7 +155,7 @@ class CallbacksManager(object):
                                   {'callback': callback_id,
                                    'resource': resource, 'event': event})
                 else:
-                    LOG.error(_LE("Callback %(callback)s raised %(error)s"),
+                    LOG.debug("Callback %(callback)s raised %(error)s",
                               {'callback': callback_id, 'error': e})
                 errors.append(exceptions.NotificationError(callback_id, e))
         return errors
