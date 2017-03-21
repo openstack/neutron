@@ -253,7 +253,7 @@ class KeepalivedIPv6Test(object):
         self.config = None
         self.config_path = None
         self.nsname = "keepalivedtest-" + uuidutils.generate_uuid()
-        self.pm = external_process.ProcessMonitor(cfg.CONF, 'router')
+        self.pm = None
         self.orig_interval = cfg.CONF.AGENT.check_child_processes_interval
 
     def configure(self):
@@ -278,6 +278,7 @@ class KeepalivedIPv6Test(object):
     def start_keepalived_process(self):
         # Disable process monitoring for Keepalived process.
         cfg.CONF.set_override('check_child_processes_interval', 0, 'AGENT')
+        self.pm = external_process.ProcessMonitor(cfg.CONF, 'router')
 
         # Create a temp directory to store keepalived configuration.
         self.config_path = tempfile.mkdtemp()
@@ -304,7 +305,8 @@ class KeepalivedIPv6Test(object):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        self.pm.stop()
+        if self.pm:
+            self.pm.stop()
         if self.manager:
             self.manager.disable()
         if self.config_path:
