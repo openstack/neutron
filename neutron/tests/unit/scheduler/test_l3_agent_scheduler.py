@@ -1610,7 +1610,7 @@ class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
     def test_get_ordered_l3_agents_by_num_routers(self):
         # Mock scheduling so that the test can control it explicitly
         mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
-                          '_notify_ha_interfaces_updated').start()
+                          '_notify_router_updated').start()
         with mock.patch.object(self.plugin, 'schedule_router'):
             router1 = self._create_ha_router()
             router2 = self._create_ha_router()
@@ -1802,7 +1802,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
     def test_auto_schedule(self):
         # Mock scheduling so that the test can control it explicitly
         mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
-                          '_notify_ha_interfaces_updated').start()
+                          '_notify_router_updated').start()
 
         router = self._create_ha_router()
         self.plugin.auto_schedule_routers(
@@ -2021,7 +2021,7 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
             'neutron.scheduler.l3_agent_scheduler.AZLeastRoutersScheduler')
         # Mock scheduling so that the test can control it explicitly
         mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
-                          '_notify_ha_interfaces_updated').start()
+                          '_notify_router_updated').start()
 
     def _register_l3_agents(self):
         self.agent1 = helpers.register_l3_agent(host='az1-host1', az='az1')
