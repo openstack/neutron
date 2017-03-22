@@ -86,7 +86,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.assertEqual('testuserid', self.context.user_id)
         self.assertEqual('testusername', self.context.user_name)
         self.assertEqual('testtenantid', self.context.tenant_id)
-        self.assertEqual('testtenantname', self.context.tenant_name)
+        self.assertEqual('testtenantname', self.context.project_name)
 
     def test_request_id_extracted_from_env(self):
         req_id = 'dummy-request-id'

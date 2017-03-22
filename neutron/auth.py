@@ -16,7 +16,6 @@ from neutron_lib import context
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import base
-from oslo_middleware import request_id
 import webob.dec
 import webob.exc
 
@@ -28,33 +27,11 @@ class NeutronKeystoneContext(base.ConfigurableMiddleware):
 
     @webob.dec.wsgify
     def __call__(self, req):
-        # Determine the user ID
-        user_id = req.headers.get('X_USER_ID')
-        if not user_id:
+        ctx = context.Context.from_environ(req.environ)
+
+        if not ctx.user_id:
             LOG.debug("X_USER_ID is not found in request")
             return webob.exc.HTTPUnauthorized()
-
-        # Determine the tenant
-        tenant_id = req.headers.get('X_PROJECT_ID')
-
-        # Suck out the roles
-        roles = [r.strip() for r in req.headers.get('X_ROLES', '').split(',')]
-
-        # Human-friendly names
-        tenant_name = req.headers.get('X_PROJECT_NAME')
-        user_name = req.headers.get('X_USER_NAME')
-
-        # Use request_id if already set
-        req_id = req.environ.get(request_id.ENV_REQUEST_ID)
-
-        # Get the auth token
-        auth_token = req.headers.get('X_AUTH_TOKEN',
-                                     req.headers.get('X_STORAGE_TOKEN'))
-
-        # Create a context with the authentication data
-        ctx = context.Context(user_id, tenant_id, roles=roles,
-                              user_name=user_name, tenant_name=tenant_name,
-                              request_id=req_id, auth_token=auth_token)
 
         # Inject the context...
         req.environ['neutron.context'] = ctx
