@@ -271,6 +271,14 @@ class OVS_Lib_Test(base.BaseTestCase):
         self._test_get_port_ofport(ovs_lib.INVALID_OFPORT,
                                    ovs_lib.INVALID_OFPORT)
 
+    def test_get_port_mac(self):
+        pname = "tap99"
+        self.br.vsctl_timeout = 0  # Don't waste precious time retrying
+        self.execute.return_value = self._encode_ovs_json(
+            ['mac_in_use'], [['00:01:02:03:04:05']])
+        expected_result = '00:01:02:03:04:05'
+        self.assertEqual(self.br.get_port_mac(pname), expected_result)
+
     def test_default_datapath(self):
         # verify kernel datapath is default
         expected = p_const.OVS_DATAPATH_SYSTEM

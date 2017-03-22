@@ -322,6 +322,14 @@ class OVSBridge(BaseOVS):
                           port_name)
         return ofport
 
+    def get_port_mac(self, port_name):
+        """Get the port's mac address.
+
+        This is especially useful when the port is not a neutron port.
+        E.g. networking-sfc needs the MAC address of "patch-tun
+        """
+        return self.db_get_val("Interface", port_name, "mac_in_use")
+
     def get_datapath_id(self):
         return self.db_get_val('Bridge',
                                self.br_name, 'datapath_id')
