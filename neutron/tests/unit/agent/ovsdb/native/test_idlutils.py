@@ -142,3 +142,15 @@ class TestIdlUtils(base.BaseTestCase):
     def test_db_replace_record_cmd(self):
         obj = MockCommand("test")
         self.assertEqual("test", idlutils.db_replace_record(obj))
+
+    def test_row_by_record(self):
+        FAKE_RECORD = 'fake_record'
+        mock_idl_ = mock.MagicMock()
+        mock_table = mock.MagicMock(
+            rows={mock.sentinel.row: mock.sentinel.row_value})
+        mock_idl_.tables = {mock.sentinel.table_name: mock_table}
+
+        res = idlutils.row_by_record(mock_idl_,
+                                     mock.sentinel.table_name,
+                                     FAKE_RECORD)
+        self.assertEqual(mock.sentinel.row_value, res)
