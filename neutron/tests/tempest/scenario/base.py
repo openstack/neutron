@@ -13,11 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from oslo_log import log
 
 from tempest.common import waiters
 from tempest.lib.common import ssh
 from tempest.lib.common.utils import data_utils
+from tempest.lib.common.utils import test_utils
 from tempest.lib import exceptions as lib_exc
 
 from neutron.tests.tempest.api import base as base_api
@@ -129,6 +131,18 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         cls.create_secgroup_rules(rule_list, secgroup_id=secgroup_id)
 
     @classmethod
+    def create_pingable_secgroup_rule(cls, secgroup_id=None):
+        """This rule is intended to permit inbound ping
+        """
+
+        rule_list = [{'protocol': 'icmp',
+                      'direction': 'ingress',
+                      'port_range_min': 8,  # type
+                      'port_range_max': 0,  # code
+                      'remote_ip_prefix': '0.0.0.0/0'}]
+        cls.create_secgroup_rules(rule_list, secgroup_id=secgroup_id)
+
+    @classmethod
     def create_router_by_client(cls, is_admin=False, **kwargs):
         kwargs.update({'router_name': data_utils.rand_name('router'),
                        'admin_state_up': True,
@@ -212,3 +226,47 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
             except lib_exc.NotFound:
                 LOG.debug("Server %s disappeared(deleted) while looking "
                           "for the console log", server['id'])
+
+    def _check_remote_connectivity(self, source, dest, should_succeed=True,
+                                   nic=None):
+        """check ping server via source ssh connection
+
+        :param source: RemoteClient: an ssh connection from which to ping
+        :param dest: and IP to ping against
+        :param should_succeed: boolean should ping succeed or not
+        :param nic: specific network interface to ping from
+        :returns: boolean -- should_succeed == ping
+        :returns: ping is false if ping failed
+        """
+        def ping_host(source, host, count=CONF.validation.ping_count,
+                      size=CONF.validation.ping_size, nic=None):
+            addr = netaddr.IPAddress(host)
+            cmd = 'ping6' if addr.version == 6 else 'ping'
+            if nic:
+                cmd = 'sudo {cmd} -I {nic}'.format(cmd=cmd, nic=nic)
+            cmd += ' -c{0} -w{0} -s{1} {2}'.format(count, size, host)
+            return source.exec_command(cmd)
+
+        def ping_remote():
+            try:
+                result = ping_host(source, dest, nic=nic)
+
+            except lib_exc.SSHExecCommandFailed:
+                LOG.warning('Failed to ping IP: %s via a ssh connection '
+                            'from: %s.', dest, source.host)
+                return not should_succeed
+            LOG.debug('ping result: %s', result)
+            # Assert that the return traffic was from the correct
+            # source address.
+            from_source = 'from %s' % dest
+            self.assertIn(from_source, result)
+            return should_succeed
+
+        return test_utils.call_until_true(ping_remote,
+                                          CONF.validation.ping_timeout,
+                                          1)
+
+    def check_remote_connectivity(self, source, dest, should_succeed=True,
+                                  nic=None):
+        self.assertTrue(self._check_remote_connectivity(
+            source, dest, should_succeed, nic))
