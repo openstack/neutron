@@ -16,6 +16,7 @@
 import collections
 import itertools
 import operator
+import random
 import time
 import uuid
 
@@ -741,7 +742,8 @@ def _build_flow_expr_str(flow_dict, cmd):
 
 
 def generate_random_cookie():
-    return uuid.uuid4().int & UINT64_BITMASK
+    # The OpenFlow spec forbids use of -1
+    return random.randrange(UINT64_BITMASK)
 
 
 def check_cookie_mask(cookie):
