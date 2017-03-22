@@ -43,3 +43,5 @@ ABORT_DELETE = 'abort_delete'
 ABORT = 'abort_'
 BEFORE = 'before_'
 PRECOMMIT = 'precommit_'
+
+OVS_RESTARTED = 'ovs_restarted'
