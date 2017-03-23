@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 import mock
 from neutron_lib import constants as n_const
 from neutron_lib import context
@@ -20,6 +18,7 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
+from oslo_utils import uuidutils
 import pecan
 from pecan import request
 
@@ -894,7 +893,7 @@ class TestShimControllers(test_functional.PecanFunctionalTest):
         # there is only one subresource so far
         sub_resource_collection = (
             pecan_utils.FakeExtension.FAKE_SUB_RESOURCE_COLLECTION)
-        temp_id = str(uuid.uuid1())
+        temp_id = uuidutils.generate_uuid()
         url = '/v2.0/{0}/{1}/{2}'.format(
             uri_collection,
             temp_id,
