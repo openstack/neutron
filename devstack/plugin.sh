@@ -1,12 +1,5 @@
 LIBDIR=$DEST/neutron/devstack/lib
 
-if is_neutron_legacy_enabled; then
-    NEUTRON_CORE_PLUGIN=$Q_PLUGIN
-    NEUTRON_AGENT=$Q_AGENT
-    NEUTRON_CORE_PLUGIN_CONF_PATH=$Q_PLUGIN_CONF_PATH
-    NEUTRON_CORE_PLUGIN_CONF=$Q_PLUGIN_CONF_FILE
-fi
-
 source $LIBDIR/dns
 source $LIBDIR/flavors
 source $LIBDIR/l2_agent
