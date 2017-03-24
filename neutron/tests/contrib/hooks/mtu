@@ -1,4 +1,4 @@
-[[post-extra|$TEMPEST_CONFIG]]
+[[test-config|$TEMPEST_CONFIG]]
 
 [neutron_plugin_options]
 available_type_drivers=flat,geneve,vlan,gre,local,vxlan
