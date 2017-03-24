@@ -192,7 +192,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
         :param context: plugin request context
         :param network: network dictionary
-        :return True or False
+        :return: True or False
         """
         pass
 

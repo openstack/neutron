@@ -61,47 +61,47 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
     def add_endpoint(self, ip, host):
         """Register the endpoint in the type_driver database.
 
-        param ip: the IP address of the endpoint
-        param host: the Host name of the endpoint
+        :param ip: the IP address of the endpoint
+        :param host: the Host name of the endpoint
         """
 
     @abc.abstractmethod
     def get_endpoints(self):
         """Get every endpoint managed by the type_driver
 
-        :returns a list of dict [{ip_address:endpoint_ip, host:endpoint_host},
-        ..]
+        :returns: a list of dict [{ip_address:endpoint_ip, host:endpoint_host},
+         ..]
         """
 
     @abc.abstractmethod
     def get_endpoint_by_host(self, host):
         """Get endpoint for a given host managed by the type_driver
 
-        param host: the Host name of the endpoint
+        :param host: the Host name of the endpoint
 
         if host found in type_driver database
-           :returns db object for that particular host
+           :returns: db object for that particular host
         else
-           :returns None
+           :returns: None
         """
 
     @abc.abstractmethod
     def get_endpoint_by_ip(self, ip):
         """Get endpoint for a given tunnel ip managed by the type_driver
 
-        param ip: the IP address of the endpoint
+        :param ip: the IP address of the endpoint
 
         if ip found in type_driver database
-           :returns db object for that particular ip
+           :returns: db object for that particular ip
         else
-           :returns None
+           :returns: None
         """
 
     @abc.abstractmethod
     def delete_endpoint(self, ip):
         """Delete the endpoint in the type_driver database.
 
-        param ip: the IP address of the endpoint
+        :param ip: the IP address of the endpoint
         """
 
     @abc.abstractmethod
@@ -111,8 +111,8 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
         This function will delete any endpoint matching the specified
         ip or host.
 
-        param host: the host name of the endpoint
-        param ip: the IP address of the endpoint
+        :param host: the host name of the endpoint
+        :param ip: the IP address of the endpoint
         """
 
     def _initialize(self, raw_tunnel_ranges):

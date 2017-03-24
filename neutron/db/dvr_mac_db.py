@@ -161,7 +161,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         :param context: rpc request context
         :param host: host id to match and extract ports of interest
         :param subnet: subnet id to match and extract ports of interest
-        :returns list -- Ports on the given subnet in the input host
+        :returns: list -- Ports on the given subnet in the input host
         """
         filters = {'fixed_ips': {'subnet_id': [subnet]},
                    portbindings.HOST_ID: [host]}

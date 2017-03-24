@@ -257,9 +257,10 @@ class DelayedStringRenderer(object):
 
 def load_class_by_alias_or_classname(namespace, name):
     """Load class using stevedore alias or the class name
+
     :param namespace: namespace where the alias is defined
     :param name: alias or class name of the class to be loaded
-    :returns class if calls can be loaded
+    :returns: class if calls can be loaded
     :raises ImportError if class cannot be loaded
     """
 

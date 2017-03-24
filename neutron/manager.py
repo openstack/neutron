@@ -146,10 +146,11 @@ class NeutronManager(object):
     @staticmethod
     def load_class_for_provider(namespace, plugin_provider):
         """Loads plugin using alias or class name
+
         :param namespace: namespace where alias is defined
         :param plugin_provider: plugin alias or class name
-        :returns plugin that is loaded
-        :raises ImportError if fails to load plugin
+        :returns: plugin that is loaded
+        :raises ImportError: if fails to load plugin
         """
 
         try:
