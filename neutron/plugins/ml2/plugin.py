@@ -1068,11 +1068,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         session = context.session
         deallocated = set()
         while True:
-            # NOTE(kevinbenton): this loop keeps db objects in scope
-            # so we must expire them or risk stale reads.
-            # see bug/1623990
-            session.expire_all()
             with session.begin(subtransactions=True):
+                # NOTE(kevinbenton): this loop keeps db objects in scope
+                # so we must expire them or risk stale reads.
+                # see bug/1623990
+                session.expire_all()
                 record = self._get_subnet(context, id)
                 subnet = self._make_subnet_dict(record, None, context=context)
                 qry_allocated = (session.query(models_v2.IPAllocation).
@@ -1089,7 +1089,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     qry_allocated = (
                         qry_allocated.filter(models_v2.Port.device_owner.
                         in_(db_base_plugin_v2.AUTO_DELETE_PORT_OWNERS)))
-                allocated = set(qry_allocated.all())
+                allocated = set(ipal.port_id for ipal in qry_allocated)
                 LOG.debug("Ports to auto-deallocate: %s", allocated)
                 if not is_auto_addr_subnet:
                     user_alloc = self._subnet_get_user_allocation(
@@ -1152,14 +1152,20 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     LOG.debug("Committing transaction")
                     break
 
-            for a in to_deallocate:
-                if a.port:
+            for port_id in to_deallocate:
+                try:
+                    port = self.get_port(context, port_id)
+                except exc.PortNotFound:
+                    LOG.debug("Port %s deleted concurrently", port_id)
+                    deallocated.add(port_id)
+                    continue
+                if port:
                     # calling update_port() for each allocation to remove the
                     # IP from the port and call the MechanismDrivers
-                    fixed_ips = [{'subnet_id': ip.subnet_id,
-                                  'ip_address': ip.ip_address}
-                                 for ip in a.port.fixed_ips
-                                 if ip.subnet_id != id]
+                    fixed_ips = [{'subnet_id': ip['subnet_id'],
+                                  'ip_address': ip['ip_address']}
+                                 for ip in port['fixed_ips']
+                                 if ip['subnet_id'] != id]
                     # By default auto-addressed ips are not removed from port
                     # on port update, so mark subnet with 'delete_subnet' flag
                     # to force ip deallocation on port update.
@@ -1168,11 +1174,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                           'delete_subnet': True})
                     data = {attributes.PORT: {'fixed_ips': fixed_ips}}
                     try:
-                        # NOTE Don't inline port_id; needed for PortNotFound.
-                        port_id = a.port_id
                         self.update_port(context, port_id, data)
                     except exc.PortNotFound:
-                        # NOTE Attempting to access a.port_id here is an error.
                         LOG.debug("Port %s deleted concurrently", port_id)
                     except exc.SubnetNotFound:
                         # NOTE we hit here if another subnet was concurrently
@@ -1185,7 +1188,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             utils.attach_exc_details(
                                 e, _LE("Exception deleting fixed_ip from "
                                        "port %s"), port_id)
-                deallocated.add(a)
+                deallocated.add(port_id)
 
         kwargs = {'context': context, 'subnet': subnet}
         registry.notify(resources.SUBNET, events.AFTER_DELETE, self, **kwargs)
