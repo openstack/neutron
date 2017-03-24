@@ -1,0 +1,6 @@
+---
+features:
+  - The QoS service plugin now supports new attribute in
+    ``qos_bandwidth_limit_rule``. This new parameter is called
+    ``direction`` and allows to specify direction of traffic
+    for which the limit should be applied.

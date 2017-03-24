@@ -36,7 +36,7 @@ class QoSPlugin(qos.QoSPluginBase):
     service parameters over ports and networks.
 
     """
-    supported_extension_aliases = ['qos']
+    supported_extension_aliases = ['qos', 'qos-bw-limit-direction']
 
     __native_pagination_support = True
     __native_sorting_support = True

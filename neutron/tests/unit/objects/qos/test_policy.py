@@ -14,6 +14,7 @@ import mock
 from oslo_versionedobjects import exception
 import testtools
 
+from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.db import models_v2
 from neutron.objects.db import api as db_api
@@ -132,13 +133,17 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.objs[0].create()
         return self.objs[0]
 
-    def _create_test_policy_with_rules(self, rule_type, reload_rules=False):
+    def _create_test_policy_with_rules(self, rule_type, reload_rules=False,
+                                       bwlimit_direction=None):
         policy_obj = self._create_test_policy()
         rules = []
         for obj_cls in (RULE_OBJ_CLS.get(rule_type)
                         for rule_type in rule_type):
             rule_fields = self.get_random_object_fields(obj_cls=obj_cls)
             rule_fields['qos_policy_id'] = policy_obj.id
+            if (obj_cls.rule_type == qos_consts.RULE_TYPE_BANDWIDTH_LIMIT and
+                    bwlimit_direction is not None):
+                rule_fields['direction'] = bwlimit_direction
             rule_obj = obj_cls(self.context, **rule_fields)
             rule_obj.create()
             rules.append(rule_obj)
@@ -380,11 +385,11 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj, rule_objs = self._create_test_policy_with_rules(
             RULE_OBJ_CLS.keys(), reload_rules=True)
 
-        policy_obj_v1_2 = self._policy_through_version(
+        policy_obj_v1_5 = self._policy_through_version(
             policy_obj, policy.QosPolicy.VERSION)
 
         for rule_obj in rule_objs:
-            self.assertIn(rule_obj, policy_obj_v1_2.rules)
+            self.assertIn(rule_obj, policy_obj_v1_5.rules)
 
     def test_object_version_degradation_1_3_to_1_2_null_description(self):
         policy_obj = self._create_test_policy()
@@ -398,7 +403,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj, rule_objs = self._create_test_policy_with_rules(
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
              qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH], reload_rules=True)
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
+            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
 
         policy_obj_v1_0 = self._policy_through_version(policy_obj, '1.0')
 
@@ -412,7 +418,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj, rule_objs = self._create_test_policy_with_rules(
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
              qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH], reload_rules=True)
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
+            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
 
         policy_obj_v1_1 = self._policy_through_version(policy_obj, '1.1')
 
@@ -426,12 +433,14 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj, rule_objs = self._create_test_policy_with_rules(
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
              qos_consts.RULE_TYPE_DSCP_MARKING,
-             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH], reload_rules=True)
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
+            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
 
         policy_obj_v1_2 = self._policy_through_version(policy_obj, '1.2')
 
-        for rule_obj in rule_objs:
-            self.assertIn(rule_obj, policy_obj_v1_2.rules)
+        self.assertIn(rule_objs[0], policy_obj_v1_2.rules)
+        self.assertIn(rule_objs[1], policy_obj_v1_2.rules)
+        self.assertIn(rule_objs[2], policy_obj_v1_2.rules)
 
     def test_v1_4_to_v1_3_drops_project_id(self):
         policy_new = self._create_test_policy()
@@ -439,6 +448,32 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_v1_3 = policy_new.obj_to_primitive(target_version='1.3')
         self.assertNotIn('project_id', policy_v1_3['versioned_object.data'])
         self.assertIn('tenant_id', policy_v1_3['versioned_object.data'])
+
+    def test_object_version_degradation_1_5_to_1_4_ingress_direction(self):
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
+            reload_rules=True, bwlimit_direction=n_const.INGRESS_DIRECTION)
+
+        policy_obj_v1_4 = self._policy_through_version(policy_obj, '1.4')
+
+        self.assertNotIn(rule_objs[0], policy_obj_v1_4.rules)
+        self.assertIn(rule_objs[1], policy_obj_v1_4.rules)
+        self.assertIn(rule_objs[2], policy_obj_v1_4.rules)
+
+    def test_object_version_degradation_1_5_to_1_4_egress_direction(self):
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH],
+            reload_rules=True, bwlimit_direction=n_const.EGRESS_DIRECTION)
+
+        policy_obj_v1_4 = self._policy_through_version(policy_obj, '1.4')
+
+        self.assertIn(rule_objs[0], policy_obj_v1_4.rules)
+        self.assertIn(rule_objs[1], policy_obj_v1_4.rules)
+        self.assertIn(rule_objs[2], policy_obj_v1_4.rules)
 
     def test_filter_by_shared(self):
         policy_obj = policy.QosPolicy(

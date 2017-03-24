@@ -14,6 +14,7 @@ from neutron_lib import constants
 
 from oslo_versionedobjects import exception
 
+from neutron.common import constants as n_const
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.services.qos import qos_consts
@@ -116,6 +117,25 @@ class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         obj = rule.QosBandwidthLimitRule(self.context, **self.db_objs[0])
         dict_ = obj.to_dict()
         self.assertEqual(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, dict_['type'])
+
+    def test_bandwidth_limit_object_version_degradation(self):
+        self.db_objs[0]['direction'] = n_const.EGRESS_DIRECTION
+        rule_obj = rule.QosBandwidthLimitRule(self.context, **self.db_objs[0])
+        primitive_rule = rule_obj.obj_to_primitive('1.2')
+        self.assertNotIn(
+            "direction", primitive_rule['versioned_object.data'].keys())
+        self.assertEqual(
+            self.db_objs[0]['max_kbps'],
+            primitive_rule['versioned_object.data']['max_kbps'])
+        self.assertEqual(
+            self.db_objs[0]['max_burst_kbps'],
+            primitive_rule['versioned_object.data']['max_burst_kbps'])
+
+        self.db_objs[0]['direction'] = n_const.INGRESS_DIRECTION
+        rule_obj = rule.QosBandwidthLimitRule(self.context, **self.db_objs[0])
+        self.assertRaises(
+            exception.IncompatibleObjectVersion,
+            rule_obj.obj_to_primitive, '1.2')
 
 
 class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,

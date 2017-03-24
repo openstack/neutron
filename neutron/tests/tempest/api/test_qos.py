@@ -17,10 +17,14 @@ from tempest.lib import decorators
 from tempest.lib import exceptions
 from tempest import test
 
+import testscenarios
 import testtools
 
 from neutron.services.qos import qos_consts
 from neutron.tests.tempest.api import base
+
+
+load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class QosTestJSON(base.BaseAdminNetworkTest):
@@ -360,20 +364,34 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
+
+    direction = None
+
     @classmethod
     @test.requires_ext(extension="qos", service="network")
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     def resource_setup(cls):
         super(QosBandwidthLimitRuleTestJSON, cls).resource_setup()
 
+    @property
+    def opposite_direction(self):
+        if self.direction == "ingress":
+            return "egress"
+        elif self.direction == "egress":
+            return "ingress"
+        else:
+            return None
+
     @decorators.idempotent_id('8a59b00b-3e9c-4787-92f8-93a5cdf5e378')
     def test_rule_create(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
                                         shared=False)
-        rule = self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
-                                                    max_kbps=200,
-                                                    max_burst_kbps=1337)
+        rule = self.create_qos_bandwidth_limit_rule(
+            policy_id=policy['id'],
+            max_kbps=200,
+            max_burst_kbps=1337,
+            direction=self.direction)
 
         # Test 'show rule'
         retrieved_rule = self.admin_client.show_bandwidth_limit_rule(
@@ -382,6 +400,8 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(rule['id'], retrieved_rule['id'])
         self.assertEqual(200, retrieved_rule['max_kbps'])
         self.assertEqual(1337, retrieved_rule['max_burst_kbps'])
+        if self.direction:
+            self.assertEqual(self.direction, retrieved_rule['direction'])
 
         # Test 'list rules'
         rules = self.admin_client.list_bandwidth_limit_rules(policy['id'])
@@ -404,12 +424,14 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                         shared=False)
         self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
                                              max_kbps=200,
-                                             max_burst_kbps=1337)
+                                             max_burst_kbps=1337,
+                                             direction=self.direction)
 
         self.assertRaises(exceptions.Conflict,
                           self.create_qos_bandwidth_limit_rule,
                           policy_id=policy['id'],
-                          max_kbps=201, max_burst_kbps=1338)
+                          max_kbps=201, max_burst_kbps=1338,
+                          direction=self.direction)
 
     @decorators.idempotent_id('149a6988-2568-47d2-931e-2dbc858943b3')
     def test_rule_update(self):
@@ -418,18 +440,24 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                         shared=False)
         rule = self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
                                                     max_kbps=1,
-                                                    max_burst_kbps=1)
+                                                    max_burst_kbps=1,
+                                                    direction=self.direction)
 
-        self.admin_client.update_bandwidth_limit_rule(policy['id'],
-                                                      rule['id'],
-                                                      max_kbps=200,
-                                                      max_burst_kbps=1337)
+        self.admin_client.update_bandwidth_limit_rule(
+            policy['id'],
+            rule['id'],
+            max_kbps=200,
+            max_burst_kbps=1337,
+            direction=self.opposite_direction)
 
         retrieved_policy = self.admin_client.show_bandwidth_limit_rule(
             policy['id'], rule['id'])
         retrieved_policy = retrieved_policy['bandwidth_limit_rule']
         self.assertEqual(200, retrieved_policy['max_kbps'])
         self.assertEqual(1337, retrieved_policy['max_burst_kbps'])
+        if self.opposite_direction:
+            self.assertEqual(self.opposite_direction,
+                             retrieved_policy['direction'])
 
     @decorators.idempotent_id('67ee6efd-7b33-4a68-927d-275b4f8ba958')
     def test_rule_delete(self):
@@ -437,7 +465,7 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                         description='test policy',
                                         shared=False)
         rule = self.admin_client.create_bandwidth_limit_rule(
-            policy['id'], 200, 1337)['bandwidth_limit_rule']
+            policy['id'], 200, 1337, self.direction)['bandwidth_limit_rule']
 
         retrieved_policy = self.admin_client.show_bandwidth_limit_rule(
             policy['id'], rule['id'])
@@ -454,14 +482,14 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         self.assertRaises(
             exceptions.NotFound,
             self.create_qos_bandwidth_limit_rule,
-            'policy', 200, 1337)
+            'policy', 200, 1337, self.direction)
 
     @decorators.idempotent_id('a4a2e7ad-786f-4927-a85a-e545a93bd274')
     def test_rule_create_forbidden_for_regular_tenants(self):
         self.assertRaises(
             exceptions.Forbidden,
             self.client.create_bandwidth_limit_rule,
-            'policy', 1, 2)
+            'policy', 1, 2, self.direction)
 
     @decorators.idempotent_id('1bfc55d9-6fd8-4293-ab3a-b1d69bf7cd2e')
     def test_rule_update_forbidden_for_regular_tenants_own_policy(self):
@@ -471,7 +499,8 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                         tenant_id=self.client.tenant_id)
         rule = self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
                                                     max_kbps=1,
-                                                    max_burst_kbps=1)
+                                                    max_burst_kbps=1,
+                                                    direction=self.direction)
         self.assertRaises(
             exceptions.Forbidden,
             self.client.update_bandwidth_limit_rule,
@@ -485,7 +514,8 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                         tenant_id=self.admin_client.tenant_id)
         rule = self.create_qos_bandwidth_limit_rule(policy_id=policy['id'],
                                                     max_kbps=1,
-                                                    max_burst_kbps=1)
+                                                    max_burst_kbps=1,
+                                                    direction=self.direction)
         self.assertRaises(
             exceptions.NotFound,
             self.client.update_bandwidth_limit_rule,
@@ -498,14 +528,16 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                          shared=False)
         rule1 = self.create_qos_bandwidth_limit_rule(policy_id=policy1['id'],
                                                      max_kbps=200,
-                                                     max_burst_kbps=1337)
+                                                     max_burst_kbps=1337,
+                                                     direction=self.direction)
 
         policy2 = self.create_qos_policy(name='test-policy2',
                                          description='test policy2',
                                          shared=False)
         rule2 = self.create_qos_bandwidth_limit_rule(policy_id=policy2['id'],
                                                      max_kbps=5000,
-                                                     max_burst_kbps=2523)
+                                                     max_burst_kbps=2523,
+                                                     direction=self.direction)
 
         # Test 'list rules'
         rules = self.admin_client.list_bandwidth_limit_rules(policy1['id'])
@@ -513,6 +545,20 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
         rules_ids = [r['id'] for r in rules]
         self.assertIn(rule1['id'], rules_ids)
         self.assertNotIn(rule2['id'], rules_ids)
+
+
+class QosBandwidthLimitRuleWithDirectionTestJSON(
+    QosBandwidthLimitRuleTestJSON):
+
+    scenarios = [
+        ('ingress', {'direction': 'ingress'}),
+        ('egress', {'direction': 'egress'}),
+    ]
+
+    @classmethod
+    @test.requires_ext(extension="qos-bw-limit-direction", service="network")
+    def resource_setup(cls):
+        super(QosBandwidthLimitRuleWithDirectionTestJSON, cls).resource_setup()
 
 
 class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):

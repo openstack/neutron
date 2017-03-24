@@ -21,6 +21,7 @@ from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron._i18n import _
+from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.db import api as db_api
 from neutron.db import models_v2
@@ -40,7 +41,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.2: Added QosMinimumBandwidthRule
     # Version 1.3: Added standard attributes (created_at, revision, etc)
     # Version 1.4: Changed tenant_id to project_id
-    VERSION = '1.4'
+    # Version 1.5: Direction for bandwidth limit rule added
+    VERSION = '1.5'
 
     # required by RbacNeutronMetaclass
     rbac_db_model = QosPolicyRBAC
@@ -222,6 +224,19 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             return [rule for rule in rules if
                     rule['versioned_object.name'] in obj_names]
 
+        def filter_ingress_bandwidth_limit_rules(rules):
+            bwlimit_obj_name = rule_obj_impl.QosBandwidthLimitRule.obj_name()
+            filtered_rules = []
+            for rule in rules:
+                if rule['versioned_object.name'] == bwlimit_obj_name:
+                    direction = rule['versioned_object.data'].get("direction")
+                    if direction == n_const.EGRESS_DIRECTION:
+                        rule['versioned_object.data'].pop('direction')
+                        filtered_rules.append(rule)
+                else:
+                    filtered_rules.append(rule)
+            return filtered_rules
+
         _target_version = versionutils.convert_version_to_tuple(target_version)
         names = []
         if _target_version >= (1, 0):
@@ -244,3 +259,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
         if _target_version < (1, 4):
             primitive['tenant_id'] = primitive.pop('project_id')
+
+        if _target_version < (1, 5):
+            if 'rules' in primitive:
+                primitive['rules'] = filter_ingress_bandwidth_limit_rules(
+                    primitive['rules'])
