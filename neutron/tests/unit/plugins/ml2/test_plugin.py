@@ -2486,6 +2486,18 @@ class TestML2Segments(Ml2PluginV2TestCase):
             self.assertRaises(
                 exc.VlanIdInUse, self._reserve_segment, network, 10)
 
+    def test_create_network_mtu_on_precommit(self):
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                        'create_network_precommit') as bmp:
+            with mock.patch.object(
+                self.driver, '_get_network_mtu') as mtu:
+                mtu.return_value = 1100
+                with self.network() as network:
+                    self.assertIn('mtu', network['network'])
+            all_args = bmp.call_args_list
+            mech_context = all_args[0][0][0]
+            self.assertEqual(1100, mech_context.__dict__['_network']['mtu'])
+
     def test_reserve_segment_update_network_mtu(self):
         with self.network() as network:
             network_id = network['network']['id']
