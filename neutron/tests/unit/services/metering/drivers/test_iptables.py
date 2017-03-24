@@ -104,6 +104,22 @@ TEST_ROUTERS_WITH_ONE_RULE = [
      'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
 ]
 
+TEST_ROUTERS_WITH_NEW_LABEL = [
+    {'_metering_labels': [
+        {'id': 'e27fe2df-376e-4ac7-ae13-92f050a21f84',
+         'rule': {
+             'direction': 'ingress',
+             'excluded': False,
+             'id': '7f1a261f-2489-4ed1-870c-a62754501379',
+             'metering_label_id': 'e27fe2df-376e-4ac7-ae13-92f050a21f84',
+             'remote_ip_prefix': '50.0.0.0/24'}}],
+     'admin_state_up': True,
+     'gw_port_id': '6d411f48-ecc7-45e0-9ece-3b5bdb54fcee',
+     'id': '473ec392-1711-44e3-b008-3251ccfc5099',
+     'name': 'router1',
+     'status': 'ACTIVE',
+     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+
 
 class IptablesDriverTestCase(base.BaseTestCase):
     def setUp(self):
@@ -440,7 +456,35 @@ class IptablesDriverTestCase(base.BaseTestCase):
                                     '-d 40.0.0.0/24 -o qg-7d411f48-ec'
                                     ' -j neutron-meter-l-eeef45da-c60',
                                     wrap=False, top=False),
+                ]
+        self.v4filter_inst.assert_has_calls(calls)
 
+    def test_add_metering_label_rule_without_label(self):
+        new_routers_rules = TEST_ROUTERS_WITH_NEW_LABEL
+        # clear all the metering labels
+        for r in TEST_ROUTERS:
+            rm = iptables_driver.RouterWithMetering(self.metering.conf, r)
+            rm.metering_labels = {}
+
+        self.metering.update_routers(None, TEST_ROUTERS)
+        self.metering.add_metering_label_rule(None, new_routers_rules)
+        calls = [
+                 mock.call.add_chain('neutron-meter-l-e27fe2df-376',
+                                     wrap=False),
+                 mock.call.add_chain('neutron-meter-r-e27fe2df-376',
+                                     wrap=False),
+                 mock.call.add_rule('neutron-meter-FORWARD',
+                                    '-j neutron-meter-r-e27fe2df-376',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-l-e27fe2df-376',
+                                    '',
+                                    wrap=False),
+                 mock.call.add_rule('neutron-meter-r-e27fe2df-376',
+                                    '-s 50.0.0.0/24 '
+                                    '-i qg-6d411f48-ec '
+                                    '-j neutron-meter-l-e27fe2df-376',
+                                    top=False,
+                                    wrap=False)
                 ]
         self.v4filter_inst.assert_has_calls(calls)
 
