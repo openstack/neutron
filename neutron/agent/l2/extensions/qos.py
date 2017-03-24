@@ -16,7 +16,6 @@
 import abc
 import collections
 
-from neutron_lib import exceptions
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import six
@@ -168,7 +167,8 @@ class PortPolicyMap(object):
                     if not port_dict:
                         self._clean_policy_info(qos_policy_id)
                     return
-        raise exceptions.PortNotFound(port_id=port['port_id'])
+        LOG.debug("QoS extension did not have information on port %s",
+                  port_id)
 
     def _clean_policy_info(self, qos_policy_id):
         del self.qos_policy_ports[qos_policy_id]
@@ -274,10 +274,5 @@ class QosAgentExtension(l2_agent_extension.L2AgentExtension):
             self.policy_map.update_policy(qos_policy)
 
     def _process_reset_port(self, port):
-        try:
-            self.policy_map.clean_by_port(port)
-            self.qos_driver.delete(port)
-        except exceptions.PortNotFound:
-            LOG.info(_LI("QoS extension did have no information about the "
-                         "port %s that we were trying to reset"),
-                     port['port_id'])
+        self.policy_map.clean_by_port(port)
+        self.qos_driver.delete(port)
