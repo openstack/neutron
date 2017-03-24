@@ -15,7 +15,6 @@
 
 import mock
 from neutron_lib import context
-from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import qos
@@ -223,7 +222,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
     def test_delete_unknown_port(self):
         port = self._create_test_port_dict()
         self.qos_ext.delete_port(self.context, port)
-        self.assertFalse(self.qos_ext.qos_driver.delete.called)
+        self.assertTrue(self.qos_ext.qos_driver.delete.called)
         self.assertIsNone(self.qos_ext.policy_map.get_port_policy(port))
 
     def test__handle_notification_ignores_all_event_types_except_updated(self):
@@ -415,9 +414,11 @@ class PortPolicyMapTestCase(base.BaseTestCase):
         self.assertNotIn(TEST_PORT['port_id'], self.policy_map.port_policies)
         self.assertIn(TEST_POLICY2.id, self.policy_map.known_policies)
 
-    def test_clean_by_port_raises_exception_for_unknown_port(self):
-        self.assertRaises(exceptions.PortNotFound,
-                          self.policy_map.clean_by_port, TEST_PORT)
+    def test_clean_by_port_for_unknown_port(self):
+        self.policy_map._clean_policy_info = mock.Mock()
+        self.policy_map.clean_by_port(TEST_PORT)
+
+        self.policy_map._clean_policy_info.assert_not_called()
 
     def test_has_policy_changed(self):
         self._set_ports()
