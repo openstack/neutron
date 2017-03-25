@@ -24,8 +24,7 @@ LOG = logging.getLogger(__name__)
 DRIVER = None
 
 SUPPORTED_RULES = [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-                   qos_consts.RULE_TYPE_DSCP_MARKING,
-                   qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH]
+                   qos_consts.RULE_TYPE_DSCP_MARKING]
 
 
 class LinuxBridgeDriver(base.DriverBase):
