@@ -15,10 +15,17 @@
 import datetime
 
 import mock
+from neutron_lib import constants as const
 from neutron_lib import context
+from neutron_lib.plugins import directory
+from oslo_config import cfg
 
 from neutron.db.quota import api as quota_api
+from neutron.tests.unit.db.quota import test_driver
 from neutron.tests.unit import testlib_api
+
+
+DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 
 class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
@@ -36,8 +43,8 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
 
     def _create_quota_usage(self, resource, used, tenant_id=None):
         tenant_id = tenant_id or self.tenant_id
-        return quota_api.set_quota_usage(
-            self.context, resource, tenant_id, in_use=used)
+        return quota_api.set_quota_usage(context.get_admin_context(),
+            resource, tenant_id, in_use=used)
 
     def _verify_quota_usage(self, usage_info,
                             expected_resource=None,
@@ -54,6 +61,9 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
     def setUp(self):
         super(TestQuotaDbApi, self).setUp()
         self._set_context()
+        self.plugin = test_driver.FakePlugin()
+        directory.add_plugin(const.CORE, self.plugin)
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
 
     def test_create_quota_usage(self):
         usage_info = self._create_quota_usage('goals', 26)
@@ -291,7 +301,7 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
                                               expiration=exp_date_2,
                                               tenant_id='Callejon')
             self.assertEqual(2, quota_api.remove_expired_reservations(
-                self.context))
+                context.get_admin_context()))
             self.assertIsNone(quota_api.get_reservation(
                 self.context, resv_2.reservation_id))
             self.assertIsNone(quota_api.get_reservation(
