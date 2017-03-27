@@ -30,6 +30,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('4a26a4be-9c53-483c-bc50-b53f1db10ac6')
     def test_update_network_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         self.assertIn('revision_number', net)
         updated = self.client.update_network(net['id'], name='newnet')
         self.assertGreater(updated['network']['revision_number'],
@@ -38,7 +39,9 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('cac7ecde-12d5-4331-9a03-420899dea077')
     def test_update_port_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         self.assertIn('revision_number', port)
         updated = self.client.update_port(port['id'], name='newport')
         self.assertGreater(updated['port']['revision_number'],
@@ -47,7 +50,9 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('c1c4fa41-8e89-44d0-9bfc-409f3b66dc57')
     def test_update_subnet_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         subnet = self.create_subnet(net)
+        self.addCleanup(self.client.delete_subnet, subnet['id'])
         self.assertIn('revision_number', subnet)
         updated = self.client.update_subnet(subnet['id'], name='newsub')
         self.assertGreater(updated['subnet']['revision_number'],
@@ -57,6 +62,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     def test_update_subnetpool_bumps_revision(self):
         sp = self.create_subnetpool('subnetpool', default_prefixlen=24,
                                     prefixes=['10.0.0.0/8'])
+        self.addCleanup(self.client.delete_subnetpool, sp['id'])
         self.assertIn('revision_number', sp)
         updated = self.admin_client.update_subnetpool(sp['id'], name='sp2')
         self.assertGreater(updated['subnetpool']['revision_number'],
@@ -65,6 +71,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('e8c5d7db-2b8d-4567-a326-6e123437c4d1')
     def test_update_subnet_bumps_network_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         subnet = self.create_subnet(net)
         updated = self.client.show_network(net['id'])
         self.assertGreater(updated['network']['revision_number'],
@@ -88,7 +95,9 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="security-group", service="network")
     def test_update_port_sg_binding_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         sg = self._create_security_group()[0]
         self.client.update_port(
             port['id'], security_groups=[sg['security_group']['id']])
@@ -120,7 +129,9 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="allowed-address-pairs", service="network")
     def test_update_allowed_address_pairs_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         updated = self.client.update_port(
             port['id'], allowed_address_pairs=[{'ip_address': '1.1.1.1/32'}])
         self.assertGreater(updated['port']['revision_number'],
@@ -134,7 +145,9 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="extra_dhcp_opt", service="network")
     def test_update_extra_dhcp_opt_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         opts = [{'opt_value': 'pxelinux.0', 'opt_name': 'bootfile-name'}]
         updated = self.client.update_port(port['id'], extra_dhcp_opts=opts)
         self.assertGreater(updated['port']['revision_number'],
@@ -149,10 +162,12 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="dns-integration", service="network")
     def test_update_dns_domain_bumps_revision(self):
         net = self.create_network(dns_domain='example.test.')
+        self.addCleanup(self.client.delete_network, net['id'])
         updated = self.client.update_network(net['id'], dns_domain='exa.test.')
         self.assertGreater(updated['network']['revision_number'],
                            net['revision_number'])
         port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         updated = self.client.update_port(port['id'], dns_name='port1')
         if not updated['port']['dns_name']:
             self.skipTest("Server does not have DNS domain configured.")
@@ -166,10 +181,18 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="router", service="network")
     @test.requires_ext(extension="extraroute", service="network")
     def test_update_router_extra_routes_bumps_revision(self):
-        subnet = self.create_subnet(self.create_network())
+        net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
+        subnet = self.create_subnet(net)
+        self.addCleanup(self.client.delete_subnet, subnet['id'])
         subgateway = netaddr.IPAddress(subnet['gateway_ip'])
         router = self.create_router(router_name='test')
+        self.addCleanup(self.client.delete_router, router['id'])
         self.create_router_interface(router['id'], subnet['id'])
+        self.addCleanup(
+            self.client.remove_router_interface_with_subnet_id,
+            router['id'],
+            subnet['id'])
         router = self.client.show_router(router['id'])['router']
         updated = self.client.update_extra_routes(
             router['id'], str(subgateway + 1), '2.0.0.0/24')
@@ -182,7 +205,10 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('6bd18702-e25a-4b4b-8c0c-680113533511')
     @test.requires_ext(extension="subnet-service-types", service="network")
     def test_update_subnet_service_types_bumps_revisions(self):
-        subnet = self.create_subnet(self.create_network())
+        net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
+        subnet = self.create_subnet(net)
+        self.addCleanup(self.client.delete_subnet, subnet['id'])
         updated = self.client.update_subnet(
             subnet['id'], service_types=['compute:'])
         self.assertGreater(updated['subnet']['revision_number'],
@@ -196,6 +222,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="port-security", service="network")
     def test_update_port_security_bumps_revisions(self):
         net = self.create_network(port_security_enabled=False)
+        self.addCleanup(self.client.delete_network, net['id'])
         updated = self.client.update_network(net['id'],
                                              port_security_enabled=True)
         self.assertGreater(updated['network']['revision_number'],
@@ -205,6 +232,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
         self.assertGreater(updated2['network']['revision_number'],
                            updated['network']['revision_number'])
         port = self.create_port(net, port_security_enabled=False)
+        self.addCleanup(self.client.delete_port, port['id'])
         updated = self.client.update_port(port['id'],
                                           port_security_enabled=True)
         self.assertGreater(updated['port']['revision_number'],
@@ -217,7 +245,10 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('68d5ac3a-11a1-4847-8e2e-5843c043d89b')
     @test.requires_ext(extension="binding", service="network")
     def test_portbinding_bumps_revision(self):
-        port = self.create_port(self.create_network())
+        net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
+        port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         port = self.admin_client.update_port(
             port['id'], **{'binding:host_id': 'badhost1'})['port']
         updated = self.admin_client.update_port(
@@ -228,14 +259,22 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @decorators.idempotent_id('4a37bde9-1975-47e0-9b8c-2c9ca36415b0')
     @test.requires_ext(extension="router", service="network")
     def test_update_router_bumps_revision(self):
-        subnet = self.create_subnet(self.create_network())
+        net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
+        subnet = self.create_subnet(net)
+        self.addCleanup(self.client.delete_subnet, subnet['id'])
         router = self.create_router(router_name='test')
+        self.addCleanup(self.client.delete_router, router['id'])
         self.assertIn('revision_number', router)
         rev1 = router['revision_number']
         router = self.client.update_router(router['id'],
                                            name='test2')['router']
         self.assertGreater(router['revision_number'], rev1)
         self.create_router_interface(router['id'], subnet['id'])
+        self.addCleanup(
+            self.client.remove_router_interface_with_subnet_id,
+            router['id'],
+            subnet['id'])
         updated = self.client.show_router(router['id'])['router']
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
@@ -246,11 +285,19 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
                        service="network")
     def test_update_floatingip_bumps_revision(self):
         ext_id = config.CONF.network.public_network_id
-        network = self.create_network()
-        subnet = self.create_subnet(network)
+        net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
+        subnet = self.create_subnet(net)
+        self.addCleanup(self.client.delete_subnet, subnet['id'])
         router = self.create_router('test', external_network_id=ext_id)
+        self.addCleanup(self.client.delete_router, router['id'])
         self.create_router_interface(router['id'], subnet['id'])
-        port = self.create_port(network)
+        self.addCleanup(
+            self.client.remove_router_interface_with_subnet_id,
+            router['id'],
+            subnet['id'])
+        port = self.create_port(net)
+        self.addCleanup(self.client.delete_port, port['id'])
         body = self.client.create_floatingip(
             floating_network_id=ext_id,
             port_id=port['id'],
@@ -269,6 +316,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="dvr", service="network")
     def test_update_router_extra_attributes_bumps_revision(self):
         router = self.create_router(router_name='r1')
+        self.addCleanup(self.client.delete_router, router['id'])
         self.assertIn('revision_number', router)
         rev1 = router['revision_number']
         router = self.admin_client.update_router(
@@ -287,6 +335,7 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="router", service="network")
     def test_update_external_network_bumps_revision(self):
         net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
         self.assertIn('revision_number', net)
         updated = self.admin_client.update_network(net['id'],
                                                    **{'router:external': True})
@@ -297,7 +346,9 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
     @test.requires_ext(extension="qos", service="network")
     def test_update_qos_port_policy_binding_bumps_revision(self):
         policy = self.create_qos_policy(name='port-policy', shared=False)
-        port = self.create_port(self.create_network())
+        net = self.create_network()
+        self.addCleanup(self.client.delete_network, net['id'])
+        port = self.create_port(net)
         self.addCleanup(self.client.delete_port, port['id'])
         updated = self.admin_client.update_port(
             port['id'], qos_policy_id=policy['id'])
