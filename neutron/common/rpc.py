@@ -100,6 +100,14 @@ def get_allowed_exmods():
     return ALLOWED_EXMODS + EXTRA_EXMODS
 
 
+def _get_default_method_timeout():
+    return TRANSPORT.conf.rpc_response_timeout
+
+
+def _get_default_method_timeouts():
+    return collections.defaultdict(_get_default_method_timeout)
+
+
 class _ContextWrapper(object):
     """Wraps oslo messaging contexts to set the timeout for calls.
 
@@ -110,12 +118,28 @@ class _ContextWrapper(object):
     servers are more frequently the cause of timeouts rather than lost
     messages.
     """
-    _METHOD_TIMEOUTS = collections.defaultdict(
-        lambda: TRANSPORT.conf.rpc_response_timeout)
+    _METHOD_TIMEOUTS = _get_default_method_timeouts()
+    _max_timeout = None
 
     @classmethod
     def reset_timeouts(cls):
-        cls._METHOD_TIMEOUTS.clear()
+        # restore the original default timeout factory
+        cls._METHOD_TIMEOUTS = _get_default_method_timeouts()
+        cls._max_timeout = None
+
+    @classmethod
+    def get_max_timeout(cls):
+        return cls._max_timeout or _get_default_method_timeout() * 10
+
+    @classmethod
+    def set_max_timeout(cls, max_timeout):
+        if max_timeout < cls.get_max_timeout():
+            cls._METHOD_TIMEOUTS = collections.defaultdict(
+                lambda: max_timeout, **{
+                    k: min(v, max_timeout)
+                    for k, v in cls._METHOD_TIMEOUTS.items()
+                })
+            cls._max_timeout = max_timeout
 
     def __init__(self, original_context):
         self._original_context = original_context
@@ -138,7 +162,11 @@ class _ContextWrapper(object):
             return self._original_context.call(ctxt, method, **kwargs)
         except oslo_messaging.MessagingTimeout:
             with excutils.save_and_reraise_exception():
-                wait = random.uniform(0, TRANSPORT.conf.rpc_response_timeout)
+                wait = random.uniform(
+                    0,
+                    min(self._METHOD_TIMEOUTS[scoped_method],
+                        TRANSPORT.conf.rpc_response_timeout)
+                )
                 LOG.error(_LE("Timeout in RPC method %(method)s. Waiting for "
                               "%(wait)s seconds before next attempt. If the "
                               "server is not down, consider increasing the "
@@ -146,8 +174,8 @@ class _ContextWrapper(object):
                               "server(s) may be overloaded and unable to "
                               "respond quickly enough."),
                           {'wait': int(round(wait)), 'method': scoped_method})
-                ceiling = TRANSPORT.conf.rpc_response_timeout * 10
-                new_timeout = min(self._original_context.timeout * 2, ceiling)
+                new_timeout = min(
+                    self._original_context.timeout * 2, self.get_max_timeout())
                 if new_timeout > self._METHOD_TIMEOUTS[scoped_method]:
                     LOG.warning(_LW("Increasing timeout for %(method)s calls "
                                     "to %(new)s seconds. Restart the agent to "
@@ -169,6 +197,11 @@ class BackingOffClient(oslo_messaging.RPCClient):
         ctx = super(BackingOffClient, self).prepare(*args, **kwargs)
         # don't enclose Contexts that explicitly set a timeout
         return _ContextWrapper(ctx) if 'timeout' not in kwargs else ctx
+
+    @staticmethod
+    def set_max_timeout(max_timeout):
+        '''Set RPC timeout ceiling for all backing-off RPC clients.'''
+        _ContextWrapper.set_max_timeout(max_timeout)
 
 
 def get_client(target, version_cap=None, serializer=None):
