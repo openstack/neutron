@@ -71,9 +71,14 @@ DNSNameServer:
     dnses = DNSNameServer.get_objects(context)
     # will return list of all dns name servers from DB
 
-    # to remove object:
-    primary_keys = {'address': 'asd', 'subnet_id': 'xxx'}
-    DNSNameServer.delete_objects(context, **primary_keys)
+    # to update fields:
+    dns = DNSNameServer.get_object(context, address='asd', subnet_id='xxx')
+    dns.order = 2
+    dns.update()
+
+    # to remove object with filter arguments:
+    filters = {'address': 'asd', 'subnet_id': 'xxx'}
+    DNSNameServer.delete_objects(context, **filters)
 
 
 Filter, sort and paginate
@@ -107,6 +112,11 @@ To limit or paginate results, :code:`Pager` object can be used. It accepts
 .. code-block:: Python
 
     # filtering
+
+    # to get an object based on primary key filter
+    dns = DNSNameServer.get_object(context, address='asd', subnet_id='xxx')
+
+    # to get multiple objects
     dnses = DNSNameServer.get_objects(context, subnet_id='xxx')
 
     filters = {'subnet_id': ['xxx', 'yyy']}
