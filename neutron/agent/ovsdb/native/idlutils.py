@@ -84,7 +84,7 @@ def row_by_record(idl_, table, record):
     if rl.table is None:
         raise ValueError(_("Table %s can only be queried by UUID") % table)
     if rl.column is None:
-        return t.rows.values()[0]
+        return next(iter(t.rows.values()))
     row = row_by_value(idl_, rl.table, rl.column, record)
     if rl.uuid_column:
         rows = getattr(row, rl.uuid_column)
