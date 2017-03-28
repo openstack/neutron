@@ -6061,6 +6061,15 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
 class DbModelMixin(object):
     """DB model tests."""
+    def test_make_network_dict_outside_engine_facade_manager(self):
+        ctx = context.get_admin_context()
+        with db_api.context_manager.writer.using(ctx):
+            network = models_v2.Network(name="net_net", status="OK",
+                                        admin_state_up=True)
+            ctx.session.add(network)
+        pl = db_base_plugin_common.DbBasePluginCommon()
+        self.assertFalse(pl._make_network_dict(network, context=ctx)['shared'])
+
     def test_repr(self):
         """testing the string representation of 'model' classes."""
         network = models_v2.Network(name="net_net", status="OK",
