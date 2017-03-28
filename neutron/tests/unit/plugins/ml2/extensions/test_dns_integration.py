@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 from keystoneauth1 import loading
 from keystoneauth1 import session
 import mock
@@ -22,6 +20,7 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.extensions import dns
@@ -533,15 +532,15 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
     """Test case for designate clients """
 
     TEST_URL = 'http://127.0.0.1:9001/v2'
-    TEST_ADMIN_USERNAME = uuid.uuid4().hex
-    TEST_ADMIN_PASSWORD = uuid.uuid4().hex
-    TEST_ADMIN_TENANT_NAME = uuid.uuid4().hex
-    TEST_ADMIN_TENANT_ID = uuid.uuid4().hex
+    TEST_ADMIN_USERNAME = uuidutils.generate_uuid(dashed=False)
+    TEST_ADMIN_PASSWORD = uuidutils.generate_uuid(dashed=False)
+    TEST_ADMIN_TENANT_NAME = uuidutils.generate_uuid(dashed=False)
+    TEST_ADMIN_TENANT_ID = uuidutils.generate_uuid(dashed=False)
     TEST_ADMIN_AUTH_URL = 'http://127.0.0.1:35357/v2.0'
-    TEST_CA_CERT = uuid.uuid4().hex
+    TEST_CA_CERT = uuidutils.generate_uuid(dashed=False)
 
     TEST_CONTEXT = mock.Mock()
-    TEST_CONTEXT.auth_token = uuid.uuid4().hex
+    TEST_CONTEXT.auth_token = uuidutils.generate_uuid(dashed=False)
 
     def setUp(self):
         super(TestDesignateClientKeystoneV2, self).setUp()
@@ -610,16 +609,16 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
     """Test case for designate clients """
 
     TEST_URL = 'http://127.0.0.1:9001/v2'
-    TEST_ADMIN_USERNAME = uuid.uuid4().hex
-    TEST_ADMIN_PASSWORD = uuid.uuid4().hex
+    TEST_ADMIN_USERNAME = uuidutils.generate_uuid(dashed=False)
+    TEST_ADMIN_PASSWORD = uuidutils.generate_uuid(dashed=False)
     TEST_ADMIN_USER_DOMAIN_ID = 'Default'
-    TEST_ADMIN_PROJECT_ID = uuid.uuid4().hex
+    TEST_ADMIN_PROJECT_ID = uuidutils.generate_uuid(dashed=False)
     TEST_ADMIN_PROJECT_DOMAIN_ID = 'Default'
     TEST_ADMIN_AUTH_URL = 'http://127.0.0.1:35357/v3'
-    TEST_CA_CERT = uuid.uuid4().hex
+    TEST_CA_CERT = uuidutils.generate_uuid(dashed=False)
 
     TEST_CONTEXT = mock.Mock()
-    TEST_CONTEXT.auth_token = uuid.uuid4().hex
+    TEST_CONTEXT.auth_token = uuidutils.generate_uuid(dashed=False)
 
     def setUp(self):
         super(TestDesignateClientKeystoneV3, self).setUp()
