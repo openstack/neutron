@@ -61,6 +61,29 @@ class OFCTLParamListMatcher(object):
     __repr__ = __str__
 
 
+class StringSetMatcher(object):
+    """A helper object for unordered CSV strings
+
+    Will compare equal if both strings, when read as a comma-separated set
+    of values, represent the same set.
+
+    Example: "a,b,45" == "b,45,a"
+    """
+    def __init__(self, string, separator=','):
+        self.separator = separator
+        self.set = set(string.split(self.separator))
+
+    def __eq__(self, other):
+        return self.set == set(other.split(self.separator))
+
+    def __ne__(self, other):
+        return self.set != set(other.split(self.separator))
+
+    def __repr__(self):
+        sep = '' if self.separator == ',' else " on %s" % self.separator
+        return '<comma-separated string for %s%s>' % (self.set, sep)
+
+
 def vsctl_only(f):
     # NOTE(ivasilevskaya) as long as some tests rely heavily on mocking
     # direct vsctl commands, need to ensure that ovsdb_interface = 'vsctl'
@@ -298,38 +321,54 @@ class OVS_Lib_Test(base.BaseTestCase):
         self._verify_ofctl_mock("dump-flows", self.BR_NAME, process_input=None)
 
     def test_delete_flow(self):
-        ofport = "5"
+        ofport = 5
         lsw_id = 40
         vid = 39
         self.br.delete_flows(in_port=ofport)
         self.br.delete_flows(tun_id=lsw_id)
         self.br.delete_flows(dl_vlan=vid)
         self.br.delete_flows()
+        cookie_spec = "cookie=%s/-1" % self.br._default_cookie
         expected_calls = [
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
-                             process_input="in_port=" + ofport),
+                             process_input=StringSetMatcher(
+                                 "%s,in_port=%d" % (cookie_spec, ofport))),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
-                             process_input="tun_id=%s" % lsw_id),
+                             process_input=StringSetMatcher(
+                                 "%s,tun_id=%s" % (cookie_spec, lsw_id))),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
-                             process_input="dl_vlan=%s" % vid),
-            self._ofctl_mock("del-flows", self.BR_NAME,
-                             process_input=None),
+                             process_input=StringSetMatcher(
+                                 "%s,dl_vlan=%s" % (cookie_spec, vid))),
+            self._ofctl_mock("del-flows", self.BR_NAME, '-',
+                             process_input="%s" % cookie_spec),
         ]
         self.execute.assert_has_calls(expected_calls)
+
+    def test_delete_flows_cookie_nomask(self):
+        self.br.delete_flows(cookie=42)
+        self.execute.assert_has_calls([
+            self._ofctl_mock("del-flows", self.BR_NAME, '-',
+                             process_input="cookie=42/-1"),
+        ])
 
     def test_do_action_flows_delete_flows(self):
-        # test what the deffered bridge implementation calls in the case of a
-        # delete_flows() among calls to delete_flows(foo=bar)
-        self.br.do_action_flows('del', [{'in_port': 5}, {}])
+        # test what the deferred bridge implementation calls, in the case of a
+        # delete_flows(cookie=ovs_lib.COOKIE_ANY) among calls to
+        # delete_flows(foo=bar)
+        self.br.do_action_flows('del', [{'in_port': 5},
+                                        {'cookie': ovs_lib.COOKIE_ANY}])
         expected_calls = [
             self._ofctl_mock("del-flows", self.BR_NAME,
                              process_input=None),
         ]
         self.execute.assert_has_calls(expected_calls)
 
-    def test_do_action_flows_delete_flows_empty(self):
-        self.br.delete_flows()
+    def test_delete_flows_any_cookie(self):
+        self.br.delete_flows(in_port=5, cookie=ovs_lib.COOKIE_ANY)
+        self.br.delete_flows(cookie=ovs_lib.COOKIE_ANY)
         expected_calls = [
+            self._ofctl_mock("del-flows", self.BR_NAME, '-',
+                             process_input="in_port=5"),
             self._ofctl_mock("del-flows", self.BR_NAME,
                              process_input=None),
         ]

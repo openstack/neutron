@@ -23,6 +23,7 @@ from oslo_utils import excutils
 from osprofiler import profiler
 
 from neutron._i18n import _LE, _LI, _LW
+from neutron.agent.common import ovs_lib
 from neutron.common import utils as n_utils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -209,7 +210,7 @@ class OVSDVRNeutronAgent(object):
                  self.dvr_mac_address)
         # Remove existing flows in integration bridge
         if self.conf.AGENT.drop_flows_on_start:
-            self.int_br.uninstall_flows()
+            self.int_br.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
 
         # Add a canary flow to int_br to track OVS restarts
         self.int_br.setup_canary_table()

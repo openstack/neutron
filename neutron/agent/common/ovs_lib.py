@@ -47,6 +47,9 @@ UNASSIGNED_OFPORT = []
 FAILMODE_SECURE = 'secure'
 FAILMODE_STANDALONE = 'standalone'
 
+# special values for cookies
+COOKIE_ANY = object()
+
 ovs_conf.register_ovs_agent_opts()
 
 LOG = logging.getLogger(__name__)
@@ -335,15 +338,30 @@ class OVSBridge(BaseOVS):
                                self.br_name, 'datapath_id')
 
     def do_action_flows(self, action, kwargs_list):
+        for kw in kwargs_list:
+            if action is 'del':
+                if kw.get('cookie') == COOKIE_ANY:
+                    # special value COOKIE_ANY was provided, unset
+                    # cookie to match flows whatever their cookie is
+                    kw.pop('cookie')
+                    if kw.get('cookie_mask'):  # non-zero cookie mask
+                        LOG.error(_LE("cookie=COOKIE_ANY but cookie_mask set "
+                                      "to %s"), kw.get('cookie_mask'))
+                elif 'cookie' in kw:
+                    # a cookie was specified, use it
+                    kw['cookie'] = check_cookie_mask(kw['cookie'])
+                else:
+                    # nothing was specified about cookies, use default
+                    kw['cookie'] = "%d/-1" % self._default_cookie
+            else:
+                if 'cookie' not in kw:
+                    kw['cookie'] = self._default_cookie
+
         if action == 'del' and {} in kwargs_list:
             # the 'del' case simplifies itself if kwargs_list has at least
             # one item that matches everything
             self.run_ofctl('%s-flows' % action, [])
         else:
-            if action != 'del':
-                for kw in kwargs_list:
-                    if 'cookie' not in kw:
-                        kw['cookie'] = self._default_cookie
             flow_strs = [_build_flow_expr_str(kw, action)
                          for kw in kwargs_list]
             self.run_ofctl('%s-flows' % action, ['-'], '\n'.join(flow_strs))
@@ -755,6 +773,7 @@ def generate_random_cookie():
 
 
 def check_cookie_mask(cookie):
+    cookie = str(cookie)
     if '/' not in cookie:
         return cookie + '/-1'
     else:

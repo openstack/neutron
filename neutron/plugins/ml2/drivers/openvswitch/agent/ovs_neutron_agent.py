@@ -996,7 +996,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             # the flows on br-int, so that traffic doesn't get flooded over
             # while flows are missing.
             self.int_br.delete_port(self.conf.OVS.int_peer_patch_port)
-            self.int_br.uninstall_flows()
+            self.int_br.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
         self.int_br.setup_default_table()
 
     def setup_ancillary_bridges(self, integ_br, tun_br):
@@ -1058,7 +1058,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                           "ports. Agent terminated!"))
             sys.exit(1)
         if self.conf.AGENT.drop_flows_on_start:
-            self.tun_br.uninstall_flows()
+            self.tun_br.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
 
     def setup_tunnel_br_flows(self):
         '''Setup the tunnel bridge.
@@ -1102,7 +1102,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             br.set_secure_mode()
             br.setup_controllers(self.conf)
             if cfg.CONF.AGENT.drop_flows_on_start:
-                br.uninstall_flows()
+                br.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
             br.setup_default_table()
             self.phys_brs[physical_network] = br
 
