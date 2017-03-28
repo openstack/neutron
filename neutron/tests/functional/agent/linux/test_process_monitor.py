@@ -76,7 +76,7 @@ class BaseTestProcessMonitor(base.BaseTestCase):
     def _kill_last_child(self):
         self._child_processes[-1].disable()
 
-    def wait_for_all_children_respawned(self):
+    def wait_for_all_children_spawned(self):
         def all_children_active():
             return all(pm.active for pm in self._child_processes)
 
@@ -93,7 +93,7 @@ class BaseTestProcessMonitor(base.BaseTestCase):
             all_children_active,
             timeout=max_wait_time,
             sleep=0.01,
-            exception=RuntimeError('Not all children respawned.'))
+            exception=RuntimeError('Not all children (re)spawned.'))
 
     def cleanup_spawned_children(self):
         self._process_monitor.stop()
@@ -105,5 +105,6 @@ class TestProcessMonitor(BaseTestProcessMonitor):
 
     def test_respawn_handler(self):
         self.spawn_n_children(2)
+        self.wait_for_all_children_spawned()
         self._kill_last_child()
-        self.wait_for_all_children_respawned()
+        self.wait_for_all_children_spawned()
