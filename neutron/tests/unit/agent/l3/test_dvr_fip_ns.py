@@ -20,6 +20,7 @@ from oslo_utils import uuidutils
 from neutron.agent.common import utils
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import link_local_allocator as lla
+from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import exceptions as n_exc
@@ -311,32 +312,39 @@ class TestDvrFipNs(base.BaseTestCase):
     def test_create_rtr_2_fip_link_and_addr_already_exist(self):
         self._test_create_rtr_2_fip_link(True, True)
 
+    @mock.patch.object(router_info.RouterInfo, 'get_router_cidrs')
     @mock.patch.object(ip_lib, 'IPDevice')
-    def _test_scan_fip_ports(self, ri, ip_list, IPDevice):
+    def _test_scan_fip_ports(self, ri, ip_list, stale_list, IPDevice,
+        get_router_cidrs):
         IPDevice.return_value = device = mock.Mock()
         device.exists.return_value = True
         ri.get_router_cidrs.return_value = ip_list
+        get_router_cidrs.return_value = stale_list
         self.fip_ns.get_rtr_ext_device_name = mock.Mock(
             return_value=mock.sentinel.rtr_ext_device_name)
         self.fip_ns.scan_fip_ports(ri)
+        if stale_list:
+            device.delete_addr_and_conntrack_state.assert_called_once_with(
+                stale_list[0])
 
     def test_scan_fip_ports_restart_fips(self):
         ri = mock.Mock()
         ri.dist_fip_count = None
         ri.floating_ips_dict = {}
         ip_list = [{'cidr': '111.2.3.4'}, {'cidr': '111.2.3.5'}]
-        self._test_scan_fip_ports(ri, ip_list)
+        stale_list = ['111.2.3.7/32']
+        self._test_scan_fip_ports(ri, ip_list, stale_list)
         self.assertEqual(2, ri.dist_fip_count)
 
     def test_scan_fip_ports_restart_none(self):
         ri = mock.Mock()
         ri.dist_fip_count = None
         ri.floating_ips_dict = {}
-        self._test_scan_fip_ports(ri, [])
+        self._test_scan_fip_ports(ri, [], [])
         self.assertEqual(0, ri.dist_fip_count)
 
     def test_scan_fip_ports_restart_zero(self):
         ri = mock.Mock()
         ri.dist_fip_count = 0
-        self._test_scan_fip_ports(ri, None)
+        self._test_scan_fip_ports(ri, None, [])
         self.assertEqual(0, ri.dist_fip_count)
