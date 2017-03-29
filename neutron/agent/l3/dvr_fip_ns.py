@@ -23,6 +23,7 @@ from neutron._i18n import _, _LE, _LW
 from neutron.agent.l3 import fip_rule_priority_allocator as frpa
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespaces
+from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import constants
@@ -67,6 +68,7 @@ class FipNamespace(namespaces.Namespace):
         self.local_subnets = lla.LinkLocalAllocator(
             path, constants.DVR_FIP_LL_CIDR)
         self.destroyed = False
+        self._stale_fips_checked = False
 
     @classmethod
     def _get_ns_name(cls, ext_net_id):
@@ -395,3 +397,17 @@ class FipNamespace(namespaces.Namespace):
         device = ip_lib.IPDevice(rtr_2_fip_interface, namespace=ri.ns_name)
         if device.exists():
             ri.dist_fip_count = len(ri.get_router_cidrs(device))
+            # On upgrade, there could be stale IP addresses configured, check
+            # and remove them once.
+            # TODO(haleyb): this can go away after a cycle or two
+            if not self._stale_fips_checked:
+                stale_cidrs = (
+                    ip for ip in router_info.RouterInfo.get_router_cidrs(
+                        ri, device)
+                    if common_utils.is_cidr_host(ip))
+                for ip_cidr in stale_cidrs:
+                    LOG.debug("Removing stale floating ip %s from interface "
+                              "%s in namespace %s",
+                              ip_cidr, rtr_2_fip_interface, ri.ns_name)
+                    device.delete_addr_and_conntrack_state(ip_cidr)
+                self._stale_fips_checked = True
