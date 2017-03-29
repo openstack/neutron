@@ -474,6 +474,14 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.br.delete_flows(cookie=ovs_lib.COOKIE_ANY)
         self.assertEqual([], self.br.dump_all_flows())
 
+    def test_delete_flows_strict(self):
+        self.br.delete_flows(cookie=ovs_lib.COOKIE_ANY)  # remove NORMAL action
+        self.br.add_flow(in_port=1, actions="output:2")
+        self.br.add_flow(in_port=1, priority=100, actions="output:3")
+        self.assertEqual(2, len(self.br.dump_all_flows()))
+        self.br.delete_flows(in_port=1, priority=100, strict=True)
+        self.assertEqual(1, len(self.br.dump_all_flows()))
+
 
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 

@@ -374,13 +374,32 @@ class OVS_Lib_Test(base.BaseTestCase):
         ]
         self.execute.assert_has_calls(expected_calls)
 
-    def test_delete_flow_with_priority_set(self):
-        params = {'in_port': '1',
-                  'priority': '1'}
+    def test_mod_delete_flows_strict(self):
+        self.br.delete_flows(in_port=5, priority=1, strict=True)
+        self.br.mod_flow(in_port=5, priority=1, strict=True, actions='drop')
+        cookie_spec = "cookie=%s" % self.br._default_cookie
+        expected_calls = [
+            self._ofctl_mock("del-flows", self.BR_NAME, '--strict', '-',
+                             process_input=StringSetMatcher(
+                                 "%s/-1,in_port=5,priority=1" % cookie_spec)),
+            self._ofctl_mock("mod-flows", self.BR_NAME, '--strict', '-',
+                             process_input=StringSetMatcher(
+                                 "%s,in_port=5,priority=1,actions=drop" %
+                                 cookie_spec)),
+        ]
+        self.execute.assert_has_calls(expected_calls)
 
+    def test_mod_delete_flows_priority_without_strict(self):
         self.assertRaises(exceptions.InvalidInput,
                           self.br.delete_flows,
-                          **params)
+                          in_port=5, priority=1)
+
+    def test_mod_delete_flows_mixed_strict(self):
+        deferred_br = self.br.deferred()
+        deferred_br.delete_flows(in_port=5)
+        deferred_br.delete_flows(in_port=5, priority=1, strict=True)
+        self.assertRaises(exceptions.InvalidInput,
+                          deferred_br.apply_flows)
 
     def test_dump_flows(self):
         table = 23
