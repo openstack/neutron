@@ -28,7 +28,7 @@ class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,
     __tablename__ = 'qos_policies'
     name = sa.Column(sa.String(attrs.NAME_MAX_LEN))
     rbac_entries = sa.orm.relationship(rbac_db_models.QosPolicyRBAC,
-                                       backref='qos_policy', lazy='joined',
+                                       backref='qos_policy', lazy='subquery',
                                        cascade='all, delete, delete-orphan')
     api_collections = ['policies']
 

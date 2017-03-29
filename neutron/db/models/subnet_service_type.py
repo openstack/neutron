@@ -33,7 +33,7 @@ class SubnetServiceType(model_base.BASEV2):
                                 length=attributes.DEVICE_OWNER_MAX_LEN))
     subnet = orm.relationship(models_v2.Subnet,
                               backref=orm.backref('service_types',
-                                                  lazy='joined',
+                                                  lazy='subquery',
                                                   cascade='all, delete-orphan',
                                                   uselist=True))
     __table_args__ = (
