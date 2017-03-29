@@ -65,7 +65,8 @@ class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
                     instructions=[],
                     match=ofpp.OFPMatch(in_port=in_port),
                     priority=2,
-                    table_id=0)),
+                    table_id=0),
+                active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -85,7 +86,8 @@ class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
                     ],
                     match=ofpp.OFPMatch(in_port=in_port),
                     priority=priority,
-                    table_id=0)),
+                    table_id=0),
+                active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -101,7 +103,8 @@ class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
                     instructions=[],
                     match=ofpp.OFPMatch(in_port=in_port),
                     priority=priority,
-                    table_id=0)),
+                    table_id=0),
+                active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -121,7 +124,8 @@ class OVSBridgeTestBase(ovs_test_base.OVSRyuTestBase):
                     ],
                     match=ofpp.OFPMatch(in_port=in_port),
                     priority=priority,
-                    table_id=0)),
+                    table_id=0),
+                active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -162,7 +166,8 @@ class OVSDVRProcessTestMixin(object):
                     arp_tpa=gateway_ip,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=3,
-                table_id=self.dvr_process_table_id)),
+                table_id=self.dvr_process_table_id),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -198,7 +203,8 @@ class OVSDVRProcessTestMixin(object):
                     ip_proto=self.in_proto.IPPROTO_ICMPV6,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=3,
-                table_id=self.dvr_process_table_id)),
+                table_id=self.dvr_process_table_id),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -235,7 +241,8 @@ class OVSDVRProcessTestMixin(object):
                     eth_dst=vif_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=2,
-                table_id=self.dvr_process_table_id)),
+                table_id=self.dvr_process_table_id),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -249,7 +256,8 @@ class OVSDVRProcessTestMixin(object):
                     eth_src=vif_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=1,
-                table_id=self.dvr_process_table_id)),
+                table_id=self.dvr_process_table_id),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 

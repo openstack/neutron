@@ -38,7 +38,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 instructions=[],
                 match=ofpp.OFPMatch(),
                 priority=0,
-                table_id=23)),
+                table_id=23),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -46,7 +47,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -57,13 +59,15 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 ],
                 match=ofpp.OFPMatch(),
                 priority=3,
-                table_id=60)),
+                table_id=60),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[],
                 match=ofpp.OFPMatch(),
                 priority=0,
-                table_id=24)),
+                table_id=24),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -88,7 +92,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=port,
                     vlan_vid=segmentation_id | ofp.OFPVID_PRESENT),
                 priority=3,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -114,7 +119,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=port,
                     vlan_vid=ofp.OFPVID_NONE),
                 priority=3,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -169,7 +175,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=4,
-                table_id=1)),
+                table_id=1),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -182,7 +189,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=4,
-                table_id=60)),
+                table_id=60),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -237,7 +245,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=4,
-                table_id=2)),
+                table_id=2),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -250,7 +259,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=4,
-                table_id=60)),
+                table_id=60),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -295,7 +305,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_src=mac,
                     in_port=port),
                 priority=4,
-                table_id=0))
+                table_id=0),
+                           active_bundle=None)
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -323,7 +334,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_src=mac,
                     in_port=port),
                 priority=2,
-                table_id=0))
+                table_id=0),
+                           active_bundle=None)
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -355,7 +367,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=8888,
                 ),
                 priority=2,
-                table_id=24)),
+                table_id=24),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -369,7 +382,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=8888,
                 ),
                 priority=2,
-                table_id=24)),
+                table_id=24),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -382,7 +396,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=8888,
                 ),
                 priority=10,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -403,7 +418,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=8888,
                 ),
                 priority=2,
-                table_id=24)),
+                table_id=24),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -415,7 +431,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=8888
                 ),
                 priority=2,
-                table_id=24)),
+                table_id=24),
+                           active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
@@ -426,7 +443,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     in_port=8888,
                 ),
                 priority=10,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 

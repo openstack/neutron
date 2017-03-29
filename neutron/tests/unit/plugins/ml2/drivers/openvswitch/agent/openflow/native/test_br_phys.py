@@ -52,7 +52,8 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -79,7 +80,8 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                     in_port=port,
                     vlan_vid=lvid | ofp.OFPVID_PRESENT),
                 priority=4,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -105,7 +107,8 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                     in_port=port,
                     vlan_vid=lvid | ofp.OFPVID_PRESENT),
                 priority=4,
-                table_id=0)),
+                table_id=0),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -137,7 +140,8 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                 ],
                 match=ofpp.OFPMatch(eth_src=mac),
                 priority=2,
-                table_id=3)),
+                table_id=3),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 

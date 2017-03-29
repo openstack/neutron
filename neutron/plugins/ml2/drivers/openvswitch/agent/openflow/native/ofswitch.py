@@ -14,8 +14,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+import random
+
 import eventlet
 import netaddr
+from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -31,7 +35,12 @@ from neutron.agent.common import ovs_lib
 
 LOG = logging.getLogger(__name__)
 
+BUNDLE_ID_WIDTH = 1 << 32
 COOKIE_DEFAULT = object()
+
+
+class ActiveBundleRunning(exceptions.NeutronException):
+    message = _("Another active bundle 0x%(bundle_id)x is running")
 
 
 class OpenFlowSwitchMixin(object):
@@ -50,6 +59,7 @@ class OpenFlowSwitchMixin(object):
 
     def __init__(self, *args, **kwargs):
         self._app = kwargs.pop('ryu_app')
+        self.active_bundles = set()
         super(OpenFlowSwitchMixin, self).__init__(*args, **kwargs)
 
     def _get_dp_by_dpid(self, dpid_int):
@@ -70,9 +80,14 @@ class OpenFlowSwitchMixin(object):
             eventlet.sleep(1)
         return dp
 
-    def _send_msg(self, msg, reply_cls=None, reply_multi=False):
+    def _send_msg(self, msg, reply_cls=None, reply_multi=False,
+                  active_bundle=None):
         timeout_sec = cfg.CONF.OVS.of_request_timeout
         timeout = eventlet.Timeout(seconds=timeout_sec)
+        if active_bundle is not None:
+            (dp, ofp, ofpp) = self._get_dp()
+            msg = ofpp.ONFBundleAddMsg(dp, active_bundle['id'],
+                                       active_bundle['bundle_flags'], msg, [])
         try:
             result = ofctl_api.send_msg(self._app, msg, reply_cls, reply_multi)
         except ryu_exc.RyuException as e:
@@ -107,7 +122,7 @@ class OpenFlowSwitchMixin(object):
 
     def uninstall_flows(self, table_id=None, strict=False, priority=0,
                         cookie=COOKIE_DEFAULT, cookie_mask=0,
-                        match=None, **match_kwargs):
+                        match=None, active_bundle=None, **match_kwargs):
         (dp, ofp, ofpp) = self._get_dp()
         if table_id is None:
             table_id = ofp.OFPTT_ALL
@@ -135,7 +150,7 @@ class OpenFlowSwitchMixin(object):
                               priority=priority,
                               out_group=ofp.OFPG_ANY,
                               out_port=ofp.OFPP_ANY)
-        self._send_msg(msg)
+        self._send_msg(msg, active_bundle=active_bundle)
 
     def dump_flows(self, table_id=None):
         (dp, ofp, ofpp) = self._get_dp()
@@ -160,8 +175,9 @@ class OpenFlowSwitchMixin(object):
                         {'cookie': c})
             self.uninstall_flows(cookie=c, cookie_mask=ovs_lib.UINT64_BITMASK)
 
-    def install_goto_next(self, table_id):
-        self.install_goto(table_id=table_id, dest_table_id=table_id + 1)
+    def install_goto_next(self, table_id, active_bundle=None):
+        self.install_goto(table_id=table_id, dest_table_id=table_id + 1,
+                          active_bundle=active_bundle)
 
     def install_output(self, port, table_id=0, priority=0,
                        match=None, **match_kwargs):
@@ -194,7 +210,7 @@ class OpenFlowSwitchMixin(object):
 
     def install_instructions(self, instructions,
                              table_id=0, priority=0,
-                             match=None, **match_kwargs):
+                             match=None, active_bundle=None, **match_kwargs):
         (dp, ofp, ofpp) = self._get_dp()
         match = self._match(ofp, ofpp, match, **match_kwargs)
         if isinstance(instructions, six.string_types):
@@ -211,7 +227,7 @@ class OpenFlowSwitchMixin(object):
                               match=match,
                               priority=priority,
                               instructions=instructions)
-        self._send_msg(msg)
+        self._send_msg(msg, active_bundle=active_bundle)
 
     def install_apply_actions(self, actions,
                               table_id=0, priority=0,
@@ -225,3 +241,81 @@ class OpenFlowSwitchMixin(object):
                                   match=match,
                                   instructions=instructions,
                                   **match_kwargs)
+
+    def bundled(self, atomic=False, ordered=False):
+        return BundledOpenFlowBridge(self, atomic, ordered)
+
+
+class BundledOpenFlowBridge(object):
+    def __init__(self, br, atomic, ordered):
+        self.br = br
+        self.active_bundle = None
+        self.bundle_flags = 0
+        if not atomic and not ordered:
+            return
+        (dp, ofp, ofpp) = self.br._get_dp()
+        if atomic:
+            self.bundle_flags |= ofp.ONF_BF_ATOMIC
+        if ordered:
+            self.bundle_flags |= ofp.ONF_BF_ORDERED
+
+    def __getattr__(self, name):
+        if name.startswith('install') or name.startswith('uninstall'):
+            under = getattr(self.br, name)
+            if self.active_bundle is None:
+                return under
+            return functools.partial(under, active_bundle=dict(
+                id=self.active_bundle, bundle_flags=self.bundle_flags))
+        raise AttributeError("Only install_* or uninstall_* methods "
+            "can be used")
+
+    def __enter__(self):
+        if self.active_bundle is not None:
+            raise ActiveBundleRunning(bundle_id=self.active_bundle)
+        while True:
+            self.active_bundle = random.randrange(BUNDLE_ID_WIDTH)
+            if self.active_bundle not in self.br.active_bundles:
+                self.br.active_bundles.add(self.active_bundle)
+                break
+        try:
+            (dp, ofp, ofpp) = self.br._get_dp()
+            msg = ofpp.ONFBundleCtrlMsg(dp, self.active_bundle,
+                                        ofp.ONF_BCT_OPEN_REQUEST,
+                                        self.bundle_flags, [])
+            reply = self.br._send_msg(msg, reply_cls=ofpp.ONFBundleCtrlMsg)
+            if reply.type != ofp.ONF_BCT_OPEN_REPLY:
+                raise RuntimeError(
+                    "Unexpected reply type %d != ONF_BCT_OPEN_REPLY" %
+                    reply.type)
+            return self
+        except Exception:
+            self.br.active_bundles.remove(self.active_bundle)
+            self.active_bundle = None
+            raise
+
+    def __exit__(self, type, value, traceback):
+        (dp, ofp, ofpp) = self.br._get_dp()
+        if type is None:
+            ctrl_type = ofp.ONF_BCT_COMMIT_REQUEST
+            expected_reply = ofp.ONF_BCT_COMMIT_REPLY
+        else:
+            ctrl_type = ofp.ONF_BCT_DISCARD_REQUEST
+            expected_reply = ofp.ONF_BCT_DISCARD_REPLY
+            LOG.warning(
+                "Discarding bundle with ID 0x%(id)x due to an exception",
+                {'id': self.active_bundle})
+
+        try:
+            msg = ofpp.ONFBundleCtrlMsg(dp, self.active_bundle,
+                                        ctrl_type,
+                                        self.bundle_flags, [])
+            reply = self.br._send_msg(msg, reply_cls=ofpp.ONFBundleCtrlMsg)
+            if reply.type != expected_reply:
+                # The bundle ID may be in a bad state.  Let's leave it
+                # in active_bundles so that we will never use it again.
+                raise RuntimeError("Unexpected reply type %d" % reply.type)
+            self.br.active_bundles.remove(self.active_bundle)
+        finally:
+            # It is possible the bundle is kept open, but this must be
+            # cleared or all subsequent __enter__ will fail.
+            self.active_bundle = None
