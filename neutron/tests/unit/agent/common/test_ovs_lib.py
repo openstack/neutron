@@ -239,7 +239,7 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.execute.assert_has_calls(expected_calls)
 
     def _ofctl_args(self, cmd, *args):
-        cmd = ['ovs-ofctl', cmd]
+        cmd = ['ovs-ofctl', cmd, '-O', self.br._highest_protocol_needed]
         cmd += args
         return cmd
 
@@ -443,6 +443,37 @@ class OVS_Lib_Test(base.BaseTestCase):
         self.assertRaises(exceptions.InvalidInput,
                           self.br.mod_flow,
                           **params)
+
+    def test_ofctl_of_version_use_highest(self):
+        self.br.add_flow(in_port=1, actions="drop")
+        self.execute.assert_has_calls([
+            mock.call(['ovs-ofctl', 'add-flows', '-O', p_const.OPENFLOW10,
+                       mock.ANY, '-'], process_input=mock.ANY,
+                      run_as_root=mock.ANY)
+        ])
+        self.br.use_at_least_protocol(p_const.OPENFLOW12)
+        self.execute.reset_mock()
+        self.br.add_flow(in_port=1, actions="drop")
+        self.execute.assert_has_calls([
+            mock.call(['ovs-ofctl', 'add-flows', '-O', p_const.OPENFLOW12,
+                       mock.ANY, '-'], process_input=mock.ANY,
+                      run_as_root=mock.ANY),
+        ])
+
+    def test_ofctl_of_version_keep_highest(self):
+        self.br.use_at_least_protocol(p_const.OPENFLOW13)
+        self.br.use_at_least_protocol(p_const.OPENFLOW12)
+        self.execute.reset_mock()
+        self.br.add_flow(in_port=1, actions="drop")
+        self.execute.assert_has_calls([
+            mock.call(['ovs-ofctl', 'add-flows', '-O', p_const.OPENFLOW13,
+                       mock.ANY, '-'], process_input=mock.ANY,
+                      run_as_root=mock.ANY),
+        ])
+
+    def test_ofctl_of_version_use_unknown(self):
+        with testtools.ExpectedException(Exception):
+            self.br.use_at_least_protocol("OpenFlow42")
 
     def test_run_ofctl_retry_on_socket_error(self):
         err = RuntimeError('failed to connect to socket')
