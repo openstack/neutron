@@ -220,16 +220,7 @@ class CommonDbMixin(object):
         # if model has no unqiue sets, 'paginate_query' will
         # warn if sorting is unstable
         uk_sets = sa_utils.get_unique_keys(model)
-        for kset in uk_sets:
-            for k in kset:
-                if marker_obj and isinstance(getattr(marker_obj, k), bool):
-                    # TODO(kevinbenton): workaround for bug/1656947.
-                    # we can't use boolean cols until that bug is fixed. return
-                    # first entry in uk_sets once that bug is resolved
-                    break
-            else:
-                return kset
-        return []
+        return uk_sets[0] if uk_sets else []
 
     def _get_collection(self, context, model, dict_func, filters=None,
                         fields=None, sorts=None, limit=None, marker_obj=None,
