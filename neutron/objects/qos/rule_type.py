@@ -16,7 +16,6 @@ from oslo_log import log as logging
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron._i18n import _LW
 from neutron.objects import base
 from neutron.services.qos import qos_consts
 
@@ -48,21 +47,8 @@ class QosRuleType(base.NeutronObject):
         if validate_filters:
             cls.validate_filters(**kwargs)
 
-        #TODO(mangelajo): remove in backwards compatible available rule
-        #                 inspection in Pike
-
-        core_plugin_supported_rules = getattr(
-            directory.get_plugin(), 'supported_qos_rule_types', None)
-
         rule_types = (
-            core_plugin_supported_rules or
             directory.get_plugin(alias=constants.QOS).supported_rule_types)
-
-        if core_plugin_supported_rules:
-            LOG.warning(_LW(
-                "Your core plugin defines supported_qos_rule_types which is "
-                "deprecated and shall be implemented through a QoS driver."
-            ))
 
         # TODO(ihrachys): apply filters to returned result
         return [cls(type=type_) for type_ in rule_types]

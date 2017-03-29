@@ -22,6 +22,7 @@ from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.plugins.common import constants
 from neutron.services.qos import qos_consts
+from neutron.services.qos import qos_plugin
 from neutron.tests.unit.services.qos import base
 
 
@@ -52,8 +53,6 @@ class TestQosPlugin(base.BaseQosTestCase):
         manager.init()
         self.qos_plugin = directory.get_plugin(constants.QOS)
 
-        #TODO(mangelajo): Remove notification_driver_manager mock in Pike
-        self.qos_plugin.notification_driver_manager = mock.Mock()
         self.qos_plugin.driver_manager = mock.Mock()
 
         self.rpc_push = mock.patch('neutron.api.rpc.handlers.resources_rpc'
@@ -87,12 +86,6 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.ctxt, **self.rule_data['dscp_marking_rule'])
 
     def _validate_driver_params(self, method_name):
-        method = getattr(self.qos_plugin.notification_driver_manager,
-                         method_name)
-        self.assertTrue(method.called)
-        self.assertIsInstance(
-            method.call_args[0][1], policy_object.QosPolicy)
-
         self.assertTrue(self.qos_plugin.driver_manager.call.called)
         self.assertEqual(self.qos_plugin.driver_manager.call.call_args[0][0],
                          method_name)
@@ -617,45 +610,14 @@ class TestQosPlugin(base.BaseQosTestCase):
                           'create_policy_bandwidth_limit_rules')
 
     def test_get_rule_types(self):
-        core_plugin = directory.get_plugin()
         rule_types_mock = mock.PropertyMock(
             return_value=qos_consts.VALID_RULE_TYPES)
         filters = {'type': 'type_id'}
-        with mock.patch.object(core_plugin, 'supported_qos_rule_types',
-                               new_callable=rule_types_mock,
-                               create=True):
+        with mock.patch.object(qos_plugin.QoSPlugin, 'supported_rule_types',
+                               new_callable=rule_types_mock):
             types = self.qos_plugin.get_rule_types(self.ctxt, filters=filters)
             self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))
-
-    @mock.patch('neutron.objects.qos.policy.QosPolicy')
-    def test_policy_notification_ordering(self, qos_policy_mock):
-
-        policy_actions = {'create': [self.ctxt, {'policy': {}}],
-                          'update': [self.ctxt, self.policy.id,
-                                     {'policy': {}}],
-                          'delete': [self.ctxt, self.policy.id]}
-
-        self.qos_plugin.notification_driver_manager = mock.Mock()
-
-        mock_manager = mock.Mock()
-        mock_manager.attach_mock(qos_policy_mock, 'QosPolicy')
-        mock_manager.attach_mock(self.qos_plugin.notification_driver_manager,
-                                 'notification_driver')
-
-        for action, arguments in policy_actions.items():
-            mock_manager.reset_mock()
-
-            method = getattr(self.qos_plugin, "%s_policy" % action)
-            method(*arguments)
-
-            policy_mock_call = getattr(mock.call.QosPolicy(), action)()
-            notify_mock_call = getattr(mock.call.notification_driver,
-                                       '%s_policy' % action)(self.ctxt,
-                                                             mock.ANY)
-
-            self.assertTrue(mock_manager.mock_calls.index(policy_mock_call) <
-                            mock_manager.mock_calls.index(notify_mock_call))
 
     @mock.patch('neutron.objects.ports.Port')
     @mock.patch('neutron.objects.qos.policy.QosPolicy')
@@ -672,16 +634,10 @@ class TestQosPlugin(base.BaseQosTestCase):
                         'delete': [self.ctxt, rule_cls_mock,
                                    self.rule.id, self.policy.id]}
 
-        # TODO(mangelajo): Remove notification_driver_manager checks in Pike
-        #                  and rename this test
-        self.qos_plugin.notification_driver_manager = mock.Mock()
-
         mock_manager = mock.Mock()
         mock_manager.attach_mock(qos_policy_mock, 'QosPolicy')
         mock_manager.attach_mock(port_mock, 'Port')
         mock_manager.attach_mock(rule_cls_mock, 'RuleCls')
-        mock_manager.attach_mock(self.qos_plugin.notification_driver_manager,
-                                 'notification_driver')
         mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
 
         for action, arguments in rule_actions.items():
@@ -695,9 +651,6 @@ class TestQosPlugin(base.BaseQosTestCase):
             # some actions construct rule from class reference
             rule_mock_call = getattr(mock.call.RuleCls(), action)()
 
-            notify_mock_call = mock.call.notification_driver.update_policy(
-                    self.ctxt, mock.ANY)
-
             driver_mock_call = mock.call.driver.call('update_policy',
                                                      self.ctxt, mock.ANY)
 
@@ -706,9 +659,6 @@ class TestQosPlugin(base.BaseQosTestCase):
             else:
                 action_index = mock_manager.mock_calls.index(
                     get_rule_mock_call)
-
-            self.assertTrue(
-                action_index < mock_manager.mock_calls.index(notify_mock_call))
 
             self.assertTrue(
                 action_index < mock_manager.mock_calls.index(driver_mock_call))

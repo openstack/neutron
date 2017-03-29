@@ -44,7 +44,6 @@ import neutron.conf.plugins.ml2.drivers.ovs_conf
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.conf.services.metering_agent
-import neutron.conf.services.qos_driver_manager
 import neutron.conf.wsgi
 import neutron.db.agents_db
 import neutron.db.agentschedulers_db
@@ -140,13 +139,6 @@ def list_opts():
               neutron.conf.common.nova_opts)
          ),
         ('quotas', neutron.conf.quota.core_quota_opts)
-    ]
-
-
-def list_qos_opts():
-    return [
-        ('qos',
-         neutron.conf.services.qos_driver_manager.QOS_PLUGIN_OPTS)
     ]
 
 
