@@ -55,6 +55,7 @@ from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 from neutron.db import standard_attr
 from neutron.ipam import exceptions as ipam_exc
 from neutron.tests import base
@@ -6062,13 +6063,29 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 class DbModelMixin(object):
     """DB model tests."""
     def test_make_network_dict_outside_engine_facade_manager(self):
+        mock.patch.object(directory, 'get_plugin').start()
         ctx = context.get_admin_context()
         with db_api.context_manager.writer.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         admin_state_up=True)
             ctx.session.add(network)
+            with db_api.autonested_transaction(ctx.session):
+                sg = sg_models.SecurityGroup(name='sg', description='sg')
+                ctx.session.add(sg)
+            # ensure db rels aren't loaded until commit for network object
+            # by sharing after a nested transaction
+            ctx.session.add(
+                rbac_db_models.NetworkRBAC(object_id=network.id,
+                                           action='access_as_shared',
+                                           tenant_id=network.tenant_id,
+                                           target_tenant='*')
+            )
+            net2 = models_v2.Network(name="net_net2", status="OK",
+                                     admin_state_up=True)
+            ctx.session.add(net2)
         pl = db_base_plugin_common.DbBasePluginCommon()
-        self.assertFalse(pl._make_network_dict(network, context=ctx)['shared'])
+        self.assertTrue(pl._make_network_dict(network, context=ctx)['shared'])
+        self.assertFalse(pl._make_network_dict(net2, context=ctx)['shared'])
 
     def test_repr(self):
         """testing the string representation of 'model' classes."""

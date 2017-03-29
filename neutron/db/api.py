@@ -15,6 +15,7 @@
 
 import contextlib
 import copy
+import weakref
 
 from debtcollector import removals
 from neutron_lib.db import api
@@ -264,12 +265,25 @@ def sqla_remove_all():
     del _REGISTERED_SQLA_EVENTS[:]
 
 
+@event.listens_for(orm.session.Session, "after_flush")
+def add_to_rel_load_list(session, flush_context=None):
+    # keep track of new items to load relationships on during commit
+    session.info.setdefault('_load_rels', weakref.WeakSet()).update(
+        session.new)
+
+
 @event.listens_for(orm.session.Session, "before_commit")
 def load_one_to_manys(session):
     # TODO(kevinbenton): we should be able to remove this after we
     # have eliminated all places where related objects are constructed
     # using a key rather than a relationship.
-    for new_object in session.new:
+
+    add_to_rel_load_list(session)  # capture any new objects
+    if session.transaction.nested:
+        # wait until final commit
+        return
+
+    for new_object in session.info.pop('_load_rels', []):
         state = sqlalchemy.inspect(new_object)
 
         # set up relationship loading so that we can call lazy
