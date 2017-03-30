@@ -24,9 +24,6 @@ from neutron.tests import base
 
 class TestOVSNativeConnection(base.BaseTestCase):
 
-    def setUp(self):
-        super(TestOVSNativeConnection, self).setUp()
-
     @mock.patch.object(connection, 'TransactionQueue')
     @mock.patch.object(idlutils, 'get_schema_helper')
     @mock.patch.object(idl, 'Idl')
