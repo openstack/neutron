@@ -13,44 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api import converters
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
-from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 
 from neutron._i18n import _
-
-
-NETWORK_TYPE = 'provider:network_type'
-PHYSICAL_NETWORK = 'provider:physical_network'
-SEGMENTATION_ID = 'provider:segmentation_id'
-ATTRIBUTES = (NETWORK_TYPE, PHYSICAL_NETWORK, SEGMENTATION_ID)
-
-# Common definitions for maximum string field length
-NETWORK_TYPE_MAX_LEN = 32
-PHYSICAL_NETWORK_MAX_LEN = 64
-
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {
-        NETWORK_TYPE: {'allow_post': True, 'allow_put': True,
-                       'validate': {'type:string': NETWORK_TYPE_MAX_LEN},
-                       'default': constants.ATTR_NOT_SPECIFIED,
-                       'enforce_policy': True,
-                       'is_visible': True},
-        PHYSICAL_NETWORK: {'allow_post': True, 'allow_put': True,
-                           'validate': {'type:string':
-                                        PHYSICAL_NETWORK_MAX_LEN},
-                           'default': constants.ATTR_NOT_SPECIFIED,
-                           'enforce_policy': True,
-                           'is_visible': True},
-        SEGMENTATION_ID: {'allow_post': True, 'allow_put': True,
-                          'convert_to': converters.convert_to_int,
-                          'enforce_policy': True,
-                          'default': constants.ATTR_NOT_SPECIFIED,
-                          'is_visible': True},
-    }
-}
 
 
 def _raise_if_updates_provider_attributes(attrs):
@@ -59,7 +27,8 @@ def _raise_if_updates_provider_attributes(attrs):
     This method is used for plugins that do not support
     updating provider networks.
     """
-    if any(validators.is_attr_set(attrs.get(a)) for a in ATTRIBUTES):
+    if any(validators.is_attr_set(attrs.get(a))
+           for a in provider_net.ATTRIBUTES):
         msg = _("Plugin does not support updating provider attributes")
         raise n_exc.InvalidInput(error_message=msg)
 
@@ -79,22 +48,22 @@ class Providernet(extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
-        return "Provider Network"
+        return provider_net.NAME
 
     @classmethod
     def get_alias(cls):
-        return "provider"
+        return provider_net.ALIAS
 
     @classmethod
     def get_description(cls):
-        return "Expose mapping of virtual networks to physical networks"
+        return provider_net.DESCRIPTION
 
     @classmethod
     def get_updated(cls):
-        return "2012-09-07T10:00:00-00:00"
+        return provider_net.UPDATED_TIMESTAMP
 
     def get_extended_resources(self, version):
         if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
+            return provider_net.RESOURCE_ATTRIBUTE_MAP
         else:
             return {}

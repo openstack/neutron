@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
@@ -698,7 +699,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         except KeyError:
             segments = [network]
         for s in segments:
-            segment_type = s[provider.NETWORK_TYPE]
+            segment_type = s[provider_net.NETWORK_TYPE]
             try:
                 type_driver = self.type_manager.drivers[segment_type].obj
             except KeyError:
@@ -709,7 +710,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # a bad setup, it's better to be safe than sorry here. Also,
                 # several unit tests use non-existent driver types that may
                 # trigger the exception here.
-                if segment_type and s[provider.SEGMENTATION_ID]:
+                if segment_type and s[provider_net.SEGMENTATION_ID]:
                     LOG.warning(
                         _LW("Failed to determine MTU for segment "
                             "%(segment_type)s:%(segment_id)s; network "
@@ -717,12 +718,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             "accurate"),
                         {
                             'segment_type': segment_type,
-                            'segment_id': s[provider.SEGMENTATION_ID],
+                            'segment_id': s[provider_net.SEGMENTATION_ID],
                             'network_id': network['id'],
                         }
                     )
             else:
-                mtu = type_driver.get_mtu(s[provider.PHYSICAL_NETWORK])
+                mtu = type_driver.get_mtu(s[provider_net.PHYSICAL_NETWORK])
                 # Some drivers, like 'local', may return None; the assumption
                 # then is that for the segment type, MTU has no meaning or
                 # unlimited, and so we should then ignore those values.

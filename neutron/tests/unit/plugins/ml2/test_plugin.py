@@ -21,6 +21,7 @@ import six
 import testtools
 import webob
 
+from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as exc
@@ -44,7 +45,6 @@ from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import portbindings
-from neutron.extensions import providernet as pnet
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config
