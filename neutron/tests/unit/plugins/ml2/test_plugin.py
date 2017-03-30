@@ -776,6 +776,12 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 plugin.update_port(ctx, port['port']['id'], port)
                 self.assertTrue(ap.called)
 
+    def test_dhcp_provisioning_blocks_removed_without_dhcp_agents(self):
+        with mock.patch.object(provisioning_blocks,
+                               'remove_provisioning_component') as cp:
+            with self.port():
+                self.assertTrue(cp.called)
+
     def test_create_update_get_port_same_fixed_ips_order(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
