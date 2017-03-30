@@ -1033,11 +1033,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                    internal_subnet_id,
                                    external_network_id):
         subnet = self._core_plugin.get_subnet(context, internal_subnet_id)
-        if not subnet['gateway_ip']:
-            msg = (_('Cannot add floating IP to port on subnet %s '
-                     'which has no gateway_ip') % internal_subnet_id)
-            raise n_exc.BadRequest(resource='floatingip', msg=msg)
-
         return self.get_router_for_floatingip(context,
             internal_port, subnet, external_network_id)
 
