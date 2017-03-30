@@ -40,7 +40,7 @@ class DnsExtensionManager(object):
         return []
 
     def get_extended_resources(self, version):
-        return dns.get_extended_resources(version)
+        return dns.Dns().get_extended_resources(version)
 
 
 class DnsExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2):
