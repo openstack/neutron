@@ -29,7 +29,8 @@ class SubnetServiceTypesExtensionManager(object):
         return []
 
     def get_extended_resources(self, version):
-        return subnet_service_types.get_extended_resources(version)
+        extension = subnet_service_types.Subnet_service_types()
+        return extension.get_extended_resources(version)
 
 
 class SubnetServiceTypesExtensionTestPlugin(
