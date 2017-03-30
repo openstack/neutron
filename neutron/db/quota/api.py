@@ -85,7 +85,7 @@ def set_quota_usage(context, resource, tenant_id,
     :param delta: Specifies whether in_use is an absolute number
                   or a delta (default to False)
     """
-    with db_api.autonested_transaction(context.session):
+    with db_api.context_manager.writer.using(context):
         usage_data = quota_obj.QuotaUsage.get_object(
             context, resource=resource, project_id=tenant_id)
         if not usage_data:

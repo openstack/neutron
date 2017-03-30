@@ -177,7 +177,7 @@ class TrackedResource(BaseResource):
     def mark_dirty(self, context):
         if not self._dirty_tenants:
             return
-        with db_api.autonested_transaction(context.session):
+        with db_api.context_manager.writer.using(context):
             # It is not necessary to protect this operation with a lock.
             # Indeed when this method is called the request has been processed
             # and therefore all resources created or deleted.

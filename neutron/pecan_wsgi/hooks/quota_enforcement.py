@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from pecan import hooks
 
 from neutron.common import exceptions
+from neutron.db import api as db_api
 from neutron import manager
 from neutron import quota
 from neutron.quota import resource_registry
@@ -66,7 +67,7 @@ class QuotaEnforcementHook(hooks.PecanHook):
         if not reservations:
             return
         neutron_context = state.request.context.get('neutron_context')
-        with neutron_context.session.begin():
+        with db_api.context_manager.writer.using(neutron_context):
             # Commit the reservation(s)
             for reservation in reservations:
                 quota.QUOTAS.commit_reservation(

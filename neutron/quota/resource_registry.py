@@ -15,6 +15,7 @@ from oslo_log import log
 import six
 
 from neutron._i18n import _, _LI, _LW
+from neutron.db import api as db_api
 from neutron.quota import resource
 
 LOG = log.getLogger(__name__)
@@ -71,7 +72,7 @@ def set_resources_dirty(context):
         return
 
     for res in get_all_resources().values():
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             if is_tracked(res.name) and res.dirty:
                 res.mark_dirty(context)
 

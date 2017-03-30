@@ -168,7 +168,7 @@ class DbQuotaDriver(object):
         # locks should be ok to use when support for sending "hotspot" writes
         # to a single node will be available.
         requested_resources = deltas.keys()
-        with db_api.autonested_transaction(context.session):
+        with db_api.context_manager.writer.using(context):
             # get_tenant_quotes needs in input a dictionary mapping resource
             # name to BaseResosurce instances so that the default quota can be
             # retrieved
