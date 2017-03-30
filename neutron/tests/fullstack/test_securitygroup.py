@@ -52,7 +52,8 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
                 of_interface=self.of_interface,
                 ovsdb_interface=self.ovsdb_interface,
                 l2_agent_type=self.l2_agent_type,
-                firewall_driver=self.firewall_driver) for _ in range(2)]
+                firewall_driver=self.firewall_driver,
+                dhcp_agent=True) for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type=self.network_type),
@@ -147,7 +148,8 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                     network['id'],
                     tenant_uuid,
                     self.safe_client,
-                    neutron_port=ports[port]))
+                    neutron_port=ports[port],
+                    use_dhcp=True))
             for port, host in enumerate(index_to_host)]
 
         for vm in vms:
@@ -238,7 +240,8 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                     network['id'],
                     tenant_uuid,
                     self.safe_client,
-                    neutron_port=ports[3])))
+                    neutron_port=ports[3],
+                    use_dhcp=True)))
 
         vms[3].block_until_boot()
 
