@@ -937,9 +937,9 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
             try:
                 getattr(driver.obj, method_name)(session, base_model, result)
             except Exception:
-                LOG.error(_LE("Extension driver '%(name)s' failed in "
-                          "%(method)s"),
-                          {'name': driver.name, 'method': method_name})
+                LOG.exception(_LE("Extension driver '%(name)s' failed in "
+                                  "%(method)s"),
+                              {'name': driver.name, 'method': method_name})
                 raise ml2_exc.ExtensionDriverError(driver=driver.name)
 
     def extend_network_dict(self, session, base_model, result):
