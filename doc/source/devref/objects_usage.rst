@@ -50,11 +50,11 @@ CRUD operations
 ~~~~~~~~~~~~~~~
 Objects support CRUD operations: :code:`create()`, :code:`get_object()` and
 :code:`get_objects()` (equivalent of :code:`read`), :code:`update()`,
-:code:`delete()` and :code:`delete_objects()`. The nature of OVO is, when any
-change is applied, OVO tracks it. After calling :code:`create()` or
-:code:`update()`, OVO detects this and changed fields are saved in the
-database. Please take a look at simple object usage scenarios using example of
-DNSNameServer:
+:code:`delete()`, :code:`update_objects()`, and :code:`delete_objects()`. The
+nature of OVO is, when any change is applied, OVO tracks it. After calling
+:code:`create()` or :code:`update()`, OVO detects this and changed fields are
+saved in the database. Please take a look at simple object usage scenarios
+using example of DNSNameServer:
 
 .. code-block:: Python
 
@@ -76,6 +76,11 @@ DNSNameServer:
     dns.order = 2
     dns.update()
 
+    # if you don't care about keeping the object, you can execute the update
+    # without fetch of the object state from the underlying persistent layer
+    count = DNSNameServer.update_objects(
+        context, {'order': 3}, address='asd', subnet_id='xxx')
+
     # to remove object with filter arguments:
     filters = {'address': 'asd', 'subnet_id': 'xxx'}
     DNSNameServer.delete_objects(context, **filters)
@@ -85,11 +90,12 @@ Filter, sort and paginate
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 The :code:`NeutronDbObject` class has strict validation on which field sorting
 and filtering can happen. When calling :code:`get_objects()`, :code:`count()`,
-:code:`delete_objects()` and :code:`objects_exist()`, :code:`validate_filters()`
-is invoked, to see if it's a supported filter criterion (which is by default
-non-synthetic fields only). Additional filters can be defined using
-:code:`register_filter_hook_on_model()`. This will add the requested string to
-valid filter names in object implementation. It is optional.
+:code:`update_objects()`, :code:`delete_objects()` and :code:`objects_exist()`,
+:code:`validate_filters()` is invoked, to see if it's a supported filter
+criterion (which is by default non-synthetic fields only). Additional filters
+can be defined using :code:`register_filter_hook_on_model()`. This will add the
+requested string to valid filter names in object implementation. It is
+optional.
 
 In order to disable filter validation, :code:`validate_filters=False` needs to
 be passed as an argument in aforementioned methods. It was added because the

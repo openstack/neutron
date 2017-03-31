@@ -10,12 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 from neutron_lib import context
 from oslo_utils import uuidutils
 
 from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import rbac_db
 from neutron.objects import subnet
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
@@ -127,6 +129,17 @@ class SubnetObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
         super(SubnetObjectIfaceTestCase, self).setUp()
         self.pager_map[subnet.DNSNameServer.obj_name()] = (
             obj_base.Pager(sorts=[('order', True)]))
+        # Base class will mock those out only when rbac_db_model is set for the
+        # object. Since subnets don't have their own models but only derive
+        # shared value from networks, we need to unconditionally mock those
+        # entry points out here, otherwise they will trigger database access,
+        # which is not allowed in 'Iface' test classes.
+        mock.patch.object(
+            rbac_db.RbacNeutronDbObjectMixin,
+            'is_shared_with_tenant', return_value=False).start()
+        mock.patch.object(
+            rbac_db.RbacNeutronDbObjectMixin,
+            'get_shared_with_tenant').start()
 
 
 class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
