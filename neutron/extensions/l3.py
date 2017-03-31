@@ -236,7 +236,7 @@ class RouterPluginBase(object):
         pass
 
     @abc.abstractmethod
-    def add_router_interface(self, context, router_id, interface_info):
+    def add_router_interface(self, context, router_id, interface_info=None):
         pass
 
     @abc.abstractmethod
