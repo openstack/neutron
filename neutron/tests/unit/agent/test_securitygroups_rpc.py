@@ -17,12 +17,12 @@ import collections
 import contextlib
 
 import mock
+import netaddr
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 import oslo_messaging
-from oslo_utils import netutils
 from testtools import matchers
 import webob.exc
 
@@ -55,6 +55,38 @@ FIREWALL_IPTABLES_DRIVER = FIREWALL_BASE_PACKAGE + 'IptablesFirewallDriver'
 FIREWALL_HYBRID_DRIVER = (FIREWALL_BASE_PACKAGE +
                           'OVSHybridIptablesFirewallDriver')
 FIREWALL_NOOP_DRIVER = 'neutron.agent.firewall.NoopFirewallDriver'
+
+
+def ingress_address_assignment_rules(port):
+    rules = []
+    v4_addrs = [ip['ip_address'] for ip in port['port']['fixed_ips']
+                if netaddr.IPNetwork(ip['ip_address']).version == 4]
+    v6_addrs = [ip['ip_address'] for ip in port['port']['fixed_ips']
+                if netaddr.IPNetwork(ip['ip_address']).version == 6]
+    if v6_addrs:
+        rules.append({'direction': 'ingress',
+                      'ethertype': 'IPv6',
+                      'protocol': 'ipv6-icmp',
+                      'source_port_range_min': 134})
+    for dest in v4_addrs + ['255.255.255.255']:
+        rules.append({'direction': 'ingress',
+                      'ethertype': 'IPv4',
+                      'port_range_max': 68,
+                      'port_range_min': 68,
+                      'protocol': 'udp',
+                      'source_port_range_max': 67,
+                      'source_port_range_min': 67,
+                      'dest_ip_prefix': '%s/32' % dest})
+    for dest in v6_addrs:
+        rules.append({'direction': 'ingress',
+                      'ethertype': 'IPv6',
+                      'port_range_max': 546,
+                      'port_range_min': 546,
+                      'protocol': 'udp',
+                      'source_port_range_max': 547,
+                      'source_port_range_min': 547,
+                      'dest_ip_prefix': '%s/128' % dest})
+    return rules
 
 
 def set_enable_security_groups(enabled):
@@ -252,7 +284,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'port_range_max': 23, 'security_group_id': sg1_id,
                          'port_range_min': 23,
                          'source_ip_prefix': fake_prefix},
-                        ]
+                        ] + ingress_address_assignment_rules(ports_rest1)
             self.assertEqual(port_rpc['security_group_rules'],
                              expected)
             self._delete('ports', port_id1)
@@ -368,7 +400,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'port_range_max': 23, 'security_group_id': sg_id,
                          'port_range_min': 23,
                          'source_ip_prefix': fake_prefix},
-                        ]
+                        ] + ingress_address_assignment_rules(port)
             expected = tools.UnorderedList(expected)
             self.assertEqual(expected,
                              port_rpc['security_group_rules'])
@@ -424,7 +456,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'port_range_max': 23, 'security_group_id': sg1_id,
                          'port_range_min': 23,
                          'dest_ip_prefix': fake_prefix},
-                        ]
+                        ] + ingress_address_assignment_rules(ports_rest1)
             self.assertEqual(port_rpc['security_group_rules'],
                              expected)
             self._delete('ports', port_id1)
@@ -481,7 +513,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'port_range_max': 25, 'port_range_min': 24,
                          'remote_group_id': sg2_id,
                          'security_group_id': sg1_id},
-                        ]
+                        ] + ingress_address_assignment_rules(ports_rest1)
             self.assertEqual(port_rpc['security_group_rules'],
                              expected)
             self._delete('ports', port_id1)
@@ -570,17 +602,12 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
-            dhcp_port = self._create_port(
+            self._create_port(
                 self.fmt, n['network']['id'],
                 fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
                             'ip_address': FAKE_IP['IPv6_DHCP']}],
                 device_owner=const.DEVICE_OWNER_DHCP,
                 security_groups=[sg1_id])
-            dhcp_rest = self.deserialize(self.fmt, dhcp_port)
-            dhcp_mac = dhcp_rest['port']['mac_address']
-            dhcp_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
-                const.IPv6_LLA_PREFIX,
-                dhcp_mac))
 
             res1 = self._create_port(
                 self.fmt, n['network']['id'],
@@ -612,20 +639,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'security_group_id': sg1_id,
                          'port_range_min': 23,
                          'source_ip_prefix': fake_prefix},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': fake_gateway,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        {'direction': 'ingress',
-                         'ethertype': ethertype,
-                         'port_range_max': dest_port,
-                         'port_range_min': dest_port,
-                         'protocol': const.PROTO_NAME_UDP,
-                         'source_ip_prefix': dhcp_lla_ip,
-                         'source_port_range_max': source_port,
-                         'source_port_range_min': source_port}
-                        ]
+                        ] + ingress_address_assignment_rules(ports_rest1)
             self.assertEqual(port_rpc['security_group_rules'],
                              expected)
             self._delete('ports', port_id1)
@@ -673,310 +687,6 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                              ports_rpc['security_groups'])
             self.assertEqual(expected['sg_member_ips'][sg1_id]['IPv6'],
                              ports_rpc['sg_member_ips'][sg1_id]['IPv6'])
-            self._delete('ports', port_id1)
-
-    def test_security_group_ra_rules_for_devices_ipv6_gateway_global(self):
-        fake_prefix = FAKE_PREFIX[const.IPv6]
-        fake_gateway = FAKE_IP['IPv6_GLOBAL']
-        with self.network() as n,\
-                self.subnet(n, gateway_ip=fake_gateway,
-                            cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
-                            ) as subnet_v6,\
-                self.security_group() as sg1:
-            sg1_id = sg1['security_group']['id']
-            rule1 = self._build_security_group_rule(
-                sg1_id,
-                'ingress', const.PROTO_NAME_TCP, '22',
-                '22',
-                ethertype=const.IPv6)
-            rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
-            self._make_security_group_rule(self.fmt, rules)
-
-            # Create gateway port
-            gateway_res = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
-                            'ip_address': fake_gateway}],
-                device_owner=const.DEVICE_OWNER_ROUTER_INTF)
-            gateway_mac = gateway_res['port']['mac_address']
-            gateway_port_id = gateway_res['port']['id']
-            gateway_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
-                const.IPv6_LLA_PREFIX,
-                gateway_mac))
-
-            ports_rest1 = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                security_groups=[sg1_id])
-            port_id1 = ports_rest1['port']['id']
-            self.rpc.devices = {port_id1: ports_rest1['port']}
-            devices = [port_id1, 'no_exist_device']
-            ctx = context.get_admin_context()
-            ports_rpc = self.rpc.security_group_rules_for_devices(
-                ctx, devices=devices)
-            port_rpc = ports_rpc[port_id1]
-            expected = [{'direction': 'egress', 'ethertype': const.IPv4,
-                         'security_group_id': sg1_id},
-                        {'direction': 'egress', 'ethertype': const.IPv6,
-                         'security_group_id': sg1_id},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_TCP,
-                         'ethertype': const.IPv6,
-                         'port_range_max': 22,
-                         'security_group_id': sg1_id,
-                         'port_range_min': 22},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': gateway_lla_ip,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        ]
-            self.assertEqual(port_rpc['security_group_rules'],
-                             expected)
-            self._delete('ports', port_id1)
-            # Note(xuhanp): remove gateway port's fixed_ips or gateway port
-            # deletion will be prevented.
-            data = {'port': {'fixed_ips': []}}
-            req = self.new_update_request('ports', data, gateway_port_id)
-            self.deserialize(self.fmt, req.get_response(self.api))
-            self._delete('ports', gateway_port_id)
-
-    def test_security_group_rule_for_device_ipv6_multi_router_interfaces(self):
-        fake_prefix = FAKE_PREFIX[const.IPv6]
-        fake_gateway = FAKE_IP['IPv6_GLOBAL']
-        with self.network() as n,\
-                self.subnet(n, gateway_ip=fake_gateway,
-                            cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
-                            ) as subnet_v6,\
-                self.security_group() as sg1:
-            sg1_id = sg1['security_group']['id']
-            rule1 = self._build_security_group_rule(
-                sg1_id,
-                'ingress', const.PROTO_NAME_TCP, '22',
-                '22',
-                ethertype=const.IPv6)
-            rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
-            self._make_security_group_rule(self.fmt, rules)
-
-            # Create gateway port
-            gateway_res = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
-                            'ip_address': fake_gateway}],
-                device_owner=const.DEVICE_OWNER_ROUTER_INTF)
-            gateway_mac = gateway_res['port']['mac_address']
-            gateway_port_id = gateway_res['port']['id']
-            gateway_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
-                const.IPv6_LLA_PREFIX,
-                gateway_mac))
-            # Create another router interface port
-            interface_res = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                device_owner=const.DEVICE_OWNER_ROUTER_INTF)
-            interface_port_id = interface_res['port']['id']
-
-            ports_rest1 = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                security_groups=[sg1_id])
-            port_id1 = ports_rest1['port']['id']
-            self.rpc.devices = {port_id1: ports_rest1['port']}
-            devices = [port_id1, 'no_exist_device']
-            ctx = context.get_admin_context()
-            ports_rpc = self.rpc.security_group_rules_for_devices(
-                ctx, devices=devices)
-            port_rpc = ports_rpc[port_id1]
-            expected = [{'direction': 'egress', 'ethertype': const.IPv4,
-                         'security_group_id': sg1_id},
-                        {'direction': 'egress', 'ethertype': const.IPv6,
-                         'security_group_id': sg1_id},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_TCP,
-                         'ethertype': const.IPv6,
-                         'port_range_max': 22,
-                         'security_group_id': sg1_id,
-                         'port_range_min': 22},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': gateway_lla_ip,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        ]
-            self.assertEqual(port_rpc['security_group_rules'],
-                             expected)
-            self._delete('ports', port_id1)
-            data = {'port': {'fixed_ips': []}}
-            req = self.new_update_request('ports', data, gateway_port_id)
-            self.deserialize(self.fmt, req.get_response(self.api))
-            req = self.new_update_request('ports', data, interface_port_id)
-            self.deserialize(self.fmt, req.get_response(self.api))
-            self._delete('ports', gateway_port_id)
-            self._delete('ports', interface_port_id)
-
-    def test_security_group_ra_rules_for_devices_ipv6_dvr(self):
-        fake_prefix = FAKE_PREFIX[const.IPv6]
-        fake_gateway = FAKE_IP['IPv6_GLOBAL']
-        with self.network() as n,\
-                self.subnet(n, gateway_ip=fake_gateway,
-                            cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
-                            ) as subnet_v6,\
-                self.security_group() as sg1:
-            sg1_id = sg1['security_group']['id']
-            rule1 = self._build_security_group_rule(
-                sg1_id,
-                'ingress', const.PROTO_NAME_TCP, '22',
-                '22',
-                ethertype=const.IPv6)
-            rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
-            self._make_security_group_rule(self.fmt, rules)
-
-            # Create DVR router interface port
-            gateway_res = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id'],
-                            'ip_address': fake_gateway}],
-                device_owner=const.DEVICE_OWNER_DVR_INTERFACE)
-            gateway_mac = gateway_res['port']['mac_address']
-            gateway_port_id = gateway_res['port']['id']
-            gateway_lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
-                const.IPv6_LLA_PREFIX,
-                gateway_mac))
-
-            ports_rest1 = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                security_groups=[sg1_id])
-            port_id1 = ports_rest1['port']['id']
-            self.rpc.devices = {port_id1: ports_rest1['port']}
-            devices = [port_id1, 'no_exist_device']
-            ctx = context.get_admin_context()
-            ports_rpc = self.rpc.security_group_rules_for_devices(
-                ctx, devices=devices)
-            port_rpc = ports_rpc[port_id1]
-            expected = [{'direction': 'egress', 'ethertype': const.IPv4,
-                         'security_group_id': sg1_id},
-                        {'direction': 'egress', 'ethertype': const.IPv6,
-                         'security_group_id': sg1_id},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_TCP,
-                         'ethertype': const.IPv6,
-                         'port_range_max': 22,
-                         'security_group_id': sg1_id,
-                         'port_range_min': 22},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': gateway_lla_ip,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        ]
-            self.assertEqual(port_rpc['security_group_rules'],
-                             expected)
-            self._delete('ports', port_id1)
-            # Note(xuhanp): remove gateway port's fixed_ips or gateway port
-            # deletion will be prevented.
-            data = {'port': {'fixed_ips': []}}
-            req = self.new_update_request('ports', data, gateway_port_id)
-            self.deserialize(self.fmt, req.get_response(self.api))
-            self._delete('ports', gateway_port_id)
-
-    def test_security_group_ra_rules_for_devices_ipv6_gateway_lla(self):
-        fake_prefix = FAKE_PREFIX[const.IPv6]
-        fake_gateway = FAKE_IP['IPv6_LLA']
-        with self.network() as n,\
-                self.subnet(n, gateway_ip=fake_gateway,
-                            cidr=fake_prefix, ip_version=6,
-                            ipv6_ra_mode=const.IPV6_SLAAC
-                            ) as subnet_v6,\
-                self.security_group() as sg1:
-            sg1_id = sg1['security_group']['id']
-            rule1 = self._build_security_group_rule(
-                sg1_id,
-                'ingress', const.PROTO_NAME_TCP, '22',
-                '22',
-                ethertype=const.IPv6)
-            rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
-            self._make_security_group_rule(self.fmt, rules)
-
-            ports_rest1 = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                security_groups=[sg1_id])
-            port_id1 = ports_rest1['port']['id']
-            self.rpc.devices = {port_id1: ports_rest1['port']}
-            devices = [port_id1, 'no_exist_device']
-            ctx = context.get_admin_context()
-            ports_rpc = self.rpc.security_group_rules_for_devices(
-                ctx, devices=devices)
-            port_rpc = ports_rpc[port_id1]
-            expected = [{'direction': 'egress', 'ethertype': const.IPv4,
-                         'security_group_id': sg1_id},
-                        {'direction': 'egress', 'ethertype': const.IPv6,
-                         'security_group_id': sg1_id},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_TCP,
-                         'ethertype': const.IPv6,
-                         'port_range_max': 22,
-                         'security_group_id': sg1_id,
-                         'port_range_min': 22},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': fake_gateway,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        ]
-            self.assertEqual(port_rpc['security_group_rules'],
-                             expected)
-            self._delete('ports', port_id1)
-
-    def test_security_group_ra_rules_for_devices_ipv6_no_gateway_port(self):
-        fake_prefix = FAKE_PREFIX[const.IPv6]
-        with self.network() as n,\
-                self.subnet(n, gateway_ip=None, cidr=fake_prefix,
-                            ip_version=6, ipv6_ra_mode=const.IPV6_SLAAC
-                            ) as subnet_v6,\
-                self.security_group() as sg1:
-            sg1_id = sg1['security_group']['id']
-            rule1 = self._build_security_group_rule(
-                sg1_id,
-                'ingress', const.PROTO_NAME_TCP, '22',
-                '22',
-                ethertype=const.IPv6)
-            rules = {
-                'security_group_rules': [rule1['security_group_rule']]}
-            self._make_security_group_rule(self.fmt, rules)
-
-            ports_rest1 = self._make_port(
-                self.fmt, n['network']['id'],
-                fixed_ips=[{'subnet_id': subnet_v6['subnet']['id']}],
-                security_groups=[sg1_id])
-            port_id1 = ports_rest1['port']['id']
-            self.rpc.devices = {port_id1: ports_rest1['port']}
-            devices = [port_id1, 'no_exist_device']
-            ctx = context.get_admin_context()
-            ports_rpc = self.rpc.security_group_rules_for_devices(
-                ctx, devices=devices)
-            port_rpc = ports_rpc[port_id1]
-            expected = [{'direction': 'egress', 'ethertype': const.IPv4,
-                         'security_group_id': sg1_id},
-                        {'direction': 'egress', 'ethertype': const.IPv6,
-                         'security_group_id': sg1_id},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_TCP,
-                         'ethertype': const.IPv6,
-                         'port_range_max': 22,
-                         'security_group_id': sg1_id,
-                         'port_range_min': 22},
-                        ]
-            self.assertEqual(port_rpc['security_group_rules'],
-                             expected)
             self._delete('ports', port_id1)
 
     def test_security_group_rules_for_devices_ipv6_egress(self):
@@ -1032,12 +742,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'security_group_id': sg1_id,
                          'port_range_min': 23,
                          'dest_ip_prefix': fake_prefix},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': fake_gateway,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        ]
+                        ] + ingress_address_assignment_rules(ports_rest1)
             self.assertEqual(port_rpc['security_group_rules'],
                              expected)
             self._delete('ports', port_id1)
@@ -1098,12 +803,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                          'port_range_max': 25, 'port_range_min': 24,
                          'remote_group_id': sg2_id,
                          'security_group_id': sg1_id},
-                        {'direction': 'ingress',
-                         'protocol': const.PROTO_NAME_IPV6_ICMP,
-                         'ethertype': const.IPv6,
-                         'source_ip_prefix': fake_gateway,
-                         'source_port_range_min': const.ICMPV6_TYPE_RA},
-                        ]
+                        ] + ingress_address_assignment_rules(ports_rest1)
             self.assertEqual(port_rpc['security_group_rules'],
                              expected)
             self._delete('ports', port_id1)

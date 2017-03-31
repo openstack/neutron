@@ -17,10 +17,8 @@ import netaddr
 from neutron_lib import constants as const
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
-from oslo_utils import netutils
-from sqlalchemy.orm import exc
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import securitygroup as sg_models
@@ -300,92 +298,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                     remote_group_ids.append(remote_group_id)
         return remote_group_ids
 
-    def _select_network_ids(self, ports):
-        return set((port['network_id'] for port in ports.values()))
-
-    def _select_dhcp_ips_for_network_ids(self, context, network_ids):
-        if not network_ids:
-            return {}
-        query = context.session.query(models_v2.Port.mac_address,
-                                      models_v2.Port.network_id,
-                                      models_v2.IPAllocation.ip_address)
-        query = query.join(models_v2.IPAllocation)
-        query = query.filter(models_v2.Port.network_id.in_(network_ids))
-        owner = const.DEVICE_OWNER_DHCP
-        query = query.filter(models_v2.Port.device_owner == owner)
-        ips = {}
-
-        for network_id in network_ids:
-            ips[network_id] = []
-
-        for mac_address, network_id, ip in query:
-            if (netaddr.IPAddress(ip).version == 6
-                and not netaddr.IPAddress(ip).is_link_local()):
-                ip = str(netutils.get_ipv6_addr_by_EUI64(const.IPv6_LLA_PREFIX,
-                    mac_address))
-            if ip not in ips[network_id]:
-                ips[network_id].append(ip)
-
-        return ips
-
-    def _select_ra_ips_for_network_ids(self, context, network_ids):
-        """Select IP addresses to allow sending router advertisement from.
-
-        If the OpenStack managed radvd process sends an RA, get link local
-        address of gateway and allow RA from this Link Local address.
-        The gateway port link local address will only be obtained
-        when router is created before VM instance is booted and
-        subnet is attached to router.
-
-        If OpenStack doesn't send RA, allow RA from gateway IP.
-        Currently, the gateway IP needs to be link local to be able
-        to send RA to VM.
-        """
-        if not network_ids:
-            return {}
-        ips = {}
-        for network_id in network_ids:
-            ips[network_id] = set([])
-        query = context.session.query(models_v2.Subnet)
-        subnets = query.filter(models_v2.Subnet.network_id.in_(network_ids))
-        for subnet in subnets:
-            gateway_ip = subnet['gateway_ip']
-            if subnet['ip_version'] != 6 or not gateway_ip:
-                continue
-            if not netaddr.IPAddress(gateway_ip).is_link_local():
-                if subnet['ipv6_ra_mode']:
-                    gateway_ip = self._get_lla_gateway_ip_for_subnet(context,
-                                                                     subnet)
-                else:
-                    # TODO(xuhanp):Figure out how to allow gateway IP from
-                    # existing device to be global address and figure out the
-                    # link local address by other method.
-                    continue
-            if gateway_ip:
-                ips[subnet['network_id']].add(gateway_ip)
-
-        return ips
-
-    def _get_lla_gateway_ip_for_subnet(self, context, subnet):
-        query = context.session.query(models_v2.Port.mac_address)
-        query = query.join(models_v2.IPAllocation)
-        query = query.filter(
-            models_v2.IPAllocation.subnet_id == subnet['id'])
-        query = query.filter(
-            models_v2.IPAllocation.ip_address == subnet['gateway_ip'])
-        query = query.filter(
-            models_v2.Port.device_owner.in_(const.ROUTER_INTERFACE_OWNERS))
-        try:
-            mac_address = query.one()[0]
-        except (exc.NoResultFound, exc.MultipleResultsFound):
-            LOG.warning(_LW('No valid gateway port on subnet %s is '
-                            'found for IPv6 RA'), subnet['id'])
-            return
-        lla_ip = str(netutils.get_ipv6_addr_by_EUI64(
-            const.IPv6_LLA_PREFIX,
-            mac_address))
-        return lla_ip
-
     def _convert_remote_group_id_to_ip_prefix(self, context, ports):
         remote_group_ids = self._select_remote_group_ids(ports)
         ips = self._select_ips_for_remote_group(context, remote_group_ids)
@@ -415,38 +327,43 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             port['security_group_rules'] = updated_rule
         return ports
 
-    def _add_ingress_dhcp_rule(self, port, ips):
-        dhcp_ips = ips.get(port['network_id'])
-        for dhcp_ip in dhcp_ips:
-            source_port, dest_port, ethertype = DHCP_RULE_PORT[
-                netaddr.IPAddress(dhcp_ip).version]
-            dhcp_rule = {'direction': 'ingress',
-                         'ethertype': ethertype,
-                         'protocol': 'udp',
-                         'port_range_min': dest_port,
-                         'port_range_max': dest_port,
-                         'source_port_range_min': source_port,
-                         'source_port_range_max': source_port,
-                         'source_ip_prefix': dhcp_ip}
-            port['security_group_rules'].append(dhcp_rule)
+    def _add_ingress_dhcp_rule(self, port):
+        for ip_version in (4, 6):
+            # only allow DHCP servers to talk to the appropriate IP address
+            # to avoid getting leases that don't match the Neutron IPs
+            prefix = '32' if ip_version == 4 else '128'
+            dests = ['%s/%s' % (ip, prefix) for ip in port['fixed_ips']
+                     if netaddr.IPNetwork(ip).version == ip_version]
+            if ip_version == 4:
+                # v4 dhcp servers can also talk to broadcast
+                dests.append('255.255.255.255/32')
+            source_port, dest_port, ethertype = DHCP_RULE_PORT[ip_version]
+            for dest in dests:
+                dhcp_rule = {'direction': 'ingress',
+                             'ethertype': ethertype,
+                             'protocol': 'udp',
+                             'port_range_min': dest_port,
+                             'port_range_max': dest_port,
+                             'source_port_range_min': source_port,
+                             'source_port_range_max': source_port,
+                             'dest_ip_prefix': dest}
+                port['security_group_rules'].append(dhcp_rule)
 
-    def _add_ingress_ra_rule(self, port, ips):
-        ra_ips = ips.get(port['network_id'])
-        for ra_ip in ra_ips:
-            ra_rule = {'direction': 'ingress',
-                       'ethertype': const.IPv6,
-                       'protocol': const.PROTO_NAME_IPV6_ICMP,
-                       'source_ip_prefix': ra_ip,
-                       'source_port_range_min': const.ICMPV6_TYPE_RA}
-            port['security_group_rules'].append(ra_rule)
+    def _add_ingress_ra_rule(self, port):
+        has_v6 = [ip for ip in port['fixed_ips']
+                  if netaddr.IPNetwork(ip).version == 6]
+        if not has_v6:
+            return
+        ra_rule = {'direction': 'ingress',
+                   'ethertype': const.IPv6,
+                   'protocol': const.PROTO_NAME_IPV6_ICMP,
+                   'source_port_range_min': const.ICMPV6_TYPE_RA}
+        port['security_group_rules'].append(ra_rule)
 
     def _apply_provider_rule(self, context, ports):
-        network_ids = self._select_network_ids(ports)
-        ips_dhcp = self._select_dhcp_ips_for_network_ids(context, network_ids)
-        ips_ra = self._select_ra_ips_for_network_ids(context, network_ids)
         for port in ports.values():
-            self._add_ingress_ra_rule(port, ips_ra)
-            self._add_ingress_dhcp_rule(port, ips_dhcp)
+            self._add_ingress_ra_rule(port)
+            self._add_ingress_dhcp_rule(port)
 
     @db_api.retry_if_session_inactive()
     def security_group_rules_for_ports(self, context, ports):
