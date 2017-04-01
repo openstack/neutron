@@ -79,6 +79,34 @@ class QosRuleObjectTestCase(neutron_test_base.BaseTestCase):
             device_owner=DEVICE_OWNER_COMPUTE,
             expected_result=True)
 
+    def test_should_apply_to_port_with_router_gw_port_and_net_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_B,
+            port_policy_id=POLICY_ID_A,
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW,
+            expected_result=False)
+
+    def test_should_apply_to_port_with_router_gw_port_and_port_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_A,
+            port_policy_id=POLICY_ID_A,
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW,
+            expected_result=True)
+
+    def test_should_apply_to_port_with_agent_gw_port_and_net_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_B,
+            port_policy_id=POLICY_ID_A,
+            device_owner=constants.DEVICE_OWNER_AGENT_GW,
+            expected_result=False)
+
+    def test_should_apply_to_port_with_agent_gw_port_and_port_policy(self):
+        self._test_should_apply_to_port(
+            rule_policy_id=POLICY_ID_A,
+            port_policy_id=POLICY_ID_A,
+            device_owner=constants.DEVICE_OWNER_AGENT_GW,
+            expected_result=True)
+
 
 class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
