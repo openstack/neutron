@@ -388,8 +388,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         target_tenant='*', tenant_id=network['tenant_id'])
                     context.session.add(entry)
                 elif not update_shared and entry:
-                    context.session.delete(entry)
-                    context.session.expire(network, ['rbac_entries'])
+                    network.rbac_entries.remove(entry)
             # The filter call removes attributes from the body received from
             # the API that are logically tied to network resources but are
             # stored in other database tables handled by extensions
