@@ -23,6 +23,7 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import query
 
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
@@ -63,7 +64,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         return port
 
     def _setup_neutron_portbinding(self, port_id, vif_type, host):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self.ctx):
             self.ctx.session.add(models.PortBinding(port_id=port_id,
                                                     vif_type=vif_type,
                                                     host=host))
@@ -285,7 +286,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         self.setup_coreplugin(PLUGIN_NAME)
 
     def _setup_neutron_network(self, network_id, port_ids):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self.ctx):
             network_obj.Network(self.ctx, id=network_id).create()
             ports = []
             for port_id in port_ids:
@@ -311,7 +312,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def _setup_distributed_binding(self, network_id,
                                    port_id, router_id, host_id):
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self.ctx):
             record = models.DistributedPortBinding(
                 port_id=port_id,
                 host=host_id,
@@ -403,7 +404,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
     def test_distributed_port_binding_deleted_by_port_deletion(self):
         network_id = uuidutils.generate_uuid()
         network_obj.Network(self.ctx, id=network_id).create()
-        with self.ctx.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self.ctx):
             device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
             port = models_v2.Port(
                 id='port_id',
@@ -428,7 +429,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session.add(models.DistributedPortBinding(
                 **binding_kwarg))
         with warnings.catch_warnings(record=True) as warning_list:
-            with self.ctx.session.begin(subtransactions=True):
+            with db_api.context_manager.writer.using(self.ctx):
                 self.ctx.session.delete(port)
             self.assertEqual([], warning_list)
         ports = ml2_db.get_distributed_port_bindings(self.ctx,

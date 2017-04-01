@@ -18,6 +18,7 @@ from neutron._i18n import _LI
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
+from neutron.db import api as db_api
 from neutron.db.models import segment as segments_model
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def _make_segment_dict(record):
 
 def add_network_segment(context, network_id, segment, segment_index=0,
                         is_dynamic=False):
-    with context.session.begin(subtransactions=True):
+    with db_api.context_manager.writer.using(context):
         record = segments_model.NetworkSegment(
             id=uuidutils.generate_uuid(),
             network_id=network_id,
@@ -70,7 +71,7 @@ def get_networks_segments(context, network_ids, filter_dynamic=False):
     if not network_ids:
         return {}
 
-    with context.session.begin(subtransactions=True):
+    with db_api.context_manager.reader.using(context):
         query = (context.session.query(segments_model.NetworkSegment).
                  filter(segments_model.NetworkSegment.network_id
                         .in_(network_ids)).
@@ -85,7 +86,7 @@ def get_networks_segments(context, network_ids, filter_dynamic=False):
 
 
 def get_segment_by_id(context, segment_id):
-    with context.session.begin(subtransactions=True):
+    with db_api.context_manager.reader.using(context):
         try:
             record = (context.session.query(segments_model.NetworkSegment).
                       filter_by(id=segment_id).
@@ -98,7 +99,7 @@ def get_segment_by_id(context, segment_id):
 def get_dynamic_segment(context, network_id, physical_network=None,
                         segmentation_id=None):
     """Return a dynamic segment for the filters provided if one exists."""
-    with context.session.begin(subtransactions=True):
+    with db_api.context_manager.reader.using(context):
         query = (context.session.query(segments_model.NetworkSegment).
                  filter_by(network_id=network_id, is_dynamic=True))
         if physical_network:
@@ -122,6 +123,6 @@ def get_dynamic_segment(context, network_id, physical_network=None,
 
 def delete_network_segment(context, segment_id):
     """Release a dynamic segment for the params provided if one exists."""
-    with context.session.begin(subtransactions=True):
+    with db_api.context_manager.writer.using(context):
         (context.session.query(segments_model.NetworkSegment).
          filter_by(id=segment_id).delete())

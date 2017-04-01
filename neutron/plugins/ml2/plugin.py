@@ -434,7 +434,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # After we've attempted to bind the port, we begin a
         # transaction, get the current port state, and decide whether
         # to commit the binding results.
-        with plugin_context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(plugin_context):
             # Get the current port state and build a new PortContext
             # reflecting this state as original state for subsequent
             # mechanism driver update_port_*commit() calls.
@@ -595,16 +595,23 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                attributes.SUBNETS, ['_ml2_md_extend_subnet_dict'])
 
     def _ml2_md_extend_network_dict(self, result, netdb):
-        session = sqlalchemy.inspect(netdb).session
+        session = self._object_session_or_new_session(netdb)
         self.extension_manager.extend_network_dict(session, netdb, result)
 
     def _ml2_md_extend_port_dict(self, result, portdb):
-        session = sqlalchemy.inspect(portdb).session
+        session = self._object_session_or_new_session(portdb)
         self.extension_manager.extend_port_dict(session, portdb, result)
 
     def _ml2_md_extend_subnet_dict(self, result, subnetdb):
-        session = sqlalchemy.inspect(subnetdb).session
+        session = self._object_session_or_new_session(subnetdb)
         self.extension_manager.extend_subnet_dict(session, subnetdb, result)
+
+    @staticmethod
+    def _object_session_or_new_session(sql_obj):
+        session = sqlalchemy.inspect(sql_obj).session
+        if not session:
+            session = db_api.get_reader_session()
+        return session
 
     # Note - The following hook methods have "ml2" in their names so
     # that they are not called twice during unit tests due to global
@@ -657,7 +664,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         objects = []
         collection = "%ss" % resource
         items = request_items[collection]
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             obj_creator = getattr(self, '_create_%s_db' % resource)
             for item in items:
                 try:
@@ -734,10 +741,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _create_network_db(self, context, network):
         net_data = network[attributes.NETWORK]
         tenant_id = net_data['tenant_id']
-        session = context.session
         registry.notify(resources.NETWORK, events.BEFORE_CREATE, self,
                         context=context, network=net_data)
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             net_db = self.create_network_db(context, network)
             result = self._make_network_dict(net_db, process_extensions=False,
                                              context=context)
@@ -767,7 +773,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 net_db[az_ext.AZ_HINTS] = az_hints
                 result[az_ext.AZ_HINTS] = az_hints
 
-        self._apply_dict_extend_functions('networks', result, net_db)
+            self._apply_dict_extend_functions('networks', result, net_db)
         return result, mech_context
 
     @utils.transaction_guard
@@ -798,8 +804,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         net_data = network[attributes.NETWORK]
         provider._raise_if_updates_provider_attributes(net_data)
 
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             original_network = super(Ml2Plugin, self).get_network(context, id)
             updated_network = super(Ml2Plugin, self).update_network(context,
                                                                     id,
@@ -842,8 +847,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.reader.using(context):
             result = super(Ml2Plugin, self).get_network(context, id, None)
             self.type_manager.extend_network_dict_provider(context, result)
             result[api.MTU] = self._get_network_mtu(result)
@@ -853,8 +857,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.reader.using(context):
             nets = super(Ml2Plugin,
                          self).get_networks(context, filters, None, sorts,
                                             limit, marker, page_reverse)
@@ -901,8 +904,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier.network_delete(context, network['id'])
 
     def _create_subnet_db(self, context, subnet):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             result, net_db, ipam_sub = self._create_subnet_precommit(
                 context, subnet)
             self.extension_manager.process_create_subnet(
@@ -913,6 +915,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.SubnetContext(self, context,
                                                         result, network)
             self.mechanism_manager.create_subnet_precommit(mech_context)
+            # TODO(ataraday): temporary flush until this will be available
+            # in oslo.db (change https://review.openstack.org/#/c/433758/
+            # got merged)
+            context.session.flush()
+
         # db base plugin post commit ops
         self._create_subnet_postcommit(context, result, net_db, ipam_sub)
 
@@ -942,8 +949,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def update_subnet(self, context, id, subnet):
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             original_subnet = self.get_subnet(context, id)
             updated_subnet = self._update_subnet_precommit(
                 context, id, subnet)
@@ -1043,8 +1049,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         registry.notify(resources.PORT, events.BEFORE_CREATE, self,
                         context=context, port=attrs)
-        session = context.session
-        with session.begin(subtransactions=True):
+        # NOTE(kevinbenton): triggered outside of transaction since it
+        # emits 'AFTER' events if it creates.
+        self._ensure_default_security_group(context, attrs['tenant_id'])
+        with db_api.context_manager.writer.using(context):
             dhcp_opts = attrs.get(edo_ext.EXTRADHCPOPTS, [])
             port_db = self.create_port_db(context, port)
             result = self._make_port_dict(port_db, process_extensions=False)
@@ -1181,10 +1189,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_port(self, context, id, port):
         attrs = port[attributes.PORT]
         need_port_update_notify = False
-        session = context.session
         bound_mech_contexts = []
-
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             port_db = self._get_port(context, id)
             binding = port_db.port_binding
             if not binding:
@@ -1344,7 +1350,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             LOG.error(_LE("No Host supplied to bind DVR Port %s"), id)
             return
 
-        session = context.session
         binding = db.get_distributed_port_binding_by_host(context,
                                                           id, host)
         device_id = attrs and attrs.get('device_id')
@@ -1354,7 +1359,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             router_id != device_id)
         if update_required:
             try:
-                with session.begin(subtransactions=True):
+                with db_api.context_manager.writer.using(context):
                     orig_port = self.get_port(context, id)
                     if not binding:
                         binding = db.ensure_distributed_port_binding(
@@ -1399,8 +1404,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         router_ids = []
         l3plugin = directory.get_plugin(const.L3)
 
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             try:
                 port_db = self._get_port(context, id)
                 binding = port_db.port_binding
@@ -1467,8 +1471,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive(context_var_name='plugin_context')
     def get_bound_port_context(self, plugin_context, port_id, host=None,
                                cached_networks=None):
-        session = plugin_context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.reader.using(plugin_context) as session:
             try:
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
@@ -1528,8 +1531,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         one was already performed by the caller.
         """
         updated = False
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             port = db.get_port(context, port_id)
             if not port:
                 LOG.debug("Port %(port)s update to %(val)s by agent not found",
@@ -1561,7 +1563,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if (updated and
             port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
-            with session.begin(subtransactions=True):
+            with db_api.context_manager.writer.using(context):
                 port = db.get_port(context, port_id)
                 if not port:
                     LOG.warning(_LW("Port %s not found during update"),

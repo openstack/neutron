@@ -660,7 +660,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             status='ACTIVE', device_id='vm_id',
             device_owner=DEVICE_OWNER_COMPUTE
         )
-        with self.context.session.begin():
+        with db_api.context_manager.writer.using(self.context):
             self.context.session.add(port_db)
         self.assertIsNone(plugin._port_provisioned('port', 'evt', 'trigger',
                                                    self.context, port_id))
@@ -1404,7 +1404,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                             {'subnet_id': s['subnet']['id']})
 
         # lie to turn the port into an SNAT interface
-        with self.context.session.begin():
+        with db_api.context_manager.reader.using(self.context):
             rp = self.context.session.query(l3_models.RouterPort).filter_by(
                 port_id=p['port_id']).first()
             rp.port_type = constants.DEVICE_OWNER_ROUTER_SNAT
@@ -2560,17 +2560,21 @@ class TestML2Segments(Ml2PluginV2TestCase):
         ml2_db.subscribe()
         plugin = directory.get_plugin()
         with self.port(device_owner=fake_owner_compute) as port:
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
-            binding['host'] = 'host-ovs-no_filter'
-            mech_context = driver_context.PortContext(
-                plugin, self.context, port['port'],
-                plugin.get_network(self.context, port['port']['network_id']),
-                binding, None)
-            plugin._bind_port_if_needed(mech_context)
-            segment = segments_db.get_network_segments(
-                self.context, port['port']['network_id'])[0]
-            segment['network_id'] = port['port']['network_id']
+            # add writer here to make sure that the following operations are
+            # performed in the same session
+            with db_api.context_manager.writer.using(self.context):
+                binding = plugin._get_port(
+                    self.context, port['port']['id']).port_binding
+                binding['host'] = 'host-ovs-no_filter'
+                mech_context = driver_context.PortContext(
+                    plugin, self.context, port['port'],
+                    plugin.get_network(self.context,
+                                       port['port']['network_id']),
+                    binding, None)
+                plugin._bind_port_if_needed(mech_context)
+                segment = segments_db.get_network_segments(
+                    self.context, port['port']['network_id'])[0]
+                segment['network_id'] = port['port']['network_id']
             self.assertRaises(c_exc.CallbackFailure, registry.notify,
                               resources.SEGMENT, events.BEFORE_DELETE,
                               mock.ANY,

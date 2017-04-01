@@ -190,8 +190,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def create_network_segments(self, context, network, tenant_id):
         """Call type drivers to create network segments."""
         segments = self._process_provider_create(network)
-        session = context.session
-        with session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             network_id = network['id']
             if segments:
                 for segment_index, segment in enumerate(segments):
@@ -224,7 +223,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         self.validate_provider_segment(segment)
 
         # Reserve segment in type driver
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             return self.reserve_provider_segment(context, segment)
 
     def is_partial_segment(self, segment):

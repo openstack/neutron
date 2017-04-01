@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.common import exceptions as n_exc
+from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
@@ -49,9 +50,10 @@ class SubnetAllocator(driver.Pool):
         subnetpool, it's required to ensure non-overlapping cidrs in the same
         subnetpool.
         """
-
-        current_hash = (self._context.session.query(models_v2.SubnetPool.hash)
-                        .filter_by(id=self._subnetpool['id']).scalar())
+        with db_api.context_manager.reader.using(self._context):
+            current_hash = (
+                self._context.session.query(models_v2.SubnetPool.hash)
+                .filter_by(id=self._subnetpool['id']).scalar())
         if current_hash is None:
             # NOTE(cbrandily): subnetpool has been deleted
             raise n_exc.SubnetPoolNotFound(
@@ -61,17 +63,21 @@ class SubnetAllocator(driver.Pool):
         # NOTE(cbrandily): the update disallows 2 concurrent subnet allocation
         # to succeed: at most 1 transaction will succeed, others will be
         # rolled back and be caught in neutron.db.v2.base
-        query = self._context.session.query(models_v2.SubnetPool).filter_by(
-            id=self._subnetpool['id'], hash=current_hash)
-        count = query.update({'hash': new_hash})
+        with db_api.context_manager.writer.using(self._context):
+            query = (
+                self._context.session.query(models_v2.SubnetPool).filter_by(
+                    id=self._subnetpool['id'], hash=current_hash))
+
+            count = query.update({'hash': new_hash})
         if not count:
             raise db_exc.RetryRequest(lib_exc.SubnetPoolInUse(
                                       subnet_pool_id=self._subnetpool['id']))
 
     def _get_allocated_cidrs(self):
-        query = self._context.session.query(models_v2.Subnet)
-        subnets = query.filter_by(subnetpool_id=self._subnetpool['id'])
-        return (x.cidr for x in subnets)
+        with db_api.context_manager.reader.using(self._context):
+            query = self._context.session.query(models_v2.Subnet)
+            subnets = query.filter_by(subnetpool_id=self._subnetpool['id'])
+            return (x.cidr for x in subnets)
 
     def _get_available_prefix_list(self):
         prefixes = (x.cidr for x in self._subnetpool.prefixes)
@@ -90,7 +96,7 @@ class SubnetAllocator(driver.Pool):
     def _allocations_used_by_tenant(self, quota_unit):
         subnetpool_id = self._subnetpool['id']
         tenant_id = self._subnetpool['tenant_id']
-        with self._context.session.begin(subtransactions=True):
+        with db_api.context_manager.reader.using(self._context):
             qry = self._context.session.query(models_v2.Subnet)
             allocations = qry.filter_by(subnetpool_id=subnetpool_id,
                                         tenant_id=tenant_id)
@@ -115,7 +121,7 @@ class SubnetAllocator(driver.Pool):
                 raise n_exc.SubnetPoolQuotaExceeded()
 
     def _allocate_any_subnet(self, request):
-        with self._context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self._context):
             self._lock_subnetpool()
             self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)
@@ -139,7 +145,7 @@ class SubnetAllocator(driver.Pool):
                                               str(request.prefixlen))
 
     def _allocate_specific_subnet(self, request):
-        with self._context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(self._context):
             self._lock_subnetpool()
             self._check_subnetpool_tenant_quota(request.tenant_id,
                                                 request.prefixlen)

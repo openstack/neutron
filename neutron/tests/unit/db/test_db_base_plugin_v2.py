@@ -6295,7 +6295,7 @@ class DbModelMixin(object):
 
 class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_network(self, ctx):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         tenant_id='dbcheck',
                                         admin_state_up=True)
@@ -6303,7 +6303,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return network
 
     def _make_subnet(self, ctx, network_id):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             subnet = models_v2.Subnet(name="subsub", ip_version=4,
                                       tenant_id='dbcheck',
                                       cidr='turn_down_for_what',
@@ -6321,7 +6321,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return port
 
     def _make_subnetpool(self, ctx):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             subnetpool = models_v2.SubnetPool(
                 ip_version=4, default_prefixlen=4, min_prefixlen=4,
                 max_prefixlen=4, shared=False, default_quota=4,
@@ -6334,7 +6334,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
 
 class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_network(self, ctx):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
                                         project_id='dbcheck',
                                         admin_state_up=True)
@@ -6342,7 +6342,7 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return network
 
     def _make_subnet(self, ctx, network_id):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             subnet = models_v2.Subnet(name="subsub", ip_version=4,
                                       project_id='dbcheck',
                                       cidr='turn_down_for_what',
@@ -6360,7 +6360,7 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
         return port
 
     def _make_subnetpool(self, ctx):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             subnetpool = models_v2.SubnetPool(
                 ip_version=4, default_prefixlen=4, min_prefixlen=4,
                 max_prefixlen=4, shared=False, default_quota=4,
