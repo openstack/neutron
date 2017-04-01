@@ -237,6 +237,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.context.session.add(self.fip_int_ip_info)
         self.context.session.add(self.fip)
         self.context.session.flush()
+        self.context.session.expire_all()
         self.fip_request = {'port_id': FAKE_FIP_INT_PORT_ID,
                             'tenant_id': self.tenant_id}
 
