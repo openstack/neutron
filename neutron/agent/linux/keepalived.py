@@ -347,12 +347,20 @@ class KeepalivedManager(object):
     """
 
     def __init__(self, resource_id, config, process_monitor, conf_path='/tmp',
-                 namespace=None):
+                 namespace=None, throttle_restart_value=None):
         self.resource_id = resource_id
         self.config = config
         self.namespace = namespace
         self.process_monitor = process_monitor
         self.conf_path = conf_path
+        # configure throttler for spawn to introduce delay between SIGHUPs,
+        # otherwise keepalived master may unnecessarily flip to slave
+        if throttle_restart_value is not None:
+            self._throttle_spawn(throttle_restart_value)
+
+    #pylint: disable=method-hidden
+    def _throttle_spawn(self, threshold):
+        self.spawn = common_utils.throttler(threshold)(self.spawn)
 
     def get_conf_dir(self):
         confs_dir = os.path.abspath(os.path.normpath(self.conf_path))
