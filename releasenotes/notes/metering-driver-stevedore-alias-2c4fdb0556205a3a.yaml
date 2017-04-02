@@ -1,0 +1,6 @@
+---
+features:
+  - The metering agent driver can now be specified with a stevedore
+    alias in the ``metering_agent.ini`` file. For example,
+    ``driver = iptables`` instead of
+    ``driver = neutron.services.metering.iptables.iptables_driver:IptablesMeteringDriver``.
