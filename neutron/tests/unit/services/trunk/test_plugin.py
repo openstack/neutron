@@ -14,13 +14,13 @@
 # limitations under the License.
 
 import mock
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import directory
 import testtools
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
-from neutron.extensions import portbindings
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants

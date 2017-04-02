@@ -17,6 +17,7 @@ import warnings
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_utils import uuidutils
@@ -28,7 +29,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import segments_db
-from neutron.extensions import portbindings
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import db as ml2_db

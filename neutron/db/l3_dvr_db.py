@@ -13,6 +13,7 @@
 #    under the License.
 import collections
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
@@ -38,7 +39,6 @@ from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.extensions import l3
-from neutron.extensions import portbindings
 from neutron.ipam import utils as ipam_utils
 from neutron.plugins.common import utils as p_utils
 

@@ -20,10 +20,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.agent import securitygroups_rpc
-from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
 

@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 from oslo_log import log
 import six
@@ -22,7 +23,6 @@ import six
 from neutron._i18n import _LW
 from neutron.callbacks import resources
 from neutron.db import provisioning_blocks
-from neutron.extensions import portbindings
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 

@@ -18,6 +18,7 @@ import copy
 import itertools
 
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
@@ -38,7 +39,6 @@ from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
 from neutron.extensions import ip_allocation as ipa
-from neutron.extensions import portbindings
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils

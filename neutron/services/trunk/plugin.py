@@ -14,6 +14,7 @@
 
 import copy
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
@@ -27,7 +28,6 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_common
-from neutron.extensions import portbindings
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import callbacks

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -25,7 +26,6 @@ from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import utils
 from neutron.db import provisioning_blocks
-from neutron.extensions import portbindings
 from neutron.tests import base
 
 

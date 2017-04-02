@@ -20,6 +20,7 @@ from itertools import combinations as iter_combinations
 import eventlet
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
@@ -52,7 +53,6 @@ from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf import common as base_config
-from neutron.extensions import portbindings
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
 

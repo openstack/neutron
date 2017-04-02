@@ -17,6 +17,7 @@ import shutil
 import signal
 
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_consts
 from oslo_log import log as logging
 
@@ -27,7 +28,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import utils as common_utils
-from neutron.extensions import portbindings
 
 LOG = logging.getLogger(__name__)
 HA_DEV_PREFIX = 'ha-'

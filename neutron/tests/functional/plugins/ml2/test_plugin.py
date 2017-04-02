@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 
 from neutron.db import agents_db
-from neutron.extensions import portbindings
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 

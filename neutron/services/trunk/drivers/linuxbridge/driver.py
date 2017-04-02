@@ -13,9 +13,9 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
-from neutron.extensions import portbindings
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.drivers import base
 

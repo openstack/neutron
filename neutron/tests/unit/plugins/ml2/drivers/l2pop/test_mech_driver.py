@@ -14,6 +14,8 @@
 #    under the License.
 
 import mock
+
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib import context
@@ -29,7 +31,6 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
-from neutron.extensions import portbindings
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db

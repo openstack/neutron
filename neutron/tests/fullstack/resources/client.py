@@ -16,11 +16,11 @@ import functools
 import netaddr
 
 import fixtures
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutronclient.common import exceptions
 
 from neutron.common import utils
-from neutron.extensions import portbindings
 
 
 def _safe_method(f):

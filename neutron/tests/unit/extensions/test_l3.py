@@ -19,6 +19,7 @@ import copy
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -53,7 +54,6 @@ from neutron.db import models_v2
 from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
-from neutron.extensions import portbindings
 from neutron.plugins.ml2 import config
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base

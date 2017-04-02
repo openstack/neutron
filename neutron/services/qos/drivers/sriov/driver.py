@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from oslo_log import log as logging
 
-from neutron.extensions import portbindings
 from neutron.services.qos.drivers import base
 from neutron.services.qos import qos_consts
 

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.utils import net
@@ -22,7 +23,6 @@ from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
 from neutron.db import models_v2
-from neutron.extensions import portbindings
 from neutron.objects import network as network_obj
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2 import models

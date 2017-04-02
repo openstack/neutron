@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import mock
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib import exceptions
@@ -29,7 +30,6 @@ from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_dvr_db
 from neutron.extensions import l3
-from neutron.extensions import portbindings
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 _uuid = uuidutils.generate_uuid

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -33,7 +34,6 @@ from neutron.db import api as db_api
 from neutron.db.models import dvr as dvr_models
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
-from neutron.extensions import portbindings
 
 
 LOG = logging.getLogger(__name__)
