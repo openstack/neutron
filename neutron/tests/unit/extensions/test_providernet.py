@@ -45,7 +45,7 @@ class ProviderExtensionManager(object):
         return []
 
     def get_extended_resources(self, version):
-        return pnet.get_extended_resources(version)
+        return pnet.Providernet().get_extended_resources(version)
 
 
 class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
