@@ -1,1 +1,1 @@
-enable_service q-dns
+enable_service neutron-dns
