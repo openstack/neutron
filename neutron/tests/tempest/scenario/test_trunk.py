@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from oslo_log import log as logging
 from tempest.common import waiters
 from tempest.lib.common import ssh
 from tempest.lib.common.utils import data_utils
@@ -24,6 +25,7 @@ from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import constants
 
+LOG = logging.getLogger(__name__)
 CONF = config.CONF
 
 CONFIGURE_VLAN_INTERFACE_COMMANDS = (
@@ -236,6 +238,8 @@ class TrunkTest(base.BaseTempestTestCase):
             # Configure VLAN interfaces on server
             command = CONFIGURE_VLAN_INTERFACE_COMMANDS % {'tag': vlan_tag}
             server['ssh_client'].exec_command(command)
+            out = server['ssh_client'].exec_command('ip addr list')
+            LOG.debug("Interfaces on server %s: %s", server, out)
 
         # Ping from server1 to server2 via VLAN interface should fail because
         # we haven't allowed ICMP
