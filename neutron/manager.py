@@ -287,6 +287,5 @@ class NeutronManager(object):
 
 def init():
     """Call to load the plugins (core+services) machinery."""
-    # TODO(armax): use is_loaded() when available
-    if not directory.get_plugins():
+    if not directory.is_loaded():
         NeutronManager.get_instance()
