@@ -344,8 +344,8 @@ class OVSBridge(BaseOVS):
                     # cookie to match flows whatever their cookie is
                     kw.pop('cookie')
                     if kw.get('cookie_mask'):  # non-zero cookie mask
-                        LOG.error(_LE("cookie=COOKIE_ANY but cookie_mask set "
-                                      "to %s"), kw.get('cookie_mask'))
+                        raise Exception("cookie=COOKIE_ANY but cookie_mask "
+                                        "set to %s" % kw.get('cookie_mask'))
                 elif 'cookie' in kw:
                     # a cookie was specified, use it
                     kw['cookie'] = check_cookie_mask(kw['cookie'])

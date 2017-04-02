@@ -23,7 +23,7 @@ from oslo_utils import timeutils
 import ryu.app.ofctl.api as ofctl_api
 import ryu.exception as ryu_exc
 
-from neutron._i18n import _, _LW, _LE
+from neutron._i18n import _, _LW
 from neutron.agent.common import ovs_lib
 
 LOG = logging.getLogger(__name__)
@@ -112,8 +112,8 @@ class OpenFlowSwitchMixin(object):
         if cookie == ovs_lib.COOKIE_ANY:
             cookie = 0
             if cookie_mask != 0:
-                LOG.error(_LE("cookie=COOKIE_ANY but cookie_mask set to %s"),
-                          cookie_mask)
+                raise Exception("cookie=COOKIE_ANY but cookie_mask set to %s" %
+                                cookie_mask)
         elif cookie == COOKIE_DEFAULT:
             cookie = self._default_cookie
             cookie_mask = ovs_lib.UINT64_BITMASK
