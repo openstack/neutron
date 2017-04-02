@@ -425,6 +425,10 @@ class KeepalivedManager(object):
     def spawn(self):
         config_path = self._output_config_file()
 
+        for key, instance in six.iteritems(self.config.instances):
+            if instance.track_script:
+                instance.track_script.write_check_script()
+
         keepalived_pm = self.get_process()
         vrrp_pm = self._get_vrrp_process(
             self.get_vrrp_pid_file_name(keepalived_pm.get_pid_file_name()))
@@ -433,10 +437,6 @@ class KeepalivedManager(object):
             self._get_keepalived_process_callback(vrrp_pm, config_path))
 
         keepalived_pm.enable(reload_cfg=True)
-
-        for key, instance in six.iteritems(self.config.instances):
-            if instance.track_script:
-                instance.track_script.write_check_script()
 
         self.process_monitor.register(uuid=self.resource_id,
                                       service_name=KEEPALIVED_SERVICE_NAME,
