@@ -374,7 +374,9 @@ class OVSBaseConnectionTester(ConnectionTester):
         bridge.set_db_attribute('Port', port_name, 'tag', tag)
         other_config = bridge.db_get_val(
             'Port', port_name, 'other_config')
-        other_config['tag'] = tag
+        if 'tag' in other_config:
+            return
+        other_config['tag'] = str(tag)
         bridge.set_db_attribute(
             'Port', port_name, 'other_config', other_config)
 

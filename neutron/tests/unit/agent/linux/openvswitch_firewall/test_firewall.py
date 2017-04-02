@@ -19,6 +19,7 @@ import testtools
 from neutron.agent.common import ovs_lib
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
+from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
@@ -331,16 +332,8 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             'device': 'port-id',
             'security_groups': [123, 456]}
         self.mock_bridge.br.get_vif_port_by_id.return_value = None
-        with testtools.ExpectedException(ovsfw.OVSFWPortNotFound):
+        with testtools.ExpectedException(exceptions.OVSFWPortNotFound):
             self.firewall.get_or_create_ofport(port_dict)
-
-    def test_get_or_create_ofport_not_tagged(self):
-        port_dict = {
-            'device': 'port-id',
-            'security_groups': [123, 456]}
-        self.mock_bridge.br.db_get_val.return_value = None
-        port = self.firewall.get_or_create_ofport(port_dict)
-        self.assertEqual(ovs_consts.DEAD_VLAN_TAG, port.vlan_tag)
 
     def test_is_port_managed_managed_port(self):
         port_dict = {'device': 'port-id'}
