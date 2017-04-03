@@ -278,7 +278,10 @@ def load_one_to_manys(session):
     # have eliminated all places where related objects are constructed
     # using a key rather than a relationship.
 
-    add_to_rel_load_list(session)  # capture any new objects
+    # capture any new objects
+    if session.new:
+        session.flush()
+
     if session.transaction.nested:
         # wait until final commit
         return
