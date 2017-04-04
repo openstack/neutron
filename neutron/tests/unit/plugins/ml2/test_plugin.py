@@ -212,6 +212,39 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.assertEqual(n['network']['id'],
                              kwargs['network']['id'])
 
+    def test_network_precommit_create_callback(self):
+        precommit_create = mock.Mock()
+        registry.subscribe(precommit_create, resources.NETWORK,
+                           events.PRECOMMIT_CREATE)
+        with self.network():
+            precommit_create.assert_called_once_with(
+                resources.NETWORK, events.PRECOMMIT_CREATE, mock.ANY,
+                context=mock.ANY, network=mock.ANY, request=mock.ANY)
+
+    def test_network_precommit_create_callback_aborts(self):
+        precommit_create = mock.Mock()
+        registry.subscribe(precommit_create, resources.NETWORK,
+                           events.PRECOMMIT_CREATE)
+        precommit_create.side_effect = exc.InvalidInput(error_message='x')
+        data = {'network': {'tenant_id': 'sometenant', 'name': 'dummy',
+                            'admin_state_up': True, 'shared': False}}
+        req = self.new_create_request('networks', data)
+        res = req.get_response(self.api)
+        self.assertEqual(400, res.status_int)
+
+    def test_network_precommit_update_includes_req(self):
+        precommit_update = mock.Mock()
+        registry.subscribe(precommit_update, resources.NETWORK,
+                           events.PRECOMMIT_UPDATE)
+        with self.network() as n:
+            data = {'network': {'name': 'updated'}}
+            req = self.new_update_request('networks', data, n['network']['id'])
+            self.deserialize(self.fmt, req.get_response(self.api))
+            precommit_update.assert_called_once_with(
+                resources.NETWORK, events.PRECOMMIT_UPDATE, mock.ANY,
+                context=mock.ANY, network=mock.ANY, original_network=mock.ANY,
+                request=mock.ANY)
+
     def test_network_after_update_callback(self):
         after_update = mock.Mock()
         registry.subscribe(after_update, resources.NETWORK,

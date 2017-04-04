@@ -765,6 +765,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                 net_data[az_ext.AZ_HINTS])
                 net_db[az_ext.AZ_HINTS] = az_hints
                 result[az_ext.AZ_HINTS] = az_hints
+            registry.notify(resources.NETWORK, events.PRECOMMIT_CREATE, self,
+                            context=context, request=net_data, network=result)
 
         self._apply_dict_extend_functions('networks', result, net_db)
         return result, mech_context
@@ -812,7 +814,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             updated_network = self.get_network(context, id)
 
             kwargs = {'context': context, 'network': updated_network,
-                      'original_network': original_network}
+                      'original_network': original_network,
+                      'request': net_data}
             registry.notify(
                 resources.NETWORK, events.PRECOMMIT_UPDATE, self, **kwargs)
 
