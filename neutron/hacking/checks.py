@@ -17,8 +17,6 @@ import re
 
 from hacking import core
 from neutron_lib.hacking import checks
-import pep8
-import six
 
 
 def flake8ext(f):
@@ -63,10 +61,6 @@ def _regex_for_level(level, hint):
     }
 
 
-log_translation_hint = re.compile(
-    '|'.join('(?:%s)' % _regex_for_level(level, hint)
-             for level, hint in six.iteritems(_all_log_levels)))
-
 log_warn = re.compile(
     r"(.)*LOG\.(warn)\(\s*('|\"|_)")
 unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
@@ -76,20 +70,6 @@ filter_match = re.compile(r".*filter\(lambda ")
 tests_imports_dot = re.compile(r"\bimport[\s]+neutron.tests\b")
 tests_imports_from1 = re.compile(r"\bfrom[\s]+neutron.tests\b")
 tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
-
-
-@flake8ext
-def validate_log_translations(logical_line, physical_line, filename):
-    """N320 - Log messages require translation."""
-    # Translations are not required in the test directory
-    if "neutron/tests" in filename:
-        return
-    if pep8.noqa(physical_line):
-        return
-
-    msg = "N320: Log messages require translation hints!"
-    if log_translation_hint.match(logical_line):
-        yield (0, msg)
 
 
 @flake8ext
@@ -407,7 +387,6 @@ def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
 
 
 def factory(register):
-    register(validate_log_translations)
     register(use_jsonutils)
     register(check_assert_called_once_with)
     register(no_translate_debug_logs)
