@@ -76,7 +76,8 @@ class TestDhcp(functional_base.BaseSudoTestCase):
         ipw = ip_lib.IPWrapper(namespace="qdhcp-foo_id")
         devices = ipw.get_devices(exclude_loopback=True)
         self.addCleanup(ipw.netns.delete, 'qdhcp-foo_id')
-        self.assertEqual(2, len(devices))
+        self.assertEqual(sorted(["tapfoo_id2", "tapfoo_id3"]),
+                         sorted(map(str, devices)))
         # setting up dhcp for the network
         dev_mgr.setup(tests_base.AttributeDict(network))
         devices = ipw.get_devices(exclude_loopback=True)
