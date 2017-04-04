@@ -1,0 +1,14 @@
+---
+upgrade:
+  - |
+    Existing IPv6 ICMP security group rules created by using legacy protocol
+    names ``icmpv6`` and ``icmp`` will now be returned as ``ipv6-icmp`` in
+    an API GET call.
+fixes:
+  - |
+    Security group rule code has been changed to better detect duplicate
+    rules by standardizing on ``ipv6-icmp`` as the protocol field value
+    for IPv6 ICMP rules.  The legacy names ``icmpv6`` and ``icmp`` can still
+    be used in API POST calls, but API GET calls will return ``ipv6-icmp``.
+    Partial fix for bug
+    `1582500 <https://bugs.launchpad.net/neutron/+bug/1582500>`_.

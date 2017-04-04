@@ -519,7 +519,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         with self.security_group(name, description) as sg:
             security_group_id = sg['security_group']['id']
             rule = self._build_security_group_rule(
-                security_group_id, 'ingress', const.PROTO_NAME_IPV6_ICMP)
+                security_group_id, 'ingress', const.PROTO_NAME_IPV6_FRAG)
             res = self._create_security_group_rule(self.fmt, rule)
             self.deserialize(self.fmt, res)
             self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
@@ -1049,7 +1049,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 for k, v, in keys:
                     self.assertEqual(rule['security_group_rule'][k], v)
 
-    def test_create_security_group_rule_icmpv6_legacy_protocol_name(self):
+    def _test_create_security_group_rule_legacy_protocol_name(self, protocol):
         name = 'webservers'
         description = 'my webservers'
         with self.security_group(name, description) as sg:
@@ -1057,7 +1057,6 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             direction = "ingress"
             ethertype = const.IPv6
             remote_ip_prefix = "2001::f401:56ff:fefe:d3dc/128"
-            protocol = const.PROTO_NAME_IPV6_ICMP_LEGACY
             keys = [('remote_ip_prefix', remote_ip_prefix),
                     ('security_group_id', security_group_id),
                     ('direction', direction),
@@ -1069,7 +1068,18 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                           None, None,
                                           ethertype) as rule:
                 for k, v, in keys:
+                    # IPv6 ICMP protocol will always be 'ipv6-icmp'
+                    if k == 'protocol':
+                        v = const.PROTO_NAME_IPV6_ICMP
                     self.assertEqual(rule['security_group_rule'][k], v)
+
+    def test_create_security_group_rule_ipv6_icmp_legacy_protocol_name(self):
+        protocol = const.PROTO_NAME_ICMP
+        self._test_create_security_group_rule_legacy_protocol_name(protocol)
+
+    def test_create_security_group_rule_icmpv6_legacy_protocol_name(self):
+        protocol = const.PROTO_NAME_IPV6_ICMP_LEGACY
+        self._test_create_security_group_rule_legacy_protocol_name(protocol)
 
     def test_create_security_group_source_group_ip_and_ip_prefix(self):
         security_group_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"

@@ -41,6 +41,10 @@ IPTABLES_MULTIPORT_ONLY_PROTOCOLS = [
     constants.PROTO_NAME_UDPLITE
 ]
 
+# Legacy IPv6 ICMP protocol list
+IPV6_ICMP_LEGACY_PROTO_LIST = [constants.PROTO_NAME_ICMP,
+                               constants.PROTO_NAME_IPV6_ICMP_LEGACY]
+
 # Number of resources for neutron agent side functions to deal
 # with large sets.
 # Setting this value does not count on special conditions, it is just a human

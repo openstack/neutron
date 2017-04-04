@@ -400,8 +400,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             if rule.get('ethertype') == constants.IPv4:
                 ipv4_sg_rules.append(rule)
             elif rule.get('ethertype') == constants.IPv6:
-                if rule.get('protocol') == 'icmp':
-                    rule['protocol'] = 'ipv6-icmp'
+                if rule.get('protocol') in const.IPV6_ICMP_LEGACY_PROTO_LIST:
+                    rule['protocol'] = constants.PROTO_NAME_IPV6_ICMP
                 ipv6_sg_rules.append(rule)
         return ipv4_sg_rules, ipv6_sg_rules
 
