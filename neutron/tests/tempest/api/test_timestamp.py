@@ -223,8 +223,10 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
         # verify the timestamp from creation and showed is same
         self.assertEqual(router['created_at'],
                          show_router['created_at'])
-        self.assertEqual(router['updated_at'],
-                         show_router['updated_at'])
+        # 'updated_at' timestamp can change immediately after creation
+        # if environment is HA or DVR, so just make sure it's >=
+        self.assertGreaterEqual(show_router['updated_at'],
+                                router['updated_at'])
 
     @decorators.idempotent_id('8ae55186-464f-4b87-1c9f-eb2765ee81ac')
     def test_create_floatingip_with_timestamp(self):
