@@ -22,7 +22,6 @@ from sqlalchemy.sql import expression as expr
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.callbacks import events
-from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.db import _model_query as model_query
@@ -103,26 +102,9 @@ class External_net_db_mixin(object):
             context.session.add(rbac_db.NetworkRBAC(
                   object_id=net_data['id'], action='access_as_external',
                   target_tenant='*', tenant_id=net_data['tenant_id']))
-            try:
-                registry.notify(
-                    resources.EXTERNAL_NETWORK, events.PRECOMMIT_CREATE,
-                    self, context=context,
-                    request=req_data, network=net_data)
-            except c_exc.CallbackFailure as e:
-                # raise the underlying exception
-                raise e.errors[0].error
         net_data[external_net.EXTERNAL] = external
 
     def _process_l3_update(self, context, net_data, req_data, allow_all=True):
-        try:
-            registry.notify(
-                resources.EXTERNAL_NETWORK, events.BEFORE_UPDATE,
-                self, context=context,
-                request=req_data, network=net_data)
-        except c_exc.CallbackFailure as e:
-            # raise the underlying exception
-            raise e.errors[0].error
-
         new_value = req_data.get(external_net.EXTERNAL)
         net_id = net_data['id']
         if not validators.is_attr_set(new_value):
