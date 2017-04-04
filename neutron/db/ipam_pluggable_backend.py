@@ -24,7 +24,6 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy import and_
 
-from neutron._i18n import _LE, _LW
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.db import api as db_api
@@ -55,7 +54,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         try:
             func(*args, **kwargs)
         except Exception as e:
-            LOG.warning(_LW("Revert failed with: %s"), e)
+            LOG.warning("Revert failed with: %s", e)
 
     def _ipam_deallocate_ips(self, context, ipam_driver, port, ips,
                              revert_on_fail=True):
@@ -92,8 +91,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 elif not revert_on_fail and ips:
                     addresses = ', '.join(self._get_failed_ips(ips,
                                                                deallocated))
-                    LOG.error(_LE("IP deallocation failed on "
-                                  "external system for %s"), addresses)
+                    LOG.error("IP deallocation failed on "
+                              "external system for %s", addresses)
         return deallocated
 
     def _ipam_allocate_ips(self, context, ipam_driver, port, ips,
@@ -146,8 +145,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                 elif not revert_on_fail and ips:
                     addresses = ', '.join(self._get_failed_ips(ips,
                                                                allocated))
-                    LOG.error(_LE("IP allocation failed on "
-                                  "external system for %s"), addresses)
+                    LOG.error("IP allocation failed on "
+                              "external system for %s", addresses)
 
         return allocated
 

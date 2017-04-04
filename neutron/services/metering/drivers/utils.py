@@ -15,7 +15,6 @@
 
 from oslo_log import log as logging
 
-from neutron._i18n import _LE
 from neutron.common import utils as utils
 
 
@@ -37,6 +36,5 @@ def load_metering_driver(plugin, conf):
                 METERING_NAMESPACE, conf.driver)
         return loaded_class(plugin, conf)
     except ImportError:
-        LOG.error(_LE("Error loading metering driver '%s'"),
-                  conf.driver)
+        LOG.error("Error loading metering driver '%s'", conf.driver)
         raise SystemExit(1)

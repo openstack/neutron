@@ -20,7 +20,6 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron._i18n import _LE
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks.producer import registry
 from neutron.api.rpc.callbacks import resources
@@ -130,7 +129,7 @@ class TrunkSkeleton(object):
                 # of the port data structure.
                 updated_ports.append(updated_port)
             except trunk_exc.SubPortBindingError as e:
-                LOG.error(_LE("Failed to bind subport: %s"), e)
+                LOG.error("Failed to bind subport: %s", e)
 
                 # NOTE(status_police) The subport binding has failed in a
                 # manner in which we cannot proceed and the user must take
@@ -138,8 +137,8 @@ class TrunkSkeleton(object):
                 trunk.update(status=trunk_consts.ERROR_STATUS)
                 return []
             except Exception as e:
-                msg = _LE("Failed to bind subport port %(port)s on trunk "
-                          "%(trunk)s: %(exc)s")
+                msg = ("Failed to bind subport port %(port)s on trunk "
+                       "%(trunk)s: %(exc)s")
                 LOG.error(msg, {'port': port_id, 'trunk': trunk.id, 'exc': e})
 
         if len(port_ids) != len(updated_ports):

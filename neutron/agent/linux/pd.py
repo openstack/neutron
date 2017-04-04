@@ -27,7 +27,7 @@ from oslo_utils import netutils
 import six
 from stevedore import driver
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.common import constants as l3_constants
 from neutron.common import utils
 
@@ -392,8 +392,8 @@ def update_router(resource, event, l3_agent, **kwargs):
     updated_router = kwargs['router']
     router = l3_agent.pd.routers.get(updated_router.router_id)
     if not router:
-        LOG.exception(_LE("Router to be updated is not in internal routers "
-                          "list: %s"), updated_router.router_id)
+        LOG.exception("Router to be updated is not in internal routers "
+                      "list: %s", updated_router.router_id)
     else:
         router['ns_name'] = updated_router.get_gw_ns_name()
 

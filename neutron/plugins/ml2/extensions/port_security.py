@@ -18,7 +18,6 @@ from neutron_lib.api import validators
 from neutron_lib.utils import net
 from oslo_log import log as logging
 
-from neutron._i18n import _LI
 from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
 from neutron.plugins.ml2 import driver_api as api
@@ -32,7 +31,7 @@ class PortSecurityExtensionDriver(api.ExtensionDriver,
     _supported_extension_alias = 'port-security'
 
     def initialize(self):
-        LOG.info(_LI("PortSecurityExtensionDriver initialization complete"))
+        LOG.info("PortSecurityExtensionDriver initialization complete")
 
     @property
     def extension_alias(self):

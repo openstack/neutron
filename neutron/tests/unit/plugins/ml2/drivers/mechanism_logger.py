@@ -16,7 +16,6 @@
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 
-from neutron._i18n import _
 
 LOG = log.getLogger(__name__)
 
@@ -31,9 +30,9 @@ class LoggerMechanismDriver(api.MechanismDriver):
         pass
 
     def _log_network_call(self, method_name, context):
-        LOG.info(_("%(method)s called with network settings %(current)s "
-                   "(original settings %(original)s) and "
-                   "network segments %(segments)s"),
+        LOG.info("%(method)s called with network settings %(current)s "
+                 "(original settings %(original)s) and "
+                 "network segments %(segments)s",
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original,
@@ -62,8 +61,8 @@ class LoggerMechanismDriver(api.MechanismDriver):
         return True
 
     def _log_subnet_call(self, method_name, context):
-        LOG.info(_("%(method)s called with subnet settings %(current)s "
-                   "(original settings %(original)s)"),
+        LOG.info("%(method)s called with subnet settings %(current)s "
+                 "(original settings %(original)s)",
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original})
@@ -88,18 +87,18 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def _log_port_call(self, method_name, context):
         network_context = context.network
-        LOG.info(_("%(method)s called with port settings %(current)s "
-                   "(original settings %(original)s) "
-                   "host %(host)s "
-                   "(original host %(original_host)s) "
-                   "vif type %(vif_type)s "
-                   "(original vif type %(original_vif_type)s) "
-                   "vif details %(vif_details)s "
-                   "(original vif details %(original_vif_details)s) "
-                   "binding levels %(levels)s "
-                   "(original binding levels %(original_levels)s) "
-                   "on network %(network)s "
-                   "with segments to bind %(segments_to_bind)s"),
+        LOG.info("%(method)s called with port settings %(current)s "
+                 "(original settings %(original)s) "
+                 "host %(host)s "
+                 "(original host %(original_host)s) "
+                 "vif type %(vif_type)s "
+                 "(original vif type %(original_vif_type)s) "
+                 "vif details %(vif_details)s "
+                 "(original vif details %(original_vif_details)s) "
+                 "binding levels %(levels)s "
+                 "(original binding levels %(original_levels)s) "
+                 "on network %(network)s "
+                 "with segments to bind %(segments_to_bind)s",
                  {'method': method_name,
                   'current': context.current,
                   'original': context.original,
@@ -137,7 +136,7 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def filter_hosts_with_segment_access(
             self, context, segments, candidate_hosts, agent_getter):
-        LOG.info(_("filter_hosts_with_segment_access called with segments "
-                   "%(segments)s, candidate hosts %(hosts)s "),
+        LOG.info("filter_hosts_with_segment_access called with segments "
+                 "%(segments)s, candidate hosts %(hosts)s ",
                  {'segments': segments, 'hosts': candidate_hosts})
         return set()

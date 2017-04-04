@@ -18,8 +18,6 @@ import re
 
 from oslo_log import log as logging
 
-from neutron._i18n import _LW
-
 LOG = logging.getLogger(__name__)
 
 # Field name mappings (from Ryu to ovs-ofctl)
@@ -111,5 +109,5 @@ class OpenFlowSwitchMixin(object):
         for flow, cookie, table in self._filter_flows(flows):
             # deleting a stale flow should be rare.
             # it might deserve some attention
-            LOG.warning(_LW("Deleting flow %s"), flow)
+            LOG.warning("Deleting flow %s", flow)
             self.delete_flows(cookie=cookie + '/-1', table=table)

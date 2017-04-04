@@ -29,7 +29,6 @@ from oslo_log import log as logging
 from oslo_rootwrap import cmd as oslo_rootwrap_cmd
 from oslo_serialization import jsonutils
 
-from neutron._i18n import _LE
 from neutron.conf.agent import xenapi_conf
 
 
@@ -88,6 +87,6 @@ class XenAPIClient(object):
             err = result['err']
             return returncode, out, err
         except XenAPI.Failure as failure:
-            LOG.exception(_LE('Failed to execute command: %s'), cmd)
+            LOG.exception('Failed to execute command: %s', cmd)
             returncode = self._get_return_code(failure.details)
             return returncode, out, err

@@ -29,7 +29,6 @@ from oslo_service import service
 from oslo_utils import excutils
 from osprofiler import profiler
 
-from neutron._i18n import _LE, _LW
 from neutron.common import exceptions
 
 
@@ -168,19 +167,19 @@ class _BackingOffContextWrapper(_ContextWrapper):
                     min(self._METHOD_TIMEOUTS[scoped_method],
                         TRANSPORT.conf.rpc_response_timeout)
                 )
-                LOG.error(_LE("Timeout in RPC method %(method)s. Waiting for "
-                              "%(wait)s seconds before next attempt. If the "
-                              "server is not down, consider increasing the "
-                              "rpc_response_timeout option as Neutron "
-                              "server(s) may be overloaded and unable to "
-                              "respond quickly enough."),
+                LOG.error("Timeout in RPC method %(method)s. Waiting for "
+                          "%(wait)s seconds before next attempt. If the "
+                          "server is not down, consider increasing the "
+                          "rpc_response_timeout option as Neutron "
+                          "server(s) may be overloaded and unable to "
+                          "respond quickly enough.",
                           {'wait': int(round(wait)), 'method': scoped_method})
                 new_timeout = min(
                     self._original_context.timeout * 2, self.get_max_timeout())
                 if new_timeout > self._METHOD_TIMEOUTS[scoped_method]:
-                    LOG.warning(_LW("Increasing timeout for %(method)s calls "
-                                    "to %(new)s seconds. Restart the agent to "
-                                    "restore it to the default value."),
+                    LOG.warning("Increasing timeout for %(method)s calls "
+                                "to %(new)s seconds. Restart the agent to "
+                                "restore it to the default value.",
                                 {'method': scoped_method, 'new': new_timeout})
                     self._METHOD_TIMEOUTS[scoped_method] = new_timeout
                 time.sleep(wait)

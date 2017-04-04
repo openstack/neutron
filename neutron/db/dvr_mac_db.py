@@ -27,7 +27,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from sqlalchemy import or_
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import models_v2
@@ -120,7 +120,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         try:
             return self._create_dvr_mac_address_retry(context, host, base_mac)
         except exceptions.NeutronDbObjectDuplicateEntry:
-            LOG.error(_LE("MAC generation error after %s attempts"),
+            LOG.error("MAC generation error after %s attempts",
                       db_api.MAX_RETRIES)
         raise ext_dvr.MacAddressGenerationFailure(host=host)
 
@@ -200,8 +200,8 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             internal_gateway_ports = self.plugin.get_ports(
                 context, filters=filter)
             if not internal_gateway_ports:
-                LOG.error(_LE("Could not retrieve gateway port "
-                              "for subnet %s"), subnet_info)
+                LOG.error("Could not retrieve gateway port "
+                          "for subnet %s", subnet_info)
                 return {}
             internal_port = internal_gateway_ports[0]
             subnet_info['gateway_mac'] = internal_port['mac_address']

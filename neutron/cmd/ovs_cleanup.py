@@ -16,7 +16,6 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _LI
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
@@ -73,7 +72,7 @@ def delete_neutron_ports(ports):
         device = ip_lib.IPDevice(port)
         if device.exists():
             device.link.delete()
-            LOG.info(_LI("Deleting port: %s"), port)
+            LOG.info("Deleting port: %s", port)
 
 
 def main():
@@ -103,7 +102,7 @@ def main():
     ports = collect_neutron_ports(available_configuration_bridges)
 
     for bridge in bridges:
-        LOG.info(_LI("Cleaning bridge: %s"), bridge)
+        LOG.info("Cleaning bridge: %s", bridge)
         ovs = ovs_lib.OVSBridge(bridge)
         if conf.ovs_all_ports:
             port_names = ovs.get_port_name_list()
@@ -115,4 +114,4 @@ def main():
     # Remove remaining ports created by Neutron (usually veth pair)
     delete_neutron_ports(ports)
 
-    LOG.info(_LI("OVS cleanup completed successfully"))
+    LOG.info("OVS cleanup completed successfully")

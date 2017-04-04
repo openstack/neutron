@@ -17,7 +17,6 @@
 from oslo_log import log as logging
 from oslo_utils import excutils
 
-from neutron._i18n import _LI
 from neutron.agent.common import ovs_lib
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
@@ -44,7 +43,7 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         while True:
             if self._cached_dpid is None:
                 dpid_str = self.get_datapath_id()
-                LOG.info(_LI("Bridge %(br_name)s has datapath-ID %(dpid)s"),
+                LOG.info("Bridge %(br_name)s has datapath-ID %(dpid)s",
                          {"br_name": self.br_name, "dpid": dpid_str})
                 self._cached_dpid = int(dpid_str, 16)
             try:
@@ -59,12 +58,12 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                     old_dpid_str = format(self._cached_dpid, '0x')
                     new_dpid_str = self.get_datapath_id()
                     if new_dpid_str != old_dpid_str:
-                        LOG.info(_LI("Bridge %(br_name)s changed its "
-                                     "datapath-ID from %(old)s to %(new)s"), {
-                            "br_name": self.br_name,
-                            "old": old_dpid_str,
-                            "new": new_dpid_str,
-                        })
+                        LOG.info("Bridge %(br_name)s changed its "
+                                 "datapath-ID from %(old)s to %(new)s", {
+                                     "br_name": self.br_name,
+                                     "old": old_dpid_str,
+                                     "new": new_dpid_str,
+                                 })
                         ctx.reraise = False
                     self._cached_dpid = int(new_dpid_str, 16)
 

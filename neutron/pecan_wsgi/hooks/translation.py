@@ -17,7 +17,6 @@ import oslo_i18n
 from oslo_log import log as logging
 from pecan import hooks
 
-from neutron._i18n import _LE, _LI
 from neutron.api import api_common
 from neutron.api.v2 import base as v2base
 
@@ -34,8 +33,8 @@ class ExceptionTranslationHook(hooks.PecanHook):
         exc = api_common.convert_exception_to_http_exc(e, v2base.FAULT_MAP,
                                                        language)
         if hasattr(exc, 'code') and 400 <= exc.code < 500:
-            LOG.info(_LI('%(action)s failed (client error): %(exc)s'),
+            LOG.info('%(action)s failed (client error): %(exc)s',
                      {'action': state.request.method, 'exc': exc})
         else:
-            LOG.exception(_LE('%s failed.'), state.request.method)
+            LOG.exception('%s failed.', state.request.method)
         return exc

@@ -35,7 +35,6 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _LE
 from neutron.objects import exceptions as obj_exc
 
 
@@ -148,8 +147,8 @@ def retry_if_session_inactive(context_var_name='context'):
             # functions
             ctx_arg_index = p_util.getargspec(f).args.index(context_var_name)
         except ValueError:
-            raise RuntimeError(_LE("Could not find position of var %s")
-                               % context_var_name)
+            raise RuntimeError("Could not find position of var %s" %
+                               context_var_name)
         f_with_retry = retry_db_errors(f)
 
         @six.wraps(f)

@@ -23,7 +23,7 @@ from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.common import exceptions as c_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
@@ -170,8 +170,8 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         except exceptions.UnknownProvisioningError as e:
             # Clean partially provisioned topologies, and reraise the
             # error. If it can be retried, so be it.
-            LOG.error(_LE("Unknown error while provisioning topology for "
-                          "tenant %(tenant_id)s. Reason: %(reason)s"),
+            LOG.error("Unknown error while provisioning topology for "
+                      "tenant %(tenant_id)s. Reason: %(reason)s",
                       {'tenant_id': tenant_id, 'reason': e})
             self._cleanup(
                 context, network_id=e.network_id,
@@ -228,14 +228,14 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             context, is_default=True)
 
         if not default_external_networks:
-            LOG.error(_LE("Unable to find default external network "
-                          "for deployment, please create/assign one to "
-                          "allow auto-allocation to work correctly."))
+            LOG.error("Unable to find default external network "
+                      "for deployment, please create/assign one to "
+                      "allow auto-allocation to work correctly.")
             raise exceptions.AutoAllocationFailure(
                 reason=_("No default router:external network"))
         if len(default_external_networks) > 1:
-            LOG.error(_LE("Multiple external default networks detected. "
-                          "Network %s is true 'default'."),
+            LOG.error("Multiple external default networks detected. "
+                      "Network %s is true 'default'.",
                       default_external_networks[0]['network_id'])
         return default_external_networks[0].network_id
 
@@ -249,7 +249,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             s for s in default_subnet_pools if s
         ]
         if not available_pools:
-            LOG.error(_LE("No default pools available"))
+            LOG.error("No default pools available")
             raise n_exc.NotFound()
 
         return available_pools
@@ -280,9 +280,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
             return subnets
         except (c_exc.SubnetAllocationError, ValueError,
                 n_exc.BadRequest, n_exc.NotFound) as e:
-            LOG.error(_LE("Unable to auto allocate topology for tenant "
-                          "%(tenant_id)s due to missing or unmet "
-                          "requirements. Reason: %(reason)s"),
+            LOG.error("Unable to auto allocate topology for tenant "
+                      "%(tenant_id)s due to missing or unmet "
+                      "requirements. Reason: %(reason)s",
                       {'tenant_id': tenant_id, 'reason': e})
             if network:
                 self._cleanup(context, network['id'])
@@ -312,9 +312,9 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
                 attached_subnets.append(subnet)
             return router
         except n_exc.BadRequest as e:
-            LOG.error(_LE("Unable to auto allocate topology for tenant "
-                          "%(tenant_id)s because of router errors. "
-                          "Reason: %(reason)s"),
+            LOG.error("Unable to auto allocate topology for tenant "
+                      "%(tenant_id)s because of router errors. "
+                      "Reason: %(reason)s",
                       {'tenant_id': tenant_id, 'reason': e})
             router_id = router['id'] if router else None
             self._cleanup(context,

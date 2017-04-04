@@ -24,7 +24,7 @@ from oslo_log import log as logging
 import six
 import webob.exc
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
@@ -47,8 +47,8 @@ class RouterSchedulerController(wsgi.Controller):
     def get_plugin(self):
         plugin = directory.get_plugin(plugin_constants.L3)
         if not plugin:
-            LOG.error(_LE('No plugin for L3 routing registered to handle '
-                          'router scheduling'))
+            LOG.error('No plugin for L3 routing registered to handle '
+                      'router scheduling')
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
         return plugin
@@ -89,8 +89,8 @@ class L3AgentsHostingRouterController(wsgi.Controller):
     def get_plugin(self):
         plugin = directory.get_plugin(plugin_constants.L3)
         if not plugin:
-            LOG.error(_LE('No plugin for L3 routing registered to handle '
-                          'router scheduling'))
+            LOG.error('No plugin for L3 routing registered to handle '
+                      'router scheduling')
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
         return plugin

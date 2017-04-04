@@ -30,7 +30,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
@@ -247,8 +247,8 @@ class IptablesTable(object):
                                                           top, self.wrap_name,
                                                           comment=comment)))
         except ValueError:
-            LOG.warning(_LW('Tried to remove rule that was not there:'
-                            ' %(chain)r %(rule)r %(wrap)r %(top)r'),
+            LOG.warning('Tried to remove rule that was not there:'
+                        ' %(chain)r %(rule)r %(wrap)r %(top)r',
                         {'chain': chain, 'rule': rule,
                          'top': top, 'wrap': wrap})
 
@@ -533,8 +533,8 @@ class IptablesManager(object):
                                      commands[log_start:log_end],
                                      log_start + 1)
                                  )
-                    LOG.error(_LE("IPTablesManager.apply failed to apply the "
-                                  "following set of iptables rules:\n%s"),
+                    LOG.error("IPTablesManager.apply failed to apply the "
+                              "following set of iptables rules:\n%s",
                               '\n'.join(log_lines))
         LOG.debug("IPTablesManager.apply completed with success. %d iptables "
                   "commands were issued", len(all_commands))
@@ -636,9 +636,9 @@ class IptablesManager(object):
         def _weed_out_duplicates(line):
             if line in seen_lines:
                 thing = 'chain' if line.startswith(':') else 'rule'
-                LOG.warning(_LW("Duplicate iptables %(thing)s detected. This "
-                                "may indicate a bug in the iptables "
-                                "%(thing)s generation code. Line: %(line)s"),
+                LOG.warning("Duplicate iptables %(thing)s detected. This "
+                            "may indicate a bug in the iptables "
+                            "%(thing)s generation code. Line: %(line)s",
                             {'thing': thing, 'line': line})
                 return False
             seen_lines.add(line)
@@ -675,8 +675,8 @@ class IptablesManager(object):
         """Return the sum of the traffic counters of all rules of a chain."""
         cmd_tables = self._get_traffic_counters_cmd_tables(chain, wrap)
         if not cmd_tables:
-            LOG.warning(_LW('Attempted to get traffic counters of chain %s '
-                            'which does not exist'), chain)
+            LOG.warning('Attempted to get traffic counters of chain %s '
+                        'which does not exist', chain)
             return
 
         name = get_chain_name(chain, wrap)

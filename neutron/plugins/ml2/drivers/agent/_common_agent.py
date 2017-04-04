@@ -31,7 +31,6 @@ from oslo_service import service
 from oslo_utils import excutils
 from osprofiler import profiler
 
-from neutron._i18n import _LE, _LI
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc
@@ -72,9 +71,9 @@ class CommonAgentLoop(service.Service):
     def _validate_manager_class(self):
         if not isinstance(self.mgr,
                           amb.CommonAgentManagerBase):
-            LOG.error(_LE("Manager class must inherit from "
-                          "CommonAgentManagerBase to ensure CommonAgent "
-                          "works properly."))
+            LOG.error("Manager class must inherit from "
+                      "CommonAgentManagerBase to ensure CommonAgent "
+                      "works properly.")
             sys.exit(1)
 
     def start(self):
@@ -112,7 +111,7 @@ class CommonAgentLoop(service.Service):
         self.daemon_loop()
 
     def stop(self, graceful=True):
-        LOG.info(_LI("Stopping %s agent."), self.agent_type)
+        LOG.info("Stopping %s agent.", self.agent_type)
         if graceful and self.quitting_rpc_timeout:
             self.set_rpc_timeout(self.quitting_rpc_timeout)
         super(CommonAgentLoop, self).stop(graceful)
@@ -128,22 +127,22 @@ class CommonAgentLoop(service.Service):
                                                        self.agent_state,
                                                        True)
             if agent_status == n_const.AGENT_REVIVED:
-                LOG.info(_LI('%s Agent has just been revived. '
-                             'Doing a full sync.'),
+                LOG.info('%s Agent has just been revived. '
+                         'Doing a full sync.',
                          self.agent_type)
                 self.fullsync = True
             # we only want to update resource versions on startup
             self.agent_state.pop('resource_versions', None)
             self.agent_state.pop('start_flag', None)
         except Exception:
-            LOG.exception(_LE("Failed reporting state!"))
+            LOG.exception("Failed reporting state!")
 
     def _validate_rpc_endpoints(self):
         if not isinstance(self.endpoints[0],
                           amb.CommonAgentManagerRpcCallBackBase):
-            LOG.error(_LE("RPC Callback class must inherit from "
-                          "CommonAgentManagerRpcCallBackBase to ensure "
-                          "CommonAgent works properly."))
+            LOG.error("RPC Callback class must inherit from "
+                      "CommonAgentManagerRpcCallBackBase to ensure "
+                      "CommonAgent works properly.")
             sys.exit(1)
 
     def setup_rpc(self):
@@ -153,7 +152,7 @@ class CommonAgentLoop(service.Service):
             self.context, self.sg_plugin_rpc, defer_refresh_firewall=True)
 
         self.agent_id = self.mgr.get_agent_id()
-        LOG.info(_LI("RPC agent_id: %s"), self.agent_id)
+        LOG.info("RPC agent_id: %s", self.agent_id)
 
         self.topic = topics.AGENT
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
@@ -217,7 +216,7 @@ class CommonAgentLoop(service.Service):
             devices_details_list = self.plugin_rpc.get_devices_details_list(
                 self.context, devices, self.agent_id, host=cfg.CONF.host)
         except Exception:
-            LOG.exception(_LE("Unable to get port details for %s"), devices)
+            LOG.exception("Unable to get port details for %s", devices)
             # resync is needed
             return True
 
@@ -234,7 +233,7 @@ class CommonAgentLoop(service.Service):
             LOG.debug("Port %s added", device)
 
             if 'port_id' in device_details:
-                LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
+                LOG.info("Port %(device)s updated. Details: %(details)s",
                          {'device': device, 'details': device_details})
                 self.mgr.setup_arp_spoofing_protection(device,
                                                        device_details)
@@ -312,7 +311,7 @@ class CommonAgentLoop(service.Service):
                                 context=self.context,
                                 device_details=device_details)
             else:
-                LOG.info(_LI("Device %s not defined on plugin"), device)
+                LOG.info("Device %s not defined on plugin", device)
 
     @contextlib.contextmanager
     def _ignore_missing_device_exceptions(self, device):
@@ -328,7 +327,7 @@ class CommonAgentLoop(service.Service):
         resync = False
         self.sg_agent.remove_devices_filter(devices)
         for device in devices:
-            LOG.info(_LI("Attachment %s removed"), device)
+            LOG.info("Attachment %s removed", device)
             details = None
             try:
                 details = self.plugin_rpc.update_device_down(self.context,
@@ -336,11 +335,11 @@ class CommonAgentLoop(service.Service):
                                                              self.agent_id,
                                                              cfg.CONF.host)
             except Exception:
-                LOG.exception(_LE("Error occurred while removing port %s"),
+                LOG.exception("Error occurred while removing port %s",
                               device)
                 resync = True
             if details and details['exists']:
-                LOG.info(_LI("Port %s updated."), device)
+                LOG.info("Port %s updated.", device)
             else:
                 LOG.debug("Device %s not defined on plugin", device)
             port_id = self._clean_network_ports(device)
@@ -429,7 +428,7 @@ class CommonAgentLoop(service.Service):
                 or device_info.get('removed'))
 
     def daemon_loop(self):
-        LOG.info(_LI("%s Agent RPC Daemon Started!"), self.agent_type)
+        LOG.info("%s Agent RPC Daemon Started!", self.agent_type)
         device_info = None
         sync = True
 
@@ -441,7 +440,7 @@ class CommonAgentLoop(service.Service):
                 self.fullsync = False
 
             if sync:
-                LOG.info(_LI("%s Agent out of sync with plugin!"),
+                LOG.info("%s Agent out of sync with plugin!",
                          self.agent_type)
 
             device_info = self.scan_devices(previous=device_info, sync=sync)
@@ -453,7 +452,7 @@ class CommonAgentLoop(service.Service):
                 try:
                     sync = self.process_network_devices(device_info)
                 except Exception:
-                    LOG.exception(_LE("Error in agent loop. Devices info: %s"),
+                    LOG.exception("Error in agent loop. Devices info: %s",
                                   device_info)
                     sync = True
 

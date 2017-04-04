@@ -27,7 +27,7 @@ from oslo_policy import policy
 from oslo_utils import excutils
 import six
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import cache_utils as cache
 from neutron.common import constants as const
@@ -116,8 +116,7 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
     validate = attr['validate']
     key = [k for k in validate.keys() if k.startswith('type:dict')]
     if not key:
-        LOG.warning(_LW("Unable to find data type descriptor "
-                        "for attribute %s"),
+        LOG.warning("Unable to find data type descriptor for attribute %s",
                     attr_name)
         return
     data = validate[key[0]]
@@ -235,7 +234,7 @@ class OwnerCheck(policy.Check):
             raise db_exc.RetryRequest(e)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE('Policy check error while calling %s!'), f)
+                LOG.exception('Policy check error while calling %s!', f)
         return data[field]
 
     def __call__(self, target, creds, enforcer):

@@ -19,7 +19,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import timeutils
 
-from neutron._i18n import _LE
 from neutron.common import utils as neutron_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent.database import agents_db
@@ -53,7 +52,7 @@ def load_interface_driver(conf):
                 INTERFACE_NAMESPACE, conf.interface_driver)
         return loaded_class(conf)
     except ImportError:
-        LOG.error(_LE("Error loading interface driver '%s'"),
+        LOG.error("Error loading interface driver '%s'",
                   conf.interface_driver)
         raise SystemExit(1)
 

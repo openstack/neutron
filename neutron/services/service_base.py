@@ -17,7 +17,6 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import importutils
 
-from neutron._i18n import _LE, _LI
 from neutron.db import servicetype_db as sdb
 from neutron.services import provider_configuration as pconf
 
@@ -36,7 +35,7 @@ def load_drivers(service_type, plugin):
                      filters={'service_type': [service_type]})
                  )
     if not providers:
-        msg = (_LE("No providers specified for '%s' service, exiting") %
+        msg = ("No providers specified for '%s' service, exiting" %
                service_type)
         LOG.error(msg)
         raise SystemExit(1)
@@ -53,8 +52,8 @@ def load_drivers(service_type, plugin):
                        'service_type': service_type})
         except ImportError:
             with excutils.save_and_reraise_exception():
-                LOG.exception(_LE("Error loading provider '%(provider)s' for "
-                                  "service %(service_type)s"),
+                LOG.exception("Error loading provider '%(provider)s' for "
+                              "service %(service_type)s",
                               {'provider': provider['driver'],
                                'service_type': service_type})
 
@@ -64,7 +63,7 @@ def load_drivers(service_type, plugin):
             None, service_type)
         default_provider = provider['name']
     except pconf.DefaultServiceProviderNotFound:
-        LOG.info(_LI("Default provider is not specified for service type %s"),
+        LOG.info("Default provider is not specified for service type %s",
                  service_type)
 
     return drivers, default_provider

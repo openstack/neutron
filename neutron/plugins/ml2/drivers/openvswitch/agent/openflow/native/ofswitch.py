@@ -26,7 +26,7 @@ from ryu.lib import ofctl_string
 from ryu.ofproto import ofproto_parser
 import six
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 
 LOG = logging.getLogger(__name__)
@@ -156,7 +156,7 @@ class OpenFlowSwitchMixin(object):
         LOG.debug("Reserved cookies for %s: %s", self.br_name,
                   self.reserved_cookies)
         for c in cookies:
-            LOG.warning(_LW("Deleting flow with cookie 0x%(cookie)x"),
+            LOG.warning("Deleting flow with cookie 0x%(cookie)x",
                         {'cookie': c})
             self.uninstall_flows(cookie=c, cookie_mask=ovs_lib.UINT64_BITMASK)
 

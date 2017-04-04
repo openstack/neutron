@@ -22,7 +22,7 @@ from oslo_config import cfg
 from oslo_log import log
 from six import moves
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import api as db_api
 from neutron.objects.plugins.ml2 import vlanallocation as vlanalloc
@@ -55,10 +55,10 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
                 cfg.CONF.ml2_type_vlan.network_vlan_ranges)
         except Exception:
-            LOG.exception(_LE("Failed to parse network_vlan_ranges. "
-                              "Service terminated!"))
+            LOG.exception("Failed to parse network_vlan_ranges. "
+                          "Service terminated!")
             sys.exit(1)
-        LOG.info(_LI("Network VLAN ranges: %s"), self.network_vlan_ranges)
+        LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
 
     @db_api.retry_db_errors
     def _sync_vlan_allocations(self):
@@ -137,7 +137,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
     def initialize(self):
         self._sync_vlan_allocations()
-        LOG.info(_LI("VlanTypeDriver initialization complete"))
+        LOG.info("VlanTypeDriver initialization complete")
 
     def is_partial_segment(self, segment):
         return segment.get(api.SEGMENTATION_ID) is None
@@ -242,8 +242,8 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                'physical_network': physical_network})
 
         if not count:
-            LOG.warning(_LW("No vlan_id %(vlan_id)s found on physical "
-                            "network %(physical_network)s"),
+            LOG.warning("No vlan_id %(vlan_id)s found on physical "
+                        "network %(physical_network)s",
                         {'vlan_id': vlan_id,
                          'physical_network': physical_network})
 

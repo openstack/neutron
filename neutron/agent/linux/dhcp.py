@@ -32,7 +32,7 @@ from oslo_utils import fileutils
 from oslo_utils import uuidutils
 import six
 
-from neutron._i18n import _, _LI, _LW, _LE
+from neutron._i18n import _
 from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -238,7 +238,7 @@ class DhcpLocalProcess(DhcpBase):
         try:
             self.device_manager.destroy(self.network, self.interface_name)
         except RuntimeError:
-            LOG.warning(_LW('Failed trying to delete interface: %s'),
+            LOG.warning('Failed trying to delete interface: %s',
                         self.interface_name)
 
         ns_ip = ip_lib.IPWrapper(namespace=self.network.namespace)
@@ -248,7 +248,7 @@ class DhcpLocalProcess(DhcpBase):
         try:
             ns_ip.netns.delete(self.network.namespace)
         except RuntimeError:
-            LOG.warning(_LW('Failed trying to delete namespace: %s'),
+            LOG.warning('Failed trying to delete namespace: %s',
                         self.network.namespace)
 
     def _get_value_from_conf_file(self, kind, converter=None):
@@ -421,8 +421,7 @@ class Dnsmasq(DhcpLocalProcess):
                 if not os.path.exists(log_dir):
                     os.makedirs(log_dir)
             except OSError:
-                LOG.error(_LE('Error while create dnsmasq log dir: %s'),
-                    log_dir)
+                LOG.error('Error while create dnsmasq log dir: %s', log_dir)
             else:
                 log_filename = os.path.join(log_dir, 'dhcp_dns_log')
                 cmd.append('--log-queries')
@@ -460,8 +459,8 @@ class Dnsmasq(DhcpLocalProcess):
         if self._IS_DHCP_RELEASE6_SUPPORTED is None:
             self._IS_DHCP_RELEASE6_SUPPORTED = checks.dhcp_release6_supported()
             if not self._IS_DHCP_RELEASE6_SUPPORTED:
-                LOG.warning(_LW("dhcp_release6 is not present on this system, "
-                                "will not call it again."))
+                LOG.warning("dhcp_release6 is not present on this system, "
+                            "will not call it again.")
         return self._IS_DHCP_RELEASE6_SUPPORTED
 
     def _release_lease(self, mac_address, ip, client_id=None,
@@ -483,8 +482,8 @@ class Dnsmasq(DhcpLocalProcess):
         except RuntimeError as e:
             # when failed to release single lease there's
             # no need to propagate error further
-            LOG.warning(_LW('DHCP release failed for %(cmd)s. '
-                            'Reason: %(e)s'), {'cmd': cmd, 'e': e})
+            LOG.warning('DHCP release failed for %(cmd)s. '
+                        'Reason: %(e)s', {'cmd': cmd, 'e': e})
 
     def _output_config_files(self):
         self._output_hosts_file()
@@ -798,9 +797,9 @@ class Dnsmasq(DhcpLocalProcess):
                             server_id = l.strip().split()[1]
                             continue
                         else:
-                            LOG.warning(_LW('Multiple DUID entries in %s '
-                                            'lease file, dnsmasq is possibly '
-                                            'not functioning properly'),
+                            LOG.warning('Multiple DUID entries in %s '
+                                        'lease file, dnsmasq is possibly '
+                                        'not functioning properly',
                                         filename)
                             continue
                     parts = l.strip().split()
@@ -969,9 +968,9 @@ class Dnsmasq(DhcpLocalProcess):
                             self._format_option(opt_ip_version, port.id,
                                                 opt.opt_name, opt.opt_value))
                     else:
-                        LOG.info(_LI("Cannot apply dhcp option %(opt)s "
-                                     "because it's ip_version %(version)d "
-                                     "is not in port's address IP versions"),
+                        LOG.info("Cannot apply dhcp option %(opt)s "
+                                 "because it's ip_version %(version)d "
+                                 "is not in port's address IP versions",
                                  {'opt': opt.opt_name,
                                   'version': opt_ip_version})
 
@@ -1269,8 +1268,8 @@ class DeviceManager(object):
                                            'device_id': device_id}})
                 except oslo_messaging.RemoteError as e:
                     if e.exc_type == 'DhcpPortInUse':
-                        LOG.info(_LI("Skipping DHCP port %s as it is "
-                                     "already in use"), port.id)
+                        LOG.info("Skipping DHCP port %s as it is "
+                                 "already in use", port.id)
                         continue
                     raise
                 if port:
@@ -1374,8 +1373,8 @@ class DeviceManager(object):
                 try:
                     self.unplug(d.name, network)
                 except Exception:
-                    LOG.exception(_LE("Exception during stale "
-                                      "dhcp device cleanup"))
+                    LOG.exception("Exception during stale "
+                                  "dhcp device cleanup")
 
     def plug(self, network, port, interface_name):
         """Plug device settings for the network's DHCP on this host."""
@@ -1424,8 +1423,8 @@ class DeviceManager(object):
                 self.plug(network, port, interface_name)
             except Exception:
                 with excutils.save_and_reraise_exception():
-                    LOG.exception(_LE('Unable to plug DHCP port for '
-                                      'network %s. Releasing port.'),
+                    LOG.exception('Unable to plug DHCP port for '
+                                  'network %s. Releasing port.',
                                   network.id)
                     self.plugin.release_dhcp_port(network.id, port.device_id)
 

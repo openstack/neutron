@@ -20,7 +20,6 @@ from oslo_log import log as logging
 from oslo_utils import fileutils
 import webob
 
-from neutron._i18n import _LI
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import constants
 from neutron.notifiers import batch_notifier
@@ -88,8 +87,8 @@ class AgentMixin(object):
         try:
             return self.router_info[router_id]
         except KeyError:
-            LOG.info(_LI('Router %s is not managed by this agent. It was '
-                         'possibly deleted concurrently.'), router_id)
+            LOG.info('Router %s is not managed by this agent. It was '
+                     'possibly deleted concurrently.', router_id)
 
     def check_ha_state_for_router(self, router_id, current_state):
         ri = self._get_router_info(router_id)
@@ -110,7 +109,7 @@ class AgentMixin(object):
         return self.conf.ha_vrrp_advert_int
 
     def enqueue_state_change(self, router_id, state):
-        LOG.info(_LI('Router %(router_id)s transitioned to %(state)s'),
+        LOG.info('Router %(router_id)s transitioned to %(state)s',
                  {'router_id': router_id,
                   'state': state})
 

@@ -15,7 +15,6 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from oslo_log import log as logging
 
-from neutron._i18n import _LW
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
@@ -53,10 +52,9 @@ class QosServiceDriverManager(object):
     def _get_qos_policy_cb(resource, policy_id, **kwargs):
         context = kwargs.get('context')
         if context is None:
-            LOG.warning(_LW(
-                'Received %(resource)s %(policy_id)s without context'),
-                {'resource': resource, 'policy_id': policy_id}
-            )
+            LOG.warning(
+                'Received %(resource)s %(policy_id)s without context',
+                {'resource': resource, 'policy_id': policy_id})
             return
 
         policy = policy_object.QosPolicy.get_object(context, id=policy_id)

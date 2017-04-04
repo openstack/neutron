@@ -17,7 +17,6 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from oslo_log import log as logging
 
-from neutron._i18n import _LE
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.objects import provisioning_blocks as pb_obj
@@ -122,7 +121,7 @@ def provisioning_complete(context, object_id, object_type, entity):
     # this can't be called in a transaction to avoid REPEATABLE READ
     # tricking us into thinking there are remaining provisioning components
     if context.session.is_active:
-        raise RuntimeError(_LE("Must not be called in a transaction"))
+        raise RuntimeError("Must not be called in a transaction")
     standard_attr_id = _get_standard_attr_id(context, object_id,
                                              object_type)
     if not standard_attr_id:
@@ -162,10 +161,10 @@ def is_object_blocked(context, object_id, object_type):
 def _get_standard_attr_id(context, object_id, object_type):
     model = _RESOURCE_TO_MODEL_MAP.get(object_type)
     if not model:
-        raise RuntimeError(_LE("Could not find model for %s. If you are "
-                               "adding provisioning blocks for a new resource "
-                               "you must call add_model_for_resource during "
-                               "initialization for your type.") % object_type)
+        raise RuntimeError("Could not find model for %s. If you are "
+                           "adding provisioning blocks for a new resource "
+                           "you must call add_model_for_resource during "
+                           "initialization for your type." % object_type)
     obj = (context.session.query(model).enable_eagerloads(False).
            filter_by(id=object_id).first())
     if not obj:
