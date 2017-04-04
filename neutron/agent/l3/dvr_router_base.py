@@ -12,7 +12,6 @@
 
 from oslo_log import log as logging
 
-from neutron._i18n import _LE
 from neutron.agent.l3 import router_info as router
 from neutron.common import constants as l3_constants
 
@@ -47,8 +46,8 @@ class DvrRouterBase(router.RouterInfo):
                 if ip['subnet_id'] in subnet_ids:
                     return p
 
-        LOG.error(_LE('DVR: SNAT port not found in the list '
-                      '%(snat_list)s for the given router '
-                      'internal port %(int_p)s'), {
-                          'snat_list': snat_ports,
-                          'int_p': int_port})
+        LOG.error('DVR: SNAT port not found in the list '
+                  '%(snat_list)s for the given router '
+                  'internal port %(int_p)s', {
+                      'snat_list': snat_ports,
+                      'int_p': int_port})

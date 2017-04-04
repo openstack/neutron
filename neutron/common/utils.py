@@ -49,7 +49,7 @@ import six
 from stevedore import driver
 
 import neutron
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.db import api as db_api
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -307,7 +307,7 @@ def load_class_by_alias_or_classname(namespace, name):
     """
 
     if not name:
-        LOG.error(_LE("Alias or class name is not set"))
+        LOG.error("Alias or class name is not set")
         raise ImportError(_("Class not found."))
     try:
         # Try to resolve class by alias
@@ -320,9 +320,9 @@ def load_class_by_alias_or_classname(namespace, name):
         try:
             class_to_load = importutils.import_class(name)
         except (ImportError, ValueError):
-            LOG.error(_LE("Error loading class by alias"),
+            LOG.error("Error loading class by alias",
                       exc_info=e1_info)
-            LOG.error(_LE("Error loading class by class name"),
+            LOG.error("Error loading class by class name",
                       exc_info=True)
             raise ImportError(_("Class not found."))
     return class_to_load
@@ -636,7 +636,7 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
                     try:
                         dep_deleter(dependency)
                     except Exception:
-                        LOG.exception(_LE("Failed cleaning up dependency %s"),
+                        LOG.exception("Failed cleaning up dependency %s",
                                       dep_id)
     return result, dependency
 
@@ -743,7 +743,7 @@ def attach_exc_details(e, msg, args=_NO_ARGS_MARKER):
 def extract_exc_details(e):
     for attr in ('_error_context_msg', '_error_context_args'):
         if not hasattr(e, attr):
-            return _LE('No details.')
+            return u'No details.'
     details = e._error_context_msg
     args = e._error_context_args
     if args is _NO_ARGS_MARKER:

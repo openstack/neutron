@@ -24,7 +24,6 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_service import service
 
-from neutron._i18n import _LE, _LI
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
@@ -58,7 +57,7 @@ class MacvtapRPCCallBack(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         network_id = kwargs.get('network_id')
 
         if network_id not in self.network_map:
-            LOG.error(_LE("Network %s is not available."), network_id)
+            LOG.error("Network %s is not available.", network_id)
             return
 
         segment = self.network_map.get(network_id)
@@ -95,8 +94,8 @@ class MacvtapManager(amb.CommonAgentManagerBase):
     def validate_interface_mappings(self):
         for physnet, interface in self.interface_mappings.items():
             if not ip_lib.device_exists(interface):
-                LOG.error(_LE("Interface %(intf)s for physical network "
-                              "%(net)s does not exist. Agent terminated!"),
+                LOG.error("Interface %(intf)s for physical network "
+                          "%(net)s does not exist. Agent terminated!",
                           {'intf': interface, 'net': physnet})
                 sys.exit(1)
 
@@ -118,8 +117,8 @@ class MacvtapManager(amb.CommonAgentManagerBase):
             mac = ip_lib.get_device_mac(devices[0].name)
             return 'macvtap%s' % mac.replace(":", "")
         else:
-            LOG.error(_LE("Unable to obtain MAC address for unique ID. "
-                          "Agent terminated!"))
+            LOG.error("Unable to obtain MAC address for unique ID. "
+                      "Agent terminated!")
             sys.exit(1)
 
     def get_devices_modified_timestamps(self, devices):
@@ -175,18 +174,18 @@ class MacvtapManager(amb.CommonAgentManagerBase):
 
 def parse_interface_mappings():
     if not cfg.CONF.macvtap.physical_interface_mappings:
-        LOG.error(_LE("No physical_interface_mappings provided, but at least "
-                      "one mapping is required. Agent terminated!"))
+        LOG.error("No physical_interface_mappings provided, but at least "
+                  "one mapping is required. Agent terminated!")
         sys.exit(1)
 
     try:
         interface_mappings = helpers.parse_mappings(
             cfg.CONF.macvtap.physical_interface_mappings)
-        LOG.info(_LI("Interface mappings: %s"), interface_mappings)
+        LOG.info("Interface mappings: %s", interface_mappings)
         return interface_mappings
     except ValueError as e:
-        LOG.error(_LE("Parsing physical_interface_mappings failed: %s. "
-                      "Agent terminated!"), e)
+        LOG.error("Parsing physical_interface_mappings failed: %s. "
+                  "Agent terminated!", e)
         sys.exit(1)
 
 
@@ -195,11 +194,11 @@ def validate_firewall_driver():
     supported_fw_drivers = ['neutron.agent.firewall.NoopFirewallDriver',
                             'noop']
     if fw_driver not in supported_fw_drivers:
-        LOG.error(_LE('Unsupported configuration option for "SECURITYGROUP.'
-                      'firewall_driver"! Only the NoopFirewallDriver is '
-                      'supported by macvtap agent, but "%s" is configured. '
-                      'Set the firewall_driver to "noop" and start the '
-                      'agent again. Agent terminated!'),
+        LOG.error('Unsupported configuration option for "SECURITYGROUP.'
+                  'firewall_driver"! Only the NoopFirewallDriver is '
+                  'supported by macvtap agent, but "%s" is configured. '
+                  'Set the firewall_driver to "noop" and start the '
+                  'agent again. Agent terminated!',
                   fw_driver)
         sys.exit(1)
 
@@ -220,6 +219,6 @@ def main():
                                quitting_rpc_timeout,
                                constants.AGENT_TYPE_MACVTAP,
                                MACVTAP_AGENT_BINARY)
-    LOG.info(_LI("Agent initialized successfully, now running... "))
+    LOG.info("Agent initialized successfully, now running... ")
     launcher = service.launch(cfg.CONF, agent)
     launcher.wait()

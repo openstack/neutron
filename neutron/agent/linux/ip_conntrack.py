@@ -17,7 +17,6 @@ import netaddr
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
-from neutron._i18n import _LE
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
@@ -107,8 +106,7 @@ class IpConntrackManager(object):
                              check_exit_code=True,
                              extra_ok_codes=[1])
             except RuntimeError:
-                LOG.exception(
-                    _LE("Failed execute conntrack command %s"), cmd)
+                LOG.exception("Failed execute conntrack command %s", cmd)
 
     def delete_conntrack_state_by_rule(self, device_info_list, rule):
         self._delete_conntrack_state(device_info_list, rule)

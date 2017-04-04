@@ -20,7 +20,6 @@ import pecan
 from pecan import request
 import six.moves.urllib.parse as urlparse
 
-from neutron._i18n import _LW
 from neutron.api.v2 import attributes
 from neutron.api.views import versions as versions_view
 from neutron import manager
@@ -120,8 +119,8 @@ class V2Controller(object):
         controller = manager.NeutronManager.get_controller_for_resource(
             collection)
         if not controller:
-            LOG.warning(_LW("No controller found for: %s - returning response "
-                            "code 404"), collection)
+            LOG.warning("No controller found for: %s - returning response "
+                        "code 404", collection)
             pecan.abort(404)
         # Store resource and collection names in pecan request context so that
         # hooks can leverage them if necessary. The following code uses

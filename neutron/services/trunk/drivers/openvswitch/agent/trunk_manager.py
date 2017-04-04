@@ -14,7 +14,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions as exc
 from neutron.services.trunk.drivers.openvswitch import utils
@@ -248,8 +248,8 @@ class TrunkManager(object):
             LOG.debug("Deleted bridge '%s' and patch peers '%s'.",
                       trunk_bridge.br_name, patch_peers)
         except RuntimeError as e:
-            LOG.error(_LE("Could not delete '%(peers)s' associated to "
-                          "trunk bridge %(name)s. Reason: %(reason)s."),
+            LOG.error("Could not delete '%(peers)s' associated to "
+                      "trunk bridge %(name)s. Reason: %(reason)s.",
                       {'peers': patch_peers,
                        'name': trunk_bridge.br_name,
                        'reason': e})

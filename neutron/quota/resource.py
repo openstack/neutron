@@ -18,7 +18,6 @@ from oslo_utils import excutils
 from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
-from neutron._i18n import _LE, _LW
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 
@@ -199,8 +198,8 @@ class TrackedResource(BaseResource):
             tenant_id = target['tenant_id']
         except AttributeError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("Model class %s does not have a tenant_id "
-                              "attribute"), target)
+                LOG.error("Model class %s does not have a tenant_id "
+                          "attribute", target)
         self._dirty_tenants.add(tenant_id)
 
     # Retry the operation if a duplicate entry exception is raised. This
@@ -300,10 +299,10 @@ class TrackedResource(BaseResource):
 
     def _except_bulk_delete(self, delete_context):
         if delete_context.mapper.class_ == self._model_class:
-            raise RuntimeError(_LE("%s may not be deleted in bulk because "
-                                   "it is tracked by the quota engine via "
-                                   "SQLAlchemy event handlers, which are not "
-                                   "compatible with bulk deletes.") %
+            raise RuntimeError("%s may not be deleted in bulk because "
+                               "it is tracked by the quota engine via "
+                               "SQLAlchemy event handlers, which are not "
+                               "compatible with bulk deletes." %
                                self._model_class)
 
     def register_events(self):
@@ -321,5 +320,5 @@ class TrackedResource(BaseResource):
             db_api.sqla_remove(se.Session, 'after_bulk_delete',
                                self._except_bulk_delete)
         except sql_exc.InvalidRequestError:
-            LOG.warning(_LW("No sqlalchemy event for resource %s found"),
+            LOG.warning("No sqlalchemy event for resource %s found",
                         self.name)

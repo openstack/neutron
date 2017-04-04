@@ -19,7 +19,6 @@ from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import tenacity
 
-from neutron._i18n import _LI
 from neutron.agent.linux import ip_lib
 
 LOG = logging.getLogger(__name__)
@@ -31,8 +30,8 @@ def setup_arp_spoofing_protection(vif, port_details):
     if not port_details.get('port_security_enabled', True):
         # clear any previous entries related to this port
         delete_arp_spoofing_protection([vif])
-        LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
-                     "it has port security disabled"), vif)
+        LOG.info("Skipping ARP spoofing rules for port '%s' because "
+                 "it has port security disabled", vif)
         return
     if net.is_port_trusted(port_details):
         # clear any previous entries related to this port
@@ -100,7 +99,7 @@ def delete_unreferenced_arp_protection(current_vifs):
             devname = line.split(SPOOF_CHAIN_PREFIX, 1)[1].split(',')[0]
             if devname not in current_vifs:
                 to_delete.append(devname)
-    LOG.info(_LI("Clearing orphaned ARP spoofing entries for devices %s"),
+    LOG.info("Clearing orphaned ARP spoofing entries for devices %s",
              to_delete)
     _delete_arp_spoofing_protection(to_delete, current_rules)
 

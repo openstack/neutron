@@ -24,8 +24,7 @@ from oslo_service import periodic_task
 from oslo_service import service
 from oslo_utils import timeutils
 
-from neutron.services.metering.drivers import utils as driverutils
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
@@ -36,6 +35,7 @@ from neutron.conf.agent import common as config
 from neutron.conf.services import metering_agent
 from neutron import manager
 from neutron import service as neutron_service
+from neutron.services.metering.drivers import utils as driverutils
 
 
 LOG = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class MeteringPluginRpc(object):
             return cctxt.call(context, 'get_sync_data_metering',
                               host=self.host)
         except Exception:
-            LOG.exception(_LE("Failed synchronizing routers"))
+            LOG.exception("Failed synchronizing routers")
 
 
 class MeteringAgent(MeteringPluginRpc, manager.Manager):
@@ -83,7 +83,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
 
     def _load_drivers(self):
         """Loads plugin-driver from configuration."""
-        LOG.info(_LI("Loading Metering driver %s"), self.conf.driver)
+        LOG.info("Loading Metering driver %s", self.conf.driver)
         if not self.conf.driver:
             raise SystemExit(_('A metering driver must be specified'))
         self.metering_driver = driverutils.load_metering_driver(self,
@@ -165,11 +165,11 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         try:
             return getattr(self.metering_driver, func_name)(context, meterings)
         except AttributeError:
-            LOG.exception(_LE("Driver %(driver)s does not implement %(func)s"),
+            LOG.exception("Driver %(driver)s does not implement %(func)s",
                           {'driver': self.conf.driver,
                            'func': func_name})
         except RuntimeError:
-            LOG.exception(_LE("Driver %(driver)s:%(func)s runtime error"),
+            LOG.exception("Driver %(driver)s:%(func)s runtime error",
                           {'driver': self.conf.driver,
                            'func': func_name})
 
@@ -274,15 +274,15 @@ class MeteringAgentWithStateReport(MeteringAgent):
             self.use_call = False
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warning(_LW("Neutron server does not support state report. "
-                            "State report for this agent will be disabled."))
+            LOG.warning("Neutron server does not support state report. "
+                        "State report for this agent will be disabled.")
             self.heartbeat.stop()
             return
         except Exception:
-            LOG.exception(_LE("Failed reporting state!"))
+            LOG.exception("Failed reporting state!")
 
     def agent_updated(self, context, payload):
-        LOG.info(_LI("agent_updated by server side %s!"), payload)
+        LOG.info("agent_updated by server side %s!", payload)
 
 
 def main():

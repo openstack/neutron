@@ -18,7 +18,7 @@ from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _, _LI, _LW
+from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import api as db_api
@@ -50,19 +50,19 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
     def _parse_networks(self, entries):
         self.flat_networks = entries
         if '*' in self.flat_networks:
-            LOG.info(_LI("Arbitrary flat physical_network names allowed"))
+            LOG.info("Arbitrary flat physical_network names allowed")
             self.flat_networks = None
         elif not self.flat_networks:
-            LOG.info(_LI("Flat networks are disabled"))
+            LOG.info("Flat networks are disabled")
         else:
-            LOG.info(_LI("Allowable flat physical_network names: %s"),
+            LOG.info("Allowable flat physical_network names: %s",
                      self.flat_networks)
 
     def get_type(self):
         return p_const.TYPE_FLAT
 
     def initialize(self):
-        LOG.info(_LI("ML2 FlatTypeDriver initialization complete"))
+        LOG.info("ML2 FlatTypeDriver initialization complete")
 
     def is_partial_segment(self, segment):
         return False
@@ -116,8 +116,8 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
                 LOG.debug("Releasing flat network on physical network %s",
                           physical_network)
             else:
-                LOG.warning(_LW(
-                    "No flat network found on physical network %s"),
+                LOG.warning(
+                    "No flat network found on physical network %s",
                     physical_network)
 
     def get_mtu(self, physical_network):

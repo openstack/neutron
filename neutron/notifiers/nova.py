@@ -29,7 +29,6 @@ from oslo_log import log as logging
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
-from neutron._i18n import _LE, _LI, _LW
 from neutron.notifiers import batch_notifier
 
 
@@ -162,8 +161,8 @@ class Notifier(object):
 
     def _can_notify(self, port):
         if not port.id:
-            LOG.warning(_LW("Port ID not set! Nova will not be notified of "
-                            "port status change."))
+            LOG.warning("Port ID not set! Nova will not be notified of "
+                        "port status change.")
             return False
 
         # If there is no device_id set there is nothing we can do here.
@@ -248,11 +247,11 @@ class Notifier(object):
             LOG.debug("Nova returned NotFound for event: %s",
                       batched_events)
         except Exception:
-            LOG.exception(_LE("Failed to notify nova on events: %s"),
+            LOG.exception("Failed to notify nova on events: %s",
                           batched_events)
         else:
             if not isinstance(response, list):
-                LOG.error(_LE("Error response returned from nova: %s"),
+                LOG.error("Error response returned from nova: %s",
                           response)
                 return
             response_error = False
@@ -263,10 +262,10 @@ class Notifier(object):
                     response_error = True
                     continue
                 if code != 200:
-                    LOG.warning(_LW("Nova event: %s returned with failed "
-                                    "status"), event)
+                    LOG.warning("Nova event: %s returned with failed "
+                                "status", event)
                 else:
-                    LOG.info(_LI("Nova event response: %s"), event)
+                    LOG.info("Nova event response: %s", event)
             if response_error:
-                LOG.error(_LE("Error response returned from nova: %s"),
+                LOG.error("Error response returned from nova: %s",
                           response)

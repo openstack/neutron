@@ -27,7 +27,7 @@ from oslo_log import log as logging
 import six
 import tenacity
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb_api
@@ -298,8 +298,8 @@ class OVSBridge(BaseOVS):
                               "in 1 second. Attempt: %s/10", i)
                     time.sleep(1)
                     continue
-                LOG.error(_LE("Unable to execute %(cmd)s. Exception: "
-                              "%(exception)s"),
+                LOG.error("Unable to execute %(cmd)s. Exception: "
+                          "%(exception)s",
                           {'cmd': full_args, 'exception': e})
                 break
 
@@ -320,7 +320,7 @@ class OVSBridge(BaseOVS):
         try:
             ofport = self._get_port_val(port_name, "ofport")
         except tenacity.RetryError:
-            LOG.exception(_LE("Timed out retrieving ofport on port %s."),
+            LOG.exception("Timed out retrieving ofport on port %s.",
                           port_name)
         return ofport
 
@@ -330,7 +330,7 @@ class OVSBridge(BaseOVS):
         try:
             port_external_ids = self._get_port_val(port_name, "external_ids")
         except tenacity.RetryError:
-            LOG.exception(_LE("Timed out retrieving external_ids on port %s."),
+            LOG.exception("Timed out retrieving external_ids on port %s.",
                           port_name)
         return port_external_ids
 
@@ -526,10 +526,10 @@ class OVSBridge(BaseOVS):
             if_exists=True)
         for result in results:
             if result['ofport'] == UNASSIGNED_OFPORT:
-                LOG.warning(_LW("Found not yet ready openvswitch port: %s"),
+                LOG.warning("Found not yet ready openvswitch port: %s",
                             result['name'])
             elif result['ofport'] == INVALID_OFPORT:
-                LOG.warning(_LW("Found failed openvswitch port: %s"),
+                LOG.warning("Found failed openvswitch port: %s",
                             result['name'])
             elif 'attached-mac' in result['external_ids']:
                 port_id = self.portid_from_external_ids(result['external_ids'])
@@ -569,8 +569,8 @@ class OVSBridge(BaseOVS):
         for port_id in port_ids:
             result[port_id] = None
             if port_id not in by_id:
-                LOG.info(_LI("Port %(port_id)s not present in bridge "
-                             "%(br_name)s"),
+                LOG.info("Port %(port_id)s not present in bridge "
+                         "%(br_name)s",
                          {'port_id': port_id, 'br_name': self.br_name})
                 continue
             pinfo = by_id[port_id]
@@ -584,8 +584,8 @@ class OVSBridge(BaseOVS):
     @staticmethod
     def _check_ofport(port_id, port_info):
         if port_info['ofport'] in [UNASSIGNED_OFPORT, INVALID_OFPORT]:
-            LOG.warning(_LW("ofport: %(ofport)s for VIF: %(vif)s "
-                            "is not a positive integer"),
+            LOG.warning("ofport: %(ofport)s for VIF: %(vif)s "
+                        "is not a positive integer",
                         {'ofport': port_info['ofport'], 'vif': port_id})
             return False
         return True
@@ -602,7 +602,7 @@ class OVSBridge(BaseOVS):
                 continue
             mac = port['external_ids'].get('attached-mac')
             return VifPort(port['name'], port['ofport'], port_id, mac, self)
-        LOG.info(_LI("Port %(port_id)s not present in bridge %(br_name)s"),
+        LOG.info("Port %(port_id)s not present in bridge %(br_name)s",
                  {'port_id': port_id, 'br_name': self.br_name})
 
     def delete_ports(self, all_ports=False):
@@ -837,7 +837,7 @@ class DeferredOVSBridge(object):
         if exc_type is None:
             self.apply_flows()
         else:
-            LOG.exception(_LE("OVS flows could not be applied on bridge %s"),
+            LOG.exception("OVS flows could not be applied on bridge %s",
                           self.br.br_name)
 
 

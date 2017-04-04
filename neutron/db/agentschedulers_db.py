@@ -26,7 +26,7 @@ from oslo_utils import timeutils
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as n_const
 from neutron.common import utils
@@ -130,10 +130,10 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         tdelta = timeutils.utcnow() - getattr(self, '_clock_jump_canary',
                                               timeutils.utcnow())
         if tdelta.total_seconds() > cfg.CONF.agent_down_time:
-            LOG.warning(_LW("Time since last %s agent reschedule check has "
-                            "exceeded the interval between checks. Waiting "
-                            "before check to allow agents to send a heartbeat "
-                            "in case there was a clock adjustment."),
+            LOG.warning("Time since last %s agent reschedule check has "
+                        "exceeded the interval between checks. Waiting "
+                        "before check to allow agents to send a heartbeat "
+                        "in case there was a clock adjustment.",
                         agent_type)
             time.sleep(agent_dead_limit)
         self._clock_jump_canary = timeutils.utcnow()
@@ -176,10 +176,10 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
                         agents_back_online.add(binding_agent_id)
                         continue
 
-                LOG.warning(_LW(
+                LOG.warning(
                     "Rescheduling %(resource_name)s %(resource)s from agent "
                     "%(agent)s because the agent did not report to the server "
-                    "in the last %(dead_time)s seconds."),
+                    "in the last %(dead_time)s seconds.",
                     {'resource_name': resource_name,
                      'resource': binding_resource_id,
                      'agent': binding_agent_id,
@@ -189,15 +189,15 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
                 except (rescheduling_failed, oslo_messaging.RemoteError):
                     # Catch individual rescheduling errors here
                     # so one broken one doesn't stop the iteration.
-                    LOG.exception(_LE("Failed to reschedule %(resource_name)s "
-                                      "%(resource)s"),
+                    LOG.exception("Failed to reschedule %(resource_name)s "
+                                  "%(resource)s",
                                   {'resource_name': resource_name,
                                    'resource': binding_resource_id})
         except Exception:
             # we want to be thorough and catch whatever is raised
             # to avoid loop abortion
-            LOG.exception(_LE("Exception encountered during %(resource_name)s "
-                              "rescheduling."),
+            LOG.exception("Exception encountered during %(resource_name)s "
+                          "rescheduling.",
                           {'resource_name': resource_name})
 
 
@@ -211,8 +211,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
     def add_periodic_dhcp_agent_status_check(self):
         if not cfg.CONF.allow_automatic_dhcp_failover:
-            LOG.info(_LI("Skipping periodic DHCP agent status check because "
-                         "automatic network rescheduling is disabled."))
+            LOG.info("Skipping periodic DHCP agent status check because "
+                     "automatic network rescheduling is disabled.")
             return
 
         self.add_agent_status_check_worker(
@@ -249,23 +249,23 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         return agent_expected_up > timeutils.utcnow()
 
     def _schedule_network(self, context, network_id, dhcp_notifier):
-        LOG.info(_LI("Scheduling unhosted network %s"), network_id)
+        LOG.info("Scheduling unhosted network %s", network_id)
         try:
             # TODO(enikanorov): have to issue redundant db query
             # to satisfy scheduling interface
             network = self.get_network(context, network_id)
             agents = self.schedule_network(context, network)
             if not agents:
-                LOG.info(_LI("Failed to schedule network %s, "
-                             "no eligible agents or it might be "
-                             "already scheduled by another server"),
+                LOG.info("Failed to schedule network %s, "
+                         "no eligible agents or it might be "
+                         "already scheduled by another server",
                          network_id)
                 return
             if not dhcp_notifier:
                 return
             for agent in agents:
-                LOG.info(_LI("Adding network %(net)s to agent "
-                             "%(agent)s on host %(host)s"),
+                LOG.info("Adding network %(net)s to agent "
+                         "%(agent)s on host %(host)s",
                          {'net': network_id,
                           'agent': agent.id,
                           'host': agent.host})
@@ -275,7 +275,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             # catching any exception during scheduling
             # so if _schedule_network is invoked in the loop it could
             # continue in any case
-            LOG.exception(_LE("Failed to schedule network %s"), network_id)
+            LOG.exception("Failed to schedule network %s", network_id)
 
     def _filter_bindings(self, context, bindings):
         """Skip bindings for which the agent is dead, but starting up."""
@@ -332,14 +332,14 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             active_agents = [agent for agent in agents if
                              self.is_eligible_agent(context, True, agent)]
             if not active_agents:
-                LOG.warning(_LW("No DHCP agents available, "
-                                "skipping rescheduling"))
+                LOG.warning("No DHCP agents available, "
+                            "skipping rescheduling")
                 return
             for binding in dead_bindings:
-                LOG.warning(_LW("Removing network %(network)s from agent "
-                                "%(agent)s because the agent did not report "
-                                "to the server in the last %(dead_time)s "
-                                "seconds."),
+                LOG.warning("Removing network %(network)s from agent "
+                            "%(agent)s because the agent did not report "
+                            "to the server in the last %(dead_time)s "
+                            "seconds.",
                             {'network': binding.network_id,
                              'agent': binding.dhcp_agent_id,
                              'dead_time': agent_dead_limit})
@@ -362,9 +362,9 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
                               saved_binding)
                     # still continue and allow concurrent scheduling attempt
                 except Exception:
-                    LOG.exception(_LE("Unexpected exception occurred while "
-                                      "removing network %(net)s from agent "
-                                      "%(agent)s"),
+                    LOG.exception("Unexpected exception occurred while "
+                                  "removing network %(net)s from agent "
+                                  "%(agent)s",
                                   saved_binding)
 
                 if cfg.CONF.network_auto_schedule:
@@ -373,8 +373,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         except Exception:
             # we want to be thorough and catch whatever is raised
             # to avoid loop abortion
-            LOG.exception(_LE("Exception encountered during network "
-                              "rescheduling"))
+            LOG.exception("Exception encountered during network "
+                          "rescheduling")
 
     def get_dhcp_agents_hosting_networks(
             self, context, network_ids, active=None, admin_state_up=None,

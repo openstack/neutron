@@ -18,7 +18,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import dns
@@ -59,8 +59,8 @@ class DNSDbMixin(object):
                       cfg.CONF.external_dns_driver)
             return self._dns_driver
         except ImportError:
-            LOG.exception(_LE("ImportError exception occurred while loading "
-                              "the external DNS service driver"))
+            LOG.exception("ImportError exception occurred while loading "
+                          "the external DNS service driver")
             raise dns.ExternalDNSDriverNotFound(
                 driver=cfg.CONF.external_dns_driver)
 
@@ -210,10 +210,10 @@ class DNSDbMixin(object):
             self.dns_driver.delete_record_set(context, dns_domain, dns_name,
                                               records)
         except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
-            LOG.exception(_LE("Error deleting Floating IP data from external "
-                              "DNS service. Name: '%(name)s'. Domain: "
-                              "'%(domain)s'. IP addresses '%(ips)s'. DNS "
-                              "service driver message '%(message)s'"),
+            LOG.exception("Error deleting Floating IP data from external "
+                          "DNS service. Name: '%(name)s'. Domain: "
+                          "'%(domain)s'. IP addresses '%(ips)s'. DNS "
+                          "service driver message '%(message)s'",
                           {"name": dns_name,
                            "domain": dns_domain,
                            "message": e.msg,
@@ -241,10 +241,10 @@ class DNSDbMixin(object):
             self.dns_driver.create_record_set(context, dns_domain, dns_name,
                                               records)
         except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
-            LOG.exception(_LE("Error publishing floating IP data in external "
-                              "DNS service. Name: '%(name)s'. Domain: "
-                              "'%(domain)s'. DNS service driver message "
-                              "'%(message)s'"),
+            LOG.exception("Error publishing floating IP data in external "
+                          "DNS service. Name: '%(name)s'. Domain: "
+                          "'%(domain)s'. DNS service driver message "
+                          "'%(message)s'",
                           {"name": dns_name,
                            "domain": dns_domain,
                            "message": e.msg})

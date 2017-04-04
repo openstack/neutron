@@ -18,7 +18,7 @@ import re
 from neutron_lib import exceptions as n_exc
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.linux import utils
 
 
@@ -103,6 +103,6 @@ class IpLinkSupport(object):
                 return_stderr=True,
                 log_fail_as_error=False)
         except Exception as e:
-            LOG.exception(_LE("Failed executing ip command"))
+            LOG.exception("Failed executing ip command")
             raise UnsupportedIpLinkCommand(reason=e)
         return _stdout or _stderr

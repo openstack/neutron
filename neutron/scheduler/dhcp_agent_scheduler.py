@@ -23,7 +23,6 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import sql
 
-from neutron._i18n import _LI, _LW
 from neutron.agent.common import utils as agent_utils
 from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
@@ -74,8 +73,7 @@ class AutoScheduler(object):
             for dhcp_agent in dhcp_agents:
                 if agent_utils.is_agent_down(
                     dhcp_agent.heartbeat_timestamp):
-                    LOG.warning(_LW('DHCP agent %s is not active'),
-                                dhcp_agent.id)
+                    LOG.warning('DHCP agent %s is not active', dhcp_agent.id)
                     continue
                 for net_id, is_routed_network in net_ids.items():
                     agents = plugin.get_dhcp_agents_hosting_networks(
@@ -194,7 +192,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             except db_exc.DBDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 bound_agents.remove(agent)
-                LOG.info(_LI('Agent %s already present'), agent_id)
+                LOG.info('Agent %s already present', agent_id)
             LOG.debug('Network %(network_id)s is scheduled to be '
                       'hosted by DHCP agent %(agent_id)s',
                       {'network_id': network_id,
@@ -256,7 +254,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             active_dhcp_agents = plugin.get_agents_db(
                 context, filters=filters)
             if not active_dhcp_agents:
-                LOG.warning(_LW('No more DHCP agents'))
+                LOG.warning('No more DHCP agents')
                 return []
         return active_dhcp_agents
 

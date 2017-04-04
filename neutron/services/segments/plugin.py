@@ -29,7 +29,7 @@ from novaclient import exceptions as nova_exc
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
@@ -209,8 +209,8 @@ class NovaSegmentNotifier(object):
             except n_exc.PlacementInventoryUpdateConflict:
                 LOG.debug('Re-trying to update Nova IPv4 inventory for '
                           'routed network segment: %s', event.segment_id)
-        LOG.error(_LE('Failed to update Nova IPv4 inventory for routed '
-                  'network segment: %s'), event.segment_id)
+        LOG.error('Failed to update Nova IPv4 inventory for routed '
+                  'network segment: %s', event.segment_id)
 
     def _create_nova_inventory(self, segment_id, total, reserved,
                                segment_host_mappings):
@@ -326,16 +326,16 @@ class NovaSegmentNotifier(object):
             try:
                 aggregate_id = self._get_aggregate_id(segment_id)
             except n_exc.PlacementAggregateNotFound:
-                LOG.info(_LI('When adding host %(host)s, aggregate not found '
-                             'for routed network segment %(segment_id)s'),
+                LOG.info('When adding host %(host)s, aggregate not found '
+                         'for routed network segment %(segment_id)s',
                          {'host': event.host, 'segment_id': segment_id})
                 continue
 
             try:
                 self.n_client.aggregates.add_host(aggregate_id, event.host)
             except nova_exc.Conflict:
-                LOG.info(_LI('Host %(host)s already exists in aggregate for '
-                             'routed network segment %(segment_id)s'),
+                LOG.info('Host %(host)s already exists in aggregate for '
+                         'routed network segment %(segment_id)s',
                          {'host': event.host, 'segment_id': segment_id})
 
     @registry.receives(resources.PORT,

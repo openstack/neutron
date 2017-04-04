@@ -25,7 +25,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils as common_utils
@@ -85,8 +85,8 @@ def bridge_has_port(bridge, is_port_predicate):
     try:
         ifaces = bridge.get_iface_name_list()
     except RuntimeError as e:
-        LOG.error(_LE("Cannot obtain interface list for bridge %(bridge)s: "
-                      "%(err)s"),
+        LOG.error("Cannot obtain interface list for bridge %(bridge)s: "
+                  "%(err)s",
                   {'bridge': bridge.br_name,
                    'err': e})
         return False
@@ -183,13 +183,13 @@ class OVSDBHandler(object):
         try:
             self._wire_trunk(bridge, self._get_parent_port(bridge), rewire)
         except oslo_messaging.MessagingException as e:
-            LOG.error(_LE("Got messaging error while processing trunk bridge "
-                          "%(bridge_name)s: %(err)s"),
+            LOG.error("Got messaging error while processing trunk bridge "
+                      "%(bridge_name)s: %(err)s",
                       {'bridge_name': bridge.br_name,
                        'err': e})
         except exceptions.ParentPortNotFound as e:
-            LOG.error(_LE("Failed to get parent port for bridge "
-                          "%(bridge_name)s: %(err)s"),
+            LOG.error("Failed to get parent port for bridge "
+                      "%(bridge_name)s: %(err)s",
                       {'bridge_name': bridge.br_name,
                        'err': e})
 
@@ -217,7 +217,7 @@ class OVSDBHandler(object):
             self.unwire_subports_for_trunk(trunk_id, subport_ids)
             self.trunk_manager.remove_trunk(trunk_id, parent_port_id)
         except tman.TrunkManagerError as te:
-            LOG.error(_LE("Removing trunk %(trunk_id)s failed: %(err)s"),
+            LOG.error("Removing trunk %(trunk_id)s failed: %(err)s",
                       {'trunk_id': port['external_ids']['trunk_id'],
                        'err': te})
         else:
@@ -241,8 +241,8 @@ class OVSDBHandler(object):
                 for port in ports if is_subport(port['name'])
             ]
         except (RuntimeError, tman.TrunkManagerError) as e:
-            LOG.error(_LE("Failed to get subports for bridge %(bridge)s: "
-                          "%(err)s"), {'bridge': bridge.br_name, 'err': e})
+            LOG.error("Failed to get subports for bridge %(bridge)s: "
+                      "%(err)s", {'bridge': bridge.br_name, 'err': e})
             return []
 
     def wire_subports_for_trunk(self, context, trunk_id, subports,
@@ -262,9 +262,9 @@ class OVSDBHandler(object):
                                                 subports_mac[subport.port_id],
                                                 subport.segmentation_id)
             except tman.TrunkManagerError as te:
-                LOG.error(_LE("Failed to add subport with port ID "
-                              "%(subport_port_id)s to trunk with ID "
-                              "%(trunk_id)s: %(err)s"),
+                LOG.error("Failed to add subport with port ID "
+                          "%(subport_port_id)s to trunk with ID "
+                          "%(trunk_id)s: %(err)s",
                           {'subport_port_id': subport.port_id,
                            'trunk_id': trunk_id,
                            'err': te})
@@ -275,8 +275,8 @@ class OVSDBHandler(object):
             self._update_trunk_metadata(
                 trunk_bridge, parent_port, trunk_id, subport_ids)
         except (RuntimeError, exceptions.ParentPortNotFound) as e:
-            LOG.error(_LE("Failed to store metadata for trunk %(trunk_id)s: "
-                          "%(reason)s"), {'trunk_id': trunk_id, 'reason': e})
+            LOG.error("Failed to store metadata for trunk %(trunk_id)s: "
+                      "%(reason)s", {'trunk_id': trunk_id, 'reason': e})
             # NOTE(status_police): Trunk bridge has stale metadata now, it
             # might cause troubles during deletion. Signal a DEGRADED status;
             # if the user undo/redo the operation things may go back to
@@ -294,8 +294,8 @@ class OVSDBHandler(object):
                 self.trunk_manager.remove_sub_port(trunk_id, subport_id)
                 ids.append(subport_id)
             except tman.TrunkManagerError as te:
-                LOG.error(_LE("Removing subport %(subport_id)s from trunk "
-                              "%(trunk_id)s failed: %(err)s"),
+                LOG.error("Removing subport %(subport_id)s from trunk "
+                          "%(trunk_id)s failed: %(err)s",
                           {'subport_id': subport_id,
                            'trunk_id': trunk_id,
                            'err': te})
@@ -310,8 +310,8 @@ class OVSDBHandler(object):
             # might cause troubles during deletion. Signal a DEGRADED status;
             # if the user undo/redo the operation things may go back to
             # normal.
-            LOG.error(_LE("Failed to store metadata for trunk %(trunk_id)s: "
-                          "%(reason)s"), {'trunk_id': trunk_id, 'reason': e})
+            LOG.error("Failed to store metadata for trunk %(trunk_id)s: "
+                      "%(reason)s", {'trunk_id': trunk_id, 'reason': e})
             return constants.DEGRADED_STATUS
         except exceptions.ParentPortNotFound as e:
             # If a user deletes/migrates a VM and remove subports from a trunk
@@ -356,11 +356,11 @@ class OVSDBHandler(object):
                 self.trunk_manager.get_port_uuid_from_external_ids(port))
             trunk = self.trunk_rpc.get_trunk_details(ctx, parent_port_id)
         except tman.TrunkManagerError as te:
-            LOG.error(_LE("Can't obtain parent port ID from port %s"),
+            LOG.error("Can't obtain parent port ID from port %s",
                       port['name'])
             return
         except resources_rpc.ResourceNotFound:
-            LOG.error(_LE("Port %s has no trunk associated."), parent_port_id)
+            LOG.error("Port %s has no trunk associated.", parent_port_id)
             return
 
         try:
@@ -371,7 +371,7 @@ class OVSDBHandler(object):
                 trunk.id, trunk.port_id,
                 port['external_ids'].get('attached-mac'))
         except tman.TrunkManagerError as te:
-            LOG.error(_LE("Failed to create trunk %(trunk_id)s: %(err)s"),
+            LOG.error("Failed to create trunk %(trunk_id)s: %(err)s",
                       {'trunk_id': trunk.id,
                        'err': te})
             # NOTE(status_police): Trunk couldn't be created so it ends in
@@ -476,8 +476,8 @@ class OVSDBHandler(object):
             return True
         except common_utils.WaitTimeout:
             LOG.error(
-                _LE('No port present on trunk bridge %(br_name)s '
-                    'in %(timeout)d seconds.'),
+                'No port present on trunk bridge %(br_name)s '
+                'in %(timeout)d seconds.',
                 {'br_name': bridge.br_name,
                  'timeout': self.timeout})
         return False

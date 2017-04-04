@@ -21,7 +21,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.l3 import ha
 from neutron.agent.linux import daemon
 from neutron.agent.linux import ip_lib
@@ -86,8 +86,8 @@ class MonitorDaemon(daemon.Daemon):
                 # Remove this code once new keepalived versions are available.
                 self.send_garp(event)
         except Exception:
-            LOG.exception(_LE(
-                'Failed to process or handle event for line %s'), iterable)
+            LOG.exception('Failed to process or handle event for line %s',
+                          iterable)
 
     def write_state_change(self, state):
         with open(os.path.join(

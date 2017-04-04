@@ -28,7 +28,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from oslo_utils import excutils
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
@@ -120,9 +120,9 @@ class DhcpRpcCallback(object):
                         ctxt.reraise = True
                 if ctxt.reraise:
                     net_id = port['port']['network_id']
-                    LOG.warning(_LW("Action %(action)s for network %(net_id)s "
-                                    "could not complete successfully: "
-                                    "%(reason)s"),
+                    LOG.warning("Action %(action)s for network %(net_id)s "
+                                "could not complete successfully: "
+                                "%(reason)s",
                                 {"action": action,
                                  "net_id": net_id,
                                  'reason': e})

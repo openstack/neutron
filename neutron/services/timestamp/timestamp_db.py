@@ -16,7 +16,6 @@ from neutron_lib import exceptions as n_exc
 from oslo_utils import timeutils
 from sqlalchemy.orm import session as se
 
-from neutron._i18n import _LW
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
@@ -39,8 +38,8 @@ def _change_since_result_filter_hook(query, filters):
     try:
         changed_since_string = timeutils.parse_isotime(data)
     except Exception:
-        msg = _LW("The input %s must be in the "
-                  "following format: YYYY-MM-DDTHH:MM:SSZ") % CHANGED_SINCE
+        msg = ("The input %s must be in the "
+               "following format: YYYY-MM-DDTHH:MM:SSZ") % CHANGED_SINCE
         raise n_exc.InvalidInput(error_message=msg)
     changed_since = (timeutils.
                      normalize_time(changed_since_string))

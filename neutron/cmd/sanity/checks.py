@@ -23,7 +23,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
-from neutron._i18n import _LE
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
@@ -104,8 +103,8 @@ def ofctl_arg_supported(cmd, **kwargs):
                       "command %s. Exception: %s", full_args, e)
             return False
         except Exception:
-            LOG.exception(_LE("Unexpected exception while checking supported"
-                              " feature via command: %s"), full_args)
+            LOG.exception("Unexpected exception while checking supported"
+                          " feature via command: %s", full_args)
             return False
         else:
             return True
@@ -157,8 +156,8 @@ def _vf_management_support(required_caps):
                 LOG.debug("ip link command does not support "
                           "vf capability '%(cap)s'", {'cap': cap})
     except ip_link_support.UnsupportedIpLinkCommand:
-        LOG.exception(_LE("Unexpected exception while checking supported "
-                          "ip link command"))
+        LOG.exception("Unexpected exception while checking supported "
+                      "ip link command")
         return False
     return is_supported
 
@@ -362,11 +361,11 @@ def ovsdb_native_supported():
         ovs.get_bridges()
         return True
     except ImportError as ex:
-        LOG.error(_LE("Failed to import required modules. Ensure that the "
-                      "python-openvswitch package is installed. Error: %s"),
+        LOG.error("Failed to import required modules. Ensure that the "
+                  "python-openvswitch package is installed. Error: %s",
                   ex)
     except Exception:
-        LOG.exception(_LE("Unexpected exception occurred."))
+        LOG.exception("Unexpected exception occurred.")
 
     return False
 

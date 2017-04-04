@@ -18,7 +18,7 @@ from neutronclient.common import utils
 from neutronclient.neutron import v2_0 as client
 from neutronclient.neutron.v2_0 import port
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _
 
 
 class ProbeCommand(client.NeutronCommand):
@@ -84,7 +84,7 @@ class ClearProbe(ProbeCommand):
     def take_action(self, parsed_args):
         debug_agent = self.get_debug_agent()
         cleared_probes_count = debug_agent.clear_probes()
-        self.log.info(_LI('%d probe(s) deleted'), cleared_probes_count)
+        self.log.info('%d probe(s) deleted', cleared_probes_count)
 
 
 class ExecProbe(ProbeCommand):

@@ -20,7 +20,6 @@ from neutron_lib import constants as lib_const
 from oslo_log import log as logging
 from oslo_utils import netutils
 
-from neutron._i18n import _LE
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
@@ -461,8 +460,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         # allow_address_pair MACs will be updated in
         # self.get_or_create_ofport(port)
         if old_of_port:
-            LOG.error(_LE("Initializing port %s that was already "
-                          "initialized."),
+            LOG.error("Initializing port %s that was already "
+                      "initialized.",
                       port['device'])
             self.delete_all_port_flows(old_of_port)
         of_port = self.get_or_create_ofport(port)

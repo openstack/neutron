@@ -24,7 +24,7 @@ from oslo_utils import importutils
 import six
 import webob
 
-from neutron._i18n import _, _LI, _LW
+from neutron._i18n import _
 from neutron.common import exceptions
 from neutron.conf import quota
 from neutron.db.quota import api as quota_api
@@ -173,18 +173,18 @@ class QuotaEngine(object):
                     QUOTA_DB_MODULE not in sys.modules):
                 # If quotas table is not loaded, force config quota driver.
                 _driver_class = QUOTA_CONF_DRIVER
-                LOG.info(_LI("ConfDriver is used as quota_driver because the "
-                             "loaded plugin does not support 'quotas' table."))
+                LOG.info("ConfDriver is used as quota_driver because the "
+                         "loaded plugin does not support 'quotas' table.")
             if isinstance(_driver_class, six.string_types):
                 _driver_class = importutils.import_object(_driver_class)
             if isinstance(_driver_class, ConfDriver):
                 versionutils.report_deprecated_feature(
-                    LOG, _LW("The quota driver neutron.quota.ConfDriver is "
-                             "deprecated as of Liberty. "
-                             "neutron.db.quota.driver.DbQuotaDriver should "
-                             "be used in its place"))
+                    LOG, ("The quota driver neutron.quota.ConfDriver is "
+                          "deprecated as of Liberty. "
+                          "neutron.db.quota.driver.DbQuotaDriver should "
+                          "be used in its place"))
             self._driver = _driver_class
-            LOG.info(_LI('Loaded quota_driver: %s.'), _driver_class)
+            LOG.info('Loaded quota_driver: %s.', _driver_class)
         return self._driver
 
     def count(self, context, resource_name, *args, **kwargs):

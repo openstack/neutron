@@ -27,7 +27,7 @@ import six
 import six.moves.urllib.parse as urlparse
 import webob
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import cache_utils as cache
@@ -92,7 +92,7 @@ class MetadataProxyHandler(object):
                 return webob.exc.HTTPNotFound()
 
         except Exception:
-            LOG.exception(_LE("Unexpected error."))
+            LOG.exception("Unexpected error.")
             msg = _('An unknown error has occurred. '
                     'Please try your request again.')
             explanation = six.text_type(msg)
@@ -198,10 +198,10 @@ class MetadataProxyHandler(object):
             LOG.debug(str(resp))
             return req.response
         elif resp.status == 403:
-            LOG.warning(_LW(
+            LOG.warning(
                 'The remote metadata server responded with Forbidden. This '
                 'response usually occurs when shared secrets do not match.'
-            ))
+            )
             return webob.exc.HTTPForbidden()
         elif resp.status == 400:
             return webob.exc.HTTPBadRequest()
@@ -262,12 +262,12 @@ class UnixDomainMetadataProxy(object):
                 use_call=self.agent_state.get('start_flag'))
         except AttributeError:
             # This means the server does not support report_state
-            LOG.warning(_LW('Neutron server does not support state report.'
-                            ' State report for this agent will be disabled.'))
+            LOG.warning('Neutron server does not support state report.'
+                        ' State report for this agent will be disabled.')
             self.heartbeat.stop()
             return
         except Exception:
-            LOG.exception(_LE("Failed reporting state!"))
+            LOG.exception("Failed reporting state!")
             return
         self.agent_state.pop('start_flag', None)
 

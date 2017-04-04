@@ -29,7 +29,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.db import api as db_api
@@ -227,8 +227,8 @@ class DVRResourceOperationHandler(object):
                 port_type=const.DEVICE_OWNER_DVR_INTERFACE
             )
         )
-        LOG.info(_LI('SNAT interface port list does not exist,'
-                     ' so create one: %s'), port_list)
+        LOG.info('SNAT interface port list does not exist,'
+                 ' so create one: %s', port_list)
         for intf in int_ports:
             if intf.fixed_ips:
                 # Passing the subnet for the port to make sure the IP's
@@ -431,8 +431,8 @@ class DVRResourceOperationHandler(object):
                 try:
                     revert()
                 except Exception:
-                    LOG.exception(_LE("Failed to revert change "
-                                      "to router port %s."),
+                    LOG.exception("Failed to revert change "
+                                  "to router port %s.",
                                   port['id'])
         LOG.debug("CSNAT port updated for IPv6 subnet: %s", updated_port)
 
@@ -544,7 +544,7 @@ class DVRResourceOperationHandler(object):
         for p in c_snat_ports:
             if subnet_id is None or not p['fixed_ips']:
                 if not p['fixed_ips']:
-                    LOG.info(_LI("CSNAT port has no IPs: %s"), p)
+                    LOG.info("CSNAT port has no IPs: %s", p)
                 self.l3plugin._core_plugin.delete_port(context,
                                                        p['id'],
                                                        l3_port_check=False)
@@ -813,8 +813,8 @@ class _DVRAgentInterfaceMixin(object):
             f_port = self._get_agent_gw_ports_exist_for_network(
                 context, network_id, host, l3_agent_db['id'])
             if not f_port:
-                LOG.info(_LI('Agent Gateway port does not exist,'
-                             ' so create one: %s'), f_port)
+                LOG.info('Agent Gateway port does not exist,'
+                         ' so create one: %s', f_port)
                 port_data = {'tenant_id': '',
                              'network_id': network_id,
                              'device_id': l3_agent_db['id'],
@@ -972,8 +972,8 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             # using admin context as router may belong to admin tenant
             router = self._get_router(context.elevated(), router_id)
         except l3.RouterNotFound:
-            LOG.warning(_LW("Router %s was not found. "
-                            "Skipping agent notification."),
+            LOG.warning("Router %s was not found. "
+                        "Skipping agent notification.",
                         router_id)
             return
 

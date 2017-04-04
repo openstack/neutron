@@ -27,7 +27,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 import six
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
@@ -326,8 +326,8 @@ class IPDevice(SubProcessBase):
                                      extra_ok_codes=[1])
 
         except RuntimeError:
-            LOG.exception(_LE("Failed deleting ingress connection state of"
-                              " floatingip %s"), ip_str)
+            LOG.exception("Failed deleting ingress connection state of"
+                          " floatingip %s", ip_str)
 
         # Delete conntrack state for egress traffic
         try:
@@ -335,8 +335,8 @@ class IPDevice(SubProcessBase):
                                      check_exit_code=True,
                                      extra_ok_codes=[1])
         except RuntimeError:
-            LOG.exception(_LE("Failed deleting egress connection state of"
-                              " floatingip %s"), ip_str)
+            LOG.exception("Failed deleting egress connection state of"
+                          " floatingip %s", ip_str)
 
     def disable_ipv6(self):
         sysctl_name = re.sub(r'\.', '/', self.name)
@@ -1100,8 +1100,8 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                                     'ns': ns_name,
                                     'err': exc})
                 if not exists:
-                    LOG.warning(_LW("Interface %s might have been deleted "
-                                    "concurrently"), iface_name)
+                    LOG.warning("Interface %s might have been deleted "
+                                "concurrently", iface_name)
                     return
 
 
@@ -1160,7 +1160,7 @@ def sysctl(cmd, namespace=None, log_fail_as_error=True):
                                  log_fail_as_error=log_fail_as_error)
     except RuntimeError as rte:
         LOG.warning(
-            _LW("Setting %(cmd)s in namespace %(ns)s failed: %(err)s."),
+            "Setting %(cmd)s in namespace %(ns)s failed: %(err)s.",
             {'cmd': cmd,
              'ns': namespace,
              'err': rte})
@@ -1207,9 +1207,9 @@ def set_ip_nonlocal_bind_for_namespace(namespace):
                                   log_fail_as_error=False)
     if failed:
         LOG.warning(
-            _LW("%s will not be set to 0 in the root namespace in order to "
-                "not break DVR, which requires this value be set to 1. This "
-                "may introduce a race between moving a floating IP to a "
-                "different network node, and the peer side getting a "
-                "populated ARP cache for a given floating IP address."),
+            "%s will not be set to 0 in the root namespace in order to "
+            "not break DVR, which requires this value be set to 1. This "
+            "may introduce a race between moving a floating IP to a "
+            "different network node, and the peer side getting a "
+            "populated ARP cache for a given floating IP address.",
             IP_NONLOCAL_BIND)
