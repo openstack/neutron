@@ -85,7 +85,10 @@ case $VENV in
     ;;
 
 "api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
-    load_rc_hook api_${FLAVOR}_extensions
+    load_rc_hook api_all_extensions
+    if [ "${FLAVOR}" = "dvrskip" ]; then
+        load_rc_hook disable_dvr_tests
+    fi
     load_conf_hook quotas
     load_rc_hook dns
     load_rc_hook qos
