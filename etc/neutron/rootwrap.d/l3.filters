@@ -34,6 +34,15 @@ ip: IpFilter, ip, root
 find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -printf, %.*
 ip_exec: IpNetnsExecFilter, ip, root
 
+# l3_tc_lib
+l3_tc_show_qdisc: RegExpFilter, tc, root, tc, qdisc, show, dev, .+
+l3_tc_add_qdisc_ingress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, ingress
+l3_tc_add_qdisc_egress: RegExpFilter, tc, root, tc, qdisc, add, dev, .+, root, handle, 1:, htb
+l3_tc_show_filters: RegExpFilter, tc, root, tc, -p, -s, -d, filter, show, dev, .+, parent, .+, prio, 1
+l3_tc_delete_filters: RegExpFilter, tc, root, tc, filter, del, dev, .+, parent, .+, prio, 1, handle, .+, u32
+l3_tc_add_filter_ingress: RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, ip, prio, 1, u32, match, ip, dst, .+, police, rate, .+, burst, .+, drop, flowid, :1
+l3_tc_add_filter_egress:  RegExpFilter, tc, root, tc, filter, add, dev, .+, parent, .+, protocol, ip, prio, 1, u32, match, ip, src, .+, police, rate, .+, burst, .+, drop, flowid, :1
+
 # For ip monitor
 kill_ip_monitor: KillFilter, root, ip, -9
 
