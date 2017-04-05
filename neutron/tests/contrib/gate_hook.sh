@@ -91,6 +91,7 @@ case $VENV in
     load_rc_hook qos
     load_rc_hook trunk
     load_conf_hook mtu
+    load_conf_hook vlan_provider
     load_conf_hook osprofiler
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
         load_rc_hook ubuntu_image
