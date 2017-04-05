@@ -310,7 +310,8 @@ class CommonDbMixin(object):
         uk_sets = sa_utils._get_unique_keys(model)
         for kset in uk_sets:
             for k in kset:
-                if marker_obj and isinstance(getattr(marker_obj, k), bool):
+                if marker_obj and (isinstance(getattr(marker_obj, k), bool)
+                                   or getattr(marker_obj, k) is None):
                     # TODO(kevinbenton): workaround for bug/1656947.
                     # we can't use boolean cols until that bug is fixed. return
                     # first entry in uk_sets once that bug is resolved
