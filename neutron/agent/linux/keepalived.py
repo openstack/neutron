@@ -482,6 +482,8 @@ class KeepalivedManager(object):
                    '-f', config_path,
                    '-p', pid_file,
                    '-r', self.get_vrrp_pid_file_name(pid_file)]
+            if cfg.CONF.debug:
+                cmd.append('-D')
             return cmd
 
         return callback
