@@ -16,6 +16,7 @@ import copy
 
 import netaddr
 from neutron_lib import constants as lib_constants
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 from six import moves
 
@@ -110,12 +111,15 @@ def prepare_router_data(ip_version=4, enable_snat=None, num_internal_ports=1,
         'gw_port': ex_gw_port}
 
     if enable_floating_ip:
-        router[lib_constants.FLOATINGIP_KEY] = [{
-            'id': _uuid(),
-            'port_id': _uuid(),
-            'status': 'DOWN',
-            'floating_ip_address': '19.4.4.2',
-            'fixed_ip_address': '10.0.0.1'}]
+        fip = {'id': _uuid(),
+               'port_id': _uuid(),
+               'status': 'DOWN',
+               'floating_ip_address': '19.4.4.2',
+               'fixed_ip_address': '10.0.0.1'}
+        qos_policy_id = kwargs.get(qos_consts.QOS_POLICY_ID)
+        if qos_policy_id:
+            fip[qos_consts.QOS_POLICY_ID] = qos_policy_id
+        router[lib_constants.FLOATINGIP_KEY] = [fip]
 
     router_append_interface(router, count=num_internal_ports,
                             ip_version=ip_version, dual_stack=dual_stack)
