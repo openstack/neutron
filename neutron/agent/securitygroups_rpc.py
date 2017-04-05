@@ -33,24 +33,7 @@ LOG = logging.getLogger(__name__)
 sc_cfg.register_securitygroups_opts()
 
 
-#This is backward compatibility check for Havana
-def _is_valid_driver_combination():
-    return ((cfg.CONF.SECURITYGROUP.enable_security_group and
-             (cfg.CONF.SECURITYGROUP.firewall_driver and
-              cfg.CONF.SECURITYGROUP.firewall_driver !=
-             'neutron.agent.firewall.NoopFirewallDriver')) or
-            (not cfg.CONF.SECURITYGROUP.enable_security_group and
-             (cfg.CONF.SECURITYGROUP.firewall_driver ==
-             'neutron.agent.firewall.NoopFirewallDriver' or
-              cfg.CONF.SECURITYGROUP.firewall_driver is None)
-             ))
-
-
 def is_firewall_enabled():
-    if not _is_valid_driver_combination():
-        LOG.warning(_LW("Driver configuration doesn't match with "
-                        "enable_security_group"))
-
     return cfg.CONF.SECURITYGROUP.enable_security_group
 
 
@@ -80,9 +63,6 @@ class SecurityGroupAgentRpc(object):
                       integration_bridge=None):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver or 'noop'
         LOG.debug("Init firewall settings (driver=%s)", firewall_driver)
-        if not _is_valid_driver_combination():
-            LOG.warning(_LW("Driver configuration doesn't match "
-                            "with enable_security_group"))
         firewall_class = firewall.load_firewall_driver_class(firewall_driver)
         try:
             self.firewall = firewall_class(
