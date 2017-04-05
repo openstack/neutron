@@ -196,8 +196,12 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 api.MTU: self.get_mtu(alloc.physical_network)}
 
     def allocate_tenant_segment(self, context):
-        alloc = self.allocate_partially_specified_segment(context)
-        if not alloc:
+        for physnet in self.network_vlan_ranges:
+            alloc = self.allocate_partially_specified_segment(
+                context, physical_network=physnet)
+            if alloc:
+                break
+        else:
             return
         return {api.NETWORK_TYPE: p_const.TYPE_VLAN,
                 api.PHYSICAL_NETWORK: alloc.physical_network,
