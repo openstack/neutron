@@ -311,7 +311,7 @@
         subport_count: 250
       runner:
         type: "constant"
-        times: 1
+        times: 4
         concurrency: 4
       context:
         users:
