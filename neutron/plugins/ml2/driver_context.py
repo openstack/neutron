@@ -40,12 +40,12 @@ class MechanismDriverContext(object):
 class NetworkContext(MechanismDriverContext, api.NetworkContext):
 
     def __init__(self, plugin, plugin_context, network,
-                 original_network=None):
+                 original_network=None, segments=None):
         super(NetworkContext, self).__init__(plugin, plugin_context)
         self._network = network
         self._original_network = original_network
         self._segments = segments_db.get_network_segments(
-            plugin_context, network['id'])
+            plugin_context, network['id']) if segments is None else segments
 
     @property
     def current(self):
@@ -95,8 +95,11 @@ class PortContext(MechanismDriverContext, api.PortContext):
         super(PortContext, self).__init__(plugin, plugin_context)
         self._port = port
         self._original_port = original_port
-        self._network_context = NetworkContext(plugin, plugin_context,
-                                               network) if network else None
+        if isinstance(network, NetworkContext):
+            self._network_context = network
+        else:
+            self._network_context = NetworkContext(
+                plugin, plugin_context, network) if network else None
         # NOTE(kevinbenton): these copys can go away once we are working with
         # OVO objects here instead of native SQLA objects.
         self._binding = copy.deepcopy(binding)
