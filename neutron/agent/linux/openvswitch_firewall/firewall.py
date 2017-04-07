@@ -561,7 +561,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             dl_dst=port.mac,
             actions='set_field:{:d}->reg{:d},'
                     'set_field:{:d}->reg{:d},'
-                    'resubmit(,{:d})'.format(
+                    'strip_vlan,resubmit(,{:d})'.format(
                         port.ofport,
                         ovsfw_consts.REG_PORT,
                         port.vlan_tag,
@@ -777,7 +777,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='strip_vlan,output:{:d}'.format(port.ofport),
+                actions='output:{:d}'.format(port.ofport),
             )
 
     def _initialize_ingress(self, port):
@@ -788,7 +788,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             dl_type=constants.ETHERTYPE_ARP,
             reg_port=port.ofport,
             dl_dst=port.mac,
-            actions='strip_vlan,output:{:d}'.format(port.ofport),
+            actions='output:{:d}'.format(port.ofport),
         )
         self._initialize_ingress_ipv6_icmp(port)
 
@@ -804,7 +804,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
-                actions='strip_vlan,output:{:d}'.format(port.ofport),
+                actions='output:{:d}'.format(port.ofport),
             )
 
         # Track untracked
@@ -856,7 +856,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=state,
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 ct_zone=port.vlan_tag,
-                actions='strip_vlan,output:{:d}'.format(port.ofport)
+                actions='output:{:d}'.format(port.ofport)
             )
         self._add_flow(
             table=ovs_consts.RULES_INGRESS_TABLE,

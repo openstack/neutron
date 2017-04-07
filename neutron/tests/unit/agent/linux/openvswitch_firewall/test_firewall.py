@@ -472,7 +472,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             table=ovs_consts.TRANSIENT_TABLE)
         exp_ingress_classifier = mock.call(
             actions='set_field:{:d}->reg5,set_field:{:d}->reg6,'
-                    'resubmit(,{:d})'.format(
+                    'strip_vlan,resubmit(,{:d})'.format(
                         self.port_ofport, TESTING_VLAN_TAG,
                         ovs_consts.BASE_INGRESS_TABLE),
             dl_dst=self.port_mac,
@@ -480,7 +480,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             table=ovs_consts.TRANSIENT_TABLE)
         filter_rule = mock.call(
             actions='ct(commit,zone=NXM_NX_REG6[0..15]),'
-            'strip_vlan,output:{:d}'.format(self.port_ofport),
+            'output:{:d}'.format(self.port_ofport),
             dl_dst=self.port_mac,
             dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,

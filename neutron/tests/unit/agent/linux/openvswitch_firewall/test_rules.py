@@ -187,7 +187,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         expected_flows = [{
             'table': ovs_consts.RULES_INGRESS_TABLE,
             'dl_dst': self.port.mac,
-            'actions': 'strip_vlan,output:1',
+            'actions': 'output:1',
             'nw_proto': constants.PROTO_NUM_TCP,
         }]
         self._test_create_protocol_flows_helper(
@@ -368,7 +368,7 @@ class TestCreateConjFlows(base.BaseTestCase):
                          flows[0]['ct_state'])
         self.assertEqual(ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
                          flows[1]['ct_state'])
-        self.assertEqual("strip_vlan,output:{:d}".format(port.ofport),
+        self.assertEqual("output:{:d}".format(port.ofport),
                          flows[0]['actions'])
         self.assertEqual("ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s}".format(
             ovsfw_consts.REG_NET, flows[0]['actions']),
