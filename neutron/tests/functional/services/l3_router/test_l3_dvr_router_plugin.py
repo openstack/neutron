@@ -169,18 +169,18 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
                 self.context, network_id, "", self.l3_agent['id']))
 
-    def test_get_fip_sync_interfaces(self):
+    def test_get_fip_agent_gw_ports(self):
         self.setup_create_agent_gw_port_for_network()
 
         self.assertEqual(
-            1, len(self.l3_plugin._get_fip_sync_interfaces(
+            1, len(self.l3_plugin._get_fip_agent_gw_ports(
                 self.context, self.l3_agent['id'])))
 
     def test_process_routers(self):
         router = self._create_router()
         if not router.get('gw_port_id'):
             router['gw_port_id'] = 'fake_gw_id'
-        self.l3_plugin._get_fip_sync_interfaces = mock.Mock(
+        self.l3_plugin._get_fip_agent_gw_ports = mock.Mock(
             return_value='fip_interface')
         self.l3_plugin._get_snat_sync_interfaces = mock.Mock(
             return_value={router['id']: 'snat_interface'})
@@ -190,7 +190,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         self.assertEqual(
             router['id'], result[router['id']]['id'])
         self.assertIn(n_const.FLOATINGIP_AGENT_INTF_KEY, result[router['id']])
-        self.l3_plugin._get_fip_sync_interfaces.assert_called_once_with(
+        self.l3_plugin._get_fip_agent_gw_ports.assert_called_once_with(
             self.context, self.l3_agent['id'])
         self.l3_plugin._get_snat_sync_interfaces.assert_called_once_with(
             self.context, [router['id']])
