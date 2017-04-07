@@ -99,10 +99,11 @@ class SqlFixture(fixtures.Fixture):
 
         self.sessionmaker = session.get_maker(engine)
 
-        self.enginefacade_factory = enginefacade._TestTransactionFactory(
-            self.engine, self.sessionmaker, apply_global=False)
-
         _restore_factory = db_api.context_manager._root_factory
+
+        self.enginefacade_factory = enginefacade._TestTransactionFactory(
+            self.engine, self.sessionmaker, from_factory=_restore_factory,
+            apply_global=False)
 
         db_api.context_manager._root_factory = self.enginefacade_factory
 
@@ -160,7 +161,7 @@ class StaticSqlFixture(SqlFixture):
         else:
             cls._GLOBAL_RESOURCES = True
             cls.schema_resource = provision.SchemaResource(
-                provision.DatabaseResource("sqlite"),
+                provision.DatabaseResource("sqlite", db_api.context_manager),
                 cls._generate_schema, teardown=False)
             dependency_resources = {}
             for name, resource in cls.schema_resource.resources:
@@ -183,7 +184,8 @@ class StaticSqlFixtureNoSchema(SqlFixture):
             return
         else:
             cls._GLOBAL_RESOURCES = True
-            cls.database_resource = provision.DatabaseResource("sqlite")
+            cls.database_resource = provision.DatabaseResource(
+                "sqlite", db_api.context_manager)
             dependency_resources = {}
             for name, resource in cls.database_resource.resources:
                 dependency_resources[name] = resource.getResource()
