@@ -32,7 +32,6 @@ from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import netutils
 from oslo_utils import uuidutils
-import six
 from sqlalchemy import orm
 import testtools
 from testtools import matchers
@@ -125,7 +124,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override(
             'service_plugins',
             [test_lib.test_config.get(key, default)
-             for key, default in six.iteritems(service_plugins or {})]
+             for key, default in (service_plugins or {}).items()]
         )
 
         cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")

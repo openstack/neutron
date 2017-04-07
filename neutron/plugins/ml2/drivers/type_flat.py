@@ -16,7 +16,6 @@
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
-import six
 
 from neutron._i18n import _, _LI, _LW
 from neutron.common import exceptions as n_exc
@@ -81,7 +80,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
                    % physical_network)
             raise exc.InvalidInput(error_message=msg)
 
-        for key, value in six.iteritems(segment):
+        for key, value in segment.items():
             if value and key not in [api.NETWORK_TYPE,
                                      api.PHYSICAL_NETWORK]:
                 msg = _("%s prohibited for flat provider network") % key

@@ -30,7 +30,6 @@ from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_utils import netutils
 from oslo_utils import timeutils
-import six
 import unittest2
 
 from neutron.api.v2 import attributes
@@ -61,7 +60,7 @@ class AttributeMapMemento(fixtures.Fixture):
         # to result in test failures. A compromise is to copy one level
         # deeper than a shallow copy.
         self.contents_backup = {}
-        for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
+        for res, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.items():
             self.contents_backup[res] = attrs.copy()
         self.addCleanup(self.restore)
 

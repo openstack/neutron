@@ -17,7 +17,6 @@ import functools
 
 import fixtures
 import mock
-import six
 import testtools
 import webob
 
@@ -251,7 +250,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             network = self.deserialize(self.fmt,
                                        req.get_response(self.api))['network']
             if mpnet.SEGMENTS not in net:
-                for k, v in six.iteritems(net):
+                for k, v in net.items():
                     self.assertEqual(net[k], network[k])
                     self.assertNotIn(mpnet.SEGMENTS, network)
             else:

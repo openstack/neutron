@@ -17,7 +17,6 @@ import copy
 
 import mock
 from neutron_lib import constants
-import six
 import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
@@ -58,7 +57,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         # Get the last state reported for each router
         actual_router_states = {}
         for call in calls:
-            for router_id, state in six.iteritems(call):
+            for router_id, state in call.items():
                 actual_router_states[router_id] = state
 
         return actual_router_states == expected
