@@ -64,21 +64,6 @@ class L3AgentSchedulerTestJSON(base.BaseAdminNetworkTest):
             msg = "L3 Agent Scheduler enabled in conf, but L3 Agent not found"
             raise exceptions.InvalidConfiguration(msg)
         cls.router = cls.create_router(data_utils.rand_name('router'))
-        # NOTE(armax): If DVR is an available extension, and the created router
-        # is indeed a distributed one, more resources need to be provisioned
-        # in order to bind the router to the L3 agent.
-        # That said, let's preserve the existing test logic, where the extra
-        # query and setup steps are only required if the extension is available
-        # and only if the router's default type is distributed.
-        if test.is_extension_enabled('dvr', 'network'):
-            is_dvr_router = cls.admin_client.show_router(
-                cls.router['id'])['router'].get('distributed', False)
-            if is_dvr_router:
-                cls.network = cls.create_network()
-                cls.create_subnet(cls.network)
-                cls.port = cls.create_port(cls.network)
-                cls.client.add_router_interface_with_port_id(
-                    cls.router['id'], cls.port['id'])
 
     @decorators.idempotent_id('b7ce6e89-e837-4ded-9b78-9ed3c9c6a45a')
     def test_list_routers_on_l3_agent(self):
