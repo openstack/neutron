@@ -61,6 +61,17 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         result = utils.execute(["ls", self.test_file], run_as_root=True)
         self.assertEqual(result, expected)
 
+    @mock.patch.object(utils.RootwrapDaemonHelper, 'get_client')
+    def test_with_helper_exception(self, get_client):
+        client_inst = mock.Mock()
+        client_inst.execute.side_effect = RuntimeError
+        get_client.return_value = client_inst
+        self.config(group='AGENT', root_helper_daemon='echo')
+        with mock.patch.object(utils, 'LOG') as log:
+            self.assertRaises(RuntimeError, utils.execute,
+                              ['ls'], run_as_root=True)
+            self.assertTrue(log.error.called)
+
     def test_stderr_true(self):
         expected = "%s\n" % self.test_file
         self.mock_popen.return_value = [expected, ""]

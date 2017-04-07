@@ -107,7 +107,11 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
     # just logging the execution error.
     LOG.debug("Running command (rootwrap daemon): %s", cmd)
     client = RootwrapDaemonHelper.get_client()
-    return client.execute(cmd, process_input)
+    try:
+        return client.execute(cmd, process_input)
+    except Exception:
+        with excutils.save_and_reraise_exception():
+            LOG.error(_LE("Rootwrap error running command: %s"), cmd)
 
 
 def execute(cmd, process_input=None, addl_env=None,
