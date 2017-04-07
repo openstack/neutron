@@ -2854,33 +2854,3 @@ class TestSecurityGroupExtensionControl(base.BaseTestCase):
         ext_aliases = ['dummy1', 'security-group', 'dummy2']
         sg_rpc.disable_security_group_extension_by_config(ext_aliases)
         self.assertEqual(ext_aliases, exp_aliases)
-
-    def test_is_invalid_drvier_combination_sg_enabled(self):
-        set_enable_security_groups(True)
-        set_firewall_driver(FIREWALL_NOOP_DRIVER)
-        self.assertFalse(sg_rpc._is_valid_driver_combination())
-
-    def test_is_invalid_drvier_combination_sg_enabled_with_none(self):
-        set_enable_security_groups(True)
-        set_firewall_driver(None)
-        self.assertFalse(sg_rpc._is_valid_driver_combination())
-
-    def test_is_invalid_drvier_combination_sg_disabled(self):
-        set_enable_security_groups(False)
-        set_firewall_driver('NonNoopDriver')
-        self.assertFalse(sg_rpc._is_valid_driver_combination())
-
-    def test_is_valid_drvier_combination_sg_enabled(self):
-        set_enable_security_groups(True)
-        set_firewall_driver('NonNoopDriver')
-        self.assertTrue(sg_rpc._is_valid_driver_combination())
-
-    def test_is_valid_drvier_combination_sg_disabled(self):
-        set_enable_security_groups(False)
-        set_firewall_driver(FIREWALL_NOOP_DRIVER)
-        self.assertTrue(sg_rpc._is_valid_driver_combination())
-
-    def test_is_valid_drvier_combination_sg_disabled_with_none(self):
-        set_enable_security_groups(False)
-        set_firewall_driver(None)
-        self.assertTrue(sg_rpc._is_valid_driver_combination())
