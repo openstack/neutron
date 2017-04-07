@@ -1606,7 +1606,8 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             plugin = directory.get_plugin()
             binding = plugin._get_port(
                 self.context, port['port']['id']).port_binding
-            binding['host'] = 'test'
+            with self.context.session.begin(subtransactions=True):
+                binding.host = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
@@ -1614,7 +1615,9 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
                         '_update_port_dict_binding') as update_mock:
             attrs = {portbindings.HOST_ID: None}
-            plugin._process_port_binding(mech_context, attrs)
+            self.assertEqual('test', binding.host)
+            with self.context.session.begin(subtransactions=True):
+                plugin._process_port_binding(mech_context, attrs)
             self.assertTrue(update_mock.mock_calls)
             self.assertEqual('', binding.host)
 
