@@ -122,7 +122,7 @@ class IPWrapper(SubProcessBase):
     def device(self, name):
         return IPDevice(name, namespace=self.namespace)
 
-    def get_devices(self, exclude_loopback=False, exclude_gre_devices=False):
+    def get_devices(self, exclude_loopback=True, exclude_gre_devices=True):
         retval = []
         if self.namespace:
             # we call out manually because in order to avoid screen scraping
@@ -215,8 +215,7 @@ class IPWrapper(SubProcessBase):
         return ip
 
     def namespace_is_empty(self):
-        return not self.get_devices(exclude_loopback=True,
-                                    exclude_gre_devices=True)
+        return not self.get_devices()
 
     def garbage_collect_namespace(self):
         """Conditionally destroy the namespace if it is empty."""

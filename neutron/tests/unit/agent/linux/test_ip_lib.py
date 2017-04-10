@@ -275,7 +275,7 @@ class TestIpWrapper(base.BaseTestCase):
     def test_get_devices(self, mocked_listdir, mocked_islink):
         retval = ip_lib.IPWrapper().get_devices()
         mocked_islink.assert_called_once_with('/sys/class/net/lo')
-        self.assertEqual(retval, [ip_lib.IPDevice('lo')])
+        self.assertEqual([], retval)
 
     @mock.patch('neutron.agent.common.utils.execute')
     def test_get_devices_namespaces(self, mocked_execute):
@@ -288,7 +288,7 @@ class TestIpWrapper(base.BaseTestCase):
                  '-maxdepth', '1', '-type', 'l', '-printf', '%f '],
                 run_as_root=True, log_fail_as_error=True)
         self.assertTrue(fake_str.split.called)
-        self.assertEqual(retval, [ip_lib.IPDevice('lo', namespace='foo')])
+        self.assertEqual([], retval)
 
     @mock.patch('neutron.agent.common.utils.execute')
     def test_get_devices_namespaces_ns_not_exists(self, mocked_execute):
