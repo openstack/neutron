@@ -102,6 +102,9 @@
     "create_router:ha": "rule:admin_only",
     "get_router": "rule:admin_or_owner",
     "get_router:distributed": "rule:admin_only",
+    "update_router": "rule:admin_or_owner",
+    "update_router:external_gateway_info": "rule:admin_or_owner",
+    "update_router:external_gateway_info:network_id": "rule:admin_or_owner",
     "update_router:external_gateway_info:enable_snat": "rule:admin_only",
     "update_router:distributed": "rule:admin_only",
     "update_router:ha": "rule:admin_only",
@@ -210,5 +213,15 @@
     "delete_trunk": "rule:admin_or_owner",
     "get_subports": "",
     "add_subports": "rule:admin_or_owner",
-    "remove_subports": "rule:admin_or_owner"
+    "remove_subports": "rule:admin_or_owner",
+
+    "get_security_groups": "rule:admin_or_owner",
+    "get_security_group": "rule:admin_or_owner",
+    "create_security_group": "rule:admin_or_owner",
+    "update_security_group": "rule:admin_or_owner",
+    "delete_security_group": "rule:admin_or_owner",
+    "get_security_group_rules": "rule:admin_or_owner",
+    "get_security_group_rule": "rule:admin_or_owner",
+    "create_security_group_rule": "rule:admin_or_owner",
+    "delete_security_group_rule": "rule:admin_or_owner"
 }
