@@ -236,6 +236,14 @@ def check_ip6tables():
     return result
 
 
+def check_conntrack():
+    result = checks.conntrack_supported()
+    if not result:
+        LOG.error(_LE('Cannot run conntrack. Please ensure that it '
+                      'is installed.'))
+    return result
+
+
 def check_dhcp_release6():
     result = checks.dhcp_release6_supported()
     if not result:
@@ -312,6 +320,8 @@ OPTS = [
                     help=_('Check ipset installation')),
     BoolOptCallback('ip6tables_installed', check_ip6tables,
                     help=_('Check ip6tables installation')),
+    BoolOptCallback('conntrack_installed', check_conntrack,
+                    help=_('Check conntrack installation')),
     BoolOptCallback('dhcp_release6', check_dhcp_release6,
                     help=_('Check dhcp_release6 installation')),
     BoolOptCallback('bridge_firewalling', check_bridge_firewalling_enabled,

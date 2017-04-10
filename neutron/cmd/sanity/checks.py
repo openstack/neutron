@@ -415,6 +415,17 @@ def ip6tables_supported():
         return False
 
 
+def conntrack_supported():
+    try:
+        cmd = ['conntrack', '--version']
+        agent_utils.execute(cmd)
+        return True
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking for installed conntrack. "
+                  "Exception: %s", e)
+        return False
+
+
 def get_minimal_dibbler_version_supported():
     return MINIMUM_DIBBLER_VERSION
 
