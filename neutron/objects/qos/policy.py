@@ -228,6 +228,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             names.append(rule_obj_impl.QosBandwidthLimitRule.obj_name())
         if _target_version >= (1, 1):
             names.append(rule_obj_impl.QosDscpMarkingRule.obj_name())
+        if _target_version >= (1, 2):
+            names.append(rule_obj_impl.QosMinimumBandwidthRule.obj_name())
         if 'rules' in primitive and names:
             primitive['rules'] = filter_rules(names, primitive['rules'])
 
