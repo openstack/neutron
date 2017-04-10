@@ -29,14 +29,13 @@ MAX_CONNTRACK_ZONES = 65535
 
 @lockutils.synchronized('conntrack')
 def get_conntrack(get_rules_for_table_func, filtered_ports, unfiltered_ports,
-                  execute=None, namespace=None):
-
+                  execute=None, namespace=None, zone_per_port=False):
     try:
         return CONTRACK_MGRS[namespace]
     except KeyError:
         ipconntrack = IpConntrackManager(get_rules_for_table_func,
                                          filtered_ports, unfiltered_ports,
-                                         execute, namespace)
+                                         execute, namespace, zone_per_port)
         CONTRACK_MGRS[namespace] = ipconntrack
         return CONTRACK_MGRS[namespace]
 
@@ -45,12 +44,14 @@ class IpConntrackManager(object):
     """Smart wrapper for ip conntrack."""
 
     def __init__(self, get_rules_for_table_func, filtered_ports,
-                 unfiltered_ports, execute=None, namespace=None):
+                 unfiltered_ports, execute=None, namespace=None,
+                 zone_per_port=False):
         self.get_rules_for_table_func = get_rules_for_table_func
         self.execute = execute or linux_utils.execute
         self.namespace = namespace
         self.filtered_ports = filtered_ports
         self.unfiltered_ports = unfiltered_ports
+        self.zone_per_port = zone_per_port  # zone per port vs per network
         self._populate_initial_zone_map()
 
     @staticmethod
@@ -74,8 +75,7 @@ class IpConntrackManager(object):
         cmd = self._generate_conntrack_cmd_by_rule(rule, self.namespace)
         ethertype = rule.get('ethertype')
         for device_info in device_info_list:
-            zone_id = self._device_zone_map.get(
-                self._port_key(device_info['device']), None)
+            zone_id = self.get_device_zone(device_info, create=False)
             if not zone_id:
                 LOG.debug("No zone for device %(dev)s. Will not try to "
                           "clear conntrack state. Zone map: %(zm)s",
@@ -139,26 +139,30 @@ class IpConntrackManager(object):
                 self._device_zone_map[short_port_id] = int(match.group('zone'))
         LOG.debug("Populated conntrack zone map: %s", self._device_zone_map)
 
-    @staticmethod
-    def _port_key(port_id):
-        # we have to key the device_zone_map based on the fragment of the port
+    def _device_key(self, port):
+        # we have to key the device_zone_map based on the fragment of the
         # UUID that shows up in the interface name. This is because the initial
         # map is populated strictly based on interface names that we don't know
         # the full UUID of.
-        return port_id[:(n_const.LINUX_DEV_LEN -
-                         n_const.LINUX_DEV_PREFIX_LEN)]
+        if self.zone_per_port:
+            identifier = port['device'][n_const.LINUX_DEV_PREFIX_LEN:]
+        else:
+            identifier = port['network_id']
+        return identifier[:(n_const.LINUX_DEV_LEN -
+                          n_const.LINUX_DEV_PREFIX_LEN)]
 
-    def get_device_zone(self, port_id):
-        short_port_id = self._port_key(port_id)
+    def get_device_zone(self, port, create=True):
+        device_key = self._device_key(port)
         try:
-            return self._device_zone_map[short_port_id]
+            return self._device_zone_map[device_key]
         except KeyError:
-            return self._generate_device_zone(short_port_id)
+            if create:
+                return self._generate_device_zone(device_key)
 
     def _free_zones_from_removed_ports(self):
         """Clears any entries from the zone map of removed ports."""
         existing_ports = [
-            self._port_key(port['device'])
+            self._device_key(port)
             for port in (list(self.filtered_ports.values()) +
                          list(self.unfiltered_ports.values()))
         ]
@@ -166,7 +170,7 @@ class IpConntrackManager(object):
         for dev in removed:
             self._device_zone_map.pop(dev, None)
 
-    def _generate_device_zone(self, short_port_id):
+    def _generate_device_zone(self, short_device_id):
         """Generates a unique conntrack zone for the passed in ID."""
         try:
             zone = self._find_open_zone()
@@ -175,10 +179,10 @@ class IpConntrackManager(object):
             self._free_zones_from_removed_ports()
             zone = self._find_open_zone()
 
-        self._device_zone_map[short_port_id] = zone
-        LOG.debug("Assigned CT zone %(z)s to port %(dev)s.",
-                  {'z': zone, 'dev': short_port_id})
-        return self._device_zone_map[short_port_id]
+        self._device_zone_map[short_device_id] = zone
+        LOG.debug("Assigned CT zone %(z)s to device %(dev)s.",
+                  {'z': zone, 'dev': short_device_id})
+        return self._device_zone_map[short_device_id]
 
     def _find_open_zone(self):
         # call set to dedup because old ports may be mapped to the same zone.
