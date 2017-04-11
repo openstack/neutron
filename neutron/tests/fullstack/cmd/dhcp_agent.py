@@ -20,8 +20,8 @@ import sys
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent import dhcp_agent
 from neutron.agent.linux import dhcp as linux_dhcp
+from neutron.cmd.eventlet.agents import dhcp as dhcp_agent
 
 
 OPTS = [
