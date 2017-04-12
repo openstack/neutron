@@ -8,30 +8,34 @@ Neutron Style Commandments
 Neutron Specific Commandments
 -----------------------------
 
-- [N319] Validate that debug level logs are not translated
+Some rules are enforced by `neutron-lib hacking factory
+<https://docs.openstack.org/developer/neutron-lib/usage.html#hacking-checks>`_
+while other rules are specific to Neutron repository.
+
+Below you can find a list of checks specific to this repository.
+
 - [N320] Validate that LOG messages, except debug ones, have translations
-- [N321] Validate that jsonutils module is used instead of json
 - [N322] Detect common errors with assert_called_once_with
-- [N324] Prevent use of deprecated contextlib.nested.
-- [N325] Python 3: Do not use xrange.
-- [N326] Python 3: do not use basestring.
-- [N327] Python 3: do not use dict.iteritems.
 - [N328] Detect wrong usage with assertEqual
-- [N329] Method's default argument shouldn't be mutable
 - [N330] Use assertEqual(*empty*, observed) instead of
          assertEqual(observed, *empty*)
 - [N331] Detect wrong usage with assertTrue(isinstance()).
 - [N332] Use assertEqual(expected_http_code, observed_http_code) instead of
          assertEqual(observed_http_code, expected_http_code).
-- [N333] Validate that LOG.warning is used instead of LOG.warn. The latter
-  is deprecated.
 - [N334] Use unittest2 uniformly across Neutron.
 - [N340] Check usage of <module>.i18n (and neutron.i18n)
 - [N341] Check usage of _ from python builtins
 - [N343] Production code must not import from neutron.tests.*
 - [N344] Python 3: Do not use filter(lambda obj: test(obj), data). Replace it
   with [obj for obj in data if test(obj)].
-- [N345] Detect wrong usage with assertEqual(None, A) and assertEqual(A, None).
+
+.. note::
+   When adding a new hacking check to this repository or ``neutron-lib``, make
+   sure its number (Nxxx) doesn't clash with any other check.
+
+.. note::
+   As you may have noticed, the numbering for Neutron checks has gaps. This is
+   because some checks were removed or moved to ``neutron-lib``.
 
 Creating Unit Tests
 -------------------

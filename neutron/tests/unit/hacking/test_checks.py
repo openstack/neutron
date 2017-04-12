@@ -36,38 +36,6 @@ class HackingTestCase(base.BaseTestCase):
     def assertLineFails(self, func, line):
         self.assertIsInstance(next(func(line)), tuple)
 
-    def test_no_translate_debug_logs(self):
-        for hint in checks._all_hints:
-            bad = "LOG.debug(%s('bad'))" % hint
-            self.assertEqual(
-                1, len(list(checks.no_translate_debug_logs(bad, 'f'))))
-
-    def test_use_jsonutils(self):
-        def __get_msg(fun):
-            msg = ("N321: jsonutils.%(fun)s must be used instead of "
-                   "json.%(fun)s" % {'fun': fun})
-            return [(0, msg)]
-
-        for method in ('dump', 'dumps', 'load', 'loads'):
-            self.assertEqual(
-                __get_msg(method),
-                list(checks.use_jsonutils("json.%s(" % method,
-                                          "./neutron/common/rpc.py")))
-
-            self.assertEqual(0,
-                len(list(checks.use_jsonutils("jsonx.%s(" % method,
-                                              "./neutron/common/rpc.py"))))
-
-            self.assertEqual(0,
-                len(list(checks.use_jsonutils("json.%sx(" % method,
-                                              "./neutron/common/rpc.py"))))
-
-            self.assertEqual(0,
-                len(list(checks.use_jsonutils(
-                    "json.%s" % method,
-                    "./neutron/plugins/ml2/drivers/openvswitch/agent/xenapi/"
-                    "etc/xapi.d/plugins/netwrap"))))
-
     def test_assert_called_once_with(self):
         fail_code1 = """
                mock = Mock()
@@ -117,36 +85,6 @@ class HackingTestCase(base.BaseTestCase):
         self.assertEqual(
             0, len(list(checks.check_assert_called_once_with(pass_code2,
                                             "neutron/tests/test_assert.py"))))
-
-    def test_check_python3_xrange(self):
-        f = checks.check_python3_xrange
-        self.assertLineFails(f, 'a = xrange(1000)')
-        self.assertLineFails(f, 'b =xrange   (   42 )')
-        self.assertLineFails(f, 'c = xrange(1, 10, 2)')
-        self.assertLinePasses(f, 'd = range(1000)')
-        self.assertLinePasses(f, 'e = six.moves.range(1337)')
-
-    def test_no_basestring(self):
-        self.assertEqual(1,
-            len(list(checks.check_no_basestring("isinstance(x, basestring)"))))
-
-    def test_check_python3_iteritems(self):
-        f = checks.check_python3_no_iteritems
-        self.assertLineFails(f, "d.iteritems()")
-        self.assertLinePasses(f, "six.iteritems(d)")
-
-    def test_no_mutable_default_args(self):
-        self.assertEqual(1, len(list(checks.no_mutable_default_args(
-            " def fake_suds_context(calls={}):"))))
-
-        self.assertEqual(1, len(list(checks.no_mutable_default_args(
-            "def get_info_from_bdm(virt_type, bdm, mapping=[])"))))
-
-        self.assertEqual(0, len(list(checks.no_mutable_default_args(
-            "defined = []"))))
-
-        self.assertEqual(0, len(list(checks.no_mutable_default_args(
-            "defined, undefined = [], {}"))))
 
     def test_asserttruefalse(self):
         true_fail_code1 = """
@@ -268,11 +206,6 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLineFails(f, 'from unittest.TestSuite')
         self.assertLineFails(f, 'import unittest')
 
-    def test_check_log_warn_deprecated(self):
-        bad = "LOG.warn(_LW('i am zlatan!'))"
-        self.assertEqual(
-            1, len(list(checks.check_log_warn_deprecated(bad, 'f'))))
-
     def test_check_no_imports_from_tests(self):
         fail_codes = ('from neutron import tests',
                       'from neutron.tests import base',
@@ -293,16 +226,6 @@ class HackingTestCase(base.BaseTestCase):
         self.assertLinePasses(f, "[obj for obj in data if test(obj)]")
         self.assertLinePasses(f, "filter(function, range(0,10))")
         self.assertLinePasses(f, "lambda x, y: x+y")
-
-    def test_check_assertIsNone(self):
-        self.assertEqual(1, len(list(checks.check_assertIsNone(
-            "self.assertEqual(A, None)", "neutron/tests/test_assert.py"))))
-
-        self.assertEqual(1, len(list(checks.check_assertIsNone(
-            "self.assertEqual(None, A)", "neutron/tests/test_assert.py"))))
-
-        self.assertEqual(0, len(list(checks.check_assertIsNone(
-            "self.assertIsNone()", "neutron/tests/test_assert.py"))))
 
 
 # The following is borrowed from hacking/tests/test_doctest.py.
@@ -332,6 +255,7 @@ class HackingDocTestCase(hacking_doctest.HackingTestCase):
         if self.options.select:
             turn_on.update(self.options.select)
         self.options.select = tuple(turn_on)
+        self.options.ignore = ('N530',)
 
         report = pep8.BaseReport(self.options)
         checker = pep8.Checker(filename=self.filename, lines=self.lines,
