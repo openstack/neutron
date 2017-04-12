@@ -22,6 +22,7 @@ import pwd
 import signal
 import sys
 
+from debtcollector import removals
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE, _LI
@@ -167,6 +168,9 @@ class Daemon(object):
 
     Usage: subclass the Daemon class and override the run() method
     """
+    @removals.removed_kwarg(
+        'watch_log',
+        message="Support for watch_log argument will be removed in Queens.")
     def __init__(self, pidfile, stdin=DEVNULL, stdout=DEVNULL,
                  stderr=DEVNULL, procname='python', uuid=None,
                  user=None, group=None, watch_log=True):
