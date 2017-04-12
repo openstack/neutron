@@ -335,6 +335,10 @@ def is_cidr_host(cidr):
     return net.prefixlen == n_const.IPv6_BITS
 
 
+def get_ip_version(ip_or_cidr):
+    return netaddr.IPNetwork(ip_or_cidr).version
+
+
 def ip_version_from_int(ip_version_int):
     if ip_version_int == 4:
         return n_const.IPv4
