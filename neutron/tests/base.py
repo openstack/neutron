@@ -82,7 +82,6 @@ def setup_test_logging(config_opts, log_dir, log_file_path_template):
     log_file = sanitize_log_path(
         os.path.join(log_dir, log_file_path_template))
     config_opts.set_override('log_file', log_file)
-    config_opts.set_override('use_stderr', False)
     config.setup_logging()
 
 
