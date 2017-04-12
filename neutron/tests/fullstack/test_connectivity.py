@@ -141,6 +141,7 @@ class TestOvsConnectivitySameNetworkOnOvsBridgeControllerStop(
                                                              kill_signal=None):
         # Environment preparation is effectively the same as connectivity test
         vms = self._prepare_vms_in_single_network()
+        vms.ping_all()
 
         ns0 = vms[0].namespace
         ip1 = vms[1].ip
@@ -215,6 +216,7 @@ class TestUninterruptedConnectivityOnL2AgentRestart(
     def test_l2_agent_restart(self, agent_restart_timeout=20):
         # Environment preparation is effectively the same as connectivity test
         vms = self._prepare_vms_in_single_network()
+        vms.ping_all()
 
         ns0 = vms[0].namespace
         ip1 = vms[1].ip
