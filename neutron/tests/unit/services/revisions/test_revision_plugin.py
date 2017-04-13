@@ -47,7 +47,18 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         super(TestRevisionPlugin, self).setUp()
         self.cp = directory.get_plugin()
         self.l3p = directory.get_plugin(constants.L3)
-        self.ctx = nctx.get_admin_context()
+        self._ctx = nctx.get_admin_context()
+
+    @property
+    def ctx(self):
+        # TODO(kevinbenton): return ctx without expire_all after switch to
+        # enginefacade complete. We expire_all here because the switch to
+        # the new engine facade is resulting in changes being spread over
+        # other sessions so we can end up getting stale reads in the parent
+        # session if objects remain in the identity map.
+        if not self._ctx.session.is_active:
+            self._ctx.session.expire_all()
+        return self._ctx
 
     @mock.patch.object(registry, 'notify')
     def test_handle_expired_object(self, notify_mock):
