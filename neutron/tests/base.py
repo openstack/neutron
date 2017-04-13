@@ -19,11 +19,9 @@
 import abc
 import contextlib
 import functools
-import gc
 import inspect
 import os
 import os.path
-import weakref
 
 import eventlet.timeout
 import fixtures
@@ -435,23 +433,7 @@ class PluginFixture(fixtures.Fixture):
         # TODO(marun) Fix plugins that do not properly initialize notifiers
         agentschedulers_db.AgentSchedulerDbMixin.agent_notifiers = {}
 
-        # Perform a check for deallocation only if explicitly
-        # configured to do so since calling gc.collect() after every
-        # test increases test suite execution time by ~50%.
-        check_plugin_deallocation = (
-            bool_from_env('OS_CHECK_PLUGIN_DEALLOCATION'))
-        if check_plugin_deallocation:
-            plugin = weakref.ref(nm._instance.plugin)
-
         nm.clear_instance()
-
-        if check_plugin_deallocation:
-            gc.collect()
-
-            # TODO(marun) Ensure that mocks are deallocated?
-            if plugin() and not isinstance(plugin(), mock.Base):
-                raise AssertionError(
-                    'The plugin for this test was not deallocated.')
 
 
 class Timeout(fixtures.Fixture):
