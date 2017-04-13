@@ -84,7 +84,8 @@ class HaproxyConfigurator(object):
         self.state_path = state_path
         self.unix_socket_path = unix_socket_path
         self.pidfile = pid_file
-        self.log_level = 'debug' if cfg.CONF.debug else 'info'
+        self.log_level = (
+            'debug' if logging.is_debug_enabled(cfg.CONF) else 'info')
 
     def create_config_file(self):
         """Create the config file for haproxy."""
