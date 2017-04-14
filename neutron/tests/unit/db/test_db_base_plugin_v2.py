@@ -2622,8 +2622,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                           network['network']['id'])
             req.environ['neutron.context'] = context.Context('', 'somebody')
             res = req.get_response(self.api)
-            # The API layer always returns 404 on updates in place of 403
-            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+            self.assertEqual(403, res.status_int)
 
     def test_update_network_set_shared(self):
         with self.network(shared=False) as network:
