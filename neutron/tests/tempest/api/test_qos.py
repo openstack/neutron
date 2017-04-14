@@ -473,7 +473,7 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
                                                     max_kbps=1,
                                                     max_burst_kbps=1)
         self.assertRaises(
-            exceptions.NotFound,
+            exceptions.Forbidden,
             self.client.update_bandwidth_limit_rule,
             policy['id'], rule['id'], max_kbps=2, max_burst_kbps=4)
 
