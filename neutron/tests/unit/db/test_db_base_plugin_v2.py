@@ -6536,10 +6536,10 @@ class DbOperationBoundMixin(object):
 
     def setUp(self, *args, **kwargs):
         super(DbOperationBoundMixin, self).setUp(*args, **kwargs)
-        self._db_execute_count = 0
+        self._recorded_statements = []
 
-        def _event_incrementer(*args, **kwargs):
-            self._db_execute_count += 1
+        def _event_incrementer(conn, clauseelement, *args, **kwargs):
+            self._recorded_statements.append(str(clauseelement))
 
         engine = db_api.context_manager.writer.get_engine()
         db_api.sqla_listen(engine, 'after_execute', _event_incrementer)
@@ -6553,7 +6553,7 @@ class DbOperationBoundMixin(object):
         context_ = self._get_context()
         return {'set_context': True, 'tenant_id': context_.tenant}
 
-    def _list_and_count_queries(self, resource, query_params=None):
+    def _list_and_record_queries(self, resource, query_params=None):
         kwargs = {'neutron_context': self._get_context()}
         if query_params:
             kwargs['query_params'] = query_params
@@ -6561,23 +6561,28 @@ class DbOperationBoundMixin(object):
         # otherwise the first list after a create will be different than
         # a subsequent list with no create.
         self._list(resource, **kwargs)
-        self._db_execute_count = 0
+        self._recorded_statements = []
         self.assertNotEqual([], self._list(resource, **kwargs))
-        query_count = self._db_execute_count
         # sanity check to make sure queries are being observed
-        self.assertNotEqual(0, query_count)
-        return query_count
+        self.assertNotEqual(0, len(self._recorded_statements))
+        return list(self._recorded_statements)
 
     def _assert_object_list_queries_constant(self, obj_creator, plural,
                                              filters=None):
         obj_creator()
-        before_count = self._list_and_count_queries(plural)
+        before_queries = self._list_and_record_queries(plural)
         # one more thing shouldn't change the db query count
         obj = list(obj_creator().values())[0]
-        after_count = self._list_and_count_queries(plural)
-        self.assertEqual(before_count, after_count)
+        after_queries = self._list_and_record_queries(plural)
+        self.assertEqual(len(before_queries), len(after_queries),
+                         self._qry_fail_msg(before_queries, after_queries))
         # using filters shouldn't change the count either
         if filters:
             query_params = "&".join(["%s=%s" % (f, obj[f]) for f in filters])
-            after_count = self._list_and_count_queries(plural, query_params)
-            self.assertEqual(before_count, after_count)
+            after_queries = self._list_and_record_queries(plural, query_params)
+            self.assertEqual(len(before_queries), len(after_queries),
+                             self._qry_fail_msg(before_queries, after_queries))
+
+    def _qry_fail_msg(self, before, after):
+        return "\n".join(["queries before:"] + before +
+                         ["queries after:"] + after)
