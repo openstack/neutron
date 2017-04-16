@@ -137,7 +137,8 @@ From database point of view, following objects are defined in schema:
   bandwidth.
 * QosDscpMarkingRule: defines the rule that marks the Differentiated Service
   bits for egress traffic.
-
+* QosMinimumBandwidthRule: defines the rule that creates a minimum bandwidth
+  constraint.
 
 All database models are defined under:
 
@@ -147,29 +148,7 @@ All database models are defined under:
 QoS versioned objects
 ~~~~~~~~~~~~~~~~~~~~~
 
-There is a long history of passing database dictionaries directly into business
-logic of Neutron. This path is not the one we wanted to take for QoS effort, so
-we've also introduced a new objects middleware to encapsulate the database logic
-from the rest of the Neutron code that works with QoS resources. For this, we've
-adopted oslo.versionedobjects library and introduced a new NeutronObject class
-that is a base for all other objects that will belong to the middle layer.
-There is an expectation that Neutron will evolve into using objects for all
-resources it handles, though that part was obviously out of scope for the QoS
-effort.
-
-Every NeutronObject supports the following operations:
-
-* get_object: returns specific object that is represented by the id passed as an
-  argument.
-* get_objects: returns all objects of the type, potentially with a filter
-  applied.
-* create/update/delete: usual persistence operations.
-
-Base object class is defined in:
-
-* neutron.objects.base
-
-For QoS, new neutron objects were implemented:
+For QoS, the following neutron objects are implemented:
 
 * QosPolicy: directly maps to the conceptual policy resource, as defined above.
 * QosBandwidthLimitRule: defines the instance-egress bandwidth limit rule
@@ -236,24 +215,6 @@ RPC communication
 
 Details on RPC communication implemented in reference backend driver are
 discussed in `a separate page <rpc_callbacks.html>`_.
-
-One thing that should be mentioned here explicitly is that RPC callback
-endpoints communicate using real versioned objects (as defined by serialization
-for oslo.versionedobjects library), not vague json dictionaries. Meaning,
-oslo.versionedobjects are on the wire and not just used internally inside a
-component.
-
-One more thing to note is that though RPC interface relies on versioned
-objects, it does not yet rely on versioning features the oslo.versionedobjects
-library provides. This is because Liberty is the first release where we start
-using the RPC interface, so we have no way to get different versions in a
-cluster. That said, the versioning strategy for QoS is thought through and
-described in `the separate page <rpc_callbacks.html>`_.
-
-There is expectation that after RPC callbacks are introduced in Neutron, we
-will be able to migrate propagation from server to agents for other resources
-(f.e. security groups) to the new mechanism. This will need to wait until those
-resources get proper NeutronObject implementations.
 
 The flow of updates is as follows:
 
