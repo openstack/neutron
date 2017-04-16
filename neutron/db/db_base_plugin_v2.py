@@ -1293,7 +1293,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 # conflict, bubble up a retry instead that should bring things
                 # back to sanity.
                 raise os_db_exc.RetryRequest(e)
-            return self._make_port_dict(db_port)
+        return self._make_port_dict(db_port)
 
     @db_api.retry_if_session_inactive()
     def delete_port(self, context, id):
