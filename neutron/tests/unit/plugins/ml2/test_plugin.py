@@ -586,7 +586,7 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                 subnet_id = subnet['subnet']['id']
                 attempt = [0]
 
-                def check_and_create_ports(context, subnet_id):
+                def create_dhcp_port(*args, **kwargs):
                     """A method to emulate race condition.
 
                     Adds dhcp port in the middle of subnet delete
@@ -605,26 +605,17 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     port_req = self.new_create_request('ports', data)
                     port_res = port_req.get_response(self.api)
                     self.assertEqual(201, port_res.status_int)
-                    return (context.session.query(models_v2.IPAllocation).
-                            filter_by(subnet_id=subnet_id).
-                            join(models_v2.Port).first())
 
-                plugin = manager.NeutronManager.get_plugin()
                 # we mock _subnet_check_ip_allocations with method
                 # that creates DHCP port 'in the middle' of subnet_delete
                 # causing retry this way subnet is deleted on the
                 # second attempt
-                with mock.patch.object(plugin, '_subnet_check_ip_allocations',
-                                       side_effect=check_and_create_ports):
-                    req = self.new_delete_request('subnets', subnet_id)
-                    res = req.get_response(self.api)
-                    self.assertEqual(204, res.status_int)
-                    # Validate chat check is called twice, i.e. after the
-                    # first check transaction gets restarted.
-                    calls = [mock.call(mock.ANY, subnet_id),
-                             mock.call(mock.ANY, subnet_id)]
-                    plugin._subnet_check_ip_allocations.assert_has_calls = (
-                        calls)
+                registry.subscribe(create_dhcp_port, resources.SUBNET,
+                                   events.PRECOMMIT_DELETE)
+                req = self.new_delete_request('subnets', subnet_id)
+                res = req.get_response(self.api)
+                self.assertEqual(204, res.status_int)
+                self.assertEqual(1, attempt[0])
 
 
 class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
