@@ -39,7 +39,7 @@ class DbQuotaDriver(object):
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
         :param tenant_id: The ID of the tenant to return default quotas for.
-        :return dict: from resource name to dict of name and limit
+        :return: dict from resource name to dict of name and limit
         """
         # Currently the tenant_id parameter is unused, since all tenants
         # share the same default values. This may change in the future so
@@ -57,7 +57,7 @@ class DbQuotaDriver(object):
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
         :param tenant_id: The ID of the tenant to return quotas for.
-        :return dict: from resource name to dict of name and limit
+        :return: dict from resource name to dict of name and limit
         """
 
         # init with defaults
@@ -92,7 +92,7 @@ class DbQuotaDriver(object):
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
-        :return quotas: list of dict of tenant_id:, resourcekey1:
+        :return: quotas list of dict of tenant_id:, resourcekey1:
         resourcekey2: ...
         """
         tenant_default = dict((key, resource.default)

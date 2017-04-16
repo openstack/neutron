@@ -88,7 +88,7 @@ class _TypeDriverBase(object):
     def get_mtu(self, physical):
         """Get driver's network MTU.
 
-        :returns mtu: maximum transmission unit
+        :returns: mtu maximum transmission unit
 
         Returns the mtu for the network based on the config values and
         the network type.
