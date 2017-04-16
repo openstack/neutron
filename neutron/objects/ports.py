@@ -207,7 +207,8 @@ class IPAllocation(base.NeutronDbObject):
 @obj_base.VersionedObjectRegistry.register
 class PortDNS(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Add dns_domain attribute
+    VERSION = '1.1'
 
     db_model = dns_models.PortDNS
 
@@ -224,7 +225,13 @@ class PortDNS(base.NeutronDbObject):
         'previous_dns_name': common_types.DomainNameField(),
         'previous_dns_domain': common_types.DomainNameField(),
         'dns_name': common_types.DomainNameField(),
+        'dns_domain': common_types.DomainNameField(),
     }
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('dns_domain', None)
 
 
 @obj_base.VersionedObjectRegistry.register

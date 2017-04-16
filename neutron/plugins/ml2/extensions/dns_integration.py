@@ -101,7 +101,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
                          current_dns_domain=current_dns_domain,
                          previous_dns_name='',
                          previous_dns_domain='',
-                         dns_name=dns_name).create()
+                         dns_name=dns_name,
+                         dns_domain='').create()
 
     def _update_dns_db(self, dns_name, dns_domain, db_data,
                       plugin_context, has_fixed_ips):
@@ -135,7 +136,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
                                            current_dns_domain=dns_domain,
                                            previous_dns_name='',
                                            previous_dns_domain='',
-                                           dns_name=dns_name)
+                                           dns_name=dns_name,
+                                           dns_domain='')
             dns_data_db.create()
         return dns_data_db
 
@@ -182,7 +184,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
                                            current_dns_domain='',
                                            previous_dns_name='',
                                            previous_dns_domain='',
-                                           dns_name=dns_name)
+                                           dns_name=dns_name,
+                                           dns_domain='')
             dns_data_db.create()
         return dns_data_db
 
