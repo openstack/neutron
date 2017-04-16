@@ -56,6 +56,25 @@ class TestAsyncProcess(base.BaseTestCase):
         ])
         self.assertEqual(len(proc._watchers), 2)
 
+    def test__pid_none(self):
+        pid = 1
+        self.proc._pid = None
+        with mock.patch.object(self.proc, '_process') as _process:
+            with mock.patch.object(utils,
+                                   'get_root_helper_child_pid') as func:
+                func.return_value = pid
+                self.assertEqual(self.proc.pid, pid)
+                func.assert_called_once_with(_process.pid, ['fake'],
+                                             run_as_root=False)
+                self.assertEqual(self.proc._pid, pid)
+
+    def test__pid_not_none(self):
+        self.proc._pid = 1
+        with mock.patch.object(self.proc, '_process'),\
+                mock.patch.object(utils, 'get_root_helper_child_pid') as func:
+            self.assertEqual(self.proc.pid, 1)
+            func.assert_not_called()
+
     def test__handle_process_error_kills_with_respawn(self):
         with mock.patch.object(self.proc, '_kill') as kill:
             self.proc._handle_process_error()
@@ -185,6 +204,7 @@ class TestAsyncProcess(base.BaseTestCase):
 
             self.assertIsNone(self.proc._kill_event)
             self.assertFalse(self.proc._is_running)
+            self.assertIsNone(self.proc._pid)
 
         mock_kill_event.send.assert_called_once_with()
         if pid:
