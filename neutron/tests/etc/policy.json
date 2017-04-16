@@ -7,6 +7,7 @@
     "admin_owner_or_network_owner": "rule:owner or rule:admin_or_network_owner",
     "admin_only": "rule:context_is_admin",
     "regular_user": "",
+    "admin_or_data_plane_int": "rule:context_is_admin or role:data_plane_integrator",
     "shared": "field:networks:shared=True",
     "shared_subnetpools": "field:subnetpools:shared=True",
     "shared_address_scopes": "field:address_scopes:shared=True",
@@ -93,6 +94,7 @@
     "update_port:binding:profile": "rule:admin_only",
     "update_port:mac_learning_enabled": "rule:context_is_advsvc or rule:admin_or_network_owner",
     "update_port:allowed_address_pairs": "rule:admin_or_network_owner",
+    "update_port:data_plane_status": "rule:admin_or_data_plane_int",
     "delete_port": "rule:context_is_advsvc or rule:admin_owner_or_network_owner",
 
     "get_router:ha": "rule:admin_only",

@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -206,7 +207,8 @@ class PortDNS(base.NeutronDbObject):
 @obj_base.VersionedObjectRegistry.register
 class Port(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Add data_plane_status field
+    VERSION = '1.1'
 
     db_model = models_v2.Port
 
@@ -226,6 +228,9 @@ class Port(base.NeutronDbObject):
         ),
         'binding': obj_fields.ObjectField(
             'PortBinding', nullable=True
+        ),
+        'data_plane_status': obj_fields.ObjectField(
+            'PortDataPlaneStatus', nullable=True
         ),
         'dhcp_options': obj_fields.ListOfObjectsField(
             'ExtraDhcpOpt', nullable=True
@@ -260,6 +265,7 @@ class Port(base.NeutronDbObject):
         'allowed_address_pairs',
         'binding',
         'binding_levels',
+        'data_plane_status',
         'dhcp_options',
         'distributed_binding',
         'dns',
@@ -374,3 +380,9 @@ class Port(base.NeutronDbObject):
         else:
             self.qos_policy_id = None
         self.obj_reset_changes(['qos_policy_id'])
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+
+        if _target_version < (1, 1):
+            primitive.pop('data_plane_status')
