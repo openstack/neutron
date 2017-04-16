@@ -24,7 +24,7 @@ from oslo_utils import excutils
 import six
 import stevedore
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _, _LC, _LE, _LI, _LW
 from neutron.db import api as db_api
 from neutron.db import segments_db
 from neutron.extensions import external_net
@@ -344,16 +344,33 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
 
         LOG.info(_LI("Configured mechanism driver names: %s"),
                  cfg.CONF.ml2.mechanism_drivers)
-        super(MechanismManager, self).__init__('neutron.ml2.mechanism_drivers',
-                                               cfg.CONF.ml2.mechanism_drivers,
-                                               invoke_on_load=True,
-                                               name_order=True)
+        super(MechanismManager, self).__init__(
+            'neutron.ml2.mechanism_drivers',
+            cfg.CONF.ml2.mechanism_drivers,
+            invoke_on_load=True,
+            name_order=True,
+            on_missing_entrypoints_callback=self._driver_not_found,
+            on_load_failure_callback=self._driver_not_loaded
+        )
         LOG.info(_LI("Loaded mechanism driver names: %s"), self.names())
         self._register_mechanisms()
         self.host_filtering_supported = self.is_host_filtering_supported()
         if not self.host_filtering_supported:
             LOG.info(_LI("No mechanism drivers provide segment reachability "
                          "information for agent scheduling."))
+
+    def _driver_not_found(self, names):
+        msg = (_("The following mechanism drivers were not found: %s")
+               % names)
+        LOG.critical(msg)
+        raise SystemExit(msg)
+
+    def _driver_not_loaded(self, manager, entrypoint, exception):
+        LOG.critical(_LC("The '%(entrypoint)s' entrypoint could not be"
+                         " loaded for the following reason: '%(reason)s'."),
+                     {'entrypoint': entrypoint,
+                      'reason': exception})
+        raise SystemExit(str(exception))
 
     def _register_mechanisms(self):
         """Register all mechanism drivers.
