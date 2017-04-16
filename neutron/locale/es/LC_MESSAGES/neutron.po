@@ -7,18 +7,18 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev409\n"
+"Project-Id-Version: neutron 10.0.2.dev10\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-08-18 18:59+0000\n"
+"POT-Creation-Date: 2017-04-16 05:24+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-03-29 11:39+0000\n"
-"Last-Translator: Eugènia Torrella <tester03@es.ibm.com>\n"
+"PO-Revision-Date: 2016-04-12 05:53+0000\n"
+"Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.3\n"
+"X-Generator: Zanata 3.9.6\n"
 "Language-Team: Spanish\n"
 
 #, python-format
@@ -93,10 +93,6 @@ msgid ""
 msgstr ""
 "%(method)s llamado con ajustes de subred %(current)s (ajustes originales "
 "%(original)s)"
-
-#, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s ha fallado."
 
 #, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
@@ -178,9 +174,6 @@ msgstr "'%s' no es un entero o uuid"
 msgid "'%s' is not supported for filtering"
 msgstr "'%s' no está admitido para filtrar"
 
-msgid "'.' searches are not implemented"
-msgstr "Las búsquedas '.' no se implementan"
-
 #, python-format
 msgid "'module' object has no attribute '%s'"
 msgstr "El objeto 'module' no tiene ningún atributo '%s'"
@@ -190,9 +183,6 @@ msgstr "'port_max' es menor que 'port_min'"
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0 no está permitido como longitud del prefijo de CIDR"
-
-msgid "A QoS driver must be specified"
-msgstr "Debe especificar un controlador de calidad de servicio"
 
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "Debe especificarse un cidr en ausencia de una agrupación de subred"
@@ -322,12 +312,6 @@ msgstr "Permitir la creación de registros PTR"
 msgid "Allow the usage of the bulk API"
 msgstr "Permitir el uso de la API masiva"
 
-msgid "Allow the usage of the pagination"
-msgstr "Permitir el uso de la paginación"
-
-msgid "Allow the usage of the sorting"
-msgstr "Permitir el uso de la ordenación"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr ""
 "Permitir ejecutar solicitudes SSL (https) no seguras en los metadatos de Nova"
@@ -417,18 +401,6 @@ msgid "Backend does not support VLAN Transparency."
 msgstr "El programa de fondo no soporta la transparencia de VLAN."
 
 #, python-format
-msgid ""
-"Bad prefix or mac format for generating IPv6 address by EUI-64: %(prefix)s, "
-"%(mac)s:"
-msgstr ""
-"Prefijo o formato de mac incorrecto para generar dirección IPv6 por EUI-64: "
-"%(prefix)s, %(mac)s:"
-
-#, python-format
-msgid "Bad prefix type for generate IPv6 address by EUI-64: %s"
-msgstr "Tipo de prefijo incorrecto para generar dirección IPv6 por EUI-64: %s"
-
-#, python-format
 msgid "Base MAC: %s"
 msgstr "MAC base: %s"
 
@@ -509,29 +481,6 @@ msgstr ""
 "el puerto %(port_id)s mediante la IP fija %(fixed_ip)s, porque esa IP fija "
 "ya tiene  una IP flotante en la red externa %(net_id)s."
 
-msgid ""
-"Cannot change HA attribute of active routers. Please set router "
-"admin_state_up to False prior to upgrade."
-msgstr ""
-"No se puede cambiar el atributo HA de los direccionadores activos. Defina "
-"admin_state_up en el direccionador a False antes de actualizar."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to %s, since that is not an IPv4 "
-"address."
-msgstr ""
-"No se puede crear IP flotante y enlazarla a %s, puesto que no es una "
-"dirección IPv4 ."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"No se puede crear IP flotante y enlazarla al puerto %s, porque ese puerto es "
-"propiedad de un arrendatario diferente."
-
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "No se puede inhabilitar enable_dhcp con atributos ipv6 establecidos"
 
@@ -579,13 +528,6 @@ msgstr "No se puede entender JSON"
 #, python-format
 msgid "Cannot update read-only attribute %s"
 msgstr "No se puede actualizar el atributo de sólo lectura %s"
-
-msgid ""
-"Cannot upgrade active router to distributed. Please set router "
-"admin_state_up to False prior to upgrade."
-msgstr ""
-"No se puede actualizar el direccionador activo al distribuido. Establezca el "
-"direccionador admin_state_up en False antes de la actualización."
 
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr ""
@@ -737,16 +679,6 @@ msgstr ""
 "asignación de red de arrendatario"
 
 msgid ""
-"Comma-separated list of supported PCI vendor devices, as defined by "
-"vendor_id:product_id according to the PCI ID Repository. Default enables "
-"support for Intel and Mellanox SR-IOV capable NICs."
-msgstr ""
-"Lista separada por comas de dispositivos de proveedor PCI soportados, según "
-"están definidos en vendor_id:product_id según el repositorio de ID de PCI. "
-"El valor predeterminado habilita el soporte de NIC con capacidad Intel y "
-"Mellanox SR-IOV"
-
-msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr ""
 "Lista separada por comas de los servidores DNS que se utilizarán como "
@@ -798,35 +730,6 @@ msgstr ""
 "IP de puerta de enlace actual %(ip_address)s ya está en uso por el puerto "
 "%(port_id)s. No es posible actualizar."
 
-msgid "Currently update of HA mode for a DVR/HA router is not supported."
-msgstr ""
-"No se admite la actualización actual de la modalidad HA para un router DVR/"
-"HA."
-
-msgid "Currently update of HA mode for a distributed router is not supported."
-msgstr ""
-"No se admite la actualización actual de la modalidad HA para un router "
-"distribuido."
-
-msgid ""
-"Currently update of distributed mode for a DVR/HA router is not supported"
-msgstr ""
-"No se admite la actualización actual de la modalidad distribuida para un "
-"router DVR/HA."
-
-msgid "Currently update of distributed mode for an HA router is not supported."
-msgstr ""
-"No se admite la actualización actual de la modalidad distribuida para un "
-"router HA."
-
-msgid ""
-"Currently updating a router from DVR/HA to non-DVR  non-HA is not supported."
-msgstr ""
-"No se admite la actualización actual de un router de DVR/HA a no-DVR,  no-HA."
-
-msgid "Currently updating a router to DVR/HA is not supported."
-msgstr "No se admite la actualización actual de un router a DVR/HA."
-
 msgid ""
 "DHCP lease duration (in seconds). Use -1 to tell dnsmasq to use infinite "
 "lease times."
@@ -847,38 +750,6 @@ msgid ""
 msgstr ""
 "Motor de base de datos para el cual se generará el script cuando se utilice "
 "la migración fuera de línea."
-
-msgid ""
-"Default IPv4 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. If not set then no pool will be used "
-"unless passed explicitly to the subnet create. If no pool is used, then a "
-"CIDR must be passed to create a subnet and that subnet will not be allocated "
-"from any pool; it will be considered part of the tenant's private address "
-"space. This option is deprecated for removal in the N release."
-msgstr ""
-"Agrupación-subred IPv4 predeterminada que se utilizará para la asignación "
-"CIDR de subred automática.  Especifica por UUID la agrupación a utilizar en "
-"caso de que se llame a la creación de una subred sin un ID de agrupación  de "
-"subred. Si no está definido, no se utilizará ninguna agrupación a no ser que "
-"se pase explícitamente a la creación de subred. Si no se utiliza ninguna "
-"agrupación, se debe pasar un CIDR para crear una subred y esa subred no se "
-"asignará desde ninguna agrupación; se consideraá parte del espacio de "
-"direcciones privado del inquilino. Esta opción está en desuso, para ser "
-"eliminada en el relesase N."
-
-msgid ""
-"Default IPv6 subnet pool to be used for automatic subnet CIDR allocation. "
-"Specifies by UUID the pool to be used in case where creation of a subnet is "
-"being called without a subnet pool ID. See the description for "
-"default_ipv4_subnet_pool for more information. This option is deprecated for "
-"removal in the N release."
-msgstr ""
-"Agrupación-subred IPv6 predeterminada que se utilizará para la asignación "
-"CIDR de subred automática. Especifica por UUID la agrupación a utilizar en "
-"caso de que se llame a la creación de una subred sin un ID de agrupación  de "
-"subred. Consulte la descripción de default_ipv4_subnet_pool para obtener más "
-"información. Esta opción está en desuso, para ser eliminada en el relesase N."
 
 msgid "Default external networks must be shared to everyone."
 msgstr ""
@@ -979,13 +850,6 @@ msgstr ""
 "El dispositivo %(dev_name)s en la correlación: %(mapping)s no es exclusivo"
 
 #, python-format
-msgid "Device '%(device_name)s' does not exist."
-msgstr "El dispositivo '%(device_name)s' no existe."
-
-msgid "Device has no virtual functions"
-msgstr "El dispositivo no tiene funciones virtuales"
-
-#, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
 msgstr ""
 "Falta el nombre de dispositivo %(dev_name)s en physical_device_mappings"
@@ -1006,15 +870,6 @@ msgstr "No se encuentra el dominio %(dns_domain)s en el servicio DNS externo"
 
 msgid "Domain to use for building the hostnames"
 msgstr "Dominio a utilizar par crear los nombres de host"
-
-msgid ""
-"Domain to use for building the hostnames. This option is deprecated. It has "
-"been moved to neutron.conf as dns_domain. It will be removed in a future "
-"release."
-msgstr ""
-"Dominio que se va a utilizar para crear los nombres de host. Esta opción "
-"está en desuso. Se ha trasladado a neutron.conf como dns_domain. Se "
-"eliminará en un release futuro."
 
 msgid "Downgrade no longer supported"
 msgstr "La degradación ya no está soportada"
@@ -1047,11 +902,6 @@ msgstr ""
 "de entrada definido en el espacio de nombres neutron.agent.linux.pd_drivers. "
 "Consulte setup.cfg para ver los puntos de entrada incluidos con el origen de "
 "neutron."
-
-msgid "Drivers list to use to send the update notification"
-msgstr ""
-"Lista de controladores que se va a utilizar para enviar la notificación de "
-"actualización"
 
 #, python-format
 msgid ""
@@ -1212,9 +1062,6 @@ msgstr ""
 "Se ha superado el límite de %s segundos esperando que la dirección abandone "
 "el estado de tentativa."
 
-msgid "Exceeded maximum amount of fixed ips per port."
-msgstr "Se ha superado el número máximo de IP fijas por puerto."
-
 msgid "Existing prefixes must be a subset of the new prefixes"
 msgstr "Los prefijos existentes deben ser una subred de los prefijos nuevos"
 
@@ -1319,10 +1166,6 @@ msgstr ""
 "dentro de un ámbito de dirección deben tener prefijos exclusivos."
 
 #, python-format
-msgid "Failed to check policy %(policy)s because %(reason)s."
-msgstr "No se ha podido comprobar la política %(policy)s porque %(reason)s."
-
-#, python-format
 msgid ""
 "Failed to create a duplicate %(object_type)s: for attribute(s) "
 "%(attributes)s with value(s) %(values)s"
@@ -1339,18 +1182,8 @@ msgstr ""
 "%(network_id)s, porque fixed_ips incluía una subred no válida %(subnet_id)s"
 
 #, python-format
-msgid "Failed to init policy %(policy)s because %(reason)s."
-msgstr "No se ha podido iniciar la política %(policy)s porque %(reason)s."
-
-#, python-format
 msgid "Failed to locate source for %s."
 msgstr "No se ha podido buscar el origen de %s."
-
-#, python-format
-msgid "Failed to parse request. Parameter '%s' not specified"
-msgstr ""
-"No se ha podido analizar la solicitud. No se ha especificado el parámetro "
-"'%s'"
 
 #, python-format
 msgid "Failed to parse request. Required attribute '%s' not specified"
@@ -1574,14 +1407,6 @@ msgstr ""
 "se puede añadir al direccionador de Neutron."
 
 msgid ""
-"If True, advertise network MTU values if core plugin calculates them. MTU is "
-"advertised to running instances via DHCP and RA MTU options."
-msgstr ""
-"Si es True, anunciar los valores de MTU de red si el plugin del núcleo los "
-"calcula. MTU se anuncia a las instancias en ejecución a través de  las "
-"opciones para MTU de DHCP y RA."
-
-msgid ""
 "If True, then allow plugins that support it to create VLAN transparent "
 "networks."
 msgstr ""
@@ -1641,11 +1466,6 @@ msgstr ""
 "no se define esta opción, el servicio de metadatos estará activado para "
 "todas las redes."
 
-#, python-format
-msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
-msgstr ""
-"pci_vendor_info incorrecto: \"%s\", debe ser el par vendor_id:product_id"
-
 msgid ""
 "Indicates that this L3 agent should also handle routers that do not have an "
 "external network gateway configured. This option should be True only for a "
@@ -1703,14 +1523,6 @@ msgstr "Intervalo entre dos informes de medición"
 #, python-format
 msgid "Invalid CIDR %(input)s given as IP prefix."
 msgstr "Se ha proporcionado un CIDR %(input)s no válido como prefijo de IP"
-
-#, python-format
-msgid ""
-"Invalid CIDR %s for IPv6 address mode. OpenStack uses the EUI-64 address "
-"format, which requires the prefix to be /64."
-msgstr ""
-"CIDR %s no válido para la modalidad de dirección IPv6. OpenStack utiliza el "
-"formato de dirección EUI-64, que requiere que el prefijo sea /64."
 
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
@@ -1836,19 +1648,11 @@ msgid ""
 "Kernel HZ value %(value)s is not valid. This value must be greater than 0."
 msgstr "El valor de Kernel HZ %(value)s no es válido. Debe ser mayor que 0."
 
-#, python-format
-msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
-msgstr "Clave %(key)s en correlación: '%(mapping)s' no exclusiva"
-
 msgid "L3 agent failure to setup NAT for floating IPs"
 msgstr "El agente L3 no ha podido configurar NAT para las IP flotantes"
 
 msgid "L3 agent failure to setup floating IPs"
 msgstr "El agente L3 no ha podido configurar las IP flotantes"
-
-#, python-format
-msgid "Limit must be an integer 0 or greater and not '%d'"
-msgstr "El límite debe ser un entero mayor o igual a 0 y no '%d'"
 
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "Límite de número de alquileres para evitar denegación de servicio."
@@ -1913,10 +1717,6 @@ msgstr ""
 msgid "Log agent heartbeats"
 msgstr "Registrar señales de supervisión de agente"
 
-msgid "Loopback IP subnet is not supported if enable_dhcp is True."
-msgstr ""
-"La subred de IP de bucle de retorno no está soportada si enable_dhcp es True."
-
 msgid ""
 "MTU of the underlying physical network. Neutron uses this value to calculate "
 "MTU for all virtual network components. For flat and VLAN networks, neutron "
@@ -1961,13 +1761,6 @@ msgstr ""
 msgid "Maximum number of allowed address pairs"
 msgstr "Número máximo de pares de direcciones permitidos"
 
-msgid ""
-"Maximum number of fixed ips per port. This option is deprecated and will be "
-"removed in the N release."
-msgstr ""
-"El número máximo de IP fijas por puerto. Esta opción está en desuso y se "
-"eliminará en el release N."
-
 msgid "Maximum number of host routes per subnet"
 msgstr "Número máximo de rutas de host por subred"
 
@@ -2011,9 +1804,6 @@ msgstr ""
 "Regla de etiqueta de medición con remote_ip_prefix %(remote_ip_prefix)s se "
 "solapa otro"
 
-msgid "Migration from distributed router to centralized is not supported"
-msgstr "No se admite migrar de un direccionador distribuido a uno centralizado"
-
 msgid "MinRtrAdvInterval setting for radvd.conf"
 msgstr "Parámetro MinRtrAdvInterval para radvd.conf"
 
@@ -2023,14 +1813,6 @@ msgstr "Minimizar sondeo supervisando ovsdb para cambios de interfaz."
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr "Falta clave en correlación: '%s'"
-
-#, python-format
-msgid "Missing value in mapping: '%s'"
-msgstr "Falta valor en correlación: '%s'"
-
-msgid "Multicast IP subnet is not supported if enable_dhcp is True."
-msgstr ""
-"La subred de IP de multidifusión no está soportada si enable_dhcp es True."
 
 msgid ""
 "Multicast group for VXLAN. When configured, will enable sending all "
@@ -2168,24 +1950,11 @@ msgstr "El plugin ML2 necesita el valor de tipo de red"
 msgid "Network types supported by the agent (gre and/or vxlan)."
 msgstr "Tipos de red admitidos por el agente (gre o vxlan)."
 
-msgid ""
-"Neutron IPAM (IP address management) driver to use. If ipam_driver is not "
-"set (default behavior), no IPAM driver is used. In order to use the "
-"reference implementation of Neutron IPAM driver, use 'internal'."
-msgstr ""
-"Controlador IPAM de Neutron (gestión de direcciones IP) a utilizar. Si "
-"ipam_driver no está definido (comportamiento predeterminado), no se utiliza "
-"ningún controlador IPAM. Para utilizar la implementación de referencia del "
-"controlador IPAM de Neutron, utilice 'internal'."
-
 msgid "Neutron Service Type Management"
 msgstr "Administración del tipo de servicio Neutron"
 
 msgid "Neutron core_plugin not configured!"
 msgstr "¡Neutron core_plugin no está configurado!"
-
-msgid "New value for first_ip or last_ip has to be specified."
-msgstr "Se debe especificar un nuevo valor para  first_ip o last_ip."
 
 msgid "No default router:external network"
 msgstr "No hay ninguna red router:external predeterminada"
@@ -2232,14 +2001,6 @@ msgid "Not allowed to manually remove a router from an agent in 'dvr' mode."
 msgstr ""
 "No está permitido eliminar manualmente un direccionador de un agente en modo "
 "'dvr'."
-
-#, python-format
-msgid ""
-"Not enough l3 agents available to ensure HA. Minimum required "
-"%(min_agents)s, available %(num_agents)s."
-msgstr ""
-"No hay suficientes agentes 13 disponibles para garantizar HA. El mínimo "
-"necesario es %(min_agents)s, disponibles %(num_agents)s."
 
 msgid ""
 "Number of DHCP agents scheduled to host a tenant network. If this number is "
@@ -2382,11 +2143,6 @@ msgstr ""
 "Sólo está autorizado el administrador para acceder a cuotas para otro "
 "arrendatario"
 
-msgid "Only admins can manipulate policies on networks they do not own."
-msgstr ""
-"Sólo los admin pueden manipular las políticas en las redes de las que no son "
-"propietarios"
-
 msgid "Only admins can manipulate policies on objects they do not own"
 msgstr ""
 "Sólo los admininstradores pueden manipular políticas en objetos de los que "
@@ -2440,9 +2196,6 @@ msgstr "El paquete %s no se ha instalado"
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "El análisis de bridge_mappings ha fallado: %s."
 
-msgid "Parsing supported pci_vendor_devs failed"
-msgstr "El análisis de los pci_vendor_devs soportados ha fallado"
-
 msgid "Password for connecting to designate in admin context"
 msgstr ""
 "Contraseña para establecer conexión con el designado en el contexto de "
@@ -2474,10 +2227,6 @@ msgstr ""
 msgid "Ping timeout"
 msgstr "Tiempo de espera de ping"
 
-#, python-format
-msgid "Plugin '%s' not found."
-msgstr "No se ha encontrado el plugin '%s'."
-
 msgid "Plugin does not support updating provider attributes"
 msgstr "El plug-in no soporta la actualización de atributos de proveedor"
 
@@ -2492,18 +2241,6 @@ msgstr "El puerto %(port)s no existe en %(bridge)s"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "El puerto %(port_id)s ya ha sido adquirido por otro agente DHCP"
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"El puerto %(port_id)s está asociado con un arrendatario diferente a la IP "
-"flotante %(floatingip_id)s y, por lo tanto, no se puede enlazar."
-
-#, python-format
-msgid "Port %(port_id)s is not managed by this agent. "
-msgstr "El puerto %(port_id)s no está gestionado por este agente."
 
 #, python-format
 msgid "Port %s does not exist"
@@ -2765,9 +2502,6 @@ msgstr ""
 "rootwrap.conf de sudo ' para utilizar el recurso de filtro raíz real. Cambie "
 "a 'sudo' para saltar el filtrado y ejecutar directamente el comando."
 
-msgid "Root helper daemon application to use when possible."
-msgstr "Aplicación de daemon de ayudante raíz a utilizar cuando sea posible."
-
 msgid "Root permissions are required to drop privileges."
 msgstr "Se necesitan permisos de root para descartar privilegios."
 
@@ -2998,13 +2732,6 @@ msgstr ""
 msgid "Shared address scope can't be unshared"
 msgstr "No se puede dejar de compartir el ámbito de la dirección compartida"
 
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"Para especificar un 'tenant_id' distinto del arrendatario autenticado en la "
-"solicitud requiere privilegios administrativos"
-
 msgid "String prefix used to match IPset names."
 msgstr "Prefijo de serie utilizado para coincidir con nombres IPset."
 
@@ -3015,12 +2742,6 @@ msgstr "El subproyecto %s no se ha instalado."
 msgid "Subnet for router interface must have a gateway IP"
 msgstr ""
 "La subred para la interfaz de direccionador debe tener una IP de pasarela"
-
-msgid ""
-"Subnet has a prefix length that is incompatible with DHCP service enabled."
-msgstr ""
-"La subred tiene una longitud de prefijo que no es compatible con el servicio "
-"DHCP habilitado."
 
 #, python-format
 msgid "Subnet pool %(subnetpool_id)s could not be found."
@@ -3049,9 +2770,6 @@ msgstr ""
 "Distintivo en todo el sistema para determinar el tipo de direccionador que "
 "pueden crear los arrendatarios. Sólo el administrador puede alterarlo "
 "temporalmente."
-
-msgid "TCP Port to listen for metadata server requests."
-msgstr "Puerto TCP para escuchar solicitudes de servidor de metadatos."
 
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
@@ -3187,13 +2905,6 @@ msgstr ""
 "'dvr_base_mac' *debe* ser diferente de 'base_mac' para evitar que se mezclen "
 "con MAC asignado para los puertos de arrendatarios. Un ejemplo de 4 octetos "
 "sería dvr_base_mac = fa:16:3f:4f:00:00. El valor predeterminado es 3 octetos."
-
-msgid ""
-"The connection string for the native OVSDB backend. Requires the native "
-"ovsdb_interface to be enabled."
-msgstr ""
-"La serie de conexión del programa de fondo OVSDB nativo. Requiere que la "
-"opción nativa ovsdb_interface esté habilitada."
 
 msgid "The core plugin Neutron will use"
 msgstr "El core plugin Neutron usará"
@@ -3557,9 +3268,6 @@ msgstr ""
 msgid "Unable to find resource name in %s"
 msgstr "No se ha podido encontrar el nombre del recurso en %s"
 
-msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
-msgstr "No se puede generar dirección IP por EUI64 para el prefijo de IPv4"
-
 #, python-format
 msgid "Unable to generate unique DVR mac for host %(host)s."
 msgstr "No se puede generar la mac DVR exclusiva para el host %(host)s."
@@ -3764,10 +3472,6 @@ msgid "VXLAN network unsupported."
 msgstr "Red VXLAN no soportada."
 
 #, python-format
-msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
-msgstr "Valor %(value)s en correlación: '%(mapping)s' no exclusiva"
-
-#, python-format
 msgid ""
 "Value of %(parameter)s has to be multiple of %(number)s, with maximum value "
 "of %(maximum)s and minimum value of %(minimum)s"
@@ -3947,13 +3651,6 @@ msgstr "ipv6_address_mode no es válido cuando ip_version es 4"
 msgid "ipv6_ra_mode is not valid when ip_version is 4"
 msgstr "ipv6_ra_mode no es válido cuando ip_version es 4"
 
-msgid ""
-"ipv6_ra_mode or ipv6_address_mode cannot be set when enable_dhcp is set to "
-"False."
-msgstr ""
-"ipv6_ra_mode o ipv6_address_mode no se pueden establecer cuando enable_dhcp "
-"está establecido en False."
-
 #, python-format
 msgid ""
 "ipv6_ra_mode set to '%(ra_mode)s' with ipv6_address_mode set to "
@@ -3966,14 +3663,6 @@ msgstr ""
 
 msgid "mac address update"
 msgstr "Actualización de la dirección MAC"
-
-#, python-format
-msgid ""
-"max_l3_agents_per_router %(max_agents)s config parameter is not valid. It "
-"has to be greater than or equal to min_l3_agents_per_router %(min_agents)s."
-msgstr ""
-"El parámetro de configuración max_l3_agents_per_router %(max_agents)s no es "
-"válido. Debe ser mayor o igual que min_l3_agents_per_router %(min_agents)s."
 
 msgid "must provide exactly 2 arguments - cidr and MAC"
 msgstr "debe dar exactamente 2 argumentos: cidr y MAC"

@@ -9,18 +9,18 @@
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 9.0.0.0b3.dev21\n"
+"Project-Id-Version: neutron 10.0.2.dev10\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2016-07-15 19:53+0000\n"
+"POT-Creation-Date: 2017-04-16 05:24+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2015-09-16 08:28+0000\n"
-"Last-Translator: Andreas Jaeger <jaegerandi@gmail.com>\n"
+"PO-Revision-Date: 2016-04-12 06:08+0000\n"
+"Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
 "Language: tr-TR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.7.3\n"
+"X-Generator: Zanata 3.9.6\n"
 "Language-Team: Turkish (Turkey)\n"
 
 #, python-format
@@ -88,10 +88,6 @@ msgstr ""
 "çağrıldı"
 
 #, python-format
-msgid "%(method)s failed."
-msgstr "%(method)s başarısız."
-
-#, python-format
 msgid "%(name)s '%(addr)s' does not match the ip_version '%(ip_version)s'"
 msgstr "%(name)s '%(addr)s' ip_version '%(ip_version)s' ile eşleşmiyor"
 
@@ -126,9 +122,6 @@ msgstr "%s yerel sağlayıcı ağı için yasaklanmış"
 #, python-format
 msgid "'%s' is not an integer or uuid"
 msgstr "'%s' bir tam sayı ya da uuid değil"
-
-msgid "'.' searches are not implemented"
-msgstr "'.' aramaları uygulanmamış"
 
 msgid "0 is not allowed as CIDR prefix length"
 msgstr "0 CIDR önek uzunluğuna izin verilmez"
@@ -197,12 +190,6 @@ msgstr "DHCP ajanına kaynak işlem bildirimi göndermeye izin ver"
 msgid "Allow the usage of the bulk API"
 msgstr "Toplu API'nin kullanımına izin ver"
 
-msgid "Allow the usage of the pagination"
-msgstr "Sayfalama kullanımına izin ver"
-
-msgid "Allow the usage of the sorting"
-msgstr "Sıralama kullanımına izin ver"
-
 msgid "Allow to perform insecure SSL (https) requests to nova metadata"
 msgstr "Nova metadata'ya güvensiz SSL (https) istekleri yapmaya izin ver"
 
@@ -240,18 +227,6 @@ msgstr "Kullanılabilir komutlar"
 
 msgid "Backend does not support VLAN Transparency."
 msgstr "Arka uç VLAN şeffaflığını desteklemiyor."
-
-#, python-format
-msgid ""
-"Bad prefix or mac format for generating IPv6 address by EUI-64: %(prefix)s, "
-"%(mac)s:"
-msgstr ""
-"EUI-64 ile IPv6 adresi üretmek için kötü önek ya da mac biçimi: %(prefix)s, "
-"%(mac)s:"
-
-#, python-format
-msgid "Bad prefix type for generate IPv6 address by EUI-64: %s"
-msgstr "EUI-64 ile IPv6 adresi üretmek için kötü önek türü: %s"
 
 #, python-format
 msgid "Base MAC: %s"
@@ -296,14 +271,6 @@ msgstr ""
 "Değişken IP %(floating_ip_address)s (%(fip_id)s) sabit IP %(fixed_ip)s "
 "kullanılarak %(port_id)s bağlantı noktasıyla ilişkilendirilemiyor, çünkü bu "
 "sabit IP %(net_id)s harici ağında zaten bir değişken IP'ye sahip."
-
-#, python-format
-msgid ""
-"Cannot create floating IP and bind it to Port %s, since that port is owned "
-"by a different tenant."
-msgstr ""
-"Değişken IP oluşturup %s bağlantı noktasına bağlanamıyor, çünkü bu bağlantı "
-"noktası başka bir kiracıya ait."
 
 msgid "Cannot disable enable_dhcp with ipv6 attributes set"
 msgstr "ipv6 öznitelikleri ayarlıyken enable_dhcp kapatılamaz"
@@ -515,9 +482,6 @@ msgstr "Tüm IPset'leri sil."
 msgid "Device %(dev_name)s in mapping: %(mapping)s not unique"
 msgstr "%(mapping)s eşleştirmesindeki aygıt %(dev_name)s benzersiz"
 
-msgid "Device has no virtual functions"
-msgstr "Aygıt sanal fonksiyonlara sahip değil"
-
 #, python-format
 msgid "Device name %(dev_name)s is missing from physical_device_mappings"
 msgstr "Aygıt ismi %(dev_name)s physical_device_mappings'de eksik"
@@ -728,10 +692,6 @@ msgstr ""
 "fixed_ips geçersiz %(subnet_id)s alt ağını içeriyor"
 
 #, python-format
-msgid "Failed to parse request. Parameter '%s' not specified"
-msgstr "İstek ayrıştırılamadı. '%s' parametresi belirtilmemiş"
-
-#, python-format
 msgid "Failed to parse request. Required attribute '%s' not specified"
 msgstr "İstek ayrıştırılamıyor. Gerekli öznitelik '%s' belirtilmemiş"
 
@@ -884,10 +844,6 @@ msgid "Illegal IP version number"
 msgstr "Kuraldışı IP sürüm numarası"
 
 #, python-format
-msgid "Incorrect pci_vendor_info: \"%s\", should be pair vendor_id:product_id"
-msgstr "Geçersiz pci_vendor_info: \"%s\", vendor_id:product_id çifti olmalı"
-
-#, python-format
 msgid "Insufficient prefix space to allocate subnet size /%s"
 msgstr "/%s boyutunda alt ağ ayırmak için yetersiz önek alanı"
 
@@ -907,14 +863,6 @@ msgstr "İki ölçüm arasındaki aralık"
 
 msgid "Interval between two metering reports"
 msgstr "İki ölçme raporu arasındaki aralık"
-
-#, python-format
-msgid ""
-"Invalid CIDR %s for IPv6 address mode. OpenStack uses the EUI-64 address "
-"format, which requires the prefix to be /64."
-msgstr ""
-"IPv6 adres kipi için geçersiz CIDR %s. OpenStack önekin /64 olmasına ihtiyaç "
-"duyan EUI-64 adres biçimini kullanır."
 
 #, python-format
 msgid "Invalid Device %(dev_name)s: %(reason)s"
@@ -980,14 +928,6 @@ msgstr "%(port)s bağlantı noktası için geçersiz değer"
 
 msgid "Keepalived didn't respawn"
 msgstr "Keepalived yeniden başlamadı"
-
-#, python-format
-msgid "Key %(key)s in mapping: '%(mapping)s' not unique"
-msgstr "'%(mapping)s' eşleştirmesindeki %(key)s anahtarı benzersiz değil"
-
-#, python-format
-msgid "Limit must be an integer 0 or greater and not '%d'"
-msgstr "Sınır tam sayı 0 ya da daha büyüğü olmalı '%d' değil"
 
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "Servis engellemeyi önlemek için kiralama sayısını sınırla."
@@ -1072,10 +1012,6 @@ msgstr ""
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr "Eşleştirmede anahtar eksik: '%s'"
-
-#, python-format
-msgid "Missing value in mapping: '%s'"
-msgstr "Eşleştirmede değer eksik: '%s'"
 
 #, python-format
 msgid "Multiple agents with agent_type=%(agent_type)s and host=%(host)s found"
@@ -1174,14 +1110,6 @@ msgstr ""
 "%(router_id)s yönlendiricisi oluşturulurken kullanılabilir Sanal "
 "Yönlendirici Tanımlayıcı (VRID) yok. Kiracı başına HA Yönlendirici sayısı "
 "sınırı 254."
-
-#, python-format
-msgid ""
-"Not enough l3 agents available to ensure HA. Minimum required "
-"%(min_agents)s, available %(num_agents)s."
-msgstr ""
-"HA'dan emin olmak için yeterli l3 ajanı yok. Asgari %(min_agents)s gerekli, "
-"kullanılabilir %(num_agents)s var."
 
 msgid ""
 "Number of DHCP agents scheduled to host a tenant network. If this number is "
@@ -1303,9 +1231,6 @@ msgstr "POST istekleri bu kaynakta desteklenmiyor."
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "bridge_mappins ayrıştırma başarısız: %s."
 
-msgid "Parsing supported pci_vendor_devs failed"
-msgstr "Desteklenen pci_vendor_devs ayrıştırması başarısız"
-
 msgid "Path to PID file for this process"
 msgstr "Bu sürecin PID dosyasının yolu"
 
@@ -1331,14 +1256,6 @@ msgstr "%(id)s bağlantı noktası %(address)s sabit ip'sine sahip değil"
 #, python-format
 msgid "Port %(port)s does not exist on %(bridge)s!"
 msgstr "Bağlantı noktası %(port)s %(bridge)s köprüsü üzerinde mevcut değil!"
-
-#, python-format
-msgid ""
-"Port %(port_id)s is associated with a different tenant than Floating IP "
-"%(floatingip_id)s and therefore cannot be bound."
-msgstr ""
-"%(port_id)s bağlantı noktası %(floatingip_id)s değişken IP'sinden başka bir "
-"kiracı ile ilişkilendirilmiş bu yüzden bağlanamaz."
 
 #, python-format
 msgid "Port %s does not exist"
@@ -1451,9 +1368,6 @@ msgstr "Kaynak bulunamadı."
 
 msgid "Resources required"
 msgstr "Kaynaklar gerekiyor"
-
-msgid "Root helper daemon application to use when possible."
-msgstr "Mümkün olduğunda kullanılacak kök yardımcı artalan işlemi uygulaması."
 
 msgid "Root permissions are required to drop privileges."
 msgstr "İzinlerin düşürülmesi için Root izinleri gerekli."
@@ -1594,22 +1508,11 @@ msgstr ""
 msgid "Shared address scope can't be unshared"
 msgstr "Paylaşılan adres kapsamının paylaştırılması durdurulamaz"
 
-msgid ""
-"Specifying 'tenant_id' other than authenticated tenant in request requires "
-"admin privileges"
-msgstr ""
-"İstekte doğrulanmış kiracıdan başka 'tenant_id' belirtme yönetici yetkileri "
-"gerektirir"
-
 msgid "String prefix used to match IPset names."
 msgstr "IPset isimleriyle eşleştirme için kullanılan karakter dizisi önekleri."
 
 msgid "Subnet for router interface must have a gateway IP"
 msgstr "Yönlendirici arayüzü için alt ağ bir geçit IP'ye sahip olmalı"
-
-msgid ""
-"Subnet has a prefix length that is incompatible with DHCP service enabled."
-msgstr "Alt ağ etkin DHCP servisiyle uyumsz bir önek uzunluğuna sahip."
 
 msgid "Subnet pool has existing allocations"
 msgstr "Alt ağ havuzunun mevcut ayırmaları var"
@@ -1626,9 +1529,6 @@ msgid ""
 msgstr ""
 "Kiracıların oluşturabileceği yönlendirici türünü belirlemek için sistem "
 "genelinde bayrak. Yalnızca yönetici üzerine yazabilir."
-
-msgid "TCP Port to listen for metadata server requests."
-msgstr "Metadata sunucu istekleri için dinlenecek TCP bağlantı noktası."
 
 msgid "TCP Port used by Neutron metadata namespace proxy."
 msgstr ""
@@ -1904,9 +1804,6 @@ msgstr "%(subnet_id)s alt ağında %(ip_address)s IP adresi bulunamıyor"
 msgid "Unable to find resource name in %s"
 msgstr "%s içinde kaynak ismi bulunamadı"
 
-msgid "Unable to generate IP address by EUI64 for IPv4 prefix"
-msgstr "IPv4 öneki için EUI64 ile IP adresi üretilemedi"
-
 #, python-format
 msgid "Unable to generate unique DVR mac for host %(host)s."
 msgstr "%(host)s istemcisi için benzersiz DVR mac üretilemedi."
@@ -2015,10 +1912,6 @@ msgstr "VRRP kimlik doğrulama parolası"
 msgid "VRRP authentication type"
 msgstr "VRRP kimlik doğrulama türü"
 
-#, python-format
-msgid "Value %(value)s in mapping: '%(mapping)s' not unique"
-msgstr "'%(mapping)s' eşleştirmesindeki %(value)s değeri benzersiz değil"
-
 msgid ""
 "Watch file log. Log watch should be disabled when metadata_proxy_user/group "
 "has no read/write permissions on metadata proxy log file."
@@ -2115,13 +2008,6 @@ msgstr "ip_version 4 olduğunda ipv6_address_mode geçerli değildir"
 msgid "ipv6_ra_mode is not valid when ip_version is 4"
 msgstr "ip_version 4 olduğunda ipv6_ra_mode geçerli değildir"
 
-msgid ""
-"ipv6_ra_mode or ipv6_address_mode cannot be set when enable_dhcp is set to "
-"False."
-msgstr ""
-"enable_dhcp False olarak ayarlıyken ipv6_ra_mode veya ipv6_address_mode "
-"ayarlanamaz."
-
 #, python-format
 msgid ""
 "ipv6_ra_mode set to '%(ra_mode)s' with ipv6_address_mode set to "
@@ -2134,15 +2020,6 @@ msgstr ""
 
 msgid "mac address update"
 msgstr "mac adres güncellemesi"
-
-#, python-format
-msgid ""
-"max_l3_agents_per_router %(max_agents)s config parameter is not valid. It "
-"has to be greater than or equal to min_l3_agents_per_router %(min_agents)s."
-msgstr ""
-"max_l3_agents_per_router %(max_agents)s yapılandırma parametresi geçerli "
-"değil. min_l3_agents_per_router %(min_agents)s den büyük ya da ona eşit "
-"olmalı."
 
 msgid "network_type required"
 msgstr "network_type gerekli"
