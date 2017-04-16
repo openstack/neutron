@@ -62,7 +62,8 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         config.cfg.CONF.set_override('dns_domain', self._domain)
 
     def _create_port_for_test(self, provider_net=True, dns_domain=True,
-                              dns_name=True, ipv4=True, ipv6=True):
+                              dns_name=True, ipv4=True, ipv6=True,
+                              dns_domain_port=False):
         net_kwargs = {}
         if provider_net:
             net_kwargs = {
@@ -91,6 +92,10 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                 'arg_list': (dns.DNSNAME,),
                 dns.DNSNAME: DNSNAME
             }
+        if dns_domain_port:
+            port_kwargs[dns.DNSDOMAIN] = self._port_domain
+            port_kwargs['arg_list'] = (port_kwargs.get('arg_list', ()) +
+                (dns.DNSDOMAIN,))
         res = self._create_port('json', network['network']['id'],
                                 **port_kwargs)
         self.assertEqual(201, res.status_int)
@@ -526,6 +531,19 @@ class DNSIntegrationTestCaseDefaultDomain(DNSIntegrationTestCase):
         port, dns_data_db = self._update_port_for_test(port,
                                                        new_dns_name=DNSNAME)
         self._verify_port_dns(net, port, dns_data_db)
+
+
+@mock.patch(
+    'neutron.services.externaldns.drivers.designate.driver.get_clients',
+    **mock_config)
+class DNSDomainPortsTestCase(DNSIntegrationTestCase):
+    _extension_drivers = ['dns_domain_ports']
+    _domain = 'domain.com.'
+    _port_domain = 'portdomain.com.'
+
+    def test_create_port(self, *mocks):
+        net, port, dns_data_db = self._create_port_for_test(
+            dns_domain_port=True)
 
 
 class TestDesignateClientKeystoneV2(testtools.TestCase):
