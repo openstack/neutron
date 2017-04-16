@@ -27,6 +27,7 @@ from sqlalchemy import and_
 from neutron._i18n import _LE, _LW
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
+from neutron.db import api as db_api
 from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
 from neutron.ipam import driver
@@ -321,6 +322,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                             original=changes.original,
                             remove=removed)
 
+    @db_api.context_manager.writer
     def save_allocation_pools(self, context, subnet, allocation_pools):
         for pool in allocation_pools:
             first_ip = str(netaddr.IPAddress(pool.first, pool.version))
@@ -423,6 +425,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             raise RuntimeError(
                 "Subnet manager doesn't match subnet. %s != %s"
                 % (subnet['id'], ipam_subnet.subnet_manager.neutron_id))
+        # TODO(ataraday): switched for writer when flush_on_subtransaction
+        # will be available for neutron
         with context.session.begin(subtransactions=True):
             network_id = subnet['network_id']
             port_qry = context.session.query(models_v2.Port)
@@ -453,7 +457,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     # the context of a nested transaction, so that the entry
                     # is rolled back independently of other entries whenever
                     # the corresponding port has been deleted.
-                    with context.session.begin_nested():
+                    with db_api.context_manager.writer.using(context):
                         context.session.add(allocated)
                     updated_ports.append(port['id'])
                 except db_exc.DBReferenceError:

@@ -521,12 +521,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # a subnet-update and a router-interface-add operation are
             # executed concurrently
             if cur_subnet and not ipv6_utils.is_ipv6_pd_enabled(s):
-                ipal = models_v2.IPAllocation
-                alloc_qry = context.session.query(ipal)
-                alloc_qry = alloc_qry.join("port", "routerport")
-                allocated = alloc_qry.filter(
-                    ipal.ip_address == cur_subnet['gateway_ip'],
-                    ipal.subnet_id == cur_subnet['id']).first()
+                with db_api.context_manager.reader.using(context):
+                    ipal = models_v2.IPAllocation
+                    alloc_qry = context.session.query(ipal)
+                    alloc_qry = alloc_qry.join("port", "routerport")
+                    allocated = alloc_qry.filter(
+                        ipal.ip_address == cur_subnet['gateway_ip'],
+                        ipal.subnet_id == cur_subnet['id']).first()
                 if allocated and allocated['port_id']:
                     raise n_exc.GatewayIpInUse(
                         ip_address=cur_subnet['gateway_ip'],
@@ -886,6 +887,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         return result
 
+    @db_api.context_manager.reader
     def _subnet_get_user_allocation(self, context, subnet_id):
         """Check if there are any user ports on subnet and return first."""
         # need to join with ports table as IPAllocation's port
@@ -896,6 +898,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 filter(~models_v2.Port.device_owner.
                        in_(AUTO_DELETE_PORT_OWNERS)).first())
 
+    @db_api.context_manager.reader
     def _subnet_check_ip_allocations_internal_router_ports(self, context,
                                                            subnet_id):
         # Do not delete the subnet if IP allocations for internal
@@ -1220,7 +1223,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                          description=p.get('description'))
         if p.get('mac_address') is not constants.ATTR_NOT_SPECIFIED:
             port_data['mac_address'] = p.get('mac_address')
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             # Ensure that the network exists.
             self._get_network(context, network_id)
 
@@ -1261,7 +1264,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def update_port(self, context, id, port):
         new_port = port['port']
 
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             db_port = self._get_port(context, id)
             new_mac = new_port.get('mac_address')
             self._validate_port_for_update(context, db_port, new_port, new_mac)
@@ -1290,21 +1293,21 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 # conflict, bubble up a retry instead that should bring things
                 # back to sanity.
                 raise os_db_exc.RetryRequest(e)
-        result = self._make_port_dict(db_port)
-        return result
+            return self._make_port_dict(db_port)
 
     @db_api.retry_if_session_inactive()
     def delete_port(self, context, id):
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             self.ipam.delete_port(context, id)
 
     def delete_ports_by_device_id(self, context, device_id, network_id=None):
-        query = (context.session.query(models_v2.Port.id)
-                 .enable_eagerloads(False)
-                 .filter(models_v2.Port.device_id == device_id))
-        if network_id:
-            query = query.filter(models_v2.Port.network_id == network_id)
-        port_ids = [p[0] for p in query]
+        with db_api.context_manager.reader.using(context):
+            query = (context.session.query(models_v2.Port.id)
+                     .enable_eagerloads(False)
+                     .filter(models_v2.Port.device_id == device_id))
+            if network_id:
+                query = query.filter(models_v2.Port.network_id == network_id)
+            port_ids = [p[0] for p in query]
         for port_id in port_ids:
             try:
                 self.delete_port(context, port_id)
@@ -1315,6 +1318,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                           port_id)
 
     @db_api.retry_if_session_inactive()
+    @db_api.context_manager.reader
     def get_port(self, context, id, fields=None):
         port = self._get_port(context, id)
         return self._make_port_dict(port, fields)

@@ -34,6 +34,7 @@ from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
 from neutron.db import _utils as db_utils
+from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type as sst_model
@@ -162,6 +163,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         del s["dns_nameservers"]
         return new_dns_addr_list
 
+    @db_api.context_manager.writer
     def _update_subnet_allocation_pools(self, context, subnet_id, s):
         context.session.query(models_v2.IPAllocationPool).filter_by(
             subnet_id=subnet_id).delete()

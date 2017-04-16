@@ -311,7 +311,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
         inside = any(lo <= tunnel_id <= hi for lo, hi in self.tunnel_ranges)
 
         info = {'type': self.get_type(), 'id': tunnel_id}
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             query = (context.session.query(self.model).
                      filter_by(**{self.segmentation_key: tunnel_id}))
             if inside:
@@ -328,6 +328,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
         if not count:
             LOG.warning(_LW("%(type)s tunnel %(id)s not found"), info)
 
+    @db_api.context_manager.reader
     def get_allocation(self, context, tunnel_id):
         return (context.session.query(self.model).
                 filter_by(**{self.segmentation_key: tunnel_id}).

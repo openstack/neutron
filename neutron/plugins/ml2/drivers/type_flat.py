@@ -21,6 +21,7 @@ import six
 from neutron._i18n import _, _LI, _LW
 from neutron.common import exceptions as n_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
+from neutron.db import api as db_api
 from neutron.objects import exceptions as obj_base
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
@@ -107,7 +108,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
 
     def release_segment(self, context, segment):
         physical_network = segment[api.PHYSICAL_NETWORK]
-        with context.session.begin(subtransactions=True):
+        with db_api.context_manager.writer.using(context):
             obj = flat_obj.FlatAllocation.get_object(
                 context,
                 physical_network=physical_network)

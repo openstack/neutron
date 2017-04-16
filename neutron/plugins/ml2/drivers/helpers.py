@@ -23,6 +23,7 @@ from oslo_log import log
 
 from neutron._i18n import _LE
 from neutron.common import exceptions as exc
+from neutron.db import api as db_api
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2 import driver_api as api
 
@@ -64,8 +65,8 @@ class SegmentTypeDriver(BaseTypeDriver):
     # TODO(ataraday): get rid of this method when old TypeDriver won't be used
     def _get_session(self, arg):
         if isinstance(arg, neutron_ctx.Context):
-            return arg.session
-        return arg
+            return arg.session, db_api.context_manager.writer.using(arg)
+        return arg, arg.session.begin(subtransactions=True)
 
     def allocate_fully_specified_segment(self, context, **raw_segment):
         """Allocate segment fully specified by raw_segment.
@@ -76,9 +77,10 @@ class SegmentTypeDriver(BaseTypeDriver):
         """
 
         network_type = self.get_type()
-        session = self._get_session(context)
+        session, ctx_manager = self._get_session(context)
+
         try:
-            with session.begin(subtransactions=True):
+            with ctx_manager:
                 alloc = (
                     session.query(self.model).filter_by(**raw_segment).
                     first())
@@ -132,8 +134,8 @@ class SegmentTypeDriver(BaseTypeDriver):
         """
 
         network_type = self.get_type()
-        session = self._get_session(context)
-        with session.begin(subtransactions=True):
+        session, ctx_manager = self._get_session(context)
+        with ctx_manager:
             select = (session.query(self.model).
                       filter_by(allocated=False, **filters))
 

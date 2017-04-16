@@ -4528,10 +4528,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     # this protection only applies to router ports so we need
                     # to make this port belong to a router
                     ctx = context.get_admin_context()
-                    with ctx.session.begin():
+                    with db_api.context_manager.writer.using(ctx):
                         router = l3_models.Router()
                         ctx.session.add(router)
-                    with ctx.session.begin():
+                    with db_api.context_manager.writer.using(ctx):
                         rp = l3_models.RouterPort(router_id=router.id,
                                                   port_id=port['port']['id'])
                         ctx.session.add(rp)
@@ -4541,7 +4541,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     res = req.get_response(self.api)
                     self.assertEqual(409, res.status_int)
                     # should work fine if it's not a router port
-                    with ctx.session.begin():
+                    with db_api.context_manager.writer.using(ctx):
                         ctx.session.delete(rp)
                         ctx.session.delete(router)
                     res = req.get_response(self.api)
@@ -6142,7 +6142,7 @@ class DbModelMixin(object):
         self.assertEqual(final_exp, actual_repr_output)
 
     def _make_security_group_and_rule(self, ctx):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             sg = sg_models.SecurityGroup(name='sg', description='sg')
             rule = sg_models.SecurityGroupRule(
                 security_group=sg, port_range_min=1,
@@ -6154,7 +6154,7 @@ class DbModelMixin(object):
         return sg, rule
 
     def _make_floating_ip(self, ctx, port_id):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             flip = l3_models.FloatingIP(floating_ip_address='1.2.3.4',
                                         floating_network_id='somenet',
                                         floating_port_id=port_id)
@@ -6162,7 +6162,7 @@ class DbModelMixin(object):
         return flip
 
     def _make_router(self, ctx):
-        with ctx.session.begin():
+        with db_api.context_manager.writer.using(ctx):
             router = l3_models.Router()
             ctx.session.add(router)
         return router
@@ -6245,7 +6245,7 @@ class DbModelMixin(object):
 
         def _lock_blocked_name_update():
             ctx = context.get_admin_context()
-            with ctx.session.begin():
+            with db_api.context_manager.writer.using(ctx):
                 thing = ctx.session.query(model).filter_by(id=dbid).one()
                 thing.bump_revision()
                 thing.name = 'newname'
@@ -6260,7 +6260,7 @@ class DbModelMixin(object):
             while not self._blocked_on_lock:
                 eventlet.sleep(0)
             ctx = context.get_admin_context()
-            with ctx.session.begin():
+            with db_api.context_manager.writer.using(ctx):
                 thing = ctx.session.query(model).filter_by(id=dbid).one()
                 thing.bump_revision()
                 thing.description = 'a description'
