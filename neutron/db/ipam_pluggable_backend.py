@@ -221,18 +221,27 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     ips.append([{'subnet_id': s['id']}
                                 for s in subnets])
 
-        is_router_port = (
-            p['device_owner'] in constants.ROUTER_INTERFACE_OWNERS_SNAT)
-        if not is_router_port:
-            for subnet in v6_stateless:
-                # IP addresses for IPv6 SLAAC and DHCPv6-stateless subnets
-                # are implicitly included.
-                ips.append({'subnet_id': subnet['id'],
-                            'subnet_cidr': subnet['cidr'],
-                            'eui64_address': True,
-                            'mac': p['mac_address']})
+        ips.extend(self._get_auto_address_ips(v6_stateless, p))
+
         ipam_driver = driver.Pool.get_instance(None, context)
         return self._ipam_allocate_ips(context, ipam_driver, p, ips)
+
+    def _get_auto_address_ips(self, v6_stateless_subnets, port,
+                              exclude_subnet_ids=None):
+        exclude_subnet_ids = exclude_subnet_ids or []
+        ips = []
+        is_router_port = (
+            port['device_owner'] in constants.ROUTER_INTERFACE_OWNERS_SNAT)
+        if not is_router_port:
+            for subnet in v6_stateless_subnets:
+                if subnet['id'] not in exclude_subnet_ids:
+                    # IP addresses for IPv6 SLAAC and DHCPv6-stateless subnets
+                    # are implicitly included.
+                    ips.append({'subnet_id': subnet['id'],
+                                'subnet_cidr': subnet['cidr'],
+                                'eui64_address': True,
+                                'mac': port['mac_address']})
+        return ips
 
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
                                  device_owner, subnets):
@@ -301,6 +310,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         if changes.remove:
             removed = self._ipam_deallocate_ips(context, ipam_driver, port,
                                                 changes.remove)
+
+        v6_stateless = self._classify_subnets(
+            context, subnets)[2]
+        handled_subnet_ids = [ip['subnet_id'] for ip in
+                              to_add + changes.original + changes.remove]
+        to_add.extend(self._get_auto_address_ips(
+            v6_stateless, port, handled_subnet_ids))
+
         if to_add:
             added = self._ipam_allocate_ips(context, ipam_driver,
                                             port, to_add)

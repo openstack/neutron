@@ -648,7 +648,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         fixed_ips_mock = mock.Mock(return_value=changes.add)
         mocks['ipam'] = ipam_pluggable_backend.IpamPluggableBackend()
         mocks['ipam']._get_changed_ips_for_port = changes_mock
-        mocks['ipam']._ipam_get_subnets = mock.Mock()
+        mocks['ipam']._ipam_get_subnets = mock.Mock(return_value=[])
         mocks['ipam']._test_fixed_ips_for_port = fixed_ips_mock
         mocks['ipam']._update_ips_for_pd_subnet = mock.Mock(return_value=[])
 
