@@ -21,6 +21,13 @@ VALID_RULE_TYPES = [RULE_TYPE_BANDWIDTH_LIMIT,
                     RULE_TYPE_MINIMUM_BANDWIDTH,
                     ]
 
+# Names of rules' attributes
+MAX_KBPS = "max_kbps"
+MAX_BURST = "max_burst_kbps"
+MIN_KBPS = "min_kbps"
+DIRECTION = "direction"
+DSCP_MARK = "dscp_mark"
+
 QOS_POLICY_ID = 'qos_policy_id'
 
 QOS_PLUGIN = 'qos_plugin'

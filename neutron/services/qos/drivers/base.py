@@ -14,9 +14,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.api import validators as lib_validators
+from oslo_log import log as logging
+
 from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.services.qos import qos_consts
+
+LOG = logging.getLogger(__name__)
 
 
 @registry.has_registry_receivers
@@ -64,7 +69,34 @@ class DriverBase(object):
         return vnic_type in self.vnic_types
 
     def is_rule_supported(self, rule):
-        return rule.rule_type in self.supported_rules
+        supported_parameters = self.supported_rules.get(rule.rule_type)
+        if not supported_parameters:
+            LOG.debug("Rule type %(rule_type)s is not supported by "
+                      "%(driver_name)s",
+                      {'rule_type': rule.rule_type,
+                       'driver_name': self.name})
+            return False
+        for parameter, validators in supported_parameters.items():
+            parameter_value = rule.get(parameter)
+            for validator_type, validator_data in validators.items():
+                validator_function = lib_validators.get_validator(
+                    validator_type)
+                validate_result = validator_function(parameter_value,
+                                                     validator_data)
+                # NOTE(slaweq): validator functions returns None if data is
+                # valid or string with reason why data is not valid
+                if validate_result:
+                    LOG.debug("Parameter %(parameter)s=%(value)s in "
+                              "rule type %(rule_type)s is not "
+                              "supported by %(driver_name)s. "
+                              "Validate result: %(validate_result)s",
+                              {'parameter': parameter,
+                               'value': parameter_value,
+                               'rule_type': rule.rule_type,
+                               'driver_name': self.name,
+                               'validate_result': validate_result})
+                    return False
+        return True
 
     def create_policy(self, context, policy):
         """Create policy invocation.
