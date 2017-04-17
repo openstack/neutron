@@ -19,6 +19,9 @@ from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.callbacks import events
+from neutron.callbacks import registry
+from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import securitygroup as sg_models
@@ -35,8 +38,17 @@ DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
 DHCP_RULE_PORT = {4: (67, 68, const.IPv4), 6: (547, 546, const.IPv6)}
 
 
+@registry.has_registry_receivers
 class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     """Mixin class to add agent-based security group implementation."""
+
+    @registry.receives(resources.PORT, [events.AFTER_CREATE,
+                                        events.AFTER_UPDATE,
+                                        events.AFTER_DELETE])
+    def notify_sg_on_port_change(self, resource, event, trigger, context,
+                                 port, *args, **kwargs):
+        """Trigger notification to other SG members on port changes."""
+        self.notify_security_groups_member_updated(context, port)
 
     def get_port_from_device(self, context, device):
         """Get port dict from device name on an agent.
