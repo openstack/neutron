@@ -13,7 +13,6 @@
 #    under the License.
 
 from oslo_config import cfg
-import six
 from webob import exc as web_exc
 
 from neutron.api.v2 import attributes
@@ -68,7 +67,7 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
 
         # Save the global RESOURCE_ATTRIBUTE_MAP
         self.saved_attr_map = {}
-        for res, attrs in six.iteritems(attributes.RESOURCE_ATTRIBUTE_MAP):
+        for res, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.items():
             self.saved_attr_map[res] = attrs.copy()
 
         # Update the plugin and extensions path

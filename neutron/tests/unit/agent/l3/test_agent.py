@@ -28,7 +28,6 @@ from oslo_log import log
 import oslo_messaging
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
-import six
 from testtools import matchers
 
 from neutron.agent.l3 import agent as l3_agent
@@ -2700,7 +2699,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         def pd_notifier(context, prefix_update):
             self.pd_update = prefix_update
-            for subnet_id, prefix in six.iteritems(prefix_update):
+            for subnet_id, prefix in prefix_update.items():
                 for intf in intfs:
                     for subnet in intf['subnets']:
                         if subnet['id'] == subnet_id:
@@ -2823,7 +2822,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
         def pd_notifier(context, prefix_update):
             self.pd_update = prefix_update
-            for subnet_id, prefix in six.iteritems(prefix_update):
+            for subnet_id, prefix in prefix_update.items():
                 gateway_ip = '%s1' % netaddr.IPNetwork(prefix).network
                 for intf in new_intfs:
                     for fip in intf['fixed_ips']:

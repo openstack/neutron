@@ -19,7 +19,6 @@ from operator import attrgetter
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib import constants
 from neutron_lib import context
-import six
 import testscenarios
 
 from neutron.db import agents_db
@@ -401,7 +400,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
         # pre schedule the networks to the agents defined in
         # self.hosted_networks before calling auto_schedule_network
-        for agent, networks in six.iteritems(self.hosted_networks):
+        for agent, networks in self.hosted_networks.items():
             agent_index = self._extract_index(agent)
             for net in networks:
                 net_index = self._extract_index(net)
