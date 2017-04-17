@@ -2153,6 +2153,39 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertEqual(ip_address,
                                  body['floatingip']['fixed_ip_address'])
 
+    def test_floatingip_update_subnet_gateway_disabled(
+        self, expected_status=lib_constants.FLOATINGIP_STATUS_ACTIVE):
+        """Attach a floating IP to an instance
+
+        Verify that the floating IP can be associated to a port whose subnet's
+        gateway ip is not connected to the external router, but the router
+        has an ip in that subnet.
+        """
+        with self.subnet(cidr='30.0.0.0/24', gateway_ip=None) as private_sub:
+            with self.port(private_sub) as p:
+                subnet_id = p['port']['fixed_ips'][0]['subnet_id']
+                private_sub = {'subnet': {'id': subnet_id}}
+                port_id = p['port']['id']
+                with self.router() as r:
+                    self._router_interface_action('add', r['router']['id'],
+                                                None, port_id)
+                with self.subnet(cidr='12.0.0.0/24') as public_sub:
+                    self._set_net_external(public_sub['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                         r['router']['id'], public_sub['subnet']['network_id'])
+                    fip = self._make_floatingip(self.fmt,
+                                 public_sub['subnet']['network_id'])
+                    body = self._show('floatingips', fip['floatingip']['id'])
+                    self.assertEqual(expected_status,
+                                     body['floatingip']['status'])
+                    body = self._update('floatingips', fip['floatingip']['id'],
+                                  {'floatingip': {'port_id': port_id}})
+                    self.assertEqual(port_id, body['floatingip']['port_id'])
+                    self.assertEqual(p['port']['fixed_ips'][0]['ip_address'],
+                                     body['floatingip']['fixed_ip_address'])
+                    self.assertEqual(r['router']['id'],
+                                     body['floatingip']['router_id'])
+
     def test_floatingip_create_different_fixed_ip_same_port(self):
         '''This tests that it is possible to delete a port that has
         multiple floating ip addresses associated with it (each floating
