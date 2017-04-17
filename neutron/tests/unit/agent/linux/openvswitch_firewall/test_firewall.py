@@ -100,11 +100,13 @@ class TestOFPort(base.BaseTestCase):
             'allowed_address_pairs': [
                 {'mac_address': 'foo', 'ip_address': '10.0.0.1'},
                 {'mac_address': 'bar', 'ip_address': '192.168.0.1'},
+                {'mac_address': 'qux', 'ip_address': '169.254.0.0/16'},
                 {'mac_address': 'baz', 'ip_address': '2003::f'},
             ]}
         allowed_pairs_v4 = ovsfw.OFPort._get_allowed_pairs(port, version=4)
         allowed_pairs_v6 = ovsfw.OFPort._get_allowed_pairs(port, version=6)
-        expected_aap_v4 = {('foo', '10.0.0.1'), ('bar', '192.168.0.1')}
+        expected_aap_v4 = {('foo', '10.0.0.1'), ('bar', '192.168.0.1'),
+                           ('qux', '169.254.0.0/16')}
         expected_aap_v6 = {('baz', '2003::f')}
         self.assertEqual(expected_aap_v4, allowed_pairs_v4)
         self.assertEqual(expected_aap_v6, allowed_pairs_v6)
