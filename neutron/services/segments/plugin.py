@@ -16,6 +16,9 @@
 
 from keystoneauth1 import loading as ks_loading
 import netaddr
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.plugins import directory
 from novaclient import client as nova_client
@@ -25,9 +28,6 @@ from oslo_log import log
 
 from neutron._i18n import _, _LE, _LI
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api

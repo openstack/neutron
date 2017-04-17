@@ -17,6 +17,9 @@ import functools
 import signal
 
 import eventlet
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -25,9 +28,6 @@ import six
 from stevedore import driver
 
 from neutron._i18n import _, _LE
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import utils
 

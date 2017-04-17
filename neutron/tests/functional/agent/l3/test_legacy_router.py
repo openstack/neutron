@@ -16,14 +16,14 @@
 import copy
 
 import mock
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_constants
 
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers

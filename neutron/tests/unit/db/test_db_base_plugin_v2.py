@@ -21,6 +21,8 @@ import itertools
 import eventlet
 import mock
 import netaddr
+from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
@@ -41,8 +43,6 @@ import neutron
 from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import router
-from neutron.callbacks import exceptions
-from neutron.callbacks import registry
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils

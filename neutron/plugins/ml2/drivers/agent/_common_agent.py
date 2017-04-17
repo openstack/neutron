@@ -19,6 +19,9 @@ import contextlib
 import sys
 import time
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources as local_resources
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_config import cfg
@@ -34,9 +37,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources as local_resources
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import topics

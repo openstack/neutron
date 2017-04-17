@@ -19,6 +19,10 @@ import random
 from debtcollector import removals
 import netaddr
 from neutron_lib.api import validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
@@ -31,10 +35,6 @@ from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.callbacks import events
-from neutron.callbacks import exceptions
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc

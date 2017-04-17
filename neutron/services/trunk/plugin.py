@@ -15,6 +15,9 @@
 import copy
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
@@ -22,9 +25,6 @@ from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin

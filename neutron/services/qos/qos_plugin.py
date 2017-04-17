@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.callbacks import events as callbacks_events
-from neutron.callbacks import registry as callbacks_registry
-from neutron.callbacks import resources as callbacks_resources
+from neutron_lib.callbacks import events as callbacks_events
+from neutron_lib.callbacks import registry as callbacks_registry
+from neutron_lib.callbacks import resources as callbacks_resources
+
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common

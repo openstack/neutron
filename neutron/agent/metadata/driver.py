@@ -18,6 +18,9 @@ import grp
 import os
 import pwd
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -25,9 +28,6 @@ from neutron._i18n import _
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants
 from neutron.common import exceptions
 

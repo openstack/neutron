@@ -23,6 +23,9 @@ import time
 
 import netaddr
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events as callback_events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.utils import helpers
@@ -47,9 +50,6 @@ from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
-from neutron.callbacks import events as callback_events
-from neutron.callbacks import registry
-from neutron.callbacks import resources as callback_resources
 from neutron.common import config
 from neutron.common import constants as c_const
 from neutron.common import topics

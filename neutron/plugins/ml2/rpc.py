@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -24,7 +25,6 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _LE, _LW
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
-from neutron.callbacks import resources
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.db import l3_hamode_db

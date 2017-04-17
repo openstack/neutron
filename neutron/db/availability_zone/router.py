@@ -11,12 +11,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.plugins import directory
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_attrs_db

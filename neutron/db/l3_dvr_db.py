@@ -15,6 +15,10 @@ import collections
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -25,10 +29,6 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _, _LE, _LI, _LW
-from neutron.callbacks import events
-from neutron.callbacks import exceptions
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
 from neutron.db import api as db_api

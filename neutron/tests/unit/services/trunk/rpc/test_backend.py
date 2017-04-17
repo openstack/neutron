@@ -12,9 +12,9 @@
 # under the License.
 
 import mock
+from neutron_lib.callbacks import events
 
 from neutron.api.rpc.callbacks import resource_manager
-from neutron.callbacks import events
 from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import backend
@@ -28,7 +28,8 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
         self.register_mock = mock.patch.object(
             resource_manager.ResourceCallbacksManager, "register").start()
 
-    @mock.patch("neutron.callbacks.manager.CallbacksManager.subscribe")
+    # TODO(boden) replace with neutron_lib fixture once working
+    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.subscribe")
     def test___init__(self, mocked_subscribe):
         test_obj = backend.ServerSideRpcBackend()
 

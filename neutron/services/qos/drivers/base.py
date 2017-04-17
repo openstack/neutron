@@ -15,10 +15,10 @@
 # under the License.
 
 from neutron_lib.api import validators as lib_validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from oslo_log import log as logging
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.services.qos import qos_consts
 
 LOG = logging.getLogger(__name__)

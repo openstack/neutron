@@ -18,6 +18,10 @@ from keystoneauth1 import exceptions as ks_exc
 import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -28,10 +32,6 @@ from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import exceptions
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import exceptions as neutron_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import agents_db

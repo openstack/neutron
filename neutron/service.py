@@ -17,6 +17,9 @@ import inspect
 import os
 import random
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
@@ -29,9 +32,6 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 
 from neutron._i18n import _LE, _LI
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import config
 from neutron.common import profiler
 from neutron.common import rpc as n_rpc

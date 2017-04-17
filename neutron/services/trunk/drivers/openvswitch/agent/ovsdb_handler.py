@@ -16,6 +16,8 @@
 import functools
 
 import eventlet
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import context as n_context
 from oslo_concurrency import lockutils
 from oslo_context import context as o_context
@@ -26,8 +28,6 @@ from oslo_serialization import jsonutils
 from neutron._i18n import _, _LE
 from neutron.agent.common import ovs_lib
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_agent_constants

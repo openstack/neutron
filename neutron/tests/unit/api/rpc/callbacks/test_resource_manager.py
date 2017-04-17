@@ -12,9 +12,10 @@
 
 import mock
 
+from neutron_lib.callbacks import exceptions
+
 from neutron.api.rpc.callbacks import exceptions as rpc_exc
 from neutron.api.rpc.callbacks import resource_manager
-from neutron.callbacks import exceptions as exceptions
 from neutron.tests.unit.services.qos import base
 
 IS_VALID_RESOURCE_TYPE = (

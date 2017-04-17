@@ -20,6 +20,10 @@ import copy
 import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -34,10 +38,6 @@ from webob import exc
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import exceptions
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2

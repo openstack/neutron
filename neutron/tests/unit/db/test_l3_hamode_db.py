@@ -16,6 +16,10 @@ import mock
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions as c_exc
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -29,10 +33,6 @@ import testtools
 
 from neutron.agent.common import utils as agent_utils
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.callbacks import events
-from neutron.callbacks import exceptions as c_exc
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.db import agents_db
 from neutron.db import common_db_mixin

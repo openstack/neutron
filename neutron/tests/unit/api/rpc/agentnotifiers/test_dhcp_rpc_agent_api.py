@@ -16,13 +16,13 @@
 import datetime
 import mock
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.db.agentschedulers_db import cfg
 from neutron.db.models import agent as agent_model

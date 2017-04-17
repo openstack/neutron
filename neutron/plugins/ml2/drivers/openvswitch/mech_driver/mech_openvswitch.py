@@ -16,12 +16,12 @@
 import os
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from oslo_config import cfg
 
 from neutron.agent import securitygroups_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
