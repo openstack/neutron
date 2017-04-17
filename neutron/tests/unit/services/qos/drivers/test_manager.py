@@ -13,11 +13,9 @@
 import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
-from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common import constants
-from neutron.conf.services import qos_driver_manager as notif_driver_mgr_config
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import rule as rule_object
 from neutron.services.qos.drivers import base as qos_driver_base
@@ -32,8 +30,6 @@ class TestQosDriversManagerBase(base.BaseQosTestCase):
         super(TestQosDriversManagerBase, self).setUp()
         self.config_parse()
         self.setup_coreplugin(load_plugins=False)
-        config = cfg.ConfigOpts()
-        notif_driver_mgr_config.register_qos_plugin_opts(config)
 
     @staticmethod
     def _create_manager_with_drivers(drivers_details):

@@ -21,11 +21,9 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.callbacks import events
 from neutron.callbacks import registry
-from neutron.conf.services import qos_driver_manager as qos_mgr
 from neutron.objects.qos import policy as policy_object
 from neutron.services.qos import qos_consts
 
-qos_mgr.register_qos_plugin_opts()
 
 LOG = logging.getLogger(__name__)
 
@@ -38,13 +36,10 @@ SKIPPED_VIF_TYPES = [
 
 class QosServiceDriverManager(object):
 
-    def __init__(self, enable_rpc=False):
+    def __init__(self):
         self._drivers = []
         self.notification_api = resources_rpc.ResourcesPushRpcApi()
-        #TODO(mangelajo): remove the enable_rpc parameter in Pike since
-        #                 we only use it when a message_queue derived driver
-        #                 is found in the notification_drivers
-        self.rpc_notifications_required = enable_rpc
+        self.rpc_notifications_required = False
         rpc_registry.provide(self._get_qos_policy_cb, resources.QOS_POLICY)
         # notify any registered QoS driver that we're ready, those will
         # call the driver manager back with register_driver if they

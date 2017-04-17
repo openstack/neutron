@@ -14,10 +14,12 @@
 # class on the common base class for all objects
 
 import mock
-from neutron_lib.plugins import directory
+from oslo_config import cfg
 
+from neutron import manager
 from neutron.objects.qos import rule_type
 from neutron.services.qos import qos_consts
+from neutron.services.qos import qos_plugin
 from neutron.tests import base as test_base
 
 
@@ -29,15 +31,17 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
     def setUp(self):
         super(QosRuleTypeObjectTestCase, self).setUp()
         self.config_parse()
-        self.setup_coreplugin(DB_PLUGIN_KLASS)
+
+        self.setup_coreplugin(load_plugins=False)
+        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
+        cfg.CONF.set_override("service_plugins", ["qos"])
+        manager.init()
 
     def test_get_objects(self):
-        core_plugin = directory.get_plugin()
         rule_types_mock = mock.PropertyMock(
-            return_value=qos_consts.VALID_RULE_TYPES)
-        with mock.patch.object(core_plugin, 'supported_qos_rule_types',
-                               new_callable=rule_types_mock,
-                               create=True):
+            return_value=set(qos_consts.VALID_RULE_TYPES))
+        with mock.patch.object(qos_plugin.QoSPlugin, 'supported_rule_types',
+                               new_callable=rule_types_mock):
             types = rule_type.QosRuleType.get_objects()
             self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))
