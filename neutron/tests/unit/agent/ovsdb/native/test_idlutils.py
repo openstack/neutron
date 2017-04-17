@@ -154,3 +154,51 @@ class TestIdlUtils(base.BaseTestCase):
                                      mock.sentinel.table_name,
                                      FAKE_RECORD)
         self.assertEqual(mock.sentinel.row_value, res)
+
+    @mock.patch.object(idlutils.helpers, 'enable_connection_uri')
+    @mock.patch.object(idlutils, '_get_schema_helper')
+    def test_get_schema_helper_succeed_once(self,
+                                            mock_get_schema_helper,
+                                            mock_enable_conn):
+        mock_get_schema_helper.return_value = mock.Mock()
+
+        idlutils.get_schema_helper(mock.Mock(), mock.Mock())
+        self.assertEqual(1, mock_get_schema_helper.call_count)
+        self.assertEqual(0, mock_enable_conn.call_count)
+
+    @mock.patch.object(idlutils.helpers, 'enable_connection_uri')
+    @mock.patch.object(idlutils, '_get_schema_helper')
+    def test_get_schema_helper_fail_and_then_succeed(self,
+                                                     mock_get_schema_helper,
+                                                     mock_enable_conn):
+        # raise until 3rd retry attempt
+        mock_get_schema_helper.side_effect = [Exception(), Exception(),
+                                              mock.Mock()]
+
+        idlutils.get_schema_helper(mock.Mock(), mock.Mock())
+        self.assertEqual(3, mock_get_schema_helper.call_count)
+        self.assertEqual(1, mock_enable_conn.call_count)
+
+    @mock.patch.object(idlutils.helpers, 'enable_connection_uri')
+    @mock.patch.object(idlutils, '_get_schema_helper')
+    def test_get_schema_helper_not_add_manager_and_timeout(
+            self, mock_get_schema_helper, mock_enable_conn):
+        # raise always
+        mock_get_schema_helper.side_effect = RuntimeError()
+
+        self.assertRaises(RuntimeError, idlutils.get_schema_helper,
+                          mock.Mock(), mock.Mock(), retry=True,
+                          try_add_manager=False)
+        self.assertEqual(8, mock_get_schema_helper.call_count)
+        self.assertEqual(0, mock_enable_conn.call_count)
+
+    @mock.patch.object(idlutils.helpers, 'enable_connection_uri')
+    @mock.patch.object(idlutils, '_get_schema_helper')
+    def test_get_schema_helper_not_retry(
+            self, mock_get_schema_helper, mock_enable_conn):
+        # raise always
+        mock_get_schema_helper.side_effect = RuntimeError()
+
+        self.assertRaises(RuntimeError, idlutils.get_schema_helper,
+                          mock.Mock(), mock.Mock(), retry=False)
+        self.assertEqual(1, mock_get_schema_helper.call_count)
