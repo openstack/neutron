@@ -29,6 +29,7 @@ import mock
 from neutron_lib import fixture
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
+from oslo_db import options as db_options
 from oslo_messaging import conffixture as messaging_conffixture
 from oslo_utils import excutils
 from oslo_utils import fileutils
@@ -145,9 +146,9 @@ class DietTestCase(base.BaseTestCase):
         super(DietTestCase, self).setUp()
 
         # FIXME(amuller): this must be called in the Neutron unit tests base
-        # class to initialize the DB connection string. Moving this may cause
-        # non-deterministic failures. Bug #1489098 for more info.
-        config.set_db_defaults()
+        # class. Moving this may cause non-deterministic failures. Bug #1489098
+        # for more info.
+        db_options.set_defaults(cfg.CONF, connection='sqlite://')
 
         # Configure this first to ensure pm debugging support for setUp()
         debugger = os.environ.get('OS_POST_MORTEM_DEBUGGER')

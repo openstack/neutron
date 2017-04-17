@@ -1,0 +1,10 @@
+---
+upgrade:
+  - |
+    Previously, ``neutron-server`` was using configuration values
+    for ``oslo.db`` that were different from library defaults. Specifically, it
+    used the following values when they were not overridden in configuration
+    files: ``max_pool_size`` = 10, ``max_overflow`` = 20, ``pool_timeout`` =
+    10. In this release, ``neutron-server`` instead relies on default values
+    defined by the library itself. If you rely on old default values, you may
+    need to adjust your configuration files to explicitly set the new values.
