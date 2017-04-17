@@ -90,24 +90,33 @@ class TestRootController(test_functional.PecanFunctionalTest):
 
 class TestV2Controller(TestRootController):
 
-    base_url = '/v2.0'
+    base_url = '/v2.0/'
 
     def test_get(self):
         """Verify current version info are returned."""
         response = self.app.get(self.base_url)
         self.assertEqual(response.status_int, 200)
         json_body = jsonutils.loads(response.body)
-        self.assertEqual('v2.0', json_body['version']['id'])
-        self.assertEqual('CURRENT', json_body['version']['status'])
+        self.assertIn('resources', json_body)
+        self.assertIsInstance(json_body['resources'], list)
+        for r in json_body['resources']:
+            self.assertIn("links", r)
+            self.assertIn("name", r)
+            self.assertIn("collection", r)
+            self.assertIn(self.base_url, r['links'][0]['href'])
+
+    def test_get_no_trailing_slash(self):
+        response = self.app.get(self.base_url[:-1], expect_errors=True)
+        self.assertEqual(response.status_int, 404)
 
     def test_routing_successs(self):
         """Test dispatch to controller for existing resource."""
-        response = self.app.get('%s/ports.json' % self.base_url)
+        response = self.app.get('%sports.json' % self.base_url)
         self.assertEqual(response.status_int, 200)
 
     def test_routing_failure(self):
         """Test dispatch to controller for non-existing resource."""
-        response = self.app.get('%s/idonotexist.json' % self.base_url,
+        response = self.app.get('%sidonotexist.json' % self.base_url,
                                 expect_errors=True)
         self.assertEqual(response.status_int, 404)
 

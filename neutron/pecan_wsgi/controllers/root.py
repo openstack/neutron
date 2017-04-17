@@ -18,8 +18,11 @@ from oslo_config import cfg
 from oslo_log import log
 import pecan
 from pecan import request
+import six
+import six.moves.urllib.parse as urlparse
 
 from neutron._i18n import _LW
+from neutron.api.v2 import attributes
 from neutron.api.views import versions as versions_view
 from neutron import manager
 from neutron.pecan_wsgi.controllers import extensions as ext_ctrl
@@ -83,8 +86,18 @@ class V2Controller(object):
 
     @utils.expose(generic=True)
     def index(self):
-        builder = versions_view.get_view_builder(pecan.request)
-        return dict(version=builder.build(self.version_info))
+        if not pecan.request.path_url.endswith('/'):
+            pecan.abort(404)
+
+        layout = []
+        for name, collection in six.iteritems(attributes.CORE_RESOURCES):
+            href = urlparse.urljoin(pecan.request.path_url, collection)
+            resource = {'name': name,
+                        'collection': collection,
+                        'links': [{'rel': 'self',
+                                   'href': href}]}
+            layout.append(resource)
+        return {'resources': layout}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='POST')
