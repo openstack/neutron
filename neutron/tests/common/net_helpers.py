@@ -16,7 +16,6 @@
 import abc
 from concurrent import futures
 import contextlib
-import functools
 import os
 import random
 import re
@@ -289,11 +288,9 @@ class RootHelperProcess(subprocess.Popen):
     @staticmethod
     def _read_stream(stream, timeout):
         if timeout:
-            poll_predicate = functools.partial(
-                select.select, [stream], [], [], 1)
-            common_utils.wait_until_true(
-                lambda: poll_predicate()[0], timeout, 0.1,
-                RuntimeError('No output in %.2f seconds' % timeout))
+            rready, _wready, _xready = select.select([stream], [], [], timeout)
+            if not rready:
+                raise RuntimeError('No output in %.2f seconds' % timeout)
         return stream.readline()
 
     def writeline(self, data):
