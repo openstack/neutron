@@ -41,8 +41,7 @@ class SnatNamespace(namespaces.Namespace):
     @namespaces.check_ns_existence
     def delete(self):
         ns_ip = ip_lib.IPWrapper(namespace=self.name)
-        for d in ns_ip.get_devices(exclude_loopback=True,
-                                   exclude_gre_devices=True):
+        for d in ns_ip.get_devices():
             if d.name.startswith(constants.SNAT_INT_DEV_PREFIX):
                 LOG.debug('Unplugging DVR device %s', d.name)
                 self.driver.unplug(d.name, namespace=self.name,

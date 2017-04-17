@@ -251,8 +251,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             return
 
         ns_ip = ip_lib.IPWrapper(namespace=self.snat_namespace.name)
-        for d in ns_ip.get_devices(exclude_loopback=True,
-                                   exclude_gre_devices=True):
+        for d in ns_ip.get_devices():
             if (d.name.startswith(router.EXTERNAL_DEV_PREFIX) and
                     d.name != interface_name):
                 LOG.debug('Deleting stale external router device: %s', d.name)

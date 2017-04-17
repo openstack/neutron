@@ -248,8 +248,7 @@ def destroy_namespace(conf, namespace, force=False):
                     # the error and continue with the cleanup
                     LOG.error(_LE('Not all processes were killed in %s'),
                               namespace)
-                for device in ip.get_devices(exclude_loopback=True,
-                                             exclude_gre_devices=True):
+                for device in ip.get_devices():
                     unplug_device(conf, device)
 
         ip.garbage_collect_namespace()
