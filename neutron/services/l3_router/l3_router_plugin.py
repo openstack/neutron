@@ -17,8 +17,10 @@ from neutron_lib import constants as n_const
 from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
+from oslo_log import log as logging
 from oslo_utils import importutils
 
+from neutron._i18n import _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import rpc as n_rpc
@@ -39,6 +41,16 @@ from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
 
 
+LOG = logging.getLogger(__name__)
+
+
+def disable_dvr_extension_by_config(aliases):
+    if not cfg.CONF.enable_dvr:
+        LOG.info(_LI('Disabled DVR extension.'))
+        if 'dvr' in aliases:
+            aliases.remove('dvr')
+
+
 class L3RouterPlugin(service_base.ServicePluginBase,
                      common_db_mixin.CommonDbMixin,
                      extraroute_db.ExtraRoute_db_mixin,
@@ -56,10 +68,10 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     l3_db.L3_NAT_db_mixin, l3_hamode_db.L3_HA_NAT_db_mixin,
     l3_dvr_db.L3_NAT_with_dvr_db_mixin, and extraroute_db.ExtraRoute_db_mixin.
     """
-    supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
-                                   "extraroute", "l3_agent_scheduler",
-                                   "l3-ha", "router_availability_zone",
-                                   "l3-flavors"]
+    _supported_extension_aliases = ["dvr", "router", "ext-gw-mode",
+                                    "extraroute", "l3_agent_scheduler",
+                                    "l3-ha", "router_availability_zone",
+                                    "l3-flavors"]
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -82,6 +94,14 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
         self.add_worker(rpc_worker)
         self.l3_driver_controller = driver_controller.DriverController(self)
+
+    @property
+    def supported_extension_aliases(self):
+        if not hasattr(self, '_aliases'):
+            aliases = self._supported_extension_aliases[:]
+            disable_dvr_extension_by_config(aliases)
+            self._aliases = aliases
+        return self._aliases
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):

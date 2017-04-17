@@ -85,6 +85,7 @@ case $VENV in
     ;;
 
 "api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
+    # TODO(ihrachys) consider feeding result of ext-list into tempest.conf
     load_rc_hook api_all_extensions
     if [ "${FLAVOR}" = "dvrskip" ]; then
         load_rc_hook disable_dvr_tests
@@ -107,6 +108,9 @@ case $VENV in
     fi
     if [[ "$VENV" =~ "ovs" ]]; then
         load_conf_hook ovsfw
+    fi
+    if [[ "$FLAVOR" = "dvrskip" ]]; then
+        load_conf_hook disable_dvr
     fi
 
     export DEVSTACK_LOCALCONF=$(cat $LOCAL_CONF)

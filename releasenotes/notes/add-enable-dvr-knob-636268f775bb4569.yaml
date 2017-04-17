@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Allow to configure ``router`` service plugin without ``dvr`` API extension
+    loaded and exposed. To achieve that, set the new ``enable_dvr`` option to
+    ``False`` in ``neutron.conf`` file.
+upgrade:
+  - |
+    Consider setting ``enable_dvr`` to ``False`` in ``neutron.conf`` file if
+    your setup doesn't support DVR. This will make Neutron stop advertising
+    support for the ``dvr`` API extension via its ``/v2.0/extensions`` API
+    endpoint.
