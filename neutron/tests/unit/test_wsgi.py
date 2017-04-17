@@ -205,6 +205,7 @@ class TestWSGIServer(base.BaseTestCase):
             max_size=server.num_threads,
             log=mock.ANY,
             keepalive=CONF.wsgi_keep_alive,
+            log_format=CONF.wsgi_log_format,
             socket_timeout=server.client_socket_timeout
         )
 

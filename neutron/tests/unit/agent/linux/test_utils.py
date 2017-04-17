@@ -19,6 +19,7 @@ import mock
 import six
 import testtools
 
+from oslo_config import cfg
 import oslo_i18n
 
 from neutron.agent.linux import utils
@@ -521,6 +522,7 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
             'app',
             protocol=utils.UnixDomainHttpProtocol,
             log=mock.ANY,
+            log_format=cfg.CONF.wsgi_log_format,
             max_size=self.server.num_threads
         )
 
@@ -535,5 +537,6 @@ class TestUnixDomainWSGIServer(base.BaseTestCase):
             'app',
             protocol=utils.UnixDomainHttpProtocol,
             log=mock.ANY,
+            log_format=cfg.CONF.wsgi_log_format,
             max_size=num_threads
         )
