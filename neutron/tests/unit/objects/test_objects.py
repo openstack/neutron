@@ -51,7 +51,7 @@ object_data = {
     'Network': '1.0-f2f6308f79731a767b92b26b0f4f3849',
     'NetworkDNSDomain': '1.0-420db7910294608534c1e2e30d6d8319',
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
-    'NetworkSegment': '1.0-40707ef6bd9a0bf095038158d995cc7d',
+    'NetworkSegment': '1.0-57b7f2960971e3b95ded20cbc59244a8',
     'Port': '1.1-5bf48d12a7bf7f5b7a319e8003b437a5',
     'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
     'PortBindingLevel': '1.0-de66a4c61a083b8f34319fa9dde5b060',

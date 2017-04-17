@@ -15,15 +15,12 @@
 #    under the License.
 
 
-import functools
-
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
-from sqlalchemy.orm import exc
 
 from neutron.callbacks import events
 from neutron.callbacks import registry
@@ -35,6 +32,7 @@ from neutron.db.models import segment as segment_model
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
+from neutron.objects import base as base_obj
 from neutron.objects import network
 from neutron.services.segments import exceptions
 
@@ -43,25 +41,23 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     """Mixin class to add segment."""
 
     @staticmethod
-    def _make_segment_dict(segment_db, fields=None):
-        res = {'id': segment_db['id'],
-               'network_id': segment_db['network_id'],
-               'name': segment_db['name'],
-               'description': segment_db['description'],
-               db.PHYSICAL_NETWORK: segment_db[db.PHYSICAL_NETWORK],
-               db.NETWORK_TYPE: segment_db[db.NETWORK_TYPE],
-               db.SEGMENTATION_ID: segment_db[db.SEGMENTATION_ID],
-               'hosts': [mapping.host for mapping in
-                         segment_db.segment_host_mapping],
-               'segment_index': segment_db['segment_index']}
+    def _make_segment_dict(segment_obj, fields=None):
+        res = {'id': segment_obj['id'],
+               'network_id': segment_obj['network_id'],
+               'name': segment_obj['name'],
+               'description': segment_obj['description'],
+               db.PHYSICAL_NETWORK: segment_obj[db.PHYSICAL_NETWORK],
+               db.NETWORK_TYPE: segment_obj[db.NETWORK_TYPE],
+               db.SEGMENTATION_ID: segment_obj[db.SEGMENTATION_ID],
+               'hosts': segment_obj['hosts'],
+               'segment_index': segment_obj['segment_index']}
         return db_utils.resource_fields(res, fields)
 
     def _get_segment(self, context, segment_id):
-        try:
-            return self._get_by_id(
-                context, segment_model.NetworkSegment, segment_id)
-        except exc.NoResultFound:
+        segment = network.NetworkSegment.get_object(context, id=segment_id)
+        if not segment:
             raise exceptions.SegmentNotFound(segment_id=segment_id)
+        return segment
 
     @log_helpers.log_method_call
     def create_segment(self, context, segment):
@@ -113,12 +109,13 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                 segment_index = (segments[-1].get('segment_index') + 1)
             args['segment_index'] = segment_index
 
-            new_segment = segment_model.NetworkSegment(**args)
-            context.session.add(new_segment)
+            new_segment = network.NetworkSegment(context, **args)
+            new_segment.create()
             # Do some preliminary operations before committing the segment to
             # db
-            registry.notify(resources.SEGMENT, events.PRECOMMIT_CREATE, self,
-                            context=context, segment=new_segment)
+            registry.notify(
+                resources.SEGMENT, events.PRECOMMIT_CREATE, self,
+                context=context, segment=new_segment)
             return new_segment
 
     @log_helpers.log_method_call
@@ -127,7 +124,8 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
         segment = segment['segment']
         with db_api.context_manager.writer.using(context):
             curr_segment = self._get_segment(context, uuid)
-            curr_segment.update(segment)
+            curr_segment.update_fields(segment)
+            curr_segment.update()
         return self._make_segment_dict(curr_segment)
 
     @log_helpers.log_method_call
@@ -139,23 +137,16 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def get_segments(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'segment', limit, marker)
-        make_segment_dict = functools.partial(self._make_segment_dict)
-        return self._get_collection(context,
-                                    segment_model.NetworkSegment,
-                                    make_segment_dict,
-                                    filters=filters,
-                                    fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        filters = filters or {}
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        segment_objs = network.NetworkSegment.get_objects(
+            context, _pager=pager, **filters)
+        return [self._make_segment_dict(obj) for obj in segment_objs]
 
     @log_helpers.log_method_call
     def get_segments_count(self, context, filters=None):
-        return self._get_collection_count(context,
-                                          segment_model.NetworkSegment,
-                                          filters=filters)
+        filters = filters or {}
+        return network.NetworkSegment.count(context, **filters)
 
     @log_helpers.log_method_call
     def get_segments_by_hosts(self, context, hosts):
@@ -168,11 +159,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     @log_helpers.log_method_call
     def delete_segment(self, context, uuid, for_net_delete=False):
         """Delete an existing segment."""
-        segment = self.get_segment(context, uuid)
+        segment_dict = self.get_segment(context, uuid)
         # Do some preliminary operations before deleting the segment
         registry.notify(resources.SEGMENT, events.BEFORE_DELETE,
                         self.delete_segment, context=context,
-                        segment=segment, for_net_delete=for_net_delete)
+                        segment=segment_dict, for_net_delete=for_net_delete)
 
         # Delete segment in DB
         with db_api.context_manager.writer.using(context):
@@ -183,11 +174,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
             # Do some preliminary operations before deleting segment in db
             registry.notify(resources.SEGMENT, events.PRECOMMIT_DELETE,
                             self.delete_segment, context=context,
-                            segment=segment)
+                            segment=segment_dict)
 
         registry.notify(resources.SEGMENT, events.AFTER_DELETE,
                         self.delete_segment, context=context,
-                        segment=segment)
+                        segment=segment_dict)
 
 
 def update_segment_host_mapping(context, host, current_segment_ids):
@@ -221,7 +212,7 @@ def _get_phys_nets(agent):
     mappings = configurations_dict.get('bridge_mappings', {})
     mappings.update(configurations_dict.get('interface_mappings', {}))
     mappings.update(configurations_dict.get('device_mappings', {}))
-    return mappings.keys()
+    return list(mappings.keys())
 
 
 reported_hosts = set()
@@ -242,9 +233,8 @@ def get_segments_with_phys_nets(context, phys_nets):
         return []
 
     with db_api.context_manager.reader.using(context):
-        segments = context.session.query(segment_model.NetworkSegment).filter(
-            segment_model.NetworkSegment.physical_network.in_(phys_nets))
-        return segments
+        return network.NetworkSegment.get_objects(
+            context, physical_network=phys_nets)
 
 
 def map_segment_to_hosts(context, segment_id, hosts):

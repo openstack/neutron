@@ -43,6 +43,7 @@ from neutron.extensions import ip_allocation as ipa
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils
+from neutron.objects import network as network_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import exceptions as segment_exc
 
@@ -334,10 +335,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 network_id=network_id)
 
         if segment_id:
-            query = context.session.query(segment_model.NetworkSegment)
-            query = query.filter(
-                segment_model.NetworkSegment.id == segment_id)
-            segment = query.one()
+            segment = network_obj.NetworkSegment.get_object(context,
+                                                            id=segment_id)
             if segment.network_id != network_id:
                 raise segment_exc.NetworkIdsDontMatch(
                     subnet_network=network_id,

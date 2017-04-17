@@ -1338,9 +1338,9 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         return port
 
     def _create_test_segment(self, network):
-        self._segment = net_obj.NetworkSegment(self.context,
-            network_id=network['id'],
-            network_type='vxlan')
+        attr = self.get_random_object_fields(net_obj.NetworkSegment)
+        attr['network_id'] = network['id']
+        self._segment = net_obj.NetworkSegment(self.context, **attr)
         self._segment.create()
 
     def _create_test_router(self):
