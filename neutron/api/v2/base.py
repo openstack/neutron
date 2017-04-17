@@ -575,7 +575,13 @@ class Controller(object):
                            pluralized=self._collection)
         except oslo_policy.PolicyNotAuthorized:
             # To avoid giving away information, pretend that it
-            # doesn't exist
+            # doesn't exist if policy does not authorize SHOW
+            with excutils.save_and_reraise_exception() as ctxt:
+                if not policy.check(request.context,
+                                    self._plugin_handlers[self.SHOW],
+                                    obj,
+                                    pluralized=self._collection):
+                    ctxt.reraise = False
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
 
@@ -640,13 +646,13 @@ class Controller(object):
                            orig_obj,
                            pluralized=self._collection)
         except oslo_policy.PolicyNotAuthorized:
+            # To avoid giving away information, pretend that it
+            # doesn't exist if policy does not authorize SHOW
             with excutils.save_and_reraise_exception() as ctxt:
-                # If a tenant is modifying its own object, it's safe to return
-                # a 403. Otherwise, pretend that it doesn't exist to avoid
-                # giving away information.
-                orig_obj_tenant_id = orig_obj.get("tenant_id")
-                if (request.context.tenant_id != orig_obj_tenant_id or
-                    orig_obj_tenant_id is None):
+                if not policy.check(request.context,
+                                    self._plugin_handlers[self.SHOW],
+                                    orig_obj,
+                                    pluralized=self._collection):
                     ctxt.reraise = False
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
