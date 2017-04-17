@@ -144,13 +144,6 @@ class QosDscpMarkingRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         self.assertRaises(exception.IncompatibleObjectVersion,
                      dscp_rule.obj_to_primitive, '1.0')
 
-    def test_dscp_object_version(self):
-        dscp_rule = rule.QosDscpMarkingRule()
-
-        prim = dscp_rule.obj_to_primitive('1.1')
-
-        self.assertTrue(prim)
-
 
 class QosDscpMarkingRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                          testlib_api.SqlTestCase):
@@ -177,13 +170,6 @@ class QosMinimumBandwidthRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         for version in ['1.0', '1.1']:
             self.assertRaises(exception.IncompatibleObjectVersion,
                               min_bw_rule.obj_to_primitive, version)
-
-    def test_min_bw_object_version(self):
-        min_bw_rule = rule.QosMinimumBandwidthRule()
-
-        prim = min_bw_rule.obj_to_primitive('1.2')
-
-        self.assertTrue(prim)
 
 
 class QosMinimumBandwidthRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
