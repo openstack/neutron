@@ -36,6 +36,7 @@ from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import link_local_allocator as lla
+from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3router
 from neutron.agent.l3 import router_processing_queue
@@ -297,6 +298,28 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.plugin_api.get_routers.return_value = []
         agent.periodic_sync_routers_task(agent.context)
         self.assertFalse(agent.namespaces_manager._clean_stale)
+
+    def test_periodic_sync_routers_task_call_ensure_snat_cleanup(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = 'dvr_snat'
+        dvr_ha_router = {'id': _uuid(),
+                      'external_gateway_info': {},
+                      'routes': [],
+                      'distributed': True,
+                      'ha': True}
+        dvr_router = {'id': _uuid(),
+                      'external_gateway_info': {},
+                      'routes': [],
+                      'distributed': True,
+                      'ha': False}
+        routers = [dvr_router, dvr_ha_router]
+        self.plugin_api.get_router_ids.return_value = [r['id'] for r
+                                                       in routers]
+        self.plugin_api.get_routers.return_value = routers
+        with mock.patch.object(namespace_manager.NamespaceManager,
+                               'ensure_snat_cleanup') as ensure_snat_cleanup:
+            agent.periodic_sync_routers_task(agent.context)
+            ensure_snat_cleanup.assert_called_once_with(dvr_router['id'])
 
     def test_periodic_sync_routers_task_call_clean_stale_meta_proxies(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
