@@ -317,13 +317,3 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return [{'subnet_id': ip["subnet_id"],
                  'ip_address': ip["ip_address"]}
                 for ip in ips]
-
-    @staticmethod
-    def _port_filter_hook(context, original_model, conditions):
-        # Apply the port filter only in non-admin and non-advsvc context
-        if db_utils.model_query_scope_is_project(context, original_model):
-            conditions |= (models_v2.Port.network_id.in_(
-                context.session.query(models_v2.Network.id).
-                filter(context.project_id == models_v2.Network.project_id).
-                subquery()))
-        return conditions

@@ -25,28 +25,32 @@ from neutron.db import models_v2
 from neutron.db import portbindings_base
 
 
+def _port_model_hook(context, original_model, query):
+    query = query.outerjoin(
+        pmodels.PortBindingPort,
+        (original_model.id == pmodels.PortBindingPort.port_id))
+    return query
+
+
+def _port_result_filter_hook(query, filters):
+    values = filters and filters.get(portbindings.HOST_ID, [])
+    if not values:
+        return query
+    query = query.filter(pmodels.PortBindingPort.host.in_(values))
+    return query
+
+
 class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
     extra_binding_dict = None
 
-    def _port_model_hook(self, context, original_model, query):
-        query = query.outerjoin(
-            pmodels.PortBindingPort,
-            (original_model.id == pmodels.PortBindingPort.port_id))
-        return query
-
-    def _port_result_filter_hook(self, query, filters):
-        values = filters and filters.get(portbindings.HOST_ID, [])
-        if not values:
-            return query
-        query = query.filter(pmodels.PortBindingPort.host.in_(values))
-        return query
-
-    model_query.register_hook(
-        models_v2.Port,
-        "portbindings_port",
-        '_port_model_hook',
-        None,
-        '_port_result_filter_hook')
+    def __new__(cls, *args, **kwargs):
+        model_query.register_hook(
+            models_v2.Port,
+            "portbindings_port",
+            query_hook=_port_model_hook,
+            filter_hook=None,
+            result_filters=_port_result_filter_hook)
+        return super(PortBindingMixin, cls).__new__(cls, *args, **kwargs)
 
     def _process_portbindings_create_and_update(self, context, port_data,
                                                 port):

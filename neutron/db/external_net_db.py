@@ -39,41 +39,44 @@ from neutron.objects import network as net_obj
 DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
 
 
+def _network_filter_hook(context, original_model, conditions):
+    if conditions is not None and not hasattr(conditions, '__iter__'):
+        conditions = (conditions, )
+    # Apply the external network filter only in non-admin and non-advsvc
+    # context
+    if db_utils.model_query_scope_is_project(context, original_model):
+        # the table will already be joined to the rbac entries for the
+        # shared check so we don't need to worry about ensuring that
+        rbac_model = original_model.rbac_entries.property.mapper.class_
+        tenant_allowed = (
+            (rbac_model.action == 'access_as_external') &
+            (rbac_model.target_tenant == context.tenant_id) |
+            (rbac_model.target_tenant == '*'))
+        conditions = expr.or_(tenant_allowed, *conditions)
+    return conditions
+
+
+def _network_result_filter_hook(query, filters):
+    vals = filters and filters.get(external_net.EXTERNAL, [])
+    if not vals:
+        return query
+    if vals[0]:
+        return query.filter(models_v2.Network.external.has())
+    return query.filter(~models_v2.Network.external.has())
+
+
 @registry.has_registry_receivers
 class External_net_db_mixin(object):
     """Mixin class to add external network methods to db_base_plugin_v2."""
 
-    @staticmethod
-    def _network_filter_hook(context, original_model, conditions):
-        if conditions is not None and not hasattr(conditions, '__iter__'):
-            conditions = (conditions, )
-        # Apply the external network filter only in non-admin and non-advsvc
-        # context
-        if db_utils.model_query_scope_is_project(context, original_model):
-            # the table will already be joined to the rbac entries for the
-            # shared check so we don't need to worry about ensuring that
-            rbac_model = original_model.rbac_entries.property.mapper.class_
-            tenant_allowed = (
-                (rbac_model.action == 'access_as_external') &
-                (rbac_model.target_tenant == context.tenant_id) |
-                (rbac_model.target_tenant == '*'))
-            conditions = expr.or_(tenant_allowed, *conditions)
-        return conditions
-
-    def _network_result_filter_hook(self, query, filters):
-        vals = filters and filters.get(external_net.EXTERNAL, [])
-        if not vals:
-            return query
-        if vals[0]:
-            return query.filter(models_v2.Network.external.has())
-        return query.filter(~models_v2.Network.external.has())
-
-    model_query.register_hook(
-        models_v2.Network,
-        "external_net",
-        None,
-        '_network_filter_hook',
-        '_network_result_filter_hook')
+    def __new__(cls, *args, **kwargs):
+        model_query.register_hook(
+            models_v2.Network,
+            "external_net",
+            query_hook=None,
+            filter_hook=_network_filter_hook,
+            result_filters=_network_result_filter_hook)
+        return super(External_net_db_mixin, cls).__new__(cls, *args, **kwargs)
 
     def _network_is_external(self, context, net_id):
         return net_obj.ExternalNetwork.objects_exist(

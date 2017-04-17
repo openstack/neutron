@@ -109,6 +109,16 @@ def _update_subnetpool_dict(orig_pool, new_pool):
     return updated
 
 
+def _port_filter_hook(context, original_model, conditions):
+    # Apply the port filter only in non-admin and non-advsvc context
+    if ndb_utils.model_query_scope_is_project(context, original_model):
+        conditions |= (models_v2.Port.network_id.in_(
+            context.session.query(models_v2.Network.id).
+            filter(context.project_id == models_v2.Network.project_id).
+            subquery()))
+    return conditions
+
+
 @registry.has_registry_receivers
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         neutron_plugin_base_v2.NeutronPluginBaseV2,
@@ -128,6 +138,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     __native_bulk_support = True
     __native_pagination_support = True
     __native_sorting_support = True
+
+    def __new__(cls, *args, **kwargs):
+        model_query.register_hook(
+            models_v2.Port,
+            "port",
+            query_hook=None,
+            filter_hook=_port_filter_hook,
+            result_filters=None)
+        return super(NeutronDbPluginV2, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self):
         self.set_ipam_backend()
@@ -1396,10 +1415,3 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             device_id=device_id)
                 if tenant_id != router['tenant_id']:
                     raise n_exc.DeviceIDNotOwnedByTenant(device_id=device_id)
-
-    model_query.register_hook(
-        models_v2.Port,
-        "port",
-        None,
-        '_port_filter_hook',
-        None)
