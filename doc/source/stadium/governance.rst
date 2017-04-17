@@ -262,7 +262,7 @@ Checklist
    For release documentation related to Neutron, please check the
    `Neutron policies document <http://docs.openstack.org/developer/neutron/#neutron-policies>`_.
    Once, everything is set up and your project is released, make sure
-   you see an entry on the release page (e.g. `Newton <http://releases.openstack.org/newton/index.html#other-projects>`_.
+   you see an entry on the release page (e.g. `Ocata <http://releases.openstack.org/ocata/index.html#other-projects>`_.
    Make sure you release according to the project declared release
    `model <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
 
