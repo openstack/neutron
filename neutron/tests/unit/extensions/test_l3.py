@@ -3219,7 +3219,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.skipTest("Plugin does not support l3_rpc_notifier")
         # make sure the callback is registered.
         registry.subscribe(
-            l3_db._notify_subnet_gateway_ip_update, resources.SUBNET_GATEWAY,
+            l3_db.L3RpcNotifierMixin._notify_subnet_gateway_ip_update,
+            resources.SUBNET_GATEWAY,
             events.AFTER_UPDATE)
         with mock.patch.object(plugin.l3_rpc_notifier,
                                'routers_updated') as chk_method:
@@ -3269,7 +3270,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             plugin.add_router_interface(
                 admin_ctx,
                 router['router']['id'], {'subnet_id': subnet['subnet']['id']})
-            l3_db._notify_subnetpool_address_scope_update(
+            l3_db.L3RpcNotifierMixin._notify_subnetpool_address_scope_update(
                 mock.ANY, mock.ANY, mock.ANY,
                 context=admin_ctx, subnetpool_id=subnetpool_id)
             chk_method.assert_called_with(admin_ctx, [router['router']['id']])
