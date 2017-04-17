@@ -366,6 +366,8 @@ class NetworkClientJSON(service_client.RestClient):
             'external_gateway_info', body['router']['external_gateway_info'])
         if 'distributed' in kwargs:
             update_body['distributed'] = kwargs['distributed']
+        if 'ha' in kwargs:
+            update_body['ha'] = kwargs['ha']
         update_body = dict(router=update_body)
         update_body = jsonutils.dumps(update_body)
         resp, body = self.put(uri, update_body)
