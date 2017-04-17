@@ -32,6 +32,7 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _, _LE, _LW
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
@@ -471,7 +472,20 @@ class IptablesManager(object):
             args = ['%s-save' % (cmd,)]
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
-            save_output = self.execute(args, run_as_root=True)
+            try:
+                save_output = self.execute(args, run_as_root=True)
+            except RuntimeError:
+                # We could be racing with a cron job deleting namespaces.
+                # It is useless to try to apply iptables rules over and
+                # over again in a endless loop if the namespace does not
+                # exist.
+                with excutils.save_and_reraise_exception() as ctx:
+                    if (self.namespace and not
+                            ip_lib.IPWrapper().netns.exists(self.namespace)):
+                        ctx.reraise = False
+                        LOG.error("Namespace %s was deleted during IPTables "
+                                  "operations.", self.namespace)
+                        return []
             all_lines = save_output.split('\n')
             commands = []
             # Traverse tables in sorted order for predictable dump output
