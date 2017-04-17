@@ -14,10 +14,12 @@ import netaddr
 
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import func
 
 from neutron.common import utils
 from neutron.db.models import l3
 from neutron.db.models import l3_attrs
+from neutron.db.models import l3agent as rb_model
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import base
 from neutron.objects import common_types
@@ -95,3 +97,22 @@ class RouterExtraAttributes(base.NeutronDbObject):
             result[az_ext.AZ_HINTS] = (
                 az_ext.convert_az_list_to_string(result[az_ext.AZ_HINTS]))
         return result
+
+    @classmethod
+    def get_router_agents_count(cls, context):
+        # TODO(sshank): This is pulled out from l3_agentschedulers_db.py
+        # until a way to handle joins is figured out.
+        binding_model = rb_model.RouterL3AgentBinding
+        sub_query = (context.session.query(
+            binding_model.router_id,
+            func.count(binding_model.router_id).label('count')).
+                     join(l3_attrs.RouterExtraAttributes,
+                          binding_model.router_id ==
+                          l3_attrs.RouterExtraAttributes.router_id).
+                     join(l3.Router).
+                     group_by(binding_model.router_id).subquery())
+
+        query = (context.session.query(l3.Router, sub_query.c.count).
+                 outerjoin(sub_query))
+
+        return [(router, agent_count) for router, agent_count in query]

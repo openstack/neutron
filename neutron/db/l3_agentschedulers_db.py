@@ -32,11 +32,11 @@ from neutron.agent.common import utils as agent_utils
 from neutron.common import utils as n_utils
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
-from neutron.db.models import l3 as l3_model
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
+from neutron.objects import router as l3_objs
 
 
 LOG = logging.getLogger(__name__)
@@ -87,6 +87,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 rescheduling_failed=l3agentscheduler.RouterReschedulingFailed)
 
     def get_down_router_bindings(self, context, agent_dead_limit):
+        # TODO(sshank): This portion is done in seperate patch: [1]
+        # [1] Change-Id: I0af665a97087ad72431d58f04089a804088ef005
             cutoff = self.get_cutoff_time(agent_dead_limit)
             return (context.session.query(
                     rb_model.RouterL3AgentBinding).
@@ -398,27 +400,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def get_routers_l3_agents_count(self, context):
         """Return a map between routers and agent counts for all routers."""
-
-        # Postgres requires every column in the select to be present in
-        # the group by statement when using an aggregate function.
-        # One solution is to generate a subquery and join it with the desired
-        # columns.
-        binding_model = rb_model.RouterL3AgentBinding
-        sub_query = (context.session.query(
-            binding_model.router_id,
-            func.count(binding_model.router_id).label('count')).
-            join(l3_attrs.RouterExtraAttributes,
-                 binding_model.router_id ==
-                 l3_attrs.RouterExtraAttributes.router_id).
-            join(l3_model.Router).
-            group_by(binding_model.router_id).subquery())
-
-        query = (context.session.query(l3_model.Router, sub_query.c.count).
-                 outerjoin(sub_query))
-
-        return [(self._make_router_dict(router), agent_count) if agent_count
-                else (self._make_router_dict(router), 0)
-                for router, agent_count in query]
+        # TODO(sshank): This portion needs Router OVO integration when it is
+        # merged.
+        l3_model_list = l3_objs.RouterExtraAttributes.get_router_agents_count(
+            context)
+        return [(self._make_router_dict(router_model),
+                 agent_count if agent_count else 0)
+                for router_model, agent_count in l3_model_list]
 
     def get_l3_agents(self, context, active=None, filters=None):
         query = context.session.query(agent_model.Agent)

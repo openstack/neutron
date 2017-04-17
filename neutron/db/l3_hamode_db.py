@@ -45,10 +45,10 @@ from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3 as l3_models
-from neutron.db.models import l3_attrs
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode as l3_ha
+from neutron.objects import router as l3_objs
 from neutron.plugins.common import utils as p_utils
 
 
@@ -715,14 +715,10 @@ def is_ha_router(router):
 
 
 def is_ha_router_port(context, device_owner, router_id):
-    session = db_api.get_reader_session()
     if device_owner == constants.DEVICE_OWNER_HA_REPLICATED_INT:
         return True
     elif device_owner == constants.DEVICE_OWNER_ROUTER_SNAT:
-        query = session.query(l3_attrs.RouterExtraAttributes)
-        query = query.filter_by(ha=True)
-        query = query.filter(l3_attrs.RouterExtraAttributes.router_id ==
-                             router_id)
-        return bool(query.limit(1).count())
+        return l3_objs.RouterExtraAttributes.objects_exist(
+            context, router_id=router_id, ha=True)
     else:
         return False
