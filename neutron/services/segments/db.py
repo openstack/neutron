@@ -229,6 +229,7 @@ def get_segments_with_phys_nets(context, phys_nets):
     They could use this method to get related segments and then update
     SegmentHostMapping.
     """
+    phys_nets = list(phys_nets)
     if not phys_nets:
         return []
 
