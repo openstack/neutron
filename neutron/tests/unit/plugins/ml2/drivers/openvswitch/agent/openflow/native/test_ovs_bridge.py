@@ -33,3 +33,16 @@ class OVSAgentBridgeTestCase(ovs_test_base.OVSRyuTestBase):
         # make sure it correctly raises RuntimeError, not UnboundLocalError as
         # in LP https://bugs.launchpad.net/neutron/+bug/1588042
         self.assertRaises(RuntimeError, br._get_dp)
+
+    def test_get_datapath_no_data_returned(self):
+
+        def _mock_db_get_val(tb, rec, col):
+            if tb == 'Bridge':
+                return []
+
+        mock.patch('neutron.agent.common.ovs_lib.OVSBridge.db_get_val',
+                   side_effect=_mock_db_get_val).start()
+        br = self.br_int_cls('br-int')
+        # make sure that in case of any misconfiguration when no datapath is
+        # found a proper exception, not a TypeError is raised
+        self.assertRaises(RuntimeError, br._get_dp)
