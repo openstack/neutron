@@ -37,7 +37,7 @@ class VlanTransparentExtensionManager(object):
         return []
 
     def get_extended_resources(self, version):
-        return vlt.get_extended_resources(version)
+        return vlt.Vlantransparent().get_extended_resources(version)
 
 
 class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
