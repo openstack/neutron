@@ -1261,44 +1261,41 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                         objclass.db_model(**objclass_fields)
                     ]
 
-    def _create_test_network(self):
-        self._network = net_obj.Network(self.context,
-                                       name='test-network1')
-        self._network.create()
-
-    def _create_network(self):
-        name = "test-network-%s" % helpers.get_random_string(4)
-        _network = net_obj.Network(self.context,
-                                   name=name)
+    def _create_test_network(self, name='test-network1'):
+        _network = net_obj.Network(self.context, name=name)
         _network.create()
         return _network
 
-    def _create_external_network(self):
-        test_network = self._create_network()
-        ext_net = net_obj.ExternalNetwork(self.context,
-            network_id=test_network['id'])
-        ext_net.create()
-        return ext_net
+    def _create_test_network_id(self):
+        return self._create_test_network(
+            "test-network-%s" % helpers.get_random_string(4)).id
 
-    def _create_test_fip(self):
+    def _create_external_network_id(self):
+        test_network_id = self._create_test_network_id()
+        ext_net = net_obj.ExternalNetwork(self.context,
+            network_id=test_network_id)
+        ext_net.create()
+        return ext_net.network_id
+
+    def _create_test_fip_id(self):
         fake_fip = '172.23.3.0'
-        ext_net = self._create_external_network()
-        test_port = self._create_port(
-            network_id=ext_net['network_id'])
+        ext_net_id = self._create_external_network_id()
         # TODO(manjeets) replace this with fip ovo
         # once it is implemented
         return obj_db_api.create_object(
-            self.context,
-            l3_model.FloatingIP,
+            self.context, l3_model.FloatingIP,
             {'floating_ip_address': fake_fip,
-             'floating_network_id': ext_net['network_id'],
-             'floating_port_id': test_port['id']})
+             'floating_network_id': ext_net_id,
+             'floating_port_id': self._create_test_port_id(
+                 network_id=ext_net_id)}).id
 
-    def _create_test_subnet(self, network):
+    def _create_test_subnet_id(self, network_id=None):
+        if not network_id:
+            network_id = self._create_test_network_id()
         test_subnet = {
             'project_id': uuidutils.generate_uuid(),
             'name': 'test-subnet1',
-            'network_id': network['id'],
+            'network_id': network_id,
             'ip_version': 4,
             'cidr': netaddr.IPNetwork('10.0.0.0/24'),
             'gateway_ip': '10.0.0.1',
@@ -1306,10 +1303,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             'ipv6_ra_mode': None,
             'ipv6_address_mode': None
         }
-        self._subnet = subnet.Subnet(self.context, **test_subnet)
-        self._subnet.create()
+        subnet_obj = subnet.Subnet(self.context, **test_subnet)
+        subnet_obj.create()
+        return subnet_obj.id
 
-    def _create_port(self, **port_attrs):
+    def _create_test_port_id(self, **port_attrs):
+        return self._create_test_port(**port_attrs)['id']
+
+    def _create_test_port(self, **port_attrs):
+        if 'network_id' not in port_attrs:
+            port_attrs['network_id'] = self._create_test_network_id()
+
         if not hasattr(self, '_mac_address_generator'):
             self._mac_address_generator = (
                 netaddr.EUI(":".join(["%02x" % i] * 6))
@@ -1336,46 +1340,55 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         port.create()
         return port
 
-    def _create_test_segment(self, network):
+    def _create_test_segment_id(self, network_id=None):
         attr = self.get_random_object_fields(net_obj.NetworkSegment)
-        attr['network_id'] = network['id']
-        self._segment = net_obj.NetworkSegment(self.context, **attr)
-        self._segment.create()
+        attr['network_id'] = network_id or self._create_test_network_id()
+        segment = net_obj.NetworkSegment(self.context, **attr)
+        segment.create()
+        return segment.id
 
-    def _create_test_router(self):
+    def _create_test_router_id(self):
         attrs = {
             'name': 'test_router',
         }
         # TODO(sindhu): Replace with the router object once its ready
-        self._router = obj_db_api.create_object(self.context,
-                                                l3_model.Router,
-                                                attrs)
+        router = obj_db_api.create_object(
+            self.context, l3_model.Router, attrs)
+        return router['id']
 
-    def _create_test_security_group(self):
+    def _create_test_security_group_id(self):
         sg_fields = self.get_random_object_fields(securitygroup.SecurityGroup)
-        self._securitygroup = securitygroup.SecurityGroup(self.context,
-                                                          **sg_fields)
-        self._securitygroup.create()
-        return self._securitygroup
+        _securitygroup = securitygroup.SecurityGroup(
+            self.context, **sg_fields)
+        _securitygroup.create()
+        return _securitygroup.id
 
-    def _create_test_agent(self):
+    def _create_test_agent_id(self):
         attrs = self.get_random_object_fields(obj_cls=agent.Agent)
-        self._agent = agent.Agent(self.context, **attrs)
-        self._agent.create()
+        _agent = agent.Agent(self.context, **attrs)
+        _agent.create()
+        return _agent['id']
 
-    def _create_test_port(self, network):
-        self._port = self._create_port(network_id=network['id'])
-
-    def _create_test_standard_attribute(self):
+    def _create_test_standard_attribute_id(self):
         attrs = {
             'id': tools.get_random_integer(),
             'resource_type': helpers.get_random_string(4),
             'revision_number': tools.get_random_integer()
         }
-        self._standard_attribute = obj_db_api.create_object(
-            self.context,
-            standard_attr.StandardAttribute,
-            attrs)
+        return obj_db_api.create_object(
+            self.context, standard_attr.StandardAttribute, attrs)['id']
+
+    def _create_test_flavor_id(self):
+        attrs = self.get_random_object_fields(obj_cls=flavor.Flavor)
+        flavor_obj = flavor.Flavor(self.context, **attrs)
+        flavor_obj.create()
+        return flavor_obj.id
+
+    def _create_test_service_profile_id(self):
+        attrs = self.get_random_object_fields(obj_cls=flavor.ServiceProfile)
+        service_profile_obj = flavor.ServiceProfile(self.context, **attrs)
+        service_profile_obj.create()
+        return service_profile_obj.id
 
     def test_get_standard_attr_id(self):
 
@@ -1396,18 +1409,6 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self.assertIsNotNone(retrieved_obj.standard_attr_id)
         self.assertEqual(
             model.standard_attr_id, retrieved_obj.standard_attr_id)
-
-    def _create_test_flavor(self):
-        attrs = self.get_random_object_fields(obj_cls=flavor.Flavor)
-        self._flavor = flavor.Flavor(self.context, **attrs)
-        self._flavor.create()
-        return self._flavor
-
-    def _create_test_service_profile(self):
-        attrs = self.get_random_object_fields(obj_cls=flavor.ServiceProfile)
-        self._service_profile = flavor.ServiceProfile(self.context, **attrs)
-        self._service_profile.create()
-        return self._service_profile
 
     def _make_object(self, fields):
         fields = get_non_synthetic_fields(self._test_class, fields)

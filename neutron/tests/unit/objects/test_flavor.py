@@ -32,10 +32,9 @@ class FlavorServiceProfileBindingDbObjectTestCase(
     def setUp(self):
         super(FlavorServiceProfileBindingDbObjectTestCase, self).setUp()
         self.update_obj_fields(
-            {'flavor_id': lambda: self._create_test_flavor().id})
-        self.update_obj_fields(
-            {'service_profile_id': lambda: self._create_test_service_profile(
-            ).id})
+            {'flavor_id': lambda: self._create_test_flavor_id(),
+             'service_profile_id':
+                 lambda: self._create_test_service_profile_id()})
 
 
 class ServiceProfileIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):

@@ -30,7 +30,6 @@ class AutoAllocateTopologyDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(AutoAllocateTopologyDbObjectTestCase, self).setUp()
-        self._create_test_network()
-        self._create_test_router()
-        self.update_obj_fields({'network_id': self._network['id'],
-                                'router_id': self._router['id']})
+        self.update_obj_fields({
+            'network_id': lambda: self._create_test_network_id(),
+            'router_id': lambda: self._create_test_router_id()})

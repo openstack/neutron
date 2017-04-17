@@ -110,8 +110,11 @@ class DefaultSecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(DefaultSecurityGroupDbObjTestCase, self).setUp()
-        self._create_test_security_group()
-        self.update_obj_fields({'security_group_id': self._securitygroup.id})
+        self.update_obj_fields(
+            {
+                'security_group_id':
+                    lambda: self._create_test_security_group_id()
+            })
 
 
 class SecurityGroupRuleIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
@@ -126,6 +129,10 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(SecurityGroupRuleDbObjTestCase, self).setUp()
-        self._create_test_security_group()
-        self.update_obj_fields({'security_group_id': self._securitygroup.id,
-                                'remote_group_id': self._securitygroup.id})
+        self.update_obj_fields(
+            {
+                'security_group_id':
+                    lambda: self._create_test_security_group_id(),
+                'remote_group_id':
+                    lambda: self._create_test_security_group_id()
+            })
