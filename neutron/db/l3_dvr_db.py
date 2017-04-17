@@ -499,7 +499,7 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         routers_dict = {}
         snat_intfs_by_router_id = self._get_snat_sync_interfaces(
             context, [r['id'] for r in routers])
-        fip_sync_interfaces = None
+        fip_agent_gw_ports = None
         LOG.debug("FIP Agent: %s ", agent.id)
         for router in routers:
             routers_dict[router['id']] = router
@@ -507,12 +507,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 snat_router_intfs = snat_intfs_by_router_id[router['id']]
                 LOG.debug("SNAT ports returned: %s ", snat_router_intfs)
                 router[l3_const.SNAT_ROUTER_INTF_KEY] = snat_router_intfs
-                if not fip_sync_interfaces:
-                    fip_sync_interfaces = self._get_fip_sync_interfaces(
+                if not fip_agent_gw_ports:
+                    fip_agent_gw_ports = self._get_fip_agent_gw_ports(
                         context, agent.id)
-                    LOG.debug("FIP Agent ports: %s", fip_sync_interfaces)
+                    LOG.debug("FIP Agent ports: %s", fip_agent_gw_ports)
                 router[l3_const.FLOATINGIP_AGENT_INTF_KEY] = (
-                    fip_sync_interfaces)
+                    fip_agent_gw_ports)
 
         return routers_dict
 
@@ -530,15 +530,15 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 router_floatingips.append(floating_ip)
                 router[const.FLOATINGIP_KEY] = router_floatingips
 
-    def _get_fip_sync_interfaces(self, context, fip_agent_id):
-        """Query router interfaces that relate to list of router_ids."""
+    def _get_fip_agent_gw_ports(self, context, fip_agent_id):
+        """Return list of floating agent gateway ports for the agent."""
         if not fip_agent_id:
             return []
         filters = {'device_id': [fip_agent_id],
                    'device_owner': [const.DEVICE_OWNER_AGENT_GW]}
-        interfaces = self._core_plugin.get_ports(context.elevated(), filters)
-        LOG.debug("Return the FIP ports: %s ", interfaces)
-        return interfaces
+        ports = self._core_plugin.get_ports(context.elevated(), filters)
+        LOG.debug("Return the FIP ports: %s ", ports)
+        return ports
 
     @log_helper.log_method_call
     def _get_dvr_sync_data(self, context, host, agent, router_ids=None,
