@@ -79,7 +79,8 @@ class Connection(object):
                                                     self.schema_name)
             except Exception:
                 # We may have failed do to set-manager not being called
-                helpers.enable_connection_uri(self.connection)
+                helpers.enable_connection_uri(self.connection,
+                                              set_timeout=True)
 
                 # There is a small window for a race, so retry up to a second
                 @retrying.retry(wait_exponential_multiplier=10,
