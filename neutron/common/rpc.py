@@ -205,7 +205,7 @@ def get_client(target, version_cap=None, serializer=None):
 def get_server(target, endpoints, serializer=None):
     assert TRANSPORT is not None
     serializer = RequestContextSerializer(serializer)
-    access_policy = dispatcher.LegacyRPCAccessPolicy
+    access_policy = dispatcher.DefaultRPCAccessPolicy
     return oslo_messaging.get_rpc_server(TRANSPORT, target, endpoints,
                                          'eventlet', serializer,
                                          access_policy=access_policy)
