@@ -90,6 +90,7 @@ class QuotasTest(QuotasTestBase):
         found = False
         for qs in non_default_quotas['quotas']:
             if qs['tenant_id'] == tenant_id:
+                self.assertEqual(tenant_id, qs['project_id'])
                 found = True
         self.assertTrue(found)
 
