@@ -18,7 +18,7 @@
              network: 119
       sla:
         max_avg_duration_per_atomic:
-          neutron.list_networks: 15  # reduce as perf is fixed
+          neutron.list_networks: 5  # reduce as perf is fixed
 
         failure_rate:
           max: 0
@@ -76,7 +76,7 @@
         ports_per_network: 50
       runner:
         type: "constant"
-        times: 8
+        times: 4
         concurrency: 4
       context:
         users:
@@ -89,10 +89,10 @@
              router: -1
              # ((ports per net + 1 dhcp) * times) + (concurrency-1)
              # see bug/1623390 for concurrency explanation
-             port: 811
+             port: 207
       sla:
         max_avg_duration_per_atomic:
-          neutron.list_ports: 15  # reduce as perf is fixed
+          neutron.list_ports: 5  # reduce as perf is fixed
         failure_rate:
           max: 0
 
@@ -308,7 +308,7 @@
   NeutronTrunks.create_and_list_trunk_subports:
     -
       args:
-        subport_count: 250
+        subport_count: 125
       runner:
         type: "constant"
         times: 4
