@@ -361,6 +361,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     ip['subnet_id'], db_port.id)
             self._update_db_port(context, db_port, new_port, network_id,
                                  new_mac)
+            getattr(db_port, 'fixed_ips')  # refresh relationship before return
         except Exception:
             with excutils.save_and_reraise_exception():
                 if 'fixed_ips' in new_port:

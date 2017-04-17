@@ -783,4 +783,5 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         context.session.expire(old_port_db, ['fixed_ips'])
         ips = self.allocate_ips_for_port_and_store(
             context, {'port': port_copy}, port_copy['id'])
+        getattr(old_port_db, 'fixed_ips')  # refresh relationship before return
         return self.Changes(add=ips, original=[], remove=[])
