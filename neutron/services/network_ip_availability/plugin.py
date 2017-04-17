@@ -15,6 +15,7 @@
 
 from neutron_lib import exceptions
 
+from neutron.db import _utils as db_utils
 import neutron.db.db_base_plugin_v2 as db_base_plugin_v2
 import neutron.db.network_ip_availability_db as ip_availability_db
 
@@ -42,14 +43,16 @@ class NetworkIPAvailabilityPlugin(ip_availability_db.IpAvailabilityMixin,
     def get_network_ip_availabilities(self, context, filters=None,
                                       fields=None):
         """Returns ip availability data for a collection of networks."""
-        return super(NetworkIPAvailabilityPlugin,
+        net_ip_availabilities = super(NetworkIPAvailabilityPlugin,
                      self).get_network_ip_availabilities(context, filters)
+        return [db_utils.resource_fields(net_ip_availability, fields)
+                for net_ip_availability in net_ip_availabilities]
 
     def get_network_ip_availability(self, context, id=None, fields=None):
         """Return ip availability data for a specific network id."""
         filters = {'network_id': [id]}
         result = self.get_network_ip_availabilities(context, filters)
         if result:
-            return result[0]
+            return db_utils.resource_fields(result[0], fields)
         else:
             raise exceptions.NetworkNotFound(net_id=id)
