@@ -286,12 +286,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self.update_arp_entry_for_dvr_service_port(context,
                                                        service_port_dict)
 
-    def _get_floatingip_on_port(self, context, port_id=None):
-        """Helper function to retrieve the fip associated with port."""
-        fip_qry = context.session.query(l3_models.FloatingIP)
-        floating_ip = fip_qry.filter_by(fixed_port_id=port_id)
-        return floating_ip.first()
-
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     @db_api.retry_if_session_inactive()
     def _add_csnat_on_interface_create(self, resource, event, trigger,
@@ -642,9 +636,10 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
     def check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
             self, context, port, host):
         """Create fip agent_gw_port on host if not exists"""
-        fip = self._get_floatingip_on_port(context, port_id=port['id'])
-        if not fip:
+        fips = self._get_floatingips_by_port_id(context, port['id'])
+        if not fips:
             return
+        fip = fips[0]
         network_id = fip.get('floating_network_id')
         agent_gw_port = self.create_fip_agent_gw_port_if_not_exists(
             context.elevated(), network_id, host)

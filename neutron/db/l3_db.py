@@ -1477,14 +1477,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         router_ids = set()
 
         with context.session.begin(subtransactions=True):
-            fip_qry = context.session.query(l3_models.FloatingIP)
-            floating_ips = fip_qry.filter_by(fixed_port_id=port_id)
-            for floating_ip in floating_ips:
+            for floating_ip in self._get_floatingips_by_port_id(
+                    context, port_id):
                 router_ids.add(floating_ip['router_id'])
                 floating_ip.update({'fixed_port_id': None,
                                     'fixed_ip_address': None,
                                     'router_id': None})
         return router_ids
+
+    def _get_floatingips_by_port_id(self, context, port_id):
+        """Helper function to retrieve the fips associated with a port_id."""
+        fip_qry = context.session.query(l3_models.FloatingIP)
+        return fip_qry.filter_by(fixed_port_id=port_id).all()
 
     def _build_routers_list(self, context, routers, gw_ports):
         """Subclasses can override this to add extra gateway info"""
