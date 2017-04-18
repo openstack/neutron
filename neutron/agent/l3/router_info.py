@@ -18,8 +18,6 @@ from neutron_lib import constants as lib_constants
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
-import six
-
 from neutron._i18n import _, _LE, _LW
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -1027,7 +1025,7 @@ class RouterInfo(object):
                 iptables['filter'].add_rule(
                     'scope',
                     self.address_scope_filter_rule(device_name, mark))
-        for subnet_id, prefix in six.iteritems(self.pd_subnets):
+        for subnet_id, prefix in self.pd_subnets.items():
             if prefix != n_const.PROVISIONAL_IPV6_PD_PREFIX:
                 self._process_pd_iptables_rules(prefix, subnet_id)
 

@@ -109,7 +109,7 @@ class CommonDbMixin(object):
 
     def _apply_filters_to_query(self, query, model, filters, context=None):
         if filters:
-            for key, value in six.iteritems(filters):
+            for key, value in filters.items():
                 column = getattr(model, key, None)
                 # NOTE(kevinbenton): if column is a hybrid property that
                 # references another expression, attempting to convert to

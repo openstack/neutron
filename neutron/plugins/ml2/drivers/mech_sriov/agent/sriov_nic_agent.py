@@ -276,7 +276,7 @@ class SriovNicSwitchAgent(object):
             "device": mac_pci_slot})
 
     def _clean_network_ports(self, mac_pci_slot):
-        for netid, ports_list in six.iteritems(self.network_ports):
+        for netid, ports_list in self.network_ports.items():
             for port_data in ports_list:
                 if mac_pci_slot == port_data['device']:
                     ports_list.remove(port_data)

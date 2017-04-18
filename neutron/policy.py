@@ -105,7 +105,7 @@ def _should_validate_sub_attributes(attribute, sub_attr):
     validate = attribute.get('validate')
     return (validate and isinstance(sub_attr, collections.Iterable) and
             any([k.startswith('type:dict') and
-                 v for (k, v) in six.iteritems(validate)]))
+                 v for (k, v) in validate.items()]))
 
 
 def _build_subattr_match_rule(attr_name, attr, action, target):

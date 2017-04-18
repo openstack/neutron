@@ -30,7 +30,7 @@ class ConfigDict(base.AttributeDict):
 
         :param other: dictionary to be directly modified.
         """
-        for key, value in six.iteritems(other):
+        for key, value in other.items():
             if isinstance(value, dict):
                 if not isinstance(value, base.AttributeDict):
                     other[key] = base.AttributeDict(value)
@@ -61,9 +61,9 @@ class ConfigFileFixture(fixtures.Fixture):
 
     def dict_to_config_parser(self, config_dict):
         config_parser = six.moves.configparser.ConfigParser()
-        for section, section_dict in six.iteritems(config_dict):
+        for section, section_dict in config_dict.items():
             if section != 'DEFAULT':
                 config_parser.add_section(section)
-            for option, value in six.iteritems(section_dict):
+            for option, value in section_dict.items():
                 config_parser.set(section, option, value)
         return config_parser

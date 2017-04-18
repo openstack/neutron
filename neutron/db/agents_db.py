@@ -27,7 +27,6 @@ import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from oslo_utils import timeutils
-import six
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
@@ -111,8 +110,8 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
         return [{'state': 'available' if v else 'unavailable',
                  'name': k[0], 'resource': k[1],
                  'tenant_id': context.tenant_id}
-                for k, v in six.iteritems(self._list_availability_zones(
-                                           context, filters))]
+                for k, v in self._list_availability_zones(
+                                           context, filters).items()]
 
     @db_api.retry_if_session_inactive()
     def validate_availability_zones(self, context, resource_type,

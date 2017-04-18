@@ -153,7 +153,7 @@ class PrefixDelegation(object):
         if not self._is_pd_master_router(router):
             return
         prefix_update = {}
-        for subnet_id, pd_info in six.iteritems(router['subnets']):
+        for subnet_id, pd_info in router['subnets'].items():
             self._delete_lla(router, pd_info.get_bind_lla_with_mask())
             if pd_info.client_started:
                 pd_info.driver.disable(self.pmon, router['ns_name'])
@@ -289,13 +289,13 @@ class PrefixDelegation(object):
         LOG.debug("Processing IPv6 PD Prefix Update")
 
         prefix_update = {}
-        for router_id, router in six.iteritems(self.routers):
+        for router_id, router in self.routers.items():
             if not (self._is_pd_master_router(router) and
                     router['gw_interface']):
                 continue
 
             llas = None
-            for subnet_id, pd_info in six.iteritems(router['subnets']):
+            for subnet_id, pd_info in router['subnets'].items():
                 if pd_info.client_started:
                     prefix = pd_info.driver.get_prefix()
                     if prefix != pd_info.prefix:

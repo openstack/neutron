@@ -29,7 +29,6 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
-import six
 
 from neutron._i18n import _, _LE, _LW
 from neutron.agent.linux import ip_lib
@@ -355,7 +354,7 @@ class IptablesManager(object):
             elif ip_version == 6:
                 tables = self.ipv6
 
-            for table, chains in six.iteritems(builtin_chains[ip_version]):
+            for table, chains in builtin_chains[ip_version].items():
                 for chain in chains:
                     tables[table].add_chain(chain)
                     tables[table].add_rule(chain, '-j $%s' %

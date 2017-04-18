@@ -90,7 +90,7 @@ def setup_test_logging(config_opts, log_dir, log_file_path_template):
 def sanitize_log_path(path):
     # Sanitize the string so that its log path is shell friendly
     replace_map = {' ': '-', '(': '_', ')': '_'}
-    for s, r in six.iteritems(replace_map):
+    for s, r in replace_map.items():
         path = path.replace(s, r)
     return path
 
@@ -212,7 +212,7 @@ class DietTestCase(base.BaseTestCase):
         self.assertEqual(expect_val, actual_val)
 
     def sort_dict_lists(self, dic):
-        for key, value in six.iteritems(dic):
+        for key, value in dic.items():
             if isinstance(value, list):
                 dic[key] = sorted(value)
             elif isinstance(value, dict):
@@ -387,7 +387,7 @@ class BaseTestCase(DietTestCase):
         test by the fixtures cleanup process.
         """
         group = kw.pop('group', None)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             CONF.set_override(k, v, group)
 
     def setup_coreplugin(self, core_plugin=None, load_plugins=True):

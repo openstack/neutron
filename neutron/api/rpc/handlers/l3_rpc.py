@@ -21,7 +21,6 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
-import six
 
 from neutron.common import constants as n_const
 from neutron.common import utils
@@ -214,7 +213,7 @@ class L3RpcCallback(object):
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Update operational status for a floating IP."""
         with context.session.begin(subtransactions=True):
-            for (floatingip_id, status) in six.iteritems(fip_statuses):
+            for (floatingip_id, status) in fip_statuses.items():
                 LOG.debug("New status for floating IP %(floatingip_id)s: "
                           "%(status)s", {'floatingip_id': floatingip_id,
                                          'status': status})

@@ -17,7 +17,6 @@ from neutron_lib.api import converters as lib_converters
 from neutron_lib.api import validators as lib_validators
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
-import six
 import webob.exc
 
 from neutron._i18n import _
@@ -305,7 +304,7 @@ def get_collection_info(collection):
 def fill_default_value(attr_info, res_dict,
                        exc_cls=ValueError,
                        check_allow_post=True):
-    for attr, attr_vals in six.iteritems(attr_info):
+    for attr, attr_vals in attr_info.items():
         if attr_vals['allow_post']:
             if 'default' not in attr_vals and attr not in res_dict:
                 msg = _("Failed to parse request. Required "
@@ -320,7 +319,7 @@ def fill_default_value(attr_info, res_dict,
 
 
 def convert_value(attr_info, res_dict, exc_cls=ValueError):
-    for attr, attr_vals in six.iteritems(attr_info):
+    for attr, attr_vals in attr_info.items():
         if (attr not in res_dict or
                 res_dict[attr] is constants.ATTR_NOT_SPECIFIED):
             continue

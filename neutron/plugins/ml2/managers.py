@@ -21,7 +21,6 @@ from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
-import six
 import stevedore
 
 from neutron._i18n import _, _LC, _LE, _LI, _LW
@@ -178,7 +177,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             network[provider.SEGMENTATION_ID] = segment[api.SEGMENTATION_ID]
 
     def initialize(self):
-        for network_type, driver in six.iteritems(self.drivers):
+        for network_type, driver in self.drivers.items():
             LOG.info(_LI("Initializing driver for type '%s'"), network_type)
             driver.obj.initialize()
 

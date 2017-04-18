@@ -16,7 +16,6 @@ from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
-import six
 
 from neutron._i18n import _, _LE, _LI
 from neutron.agent.l3 import dvr_snat_ns
@@ -129,7 +128,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def update_routers(self, context, routers):
         # disassociate removed routers
         router_ids = set(router['id'] for router in routers)
-        for router_id, rm in six.iteritems(self.routers):
+        for router_id, rm in self.routers.items():
             if router_id not in router_ids:
                 self._process_disassociate_metering_label(rm.router)
 

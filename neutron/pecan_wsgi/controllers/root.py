@@ -18,7 +18,6 @@ from oslo_config import cfg
 from oslo_log import log
 import pecan
 from pecan import request
-import six
 import six.moves.urllib.parse as urlparse
 
 from neutron._i18n import _LW
@@ -90,7 +89,7 @@ class V2Controller(object):
             pecan.abort(404)
 
         layout = []
-        for name, collection in six.iteritems(attributes.CORE_RESOURCES):
+        for name, collection in attributes.CORE_RESOURCES.items():
             href = urlparse.urljoin(pecan.request.path_url, collection)
             resource = {'name': name,
                         'collection': collection,
