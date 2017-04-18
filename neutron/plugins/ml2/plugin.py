@@ -927,10 +927,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             mech_context = driver_context.SubnetContext(self, context,
                                                         result, network)
             self.mechanism_manager.create_subnet_precommit(mech_context)
-            # TODO(ataraday): temporary flush until this will be available
-            # in oslo.db (change https://review.openstack.org/#/c/433758/
-            # got merged)
-            context.session.flush()
 
         # db base plugin post commit ops
         self._create_subnet_postcommit(context, result, net_db, ipam_sub)
