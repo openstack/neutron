@@ -925,6 +925,21 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             self.assertIn('mac_address', port['port'])
             self._delete('ports', port['port']['id'])
 
+    def test_create_port_None_values(self):
+        with self.network() as network:
+            keys = ['device_owner', 'name', 'device_id']
+            for key in keys:
+                # test with each as None and rest as ''
+                kwargs = {k: '' for k in keys}
+                kwargs[key] = None
+                self._create_port(self.fmt,
+                                  network['network']['id'],
+                                  webob.exc.HTTPClientError.code,
+                                  tenant_id='tenant_id',
+                                  fixed_ips=[],
+                                  set_context=False,
+                                  **kwargs)
+
     def test_create_port_public_network_with_ip(self):
         with self.network(shared=True) as network:
             with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
