@@ -60,6 +60,8 @@ DEVICE_OWNER_COMPUTE = ''.join([constants.DEVICE_OWNER_COMPUTE_PREFIX,
 
 class AgentSchedulerTestMixIn(object):
 
+    block_dhcp_notifier = False
+
     def _request_list(self, path, admin_context=True,
                       expected_code=exc.HTTPOk.code):
         req = self._path_req(path, admin_context=admin_context)
