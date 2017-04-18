@@ -18,6 +18,7 @@ from neutron_lib.plugins import directory
 from neutron.objects import network
 from neutron.objects import securitygroup
 from neutron.objects import subnet
+from neutron.plugins.ml2 import ovo_rpc
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -31,6 +32,9 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
         receive = lambda s, ctx, obs, evt: self.received.append((obs[0], evt))
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
                    'ResourcesPushRpcApi.push', new=receive).start()
+        # base case blocks the handler
+        self.ovo_push_interface_p.stop()
+        self.plugin.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
 
     def _assert_object_received(self, ovotype, oid=None, event=None):
         self.plugin.ovo_notifier.wait()
