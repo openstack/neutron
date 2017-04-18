@@ -27,6 +27,5 @@ class LegacyRouter(router.RouterInfo):
         # won't raise an exception to be handled.
         ip_lib.send_ip_addr_adv_notif(self.ns_name,
                                       interface_name,
-                                      fip['floating_ip_address'],
-                                      self.agent_conf.send_arp_for_ha)
+                                      fip['floating_ip_address'])
         return lib_constants.FLOATINGIP_STATUS_ACTIVE

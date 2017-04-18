@@ -337,8 +337,7 @@ class FipNamespace(namespaces.Namespace):
         for fixed_ip in agent_gateway_port['fixed_ips']:
             ip_lib.send_ip_addr_adv_notif(ns_name,
                                           interface_name,
-                                          fixed_ip['ip_address'],
-                                          self.agent_conf.send_arp_for_ha)
+                                          fixed_ip['ip_address'])
 
         for subnet in agent_gateway_port['subnets']:
             gw_ip = subnet.get('gateway_ip')

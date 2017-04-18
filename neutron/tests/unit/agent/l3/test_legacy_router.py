@@ -100,8 +100,7 @@ class TestAddFloatingIpWithMockGarp(BasicRouterTestCaseFramework):
         ip_lib.send_ip_addr_adv_notif.assert_called_once_with(
             ri.ns_name,
             mock.sentinel.interface_name,
-            ip,
-            self.agent_conf.send_arp_for_ha)
+            ip)
         self.assertEqual(lib_constants.FLOATINGIP_STATUS_ACTIVE, result)
 
     def test_add_floating_ip_error(self, send_ip_addr_adv_notif):

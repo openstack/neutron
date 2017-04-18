@@ -82,7 +82,6 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf.register_opts(ra.OPTS)
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
-        self.conf.set_override('send_arp_for_ha', 1)
         self.conf.set_override('state_path', cfg.CONF.state_path)
         self.conf.set_override('pd_dhcp_driver', '')
 
@@ -419,7 +418,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(1, self.mock_driver.init_router_port.call_count)
             self.send_adv_notif.assert_called_once_with(ri.ns_name,
                                                         interface_name,
-                                                        '99.0.1.9', mock.ANY)
+                                                        '99.0.1.9')
         elif action == 'remove':
             self.device_exists.return_value = True
             ri.internal_network_removed(port)
@@ -542,11 +541,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           'clean_connections': True}
             else:
                 exp_arp_calls = [mock.call(ri.ns_name, interface_name,
-                                           '20.0.0.30', mock.ANY)]
+                                           '20.0.0.30')]
                 if dual_stack and not no_sub_gw:
                     exp_arp_calls += [mock.call(ri.ns_name, interface_name,
-                                                '2001:192:168:100::2',
-                                                mock.ANY)]
+                                                '2001:192:168:100::2')]
                 self.send_adv_notif.assert_has_calls(exp_arp_calls)
                 ip_cidrs = ['20.0.0.30/24']
                 if dual_stack:
@@ -686,11 +684,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(1, self.mock_driver.plug.call_count)
         self.assertEqual(1, self.mock_driver.init_router_port.call_count)
         exp_arp_calls = [mock.call(ri.ns_name, interface_name,
-                                   '20.0.0.30', mock.ANY)]
+                                   '20.0.0.30')]
         if dual_stack:
             ri.use_ipv6 = True
             exp_arp_calls += [mock.call(ri.ns_name, interface_name,
-                                        '2001:192:168:100::2', mock.ANY)]
+                                        '2001:192:168:100::2')]
         self.send_adv_notif.assert_has_calls(exp_arp_calls)
         ip_cidrs = ['20.0.0.30/24']
         gateway_ips = ['20.0.0.1']
