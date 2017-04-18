@@ -16,6 +16,7 @@ import mock
 from neutron_lib import context
 from oslo_utils import uuidutils
 
+from neutron.common import constants
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
@@ -46,22 +47,32 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.br_int = mock.Mock()
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(1000, 10))
+        self.get_egress = self.qos_driver.br_int.get_egress_bw_limit_for_port
+        self.get_ingress = self.qos_driver.br_int.get_ingress_bw_limit_for_port
         self.qos_driver.br_int.dump_flows_for = mock.Mock(return_value=None)
-        self.get = self.qos_driver.br_int.get_egress_bw_limit_for_port
         self.qos_driver.br_int.del_egress_bw_limit_for_port = mock.Mock()
-        self.delete = self.qos_driver.br_int.delete_egress_bw_limit_for_port
+        self.delete_egress = (
+            self.qos_driver.br_int.delete_egress_bw_limit_for_port)
+        self.delete_ingress = (
+            self.qos_driver.br_int.delete_ingress_bw_limit_for_port)
         self.qos_driver.br_int.create_egress_bw_limit_for_port = mock.Mock()
-        self.create = self.qos_driver.br_int.create_egress_bw_limit_for_port
-        self.rules = [self._create_bw_limit_rule_obj(),
-                     self._create_dscp_marking_rule_obj()]
+        self.create_egress = (
+            self.qos_driver.br_int.create_egress_bw_limit_for_port)
+        self.update_ingress = (
+            self.qos_driver.br_int.update_ingress_bw_limit_for_port)
+        self.rules = [
+            self._create_bw_limit_rule_obj(constants.EGRESS_DIRECTION),
+            self._create_bw_limit_rule_obj(constants.INGRESS_DIRECTION),
+            self._create_dscp_marking_rule_obj()]
         self.qos_policy = self._create_qos_policy_obj(self.rules)
         self.port = self._create_fake_port(self.qos_policy.id)
 
-    def _create_bw_limit_rule_obj(self):
+    def _create_bw_limit_rule_obj(self, direction):
         rule_obj = rule.QosBandwidthLimitRule()
         rule_obj.id = uuidutils.generate_uuid()
         rule_obj.max_kbps = 2
         rule_obj.max_burst_kbps = 200
+        rule_obj.direction = direction
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -98,55 +109,67 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
                 'port_id': uuidutils.generate_uuid(),
                 'device_owner': uuidutils.generate_uuid()}
 
-    def test_create_new_rule(self):
+    def test_create_new_rules(self):
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(None, None))
+        self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
+            return_value=(None, None))
         self.qos_driver.create(self.port, self.qos_policy)
-        # Assert create is the last call
-        self.assertEqual(
-            'create_egress_bw_limit_for_port',
-            self.qos_driver.br_int.method_calls[0][0])
-        self.assertEqual(0, self.delete.call_count)
-        self.create.assert_called_once_with(
+        self.assertEqual(0, self.delete_egress.call_count)
+        self.assertEqual(0, self.delete_ingress.call_count)
+        self.create_egress.assert_called_once_with(
             self.port_name, self.rules[0].max_kbps,
             self.rules[0].max_burst_kbps)
+        self.update_ingress.assert_called_once_with(
+            self.port_name, self.rules[1].max_kbps,
+            self.rules[1].max_burst_kbps)
         self._assert_dscp_rule_create_updated()
 
     def test_create_existing_rules(self):
         self.qos_driver.create(self.port, self.qos_policy)
-        self._assert_bw_rule_create_updated()
+        self._assert_rules_create_updated()
         self._assert_dscp_rule_create_updated()
 
     def test_update_rules(self):
         self.qos_driver.update(self.port, self.qos_policy)
-        self._assert_bw_rule_create_updated()
+        self._assert_rules_create_updated()
         self._assert_dscp_rule_create_updated()
 
     def test_update_rules_no_vif_port(self):
         port = copy.copy(self.port)
         port.pop("vif_port")
         self.qos_driver.update(port, self.qos_policy)
-        self.create.assert_not_called()
+        self.create_egress.assert_not_called()
+        self.update_ingress.assert_not_called()
+
+    def _test_delete_rules(self, policy):
+        self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
+            return_value=(self.rules[1].max_kbps,
+                          self.rules[1].max_burst_kbps))
+        self.qos_driver.delete(self.port)
+        self.delete_egress.assert_called_once_with(self.port_name)
+        self.delete_ingress.assert_called_once_with(self.port_name)
 
     def test_delete_rules(self):
-        self.qos_driver.delete(self.port, self.qos_policy)
-        self.delete.assert_called_once_with(self.port_name)
+        self._test_delete_rules(self.qos_policy)
+
+    def test_delete_rules_no_policy(self):
+        self._test_delete_rules(None)
 
     def test_delete_rules_no_vif_port(self):
         port = copy.copy(self.port)
         port.pop("vif_port")
         self.qos_driver.delete(port, self.qos_policy)
-        self.delete.assert_not_called()
+        self.delete_egress.assert_not_called()
+        self.delete_ingress.assert_not_called()
 
-    def _assert_bw_rule_create_updated(self):
-        # Assert create is the last call
-        self.assertEqual(
-            'create_egress_bw_limit_for_port',
-            self.qos_driver.br_int.method_calls[0][0])
-
-        self.create.assert_called_once_with(
+    def _assert_rules_create_updated(self):
+        self.create_egress.assert_called_once_with(
             self.port_name, self.rules[0].max_kbps,
             self.rules[0].max_burst_kbps)
+        self.update_ingress.assert_called_once_with(
+            self.port_name, self.rules[1].max_kbps,
+            self.rules[1].max_burst_kbps)
 
     def _assert_dscp_rule_create_updated(self):
         # Assert add_flow is the last call

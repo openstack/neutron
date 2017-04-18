@@ -381,6 +381,23 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertIsNone(max_rate)
         self.assertIsNone(burst)
 
+    def test_ingress_bw_limit(self):
+        port_name, _ = self.create_ovs_port()
+        self.br.update_ingress_bw_limit_for_port(port_name, 700, 70)
+        max_rate, burst = self.br.get_ingress_bw_limit_for_port(port_name)
+        self.assertEqual(700, max_rate)
+        self.assertEqual(70, burst)
+
+        self.br.update_ingress_bw_limit_for_port(port_name, 750, 100)
+        max_rate, burst = self.br.get_ingress_bw_limit_for_port(port_name)
+        self.assertEqual(750, max_rate)
+        self.assertEqual(100, burst)
+
+        self.br.delete_ingress_bw_limit_for_port(port_name)
+        max_rate, burst = self.br.get_ingress_bw_limit_for_port(port_name)
+        self.assertIsNone(max_rate)
+        self.assertIsNone(burst)
+
     def test_db_create_references(self):
         with self.ovs.ovsdb.transaction(check_error=True) as txn:
             queue = txn.add(self.ovs.ovsdb.db_create("Queue",

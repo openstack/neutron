@@ -58,6 +58,10 @@ OVS_DEFAULT_CAPS = {
     'iface_types': [],
 }
 
+# It's default queue, all packets not tagged with 'set_queue' will go through
+# this one
+QOS_DEFAULT_QUEUE = 0
+
 _SENTINEL = object()
 
 
@@ -662,6 +666,101 @@ class OVSBridge(BaseOVS):
     def delete_egress_bw_limit_for_port(self, port_name):
         self._set_egress_bw_limit_for_port(
             port_name, 0, 0)
+
+    def _find_qos(self, port_name):
+        qos = self.ovsdb.db_find(
+            'QoS',
+            ('external_ids', '=', {'id': port_name}),
+            columns=['_uuid', 'other_config']).execute(check_error=True)
+        if qos:
+            return qos[0]
+
+    def _find_queue(self, port_name, queue_type):
+        queues = self.ovsdb.db_find(
+            'Queue',
+            ('external_ids', '=', {'id': port_name,
+                                   'queue_type': str(queue_type)}),
+            columns=['_uuid', 'other_config']).execute(check_error=True)
+        if queues:
+            return queues[0]
+
+    def _update_bw_limit_queue(self, txn, port_name, queue_uuid, queue_type,
+                               other_config):
+        if queue_uuid:
+            txn.add(self.ovsdb.db_set(
+                'Queue', queue_uuid,
+                ('other_config', other_config)))
+        else:
+            external_ids = {'id': port_name,
+                            'queue_type': str(queue_type)}
+            queue_uuid = txn.add(
+                self.ovsdb.db_create(
+                    'Queue', external_ids=external_ids,
+                    other_config=other_config))
+        return queue_uuid
+
+    def _update_bw_limit_profile(self, txn, port_name, qos_uuid,
+                                 queue_uuid, queue_type):
+        queues = {queue_type: queue_uuid}
+        if qos_uuid:
+            txn.add(self.ovsdb.db_set(
+                'QoS', qos_uuid, ('queues', queues)))
+        else:
+            external_ids = {'id': port_name}
+            qos_uuid = txn.add(
+                self.ovsdb.db_create(
+                    'QoS', external_ids=external_ids, type='linux-htb',
+                    queues=queues))
+        return qos_uuid
+
+    def update_ingress_bw_limit_for_port(self, port_name, max_kbps,
+                                         max_burst_kbps):
+        max_bw_in_bits = str(max_kbps * 1000)
+        max_burst_in_bits = str(max_burst_kbps * 1000)
+        queue_other_config = {
+            'max-rate': max_bw_in_bits,
+            'burst': max_burst_in_bits,
+        }
+        qos = self._find_qos(port_name)
+        queue = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
+        qos_uuid = qos['_uuid'] if qos else None
+        queue_uuid = queue['_uuid'] if queue else None
+        with self.ovsdb.transaction(check_error=True) as txn:
+            queue_uuid = self._update_bw_limit_queue(
+                txn, port_name, queue_uuid, QOS_DEFAULT_QUEUE,
+                queue_other_config
+            )
+
+            qos_uuid = self._update_bw_limit_profile(
+                txn, port_name, qos_uuid, queue_uuid, QOS_DEFAULT_QUEUE
+            )
+
+            txn.add(self.ovsdb.db_set(
+                'Port', port_name, ('qos', qos_uuid)))
+
+    def get_ingress_bw_limit_for_port(self, port_name):
+        max_kbps = None
+        max_burst_kbit = None
+        res = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
+        if res:
+            other_config = res['other_config']
+            max_bw_in_bits = other_config.get('max-rate')
+            if max_bw_in_bits is not None:
+                max_kbps = int(max_bw_in_bits) / 1000
+            max_burst_in_bits = other_config.get('burst')
+            if max_burst_in_bits is not None:
+                max_burst_kbit = int(max_burst_in_bits) / 1000
+        return max_kbps, max_burst_kbit
+
+    def delete_ingress_bw_limit_for_port(self, port_name):
+        qos = self._find_qos(port_name)
+        queue = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
+        with self.ovsdb.transaction(check_error=True) as txn:
+            txn.add(self.ovsdb.db_clear("Port", port_name, 'qos'))
+            if qos:
+                txn.add(self.ovsdb.db_destroy('QoS', qos['_uuid']))
+            if queue:
+                txn.add(self.ovsdb.db_destroy('Queue', queue['_uuid']))
 
     def __enter__(self):
         self.create()

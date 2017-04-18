@@ -1,0 +1,5 @@
+---
+prelude: >
+    Openvswitch L2 agent supports ingress bandwidth limit.
+features:
+  - The openvswitch L2 agent now supports bi-directional bandwidth limiting.

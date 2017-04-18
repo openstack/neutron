@@ -154,10 +154,9 @@ QoS versioned objects
 For QoS, the following neutron objects are implemented:
 
 * QosPolicy: directly maps to the conceptual policy resource, as defined above.
-* QosBandwidthLimitRule: defines the bandwidth limit rule, characterized by a
-  max_kbps parameter and a max_burst_kbits parameter. This rule also has a
-  direction parameter to set the traffic direction, from the instance point of
-  view.
+* QosBandwidthLimitRule: defines the instance bandwidth limit rule type,
+  characterized by a max kbps and a max burst kbits. This rule has also a
+  direction parameter to set the traffic direction, from the instance's point of view.
 * QosDscpMarkingRule: defines the DSCP rule type, characterized by an even integer
   between 0 and 56.  These integers are the result of the bits in the DiffServ section
   of the IP header, and only certain configurations are valid.  As a result, the list
@@ -296,6 +295,9 @@ Open vSwitch implementation relies on the new ovs_lib OVSBridge functions:
 * get_egress_bw_limit_for_port
 * create_egress_bw_limit_for_port
 * delete_egress_bw_limit_for_port
+* get_ingress_bw_limit_for_port
+* update_ingress_bw_limit_for_port
+* delete_ingress_bw_limit_for_port
 
 An egress bandwidth limit is effectively configured on the port by setting
 the port Interface parameters ingress_policing_rate and
@@ -304,6 +306,9 @@ ingress_policing_burst.
 That approach is less flexible than linux-htb, Queues and OvS QoS profiles,
 which we may explore in the future, but which will need to be used in
 combination with openflow rules.
+
+An ingress bandwidth limit is effectively configured on the port by setting
+Queue and OvS QoS profile with linux-htb type for port.
 
 The Open vSwitch DSCP marking implementation relies on the recent addition
 of the ovs_agent_extension_api OVSAgentExtensionAPI to request access to the

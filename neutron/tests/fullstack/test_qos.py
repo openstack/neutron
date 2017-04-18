@@ -17,8 +17,10 @@ import functools
 from neutron_lib import constants
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
+import testscenarios
 
 from neutron.agent.linux import tc_lib
+from neutron.common import constants as common_constants
 from neutron.common import utils
 from neutron.services.qos import qos_consts
 from neutron.tests.common.agents import l2_extensions
@@ -46,6 +48,13 @@ class BaseQoSRuleTestCase(object):
     of_interface = None
     ovsdb_interface = None
     number_of_hosts = 1
+
+    @property
+    def reverse_direction(self):
+        if self.direction == common_constants.INGRESS_DIRECTION:
+            return common_constants.EGRESS_DIRECTION
+        elif self.direction == common_constants.EGRESS_DIRECTION:
+            return common_constants.INGRESS_DIRECTION
 
     def setUp(self):
         host_desc = [
@@ -102,14 +111,25 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
 
     number_of_hosts = 1
 
-    def _wait_for_bw_rule_removed(self, vm):
-        # No values are provided when port doesn't have qos policy
-        self._wait_for_bw_rule_applied(vm, None, None)
+    @staticmethod
+    def _get_expected_burst_value(limit, direction):
+        # For egress bandwidth limit this value should be calculated as
+        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
+        if direction == common_constants.EGRESS_DIRECTION:
+            return int(
+                limit * qos_consts.DEFAULT_BURST_RATE
+            )
+        else:
+            return 0
 
-    def _add_bw_limit_rule(self, limit, burst, qos_policy):
+    def _wait_for_bw_rule_removed(self, vm, direction):
+        # No values are provided when port doesn't have qos policy
+        self._wait_for_bw_rule_applied(vm, None, None, direction)
+
+    def _add_bw_limit_rule(self, limit, burst, direction, qos_policy):
         qos_policy_id = qos_policy['id']
         rule = self.safe_client.create_bandwidth_limit_rule(
-            self.tenant_id, qos_policy_id, limit, burst)
+            self.tenant_id, qos_policy_id, limit, burst, direction)
         # Make it consistent with GET reply
         rule['type'] = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
         rule['qos_policy_id'] = qos_policy_id
@@ -120,54 +140,90 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
 
         # Create port with qos policy attached
         vm, qos_policy = self._prepare_vm_with_qos_policy(
-            [functools.partial(self._add_bw_limit_rule,
-                               BANDWIDTH_LIMIT, BANDWIDTH_BURST)])
+            [functools.partial(
+                self._add_bw_limit_rule,
+                BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)])
         bw_rule = qos_policy['rules'][0]
 
-        self._wait_for_bw_rule_applied(vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST)
+        self._wait_for_bw_rule_applied(
+            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
         qos_policy_id = qos_policy['id']
 
         self.client.delete_bandwidth_limit_rule(bw_rule['id'], qos_policy_id)
-        self._wait_for_bw_rule_removed(vm)
+        self._wait_for_bw_rule_removed(vm, self.direction)
 
         # Create new rule with no given burst value, in such case ovs and lb
         # agent should apply burst value as
         # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        new_expected_burst = int(
-            new_limit * qos_consts.DEFAULT_BURST_RATE
-        )
+        new_expected_burst = self._get_expected_burst_value(new_limit,
+                                                            self.direction)
         new_rule = self.safe_client.create_bandwidth_limit_rule(
-            self.tenant_id, qos_policy_id, new_limit)
-        self._wait_for_bw_rule_applied(vm, new_limit, new_expected_burst)
+            self.tenant_id, qos_policy_id, new_limit, direction=self.direction)
+        self._wait_for_bw_rule_applied(
+            vm, new_limit, new_expected_burst, self.direction)
 
         # Update qos policy rule id
         self.client.update_bandwidth_limit_rule(
             new_rule['id'], qos_policy_id,
             body={'bandwidth_limit_rule': {'max_kbps': BANDWIDTH_LIMIT,
                                            'max_burst_kbps': BANDWIDTH_BURST}})
-        self._wait_for_bw_rule_applied(vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST)
+        self._wait_for_bw_rule_applied(
+            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
 
         # Remove qos policy from port
         self.client.update_port(
             vm.neutron_port['id'],
             body={'port': {'qos_policy_id': None}})
-        self._wait_for_bw_rule_removed(vm)
+        self._wait_for_bw_rule_removed(vm, self.direction)
 
 
 class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_OVS
-    scenarios = fullstack_utils.get_ovs_interface_scenarios()
+    direction_scenarios = [
+        ('ingress', {'direction': common_constants.INGRESS_DIRECTION}),
+        ('egress', {'direction': common_constants.EGRESS_DIRECTION})
+    ]
+    scenarios = testscenarios.multiply_scenarios(
+        direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
 
-    def _wait_for_bw_rule_applied(self, vm, limit, burst):
-        utils.wait_until_true(
-            lambda: vm.bridge.get_egress_bw_limit_for_port(
-                vm.port.name) == (limit, burst))
+    def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
+        if direction == common_constants.EGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: vm.bridge.get_egress_bw_limit_for_port(
+                    vm.port.name) == (limit, burst))
+        elif direction == common_constants.INGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: vm.bridge.get_ingress_bw_limit_for_port(
+                    vm.port.name) == (limit, burst))
+
+    def test_bw_limit_direction_change(self):
+        # Create port with qos policy attached, with rule self.direction
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(
+                self._add_bw_limit_rule,
+                BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)])
+        bw_rule = qos_policy['rules'][0]
+
+        self._wait_for_bw_rule_applied(
+            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
+
+        # Update rule by changing direction to opposite then it was before
+        self.client.update_bandwidth_limit_rule(
+            bw_rule['id'], qos_policy['id'],
+            body={'bandwidth_limit_rule': {
+                'direction': self.reverse_direction}})
+        self._wait_for_bw_rule_removed(vm, self.direction)
+        self._wait_for_bw_rule_applied(
+            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.reverse_direction)
 
 
 class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
+    scenarios = [
+        ('egress', {'direction': common_constants.EGRESS_DIRECTION})
+    ]
 
-    def _wait_for_bw_rule_applied(self, vm, limit, burst):
+    def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
         port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
             vm.neutron_port['id'])
         tc = tc_lib.TcCommand(
