@@ -18,7 +18,6 @@ import re
 
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
-import six
 
 from neutron._i18n import _, _LE, _LW
 from neutron.agent.linux import ip_link_support
@@ -389,7 +388,7 @@ class ESwitchManager(object):
         """
         if exclude_devices is None:
             exclude_devices = {}
-        for phys_net, dev_names in six.iteritems(device_mappings):
+        for phys_net, dev_names in device_mappings.items():
             for dev_name in dev_names:
                 self._process_emb_switch_map(phys_net, dev_name,
                                              exclude_devices)

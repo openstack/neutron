@@ -19,7 +19,6 @@ import contextlib
 
 from oslo_log import log as logging
 from oslo_utils import excutils
-import six
 from sqlalchemy.ext import associationproxy
 
 from neutron._i18n import _LE
@@ -118,6 +117,6 @@ def filter_non_model_columns(data, model):
     """
     columns = [c.name for c in model.__table__.columns]
     return dict((k, v) for (k, v) in
-                six.iteritems(data) if k in columns or
+                data.items() if k in columns or
                 isinstance(getattr(model, k, None),
                            associationproxy.AssociationProxy))

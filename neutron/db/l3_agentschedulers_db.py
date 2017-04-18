@@ -19,7 +19,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import oslo_messaging
-import six
 import sqlalchemy as sa
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -415,7 +414,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if active is not None:
             query = (query.filter(agent_model.Agent.admin_state_up == active))
         if filters:
-            for key, value in six.iteritems(filters):
+            for key, value in filters.items():
                 column = getattr(agent_model.Agent, key, None)
                 if column:
                     if not value:

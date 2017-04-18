@@ -268,7 +268,7 @@ def db_replace_record(obj):
     api.Command object.
     """
     if isinstance(obj, collections.Mapping):
-        for k, v in six.iteritems(obj):
+        for k, v in obj.items():
             if isinstance(v, api.Command):
                 obj[k] = v.result
     elif (isinstance(obj, collections.Sequence)

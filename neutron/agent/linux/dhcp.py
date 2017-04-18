@@ -78,7 +78,7 @@ class DictModel(dict):
             else:
                 return item
 
-        for key, value in six.iteritems(self):
+        for key, value in self.items():
             if isinstance(value, (list, tuple)):
                 # Keep the same type but convert dicts to DictModels
                 self[key] = type(value)(

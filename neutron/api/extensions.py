@@ -23,7 +23,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import base
 import routes
-import six
 import webob.dec
 import webob.exc
 
@@ -71,7 +70,7 @@ class ActionExtensionController(wsgi.Controller):
     def action(self, request, id):
         input_dict = self._deserialize(request.body,
                                        request.get_content_type())
-        for action_name, handler in six.iteritems(self.action_handlers):
+        for action_name, handler in self.action_handlers.items():
             if action_name in input_dict:
                 return handler(input_dict, request, id)
         # no action handler found (bump to downstream application)
@@ -113,7 +112,7 @@ class ExtensionController(wsgi.Controller):
 
     def index(self, request):
         extensions = []
-        for _alias, ext in six.iteritems(self.extension_manager.extensions):
+        for _alias, ext in self.extension_manager.extensions.items():
             extensions.append(self._translate(ext))
         return dict(extensions=extensions)
 
@@ -154,7 +153,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
 
             LOG.debug('Extended resource: %s',
                       resource.collection)
-            for action, method in six.iteritems(resource.collection_actions):
+            for action, method in resource.collection_actions.items():
                 conditions = dict(method=[method])
                 path = "/%s/%s" % (resource.collection, action)
                 with mapper.submapper(controller=resource.controller,
@@ -345,7 +344,7 @@ class ExtensionManager(object):
                 if check_optionals and optional_exts_set - set(processed_exts):
                     continue
                 extended_attrs = ext.get_extended_resources(version)
-                for res, resource_attrs in six.iteritems(extended_attrs):
+                for res, resource_attrs in extended_attrs.items():
                     attr_map.setdefault(res, {}).update(resource_attrs)
                 processed_exts[ext_name] = ext
                 del exts_to_process[ext_name]

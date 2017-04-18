@@ -16,7 +16,6 @@ import collections
 
 from oslo_log import log as logging
 from oslo_utils import excutils
-import six
 
 from neutron._i18n import _, _LE
 from neutron.agent.ovsdb import api
@@ -284,7 +283,7 @@ class DbAddCommand(BaseCommand):
                 # Since this operation depends on the previous value, verify()
                 # must be called.
                 field = getattr(record, self.column, {})
-                for k, v in six.iteritems(value):
+                for k, v in value.items():
                     if k in field:
                         continue
                     field[k] = v

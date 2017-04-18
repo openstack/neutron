@@ -15,7 +15,6 @@
 import errno
 import itertools
 import os
-import six
 
 import netaddr
 from neutron_lib import exceptions
@@ -425,7 +424,7 @@ class KeepalivedManager(object):
     def spawn(self):
         config_path = self._output_config_file()
 
-        for key, instance in six.iteritems(self.config.instances):
+        for key, instance in self.config.instances.items():
             if instance.track_script:
                 instance.track_script.write_check_script()
 

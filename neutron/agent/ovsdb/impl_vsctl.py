@@ -243,7 +243,7 @@ class OvsdbVsctl(ovsdb.API):
         for value in values:
             if isinstance(value, collections.Mapping):
                 args += ["{}={}".format(ovsdb.py_to_val(k), ovsdb.py_to_val(v))
-                         for k, v in six.iteritems(value)]
+                         for k, v in value.items()]
             else:
                 args.append(ovsdb.py_to_val(value))
         return BaseCommand(self.context, 'add', args=args)

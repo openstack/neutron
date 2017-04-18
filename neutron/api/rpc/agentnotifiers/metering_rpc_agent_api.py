@@ -16,7 +16,6 @@ from neutron_lib import constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
-import six
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -57,7 +56,7 @@ class MeteringAgentNotifyAPI(object):
                 l3_router.append(router)
                 l3_routers[l3_agent.host] = l3_router
 
-        for host, routers in six.iteritems(l3_routers):
+        for host, routers in l3_routers.items():
             cctxt = self.client.prepare(server=host)
             cctxt.cast(context, method, routers=routers)
 

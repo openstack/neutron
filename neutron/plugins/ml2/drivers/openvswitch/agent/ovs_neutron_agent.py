@@ -33,7 +33,6 @@ from oslo_service import loopingcall
 from oslo_service import systemd
 from oslo_utils import netutils
 from osprofiler import profiler
-import six
 from six import moves
 
 from neutron._i18n import _, _LE, _LI, _LW
@@ -1082,7 +1081,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         ip_wrapper = ip_lib.IPWrapper()
         ovs = ovs_lib.BaseOVS()
         ovs_bridges = ovs.get_bridges()
-        for physical_network, bridge in six.iteritems(bridge_mappings):
+        for physical_network, bridge in bridge_mappings.items():
             LOG.info(_LI("Mapping physical network %(physical_network)s to "
                          "bridge %(bridge)s"),
                      {'physical_network': physical_network,
