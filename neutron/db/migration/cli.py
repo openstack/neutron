@@ -623,7 +623,7 @@ def get_alembic_configs():
         script_location = _get_subproject_script_location(CONF.subproject)
         script_locations[CONF.subproject] = script_location
     else:
-        for subproject, ep in migration_entrypoints.items():
+        for subproject in migration_entrypoints:
             script_locations[subproject] = _get_subproject_script_location(
                 subproject)
 
