@@ -53,9 +53,9 @@ def get_objects(context, model, _pager=None, **kwargs):
             **(_pager.to_kwargs(context, model) if _pager else {}))
 
 
-def create_object(context, model, values):
+def create_object(context, model, values, populate_id=True):
     with context.session.begin(subtransactions=True):
-        if 'id' not in values and hasattr(model, 'id'):
+        if populate_id and 'id' not in values and hasattr(model, 'id'):
             values['id'] = uuidutils.generate_uuid()
         db_obj = model(**values)
         context.session.add(db_obj)
