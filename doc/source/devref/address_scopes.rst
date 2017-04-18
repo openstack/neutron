@@ -100,12 +100,39 @@ Routing
 
 The reference implementation honors address scopes.  Within an address scope,
 addresses route freely (barring any FW rules or other external restrictions).
-Between scopes, routed is prevented unless address translation is used.  For
-now, floating IPs are the only place where traffic crosses scope boundaries.
-The 1-1 NAT allows this to happen.
+Between scopes, routing is prevented unless address translation is used.
 
-.. TODO (Carl) Implement NAT for floating ips crossing scopes
-.. TODO (Carl) Implement SNAT for crossing scopes
+For now, floating IPs are the only place where traffic crosses scope
+boundaries.  When a floating IP is associated to a fixed IP, the fixed IP is
+allowed to access the address scope of the floating IP by way of a 1:1 NAT
+rule. That means the fixed IP can access not only the external network, but
+also any internal networks that are in the same address scope as the external
+network. This is diagrammed as follows::
+
+    +----------------------+      +---------------------------+
+    |    address scope 1   |      |      address scope 2      |
+    |                      |      |                           |
+    | +------------------+ |      |   +------------------+    |
+    | | internal network | |      |   | external network |    |
+    | +-------------+----+ |      |   +--------+---------+    |
+    |               |      |      |            |              |
+    |       +-------+--+   |      |     +------+------+       |
+    |       | fixed ip +----------------+ floating IP |       |
+    |       +----------+   |      |     +--+--------+-+       |
+    +----------------------+      |        |        |         |
+                                  | +------+---+ +--+-------+ |
+                                  | | internal | | internal | |
+                                  | +----------+ +----------+ |
+                                  +---------------------------+
+
+Due to the asymmetric route in DVR, and the fact that DVR local routers do not
+know the information of the floating IPs that reside in other hosts,
+there is a limitation in the DVR multiple hosts scenario.  With DVR in
+multiple hosts, when the destination of traffic is an internal fixed IP
+in a different host, the fixed IP with a floating IP associated can't cross
+the scope boundary to access the internal networks that are in the same
+address scope of the external network.
+See https://bugs.launchpad.net/neutron/+bug/1682228
 
 RPC
 ~~~
