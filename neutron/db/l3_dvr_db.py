@@ -61,11 +61,15 @@ cfg.CONF.register_opts(router_distributed_opts)
 class DVRResourceOperationHandler(object):
     """Contains callbacks for DVR operations.
 
-    TODO(kevinbenton): currently this needs to be implemented as a mixin
-    into the main L3 mixin. Once we replace references to self with an
-    l3 plugin lookup we can stop using it as a mixin and just load it
-    directly in the DVR flavor.
+    This can be implemented as a mixin or can be intantiated as a stand-alone
+    object. Either way, it will subscribe itself to the relevant L3 events and
+    use the plugin directory to find the L3 plugin to make calls to it as
+    necessary.
     """
+
+    @property
+    def l3plugin(self):
+        return directory.get_plugin(const.L3)
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _set_distributed_flag(self, resource, event, trigger, context,
@@ -73,7 +77,8 @@ class DVRResourceOperationHandler(object):
         """Event handler to set distributed flag on creation."""
         dist = is_distributed_router(router)
         router['distributed'] = dist
-        self.set_extra_attr_value(context, router_db, 'distributed', dist)
+        self.l3plugin.set_extra_attr_value(context, router_db, 'distributed',
+                                           dist)
 
     def _validate_router_migration(self, context, router_db, router_res):
         """Allow transition only when admin_state_up=False"""
@@ -116,22 +121,24 @@ class DVRResourceOperationHandler(object):
             router.get('distributed') is True)
 
         if migrating_to_distributed:
-            self._migrate_router_ports(
+            self.l3plugin._migrate_router_ports(
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_ROUTER_INTF,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
-            self.set_extra_attr_value(context, router_db, 'distributed', True)
+            self.l3plugin.set_extra_attr_value(context, router_db,
+                                               'distributed', True)
         else:
-            self._migrate_router_ports(
+            self.l3plugin._migrate_router_ports(
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_DVR_INTERFACE,
                 new_owner=const.DEVICE_OWNER_ROUTER_INTF)
-            self.set_extra_attr_value(context, router_db, 'distributed', False)
+            self.l3plugin.set_extra_attr_value(context, router_db,
+                                               'distributed', False)
 
-        cur_agents = self.list_l3_agents_hosting_router(
+        cur_agents = self.l3plugin.list_l3_agents_hosting_router(
             context, router_db['id'])['agents']
         for agent in cur_agents:
-            self._unbind_router(context, router_db['id'], agent['id'])
+            self.l3plugin._unbind_router(context, router_db['id'], agent['id'])
 
     @registry.receives(resources.ROUTER,
                        [events.AFTER_CREATE, events.AFTER_UPDATE])
@@ -165,7 +172,7 @@ class DVRResourceOperationHandler(object):
             port_type=const.DEVICE_OWNER_ROUTER_SNAT
         )
 
-        ports = [self._core_plugin._make_port_dict(rp.port)
+        ports = [self.l3plugin._core_plugin._make_port_dict(rp.port)
                  for rp in qry]
         return ports
 
@@ -194,8 +201,8 @@ class DVRResourceOperationHandler(object):
             context.session.add(router_port)
 
         if do_pop:
-            return self._populate_mtu_and_subnets_for_ports(context,
-                                                            [snat_port])
+            return self.l3plugin._populate_mtu_and_subnets_for_ports(
+                context, [snat_port])
         return snat_port
 
     def _create_snat_intf_ports_if_not_exists(self, context, router):
@@ -230,7 +237,8 @@ class DVRResourceOperationHandler(object):
                     intf['fixed_ips'][0]['subnet_id'], do_pop=False)
                 port_list.append(snat_port)
         if port_list:
-            self._populate_mtu_and_subnets_for_ports(context, port_list)
+            self.l3plugin._populate_mtu_and_subnets_for_ports(
+                context, port_list)
         return port_list
 
     @registry.receives(resources.ROUTER_GATEWAY, [events.AFTER_DELETE])
@@ -262,7 +270,7 @@ class DVRResourceOperationHandler(object):
                 context.elevated(), None, network_id)
             # Send the information to all the L3 Agent hosts
             # to clean up the fip namespace as it is no longer required.
-            self.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
+            self.l3plugin.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                 context, network_id)
 
     def delete_floatingip_agent_gateway_port(
@@ -351,19 +359,20 @@ class DVRResourceOperationHandler(object):
     def _inherit_service_port_and_arp_update(
         self, context, service_port, allowed_address_port):
         """Function inherits port host bindings for allowed_address_pair."""
-        service_port_dict = self._core_plugin._make_port_dict(service_port)
+        service_port_dict = self.l3plugin._core_plugin._make_port_dict(
+            service_port)
         address_pair_list = service_port_dict.get('allowed_address_pairs')
         for address_pair in address_pair_list:
             updated_port = (
-                self.update_unbound_allowed_address_pair_port_binding(
+                self.l3plugin.update_unbound_allowed_address_pair_port_binding(
                     context, service_port_dict,
                     address_pair,
                     address_pair_port=allowed_address_port))
             if not updated_port:
                 LOG.warning(_LW("Allowed_address_pair port update failed: %s"),
                             updated_port)
-            self.update_arp_entry_for_dvr_service_port(context,
-                                                       service_port_dict)
+            self.l3plugin.update_arp_entry_for_dvr_service_port(
+                context, service_port_dict)
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     @db_api.retry_if_session_inactive()
@@ -397,7 +406,7 @@ class DVRResourceOperationHandler(object):
         # Add new prefix to an existing ipv6 csnat port with the
         # same network id if one exists
         admin_ctx = context.elevated()
-        router = self._get_router(admin_ctx, router_id)
+        router = self.l3plugin._get_router(admin_ctx, router_id)
         cs_port = self._find_v6_router_port_by_network_and_device_owner(
             router, subnet['network_id'], const.DEVICE_OWNER_ROUTER_SNAT)
         if not cs_port:
@@ -443,8 +452,8 @@ class DVRResourceOperationHandler(object):
             p = port['port']
             if (p['network_id'] == net_id and
                 p['device_owner'] == device_owner and
-                self._port_has_ipv6_address(p)):
-                return self._core_plugin._make_port_dict(p)
+                self.l3plugin._port_has_ipv6_address(p)):
+                return self.l3plugin._core_plugin._make_port_dict(p)
 
     def _check_for_multiprefix_csnat_port_and_update(
         self, context, router, network_id, subnet_id):
@@ -474,7 +483,7 @@ class DVRResourceOperationHandler(object):
 
                 if fixed_ips:
                     # multiple prefix port - delete prefix from port
-                    self._core_plugin.update_port(
+                    self.l3plugin._core_plugin.update_port(
                         context.elevated(),
                         cs_port['id'], {'port': {'fixed_ips': fixed_ips}})
                     return True
@@ -486,7 +495,7 @@ class DVRResourceOperationHandler(object):
                                          context, port, interface_info,
                                          router_id, **kwargs):
         """Handler to cleanup distributed resources after intf removal."""
-        router = self._get_router(context, router_id)
+        router = self.l3plugin._get_router(context, router_id)
         if not router.extra_attributes.distributed:
             return
 
@@ -510,7 +519,7 @@ class DVRResourceOperationHandler(object):
                 is_this_snat_agent = (
                     snat_binding and snat_binding.l3_agent_id == agent['id'])
                 if not is_this_snat_agent:
-                    self.l3_rpc_notifier.router_removed_from_agent(
+                    self.l3plugin.l3_rpc_notifier.router_removed_from_agent(
                         context, router_id, agent['host'])
         # if subnet_id not in interface_info, request was to remove by port
         sub_id = (interface_info.get('subnet_id') or
@@ -538,7 +547,7 @@ class DVRResourceOperationHandler(object):
             if rp.port
         ]
 
-        c_snat_ports = self._core_plugin.get_ports(
+        c_snat_ports = self.l3plugin._core_plugin.get_ports(
             context,
             filters={'id': ports}
         )
@@ -546,15 +555,15 @@ class DVRResourceOperationHandler(object):
             if subnet_id is None or not p['fixed_ips']:
                 if not p['fixed_ips']:
                     LOG.info(_LI("CSNAT port has no IPs: %s"), p)
-                self._core_plugin.delete_port(context,
-                                              p['id'],
-                                              l3_port_check=False)
+                self.l3plugin._core_plugin.delete_port(context,
+                                                       p['id'],
+                                                       l3_port_check=False)
             else:
                 if p['fixed_ips'][0]['subnet_id'] == subnet_id:
                     LOG.debug("Subnet matches: %s", subnet_id)
-                    self._core_plugin.delete_port(context,
-                                                  p['id'],
-                                                  l3_port_check=False)
+                    self.l3plugin._core_plugin.delete_port(context,
+                                                           p['id'],
+                                                           l3_port_check=False)
 
 
 class _DVRAgentInterfaceMixin(object):
