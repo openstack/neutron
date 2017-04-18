@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 import mock
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
@@ -50,6 +52,23 @@ class GetObjectsTestCase(test_base.BaseTestCase):
             filters={},
             limit=limit,
             marker_obj=get_object.return_value)
+
+
+class CreateObjectTestCase(test_base.BaseTestCase):
+    def test_populate_id(self, populate_id=True):
+        ctxt = context.get_admin_context()
+        model_cls = mock.Mock()
+        values = {'x': 1, 'y': 2, 'z': 3}
+        with mock.patch.object(ctxt.__class__, 'session'):
+            api.create_object(ctxt, model_cls, values,
+                              populate_id=populate_id)
+        expected = copy.copy(values)
+        if populate_id:
+            expected['id'] = mock.ANY
+        model_cls.assert_called_with(**expected)
+
+    def test_populate_id_False(self):
+        self.test_populate_id(populate_id=False)
 
 
 class CRUDScenarioTestCase(testlib_api.SqlTestCase):

@@ -1371,12 +1371,13 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
     def _create_test_standard_attribute_id(self):
         attrs = {
-            'id': tools.get_random_integer(),
             'resource_type': helpers.get_random_string(4),
             'revision_number': tools.get_random_integer()
         }
         return obj_db_api.create_object(
-            self.context, standard_attr.StandardAttribute, attrs)['id']
+            self.context,
+            standard_attr.StandardAttribute, attrs,
+            populate_id=False)['id']
 
     def _create_test_flavor_id(self):
         attrs = self.get_random_object_fields(obj_cls=flavor.Flavor)
