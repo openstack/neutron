@@ -268,3 +268,36 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                 "No vlan_id %(vlan_id)s found on physical network "
                 "%(physical_network)s",
                 {'vlan_id': 101, 'physical_network': PROVIDER_NET})
+
+
+class VlanTypeAllocationTest(testlib_api.SqlTestCase):
+
+    def test_allocate_tenant_segment_in_order_of_config(self):
+        ranges = NETWORK_VLAN_RANGES + ['phys_net3:20:30']
+        config.cfg.CONF.set_override('network_vlan_ranges',
+                                     ranges,
+                                     group='ml2_type_vlan')
+        driver = type_vlan.VlanTypeDriver()
+        driver.physnet_mtus = []
+        driver._sync_vlan_allocations()
+        # swap config order from DB order after sync has happened to
+        # ensure config order is followed and not DB order
+        config.cfg.CONF.set_override('network_vlan_ranges',
+                                     list(reversed(ranges)),
+                                     group='ml2_type_vlan')
+        driver._parse_network_vlan_ranges()
+        ctx = context.Context()
+        for vlan in range(11):
+            # all of physnet3 should be exhausted first
+            self.assertEqual(
+                {'network_type': 'vlan', 'physical_network': 'phys_net3',
+                 'segmentation_id': mock.ANY, 'mtu': 1500},
+                driver.allocate_tenant_segment(ctx))
+        for vlan in range(10):
+            # then physnet2
+            self.assertEqual(
+                {'network_type': 'vlan', 'physical_network': 'phys_net2',
+                 'segmentation_id': mock.ANY, 'mtu': 1500},
+                driver.allocate_tenant_segment(ctx))
+        # then nothing
+        self.assertFalse(driver.allocate_tenant_segment(ctx))
