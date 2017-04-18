@@ -9,6 +9,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import testtools
 
 from oslo_utils import uuidutils
 from tempest.lib import decorators
@@ -16,6 +17,7 @@ from tempest.lib import exceptions as lib_exc
 from tempest import test
 
 from neutron.tests.tempest.api import base
+from neutron.tests.tempest import config
 
 
 class NetworksTestAdmin(base.BaseAdminNetworkTest):
@@ -69,3 +71,17 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
                               client=self.admin_client)
         expected_message = "'project_id' and 'tenant_id' do not match"
         self.assertEqual(expected_message, e.resp_body['message'])
+
+    @decorators.idempotent_id('571d0dde-0f84-11e7-b565-fa163e4fa634')
+    @testtools.skipUnless("vxlan" in config.CONF.neutron_plugin_options.
+                          available_type_drivers,
+                          'VXLAN type_driver is not enabled')
+    @test.requires_ext(extension="provider", service="network")
+    def test_create_tenant_network_vxlan(self):
+        network = self.admin_client.create_network(
+            **{"provider:network_type": "vxlan"})['network']
+        self.addCleanup(self.admin_client.delete_network,
+                        network['id'])
+        network = self.admin_client.show_network(
+            network['id'])['network']
+        self.assertEqual('vxlan', network['provider:network_type'])
