@@ -131,6 +131,9 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.port_create_status = 'DOWN'
 
     def setUp(self):
+        self.ovo_push_interface_p = mock.patch(
+            'neutron.plugins.ml2.ovo_rpc.OVOServerRpcInterface')
+        self.ovo_push_interface_p.start()
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
