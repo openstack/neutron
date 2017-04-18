@@ -207,14 +207,16 @@ attributes and configures dnsmasq for that network, the test:
   namespace.
 * Assert that the device successfully obtained the expected IP address.
 
-Gate exceptions
+Test exceptions
 +++++++++++++++
 
 Test neutron.tests.functional.agent.test_ovs_flows.OVSFlowTestCase.\
-test_install_flood_to_tun is currently skipped on upstream gate because Ubuntu
-Xenial 16.04 contains openvswitch 2.5.0. This version contains bug where appctl
-command prints wrong output for Final flow. It's been fixed in openvswitch
+test_install_flood_to_tun is currently skipped if openvswitch version is less
+than 2.5.1. This version contains bug where appctl command prints wrong output
+for Final flow. It's been fixed in openvswitch
 2.5.1 in `this commit <https://github.com/openvswitch/ovs/commit/8c0b419a0b9ac0141d6973dcc80306dfc6a83d31>`_.
+If openvswitch version meets the test requirement then the test is triggered
+normally.
 
 Fullstack Tests
 ~~~~~~~~~~~~~~~
