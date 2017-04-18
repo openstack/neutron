@@ -241,6 +241,24 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.assertEqual(n['network']['id'],
                              kwargs['network']['id'])
 
+    def test_bulk_network_before_and_after_events_outside_of_txn(self):
+        # capture session states during each before and after event
+        before = []
+        after = []
+        b_func = lambda *a, **k: before.append(k['context'].session.is_active)
+        a_func = lambda *a, **k: after.append(k['context'].session.is_active)
+        registry.subscribe(b_func, resources.NETWORK, events.BEFORE_CREATE)
+        registry.subscribe(a_func, resources.NETWORK, events.AFTER_CREATE)
+        data = [{'tenant_id': self._tenant_id}] * 4
+        self._create_bulk_from_list(
+            self.fmt, 'network', data, context=context.get_admin_context())
+        # ensure events captured
+        self.assertTrue(before)
+        self.assertTrue(after)
+        # ensure session was closed for all
+        self.assertFalse(any(before))
+        self.assertFalse(any(after))
+
     def _create_and_verify_networks(self, networks):
         for net_idx, net in enumerate(networks):
             # create
@@ -690,6 +708,27 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             registry.subscribe(receive, resources.PORT, events.AFTER_DELETE)
             self._delete('ports', p['port']['id'])
             self.assertFalse(self.tx_open)
+
+    def test_bulk_ports_before_and_after_events_outside_of_txn(self):
+        with self.network() as n:
+            pass
+        # capture session states during each before and after event
+        before = []
+        after = []
+        b_func = lambda *a, **k: before.append(k['context'].session.is_active)
+        a_func = lambda *a, **k: after.append(k['context'].session.is_active)
+        registry.subscribe(b_func, resources.PORT, events.BEFORE_CREATE)
+        registry.subscribe(a_func, resources.PORT, events.AFTER_CREATE)
+        data = [{'tenant_id': self._tenant_id,
+                 'network_id': n['network']['id']}] * 4
+        self._create_bulk_from_list(
+            self.fmt, 'port', data, context=context.get_admin_context())
+        # ensure events captured
+        self.assertTrue(before)
+        self.assertTrue(after)
+        # ensure session was closed for all
+        self.assertFalse(any(before))
+        self.assertFalse(any(after))
 
     def test_create_router_port_and_fail_create_postcommit(self):
 
