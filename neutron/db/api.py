@@ -287,6 +287,10 @@ def load_one_to_manys(session):
         return
 
     for new_object in session.info.pop('_load_rels', []):
+        if new_object not in session:
+            # don't load detached objects because that brings them back into
+            # session
+            continue
         state = sqlalchemy.inspect(new_object)
 
         # set up relationship loading so that we can call lazy
