@@ -231,6 +231,9 @@ class TrunkTestInheritJSONBase(TrunkTestJSONBase):
             if not test.is_extension_enabled(ext, 'network'):
                 msg = "%s extension not enabled." % ext
                 raise cls.skipException(msg)
+        if ("vlan" not in
+                config.CONF.neutron_plugin_options.available_type_drivers):
+            raise cls.skipException("VLAN type_driver is not enabled")
         if not config.CONF.neutron_plugin_options.provider_vlans:
             raise cls.skipException("No provider VLAN networks available")
 
