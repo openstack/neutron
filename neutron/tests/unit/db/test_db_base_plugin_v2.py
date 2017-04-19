@@ -1373,14 +1373,21 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         req = self.new_update_request('ports', data, port['id'])
         return req.get_response(self.api), new_mac
 
-    def _check_v6_auto_address_address(self, port, subnet):
-        if ipv6_utils.is_auto_address_subnet(subnet['subnet']):
-            port_mac = port['port']['mac_address']
-            subnet_cidr = subnet['subnet']['cidr']
-            eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
-                                                           port_mac))
-            self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
-                             eui_addr)
+    def _verify_ips_after_mac_change(self, orig_port, new_port):
+        for fip in orig_port['port']['fixed_ips']:
+            subnet = self._show('subnets', fip['subnet_id'])
+            if ipv6_utils.is_auto_address_subnet(subnet['subnet']):
+                port_mac = new_port['port']['mac_address']
+                subnet_cidr = subnet['subnet']['cidr']
+                eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
+                                                               port_mac))
+                # TODO(kevinbenton): remove after bug 1671548 fix
+                eui_addr = mock.ANY
+                fip = {'ip_address': eui_addr,
+                       'subnet_id': subnet['subnet']['id']}
+            self.assertIn(fip, new_port['port']['fixed_ips'])
+        self.assertEqual(len(orig_port['port']['fixed_ips']),
+                         len(new_port['port']['fixed_ips']))
 
     def check_update_port_mac(
             self, expected_status=webob.exc.HTTPOk.code,
@@ -1399,8 +1406,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 result = self.deserialize(self.fmt, res)
                 self.assertIn('port', result)
                 self.assertEqual(new_mac, result['port']['mac_address'])
-                if subnet and subnet['subnet']['ip_version'] == 6:
-                    self._check_v6_auto_address_address(port, subnet)
+                if updated_fixed_ips is None:
+                    self._verify_ips_after_mac_change(port, result)
             else:
                 error = self.deserialize(self.fmt, res)
                 self.assertEqual(expected_error,
@@ -1458,13 +1465,27 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                        updated_fixed_ips=updated_fixed_ips)
 
     def test_update_port_mac_v6_slaac(self):
-        with self.subnet(gateway_ip='fe80::1',
+        with self.network() as n:
+            pass
+        # add a couple of v4 networks to ensure they aren't interferred with
+        with self.subnet(network=n) as v4_1, \
+                self.subnet(network=n, cidr='7.0.0.0/24') as v4_2:
+            pass
+        with self.subnet(network=n,
+                         gateway_ip='fe80::1',
                          cidr='2607:f0d0:1002:51::/64',
                          ip_version=6,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             self.assertTrue(
                 ipv6_utils.is_auto_address_subnet(subnet['subnet']))
-            self.check_update_port_mac(subnet=subnet)
+            fixed_ips_req = {
+                'fixed_ips': [{'subnet_id': subnet['subnet']['id']},
+                              {'subnet_id': v4_1['subnet']['id']},
+                              {'subnet_id': v4_1['subnet']['id']},
+                              {'subnet_id': v4_2['subnet']['id']},
+                              {'subnet_id': v4_2['subnet']['id']}]
+            }
+            self.check_update_port_mac(subnet=subnet, host_arg=fixed_ips_req)
 
     def test_update_port_mac_bad_owner(self):
         self.check_update_port_mac(
