@@ -35,7 +35,7 @@ class DriverBase(object):
         :param name: driver name.
         :param vif_types: list of interfaces (VIFs) supported.
         :param vnic_types: list of vnic types supported.
-        :param supported_rules: list of supported rules.
+        :param supported_rules: dict of supported rules.
         :param requires_rpc_notifications: indicates if this driver
                expects rpc push notifications to be sent from the driver.
         """
