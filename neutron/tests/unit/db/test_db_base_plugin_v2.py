@@ -1379,9 +1379,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             subnet_cidr = subnet['subnet']['cidr']
             eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
                                                            port_mac))
-            self.assertEqual(1, len(port['port']['fixed_ips']))
-            self.assertEqual(eui_addr,
-                             port['port']['fixed_ips'][0]['ip_address'])
+            self.assertEqual(port['port']['fixed_ips'][0]['ip_address'],
+                             eui_addr)
 
     def check_update_port_mac(
             self, expected_status=webob.exc.HTTPOk.code,
@@ -1401,7 +1400,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertIn('port', result)
                 self.assertEqual(new_mac, result['port']['mac_address'])
                 if subnet and subnet['subnet']['ip_version'] == 6:
-                    self._check_v6_auto_address_address(result, subnet)
+                    self._check_v6_auto_address_address(port, subnet)
             else:
                 error = self.deserialize(self.fmt, res)
                 self.assertEqual(expected_error,

@@ -335,19 +335,6 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def update_port_with_ips(self, context, host, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
 
-        assign_auto = False
-        if new_mac:
-            original = self._make_port_dict(db_port, process_extensions=False)
-            if original.get('mac_address') != new_mac:
-                for old_ip in original.get('fixed_ips', []):
-                    if ipv6_utils.is_eui64_address(old_ip.get('ip_address')):
-                        assign_auto = True
-                        subnet_to_delete = {}
-                        subnet_to_delete['subnet_id'] = old_ip['subnet_id']
-                        subnet_to_delete['delete_subnet'] = True
-                        new_fixed_ips = new_port.setdefault('fixed_ips', [])
-                        new_fixed_ips.append(subnet_to_delete)
-
         if 'fixed_ips' in new_port:
             original = self._make_port_dict(db_port,
                                             process_extensions=False)
@@ -375,14 +362,6 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             self._update_db_port(context, db_port, new_port, network_id,
                                  new_mac)
             getattr(db_port, 'fixed_ips')  # refresh relationship before return
-
-            if assign_auto:
-                port_copy = copy.deepcopy(original)
-                port_copy['fixed_ips'] = constants.ATTR_NOT_SPECIFIED
-                port_copy.update(new_port)
-                self.allocate_ips_for_port_and_store(context,
-                            {'port': port_copy}, port_copy['id'])
-
         except Exception:
             with excutils.save_and_reraise_exception():
                 if 'fixed_ips' in new_port:
