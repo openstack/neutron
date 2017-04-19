@@ -885,6 +885,23 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return [db_utils.resource_fields(net, fields) for net in nets]
 
+    def get_network_contexts(self, context, network_ids):
+        """Return a map of network_id to NetworkContext for network_ids."""
+        net_filters = {'id': list(set(network_ids))}
+        nets_by_netid = {
+            n['id']: n for n in self.get_networks(context,
+                                                  filters=net_filters)
+        }
+        segments_by_netid = segments_db.get_networks_segments(
+            context, nets_by_netid.keys())
+        netctxs_by_netid = {
+            net_id: driver_context.NetworkContext(
+                self, context, nets_by_netid[net_id],
+                segments=segments_by_netid[net_id])
+            for net_id in nets_by_netid.keys()
+        }
+        return netctxs_by_netid
+
     @utils.transaction_guard
     def delete_network(self, context, id):
         # the only purpose of this override is to protect this from being
