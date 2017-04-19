@@ -102,6 +102,11 @@ core_opts = [
                       "services running on this machine. All the agents and "
                       "services running on this machine must use the same "
                       "host value.")),
+    cfg.StrOpt("network_link_prefix",
+               help=_("This string is prepended to the normal URL that is "
+                      "returned in links to the OpenStack Network API. If it "
+                      "is empty (the default), the URLs are returned "
+                      "unchanged.")),
     cfg.BoolOpt('notify_nova_on_port_status_changes', default=True,
                 help=_("Send notification to nova when port status changes")),
     cfg.BoolOpt('notify_nova_on_port_data_changes', default=True,
