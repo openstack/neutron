@@ -28,7 +28,6 @@ from neutron.callbacks import resources
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
-from neutron.db.models import segment as segment_model
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
@@ -167,9 +166,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
 
         # Delete segment in DB
         with db_api.context_manager.writer.using(context):
-            query = self._model_query(context, segment_model.NetworkSegment)
-            query = query.filter(segment_model.NetworkSegment.id == uuid)
-            if 0 == query.delete():
+            if not network.NetworkSegment.delete_objects(context, id=uuid):
                 raise exceptions.SegmentNotFound(segment_id=uuid)
             # Do some preliminary operations before deleting segment in db
             registry.notify(resources.SEGMENT, events.PRECOMMIT_DELETE,
