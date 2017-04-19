@@ -102,8 +102,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 self.fip_ns.agent_gateway_port['id']))
         ip_lib.send_ip_addr_adv_notif(fip_ns_name,
                                       interface_name,
-                                      floating_ip,
-                                      self.agent_conf.send_arp_for_ha)
+                                      floating_ip)
 
     def _add_floating_ip_rule(self, floating_ip, fixed_ip):
         rule_pr = self.fip_ns.allocate_rule_priority(floating_ip)

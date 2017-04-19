@@ -58,7 +58,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.conf.register_opts(external_process.OPTS)
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
-        self.conf.set_override('send_arp_for_ha', 1)
         self.conf.set_override('state_path', cfg.CONF.state_path)
 
         self.device_exists_p = mock.patch(
