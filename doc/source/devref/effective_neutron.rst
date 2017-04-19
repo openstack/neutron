@@ -216,6 +216,12 @@ and interacting with linux utils.
   visibility (as these patches are brought up to the attention of the core team
   during team meetings). More details in `review guidelines
   <http://docs.openstack.org/developer/neutron/policies/code-reviews.html#neutron-spec-review-practices>`_.
+* When a patch or the code depends on a new feature in the kernel or in any platform tools
+  (dnsmasq, ip, Open vSwitch etc.), consider introducing a new sanity check to
+  validate deployments for the expected features. Note that sanity checks *must
+  not* check for version numbers of underlying platform tools because
+  distributions may decide to backport needed features into older versions.
+  Instead, sanity checks should validate actual features by attempting to use them.
 
 Eventlet concurrent model
 ~~~~~~~~~~~~~~~~~~~~~~~~~
