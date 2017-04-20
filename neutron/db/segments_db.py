@@ -27,6 +27,7 @@ LOG = logging.getLogger(__name__)
 NETWORK_TYPE = segments_model.NetworkSegment.network_type.name
 PHYSICAL_NETWORK = segments_model.NetworkSegment.physical_network.name
 SEGMENTATION_ID = segments_model.NetworkSegment.segmentation_id.name
+NETWORK_ID = segments_model.NetworkSegment.network_id.name
 
 
 def _make_segment_dict(obj):
@@ -34,7 +35,8 @@ def _make_segment_dict(obj):
     return {'id': obj.id,
             NETWORK_TYPE: obj.network_type,
             PHYSICAL_NETWORK: obj.physical_network,
-            SEGMENTATION_ID: obj.segmentation_id}
+            SEGMENTATION_ID: obj.segmentation_id,
+            NETWORK_ID: obj.network_id}
 
 
 def add_network_segment(context, network_id, segment, segment_index=0,

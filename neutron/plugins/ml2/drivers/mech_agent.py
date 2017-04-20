@@ -233,10 +233,11 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
         network_type = segment[api.NETWORK_TYPE]
         if network_type not in allowed_network_types:
             LOG.debug(
-                'Segment %(id)s is of type %(network_type)s '
-                'but agent %(agent)s or mechanism driver only '
-                'support %(allowed_network_types)s.',
-                {'id': segment['id'],
+                'Network %(network_id)s with segment %(id)s is type '
+                'of %(network_type)s but agent %(agent)s or mechanism driver '
+                'only support %(allowed_network_types)s.',
+                {'network_id': segment['network_id'],
+                 'id': segment['id'],
                  'network_type': network_type,
                  'agent': agent['host'],
                  'allowed_network_types': allowed_network_types})
@@ -246,12 +247,13 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
             physnet = segment[api.PHYSICAL_NETWORK]
             if not self.physnet_in_mappings(physnet, mappings):
                 LOG.debug(
-                    'Segment %(id)s is connected to physical '
-                    'network %(physnet)s, but agent %(agent)s reported '
-                    'physical networks %(mappings)s. '
+                    'Network %(network_id)s with segment %(id)s is connected '
+                    'to physical network %(physnet)s, but agent %(agent)s '
+                    'reported physical networks %(mappings)s. '
                     'The physical network must be configured on the '
                     'agent if binding is to succeed.',
-                    {'id': segment['id'],
+                    {'network_id': segment['network_id'],
+                     'id': segment['id'],
                      'physnet': physnet,
                      'agent': agent['host'],
                      'mappings': mappings})

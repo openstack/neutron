@@ -27,6 +27,7 @@ NETWORK_TYPE = 'network_type'
 PHYSICAL_NETWORK = 'physical_network'
 SEGMENTATION_ID = 'segmentation_id'
 MTU = 'mtu'
+NETWORK_ID = 'network_id'
 
 # The following keys are used in the binding level dictionaries
 # available via the binding_levels and original_binding_levels
