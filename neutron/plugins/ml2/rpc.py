@@ -120,6 +120,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                  'network_type': segment[api.NETWORK_TYPE],
                  'segmentation_id': segment[api.SEGMENTATION_ID],
                  'physical_network': segment[api.PHYSICAL_NETWORK],
+                 'mtu': port_context.network._network.get('mtu'),
                  'fixed_ips': port['fixed_ips'],
                  'device_owner': port['device_owner'],
                  'allowed_address_pairs': port['allowed_address_pairs'],

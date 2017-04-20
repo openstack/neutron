@@ -436,12 +436,12 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                              network_id: network_id})
 
     def add_tap_interface(self, network_id, network_type, physical_network,
-                          segmentation_id, tap_device_name, device_owner):
+                          segmentation_id, tap_device_name, device_owner, mtu):
         """Add tap interface and handle interface missing exceptions."""
         try:
             return self._add_tap_interface(network_id, network_type,
                                            physical_network, segmentation_id,
-                                           tap_device_name, device_owner)
+                                           tap_device_name, device_owner, mtu)
         except Exception:
             with excutils.save_and_reraise_exception() as ctx:
                 if not ip_lib.device_exists(tap_device_name):
@@ -452,7 +452,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                     return False
 
     def _add_tap_interface(self, network_id, network_type, physical_network,
-                          segmentation_id, tap_device_name, device_owner):
+                          segmentation_id, tap_device_name, device_owner, mtu):
         """Add tap interface.
 
         If a VIF has been plugged into a network, this function will
@@ -474,6 +474,12 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                                 physical_network,
                                                 segmentation_id):
             return False
+        if mtu:  # <-None with device_details from older neutron servers.
+            # we ensure the MTU here because libvirt does not set the
+            # MTU of a bridge it creates and the tap device it creates will
+            # inherit from the bridge its plugged into, which will be 1500
+            # at the time. See bug/1684326 for details.
+            self._set_tap_mtu(tap_device_name, mtu)
         # Avoid messing with plugging devices into a bridge that the agent
         # does not own
         if not device_owner.startswith(constants.DEVICE_OWNER_COMPUTE_PREFIX):
@@ -495,12 +501,16 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       "thus added elsewhere.", data)
         return True
 
+    def _set_tap_mtu(self, tap_device_name, mtu):
+        ip_lib.IPDevice(tap_device_name).link.set_mtu(mtu)
+
     def plug_interface(self, network_id, network_segment, tap_name,
                        device_owner):
         return self.add_tap_interface(network_id, network_segment.network_type,
                                       network_segment.physical_network,
                                       network_segment.segmentation_id,
-                                      tap_name, device_owner)
+                                      tap_name, device_owner,
+                                      network_segment.mtu)
 
     def delete_bridge(self, bridge_name):
         bridge_device = bridge_lib.BridgeDevice(bridge_name)
