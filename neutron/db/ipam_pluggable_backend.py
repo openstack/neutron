@@ -335,6 +335,25 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def update_port_with_ips(self, context, host, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
 
+        auto_assign_subnets = []
+        if new_mac:
+            original = self._make_port_dict(db_port, process_extensions=False)
+            if original.get('mac_address') != new_mac:
+                original_ips = original.get('fixed_ips', [])
+                new_ips = new_port.setdefault('fixed_ips', original_ips)
+                new_ips_subnets = [new_ip['subnet_id'] for new_ip in new_ips]
+                for orig_ip in original_ips:
+                    if ipv6_utils.is_eui64_address(orig_ip.get('ip_address')):
+                        subnet_to_delete = {}
+                        subnet_to_delete['subnet_id'] = orig_ip['subnet_id']
+                        subnet_to_delete['delete_subnet'] = True
+                        auto_assign_subnets.append(subnet_to_delete)
+                        try:
+                            i = new_ips_subnets.index(orig_ip['subnet_id'])
+                            new_ips[i] = subnet_to_delete
+                        except ValueError:
+                            new_ips.append(subnet_to_delete)
+
         if 'fixed_ips' in new_port:
             original = self._make_port_dict(db_port,
                                             process_extensions=False)
@@ -362,6 +381,14 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
             self._update_db_port(context, db_port, new_port, network_id,
                                  new_mac)
             getattr(db_port, 'fixed_ips')  # refresh relationship before return
+
+            if auto_assign_subnets:
+                port_copy = copy.deepcopy(original)
+                port_copy.update(new_port)
+                port_copy['fixed_ips'] = auto_assign_subnets
+                self.allocate_ips_for_port_and_store(context,
+                            {'port': port_copy}, port_copy['id'])
+
         except Exception:
             with excutils.save_and_reraise_exception():
                 if 'fixed_ips' in new_port:
