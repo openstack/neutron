@@ -114,26 +114,9 @@ function upgrade_ovs_if_necessary {
     fi
 }
 
-# compile_ovs() - Compile OVS from source and load needed modules.
-#                 Accepts two parameters:
-#                   - first one is True by default and means that modules are built and installed.
-#                   - second optional parameter defines prefix for ovs compilation
-#                   - third optional parameter defines localstatedir for ovs single machine runtime
-#                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
-function compile_ovs {
-    local _pwd=$PWD
-    local build_modules=${1:-True}
-    local prefix=$2
-    local localstatedir=$3
-
-    if [ -n "$prefix" ]; then
-        prefix="--prefix=$prefix"
-    fi
-
-    if [ -n "$localstatedir" ]; then
-        localstatedir="--localstatedir=$localstatedir"
-    fi
-
+# prepare_for_compilation() - Fetch ovs git repository and install packages needed for
+#                             compilation.
+function prepare_for_compilation {
     OVS_DIR=$DEST/$OVS_REPO_NAME
     if [ ! -d $OVS_DIR ] ; then
         # We can't use git_clone here because we want to ignore ERROR_ON_CLONE
@@ -162,6 +145,39 @@ function compile_ovs {
     elif is_ubuntu ; then
         install_package linux-headers-$(uname -r)
     fi
+}
+
+
+# reload_kernel_modules() - reload openvswitch kernel module
+function reload_kernel_modules {
+    sudo modprobe -r vport_geneve
+    sudo modprobe -r openvswitch
+    load_module openvswitch
+    load_module vport-geneve False
+    dmesg | tail
+}
+
+# compile_ovs() - Compile OVS from source and load needed modules.
+#                 Accepts two parameters:
+#                   - first one is True by default and means that modules are built and installed.
+#                   - second optional parameter defines prefix for ovs compilation
+#                   - third optional parameter defines localstatedir for ovs single machine runtime
+#                 Env variables OVS_REPO_NAME, OVS_REPO and OVS_BRANCH must be set
+function compile_ovs {
+    local _pwd=$PWD
+    local build_modules=${1:-True}
+    local prefix=$2
+    local localstatedir=$3
+
+    if [ -n "$prefix" ]; then
+        prefix="--prefix=$prefix"
+    fi
+
+    if [ -n "$localstatedir" ]; then
+        localstatedir="--localstatedir=$localstatedir"
+    fi
+
+    prepare_for_compilation
 
     if [ ! -f configure ] ; then
         ./boot.sh
@@ -177,12 +193,54 @@ function compile_ovs {
     sudo make install
     if [[ "$build_modules" == "True" ]]; then
         sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
-        sudo modprobe -r vport_geneve
-        sudo modprobe -r openvswitch
-        load_module openvswitch
-        load_module vport-geneve False
-        dmesg | tail
+        reload_kernel_modules
     fi
+
+    cd $_pwd
+}
+
+# action_service - call an action over openvswitch service
+#                  Accepts one parameter that can be either
+#                  'start', 'restart' and 'stop'.
+function action_openvswitch {
+    local action=$1
+
+    if is_ubuntu; then
+        ${action}_service openvswitch-switch
+    elif is_fedora; then
+        ${action}_service openvswitch
+    elif is_suse; then
+        if [[ $DISTRO == "sle12" ]] && [[ $os_RELEASE -lt 12.2 ]]; then
+            ${action}_service openvswitch-switch
+        else
+            ${action}_service openvswitch
+        fi
+    fi
+}
+
+
+# compile_ovs_kernel_module() - Compile openvswitch kernel module and load it
+function compile_ovs_kernel_module {
+    local _pwd=$PWD
+
+    prepare_for_compilation
+
+    [ -f configure ] || ./boot.sh
+    if [ ! -f config.status ] || [ configure -nt config.status ] ; then
+        ./configure --with-linux=/lib/modules/$(uname -r)/build
+    fi
+
+    action_openvswitch stop
+
+    make -j$[$(nproc) + 1]
+    sudo make INSTALL_MOD_DIR=kernel/net/openvswitch modules_install
+    if [ $? -eq 0 ]; then
+        reload_kernel_modules
+    else
+        echo "Compiling OVS kernel module failed"
+    fi
+
+    action_openvswitch start
 
     cd $_pwd
 }
