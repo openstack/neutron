@@ -184,6 +184,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             self.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                 context, network_id)
 
+    def delete_floatingip_agent_gateway_port(
+        self, context, host_id, ext_net_id):
+        """Function to delete FIP gateway port with given ext_net_id."""
+        # delete any fip agent gw port
+        device_filter = {'device_owner': [const.DEVICE_OWNER_AGENT_GW],
+                         'network_id': [ext_net_id]}
+        ports = self._core_plugin.get_ports(context,
+                                            filters=device_filter)
+        for p in ports:
+            if not host_id or p[portbindings.HOST_ID] == host_id:
+                self._core_plugin.ipam.delete_port(context, p['id'])
+                if host_id:
+                    return
+
     def _get_ports_for_allowed_address_pair_ip(
         self, context, network_id, fixed_ip):
         """Return all active ports associated with the allowed_addr_pair ip."""
@@ -602,20 +616,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
         ports = self._core_plugin.get_ports(context, filters)
         if ports:
             return ports[0]
-
-    def delete_floatingip_agent_gateway_port(
-        self, context, host_id, ext_net_id):
-        """Function to delete FIP gateway port with given ext_net_id."""
-        # delete any fip agent gw port
-        device_filter = {'device_owner': [const.DEVICE_OWNER_AGENT_GW],
-                         'network_id': [ext_net_id]}
-        ports = self._core_plugin.get_ports(context,
-                                            filters=device_filter)
-        for p in ports:
-            if not host_id or p[portbindings.HOST_ID] == host_id:
-                self._core_plugin.ipam.delete_port(context, p['id'])
-                if host_id:
-                    return
 
     def check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
             self, context, port, host):
