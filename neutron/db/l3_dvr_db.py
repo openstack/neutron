@@ -58,9 +58,14 @@ cfg.CONF.register_opts(router_distributed_opts)
 
 
 @registry.has_registry_receivers
-class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
-                               l3_attrs_db.ExtraAttributesMixin):
-    """Mixin class to enable DVR support."""
+class DVRResourceOperationHandler(object):
+    """Contains callbacks for DVR operations.
+
+    TODO(kevinbenton): currently this needs to be implemented as a mixin
+    into the main L3 mixin. Once we replace references to self with an
+    l3 plugin lookup we can stop using it as a mixin and just load it
+    directly in the DVR flavor.
+    """
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _set_distributed_flag(self, resource, event, trigger, context,
@@ -551,6 +556,13 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                                   p['id'],
                                                   l3_port_check=False)
 
+
+class _DVRAgentInterfaceMixin(object):
+    """Contains calls made by the DVR scheduler and RPC interface.
+
+    Must be instantiated as a mixin with the L3 plugin.
+    """
+
     def _get_snat_sync_interfaces(self, context, router_ids):
         """Query router interfaces that relate to list of router_ids."""
         if not router_ids:
@@ -939,6 +951,12 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                 context, address_pair_port['id'], {'port': port_data})
             return update_port
 
+
+class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
+                               l3_attrs_db.ExtraAttributesMixin,
+                               DVRResourceOperationHandler,
+                               _DVRAgentInterfaceMixin):
+    """Mixin class to enable DVR support."""
     router_device_owners = (
         l3_db.L3_NAT_db_mixin.router_device_owners +
         (const.DEVICE_OWNER_DVR_INTERFACE,
