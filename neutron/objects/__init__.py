@@ -10,10 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import sys
 
 
 def register_objects():
     # local import to avoid circular import failure
     from neutron.common import utils
-    utils.import_modules_recursively(sys.modules[__name__].__file__)
+    dirn = os.path.dirname(sys.modules[__name__].__file__)
+    utils.import_modules_recursively(dirn)
