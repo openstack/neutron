@@ -62,12 +62,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                l3_attrs_db.ExtraAttributesMixin):
     """Mixin class to enable DVR support."""
 
-    router_device_owners = (
-        l3_db.L3_NAT_db_mixin.router_device_owners +
-        (const.DEVICE_OWNER_DVR_INTERFACE,
-         const.DEVICE_OWNER_ROUTER_SNAT,
-         const.DEVICE_OWNER_AGENT_GW))
-
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _set_distributed_flag(self, resource, event, trigger, context,
                               router, router_db, **kwargs):
@@ -189,16 +183,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             # to clean up the fip namespace as it is no longer required.
             self.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                 context, network_id)
-
-    def _get_device_owner(self, context, router=None):
-        """Get device_owner for the specified router."""
-        router_is_uuid = isinstance(router, six.string_types)
-        if router_is_uuid:
-            router = self._get_router(context, router)
-        if is_distributed_router(router):
-            return const.DEVICE_OWNER_DVR_INTERFACE
-        return super(L3_NAT_with_dvr_db_mixin,
-                     self)._get_device_owner(context, router)
 
     def _get_ports_for_allowed_address_pair_ip(
         self, context, network_id, fixed_ip):
@@ -884,57 +868,6 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
                                                   p['id'],
                                                   l3_port_check=False)
 
-    @db_api.retry_if_session_inactive()
-    def create_floatingip(self, context, floatingip,
-                          initial_status=const.FLOATINGIP_STATUS_ACTIVE):
-        floating_ip = self._create_floatingip(
-            context, floatingip, initial_status)
-        self._notify_floating_ip_change(context, floating_ip)
-        return floating_ip
-
-    def _notify_floating_ip_change(self, context, floating_ip):
-        router_id = floating_ip['router_id']
-        fixed_port_id = floating_ip['port_id']
-        # we need to notify agents only in case Floating IP is associated
-        if not router_id or not fixed_port_id:
-            return
-
-        try:
-            # using admin context as router may belong to admin tenant
-            router = self._get_router(context.elevated(), router_id)
-        except l3.RouterNotFound:
-            LOG.warning(_LW("Router %s was not found. "
-                            "Skipping agent notification."),
-                        router_id)
-            return
-
-        if is_distributed_router(router):
-            host = self._get_dvr_service_port_hostid(context, fixed_port_id)
-            dest_host = self._get_dvr_migrating_service_port_hostid(
-                context, fixed_port_id)
-            self.l3_rpc_notifier.routers_updated_on_host(
-                context, [router_id], host)
-            if dest_host and dest_host != host:
-                self.l3_rpc_notifier.routers_updated_on_host(
-                    context, [router_id], dest_host)
-        else:
-            self.notify_router_updated(context, router_id)
-
-    @db_api.retry_if_session_inactive()
-    def update_floatingip(self, context, id, floatingip):
-        old_floatingip, floatingip = self._update_floatingip(
-            context, id, floatingip)
-        self._notify_floating_ip_change(context, old_floatingip)
-        if (floatingip['router_id'] != old_floatingip['router_id'] or
-                floatingip['port_id'] != old_floatingip['port_id']):
-            self._notify_floating_ip_change(context, floatingip)
-        return floatingip
-
-    @db_api.retry_if_session_inactive()
-    def delete_floatingip(self, context, id):
-        floating_ip = self._delete_floatingip(context, id)
-        self._notify_floating_ip_change(context, floating_ip)
-
     def _get_address_pair_active_port_with_fip(
             self, context, port_dict, port_addr_pair_ip):
         port_valid_state = (port_dict['admin_state_up'] or
@@ -1005,6 +938,73 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             update_port = self._core_plugin.update_port(
                 context, address_pair_port['id'], {'port': port_data})
             return update_port
+
+    router_device_owners = (
+        l3_db.L3_NAT_db_mixin.router_device_owners +
+        (const.DEVICE_OWNER_DVR_INTERFACE,
+         const.DEVICE_OWNER_ROUTER_SNAT,
+         const.DEVICE_OWNER_AGENT_GW))
+
+    def _get_device_owner(self, context, router=None):
+        """Get device_owner for the specified router."""
+        router_is_uuid = isinstance(router, six.string_types)
+        if router_is_uuid:
+            router = self._get_router(context, router)
+        if is_distributed_router(router):
+            return const.DEVICE_OWNER_DVR_INTERFACE
+        return super(L3_NAT_with_dvr_db_mixin,
+                     self)._get_device_owner(context, router)
+
+    @db_api.retry_if_session_inactive()
+    def create_floatingip(self, context, floatingip,
+                          initial_status=const.FLOATINGIP_STATUS_ACTIVE):
+        floating_ip = self._create_floatingip(
+            context, floatingip, initial_status)
+        self._notify_floating_ip_change(context, floating_ip)
+        return floating_ip
+
+    def _notify_floating_ip_change(self, context, floating_ip):
+        router_id = floating_ip['router_id']
+        fixed_port_id = floating_ip['port_id']
+        # we need to notify agents only in case Floating IP is associated
+        if not router_id or not fixed_port_id:
+            return
+
+        try:
+            # using admin context as router may belong to admin tenant
+            router = self._get_router(context.elevated(), router_id)
+        except l3.RouterNotFound:
+            LOG.warning(_LW("Router %s was not found. "
+                            "Skipping agent notification."),
+                        router_id)
+            return
+
+        if is_distributed_router(router):
+            host = self._get_dvr_service_port_hostid(context, fixed_port_id)
+            dest_host = self._get_dvr_migrating_service_port_hostid(
+                context, fixed_port_id)
+            self.l3_rpc_notifier.routers_updated_on_host(
+                context, [router_id], host)
+            if dest_host and dest_host != host:
+                self.l3_rpc_notifier.routers_updated_on_host(
+                    context, [router_id], dest_host)
+        else:
+            self.notify_router_updated(context, router_id)
+
+    @db_api.retry_if_session_inactive()
+    def update_floatingip(self, context, id, floatingip):
+        old_floatingip, floatingip = self._update_floatingip(
+            context, id, floatingip)
+        self._notify_floating_ip_change(context, old_floatingip)
+        if (floatingip['router_id'] != old_floatingip['router_id'] or
+                floatingip['port_id'] != old_floatingip['port_id']):
+            self._notify_floating_ip_change(context, floatingip)
+        return floatingip
+
+    @db_api.retry_if_session_inactive()
+    def delete_floatingip(self, context, id):
+        floating_ip = self._delete_floatingip(context, id)
+        self._notify_floating_ip_change(context, floating_ip)
 
 
 def is_distributed_router(router):
