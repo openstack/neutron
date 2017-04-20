@@ -106,6 +106,8 @@ class ExtensionPathTest(base.BaseTestCase):
         super(ExtensionPathTest, self).setUp()
 
     def test_get_extensions_path_with_plugins(self):
+        cfg.CONF.set_override('api_extensions_path',
+                              'neutron/tests/unit/extensions')
         path = extensions.get_extensions_path(
             {lib_const.CORE: FakePluginWithExtension()})
         self.assertEqual(path,
