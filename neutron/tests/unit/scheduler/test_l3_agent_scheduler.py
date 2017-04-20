@@ -1059,8 +1059,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         directory.add_plugin(constants.L3, l3plugin)
         with mock.patch.object(l3plugin, 'get_dvr_routers_to_remove',
                                return_value=routers_to_remove),\
-                mock.patch.object(l3plugin, '_get_floatingip_on_port',
-                                  return_value=fip):
+                mock.patch.object(l3plugin, '_get_floatingips_by_port_id',
+                                  return_value=[fip] if fip else []):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', mock.ANY, **kwargs)
             if routers_to_remove:
@@ -1108,8 +1108,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
                                return_value=[{'agent_id': 'foo_agent',
                                               'router_id': 'foo_id',
                                               'host': source_host}]),\
-                mock.patch.object(l3plugin, '_get_floatingip_on_port',
-                                  return_value=None):
+                mock.patch.object(l3plugin, '_get_floatingips_by_port_id',
+                                  return_value=[]):
             l3_dvrscheduler_db._notify_l3_agent_port_update(
                 'port', 'after_update', plugin, **kwargs)
 
