@@ -982,6 +982,20 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             {'wrap': True, 'top': False, 'rule': '-j DROP',
              'chain': 'nonexistent'})
 
+    def test_iptables__apply_synchronized_no_namespace(self):
+        self.execute.side_effect = RuntimeError
+        # no namespace set so should raise
+        self.assertRaises(RuntimeError,
+                          self.iptables._apply_synchronized)
+        self.iptables.namespace = 'test'
+        with mock.patch('neutron.agent.linux.ip_lib.IpNetnsCommand.exists',
+                        return_value=True):
+            self.assertRaises(RuntimeError,
+                              self.iptables._apply_synchronized)
+        with mock.patch('neutron.agent.linux.ip_lib.IpNetnsCommand.exists',
+                        return_value=False):
+            self.assertEqual([], self.iptables._apply_synchronized())
+
     def test_iptables_failure_with_no_failing_line_number(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
             # generate Runtime errors on iptables-restore calls
