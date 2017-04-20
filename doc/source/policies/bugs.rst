@@ -292,6 +292,19 @@ If the bug report is sound, move next:
   we rotate, tagging bugs with 'needs-attention' can be useful to quickly
   identify what reports need further screening/eyes on.
 
+Check for Bugs with the 'timeout-abandon' tag:
+
+* Search for any bugs with the timeout abandon tag:
+  `Timeout abandon <https://bugs.launchpad.net/neutron/+bugs?field.tag=timeout-abandon>`_.
+  This tag indicates that the bug had a patch associated with it that was
+  automatically abandonded after a timing out with negative feedback.
+* For each bug with this tag, determine if the bug is still valid and update
+  the status accordingly. For example, if another patch fixed the bug, ensure
+  it's marked as 'Fix Released'. Or, if that was the only patch for the bug and
+  it's still valid, mark it as 'Confirmed'.
+* After ensuring the bug report is in the correct state, remove the
+  'timeout-abandon' tag.
+
 You are done! Iterate.
 
 
