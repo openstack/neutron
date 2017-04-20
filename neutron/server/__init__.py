@@ -22,9 +22,10 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.common import config
+from neutron.common import profiler
 
 
-def boot_server(server_func):
+def _init_configuration():
     # the configuration will be read into the cfg.CONF global data structure
     config.init(sys.argv[1:])
     config.setup_logging()
@@ -33,9 +34,19 @@ def boot_server(server_func):
         sys.exit(_("ERROR: Unable to find configuration file via the default"
                    " search paths (~/.neutron/, ~/, /etc/neutron/, /etc/) and"
                    " the '--config-file' option!"))
+
+
+def boot_server(server_func):
+    _init_configuration()
     try:
         server_func()
     except KeyboardInterrupt:
         pass
     except RuntimeError as e:
         sys.exit(_("ERROR: %s") % e)
+
+
+def get_application():
+    _init_configuration()
+    profiler.setup('neutron-server', cfg.CONF.host)
+    return config.load_paste_app('neutron')
