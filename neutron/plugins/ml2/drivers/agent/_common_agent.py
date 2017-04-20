@@ -245,7 +245,8 @@ class CommonAgentLoop(service.Service):
                 segment = amb.NetworkSegment(
                     device_details.get('network_type'),
                     device_details['physical_network'],
-                    device_details.get('segmentation_id')
+                    device_details.get('segmentation_id'),
+                    device_details.get('mtu')
                 )
                 network_id = device_details['network_id']
                 self.rpc_callbacks.add_network(network_id, segment)

@@ -21,10 +21,12 @@ import six
 
 class NetworkSegment(object):
     """Represents a Neutron network segment"""
-    def __init__(self, network_type, physical_network, segmentation_id):
+    def __init__(self, network_type, physical_network, segmentation_id,
+                 mtu=None):
         self.network_type = network_type
         self.physical_network = physical_network
         self.segmentation_id = segmentation_id
+        self.mtu = mtu
 
 
 @six.add_metaclass(abc.ABCMeta)
