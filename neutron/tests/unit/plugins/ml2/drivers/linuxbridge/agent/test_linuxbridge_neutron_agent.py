@@ -478,7 +478,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertFalse(self.lbm.add_tap_interface("123",
                                                         p_const.TYPE_VLAN,
                                                         "physnet1", None,
-                                                        "tap1", "foo"))
+                                                        "tap1", "foo", None))
 
     @mock.patch.object(ip_lib, "device_exists", return_value=True)
     def test_add_tap_interface_with_other_error(self, exists):
@@ -486,7 +486,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                side_effect=RuntimeError("No more fuel")):
             self.assertRaises(RuntimeError, self.lbm.add_tap_interface, "123",
                               p_const.TYPE_VLAN, "physnet1", None, "tap1",
-                              "foo")
+                              "foo", None)
 
     def test_add_tap_interface_owner_compute(self):
         with mock.patch.object(ip_lib, "device_exists"):
@@ -495,7 +495,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                            p_const.TYPE_LOCAL,
                                                            "physnet1", None,
                                                            "tap1",
-                                                           "compute:1"))
+                                                           "compute:1", None))
 
     def _test_add_tap_interface(self, dev_owner_prefix):
         with mock.patch.object(ip_lib, "device_exists") as de_fn:
@@ -503,13 +503,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.assertFalse(
                 self.lbm.add_tap_interface("123", p_const.TYPE_VLAN,
                                            "physnet1", "1", "tap1",
-                                           dev_owner_prefix))
+                                           dev_owner_prefix, None))
 
             de_fn.return_value = True
             bridge_device = mock.Mock()
             with mock.patch.object(self.lbm, "ensure_local_bridge") as en_fn,\
                     mock.patch.object(bridge_lib, "BridgeDevice",
                                       return_value=bridge_device), \
+                    mock.patch.object(self.lbm, '_set_tap_mtu') as set_tap, \
                     mock.patch.object(bridge_lib.BridgeDevice,
                                       "get_interface_bridge") as get_br:
                 bridge_device.addif.retun_value = False
@@ -518,7 +519,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                            p_const.TYPE_LOCAL,
                                                            "physnet1", None,
                                                            "tap1",
-                                                           dev_owner_prefix))
+                                                           dev_owner_prefix,
+                                                           None))
                 en_fn.assert_called_with("123", "brq123")
 
                 self.lbm.bridge_mappings = {"physnet1": "brq999"}
@@ -526,7 +528,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                            p_const.TYPE_LOCAL,
                                                            "physnet1", None,
                                                            "tap1",
-                                                           dev_owner_prefix))
+                                                           dev_owner_prefix,
+                                                           8765))
+                set_tap.assert_called_with('tap1', 8765)
                 en_fn.assert_called_with("123", "brq999")
 
                 get_br.return_value = False
@@ -535,7 +539,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                             p_const.TYPE_LOCAL,
                                                             "physnet1", None,
                                                             "tap1",
-                                                            dev_owner_prefix))
+                                                            dev_owner_prefix,
+                                                            None))
             with mock.patch.object(self.lbm,
                                    "ensure_physical_in_bridge") as ens_fn:
                 ens_fn.return_value = False
@@ -543,7 +548,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                             p_const.TYPE_VLAN,
                                                             "physnet1", "1",
                                                             "tap1",
-                                                            dev_owner_prefix))
+                                                            dev_owner_prefix,
+                                                            None))
 
     def test_add_tap_interface_owner_network(self):
         self._test_add_tap_interface(constants.DEVICE_OWNER_NETWORK_PREFIX)
@@ -552,13 +558,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         self._test_add_tap_interface(constants.DEVICE_OWNER_NEUTRON_PREFIX)
 
     def test_plug_interface(self):
-        segment = amb.NetworkSegment(p_const.TYPE_VLAN, "physnet-1", "1")
+        segment = amb.NetworkSegment(p_const.TYPE_VLAN, "physnet-1", "1", 1777)
         with mock.patch.object(self.lbm, "add_tap_interface") as add_tap:
             self.lbm.plug_interface("123", segment, "tap234",
                                    constants.DEVICE_OWNER_NETWORK_PREFIX)
             add_tap.assert_called_with("123", p_const.TYPE_VLAN, "physnet-1",
                                        "1", "tap234",
-                                       constants.DEVICE_OWNER_NETWORK_PREFIX)
+                                       constants.DEVICE_OWNER_NETWORK_PREFIX,
+                                       1777)
 
     def test_delete_bridge(self):
         with mock.patch.object(ip_lib.IPDevice, "exists") as de_fn,\
