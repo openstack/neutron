@@ -87,6 +87,9 @@ class NeutronConfigFixture(ConfigFixture):
             'oslo_policy': {
                 'policy_file': self._generate_policy_json(),
             },
+            'agent': {
+                'report_interval': env_desc.agent_down_time / 2.0
+            },
         })
 
     def _setUp(self):

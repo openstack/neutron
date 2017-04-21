@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from distutils import spawn
 import itertools
 
 import netaddr
@@ -24,6 +25,8 @@ from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
+
+FULLSTACK_DHCLIENT_SCRIPT = 'fullstack-dhclient-script'
 
 
 class FakeFullstackMachinesList(list):
@@ -42,6 +45,8 @@ class FakeFullstackMachinesList(list):
 
 
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
+    NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH = (
+        spawn.find_executable(FULLSTACK_DHCLIENT_SCRIPT))
 
     def __init__(self, host, network_id, tenant_id, safe_client,
                  neutron_port=None, bridge_name=None, use_dhcp=False):
@@ -129,7 +134,8 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         self.addCleanup(self._stop_async_dhclient)
 
     def _start_async_dhclient(self):
-        cmd = ["dhclient", '--no-pid', '-d', self.port.name]
+        cmd = ["dhclient", '-sf', self.NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH,
+               '--no-pid', '-d', self.port.name]
         self.dhclient_async = async_process.AsyncProcess(
             cmd, run_as_root=True, namespace=self.namespace)
         self.dhclient_async.start()

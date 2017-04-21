@@ -26,6 +26,7 @@ from neutron.tests.unit import testlib_api
 # This is the directory from which infra fetches log files for fullstack tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-fullstack-logs')
+ROOTDIR = os.path.dirname(__file__)
 
 
 class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,

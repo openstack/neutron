@@ -46,7 +46,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
             environment.EnvironmentDescription(
                 l2_pop=False,
                 arp_responder=False,
-                agent_down_time=10),
+                agent_down_time=self.agent_down_time),
             host_descriptions)
 
         super(BaseDhcpAgentTest, self).setUp(env)
@@ -88,6 +88,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
 class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 
     number_of_hosts = 1
+    agent_down_time = 60
 
     def test_dhcp_assignment(self):
         # First check if network was scheduled to one DHCP agent
@@ -102,6 +103,7 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 class TestDhcpAgentHA(BaseDhcpAgentTest):
 
     number_of_hosts = 2
+    agent_down_time = 10
 
     def _wait_until_network_rescheduled(self, old_agent):
         def _agent_rescheduled():
