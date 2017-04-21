@@ -18,6 +18,7 @@ from ovsdbapp.schema.open_vswitch import impl_idl
 
 from neutron.agent.ovsdb.native import connection
 from neutron.agent.ovsdb.native import vlog
+from neutron.conf.agent import ovs_conf
 
 NeutronOVSDBTransaction = moves.moved_class(
     impl_idl.OvsVsctlTransaction,
@@ -28,6 +29,8 @@ VswitchdInterfaceAddException = moves.moved_class(
     impl_idl.VswitchdInterfaceAddException,
     'VswitchdInterfaceAddException',
     __name__)
+
+ovs_conf.register_ovs_agent_opts()
 
 _connection = connection.Connection(idl_factory=connection.idl_factory,
                                     timeout=cfg.CONF.ovs_vsctl_timeout)
