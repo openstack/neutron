@@ -87,7 +87,7 @@ def set_rules(policies, overwrite=True):
 
 def _is_attribute_explicitly_set(attribute_name, resource, target, action):
     """Verify that an attribute is present and is explicitly set."""
-    if 'update' in action:
+    if target.get(const.ATTRIBUTES_TO_UPDATE):
         # In the case of update, the function should not pay attention to a
         # default value of an attribute, but check whether it was explicitly
         # marked as being updated instead.

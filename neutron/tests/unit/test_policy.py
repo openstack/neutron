@@ -431,6 +431,12 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         result = policy._build_match_rule(action, target, None)
         self.assertEqual("rule:" + action, str(result))
 
+    def test_build_match_rule_normal_pluralized_when_update(self):
+        action = "update_" + FAKE_RESOURCE_NAME
+        target = {}
+        result = policy._build_match_rule(action, target, None)
+        self.assertEqual("rule:" + action, str(result))
+
     def test_enforce_subattribute(self):
         action = "create_" + FAKE_RESOURCE_NAME
         target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
