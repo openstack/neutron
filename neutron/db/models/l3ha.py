@@ -53,6 +53,7 @@ class L3HARouterAgentPortBinding(model_base.BASEV2):
 
     state = sa.Column(sa.Enum(n_const.HA_ROUTER_STATE_ACTIVE,
                               n_const.HA_ROUTER_STATE_STANDBY,
+                              n_const.HA_ROUTER_STATE_UNKNOWN,
                               name='l3_ha_states'),
                       default=n_const.HA_ROUTER_STATE_STANDBY,
                       server_default=n_const.HA_ROUTER_STATE_STANDBY)
