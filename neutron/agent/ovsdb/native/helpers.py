@@ -12,31 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
+import functools
 
-from neutron.agent.ovsdb import api as ovsdb
+from debtcollector import moves
+from ovsdbapp.schema.open_vswitch import helpers
 
-cfg.CONF.import_opt('ovs_vsctl_timeout', 'neutron.agent.common.ovs_lib')
+from neutron.agent.common import utils
 
+_connection_to_manager_uri = moves.moved_function(
+    helpers._connection_to_manager_uri,
+    '_connection_to_manager_uri', __name__)
 
-def _connection_to_manager_uri(conn_uri):
-    proto, addr = conn_uri.split(':', 1)
-    if ':' in addr:
-        ip, port = addr.split(':', 1)
-        return 'p%s:%s:%s' % (proto, port, ip)
-    else:
-        return 'p%s:%s' % (proto, addr)
-
-
-def enable_connection_uri(conn_uri, set_timeout=False):
-    class OvsdbVsctlContext(object):
-        vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
-
-    manager_uri = _connection_to_manager_uri(conn_uri)
-    api = ovsdb.API.get(OvsdbVsctlContext, 'vsctl')
-    with api.transaction() as txn:
-        txn.add(api.add_manager(manager_uri))
-        if set_timeout:
-            timeout = cfg.CONF.ovs_vsctl_timeout * 1000
-            txn.add(api.db_set('Manager', manager_uri,
-                               ('inactivity_probe', timeout)))
+enable_connection_uri = functools.partial(
+    helpers.enable_connection_uri, execute=utils.execute, run_as_root=True,
+    log_fail_as_error=False, check_exit_code=False)
