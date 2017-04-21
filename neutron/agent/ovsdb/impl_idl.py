@@ -14,6 +14,7 @@
 
 from debtcollector import moves
 from oslo_config import cfg
+from ovsdbapp.backend.ovs_idl import transaction
 from ovsdbapp.schema.open_vswitch import impl_idl
 
 from neutron.agent.ovsdb.native import connection
@@ -30,8 +31,10 @@ VswitchdInterfaceAddException = moves.moved_class(
     'VswitchdInterfaceAddException',
     __name__)
 
-ovs_conf.register_ovs_agent_opts()
+Transaction = moves.moved_class(transaction.Transaction,
+                                'Transaction', __name__)
 
+ovs_conf.register_ovs_agent_opts()
 _connection = connection.Connection(idl_factory=connection.idl_factory,
                                     timeout=cfg.CONF.ovs_vsctl_timeout)
 
