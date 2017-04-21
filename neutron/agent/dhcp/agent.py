@@ -523,7 +523,7 @@ class DhcpAgent(manager.Manager):
             uuid = network.id
             is_router_id = False
         metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
-            self._process_monitor, uuid, self.conf)
+            self._process_monitor, uuid, self.conf, network.namespace)
         if is_router_id:
             del self._metadata_routers[network.id]
 

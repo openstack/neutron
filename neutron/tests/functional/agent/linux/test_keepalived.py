@@ -63,7 +63,7 @@ class KeepalivedManagerTestCase(base.BaseLoggingTestCase,
 
         # Exit the process, and see that when it comes back
         # It's indeed a different process
-        utils.execute(['kill', exit_code, pid], run_as_root=True)
+        utils.execute(['kill', exit_code, pid])
         common_utils.wait_until_true(
             lambda: process.active and pid != process.pid,
             timeout=5,

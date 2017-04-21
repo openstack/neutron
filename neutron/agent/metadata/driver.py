@@ -259,10 +259,10 @@ class MetadataDriver(object):
             pm.disable()
 
     @classmethod
-    def destroy_monitored_metadata_proxy(cls, monitor, uuid, conf):
+    def destroy_monitored_metadata_proxy(cls, monitor, uuid, conf, ns_name):
         monitor.unregister(uuid, METADATA_SERVICE_NAME)
-        # No need to pass ns name as it's not needed for disable()
-        pm = cls._get_metadata_proxy_process_manager(uuid, conf)
+        pm = cls._get_metadata_proxy_process_manager(uuid, conf,
+                                                     ns_name=ns_name)
         pm.disable()
 
         # Delete metadata proxy config file
@@ -320,4 +320,5 @@ def before_router_removed(resource, event, l3_agent, **kwargs):
 
     proxy.destroy_monitored_metadata_proxy(l3_agent.process_monitor,
                                           router.router['id'],
-                                          l3_agent.conf)
+                                          l3_agent.conf,
+                                          router.ns_name)

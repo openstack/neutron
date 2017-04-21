@@ -482,7 +482,7 @@ class TestDhcpAgent(base.BaseTestCase):
                 network_id=fake_network.id)
             dhcp.disable_dhcp_helper(fake_network.id)
             md_cls.destroy_monitored_metadata_proxy.assert_called_once_with(
-                mock.ANY, fake_network.id, mock.ANY)
+                mock.ANY, fake_network.id, mock.ANY, fake_network.namespace)
 
     def test_report_state_revival_logic(self):
         dhcp = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
@@ -678,7 +678,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                 mock.call().enable()], any_order=True)
         else:
             self.external_process.assert_has_calls([
-                self._process_manager_constructor_call(ns=None),
+                self._process_manager_constructor_call(),
                 mock.call().disable()])
 
     def test_enable_dhcp_helper_enable_metadata_isolated_network(self):
@@ -796,7 +796,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.get_network_by_id(fake_network.id)])
         self.call_driver.assert_called_once_with('disable', fake_network)
         self.external_process.assert_has_calls([
-            self._process_manager_constructor_call(ns=None),
+            self._process_manager_constructor_call(),
             mock.call().disable()])
 
     def test_disable_dhcp_helper_known_network_isolated_metadata(self):
@@ -825,7 +825,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.assert_has_calls(
             [mock.call.get_network_by_id(fake_network.id)])
         self.external_process.assert_has_calls([
-            self._process_manager_constructor_call(ns=None),
+            self._process_manager_constructor_call(),
             mock.call().disable()
         ])
 
@@ -850,7 +850,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp.disable_isolated_metadata_proxy(fake_network)
             destroy.assert_called_once_with(self.dhcp._process_monitor,
                                             fake_network.id,
-                                            cfg.CONF)
+                                            cfg.CONF,
+                                            fake_network.namespace)
 
     def _test_enable_isolated_metadata_proxy(self, network):
         cfg.CONF.set_override('enable_metadata_network', True)
@@ -884,7 +885,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp.disable_isolated_metadata_proxy(network)
             destroy.assert_called_once_with(self.dhcp._process_monitor,
                                             'forzanapoli',
-                                            cfg.CONF)
+                                            cfg.CONF,
+                                            network.namespace)
 
     def test_disable_isolated_metadata_proxy_with_metadata_network(self):
         self._test_disable_isolated_metadata_proxy(fake_meta_network)

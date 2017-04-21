@@ -85,5 +85,6 @@ class NamespaceManagerTestCase(NamespaceManagerTestFramework):
             (self.metadata_driver_mock.destroy_monitored_metadata_proxy.
              assert_called_once_with(mock.ANY,
                                      router_id_to_delete,
-                                     self.agent_conf))
+                                     self.agent_conf,
+                                     ns_name))
             self.assertFalse(self._namespace_exists(ns_name))

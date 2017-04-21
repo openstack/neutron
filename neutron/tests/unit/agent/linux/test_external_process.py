@@ -154,7 +154,7 @@ class TestProcessManager(base.BaseTestCase):
                     ip_lib.assert_has_calls([
                         mock.call.IPWrapper(namespace='ns'),
                         mock.call.IPWrapper().netns.execute(
-                            ['the', 'cmd'], addl_env=None, run_as_root=False)])
+                            ['the', 'cmd'], addl_env=None, run_as_root=True)])
 
     def test_enable_with_namespace_process_active(self):
         callback = mock.Mock()
@@ -208,7 +208,7 @@ class TestProcessManager(base.BaseTestCase):
                     manager.disable()
                     utils.assert_has_calls([
                         mock.call.execute(['kill', '-9', 4],
-                                          run_as_root=True)])
+                                          run_as_root=False)])
 
     def test_disable_namespace(self):
         with mock.patch.object(ep.ProcessManager, 'pid') as pid:
