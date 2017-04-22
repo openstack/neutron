@@ -80,6 +80,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
             segments_db.add_network_segment(
                 self.ctx, network_id, segment,
                 is_dynamic=is_seg_dynamic)
+            segment['network_id'] = network_id
 
         net_segments = segments_db.get_network_segments(
                            self.ctx, network_id,
