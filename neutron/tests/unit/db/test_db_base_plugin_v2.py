@@ -102,6 +102,7 @@ def _get_create_db_method(resource):
 class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     fmt = 'json'
     resource_prefix_map = {}
+    block_dhcp_notifier = True
 
     def setUp(self, plugin=None, service_plugins=None,
               ext_mgr=None):
@@ -119,6 +120,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if not plugin:
             plugin = DB_PLUGIN_KLASS
 
+        if self.block_dhcp_notifier:
+            mock.patch('neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.'
+                       'DhcpAgentNotifyAPI').start()
         # Update the plugin
         self.setup_coreplugin(plugin, load_plugins=False)
         cfg.CONF.set_override(

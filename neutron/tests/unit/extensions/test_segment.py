@@ -1975,6 +1975,7 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
 
     _mechanism_drivers = ['openvswitch', 'logger']
     mock_path = 'neutron.services.segments.db.update_segment_host_mapping'
+    block_dhcp_notifier = False
 
     def setUp(self):
         super(TestDhcpAgentSegmentScheduling, self).setUp()
