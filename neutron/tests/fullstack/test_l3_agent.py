@@ -17,7 +17,6 @@ import netaddr
 import os
 import time
 
-from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
@@ -42,9 +41,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
         cidr = self.useFixture(
             ip_network.ExclusiveIPNetwork(
                 "240.0.0.0", "240.255.255.255", "24")).network
-        subnet = self.safe_client.create_subnet(
-            tenant_id, network['id'], cidr,
-            enable_dhcp=False)
+        subnet = self.safe_client.create_subnet(tenant_id, network['id'], cidr)
         return network, subnet
 
     def block_until_port_status_active(self, port_id):
@@ -55,11 +52,8 @@ class TestL3Agent(base.BaseFullStackTestCase):
 
     def _create_and_attach_subnet(
             self, tenant_id, subnet_cidr, network_id, router_id):
-        # For IPv6 subnets, enable_dhcp should be set to true.
-        enable_dhcp = (netaddr.IPNetwork(subnet_cidr).version ==
-            constants.IP_VERSION_6)
         subnet = self.safe_client.create_subnet(
-            tenant_id, network_id, subnet_cidr, enable_dhcp=enable_dhcp)
+            tenant_id, network_id, subnet_cidr)
 
         router_interface_info = self.safe_client.add_router_interface(
             router_id, subnet['id'])
@@ -69,7 +63,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
     def _boot_fake_vm_in_network(self, host, tenant_id, network_id, wait=True):
         vm = self.useFixture(
             machine.FakeFullstackMachine(
-                host, network_id, tenant_id, self.safe_client))
+                host, network_id, tenant_id, self.safe_client, use_dhcp=True))
         if wait:
             vm.block_until_boot()
         return vm
@@ -87,7 +81,7 @@ class TestLegacyL3Agent(TestL3Agent):
 
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=True),
+            environment.HostDescription(l3_agent=True, dhcp_agent=True),
             environment.HostDescription()]
         env = environment.Environment(
             environment.EnvironmentDescription(
@@ -191,7 +185,8 @@ class TestHAL3Agent(TestL3Agent):
 
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=True) for _ in range(2)]
+            environment.HostDescription(l3_agent=True, dhcp_agent=True)
+            for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type='vxlan', l2_pop=True),
