@@ -1017,3 +1017,24 @@ class TestParentSubresourceController(test_functional.PecanFunctionalTest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual({'fake_duplicates': [{'fake': 'something'}]},
                          resp.json)
+
+
+class TestExcludeAttributePolicy(test_functional.PecanFunctionalTest):
+
+    def setUp(self):
+        super(TestExcludeAttributePolicy, self).setUp()
+        policy.init()
+        self.addCleanup(policy.reset)
+        plugin = directory.get_plugin()
+        ctx = context.get_admin_context()
+        self.network_id = pecan_utils.create_network(ctx, plugin)['id']
+        mock.patch('neutron.pecan_wsgi.controllers.resource.'
+                   'CollectionsController.get').start()
+
+    def test_get_networks(self):
+        response = self.app.get('/v2.0/networks/%s.json' % self.network_id,
+                headers={'X-Project-Id': 'tenid'})
+        json_body = jsonutils.loads(response.body)
+        self.assertEqual(response.status_int, 200)
+        self.assertEqual('tenid', json_body['network']['project_id'])
+        self.assertEqual('tenid', json_body['network']['tenant_id'])
