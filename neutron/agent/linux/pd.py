@@ -191,10 +191,14 @@ class PrefixDelegation(object):
     def remove_stale_ri_ifname(self, router_id, stale_ifname):
         router = self.routers.get(router_id)
         if router is not None:
-            for subnet_id, pd_info in six.iteriterms(router['subnets']):
+            subnet_to_delete = None
+            for subnet_id, pd_info in six.iteritems(router['subnets']):
                 if pd_info.ri_ifname == stale_ifname:
                     self._delete_pd(router, pd_info)
-                    del router['subnets'][subnet_id]
+                    subnet_to_delete = subnet_id
+                    break
+            if subnet_to_delete:
+                del router['subnets'][subnet_to_delete]
 
     @staticmethod
     def _get_lla(mac):
