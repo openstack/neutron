@@ -360,8 +360,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
             agent.periodic_sync_routers_task(agent.context)
 
-            expected_calls = [mock.call(mock.ANY, r_id, agent.conf)
-                              for r_id in stale_router_ids]
+            expected_calls = [
+                mock.call(
+                    mock.ANY, r_id, agent.conf, namespaces.NS_PREFIX + r_id)
+                for r_id in stale_router_ids]
             self.assertEqual(len(stale_router_ids), destroy_proxy.call_count)
             destroy_proxy.assert_has_calls(expected_calls, any_order=True)
 
@@ -2168,7 +2170,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 if enableflag:
                     destroy_proxy.assert_called_with(mock.ANY,
                                                      router_id,
-                                                     mock.ANY)
+                                                     mock.ANY,
+                                                     'qrouter-' + router_id)
                 else:
                     self.assertFalse(destroy_proxy.call_count)
 

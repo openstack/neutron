@@ -161,7 +161,7 @@ class AgentMixin(object):
         else:
             LOG.debug('Closing metadata proxy for router %s', router_id)
             self.metadata_driver.destroy_monitored_metadata_proxy(
-                self.process_monitor, ri.router_id, self.conf)
+                self.process_monitor, ri.router_id, self.conf, ri.ns_name)
 
     def _update_radvd_daemon(self, ri, state):
         # Radvd has to be spawned only on the Master HA Router. If there are

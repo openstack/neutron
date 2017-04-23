@@ -172,7 +172,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
                 mock.call().netns.execute(netns_execute_args, addl_env=None,
-                                          run_as_root=False)
+                                          run_as_root=True)
             ])
 
     def test_create_config_file_wrong_user(self):

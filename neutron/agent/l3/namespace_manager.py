@@ -141,7 +141,7 @@ class NamespaceManager(object):
             if self.metadata_driver:
                 # cleanup stale metadata proxy processes first
                 self.metadata_driver.destroy_monitored_metadata_proxy(
-                    self.process_monitor, ns_id, self.agent_conf)
+                    self.process_monitor, ns_id, self.agent_conf, ns.name)
             ns.delete()
         except RuntimeError:
             LOG.exception(_LE('Failed to destroy stale namespace %s'), ns)
