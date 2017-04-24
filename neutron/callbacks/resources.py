@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# NOTE(boden): This module will be removed soon; use neutron-lib callbacks
+
 # String literals representing core resources.
 AGENT = 'agent'
 FLOATING_IP = 'floatingip'

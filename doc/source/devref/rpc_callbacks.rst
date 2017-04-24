@@ -26,9 +26,10 @@
 Neutron Messaging Callback System
 =================================
 
-Neutron already has a :doc:`callback system <callbacks>` for
-in-process resource callbacks where publishers and subscribers are able
-to publish and subscribe for resource events.
+Neutron already has a `callback system
+<https://docs.openstack.org/developer/neutron-lib/devref/callbacks.html>`_
+for in-process resource callbacks where publishers and subscribers are
+able to publish and subscribe for resource events.
 
 This system is different, and is intended to be used for inter-process
 callbacks, via the messaging fanout mechanisms.

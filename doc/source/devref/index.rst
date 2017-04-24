@@ -70,7 +70,6 @@ Neutron Internals
    ovs_vhostuser
    quality_of_service
    service_extensions
-   callbacks
    dns_order
    external_dns_integration
    upgrade
