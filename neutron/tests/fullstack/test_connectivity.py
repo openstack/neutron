@@ -122,18 +122,6 @@ class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
         self._test_connectivity()
 
 
-class TestOvsConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
-    use_dhcp = False
-    network_type = 'vxlan'
-    l2_pop = False
-    l2_agent_type = constants.AGENT_TYPE_OVS
-    ovsdb_interface = 'native'
-    of_interface = 'native'
-
-    def test_connectivity(self):
-        self._test_connectivity()
-
-
 class TestOvsConnectivitySameNetworkOnOvsBridgeControllerStop(
         BaseConnectivitySameNetworkTest):
 
@@ -201,6 +189,25 @@ class TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
         ('VXLAN and l2pop', {'network_type': 'vxlan',
                              'l2_pop': True})
     ]
+
+    def test_connectivity(self):
+        self._test_connectivity()
+
+
+class TestConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
+
+    scenarios = [
+        (constants.AGENT_TYPE_OVS,
+         {'l2_agent_type': constants.AGENT_TYPE_OVS}),
+        (constants.AGENT_TYPE_LINUXBRIDGE,
+         {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})
+    ]
+
+    use_dhcp = False
+    network_type = 'vxlan'
+    l2_pop = False
+    ovsdb_interface = 'native'
+    of_interface = 'native'
 
     def test_connectivity(self):
         self._test_connectivity()
