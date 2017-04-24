@@ -1,0 +1,7 @@
+function configure_segments_service_plugin {
+    neutron_service_plugin_class_add segments
+}
+
+function configure_segments_extension {
+    configure_segments_service_plugin
+}
