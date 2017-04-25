@@ -672,6 +672,12 @@ class L3SchedulerTestCaseMixin(test_l3.L3NatTestCaseMixin,
 class L3AgentChanceSchedulerTestCase(L3SchedulerTestCaseMixin,
                                      test_db_base_plugin_v2.
                                      NeutronDbPluginV2TestCase):
+    def setUp(self):
+        super(L3AgentChanceSchedulerTestCase, self).setUp()
+        # Removes MissingAuthPlugin exception from logs
+        self.patch_notifier = mock.patch(
+            'neutron.notifiers.batch_notifier.BatchNotifier._notify')
+        self.patch_notifier.start()
 
     def test_random_scheduling(self):
         random_patch = mock.patch('random.choice')
@@ -1904,6 +1910,10 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         # Mock scheduling so that the test can control it explicitly
         mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,
                           '_notify_router_updated').start()
+        # Removes MissingAuthPlugin exception from logs
+        self.patch_notifier = mock.patch(
+            'neutron.notifiers.batch_notifier.BatchNotifier._notify')
+        self.patch_notifier.start()
 
     def _register_l3_agents(self):
         self.agent1 = helpers.register_l3_agent(host='az1-host1', az='az1')

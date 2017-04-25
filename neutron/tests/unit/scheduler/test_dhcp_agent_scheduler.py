@@ -305,6 +305,9 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
         self.segments_plugin = importutils.import_object(
             'neutron.services.segments.plugin.Plugin')
         self.ctx = context.get_admin_context()
+        # Remove MissingAuthPlugin exception from logs
+        mock.patch(
+            'neutron.notifiers.batch_notifier.BatchNotifier._notify').start()
 
     def _create_network(self):
         net = self.plugin.create_network(

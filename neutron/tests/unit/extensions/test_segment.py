@@ -82,6 +82,10 @@ class SegmentTestExtensionManager(object):
 class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=None):
+        # Remove MissingAuthPlugin exception from logs
+        self.patch_notifier = mock.patch(
+            'neutron.notifiers.batch_notifier.BatchNotifier._notify')
+        self.patch_notifier.start()
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
         service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
@@ -1427,6 +1431,9 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                                       'physnet1:200:209', 'physnet2:200:209'],
                                      group='ml2_type_vlan')
         super(TestNovaSegmentNotifier, self).setUp(plugin='ml2')
+        # Need notifier here
+        self.patch_notifier.stop()
+        self._mock_keystone_auth()
         self.segments_plugin = directory.get_plugin(ext_segment.SEGMENTS)
 
         nova_updater = self.segments_plugin.nova_updater
@@ -1436,6 +1443,15 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_n_client = nova_updater.n_client
         self.batch_notifier = nova_updater.batch_notifier
         self.batch_notifier._waiting_to_send = True
+
+    def _mock_keystone_auth(self):
+        # Use to remove MissingAuthPlugin exception when notifier is needed
+        self.mock_load_auth_p = mock.patch(
+            'keystoneauth1.loading.load_auth_from_conf_options')
+        self.mock_load_auth = self.mock_load_auth_p.start()
+        self.mock_request_p = mock.patch(
+            'keystoneauth1.session.Session.request')
+        self.mock_request = self.mock_request_p.start()
 
     def _calculate_inventory_total_and_reserved(self, subnet):
         total = 0
@@ -1719,6 +1735,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                                                                   host)
 
     def test_add_host_to_non_existent_segment_aggregate(self):
+        self._mock_keystone_auth()
         db.subscribe()
         network, segment, first_subnet = (
             self._test_first_subnet_association_with_segment())
