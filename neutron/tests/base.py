@@ -43,7 +43,6 @@ from neutron.agent.linux import external_process
 from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.api.rpc.callbacks.producer import registry as rpc_producer_reg
 from neutron.callbacks import manager as registry_manager
-from neutron.callbacks import registry
 from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron.db import _model_query as model_query
@@ -296,7 +295,10 @@ class BaseTestCase(DietTestCase):
 
         self.setup_rpc_mocks()
         self.setup_config()
-        self.setup_test_registry_instance()
+
+        self._callback_manager = registry_manager.CallbacksManager()
+        self.useFixture(fixture.CallbackRegistryFixture(
+            callback_manager=self._callback_manager))
         # Give a private copy of the directory to each test.
         self.useFixture(fixture.PluginDirectoryFixture())
 
@@ -363,12 +365,6 @@ class BaseTestCase(DietTestCase):
 
         self.addCleanup(n_rpc.cleanup)
         n_rpc.init(CONF)
-
-    def setup_test_registry_instance(self):
-        """Give a private copy of the registry to each test."""
-        self._callback_manager = registry_manager.CallbacksManager()
-        mock.patch.object(registry, '_get_callback_manager',
-                          return_value=self._callback_manager).start()
 
     def setup_config(self, args=None):
         """Tests that need a non-default config can override this method."""
