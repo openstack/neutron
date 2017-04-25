@@ -76,7 +76,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         network = self.create_network()
         self.create_subnet(network)
 
-        sec_group_body, sec_group_name = self._create_security_group()
+        sec_group_body, _ = self._create_security_group()
         port = self.create_port(network)
 
         # Exception when set port-sec to False with sec-group defined
