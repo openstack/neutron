@@ -29,9 +29,10 @@ LOG = logging.getLogger(__name__)
 CONF = config.CONF
 
 CONFIGURE_VLAN_INTERFACE_COMMANDS = (
-    'IFACE=$(ip l | grep "^[0-9]*: e" | cut -d \: -f 2) && '
+    'IFACE=$(PATH=$PATH:/usr/sbin ip l | grep "^[0-9]*: e" |'
+    'cut -d \: -f 2) && '
     'sudo su -c '
-    '"ip l a link $IFACE name $IFACE.%(tag)d type vlan id %(tag)d && '
+    '"ip l a link $IFACE name $IFACE.%(tag)d type vlan id %(tag)d &&'
     'ip l s up dev $IFACE.%(tag)d && '
     'dhclient $IFACE.%(tag)d"')
 
