@@ -114,9 +114,10 @@ def _validate_dns_format(data, max_len=FQDN_MAX_LEN):
         # Trailing periods are allowed to indicate that a name is fully
         # qualified per RFC 1034 (page 7).
         trimmed = data if not data.endswith('.') else data[:-1]
-        if len(trimmed) > 255:
+        if len(trimmed) > max_len:
             raise TypeError(
-                _("'%s' exceeds the 255 character FQDN limit") % trimmed)
+                _("'%(trimmed)s' exceeds the %(maxlen)s character FQDN "
+                  "limit") % {'trimmed': trimmed, 'maxlen': max_len})
         names = trimmed.split('.')
         for name in names:
             if not name:
