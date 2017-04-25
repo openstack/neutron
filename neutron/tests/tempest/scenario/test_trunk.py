@@ -227,7 +227,7 @@ class TrunkTest(base.BaseTempestTestCase):
         vlan_network = self.create_network()
         new_subnet_cidr = get_next_subnet(
             config.safe_get_config_value('network', 'project_network_cidr'))
-        self.create_subnet(vlan_network, cidr=new_subnet_cidr)
+        self.create_subnet(vlan_network, gateway=None, cidr=new_subnet_cidr)
 
         servers = [
             self._create_server_with_port_and_subport(vlan_network, vlan_tag)
