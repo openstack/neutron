@@ -1,5 +1,5 @@
 function configure_qos_service_plugin {
-    _neutron_service_plugin_class_add "qos"
+    neutron_service_plugin_class_add "qos"
 }
 
 
