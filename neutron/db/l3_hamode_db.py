@@ -19,6 +19,9 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib.api import validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
@@ -33,9 +36,6 @@ from sqlalchemy import orm
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import utils as n_utils
 from neutron.db import _utils as db_utils

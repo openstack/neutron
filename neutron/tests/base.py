@@ -26,6 +26,7 @@ import os.path
 import eventlet.timeout
 import fixtures
 import mock
+from neutron_lib.callbacks import manager as registry_manager
 from neutron_lib import fixture
 from oslo_concurrency.fixture import lockutils
 from oslo_config import cfg
@@ -42,7 +43,6 @@ from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.api.rpc.callbacks.producer import registry as rpc_producer_reg
-from neutron.callbacks import manager as registry_manager
 from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron.db import _model_query as model_query

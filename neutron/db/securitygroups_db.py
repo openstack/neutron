@@ -14,6 +14,10 @@
 
 import netaddr
 from neutron_lib.api import validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_utils import uuidutils
@@ -22,10 +26,6 @@ from sqlalchemy.orm import scoped_session
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes
-from neutron.callbacks import events
-from neutron.callbacks import exceptions
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import _model_query as model_query

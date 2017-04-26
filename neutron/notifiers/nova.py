@@ -14,6 +14,9 @@
 #    under the License.
 
 from keystoneauth1 import loading as ks_loading
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as exc
@@ -27,9 +30,6 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
 from neutron._i18n import _LE, _LI, _LW
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.notifiers import batch_notifier
 
 

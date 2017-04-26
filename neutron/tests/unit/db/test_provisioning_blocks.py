@@ -13,11 +13,11 @@
 #    under the License.
 
 import mock
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import context as n_ctx
 import testtools
 
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks as pb

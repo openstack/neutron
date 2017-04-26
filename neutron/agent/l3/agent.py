@@ -15,6 +15,9 @@
 
 import eventlet
 import netaddr
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
 from neutron_lib import context as n_context
 from oslo_config import cfg
@@ -45,9 +48,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import pd
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils

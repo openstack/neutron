@@ -14,13 +14,14 @@
 
 import mock
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
+
 from neutron_lib import constants
 from neutron_lib import context
 
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron.extensions import external_net

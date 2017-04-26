@@ -13,12 +13,12 @@
 import abc
 import collections
 
+from neutron_lib.callbacks import exceptions
 from oslo_log import log as logging
 import six
 
 from neutron.api.rpc.callbacks import exceptions as rpc_exc
 from neutron.api.rpc.callbacks import resources
-from neutron.callbacks import exceptions
 
 LOG = logging.getLogger(__name__)
 

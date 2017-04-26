@@ -15,6 +15,9 @@
 
 from debtcollector import removals
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
@@ -25,9 +28,6 @@ from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LE
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import api as db_api
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2

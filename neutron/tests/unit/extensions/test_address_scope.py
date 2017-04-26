@@ -16,14 +16,14 @@ import contextlib
 
 import mock
 import netaddr
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 import webob.exc
 
 from neutron.api.v2 import attributes as attr
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import address_scope_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import address_scope as ext_address_scope

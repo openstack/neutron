@@ -13,11 +13,11 @@
 
 import mock
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from oslo_config import cfg
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as agent_consts)
 from neutron.services.trunk.drivers.openvswitch import driver

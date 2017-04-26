@@ -11,15 +11,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.callbacks import events as local_events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources as local_resources
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron._i18n import _LE
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.callbacks import events as local_events
-from neutron.callbacks import registry
-from neutron.callbacks import resources as local_resources
 from neutron.services.trunk import constants as t_const
 from neutron.services.trunk.drivers.linuxbridge.agent import trunk_plumber
 from neutron.services.trunk.rpc import agent as trunk_rpc

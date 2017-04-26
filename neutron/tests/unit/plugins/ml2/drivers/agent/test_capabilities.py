@@ -12,15 +12,16 @@
 # under the License.
 
 import mock
+from neutron_lib.callbacks import events
 
-from neutron.callbacks import events
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.tests import base
 
 
 class CapabilitiesTest(base.BaseTestCase):
 
-    @mock.patch("neutron.callbacks.manager.CallbacksManager.notify")
+    # TODO(boden) replace with neutron_lib fixture once working
+    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.notify")
     def test_notify_init_event(self, mocked_manager):
         mock_agent_type = mock.Mock()
         mock_agent = mock.Mock()
@@ -30,7 +31,8 @@ class CapabilitiesTest(base.BaseTestCase):
                                           mock_agent,
                                           agent=mock_agent)
 
-    @mock.patch("neutron.callbacks.manager.CallbacksManager.subscribe")
+    # TODO(boden) replace with neutron_lib fixture once working
+    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.subscribe")
     def test_register(self, mocked_subscribe):
         mock_callback = mock.Mock()
         mock_agent_type = mock.Mock()

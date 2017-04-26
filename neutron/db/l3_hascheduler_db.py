@@ -13,13 +13,13 @@
 # under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.plugins import directory
 from sqlalchemy import func
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import l3_agentschedulers_db as l3_sch_db
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model

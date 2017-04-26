@@ -15,8 +15,9 @@
 
 import abc
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import backend
 
@@ -75,7 +76,7 @@ class DriverBase(object):
         register() method invocation.
 
         :param resource: neutron.services.trunk.constants.TRUNK_PLUGIN
-        :param event: neutron.callbacks.events.AFTER_INIT
+        :param event: neutron_lib.callbacks.events.AFTER_INIT
         :param trigger: neutron.service.trunks.plugin.TrunkPlugin
         """
 

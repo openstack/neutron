@@ -13,7 +13,8 @@
 
 import mock
 
-from neutron.callbacks import events
+from neutron_lib.callbacks import events
+
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_capabilities
 from neutron.services.trunk.drivers.openvswitch.agent import driver
 from neutron.tests import base
@@ -22,7 +23,8 @@ from neutron_lib import constants
 
 class CapabilitiesTest(base.BaseTestCase):
 
-    @mock.patch("neutron.callbacks.manager.CallbacksManager.subscribe")
+    # TODO(boden) replace with neutron_lib fixture once working
+    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.subscribe")
     def test_register(self, mocked_subscribe):
         ovs_capabilities.register()
         mocked_subscribe.assert_called_with(driver.init_handler,

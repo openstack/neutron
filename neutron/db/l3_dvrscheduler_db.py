@@ -14,14 +14,14 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from sqlalchemy import or_
 
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import utils as n_utils
 
 from neutron.db import agentschedulers_db

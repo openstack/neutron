@@ -15,14 +15,14 @@
 import abc
 import itertools
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import exceptions as lib_exc
 from six import add_metaclass
 from six import with_metaclass
 from sqlalchemy import and_
 
 from neutron._i18n import _
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.common import exceptions as n_exc
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api

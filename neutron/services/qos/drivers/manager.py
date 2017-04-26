@@ -11,6 +11,8 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from oslo_log import log as logging
 from oslo_utils import excutils
 
@@ -19,8 +21,6 @@ from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.objects.qos import policy as policy_object
 from neutron.services.qos import qos_consts
 

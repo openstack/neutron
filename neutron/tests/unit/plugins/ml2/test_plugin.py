@@ -22,6 +22,10 @@ import webob
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions as c_exc
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as exc
@@ -30,10 +34,6 @@ from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
-from neutron.callbacks import events
-from neutron.callbacks import exceptions as c_exc
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import api as db_api

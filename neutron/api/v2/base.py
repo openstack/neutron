@@ -17,6 +17,8 @@ import collections
 import copy
 
 import netaddr
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
@@ -27,8 +29,6 @@ from neutron._i18n import _, _LE, _LI
 from neutron.api import api_common
 from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import rpc as n_rpc

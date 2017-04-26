@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import directory
@@ -19,9 +22,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import servicetype_db as st_db
 from neutron.plugins.common import constants
 from neutron.services import provider_configuration

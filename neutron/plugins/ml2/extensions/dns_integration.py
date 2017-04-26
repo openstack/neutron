@@ -14,14 +14,14 @@
 #    under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _LE, _LI
-from neutron.callbacks import events
-from neutron.callbacks import registry
-from neutron.callbacks import resources
 from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.extensions import dns
