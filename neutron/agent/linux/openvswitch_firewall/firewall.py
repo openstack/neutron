@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 import netaddr
 from neutron_lib import constants as lib_const
 from oslo_log import log as logging
@@ -78,6 +80,7 @@ class SecurityGroup(object):
         self.raw_rules = []
         self.remote_rules = []
         self.members = {}
+        self.members_on_flows = {}
         self.ports = set()
 
     def update_rules(self, rules):
@@ -87,11 +90,8 @@ class SecurityGroup(object):
         self.remote_rules = [rule for rule in rules
                              if 'remote_group_id' in rule]
 
-    def get_ethertype_filtered_addresses(self, ethertype,
-                                         exclude_addresses=None):
-        exclude_addresses = set(exclude_addresses) or set()
-        group_addresses = set(self.members.get(ethertype, []))
-        return list(group_addresses - exclude_addresses)
+    def get_ethertype_filtered_addresses(self, ethertype):
+        return self.members.get(ethertype, [])
 
 
 class OFPort(object):
@@ -140,6 +140,9 @@ class SGPortMap(object):
         self.ports = {}
         self.sec_groups = {}
 
+    def get_sg(self, sg_id):
+        return self.sec_groups.get(sg_id, None)
+
     def get_or_create_sg(self, sg_id):
         try:
             sec_group = self.sec_groups[sg_id]
@@ -147,6 +150,9 @@ class SGPortMap(object):
             sec_group = SecurityGroup(sg_id)
             self.sec_groups[sg_id] = sec_group
         return sec_group
+
+    def delete_sg(self, sg_id):
+        del self.sec_groups[sg_id]
 
     def create_port(self, port, port_dict):
         self.ports[port.id] = port
@@ -176,6 +182,162 @@ class SGPortMap(object):
         sec_group.members = members
 
 
+class ConjIdMap(object):
+    """Handle conjuction ID allocations and deallocations."""
+
+    def __init__(self):
+        self.id_map = collections.defaultdict(self._conj_id_factory)
+        self.id_free = collections.deque()
+        self.max_id = 0
+
+    def _conj_id_factory(self):
+        # If there is any freed ID, use one.
+        if self.id_free:
+            return self.id_free.popleft()
+        # Allocate new one.  It must be an even number.
+        self.max_id += 2
+        return self.max_id
+
+    def get_conj_id(self, sg_id, remote_sg_id, direction, ethertype):
+        """Return a conjunction ID specified by the arguments.
+        Allocate one if necessary.  The returned ID is always an even
+        number, allowing the caller to use 2 IDs for each combination.
+        """
+        if direction not in [firewall.EGRESS_DIRECTION,
+                             firewall.INGRESS_DIRECTION]:
+            raise ValueError("Invalid direction '%s'" % direction)
+        if ethertype not in [lib_const.IPv4, lib_const.IPv6]:
+            raise ValueError("Invalid ethertype '%s'" % ethertype)
+
+        return self.id_map[(sg_id, remote_sg_id, direction, ethertype)]
+
+    def delete_sg(self, sg_id):
+        """Free all conj_ids associated with the sg_id and
+        return a list of (remote_sg_id, conj_id), which are no longer
+        in use.
+        """
+        result = []
+        for k in list(self.id_map.keys()):
+            if sg_id in k[0:2]:
+                conj_id = self.id_map.pop(k)
+                result.append((k[1], conj_id))
+                self.id_free.append(conj_id)
+
+        return result
+
+
+class ConjIPFlowManager(object):
+    """Manage conj_id allocation and remote securitygroups derived
+    conjunction flows.
+
+    Flows managed by this class is of form:
+
+        nw_src=10.2.3.4,reg_net=0xf00 actions=conjunction(123,1/2)
+
+    These flows are managed per network and are usually per remote_group_id,
+    but flows from different remote_group need to be merged on shared networks,
+    where the complexity arises and this manager is needed.
+
+    """
+
+    def __init__(self, driver):
+        self.conj_id_map = ConjIdMap()
+        self.driver = driver
+        # The following two are dict of dicts and are indexed like:
+        #     self.x[vlan_tag][(direction, ethertype)]
+        self.conj_ids = collections.defaultdict(dict)
+        self.flow_state = collections.defaultdict(
+            lambda: collections.defaultdict(dict))
+
+    def _build_addr_conj_id_map(self, ethertype, sg_conj_id_map):
+        """Build a map of addr -> list of conj_ids."""
+        addr_to_conj = collections.defaultdict(list)
+        for remote_id, conj_id_set in sg_conj_id_map.items():
+            remote_group = self.driver.sg_port_map.get_sg(remote_id)
+            if not remote_group:
+                LOG.debug('No member for SG %s', remote_id)
+                continue
+            for addr in remote_group.get_ethertype_filtered_addresses(
+                    ethertype):
+                addr_to_conj[addr].extend(conj_id_set)
+
+        return addr_to_conj
+
+    def _update_flows_for_vlan_subr(self, direction, ethertype, vlan_tag,
+                                    flow_state, addr_to_conj):
+        """Do the actual flow updates for given direction and ethertype."""
+        current_ips = set(flow_state.keys())
+        self.driver.delete_flows_for_ip_addresses(
+            current_ips - set(addr_to_conj.keys()),
+            direction, ethertype, vlan_tag)
+        for addr, conj_ids in addr_to_conj.items():
+            conj_ids.sort()
+            if flow_state.get(addr) == conj_ids:
+                continue
+            for flow in rules.create_flows_for_ip_address(
+                    addr, direction, ethertype, vlan_tag, conj_ids):
+                self.driver._add_flow(**flow)
+
+    def update_flows_for_vlan(self, vlan_tag):
+        """Install action=conjunction(conj_id, 1/2) flows,
+        which depend on IP addresses of remote_group_id.
+        """
+        for (direction, ethertype), sg_conj_id_map in (
+                self.conj_ids[vlan_tag].items()):
+            # TODO(toshii): optimize when remote_groups have
+            # no address overlaps.
+            addr_to_conj = self._build_addr_conj_id_map(
+                ethertype, sg_conj_id_map)
+            self._update_flows_for_vlan_subr(direction, ethertype, vlan_tag,
+                self.flow_state[vlan_tag][(direction, ethertype)],
+                addr_to_conj)
+            self.flow_state[vlan_tag][(direction, ethertype)] = addr_to_conj
+
+    def add(self, vlan_tag, sg_id, remote_sg_id, direction, ethertype):
+        """Get conj_id specified by the arguments
+        and notify the manager that
+        (remote_sg_id, direction, ethertype, conj_id) flows need to be
+        populated on the vlan_tag network.
+
+        A caller must call update_flows_for_vlan to have the change in effect.
+
+        """
+        conj_id = self.conj_id_map.get_conj_id(
+            sg_id, remote_sg_id, direction, ethertype)
+
+        if (direction, ethertype) not in self.conj_ids[vlan_tag]:
+            self.conj_ids[vlan_tag][(direction, ethertype)] = (
+                collections.defaultdict(set))
+        self.conj_ids[vlan_tag][(direction, ethertype)][remote_sg_id].add(
+            conj_id)
+        return conj_id
+
+    def sg_removed(self, sg_id):
+        """Handle SG removal events.
+
+        Free all conj_ids associated with the sg_id and clean up
+        obsolete entries from the self.conj_ids map.  Unlike the add
+        method, it also updates flows.
+        """
+        id_list = self.conj_id_map.delete_sg(sg_id)
+        unused_dict = collections.defaultdict(set)
+        for remote_sg_id, conj_id in id_list:
+            unused_dict[remote_sg_id].add(conj_id)
+
+        for vlan_tag, vlan_conj_id_map in self.conj_ids.items():
+            update = False
+            for sg_conj_id_map in vlan_conj_id_map.values():
+                for remote_sg_id, unused in unused_dict.items():
+                    if (remote_sg_id in sg_conj_id_map and
+                        sg_conj_id_map[remote_sg_id] & unused):
+                        sg_conj_id_map[remote_sg_id] -= unused
+                        if not sg_conj_id_map[remote_sg_id]:
+                            del sg_conj_id_map[remote_sg_id]
+                        update = True
+            if update:
+                self.update_flows_for_vlan(vlan_tag)
+
+
 class OVSFirewallDriver(firewall.FirewallDriver):
     REQUIRED_PROTOCOLS = [
         ovs_consts.OPENFLOW10,
@@ -196,8 +358,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """
         self.int_br = self.initialize_bridge(integration_bridge)
         self.sg_port_map = SGPortMap()
+        self.sg_to_delete = set()
         self._deferred = False
         self._drop_all_unmatched_flows()
+        self.conj_ip_manager = ConjIPFlowManager(self)
 
     def security_group_updated(self, action_type, sec_group_ids,
                                device_ids=None):
@@ -208,14 +372,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """
 
     def _accept_flow(self, **flow):
-        flow['ct_state'] = ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY
-        self._add_flow(**flow)
-        flow['ct_state'] = ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED
-        if flow['table'] == ovs_consts.RULES_INGRESS_TABLE:
-            flow['actions'] = (
-                'ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s}'.format(
-                    ovsfw_consts.REG_NET, flow['actions']))
-        self._add_flow(**flow)
+        for f in rules.create_accept_flows(flow):
+            self._add_flow(**f)
 
     def _add_flow(self, **kwargs):
         dl_type = kwargs.get('dl_type')
@@ -319,18 +477,47 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             of_port = self.get_ofport(port)
             self.delete_all_port_flows(of_port)
             self.sg_port_map.remove_port(of_port)
+            for sec_group in of_port.sec_groups:
+                self._schedule_sg_deletion_maybe(sec_group.id)
 
     def update_security_group_rules(self, sg_id, rules):
         self.sg_port_map.update_rules(sg_id, rules)
 
     def update_security_group_members(self, sg_id, member_ips):
         self.sg_port_map.update_members(sg_id, member_ips)
+        if not member_ips:
+            self._schedule_sg_deletion_maybe(sg_id)
+
+    def _schedule_sg_deletion_maybe(self, sg_id):
+        """Schedule possible deletion of the given SG.
+
+        This function must be called when the number of ports
+        associated to sg_id drops to zero, as it isn't possible
+        to know SG deletions from agents due to RPC API design.
+        """
+        sec_group = self.sg_port_map.get_or_create_sg(sg_id)
+        if not sec_group.members or not sec_group.ports:
+            self.sg_to_delete.add(sg_id)
+
+    def _cleanup_stale_sg(self):
+        sg_to_delete = self.sg_to_delete
+        self.sg_to_delete = set()
+
+        for sg_id in sg_to_delete:
+            sec_group = self.sg_port_map.get_sg(sg_id)
+            if sec_group.members and sec_group.ports:
+                # sec_group is still in use
+                continue
+
+            self.conj_ip_manager.sg_removed(sg_id)
+            self.sg_port_map.delete_sg(sg_id)
 
     def filter_defer_apply_on(self):
         self._deferred = True
 
     def filter_defer_apply_off(self):
         if self._deferred:
+            self._cleanup_stale_sg()
             self.int_br.apply_flows()
             self._deferred = False
 
@@ -672,29 +859,57 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                             ovsfw_consts.CT_MARK_INVALID)
             )
 
+    def _add_non_ip_conj_flows(self, port):
+        """Install conjunction flows that don't depend on IP address of remote
+        groups, which consist of actions=conjunction(conj_id, 2/2) flows and
+        actions=accept flows.
+
+        The remaining part is done by ConjIPFlowManager.
+        """
+        for sec_group_id, rule in (
+                self._create_remote_rules_generator_for_port(port)):
+            direction = rule['direction']
+            ethertype = rule['ethertype']
+
+            conj_id = self.conj_ip_manager.add(port.vlan_tag, sec_group_id,
+                                               rule['remote_group_id'],
+                                               direction, ethertype)
+
+            flows = rules.create_flows_from_rule_and_port(rule, port)
+            for flow in rules.substitute_conjunction_actions(
+                    flows, 2, [conj_id]):
+                self._add_flow(**flow)
+
+            # Install actions=accept flows.
+            for flow in rules.create_conj_flows(
+                    port, conj_id, direction, ethertype):
+                self._add_flow(**flow)
+
     def add_flows_from_rules(self, port):
         self._initialize_tracked_ingress(port)
         self._initialize_tracked_egress(port)
         LOG.debug('Creating flow rules for port %s that is port %d in OVS',
                   port.id, port.ofport)
-        rules_generator = self.create_rules_generator_for_port(port)
-        for rule in rules_generator:
+        for rule in self._create_rules_generator_for_port(port):
             flows = rules.create_flows_from_rule_and_port(rule, port)
             LOG.debug("RULGEN: Rules generated for flow %s are %s",
                       rule, flows)
             for flow in flows:
                 self._accept_flow(**flow)
 
-    def create_rules_generator_for_port(self, port):
+        self._add_non_ip_conj_flows(port)
+
+        self.conj_ip_manager.update_flows_for_vlan(port.vlan_tag)
+
+    def _create_rules_generator_for_port(self, port):
         for sec_group in port.sec_groups:
             for rule in sec_group.raw_rules:
                 yield rule
+
+    def _create_remote_rules_generator_for_port(self, port):
+        for sec_group in port.sec_groups:
             for rule in sec_group.remote_rules:
-                remote_group = self.sg_port_map.sec_groups[
-                    rule['remote_group_id']]
-                for ip_addr in remote_group.get_ethertype_filtered_addresses(
-                        rule['ethertype'], port.fixed_ips):
-                    yield rules.create_rule_for_ip_address(ip_addr, rule)
+                yield sec_group.id, rule
 
     def delete_all_port_flows(self, port):
         """Delete all flows for given port"""
@@ -704,3 +919,18 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._delete_flows(reg_port=port.ofport)
         self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                            dl_dst=port.mac)
+
+    def delete_flows_for_ip_addresses(
+            self, ip_addresses, direction, ethertype, vlan_tag):
+        for ip_addr in ip_addresses:
+            # Generate deletion template with bogus conj_id.
+            flows = rules.create_flows_for_ip_address(
+                ip_addr, direction, ethertype, vlan_tag, [0])
+            for f in flows:
+                # The following del statements are partly for
+                # complying the OpenFlow spec. It forbids the use of
+                # these field in non-strict delete flow messages, and
+                # the actions field is bogus anyway.
+                del f['actions']
+                del f['priority']
+                self._delete_flows(**f)
