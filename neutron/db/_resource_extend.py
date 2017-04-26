@@ -68,6 +68,13 @@ def get_funcs(resource):
     return _resource_extend_functions.get(resource, [])
 
 
+def apply_funcs(resource_type, response, db_object):
+    for func in get_funcs(resource_type):
+        resolved_func = utils.resolve_ref(func)
+        if resolved_func:
+            resolved_func(response, db_object)
+
+
 def extends(resources):
     """Use to decorate methods on classes before initialization.
 
