@@ -37,6 +37,7 @@ from neutron.callbacks import events
 from neutron.callbacks import registry
 from neutron.callbacks import resources
 from neutron.common import constants as n_const
+from neutron.db import _model_query as model_query
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db.models import agent as agent_model
@@ -82,8 +83,8 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
 
     def _list_availability_zones(self, context, filters=None):
         result = {}
-        query = self._get_collection_query(context, agent_model.Agent,
-                                           filters=filters)
+        query = model_query.get_collection_query(context, agent_model.Agent,
+                                                 filters=filters)
         columns = (agent_model.Agent.admin_state_up,
                    agent_model.Agent.availability_zone,
                    agent_model.Agent.agent_type)
@@ -142,7 +143,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
 
     def _get_agent(self, context, id):
         try:
-            agent = self._get_by_id(context, agent_model.Agent, id)
+            agent = model_query.get_by_id(context, agent_model.Agent, id)
         except exc.NoResultFound:
             raise ext_agent.AgentNotFound(id=id)
         return agent
@@ -242,16 +243,16 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
 
     @db_api.retry_if_session_inactive()
     def get_agents_db(self, context, filters=None):
-        query = self._get_collection_query(context,
-                                           agent_model.Agent,
-                                           filters=filters)
+        query = model_query.get_collection_query(context,
+                                                 agent_model.Agent,
+                                                 filters=filters)
         return query.all()
 
     @db_api.retry_if_session_inactive()
     def get_agents(self, context, filters=None, fields=None):
-        agents = self._get_collection(context, agent_model.Agent,
-                                      self._make_agent_dict,
-                                      filters=filters, fields=fields)
+        agents = model_query.get_collection(context, agent_model.Agent,
+                                            self._make_agent_dict,
+                                            filters=filters, fields=fields)
         alive = filters and filters.get('alive', None)
         if alive:
             alive = converters.convert_to_boolean(alive[0])
@@ -280,7 +281,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                       len(agents))
 
     def _get_agent_by_type_and_host(self, context, agent_type, host):
-        query = self._model_query(context, agent_model.Agent)
+        query = model_query.query_with_hooks(context, agent_model.Agent)
         try:
             agent_db = query.filter(agent_model.Agent.agent_type == agent_type,
                                     agent_model.Agent.host == host).one()

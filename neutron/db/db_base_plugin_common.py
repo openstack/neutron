@@ -26,6 +26,8 @@ from sqlalchemy.orm import exc
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions
+from neutron.db import _model_query as model_query
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
@@ -152,7 +154,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         # The shared attribute for a subnet is the same as its parent network
         res['shared'] = self._is_network_shared(context, subnet.rbac_entries)
         # Call auxiliary extend functions, if any
-        self._apply_dict_extend_functions(attributes.SUBNETS, res, subnet)
+        resource_extend.apply_funcs(attributes.SUBNETS, res, subnet)
         return db_utils.resource_fields(res, fields)
 
     def _make_subnetpool_dict(self, subnetpool, fields=None):
@@ -171,8 +173,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'ip_version': subnetpool['ip_version'],
                'default_quota': subnetpool['default_quota'],
                'address_scope_id': subnetpool['address_scope_id']}
-        self._apply_dict_extend_functions(attributes.SUBNETPOOLS, res,
-                                          subnetpool)
+        resource_extend.apply_funcs(attributes.SUBNETPOOLS, res, subnetpool)
         return db_utils.resource_fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
@@ -191,20 +192,19 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                "device_owner": port["device_owner"]}
         # Call auxiliary extend functions, if any
         if process_extensions:
-            self._apply_dict_extend_functions(
-                attributes.PORTS, res, port)
+            resource_extend.apply_funcs(attributes.PORTS, res, port)
         return db_utils.resource_fields(res, fields)
 
     def _get_network(self, context, id):
         try:
-            network = self._get_by_id(context, models_v2.Network, id)
+            network = model_query.get_by_id(context, models_v2.Network, id)
         except exc.NoResultFound:
             raise n_exc.NetworkNotFound(net_id=id)
         return network
 
     def _get_subnet(self, context, id):
         try:
-            subnet = self._get_by_id(context, models_v2.Subnet, id)
+            subnet = model_query.get_by_id(context, models_v2.Subnet, id)
         except exc.NoResultFound:
             raise n_exc.SubnetNotFound(subnet_id=id)
         return subnet
@@ -218,7 +218,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
 
     def _get_port(self, context, id):
         try:
-            port = self._get_by_id(context, models_v2.Port, id)
+            port = model_query.get_by_id(context, models_v2.Port, id)
         except exc.NoResultFound:
             raise n_exc.PortNotFound(port_id=id)
         return port
@@ -254,13 +254,13 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         marker_obj = self._get_marker_obj(context, 'subnet', limit, marker)
         make_subnet_dict = functools.partial(self._make_subnet_dict,
                                              context=context)
-        return self._get_collection(context, models_v2.Subnet,
-                                    make_subnet_dict,
-                                    filters=filters, fields=fields,
-                                    sorts=sorts,
-                                    limit=limit,
-                                    marker_obj=marker_obj,
-                                    page_reverse=page_reverse)
+        return model_query.get_collection(context, models_v2.Subnet,
+                                          make_subnet_dict,
+                                          filters=filters, fields=fields,
+                                          sorts=sorts,
+                                          limit=limit,
+                                          marker_obj=marker_obj,
+                                          page_reverse=page_reverse)
 
     def _make_network_dict(self, network, fields=None,
                            process_extensions=True, context=None):
@@ -275,8 +275,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         res['shared'] = self._is_network_shared(context, network.rbac_entries)
         # Call auxiliary extend functions, if any
         if process_extensions:
-            self._apply_dict_extend_functions(
-                attributes.NETWORKS, res, network)
+            resource_extend.apply_funcs(attributes.NETWORKS, res, network)
         return db_utils.resource_fields(res, fields)
 
     def _is_network_shared(self, context, rbac_entries):

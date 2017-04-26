@@ -20,6 +20,7 @@ from sqlalchemy.orm import exc
 from neutron.callbacks import events
 from neutron.callbacks import exceptions as c_exc
 from neutron.callbacks import registry
+from neutron.db import _model_query as model_query
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
@@ -99,8 +100,8 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         object_type = self._get_object_type(context, id)
         dbmodel = models.get_type_model_map()[object_type]
         try:
-            return self._model_query(context,
-                                     dbmodel).filter(dbmodel.id == id).one()
+            return model_query.query_with_hooks(
+                context, dbmodel).filter(dbmodel.id == id).one()
         except exc.NoResultFound:
             raise ext_rbac.RbacPolicyNotFound(id=id, object_type=object_type)
 
@@ -118,7 +119,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
             m for t, m in models.get_type_model_map().items()
             if object_type_filters is None or t in object_type_filters
         ]
-        collections = [self._get_collection(
+        collections = [model_query.get_collection(
             context, model, self._make_rbac_policy_dict,
             filters=filters, fields=fields, sorts=sorts,
             limit=limit, page_reverse=page_reverse)

@@ -789,7 +789,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             registry.notify(resources.NETWORK, events.PRECOMMIT_CREATE, self,
                             context=context, request=net_data, network=result)
 
-            self._apply_dict_extend_functions('networks', result, net_db)
+            resource_extend.apply_funcs('networks', result, net_db)
             mech_context = driver_context.NetworkContext(self, context,
                                                          result)
             self.mechanism_manager.create_network_precommit(mech_context)
@@ -1135,7 +1135,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_port_precommit(mech_context)
             self._setup_dhcp_agent_provisioning_component(context, result)
 
-        self._apply_dict_extend_functions('ports', result, port_db)
+        resource_extend.apply_funcs('ports', result, port_db)
         return result, mech_context
 
     @utils.transaction_guard
