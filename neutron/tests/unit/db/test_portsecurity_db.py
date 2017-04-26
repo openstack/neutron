@@ -11,6 +11,8 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
+from neutron_lib.plugins import directory
 
 from neutron.db import portsecurity_db as pd
 from neutron.db import portsecurity_db_common as pdc
@@ -29,6 +31,7 @@ class PortSecurityDbMixinTestCase(base.BaseTestCase):
     def setUp(self):
         super(PortSecurityDbMixinTestCase, self).setUp()
         self.plugin = FakePlugin()
+        directory.add_plugin(constants.CORE, self.plugin)
 
     @mock.patch.object(common, '_extend_port_security_dict')
     def test__extend_port_security_dict_relies_on_common(self, extend):

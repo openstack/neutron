@@ -15,6 +15,7 @@
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
+from neutron_lib.plugins import directory
 
 from neutron.api.v2 import attributes
 from neutron.db import _model_query as model_query
@@ -40,8 +41,8 @@ def _port_result_filter_hook(query, filters):
     return query
 
 
+@resource_extend.has_resource_extenders
 class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
-    extra_binding_dict = None
 
     def __new__(cls, *args, **kwargs):
         model_query.register_hook(
@@ -101,11 +102,10 @@ class PortBindingMixin(portbindings_base.PortBindingBaseMixin):
         host = port_db.portbinding.host if port_db.portbinding else None
         self._extend_port_dict_binding_host(port_res, host)
 
-
-def _extend_port_dict_binding(plugin, port_res, port_db):
-    if not isinstance(plugin, PortBindingMixin):
-        return
-    plugin.extend_port_dict_binding(port_res, port_db)
-
-
-resource_extend.register_funcs(attributes.PORTS, [_extend_port_dict_binding])
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _extend_port_dict_binding(port_res, port_db):
+        plugin = directory.get_plugin()
+        if not isinstance(plugin, PortBindingMixin):
+            return
+        plugin.extend_port_dict_binding(port_res, port_db)

@@ -13,11 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import directory
+
 from neutron.api.v2 import attributes
 from neutron.db import _resource_extend as resource_extend
 
 
+@resource_extend.has_resource_extenders
 class PortBindingBaseMixin(object):
+
+    # Initialized by core plugin or ml2 mechanism driver(s)
     base_binding_dict = None
 
     def _process_portbindings_create_and_update(self, context, port_data,
@@ -28,13 +33,10 @@ class PortBindingBaseMixin(object):
         if self.base_binding_dict:
             port_res.update(self.base_binding_dict)
 
-
-def _extend_port_dict_binding(plugin, port_res, port_db):
-    if not isinstance(plugin, PortBindingBaseMixin):
-        return
-    plugin.extend_port_dict_binding(port_res, port_db)
-
-
-def register_port_dict_function():
-    resource_extend.register_funcs(
-        attributes.PORTS, [_extend_port_dict_binding])
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _extend_port_dict_binding(port_res, port_db):
+        plugin = directory.get_plugin()
+        if not isinstance(plugin, PortBindingBaseMixin):
+            return
+        plugin.extend_port_dict_binding(port_res, port_db)

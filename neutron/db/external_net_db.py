@@ -64,6 +64,7 @@ def _network_result_filter_hook(query, filters):
     return query.filter(~models_v2.Network.external.has())
 
 
+@resource_extend.has_resource_extenders
 @registry.has_registry_receivers
 class External_net_db_mixin(object):
     """Mixin class to add external network methods to db_base_plugin_v2."""
@@ -81,13 +82,12 @@ class External_net_db_mixin(object):
         return net_obj.ExternalNetwork.objects_exist(
             context, network_id=net_id)
 
-    def _extend_network_dict_l3(self, network_res, network_db):
+    @staticmethod
+    @resource_extend.extends([attributes.NETWORKS])
+    def _extend_network_dict_l3(network_res, network_db):
         # Comparing with None for converting uuid into bool
         network_res[external_net.EXTERNAL] = network_db.external is not None
         return network_res
-
-    resource_extend.register_funcs(
-        attributes.NETWORKS, ['_extend_network_dict_l3'])
 
     def _process_l3_create(self, context, net_data, req_data):
         external = req_data.get(external_net.EXTERNAL)

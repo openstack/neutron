@@ -109,6 +109,7 @@ def _ml2_port_result_filter_hook(query, filters):
     return query.filter(models_v2.Port.port_binding.has(bind_criteria))
 
 
+@resource_extend.has_resource_extenders
 @registry.has_registry_receivers
 class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 dvr_mac_db.DVRDbMixin,
@@ -602,34 +603,37 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                            'port': binding.port_id})
         return {}
 
-    def _ml2_extend_port_dict_binding(self, port_res, port_db):
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _ml2_extend_port_dict_binding(port_res, port_db):
+        plugin = directory.get_plugin()
         # None when called during unit tests for other plugins.
         if port_db.port_binding:
-            self._update_port_dict_binding(port_res, port_db.port_binding)
-
-    resource_extend.register_funcs(
-        attributes.PORTS, ['_ml2_extend_port_dict_binding'])
+            plugin._update_port_dict_binding(port_res, port_db.port_binding)
 
     # ML2's resource extend functions allow extension drivers that extend
     # attributes for the resources to add those attributes to the result.
-    resource_extend.register_funcs(
-               attributes.NETWORKS, ['_ml2_md_extend_network_dict'])
-    resource_extend.register_funcs(
-               attributes.PORTS, ['_ml2_md_extend_port_dict'])
-    resource_extend.register_funcs(
-               attributes.SUBNETS, ['_ml2_md_extend_subnet_dict'])
 
-    def _ml2_md_extend_network_dict(self, result, netdb):
-        session = self._object_session_or_new_session(netdb)
-        self.extension_manager.extend_network_dict(session, netdb, result)
+    @staticmethod
+    @resource_extend.extends([attributes.NETWORKS])
+    def _ml2_md_extend_network_dict(result, netdb):
+        plugin = directory.get_plugin()
+        session = plugin._object_session_or_new_session(netdb)
+        plugin.extension_manager.extend_network_dict(session, netdb, result)
 
-    def _ml2_md_extend_port_dict(self, result, portdb):
-        session = self._object_session_or_new_session(portdb)
-        self.extension_manager.extend_port_dict(session, portdb, result)
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _ml2_md_extend_port_dict(result, portdb):
+        plugin = directory.get_plugin()
+        session = plugin._object_session_or_new_session(portdb)
+        plugin.extension_manager.extend_port_dict(session, portdb, result)
 
-    def _ml2_md_extend_subnet_dict(self, result, subnetdb):
-        session = self._object_session_or_new_session(subnetdb)
-        self.extension_manager.extend_subnet_dict(session, subnetdb, result)
+    @staticmethod
+    @resource_extend.extends([attributes.SUBNETS])
+    def _ml2_md_extend_subnet_dict(result, subnetdb):
+        plugin = directory.get_plugin()
+        session = plugin._object_session_or_new_session(subnetdb)
+        plugin.extension_manager.extend_subnet_dict(session, subnetdb, result)
 
     @staticmethod
     def _object_session_or_new_session(sql_obj):

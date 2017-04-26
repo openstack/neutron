@@ -40,7 +40,8 @@ class DataPlaneStatusMixin(object):
         else:
             self._process_create_port_data_plane_status(context, data, res)
 
-    def _extend_port_data_plane_status(self, port_res, port_db):
+    @staticmethod
+    def _extend_port_data_plane_status(port_res, port_db):
         port_res[dps_lib.DATA_PLANE_STATUS] = None
 
         if port_db.get(dps_lib.DATA_PLANE_STATUS):

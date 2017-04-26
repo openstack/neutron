@@ -38,13 +38,13 @@ setattr(l3_models.Router, 'enable_snat',
                   nullable=False))
 
 
+@resource_extend.has_resource_extenders
 class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to add configurable gateway modes."""
 
-    resource_extend.register_funcs(
-        l3.ROUTERS, ['_extend_router_dict_gw_mode'])
-
-    def _extend_router_dict_gw_mode(self, router_res, router_db):
+    @staticmethod
+    @resource_extend.extends([l3.ROUTERS])
+    def _extend_router_dict_gw_mode(router_res, router_db):
         if router_db.gw_port_id:
             nw_id = router_db.gw_port['network_id']
             router_res[EXTERNAL_GW_INFO] = {

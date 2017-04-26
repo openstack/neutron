@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.plugins import directory
 
 from neutron.api.v2 import attributes as attrs
 from neutron.common import utils
@@ -21,16 +22,16 @@ from neutron.db import portsecurity_db_common
 from neutron.extensions import portsecurity as psec
 
 
+@resource_extend.has_resource_extenders
 class PortSecurityDbMixin(portsecurity_db_common.PortSecurityDbCommon):
-    resource_extend.register_funcs(
-        attrs.NETWORKS, ['_extend_port_security_dict'])
-    resource_extend.register_funcs(
-        attrs.PORTS, ['_extend_port_security_dict'])
 
-    def _extend_port_security_dict(self, response_data, db_data):
+    @staticmethod
+    @resource_extend.extends([attrs.NETWORKS, attrs.PORTS])
+    def _extend_port_security_dict(response_data, db_data):
+        plugin = directory.get_plugin()
         if ('port-security' in
-            getattr(self, 'supported_extension_aliases', [])):
-            super(PortSecurityDbMixin, self)._extend_port_security_dict(
+                getattr(plugin, 'supported_extension_aliases', [])):
+            super(PortSecurityDbMixin, plugin)._extend_port_security_dict(
                 response_data, db_data)
 
     def _determine_port_security_and_has_ip(self, context, port):

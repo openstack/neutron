@@ -26,6 +26,7 @@ from neutron.objects import base as base_obj
 from neutron.objects import subnetpool as subnetpool_obj
 
 
+@resource_extend.has_resource_extenders
 class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
     """Mixin class to add address scope to db_base_plugin_v2."""
 
@@ -117,7 +118,9 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
             address_scope = self._get_address_scope(context, id)
             address_scope.delete()
 
-    def _extend_network_dict_address_scope(self, network_res, network_db):
+    @staticmethod
+    @resource_extend.extends([attr.NETWORKS])
+    def _extend_network_dict_address_scope(network_res, network_db):
         network_res[ext_address_scope.IPV4_ADDRESS_SCOPE] = None
         network_res[ext_address_scope.IPV6_ADDRESS_SCOPE] = None
         subnetpools = {subnet.subnetpool for subnet in network_db.subnets
@@ -132,6 +135,3 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
             if subnetpool['ip_version'] == constants.IP_VERSION_6:
                 network_res[ext_address_scope.IPV6_ADDRESS_SCOPE] = as_id
         return network_res
-
-    resource_extend.register_funcs(
-        attr.NETWORKS, ['_extend_network_dict_address_scope'])

@@ -46,6 +46,7 @@ from neutron.callbacks import manager as registry_manager
 from neutron.common import config
 from neutron.common import rpc as n_rpc
 from neutron.db import _model_query as model_query
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import agentschedulers_db
 from neutron.db import api as db_api
 from neutron import manager
@@ -167,6 +168,7 @@ class DietTestCase(base.BaseTestCase):
         self.addCleanup(mock.patch.stopall)
 
         self.addCleanup(self.reset_model_query_hooks)
+        self.addCleanup(self.reset_resource_extend_functions)
 
         self.addOnException(self.check_for_systemexit)
         self.orig_pid = os.getpid()
@@ -176,6 +178,10 @@ class DietTestCase(base.BaseTestCase):
     @staticmethod
     def reset_model_query_hooks():
         model_query._model_query_hooks = {}
+
+    @staticmethod
+    def reset_resource_extend_functions():
+        resource_extend._resource_extend_functions = {}
 
     def addOnException(self, handler):
 

@@ -41,6 +41,7 @@ class DNSActionsData(object):
         self.previous_dns_domain = previous_dns_domain
 
 
+@resource_extend.has_resource_extenders
 class DNSDbMixin(object):
     """Mixin class to add DNS methods to db_base_plugin_v2."""
 
@@ -63,16 +64,15 @@ class DNSDbMixin(object):
             raise dns.ExternalDNSDriverNotFound(
                 driver=cfg.CONF.external_dns_driver)
 
-    def _extend_floatingip_dict_dns(self, floatingip_res, floatingip_db):
+    @staticmethod
+    @resource_extend.extends([l3.FLOATINGIPS])
+    def _extend_floatingip_dict_dns(floatingip_res, floatingip_db):
         floatingip_res['dns_domain'] = ''
         floatingip_res['dns_name'] = ''
         if floatingip_db.dns:
             floatingip_res['dns_domain'] = floatingip_db.dns['dns_domain']
             floatingip_res['dns_name'] = floatingip_db.dns['dns_name']
         return floatingip_res
-
-    resource_extend.register_funcs(
-        l3.FLOATINGIPS, ['_extend_floatingip_dict_dns'])
 
     def _process_dns_floatingip_create_precommit(self, context,
                                                  floatingip_data, req_data):

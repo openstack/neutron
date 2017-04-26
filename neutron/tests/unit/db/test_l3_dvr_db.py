@@ -48,6 +48,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.core_plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self.mixin = FakeL3Plugin()
+        directory.add_plugin(const.L3, self.mixin)
 
     def _create_router(self, router):
         with self.ctx.session.begin(subtransactions=True):

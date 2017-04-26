@@ -571,6 +571,7 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         super(ExtraAttributesMixinTestCase, self).setUp()
         self.mixin = l3_attrs_db.ExtraAttributesMixin()
+        directory.add_plugin(lib_constants.L3, self.mixin)
         self.ctx = context.get_admin_context()
         self.router = l3_models.Router()
         with self.ctx.session.begin():

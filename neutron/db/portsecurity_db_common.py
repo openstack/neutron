@@ -21,7 +21,8 @@ from neutron.objects.port.extensions import port_security as p_ps
 class PortSecurityDbCommon(object):
     """Mixin class to add port security."""
 
-    def _extend_port_security_dict(self, response_data, db_data):
+    @staticmethod
+    def _extend_port_security_dict(response_data, db_data):
         if db_data.get('port_security') is None:
             response_data[psec.PORTSECURITY] = psec.DEFAULT_PORT_SECURITY
         else:

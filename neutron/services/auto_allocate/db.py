@@ -42,13 +42,6 @@ IS_DEFAULT = 'is_default'
 CHECK_REQUIREMENTS = 'dry-run'
 
 
-def _extend_external_network_default(core_plugin, net_res, net_db):
-    """Add is_default field to 'show' response."""
-    if net_db.external is not None:
-        net_res[IS_DEFAULT] = net_db.external.is_default
-    return net_res
-
-
 @db_api.retry_if_session_inactive()
 def _ensure_external_network_default_value_callback(
     resource, event, trigger, context, request, network, **kwargs):
@@ -78,10 +71,8 @@ def _ensure_external_network_default_value_callback(
         obj.update()
 
 
+@resource_extend.has_resource_extenders
 class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
-
-    resource_extend.register_funcs(
-        attributes.NETWORKS, [_extend_external_network_default])
 
     def __new__(cls, *args, **kwargs):
         # NOTE(kevinbenton): we subscribe on object construction because
@@ -115,6 +106,14 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         if not getattr(self, '_l3_plugin', None):
             self._l3_plugin = directory.get_plugin(constants.L3)
         return self._l3_plugin
+
+    @staticmethod
+    @resource_extend.extends([attributes.NETWORKS])
+    def _extend_external_network_default(net_res, net_db):
+        """Add is_default field to 'show' response."""
+        if net_db.external is not None:
+            net_res[IS_DEFAULT] = net_db.external.is_default
+        return net_res
 
     def get_auto_allocated_topology(self, context, tenant_id, fields=None):
         """Return tenant's network associated to auto-allocated topology.

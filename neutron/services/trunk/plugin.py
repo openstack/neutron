@@ -16,6 +16,7 @@ import copy
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
+from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -40,26 +41,7 @@ from neutron.services.trunk.seg_types import validators
 LOG = logging.getLogger(__name__)
 
 
-def _extend_port_trunk_details(core_plugin, port_res, port_db):
-    """Add trunk details to a port."""
-    if port_db.trunk_port:
-        subports = {
-            x.port_id: {'segmentation_id': x.segmentation_id,
-                        'segmentation_type': x.segmentation_type,
-                        'port_id': x.port_id}
-            for x in port_db.trunk_port.sub_ports
-        }
-        ports = core_plugin.get_ports(
-            context.get_admin_context(), filters={'id': subports})
-        for port in ports:
-            subports[port['id']]['mac_address'] = port['mac_address']
-        trunk_details = {'trunk_id': port_db.trunk_port.id,
-                         'sub_ports': [x for x in subports.values()]}
-        port_res['trunk_details'] = trunk_details
-
-    return port_res
-
-
+@resource_extend.has_resource_extenders
 @registry.has_registry_receivers
 class TrunkPlugin(service_base.ServicePluginBase,
                   common_db_mixin.CommonDbMixin):
@@ -70,8 +52,6 @@ class TrunkPlugin(service_base.ServicePluginBase,
     __native_sorting_support = True
 
     def __init__(self):
-        resource_extend.register_funcs(
-            attributes.PORTS, [_extend_port_trunk_details])
         self._rpc_backend = None
         self._drivers = []
         self._segmentation_types = {}
@@ -84,6 +64,28 @@ class TrunkPlugin(service_base.ServicePluginBase,
         for driver in self._drivers:
             LOG.debug('Trunk plugin loaded with driver %s', driver.name)
         self.check_compatibility()
+
+    @staticmethod
+    @resource_extend.extends([attributes.PORTS])
+    def _extend_port_trunk_details(port_res, port_db):
+        """Add trunk details to a port."""
+        if port_db.trunk_port:
+            subports = {
+                x.port_id: {'segmentation_id': x.segmentation_id,
+                            'segmentation_type': x.segmentation_type,
+                            'port_id': x.port_id}
+                for x in port_db.trunk_port.sub_ports
+            }
+            core_plugin = directory.get_plugin()
+            ports = core_plugin.get_ports(
+                context.get_admin_context(), filters={'id': subports})
+            for port in ports:
+                subports[port['id']]['mac_address'] = port['mac_address']
+            trunk_details = {'trunk_id': port_db.trunk_port.id,
+                             'sub_ports': [x for x in subports.values()]}
+            port_res['trunk_details'] = trunk_details
+
+        return port_res
 
     def check_compatibility(self):
         """Verify the plugin can load correctly and fail otherwise."""

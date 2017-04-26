@@ -16,17 +16,14 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.db import standard_attr
 
 
+@resource_extend.has_resource_extenders
 class StandardAttrDescriptionMixin(object):
     supported_extension_aliases = ['standard-attr-description']
 
-    def _extend_standard_attr_description(self, res, db_object):
+    @staticmethod
+    @resource_extend.extends(
+        list(standard_attr.get_standard_attr_resource_model_map()))
+    def _extend_standard_attr_description(res, db_object):
         if not hasattr(db_object, 'description'):
             return
         res['description'] = db_object.description
-
-    def __new__(cls, *args, **kwargs):
-        for resource in standard_attr.get_standard_attr_resource_model_map():
-            resource_extend.register_funcs(
-                resource, ['_extend_standard_attr_description'])
-        return super(StandardAttrDescriptionMixin, cls).__new__(cls, *args,
-                                                                **kwargs)

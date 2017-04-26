@@ -17,13 +17,13 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import vlantransparent
 
 
+@resource_extend.has_resource_extenders
 class Vlantransparent_db_mixin(object):
     """Mixin class to add vlan transparent methods to db_base_plugin_v2."""
 
-    def _extend_network_dict_vlan_transparent(self, network_res, network_db):
+    @staticmethod
+    @resource_extend.extends([attributes.NETWORKS])
+    def _extend_network_dict_vlan_transparent(network_res, network_db):
         network_res[vlantransparent.VLANTRANSPARENT] = (
             network_db.vlan_transparent)
         return network_res
-
-    resource_extend.register_funcs(
-        attributes.NETWORKS, ['_extend_network_dict_vlan_transparent'])
