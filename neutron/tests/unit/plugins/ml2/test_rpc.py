@@ -177,10 +177,10 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             f.assert_has_calls(calls)
 
     def test_get_devices_details_list(self):
-        devices = [1, 2, 3, 4, 5]
-        expected = devices
+        results = [{'device': [v]} for v in [1, 2, 3, 4, 5]]
+        expected = results
         callback = self.callbacks.get_devices_details_list
-        self._test_get_devices_list(callback, devices, expected)
+        self._test_get_devices_list(callback, results, expected)
 
     def test_get_devices_details_list_with_empty_devices(self):
         with mock.patch.object(self.callbacks, 'get_device_details') as f:
