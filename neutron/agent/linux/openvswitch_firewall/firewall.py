@@ -80,7 +80,6 @@ class SecurityGroup(object):
         self.raw_rules = []
         self.remote_rules = []
         self.members = {}
-        self.members_on_flows = {}
         self.ports = set()
 
     def update_rules(self, rules):
