@@ -28,12 +28,6 @@ eventlet_utils.monkey_patch()
 
 def load_tests(loader, tests, pattern):
     this_dir = os.path.dirname(__file__)
-    parent_dir = os.path.dirname(this_dir)
-    target_dirs = [
-        this_dir,
-        os.path.join(parent_dir, 'retargetable'),
-    ]
-    for start_dir in target_dirs:
-        new_tests = loader.discover(start_dir=start_dir, pattern=pattern)
-        tests.addTests(new_tests)
+    new_tests = loader.discover(start_dir=this_dir, pattern=pattern)
+    tests.addTests(new_tests)
     return tests
