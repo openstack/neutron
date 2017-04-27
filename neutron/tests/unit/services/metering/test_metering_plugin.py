@@ -18,6 +18,7 @@ from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
 from neutron.api.v2 import attributes as attr
+from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.metering import metering_rpc
 from neutron.db.models import agent as agent_model
@@ -247,7 +248,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
                              {'rule': {
-                                 'remote_ip_prefix': '10.0.0.0/24',
+                                 'remote_ip_prefix': utils.AuthenticIPNetwork(
+                                     '10.0.0.0/24'),
                                  'direction': 'ingress',
                                  'metering_label_id': self.uuid,
                                  'excluded': False,
@@ -263,7 +265,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'tenant_id': self.tenant_id,
                          '_metering_labels': [
                              {'rule': {
-                                  'remote_ip_prefix': '10.0.0.0/24',
+                                  'remote_ip_prefix': utils.AuthenticIPNetwork(
+                                      '10.0.0.0/24'),
                                   'direction': 'ingress',
                                   'metering_label_id': self.uuid,
                                   'excluded': False,

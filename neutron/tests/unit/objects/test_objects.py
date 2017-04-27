@@ -48,6 +48,8 @@ object_data = {
     'IpamAllocation': '1.0-ace65431abd0a7be84cc4a5f32d034a3',
     'IpamAllocationPool': '1.0-c4fa1460ed1b176022ede7af7d1510d5',
     'IpamSubnet': '1.0-713de401682a70f34891e13af645fa08',
+    'MeteringLabel': '1.0-cc4b620a3425222447cbe459f62de533',
+    'MeteringLabelRule': '1.0-b5c5717e7bab8d1af1623156012a5842',
     'Network': '1.0-f2f6308f79731a767b92b26b0f4f3849',
     'NetworkDNSDomain': '1.0-420db7910294608534c1e2e30d6d8319',
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
