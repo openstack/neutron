@@ -1299,8 +1299,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._process_dns_floatingip_create_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
-            resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
-                                        floatingip_db)
+        resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
+                                    floatingip_db)
         return floatingip_dict
 
     @db_api.retry_if_session_inactive()
@@ -1330,8 +1330,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._process_dns_floatingip_update_postcommit(context,
                                                            floatingip_dict,
                                                            dns_data)
-            resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
-                                        floatingip_db)
+        resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
+                                    floatingip_db)
         return old_floatingip, floatingip_dict
 
     def _floatingips_to_router_ids(self, floatingips):
