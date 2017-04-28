@@ -98,9 +98,9 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self._router_lifecycle(enable_ha=True, dual_stack=True,
                                v6_ext_gw_with_sub=False)
 
-    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
-                          "IPv6 is not enabled")
-    def test_ipv6_router_advts_and_fwd_after_router_state_change_master(self):
+    def _test_ipv6_router_advts_and_fwd_helper(self, state, enable_v6_gw,
+                                               expected_ra,
+                                               expected_forwarding):
         # Schedule router to l3 agent, and then add router gateway. Verify
         # that router gw interface is configured to receive Router Advts and
         # IPv6 forwarding is enabled.
@@ -108,30 +108,44 @@ class L3HATestCase(framework.L3AgentTestFramework):
             enable_snat=True, enable_ha=True, dual_stack=True, enable_gw=False)
         router = self.manage_router(self.agent, router_info)
         common_utils.wait_until_true(lambda: router.ha_state == 'master')
+        if state == 'backup':
+            self.fail_ha_router(router)
+            common_utils.wait_until_true(lambda: router.ha_state == 'backup')
         _ext_dev_name, ex_port = l3_test_common.prepare_ext_gw_test(
-            mock.Mock(), router)
+            mock.Mock(), router, dual_stack=enable_v6_gw)
         router_info['gw_port'] = ex_port
         router.process()
-        self._assert_ipv6_accept_ra(router)
-        self._assert_ipv6_forwarding(router)
+        self._assert_ipv6_accept_ra(router, expected_ra)
+        self._assert_ipv6_forwarding(router, expected_forwarding)
+
+    @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
+                          "IPv6 is not enabled")
+    def test_ipv6_router_advts_and_fwd_after_router_state_change_master(self):
+        # Check that RA and forwarding are enabled when there's no IPv6
+        # gateway.
+        self._test_ipv6_router_advts_and_fwd_helper('master',
+                                                    enable_v6_gw=False,
+                                                    expected_ra=True,
+                                                    expected_forwarding=True)
+        # Check that RA is disabled and forwarding is enabled when an IPv6
+        # gateway is configured.
+        self._test_ipv6_router_advts_and_fwd_helper('master',
+                                                    enable_v6_gw=True,
+                                                    expected_ra=False,
+                                                    expected_forwarding=True)
 
     @testtools.skipUnless(ipv6_utils.is_enabled_and_bind_by_default(),
                           "IPv6 is not enabled")
     def test_ipv6_router_advts_and_fwd_after_router_state_change_backup(self):
-        # Schedule router to l3 agent, and then add router gateway. Verify
-        # that router gw interface is configured to discard Router Advts and
-        # IPv6 forwarding is disabled.
-        router_info = l3_test_common.prepare_router_data(
-            enable_snat=True, enable_ha=True, dual_stack=True, enable_gw=False)
-        router = self.manage_router(self.agent, router_info)
-        self.fail_ha_router(router)
-        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
-        _ext_dev_name, ex_port = l3_test_common.prepare_ext_gw_test(
-            mock.Mock(), router)
-        router_info['gw_port'] = ex_port
-        router.process()
-        self._assert_ipv6_accept_ra(router, False)
-        self._assert_ipv6_forwarding(router, False)
+        # Check that both RA and forwarding are disabled on backup instances
+        self._test_ipv6_router_advts_and_fwd_helper('backup',
+                                                    enable_v6_gw=False,
+                                                    expected_ra=False,
+                                                    expected_forwarding=False)
+        self._test_ipv6_router_advts_and_fwd_helper('backup',
+                                                    enable_v6_gw=True,
+                                                    expected_ra=False,
+                                                    expected_forwarding=False)
 
     def test_keepalived_configuration(self):
         router_info = self.generate_router_info(enable_ha=True)
