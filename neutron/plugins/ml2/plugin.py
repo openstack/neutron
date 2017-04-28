@@ -1039,9 +1039,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.extension_manager.process_update_subnet(
                 context, subnet[attributes.SUBNET], updated_subnet)
             updated_subnet = self.get_subnet(context, id)
-            network = self.get_network(context, updated_subnet['network_id'])
             mech_context = driver_context.SubnetContext(
-                self, context, updated_subnet, network,
+                self, context, updated_subnet, network=None,
                 original_subnet=original_subnet)
             self.mechanism_manager.update_subnet_precommit(mech_context)
 
