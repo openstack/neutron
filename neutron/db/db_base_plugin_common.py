@@ -120,14 +120,10 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
             ip_address=ip_address,
             subnet_id=subnet_id
         )
-        context.session.add(allocated)
-
-        # NOTE(kevinbenton): We add this to the session info so the sqlalchemy
-        # object isn't immediately garbage collected. Otherwise when the
-        # fixed_ips relationship is referenced a new persistent object will be
-        # added to the session that will interfere with retry operations.
-        # See bug 1556178 for details.
-        context.session.info.setdefault('allocated_ips', []).append(allocated)
+        port_db = context.session.query(models_v2.Port).get(port_id)
+        port_db.fixed_ips.append(allocated)
+        port_db.fixed_ips.sort(key=lambda fip: (fip['ip_address'],
+                                                fip['subnet_id']))
 
     def _make_subnet_dict(self, subnet, fields=None, context=None):
         res = {'id': subnet['id'],
