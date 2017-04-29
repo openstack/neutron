@@ -19,7 +19,6 @@ import operator
 import netaddr
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log
 import six
@@ -136,9 +135,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
         LOG.info(_LI("%(type)s ID ranges: %(range)s"),
                  {'type': self.get_type(), 'range': current_range})
 
-    @oslo_db_api.wrap_db_retry(
-        max_retries=db_api.MAX_RETRIES,
-        exception_checker=db_api.is_retriable)
+    @db_api.retry_db_errors
     def sync_allocations(self):
         # determine current configured allocatable tunnel ids
         tunnel_ids = set()
