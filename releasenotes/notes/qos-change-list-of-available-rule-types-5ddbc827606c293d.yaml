@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    With `improved validation for QoS rules
+    <http://specs.openstack.org/openstack/neutron-specs/pike/qos-improved-validation-mechanism-rules.html>`_
+    API call to /v2.0/qos/rule-types now returns rule types that are supported
+    by at least one of enabled backends.
