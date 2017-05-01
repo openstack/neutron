@@ -24,6 +24,7 @@ from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import six
 
+from neutron.common import constants as n_const
 from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
@@ -50,11 +51,12 @@ class QosRule(base.NeutronDbObject):
     # Version 1.0: Initial version, only BandwidthLimitRule
     #         1.1: Added DscpMarkingRule
     #         1.2: Added QosMinimumBandwidthRule
+    #         1.3: Added direction for BandwidthLimitRule
     #
     #NOTE(mangelajo): versions need to be handled from the top QosRule object
     #                 because it's the only reference QosPolicy can make
     #                 to them via obj_relationships version map
-    VERSION = '1.2'
+    VERSION = '1.3'
 
     fields = {
         'id': common_types.UUIDField(),
@@ -106,10 +108,21 @@ class QosBandwidthLimitRule(QosRule):
 
     fields = {
         'max_kbps': obj_fields.IntegerField(nullable=True),
-        'max_burst_kbps': obj_fields.IntegerField(nullable=True)
+        'max_burst_kbps': obj_fields.IntegerField(nullable=True),
+        'direction': common_types.FlowDirectionEnumField(
+            default=n_const.EGRESS_DIRECTION)
     }
 
     rule_type = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 3) and 'direction' in primitive:
+            direction = primitive.pop('direction')
+            if direction == n_const.INGRESS_DIRECTION:
+                raise exception.IncompatibleObjectVersion(
+                    objver=target_version,
+                    objtype="QosBandwidthLimitRule")
 
 
 @obj_base.VersionedObjectRegistry.register

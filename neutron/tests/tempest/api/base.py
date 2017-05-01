@@ -374,11 +374,12 @@ class BaseNetworkTest(test.BaseTestCase):
         return qos_policy
 
     @classmethod
-    def create_qos_bandwidth_limit_rule(cls, policy_id,
-                                       max_kbps, max_burst_kbps):
+    def create_qos_bandwidth_limit_rule(cls, policy_id, max_kbps,
+                                        max_burst_kbps,
+                                        direction=constants.EGRESS_DIRECTION):
         """Wrapper utility that returns a test QoS bandwidth limit rule."""
         body = cls.admin_client.create_bandwidth_limit_rule(
-            policy_id, max_kbps, max_burst_kbps)
+            policy_id, max_kbps, max_burst_kbps, direction)
         qos_rule = body['bandwidth_limit_rule']
         cls.qos_rules.append(qos_rule)
         return qos_rule
