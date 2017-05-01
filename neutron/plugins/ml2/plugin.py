@@ -16,6 +16,7 @@
 import copy
 
 from eventlet import greenthread
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api import validators
@@ -25,6 +26,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
@@ -74,7 +76,6 @@ from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import multiprovidernet as mpnet
-from neutron.extensions import portsecurity as psec
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.plugins.ml2.common import exceptions as ml2_exc
@@ -1074,7 +1075,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if port_security:
             self._ensure_default_security_group_on_port(context, port)
         elif self._check_update_has_security_groups(port):
-            raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+            raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
     def _setup_dhcp_agent_provisioning_component(self, context, port):
         subnet_ids = [f['subnet_id'] for f in port['fixed_ips']]
@@ -1201,7 +1202,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # checks if security groups were updated adding/modifying
         # security groups, port security is set
         if self._check_update_has_security_groups(port):
-            raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+            raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
         elif (not
           self._check_update_deletes_security_groups(port)):
             # Update did not have security groups passed in. Check
@@ -1212,7 +1213,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         context, filters)
                      )
             if security_groups:
-                raise psec.PortSecurityPortHasSecurityGroup()
+                raise psec_exc.PortSecurityPortHasSecurityGroup()
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()

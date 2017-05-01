@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib import context
 from neutron_lib.plugins import directory
 
-from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.extensions import test_portsecurity as test_psec
 from neutron.tests.unit.plugins.ml2 import test_plugin

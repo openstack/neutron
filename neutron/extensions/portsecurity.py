@@ -12,67 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api import converters
+from neutron_lib.api.definitions import port_security
 from neutron_lib.api import extensions
-from neutron_lib import constants
-from neutron_lib import exceptions as nexception
-
-from neutron._i18n import _
 
 
-DEFAULT_PORT_SECURITY = True
-
-
-class PortSecurityPortHasSecurityGroup(nexception.InUse):
-    message = _("Port has security group associated. Cannot disable port "
-                "security or ip address until security group is removed")
-
-
-class PortSecurityAndIPRequiredForSecurityGroups(nexception.InvalidInput):
-    message = _("Port security must be enabled and port must have an IP"
-                " address in order to use security groups.")
-
-
-PORTSECURITY = 'port_security_enabled'
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {
-        PORTSECURITY: {'allow_post': True, 'allow_put': True,
-                       'convert_to': converters.convert_to_boolean,
-                       'enforce_policy': True,
-                       'default': DEFAULT_PORT_SECURITY,
-                       'is_visible': True},
-    },
-    'ports': {
-        PORTSECURITY: {'allow_post': True, 'allow_put': True,
-                       'convert_to': converters.convert_to_boolean,
-                       'default': constants.ATTR_NOT_SPECIFIED,
-                       'enforce_policy': True,
-                       'is_visible': True},
-    }
-}
-
-
-class Portsecurity(extensions.ExtensionDescriptor):
+class Portsecurity(extensions.APIExtensionDescriptor):
     """Extension class supporting port security."""
-
-    @classmethod
-    def get_name(cls):
-        return "Port Security"
-
-    @classmethod
-    def get_alias(cls):
-        return "port-security"
-
-    @classmethod
-    def get_description(cls):
-        return "Provides port security"
-
-    @classmethod
-    def get_updated(cls):
-        return "2012-07-23T10:00:00-00:00"
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+    api_definition = port_security

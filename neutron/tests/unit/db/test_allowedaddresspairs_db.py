@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -22,7 +23,6 @@ from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.extensions import allowedaddresspairs as addr_pair
-from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as secgroup
 from neutron.tests.unit.db import test_db_base_plugin_v2
 

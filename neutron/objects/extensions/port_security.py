@@ -10,9 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port_security
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.extensions import portsecurity
 from neutron.objects import base
 from neutron.objects import common_types
 
@@ -21,7 +21,7 @@ class _PortSecurity(base.NeutronDbObject):
     fields = {
         'id': common_types.UUIDField(),
         'port_security_enabled': obj_fields.BooleanField(
-            default=portsecurity.DEFAULT_PORT_SECURITY),
+            default=port_security.DEFAULT_PORT_SECURITY),
     }
 
     foreign_keys = {

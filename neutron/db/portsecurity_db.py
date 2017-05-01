@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib.plugins import directory
 
@@ -19,7 +20,6 @@ from neutron.api.v2 import attributes as attrs
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import portsecurity_db_common
-from neutron.extensions import portsecurity as psec
 
 
 @resource_extend.has_resource_extenders

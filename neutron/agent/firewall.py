@@ -18,11 +18,12 @@ import contextlib
 
 import six
 
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib import constants as n_const
 
 import neutron.common.constants as const
 from neutron.common import utils
-from neutron.extensions import portsecurity as psec
+
 
 INGRESS_DIRECTION = const.INGRESS_DIRECTION
 EGRESS_DIRECTION = const.EGRESS_DIRECTION

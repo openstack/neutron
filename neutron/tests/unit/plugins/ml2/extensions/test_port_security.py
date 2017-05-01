@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import port_security as psec
 
-from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2.extensions import port_security
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
