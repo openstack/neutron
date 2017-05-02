@@ -15,9 +15,21 @@ function configure_l2_agent_sriovnicswitch {
 }
 
 function start_l2_agent_sriov {
-    run_process q-sriov-agt "$SRIOV_AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$SRIOV_AGENT_CONF"
+    local SERVICE_NAME
+    if is_neutron_legacy_enabled; then
+        SERVICE_NAME=q-sriov-agt
+    else
+        SERVICE_NAME=neutron-sriov-agent
+    fi
+    run_process $SERVICE_NAME "$SRIOV_AGENT_BINARY --config-file $NEUTRON_CONF --config-file /$SRIOV_AGENT_CONF"
 }
 
 function stop_l2_agent_sriov {
-    stop_process q-sriov-agt
+    local SERVICE_NAME
+    if is_neutron_legacy_enabled; then
+        SERVICE_NAME=q-sriov-agt
+    else
+        SERVICE_NAME=neutron-sriov-agent
+    fi
+    stop_process $SERVICE_NAME
 }

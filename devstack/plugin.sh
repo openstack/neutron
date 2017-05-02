@@ -49,20 +49,20 @@ if [[ "$1" == "stack" ]]; then
             #Currently devstack lacks the option to run two agents on the same node.
             #Therefore we create new service, q-sriov-agt, and the
             # q-agt/neutron-agent should be OVS or linux bridge.
-            if is_service_enabled q-sriov-agt; then
+            if is_service_enabled q-sriov-agt neutron-sriov-agent; then
                 configure_$NEUTRON_CORE_PLUGIN
                 configure_l2_agent
                 configure_l2_agent_sriovnicswitch
             fi
             ;;
         extra)
-            if is_service_enabled q-sriov-agt; then
+            if is_service_enabled q-sriov-agt neutron-sriov-agent; then
                 start_l2_agent_sriov
             fi
             ;;
     esac
 elif [[ "$1" == "unstack" ]]; then
-    if is_service_enabled q-sriov-agt; then
+    if is_service_enabled q-sriov-agt neutron-sriov-agent; then
         stop_l2_agent_sriov
     fi
 fi
