@@ -34,6 +34,7 @@ AFTER_REQUEST = 'after_request'
 # String literals representing events associated to process operations
 BEFORE_INIT = 'before_init'
 BEFORE_SPAWN = 'before_spawn'  # sent per process
+AFTER_SPAWN = 'after_spawn'  # sent per process
 AFTER_INIT = 'after_init'  # sent per worker
 
 # String literals representing events associated to error conditions
