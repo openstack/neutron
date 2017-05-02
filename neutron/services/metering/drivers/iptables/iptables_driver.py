@@ -232,23 +232,21 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
                 label_chain = iptables_manager.get_chain_name(
                     WRAP_NAME + LABEL + label_id, wrap=False)
-                im.ipv4['filter'].add_chain(label_chain, wrap=False)
 
                 rules_chain = iptables_manager.get_chain_name(
                     WRAP_NAME + RULE + label_id, wrap=False)
-                im.ipv4['filter'].add_chain(rules_chain, wrap=False)
-                im.ipv4['filter'].add_rule(
-                    TOP_CHAIN, '-j ' + rules_chain, wrap=False)
 
-                im.ipv4['filter'].add_rule(
-                    label_chain, '', wrap=False)
+                exists = rm.metering_labels.get(label_id)
+                if not exists:
+                    self._create_metering_label_chain(rm,
+                                                      label_chain,
+                                                      rules_chain)
+                    rm.metering_labels[label_id] = label
 
                 rules = label.get('rules')
                 if rules:
                     self._process_metering_label_rules(
                         rules, label_chain, rules_chain, ext_dev, im)
-
-                rm.metering_labels[label_id] = label
 
     def _process_associate_metering_label(self, router):
         self._update_router(router)
@@ -318,9 +316,18 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def _remove_metering_label_rule(self, router):
         self._process_metering_rule_action(router, 'delete')
 
+    def _create_metering_label_chain(self, rm, label_chain, rules_chain):
+        rm.iptables_manager.ipv4['filter'].add_chain(label_chain, wrap=False)
+        rm.iptables_manager.ipv4['filter'].add_chain(rules_chain, wrap=False)
+        rm.iptables_manager.ipv4['filter'].add_rule(
+            TOP_CHAIN, '-j ' + rules_chain, wrap=False)
+        rm.iptables_manager.ipv4['filter'].add_rule(
+            label_chain, '', wrap=False)
+
     def _process_metering_rule_action_based_on_ns(
         self, router, action, ext_dev, im):
         '''Process metering rule actions based specific namespaces.'''
+        rm = self.routers.get(router['id'])
         with IptablesManagerTransaction(im):
             labels = router.get(constants.METERING_LABEL_KEY, [])
             for label in labels:
@@ -330,6 +337,14 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
                 rules_chain = iptables_manager.get_chain_name(
                     WRAP_NAME + RULE + label_id, wrap=False)
+
+                exists = rm.metering_labels.get(label_id)
+                if action == 'create' and not exists:
+                    self._create_metering_label_chain(rm,
+                                                      label_chain,
+                                                      rules_chain)
+                    rm.metering_labels[label_id] = label
+
                 rule = label.get('rule')
                 if rule:
                     if action == 'create':
