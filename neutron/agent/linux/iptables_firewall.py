@@ -248,17 +248,9 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.ipv6['filter'].add_rule('sg-fallback', '-j DROP',
                                               comment=ic.UNMATCH_DROP)
 
-    def _add_raw_chain(self, chain_name):
-        self.iptables.ipv4['raw'].add_chain(chain_name)
-        self.iptables.ipv6['raw'].add_chain(chain_name)
-
     def _add_chain_by_name_v4v6(self, chain_name):
         self.iptables.ipv4['filter'].add_chain(chain_name)
         self.iptables.ipv6['filter'].add_chain(chain_name)
-
-    def _remove_raw_chain(self, chain_name):
-        self.iptables.ipv4['raw'].remove_chain(chain_name)
-        self.iptables.ipv6['raw'].remove_chain(chain_name)
 
     def _remove_chain_by_name_v4v6(self, chain_name):
         self.iptables.ipv4['filter'].remove_chain(chain_name)
