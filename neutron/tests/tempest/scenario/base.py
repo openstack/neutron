@@ -17,12 +17,12 @@ import netaddr
 from oslo_log import log
 
 from tempest.common import waiters
-from tempest.lib.common import ssh
 from tempest.lib.common.utils import data_utils
 from tempest.lib.common.utils import test_utils
 from tempest.lib import exceptions as lib_exc
 
 from neutron.tests.tempest.api import base as base_api
+from neutron.tests.tempest.common import ssh
 from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import constants
 

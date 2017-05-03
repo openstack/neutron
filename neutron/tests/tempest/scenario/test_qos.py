@@ -17,7 +17,6 @@ import socket
 import time
 
 from oslo_log import log as logging
-from tempest.lib.common import ssh
 from tempest.lib import decorators
 from tempest.lib import exceptions
 from tempest import test
@@ -26,6 +25,7 @@ import testtools
 from neutron.common import utils
 from neutron.services.qos import qos_consts
 from neutron.tests.tempest.api import base as base_api
+from neutron.tests.tempest.common import ssh
 from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import constants
