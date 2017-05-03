@@ -1385,8 +1385,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 subnet_cidr = subnet['subnet']['cidr']
                 eui_addr = str(netutils.get_ipv6_addr_by_EUI64(subnet_cidr,
                                                                port_mac))
-                # TODO(kevinbenton): remove after bug 1671548 fix
-                eui_addr = mock.ANY
                 fip = {'ip_address': eui_addr,
                        'subnet_id': subnet['subnet']['id']}
             self.assertIn(fip, new_port['port']['fixed_ips'])
@@ -1412,6 +1410,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(new_mac, result['port']['mac_address'])
                 if updated_fixed_ips is None:
                     self._verify_ips_after_mac_change(port, result)
+                else:
+                    self.assertEqual(len(updated_fixed_ips),
+                         len(result['port']['fixed_ips']))
             else:
                 error = self.deserialize(self.fmt, res)
                 self.assertEqual(expected_error,
