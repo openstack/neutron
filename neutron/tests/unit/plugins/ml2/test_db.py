@@ -177,6 +177,33 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                                                     segment_uuid)
         self.assertIsNone(net_segment)
 
+    def test_get_dynamic_segment(self):
+        net_id = uuidutils.generate_uuid()
+        segment1 = {api.NETWORK_TYPE: 'vlan',
+                    api.PHYSICAL_NETWORK: 'physnet1',
+                    api.SEGMENTATION_ID: 1}
+
+        self._create_segments(
+            [segment1], is_seg_dynamic=True, network_id=net_id)
+
+        segs1 = segments_db.get_dynamic_segment(
+            self.ctx, net_id)
+        self.assertEqual('vlan', segs1[api.NETWORK_TYPE])
+        self.assertEqual('physnet1', segs1[api.PHYSICAL_NETWORK])
+        self.assertEqual(1, segs1[api.SEGMENTATION_ID])
+
+        segs2 = segments_db.get_dynamic_segment(
+            self.ctx, net_id, physical_network='physnet1')
+        self.assertEqual('vlan', segs2[api.NETWORK_TYPE])
+        self.assertEqual('physnet1', segs2[api.PHYSICAL_NETWORK])
+        self.assertEqual(1, segs2[api.SEGMENTATION_ID])
+
+        segs3 = segments_db.get_dynamic_segment(
+            self.ctx, net_id, segmentation_id=1)
+        self.assertEqual('vlan', segs3[api.NETWORK_TYPE])
+        self.assertEqual('physnet1', segs3[api.PHYSICAL_NETWORK])
+        self.assertEqual(1, segs3[api.SEGMENTATION_ID])
+
     def test_add_port_binding(self):
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
