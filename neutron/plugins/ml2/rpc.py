@@ -19,6 +19,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
@@ -31,7 +32,6 @@ from neutron.common import topics
 from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.services.qos import qos_consts
 # REVISIT(kmestery): Allow the type and mechanism drivers to supply the

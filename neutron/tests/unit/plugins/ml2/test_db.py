@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.plugins.ml2 import api
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import query
@@ -32,7 +33,6 @@ from neutron.db import segments_db
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import db as ml2_db
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 from neutron.tests.unit import testlib_api
 

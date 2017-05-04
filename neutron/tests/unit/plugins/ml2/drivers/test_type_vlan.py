@@ -16,6 +16,7 @@
 import mock
 from neutron_lib import context
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins.ml2 import api
 from testtools import matchers
 
 from neutron.db import api as db_api
@@ -23,7 +24,6 @@ from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2 import config
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 

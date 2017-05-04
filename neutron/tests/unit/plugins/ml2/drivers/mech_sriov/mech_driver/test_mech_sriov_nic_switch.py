@@ -15,10 +15,10 @@
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import api
 import testtools
 
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver import mech_driver

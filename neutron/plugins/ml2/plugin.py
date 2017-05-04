@@ -29,6 +29,7 @@ from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
 from oslo_log import helpers as log_helpers
@@ -81,7 +82,6 @@ from neutron.extensions import vlantransparent
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import db
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2.extensions import qos as qos_ext
 from neutron.plugins.ml2 import managers

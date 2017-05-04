@@ -18,11 +18,11 @@ from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import api
 
 from neutron._i18n import _
 from neutron.common import utils as n_utils
 from neutron.objects import trunk as trunk_objects
-from neutron.plugins.ml2 import driver_api as api
 from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
 from neutron.services.trunk import utils

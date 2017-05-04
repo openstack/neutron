@@ -14,9 +14,9 @@
 #    under the License.
 
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins.ml2 import api
 
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import type_local
 from neutron.tests import base
 

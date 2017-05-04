@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 
 from neutron._i18n import _
-from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
 

@@ -20,10 +20,10 @@ import testtools
 from neutron_lib.api.definitions import trunk as trunk_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import api
 from oslo_utils import uuidutils
 
 from neutron.plugins.common import utils
-from neutron.plugins.ml2 import driver_api as api
 from neutron.services.trunk import constants
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc

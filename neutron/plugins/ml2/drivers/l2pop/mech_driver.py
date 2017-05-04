@@ -17,6 +17,7 @@ from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -24,7 +25,6 @@ from neutron._i18n import _, _LW
 from neutron.conf.plugins.ml2.drivers import l2pop as config
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 
