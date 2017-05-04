@@ -137,20 +137,14 @@ class QosServiceDriverManager(object):
         if not self._drivers:
             return []
 
-        rule_types = set(qos_consts.VALID_RULE_TYPES)
+        rule_types = set()
 
         # Recalculate on every call to allow drivers determine supported rule
         # types dynamically
         for driver in self._drivers:
-            new_rule_types = rule_types & set(driver.supported_rules)
-            dropped_rule_types = rule_types - new_rule_types
-            if dropped_rule_types:
-                LOG.debug("%(rule_types)s rule types disabled "
-                          "because enabled %(driver)s does not support them",
-                          {'rule_types': ', '.join(dropped_rule_types),
-                           'driver': driver.name})
-            rule_types = new_rule_types
+            rule_types |= set(driver.supported_rules)
 
         LOG.debug("Supported QoS rule types "
-                  "(common subset for all loaded QoS drivers): %s", rule_types)
+                  "(rules supported by at least one loaded QoS driver): %s",
+                  rule_types)
         return rule_types

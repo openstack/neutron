@@ -100,12 +100,14 @@ For a list of all rule types, see:
 neutron.services.qos.qos_consts.VALID_RULE_TYPES.
 
 The list of supported QoS rule types exposed by neutron is calculated as
-the common subset of rules supported by all active QoS drivers.
+set of rules supported by at least one active QoS driver.
 
 Note: the list of supported rule types reported by core plugin is not enforced
-when accessing QoS rule resources. This is mostly because then we would not be
-able to create rules while at least one of the QoS driver in gate lacks
-support for the rules we're trying to test.
+when accessing QoS rule resources.
+
+When a policy is attached to a port or a network, or when a rule is created or updated,
+core plugins may validate write requests against their backends, and invalidate requests
+that don't make sense or can't be implemented by affected backends.
 
 
 Database models
