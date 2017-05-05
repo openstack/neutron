@@ -385,7 +385,6 @@ class FakeV4Subnet(Dictable):
         self.enable_dhcp = True
         self.host_routes = [FakeV4HostRoute()]
         self.dns_nameservers = ['8.8.8.8']
-        self.segment_id = None
 
 
 class FakeV4Subnet2(FakeV4Subnet):
@@ -499,7 +498,6 @@ class FakeV4SubnetNoDHCP(object):
         self.enable_dhcp = False
         self.host_routes = []
         self.dns_nameservers = []
-        self.segment_id = None
 
 
 class FakeV6SubnetDHCPStateful(Dictable):

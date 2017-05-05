@@ -869,6 +869,7 @@ class Dnsmasq(DhcpLocalProcess):
         isolated_subnets = self.get_isolated_subnets(self.network)
         for i, subnet in enumerate(self.network.subnets):
             addr_mode = getattr(subnet, 'ipv6_address_mode', None)
+            segment_id = getattr(subnet, 'segment_id', None)
             if (not subnet.enable_dhcp or
                 (subnet.ip_version == 6 and
                  addr_mode == constants.IPV6_SLAAC)):
@@ -914,11 +915,12 @@ class Dnsmasq(DhcpLocalProcess):
                 )
 
             if subnet.ip_version == 4:
-                host_routes.extend(["%s,0.0.0.0" % (s.cidr) for s in
-                                    self.network.subnets
-                                    if (s.ip_version == 4 and
-                                        s.cidr != subnet.cidr and
-                                        s.segment_id == subnet.segment_id)])
+                for s in self.network.subnets:
+                    sub_segment_id = getattr(s, 'segment_id', None)
+                    if (s.ip_version == 4 and
+                            s.cidr != subnet.cidr and
+                            sub_segment_id == segment_id):
+                        host_routes.append("%s,0.0.0.0" % s.cidr)
 
                 if host_routes:
                     if gateway:
