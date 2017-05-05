@@ -245,7 +245,7 @@ Checklist
    The `neutron-lib patch <https://review.openstack.org/#/c/353131/>`_
    introduces the elements that define the API, and testing coverage
    validates that the resource and actions maps use valid keywords.
-   API reference documention is provided alongside the definition to
+   API reference documentation is provided alongside the definition to
    keep everything in one place.
    The `neutron patch <https://review.openstack.org/#/c/353132/>`_
    uses the Neutron extension framework to plug the API definition
