@@ -107,7 +107,7 @@ end
 
 note left of nova_compute1
     live migration
-    succeded
+    succeeded
 end note
 
 nova_compute1 -> nova_compute1 : post_live_migration

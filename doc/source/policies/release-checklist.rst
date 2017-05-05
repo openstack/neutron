@@ -47,7 +47,7 @@ New major release process contains several phases:
 #. at this point, master branch is open for patches targeted to the next
    release; PTL unblocks all patches that were blocked in step 1;
 #. if additional patches are identified that are critical for the release and
-   must be shipped in the final major build, correpsponding bugs are tagged
+   must be shipped in the final major build, corresponding bugs are tagged
    with <release>-rc-potential in Launchpad, fixes are prepared and land in
    master branch, and are then backported to the newly created stable branch;
 #. if patches landed in the release stable branch as per the previous step, a

@@ -256,7 +256,7 @@ served by Neutron "core" and for the APIs served by the various Neutron
  * There is still only one check which is hardcoded in Neutron's API layer:
    the check to verify that a project owns the network on which it is creating
    a port. This check is hardcoded and is always executed when creating a
-   port, unless the network is shared. Unfortunatelu a solution for performing
+   port, unless the network is shared. Unfortunately a solution for performing
    this check in an efficient way through the policy engine has not yet been
    found. Due to its nature, there is no way to override this check using the
    policy engine.
