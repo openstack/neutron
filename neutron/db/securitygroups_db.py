@@ -143,8 +143,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             else:
                 tenant_id = context.tenant_id
             self._ensure_default_security_group(context, tenant_id)
-        marker_obj = self._get_marker_obj(context, 'security_group', limit,
-                                          marker)
+        marker_obj = db_utils.get_marker_obj(self, context, 'security_group',
+                                             limit, marker)
         return model_query.get_collection(context,
                                           sg_models.SecurityGroup,
                                           self._make_security_group_dict,
@@ -603,8 +603,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     def get_security_group_rules(self, context, filters=None, fields=None,
                                  sorts=None, limit=None, marker=None,
                                  page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'security_group_rule',
-                                          limit, marker)
+        marker_obj = db_utils.get_marker_obj(self, context,
+                                             'security_group_rule',
+                                             limit, marker)
         return model_query.get_collection(context,
                                           sg_models.SecurityGroupRule,
                                           self._make_security_group_rule_dict,

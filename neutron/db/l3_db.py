@@ -561,7 +561,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def get_routers(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'router', limit, marker)
+        marker_obj = db_utils.get_marker_obj(self, context, 'router',
+                                             limit, marker)
         return model_query.get_collection(context, l3_models.Router,
                                           self._make_router_dict,
                                           filters=filters, fields=fields,
@@ -1380,8 +1381,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def get_floatingips(self, context, filters=None, fields=None,
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):
-        marker_obj = self._get_marker_obj(context, 'floatingip', limit,
-                                          marker)
+        marker_obj = db_utils.get_marker_obj(self, context, 'floatingip',
+                                             limit, marker)
         if filters is not None:
             for key, val in API_TO_DB_COLUMN_MAP.items():
                 if key in filters:
