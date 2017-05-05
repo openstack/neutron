@@ -1098,15 +1098,24 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertTrue(upd_port_down.called)
 
     def test_delete_unbound_port(self):
+        self._test_delete_port_handles_agentless_host_id(None)
+
+    def test_delete_port_bound_to_agentless_host(self):
+        self._test_delete_port_handles_agentless_host_id('test')
+
+    def _test_delete_port_handles_agentless_host_id(self, host):
         l2pop_mech = l2pop_mech_driver.L2populationMechanismDriver()
         l2pop_mech.initialize()
 
         with self.port() as port:
+            port['port'][portbindings.HOST_ID] = host
+            bindings = [mock.Mock()]
             port_context = driver_context.PortContext(
                 self.driver, self.context, port['port'],
                 self.driver.get_network(
                     self.context, port['port']['network_id']),
-                None, None)
+                None, bindings)
+            mock.patch.object(port_context, '_expand_segment').start()
             # The point is to provide coverage and to assert that no exceptions
             # are raised.
             l2pop_mech.delete_port_postcommit(port_context)
