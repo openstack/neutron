@@ -307,18 +307,28 @@ class OVSBridge(BaseOVS):
         self.run_ofctl("del-flows", [])
 
     @_ovsdb_retry
-    def _get_port_ofport(self, port_name):
-        return self.db_get_val("Interface", port_name, "ofport")
+    def _get_port_val(self, port_name, port_val):
+        return self.db_get_val("Interface", port_name, port_val)
 
     def get_port_ofport(self, port_name):
         """Get the port's assigned ofport, retrying if not yet assigned."""
         ofport = INVALID_OFPORT
         try:
-            ofport = self._get_port_ofport(port_name)
+            ofport = self._get_port_val(port_name, "ofport")
         except tenacity.RetryError:
             LOG.exception(_LE("Timed out retrieving ofport on port %s."),
                           port_name)
         return ofport
+
+    def get_port_external_ids(self, port_name):
+        """Get the port's assigned ofport, retrying if not yet assigned."""
+        port_external_ids = dict()
+        try:
+            port_external_ids = self._get_port_val(port_name, "external_ids")
+        except tenacity.RetryError:
+            LOG.exception(_LE("Timed out retrieving external_ids on port %s."),
+                          port_name)
+        return port_external_ids
 
     def get_port_mac(self, port_name):
         """Get the port's mac address.
