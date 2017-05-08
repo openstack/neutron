@@ -36,7 +36,7 @@ class TestDhcp(functional_base.BaseSudoTestCase):
         conf.register_opts(common_conf.core_opts)
         conf.register_opts(dhcp_conf.DHCP_AGENT_OPTS)
         conf.set_override('interface_driver', 'openvswitch')
-        conf.set_override('host', 'foo_host')
+        conf.set_override('host', 'foo-host')
         self.conf = conf
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.conf.set_override('ovs_integration_bridge', br_int.br_name)
