@@ -1674,13 +1674,14 @@ class TestArpPing(TestIPCmdBase):
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
 
         # Just test that arping is called with the right arguments
-        arping_cmd = ['arping', '-A',
-                      '-I', mock.sentinel.iface_name,
-                      '-c', 1,
-                      '-w', mock.ANY,
-                      address]
-        ip_wrapper.netns.execute.assert_any_call(arping_cmd,
-                                                 extra_ok_codes=[1])
+        for arg in ('-A', '-U'):
+            arping_cmd = ['arping', arg,
+                          '-I', mock.sentinel.iface_name,
+                          '-c', 1,
+                          '-w', mock.ANY,
+                          address]
+            ip_wrapper.netns.execute.assert_any_call(arping_cmd,
+                                                     extra_ok_codes=[1])
 
     @mock.patch('eventlet.spawn_n')
     def test_no_ipv6_addr_notif(self, spawn_n):
