@@ -1015,9 +1015,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # by re-calling update_subnet with the previous attributes. For
         # now the error is propagated to the caller, which is expected to
         # either undo/retry the operation or delete the resource.
-        kwargs = {'context': context, 'subnet': updated_subnet,
-                  'original_subnet': original_subnet}
-        registry.notify(resources.SUBNET, events.AFTER_UPDATE, self, **kwargs)
         self.mechanism_manager.update_subnet_postcommit(mech_context)
         return updated_subnet
 

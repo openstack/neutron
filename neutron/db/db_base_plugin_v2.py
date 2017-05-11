@@ -907,6 +907,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             registry.notify(resources.SUBNET_GATEWAY, events.AFTER_UPDATE,
                             self, **kwargs)
 
+        kwargs = {'context': context, 'subnet': result,
+                  'original_subnet': orig}
+        registry.notify(resources.SUBNET, events.AFTER_UPDATE, self,
+                        **kwargs)
         return result
 
     @db_api.context_manager.reader
