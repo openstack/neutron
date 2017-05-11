@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
+from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -320,7 +321,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         subnet_cidr=subnet_cidr)
 
     def _validate_max_ips_per_port(self, fixed_ip_list, device_owner):
-        if common_utils.is_port_trusted({'device_owner': device_owner}):
+        if net.is_port_trusted({'device_owner': device_owner}):
             return
 
         if len(fixed_ip_list) > cfg.CONF.max_fixed_ips_per_port:

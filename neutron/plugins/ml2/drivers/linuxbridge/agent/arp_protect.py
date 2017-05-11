@@ -14,12 +14,12 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
 from neutron._i18n import _LI
 from neutron.agent.linux import ip_lib
-from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
 SPOOF_CHAIN_PREFIX = 'neutronARP-'
@@ -34,7 +34,7 @@ def setup_arp_spoofing_protection(vif, port_details):
         LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                      "it has port security disabled"), vif)
         return
-    if utils.is_port_trusted(port_details):
+    if net.is_port_trusted(port_details):
         # clear any previous entries related to this port
         delete_arp_spoofing_protection([vif], current_rules)
         LOG.debug("Skipping ARP spoofing rules for network owned port "

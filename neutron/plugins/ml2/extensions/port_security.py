@@ -14,10 +14,10 @@
 #    under the License.
 
 from neutron_lib.api import validators
+from neutron_lib.utils import net
 from oslo_log import log as logging
 
 from neutron._i18n import _LI
-from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
 from neutron.extensions import portsecurity as psec
@@ -72,7 +72,7 @@ class PortSecurityExtensionDriver(api.ExtensionDriver,
         otherwise the value associated with the network is returned.
         """
         # we don't apply security groups for dhcp, router
-        if port.get('device_owner') and utils.is_port_trusted(port):
+        if port.get('device_owner') and net.is_port_trusted(port):
             return False
 
         if validators.is_attr_set(port.get(psec.PORTSECURITY)):
