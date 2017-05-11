@@ -1097,7 +1097,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         the floating IP should be associated to.
         """
         internal_port = self._core_plugin.get_port(context, fip['port_id'])
-        if not internal_port['tenant_id'] == tenant_id:
+        if internal_port['tenant_id'] != tenant_id and not context.is_admin:
             port_id = fip['port_id']
             msg = (_('Cannot process floating IP association with '
                      'Port %s, since that port is owned by a '
