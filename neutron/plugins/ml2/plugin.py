@@ -16,6 +16,7 @@
 import copy
 
 from eventlet import greenthread
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
@@ -74,7 +75,6 @@ from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import availability_zone as az_ext
-from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent

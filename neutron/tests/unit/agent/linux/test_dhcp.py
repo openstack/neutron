@@ -17,6 +17,7 @@ import os
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants
 from oslo_config import cfg
 import oslo_messaging
@@ -29,7 +30,6 @@ from neutron.common import constants as n_const
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
-from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests import base
 from neutron.tests import tools
 
@@ -172,7 +172,7 @@ class FakePort5(object):
         self.mac_address = '00:00:0f:aa:bb:55'
         self.device_id = 'fake_port5'
         self.extra_dhcp_opts = [
-            DhcpOpt(opt_name=edo_ext.CLIENT_ID,
+            DhcpOpt(opt_name=edo_ext.DHCP_OPT_CLIENT_ID,
                     opt_value='test5')]
 
 
@@ -188,7 +188,7 @@ class FakePort6(object):
         self.mac_address = '00:00:0f:aa:bb:66'
         self.device_id = 'fake_port6'
         self.extra_dhcp_opts = [
-            DhcpOpt(opt_name=edo_ext.CLIENT_ID,
+            DhcpOpt(opt_name=edo_ext.DHCP_OPT_CLIENT_ID,
                     opt_value='test6',
                     ip_version=4),
             DhcpOpt(opt_name='dns-server',

@@ -15,11 +15,11 @@
 
 import copy
 
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import extradhcpopt_db as edo_db
-from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 

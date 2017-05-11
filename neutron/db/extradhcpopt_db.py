@@ -13,10 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+
+
 from neutron.api.v2 import attributes
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
-from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.objects.port.extensions import extra_dhcp_opt as obj_extra_dhcp
 
 

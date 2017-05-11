@@ -21,6 +21,7 @@ import shutil
 import time
 
 import netaddr
+from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.utils import file as file_utils
@@ -39,7 +40,6 @@ from neutron.agent.linux import iptables_manager
 from neutron.cmd import runtime_checks as checks
 from neutron.common import constants as n_const
 from neutron.common import utils as common_utils
-from neutron.extensions import extra_dhcp_opt as edo_ext
 from neutron.ipam import utils as ipam_utils
 
 LOG = logging.getLogger(__name__)
@@ -717,7 +717,7 @@ class Dnsmasq(DhcpLocalProcess):
     def _get_client_id(self, port):
         if self._get_port_extra_dhcp_opts(port):
             for opt in port.extra_dhcp_opts:
-                if opt.opt_name == edo_ext.CLIENT_ID:
+                if opt.opt_name == edo_ext.DHCP_OPT_CLIENT_ID:
                     return opt.opt_value
 
     def _read_hosts_file_leases(self, filename):
@@ -953,7 +953,7 @@ class Dnsmasq(DhcpLocalProcess):
                     [netaddr.IPAddress(ip.ip_address).version
                      for ip in port.fixed_ips])
                 for opt in port.extra_dhcp_opts:
-                    if opt.opt_name == edo_ext.CLIENT_ID:
+                    if opt.opt_name == edo_ext.DHCP_OPT_CLIENT_ID:
                         continue
                     opt_ip_version = opt.ip_version
                     if opt_ip_version in port_ip_versions:
