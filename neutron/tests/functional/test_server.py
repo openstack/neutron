@@ -21,6 +21,7 @@ import traceback
 
 import httplib2
 import mock
+from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
 import psutil
 
@@ -28,7 +29,6 @@ from neutron.common import utils
 from neutron import manager
 from neutron import service
 from neutron.tests import base
-from neutron import worker as neutron_worker
 from neutron import wsgi
 
 
@@ -273,7 +273,7 @@ class TestPluginWorker(TestNeutronServer):
             plugin_workers_launcher.wait()
 
     def test_start(self):
-        class FakeWorker(neutron_worker.NeutronWorker):
+        class FakeWorker(neutron_worker.BaseWorker):
             def start(self):
                 pass
 

@@ -24,6 +24,7 @@ import time
 import eventlet.wsgi
 from neutron_lib import context
 from neutron_lib import exceptions as exception
+from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
@@ -43,7 +44,6 @@ from neutron.common import config
 from neutron.common import exceptions as n_exc
 from neutron.conf import wsgi as wsgi_config
 from neutron.db import api
-from neutron import worker as neutron_worker
 
 CONF = cfg.CONF
 wsgi_config.register_socket_opts()
@@ -59,7 +59,7 @@ def encode_body(body):
     return encodeutils.to_utf8(body)
 
 
-class WorkerService(neutron_worker.NeutronWorker):
+class WorkerService(neutron_worker.BaseWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, service, application, disable_ssl=False,
                  worker_process_count=0):
