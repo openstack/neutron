@@ -998,8 +998,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive()
     def update_subnet(self, context, id, subnet):
         with db_api.context_manager.writer.using(context):
-            original_subnet = self.get_subnet(context, id)
-            updated_subnet = self._update_subnet_precommit(
+            updated_subnet, original_subnet = self._update_subnet_precommit(
                 context, id, subnet)
             self.extension_manager.process_update_subnet(
                 context, subnet[attributes.SUBNET], updated_subnet)

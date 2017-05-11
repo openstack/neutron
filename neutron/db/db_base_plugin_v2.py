@@ -787,8 +787,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         The change however will not be realized until the client renew the
         dns lease or we support gratuitous DHCP offers
         """
-        orig = self.get_subnet(context, id)
-        result = self._update_subnet_precommit(context, id, subnet)
+        result, orig = self._update_subnet_precommit(context, id, subnet)
         return self._update_subnet_postcommit(context, orig, result)
 
     def _update_subnet_precommit(self, context, id, subnet):
@@ -801,6 +800,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         s = subnet['subnet']
         new_cidr = s.get('cidr')
         db_subnet = self._get_subnet(context, id)
+        orig = self._make_subnet_dict(db_subnet, fields=None, context=context)
         # Fill 'ip_version' and 'allocation_pools' fields with the current
         # value since _validate_subnet() expects subnet spec has 'ip_version'
         # and 'allocation_pools' fields.
@@ -855,7 +855,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if subnet in context.session:
             context.session.expire(subnet)
 
-        return self._make_subnet_dict(subnet, context=context)
+        return self._make_subnet_dict(subnet, context=context), orig
 
     @property
     def l3_rpc_notifier(self):
