@@ -153,8 +153,10 @@ QoS versioned objects
 For QoS, the following neutron objects are implemented:
 
 * QosPolicy: directly maps to the conceptual policy resource, as defined above.
-* QosBandwidthLimitRule: defines the instance-egress bandwidth limit rule
-  type, characterized by a max kbps and a max burst kbits.
+* QosBandwidthLimitRule: defines the bandwidth limit rule, characterized by a
+  max_kbps parameter and a max_burst_kbits parameter. This rule also has a
+  direction parameter to set the traffic direction, from the instance point of
+  view.
 * QosDscpMarkingRule: defines the DSCP rule type, characterized by an even integer
   between 0 and 56.  These integers are the result of the bits in the DiffServ section
   of the IP header, and only certain configurations are valid.  As a result, the list
