@@ -15,6 +15,7 @@
 
 import os
 import re
+import time
 
 from debtcollector import removals
 import eventlet
@@ -1046,25 +1047,41 @@ def iproute_arg_supported(command, arg):
 
 
 def _arping(ns_name, iface_name, address, count, log_exception):
-    # Pass -w to set timeout to ensure exit if interface removed while running
-    arping_cmd = ['arping', '-A', '-I', iface_name, '-c', count,
-                  '-w', 1.5 * count, address]
-    try:
-        ip_wrapper = IPWrapper(namespace=ns_name)
-        # Since arping is used to send gratuitous ARP, a response is not
-        # expected. In some cases (no response) and with some platforms
-        # (>=Ubuntu 14.04), arping exit code can be 1.
-        ip_wrapper.netns.execute(arping_cmd, extra_ok_codes=[1])
-    except Exception as exc:
-        msg = _("Failed sending gratuitous ARP "
-                "to %(addr)s on %(iface)s in namespace %(ns)s: %(err)s")
-        logger_method = LOG.exception
-        if not log_exception:
-            logger_method = LOG.warning
-        logger_method(msg, {'addr': address,
-                            'iface': iface_name,
-                            'ns': ns_name,
-                            'err': exc})
+    # Due to a Linux kernel bug*, it's advised to spread gratuitous updates
+    # more, injecting an interval between consequent packets that is longer
+    # than 1s which is currently hardcoded** in arping. To achieve that, we
+    # call arping tool the 'count' number of times, each issuing a single ARP
+    # update, and wait between iterations.
+    #
+    # *  https://patchwork.ozlabs.org/patch/760372/
+    # ** https://github.com/iputils/iputils/pull/86
+    first = True
+    for i in range(count):
+        if not first:
+            # hopefully enough for kernel to get out of locktime loop
+            time.sleep(2)
+        first = False
+
+        # Pass -w to set timeout to ensure exit if interface removed while
+        # running
+        arping_cmd = ['arping', '-A', '-I', iface_name, '-c', 1,
+                      '-w', 1.5, address]
+        try:
+            ip_wrapper = IPWrapper(namespace=ns_name)
+            # Since arping is used to send gratuitous ARP, a response is not
+            # expected. In some cases (no response) and with some platforms
+            # (>=Ubuntu 14.04), arping exit code can be 1.
+            ip_wrapper.netns.execute(arping_cmd, extra_ok_codes=[1])
+        except Exception as exc:
+            msg = _("Failed sending gratuitous ARP "
+                    "to %(addr)s on %(iface)s in namespace %(ns)s: %(err)s")
+            logger_method = LOG.exception
+            if not log_exception:
+                logger_method = LOG.warning
+            logger_method(msg, {'addr': address,
+                                'iface': iface_name,
+                                'ns': ns_name,
+                                'err': exc})
 
 
 def send_ip_addr_adv_notif(
