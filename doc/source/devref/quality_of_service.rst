@@ -268,6 +268,22 @@ interface:
 * SR-IOV (QosSRIOVAgentDriver);
 * Linux bridge (QosLinuxbridgeAgentDriver).
 
+Table of Neutron backends, supported rules and traffic direction (from the VM
+point of view)
+::
+
+    +----------------------+----------------+----------------+----------------+
+    | Rule \ Backend       | Open vSwitch   | SR-IOV         | Linux Bridge   |
+    +----------------------+----------------+----------------+----------------+
+    | Bandwidth Limit      | Egress         | Egress (1)     | Egress         |
+    +----------------------+----------------+----------------+----------------+
+    | Minimum Bandwidth    | -              | Egress         | -              |
+    +----------------------+----------------+----------------+----------------+
+    | DSCP Marking         | Egress         | -              | Egress         |
+    +----------------------+----------------+----------------+----------------+
+
+    (1) Max burst parameter is skipped because it's not supported by ip tool.
+
 
 Open vSwitch
 ++++++++++++
