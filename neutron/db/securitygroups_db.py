@@ -487,8 +487,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'direction': [sgr['direction']]}
 
         include_if_present = ['protocol', 'port_range_max', 'port_range_min',
-                              'ethertype', 'remote_ip_prefix',
-                              'remote_group_id']
+                              'ethertype', 'remote_group_id']
         for key in include_if_present:
             value = sgr.get(key)
             if value:
@@ -527,6 +526,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         rule_dict.pop('description', None)
         keys = rule_dict.keys()
         fields = list(keys) + ['id']
+        if 'remote_ip_prefix' not in fields:
+            fields += ['remote_ip_prefix']
         db_rules = self.get_security_group_rules(context, filters,
                                                  fields=fields)
         # Note(arosen): the call to get_security_group_rules wildcards
@@ -540,6 +541,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # below to check for these corner cases.
         rule_dict.pop('id', None)
         sg_protocol = rule_dict.pop('protocol', None)
+        remote_ip_prefix = rule_dict.pop('remote_ip_prefix', None)
         for db_rule in db_rules:
             rule_id = db_rule.pop('id', None)
             # remove protocol and match separately for number and type
@@ -547,8 +549,20 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             is_protocol_matching = (
                 self._get_ip_proto_name_and_num(db_protocol) ==
                 self._get_ip_proto_name_and_num(sg_protocol))
-            if (is_protocol_matching and rule_dict == db_rule):
+            db_remote_ip_prefix = db_rule.pop('remote_ip_prefix', None)
+            duplicate_ip_prefix = self._validate_duplicate_ip_prefix(
+                                    remote_ip_prefix, db_remote_ip_prefix)
+            if (is_protocol_matching and duplicate_ip_prefix and
+                    rule_dict == db_rule):
                 raise ext_sg.SecurityGroupRuleExists(rule_id=rule_id)
+
+    def _validate_duplicate_ip_prefix(self, ip_prefix, other_ip_prefix):
+        all_address = ['0.0.0.0/0', '::/0', None]
+        if ip_prefix == other_ip_prefix:
+            return True
+        elif ip_prefix in all_address and other_ip_prefix in all_address:
+            return True
+        return False
 
     def _validate_ip_prefix(self, rule):
         """Check that a valid cidr was specified as remote_ip_prefix
