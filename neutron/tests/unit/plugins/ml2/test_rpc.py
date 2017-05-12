@@ -166,13 +166,13 @@ class RpcCallbacksTestCase(base.BaseTestCase):
     def _test_get_devices_list(self, callback, side_effect, expected):
         devices = [1, 2, 3, 4, 5]
         kwargs = {'host': 'fake_host', 'agent_id': 'fake_agent_id'}
-        with mock.patch.object(self.callbacks, 'get_device_details',
+        with mock.patch.object(self.callbacks, '_get_device_details',
                                side_effect=side_effect) as f:
             res = callback('fake_context', devices=devices, **kwargs)
             self.assertEqual(expected, res)
             self.assertEqual(len(devices), f.call_count)
             calls = [mock.call('fake_context', device=i,
-                               cached_networks={}, **kwargs)
+                               port_context=mock.ANY, **kwargs)
                      for i in devices]
             f.assert_has_calls(calls)
 
