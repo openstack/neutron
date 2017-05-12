@@ -174,6 +174,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 raise exc.InvalidInput(error_message=msg)
 
         tenant_to_check = None
+        self_sharing = policy['target_tenant'] == net['tenant_id']
+        if self_sharing:
+            return
         if event == events.BEFORE_UPDATE:
             new_tenant = kwargs['policy_update']['target_tenant']
             if policy['target_tenant'] != new_tenant:
