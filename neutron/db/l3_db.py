@@ -1746,14 +1746,18 @@ class L3RpcNotifierMixin(object):
             LOG.debug('%s not configured', constants.L3)
 
     @staticmethod
-    @registry.receives(resources.SUBNET_GATEWAY, [events.AFTER_UPDATE])
+    @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
     def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
         l3plugin = directory.get_plugin(constants.L3)
         if not l3plugin:
             return
         context = kwargs['context']
-        network_id = kwargs['network_id']
-        subnet_id = kwargs['subnet_id']
+        orig = kwargs['original_subnet']
+        updated = kwargs['subnet']
+        if orig['gateway_ip'] == updated['gateway_ip']:
+            return
+        network_id = updated['network_id']
+        subnet_id = updated['id']
         query = context.session.query(models_v2.Port).filter_by(
                     network_id=network_id,
                     device_owner=constants.DEVICE_OWNER_ROUTER_GW)
