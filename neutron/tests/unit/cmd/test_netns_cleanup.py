@@ -59,7 +59,7 @@ class TestNetnsCleanup(base.BaseTestCase):
     def setUp(self):
         super(TestNetnsCleanup, self).setUp()
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
 

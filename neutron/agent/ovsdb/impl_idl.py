@@ -35,11 +35,20 @@ Transaction = moves.moved_class(transaction.Transaction,
                                 'Transaction', __name__)
 
 ovs_conf.register_ovs_agent_opts()
-_connection = connection.Connection(idl_factory=connection.idl_factory,
-                                    timeout=cfg.CONF.ovs_vsctl_timeout)
+_connection = None
 
 
 def api_factory(context):
+    global _connection
+    if _connection is None:
+        try:
+            _connection = connection.Connection(
+                idl=connection.idl_factory(),
+                timeout=cfg.CONF.ovs_vsctl_timeout)
+        except TypeError:
+            _connection = connection.Connection(
+                idl_factory=connection.idl_factory,
+                timeout=cfg.CONF.ovs_vsctl_timeout)
     return NeutronOvsdbIdl(_connection)
 
 

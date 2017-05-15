@@ -32,7 +32,7 @@ class OVSPhysicalBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
 
     def setUp(self):
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         super(OVSPhysicalBridgeTest, self).setUp()
         self.addCleanup(conn_patcher.stop)

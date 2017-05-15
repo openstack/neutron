@@ -37,8 +37,12 @@ class TestOVSNativeConnection(base.BaseTestCase):
         # raise until 3rd retry attempt
         mock_get_schema_helper.side_effect = [Exception(), Exception(),
                                               mock_helper]
-        conn = connection.Connection(idl_factory=native_conn.idl_factory,
-                                     timeout=mock.Mock())
+        try:
+            conn = connection.Connection(idl_factory=native_conn.idl_factory,
+                                         timeout=mock.Mock())
+        except TypeError:
+            conn = connection.Connection(idl=native_conn.idl_factory(),
+                                         timeout=mock.Mock())
         conn.start()
         self.assertEqual(3, len(mock_get_schema_helper.mock_calls))
         mock_helper.register_all.assert_called_once_with()

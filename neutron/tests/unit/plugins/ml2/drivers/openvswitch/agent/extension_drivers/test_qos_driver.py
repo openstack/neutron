@@ -33,7 +33,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
     def setUp(self):
         super(QosOVSAgentDriverTestCase, self).setUp()
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
         self.context = context.get_admin_context()
