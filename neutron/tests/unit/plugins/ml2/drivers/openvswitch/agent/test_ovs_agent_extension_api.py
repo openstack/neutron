@@ -83,10 +83,12 @@ class TestOVSCookieBridgeOFCtl(ovs_test_base.OVSOFCtlTestBase):
         self.assertIn(self.tested_bridge._default_cookie,
                       self.bridge.reserved_cookies)
 
-    def assert_mock_build_flow_expr_str_call(self, action, kwargs_list):
+    def assert_mock_build_flow_expr_str_call(self, action, kwargs_list,
+                                             strict=False):
         self.mock_build_flow_expr_str.assert_called_once_with(
             kwargs_list[0],
-            action
+            action,
+            strict
         )
 
     def test_add_flow_without_cookie(self):
