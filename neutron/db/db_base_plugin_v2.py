@@ -837,14 +837,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if gateway_ip:
                 self.ipam.validate_gw_out_of_pools(gateway_ip, pools)
 
-        if gateway_ip_changed:
-            # Provide pre-update notification not to break plugins that don't
-            # support gateway ip change
-            kwargs = {'context': context, 'subnet_id': id,
-                      'network_id': db_subnet.network_id}
-            registry.notify(resources.SUBNET_GATEWAY, events.BEFORE_UPDATE,
-                            self, **kwargs)
-
         kwargs = {'context': context, 'original_subnet': orig,
                   'request': s}
         registry.notify(resources.SUBNET, events.BEFORE_UPDATE,
@@ -905,12 +897,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # Send router_update to l3_agent
             if routers:
                 self.l3_rpc_notifier.routers_updated(context, routers)
-
-        if orig['gateway_ip'] != result['gateway_ip']:
-            kwargs = {'context': context, 'subnet_id': result['id'],
-                      'network_id': result['network_id']}
-            registry.notify(resources.SUBNET_GATEWAY, events.AFTER_UPDATE,
-                            self, **kwargs)
 
         kwargs = {'context': context, 'subnet': result,
                   'original_subnet': orig}
