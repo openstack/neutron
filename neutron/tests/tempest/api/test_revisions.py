@@ -313,17 +313,21 @@ class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
 
     @decorators.idempotent_id('afb6486c-41b5-483e-a500-3c506f4deb49')
     @test.requires_ext(extension="router", service="network")
-    @test.requires_ext(extension="dvr", service="network")
+    @test.requires_ext(extension="l3-ha", service="network")
     def test_update_router_extra_attributes_bumps_revision(self):
-        router = self.create_router(router_name='r1')
+        # updates from CVR to CVR-HA are supported on every release,
+        # but only the admin can forcibly create a non-HA router
+        router_args = {'tenant_id': self.client.tenant_id,
+                       'ha': False}
+        router = self.admin_client.create_router('r1', True,
+            **router_args)['router']
         self.addCleanup(self.client.delete_router, router['id'])
         self.assertIn('revision_number', router)
         rev1 = router['revision_number']
         router = self.admin_client.update_router(
             router['id'], admin_state_up=False)['router']
         self.assertGreater(router['revision_number'], rev1)
-        self.admin_client.update_router(router['id'],
-                                        distributed=True)['router']
+        self.admin_client.update_router(router['id'], ha=True)['router']
         updated = self.client.show_router(router['id'])['router']
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
