@@ -684,10 +684,10 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
                       (default) then WaitTimeout exception is raised.
     """
     try:
-        with eventlet.timeout.Timeout(timeout):
+        with eventlet.Timeout(timeout):
             while not predicate():
                 eventlet.sleep(sleep)
-    except eventlet.TimeoutError:
+    except eventlet.Timeout:
         if exception is not None:
             #pylint: disable=raising-bad-type
             raise exception

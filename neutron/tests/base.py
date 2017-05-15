@@ -113,7 +113,7 @@ def _catch_timeout(f):
     def func(self, *args, **kwargs):
         try:
             return f(self, *args, **kwargs)
-        except eventlet.timeout.Timeout as e:
+        except eventlet.Timeout as e:
             self.fail('Execution of this test timed out: %s' % e)
     return func
 
@@ -206,7 +206,7 @@ class DietTestCase(base.BaseTestCase):
 
     @contextlib.contextmanager
     def assert_max_execution_time(self, max_execution_time=5):
-        with eventlet.timeout.Timeout(max_execution_time, False):
+        with eventlet.Timeout(max_execution_time, False):
             yield
             return
         self.fail('Execution of this test timed out')

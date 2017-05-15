@@ -69,7 +69,7 @@ class OpenFlowSwitchMixin(object):
 
     def _send_msg(self, msg, reply_cls=None, reply_multi=False):
         timeout_sec = cfg.CONF.OVS.of_request_timeout
-        timeout = eventlet.timeout.Timeout(seconds=timeout_sec)
+        timeout = eventlet.Timeout(seconds=timeout_sec)
         try:
             result = ofctl_api.send_msg(self._app, msg, reply_cls, reply_multi)
         except ryu_exc.RyuException as e:
@@ -80,7 +80,7 @@ class OpenFlowSwitchMixin(object):
             LOG.error(m)
             # NOTE(yamamoto): use RuntimeError for compat with ovs_lib
             raise RuntimeError(m)
-        except eventlet.timeout.Timeout as e:
+        except eventlet.Timeout as e:
             with excutils.save_and_reraise_exception() as ctx:
                 if e is timeout:
                     ctx.reraise = False

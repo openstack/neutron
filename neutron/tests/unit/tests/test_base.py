@@ -78,7 +78,7 @@ class CatchTimeoutTestCase(base.DietTestCase):
     # Embedded to hide from the regular test discovery
     class MyTestCase(base.DietTestCase):
         def test_case(self):
-            raise eventlet.timeout.Timeout()
+            raise eventlet.Timeout()
 
         def runTest(self):
             return self.test_case()
@@ -87,5 +87,5 @@ class CatchTimeoutTestCase(base.DietTestCase):
         try:
             result = self.MyTestCase().run()
             self.assertFalse(result.wasSuccessful())
-        except eventlet.timeout.Timeout:
+        except eventlet.Timeout:
             self.fail('Timeout escaped!')
