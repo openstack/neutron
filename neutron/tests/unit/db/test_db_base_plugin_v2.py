@@ -209,13 +209,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         )
 
     def new_show_request(self, resource, id, fmt=None,
-                         subresource=None, fields=None):
+                         subresource=None, fields=None, sub_id=None):
         if fields:
             params = "&".join(["fields=%s" % x for x in fields])
         else:
             params = None
         return self._req('GET', resource, None, fmt, id=id,
-                         params=params, subresource=subresource)
+                         params=params, subresource=subresource, sub_id=sub_id)
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
                            sub_id=None, data=None):
@@ -230,14 +230,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         )
 
     def new_update_request(self, resource, data, id, fmt=None,
-                           subresource=None, context=None):
+                           subresource=None, context=None, sub_id=None):
         return self._req(
             'PUT', resource, data, fmt, id=id, subresource=subresource,
-            context=context
+            sub_id=sub_id, context=context
         )
 
     def new_action_request(self, resource, data, id, action, fmt=None,
-                           subresource=None):
+                           subresource=None, sub_id=None):
         return self._req(
             'PUT',
             resource,
@@ -245,7 +245,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             fmt,
             id=id,
             action=action,
-            subresource=subresource
+            subresource=subresource,
+            sub_id=sub_id
         )
 
     def deserialize(self, content_type, response):
