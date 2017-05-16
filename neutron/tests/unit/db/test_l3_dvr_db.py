@@ -26,8 +26,8 @@ from oslo_utils import uuidutils
 
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
-from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_dvr_db
+from neutron.db import l3_dvrscheduler_db
 from neutron.extensions import l3
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -36,7 +36,7 @@ _uuid = uuidutils.generate_uuid
 
 class FakeL3Plugin(common_db_mixin.CommonDbMixin,
                    l3_dvr_db.L3_NAT_with_dvr_db_mixin,
-                   l3_agentschedulers_db.L3AgentSchedulerDbMixin,
+                   l3_dvrscheduler_db.L3_DVRsch_db_mixin,
                    agents_db.AgentDbMixin):
     pass
 
@@ -494,7 +494,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
-        plugin = mock.MagicMock()
         with self.network() as net_ext,\
                 self.subnet() as subnet1,\
                 self.subnet(cidr='20.0.0.0/24') as subnet2:
@@ -523,7 +522,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, filters=dvr_filters)
             self.assertEqual(2, len(dvr_ports))
 
-            directory.add_plugin(const.L3, plugin)
             self.mixin.remove_router_interface(
                 self.ctx, router['id'], {'port_id': dvr_ports[0]['id']})
 
@@ -541,7 +539,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
-        plugin = mock.MagicMock()
         with self.network() as net_ext, self.network() as net_int:
             ext_net_id = net_ext['network']['id']
             self.core_plugin.update_network(
@@ -560,7 +557,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                     {'subnet_id': subnet_v4['subnet']['id']})
                 self.mixin.add_router_interface(self.ctx, router['id'],
                     {'subnet_id': subnet_v6['subnet']['id']})
-                directory.add_plugin(const.L3, plugin)
                 return router, subnet_v4, subnet_v6
 
     def test_undo_router_interface_change_on_csnat_error(self):

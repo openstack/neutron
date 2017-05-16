@@ -300,6 +300,7 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.l3_plugin = l3_router_plugin.L3RouterPlugin()
         directory.add_plugin(constants.L3, self.l3_plugin)
         self.l3_plugin.router_scheduler = None
+        directory.add_plugin(constants.L3, self.l3_plugin)
         self.adminContext = context.get_admin_context()
         self.adminContext.tenant_id = '_func_test_tenant_'
 
