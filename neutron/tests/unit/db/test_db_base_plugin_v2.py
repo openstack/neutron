@@ -1581,6 +1581,36 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
 
+    def test_delete_network_port_exists_owned_by_network_port_not_found(self):
+        """Tests that we continue to gracefully delete the network even if
+        a neutron:dhcp-owned port was deleted concurrently.
+        """
+        res = self._create_network(fmt=self.fmt, name='net',
+                                   admin_state_up=True)
+        network = self.deserialize(self.fmt, res)
+        network_id = network['network']['id']
+        self._create_port(self.fmt, network_id,
+                          device_owner=constants.DEVICE_OWNER_DHCP)
+        # Raise PortNotFound when trying to delete the port to simulate a
+        # concurrent delete race; note that we actually have to delete the port
+        # "out of band" otherwise deleting the network will fail because of
+        # constraints in the data model.
+        plugin = directory.get_plugin()
+        orig_delete = plugin.delete_port
+
+        def fake_delete_port(context, id):
+            # Delete the port for real from the database and then raise
+            # PortNotFound to simulate the race.
+            self.assertIsNone(orig_delete(context, id))
+            raise lib_exc.PortNotFound(port_id=id)
+
+        p = mock.patch.object(plugin, 'delete_port')
+        mock_del_port = p.start()
+        mock_del_port.side_effect = fake_delete_port
+        req = self.new_delete_request('networks', network_id)
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
+
     def test_update_port_delete_ip(self):
         with self.subnet() as subnet:
             with self.port(subnet=subnet) as port:
