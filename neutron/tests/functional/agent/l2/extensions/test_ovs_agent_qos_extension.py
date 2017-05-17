@@ -124,7 +124,7 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
             self.agent.int_br, port['vif_name'], rule)
 
     def _assert_dscp_marking_rule_is_set(self, port, dscp_rule):
-        port_num = self.agent.int_br._get_port_ofport(port['vif_name'])
+        port_num = self.agent.int_br._get_port_val(port['vif_name'], 'ofport')
 
         flows = self.agent.int_br.dump_flows_for(table='0',
                                                  in_port=str(port_num))
@@ -132,7 +132,7 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         self.assertEqual(dscp_rule.dscp_mark << 2, tos_mark)
 
     def _assert_dscp_marking_rule_not_set(self, port):
-        port_num = self.agent.int_br._get_port_ofport(port['vif_name'])
+        port_num = self.agent.int_br._get_port_val(port['vif_name'], 'ofport')
 
         flows = self.agent.int_br.dump_flows_for(table='0',
                                                  in_port=str(port_num))

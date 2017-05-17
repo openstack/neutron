@@ -46,8 +46,6 @@ class TestOVSCleanup(base.BaseTestCase):
         mock_collect.return_value = ports
 
         util.main()
-        mock_ovs.assert_has_calls([mock.call().delete_ports(
-            all_ports=False)])
         mock_collect.assert_called_once_with(set(bridges))
         mock_delete.assert_called_once_with(ports)
 

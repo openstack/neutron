@@ -24,6 +24,7 @@ from neutron.common import config
 from neutron.conf.agent import cmd
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 
 LOG = logging.getLogger(__name__)
@@ -44,12 +45,22 @@ def setup_conf():
     return conf
 
 
+def get_bridge_deletable_ports(br):
+    """
+    Return a list of OVS Bridge ports, excluding the ports who should not be
+    cleaned. such ports are tagged with the 'skip_cleanup' key in external_ids.
+    """
+    return [port.port_name for port in br.get_vif_ports()
+            if constants.SKIP_CLEANUP not in
+            br.get_port_external_ids(port.port_name)]
+
+
 def collect_neutron_ports(bridges):
     """Collect ports created by Neutron from OVS."""
     ports = []
     for bridge in bridges:
         ovs = ovs_lib.OVSBridge(bridge)
-        ports += [port.port_name for port in ovs.get_vif_ports()]
+        ports += get_bridge_deletable_ports(ovs)
     return ports
 
 
@@ -94,7 +105,12 @@ def main():
     for bridge in bridges:
         LOG.info(_LI("Cleaning bridge: %s"), bridge)
         ovs = ovs_lib.OVSBridge(bridge)
-        ovs.delete_ports(all_ports=conf.ovs_all_ports)
+        if conf.ovs_all_ports:
+            port_names = ovs.get_port_name_list()
+        else:
+            port_names = get_bridge_deletable_ports(ovs)
+        for port_name in port_names:
+            ovs.delete_port(port_name)
 
     # Remove remaining ports created by Neutron (usually veth pair)
     delete_neutron_ports(ports)

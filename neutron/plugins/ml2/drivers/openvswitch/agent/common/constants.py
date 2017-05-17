@@ -149,3 +149,7 @@ OVS_BRIDGE_NAME = 'ovs_bridge_name'
 
 # callback resource for notifying to ovsdb handler
 OVSDB_RESOURCE = 'ovsdb'
+
+# Used in ovs port 'external_ids' in order mark it for no cleanup when
+# ovs_cleanup script is used.
+SKIP_CLEANUP = 'skip_cleanup'
