@@ -256,7 +256,7 @@ class TestConjIdMap(base.BaseTestCase):
         result = self.conj_id_map.delete_sg('sg1')
         self.assertIn(('sg1', ids[0]), result)
         self.assertIn(('sg2', ids[1]), result)
-        self.assertEqual(len(self.conj_id_map.id_map), 0)
+        self.assertFalse(self.conj_id_map.id_map)
 
         reallocated = self.conj_id_map.get_conj_id(
             'sg-foo', 'sg-foo', firewall.INGRESS_DIRECTION,
