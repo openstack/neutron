@@ -435,7 +435,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 models_v2.Port.id).filter_by(network_id=id).filter(
                 models_v2.Port.device_owner.in_(AUTO_DELETE_PORT_OWNERS))]
         for port_id in auto_delete_port_ids:
-            self.delete_port(context.elevated(), port_id)
+            try:
+                self.delete_port(context.elevated(), port_id)
+            except exc.PortNotFound:
+                # Don't raise if something else concurrently deleted the port
+                LOG.debug("Ignoring PortNotFound when deleting port '%s'. "
+                          "The port has already been deleted.", port_id)
         # clean up subnets
         subnets = self._get_subnets_by_network(context, id)
         with db_api.exc_to_retry(os_db_exc.DBReferenceError):
