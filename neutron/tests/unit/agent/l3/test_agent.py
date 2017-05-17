@@ -253,6 +253,23 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             check.assert_called_once_with(ha_id,
                                           n_const.HA_ROUTER_STATE_STANDBY)
 
+    def test_periodic_sync_routers_task_not_check_ha_state_for_router(self):
+        # DVR-only agent should not trigger ha state check
+        self.conf.set_override('agent_mode', lib_constants.L3_AGENT_MODE_DVR)
+        agent = l3_agent.L3NATAgentWithStateReport(HOSTNAME, self.conf)
+        ha_id = _uuid()
+        active_routers = [
+            {'id': ha_id,
+             n_const.HA_ROUTER_STATE_KEY: n_const.HA_ROUTER_STATE_STANDBY,
+             'ha': True},
+            {'id': _uuid()}]
+        self.plugin_api.get_router_ids.return_value = [r['id'] for r
+                                                       in active_routers]
+        self.plugin_api.get_routers.return_value = active_routers
+        with mock.patch.object(agent, 'check_ha_state_for_router') as check:
+            agent.periodic_sync_routers_task(agent.context)
+            self.assertFalse(check.called)
+
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.plugin_api.get_router_ids.return_value = ['fake_id']
