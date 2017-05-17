@@ -880,11 +880,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 mock.patch.object(
                     utils,
                     "get_interface_mac",
-                    return_value='16:63:69:10:a0:59') as mock_gim:
+                    side_effect=[None, '16:63:69:10:a0:59']) as mock_gim:
 
             agent_id = lbm.get_agent_id()
             self.assertEqual("lb16636910a059", agent_id)
-            mock_gim.assert_called_with("eth1")
+            mock_gim.assert_has_calls([mock.call("eth1"), mock.call("eth2")])
 
 
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
