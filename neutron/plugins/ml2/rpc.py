@@ -58,6 +58,14 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
         super(RpcCallbacks, self).__init__()
 
+    def _get_new_status(self, host, port_context):
+        port = port_context.current
+        if not host or host == port_context.host:
+            new_status = (n_const.PORT_STATUS_BUILD if port['admin_state_up']
+                          else n_const.PORT_STATUS_DOWN)
+            if port['status'] != new_status:
+                return new_status
+
     def get_device_details(self, rpc_context, **kwargs):
         """Agent requests device details."""
         agent_id = kwargs.get('agent_id')
@@ -88,16 +96,24 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             if port['network_id'] not in cached_networks:
                 cached_networks[port['network_id']] = (
                     port_context.network.current)
-        return self._get_device_details(rpc_context, agent_id=agent_id,
-                                        host=host, device=device,
-                                        port_context=port_context)
+        result = self._get_device_details(rpc_context, agent_id=agent_id,
+                                          host=host, device=device,
+                                          port_context=port_context)
+        if 'network_id' in result:
+            # success so we update status
+            new_status = self._get_new_status(host, port_context)
+            if new_status:
+                plugin.update_port_status(rpc_context,
+                                          port_id,
+                                          new_status,
+                                          host,
+                                          port_context.network.current)
+        return result
 
     def _get_device_details(self, rpc_context, agent_id, host, device,
                             port_context):
         segment = port_context.bottom_bound_segment
         port = port_context.current
-        plugin = directory.get_plugin()
-        port_id = port_context.current['id']
 
         if not segment:
             LOG.warning(_LW("Device %(device)s requested by agent "
@@ -108,16 +124,6 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                          'network_id': port['network_id'],
                          'vif_type': port_context.vif_type})
             return {'device': device}
-
-        if (not host or host == port_context.host):
-            new_status = (n_const.PORT_STATUS_BUILD if port['admin_state_up']
-                          else n_const.PORT_STATUS_DOWN)
-            if port['status'] != new_status:
-                plugin.update_port_status(rpc_context,
-                                          port_id,
-                                          new_status,
-                                          host,
-                                          port_context.network.current)
 
         network_qos_policy_id = port_context.network._network.get(
             qos_consts.QOS_POLICY_ID)
@@ -184,6 +190,18 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 LOG.exception(_LE("Failed to get details for device %s"),
                               device)
                 failed_devices.append(device)
+        new_status_map = {ctxt.current['id']: self._get_new_status(host, ctxt)
+                          for ctxt in bound_contexts.values() if ctxt}
+        # filter out any without status changes
+        new_status_map = {p: s for p, s in new_status_map.items() if s}
+        try:
+            for port_id, new_status in new_status_map.items():
+                plugin.update_port_status(rpc_context, port_id,
+                                          new_status, host)
+        except Exception:
+            LOG.exception("Failure updating statuses, retrying all")
+            failed_devices = devices_to_fetch
+            devices = []
 
         return {'devices': devices,
                 'failed_devices': failed_devices}
