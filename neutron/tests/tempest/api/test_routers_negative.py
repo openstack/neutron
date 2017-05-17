@@ -85,3 +85,18 @@ class DvrRoutersNegativeTest(RoutersNegativeTestBase):
         with testtools.ExpectedException(lib_exc.Forbidden):
             self.create_router(
                 data_utils.rand_name('router'), distributed=True)
+
+
+class HaRoutersNegativeTest(RoutersNegativeTestBase):
+
+    @classmethod
+    @test.requires_ext(extension="l3-ha", service="network")
+    def skip_checks(cls):
+        super(HaRoutersNegativeTest, cls).skip_checks()
+
+    @test.attr(type='negative')
+    @decorators.idempotent_id('821b85b9-9c51-40f3-831f-bf223a7e0084')
+    def test_router_create_tenant_ha_returns_forbidden(self):
+        with testtools.ExpectedException(lib_exc.Forbidden):
+            self.create_router(
+                data_utils.rand_name('router'), ha=True)
