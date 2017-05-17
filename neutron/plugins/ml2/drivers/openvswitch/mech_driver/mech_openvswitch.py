@@ -23,7 +23,6 @@ from oslo_config import cfg
 
 from neutron.agent import securitygroups_rpc
 from neutron.plugins.common import constants as p_constants
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
@@ -69,16 +68,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """Currently Openvswitch driver doesn't support vlan transparency."""
         return False
 
-    def try_to_bind_segment_for_agent(self, context, segment, agent):
-        if self.check_segment_for_agent(segment, agent):
-            context.set_binding(segment[api.ID],
-                                self.get_vif_type(agent, context),
-                                self.get_vif_details(agent, context))
-            return True
-        else:
-            return False
-
-    def get_vif_type(self, agent, context):
+    def get_vif_type(self, context, agent, segment):
         caps = agent['configurations'].get('ovs_capabilities', {})
         if (any(x in caps.get('iface_types', []) for x
                 in [a_const.OVS_DPDK_VHOST_USER,
@@ -96,7 +86,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             return portbindings.VHOST_USER_MODE_SERVER
         return portbindings.VHOST_USER_MODE_CLIENT
 
-    def get_vif_details(self, agent, context):
+    def get_vif_details(self, context, agent, segment):
         vif_details = self._pre_get_vif_details(agent, context)
         self._set_bridge_name(context.current, vif_details)
         return vif_details
@@ -116,7 +106,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def _pre_get_vif_details(self, agent, context):
         a_config = agent['configurations']
-        vif_type = self.get_vif_type(agent, context)
+        vif_type = self.get_vif_type(context, agent, segment=None)
         if vif_type != portbindings.VIF_TYPE_VHOST_USER:
             details = dict(self.vif_details)
             hybrid = portbindings.OVS_HYBRID_PLUG
