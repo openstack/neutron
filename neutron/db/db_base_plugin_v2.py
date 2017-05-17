@@ -853,6 +853,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             registry.notify(resources.SUBNET_GATEWAY, events.BEFORE_UPDATE,
                             self, **kwargs)
 
+        kwargs = {'context': context, 'original_subnet': orig,
+                  'request': s}
+        registry.notify(resources.SUBNET, events.BEFORE_UPDATE,
+                        self, **kwargs)
+
         with db_api.context_manager.writer.using(context):
             subnet, changes = self.ipam.update_db_subnet(context, id, s,
                                                          db_pools)
