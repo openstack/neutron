@@ -239,7 +239,8 @@ class TrunkTest(base.BaseTempestTestCase):
             # Configure VLAN interfaces on server
             command = CONFIGURE_VLAN_INTERFACE_COMMANDS % {'tag': vlan_tag}
             server['ssh_client'].exec_command(command)
-            out = server['ssh_client'].exec_command('ip addr list')
+            out = server['ssh_client'].exec_command(
+                'PATH=$PATH:/usr/sbin;ip addr list')
             LOG.debug("Interfaces on server %s: %s", server, out)
 
         # Ping from server1 to server2 via VLAN interface should fail because
