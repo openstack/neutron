@@ -24,6 +24,7 @@ from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
+from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
 import testtools
@@ -1416,6 +1417,14 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         return self._test_class(self.context,
                                 **remove_timestamps_from_fields(
                                     fields, self._test_class.fields))
+
+    def test_downgrade_to_1_0(self):
+        for obj in self.objs:
+            try:
+                obj.obj_to_primitive(target_version='1.0')
+            except exception.IncompatibleObjectVersion:
+                # the only exception we should allow is IncompatibleVersion
+                pass
 
     def test_get_object_create_update_delete(self):
         # Timestamps can't be initialized and multiple objects may use standard
