@@ -25,6 +25,7 @@ from neutron.objects import base as base_obj
 from neutron.objects import network as network_object
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
+from neutron.objects.qos import qos_policy_validator as checker
 from neutron.objects.qos import rule_type as rule_type_object
 from neutron.services.qos.drivers import manager
 from neutron.services.qos import qos_consts
@@ -285,6 +286,7 @@ class QoSPlugin(qos.QoSPluginBase):
         with db_api.autonested_transaction(context.session):
             # Ensure that we have access to the policy.
             policy = self._get_policy_obj(context, policy_id)
+            checker.check_bandwidth_rule_conflict(policy, rule_data)
             rule = rule_cls(context, qos_policy_id=policy_id, **rule_data)
             rule.create()
             policy.reload_rules()
@@ -319,6 +321,7 @@ class QoSPlugin(qos.QoSPluginBase):
             # Ensure we have access to the policy.
             policy = self._get_policy_obj(context, policy_id)
             # Ensure the rule belongs to the policy.
+            checker.check_bandwidth_rule_conflict(policy, rule_data)
             policy.get_rule_by_id(rule_id)
             rule = rule_cls(context, id=rule_id)
             rule.update_fields(rule_data, reset_changes=True)
