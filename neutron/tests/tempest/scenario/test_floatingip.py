@@ -51,15 +51,10 @@ class FloatingIpTestCasesMixin(object):
         cls.create_loginable_secgroup_rule(secgroup_id=cls.secgroup['id'])
         cls.create_pingable_secgroup_rule(secgroup_id=cls.secgroup['id'])
 
-        cls._src_server = cls._create_server()
         if cls.same_network:
             cls._dest_network = cls.network
         else:
             cls._dest_network = cls._create_dest_network()
-        cls._dest_server_with_fip = cls._create_server(
-            network=cls._dest_network)
-        cls._dest_server_without_fip = cls._create_server(
-            create_floating_ip=False, network=cls._dest_network)
 
     @classmethod
     def _create_dest_network(cls):
@@ -69,28 +64,27 @@ class FloatingIpTestCasesMixin(object):
         cls.create_router_interface(cls.router['id'], subnet['id'])
         return network
 
-    @classmethod
-    def _create_server(cls, create_floating_ip=True, network=None):
+    def _create_server(self, create_floating_ip=True, network=None):
         if network is None:
-            network = cls.network
-        port = cls.create_port(network, security_groups=[cls.secgroup['id']])
+            network = self.network
+        port = self.create_port(network, security_groups=[self.secgroup['id']])
         if create_floating_ip:
-            fip = cls.create_and_associate_floatingip(port['id'])
+            fip = self.create_and_associate_floatingip(port['id'])
         else:
             fip = None
-        server = cls.create_server(
+        server = self.create_server(
             flavor_ref=CONF.compute.flavor_ref,
             image_ref=CONF.compute.image_ref,
-            key_name=cls.keypair['name'],
+            key_name=self.keypair['name'],
             networks=[{'port': port['id']}])['server']
-        waiters.wait_for_server_status(cls.manager.servers_client,
+        waiters.wait_for_server_status(self.manager.servers_client,
                                        server['id'],
                                        constants.SERVER_STATUS_ACTIVE)
         return {'port': port, 'fip': fip, 'server': server}
 
     def _test_east_west(self):
         # Source VM
-        server1 = self._src_server
+        server1 = self._create_server()
         server1_ip = server1['fip']['floating_ip_address']
         ssh_client = ssh.Client(server1_ip,
                                 CONF.validation.image_ssh_user,
@@ -98,9 +92,10 @@ class FloatingIpTestCasesMixin(object):
 
         # Destination VM
         if self.dest_has_fip:
-            dest_server = self._dest_server_with_fip
+            dest_server = self._create_server(network=self._dest_network)
         else:
-            dest_server = self._dest_server_without_fip
+            dest_server = self._create_server(create_floating_ip=False,
+                                              network=self._dest_network)
 
         # Check connectivity
         self.check_remote_connectivity(ssh_client,
