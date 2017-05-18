@@ -385,4 +385,4 @@ class Port(base.NeutronDbObject):
         _target_version = versionutils.convert_version_to_tuple(target_version)
 
         if _target_version < (1, 1):
-            primitive.pop('data_plane_status')
+            primitive.pop('data_plane_status', None)
