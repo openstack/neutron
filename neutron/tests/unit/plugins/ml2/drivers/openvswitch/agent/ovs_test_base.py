@@ -42,7 +42,7 @@ class OVSAgentTestBase(OVSAgentConfigTestBase):
     def setUp(self):
         super(OVSAgentTestBase, self).setUp()
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
         self.br_int_cls = importutils.import_class(self._BR_INT_CLASS)

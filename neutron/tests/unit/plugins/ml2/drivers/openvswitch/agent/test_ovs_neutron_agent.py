@@ -123,6 +123,7 @@ class TestOvsNeutronAgent(object):
         mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                    new_callable=mock.PropertyMock,
                    return_value={}).start()
+        mock.patch('neutron.agent.ovsdb.impl_idl._connection').start()
         self.agent = self._make_agent()
         self.agent.sg_agent = mock.Mock()
 
@@ -2161,7 +2162,7 @@ class AncillaryBridgesTest(object):
     def setUp(self):
         super(AncillaryBridgesTest, self).setUp()
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
         notifier_p = mock.patch(NOTIFIER)
@@ -2294,6 +2295,7 @@ class TestOvsDvrNeutronAgent(object):
         mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                    new_callable=mock.PropertyMock,
                    return_value={}).start()
+        mock.patch('neutron.agent.ovsdb.impl_idl._connection').start()
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
                                'setup_integration_br'),\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,

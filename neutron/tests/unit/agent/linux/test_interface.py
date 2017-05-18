@@ -382,8 +382,7 @@ class TestOVSInterfaceDriver(TestBase):
                                          internal=True)
 
     def _test_plug(self, bridge=None, namespace=None):
-        with mock.patch('neutron.agent.ovsdb.native.connection.'
-                        'Connection.start'):
+        with mock.patch('neutron.agent.ovsdb.impl_idl._connection'):
             if not bridge:
                 bridge = 'br-int'
 
@@ -456,8 +455,7 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
 
     def _test_plug(self, devname=None, bridge=None, namespace=None,
                    prefix=None):
-        with mock.patch('neutron.agent.ovsdb.native.connection.'
-                        'Connection.start'):
+        with mock.patch('neutron.agent.ovsdb.impl_idl._connection'):
 
             if not devname:
                 devname = 'ns-0'

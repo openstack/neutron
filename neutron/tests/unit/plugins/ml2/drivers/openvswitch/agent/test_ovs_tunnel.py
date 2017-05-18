@@ -78,7 +78,7 @@ class TunnelTest(object):
         super(TunnelTest, self).setUp()
         self.useFixture(test_vlanmanager.LocalVlanManagerFixture())
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
         cfg.CONF.set_default('firewall_driver',
@@ -110,6 +110,7 @@ class TunnelTest(object):
                           new_callable=mock.PropertyMock,
                           return_value={}).start()
 
+        mock.patch('neutron.agent.ovsdb.impl_idl._connection').start()
         self.ovs_bridges = {
             self.INT_BRIDGE: mock.create_autospec(
                 self.br_int_cls('br-int')),
