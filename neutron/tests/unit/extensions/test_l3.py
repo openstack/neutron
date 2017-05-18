@@ -3264,7 +3264,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         # make sure the callback is registered.
         registry.subscribe(
             l3_db.L3RpcNotifierMixin._notify_subnet_gateway_ip_update,
-            resources.SUBNET_GATEWAY,
+            resources.SUBNET,
             events.AFTER_UPDATE)
         with mock.patch.object(plugin.l3_rpc_notifier,
                                'routers_updated') as chk_method:
