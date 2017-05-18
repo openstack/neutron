@@ -2562,6 +2562,16 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         fip2_r2_res = associate_and_assert(fip2, p2)
                         self.assertEqual(fip2_r2_res, r2['router']['id'])
 
+    def test_floatingip_update_different_port_owner_as_admin(self):
+        with self.subnet() as private_sub:
+            with self.floatingip_no_assoc(private_sub) as fip:
+                with self.port(subnet=private_sub, tenant_id='other') as p:
+                    body = self._update('floatingips', fip['floatingip']['id'],
+                                        {'floatingip':
+                                         {'port_id': p['port']['id']}})
+                    self.assertEqual(p['port']['id'],
+                                     body['floatingip']['port_id'])
+
     def test_floatingip_port_delete(self):
         with self.subnet() as private_sub:
             with self.floatingip_no_assoc(private_sub) as fip:
