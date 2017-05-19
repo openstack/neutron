@@ -2099,6 +2099,28 @@ class TestMl2AllowedAddressPairs(Ml2PluginV2TestCase,
             plugin=PLUGIN_NAME)
 
 
+class TestMl2PortSecurity(Ml2PluginV2TestCase):
+
+    def setUp(self):
+        config.cfg.CONF.set_override('extension_drivers',
+                                     ['port_security'],
+                                     group='ml2')
+        config.cfg.CONF.set_override('enable_security_group',
+                                     False,
+                                     group='SECURITYGROUP')
+        super(TestMl2PortSecurity, self).setUp()
+
+    def test_port_update_without_security_groups(self):
+        with self.port() as port:
+            plugin = directory.get_plugin()
+            ctx = context.get_admin_context()
+            self.assertTrue(port['port']['port_security_enabled'])
+            updated_port = plugin.update_port(
+                ctx, port['port']['id'],
+                {'port': {'port_security_enabled': False}})
+            self.assertFalse(updated_port['port_security_enabled'])
+
+
 class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
 
