@@ -21,14 +21,6 @@ from ovs.db import idl
 
 class OVSDBConnectionTestCase(base.BaseSudoTestCase):
 
-    def test_limit_tables(self):
-        self.connection = connection.Connection(
-            cfg.CONF.OVS.ovsdb_connection,
-            cfg.CONF.ovs_vsctl_timeout, 'Open_vSwitch')
-        tables = ['Open_vSwitch', 'Bridge', 'Port']
-        self.connection.start(table_name_list=tables)
-        self.assertItemsEqual(tables, self.connection.idl.tables.keys())
-
     def test_idl_factory(self):
         tables = ['Open_vSwitch', 'Bridge', 'Port']
 
