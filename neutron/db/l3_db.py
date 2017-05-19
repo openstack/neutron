@@ -424,6 +424,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         self._delete_router_gw_port_db(context, router)
         self._core_plugin.delete_port(
             admin_ctx, gw_port_id, l3_port_check=False)
+        with context.session.begin(subtransactions=True):
+            context.session.refresh(router)
         registry.notify(resources.ROUTER_GATEWAY,
                         events.AFTER_DELETE, self,
                         router_id=router_id,
@@ -531,7 +533,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         router = self._get_router(context, router_id)
         device_owner = self._get_device_owner(context, router)
         if any(rp.port_type == device_owner
-               for rp in router.attached_ports.all()):
+               for rp in router.attached_ports):
             raise l3.RouterInUse(router_id=router_id)
         return router
 
@@ -543,13 +545,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         router = self._ensure_router_not_in_use(context, id)
         original = self._make_router_dict(router)
         self._delete_current_gw_port(context, id, router, None)
+        with context.session.begin(subtransactions=True):
+            context.session.refresh(router)
 
-        router_ports = router.attached_ports.all()
+        router_ports = router.attached_ports
         for rp in router_ports:
             self._core_plugin.delete_port(context.elevated(),
                                           rp.port.id,
                                           l3_port_check=False)
         with context.session.begin(subtransactions=True):
+            context.session.refresh(router)
             registry.notify(resources.ROUTER, events.PRECOMMIT_DELETE,
                             self, context=context, router_db=router,
                             router_id=id)
@@ -887,6 +892,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         new_interface=new_router_intf,
                         interface_info=interface_info)
 
+        with context.session.begin(subtransactions=True):
+            context.session.refresh(router)
         return self._make_router_interface_info(
             router.id, port['tenant_id'], port['id'], port['network_id'],
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
@@ -1013,6 +1020,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         port=port,
                         router_id=router_id,
                         interface_info=interface_info)
+        with context.session.begin(subtransactions=True):
+            context.session.refresh(router)
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], port['network_id'],
                                                 subnets[0]['id'],
@@ -1922,6 +1931,7 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
     def _migrate_router_ports(
         self, context, router_db, old_owner, new_owner):
         """Update the model to support the dvr case of a router."""
-        for rp in router_db.attached_ports.filter_by(port_type=old_owner):
-            rp.port_type = new_owner
-            rp.port.device_owner = new_owner
+        for rp in router_db.attached_ports:
+            if rp.port_type == old_owner:
+                rp.port_type = new_owner
+                rp.port.device_owner = new_owner

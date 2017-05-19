@@ -1202,7 +1202,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         router = self._migrate_router(router['id'], False)
 
         self.assertFalse(router.extra_attributes['ha'])
-        for routerport in router.attached_ports.all():
+        for routerport in router.attached_ports:
             self.assertEqual(constants.DEVICE_OWNER_ROUTER_INTF,
                              routerport.port_type)
             self.assertEqual(constants.DEVICE_OWNER_ROUTER_INTF,
