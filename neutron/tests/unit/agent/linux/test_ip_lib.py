@@ -1666,14 +1666,17 @@ class TestArpPing(TestIPCmdBase):
                                       ARPING_COUNT)
 
         self.assertTrue(spawn_n.called)
-        mIPWrapper.assert_called_once_with(namespace=mock.sentinel.ns_name)
+        mIPWrapper.assert_has_calls([
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=mock.ANY)
+        ] * ARPING_COUNT)
 
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
 
         # Just test that arping is called with the right arguments
         arping_cmd = ['arping', '-A',
                       '-I', mock.sentinel.iface_name,
-                      '-c', ARPING_COUNT,
+                      '-c', 1,
                       '-w', mock.ANY,
                       address]
         ip_wrapper.netns.execute.assert_any_call(arping_cmd,
