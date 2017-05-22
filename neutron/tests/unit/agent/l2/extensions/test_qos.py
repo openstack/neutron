@@ -23,6 +23,7 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import constants as common_constants
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
@@ -52,18 +53,30 @@ TEST_PORT2 = {'port_id': 'test_port_id_2',
              'qos_policy_id': TEST_POLICY2.id}
 
 FAKE_RULE_ID = uuidutils.generate_uuid()
+FAKE_RULE_ID_2 = uuidutils.generate_uuid()
 REALLY_FAKE_RULE_ID = uuidutils.generate_uuid()
 
 
 class FakeDriver(qos_linux.QosLinuxAgentDriver):
 
-    SUPPORTED_RULES = {qos_consts.RULE_TYPE_BANDWIDTH_LIMIT}
+    SUPPORTED_RULES = {
+        qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: {
+            qos_consts.MAX_KBPS: {
+                'type:range': [0, common_constants.DB_INTEGER_MAX_VALUE]},
+            qos_consts.MAX_BURST: {
+                'type:range': [0, common_constants.DB_INTEGER_MAX_VALUE]},
+            qos_consts.DIRECTION: {
+                'type:values': [common_constants.EGRESS_DIRECTION,
+                                common_constants.INGRESS_DIRECTION]}
+        },
+    }
 
     def __init__(self):
         super(FakeDriver, self).__init__()
         self.create_bandwidth_limit = mock.Mock()
         self.update_bandwidth_limit = mock.Mock()
         self.delete_bandwidth_limit = mock.Mock()
+        self.delete_bandwidth_limit_ingress = mock.Mock()
 
     def initialize(self):
         pass
@@ -80,11 +93,20 @@ class QosAgentDriverTestCase(base.BaseTestCase):
         super(QosAgentDriverTestCase, self).setUp()
         self.driver = FakeDriver()
         self.policy = TEST_POLICY
-        self.rule = (
-            rule.QosBandwidthLimitRule(context=None, id=FAKE_RULE_ID,
-                                       qos_policy_id=self.policy.id,
-                                       max_kbps=100, max_burst_kbps=200))
-        self.policy.rules = [self.rule]
+        self.egress_bandwidth_limit_rule = (
+            rule.QosBandwidthLimitRule(
+                context=None, id=FAKE_RULE_ID,
+                qos_policy_id=self.policy.id,
+                max_kbps=100, max_burst_kbps=200,
+                direction=common_constants.EGRESS_DIRECTION))
+        self.ingress_bandwidth_limit_rule = (
+            rule.QosBandwidthLimitRule(
+                context=None, id=FAKE_RULE_ID_2,
+                qos_policy_id=self.policy.id,
+                max_kbps=100, max_burst_kbps=200,
+                direction=common_constants.INGRESS_DIRECTION))
+        self.policy.rules = [self.egress_bandwidth_limit_rule,
+                             self.ingress_bandwidth_limit_rule]
         self.port = {'qos_policy_id': None, 'network_qos_policy_id': None,
                      'device_owner': 'random-device-owner'}
 
@@ -93,44 +115,100 @@ class QosAgentDriverTestCase(base.BaseTestCase):
 
     def test_create(self):
         self.driver.create(self.port, self.policy)
-        self.driver.create_bandwidth_limit.assert_called_with(
-            self.port, self.rule)
+        self.driver.create_bandwidth_limit.assert_has_calls([
+            mock.call(self.port, self.egress_bandwidth_limit_rule),
+            mock.call(self.port, self.ingress_bandwidth_limit_rule)
+        ])
 
     def test_update(self):
         self.driver.update(self.port, self.policy)
-        self.driver.update_bandwidth_limit.assert_called_with(
-            self.port, self.rule)
+        self.driver.update_bandwidth_limit.assert_has_calls([
+            mock.call(self.port, self.egress_bandwidth_limit_rule),
+            mock.call(self.port, self.ingress_bandwidth_limit_rule)
+        ])
 
     def test_delete(self):
         self.driver.delete(self.port, self.policy)
         self.driver.delete_bandwidth_limit.assert_called_with(self.port)
+        self.driver.delete_bandwidth_limit_ingress.assert_called_with(
+            self.port)
 
     def test_delete_no_policy(self):
         self.driver.delete(self.port, qos_policy=None)
         self.driver.delete_bandwidth_limit.assert_called_with(self.port)
+        self.driver.delete_bandwidth_limit_ingress.assert_called_with(
+            self.port)
 
     def test__iterate_rules_with_unknown_rule_type(self):
         self.policy.rules.append(self.fake_rule)
         rules = list(self.driver._iterate_rules(self.policy.rules))
-        self.assertEqual(1, len(rules))
+        self.assertEqual(2, len(rules))
         self.assertIsInstance(rules[0], rule.QosBandwidthLimitRule)
+        self.assertIsInstance(rules[1], rule.QosBandwidthLimitRule)
 
     def test__handle_update_create_rules_checks_should_apply_to_port(self):
-        self.rule.should_apply_to_port = mock.Mock(return_value=False)
+        self.egress_bandwidth_limit_rule.should_apply_to_port = mock.Mock(
+            return_value=False)
+        self.ingress_bandwidth_limit_rule.should_apply_to_port = mock.Mock(
+            return_value=False)
         self.driver.create(self.port, self.policy)
         self.assertFalse(self.driver.create_bandwidth_limit.called)
 
-        self.rule.should_apply_to_port = mock.Mock(return_value=True)
+        self.egress_bandwidth_limit_rule.should_apply_to_port = mock.Mock(
+            return_value=True)
+        self.ingress_bandwidth_limit_rule.should_apply_to_port = mock.Mock(
+            return_value=True)
         self.driver.create(self.port, self.policy)
         self.assertTrue(self.driver.create_bandwidth_limit.called)
 
     def test__get_max_burst_value(self):
-        rule = self.rule
+        rule = self.egress_bandwidth_limit_rule
         rule.max_burst_kbps = 0
         expected_burst = rule.max_kbps * qos_consts.DEFAULT_BURST_RATE
         self.assertEqual(
             expected_burst, self.driver._get_egress_burst_value(rule)
         )
+
+    def test__rule_type_has_ingress_direction(self):
+        self.assertTrue(
+            self.driver._rule_type_has_ingress_direction(
+                qos_consts.RULE_TYPE_BANDWIDTH_LIMIT))
+
+        # Should return False for rule type other than
+        # RULE_TYPE_BANDWIDTH_LIMIT
+        supported_rules = {
+            qos_consts.RULE_TYPE_DSCP_MARKING: {
+                qos_consts.DSCP_MARK: {
+                    'type:values': common_constants.VALID_DSCP_MARKS}
+            }
+        }
+        with mock.patch.dict(self.driver.SUPPORTED_RULES, supported_rules):
+            self.assertFalse(
+                self.driver._rule_type_has_ingress_direction(
+                    qos_consts.RULE_TYPE_DSCP_MARKING))
+
+        # Should return False for rule type RULE_TYPE_BANDWIDTH_LIMIT but
+        # without INGRESS_DIRECTION in supported values
+        supported_rules = {
+            qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: {
+                'type:values': [common_constants.EGRESS_DIRECTION]
+            }
+        }
+        with mock.patch.dict(self.driver.SUPPORTED_RULES, supported_rules):
+            self.assertFalse(
+                self.driver._rule_type_has_ingress_direction(
+                    qos_consts.RULE_TYPE_BANDWIDTH_LIMIT))
+
+    def test__rule_is_ingress_direction(self):
+        self.assertFalse(
+            self.driver._rule_is_ingress_direction(
+                self.egress_bandwidth_limit_rule))
+        self.assertFalse(
+            self.driver._rule_is_ingress_direction(
+                self.fake_rule))
+        self.assertTrue(
+            self.driver._rule_is_ingress_direction(
+                self.ingress_bandwidth_limit_rule))
 
 
 class QosExtensionBaseTestCase(base.BaseTestCase):
