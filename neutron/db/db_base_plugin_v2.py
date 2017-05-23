@@ -16,6 +16,8 @@
 import functools
 
 import netaddr
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -37,7 +39,6 @@ from sqlalchemy import not_
 
 from neutron._i18n import _, _LE, _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
@@ -947,7 +948,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if auto_subnet:
                 # special flag to avoid re-allocation on auto subnets
                 fixed.append({'subnet_id': sub_id, 'delete_subnet': True})
-            data = {attributes.PORT: {'fixed_ips': fixed}}
+            data = {port_def.RESOURCE_NAME: {'fixed_ips': fixed}}
             self.update_port(context, port_id, data)
         except exc.PortNotFound:
             # port is gone
@@ -1159,7 +1160,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         for key in ['min_prefixlen', 'max_prefixlen', 'default_prefixlen']:
             updated['key'] = str(updated[key])
-        resource_extend.apply_funcs(attributes.SUBNETPOOLS,
+        resource_extend.apply_funcs(subnetpool_def.COLLECTION_NAME,
                                     updated, orig_sp.db_obj)
         return updated
 

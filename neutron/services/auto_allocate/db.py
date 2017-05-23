@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import network as net_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -23,7 +24,6 @@ from neutron_lib.plugins import directory
 from oslo_log import log as logging
 
 from neutron._i18n import _, _LE
-from neutron.api.v2 import attributes
 from neutron.common import exceptions as c_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
@@ -108,7 +108,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         return self._l3_plugin
 
     @staticmethod
-    @resource_extend.extends([attributes.NETWORKS])
+    @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_external_network_default(net_res, net_db):
         """Add is_default field to 'show' response."""
         if net_db.external is not None:

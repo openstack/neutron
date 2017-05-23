@@ -13,6 +13,7 @@
 
 import abc
 
+from neutron_lib.api.definitions import network
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions
@@ -23,7 +24,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
 from neutron.common import rpc as n_rpc
@@ -37,7 +37,7 @@ TAG_PLUGIN_TYPE = 'TAG'
 TAG_SUPPORTED_RESOURCES = {
     # We shouldn't add new resources here. If more resources need to be tagged,
     # we must add them in new extension.
-    attributes.NETWORKS: attributes.NETWORK,
+    network.COLLECTION_NAME: network.RESOURCE_NAME,
 }
 
 TAG_ATTRIBUTE_MAP = {

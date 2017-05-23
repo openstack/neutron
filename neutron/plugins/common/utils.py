@@ -21,6 +21,9 @@ import contextlib
 import hashlib
 
 from neutron_lib.api import attributes as lib_attrs
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -166,21 +169,21 @@ def _fixup_res_dict(context, attr_name, res_dict, check_allow_post=True):
 
 
 def create_network(core_plugin, context, net, check_allow_post=True):
-    net_data = _fixup_res_dict(context, attributes.NETWORKS,
+    net_data = _fixup_res_dict(context, net_def.COLLECTION_NAME,
                                net.get('network', {}),
                                check_allow_post=check_allow_post)
     return core_plugin.create_network(context, {'network': net_data})
 
 
 def create_subnet(core_plugin, context, subnet, check_allow_post=True):
-    subnet_data = _fixup_res_dict(context, attributes.SUBNETS,
+    subnet_data = _fixup_res_dict(context, subnet_def.COLLECTION_NAME,
                                   subnet.get('subnet', {}),
                                   check_allow_post=check_allow_post)
     return core_plugin.create_subnet(context, {'subnet': subnet_data})
 
 
 def create_port(core_plugin, context, port, check_allow_post=True):
-    port_data = _fixup_res_dict(context, attributes.PORTS,
+    port_data = _fixup_res_dict(context, port_def.COLLECTION_NAME,
                                 port.get('port', {}),
                                 check_allow_post=check_allow_post)
     return core_plugin.create_port(context, {'port': port_data})

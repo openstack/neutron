@@ -13,6 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
@@ -20,7 +24,6 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
-from neutron.api.v2 import attributes as attr
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import rbac_db_models
 from neutron.db import standard_attr
@@ -106,7 +109,7 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
             name='uniq_ports0network_id0mac_address'),
         model_base.BASEV2.__table_args__
     )
-    api_collections = [attr.PORTS]
+    api_collections = [port_def.COLLECTION_NAME]
 
     def __init__(self, id=None, tenant_id=None, project_id=None, name=None,
                  network_id=None, mac_address=None, admin_state_up=None,
@@ -198,7 +201,7 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
         rbac_db_models.NetworkRBAC, lazy='subquery', uselist=True,
         foreign_keys='Subnet.network_id',
         primaryjoin='Subnet.network_id==NetworkRBAC.object_id')
-    api_collections = [attr.SUBNETS]
+    api_collections = [subnet_def.COLLECTION_NAME]
 
 
 class SubnetPoolPrefix(model_base.BASEV2):
@@ -235,7 +238,7 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 backref='subnetpools',
                                 cascade='all, delete, delete-orphan',
                                 lazy='subquery')
-    api_collections = [attr.SUBNETPOOLS]
+    api_collections = [subnetpool_def.COLLECTION_NAME]
 
 
 class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -256,4 +259,4 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     dhcp_agents = orm.relationship(
         'Agent', lazy='subquery', viewonly=True,
         secondary=ndab_model.NetworkDhcpAgentBinding.__table__)
-    api_collections = [attr.NETWORKS]
+    api_collections = [net_def.COLLECTION_NAME]

@@ -16,6 +16,9 @@
 
 from keystoneauth1 import loading as ks_loading
 import netaddr
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -27,7 +30,6 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron._i18n import _, _LE, _LI
-from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
@@ -61,7 +63,7 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         self.nova_updater = NovaSegmentNotifier()
 
     @staticmethod
-    @resource_extend.extends([attributes.NETWORKS])
+    @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_network_dict_binding(network_res, network_db):
         if not directory.get_plugin('segments'):
             return
@@ -73,12 +75,12 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         network_res[l2_adjacency.L2_ADJACENCY] = is_adjacent
 
     @staticmethod
-    @resource_extend.extends([attributes.SUBNETS])
+    @resource_extend.extends([subnet_def.COLLECTION_NAME])
     def _extend_subnet_dict_binding(subnet_res, subnet_db):
         subnet_res['segment_id'] = subnet_db.get('segment_id')
 
     @staticmethod
-    @resource_extend.extends([attributes.PORTS])
+    @resource_extend.extends([port_def.COLLECTION_NAME])
     def _extend_port_dict_binding(port_res, port_db):
         if not directory.get_plugin('segments'):
             return

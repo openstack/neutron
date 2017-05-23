@@ -13,6 +13,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -27,7 +28,6 @@ import six
 from sqlalchemy.orm import scoped_session
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import _model_query as model_query
@@ -701,7 +701,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             **kwargs)
 
     @staticmethod
-    @resource_extend.extends([attributes.PORTS])
+    @resource_extend.extends([port_def.COLLECTION_NAME])
     def _extend_port_dict_security_group(port_res, port_db):
         # Security group bindings will be retrieved from the SQLAlchemy
         # model. As they're loaded eagerly with ports because of the

@@ -12,12 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
 
-from neutron.api.v2 import attributes as attrs
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import portsecurity_db_common
 
@@ -26,7 +27,8 @@ from neutron.db import portsecurity_db_common
 class PortSecurityDbMixin(portsecurity_db_common.PortSecurityDbCommon):
 
     @staticmethod
-    @resource_extend.extends([attrs.NETWORKS, attrs.PORTS])
+    @resource_extend.extends([net_def.COLLECTION_NAME,
+                              port_def.COLLECTION_NAME])
     def _extend_port_security_dict(response_data, db_data):
         plugin = directory.get_plugin()
         if ('port-security' in
