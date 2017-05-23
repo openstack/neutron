@@ -38,6 +38,8 @@ class MeteringLabelRule(base.NeutronDbObject):
         'excluded': obj_fields.BooleanField(default=False),
     }
 
+    fields_no_update = ['metering_label_id']
+
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         result = super(MeteringLabelRule, cls).modify_fields_from_db(db_obj)

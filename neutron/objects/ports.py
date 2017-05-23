@@ -156,6 +156,8 @@ class IPAllocation(base.NeutronDbObject):
         'ip_address': obj_fields.IPAddressField(),
     }
 
+    fields_no_update = fields.keys()
+
     primary_keys = ['subnet_id', 'network_id', 'ip_address']
 
     foreign_keys = {
@@ -260,6 +262,8 @@ class Port(base.NeutronDbObject):
         # TODO(ihrachys): consider adding a 'dns_assignment' fully synthetic
         # field in later object iterations
     }
+
+    fields_no_update = ['project_id', 'network_id']
 
     synthetic_fields = [
         'allowed_address_pairs',

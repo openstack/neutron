@@ -52,6 +52,8 @@ class NetworkSegment(base.NeutronDbObject):
 
     synthetic_fields = ['hosts']
 
+    fields_no_update = ['network_id']
+
     foreign_keys = {
         'Network': {'network_id': 'id'},
         'PortBindingLevel': {'id': 'segment_id'},
