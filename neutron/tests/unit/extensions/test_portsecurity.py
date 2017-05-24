@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib import context
+from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
 from webob import exc
 
@@ -23,7 +25,6 @@ from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
-from neutron.extensions import portsecurity as psec
 from neutron.extensions import securitygroup as ext_sg
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_securitygroup
@@ -98,7 +99,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if (validators.is_attr_set(p.get(ext_sg.SECURITYGROUPS)) and
             not (port_security and has_ip)):
-            raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+            raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
         # Port requires ip and port_security enabled for security group
         if has_ip and port_security:
@@ -130,13 +131,13 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             # security groups, port security is set and port has ip
             if (has_security_groups and (not ret_port[psec.PORTSECURITY]
                                          or not has_ip)):
-                raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+                raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
             # Port security/IP was updated off. Need to check that no security
             # groups are on port.
             if ret_port[psec.PORTSECURITY] is not True or not has_ip:
                 if has_security_groups:
-                    raise psec.PortSecurityAndIPRequiredForSecurityGroups()
+                    raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
                 # get security groups on port
                 filters = {'port_id': [id]}
@@ -144,7 +145,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                                    _get_port_security_group_bindings(
                                        context, filters))
                 if security_groups and not delete_security_groups:
-                    raise psec.PortSecurityPortHasSecurityGroup()
+                    raise psec_exc.PortSecurityPortHasSecurityGroup()
 
             if (delete_security_groups or has_security_groups):
                 # delete the port binding and read it with the new rules.

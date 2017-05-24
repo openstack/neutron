@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from oslo_log import log as logging
 
@@ -20,7 +21,6 @@ from neutron._i18n import _LI
 from neutron.common import utils
 from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
-from neutron.extensions import portsecurity as psec
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = logging.getLogger(__name__)
