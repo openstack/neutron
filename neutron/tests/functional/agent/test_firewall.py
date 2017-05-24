@@ -277,7 +277,7 @@ class FirewallTestCase(BaseFirewallTestCase):
                                (outgoing_rule_pref, i['port_range_min']))
                    for i in sg_rules]
         # all indexes should be in order with no unexpected rules in between
-        self.assertEqual(range(indexes[0], indexes[-1] + 1), indexes)
+        self.assertEqual(list(range(indexes[0], indexes[-1] + 1)), indexes)
 
     def test_ingress_icmp_secgroup(self):
         # update the sg_group to make ping pass
