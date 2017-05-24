@@ -294,7 +294,7 @@ class RootHelperProcess(subprocess.Popen):
         return stream.readline()
 
     def writeline(self, data):
-        self.stdin.write(data + os.linesep)
+        self.stdin.write((data + os.linesep).encode('utf-8'))
         self.stdin.flush()
 
     def _wait_for_child_process(self, timeout=CHILD_PROCESS_TIMEOUT,
