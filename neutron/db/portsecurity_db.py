@@ -15,9 +15,9 @@
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib.plugins import directory
+from neutron_lib.utils import net
 
 from neutron.api.v2 import attributes as attrs
-from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import portsecurity_db_common
 
@@ -43,7 +43,7 @@ class PortSecurityDbMixin(portsecurity_db_common.PortSecurityDbCommon):
         """
         has_ip = self._ip_on_port(port)
         # we don't apply security groups for dhcp, router
-        if port.get('device_owner') and utils.is_port_trusted(port):
+        if port.get('device_owner') and net.is_port_trusted(port):
             return (False, has_ip)
 
         if validators.is_attr_set(port.get(psec.PORTSECURITY)):

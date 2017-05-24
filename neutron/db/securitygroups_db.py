@@ -20,6 +20,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.utils import helpers
+from neutron_lib.utils import net
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc
 from sqlalchemy.orm import scoped_session
@@ -27,7 +28,6 @@ from sqlalchemy.orm import scoped_session
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
@@ -730,7 +730,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         port = port['port']
         if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
             return
-        if port.get('device_owner') and utils.is_port_trusted(port):
+        if port.get('device_owner') and net.is_port_trusted(port):
             return
 
         port_sg = port.get(ext_sg.SECURITYGROUPS, [])
@@ -752,7 +752,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     def _ensure_default_security_group_on_port(self, context, port):
         # we don't apply security groups for dhcp, router
         port = port['port']
-        if port.get('device_owner') and utils.is_port_trusted(port):
+        if port.get('device_owner') and net.is_port_trusted(port):
             return
         default_sg = self._ensure_default_security_group(context,
                                                          port['tenant_id'])

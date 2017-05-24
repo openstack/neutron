@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.plugins import directory
+from neutron_lib.utils import net
 from oslo_log import log as logging
 import oslo_messaging
 
@@ -20,7 +21,6 @@ from neutron._i18n import _LW
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class SecurityGroupServerRpcCallback(object):
         return dict(
             (port['id'], port)
             for port in self.plugin.get_ports_from_devices(context, devices)
-            if port and not utils.is_port_trusted(port)
+            if port and not net.is_port_trusted(port)
         )
 
     def security_group_rules_for_devices(self, context, **kwargs):
