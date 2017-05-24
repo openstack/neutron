@@ -36,7 +36,7 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         super(LinuxbridgeMechanismDriver, self).__init__(
             constants.AGENT_TYPE_LINUXBRIDGE,
-            portbindings.VIF_TYPE_BRIDGE,
+            'tap',  # const merge in I718f514e1673544114063af5e1a14ec29bf3274d
             {portbindings.CAP_PORT_FILTER: sg_enabled})
         lb_qos_driver.register()
 
@@ -49,6 +49,13 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         mappings = dict(agent['configurations'].get('interface_mappings', {}),
                         **agent['configurations'].get('bridge_mappings', {}))
         return mappings
+
+    def get_vif_type(self, context, agent, segment):
+        # TODO(kevinbenton): remove this function after we no longer support
+        # Ocata agents
+        if not agent['configurations'].get('wires_compute_ports'):
+            return portbindings.VIF_TYPE_BRIDGE
+        return self.vif_type
 
     def check_vlan_transparency(self, context):
         """Linuxbridge driver vlan transparency support."""
