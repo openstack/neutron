@@ -809,6 +809,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(context,
                                                            updated_network)
 
+            # ToDO(QoS): This would change once EngineFacade moves out
+            db_network = self._get_network(context, id)
+            # Expire the db_network in current transaction, so that the join
+            # relationship can be updated.
+            context.session.expire(db_network)
             updated_network = self.get_network(context, id)
 
             # TODO(QoS): Move out to the extension framework somehow.
