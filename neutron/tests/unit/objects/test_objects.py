@@ -68,6 +68,7 @@ object_data = {
     'QosRuleType': '1.2-e6fd08fcca152c339cbd5e9b94b1b8e7',
     'QosPolicy': '1.6-4adb0cde3102c10d8970ec9487fd7fe7',
     'QosPolicyDefault': '1.0-59e5060eedb1f06dd0935a244d27d11c',
+    'QosPolicyPortBinding': '1.0-66cb364ac99aa64523ade07f9f868ea6',
     'Quota': '1.0-6bb6a0f1bd5d66a2134ffa1a61873097',
     'QuotaUsage': '1.0-6fbf820368681aac7c5d664662605cf9',
     'Reservation': '1.0-49929fef8e82051660342eed51b48f2a',
