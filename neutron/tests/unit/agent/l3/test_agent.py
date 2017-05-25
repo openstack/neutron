@@ -449,7 +449,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _fixed_ip_cidr(fixed_ip):
         return '%s/%s' % (fixed_ip['ip_address'], fixed_ip['prefixlen'])
 
-    def _test_internal_network_action_dist(self, action, scope_match=False):
+    def _test_internal_network_action_dist(self, action):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -485,10 +485,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.snat_ports = sn_port
         ri.ex_gw_port = ex_gw_port
         ri.snat_namespace = mock.Mock()
-        if scope_match:
-            ri._check_if_address_scopes_match = mock.Mock(return_value=True)
-        else:
-            ri._check_if_address_scopes_match = mock.Mock(return_value=False)
+
         if action == 'add':
             self.device_exists.return_value = False
 
@@ -498,10 +495,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri._set_subnet_arp_info = mock.Mock()
             ri._internal_network_added = mock.Mock()
             ri._set_subnet_arp_info = mock.Mock()
-            ri._port_has_ipv6_subnet = mock.Mock(return_value=False)
-            ri._add_interface_routing_rule_to_router_ns = mock.Mock()
-            ri._add_interface_route_to_fip_ns = mock.Mock()
             ri.internal_network_added(port)
+            self.assertEqual(1, ri._snat_redirect_add.call_count)
             self.assertEqual(2, ri._internal_network_added.call_count)
             ri._set_subnet_arp_info.assert_called_once_with(subnet_id)
             ri._internal_network_added.assert_called_with(
@@ -513,47 +508,19 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 ri._get_snat_int_device_name(sn_port['id']),
                 lib_constants.SNAT_INT_DEV_PREFIX,
                 mtu=None)
-            self.assertTrue(ri._check_if_address_scopes_match.called)
-            if scope_match:
-                self.assertTrue(
-                    ri._add_interface_routing_rule_to_router_ns.called)
-                self.assertTrue(
-                    ri._add_interface_route_to_fip_ns.called)
-                self.assertEqual(0, ri._snat_redirect_add.call_count)
-            else:
-                self.assertFalse(
-                    ri._add_interface_routing_rule_to_router_ns.called)
-                self.assertFalse(
-                    ri._add_interface_route_to_fip_ns.called)
-                self.assertEqual(1, ri._snat_redirect_add.call_count)
         elif action == 'remove':
             self.device_exists.return_value = False
             ri.get_snat_port_for_internal_port = mock.Mock(
                 return_value=sn_port)
             ri._delete_arp_cache_for_internal_port = mock.Mock()
             ri._snat_redirect_modify = mock.Mock()
-            ri._port_has_ipv6_subnet = mock.Mock(return_value=False)
-            ri._delete_interface_routing_rule_in_router_ns = mock.Mock()
-            ri._delete_interface_route_in_fip_ns = mock.Mock()
             ri.internal_network_removed(port)
             self.assertEqual(
                 1, ri._delete_arp_cache_for_internal_port.call_count)
-            self.assertTrue(ri._check_if_address_scopes_match.called)
-            if scope_match:
-                self.assertFalse(ri._snat_redirect_modify.called)
-                self.assertTrue(
-                    ri._delete_interface_routing_rule_in_router_ns.called)
-                self.assertTrue(
-                    ri._delete_interface_route_in_fip_ns.called)
-            else:
-                ri._snat_redirect_modify.assert_called_with(
-                    sn_port, port,
-                    ri.get_internal_device_name(port['id']),
-                    is_add=False)
-                self.assertFalse(
-                    ri._delete_interface_routing_rule_in_router_ns.called)
-                self.assertFalse(
-                    ri._delete_interface_route_in_fip_ns.called)
+            ri._snat_redirect_modify.assert_called_with(
+                sn_port, port,
+                ri.get_internal_device_name(port['id']),
+                is_add=False)
 
     def test_agent_add_internal_network(self):
         self._test_internal_network_action('add')
@@ -561,14 +528,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_agent_add_internal_network_dist(self):
         self._test_internal_network_action_dist('add')
 
-    def test_agent_add_internal_network_dist_with_addr_scope_match(self):
-        self._test_internal_network_action_dist('add', scope_match=True)
-
     def test_agent_remove_internal_network(self):
         self._test_internal_network_action('remove')
-
-    def test_agent_remove_internal_network_dist_with_addr_scope_mismatch(self):
-        self._test_internal_network_action_dist('remove', scope_match=True)
 
     def test_agent_remove_internal_network_dist(self):
         self._test_internal_network_action_dist('remove')
@@ -707,8 +668,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri.get_snat_port_for_internal_port = mock.Mock(
                 return_value=sn_port)
             ri._snat_redirect_remove = mock.Mock()
-            if router.get('distributed'):
-                ri.fip_ns.delete_rtr_2_fip_link = mock.Mock()
             ri.router['gw_port'] = ""
             ri.external_gateway_removed(ex_gw_port, interface_name)
             if not router.get('distributed'):
@@ -723,7 +682,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                     ri.get_internal_device_name(sn_port['id']))
                 ri.get_snat_port_for_internal_port.assert_called_with(
                     mock.ANY, ri.snat_ports)
-                self.assertTrue(ri.fip_ns.delete_rtr_2_fip_link.called)
         else:
             raise Exception("Invalid action %s" % action)
 
