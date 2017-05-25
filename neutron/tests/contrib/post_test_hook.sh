@@ -25,6 +25,19 @@ function generate_log_index {
     xtrace=$(set +o | grep xtrace)
     set +o xtrace
 
+    # honor job flavors like -python35
+    case $venv in
+    *"dsvm-fullstack"*)
+        venv="dsvm-fullstack"
+        ;;
+    *"dsvm-functional"*)
+        venv="dsvm-functional"
+        ;;
+    *)
+        echo "Unrecognized environment $venv".
+        exit 1
+    esac
+
     virtualenv /tmp/os-log-merger
     /tmp/os-log-merger/bin/pip install -U os-log-merger==1.1.0
     files=$(find /opt/stack/logs/$venv-logs -name '*.txt' -o -name '*.log')
