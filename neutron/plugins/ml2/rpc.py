@@ -233,8 +233,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                           "executed concurrently. Ignoring StaleDataError.")
                 return {'device': device,
                         'exists': port_exists}
-        self.notify_ha_port_status(port_id, rpc_context,
-                                   n_const.PORT_STATUS_DOWN, host)
+        self.notify_l2pop_port_wiring(port_id, rpc_context,
+                                      n_const.PORT_STATUS_DOWN, host)
 
         return {'device': device,
                 'exists': port_exists}
@@ -268,8 +268,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                     return
         else:
             self.update_port_status_to_active(port, rpc_context, port_id, host)
-        self.notify_ha_port_status(port_id, rpc_context,
-                                   n_const.PORT_STATUS_ACTIVE, host, port=port)
+        self.notify_l2pop_port_wiring(port_id, rpc_context,
+                                      n_const.PORT_STATUS_ACTIVE, host)
 
     def update_port_status_to_active(self, port, rpc_context, port_id, host):
         plugin = directory.get_plugin()
@@ -292,29 +292,39 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 rpc_context, port['id'], resources.PORT,
                 provisioning_blocks.L2_AGENT_ENTITY)
 
-    def notify_ha_port_status(self, port_id, rpc_context,
-                              status, host, port=None):
+    def notify_l2pop_port_wiring(self, port_id, rpc_context,
+                                 status, host):
+        """Notify the L2pop driver that a port has been wired/unwired.
+
+        The L2pop driver uses this notification to broadcast forwarding
+        entries to other agents on the same network as the port for port_id.
+        """
         plugin = directory.get_plugin()
         l2pop_driver = plugin.mechanism_manager.mech_drivers.get(
                 'l2population')
         if not l2pop_driver:
             return
-        if not port:
-            port = ml2_db.get_port(rpc_context, port_id)
-            if not port:
+        port_context = plugin.get_bound_port_context(
+                rpc_context, port_id)
+        if not port_context:
+            # port deleted
+            return
+        port = port_context.current
+        if (status == n_const.PORT_STATUS_ACTIVE and
+            port[portbindings.HOST_ID] != host and
+            not l3_hamode_db.is_ha_router_port(rpc_context,
+                                               port['device_owner'],
+                                               port['device_id'])):
+                # don't setup ACTIVE forwarding entries unless bound to this
+                # host or if it's an HA port (which is special-cased in the
+                # mech driver)
                 return
-        is_ha_port = l3_hamode_db.is_ha_router_port(rpc_context,
-                                                    port['device_owner'],
-                                                    port['device_id'])
-        if is_ha_port:
-            port_context = plugin.get_bound_port_context(
-                    rpc_context, port_id)
-            port_context.current['status'] = status
-            port_context.current[portbindings.HOST_ID] = host
-            if status == n_const.PORT_STATUS_ACTIVE:
-                l2pop_driver.obj.update_port_up(port_context)
-            else:
-                l2pop_driver.obj.update_port_down(port_context)
+        port_context.current['status'] = status
+        port_context.current[portbindings.HOST_ID] = host
+        if status == n_const.PORT_STATUS_ACTIVE:
+            l2pop_driver.obj.update_port_up(port_context)
+        else:
+            l2pop_driver.obj.update_port_down(port_context)
 
     def update_device_list(self, rpc_context, **kwargs):
         devices_up = []
