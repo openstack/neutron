@@ -1199,6 +1199,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
         elif (not
           self._check_update_deletes_security_groups(port)):
+            if not utils.is_extension_supported(self, 'security-group'):
+                return
             # Update did not have security groups passed in. Check
             # that port does not have any security groups already on it.
             filters = {'port_id': [id]}
