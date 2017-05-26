@@ -349,6 +349,9 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             if ip_version == 4:
                 # v4 dhcp servers can also talk to broadcast
                 dests.append('255.255.255.255/32')
+            elif ip_version == 6:
+                # v6 dhcp responses can target link-local addresses
+                dests.append('fe80::/64')
             source_port, dest_port, ethertype = DHCP_RULE_PORT[ip_version]
             for dest in dests:
                 dhcp_rule = {'direction': 'ingress',
