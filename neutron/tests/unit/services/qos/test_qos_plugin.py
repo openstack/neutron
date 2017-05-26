@@ -311,9 +311,24 @@ class TestQosPlugin(base.BaseQosTestCase):
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
         '.create_rbac_policy')
-    def test_add_policy(self, *mocks):
+    @mock.patch('neutron.objects.qos.policy.QosPolicy')
+    def test_add_policy(self, mock_qos_policy, mock_create_rbac_policy):
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(mock_qos_policy, 'QosPolicy')
+        mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
+        mock_manager.reset_mock()
+
         self.qos_plugin.create_policy(self.ctxt, self.policy_data)
-        self._validate_driver_params('create_policy')
+
+        policy_mock_call = mock.call.QosPolicy().create()
+        create_precommit_mock_call = mock.call.driver.call(
+            'create_policy_precommit', self.ctxt, mock.ANY)
+        create_mock_call = mock.call.driver.call(
+            'create_policy', self.ctxt, mock.ANY)
+        self.assertTrue(
+            mock_manager.mock_calls.index(policy_mock_call) <
+            mock_manager.mock_calls.index(create_precommit_mock_call) <
+            mock_manager.mock_calls.index(create_mock_call))
 
     def test_add_policy_with_extra_tenant_keyword(self, *mocks):
         policy_id = uuidutils.generate_uuid()
@@ -340,17 +355,50 @@ class TestQosPlugin(base.BaseQosTestCase):
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
         '.create_rbac_policy')
-    def test_update_policy(self, *mocks):
+    @mock.patch.object(policy_object.QosPolicy, 'update')
+    def test_update_policy(self, mock_qos_policy_update,
+                           mock_create_rbac_policy):
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(mock_qos_policy_update, 'update')
+        mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
+        mock_manager.reset_mock()
+
         fields = base_object.get_updatable_fields(
             policy_object.QosPolicy, self.policy_data['policy'])
         self.qos_plugin.update_policy(
             self.ctxt, self.policy.id, {'policy': fields})
         self._validate_driver_params('update_policy')
 
+        policy_update_mock_call = mock.call.update()
+        update_precommit_mock_call = mock.call.driver.call(
+            'update_policy_precommit', self.ctxt, mock.ANY)
+        update_mock_call = mock.call.driver.call(
+            'update_policy', self.ctxt, mock.ANY)
+        self.assertTrue(
+            mock_manager.mock_calls.index(policy_update_mock_call) <
+            mock_manager.mock_calls.index(update_precommit_mock_call) <
+            mock_manager.mock_calls.index(update_mock_call))
+
     @mock.patch('neutron.objects.db.api.get_object', return_value=None)
-    def test_delete_policy(self, *mocks):
+    @mock.patch.object(policy_object.QosPolicy, 'delete')
+    def test_delete_policy(self, mock_qos_policy_delete, mock_api_get_policy):
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(mock_qos_policy_delete, 'delete')
+        mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
+        mock_manager.reset_mock()
+
         self.qos_plugin.delete_policy(self.ctxt, self.policy.id)
         self._validate_driver_params('delete_policy')
+
+        policy_delete_mock_call = mock.call.delete()
+        delete_precommit_mock_call = mock.call.driver.call(
+            'delete_policy_precommit', self.ctxt, mock.ANY)
+        delete_mock_call = mock.call.driver.call(
+            'delete_policy', self.ctxt, mock.ANY)
+        self.assertTrue(
+            mock_manager.mock_calls.index(policy_delete_mock_call) <
+            mock_manager.mock_calls.index(delete_precommit_mock_call) <
+            mock_manager.mock_calls.index(delete_mock_call))
 
     def test_create_policy_rule(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -409,7 +457,13 @@ class TestQosPlugin(base.BaseQosTestCase):
                 self.ctxt, self.policy.id, self.rule_data)
             mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
 
-    def test_update_policy_rule(self):
+    @mock.patch.object(rule_object.QosBandwidthLimitRule, 'update')
+    def test_update_policy_rule(self, mock_qos_rule_update):
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(mock_qos_rule_update, 'update')
+        mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
+        mock_manager.reset_mock()
+
         _policy = policy_object.QosPolicy(
             self.ctxt, **self.policy_data['policy'])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -418,6 +472,16 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.qos_plugin.update_policy_bandwidth_limit_rule(
                 self.ctxt, self.rule.id, self.policy.id, self.rule_data)
             self._validate_driver_params('update_policy')
+
+            rule_update_mock_call = mock.call.update()
+            update_precommit_mock_call = mock.call.driver.call(
+                'update_policy_precommit', self.ctxt, mock.ANY)
+            update_mock_call = mock.call.driver.call(
+                'update_policy', self.ctxt, mock.ANY)
+            self.assertTrue(
+                mock_manager.mock_calls.index(rule_update_mock_call) <
+                mock_manager.mock_calls.index(update_precommit_mock_call) <
+                mock_manager.mock_calls.index(update_mock_call))
 
     def test_update_policy_rule_check_rule_min_less_than_max(self):
         _policy = self._get_policy()
@@ -501,7 +565,13 @@ class TestQosPlugin(base.BaseQosTestCase):
                 self.ctxt, self.rule.id, self.policy.id,
                 self.rule_data)
 
-    def test_delete_policy_rule(self):
+    @mock.patch.object(rule_object.QosBandwidthLimitRule, 'delete')
+    def test_delete_policy_rule(self, mock_qos_rule_delete):
+        mock_manager = mock.Mock()
+        mock_manager.attach_mock(mock_qos_rule_delete, 'delete')
+        mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
+        mock_manager.reset_mock()
+
         _policy = policy_object.QosPolicy(
             self.ctxt, **self.policy_data['policy'])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -510,6 +580,16 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.qos_plugin.delete_policy_bandwidth_limit_rule(
                         self.ctxt, self.rule.id, _policy.id)
             self._validate_driver_params('update_policy')
+
+            rule_delete_mock_call = mock.call.delete()
+            update_precommit_mock_call = mock.call.driver.call(
+                'update_policy_precommit', self.ctxt, mock.ANY)
+            update_mock_call = mock.call.driver.call(
+                'update_policy', self.ctxt, mock.ANY)
+            self.assertTrue(
+                mock_manager.mock_calls.index(rule_delete_mock_call) <
+                mock_manager.mock_calls.index(update_precommit_mock_call) <
+                mock_manager.mock_calls.index(update_mock_call))
 
     def test_delete_policy_rule_bad_policy(self):
         _policy = policy_object.QosPolicy(

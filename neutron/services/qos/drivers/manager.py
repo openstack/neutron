@@ -14,13 +14,13 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from oslo_log import log as logging
-from oslo_utils import excutils
 
-from neutron._i18n import _LE, _LW
+from neutron._i18n import _LW
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import exceptions
 from neutron.objects.qos import policy as policy_object
 from neutron.services.qos import qos_consts
 
@@ -86,14 +86,19 @@ class QosServiceDriverManager(object):
 
     def call(self, method_name, *args, **kwargs):
         """Helper method for calling a method across all extension drivers."""
+        exc_list = []
         for driver in self._drivers:
             try:
                 getattr(driver, method_name)(*args, **kwargs)
-            except Exception:
-                with excutils.save_and_reraise_exception():
-                    LOG.exception(_LE("Extension driver '%(name)s' failed in "
-                                      "%(method)s"),
-                                  {'name': driver.name, 'method': method_name})
+            except Exception as exc:
+                exception_msg = ("Extension driver '%(name)s' failed in "
+                                 "%(method)s")
+                exception_data = {'name': driver.name, 'method': method_name}
+                LOG.exception(exception_msg, exception_data)
+                exc_list.append(exc)
+
+        if exc_list:
+            raise exceptions.DriverCallError(exc_list=exc_list)
 
         if self.rpc_notifications_required:
             context = kwargs.get('context') or args[0]
@@ -102,10 +107,10 @@ class QosServiceDriverManager(object):
             # we don't push create_policy events since policies are empty
             # on creation, they only become of any use when rules get
             # attached to them.
-            if method_name == 'update_policy':
+            if method_name == qos_consts.UPDATE_POLICY:
                 self.push_api.push(context, [policy_obj], rpc_events.UPDATED)
 
-            elif method_name == 'delete_policy':
+            elif method_name == qos_consts.DELETE_POLICY:
                 self.push_api.push(context, [policy_obj], rpc_events.DELETED)
 
     def register_driver(self, driver):
