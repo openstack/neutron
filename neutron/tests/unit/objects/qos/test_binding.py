@@ -11,7 +11,6 @@
 #    under the License.
 
 from neutron.objects.qos import binding
-from neutron.objects.qos import policy
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -26,11 +25,6 @@ class QosPolicyPortBindingDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     _test_class = binding.QosPolicyPortBinding
 
-    def _create_test_qos_policy(self, **qos_policy_attrs):
-        qos_policy = policy.QosPolicy(self.context, **qos_policy_attrs)
-        qos_policy.create()
-        return qos_policy
-
     def setUp(self):
         super(QosPolicyPortBindingDbObjectTestCase, self).setUp()
         network_id = self._create_test_network_id()
@@ -38,3 +32,20 @@ class QosPolicyPortBindingDbObjectTestCase(test_base.BaseDbObjectTestCase,
             self._create_test_qos_policy(id=db_obj['policy_id'])
             self._create_test_port(network_id=network_id,
                                    id=db_obj['port_id'])
+
+
+class QosPolicyNetworkBindingObjectTestCase(test_base.BaseObjectIfaceTestCase):
+
+    _test_class = binding.QosPolicyNetworkBinding
+
+
+class QosPolicyNetworkBindingDbObjectTestCase(test_base.BaseDbObjectTestCase,
+                                              testlib_api.SqlTestCase):
+
+    _test_class = binding.QosPolicyNetworkBinding
+
+    def setUp(self):
+        super(QosPolicyNetworkBindingDbObjectTestCase, self).setUp()
+        for db_obj in self.db_objs:
+            self._create_test_qos_policy(id=db_obj['policy_id'])
+            self._create_test_network(network_id=db_obj['network_id'])

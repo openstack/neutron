@@ -34,3 +34,19 @@ class QosPolicyPortBinding(base.NeutronDbObject):
 
     primary_keys = ['port_id']
     fields_no_update = ['policy_id', 'port_id']
+
+
+@obj_base.VersionedObjectRegistry.register
+class QosPolicyNetworkBinding(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = qos_db_model.QosNetworkPolicyBinding
+
+    fields = {
+        'policy_id': common_types.UUIDField(),
+        'network_id': common_types.UUIDField()
+    }
+
+    primary_keys = ['network_id']
+    fields_no_update = ['policy_id', 'network_id']

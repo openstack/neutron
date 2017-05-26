@@ -43,6 +43,7 @@ from neutron.objects import flavor
 from neutron.objects.logapi import event_types
 from neutron.objects import network as net_obj
 from neutron.objects import ports
+from neutron.objects.qos import policy as qos_policy
 from neutron.objects import rbac_db
 from neutron.objects import securitygroup
 from neutron.objects import subnet
@@ -1336,8 +1337,10 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                         objclass.db_model(**objclass_fields)
                     ]
 
-    def _create_test_network(self, name='test-network1'):
-        _network = net_obj.Network(self.context, name=name)
+    def _create_test_network(self, name='test-network1', network_id=None):
+        network_id = (uuidutils.generate_uuid() if network_id is None
+                      else network_id)
+        _network = net_obj.Network(self.context, name=name, id=network_id)
         _network.create()
         return _network
 
@@ -1465,6 +1468,11 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         service_profile_obj = flavor.ServiceProfile(self.context, **attrs)
         service_profile_obj.create()
         return service_profile_obj.id
+
+    def _create_test_qos_policy(self, **qos_policy_attrs):
+        _qos_policy = qos_policy.QosPolicy(self.context, **qos_policy_attrs)
+        _qos_policy.create()
+        return _qos_policy
 
     def test_get_standard_attr_id(self):
 

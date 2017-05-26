@@ -21,13 +21,12 @@ from neutron.db.models import external_net as ext_net_model
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.db.port_security import models as ps_models
-from neutron.db.qos import models as qos_models
 from neutron.db import rbac_db_models
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import base
 from neutron.objects import common_types
-from neutron.objects.db import api as obj_db_api
 from neutron.objects.extensions import port_security as base_ps
+from neutron.objects.qos import binding
 from neutron.objects import rbac_db
 
 
@@ -221,18 +220,13 @@ class Network(rbac_db.NeutronRbacObject):
                 self._attach_qos_policy(fields['qos_policy_id'])
 
     def _attach_qos_policy(self, qos_policy_id):
-        # TODO(ihrachys): introduce an object for the binding to isolate
-        # database access in a single place, currently scattered between port
-        # and policy objects
-        obj_db_api.delete_objects(
-            self.obj_context, qos_models.QosNetworkPolicyBinding,
-            network_id=self.id,
-        )
+        binding.QosPolicyNetworkBinding.delete_objects(
+            self.obj_context, network_id=self.id)
         if qos_policy_id:
-            obj_db_api.create_object(
-                self.obj_context, qos_models.QosNetworkPolicyBinding,
-                {'network_id': self.id, 'policy_id': qos_policy_id}
-            )
+            net_binding_obj = binding.QosPolicyNetworkBinding(
+                self.obj_context, policy_id=qos_policy_id, network_id=self.id)
+            net_binding_obj.create()
+
         self.qos_policy_id = qos_policy_id
         self.obj_reset_changes(['qos_policy_id'])
 
