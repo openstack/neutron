@@ -60,6 +60,14 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
                           is_admin=False, shared=True)
 
     @test.attr(type='negative')
+    @decorators.idempotent_id('6ae09d8f-95be-40ed-b1cf-8b850d45bab5')
+    @test.requires_ext(extension='default-subnetpools', service='network')
+    def test_tenant_create_default_subnetpool(self):
+        # 'default' subnetpool can only be created by admin.
+        self.assertRaises(lib_exc.Forbidden, self._create_subnetpool,
+                          is_admin=False, is_default=True)
+
+    @test.attr(type='negative')
     @decorators.idempotent_id('4be84d30-60ca-4bd3-8512-db5b36ce1378')
     def test_update_non_existent_subnetpool(self):
         non_exist_id = data_utils.rand_name('subnetpool')
