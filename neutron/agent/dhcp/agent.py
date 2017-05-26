@@ -227,14 +227,7 @@ class DhcpAgent(manager.Manager):
                 except oslo_messaging.MessagingTimeout:
                     LOG.error(_LE("Timeout notifying server of ports ready. "
                                   "Retrying..."))
-                except Exception as e:
-                    if (isinstance(e, oslo_messaging.RemoteError)
-                            and e.exc_type == 'NoSuchMethod'):
-                        LOG.info(_LI("Server does not support port ready "
-                                     "notifications. Waiting for 5 minutes "
-                                     "before retrying."))
-                        eventlet.sleep(300)
-                        continue
+                except Exception:
                     LOG.exception(_LE("Failure notifying DHCP server of "
                                       "ready DHCP ports. Will retry on next "
                                       "iteration."))
@@ -712,7 +705,6 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.DHCP_AGENT,
             'configurations': {
-                'notifies_port_ready': True,
                 'dhcp_driver': self.conf.dhcp_driver,
                 'dhcp_lease_duration': self.conf.dhcp_lease_duration,
                 'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},
