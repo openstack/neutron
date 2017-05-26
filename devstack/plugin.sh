@@ -7,6 +7,7 @@ source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/ml2
 source $LIBDIR/qos
 source $LIBDIR/ovs
+source $LIBDIR/segments
 source $LIBDIR/trunk
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
@@ -29,6 +30,9 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled q-dns neutron-dns; then
                 configure_dns_extension
+            fi
+            if is_service_enabled neutron-segments; then
+                configure_segments_extension
             fi
             if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
                [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
