@@ -1717,6 +1717,55 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             mock_update_fip_status.assert_called_once_with(
                 mock.ANY, ri.router_id, {fip2['id']: 'ACTIVE'})
 
+    @mock.patch.object(l3_agent.LOG, 'exception')
+    def _retrigger_initialize(self, log_exception, delete_fail=False):
+        self.conf.external_network_bridge = ''
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = {'id': _uuid(),
+                  'external_gateway_info': {'network_id': 'aaa'}}
+        self.plugin_api.get_routers.return_value = [router]
+        update = router_processing_queue.RouterUpdate(
+            router['id'],
+            router_processing_queue.PRIORITY_SYNC_ROUTERS_TASK,
+            router=router,
+            timestamp=timeutils.utcnow())
+        agent._queue.add(update)
+
+        ri = legacy_router.LegacyRouter(router['id'], router,
+                                        **self.ri_kwargs)
+        calls = [mock.call('Error while initializing router %s',
+                           router['id'])]
+        if delete_fail:
+            # if delete fails, then also retrigger initialize
+            ri.delete = mock.Mock(side_effect=RuntimeError())
+            calls.append(
+                 mock.call('Error while deleting router %s',
+                           router['id']))
+        else:
+            ri.delete = mock.Mock()
+        calls.append(
+            mock.call("Failed to process compatible router: %s" %
+                      router['id']))
+        ri.process = mock.Mock()
+        ri.initialize = mock.Mock(side_effect=RuntimeError())
+        agent._create_router = mock.Mock(return_value=ri)
+        agent._process_router_update()
+        log_exception.assert_has_calls(calls)
+
+        ri.initialize.side_effect = None
+        agent._process_router_update()
+        self.assertTrue(ri.delete.called)
+        self.assertEqual(2, ri.initialize.call_count)
+        self.assertEqual(2, agent._create_router.call_count)
+        self.assertEqual(1, ri.process.call_count)
+        self.assertIn(ri.router_id, agent.router_info)
+
+    def test_initialize_fail_retrigger_initialize(self):
+        self._retrigger_initialize()
+
+    def test_initialize_and_delete_fail_retrigger_initialize(self):
+        self._retrigger_initialize(delete_fail=True)
+
     def test_process_router_floatingip_status_update_if_processed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router = l3_test_common.prepare_router_data(num_internal_ports=1)

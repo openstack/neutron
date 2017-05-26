@@ -348,7 +348,20 @@ class L3NATAgent(ha.AgentMixin,
 
         self.router_info[router_id] = ri
 
-        ri.initialize(self.process_monitor)
+        # If initialize() fails, cleanup and retrigger complete sync
+        try:
+            ri.initialize(self.process_monitor)
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                del self.router_info[router_id]
+                LOG.exception(_LE('Error while initializing router %s'),
+                              router_id)
+                self.namespaces_manager.ensure_router_cleanup(router_id)
+                try:
+                    ri.delete()
+                except Exception:
+                    LOG.exception(_LE('Error while deleting router %s'),
+                                  router_id)
 
     def _safe_router_removed(self, router_id):
         """Try to delete a router and return True if successful."""
