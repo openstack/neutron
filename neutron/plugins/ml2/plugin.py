@@ -901,6 +901,20 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         e,
                         _LE("Exception auto-deleting subnet %s"), subnet_id)
 
+    def get_network_contexts(self, context, network_ids):
+        """Return a map of network_id to NetworkContext for network_ids."""
+        net_filters = {'id': list(set(network_ids))}
+        nets_by_netid = {
+            n['id']: n for n in self.get_networks(context,
+                                                  filters=net_filters)
+        }
+        netctxs_by_netid = {
+            net_id: driver_context.NetworkContext(
+                self, context, nets_by_netid[net_id])
+            for net_id in nets_by_netid.keys()
+        }
+        return netctxs_by_netid
+
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):
