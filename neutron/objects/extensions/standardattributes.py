@@ -25,3 +25,5 @@ def add_standard_attributes(cls):
     # its own instance of list
     cls.fields = cls.fields.copy()
     cls.fields.update(STANDARD_ATTRIBUTES)
+    # those fields are updated by sqlalchemy itself
+    cls.fields_no_update += ('created_at', 'updated_at')
