@@ -83,6 +83,23 @@ def delete_object(context, model, **kwargs):
         context.session.delete(db_obj)
 
 
+def update_objects(context, model, values, **kwargs):
+    '''Update matching objects, if any. Return number of updated objects.
+
+    This function does not raise exceptions if nothing matches.
+
+    :param model: SQL model
+    :param values: values to update in matching objects
+    :param kwargs: multiple filters defined by key=value pairs
+    :return: Number of entries updated
+    '''
+    with context.session.begin(subtransactions=True):
+        if not values:
+            return count(context, model, **kwargs)
+        q = _get_filter_query(context, model, **kwargs)
+        return q.update(values, synchronize_session=False)
+
+
 def delete_objects(context, model, **kwargs):
     '''Delete matching objects, if any. Return number of deleted objects.
 

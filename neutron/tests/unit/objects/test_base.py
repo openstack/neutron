@@ -528,6 +528,10 @@ class _BaseObjectTestCase(object):
             self._test_class.db_model: self.db_objs,
             ObjectFieldsModel: [ObjectFieldsModel(**synthetic_obj_fields)]}
 
+    def _get_random_update_fields(self):
+        return self.get_updatable_fields(
+            self.get_random_object_fields(self._test_class))
+
     def get_random_object_fields(self, obj_cls=None):
         obj_cls = obj_cls or self._test_class
         fields = {}
@@ -650,6 +654,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             mock.patch.object(
                 rbac_db.RbacNeutronDbObjectMixin,
                 'is_shared_with_tenant', return_value=False).start()
+            mock.patch.object(
+                rbac_db.RbacNeutronDbObjectMixin,
+                'get_shared_with_tenant').start()
 
     def fake_get_object(self, context, model, **kwargs):
         objs = self.model_map[model]
@@ -805,6 +812,27 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertItemsEqual(
                 [get_obj_persistent_fields(obj) for obj in self.objs],
                 [get_obj_persistent_fields(obj) for obj in objs])
+
+    @mock.patch.object(obj_db_api, 'update_object', return_value={})
+    @mock.patch.object(obj_db_api, 'update_objects', return_value=0)
+    def test_update_objects_valid_fields(self, *mocks):
+        '''Test that a valid filter does not raise an error.'''
+        self._test_class.update_objects(
+            self.context, {},
+            **self.valid_field_filter)
+
+    def test_update_objects_invalid_fields(self):
+        with mock.patch.object(obj_db_api, 'update_objects'):
+            self.assertRaises(n_exc.InvalidInput,
+                              self._test_class.update_objects,
+                              self.context, {}, fake_field='xxx')
+
+    @mock.patch.object(obj_db_api, 'update_objects')
+    @mock.patch.object(obj_db_api, 'update_object', return_value={})
+    def test_update_objects_without_validate_filters(self, *mocks):
+            self._test_class.update_objects(
+                self.context, {'unknown_filter': 'new_value'},
+                validate_filters=False, unknown_filter='value')
 
     def test_delete_objects(self):
         '''Test that delete_objects calls to underlying db_api.'''
@@ -1677,6 +1705,55 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             self._make_object(fields).create()
         self.assertTrue(self._test_class.objects_exist(
             self.context, validate_filters=False, fake_filter='xxx'))
+
+    def test_update_objects(self):
+        fields_to_update = self.get_updatable_fields(
+            self.obj_fields[1])
+        if not fields_to_update:
+            self.skipTest('No updatable fields found in test '
+                          'class %r' % self._test_class)
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+
+        objs = self._test_class.get_objects(
+            self.context, **self.valid_field_filter)
+        for k, v in self.valid_field_filter.items():
+            self.assertEqual(v, objs[0][k])
+
+        count = self._test_class.update_objects(
+            self.context, {}, **self.valid_field_filter)
+
+        # we haven't updated anything, but got the number of matching records
+        self.assertEqual(len(objs), count)
+
+        # and the request hasn't changed the number of matching records
+        new_objs = self._test_class.get_objects(
+            self.context, **self.valid_field_filter)
+        self.assertEqual(len(objs), len(new_objs))
+
+        # now update an object with new values
+        new_values = self._get_random_update_fields()
+        keys = self.objs[0]._get_composite_keys()
+        count_updated = self._test_class.update_objects(
+            self.context, new_values, **keys)
+        self.assertEqual(1, count_updated)
+
+        new_filter = keys.copy()
+        new_filter.update(new_values)
+
+        # check that we can fetch using new values
+        new_objs = self._test_class.get_objects(
+            self.context, **new_filter)
+        self.assertEqual(1, len(new_objs))
+
+    def test_update_objects_nothing_to_update(self):
+        fields_to_update = self.get_updatable_fields(
+            self.obj_fields[1])
+        if not fields_to_update:
+            self.skipTest('No updatable fields found in test '
+                          'class %r' % self._test_class)
+        self.assertEqual(
+            0, self._test_class.update_objects(self.context, {}))
 
     def test_delete_objects(self):
         for fields in self.obj_fields:

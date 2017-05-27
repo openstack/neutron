@@ -53,11 +53,10 @@ class SubnetPool(base.NeutronDbObject):
     def from_db_object(self, db_obj):
         super(SubnetPool, self).from_db_object(db_obj)
         self.prefixes = []
-        if db_obj['prefixes']:
-            self.prefixes = [
-                prefix.cidr
-                for prefix in db_obj.prefixes
-            ]
+        self.prefixes = [
+            prefix.cidr
+            for prefix in db_obj.get('prefixes', [])
+        ]
         self.obj_reset_changes(['prefixes'])
 
     def _attach_prefixes(self, prefixes):
