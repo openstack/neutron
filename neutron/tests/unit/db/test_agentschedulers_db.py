@@ -34,10 +34,11 @@ from neutron.common import constants as n_const
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
-from neutron.db.models import l3agent as rb_model
 from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
+from neutron.objects import agent as ag_obj
+from neutron.objects import l3agent as rb_obj
 from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
 from neutron.tests import tools
@@ -792,10 +793,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             # A should still have it even though it was inactive due to the
             # admin_state being down
-            rab = rb_model.RouterL3AgentBinding
-            binding = (self.adminContext.session.query(rab).
-                       filter(rab.router_id == r['router']['id']).first())
-            self.assertEqual(binding.l3_agent.host, L3_HOSTA)
+            bindings = rb_obj.RouterL3AgentBinding.get_objects(
+                    self.adminContext, router_id=r['router']['id'])
+            binding = bindings.pop() if bindings else None
+            l3_agent = ag_obj.Agent.get_objects(
+                self.adminContext, id=binding.l3_agent_id)
+            self.assertEqual(l3_agent[0].host, L3_HOSTA)
 
             # B should not pick up the router
             ret_b = l3_rpc_cb.get_router_ids(self.adminContext, host=L3_HOSTB)

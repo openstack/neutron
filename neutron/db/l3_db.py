@@ -430,7 +430,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         with context.session.begin(subtransactions=True):
             gw_port = router.gw_port
             router.gw_port = None
-            context.session.add(router)
+            if router not in context.session:
+                context.session.add(router)
             context.session.expire(gw_port)
             try:
                 kwargs = {'context': context, 'router_id': router.id}

@@ -42,6 +42,7 @@ from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
+from neutron.objects import l3agent as rb_obj
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
 from neutron.tests.common import helpers
@@ -284,7 +285,7 @@ class L3SchedulerTestBaseMixin(object):
         self.plugin._unbind_router(self.adminContext,
                             router['router']['id'],
                             agent_id)
-        bindings = self.plugin._get_l3_bindings_hosting_routers(
+        bindings = rb_obj.RouterL3AgentBinding.get_l3_agents_by_router_ids(
             self.adminContext, [router['router']['id']])
         self.assertEqual(0, len(bindings))
 
@@ -493,7 +494,7 @@ class L3SchedulerTestBaseMixin(object):
         # checking that bind_router() is not throwing
         # when supplied with router_id of non-existing router
         scheduler.bind_router(self.plugin, self.adminContext,
-                              "dummyID", self.agent_id1)
+                              uuidutils.generate_uuid(), self.agent_id1)
 
     def test_bind_existing_router(self):
         router = self._make_router(self.fmt,

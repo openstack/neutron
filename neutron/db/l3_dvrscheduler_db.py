@@ -26,8 +26,8 @@ from neutron.common import utils as n_utils
 
 from neutron.db import agentschedulers_db
 from neutron.db import l3_agentschedulers_db as l3agent_sch_db
-from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
+from neutron.objects import l3agent as rb_obj
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import models as ml2_models
 
@@ -163,11 +163,9 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             context, n_const.AGENT_TYPE_L3, port_host)
         removed_router_info = []
         for router_id in router_ids:
-            snat_binding = context.session.query(
-                rb_model.RouterL3AgentBinding).filter_by(
-                    router_id=router_id).filter_by(
-                        l3_agent_id=agent.id).first()
-            if snat_binding:
+            if rb_obj.RouterL3AgentBinding.objects_exist(context,
+                                                         router_id=router_id,
+                                                         l3_agent_id=agent.id):
                 # not removing from the agent hosting SNAT for the router
                 continue
             subnet_ids = self.get_subnet_ids_on_router(admin_context,

@@ -36,10 +36,11 @@ from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
 from neutron.db.models import l3 as l3_models
-from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.ipam import utils as ipam_utils
+from neutron.objects import agent as ag_obj
+from neutron.objects import l3agent as rb_obj
 from neutron.plugins.common import utils as p_utils
 
 
@@ -512,9 +513,9 @@ class DVRResourceOperationHandler(object):
         if removed_hosts:
             agents = plugin.get_l3_agents(context,
                                           filters={'host': removed_hosts})
-            binding_table = rb_model.RouterL3AgentBinding
-            snat_binding = context.session.query(binding_table).filter_by(
-                router_id=router_id).first()
+            bindings = rb_obj.RouterL3AgentBinding.get_objects(
+                context, router_id=router_id)
+            snat_binding = bindings.pop() if bindings else None
             for agent in agents:
                 is_this_snat_agent = (
                     snat_binding and snat_binding.l3_agent_id == agent['id'])
@@ -593,10 +594,9 @@ class _DVRAgentInterfaceMixin(object):
         if not routers:
             return []
         router_ids = [r['id'] for r in routers]
-        snat_binding = rb_model.RouterL3AgentBinding
-        query = (context.session.query(snat_binding).
-                 filter(snat_binding.router_id.in_(router_ids))).all()
-        bindings = dict((b.router_id, b) for b in query)
+        binding_objs = rb_obj.RouterL3AgentBinding.get_objects(
+            context, router_id=router_ids)
+        bindings = dict((b.router_id, b) for b in binding_objs)
 
         for rtr in routers:
             gw_port_id = rtr['gw_port_id']
@@ -613,7 +613,9 @@ class _DVRAgentInterfaceMixin(object):
                     LOG.debug('No snat is bound to router %s', rtr['id'])
                     continue
 
-                rtr['gw_port_host'] = binding.l3_agent.host
+                l3_agent = ag_obj.Agent.get_object(context,
+                        id=binding.l3_agent_id)
+                rtr['gw_port_host'] = l3_agent.host
 
         return routers
 

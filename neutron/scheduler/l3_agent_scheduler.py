@@ -33,6 +33,7 @@ from neutron.db import l3_hamode_db
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import l3
+from neutron.objects import l3agent as rb_obj
 
 
 LOG = logging.getLogger(__name__)
@@ -188,10 +189,9 @@ class L3Scheduler(object):
         one try, regardless of the error preventing the addition of a new
         RouterL3AgentBinding object to the database.
         """
-        bindings = context.session.query(
-            rb_model.RouterL3AgentBinding).filter_by(router_id=router_id)
 
-        if bindings.filter_by(l3_agent_id=agent_id).first():
+        if rb_obj.RouterL3AgentBinding.objects_exist(
+                context, router_id=router_id, l3_agent_id=agent_id):
             LOG.debug('Router %(router_id)s has already been scheduled '
                       'to L3 agent %(agent_id)s.',
                       {'router_id': router_id, 'agent_id': agent_id})
@@ -199,7 +199,8 @@ class L3Scheduler(object):
 
         if not is_ha:
             binding_index = rb_model.LOWEST_BINDING_INDEX
-            if bindings.filter_by(binding_index=binding_index).first():
+            if rb_obj.RouterL3AgentBinding.objects_exist(
+                    context, router_id=router_id, binding_index=binding_index):
                 LOG.debug('Non-HA router %s has already been scheduled',
                           router_id)
                 return
@@ -214,12 +215,10 @@ class L3Scheduler(object):
                 return
 
         try:
-            with context.session.begin(subtransactions=True):
-                binding = rb_model.RouterL3AgentBinding()
-                binding.l3_agent_id = agent_id
-                binding.router_id = router_id
-                binding.binding_index = binding_index
-                context.session.add(binding)
+            binding = rb_obj.RouterL3AgentBinding(
+                context, l3_agent_id=agent_id,
+                router_id=router_id, binding_index=binding_index)
+            binding.create()
             LOG.debug('Router %(router_id)s is scheduled to L3 agent '
                       '%(agent_id)s with binding_index %(binding_index)d',
                       {'router_id': router_id,
@@ -314,7 +313,9 @@ class L3Scheduler(object):
 
     def _filter_scheduled_agents(self, plugin, context, router_id, candidates):
         hosting = plugin.get_l3_agents_hosting_routers(context, [router_id])
-        return list(set(candidates) - set(hosting))
+        # convert to comparable types
+        hosting_list = [tuple(host) for host in hosting]
+        return list(set(candidates) - set(hosting_list))
 
     def _bind_ha_router(self, plugin, context, router_id,
                         tenant_id, candidates):
