@@ -1,0 +1,5 @@
+---
+features:
+    - Ports have now a ``dns_domain`` attribute. A port's ``dns_domain``
+      attribute has precedence over the network's ``dns_domain``
+      from the point of view of publishing it to the external DNS service.
