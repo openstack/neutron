@@ -438,10 +438,12 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                          dns_data_db_2['current_dns_name'])
         self.assertEqual(dns_data_db_1['current_dns_domain'],
                          dns_data_db_2['current_dns_domain'])
-        self.assertEqual(dns_data_db_1['previous_dns_name'],
-                         dns_data_db_2['previous_dns_name'])
-        self.assertEqual(dns_data_db_1['previous_dns_domain'],
-                         dns_data_db_2['previous_dns_domain'])
+        # The first update cleared this port's data from the external DNS
+        # service. Therefore, the second update should have cleared
+        # previous_dns_name and previous_dns_domain, which record what has
+        # to be cleared from the external DNS service
+        self.assertFalse(dns_data_db_2['previous_dns_name'])
+        self.assertFalse(dns_data_db_2['previous_dns_domain'])
         self.assertFalse(mock_client.recordsets.create.call_args_list)
         self.assertFalse(
             mock_admin_client.recordsets.create.call_args_list)
