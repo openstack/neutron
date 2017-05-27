@@ -80,7 +80,7 @@ class _mac_mydialect(netaddr.mac_unix):
     word_fmt = '%.2x'
 
 
-class OVSPluginApi(agent_rpc.PluginApi):
+class OVSPluginApi(agent_rpc.CacheBackedPluginApi):
     pass
 
 
@@ -360,6 +360,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
 
     def setup_rpc(self):
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
+        # allow us to receive port_update/delete callbacks from the cache
+        self.plugin_rpc.register_legacy_notification_callbacks(self)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.dvr_plugin_rpc = dvr_rpc.DVRServerRpcApi(topics.PLUGIN)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
@@ -367,13 +369,10 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # RPC network init
         self.context = context.get_admin_context_without_session()
         # Define the listening consumers for the agent
-        consumers = [[topics.PORT, topics.UPDATE],
-                     [topics.PORT, topics.DELETE],
-                     [constants.TUNNEL, topics.UPDATE],
+        consumers = [[constants.TUNNEL, topics.UPDATE],
                      [constants.TUNNEL, topics.DELETE],
                      [topics.SECURITY_GROUP, topics.UPDATE],
-                     [topics.DVR, topics.UPDATE],
-                     [topics.NETWORK, topics.UPDATE]]
+                     [topics.DVR, topics.UPDATE]]
         if self.l2_pop:
             consumers.append([topics.L2POPULATION, topics.UPDATE])
         self.connection = agent_rpc.create_consumers([self],

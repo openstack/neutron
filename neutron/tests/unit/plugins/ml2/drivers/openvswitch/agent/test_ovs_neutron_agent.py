@@ -42,6 +42,7 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
 
 
 NOTIFIER = 'neutron.plugins.ml2.rpc.AgentNotifierApi'
+PULLAPI = 'neutron.api.rpc.handlers.resources_rpc.ResourcesPullRpcApi'
 OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
 
 FAKE_MAC = '00:11:22:33:44:55'
@@ -101,6 +102,7 @@ class TestOvsNeutronAgent(object):
     def setUp(self):
         super(TestOvsNeutronAgent, self).setUp()
         self.useFixture(test_vlanmanager.LocalVlanManagerFixture())
+        mock.patch(PULLAPI).start()
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
@@ -2165,6 +2167,7 @@ class AncillaryBridgesTest(object):
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
+        mock.patch(PULLAPI).start()
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
@@ -2284,6 +2287,7 @@ class TestOvsDvrNeutronAgent(object):
 
     def setUp(self):
         super(TestOvsDvrNeutronAgent, self).setUp()
+        mock.patch(PULLAPI).start()
         notifier_p = mock.patch(NOTIFIER)
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
