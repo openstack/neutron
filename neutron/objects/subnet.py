@@ -116,6 +116,8 @@ class IPAllocationPool(base.NeutronDbObject):
         'end': obj_fields.IPAddressField()
     }
 
+    fields_no_update = ['subnet_id']
+
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
@@ -195,7 +197,7 @@ class Subnet(base.NeutronDbObject):
 
     foreign_keys = {'Network': {'network_id': 'id'}}
 
-    fields_no_update = ['project_id']
+    fields_no_update = ['project_id', 'network_id', 'segment_id']
 
     fields_need_translation = {
         'host_routes': 'routes'

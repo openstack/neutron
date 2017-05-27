@@ -38,6 +38,8 @@ class IpamAllocationPool(base.NeutronDbObject):
         'last_ip': obj_fields.IPAddressField(),
     }
 
+    fields_no_update = ['ipam_subnet_id']
+
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         result = super(IpamAllocationPool, cls).modify_fields_from_db(db_obj)

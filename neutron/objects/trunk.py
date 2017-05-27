@@ -44,7 +44,7 @@ class SubPort(base.NeutronDbObject):
         'segmentation_id': obj_fields.IntegerField(),
     }
 
-    fields_no_update = ['segmentation_type', 'segmentation_id']
+    fields_no_update = ['segmentation_type', 'segmentation_id', 'trunk_id']
 
     def to_dict(self):
         _dict = super(SubPort, self).to_dict()

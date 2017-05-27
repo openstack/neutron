@@ -104,7 +104,7 @@ class SecurityGroupRule(base.NeutronDbObject):
 
     foreign_keys = {'SecurityGroup': {'security_group_id': 'id'}}
 
-    fields_no_update = ['project_id', 'security_group_id']
+    fields_no_update = ['project_id', 'security_group_id', 'remote_group_id']
 
     # TODO(sayalilunkad): get rid of it once we switch the db model to using
     # custom types.
