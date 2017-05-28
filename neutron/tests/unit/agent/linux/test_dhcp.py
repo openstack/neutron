@@ -405,6 +405,14 @@ class FakeV4SubnetSegmentID(FakeV4Subnet):
         self.segment_id = 1
 
 
+class FakeV4SubnetSegmentID2(FakeV4Subnet):
+    def __init__(self):
+        super(FakeV4SubnetSegmentID2, self).__init__()
+        self.id = 'jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj'
+        self.host_routes = []
+        self.segment_id = 2
+
+
 class FakeV4MetadataSubnet(FakeV4Subnet):
     def __init__(self):
         super(FakeV4MetadataSubnet, self).__init__()
@@ -681,6 +689,15 @@ class FakeDualNetworkDualDHCPOnLinkSubnetRoutesDisabled(object):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4SubnetSegmentID()]
+        self.ports = [FakePort1(), FakeRouterPort(), FakeRouterPortSegmentID()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeNonLocalSubnets(object):
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4SubnetSegmentID2()]
+        self.non_local_subnets = [FakeV4SubnetSegmentID()]
         self.ports = [FakePort1(), FakeRouterPort(), FakeRouterPortSegmentID()]
         self.namespace = 'qdhcp-ns'
 
@@ -1520,6 +1537,23 @@ class TestDnsmasq(TestBase):
 
         ipm_retval = {FakeV4SubnetNoGateway().id: '192.168.1.1'}
         self._test_output_opts_file(expected, FakeV4NoGatewayNetwork(),
+                                    ipm_retval=ipm_retval)
+
+    def test_non_local_subnets(self):
+        expected = (
+            'tag:tag0,option:dns-server,8.8.8.8\n'
+            'tag:tag0,option:classless-static-route,'
+            '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+            'tag:tag0,249,169.254.169.254/32,192.168.0.1,'
+            '0.0.0.0/0,192.168.0.1\ntag:tag0,option:router,192.168.0.1\n'
+            'tag:tag1,option:dns-server,8.8.8.8\n'
+            'tag:tag1,option:classless-static-route,'
+            '169.254.169.254/32,192.168.2.1,0.0.0.0/0,192.168.2.1\n'
+            'tag:tag1,249,169.254.169.254/32,192.168.2.1,'
+            '0.0.0.0/0,192.168.2.1\n'
+            'tag:tag1,option:router,192.168.2.1').lstrip()
+        ipm_retval = {FakeV4SubnetSegmentID2().id: '192.168.0.1'}
+        self._test_output_opts_file(expected, FakeNonLocalSubnets(),
                                     ipm_retval=ipm_retval)
 
     def test_output_opts_file_no_neutron_router_on_subnet(self):

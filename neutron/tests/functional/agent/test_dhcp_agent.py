@@ -136,12 +136,15 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
                            "ip_address": ip_address}], })
         return port_dict
 
-    def create_network_dict(self, net_id, subnets=None, ports=None):
+    def create_network_dict(self, net_id, subnets=None, ports=None,
+                            non_local_subnets=None):
         subnets = [] if not subnets else subnets
         ports = [] if not ports else ports
+        non_local_subnets = [] if not non_local_subnets else non_local_subnets
         net_dict = dhcp.NetModel(d={
             "id": net_id,
             "subnets": subnets,
+            "non_local_subnets": non_local_subnets,
             "ports": ports,
             "admin_state_up": True,
             "tenant_id": uuidutils.generate_uuid(), })
