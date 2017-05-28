@@ -1114,31 +1114,39 @@ class DeviceManager(object):
         return common_utils.get_dhcp_agent_device_id(network.id,
                                                      self.conf.host)
 
-    def _set_default_route(self, network, device_name):
-        """Sets the default gateway for this dhcp namespace.
-
-        This method is idempotent and will only adjust the route if adjusting
-        it would change it from what it already is.  This makes it safe to call
-        and avoids unnecessary perturbation of the system.
-        """
+    def _set_default_route_ip_version(self, network, device_name, ip_version):
         device = ip_lib.IPDevice(device_name, namespace=network.namespace)
-        gateway = device.route.get_gateway()
+        gateway = device.route.get_gateway(ip_version=ip_version)
         if gateway:
             gateway = gateway.get('gateway')
 
         for subnet in network.subnets:
             skip_subnet = (
-                subnet.ip_version != 4
+                subnet.ip_version != ip_version
                 or not subnet.enable_dhcp
                 or subnet.gateway_ip is None)
 
             if skip_subnet:
                 continue
 
+            if subnet.ip_version == constants.IP_VERSION_6:
+                # This is duplicating some of the API checks already done,
+                # but some of the functional tests call directly
+                prefixlen = netaddr.IPNetwork(subnet.cidr).prefixlen
+                if prefixlen == 0 or prefixlen > 126:
+                    continue
+                modes = [constants.IPV6_SLAAC, constants.DHCPV6_STATELESS]
+                addr_mode = getattr(subnet, 'ipv6_address_mode', None)
+                ra_mode = getattr(subnet, 'ipv6_ra_mode', None)
+                if (prefixlen != 64 and
+                        (addr_mode in modes or ra_mode in modes)):
+                    continue
+
             if gateway != subnet.gateway_ip:
-                LOG.debug('Setting gateway for dhcp netns on net %(n)s to '
-                          '%(ip)s',
-                          {'n': network.id, 'ip': subnet.gateway_ip})
+                LOG.debug('Setting IPv%(version)s gateway for dhcp netns '
+                          'on net %(n)s to %(ip)s',
+                          {'n': network.id, 'ip': subnet.gateway_ip,
+                           'version': ip_version})
 
                 # Check for and remove the on-link route for the old
                 # gateway being replaced, if it is outside the subnet
@@ -1146,12 +1154,8 @@ class DeviceManager(object):
                                                 not ipam_utils.check_subnet_ip(
                                                         subnet.cidr, gateway))
                 if is_old_gateway_not_in_subnet:
-                    v4_onlink = device.route.list_onlink_routes(
-                        constants.IP_VERSION_4)
-                    v6_onlink = device.route.list_onlink_routes(
-                        constants.IP_VERSION_6)
-                    existing_onlink_routes = set(
-                        r['cidr'] for r in v4_onlink + v6_onlink)
+                    onlink = device.route.list_onlink_routes(ip_version)
+                    existing_onlink_routes = set(r['cidr'] for r in onlink)
                     if gateway in existing_onlink_routes:
                         device.route.delete_route(gateway, scope='link')
 
@@ -1168,9 +1172,22 @@ class DeviceManager(object):
         # No subnets on the network have a valid gateway.  Clean it up to avoid
         # confusion from seeing an invalid gateway here.
         if gateway is not None:
-            LOG.debug('Removing gateway for dhcp netns on net %s', network.id)
+            LOG.debug('Removing IPv%(version)s gateway for dhcp netns on '
+                      'net %(n)s',
+                      {'n': network.id, 'version': ip_version})
 
             device.route.delete_gateway(gateway)
+
+    def _set_default_route(self, network, device_name):
+        """Sets the default gateway for this dhcp namespace.
+
+        This method is idempotent and will only adjust the route if adjusting
+        it would change it from what it already is.  This makes it safe to call
+        and avoids unnecessary perturbation of the system.
+        """
+        for ip_version in (constants.IP_VERSION_4, constants.IP_VERSION_6):
+            self._set_default_route_ip_version(network, device_name,
+                                               ip_version)
 
     def _setup_existing_dhcp_port(self, network, device_id, dhcp_subnets):
         """Set up the existing DHCP port, if there is one."""
