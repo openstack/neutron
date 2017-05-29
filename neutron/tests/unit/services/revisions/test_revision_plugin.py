@@ -170,7 +170,8 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         with self.port() as port:
             rev = port['port']['revision_number']
             qos_plugin = directory.get_plugin('QOS')
-            qos_policy = {'policy': {'name': "policy1",
+            qos_policy = {'policy': {'id': uuidutils.generate_uuid(),
+                                     'name': "policy1",
                                      'project_id': uuidutils.generate_uuid()}}
             qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
             data = {'port': {'qos_policy_id': qos_obj['id']}}
@@ -182,7 +183,8 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         with self.network() as network:
             rev = network['network']['revision_number']
             qos_plugin = directory.get_plugin('QOS')
-            qos_policy = {'policy': {'name': "policy1",
+            qos_policy = {'policy': {'id': uuidutils.generate_uuid(),
+                                     'name': "policy1",
                                      'project_id': uuidutils.generate_uuid()}}
             qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
             data = {'network': {'qos_policy_id': qos_obj['id']}}

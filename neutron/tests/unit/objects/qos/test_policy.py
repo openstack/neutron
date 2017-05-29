@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from oslo_utils import uuidutils
 from oslo_versionedobjects import exception
 import testtools
 
@@ -39,6 +40,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     def setUp(self):
         super(QosPolicyObjectTestCase, self).setUp()
+        mock.patch.object(policy.QosPolicy, 'get_default').start()
+
         # qos_policy_ids will be incorrect, but we don't care in this test
         self.db_qos_bandwidth_rules = [
             self.get_random_db_fields(rule.QosBandwidthLimitRule)
@@ -98,18 +101,16 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
     def test_get_object(self):
         admin_context = self.context.elevated()
-        with mock.patch.object(
-                db_api, 'get_object',
-                return_value=self.db_objs[0]) as get_object_mock:
-            with mock.patch.object(self.context,
-                                   'elevated',
-                                   return_value=admin_context) as context_mock:
-                obj = self._test_class.get_object(self.context, id='fake_id')
-                self.assertTrue(self._is_test_class(obj))
-                self._check_equal(self.objs[0], obj)
-                context_mock.assert_called_once_with()
-                get_object_mock.assert_called_once_with(
-                    admin_context, self._test_class.db_model, id='fake_id')
+        with mock.patch.object(db_api, 'get_object',
+                return_value=self.db_objs[0]) as get_object_mock, \
+                mock.patch.object(self.context, 'elevated',
+                return_value=admin_context) as context_mock:
+            obj = self._test_class.get_object(self.context, id='fake_id')
+            self.assertTrue(self._is_test_class(obj))
+            self._check_equal(self.objs[0], obj)
+            context_mock.assert_called_once_with()
+            get_object_mock.assert_called_once_with(
+                admin_context, self._test_class.db_model, id='fake_id')
 
     def test_to_dict_makes_primitive_field_value(self):
         # is_shared_with_tenant requires DB
@@ -149,7 +150,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
             rules.append(rule_obj)
 
         if reload_rules:
-            policy_obj.reload_rules()
+            policy_obj.obj_load_attr('rules')
         return policy_obj, rules
 
     def test_attach_network_get_network_policy(self):
@@ -303,6 +304,42 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertRaises(n_exc.NetworkQosBindingNotFound,
                           policy_obj.detach_network, self._network_id)
 
+    @mock.patch.object(policy.QosPolicyDefault, 'create')
+    def test_set_default_no_default_policy_exists(self, mock_default_create):
+        obj = self._create_test_policy()
+        with mock.patch.object(obj, 'get_default', return_value=None):
+            obj.set_default()
+            mock_default_create.assert_called_once_with()
+
+    def test_set_default_default_policy_exists(self):
+        obj = self._create_test_policy()
+        with mock.patch.object(obj, 'get_default', return_value=mock.Mock()):
+            self.assertRaises(n_exc.QoSPolicyDefaultAlreadyExists,
+                              obj.set_default)
+
+    def test_set_default_is_default_policy(self):
+        obj = self._create_test_policy()
+        with mock.patch.object(obj, 'get_default', return_value=obj.id), \
+                mock.patch.object(obj, 'set_default'):
+            obj.set_default()
+
+    @mock.patch.object(policy.QosPolicyDefault, 'get_object')
+    @mock.patch.object(policy.QosPolicyDefault, 'delete')
+    def test_unset_default_default_policy_exists(self, mock_default_delete,
+                                                 mock_default_get):
+        obj = self._create_test_policy()
+        with mock.patch.object(obj, 'get_default', return_value=obj.id):
+            mock_default_get.return_value = policy.QosPolicyDefault()
+            obj.unset_default()
+            mock_default_get.assert_called_once_with(obj.obj_context,
+                                                     project_id=obj.project_id)
+            mock_default_delete.assert_called_once_with()
+
+    def test_unset_default_no_default_policy_exists(self):
+        obj = self._create_test_policy()
+        with mock.patch.object(obj, 'get_default', return_value=None):
+            obj.unset_default()
+
     def test_synthetic_rule_fields(self):
         policy_obj, rule_obj = self._create_test_policy_with_rules(
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT])
@@ -363,8 +400,15 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT])
         self.assertEqual([], policy_obj.rules)
 
-        policy_obj.reload_rules()
+        policy_obj._reload_rules()
         self.assertEqual(rule_obj, policy_obj.rules)
+
+    def test_reload_is_default(self):
+        policy_obj = self._create_test_policy()
+        self.assertFalse(policy_obj.is_default)
+        policy_obj.set_default()
+        policy_obj._reload_is_default()
+        self.assertTrue(policy_obj.is_default)
 
     def test_get_bound_tenant_ids_returns_set_of_tenant_ids(self):
         obj = self._create_test_policy()
@@ -475,13 +519,23 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertIn(rule_objs[1], policy_obj_v1_4.rules)
         self.assertIn(rule_objs[2], policy_obj_v1_4.rules)
 
-    def test_filter_by_shared(self):
+    def test_v1_6_to_v1_5_drops_is_default(self):
+        policy_new = self._create_test_policy()
+
+        policy_v1_5 = policy_new.obj_to_primitive(target_version='1.5')
+        self.assertNotIn('is_default', policy_v1_5['versioned_object.data'])
+
+    @mock.patch.object(policy.QosPolicy, 'unset_default')
+    def test_filter_by_shared(self, *mocks):
+        project_id = uuidutils.generate_uuid()
         policy_obj = policy.QosPolicy(
-            self.context, name='shared-policy', shared=True)
+            self.context, name='shared-policy', shared=True,
+            project_id=project_id, is_default=False)
         policy_obj.create()
 
         policy_obj = policy.QosPolicy(
-            self.context, name='private-policy', shared=False)
+            self.context, name='private-policy', shared=False,
+            project_id=project_id)
         policy_obj.create()
 
         shared_policies = policy.QosPolicy.get_objects(
@@ -499,3 +553,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         # QoSPolicy currently cannot be loaded using constant queries number.
         # It can be reworked in follow-up patch.
         pass
+
+
+class QosPolicyDefaultObjectTestCase(test_base.BaseObjectIfaceTestCase):
+
+    _test_class = policy.QosPolicyDefault

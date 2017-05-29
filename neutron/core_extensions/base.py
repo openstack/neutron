@@ -20,6 +20,8 @@ import six
 
 NETWORK = 'network'
 PORT = 'port'
+EVENT_CREATE = 'create'
+EVENT_UPDATE = 'update'
 
 
 CORE_RESOURCES = [NETWORK, PORT]
@@ -29,12 +31,14 @@ CORE_RESOURCES = [NETWORK, PORT]
 class CoreResourceExtension(object):
 
     @abc.abstractmethod
-    def process_fields(self, context, resource_type,
+    def process_fields(self, context, resource_type, event_type,
                        requested_resource, actual_resource):
         """Process extension fields.
 
         :param context: neutron api request context
         :param resource_type: core resource type (one of CORE_RESOURCES)
+        :param event_type: kind of event triggering this action (update,
+               create)
         :param requested_resource: resource dict that contains extension fields
         :param actual_resource: actual resource dict known to plugin
         """

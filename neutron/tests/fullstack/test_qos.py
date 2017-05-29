@@ -15,6 +15,7 @@
 import functools
 
 from neutron_lib import constants
+from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import tc_lib
@@ -72,7 +73,7 @@ class BaseQoSRuleTestCase(object):
     def _create_qos_policy(self):
         return self.safe_client.create_qos_policy(
             self.tenant_id, 'fs_policy', 'Fullstack testing policy',
-            shared='False')
+            shared='False', is_default='False')
 
     def _prepare_vm_with_qos_policy(self, rule_add_functions):
         qos_policy = self._create_qos_policy()
@@ -282,3 +283,60 @@ class TestQoSWithL2Population(base.BaseFullStackTestCase):
         rule_types = {t['type'] for t in res['rule_types']}
         expected_rules = set(ovs_drv.SUPPORTED_RULES)
         self.assertEqual(expected_rules, rule_types)
+
+
+class TestQoSPolicyIsDefault(base.BaseFullStackTestCase):
+
+    NAME = 'fs_policy'
+    DESCRIPTION = 'Fullstack testing policy'
+    SHARED = True
+
+    def setUp(self):
+        host_desc = []  # No need to register agents for this test case
+        env_desc = environment.EnvironmentDescription(qos=True)
+        env = environment.Environment(env_desc, host_desc)
+        super(TestQoSPolicyIsDefault, self).setUp(env)
+
+    def _create_qos_policy(self, project_id, is_default):
+        return self.safe_client.create_qos_policy(
+            project_id, self.NAME, self.DESCRIPTION, shared=self.SHARED,
+            is_default=is_default)
+
+    def _update_qos_policy(self, qos_policy_id, is_default):
+        return self.client.update_qos_policy(
+            qos_policy_id, body={'policy': {'is_default': is_default}})
+
+    def test_create_one_default_qos_policy_per_project(self):
+        project_ids = [uuidutils.generate_uuid(), uuidutils.generate_uuid()]
+        for project_id in project_ids:
+            qos_policy = self._create_qos_policy(project_id, True)
+            self.assertTrue(qos_policy['is_default'])
+            self.assertEqual(project_id, qos_policy['project_id'])
+            qos_policy = self._create_qos_policy(project_id, False)
+            self.assertFalse(qos_policy['is_default'])
+            self.assertEqual(project_id, qos_policy['project_id'])
+
+    def test_create_two_default_qos_policies_per_project(self):
+        project_id = uuidutils.generate_uuid()
+        qos_policy = self._create_qos_policy(project_id, True)
+        self.assertTrue(qos_policy['is_default'])
+        self.assertEqual(project_id, qos_policy['project_id'])
+        self.assertRaises(exceptions.Conflict,
+                          self._create_qos_policy, project_id, True)
+
+    def test_update_default_status(self):
+        project_ids = [uuidutils.generate_uuid(), uuidutils.generate_uuid()]
+        for project_id in project_ids:
+            qos_policy = self._create_qos_policy(project_id, True)
+            self.assertTrue(qos_policy['is_default'])
+            qos_policy = self._update_qos_policy(qos_policy['id'], False)
+            self.assertTrue(qos_policy['policy']['is_default'])
+
+    def test_update_default_status_conflict(self):
+        project_id = uuidutils.generate_uuid()
+        qos_policy_1 = self._create_qos_policy(project_id, True)
+        self.assertTrue(qos_policy_1['is_default'])
+        qos_policy_2 = self._create_qos_policy(project_id, False)
+        self.assertFalse(qos_policy_2['is_default'])
+        self.assertRaises(exceptions.Conflict,
+                          self._update_qos_policy, qos_policy_2['id'], True)

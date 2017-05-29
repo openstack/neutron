@@ -12,6 +12,7 @@
 
 from neutron_lib import constants
 
+from oslo_utils import uuidutils
 from oslo_versionedobjects import exception
 
 from neutron.common import constants as n_const
@@ -150,7 +151,8 @@ class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']
             policy_obj = policy.QosPolicy(self.context,
-                                          id=generated_qos_policy_id)
+                                          id=generated_qos_policy_id,
+                                          project_id=uuidutils.generate_uuid())
             policy_obj.create()
 
 
@@ -176,7 +178,8 @@ class QosDscpMarkingRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']
             policy_obj = policy.QosPolicy(self.context,
-                                          id=generated_qos_policy_id)
+                                          id=generated_qos_policy_id,
+                                          project_id=uuidutils.generate_uuid())
             policy_obj.create()
 
 
@@ -203,5 +206,6 @@ class QosMinimumBandwidthRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']
             policy_obj = policy.QosPolicy(self.context,
-                                          id=generated_qos_policy_id)
+                                          id=generated_qos_policy_id,
+                                          project_id=uuidutils.generate_uuid())
             policy_obj.create()

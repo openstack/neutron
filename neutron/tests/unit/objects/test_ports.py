@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 from oslo_utils import uuidutils
 import testscenarios
 
@@ -262,7 +263,8 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = ports.Port.get_object(self.context, id=obj.id)
         self.assertIn(sg2_id, obj.security_group_ids)
 
-    def test_qos_policy_id(self):
+    @mock.patch.object(policy.QosPolicy, 'unset_default')
+    def test_qos_policy_id(self, *mocks):
         policy_obj = policy.QosPolicy(self.context)
         policy_obj.create()
 
@@ -288,7 +290,8 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = ports.Port.get_object(self.context, id=obj.id)
         self.assertIsNone(obj.qos_policy_id)
 
-    def test__attach_qos_policy(self):
+    @mock.patch.object(policy.QosPolicy, 'unset_default')
+    def test__attach_qos_policy(self, *mocks):
         obj = self._make_object(self.obj_fields[0])
         obj.create()
 

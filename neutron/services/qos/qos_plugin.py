@@ -38,7 +38,9 @@ class QoSPlugin(qos.QoSPluginBase):
     service parameters over ports and networks.
 
     """
-    supported_extension_aliases = ['qos', 'qos-bw-limit-direction']
+    supported_extension_aliases = ['qos',
+                                   'qos-bw-limit-direction',
+                                   'qos-default']
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -299,7 +301,7 @@ class QoSPlugin(qos.QoSPluginBase):
             checker.check_bandwidth_rule_conflict(policy, rule_data)
             rule = rule_cls(context, qos_policy_id=policy_id, **rule_data)
             rule.create()
-            policy.reload_rules()
+            policy.obj_load_attr('rules')
             self.validate_policy(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
@@ -338,7 +340,7 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = rule_cls(context, id=rule_id)
             rule.update_fields(rule_data, reset_changes=True)
             rule.update()
-            policy.reload_rules()
+            policy.obj_load_attr('rules')
             self.validate_policy(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
@@ -366,7 +368,7 @@ class QoSPlugin(qos.QoSPluginBase):
             policy = self._get_policy_obj(context, policy_id)
             rule = policy.get_rule_by_id(rule_id)
             rule.delete()
-            policy.reload_rules()
+            policy.obj_load_attr('rules')
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 

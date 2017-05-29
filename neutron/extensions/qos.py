@@ -32,8 +32,10 @@ from neutron.objects.qos import rule as rule_object
 from neutron.plugins.common import constants
 from neutron.services.qos import qos_consts
 
+
 ALIAS = "qos"
 QOS_PREFIX = "/qos"
+COLLECTION_NAME = 'policies'
 
 # Attribute Map
 QOS_RULE_COMMON_FIELDS = {
@@ -47,7 +49,7 @@ QOS_RULE_COMMON_FIELDS = {
 }
 
 RESOURCE_ATTRIBUTE_MAP = {
-    'policies': {
+    COLLECTION_NAME: {
         'id': {'allow_post': False, 'allow_put': False,
                'validate': {'type:uuid': None},
                'is_visible': True, 'primary_key': True},

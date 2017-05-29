@@ -73,6 +73,16 @@ class QosPortPolicyBinding(model_base.BASEV2):
                                cascade='delete', lazy='joined'))
 
 
+class QosPolicyDefault(model_base.BASEV2,
+                       model_base.HasProjectPrimaryKeyIndex):
+    __tablename__ = 'qos_policies_default'
+    qos_policy_id = sa.Column(sa.String(36),
+                              sa.ForeignKey('qos_policies.id',
+                                            ondelete='CASCADE'),
+                              nullable=False)
+    revises_on_change = ('qos_policy',)
+
+
 class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
     __tablename__ = 'qos_bandwidth_limit_rules'
     qos_policy_id = sa.Column(sa.String(36),
