@@ -237,7 +237,7 @@ class IPWrapper(SubProcessBase):
         return IPDevice(name, namespace=self.namespace)
 
     def add_vxlan(self, name, vni, group=None, dev=None, ttl=None, tos=None,
-                  local=None, port=None, proxy=False):
+                  local=None, srcport=None, dstport=None, proxy=False):
         cmd = ['add', name, 'type', 'vxlan', 'id', vni]
         if group:
             cmd.extend(['group', group])
@@ -252,10 +252,13 @@ class IPWrapper(SubProcessBase):
         if proxy:
             cmd.append('proxy')
         # tuple: min,max
-        if port and len(port) == 2:
-            cmd.extend(['port', port[0], port[1]])
-        elif port:
-            raise n_exc.NetworkVxlanPortRangeError(vxlan_range=port)
+        if srcport:
+            if len(srcport) == 2 and srcport[0] <= srcport[1]:
+                cmd.extend(['srcport', str(srcport[0]), str(srcport[1])])
+            else:
+                raise n_exc.NetworkVxlanPortRangeError(vxlan_range=srcport)
+        if dstport:
+            cmd.extend(['dstport', str(dstport)])
         self._as_root([], 'link', cmd)
         return (IPDevice(name, namespace=self.namespace))
 

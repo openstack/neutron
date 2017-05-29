@@ -47,6 +47,18 @@ vxlan_opts = [
                      "value must match the value of the 'overlay_ip_version' "
                      "option in the ML2 plug-in configuration file on the "
                      "neutron server node(s).")),
+    cfg.PortOpt('udp_srcport_min', default=0,
+                help=_("The minimum of the UDP source port range used for "
+                       "VXLAN communication.")),
+    cfg.PortOpt('udp_srcport_max', default=0,
+                help=_("The maximum of the UDP source port range used for "
+                       "VXLAN communication.")),
+    cfg.PortOpt('udp_dstport',
+                help=_("The UDP port used for VXLAN communication. By "
+                       "default, the Linux kernel doesn't use the IANA "
+                       "assigned standard value, so if you want to use it, "
+                       "this option must be set to 4789. It is not set by "
+                       "default because of backward compatibiltiy.")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Extension to use alongside ml2 plugin's l2population "
                        "mechanism driver. It enables the plugin to populate "

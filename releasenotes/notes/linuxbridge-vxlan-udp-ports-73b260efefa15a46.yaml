@@ -1,0 +1,8 @@
+---
+features:
+  - UDP ports used by VXLAN in the LinuxBridge agent
+    can be configured now with the VXLAN.udp_srcport_min,
+    VXLAN.udp_srcport_max and VXLAN.udp_dstport config
+    options. To use the IANA assigned port number, set
+    VXLAN.udp_dstport to 4789. The default is not changed
+    from the Linux kernel default 8472.

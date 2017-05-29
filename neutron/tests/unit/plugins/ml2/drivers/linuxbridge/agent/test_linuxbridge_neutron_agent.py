@@ -392,6 +392,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 self.assertEqual("vxlan-" + seg_id, retval)
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
+                                                srcport=(0, 0),
+                                                dstport=None,
+                                                ttl=None,
+                                                tos=None,
                                                 dev=self.lbm.local_int)
                 dv6_fn.assert_called_once_with()
                 cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
@@ -399,6 +403,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                  self.lbm.ensure_vxlan(seg_id))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
+                                                srcport=(0, 0),
+                                                dstport=None,
+                                                ttl=None,
+                                                tos=None,
                                                 dev=self.lbm.local_int,
                                                 proxy=expected_proxy)
 
