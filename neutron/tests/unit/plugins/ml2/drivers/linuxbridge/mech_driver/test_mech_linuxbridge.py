@@ -24,7 +24,7 @@ from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
 
 class LinuxbridgeMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
-    VIF_TYPE = 'tap'
+    VIF_TYPE = portbindings.VIF_TYPE_TAP
     CAP_PORT_FILTER = True
     AGENT_TYPE = constants.AGENT_TYPE_LINUXBRIDGE
 
