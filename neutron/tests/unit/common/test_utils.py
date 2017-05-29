@@ -14,8 +14,10 @@
 
 import os.path
 import random
+import re
 import sys
 
+import ddt
 import eventlet
 import mock
 import netaddr
@@ -689,17 +691,20 @@ class TestExcDetails(base.BaseTestCase):
             utils.extract_exc_details(Exception()), six.text_type)
 
 
+@ddt.ddt
 class ImportModulesRecursivelyTestCase(base.BaseTestCase):
 
-    def test_recursion(self):
+    @ddt.data('/', r'\\')
+    def test_recursion(self, separator):
         expected_modules = (
             'neutron.tests.unit.tests.example.dir.example_module',
             'neutron.tests.unit.tests.example.dir.subdir.example_module',
         )
         for module in expected_modules:
             sys.modules.pop(module, None)
-        modules = utils.import_modules_recursively(
-            os.path.dirname(tests.__file__))
+
+        topdir = re.sub(r'[/\\]+', separator, os.path.dirname(tests.__file__))
+        modules = utils.import_modules_recursively(topdir)
         for module in expected_modules:
             self.assertIn(module, modules)
             self.assertIn(module, sys.modules)
