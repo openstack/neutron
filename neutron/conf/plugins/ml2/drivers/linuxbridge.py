@@ -58,6 +58,12 @@ vxlan_opts = [
                        "fully compatible with the allowed-address-pairs "
                        "extension.")
                 ),
+    cfg.ListOpt('multicast_ranges',
+                default=[],
+                help=_("Optional comma-separated list of "
+                       "<multicast address>:<vni_min>:<vni_max> triples "
+                       "describing how to assign a multicast address to "
+                       "VXLAN according to its VNI ID.")),
 ]
 
 bridge_opts = [

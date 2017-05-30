@@ -222,6 +222,45 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         vn_id = 257
         self.assertEqual('239.1.2.1', self.lbm.get_vxlan_group(vn_id))
 
+    def test_get_vxlan_group_with_multicast_address(self):
+        cfg.CONF.set_override('vxlan_group', '239.1.2.3/32', 'VXLAN')
+        cfg.CONF.set_override('multicast_ranges',
+                              ('224.0.0.10:300:315',
+                               '225.0.0.15:400:600'), 'VXLAN')
+        vn_id = 300
+        self.assertEqual('224.0.0.10', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 500
+        self.assertEqual('225.0.0.15', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 315
+        self.assertEqual('224.0.0.10', self.lbm.get_vxlan_group(vn_id))
+        vn_id = 4000
+        # outside of range should fallback to group
+        self.assertEqual('239.1.2.3', self.lbm.get_vxlan_group(vn_id))
+
+    def test__is_valid_multicast_range(self):
+        bad_ranges = ['224.0.0.10:330:315', 'x:100:200', '10.0.0.1:100:200',
+                      '224.0.0.10:100', '224.0.0.10:100:200:300']
+        for r in bad_ranges:
+            self.assertFalse(self.lbm._is_valid_multicast_range(r),
+                             'range %s should have been invalid' % r)
+        good_ranges = ['224.0.0.10:315:330', '224.0.0.0:315:315']
+        for r in good_ranges:
+            self.assertTrue(self.lbm._is_valid_multicast_range(r),
+                            'range %s should have been valid' % r)
+        # v4 ranges are bad when a v6 local_ip is present
+        self.lbm.local_ip = '2000::1'
+        for r in good_ranges:
+            self.assertFalse(self.lbm._is_valid_multicast_range(r),
+                             'range %s should have been invalid' % r)
+
+    def test__match_multicast_range(self):
+        cfg.CONF.set_override('multicast_ranges',
+                              ('224.0.0.10:300:315',
+                               '225.0.0.15:400:600'), 'VXLAN')
+        self.assertEqual('224.0.0.10', self.lbm._match_multicast_range(307))
+        self.assertEqual('225.0.0.15', self.lbm._match_multicast_range(407))
+        self.assertIsNone(self.lbm._match_multicast_range(399))
+
     def test_get_vxlan_group_with_ipv6(self):
         cfg.CONF.set_override('local_ip', LOCAL_IPV6, 'VXLAN')
         self.lbm.local_ip = LOCAL_IPV6
