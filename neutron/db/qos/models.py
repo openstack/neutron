@@ -81,6 +81,7 @@ class QosPolicyDefault(model_base.BASEV2,
                                             ondelete='CASCADE'),
                               nullable=False)
     revises_on_change = ('qos_policy',)
+    qos_policy = sa.orm.relationship(QosPolicy, load_on_pending=True)
 
 
 class QosBandwidthLimitRule(model_base.HasId, model_base.BASEV2):
