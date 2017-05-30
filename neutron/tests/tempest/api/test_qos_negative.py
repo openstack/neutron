@@ -23,10 +23,8 @@ LONG_TENANT_ID_NG = 'z' * (db_const.PROJECT_ID_FIELD_SIZE + 1)
 
 
 class QosNegativeTestJSON(base.BaseAdminNetworkTest):
-    @classmethod
-    @test.requires_ext(extension="qos", service="network")
-    def resource_setup(cls):
-        super(QosNegativeTestJSON, cls).resource_setup()
+
+    required_extensions = ['qos']
 
     @test.attr(type='negative')
     @decorators.idempotent_id('b9dce555-d3b3-11e5-950a-54ee757c77da')

@@ -12,16 +12,15 @@
 
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base_routers as base
 
 
 class RoutersTestHA(base.BaseRouterTest):
 
+    required_extensions = ['router', 'l3-ha']
+
     @classmethod
-    @test.requires_ext(extension="router", service="network")
-    @test.requires_ext(extension="l3-ha", service="network")
     def resource_setup(cls):
         # The check above will pass if api_extensions=all, which does
         # not mean "l3-ha" extension itself is present.

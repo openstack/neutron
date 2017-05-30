@@ -26,8 +26,9 @@ CONF = config.CONF
 
 class QuotasTestBase(base.BaseAdminNetworkTest):
 
+    required_extensions = ['quotas']
+
     @classmethod
-    @test.requires_ext(extension="quotas", service="network")
     def resource_setup(cls):
         if not CONF.identity_feature_enabled.api_v2_admin:
             # TODO(ihrachys) adopt to v3

@@ -76,6 +76,10 @@ class BaseNetworkTest(test.BaseTestCase):
             raise cls.skipException("Neutron support is required")
         if cls._ip_version == 6 and not CONF.network_feature_enabled.ipv6:
             raise cls.skipException("IPv6 Tests are disabled.")
+        for req_ext in getattr(cls, 'required_extensions', []):
+            if not test.is_extension_enabled(req_ext, 'network'):
+                msg = "%s extension not enabled." % req_ext
+                raise cls.skipException(msg)
 
     @classmethod
     def setup_credentials(cls):

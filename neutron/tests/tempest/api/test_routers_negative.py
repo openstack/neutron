@@ -24,10 +24,7 @@ from neutron.tests.tempest.api import base_routers as base
 
 class RoutersNegativeTestBase(base.BaseRouterTest):
 
-    @classmethod
-    @test.requires_ext(extension="router", service="network")
-    def skip_checks(cls):
-        super(RoutersNegativeTestBase, cls).skip_checks()
+    required_extensions = ['router']
 
     @classmethod
     def resource_setup(cls):
@@ -74,10 +71,7 @@ class RoutersNegativePolicyTest(RoutersNegativeTestBase):
 
 class DvrRoutersNegativeTest(RoutersNegativeTestBase):
 
-    @classmethod
-    @test.requires_ext(extension="dvr", service="network")
-    def skip_checks(cls):
-        super(DvrRoutersNegativeTest, cls).skip_checks()
+    required_extensions = ['dvr']
 
     @test.attr(type='negative')
     @decorators.idempotent_id('4990b055-8fc7-48ab-bba7-aa28beaad0b9')
@@ -89,10 +83,7 @@ class DvrRoutersNegativeTest(RoutersNegativeTestBase):
 
 class HaRoutersNegativeTest(RoutersNegativeTestBase):
 
-    @classmethod
-    @test.requires_ext(extension="l3-ha", service="network")
-    def skip_checks(cls):
-        super(HaRoutersNegativeTest, cls).skip_checks()
+    required_extensions = ['l3-ha']
 
     @test.attr(type='negative')
     @decorators.idempotent_id('821b85b9-9c51-40f3-831f-bf223a7e0084')

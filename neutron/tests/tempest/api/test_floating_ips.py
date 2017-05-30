@@ -25,8 +25,9 @@ CONF = config.CONF
 
 class FloatingIPTestJSON(base.BaseNetworkTest):
 
+    required_extensions = ['router']
+
     @classmethod
-    @test.requires_ext(extension="router", service="network")
     def resource_setup(cls):
         super(FloatingIPTestJSON, cls).resource_setup()
         cls.ext_net_id = CONF.network.public_network_id

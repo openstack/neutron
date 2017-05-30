@@ -14,15 +14,15 @@
 
 from neutron.tests.tempest.common import tempest_fixtures
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
 
 class AgentManagementTestJSON(base.BaseAdminNetworkTest):
 
+    required_extensions = ['agent']
+
     @classmethod
-    @test.requires_ext(extension="agent", service="network")
     def resource_setup(cls):
         super(AgentManagementTestJSON, cls).resource_setup()
         body = cls.admin_client.list_agents()

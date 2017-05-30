@@ -14,7 +14,6 @@
 
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import exceptions
@@ -42,10 +41,7 @@ class L3AgentSchedulerTestJSON(base.BaseAdminNetworkTest):
     The l3_agent_scheduler extension is required for these tests.
     """
 
-    @classmethod
-    @test.requires_ext(extension="l3_agent_scheduler", service="network")
-    def skip_checks(cls):
-        super(L3AgentSchedulerTestJSON, cls).skip_checks()
+    required_extensions = ['l3_agent_scheduler']
 
     @classmethod
     def resource_setup(cls):

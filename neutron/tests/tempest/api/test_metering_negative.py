@@ -24,10 +24,7 @@ LONG_NAME_NG = 'x' * (db_const.NAME_FIELD_SIZE + 1)
 
 class MeteringNegativeTestJSON(base.BaseAdminNetworkTest):
 
-    @classmethod
-    @test.requires_ext(extension="metering", service="network")
-    def resource_setup(cls):
-        super(MeteringNegativeTestJSON, cls).resource_setup()
+    required_extensions = ['metering']
 
     @test.attr(type='negative')
     @decorators.idempotent_id('8b3f7c84-9d37-4771-8681-bfd2c07f3c2d')

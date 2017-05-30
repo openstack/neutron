@@ -15,7 +15,6 @@
 
 import netaddr
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -39,8 +38,9 @@ class AllowedAddressPairTestJSON(base.BaseNetworkTest):
         api_extensions
     """
 
+    required_extensions = ['allowed-address-pairs']
+
     @classmethod
-    @test.requires_ext(extension="allowed-address-pairs", service="network")
     def resource_setup(cls):
         super(AllowedAddressPairTestJSON, cls).resource_setup()
         cls.network = cls.create_network()

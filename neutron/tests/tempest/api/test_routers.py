@@ -28,10 +28,7 @@ CONF = config.CONF
 
 class RoutersTest(base_routers.BaseRouterTest):
 
-    @classmethod
-    @test.requires_ext(extension="router", service="network")
-    def skip_checks(cls):
-        super(RoutersTest, cls).skip_checks()
+    required_extensions = ['router']
 
     @classmethod
     def resource_setup(cls):
@@ -231,10 +228,7 @@ class RoutersIpV6Test(RoutersTest):
 
 class DvrRoutersTest(base_routers.BaseRouterTest):
 
-    @classmethod
-    @test.requires_ext(extension="dvr", service="network")
-    def skip_checks(cls):
-        super(DvrRoutersTest, cls).skip_checks()
+    required_extensions = ['dvr']
 
     @decorators.idempotent_id('141297aa-3424-455d-aa8d-f2d95731e00a')
     def test_create_distributed_router(self):
@@ -261,10 +255,7 @@ class DvrRoutersTest(base_routers.BaseRouterTest):
 
 class HaRoutersTest(base_routers.BaseRouterTest):
 
-    @classmethod
-    @test.requires_ext(extension="l3-ha", service="network")
-    def skip_checks(cls):
-        super(HaRoutersTest, cls).skip_checks()
+    required_extensions = ['l3-ha']
 
     @decorators.idempotent_id('77db8eae-3aa3-4e61-bf2a-e739ce042e53')
     def test_convert_legacy_router(self):
@@ -281,12 +272,8 @@ class HaRoutersTest(base_routers.BaseRouterTest):
 
 class RoutersSearchCriteriaTest(base.BaseSearchCriteriaTest):
 
+    required_extensions = ['router']
     resource = 'router'
-
-    @classmethod
-    @test.requires_ext(extension="router", service="network")
-    def skip_checks(cls):
-        super(RoutersSearchCriteriaTest, cls).skip_checks()
 
     @classmethod
     def resource_setup(cls):

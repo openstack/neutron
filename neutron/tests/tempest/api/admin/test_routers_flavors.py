@@ -14,7 +14,6 @@
 from neutron_lib import constants
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 import testtools
 
 from neutron.tests.tempest.api import base_routers as base
@@ -22,12 +21,7 @@ from neutron.tests.tempest.api import base_routers as base
 
 class RoutersFlavorTestCase(base.BaseRouterTest):
 
-    @classmethod
-    @test.requires_ext(extension="router", service="network")
-    @test.requires_ext(extension="flavors", service="network")
-    @test.requires_ext(extension="l3-flavors", service="network")
-    def skip_checks(cls):
-        super(RoutersFlavorTestCase, cls).skip_checks()
+    required_extensions = ['router', 'flavors', 'l3-flavors']
 
     @classmethod
     def resource_setup(cls):

@@ -14,7 +14,6 @@
 
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -29,8 +28,9 @@ class TestFlavorsJson(base.BaseAdminNetworkTest):
         List, Show, Create, Update, Delete service profiles
     """
 
+    required_extensions = ['flavors']
+
     @classmethod
-    @test.requires_ext(extension="flavors", service="network")
     def resource_setup(cls):
         super(TestFlavorsJson, cls).resource_setup()
 
