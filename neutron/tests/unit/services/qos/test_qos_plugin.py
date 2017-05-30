@@ -359,12 +359,14 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         QosMocked.assert_called_once_with(self.ctxt, **policy_details)
 
+    @mock.patch.object(policy_object.QosPolicy, "get_object")
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
         '.create_rbac_policy')
     @mock.patch.object(policy_object.QosPolicy, 'update')
     def test_update_policy(self, mock_qos_policy_update,
-                           mock_create_rbac_policy):
+                           mock_create_rbac_policy, mock_qos_policy_get):
+        mock_qos_policy_get.return_value = self.policy
         mock_manager = mock.Mock()
         mock_manager.attach_mock(mock_qos_policy_update, 'update')
         mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')

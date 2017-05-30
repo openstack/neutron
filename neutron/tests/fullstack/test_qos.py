@@ -330,7 +330,7 @@ class TestQoSPolicyIsDefault(base.BaseFullStackTestCase):
             qos_policy = self._create_qos_policy(project_id, True)
             self.assertTrue(qos_policy['is_default'])
             qos_policy = self._update_qos_policy(qos_policy['id'], False)
-            self.assertTrue(qos_policy['policy']['is_default'])
+            self.assertFalse(qos_policy['policy']['is_default'])
 
     def test_update_default_status_conflict(self):
         project_id = uuidutils.generate_uuid()

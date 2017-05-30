@@ -186,7 +186,7 @@ class QoSPlugin(qos.QoSPluginBase):
         """
         policy_data = policy['policy']
         with db_api.context_manager.writer.using(context):
-            policy_obj = policy_object.QosPolicy(context, id=policy_id)
+            policy_obj = self._get_policy_obj(context, policy_id)
             policy_obj.update_fields(policy_data, reset_changes=True)
             policy_obj.update()
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
