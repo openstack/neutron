@@ -195,9 +195,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         # filter out any without status changes
         new_status_map = {p: s for p, s in new_status_map.items() if s}
         try:
-            for port_id, new_status in new_status_map.items():
-                plugin.update_port_status(rpc_context, port_id,
-                                          new_status, host)
+            plugin.update_port_statuses(rpc_context, new_status_map, host)
         except Exception:
             LOG.exception("Failure updating statuses, retrying all")
             failed_devices = devices_to_fetch
