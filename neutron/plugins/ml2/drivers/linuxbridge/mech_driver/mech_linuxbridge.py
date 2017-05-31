@@ -36,7 +36,7 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         super(LinuxbridgeMechanismDriver, self).__init__(
             constants.AGENT_TYPE_LINUXBRIDGE,
-            'tap',  # const merge in I718f514e1673544114063af5e1a14ec29bf3274d
+            portbindings.VIF_TYPE_TAP,
             {portbindings.CAP_PORT_FILTER: sg_enabled})
         lb_qos_driver.register()
 
