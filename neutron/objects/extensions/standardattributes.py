@@ -27,3 +27,6 @@ def add_standard_attributes(cls):
     cls.fields.update(STANDARD_ATTRIBUTES)
     # those fields are updated by sqlalchemy itself
     cls.fields_no_update += ('created_at', 'updated_at')
+    # revision numbers are managed by service plugin and are bumped
+    # automatically; consumers should not bump them explicitly
+    cls.fields_no_update.append('revision_number')
