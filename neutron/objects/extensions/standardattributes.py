@@ -25,3 +25,6 @@ def add_standard_attributes(cls):
     # its own instance of list
     cls.fields = cls.fields.copy()
     cls.fields.update(STANDARD_ATTRIBUTES)
+    # revision numbers are managed by service plugin and are bumped
+    # automatically; consumers should not bump them explicitly
+    cls.fields_no_update.append('revision_number')
