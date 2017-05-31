@@ -254,7 +254,8 @@ class CacheBackedPluginApi(PluginApi):
             'allowed_address_pairs': [{'mac_address': o.mac_address,
                                        'ip_address': o.ip_address}
                                       for o in port_obj.allowed_address_pairs],
-            'port_security_enabled': port_obj.security.port_security_enabled,
+            'port_security_enabled': getattr(port_obj.security,
+                                             'port_security_enabled', True),
             'qos_policy_id': port_obj.qos_policy_id,
             'network_qos_policy_id': net_qos_policy_id,
             'profile': port_obj.binding.profile,
