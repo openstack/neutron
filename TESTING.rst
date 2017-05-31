@@ -626,6 +626,4 @@ TBD: how to do this with tox.
 References
 ~~~~~~~~~~
 
-.. [#pudb] PUDB debugger:
-   https://pypi.python.org/pypi/pudb
 .. _file-based-sqlite: http://lists.openstack.org/pipermail/openstack-dev/2016-July/099861.html
