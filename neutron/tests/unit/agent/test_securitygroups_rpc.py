@@ -87,6 +87,15 @@ def ingress_address_assignment_rules(port):
                       'source_port_range_max': 547,
                       'source_port_range_min': 547,
                       'dest_ip_prefix': '%s/128' % dest})
+    for dest in ['fe80::/64']:
+        rules.append({'direction': 'ingress',
+                      'ethertype': 'IPv6',
+                      'port_range_max': 546,
+                      'port_range_min': 546,
+                      'protocol': 'udp',
+                      'source_port_range_max': 547,
+                      'source_port_range_min': 547,
+                      'dest_ip_prefix': '%s' % dest})
     return rules
 
 
