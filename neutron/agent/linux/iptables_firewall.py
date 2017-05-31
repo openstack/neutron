@@ -42,6 +42,9 @@ CHAIN_NAME_PREFIX = {firewall.INGRESS_DIRECTION: 'i',
                      SPOOF_FILTER: 's'}
 IPSET_DIRECTION = {firewall.INGRESS_DIRECTION: 'src',
                    firewall.EGRESS_DIRECTION: 'dst'}
+LINUX_DEV_PREFIX_LEN = n_const.LINUX_DEV_PREFIX_LEN
+LINUX_DEV_LEN = n_const.LINUX_DEV_LEN
+MAX_CONNTRACK_ZONES = ip_conntrack.MAX_CONNTRACK_ZONES
 comment_rule = iptables_manager.comment_rule
 
 
