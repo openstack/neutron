@@ -31,7 +31,6 @@ from neutron.common import utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf import common as common_config
 from neutron.conf.plugins.ml2.drivers import ovs_conf
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import br_int
@@ -100,7 +99,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
     def create_agent(self, create_tunnels=True, ancillary_bridge=None,
                      local_ip='192.168.10.1'):
         if create_tunnels:
-            tunnel_types = [p_const.TYPE_VXLAN]
+            tunnel_types = [n_const.TYPE_VXLAN]
         else:
             tunnel_types = None
         bridge_mappings = ['physnet:%s' % self.br_phys]

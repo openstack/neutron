@@ -34,7 +34,6 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.cmd import runtime_checks
 from neutron.common import constants
 from neutron.common import utils as common_utils
-from neutron.plugins.common import constants as const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as ovs_const
 
@@ -49,14 +48,14 @@ MINIMUM_DIBBLER_VERSION = '1.0.1'
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
     name = common_utils.get_rand_device_name(prefix='vxlantest-')
     with ovs_lib.OVSBridge(name) as br:
-        port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_VXLAN)
+        port = br.add_tunnel_port(from_ip, to_ip, n_consts.TYPE_VXLAN)
         return port != ovs_lib.INVALID_OFPORT
 
 
 def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
     name = common_utils.get_rand_device_name(prefix='genevetest-')
     with ovs_lib.OVSBridge(name) as br:
-        port = br.add_tunnel_port(from_ip, to_ip, const.TYPE_GENEVE)
+        port = br.add_tunnel_port(from_ip, to_ip, n_consts.TYPE_GENEVE)
         return port != ovs_lib.INVALID_OFPORT
 
 

@@ -13,6 +13,7 @@
 import mock
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -23,7 +24,6 @@ from neutron import manager
 from neutron.objects import base as base_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
-from neutron.plugins.common import constants as plugins_constants
 from neutron.services.qos import qos_consts
 from neutron.services.qos import qos_plugin
 from neutron.tests.unit.services.qos import base

@@ -13,7 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron.plugins.common import constants as p_const
+from neutron_lib import constants as p_const
+
 from neutron.plugins.ml2.drivers import type_vxlan
 from neutron.tests.unit.plugins.ml2.drivers import base_type_tunnel
 from neutron.tests.unit.plugins.ml2 import test_rpc

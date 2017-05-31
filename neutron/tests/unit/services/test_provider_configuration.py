@@ -17,10 +17,10 @@ import shutil
 
 import mock
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants
 from oslo_config import cfg
 
 from neutron import manager
-from neutron.plugins.common import constants
 from neutron.services import provider_configuration as provconf
 from neutron.tests import base
 

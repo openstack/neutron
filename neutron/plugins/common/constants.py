@@ -13,31 +13,23 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.plugins import constants
+from neutron_lib import constants
+from neutron_lib.plugins import constants as p_const
 
 
-# Neutron well-known service type constants:
-DUMMY = "DUMMY"
-LOADBALANCER = "LOADBALANCER"
-LOADBALANCERV2 = "LOADBALANCERV2"
-FIREWALL = "FIREWALL"
-VPN = "VPN"
-METERING = "METERING"
-FLAVORS = "FLAVORS"
-QOS = "QOS"
+# TODO(boden): consume once I208c976c3e7e43e27e1907ed196af8efccd73f22 releases
 LOG_API = "LOGGING"
 
 # Maps extension alias to service type that
 # can be implemented by the core plugin.
 EXT_TO_SERVICE_MAPPING = {
-    'dummy': DUMMY,
-    'lbaas': LOADBALANCER,
-    'lbaasv2': LOADBALANCERV2,
-    'fwaas': FIREWALL,
-    'vpnaas': VPN,
-    'metering': METERING,
+    'lbaas': p_const.LOADBALANCER,
+    'lbaasv2': p_const.LOADBALANCERV2,
+    'fwaas': p_const.FIREWALL,
+    'vpnaas': p_const.VPN,
+    'metering': p_const.METERING,
     'router': constants.L3,
-    'qos': QOS,
+    'qos': p_const.QOS,
 }
 
 # Maps default service plugins entry points to their extension aliases
@@ -48,59 +40,4 @@ DEFAULT_SERVICE_PLUGINS = {
     'network_ip_availability': 'network-ip-availability',
     'flavors': 'flavors',
     'revisions': 'revisions',
-}
-
-# Service operation status constants
-ACTIVE = "ACTIVE"
-DOWN = "DOWN"
-CREATED = "CREATED"
-PENDING_CREATE = "PENDING_CREATE"
-PENDING_UPDATE = "PENDING_UPDATE"
-PENDING_DELETE = "PENDING_DELETE"
-INACTIVE = "INACTIVE"
-ERROR = "ERROR"
-
-ACTIVE_PENDING_STATUSES = (
-    ACTIVE,
-    PENDING_CREATE,
-    PENDING_UPDATE
-)
-
-# Network Type constants
-TYPE_FLAT = 'flat'
-TYPE_GENEVE = 'geneve'
-TYPE_GRE = 'gre'
-TYPE_LOCAL = 'local'
-TYPE_VXLAN = 'vxlan'
-TYPE_VLAN = 'vlan'
-TYPE_NONE = 'none'
-
-# Values for network_type
-
-# For VLAN Network
-MIN_VLAN_TAG = 1
-MAX_VLAN_TAG = 4094
-
-# For Geneve Tunnel
-MIN_GENEVE_VNI = 1
-MAX_GENEVE_VNI = 2 ** 24 - 1
-
-# For GRE Tunnel
-MIN_GRE_ID = 1
-MAX_GRE_ID = 2 ** 32 - 1
-
-# For VXLAN Tunnel
-MIN_VXLAN_VNI = 1
-MAX_VXLAN_VNI = 2 ** 24 - 1
-VXLAN_UDP_PORT = 4789
-
-# Overlay (tunnel) protocol overhead
-GENEVE_ENCAP_MIN_OVERHEAD = 30
-GRE_ENCAP_OVERHEAD = 22
-VXLAN_ENCAP_OVERHEAD = 30
-
-# IP header length
-IP_HEADER_LENGTH = {
-    4: 20,
-    6: 40,
 }

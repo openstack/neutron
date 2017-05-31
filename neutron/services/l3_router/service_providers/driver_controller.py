@@ -24,7 +24,6 @@ from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.db import servicetype_db as st_db
-from neutron.plugins.common import constants
 from neutron.services import provider_configuration
 from neutron.services import service_base
 
@@ -60,7 +59,8 @@ class DriverController(object):
     @property
     def _flavor_plugin(self):
         if not hasattr(self, '_flavor_plugin_ref'):
-            self._flavor_plugin_ref = directory.get_plugin(constants.FLAVORS)
+            self._flavor_plugin_ref = directory.get_plugin(
+                plugin_constants.FLAVORS)
         return self._flavor_plugin_ref
 
     @registry.receives(resources.ROUTER, [events.BEFORE_CREATE])

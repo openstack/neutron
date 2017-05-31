@@ -35,7 +35,7 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
-from neutron.plugins.common import constants as p_const
+
 
 INTERFACE_HASH_LEN = 6
 LOG = logging.getLogger(__name__)
@@ -53,26 +53,26 @@ def get_deployment_physnet_mtu():
 
 
 def is_valid_vlan_tag(vlan):
-    return p_const.MIN_VLAN_TAG <= vlan <= p_const.MAX_VLAN_TAG
+    return n_const.MIN_VLAN_TAG <= vlan <= n_const.MAX_VLAN_TAG
 
 
 def is_valid_gre_id(gre_id):
-    return p_const.MIN_GRE_ID <= gre_id <= p_const.MAX_GRE_ID
+    return n_const.MIN_GRE_ID <= gre_id <= n_const.MAX_GRE_ID
 
 
 def is_valid_vxlan_vni(vni):
-    return p_const.MIN_VXLAN_VNI <= vni <= p_const.MAX_VXLAN_VNI
+    return n_const.MIN_VXLAN_VNI <= vni <= n_const.MAX_VXLAN_VNI
 
 
 def is_valid_geneve_vni(vni):
-    return p_const.MIN_GENEVE_VNI <= vni <= p_const.MAX_GENEVE_VNI
+    return n_const.MIN_GENEVE_VNI <= vni <= n_const.MAX_GENEVE_VNI
 
 
 def verify_tunnel_range(tunnel_range, tunnel_type):
     """Raise an exception for invalid tunnel range or malformed range."""
-    mappings = {p_const.TYPE_GRE: is_valid_gre_id,
-                p_const.TYPE_VXLAN: is_valid_vxlan_vni,
-                p_const.TYPE_GENEVE: is_valid_geneve_vni}
+    mappings = {n_const.TYPE_GRE: is_valid_gre_id,
+                n_const.TYPE_VXLAN: is_valid_vxlan_vni,
+                n_const.TYPE_GENEVE: is_valid_geneve_vni}
     if tunnel_type in mappings:
         for ident in tunnel_range:
             if not mappings[tunnel_type](ident):
@@ -147,9 +147,9 @@ def parse_network_vlan_ranges(network_vlan_ranges_cfg_entries):
 
 
 def in_pending_status(status):
-    return status in (p_const.PENDING_CREATE,
-                      p_const.PENDING_UPDATE,
-                      p_const.PENDING_DELETE)
+    return status in (n_const.PENDING_CREATE,
+                      n_const.PENDING_UPDATE,
+                      n_const.PENDING_DELETE)
 
 
 def _fixup_res_dict(context, attr_name, res_dict, check_allow_post=True):

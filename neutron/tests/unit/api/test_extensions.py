@@ -39,6 +39,7 @@ from neutron.plugins.common import constants
 from neutron import quota
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
+from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import extension_stubs as ext_stubs
 import neutron.tests.unit.extensions
 from neutron.tests.unit.extensions import extendedattribute as extattr
@@ -160,7 +161,7 @@ class ResourceExtensionTest(base.BaseTestCase):
     class DummySvcPlugin(wsgi.Controller):
             @classmethod
             def get_plugin_type(cls):
-                return constants.DUMMY
+                return dummy_plugin.DUMMY_SERVICE_TYPE
 
             def index(self, request, **kwargs):
                 return "resource index"
@@ -209,7 +210,7 @@ class ResourceExtensionTest(base.BaseTestCase):
 
             @classmethod
             def get_plugin_type(cls):
-                return constants.DUMMY
+                return dummy_plugin.DUMMY_SERVICE_TYPE
 
         res_ext = extensions.ResourceExtension(
             'tweedles', DummySvcPlugin(), path_prefix="/dummy_svc")
@@ -781,7 +782,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
                 return None
 
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
-        plugin_info = {constants.DUMMY: stub_plugin}
+        plugin_info = {dummy_plugin.DUMMY_SERVICE_TYPE: stub_plugin}
         with mock.patch("neutron.api.extensions.PluginAwareExtensionManager."
                         "check_if_plugin_extensions_loaded"):
             ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)

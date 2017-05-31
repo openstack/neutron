@@ -21,6 +21,7 @@ import time
 import uuid
 
 from debtcollector import removals
+from neutron_lib import constants as p_const
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -32,7 +33,6 @@ from neutron.agent.common import ip_lib
 from neutron.agent.common import utils
 from neutron.agent.ovsdb import api as ovsdb_api
 from neutron.conf.agent import ovs_conf
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
 

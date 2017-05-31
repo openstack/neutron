@@ -23,7 +23,6 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.agent import securitygroups_rpc
-from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
@@ -66,8 +65,8 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_allowed_network_types(self, agent):
         return (agent['configurations'].get('tunnel_types', []) +
-                [p_constants.TYPE_LOCAL, p_constants.TYPE_FLAT,
-                 p_constants.TYPE_VLAN])
+                [constants.TYPE_LOCAL, constants.TYPE_FLAT,
+                 constants.TYPE_VLAN])
 
     def get_mappings(self, agent):
         return agent['configurations'].get('bridge_mappings', {})

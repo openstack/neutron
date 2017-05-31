@@ -17,7 +17,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.agent import securitygroups_rpc
-from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.services.qos.drivers.linuxbridge import driver as lb_qos_driver
 
@@ -42,8 +41,8 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_allowed_network_types(self, agent):
         return (agent['configurations'].get('tunnel_types', []) +
-                [p_constants.TYPE_LOCAL, p_constants.TYPE_FLAT,
-                 p_constants.TYPE_VLAN])
+                [constants.TYPE_LOCAL, constants.TYPE_FLAT,
+                 constants.TYPE_VLAN])
 
     def get_mappings(self, agent):
         mappings = dict(agent['configurations'].get('interface_mappings', {}),

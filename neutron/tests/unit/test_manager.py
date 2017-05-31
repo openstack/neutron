@@ -31,7 +31,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 
 class MultiServiceCorePlugin(object):
-    supported_extension_aliases = ['lbaas', 'dummy']
+    supported_extension_aliases = ['lbaas', dummy_plugin.Dummy.get_alias()]
 
 
 class CorePluginWithAgentNotifiers(object):
@@ -42,11 +42,21 @@ class CorePluginWithAgentNotifiers(object):
 class NeutronManagerTestCase(base.BaseTestCase):
 
     def setUp(self):
+        ext_mapping = constants.EXT_TO_SERVICE_MAPPING
+        if dummy_plugin.Dummy.get_alias() not in ext_mapping:
+            ext_mapping[dummy_plugin.Dummy.get_alias()] = (
+                dummy_plugin.DUMMY_SERVICE_TYPE)
         super(NeutronManagerTestCase, self).setUp()
         self.config_parse()
         self.setup_coreplugin(load_plugins=False)
         self.useFixture(
             fixtures.MonkeyPatch('neutron.manager.NeutronManager._instance'))
+
+    def tearDown(self):
+        ext_mapping = constants.EXT_TO_SERVICE_MAPPING
+        if dummy_plugin.Dummy.get_alias() in ext_mapping:
+            del ext_mapping[dummy_plugin.Dummy.get_alias()]
+        super(NeutronManagerTestCase, self).tearDown()
 
     def test_service_plugin_is_loaded(self):
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
@@ -54,7 +64,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                               ["neutron.tests.unit.dummy_plugin."
                                "DummyServicePlugin"])
         manager.init()
-        plugin = directory.get_plugin(constants.DUMMY)
+        plugin = directory.get_plugin(dummy_plugin.DUMMY_SERVICE_TYPE)
 
         self.assertIsInstance(
             plugin, dummy_plugin.DummyServicePlugin,
@@ -62,9 +72,10 @@ class NeutronManagerTestCase(base.BaseTestCase):
 
     def test_service_plugin_by_name_is_loaded(self):
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
-        cfg.CONF.set_override("service_plugins", ["dummy"])
+        cfg.CONF.set_override("service_plugins",
+                              [dummy_plugin.Dummy.get_alias()])
         manager.init()
-        plugin = directory.get_plugin(constants.DUMMY)
+        plugin = directory.get_plugin(dummy_plugin.DUMMY_SERVICE_TYPE)
 
         self.assertIsInstance(
             plugin, dummy_plugin.DummyServicePlugin,
@@ -78,17 +89,20 @@ class NeutronManagerTestCase(base.BaseTestCase):
                                "DummyServicePlugin"])
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         e = self.assertRaises(ValueError, manager.NeutronManager.get_instance)
-        self.assertIn(constants.DUMMY, str(e))
+        self.assertIn(dummy_plugin.DUMMY_SERVICE_TYPE, str(e))
 
     def test_multiple_plugins_by_name_specified_for_service_type(self):
-        cfg.CONF.set_override("service_plugins", ["dummy", "dummy"])
+        cfg.CONF.set_override("service_plugins",
+                              [dummy_plugin.Dummy.get_alias(),
+                               dummy_plugin.Dummy.get_alias()])
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         self.assertRaises(ValueError, manager.NeutronManager.get_instance)
 
     def test_multiple_plugins_mixed_specified_for_service_type(self):
         cfg.CONF.set_override("service_plugins",
                               ["neutron.tests.unit.dummy_plugin."
-                               "DummyServicePlugin", "dummy"])
+                               "DummyServicePlugin",
+                               dummy_plugin.Dummy.get_alias()])
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         self.assertRaises(ValueError, manager.NeutronManager.get_instance)
 
@@ -100,7 +114,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                               "neutron.tests.unit.test_manager."
                               "MultiServiceCorePlugin")
         e = self.assertRaises(ValueError, manager.NeutronManager.get_instance)
-        self.assertIn(constants.DUMMY, str(e))
+        self.assertIn(dummy_plugin.DUMMY_SERVICE_TYPE, str(e))
 
     def test_core_plugin_supports_services(self):
         cfg.CONF.set_override("core_plugin",
@@ -110,17 +124,18 @@ class NeutronManagerTestCase(base.BaseTestCase):
         svc_plugins = directory.get_plugins()
         self.assertEqual(3, len(svc_plugins))
         self.assertIn(lib_const.CORE, svc_plugins.keys())
-        self.assertIn(constants.LOADBALANCER, svc_plugins.keys())
-        self.assertIn(constants.DUMMY, svc_plugins.keys())
+        self.assertIn(lib_const.LOADBALANCER, svc_plugins.keys())
+        self.assertIn(dummy_plugin.DUMMY_SERVICE_TYPE, svc_plugins.keys())
 
     def test_load_default_service_plugins(self):
         self.patched_default_svc_plugins.return_value = {
-            'neutron.tests.unit.dummy_plugin.DummyServicePlugin': 'DUMMY'
+            'neutron.tests.unit.dummy_plugin.DummyServicePlugin':
+                dummy_plugin.DUMMY_SERVICE_TYPE
         }
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         manager.init()
         svc_plugins = directory.get_plugins()
-        self.assertIn('DUMMY', svc_plugins)
+        self.assertIn(dummy_plugin.DUMMY_SERVICE_TYPE, svc_plugins)
 
     def test_post_plugin_validation(self):
         cfg.CONF.import_opt('dhcp_agents_per_network',
@@ -148,7 +163,7 @@ class NeutronManagerTestCase(base.BaseTestCase):
                               "CorePluginWithAgentNotifiers")
         expected = {'l3': 'l3_agent_notifier',
                     'dhcp': 'dhcp_agent_notifier',
-                    'dummy': 'dummy_agent_notifier'}
+                    dummy_plugin.Dummy.get_alias(): 'dummy_agent_notifier'}
         manager.init()
         core_plugin = directory.get_plugin()
         self.assertEqual(expected, core_plugin.agent_notifiers)

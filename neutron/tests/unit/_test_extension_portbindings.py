@@ -21,6 +21,7 @@ from six.moves import http_client as httplib
 from webob import exc
 
 from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.unit import dummy_plugin
 
 
 class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
@@ -129,7 +130,8 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self._test_update_port_binding_profile({})
 
     def test_port_create_portinfo_non_admin(self):
-        profile_arg = {portbindings.PROFILE: {'dummy': 'dummy'}}
+        profile_arg = {portbindings.PROFILE: {dummy_plugin.RESOURCE_NAME:
+                                              dummy_plugin.RESOURCE_NAME}}
         with self.network(set_context=True, tenant_id='test') as net1:
             with self.subnet(network=net1) as subnet1:
                 # succeed without binding:profile
@@ -148,7 +150,8 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                     pass
 
     def test_port_update_portinfo_non_admin(self):
-        profile_arg = {portbindings.PROFILE: {'dummy': 'dummy'}}
+        profile_arg = {portbindings.PROFILE: {dummy_plugin.RESOURCE_NAME:
+                                              dummy_plugin.RESOURCE_NAME}}
         with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1) as port:

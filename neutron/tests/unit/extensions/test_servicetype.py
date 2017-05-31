@@ -16,6 +16,7 @@
 import mock
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc as webexc
@@ -25,7 +26,6 @@ from neutron.api import extensions
 from neutron.db.models import servicetype as st_model
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import servicetype
-from neutron.plugins.common import constants
 from neutron.services import provider_configuration as provconf
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
@@ -98,7 +98,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
     def test_get_default_provider(self):
         self._set_override([constants.LOADBALANCER +
                             ':lbaas1:driver_path:default',
-                            constants.DUMMY +
+                            dp.DUMMY_SERVICE_TYPE +
                             ':lbaas2:driver_path2'])
         # can pass None as a context
         p = self.manager.get_default_service_provider(None,
@@ -111,12 +111,14 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
         self.assertRaises(
             provconf.DefaultServiceProviderNotFound,
             self.manager.get_default_service_provider,
-            None, constants.DUMMY
+            None, dp.DUMMY_SERVICE_TYPE
         )
 
     def test_get_provider_names_by_resource_ids(self):
-        self._set_override([constants.DUMMY + ':dummy1:driver_path',
-                            constants.DUMMY + ':dummy2:driver_path2'])
+        self._set_override([dp.DUMMY_SERVICE_TYPE +
+                            ':dummy1:driver_path',
+                            dp.DUMMY_SERVICE_TYPE +
+                            ':dummy2:driver_path2'])
         ctx = context.get_admin_context()
         test_data = [{'provider_name': 'dummy1',
                       'resource_id': uuidutils.generate_uuid()},
@@ -124,11 +126,14 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
                       'resource_id': uuidutils.generate_uuid()},
                      {'provider_name': 'dummy2',
                       'resource_id': uuidutils.generate_uuid()}]
-        self.manager.add_resource_association(ctx, constants.DUMMY,
+        self.manager.add_resource_association(ctx,
+                                              dp.DUMMY_SERVICE_TYPE,
                                               **test_data[0])
-        self.manager.add_resource_association(ctx, constants.DUMMY,
+        self.manager.add_resource_association(ctx,
+                                              dp.DUMMY_SERVICE_TYPE,
                                               **test_data[1])
-        self.manager.add_resource_association(ctx, constants.DUMMY,
+        self.manager.add_resource_association(ctx,
+                                              dp.DUMMY_SERVICE_TYPE,
                                               **test_data[2])
         names_by_id = self.manager.get_provider_names_by_resource_ids(
             ctx, [td['resource_id'] for td in test_data])
@@ -139,7 +144,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
     def test_add_resource_association(self):
         self._set_override([constants.LOADBALANCER +
                             ':lbaas1:driver_path:default',
-                            constants.DUMMY +
+                            dp.DUMMY_SERVICE_TYPE +
                             ':lbaas2:driver_path2'])
         ctx = context.get_admin_context()
         self.manager.add_resource_association(ctx,
@@ -155,7 +160,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
     def test_invalid_resource_association(self):
         self._set_override([constants.LOADBALANCER +
                             ':lbaas1:driver_path:default',
-                            constants.DUMMY +
+                            dp.DUMMY_SERVICE_TYPE +
                             ':lbaas2:driver_path2'])
         ctx = context.get_admin_context()
         self.assertRaises(provconf.ServiceProviderNotFound,
@@ -224,7 +229,7 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
             provconf.NeutronModule, 'service_providers').start()
         service_providers = [
             constants.LOADBALANCER + ':lbaas:driver_path',
-            constants.DUMMY + ':dummy:dummy_dr'
+            dp.DUMMY_SERVICE_TYPE + ':dummy:dummy_dr'
         ]
         self.service_providers.return_value = service_providers
         # Blank out service type manager instance

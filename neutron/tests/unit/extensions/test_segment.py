@@ -43,7 +43,6 @@ from neutron.extensions import ip_allocation
 from neutron.extensions import l2_adjacency
 from neutron.extensions import segment as ext_segment
 from neutron.objects import network
-from neutron.plugins.common import constants as p_constants
 from neutron.services.segments import db
 from neutron.services.segments import exceptions as segment_exc
 from neutron.services.segments import placement_client
@@ -507,7 +506,7 @@ class HostSegmentMappingTestCase(SegmentTestCase):
             network = network['network']
         segment = self._test_create_segment(
             network_id=network['id'], physical_network=physical_network,
-            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+            segmentation_id=200, network_type=constants.TYPE_VLAN)['segment']
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin)
         segments_host_db = self._get_segments_for_host(host)
@@ -533,10 +532,10 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
             network = network['network']
         segment = self._test_create_segment(
             network_id=network['id'], physical_network='phys_net1',
-            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+            segmentation_id=200, network_type=constants.TYPE_VLAN)['segment']
         self._test_create_segment(
             network_id=network['id'], physical_network='phys_net2',
-            segmentation_id=201, network_type=p_constants.TYPE_VLAN)['segment']
+            segmentation_id=201, network_type=constants.TYPE_VLAN)['segment']
         segments = db.get_segments_with_phys_nets(ctx, physnets)
         segment_ids = {segment['id'] for segment in segments}
         db.update_segment_host_mapping(ctx, host, segment_ids)
@@ -553,7 +552,7 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
             network = network['network']
         segment = self._test_create_segment(
             network_id=network['id'], physical_network='phys_net1',
-            segmentation_id=200, network_type=p_constants.TYPE_VLAN)['segment']
+            segmentation_id=200, network_type=constants.TYPE_VLAN)['segment']
         db.map_segment_to_hosts(ctx, segment['id'], hosts)
         updated_segment = self.plugin.get_segment(ctx, segment['id'])
         self.assertEqual(hosts, set(updated_segment['hosts']))
@@ -567,7 +566,7 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
             host = "host%s" % i
             segment = self._test_create_segment(
                 network_id=network_id, physical_network='phys_net%s' % i,
-                segmentation_id=200 + i, network_type=p_constants.TYPE_VLAN)
+                segmentation_id=200 + i, network_type=constants.TYPE_VLAN)
             db.update_segment_host_mapping(
                 ctx, host, {segment['segment']['id']})
             hosts.add(host)
@@ -597,7 +596,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
                 network_id=networks[i]['id'],
                 physical_network=physical_networks[i],
                 segmentation_id=200,
-                network_type=p_constants.TYPE_VLAN)['segment'])
+                network_type=constants.TYPE_VLAN)['segment'])
         self._register_agent(host, mappings={physical_networks[0]: 'br-eth-1',
                                              physical_networks[1]: 'br-eth-2'},
                              plugin=self.plugin)
@@ -638,7 +637,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
             network_id=network['id'],
             physical_network=physical_network,
             segmentation_id=200,
-            network_type=p_constants.TYPE_VLAN)['segment']
+            network_type=constants.TYPE_VLAN)['segment']
         self._register_agent(host1, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin)
         self._register_agent(host2, mappings={physical_network: 'br-eth-1'},
@@ -650,7 +649,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
             network_id=network['id'],
             physical_network=other_phys_net,
             segmentation_id=201,
-            network_type=p_constants.TYPE_VLAN)['segment']
+            network_type=constants.TYPE_VLAN)['segment']
         self._register_agent(host2, mappings={other_phys_net: 'br-eth-2'},
                              plugin=self.plugin)
         # We should have segment1 map to host1 and segment2 map to host2 now
@@ -673,7 +672,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
             network = network['network']
         segment2 = self._test_create_segment(
             network_id=network['id'], physical_network=physical_network,
-            segmentation_id=201, network_type=p_constants.TYPE_VLAN)['segment']
+            segmentation_id=201, network_type=constants.TYPE_VLAN)['segment']
         segments_host_db = self._get_segments_for_host(host1)
         self.assertEqual(set((segment['id'], segment2['id'])),
                          set(segments_host_db))
@@ -693,7 +692,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
             network = network['network']
         self._test_create_segment(
             network_id=network['id'], physical_network=physical_network,
-            segmentation_id=200, network_type=p_constants.TYPE_VLAN)
+            segmentation_id=200, network_type=constants.TYPE_VLAN)
         self._register_agent(host, plugin=self.plugin)
         segments_host_db = self._get_segments_for_host(host)
         self.assertFalse(segments_host_db)
@@ -753,7 +752,7 @@ class TestHostSegmentMappingNoSupportFromPlugin(HostSegmentMappingTestCase):
         self._test_create_segment(network_id=network['id'],
                                   physical_network=physical_network,
                                   segmentation_id=200,
-                                  network_type=p_constants.TYPE_VLAN)
+                                  network_type=constants.TYPE_VLAN)
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin)
         segments_host_db = self._get_segments_for_host(host)
@@ -831,7 +830,7 @@ class SegmentAwareIpamTestCase(SegmentTestCase):
         segment = self._test_create_segment(
             network_id=network['network']['id'],
             physical_network=physnet,
-            network_type=p_constants.TYPE_VLAN)
+            network_type=constants.TYPE_VLAN)
         return network, segment
 
     def _create_test_subnet_with_segment(self, network, segment,
@@ -926,7 +925,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
                 physical_network='physnet',
-                network_type=p_constants.TYPE_VLAN)
+                network_type=constants.TYPE_VLAN)
 
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
@@ -950,7 +949,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                 segment = self._test_create_segment(
                     network_id=network['network']['id'],
                     physical_network='physnet',
-                    network_type=p_constants.TYPE_VLAN)
+                    network_type=constants.TYPE_VLAN)
 
         self._validate_l2_adjacency(network['network']['id'], is_adjacent=True)
 
@@ -1021,7 +1020,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
                 physical_network='physnet',
-                network_type=p_constants.TYPE_VLAN)
+                network_type=constants.TYPE_VLAN)
 
         # Create a port with no IP address (since there is no subnet)
         port = self._create_deferred_ip_port(network)
@@ -1055,7 +1054,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
                 physical_network='physnet',
-                network_type=p_constants.TYPE_VLAN)
+                network_type=constants.TYPE_VLAN)
             with self.subnet(network=network,
                              segment_id=segment['segment']['id']):
                 pass
@@ -1115,7 +1114,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             segment = self._test_create_segment(
                 network_id=network['network']['id'],
                 physical_network='physnet',
-                network_type=p_constants.TYPE_VLAN)
+                network_type=constants.TYPE_VLAN)
 
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])

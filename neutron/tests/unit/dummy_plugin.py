@@ -22,11 +22,11 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.db import servicetype_db
 from neutron.extensions import servicetype
-from neutron.plugins.common import constants
 
 
 RESOURCE_NAME = "dummy"
 COLLECTION_NAME = "%ss" % RESOURCE_NAME
+DUMMY_SERVICE_TYPE = "DUMMY"
 
 # Attribute Map for dummy resource
 RESOURCE_ATTRIBUTE_MAP = {
@@ -53,11 +53,11 @@ class Dummy(object):
 
     @classmethod
     def get_name(cls):
-        return "dummy"
+        return RESOURCE_NAME
 
     @classmethod
     def get_alias(cls):
-        return "dummy"
+        return RESOURCE_NAME
 
     @classmethod
     def get_description(cls):
@@ -70,7 +70,7 @@ class Dummy(object):
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for dummy management."""
-        dummy_inst = directory.get_plugin('DUMMY')
+        dummy_inst = directory.get_plugin(DUMMY_SERVICE_TYPE)
         controller = base.create_resource(
             COLLECTION_NAME, RESOURCE_NAME, dummy_inst,
             RESOURCE_ATTRIBUTE_MAP[COLLECTION_NAME])
@@ -86,9 +86,9 @@ class DummyServicePlugin(service_base.ServicePluginBase):
         or VPN will adopt a similar solution.
     """
 
-    supported_extension_aliases = ['dummy', servicetype.EXT_ALIAS]
+    supported_extension_aliases = [RESOURCE_NAME, servicetype.EXT_ALIAS]
     path_prefix = "/dummy_svc"
-    agent_notifiers = {'dummy': 'dummy_agent_notifier'}
+    agent_notifiers = {RESOURCE_NAME: 'dummy_agent_notifier'}
 
     def __init__(self):
         self.svctype_mgr = servicetype_db.ServiceTypeManager.get_instance()
@@ -96,7 +96,7 @@ class DummyServicePlugin(service_base.ServicePluginBase):
 
     @classmethod
     def get_plugin_type(cls):
-        return constants.DUMMY
+        return DUMMY_SERVICE_TYPE
 
     def get_plugin_description(self):
         return "Neutron Dummy Service Plugin"
@@ -111,7 +111,7 @@ class DummyServicePlugin(service_base.ServicePluginBase):
             raise exceptions.NotFound()
 
     def create_dummy(self, context, dummy):
-        d = dummy['dummy']
+        d = dummy[RESOURCE_NAME]
         d['id'] = uuidutils.generate_uuid()
         self.dummys[d['id']] = d
         self.svctype_mgr.increase_service_type_refcount(context,

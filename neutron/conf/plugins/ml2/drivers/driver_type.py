@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as p_const
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.plugins.common import constants as p_const
 
 
 gre_opts = [
