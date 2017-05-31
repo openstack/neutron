@@ -45,7 +45,8 @@ class LinuxBridgeDriver(base.DriverBase):
     def create():
         return LinuxBridgeDriver(
             name='linuxbridge',
-            vif_types=[portbindings.VIF_TYPE_BRIDGE],
+            vif_types=[portbindings.VIF_TYPE_BRIDGE,
+                       portbindings.VIF_TYPE_TAP],
             vnic_types=[portbindings.VNIC_NORMAL],
             supported_rules=SUPPORTED_RULES,
             requires_rpc_notifications=True)
