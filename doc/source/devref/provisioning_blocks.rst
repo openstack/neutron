@@ -32,8 +32,10 @@ When that entity has finishing provisioning, we just update the STATUS
 directly to active. However, there are resources in Neutron that require
 provisioning by multiple asynchronous entities before they are ready to
 be used so managing the transition to the ACTIVE status becomes more
-complex. To handle these cases, Neutron has the provisioning_blocks
-module to track the entities that are still provisioning a resource.
+complex. To handle these cases, Neutron has `the provisioning_blocks
+module
+<http://git.openstack.org/cgit/openstack/neutron/tree/neutron/db/provisioning_blocks.py>`_
+to track the entities that are still provisioning a resource.
 
 The main example of this is with ML2, the L2 agents and the DHCP agents.
 When a port is created and bound to a host, it's placed in the DOWN
@@ -151,9 +153,3 @@ the port is deleted or it is successful.
 If an ML2 driver immediately places a bound port in the ACTIVE state
 (e.g. after calling a backend in update_port_postcommit), this patch
 will not have any impact on that process.
-
-
-References
-----------
-
-.. [#] Provisioning Blocks Module: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/db/provisioning_blocks.py
