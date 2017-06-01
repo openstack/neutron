@@ -27,6 +27,7 @@ from neutron_lib import constants
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from neutron_lib.services import base as base_services
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
@@ -70,7 +71,7 @@ CORE_ROUTER_ATTRS = ('id', 'name', 'tenant_id', 'admin_state_up', 'status')
 
 @registry.has_registry_receivers
 class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
-                          neutron_worker.WorkerSupportServiceMixin,
+                          base_services.WorkerBase,
                           st_attr.StandardAttrDescriptionMixin):
     """Mixin class to add L3/NAT router methods to db_base_plugin_v2."""
 
