@@ -74,8 +74,22 @@ def Resource(controller, faults=None, deserializers=None, serializers=None,
             if request.body:
                 args['body'] = deserializer.deserialize(request.body)['body']
 
-            method = getattr(controller, action)
+            # Routes library is dumb and cuts off everything after last dot (.)
+            # as format. At the same time, it doesn't enforce format suffix,
+            # which combined makes it impossible to pass a 'id' with dots
+            # included (the last section after the last dot is lost). This is
+            # important for some API extensions like tags where the id is
+            # really a tag name that can contain special characters.
+            #
+            # To work around the Routes behaviour, we will attach the suffix
+            # back to id if it's not one of supported formats (atm json only).
+            # This of course won't work for the corner case of a tag name that
+            # actually ends with '.json', but there seems to be no better way
+            # to tackle it without breaking API backwards compatibility.
+            if fmt is not None and fmt not in format_types:
+                args['id'] = '.'.join([args['id'], fmt])
 
+            method = getattr(controller, action)
             result = method(request=request, **args)
         except Exception as e:
             mapped_exc = api_common.convert_exception_to_http_exc(e, faults,
