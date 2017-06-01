@@ -44,6 +44,10 @@ class TagTestJSON(base.BaseAdminNetworkTest):
         self.client.update_tag(self.resource, self.res_id, 'red')
         self._get_and_compare_tags(['red', 'blue', 'green'])
 
+        # add a tag with a dot
+        self.client.update_tag(self.resource, self.res_id, 'black.or.white')
+        self._get_and_compare_tags(['red', 'blue', 'green', 'black.or.white'])
+
         # replace tags
         tags = ['red', 'yellow', 'purple']
         res_body = self.client.update_tags(self.resource, self.res_id, tags)
