@@ -963,10 +963,14 @@ class _DVRAgentInterfaceMixin(object):
             return update_port
 
 
-class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
-                               l3_attrs_db.ExtraAttributesMixin,
+# NOTE: The order in which the parent classes are inherited sometimes
+# determines the functions defined in those classes to be executed.
+# So any new classes that overrides a function in the parent class should
+# be added before the parent class.
+class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
                                DVRResourceOperationHandler,
-                               _DVRAgentInterfaceMixin):
+                               l3_attrs_db.ExtraAttributesMixin,
+                               l3_db.L3_NAT_db_mixin):
     """Mixin class to enable DVR support."""
     router_device_owners = (
         l3_db.L3_NAT_db_mixin.router_device_owners +
