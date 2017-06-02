@@ -193,6 +193,8 @@ def delete_port_on_error(core_plugin, context, port_id):
             try:
                 core_plugin.delete_port(context, port_id,
                                         l3_port_check=False)
+            except exceptions.PortNotFound:
+                LOG.debug("Port %s not found", port_id)
             except Exception:
                 LOG.exception(_LE("Failed to delete port: %s"), port_id)
 

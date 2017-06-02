@@ -16,6 +16,7 @@ import hashlib
 
 import mock
 from neutron_lib import constants
+from neutron_lib import exceptions
 import testtools
 
 from neutron.db import l3_db
@@ -89,6 +90,17 @@ class TestUtils(base.BaseTestCase):
         with testtools.ExpectedException(ValueError):
             with utils.delete_port_on_error(core_plugin, context, port_id):
                 raise ValueError()
+        core_plugin.delete_port.assert_called_once_with(context, port_id,
+                                                        l3_port_check=False)
+
+    def test_delete_port_on_error_port_does_not_exist(self):
+        core_plugin, context = mock.Mock(), mock.Mock()
+        port_id = 'pid'
+        core_plugin.delete_port.side_effect = exceptions.PortNotFound(
+            port_id=port_id)
+        with testtools.ExpectedException(exceptions.PortNotFound):
+            with utils.delete_port_on_error(core_plugin, context, port_id):
+                raise exceptions.PortNotFound(port_id=port_id)
         core_plugin.delete_port.assert_called_once_with(context, port_id,
                                                         l3_port_check=False)
 
