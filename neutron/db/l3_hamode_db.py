@@ -644,10 +644,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             router[constants.HA_INTERFACE_KEY] = port_dict
             router[n_const.HA_ROUTER_STATE_KEY] = binding.state
 
+        interfaces = []
         for router in routers_dict.values():
             interface = router.get(constants.HA_INTERFACE_KEY)
             if interface:
-                self._populate_mtu_and_subnets_for_ports(context, [interface])
+                interfaces.append(interface)
+
+        self._populate_mtu_and_subnets_for_ports(context, interfaces)
 
         # If this is a DVR+HA router, but the agent is question is in 'dvr'
         # mode (as opposed to 'dvr_snat'), then we want to always return it
