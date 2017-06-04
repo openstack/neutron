@@ -657,14 +657,15 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # implementations.
         return host and validators.is_attr_set(host)
 
-    def _ipam_get_subnets(self, context, network_id, host, service_type=None):
+    def _ipam_get_subnets(self, context, network_id, host, service_type=None,
+                          fixed_configured=False):
         """Return eligible subnets
 
         If no eligible subnets are found, determine why and potentially raise
         an appropriate error.
         """
-        subnets = self._find_candidate_subnets(
-            context, network_id, host, service_type)
+        subnets = self._find_candidate_subnets(context, network_id, host,
+                                               service_type, fixed_configured)
         if subnets:
             subnet_dicts = [self._make_subnet_dict(subnet, context=context)
                             for subnet in subnets]
@@ -697,13 +698,20 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         raise ipam_exceptions.IpAddressGenerationFailureNoMatchingSubnet()
 
-    def _find_candidate_subnets(self, context, network_id, host, service_type):
+    def _find_candidate_subnets(self, context, network_id, host, service_type,
+                                fixed_configured):
         """Find canditate subnets for the network, host, and service_type"""
         query = self._query_subnets_on_network(context, network_id)
         query = self._query_filter_service_subnets(query, service_type)
 
         # Select candidate subnets and return them
         if not self.is_host_set(host):
+            if fixed_configured:
+                # If fixed_ips in request and host is not known all subnets on
+                # the network are candidates. Host/Segment will be validated
+                # on port update with binding:host_id set. Allocation _cannot_
+                # be deferred as requested fixed_ips would then be lost.
+                return query.all()
             # If the host isn't known, we can't allocate on a routed network.
             # So, exclude any subnets attached to segments.
             return self._query_exclude_subnets_on_segments(query).all()

@@ -880,6 +880,19 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Don't allocate IPs in this case because we didn't give binding info
         self.assertEqual(0, len(res['port']['fixed_ips']))
 
+    def test_port_create_fixed_ips_with_segment_subnets_no_binding_info(self):
+        """Fixed IP provided and no binding info, do not defer IP allocation"""
+        network, segment, subnet = self._create_test_segment_with_subnet()
+        response = self._create_port(self.fmt,
+                                     net_id=network['network']['id'],
+                                     tenant_id=network['network']['tenant_id'],
+                                     fixed_ips=[
+                                         {'subnet_id': subnet['subnet']['id']}
+                                     ])
+        res = self.deserialize(self.fmt, response)
+        # We gave fixed_ips, allocate IPs in this case despite no binding info
+        self._validate_immediate_ip_allocation(res['port']['id'])
+
     def _assert_one_ip_in_subnet(self, response, cidr):
         res = self.deserialize(self.fmt, response)
         self.assertEqual(1, len(res['port']['fixed_ips']))
