@@ -1556,6 +1556,21 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
                 self.assertEqual(expected_try_again, try_again)
                 self.assertEqual(expected_bd_mock_called, bd_mock.called)
 
+    def test__bind_port_if_needed_early_exit_on_no_segments(self):
+        with self.network() as n:
+            ctx = context.get_admin_context()
+            seg_plugin = segments_plugin.Plugin.get_instance()
+            seg = seg_plugin.get_segments(ctx)[0]
+            seg_plugin.delete_segment(ctx, seg['id'])
+            plugin = directory.get_plugin()
+            mech_context = driver_context.PortContext(
+                plugin, ctx, None,
+                plugin.get_network(self.context, n['network']['id']),
+                None, None)
+            with mock.patch.object(plugin, '_attempt_binding') as ab:
+                plugin._bind_port_if_needed(mech_context)
+                self.assertFalse(ab.called)
+
     def test__attempt_binding_retries(self):
         # Simulate cases of both successful and failed binding states for
         # vif_type unbound
