@@ -13,6 +13,7 @@
 
 import mock
 from neutron_lib.callbacks import events
+from neutron_lib import fixture
 
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.tests import base
@@ -20,23 +21,25 @@ from neutron.tests import base
 
 class CapabilitiesTest(base.BaseTestCase):
 
-    # TODO(boden) replace with neutron_lib fixture once working
-    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.notify")
-    def test_notify_init_event(self, mocked_manager):
+    def setUp(self):
+        super(CapabilitiesTest, self).setUp()
+        self._mgr = mock.Mock()
+        self.useFixture(fixture.CallbackRegistryFixture(
+            callback_manager=self._mgr))
+
+    def test_notify_init_event(self):
         mock_agent_type = mock.Mock()
         mock_agent = mock.Mock()
         capabilities.notify_init_event(mock_agent_type, mock_agent)
-        mocked_manager.assert_called_with(mock_agent_type,
-                                          events.AFTER_INIT,
-                                          mock_agent,
-                                          agent=mock_agent)
+        self._mgr.notify.assert_called_with(mock_agent_type,
+                                            events.AFTER_INIT,
+                                            mock_agent,
+                                            agent=mock_agent)
 
-    # TODO(boden) replace with neutron_lib fixture once working
-    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.subscribe")
-    def test_register(self, mocked_subscribe):
+    def test_register(self):
         mock_callback = mock.Mock()
         mock_agent_type = mock.Mock()
         capabilities.register(mock_callback, mock_agent_type)
-        mocked_subscribe.assert_called_with(mock_callback,
-                                            mock_agent_type,
-                                            events.AFTER_INIT)
+        self._mgr.subscribe.assert_called_with(mock_callback,
+                                               mock_agent_type,
+                                               events.AFTER_INIT)

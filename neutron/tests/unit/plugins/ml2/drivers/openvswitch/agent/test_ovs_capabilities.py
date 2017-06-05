@@ -14,6 +14,7 @@
 import mock
 
 from neutron_lib.callbacks import events
+from neutron_lib import fixture
 
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_capabilities
 from neutron.services.trunk.drivers.openvswitch.agent import driver
@@ -23,10 +24,14 @@ from neutron_lib import constants
 
 class CapabilitiesTest(base.BaseTestCase):
 
-    # TODO(boden) replace with neutron_lib fixture once working
-    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.subscribe")
-    def test_register(self, mocked_subscribe):
+    def setUp(self):
+        super(CapabilitiesTest, self).setUp()
+        self._mgr = mock.Mock()
+        self.useFixture(fixture.CallbackRegistryFixture(
+            callback_manager=self._mgr))
+
+    def test_register(self):
         ovs_capabilities.register()
-        mocked_subscribe.assert_called_with(driver.init_handler,
+        self._mgr.subscribe.assert_called_with(driver.init_handler,
                                             constants.AGENT_TYPE_OVS,
                                             events.AFTER_INIT)

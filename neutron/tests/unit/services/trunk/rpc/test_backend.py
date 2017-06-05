@@ -13,6 +13,7 @@
 
 import mock
 from neutron_lib.callbacks import events
+from neutron_lib import fixture
 
 from neutron.api.rpc.callbacks import resource_manager
 from neutron.services.trunk import callbacks
@@ -25,12 +26,13 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
     # TODO(fitoduarte): add more test to improve coverage of module
     def setUp(self):
         super(ServerSideRpcBackendTest, self).setUp()
+        self._mgr = mock.Mock()
+        self.useFixture(fixture.CallbackRegistryFixture(
+            callback_manager=self._mgr))
         self.register_mock = mock.patch.object(
             resource_manager.ResourceCallbacksManager, "register").start()
 
-    # TODO(boden) replace with neutron_lib fixture once working
-    @mock.patch("neutron_lib.callbacks.manager.CallbacksManager.subscribe")
-    def test___init__(self, mocked_subscribe):
+    def test___init__(self,):
         test_obj = backend.ServerSideRpcBackend()
 
         calls = [mock.call(test_obj.process_event,
@@ -46,7 +48,7 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
                            trunk_consts.SUBPORTS,
                            events.AFTER_DELETE)
                  ]
-        mocked_subscribe.assert_has_calls(calls, any_order=True)
+        self._mgr.subscribe.assert_has_calls(calls, any_order=True)
 
     def test_process_event(self):
         test_obj = backend.ServerSideRpcBackend()
