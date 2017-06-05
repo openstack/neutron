@@ -1043,6 +1043,37 @@ class L3HAModeDbTestCase(L3HATestFramework):
         for port in self._get_router_port_bindings(router['id']):
             self.assertEqual(self.agent2['host'], port[portbindings.HOST_ID])
 
+    def test_get_router_ids_updates_ha_network_port_status(self):
+        router = self._create_router(ha=True)
+        callback = l3_rpc.L3RpcCallback()
+        callback._l3plugin = self.plugin
+        host = self.agent1['host']
+        ctx = self.admin_ctx
+        bindings = self.plugin.get_ha_router_port_bindings(
+            ctx, [router['id']])
+        binding = [binding for binding in bindings
+            if binding.l3_agent_id == self.agent1['id']][0]
+        port = self.core_plugin.get_port(ctx, binding.port_id)
+
+        # As network segments are not available, mock bind_port
+        # to avoid binding failures
+        def bind_port(context):
+            binding = context._binding
+            binding.vif_type = portbindings.VIF_TYPE_OVS
+        with mock.patch.object(self.core_plugin.mechanism_manager,
+                               'bind_port', side_effect=bind_port):
+            callback._ensure_host_set_on_port(
+                ctx, host, port, router_id=router['id'])
+            # Port status will be DOWN by default as we are not having
+            # l2 agent in test, so update it to ACTIVE.
+            self.core_plugin.update_port_status(
+                ctx, port['id'], constants.PORT_STATUS_ACTIVE, host=host)
+            port = self.core_plugin.get_port(ctx, port['id'])
+            self.assertEqual(constants.PORT_STATUS_ACTIVE, port['status'])
+            callback.get_router_ids(ctx, host)
+            port = self.core_plugin.get_port(ctx, port['id'])
+            self.assertEqual(constants.PORT_STATUS_DOWN, port['status'])
+
     def test_ensure_host_set_on_ports_dvr_ha_binds_to_active(self):
         agent3 = helpers.register_l3_agent('host_3',
                                            constants.L3_AGENT_MODE_DVR_SNAT)
