@@ -45,6 +45,7 @@ from neutron.api.rpc.callbacks.consumer import registry as rpc_consumer_reg
 from neutron.api.rpc.callbacks.producer import registry as rpc_producer_reg
 from neutron.common import config
 from neutron.common import rpc as n_rpc
+from neutron.conf.agent import common as agent_config
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import agentschedulers_db
@@ -62,6 +63,8 @@ CONF.import_opt('state_path', 'neutron.conf.common')
 
 ROOTDIR = os.path.dirname(__file__)
 ETCDIR = os.path.join(ROOTDIR, 'etc')
+
+SUDO_CMD = 'sudo -n'
 
 
 def etcdir(*p):
@@ -405,6 +408,14 @@ class BaseTestCase(DietTestCase):
         if notification_driver is None:
             notification_driver = [fake_notifier.__name__]
         cfg.CONF.set_override("notification_driver", notification_driver)
+
+    def setup_rootwrap(self):
+        agent_config.register_root_helper(cfg.CONF)
+        self.config(group='AGENT',
+                    root_helper=os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD))
+        self.config(group='AGENT',
+                    root_helper_daemon=os.environ.get(
+                        'OS_ROOTWRAP_DAEMON_CMD'))
 
 
 class PluginFixture(fixtures.Fixture):

@@ -27,9 +27,9 @@ from oslo_config import cfg
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ovsdb_monitor
 from neutron.common import utils
+from neutron.tests import base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
-from neutron.tests.functional import base as functional_base
 
 
 class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
@@ -37,14 +37,13 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
     def setUp(self):
         super(BaseMonitorTest, self).setUp()
 
-        rootwrap_not_configured = (cfg.CONF.AGENT.root_helper ==
-                                   functional_base.SUDO_CMD)
+        rootwrap_not_configured = (cfg.CONF.AGENT.root_helper == base.SUDO_CMD)
         if rootwrap_not_configured:
             # The monitor tests require a nested invocation that has
             # to be emulated by double sudo if rootwrap is not
             # configured.
             self.config(group='AGENT',
-                        root_helper=" ".join([functional_base.SUDO_CMD] * 2))
+                        root_helper=" ".join([base.SUDO_CMD] * 2))
 
         self._check_test_requirements()
         # ovsdb-client monitor needs to have a bridge to make any output

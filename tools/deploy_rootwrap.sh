@@ -32,6 +32,8 @@ neutron_path=$1
 target_etc_path=$2
 target_bin_path=$3
 
+fullstack_path=$neutron_path/neutron/tests/fullstack/cmd
+
 src_conf_path=${neutron_path}/etc
 src_conf=${src_conf_path}/rootwrap.conf
 src_rootwrap_path=${src_conf_path}/neutron/rootwrap.d
@@ -48,11 +50,11 @@ mkdir -p -m 755 ${dst_rootwrap_path}
 cp -p ${src_rootwrap_path}/* ${dst_rootwrap_path}/
 cp -p ${src_conf} ${dst_conf}
 sed -i "s:^filters_path=.*$:filters_path=${dst_rootwrap_path}:" ${dst_conf}
-sed -i "s:^\(exec_dirs=.*\)$:\1,${target_bin_path}:" ${dst_conf}
+sed -i "s:^\(exec_dirs=.*\)$:\1,${target_bin_path},${fullstack_path}:" ${dst_conf}
 
 if [[ "$OS_SUDO_TESTING" = "1" ]]; then
     sed -i 's/use_syslog=False/use_syslog=True/g' ${dst_conf}
     sed -i 's/syslog_log_level=ERROR/syslog_log_level=DEBUG/g' ${dst_conf}
-    cp -p ${neutron_path}/neutron/tests/contrib/functional-testing.filters \
+    cp -p ${neutron_path}/neutron/tests/contrib/testing.filters \
         ${dst_rootwrap_path}/
 fi

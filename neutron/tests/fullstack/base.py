@@ -57,6 +57,10 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         # since the latter starts services that may rely on generated port
         # numbers
         tools.reset_random_seed()
+
+        # configure test runner to use rootwrap
+        self.setup_rootwrap()
+
         self.environment = environment
         self.environment.test_name = self.get_name()
         self.useFixture(self.environment)

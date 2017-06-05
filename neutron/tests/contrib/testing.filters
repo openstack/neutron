@@ -44,3 +44,13 @@ process_spawn: EnvFilter, env, root, PATH=, python
 ip_exec: IpNetnsExecFilter, ip, root
 ps: CommandFilter, ps, root
 pid_kill: RegExpFilter, kill, root, kill, -\d+, .*
+
+#needed to set up fullstack 'multinode' environment
+rabbitmqctl: CommandFilter, rabbitmqctl, root
+linuxbridge_agent: CommandFilter, neutron-linuxbridge-agent, root
+dhcp_agent: CommandFilter, dhcp_agent.py, root
+ovs_agent: CommandFilter, ovs_agent.py, root
+l3_agent: CommandFilter, l3_agent.py, root
+
+#needed to capture and analyze traffic in fullstack tests (f.e. in DSCP scenarios)
+tcpdump: CommandFilter, tcpdump, root

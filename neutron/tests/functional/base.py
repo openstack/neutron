@@ -23,8 +23,6 @@ from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
 
-SUDO_CMD = 'sudo -n'
-
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
@@ -62,13 +60,7 @@ class BaseSudoTestCase(BaseLoggingTestCase):
         super(BaseSudoTestCase, self).setUp()
         if not base.bool_from_env('OS_SUDO_TESTING'):
             self.skipTest('Testing with sudo is not enabled')
-
-        config.register_root_helper(cfg.CONF)
-        self.config(group='AGENT',
-                    root_helper=os.environ.get('OS_ROOTWRAP_CMD', SUDO_CMD))
-        self.config(group='AGENT',
-                    root_helper_daemon=os.environ.get(
-                        'OS_ROOTWRAP_DAEMON_CMD'))
+        self.setup_rootwrap()
         config.setup_privsep()
 
     @common_base.no_skip_on_missing_deps

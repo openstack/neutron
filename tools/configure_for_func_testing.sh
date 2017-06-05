@@ -188,6 +188,12 @@ function _install_rootwrap_sudoers {
     ROOTWRAP_SUDOER_CMD="$PROJECT_VENV/bin/neutron-rootwrap $PROJECT_VENV/etc/neutron/rootwrap.conf *"
     ROOTWRAP_DAEMON_SUDOER_CMD="$PROJECT_VENV/bin/neutron-rootwrap-daemon $PROJECT_VENV/etc/neutron/rootwrap.conf"
     TEMPFILE=$(mktemp)
+
+    SECURE_PATH="$PROJECT_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
+        SECURE_PATH="$REPO_BASE/$PROJECT_NAME/neutron/tests/fullstack/cmd:$SECURE_PATH"
+    fi
+
     cat << EOF > $TEMPFILE
 # A bug in oslo.rootwrap [1] prevents commands executed with 'ip netns
 # exec' from being automatically qualified with a prefix from
@@ -201,7 +207,7 @@ function _install_rootwrap_sudoers {
 #
 # 1: https://bugs.launchpad.net/oslo.rootwrap/+bug/1417331
 #
-Defaults:$STACK_USER  secure_path="$PROJECT_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults:$STACK_USER  secure_path="$SECURE_PATH"
 $STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_SUDOER_CMD
 $STACK_USER ALL=(root) NOPASSWD: $ROOTWRAP_DAEMON_SUDOER_CMD
 EOF
