@@ -14,11 +14,12 @@
 
 from debtcollector import moves
 from oslo_config import cfg
+from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import transaction
+from ovsdbapp.backend.ovs_idl import vlog
 from ovsdbapp.schema.open_vswitch import impl_idl
 
-from neutron.agent.ovsdb.native import connection
-from neutron.agent.ovsdb.native import vlog
+from neutron.agent.ovsdb.native import connection as n_connection
 from neutron.conf.agent import ovs_conf
 
 NeutronOVSDBTransaction = moves.moved_class(
@@ -43,11 +44,12 @@ def api_factory(context):
     if _connection is None:
         try:
             _connection = connection.Connection(
-                idl=connection.idl_factory(),
+                idl=n_connection.idl_factory(),
                 timeout=cfg.CONF.ovs_vsctl_timeout)
         except TypeError:
+            #pylint: disable=unexpected-keyword-arg,no-value-for-parameter
             _connection = connection.Connection(
-                idl_factory=connection.idl_factory,
+                idl_factory=n_connection.idl_factory,  # noqa
                 timeout=cfg.CONF.ovs_vsctl_timeout)
     return NeutronOvsdbIdl(_connection)
 
