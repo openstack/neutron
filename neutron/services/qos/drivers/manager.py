@@ -38,7 +38,6 @@ class QosServiceDriverManager(object):
 
     def __init__(self):
         self._drivers = []
-        self.notification_api = resources_rpc.ResourcesPushRpcApi()
         self.rpc_notifications_required = False
         rpc_registry.provide(self._get_qos_policy_cb, resources.QOS_POLICY)
         # notify any registered QoS driver that we're ready, those will
