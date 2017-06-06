@@ -18,3 +18,9 @@ postgresql [test]
 postgresql-client [platform:dpkg test]
 postgresql-devel [platform:rpm test]
 postgresql-server [platform:rpm test]
+
+# Neutron's test-requirements requires tempest which requires paramiko
+# which requires cryptography which requires ssl.
+libssl-dev [platform:dpkg]
+openssl-devel [platform:rpm !platform:suse]
+libopenssl-devel [platform:suse !platform:rpm]
