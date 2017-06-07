@@ -320,6 +320,29 @@ class TestNetworkIPAvailabilityAPI(
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
 
+    def test_usages_query_project_id(self):
+        test_project_id = 'a-unique-project-id'
+        with self.network(tenant_id=test_project_id) as net:
+            with self.subnet(network=net):
+                # Get by query param: project_id
+                params = 'project_id=%s' % test_project_id
+                request = self.new_list_request(API_RESOURCE, params=params)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertIn(IP_AVAILS_KEY, response)
+                self.assertEqual(1, len(response[IP_AVAILS_KEY]))
+                self._validate_from_availabilities(response[IP_AVAILS_KEY],
+                                                   net, 0)
+                for net_avail in response[IP_AVAILS_KEY]:
+                    self.assertEqual(test_project_id, net_avail['project_id'])
+
+                # Get by NON-matching query param: project_id
+                params = 'project_id=clearly-wont-match'
+                request = self.new_list_request(API_RESOURCE, params=params)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertEqual(0, len(response[IP_AVAILS_KEY]))
+
     def test_usages_multi_net_multi_subnet_46(self):
         # Setup mixed v4/v6 networks with IPs consumed on each
         with self.network(name='net-v6-1') as net_v6_1, \

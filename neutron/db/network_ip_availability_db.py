@@ -29,6 +29,7 @@ SUPPORTED_FILTERS = {
     NETWORK_ID: mod.Network.id,
     NETWORK_NAME: mod.Network.name,
     'tenant_id': mod.Network.tenant_id,
+    'project_id': mod.Network.project_id,
     'ip_version': mod.Subnet.ip_version,
 }
 SUPPORTED_FILTER_KEYS = six.viewkeys(SUPPORTED_FILTERS)
@@ -158,6 +159,7 @@ class IpAvailabilityMixin(object):
             network = {NETWORK_ID: db_row.network_id,
                        NETWORK_NAME: db_row.network_name,
                        'tenant_id': db_row.tenant_id,
+                       'project_id': db_row.tenant_id,
                        'subnet_ip_availability': [],
                        'used_ips': 0, 'total_ips': 0}
             result_dict[db_row.network_id] = network
