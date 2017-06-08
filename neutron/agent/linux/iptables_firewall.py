@@ -842,7 +842,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _clean_deleted_sg_rule_conntrack_entries(self):
         deleted_sg_ids = set()
-        for sg_id in self.updated_rule_sg_ids:
+        for sg_id in set(self.updated_rule_sg_ids):
             del_rules = self._find_deleted_sg_rules(sg_id)
             if not del_rules:
                 continue
@@ -856,7 +856,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _clean_updated_sg_member_conntrack_entries(self):
         updated_device_ids = set()
-        for device in self.updated_sg_members:
+        for device in set(self.updated_sg_members):
             sec_group_change = False
             device_info = self.filtered_ports.get(device)
             pre_device_info = self._pre_defer_filtered_ports.get(device)
