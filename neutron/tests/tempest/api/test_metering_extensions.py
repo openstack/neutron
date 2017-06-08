@@ -15,7 +15,6 @@
 from neutron_lib.db import constants as db_const
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -32,8 +31,9 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
         List, Show, Create, Delete Metering labels rules
     """
 
+    required_extensions = ['metering']
+
     @classmethod
-    @test.requires_ext(extension="metering", service="network")
     def resource_setup(cls):
         super(MeteringTestJSON, cls).resource_setup()
         description = "metering label created by tempest"

@@ -14,7 +14,6 @@ from oslo_config import cfg
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 import testtools
 
 from neutron.tests.tempest.api import base
@@ -23,9 +22,9 @@ from neutron.tests.tempest.api import base
 class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
 
     credentials = ['primary', 'alt', 'admin']
+    required_extensions = ['rbac-policies']
 
     @classmethod
-    @test.requires_ext(extension="rbac-policies", service="network")
     def resource_setup(cls):
         super(ExternalNetworksRBACTestJSON, cls).resource_setup()
         cls.client2 = cls.alt_manager.network_client

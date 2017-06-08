@@ -368,6 +368,12 @@ Tests for other resources should be contributed to the Neutron repository.
 Scenario tests should be similarly split up between Tempest and Neutron
 according to the API they're targeting.
 
+To create an API test, the testing class must at least inherit from
+neutron.tests.tempest.api.base.BaseNetworkTest base class. As some of tests
+may require certain extensions to be enabled, the base class provides
+``required_extensions`` class attribute which can be used by subclasses to
+define a list of required extensions for particular test class.
+
 Scenario Tests
 ~~~~~~~~~~~~~~
 

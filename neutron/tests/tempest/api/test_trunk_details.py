@@ -19,7 +19,7 @@ from neutron.tests.tempest.api import test_trunk
 
 class TestTrunkDetailsJSON(test_trunk.TrunkTestJSONBase):
 
-    extension = 'trunk-details'
+    required_extensions = ['trunk-details']
 
     @decorators.idempotent_id('f0bed24f-d36a-498b-b4e7-0d66e3fb7308')
     def test_port_resource_trunk_details_no_subports(self):

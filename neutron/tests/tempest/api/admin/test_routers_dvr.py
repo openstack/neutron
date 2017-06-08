@@ -15,16 +15,15 @@
 
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base_routers as base
 
 
 class RoutersTestDVR(base.BaseRouterTest):
 
+    required_extensions = ['router', 'dvr']
+
     @classmethod
-    @test.requires_ext(extension="router", service="network")
-    @test.requires_ext(extension="dvr", service="network")
     def resource_setup(cls):
         # The check above will pass if api_extensions=all, which does
         # not mean DVR extension itself is present.

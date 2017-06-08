@@ -28,10 +28,8 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class QosTestJSON(base.BaseAdminNetworkTest):
-    @classmethod
-    @test.requires_ext(extension="qos", service="network")
-    def resource_setup(cls):
-        super(QosTestJSON, cls).resource_setup()
+
+    required_extensions = ['qos']
 
     @decorators.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
     def test_create_policy(self):
@@ -368,9 +366,9 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
 
     direction = None
+    required_extensions = ['qos']
 
     @classmethod
-    @test.requires_ext(extension="qos", service="network")
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
     def resource_setup(cls):
         super(QosBandwidthLimitRuleTestJSON, cls).resource_setup()
@@ -552,24 +550,23 @@ class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
 class QosBandwidthLimitRuleWithDirectionTestJSON(
     QosBandwidthLimitRuleTestJSON):
 
+    required_extensions = (
+        QosBandwidthLimitRuleTestJSON.required_extensions +
+        ['qos-bw-limit-direction']
+    )
     scenarios = [
         ('ingress', {'direction': 'ingress'}),
         ('egress', {'direction': 'egress'}),
     ]
-
-    @classmethod
-    @test.requires_ext(extension="qos-bw-limit-direction", service="network")
-    def resource_setup(cls):
-        super(QosBandwidthLimitRuleWithDirectionTestJSON, cls).resource_setup()
 
 
 class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
 
     force_tenant_isolation = True
     credentials = ['primary', 'alt', 'admin']
+    required_extensions = ['qos']
 
     @classmethod
-    @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(RbacSharedQosPoliciesTest, cls).resource_setup()
         cls.client2 = cls.alt_manager.network_client
@@ -821,8 +818,9 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
     VALID_DSCP_MARK1 = 56
     VALID_DSCP_MARK2 = 48
 
+    required_extensions = ['qos']
+
     @classmethod
-    @test.requires_ext(extension="qos", service="network")
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_DSCP_MARKING)
     def resource_setup(cls):
         super(QosDscpMarkingRuleTestJSON, cls).resource_setup()
@@ -954,9 +952,9 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
     DIRECTION_INGRESS = "ingress"
     RULE_NAME = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH + "_rule"
     RULES_NAME = RULE_NAME + "s"
+    required_extensions = ['qos']
 
     @classmethod
-    @test.requires_ext(extension="qos", service="network")
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH)
     def resource_setup(cls):
         super(QosMinimumBandwidthRuleTestJSON, cls).resource_setup()
@@ -1116,8 +1114,9 @@ class QosSearchCriteriaTest(base.BaseSearchCriteriaTest,
     list_kwargs = {'description': 'search-criteria-test'}
     list_as_admin = True
 
+    required_extensions = ['qos']
+
     @classmethod
-    @test.requires_ext(extension="qos", service="network")
     def resource_setup(cls):
         super(QosSearchCriteriaTest, cls).resource_setup()
         for name in cls.resource_names:

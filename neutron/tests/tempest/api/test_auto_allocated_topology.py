@@ -15,7 +15,6 @@
 
 from oslo_config import cfg
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -31,11 +30,7 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
     # all tests are added under TestAutoAllocatedTopology,
     # nothing bad should happen.
     force_tenant_isolation = True
-
-    @classmethod
-    @test.requires_ext(extension="auto-allocated-topology", service="network")
-    def skip_checks(cls):
-        super(TestAutoAllocatedTopology, cls).skip_checks()
+    required_extensions = ['auto-allocated-topology']
 
     @classmethod
     def resource_setup(cls):

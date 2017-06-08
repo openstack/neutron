@@ -19,8 +19,9 @@ from neutron.tests.tempest.api import base
 
 class TagTestJSON(base.BaseAdminNetworkTest):
 
+    required_extensions = ['tag']
+
     @classmethod
-    @test.requires_ext(extension="tag", service="network")
     def resource_setup(cls):
         super(TagTestJSON, cls).resource_setup()
         cls.res_id = cls._create_resource()
@@ -154,9 +155,9 @@ class TagRouterTestJSON(TagTestJSON):
 
 class TagFilterTestJSON(base.BaseAdminNetworkTest):
     credentials = ['primary', 'alt', 'admin']
+    required_extensions = ['tag']
 
     @classmethod
-    @test.requires_ext(extension="tag", service="network")
     def resource_setup(cls):
         super(TagFilterTestJSON, cls).resource_setup()
 
@@ -323,10 +324,7 @@ class TagFilterRouterTestJSON(TagFilterTestJSON):
 
 class UpdateTagsTest(base.BaseAdminNetworkTest):
 
-    @classmethod
-    @test.requires_ext(extension="tag", service="network")
-    def resource_setup(cls):
-        super(UpdateTagsTest, cls).resource_setup()
+    required_extensions = ['tag']
 
     def _get_and_compare_tags(self, tags, res_id):
         # nothing specific about networks here, just a resource that is

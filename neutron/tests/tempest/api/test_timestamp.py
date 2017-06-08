@@ -14,7 +14,6 @@ import copy
 
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest.api import base_routers
@@ -26,6 +25,8 @@ CONF = config.CONF
 
 class TestTimeStamp(base.BaseAdminNetworkTest):
 
+    required_extensions = ["standard-attr-timestamp"]
+
     ## attributes for subnetpool
     min_prefixlen = '28'
     max_prefixlen = '31'
@@ -33,11 +34,6 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
     subnet_cidr = '10.11.12.0/31'
     new_prefix = '10.11.15.0/24'
     larger_prefix = '10.11.0.0/16'
-
-    @classmethod
-    @test.requires_ext(extension="standard-attr-timestamp", service="network")
-    def skip_checks(cls):
-        super(TestTimeStamp, cls).skip_checks()
 
     @classmethod
     def resource_setup(cls):
@@ -183,13 +179,8 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
 
 
 class TestTimeStampWithL3(base_routers.BaseRouterTest):
-    @classmethod
-    def skip_checks(cls):
-        super(TestTimeStampWithL3, cls).skip_checks()
 
-        if not test.is_extension_enabled('standard-attr-timestamp', 'network'):
-            raise cls.skipException("standard-attr-timestamp extension not "
-                                    "enabled")
+    required_extensions = ['standard-attr-timestamp']
 
     @classmethod
     def resource_setup(cls):
@@ -260,13 +251,8 @@ class TestTimeStampWithL3(base_routers.BaseRouterTest):
 
 
 class TestTimeStampWithSecurityGroup(base_security_groups.BaseSecGroupTest):
-    @classmethod
-    def skip_checks(cls):
-        super(TestTimeStampWithSecurityGroup, cls).skip_checks()
 
-        if not test.is_extension_enabled('standard-attr-timestamp', 'network'):
-            raise cls.skipException("standard-attr-timestamp extension not "
-                                    "enabled")
+    required_extensions = ['standard-attr-timestamp']
 
     @classmethod
     def resource_setup(cls):

@@ -22,10 +22,7 @@ from neutron.tests.tempest import config
 
 class TestRevisions(base.BaseAdminNetworkTest, bsg.BaseSecGroupTest):
 
-    @classmethod
-    @test.requires_ext(extension="standard-attr-revisions", service="network")
-    def skip_checks(cls):
-        super(TestRevisions, cls).skip_checks()
+    required_extensions = ['standard-attr-revisions']
 
     @decorators.idempotent_id('4a26a4be-9c53-483c-bc50-b53f1db10ac6')
     def test_update_network_bumps_revision(self):

@@ -25,10 +25,7 @@ LONG_NAME_NG = 'x' * (db_const.NAME_FIELD_SIZE + 1)
 
 class NegativeSecGroupTest(base.BaseSecGroupTest):
 
-    @classmethod
-    @test.requires_ext(extension="security-group", service="network")
-    def resource_setup(cls):
-        super(NegativeSecGroupTest, cls).resource_setup()
+    required_extensions = ['security-group']
 
     @test.attr(type='negative')
     @decorators.idempotent_id('594edfa8-9a5b-438e-9344-49aece337d49')

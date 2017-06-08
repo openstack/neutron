@@ -24,9 +24,10 @@ from neutron.tests.tempest.api import base_security_groups as base_security
 class PortSecurityAdminTests(base_security.BaseSecGroupTest,
                              base.BaseAdminNetworkTest):
 
+    required_extensions = ['port-security']
+
     @test.attr(type='negative')
     @decorators.idempotent_id('d39a96e2-2dea-4feb-8093-e7ac991ce6f8')
-    @test.requires_ext(extension='port-security', service='network')
     def test_create_port_security_false_on_shared_network(self):
         network = self.create_shared_network()
         self.assertTrue(network['shared'])

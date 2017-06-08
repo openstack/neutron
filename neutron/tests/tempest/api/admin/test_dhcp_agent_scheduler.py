@@ -14,7 +14,6 @@
 
 from neutron_lib import constants
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.common import utils
 from neutron.tests.tempest.api import base
@@ -22,8 +21,9 @@ from neutron.tests.tempest.api import base
 
 class DHCPAgentSchedulersTestJSON(base.BaseAdminNetworkTest):
 
+    required_extensions = ['dhcp_agent_scheduler']
+
     @classmethod
-    @test.requires_ext(extension="dhcp_agent_scheduler", service="network")
     def resource_setup(cls):
         super(DHCPAgentSchedulersTestJSON, cls).resource_setup()
         # Create a network and make sure it will be hosted by a

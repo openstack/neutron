@@ -15,7 +15,6 @@
 
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -36,8 +35,9 @@ class ExtraDHCPOptionsTestJSON(base.BaseNetworkTest):
     section of etc/tempest.conf
     """
 
+    required_extensions = ['extra_dhcp_opt']
+
     @classmethod
-    @test.requires_ext(extension="extra_dhcp_opt", service="network")
     def resource_setup(cls):
         super(ExtraDHCPOptionsTestJSON, cls).resource_setup()
         cls.network = cls.create_network()
