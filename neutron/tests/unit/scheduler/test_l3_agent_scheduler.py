@@ -1396,10 +1396,13 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         with mock.patch.object(self.plugin.router_scheduler, 'bind_router'):
             with mock.patch.object(
                     self.plugin, 'add_ha_port',
-                    side_effect=l3.RouterNotFound(router_id='foo_router')):
+                    side_effect=l3.RouterNotFound(router_id='foo_router')),\
+                    mock.patch.object(
+                        self.plugin, 'safe_delete_ha_network') as sd_ha_net:
                 self.plugin.router_scheduler.create_ha_port_and_bind(
                     self.plugin, self.adminContext,
                     router['id'], router['tenant_id'], agent)
+                self.assertTrue(sd_ha_net.called)
 
     def test_create_ha_port_and_bind_bind_router_returns_None(self):
         router = self._create_ha_router(tenant_id='foo_tenant')

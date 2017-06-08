@@ -306,6 +306,12 @@ class L3Scheduler(object):
         except l3.RouterNotFound:
             LOG.debug('Router %s has already been removed '
                       'by concurrent operation', router_id)
+            # we try to clear the HA network here in case the port we created
+            # blocked the concurrent router delete operation from getting rid
+            # of the HA network
+            ha_net = plugin.get_ha_network(ctxt, tenant_id)
+            if ha_net:
+                plugin.safe_delete_ha_network(ctxt, ha_net, tenant_id)
 
     def get_ha_routers_l3_agents_counts(self, plugin, context, filters=None):
         """Return a mapping (router, # agents) matching specified filters."""
