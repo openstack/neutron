@@ -527,6 +527,15 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                               p_const.TYPE_VLAN, "physnet1", None, "tap1",
                               "foo", None)
 
+    def test_add_tap_interface_owner_compute(self):
+        with mock.patch.object(ip_lib, "device_exists"):
+            with mock.patch.object(self.lbm, "ensure_local_bridge"):
+                self.assertTrue(self.lbm.add_tap_interface("123",
+                                                           p_const.TYPE_LOCAL,
+                                                           "physnet1", None,
+                                                           "tap1",
+                                                           "compute:1", None))
+
     def _test_add_tap_interface(self, dev_owner_prefix):
         with mock.patch.object(ip_lib, "device_exists") as de_fn:
             de_fn.return_value = False

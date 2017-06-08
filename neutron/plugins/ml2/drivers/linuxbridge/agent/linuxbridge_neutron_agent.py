@@ -523,15 +523,25 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             # inherit from the bridge its plugged into, which will be 1500
             # at the time. See bug/1684326 for details.
             self._set_tap_mtu(tap_device_name, mtu)
-        # Check if device needs to be added to bridge
-        if not bridge_lib.BridgeDevice.get_interface_bridge(
-            tap_device_name):
+        # Avoid messing with plugging devices into a bridge that the agent
+        # does not own
+        if not device_owner.startswith(constants.DEVICE_OWNER_COMPUTE_PREFIX):
+            # Check if device needs to be added to bridge
+            if not bridge_lib.BridgeDevice.get_interface_bridge(
+                tap_device_name):
+                data = {'tap_device_name': tap_device_name,
+                        'bridge_name': bridge_name}
+                LOG.debug("Adding device %(tap_device_name)s to bridge "
+                          "%(bridge_name)s", data)
+                if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
+                    return False
+        else:
             data = {'tap_device_name': tap_device_name,
+                    'device_owner': device_owner,
                     'bridge_name': bridge_name}
-            LOG.debug("Adding device %(tap_device_name)s to bridge "
-                      "%(bridge_name)s", data)
-            if bridge_lib.BridgeDevice(bridge_name).addif(tap_device_name):
-                return False
+            LOG.debug("Skip adding device %(tap_device_name)s to "
+                      "%(bridge_name)s. It is owned by %(device_owner)s and "
+                      "thus added elsewhere.", data)
         return True
 
     def _set_tap_mtu(self, tap_device_name, mtu):
@@ -768,8 +778,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
     def get_agent_configurations(self):
         configurations = {'bridge_mappings': self.bridge_mappings,
-                          'interface_mappings': self.interface_mappings,
-                          'wires_compute_ports': True}
+                          'interface_mappings': self.interface_mappings
+                          }
         if self.vxlan_mode != lconst.VXLAN_NONE:
             configurations['tunneling_ip'] = self.local_ip
             configurations['tunnel_types'] = [p_const.TYPE_VXLAN]
