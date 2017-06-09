@@ -53,6 +53,9 @@ ARP_SPOOF_TABLE = 24
 # Table for MAC spoof filtering
 MAC_SPOOF_TABLE = 25
 
+# Table to decide whether further filtering is needed
+TRANSIENT_TABLE = 60
+
 # Tables used for ovs firewall
 BASE_EGRESS_TABLE = 71
 RULES_EGRESS_TABLE = 72

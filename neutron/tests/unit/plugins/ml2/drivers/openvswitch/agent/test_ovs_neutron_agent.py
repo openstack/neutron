@@ -3047,8 +3047,6 @@ class TestOvsDvrNeutronAgent(object):
                                        priority=1),
                 mock.call.install_drop(table_id=constants.DVR_TO_SRC_MAC_VLAN,
                                        priority=1),
-                mock.call.install_normal(table_id=constants.LOCAL_SWITCHING,
-                                         priority=1),
                 mock.call.install_drop(table_id=constants.LOCAL_SWITCHING,
                                        priority=2,
                                        in_port=ioport),
