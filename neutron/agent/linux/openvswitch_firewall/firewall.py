@@ -391,6 +391,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         else:
             self.int_br.br.delete_flows(**kwargs)
 
+    def _strict_delete_flow(self, **kwargs):
+        """Delete given flow right away even if bridge is deferred.
+
+        Delete command will use strict delete.
+        """
+        create_reg_numbers(kwargs)
+        self.int_br.br.delete_flows(strict=True, **kwargs)
+
     @staticmethod
     def initialize_bridge(int_br):
         int_br.add_protocols(*OVSFirewallDriver.REQUIRED_PROTOCOLS)
@@ -533,7 +541,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """
         # Identify egress flow
         self._add_flow(
-            table=ovs_consts.LOCAL_SWITCHING,
+            table=ovs_consts.TRANSIENT_TABLE,
             priority=100,
             in_port=port.ofport,
             actions='set_field:{:d}->reg{:d},'
@@ -548,7 +556,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # Identify ingress flows after egress filtering
         self._add_flow(
-            table=ovs_consts.LOCAL_SWITCHING,
+            table=ovs_consts.TRANSIENT_TABLE,
             priority=90,
             dl_dst=port.mac,
             actions='set_field:{:d}->reg{:d},'
@@ -924,9 +932,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def delete_all_port_flows(self, port):
         """Delete all flows for given port"""
-        self._delete_flows(table=ovs_consts.LOCAL_SWITCHING, dl_dst=port.mac)
-        self._delete_flows(table=ovs_consts.LOCAL_SWITCHING,
-                           in_port=port.ofport)
+        self._strict_delete_flow(
+            priority=90,
+            table=ovs_consts.TRANSIENT_TABLE,
+            dl_dst=port.mac)
+        self._strict_delete_flow(
+            priority=100,
+            table=ovs_consts.TRANSIENT_TABLE,
+            in_port=port.ofport)
         self._delete_flows(reg_port=port.ofport)
         self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                            dl_dst=port.mac)

@@ -192,10 +192,10 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         waiters.wait_for_server_status(self.os_primary.servers_client,
                                        self.server['server']['id'],
                                        constants.SERVER_STATUS_ACTIVE)
-        port = self.client.list_ports(network_id=self.network['id'],
-                                     device_id=self.server[
-                                          'server']['id'])['ports'][0]
-        self.fip = self.create_and_associate_floatingip(port['id'])
+        self.port = self.client.list_ports(network_id=self.network['id'],
+                                           device_id=self.server[
+                                               'server']['id'])['ports'][0]
+        self.fip = self.create_and_associate_floatingip(self.port['id'])
 
     def check_connectivity(self, host, ssh_user, ssh_key, servers=None):
         ssh_client = ssh.Client(host, ssh_user, pkey=ssh_key)
