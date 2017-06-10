@@ -322,4 +322,6 @@ class NetworkDNSDomain(base.NeutronDbObject):
             models_v2.Port, cls.db_model.network_id ==
             models_v2.Port.network_id).filter_by(
                 id=port_id).one_or_none()
+        if net_dns is None:
+            return None
         return super(NetworkDNSDomain, cls)._load_object(context, net_dns)
