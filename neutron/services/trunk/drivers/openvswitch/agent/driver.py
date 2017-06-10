@@ -9,13 +9,17 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.callbacks import events as local_events
+from neutron_lib.callbacks import registry as local_registry
+from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron._i18n import _LE
+from neutron._i18n import _LE, _LW
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
+from neutron.services.trunk import constants
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.services.trunk.rpc import agent
@@ -25,6 +29,7 @@ LOG = logging.getLogger(__name__)
 TRUNK_SKELETON = None
 
 
+@local_registry.has_registry_receivers
 class OVSTrunkSkeleton(agent.TrunkSkeleton):
     """It processes Neutron Server events to create the physical resources
     associated to a logical trunk in response to user initiated API events
@@ -70,6 +75,22 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
                     "Error on event %(event)s for subports "
                     "%(subports)s: %(err)s"),
                     {'event': event_type, 'subports': subports, 'err': e})
+
+    @local_registry.receives(constants.TRUNK, [local_events.BEFORE_CREATE])
+    def check_trunk_dependencies(
+        self, resource, event, trigger, **kwargs):
+        # The OVS trunk driver does not work with iptables firewall and QoS.
+        # We should validate the environment configuration and signal that
+        # something might be wrong.
+        # NOTE(armax): this check could be made quite sophisticated in that
+        # we could check for incompatibilities and abort the creation request
+        # only if the trunk is indeed associated with ports that have security
+        # groups and QoS rules, though this would be a lot more work.
+        if "iptables_hybrid" in cfg.CONF.securitygroup.firewall_driver:
+            LOG.warning(_LW(
+                "Firewall driver iptables_hybrid is not compatible with "
+                "trunk ports. Trunk %(trunk_id)s may be insecure."),
+                {'trunk_id': kwargs['trunk'].id})
 
 
 def init_handler(resource, event, trigger, agent=None):
