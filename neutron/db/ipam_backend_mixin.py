@@ -168,16 +168,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     @db_api.context_manager.writer
     def _update_subnet_allocation_pools(self, context, subnet_id, s):
-        context.session.query(models_v2.IPAllocationPool).filter_by(
-            subnet_id=subnet_id).delete()
+        subnet_obj.IPAllocationPool.delete_objects(context,
+                                                   subnet_id=subnet_id)
         pools = [(netaddr.IPAddress(p.first, p.version).format(),
                   netaddr.IPAddress(p.last, p.version).format())
                  for p in s['allocation_pools']]
-        new_pools = [models_v2.IPAllocationPool(first_ip=p[0],
-                                                last_ip=p[1],
-                                                subnet_id=subnet_id)
-                     for p in pools]
-        context.session.add_all(new_pools)
+        for p in pools:
+            subnet_obj.IPAllocationPool(context, start=p[0], end=p[1],
+                                        subnet_id=subnet_id).create()
 
         # Gather new pools for result
         result_pools = [{'start': p[0], 'end': p[1]} for p in pools]

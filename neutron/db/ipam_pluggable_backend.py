@@ -32,6 +32,7 @@ from neutron.db import ipam_backend_mixin
 from neutron.db import models_v2
 from neutron.ipam import driver
 from neutron.ipam import exceptions as ipam_exc
+from neutron.objects import subnet as obj_subnet
 
 
 LOG = logging.getLogger(__name__)
@@ -327,10 +328,9 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         for pool in allocation_pools:
             first_ip = str(netaddr.IPAddress(pool.first, pool.version))
             last_ip = str(netaddr.IPAddress(pool.last, pool.version))
-            ip_pool = models_v2.IPAllocationPool(subnet=subnet,
-                                                 first_ip=first_ip,
-                                                 last_ip=last_ip)
-            context.session.add(ip_pool)
+            obj_subnet.IPAllocationPool(
+                context, subnet_id=subnet['id'], start=first_ip,
+                end=last_ip).create()
 
     def update_port_with_ips(self, context, host, db_port, new_port, new_mac):
         changes = self.Changes(add=[], original=[], remove=[])
