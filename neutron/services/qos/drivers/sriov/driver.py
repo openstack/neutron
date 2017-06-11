@@ -36,7 +36,7 @@ SUPPORTED_RULES = {
     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: {
         qos_consts.MIN_KBPS: {
             'type:range': [0, constants.DB_INTEGER_MAX_VALUE]},
-        qos_consts.DIRECTION: {'type:values': constants.VALID_DIRECTIONS}
+        qos_consts.DIRECTION: {'type:values': [constants.EGRESS_DIRECTION]}
     }
 }
 
