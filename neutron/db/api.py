@@ -166,21 +166,6 @@ def retry_if_session_inactive(context_var_name='context'):
     return decorator
 
 
-def reraise_as_retryrequest(f):
-    """Packs retriable exceptions into a RetryRequest."""
-
-    @six.wraps(f)
-    def wrapped(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            with excutils.save_and_reraise_exception() as ctx:
-                if is_retriable(e):
-                    ctx.reraise = False
-                    raise db_exc.RetryRequest(e)
-    return wrapped
-
-
 def _is_nested_instance(e, etypes):
     """Check if exception or its inner excepts are an instance of etypes."""
     if isinstance(e, etypes):
