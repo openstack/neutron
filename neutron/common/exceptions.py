@@ -35,11 +35,6 @@ class QoSPolicyDefaultAlreadyExists(e.Conflict):
     message = _("A default QoS policy exists for project %(project_id)s.")
 
 
-class QoSPolicyDefaultNotFound(e.Conflict):
-    message = _("Default QoS policy for project %(project_id)s could not be "
-                "found.")
-
-
 class PortQosBindingNotFound(e.NotFound):
     message = _("QoS binding for port %(port_id)s and policy %(policy_id)s "
                 "could not be found.")
