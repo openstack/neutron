@@ -136,7 +136,7 @@ class _TrunkAPI(object):
         except resources_rpc.ResourceNotFound:
             return None
         except oslo_messaging.RemoteError as e:
-            if 'CallbackNotFound' not in str(e):
+            if e.exc_type != 'CallbackNotFound':
                 raise
             LOG.debug("Trunk plugin disabled on server. Assuming port %s is "
                       "not a trunk.", port_id)
