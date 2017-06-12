@@ -23,6 +23,7 @@ from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
+from oslo_utils import strutils
 import webob.exc
 
 from neutron._i18n import _, _LE, _LI
@@ -692,7 +693,8 @@ class Controller(object):
         if not body:
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
-        LOG.debug("Request body: %(body)s", {'body': body})
+        LOG.debug("Request body: %(body)s",
+                  {'body': strutils.mask_password(body)})
         try:
             if collection in body:
                 if not allow_bulk:
