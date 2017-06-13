@@ -68,11 +68,9 @@ def create_protocol_flows(direction, flow_template, port, rule):
     flow_template = flow_template.copy()
     if direction == firewall.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
-        flow_template['dl_dst'] = port.mac
         flow_template['actions'] = "strip_vlan,output:{:d}".format(port.ofport)
     elif direction == firewall.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
-        flow_template['dl_src'] = port.mac
         # Traffic can be both ingress and egress, check that no ingress rules
         # should be applied
         flow_template['actions'] = 'resubmit(,{:d})'.format(
