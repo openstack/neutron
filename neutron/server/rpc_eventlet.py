@@ -32,8 +32,7 @@ def eventlet_rpc_server():
 
     try:
         manager.init()
-        workers = service._get_rpc_workers() + service._get_plugins_workers()
-        rpc_workers_launcher = service._start_workers(workers)
+        rpc_workers_launcher = service.start_all_workers()
     except NotImplementedError:
         LOG.info(_LI("RPC was already started in parent process by "
                      "plugin."))
