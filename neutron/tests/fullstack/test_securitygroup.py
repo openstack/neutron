@@ -111,6 +111,8 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
              5. a remote security group member addition works, and
              6. an established connection stops by deleting a SG rule.
              7. test other protocol functionality by using SCTP protocol
+             8. test two vms with same mac on the same host in different
+                networks
         """
         index_to_sg = [0, 0, 1]
         if self.firewall_driver == 'iptables_hybrid':
@@ -272,3 +274,100 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         self.assert_connection(
             vms[1].namespace, vms[0].namespace, vms[0].ip, 3366,
             net_helpers.NetcatTester.SCTP)
+
+        # 8. test two vms with same mac on the same host in different networks
+        self._test_overlapping_mac_addresses()
+
+    def _create_vm_on_host(
+            self, project_id, network_id, sg_id, host, mac_address=None):
+        if mac_address:
+            port = self.safe_client.create_port(
+                project_id, network_id, host.hostname,
+                security_groups=[sg_id], mac_address=mac_address)
+        else:
+            port = self.safe_client.create_port(
+                project_id, network_id, host.hostname,
+                security_groups=[sg_id])
+
+        return self.useFixture(
+            machine.FakeFullstackMachine(
+                host, network_id, project_id, self.safe_client,
+                neutron_port=port))
+
+    def _create_three_vms_first_has_static_mac(
+            self, project_id, allowed_port, subnet_cidr):
+        """Create three vms.
+
+        First VM has a static mac and is placed on first host. Second VM is
+        placed on the first host and third VM is placed on second host.
+        """
+        network = self.safe_client.create_network(project_id)
+        self.safe_client.create_subnet(
+            project_id, network['id'], subnet_cidr)
+        sg = self.safe_client.create_security_group(project_id)
+
+        self.safe_client.create_security_group_rule(
+            project_id, sg['id'],
+            direction='ingress',
+            ethertype=constants.IPv4,
+            protocol=constants.PROTO_NAME_TCP,
+            port_range_min=allowed_port, port_range_max=allowed_port)
+
+        vms = [self._create_vm_on_host(
+            project_id, network['id'], sg['id'], self.environment.hosts[0],
+            mac_address="fa:16:3e:de:ad:fe")]
+
+        if self.firewall_driver == 'iptables_hybrid':
+            # iptables lack isolation between agents, use only a single host
+            vms.extend([
+                self._create_vm_on_host(
+                    project_id, network['id'], sg['id'],
+                    self.environment.hosts[0])
+                for _ in range(2)])
+        else:
+            vms.extend([
+                self._create_vm_on_host(
+                    project_id, network['id'], sg['id'], host)
+                for host in self.environment.hosts[:2]])
+
+        map(lambda vm: vm.block_until_boot(), vms)
+        return vms
+
+    def verify_connectivity_between_vms(self, src_vm, dst_vm, protocol, port):
+        self.assert_connection(
+            src_vm.namespace, dst_vm.namespace, dst_vm.ip, port,
+            protocol)
+
+    def verify_no_connectivity_between_vms(
+            self, src_vm, dst_vm, protocol, port):
+        self.assert_no_connection(
+            src_vm.namespace, dst_vm.namespace, dst_vm.ip, port, protocol)
+
+    def _test_overlapping_mac_addresses(self):
+        project1 = uuidutils.generate_uuid()
+        p1_allowed = 4444
+
+        project2 = uuidutils.generate_uuid()
+        p2_allowed = 4445
+
+        p1_vms = self._create_three_vms_first_has_static_mac(
+            project1, p1_allowed, '20.0.2.0/24')
+        p2_vms = self._create_three_vms_first_has_static_mac(
+            project2, p2_allowed, '20.0.3.0/24')
+
+        have_connectivity = [
+            (p1_vms[0], p1_vms[1], p1_allowed),
+            (p1_vms[1], p1_vms[2], p1_allowed),
+            (p2_vms[0], p2_vms[1], p2_allowed),
+            (p2_vms[1], p2_vms[2], p2_allowed),
+        ]
+
+        for vm1, vm2, port in have_connectivity:
+            self.verify_connectivity_between_vms(
+                vm1, vm2, net_helpers.NetcatTester.TCP, port)
+            self.verify_connectivity_between_vms(
+                vm2, vm1, net_helpers.NetcatTester.TCP, port)
+            self.verify_no_connectivity_between_vms(
+                vm1, vm2, net_helpers.NetcatTester.TCP, port + 1)
+            self.verify_no_connectivity_between_vms(
+                vm2, vm1, net_helpers.NetcatTester.TCP, port + 1)

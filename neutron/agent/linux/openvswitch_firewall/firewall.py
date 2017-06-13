@@ -408,6 +408,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         for table in ovs_consts.OVS_FIREWALL_TABLES:
             self.int_br.br.add_flow(table=table, priority=0, actions='drop')
 
+    def get_ovs_port(self, port_id):
+        ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
+        if not ovs_port:
+            raise exceptions.OVSFWPortNotFound(port_id=port_id)
+        return ovs_port
+
+    def _get_port_vlan_tag(self, port_name):
+        return get_tag_from_other_config(self.int_br.br, port_name)
+
     def get_ofport(self, port):
         port_id = port['device']
         return self.sg_port_map.ports.get(port_id)
@@ -418,15 +427,11 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         If ofport is nonexistent, create and return one.
         """
         port_id = port['device']
-        ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
-        if not ovs_port:
-            raise exceptions.OVSFWPortNotFound(port_id=port_id)
-
+        ovs_port = self.get_ovs_port(port_id)
         try:
             of_port = self.sg_port_map.ports[port_id]
         except KeyError:
-            port_vlan_id = get_tag_from_other_config(
-                self.int_br.br, ovs_port.port_name)
+            port_vlan_id = self._get_port_vlan_tag(ovs_port.port_name)
             of_port = OFPort(port, ovs_port, port_vlan_id)
             self.sg_port_map.create_port(of_port, port)
         else:
@@ -442,6 +447,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def prepare_port_filter(self, port):
         if not firewall.port_sec_enabled(port):
+            self._initialize_egress_no_port_security(port['device'])
             return
         old_of_port = self.get_ofport(port)
         of_port = self.get_or_create_ofport(port)
@@ -462,8 +468,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         """
         if not firewall.port_sec_enabled(port):
             self.remove_port_filter(port)
+            self._initialize_egress_no_port_security(port['device'])
             return
         elif not self.is_port_managed(port):
+            self._remove_egress_no_port_security(port['device'])
             self.prepare_port_filter(port)
             return
         old_of_port = self.get_ofport(port)
@@ -519,6 +527,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self.conj_ip_manager.sg_removed(sg_id)
             self.sg_port_map.delete_sg(sg_id)
 
+    def process_trusted_ports(self, port_ids):
+        """Pass packets from these ports directly to ingress pipeline."""
+        for port_id in port_ids:
+            self._initialize_egress_no_port_security(port_id)
+
+    def remove_trusted_ports(self, port_ids):
+        for port_id in port_ids:
+            self._remove_egress_no_port_security(port_id)
+
     def filter_defer_apply_on(self):
         self._deferred = True
 
@@ -559,6 +576,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.TRANSIENT_TABLE,
             priority=90,
             dl_dst=port.mac,
+            dl_vlan='0x%x' % port.vlan_tag,
             actions='set_field:{:d}->reg{:d},'
                     'set_field:{:d}->reg{:d},'
                     'strip_vlan,resubmit(,{:d})'.format(
@@ -584,6 +602,50 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 icmp_type=icmp_type,
                 actions='normal'
             )
+
+    def _initialize_egress_no_port_security(self, port_id):
+        ovs_port = self.get_ovs_port(port_id)
+        try:
+            vlan_tag = self._get_port_vlan_tag(ovs_port.port_name)
+        except exceptions.OVSFWTagNotFound:
+            # It's a patch port, don't set anything
+            return
+        self._add_flow(
+            table=ovs_consts.TRANSIENT_TABLE,
+            priority=100,
+            in_port=ovs_port.ofport,
+            actions='set_field:%d->reg%d,'
+                    'set_field:%d->reg%d,'
+                    'resubmit(,%d)' % (
+                        ovs_port.ofport,
+                        ovsfw_consts.REG_PORT,
+                        vlan_tag,
+                        ovsfw_consts.REG_NET,
+                        ovs_consts.ACCEPT_OR_INGRESS_TABLE)
+        )
+        self._add_flow(
+            table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+            priority=80,
+            reg_port=ovs_port.ofport,
+            actions='normal'
+        )
+
+    def _remove_egress_no_port_security(self, port_id):
+        ovs_port = self.get_ovs_port(port_id)
+        try:
+            # Test if it's a patch port
+            self._get_port_vlan_tag(ovs_port.port_name)
+        except exceptions.OVSFWTagNotFound:
+            # It's a patch port, don't do anything
+            return
+        self._delete_flows(
+            table=ovs_consts.TRANSIENT_TABLE,
+            in_port=ovs_port.ofport
+        )
+        self._delete_flows(
+            table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+            reg_port=ovs_port.ofport
+        )
 
     def _initialize_egress(self, port):
         """Identify egress traffic and send it to egress base"""
@@ -695,6 +757,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=100,
             dl_dst=port.mac,
+            reg_net=port.vlan_tag,
             actions='set_field:{:d}->reg{:d},resubmit(,{:d})'.format(
                 port.ofport,
                 ovsfw_consts.REG_PORT,
@@ -935,14 +998,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._strict_delete_flow(
             priority=90,
             table=ovs_consts.TRANSIENT_TABLE,
-            dl_dst=port.mac)
+            dl_dst=port.mac,
+            dl_vlan=port.vlan_tag)
         self._strict_delete_flow(
             priority=100,
             table=ovs_consts.TRANSIENT_TABLE,
             in_port=port.ofport)
         self._delete_flows(reg_port=port.ofport)
         self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
-                           dl_dst=port.mac)
+                           dl_dst=port.mac, reg_net=port.vlan_tag)
 
     def delete_flows_for_ip_addresses(
             self, ip_addresses, direction, ethertype, vlan_tag):

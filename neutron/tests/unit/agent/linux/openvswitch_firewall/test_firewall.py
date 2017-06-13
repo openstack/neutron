@@ -476,6 +476,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                         self.port_ofport, TESTING_VLAN_TAG,
                         ovs_consts.BASE_INGRESS_TABLE),
             dl_dst=self.port_mac,
+            dl_vlan='0x%x' % TESTING_VLAN_TAG,
             priority=90,
             table=ovs_consts.TRANSIENT_TABLE)
         filter_rule = mock.call(
@@ -498,8 +499,10 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                      'security_groups': [1],
                      'port_security_enabled': False}
         self._prepare_security_group()
-        self.firewall.prepare_port_filter(port_dict)
-        self.assertFalse(self.mock_bridge.br.add_flow.called)
+        with mock.patch.object(
+                self.firewall, 'initialize_port_flows') as m_init_flows:
+            self.firewall.prepare_port_filter(port_dict)
+        self.assertFalse(m_init_flows.called)
 
     def test_prepare_port_filter_initialized_port(self):
         port_dict = {'device': 'port-id',
@@ -602,3 +605,51 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             self.firewall._cleanup_stale_sg()
             sg_removed_mock.assert_called_once_with(1)
             delete_sg_mock.assert_called_once_with(1)
+
+    def test_get_ovs_port(self):
+        ovs_port = self.firewall.get_ovs_port('port_id')
+        self.assertEqual(self.fake_ovs_port, ovs_port)
+
+    def test_get_ovs_port_non_existent(self):
+        self.mock_bridge.br.get_vif_port_by_id.return_value = None
+        with testtools.ExpectedException(exceptions.OVSFWPortNotFound):
+            self.firewall.get_ovs_port('port_id')
+
+    def test__initialize_egress_no_port_security_sends_to_egress(self):
+        self.mock_bridge.br.db_get_val.return_value = {'tag': TESTING_VLAN_TAG}
+        self.firewall._initialize_egress_no_port_security('port_id')
+        expected_call = mock.call(
+            table=ovs_consts.TRANSIENT_TABLE,
+            priority=100,
+            in_port=self.fake_ovs_port.ofport,
+            actions='set_field:%d->reg%d,'
+                    'set_field:%d->reg%d,'
+                    'resubmit(,%d)' % (
+                        self.fake_ovs_port.ofport,
+                        ovsfw_consts.REG_PORT,
+                        TESTING_VLAN_TAG,
+                        ovsfw_consts.REG_NET,
+                        ovs_consts.ACCEPT_OR_INGRESS_TABLE)
+        )
+        calls = self.mock_bridge.br.add_flow.call_args_list
+        self.assertIn(expected_call, calls)
+
+    def test__initialize_egress_no_port_security_no_tag(self):
+        self.mock_bridge.br.db_get_val.return_value = {}
+        self.firewall._initialize_egress_no_port_security('port_id')
+        self.assertFalse(self.mock_bridge.br.add_flow.called)
+
+    def test__remove_egress_no_port_security_deletes_flow(self):
+        self.mock_bridge.br.db_get_val.return_value = {'tag': TESTING_VLAN_TAG}
+        self.firewall._remove_egress_no_port_security('port_id')
+        expected_call = mock.call(
+            table=ovs_consts.TRANSIENT_TABLE,
+            in_port=self.fake_ovs_port.ofport,
+        )
+        calls = self.mock_bridge.br.delete_flows.call_args_list
+        self.assertIn(expected_call, calls)
+
+    def test__remove_egress_no_port_security_no_tag(self):
+        self.mock_bridge.br.db_get_val.return_value = {}
+        self.firewall._remove_egress_no_port_security('port_id')
+        self.assertFalse(self.mock_bridge.br.delete_flows.called)

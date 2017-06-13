@@ -146,8 +146,8 @@ connections into separate conntrack zones.
 
  table=0,  priority=100,in_port=1 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
  table=0,  priority=100,in_port=2 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
- table=0,  priority=90,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
- table=0,  priority=90,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=0,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=0,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
  table=0,  priority=0 actions=NORMAL
 
 Following ``table 71`` implements arp spoofing protection, ip spoofing
@@ -264,8 +264,8 @@ remaining egress connections are sent to normal switching.
 
 ::
 
- table=73, priority=100,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],resubmit(,81)
- table=73, priority=100,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
+ table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],resubmit(,81)
+ table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
  table=73, priority=90,ct_state=+new-est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15]),NORMAL
  table=73, priority=90,ct_state=+new-est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15]),NORMAL
  table=73, priority=80,reg5=0x1 actions=NORMAL
