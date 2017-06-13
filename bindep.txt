@@ -4,6 +4,10 @@
 # tools/misc-sanity-checks.sh validates .po[t] files
 gettext [test]
 
+# cffi (required by oslo.privsep) and PyNaCL (required by paramiko)
+libffi-dev [platform:dpkg]
+libffi-devel [platform:rpm]
+
 # MySQL and PostgreSQL databases since some jobs are set up in
 # OpenStack infra that need these like
 # periodic-neutron-py27-with-oslo-master and
