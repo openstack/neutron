@@ -66,7 +66,6 @@ class NotifierHook(hooks.PecanHook):
             return
         action = pecan_constants.ACTION_MAP.get(state.request.method)
         if not action or action not in ('create', 'update', 'delete'):
-            LOG.debug("No notification will be sent for action: %s", action)
             return
         if utils.is_member_action(utils.get_controller(state)):
             return
