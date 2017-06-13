@@ -77,11 +77,9 @@ def populate_flow_common(direction, flow_template, port):
     """Initialize common flow fields."""
     if direction == firewall.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
-        flow_template['dl_dst'] = port.mac
         flow_template['actions'] = "output:{:d}".format(port.ofport)
     elif direction == firewall.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
-        flow_template['dl_src'] = port.mac
         # Traffic can be both ingress and egress, check that no ingress rules
         # should be applied
         flow_template['actions'] = 'resubmit(,{:d})'.format(

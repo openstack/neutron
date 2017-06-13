@@ -129,12 +129,14 @@ the second security group. Ports have following attributes:
    - ip address: 192.168.0.1
    - mac address: fa:16:3e:a4:22:10
    - security group 1: can send icmp packets out
+   - allowed address pair: 10.0.0.1/32, fa:16:3e:8c:84:13
 
  Port 2
    - plugged to the port 2 in OVS bridge
    - ip address: 192.168.0.2
    - mac address: fa:16:3e:24:57:c7
    - security group 2: can receive icmp packets from security group 1
+   - allowed address pair: 10.1.0.0/24, fa:16:3e:8c:84:14
 
 ``table 0`` contains a low priority rule to continue packets processing in
 ``table 60`` aka TRANSIENT table. ``table 0`` is left for use to other
@@ -152,7 +154,9 @@ connections into separate conntrack zones.
  table=60,  priority=100,in_port=1 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
  table=60,  priority=100,in_port=2 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
  table=60,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=60,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:8c:84:13 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
  table=60,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=60,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:8c:84:14 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
  table=60,  priority=0 actions=NORMAL
 
 Following ``table 71`` implements arp spoofing protection, ip spoofing
@@ -185,7 +189,9 @@ Following rules implement arp spoofing protection
 ::
 
  table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,arp_spa=192.168.0.1 actions=NORMAL
+ table=71, priority=95,arp,reg5=0x1,in_port=1,dl_src=fa:16:3e:8c:84:13,arp_spa=10.0.0.1 actions=NORMAL
  table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,arp_spa=192.168.0.2 actions=NORMAL
+ table=71, priority=95,arp,reg5=0x2,in_port=2,dl_src=fa:16:3e:8c:84:14,arp_spa=10.1.0.0/24 actions=NORMAL
 
 DHCP and DHCPv6 traffic is allowed to instance but DHCP servers are blocked on
 instances.
@@ -207,7 +213,9 @@ combinations. All other packets are dropped.
 ::
 
  table=71, priority=65,ct_state=-trk,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,nw_src=192.168.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ct_state=-trk,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:8c:84:13,nw_src=10.0.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
  table=71, priority=65,ct_state=-trk,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,nw_src=192.168.0.2 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ct_state=-trk,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:8c:84:14,nw_src=10.1.0.0/24 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
  table=71, priority=65,ct_state=-trk,ipv6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,ipv6_src=fe80::f816:3eff:fea4:2210 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
  table=71, priority=65,ct_state=-trk,ipv6,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,ipv6_src=fe80::f816:3eff:fe24:57c7 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
  table=71, priority=10,ct_state=-trk,reg5=0x1,in_port=1 actions=drop
@@ -226,8 +234,8 @@ In case below we allow all icmp egress traffic.
 
 ::
 
- table=72, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x1,dl_src=fa:16:3e:a4:22:10 actions=resubmit(,73)
- table=72, priority=70,ct_state=+new-est,icmp,reg5=0x1,dl_src=fa:16:3e:a4:22:10 actions=resubmit(,73)
+ table=72, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x1, actions=resubmit(,73)
+ table=72, priority=70,ct_state=+new-est,icmp,reg5=0x1, actions=resubmit(,73)
  table=72, priority=50,ct_state=+inv+trk actions=drop
 
 
@@ -270,7 +278,9 @@ remaining egress connections are sent to normal switching.
 ::
 
  table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],resubmit(,81)
+ table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:8c:84:13 actions=load:0x1->NXM_NX_REG5[],resubmit(,81)
  table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
+ table=73, priority=100,reg6=0x284,dl_dst=fa:16:3e:8c:84:14 actions=load:0x2->NXM_NX_REG5[],resubmit(,81)
  table=73, priority=90,ct_state=+new-est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15]),NORMAL
  table=73, priority=90,ct_state=+new-est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15]),NORMAL
  table=73, priority=80,reg5=0x1 actions=NORMAL
@@ -284,18 +294,18 @@ port. Not tracked packets are sent to obtain conntrack information.
 
 ::
 
- table=81, priority=100,arp,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
- table=81, priority=100,arp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=130 actions=strip_vlan,output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=131 actions=strip_vlan,output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=132 actions=strip_vlan,output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=135 actions=strip_vlan,output:1
- table=81, priority=100,icmp6,reg5=0x1,dl_dst=fa:16:3e:a4:22:10,icmp_type=136 actions=strip_vlan,output:1
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=130 actions=strip_vlan,output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=131 actions=strip_vlan,output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=132 actions=strip_vlan,output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=135 actions=strip_vlan,output:2
- table=81, priority=100,icmp6,reg5=0x2,dl_dst=fa:16:3e:24:57:c7,icmp_type=136 actions=strip_vlan,output:2
+ table=81, priority=100,arp,reg5=0x1 actions=strip_vlan,output:1
+ table=81, priority=100,arp,reg5=0x2 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x1,icmp_type=130 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,icmp_type=131 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,icmp_type=132 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,icmp_type=135 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x1,icmp_type=136 actions=strip_vlan,output:1
+ table=81, priority=100,icmp6,reg5=0x2,icmp_type=130 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,icmp_type=131 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,icmp_type=132 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,icmp_type=135 actions=strip_vlan,output:2
+ table=81, priority=100,icmp6,reg5=0x2,icmp_type=136 actions=strip_vlan,output:2
  table=81, priority=95,udp,reg5=0x1,tp_src=67,tp_dst=68 actions=strip_vlan,output:1
  table=81, priority=95,udp6,reg5=0x1,tp_src=547,tp_dst=546 actions=strip_vlan,output:1
  table=81, priority=95,udp,reg5=0x2,tp_src=67,tp_dst=68 actions=strip_vlan,output:2
@@ -304,25 +314,27 @@ port. Not tracked packets are sent to obtain conntrack information.
  table=81, priority=90,ct_state=-trk,ipv6,reg5=0x1 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
  table=81, priority=90,ct_state=-trk,ip,reg5=0x2 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
  table=81, priority=90,ct_state=-trk,ipv6,reg5=0x2 actions=ct(table=82,zone=NXM_NX_REG6[0..15])
- table=81, priority=80,ct_state=+trk,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=resubmit(,82)
- table=81, priority=80,ct_state=+trk,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=resubmit(,82)
+ table=81, priority=80,ct_state=+trk,reg5=0x1 actions=resubmit(,82)
+ table=81, priority=80,ct_state=+trk,reg5=0x2 actions=resubmit(,82)
  table=81, priority=0 actions=drop
 
 Similarly to ``table 72``, ``table 82`` accepts established and related
 connections. In this case we allow all icmp traffic coming from
-``security group 1`` which is in this case only ``port 1`` with ip address
-``192.168.0.1``. The first two rules match on the ip address, and the
-next two rules match on the icmp protocol and the destination mac address.
+``security group 1`` which is in this case only ``port 1``.
+The first two rules match on the ip packets, and the
+next two rules match on the icmp protocol.
 These four rules define conjunction flows.
 
 ::
 
- table=82, priority=70,ct_state=+est-rel-rpl,ip,reg6=0xfff,nw_src=192.168.0.1 actions=conjunction(2147352552,1/2)
- table=82, priority=70,ct_state=+new-est,ip,reg6=0xfff,nw_src=192.168.0.1 actions=conjunction(2147352553,1/2)
- table=82, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=conjunction(2147352552,2/2)
- table=82, priority=70,ct_state=+new-est,icmp,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=conjunction(2147352553,2/2)
- table=82, priority=70,conj_id=2147352552,ct_state=+est-rel-rpl,ip,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
- table=82, priority=70,conj_id=2147352553,ct_state=+new-est,ip,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=ct(commit,zone=NXM_NX_REG6[0..15]),strip_vlan,output:2
+ table=82, priority=70,ct_state=+est-rel-rpl,ip,reg6=0x284,nw_src=192.168.0.1 actions=conjunction(2147352552,1/2)
+ table=82, priority=70,ct_state=+est-rel-rpl,ip,reg6=0x284,nw_src=10.0.0.1 actions=conjunction(2147352552,1/2)
+ table=82, priority=70,ct_state=+new-est,ip,reg6=0x284,nw_src=192.168.0.1 actions=conjunction(2147352553,1/2)
+ table=82, priority=70,ct_state=+new-est,ip,reg6=0x284,nw_src=10.0.0.1 actions=conjunction(2147352553,1/2)
+ table=82, priority=70,ct_state=+est-rel-rpl,icmp,reg5=0x2 actions=conjunction(2147352552,2/2)
+ table=82, priority=70,ct_state=+new-est,icmp,reg5=0x2 actions=conjunction(2147352553,2/2)
+ table=82, priority=70,conj_id=2147352552,ct_state=+est-rel-rpl,ip,reg5=0x2 actions=strip_vlan,output:2
+ table=82, priority=70,conj_id=2147352553,ct_state=+new-est,ip,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15]),strip_vlan,output:2
  table=82, priority=50,ct_state=+inv+trk actions=drop
 
 The mechanism for dropping connections that are not allowed anymore is the
@@ -332,10 +344,10 @@ same as in ``table 72``.
 
  table=82, priority=50,ct_mark=0x1,reg5=0x1 actions=drop
  table=82, priority=50,ct_mark=0x1,reg5=0x2 actions=drop
- table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
- table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
- table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1,dl_dst=fa:16:3e:a4:22:10 actions=strip_vlan,output:1
- table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2,dl_dst=fa:16:3e:24:57:c7 actions=strip_vlan,output:2
+ table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x1 actions=strip_vlan,output:1
+ table=82, priority=50,ct_state=+est-rel+rpl,ct_zone=644,ct_mark=0,reg5=0x2 actions=strip_vlan,output:2
+ table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1 actions=strip_vlan,output:1
+ table=82, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2 actions=strip_vlan,output:2
  table=82, priority=40,ct_state=-est,reg5=0x1 actions=drop
  table=82, priority=40,ct_state=+est,reg5=0x1 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
  table=82, priority=40,ct_state=-est,reg5=0x2 actions=drop

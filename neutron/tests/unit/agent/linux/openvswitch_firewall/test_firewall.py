@@ -459,7 +459,8 @@ class TestOVSFirewallDriver(base.BaseTestCase):
 
     def test_prepare_port_filter(self):
         port_dict = {'device': 'port-id',
-                     'security_groups': [1]}
+                     'security_groups': [1],
+                     'fixed_ips': ["10.0.0.1"]}
         self._prepare_security_group()
         self.firewall.prepare_port_filter(port_dict)
         exp_egress_classifier = mock.call(
@@ -482,7 +483,6 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         filter_rule = mock.call(
             actions='ct(commit,zone=NXM_NX_REG6[0..15]),'
             'output:{:d}'.format(self.port_ofport),
-            dl_dst=self.port_mac,
             dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,
             priority=70,
@@ -528,7 +528,6 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         filter_rules = [mock.call(
             actions='resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
-            dl_src=self.port_mac,
             dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_UDP,
             priority=70,
@@ -538,7 +537,6 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                         mock.call(
             actions='conjunction({:d},2/2)'.format(conj_id),
             ct_state=ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY,
-            dl_src=mock.ANY,
             dl_type=mock.ANY,
             nw_proto=6,
             priority=70, reg5=self.port_ofport,
