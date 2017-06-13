@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
@@ -24,14 +22,13 @@ from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
 
 class LinuxbridgeMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
-    VIF_TYPE = portbindings.VIF_TYPE_TAP
+    VIF_TYPE = portbindings.VIF_TYPE_BRIDGE
     CAP_PORT_FILTER = True
     AGENT_TYPE = constants.AGENT_TYPE_LINUXBRIDGE
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_interface'}
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
-    GOOD_CONFIGS = {'wires_compute_ports': True,
-                    'interface_mappings': GOOD_MAPPINGS,
+    GOOD_CONFIGS = {'interface_mappings': GOOD_MAPPINGS,
                     'tunnel_types': GOOD_TUNNEL_TYPES}
 
     BAD_MAPPINGS = {'wrong_physical_network': 'wrong_interface'}
@@ -81,11 +78,3 @@ class LinuxbridgeMechanismVlanTestCase(LinuxbridgeMechanismBaseTestCase,
 class LinuxbridgeMechanismGreTestCase(LinuxbridgeMechanismBaseTestCase,
                                       base.AgentMechanismGreTestCase):
     pass
-
-
-class LegacyLinuxbridgeMechanismTestCase(LinuxbridgeMechanismBaseTestCase,
-                                         base.AgentMechanismVlanTestCase):
-    """An old agent doesn't wire compute ports so it needs VIF_TYPE_BRIDGE."""
-    VIF_TYPE = portbindings.VIF_TYPE_BRIDGE
-    AGENTS = copy.deepcopy(LinuxbridgeMechanismBaseTestCase.AGENTS)
-    AGENTS[0]['configurations'].pop('wires_compute_ports')
