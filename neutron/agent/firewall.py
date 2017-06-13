@@ -162,6 +162,13 @@ class FirewallDriver(object):
         """
         raise NotImplementedError()
 
+    def process_trusted_ports(self, port_ids):
+        """Process ports that are trusted and shouldn't be filtered."""
+        pass
+
+    def remove_trusted_ports(self, port_ids):
+        pass
+
 
 class NoopFirewallDriver(FirewallDriver):
     """Noop Firewall Driver.

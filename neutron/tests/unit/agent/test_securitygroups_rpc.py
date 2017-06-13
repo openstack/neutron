@@ -871,6 +871,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.firewall.assert_has_calls([mock.call.defer_apply(),
                                         mock.call.prepare_port_filter(
                                             self.fake_device),
+                                        mock.call.process_trusted_ports([]),
                                         mock.call.defer_apply(),
                                         mock.call.remove_port_filter(
                                             self.fake_device),
@@ -895,6 +896,35 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
                          security_group_info_for_devices.called)
         self.assertFalse(self.agent.plugin_rpc.
                          security_group_rules_for_devices.called)
+
+    def test_prepare_devices_filter_with_trusted_ports(self):
+        devices_to_filter = {k: {'device': k} for k in range(4, 8)}
+        all_devices = range(10)
+        expected_devices = [0, 1, 2, 3, 8, 9]
+        self.agent._use_enhanced_rpc = True
+        with mock.patch.object(
+                self.agent.plugin_rpc,
+                'security_group_info_for_devices',
+                return_value={
+                    'devices': devices_to_filter,
+                    'security_groups': {},
+                    'sg_member_ips': {}}):
+            with mock.patch.object(
+                    self.agent.firewall, 'process_trusted_ports') as m_process:
+                self.agent.prepare_devices_filter(all_devices)
+        m_process.assert_called_once_with(expected_devices)
+
+    def test_remove_devices_filter_with_trusted_ports(self):
+        all_devices = range(10)
+        firewall_managed_ports = {k: k for k in range(4, 8)}
+        trusted_port_ids = [0, 1, 2, 3, 8, 9]
+        with mock.patch.object(self.agent, 'firewall') as mock_firewall:
+            mock_firewall.ports = firewall_managed_ports
+            self.agent.remove_devices_filter(all_devices)
+        mock_firewall.remove_port_filter.assert_has_calls(
+            [mock.call(i) for i in firewall_managed_ports.keys()])
+        mock_firewall.remove_trusted_ports(
+            [mock.call([i]) for i in trusted_port_ids])
 
     def test_security_groups_rule_updated(self):
         self.agent.refresh_firewall = mock.Mock()
@@ -937,17 +967,21 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.agent.refresh_firewall()
         calls = [mock.call.defer_apply(),
                  mock.call.prepare_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports(['fake_port_id']),
                  mock.call.defer_apply(),
-                 mock.call.update_port_filter(self.fake_device)]
+                 mock.call.update_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports([])]
         self.firewall.assert_has_calls(calls)
 
     def test_refresh_firewall_devices(self):
         self.agent.prepare_devices_filter(['fake_port_id'])
-        self.agent.refresh_firewall([self.fake_device])
+        self.agent.refresh_firewall([self.fake_device['device']])
         calls = [mock.call.defer_apply(),
                  mock.call.prepare_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports(['fake_port_id']),
                  mock.call.defer_apply(),
-                 mock.call.update_port_filter(self.fake_device)]
+                 mock.call.update_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports([])]
         self.firewall.assert_has_calls(calls)
 
     def test_refresh_firewall_none(self):
@@ -959,7 +993,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
         self.agent.plugin_rpc.security_group_info_for_devices = mock.Mock()
         self.agent.plugin_rpc.security_group_rules_for_devices = mock.Mock()
         self.agent.firewall.defer_apply = mock.Mock()
-        self.agent.refresh_firewall([self.fake_device])
+        self.agent.refresh_firewall([self.fake_device['device']])
         self.assertFalse(self.agent.plugin_rpc.
                          security_group_info_for_devices.called)
         self.assertFalse(self.agent.plugin_rpc.
@@ -1010,6 +1044,7 @@ class SecurityGroupAgentEnhancedRpcTestCase(
                                         tmp_mock2,
                                         mock.call.prepare_port_filter(
                                             self.fake_device),
+                                        mock.call.process_trusted_ports([]),
                                         mock.call.defer_apply(),
                                         mock.call.remove_port_filter(
                                             self.fake_device),
@@ -1066,19 +1101,21 @@ class SecurityGroupAgentEnhancedRpcTestCase(
                  mock.call.update_security_group_members(
                      'fake_sgid2', {'IPv4': [], 'IPv6': []}),
                  mock.call.prepare_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports(['fake_port_id']),
                  mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules(
                      'fake_sgid1', [{'remote_group_id': 'fake_sgid2'}]),
                  mock.call.update_security_group_members(
                      'fake_sgid2', {'IPv4': [], 'IPv6': []}),
-                 mock.call.update_port_filter(self.fake_device)]
+                 mock.call.update_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports([])]
 
         self.firewall.assert_has_calls(calls)
 
     def test_refresh_firewall_devices_enhanced_rpc(self):
         self.agent.prepare_devices_filter(['fake_device'])
-        self.agent.refresh_firewall([self.fake_device])
+        self.agent.refresh_firewall([self.fake_device['device']])
         calls = [mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules('fake_sgid1', [
@@ -1087,13 +1124,15 @@ class SecurityGroupAgentEnhancedRpcTestCase(
                      'IPv4': [], 'IPv6': []
                  }),
                  mock.call.prepare_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports([]),
                  mock.call.defer_apply(),
                  mock.call.update_security_group_rules('fake_sgid2', []),
                  mock.call.update_security_group_rules('fake_sgid1', [
                      {'remote_group_id': 'fake_sgid2'}]),
                  mock.call.update_security_group_members('fake_sgid2', {
                      'IPv4': [], 'IPv6': []}),
-                 mock.call.update_port_filter(self.fake_device)
+                 mock.call.update_port_filter(self.fake_device),
+                 mock.call.process_trusted_ports([]),
                  ]
         self.firewall.assert_has_calls(calls)
 

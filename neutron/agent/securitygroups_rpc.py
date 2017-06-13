@@ -128,6 +128,7 @@ class SecurityGroupAgentRpc(object):
         else:
             devices = self.plugin_rpc.security_group_rules_for_devices(
                 self.context, list(device_ids))
+        trusted_devices = list(set(device_ids) - set(devices.keys()))
 
         with self.firewall.defer_apply():
             if self.use_enhanced_rpc:
@@ -142,6 +143,7 @@ class SecurityGroupAgentRpc(object):
                 else:
                     LOG.debug("Prepare port filter for %s", device['device'])
                     self.firewall.prepare_port_filter(device)
+            self.firewall.process_trusted_ports(trusted_devices)
 
     def _update_security_group_info(self, security_groups,
                                     security_group_member_ips):
@@ -213,9 +215,10 @@ class SecurityGroupAgentRpc(object):
         with self.firewall.defer_apply():
             for device_id in device_ids:
                 device = self.firewall.ports.get(device_id)
-                if not device:
-                    continue
-                self.firewall.remove_port_filter(device)
+                if device:
+                    self.firewall.remove_port_filter(device)
+                else:
+                    self.firewall.remove_trusted_ports([device_id])
 
     @skip_if_noopfirewall_or_firewall_disabled
     def refresh_firewall(self, device_ids=None):
