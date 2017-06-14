@@ -17,6 +17,7 @@ import netaddr
 from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
+import tenacity
 
 from neutron._i18n import _LI
 from neutron.agent.linux import ip_lib
@@ -189,6 +190,11 @@ def _delete_mac_spoofing_protection(vifs, current_rules):
 NAMESPACE = None
 
 
+@tenacity.retry(
+    wait=tenacity.wait_exponential(multiplier=0.01),
+    retry=tenacity.retry_if_exception(lambda e: e.returncode == 255),
+    reraise=True
+)
 def ebtables(comm):
     execute = ip_lib.IPWrapper(NAMESPACE).netns.execute
     return execute(['ebtables', '--concurrent'] + comm, run_as_root=True)
