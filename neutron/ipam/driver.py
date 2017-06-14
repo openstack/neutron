@@ -48,7 +48,6 @@ class Pool(object):
         """
         ipam_driver_name = cfg.CONF.ipam_driver
         mgr = manager.NeutronManager
-        LOG.debug("Loading ipam driver: %s", ipam_driver_name)
         driver_class = mgr.load_class_for_provider('neutron.ipam_drivers',
                                                    ipam_driver_name)
         return driver_class(subnet_pool, context)
