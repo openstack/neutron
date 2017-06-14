@@ -95,8 +95,8 @@ class Notifier(object):
                 'name': VIF_DELETED,
                 'tag': port['id']}
 
-    @registry.receives(resources.PORT, events.BEFORE_RESPONSE)
-    @registry.receives(resources.FLOATING_IP, events.BEFORE_RESPONSE)
+    @registry.receives(resources.PORT, [events.BEFORE_RESPONSE])
+    @registry.receives(resources.FLOATING_IP, [events.BEFORE_RESPONSE])
     def _send_nova_notification(self, resource, event, trigger,
                                 action=None, original=None, data=None,
                                 **kwargs):
