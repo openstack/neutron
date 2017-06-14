@@ -105,8 +105,6 @@ class _ObjectChangeHandler(object):
                 obj = self._obj_class(id=resource_id)
             else:
                 rpc_event = rpc_events.UPDATED
-            LOG.debug("Dispatching RPC callback event %s for %s %s.",
-                      rpc_event, self._resource, resource_id)
             self._resource_push_api.push(context, [obj], rpc_event)
 
     def _extract_resource_id(self, callback_kwargs):
