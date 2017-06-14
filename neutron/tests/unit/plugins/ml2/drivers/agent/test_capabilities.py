@@ -31,10 +31,10 @@ class CapabilitiesTest(base.BaseTestCase):
         mock_agent_type = mock.Mock()
         mock_agent = mock.Mock()
         capabilities.notify_init_event(mock_agent_type, mock_agent)
-        self._mgr.notify.assert_called_with(mock_agent_type,
+        self._mgr.publish.assert_called_with(mock_agent_type,
                                             events.AFTER_INIT,
                                             mock_agent,
-                                            agent=mock_agent)
+                                            payload=None)
 
     def test_register(self):
         mock_callback = mock.Mock()

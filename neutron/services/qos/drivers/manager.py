@@ -43,7 +43,7 @@ class QosServiceDriverManager(object):
         # notify any registered QoS driver that we're ready, those will
         # call the driver manager back with register_driver if they
         # are enabled
-        registry.notify(qos_consts.QOS_PLUGIN, events.AFTER_INIT, self)
+        registry.publish(qos_consts.QOS_PLUGIN, events.AFTER_INIT, self)
 
         if self.rpc_notifications_required:
             self.push_api = resources_rpc.ResourcesPushRpcApi()

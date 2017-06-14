@@ -26,7 +26,7 @@ class LoggingServiceDriverManager(object):
 
     def __init__(self):
         self._drivers = set()
-        registry.notify(log_const.LOGGING_PLUGIN, events.AFTER_INIT, self)
+        registry.publish(log_const.LOGGING_PLUGIN, events.AFTER_INIT, self)
 
     @property
     def drivers(self):

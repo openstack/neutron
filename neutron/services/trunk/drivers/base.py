@@ -62,7 +62,7 @@ class DriverBase(object):
         return agent_type == self.agent_type
 
     @registry.receives(trunk_consts.TRUNK_PLUGIN, [events.AFTER_INIT])
-    def register(self, resource, event, trigger, **kwargs):
+    def register(self, resource, event, trigger, payload=None):
         """Register the trunk driver.
 
         This method should be overridden so that the driver can subscribe
