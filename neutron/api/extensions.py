@@ -391,10 +391,12 @@ class ExtensionManager(object):
     def _check_extension(self, extension):
         """Checks for required methods in extension objects."""
         try:
-            LOG.debug('Ext name: %s', extension.get_name())
-            LOG.debug('Ext alias: %s', extension.get_alias())
-            LOG.debug('Ext description: %s', extension.get_description())
-            LOG.debug('Ext updated: %s', extension.get_updated())
+            LOG.debug('Ext name="%(name)s" alias="%(alias)s" '
+                      'description="%(desc)s" updated="%(updated)s"',
+                      {'name': extension.get_name(),
+                       'alias': extension.get_alias(),
+                       'desc': extension.get_description(),
+                       'updated': extension.get_updated()})
         except AttributeError:
             LOG.exception(_LE("Exception loading extension"))
             return False
