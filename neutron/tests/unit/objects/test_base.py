@@ -40,6 +40,7 @@ from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import exceptions as o_exc
 from neutron.objects import flavor
+from neutron.objects.logapi import event_types
 from neutron.objects import network as net_obj
 from neutron.objects import ports
 from neutron.objects import rbac_db
@@ -445,6 +446,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.SetOfUUIDsField: get_set_of_random_uuids,
     common_types.UUIDField: uuidutils.generate_uuid,
     common_types.VlanIdRangeField: tools.get_random_vlan,
+    event_types.SecurityEventField: tools.get_random_security_event,
     obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.DateTimeField: tools.get_random_datetime,
     obj_fields.DictOfStringsField: get_random_dict_of_strings,
