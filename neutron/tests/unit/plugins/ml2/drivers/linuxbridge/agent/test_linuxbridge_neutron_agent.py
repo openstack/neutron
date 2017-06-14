@@ -415,7 +415,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                       ip_version=4,
                       dynamic=False)
         with mock.patch.object(ip_lib.IpAddrCommand, 'add') as add_fn,\
-                mock.patch.object(ip_lib.IpAddrCommand, 'delete') as del_fn:
+                mock.patch.object(ip_lib.IpAddrCommand, 'delete') as del_fn,\
+                mock.patch.object(ip_lib.IpAddrCommand, 'list') as list_fn:
+            # 'list' actually returns a dict, but we're only simulating
+            # whether the device exists or not
+            list_fn.side_effect = [True, False]
+
+            self.lbm._update_interface_ip_details("br0", "eth0",
+                                                  [ipdict], None)
+            self.assertFalse(add_fn.called)
+            self.assertTrue(del_fn.called)
+
+            add_fn.reset_mock()
+            del_fn.reset_mock()
             self.lbm._update_interface_ip_details("br0", "eth0",
                                                   [ipdict], None)
             self.assertTrue(add_fn.called)
