@@ -169,9 +169,6 @@ def create_cache_for_l2_agent():
     ]
     rcache = resource_cache.RemoteResourceCache(resource_types)
     rcache.start_watcher()
-    # TODO(kevinbenton): ensure flood uses filters or that this has a long
-    # timeout before Pike release.
-    rcache.bulk_flood_cache()
     return rcache
 
 
