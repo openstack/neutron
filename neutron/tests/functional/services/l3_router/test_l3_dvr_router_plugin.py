@@ -37,6 +37,7 @@ class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework):
     def setUp(self):
         super(L3DvrTestCaseBase, self).setUp()
         self.l3_agent = helpers.register_l3_agent(
+            host="host0",
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         # register OVS agents to avoid time wasted on committing
         # port binding failures on every port update
@@ -714,6 +715,40 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                   router['id'], vrrp_arp_table)]
                 l3_notifier.add_arp_entry.assert_has_calls(
                         expected_calls)
+
+    def test_dvr_gateway_host_binding_is_set(self):
+        router = self._create_router()
+        private_net1 = self._make_network(self.fmt, 'net1', True)
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, '', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
+            ip_version=4, enable_dhcp=True)
+        # Set gateway to router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router['id'],
+            {'network_id': ext_net['network']['id']})
+        private_subnet1 = self._make_subnet(
+            self.fmt,
+            private_net1,
+            '10.1.0.1',
+            cidr='10.1.0.0/24',
+            ip_version=4,
+            enable_dhcp=True)
+        self.l3_plugin.add_router_interface(
+            self.context, router['id'],
+            {'subnet_id': private_subnet1['subnet']['id']})
+        self.l3_plugin.schedule_router(self.context,
+                                       router['id'],
+                                       candidates=[self.l3_agent])
+        # Check for the gw_port_host in the router dict to make
+        # sure that the _build_routers_list in l3_dvr_db is called.
+        router_handle = (
+            self.l3_plugin.list_active_sync_routers_on_active_l3_agent(
+                self.context, self.l3_agent['host'], [router['id']]))
+        self.assertEqual(self.l3_agent['host'],
+                         router_handle[0]['gw_port_host'])
 
     def test_allowed_address_pairs_update_arp_entry(self):
         HOST1 = 'host1'
