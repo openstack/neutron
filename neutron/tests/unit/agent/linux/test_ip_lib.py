@@ -1683,6 +1683,26 @@ class TestArpPing(TestIPCmdBase):
             ip_wrapper.netns.execute.assert_any_call(arping_cmd,
                                                      extra_ok_codes=[1])
 
+    @mock.patch.object(ip_lib, 'IPWrapper')
+    @mock.patch('eventlet.spawn_n')
+    def test_send_ipv4_addr_adv_notif_nodev(self, spawn_n, mIPWrapper):
+        spawn_n.side_effect = lambda f: f()
+        ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
+        ip_wrapper.netns.execute.side_effect = RuntimeError
+        ARPING_COUNT = 3
+        address = '20.0.0.1'
+        with mock.patch.object(ip_lib, 'device_exists', return_value=False):
+            ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
+                                          mock.sentinel.iface_name,
+                                          address,
+                                          ARPING_COUNT)
+
+        # should return early with a single call when ENODEV
+        mIPWrapper.assert_has_calls([
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=mock.ANY)
+        ] * 1)
+
     @mock.patch('eventlet.spawn_n')
     def test_no_ipv6_addr_notif(self, spawn_n):
         ipv6_addr = 'fd00::1'
