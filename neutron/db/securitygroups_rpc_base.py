@@ -243,66 +243,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                     sg_info['sg_member_ips'][sg_id][ethertype].add(ip)
         return sg_info
 
-    @db_api.retry_if_session_inactive()
-    def _select_sg_ids_for_ports(self, context, ports):
-        if not ports:
-            return []
-        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
-        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
-        query = context.session.query(sg_binding_sgid)
-        query = query.filter(sg_binding_port.in_(ports.keys()))
-        return query.all()
-
-    @db_api.retry_if_session_inactive()
-    def _select_rules_for_ports(self, context, ports):
-        if not ports:
-            return []
-        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
-        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
-
-        sgr_sgid = sg_models.SecurityGroupRule.security_group_id
-
-        query = context.session.query(sg_binding_port,
-                                      sg_models.SecurityGroupRule)
-        query = query.join(sg_models.SecurityGroupRule,
-                           sgr_sgid == sg_binding_sgid)
-        query = query.filter(sg_binding_port.in_(ports.keys()))
-        return query.all()
-
-    @db_api.retry_if_session_inactive()
-    def _select_ips_for_remote_group(self, context, remote_group_ids):
-        ips_by_group = {}
-        if not remote_group_ids:
-            return ips_by_group
-        for remote_group_id in remote_group_ids:
-            ips_by_group[remote_group_id] = set()
-
-        ip_port = models_v2.IPAllocation.port_id
-        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
-        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
-
-        # Join the security group binding table directly to the IP allocation
-        # table instead of via the Port table skip an unnecessary intermediary
-        query = context.session.query(sg_binding_sgid,
-                                      models_v2.IPAllocation.ip_address,
-                                      aap_models.AllowedAddressPair.ip_address)
-        query = query.join(models_v2.IPAllocation,
-                           ip_port == sg_binding_port)
-        # Outerjoin because address pairs may be null and we still want the
-        # IP for the port.
-        query = query.outerjoin(
-            aap_models.AllowedAddressPair,
-            sg_binding_port == aap_models.AllowedAddressPair.port_id)
-        query = query.filter(sg_binding_sgid.in_(remote_group_ids))
-        # Each allowed address pair IP record for a port beyond the 1st
-        # will have a duplicate regular IP in the query response since
-        # the relationship is 1-to-many. Dedup with a set
-        for security_group_id, ip_address, allowed_addr_ip in query:
-            ips_by_group[security_group_id].add(ip_address)
-            if allowed_addr_ip:
-                ips_by_group[security_group_id].add(allowed_addr_ip)
-        return ips_by_group
-
     def _select_remote_group_ids(self, ports):
         remote_group_ids = []
         for port in ports.values():
@@ -403,3 +343,63 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             port['security_group_rules'].append(rule_dict)
         self._apply_provider_rule(context, ports)
         return self._convert_remote_group_id_to_ip_prefix(context, ports)
+
+    @db_api.retry_if_session_inactive()
+    def _select_sg_ids_for_ports(self, context, ports):
+        if not ports:
+            return []
+        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
+        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
+        query = context.session.query(sg_binding_sgid)
+        query = query.filter(sg_binding_port.in_(ports.keys()))
+        return query.all()
+
+    @db_api.retry_if_session_inactive()
+    def _select_rules_for_ports(self, context, ports):
+        if not ports:
+            return []
+        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
+        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
+
+        sgr_sgid = sg_models.SecurityGroupRule.security_group_id
+
+        query = context.session.query(sg_binding_port,
+                                      sg_models.SecurityGroupRule)
+        query = query.join(sg_models.SecurityGroupRule,
+                           sgr_sgid == sg_binding_sgid)
+        query = query.filter(sg_binding_port.in_(ports.keys()))
+        return query.all()
+
+    @db_api.retry_if_session_inactive()
+    def _select_ips_for_remote_group(self, context, remote_group_ids):
+        ips_by_group = {}
+        if not remote_group_ids:
+            return ips_by_group
+        for remote_group_id in remote_group_ids:
+            ips_by_group[remote_group_id] = set()
+
+        ip_port = models_v2.IPAllocation.port_id
+        sg_binding_port = sg_models.SecurityGroupPortBinding.port_id
+        sg_binding_sgid = sg_models.SecurityGroupPortBinding.security_group_id
+
+        # Join the security group binding table directly to the IP allocation
+        # table instead of via the Port table skip an unnecessary intermediary
+        query = context.session.query(sg_binding_sgid,
+                                      models_v2.IPAllocation.ip_address,
+                                      aap_models.AllowedAddressPair.ip_address)
+        query = query.join(models_v2.IPAllocation,
+                           ip_port == sg_binding_port)
+        # Outerjoin because address pairs may be null and we still want the
+        # IP for the port.
+        query = query.outerjoin(
+            aap_models.AllowedAddressPair,
+            sg_binding_port == aap_models.AllowedAddressPair.port_id)
+        query = query.filter(sg_binding_sgid.in_(remote_group_ids))
+        # Each allowed address pair IP record for a port beyond the 1st
+        # will have a duplicate regular IP in the query response since
+        # the relationship is 1-to-many. Dedup with a set
+        for security_group_id, ip_address, allowed_addr_ip in query:
+            ips_by_group[security_group_id].add(ip_address)
+            if allowed_addr_ip:
+                ips_by_group[security_group_id].add(allowed_addr_ip)
+        return ips_by_group
