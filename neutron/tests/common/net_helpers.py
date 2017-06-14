@@ -923,12 +923,12 @@ class VethBridge(object):
 
     def __init__(self, ports):
         self.ports = ports
-        self.unallocated_ports = set(self.ports)
+        self.unallocated_ports = list(self.ports)
 
     def allocate_port(self):
         try:
             return self.unallocated_ports.pop()
-        except KeyError:
+        except IndexError:
             tools.fail('All FakeBridge ports (%s) are already allocated.' %
                        len(self.ports))
 
