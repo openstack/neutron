@@ -218,7 +218,7 @@ class TestTcCommand(base.BaseTestCase):
                 run_as_root=True,
                 check_exit_code=True,
                 log_fail_as_error=True,
-                extra_ok_codes=[2]
+                extra_ok_codes=[1, 2]
             ),
             mock.call(
                 ['tc', 'qdisc', 'add', 'dev', DEVICE_NAME, "ingress",
@@ -263,7 +263,7 @@ class TestTcCommand(base.BaseTestCase):
             run_as_root=True,
             check_exit_code=True,
             log_fail_as_error=True,
-            extra_ok_codes=[2]
+            extra_ok_codes=[1, 2]
         )
 
     def test_delete_tbf_bw_limit(self):
@@ -273,7 +273,7 @@ class TestTcCommand(base.BaseTestCase):
             run_as_root=True,
             check_exit_code=True,
             log_fail_as_error=True,
-            extra_ok_codes=[2]
+            extra_ok_codes=[1, 2]
         )
 
     def test_get_ingress_qdisc_burst_value_burst_not_none(self):
