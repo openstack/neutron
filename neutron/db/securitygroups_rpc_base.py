@@ -39,7 +39,7 @@ DHCP_RULE_PORT = {4: (67, 68, const.IPv4), 6: (547, 546, const.IPv6)}
 
 
 @registry.has_registry_receivers
-class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
+class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
     """Mixin class to add agent-based security group implementation."""
 
     @registry.receives(resources.PORT, [events.AFTER_CREATE,
@@ -51,7 +51,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         self.notify_security_groups_member_updated(context, port)
 
     def create_security_group_rule(self, context, security_group_rule):
-        rule = super(SecurityGroupServerRpcMixin,
+        rule = super(SecurityGroupServerNotifierRpcMixin,
                      self).create_security_group_rule(context,
                                                       security_group_rule)
         sgids = [rule['security_group_id']]
@@ -59,7 +59,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         return rule
 
     def create_security_group_rule_bulk(self, context, security_group_rules):
-        rules = super(SecurityGroupServerRpcMixin,
+        rules = super(SecurityGroupServerNotifierRpcMixin,
                       self).create_security_group_rule_bulk_native(
                           context, security_group_rules)
         sgids = set([r['security_group_id'] for r in rules])
@@ -68,7 +68,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def delete_security_group_rule(self, context, sgrid):
         rule = self.get_security_group_rule(context, sgrid)
-        super(SecurityGroupServerRpcMixin,
+        super(SecurityGroupServerNotifierRpcMixin,
               self).delete_security_group_rule(context, sgrid)
         self.notifier.security_groups_rule_updated(context,
                                                    [rule['security_group_id']])
@@ -144,6 +144,10 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def notify_security_groups_member_updated(self, context, port):
         self.notify_security_groups_member_updated_bulk(context, [port])
+
+
+class SecurityGroupInfoAPIMixin(object):
+    """API for retrieving security group info for SG agent code."""
 
     def get_port_from_device(self, context, device):
         """Get port dict from device name on an agent.
@@ -343,6 +347,32 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             port['security_group_rules'].append(rule_dict)
         self._apply_provider_rule(context, ports)
         return self._convert_remote_group_id_to_ip_prefix(context, ports)
+
+    def _select_ips_for_remote_group(self, context, remote_group_ids):
+        """Get all IP addresses (including allowed addr pairs) for each sg.
+
+        Return dict of lists of IPs keyed by group_id.
+        """
+        raise NotImplementedError()
+
+    def _select_rules_for_ports(self, context, ports):
+        """Get all security group rules associated with a list of ports.
+
+        Return list of tuples of (port_id, sg_rule)
+        """
+        raise NotImplementedError()
+
+    def _select_sg_ids_for_ports(self, context, ports):
+        """Return security group IDs for a list of ports.
+
+        Return list of tuples with a single element of sg_id.
+        """
+        raise NotImplementedError()
+
+
+class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
+                                  SecurityGroupServerNotifierRpcMixin):
+    """Server-side RPC mixin using DB for SG notifications and responses."""
 
     @db_api.retry_if_session_inactive()
     def _select_sg_ids_for_ports(self, context, ports):
