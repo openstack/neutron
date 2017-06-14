@@ -175,7 +175,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
     def notify_security_groups_member_updated(self, context, port):
         self.notify_security_groups_member_updated_bulk(context, [port])
 
-    @db_api.retry_if_session_inactive()
     def security_group_info_for_ports(self, context, ports):
         sg_info = {'devices': ports,
                    'security_groups': {},
@@ -244,6 +243,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
                     sg_info['sg_member_ips'][sg_id][ethertype].add(ip)
         return sg_info
 
+    @db_api.retry_if_session_inactive()
     def _select_sg_ids_for_ports(self, context, ports):
         if not ports:
             return []
@@ -253,6 +253,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         query = query.filter(sg_binding_port.in_(ports.keys()))
         return query.all()
 
+    @db_api.retry_if_session_inactive()
     def _select_rules_for_ports(self, context, ports):
         if not ports:
             return []
@@ -268,6 +269,7 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         query = query.filter(sg_binding_port.in_(ports.keys()))
         return query.all()
 
+    @db_api.retry_if_session_inactive()
     def _select_ips_for_remote_group(self, context, remote_group_ids):
         ips_by_group = {}
         if not remote_group_ids:
@@ -380,7 +382,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
             self._add_ingress_ra_rule(port)
             self._add_ingress_dhcp_rule(port)
 
-    @db_api.retry_if_session_inactive()
     def security_group_rules_for_ports(self, context, ports):
         rules_in_db = self._select_rules_for_ports(context, ports)
         for (port_id, rule_in_db) in rules_in_db:
