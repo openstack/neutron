@@ -162,6 +162,24 @@ class TestCommonAgentLoop(base.BaseTestCase):
             self.assertTrue(ext_mgr_delete_port.called)
             self.assertNotIn(PORT_DATA, agent.network_ports[NETWORK_ID])
 
+    def test_treat_devices_removed_failed_extension(self):
+        agent = self.agent
+        devices = [DEVICE_1]
+        agent.network_ports[NETWORK_ID].append(PORT_DATA)
+        with mock.patch.object(agent.plugin_rpc,
+                               "update_device_down") as fn_udd,\
+                mock.patch.object(agent.sg_agent,
+                                  "remove_devices_filter") as fn_rdf,\
+                mock.patch.object(agent.ext_manager,
+                                  "delete_port") as ext_mgr_delete_port:
+            ext_mgr_delete_port.side_effect = Exception()
+            resync = agent.treat_devices_removed(devices)
+            self.assertTrue(resync)
+            self.assertTrue(fn_udd.called)
+            self.assertTrue(fn_rdf.called)
+            self.assertTrue(ext_mgr_delete_port.called)
+            self.assertNotIn(PORT_DATA, agent.network_ports[NETWORK_ID])
+
     def test_treat_devices_removed_with_prevent_arp_spoofing_true(self):
         agent = self.agent
         agent.prevent_arp_spoofing = True
