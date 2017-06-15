@@ -55,7 +55,7 @@ class TestRPC(base.DietTestCase):
 
     @mock.patch.object(rpc, 'get_allowed_exmods')
     @mock.patch.object(rpc, 'RequestContextSerializer')
-    @mock.patch.object(messaging, 'get_transport')
+    @mock.patch.object(messaging, 'get_rpc_transport')
     @mock.patch.object(messaging, 'get_notification_transport')
     @mock.patch.object(messaging, 'Notifier')
     def test_init(self, mock_not, mock_noti_trans, mock_trans, mock_ser,
