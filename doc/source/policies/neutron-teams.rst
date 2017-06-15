@@ -78,6 +78,8 @@ The following are the current Neutron Lieutenants.
 | Infra                  | Ihar Hrachyshka           | ihrachys             |
 |                        +---------------------------+----------------------+
 |                        | Armando Migliaccio        | armax                |
+|                        +---------------------------+----------------------+
+|                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
 | L3                     | Brian Haley               | haleyb               |
 +                        +---------------------------+----------------------+
