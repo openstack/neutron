@@ -50,9 +50,9 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         4: {'addr': '192.168.10.11',
             'cidr': '192.168.10.0/24',
             'gateway': '192.168.10.1'},
-        6: {'addr': '0:0:0:0:0:ffff:c0a8:a0b',
-            'cidr': '0:0:0:0:0:ffff:c0a8:a00/120',
-            'gateway': '0:0:0:0:0:ffff:c0a8:a01'}, }
+        6: {'addr': '2001:db8:0:1::c0a8:a0b',
+            'cidr': '2001:db8:0:1::c0a8:a00/120',
+            'gateway': '2001:db8:0:1::c0a8:a01'}, }
 
     def setUp(self):
         super(DHCPAgentOVSTestFramework, self).setUp()
