@@ -465,7 +465,8 @@ class RouterInfo(object):
 
     def _get_existing_devices(self):
         ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
-        ip_devs = ip_wrapper.get_devices(exclude_loopback=True)
+        ip_devs = ip_wrapper.get_devices(exclude_loopback=True,
+                                         exclude_gre_devices=True)
         return [ip_dev.name for ip_dev in ip_devs]
 
     @staticmethod
