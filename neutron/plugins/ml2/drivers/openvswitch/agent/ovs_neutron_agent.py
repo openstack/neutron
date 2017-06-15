@@ -1361,7 +1361,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         return self._get_port_info(registered_ports, cur_ports, sync)
 
     def check_changed_vlans(self):
-        """Return ports which have lost their vlan tag.
+        """Check for changed VLAN tags. If changes, notify server and return.
 
         The returned value is a set of port ids of the ports concerned by a
         vlan tag loss.
@@ -1381,6 +1381,18 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                          'vlan_tag': lvm.vlan}
                     )
                     changed_ports.add(port.vif_id)
+        if changed_ports:
+            # explicitly mark these DOWN on the server since they have been
+            # manipulated (likely a nova unplug/replug) and need to be rewired
+            devices_down = self.plugin_rpc.update_device_list(self.context,
+                                                              [],
+                                                              changed_ports,
+                                                              self.agent_id,
+                                                              self.conf.host)
+            failed_devices = set(devices_down.get('failed_devices_down'))
+            if failed_devices:
+                LOG.debug("Status updated failed for %s", failed_devices)
+
         return changed_ports
 
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
