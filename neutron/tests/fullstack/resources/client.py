@@ -158,12 +158,14 @@ class ClientFixture(fixtures.Fixture):
         return policy['policy']
 
     def create_bandwidth_limit_rule(self, tenant_id, qos_policy_id, limit=None,
-                                    burst=None):
+                                    burst=None, direction=None):
         rule = {'tenant_id': tenant_id}
         if limit:
             rule['max_kbps'] = limit
         if burst:
             rule['max_burst_kbps'] = burst
+        if direction:
+            rule['direction'] = direction
         rule = self.client.create_bandwidth_limit_rule(
             policy=qos_policy_id,
             body={'bandwidth_limit_rule': rule})

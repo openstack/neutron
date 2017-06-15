@@ -18,6 +18,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.l2.extensions import qos_linux as qos
+from neutron.common import constants
 from neutron.services.qos.drivers.openvswitch import driver
 from neutron.services.qos import qos_consts
 
@@ -54,15 +55,10 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                       "vif_port was not found. It seems that port is already "
                       "deleted", port_id)
             return
-        max_kbps = rule.max_kbps
-        # NOTE(slaweq): According to ovs docs:
-        # http://openvswitch.org/support/dist-docs/ovs-vswitchd.conf.db.5.html
-        # ovs accepts only integer values of burst:
-        max_burst_kbps = int(self._get_egress_burst_value(rule))
-
-        self.br_int.create_egress_bw_limit_for_port(vif_port.port_name,
-                                                    max_kbps,
-                                                    max_burst_kbps)
+        if rule.direction == constants.INGRESS_DIRECTION:
+            self._update_ingress_bandwidth_limit(vif_port, rule)
+        else:
+            self._update_egress_bandwidth_limit(vif_port, rule)
 
     def delete_bandwidth_limit(self, port):
         vif_port = port.get('vif_port')
@@ -73,6 +69,16 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                       "deleted", port_id)
             return
         self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)
+
+    def delete_bandwidth_limit_ingress(self, port):
+        vif_port = port.get('vif_port')
+        if not vif_port:
+            port_id = port.get('port_id')
+            LOG.debug("delete_bandwidth_limit_ingress was received "
+                      "for port %s but vif_port was not found. "
+                      "It seems that port is already deleted", port_id)
+            return
+        self.br_int.delete_ingress_bw_limit_for_port(vif_port.port_name)
 
     def create_dscp_marking(self, port, rule):
         self.update_dscp_marking(port, rule)
@@ -128,3 +134,25 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
             LOG.debug("delete_dscp_marking was received for port %s but "
                       "no port information was stored to be deleted",
                       port['port_id'])
+
+    def _update_egress_bandwidth_limit(self, vif_port, rule):
+        max_kbps = rule.max_kbps
+        # NOTE(slaweq): According to ovs docs:
+        # http://openvswitch.org/support/dist-docs/ovs-vswitchd.conf.db.5.html
+        # ovs accepts only integer values of burst:
+        max_burst_kbps = int(self._get_egress_burst_value(rule))
+
+        self.br_int.create_egress_bw_limit_for_port(vif_port.port_name,
+                                                    max_kbps,
+                                                    max_burst_kbps)
+
+    def _update_ingress_bandwidth_limit(self, vif_port, rule):
+        port_name = vif_port.port_name
+        max_kbps = rule.max_kbps or 0
+        max_burst_kbps = rule.max_burst_kbps or 0
+
+        self.br_int.update_ingress_bw_limit_for_port(
+            port_name,
+            max_kbps,
+            max_burst_kbps
+        )

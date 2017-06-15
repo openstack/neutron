@@ -48,15 +48,25 @@ def extract_dscp_value_from_iptables_rules(rules):
             return int(m.group("dscp_value"), 16)
 
 
-def wait_until_bandwidth_limit_rule_applied(bridge, port_vif, rule):
+def wait_until_bandwidth_limit_rule_applied(check_function, port_vif, rule):
     def _bandwidth_limit_rule_applied():
-        bw_rule = bridge.get_egress_bw_limit_for_port(port_vif)
+        bw_rule = check_function(port_vif)
         expected = None, None
         if rule:
             expected = rule.max_kbps, rule.max_burst_kbps
         return bw_rule == expected
 
     common_utils.wait_until_true(_bandwidth_limit_rule_applied)
+
+
+def wait_until_egress_bandwidth_limit_rule_applied(bridge, port_vif, rule):
+    wait_until_bandwidth_limit_rule_applied(
+        bridge.get_egress_bw_limit_for_port, port_vif, rule)
+
+
+def wait_until_ingress_bandwidth_limit_rule_applied(bridge, port_vif, rule):
+    wait_until_bandwidth_limit_rule_applied(
+        bridge.get_ingress_bw_limit_for_port, port_vif, rule)
 
 
 def wait_until_dscp_marking_rule_applied_ovs(bridge, port_vif, rule):
