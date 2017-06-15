@@ -268,6 +268,8 @@ class RootHelperProcess(subprocess.Popen):
     def __init__(self, cmd, *args, **kwargs):
         for arg in ('stdin', 'stdout', 'stderr'):
             kwargs.setdefault(arg, subprocess.PIPE)
+        kwargs.setdefault('universal_newlines', True)
+
         self.namespace = kwargs.pop('namespace', None)
         self.cmd = cmd
         if self.namespace is not None:
@@ -283,7 +285,7 @@ class RootHelperProcess(subprocess.Popen):
         utils.execute(['kill', '-%d' % sig, pid], run_as_root=True)
 
     def read_stdout(self, timeout=None):
-        return self._read_stream(self.stdout, timeout).decode('utf-8')
+        return self._read_stream(self.stdout, timeout)
 
     @staticmethod
     def _read_stream(stream, timeout):
@@ -294,7 +296,7 @@ class RootHelperProcess(subprocess.Popen):
         return stream.readline()
 
     def writeline(self, data):
-        self.stdin.write((data + os.linesep).encode('utf-8'))
+        self.stdin.write(data + os.linesep)
         self.stdin.flush()
 
     def _wait_for_child_process(self, timeout=CHILD_PROCESS_TIMEOUT,
