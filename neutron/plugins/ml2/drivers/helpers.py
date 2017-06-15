@@ -24,6 +24,7 @@ from oslo_log import log
 from neutron._i18n import _LE
 from neutron.common import exceptions as exc
 from neutron.db import api as db_api
+from neutron.objects import base as base_obj
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2 import driver_api as api
 
@@ -58,8 +59,11 @@ class SegmentTypeDriver(BaseTypeDriver):
 
     def __init__(self, model):
         super(SegmentTypeDriver, self).__init__()
-        self.model = model
-        self.primary_keys = set(dict(model.__table__.columns))
+        if issubclass(model, base_obj.NeutronDbObject):
+            self.model = model.db_model
+        else:
+            self.model = model
+        self.primary_keys = set(dict(self.model.__table__.columns))
         self.primary_keys.remove("allocated")
 
     # TODO(ataraday): get rid of this method when old TypeDriver won't be used

@@ -25,7 +25,7 @@ from six import moves
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import api as db_api
-from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
+from neutron.objects.plugins.ml2 import vlanallocation as vlanalloc
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2.drivers import helpers
@@ -47,7 +47,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
     """
 
     def __init__(self):
-        super(VlanTypeDriver, self).__init__(vlan_alloc_model.VlanAllocation)
+        super(VlanTypeDriver, self).__init__(vlanalloc.VlanAllocation)
         self._parse_network_vlan_ranges()
 
     def _parse_network_vlan_ranges(self):
@@ -66,11 +66,11 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         with db_api.context_manager.writer.using(ctx):
             # get existing allocations for all physical networks
             allocations = dict()
-            allocs = ctx.session.query(vlan_alloc_model.VlanAllocation)
+            allocs = vlanalloc.VlanAllocation.get_objects(ctx)
             for alloc in allocs:
                 if alloc.physical_network not in allocations:
-                    allocations[alloc.physical_network] = set()
-                allocations[alloc.physical_network].add(alloc)
+                    allocations[alloc.physical_network] = list()
+                allocations[alloc.physical_network].append(alloc)
 
             # process vlan ranges for each configured physical network
             for (physical_network,
@@ -103,23 +103,22 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                 # values to True while our transaction is
                                 # open so we don't accidentally delete
                                 # allocated segments. If someone has already
-                                # allocated, count will return 0 so we don't
-                                # delete.
-                                count = allocs.filter_by(
+                                # allocated, update_objects will return 0 so we
+                                # don't delete.
+                                if vlanalloc.VlanAllocation.update_objects(
+                                    ctx, values={'allocated': False},
                                     allocated=False, vlan_id=alloc.vlan_id,
-                                    physical_network=physical_network
-                                ).update({"allocated": False})
-                                if count:
-                                    ctx.session.delete(alloc)
+                                    physical_network=physical_network):
+                                    alloc.delete()
                     del allocations[physical_network]
 
                 # add missing allocatable vlans to table
                 for vlan_id in sorted(vlan_ids):
-                    alloc = vlan_alloc_model.VlanAllocation(
-                                           physical_network=physical_network,
-                                           vlan_id=vlan_id,
-                                           allocated=False)
-                    ctx.session.add(alloc)
+                    alloc = vlanalloc.VlanAllocation(
+                        ctx,
+                        physical_network=physical_network,
+                        vlan_id=vlan_id, allocated=False)
+                    alloc.create()
 
             # remove from table unallocated vlans for any unconfigured
             # physical networks
@@ -220,21 +219,23 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
         ranges = self.network_vlan_ranges.get(physical_network, [])
         inside = any(lo <= vlan_id <= hi for lo, hi in ranges)
+        count = False
 
         with db_api.context_manager.writer.using(context):
-            query = (context.session.query(vlan_alloc_model.VlanAllocation).
-                     filter_by(physical_network=physical_network,
-                               vlan_id=vlan_id))
-            if inside:
-                count = query.update({"allocated": False})
-                if count:
+            alloc = vlanalloc.VlanAllocation.get_object(
+                context, physical_network=physical_network, vlan_id=vlan_id)
+            if alloc:
+                if inside and alloc.allocated:
+                    count = True
+                    alloc.allocated = False
+                    alloc.update()
                     LOG.debug("Releasing vlan %(vlan_id)s on physical "
                               "network %(physical_network)s to pool",
                               {'vlan_id': vlan_id,
                                'physical_network': physical_network})
-            else:
-                count = query.delete()
-                if count:
+                else:
+                    count = True
+                    alloc.delete()
                     LOG.debug("Releasing vlan %(vlan_id)s on physical "
                               "network %(physical_network)s outside pool",
                               {'vlan_id': vlan_id,

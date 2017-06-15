@@ -30,6 +30,7 @@ from sqlalchemy import or_
 from neutron._i18n import _, _LI, _LW
 from neutron.common import topics
 from neutron.db import api as db_api
+from neutron.objects import base as base_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2.drivers import helpers
@@ -339,7 +340,10 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def __init__(self, segment_model, endpoint_model):
         super(EndpointTunnelTypeDriver, self).__init__(segment_model)
-        self.endpoint_model = endpoint_model
+        if issubclass(endpoint_model, base_obj.NeutronDbObject):
+            self.endpoint_model = endpoint_model.db_model
+        else:
+            self.endpoint_model = endpoint_model
         self.segmentation_key = next(iter(self.primary_keys))
 
     def get_endpoint_by_host(self, host):
