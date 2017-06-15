@@ -57,6 +57,10 @@ class LoggerMechanismDriver(api.MechanismDriver):
     def delete_network_postcommit(self, context):
         self._log_network_call("delete_network_postcommit", context)
 
+    def check_vlan_transparency(self, context):
+        self._log_network_call("check_vlan_transparency", context)
+        return True
+
     def _log_subnet_call(self, method_name, context):
         LOG.info(_("%(method)s called with subnet settings %(current)s "
                    "(original settings %(original)s)"),
