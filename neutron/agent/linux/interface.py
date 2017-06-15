@@ -219,11 +219,14 @@ class LinuxInterfaceDriver(object):
         return (self.DEV_NAME_PREFIX + port.id)[:self.DEV_NAME_LEN]
 
     @staticmethod
-    def configure_ipv6_ra(namespace, dev_name):
-        """Configure acceptance of IPv6 route advertisements on an intf."""
-        # Learn the default router's IP address via RAs
+    def configure_ipv6_ra(namespace, dev_name, value):
+        """Configure handling of IPv6 Router Advertisements on an
+        interface. See common/constants.py for possible values.
+        """
         ip_lib.IPWrapper(namespace=namespace).netns.execute(
-            ['sysctl', '-w', 'net.ipv6.conf.%s.accept_ra=2' % dev_name])
+            ['sysctl', '-w', 'net.ipv6.conf.%(dev)s.accept_ra=%(value)s' % {
+                'dev': dev_name,
+                'value': value}])
 
     @abc.abstractmethod
     def plug_new(self, network_id, port_id, device_name, mac_address,
