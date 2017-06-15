@@ -59,7 +59,7 @@ class FakePortContext(api.PortContext):
 
     @property
     def original(self):
-        return self._original or {}
+        return self._original
 
     @property
     def status(self):
