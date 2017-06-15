@@ -16,9 +16,11 @@
 import netaddr
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
+import retrying
 
 from neutron._i18n import _LI
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
@@ -189,6 +191,17 @@ def _delete_mac_spoofing_protection(vifs, current_rules):
 NAMESPACE = None
 
 
+def _retry_on_returncode_255(e):
+    if isinstance(e, linux_utils.ProcessExecutionError):
+        return e.returncode == 255
+    return False
+
+
+@retrying.retry(
+    stop_max_attempt_number=10,
+    wait_exponential_multiplier=0.01,
+    retry_on_exception=_retry_on_returncode_255
+)
 def ebtables(comm):
     execute = ip_lib.IPWrapper(NAMESPACE).netns.execute
     return execute(['ebtables', '--concurrent'] + comm, run_as_root=True)
