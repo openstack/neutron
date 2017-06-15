@@ -717,7 +717,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                         expected_calls)
 
     def test_dvr_gateway_host_binding_is_set(self):
-        router = self._create_router()
+        router = self._create_router(ha=False)
         private_net1 = self._make_network(self.fmt, 'net1', True)
         kwargs = {'arg_list': (external_net.EXTERNAL,),
                   external_net.EXTERNAL: True}
@@ -725,6 +725,9 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
             ip_version=4, enable_dhcp=True)
+        self.l3_plugin.schedule_router(self.context,
+                                       router['id'],
+                                       candidates=[self.l3_agent])
         # Set gateway to router
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
@@ -739,9 +742,6 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         self.l3_plugin.add_router_interface(
             self.context, router['id'],
             {'subnet_id': private_subnet1['subnet']['id']})
-        self.l3_plugin.schedule_router(self.context,
-                                       router['id'],
-                                       candidates=[self.l3_agent])
         # Check for the gw_port_host in the router dict to make
         # sure that the _build_routers_list in l3_dvr_db is called.
         router_handle = (
