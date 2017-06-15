@@ -50,36 +50,6 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
         """Trigger notification to other SG members on port changes."""
         self.notify_security_groups_member_updated(context, port)
 
-    def get_port_from_device(self, context, device):
-        """Get port dict from device name on an agent.
-
-        Subclass must provide this method or get_ports_from_devices.
-
-        :param device: device name which identifies a port on the agent side.
-        What is specified in "device" depends on a plugin agent implementation.
-        For example, it is a port ID in OVS agent and netdev name in Linux
-        Bridge agent.
-        :return: port dict returned by DB plugin get_port(). In addition,
-        it must contain the following fields in the port dict returned.
-        - device
-        - security_groups
-        - security_group_rules,
-        - security_group_source_groups
-        - fixed_ips
-        """
-        raise NotImplementedError(_("%s must implement get_port_from_device "
-                                    "or get_ports_from_devices.")
-                                  % self.__class__.__name__)
-
-    def get_ports_from_devices(self, context, devices):
-        """Bulk method of get_port_from_device.
-
-        Subclasses may override this to provide better performance for DB
-        queries, backend calls, etc.
-        """
-        return [self.get_port_from_device(context, device)
-                for device in devices]
-
     def create_security_group_rule(self, context, security_group_rule):
         rule = super(SecurityGroupServerRpcMixin,
                      self).create_security_group_rule(context,
@@ -174,6 +144,36 @@ class SecurityGroupServerRpcMixin(sg_db.SecurityGroupDbMixin):
 
     def notify_security_groups_member_updated(self, context, port):
         self.notify_security_groups_member_updated_bulk(context, [port])
+
+    def get_port_from_device(self, context, device):
+        """Get port dict from device name on an agent.
+
+        Subclass must provide this method or get_ports_from_devices.
+
+        :param device: device name which identifies a port on the agent side.
+        What is specified in "device" depends on a plugin agent implementation.
+        For example, it is a port ID in OVS agent and netdev name in Linux
+        Bridge agent.
+        :return: port dict returned by DB plugin get_port(). In addition,
+        it must contain the following fields in the port dict returned.
+        - device
+        - security_groups
+        - security_group_rules,
+        - security_group_source_groups
+        - fixed_ips
+        """
+        raise NotImplementedError(_("%s must implement get_port_from_device "
+                                    "or get_ports_from_devices.")
+                                  % self.__class__.__name__)
+
+    def get_ports_from_devices(self, context, devices):
+        """Bulk method of get_port_from_device.
+
+        Subclasses may override this to provide better performance for DB
+        queries, backend calls, etc.
+        """
+        return [self.get_port_from_device(context, device)
+                for device in devices]
 
     def security_group_info_for_ports(self, context, ports):
         sg_info = {'devices': ports,
