@@ -41,7 +41,7 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
         sg_obj.is_default = True
         sg_obj.create()
 
-        default_sg_obj = securitygroup._DefaultSecurityGroup.get_object(
+        default_sg_obj = securitygroup.DefaultSecurityGroup.get_object(
             self.context,
             project_id=sg_obj.project_id,
             security_group_id=sg_obj.id)
@@ -60,7 +60,7 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
         sg_obj.is_default = False
         sg_obj.create()
 
-        default_sg_obj = securitygroup._DefaultSecurityGroup.get_object(
+        default_sg_obj = securitygroup.DefaultSecurityGroup.get_object(
             self.context,
             project_id=sg_obj.project_id,
             security_group_id=sg_obj.id)
@@ -100,13 +100,13 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
 
 class DefaultSecurityGroupIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
 
-    _test_class = securitygroup._DefaultSecurityGroup
+    _test_class = securitygroup.DefaultSecurityGroup
 
 
 class DefaultSecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
                                         testlib_api.SqlTestCase):
 
-    _test_class = securitygroup._DefaultSecurityGroup
+    _test_class = securitygroup.DefaultSecurityGroup
 
     def setUp(self):
         super(DefaultSecurityGroupDbObjTestCase, self).setUp()

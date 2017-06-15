@@ -26,11 +26,11 @@ from neutron.tests import base as test_base
 # corresponding version bump in the affected objects. Please keep the list in
 # alphabetic order.
 object_data = {
-    '_DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'AddressScope': '1.0-dd0dfdb67775892d3adc090e28e43bd8',
     'Agent': '1.0-7106cb40117a8d1f042545796ed8787d',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'AutoAllocatedTopology': '1.0-74642e58c53bf3610dc224c59f81b242',
+    'DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
     'ExternalNetwork': '1.0-53d885e033cb931f9bb3bdd6bbe3f0ce',
