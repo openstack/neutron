@@ -77,68 +77,68 @@ This means showing proof of adoption of practices as led by the Neutron core
 team. Some of these practices are typically already followed by the most
 mature OpenStack projects:
 
- * Exhaustive documentation: it is expected that each project will have a
-   `developer <http://docs.openstack.org/developer/neutron/>`_,
-   `user/operator <http://docs.openstack.org/mitaka/networking-guide/>`_
-   and `API <http://developer.openstack.org/api-ref/networking/>`_
-   documentations available.
+* Exhaustive documentation: it is expected that each project will have a
+  `developer <http://docs.openstack.org/developer/neutron/>`_,
+  `user/operator <http://docs.openstack.org/mitaka/networking-guide/>`_
+  and `API <http://developer.openstack.org/api-ref/networking/>`_
+  documentations available.
 
- * Exhaustive OpenStack CI coverage: unit, functional, and tempest coverage
-   using OpenStack CI (upstream) resources so that `Grafana <http://grafana.openstack.org/dashboard/db/neutron-failure-rate>`_
-   and `OpenStack Health <http://status.openstack.org/openstack-health/#/>`_
-   support is available. Access to CI resources and historical data by the
-   team is key to ensuring stability and robustness of a project.
-   In particular, it is of paramount importance to ensure that DB models/migrations
-   are tested functionally to prevent data inconsistency issues or unexpected
-   DB logic errors due to schema/models mismatch. For more details, please
-   look at the following resources:
+* Exhaustive OpenStack CI coverage: unit, functional, and tempest coverage
+  using OpenStack CI (upstream) resources so that `Grafana <http://grafana.openstack.org/dashboard/db/neutron-failure-rate>`_
+  and `OpenStack Health <http://status.openstack.org/openstack-health/#/>`_
+  support is available. Access to CI resources and historical data by the
+  team is key to ensuring stability and robustness of a project.
+  In particular, it is of paramount importance to ensure that DB models/migrations
+  are tested functionally to prevent data inconsistency issues or unexpected
+  DB logic errors due to schema/models mismatch. For more details, please
+  look at the following resources:
 
-   * https://review.openstack.org/#/c/346091/
-   * https://review.openstack.org/#/c/346272/
-   * https://review.openstack.org/#/c/346083/
+  * https://review.openstack.org/#/c/346091/
+  * https://review.openstack.org/#/c/346272/
+  * https://review.openstack.org/#/c/346083/
 
-   More Database related information can be found on:
+  More Database related information can be found on:
 
-   * http://docs.openstack.org/developer/neutron/devref/alembic_migrations.html
-   * http://docs.openstack.org/developer/neutron/devref/db_layer.html
+  * http://docs.openstack.org/developer/neutron/devref/alembic_migrations.html
+  * http://docs.openstack.org/developer/neutron/devref/db_layer.html
 
-   Bear in mind that many projects have been transitioning their codebase and
-   tests to fully support Python 3+, and it is important that each Stadium
-   project supports Python 3+ the same way Neutron core does. For more
-   information on how to do testing, please refer to the
-   `Neutron testing documentation <http://docs.openstack.org/developer/neutron/devref/development.environment.html#testing-neutron>`_.
+  Bear in mind that many projects have been transitioning their codebase and
+  tests to fully support Python 3+, and it is important that each Stadium
+  project supports Python 3+ the same way Neutron core does. For more
+  information on how to do testing, please refer to the
+  `Neutron testing documentation <http://docs.openstack.org/developer/neutron/devref/development.environment.html#testing-neutron>`_.
 
- * Good release footprint, according to the chosen `release model <http://governance.openstack.org/reference/tags/#release-management-tags>`_.
+* Good release footprint, according to the chosen `release model <http://governance.openstack.org/reference/tags/#release-management-tags>`_.
 
- * Adherence to deprecation and `stable backports policies <http://governance.openstack.org/reference/tags/#stable-maintenance-tags>`_.
+* Adherence to deprecation and `stable backports policies <http://governance.openstack.org/reference/tags/#stable-maintenance-tags>`_.
 
- * Demonstrated ability to do `upgrades <http://governance.openstack.org/reference/tags/assert_supports-upgrade.html>`_
-   and/or `rolling upgrades <http://governance.openstack.org/reference/tags/assert_supports-rolling-upgrade.html>`_,
-   where applicable. This means having grenade support on top of the CI
-   coverage as described above.
+* Demonstrated ability to do `upgrades <http://governance.openstack.org/reference/tags/assert_supports-upgrade.html>`_
+  and/or `rolling upgrades <http://governance.openstack.org/reference/tags/assert_supports-rolling-upgrade.html>`_,
+  where applicable. This means having grenade support on top of the CI
+  coverage as described above.
 
- * Client bindings and CLI developed according to the OpenStack Client `plugin model <http://docs.openstack.org/developer/python-openstackclient/plugins.html>`_.
+* Client bindings and CLI developed according to the OpenStack Client `plugin model <http://docs.openstack.org/developer/python-openstackclient/plugins.html>`_.
 
 On top of the above mentioned criteria, the following also are taken into
 consideration:
 
- * A project must use, adopt and implement open software and technologies.
+* A project must use, adopt and implement open software and technologies.
 
- * A project must integrate with Neutron via one of the supported, advertised
-   and maintained public Python APIs. REST API does not qualify (the project
-   python-neutronclient is an exception).
+* A project must integrate with Neutron via one of the supported, advertised
+  and maintained public Python APIs. REST API does not qualify (the project
+  python-neutronclient is an exception).
 
- * It adopts neutron-lib (with related hacking rules applied), and has proof
-   of good decoupling from Neutron core internals.
+* It adopts neutron-lib (with related hacking rules applied), and has proof
+  of good decoupling from Neutron core internals.
 
- * It provides an API that adopts API guidelines as set by the Neutron core
-   team, and that relies on an open implementation.
+* It provides an API that adopts API guidelines as set by the Neutron core
+  team, and that relies on an open implementation.
 
- * It adopts modular interfaces to provide networking services: this means
-   that L2/7 services are provided in the form of ML2 mech drivers and
-   service plugins respectively. A service plugin can expose a driver
-   interface to support multiple backend technologies, and/or adopt the
-   flavor framework as necessary.
+* It adopts modular interfaces to provide networking services: this means
+  that L2/7 services are provided in the form of ML2 mech drivers and
+  service plugins respectively. A service plugin can expose a driver
+  interface to support multiple backend technologies, and/or adopt the
+  flavor framework as necessary.
 
 Adding or removing projects to the Stadium
 ------------------------------------------
@@ -179,112 +179,112 @@ enhancements.
 Checklist
 ---------
 
- * How to integrate documentation into docs.o.o: The documentation
-   website has a section for `project developer documentation <http://docs.openstack.org/developer/openstack-projects.html>`_.
-   Each project in the Neutron Stadium must have an entry under the
-   'Networking Sub Projects' section that points to the developer
-   documentation for the project, available at http://docs.openstack.org/developer/<your-project>/.
-   This is a two step process that involves the following:
+* How to integrate documentation into docs.o.o: The documentation
+  website has a section for `project developer documentation <http://docs.openstack.org/developer/openstack-projects.html>`_.
+  Each project in the Neutron Stadium must have an entry under the
+  'Networking Sub Projects' section that points to the developer
+  documentation for the project, available at http://docs.openstack.org/developer/<your-project>/.
+  This is a two step process that involves the following:
 
-   * Build the artefacts: this can be done by following example
-     https://review.openstack.org/#/c/293399/.
-   * Publish the artefacts: this can be done by following example
-     https://review.openstack.org/#/c/216448/.
+  * Build the artefacts: this can be done by following example
+    https://review.openstack.org/#/c/293399/.
+  * Publish the artefacts: this can be done by following example
+    https://review.openstack.org/#/c/216448/.
 
-   More information can also be found on the
-   `project creator guide <http://docs.openstack.org/infra/manual/creators.html#add-link-to-your-developer-documentation>`_.
+  More information can also be found on the
+  `project creator guide <http://docs.openstack.org/infra/manual/creators.html#add-link-to-your-developer-documentation>`_.
 
- * How to integrate into Grafana: Grafana is a great tool that provides
-   the ability to display historical series, like failure rates of
-   OpenStack CI jobs. A few examples that added dashboards over time are:
+* How to integrate into Grafana: Grafana is a great tool that provides
+  the ability to display historical series, like failure rates of
+  OpenStack CI jobs. A few examples that added dashboards over time are:
 
-   * `Neutron <https://review.openstack.org/#/c/278832/>`_.
-   * `Networking-OVN <https://review.openstack.org/#/c/335791>`_.
-   * `Networking-Midonet <https://review.openstack.org/#/c/315033>`_.
+  * `Neutron <https://review.openstack.org/#/c/278832/>`_.
+  * `Networking-OVN <https://review.openstack.org/#/c/335791>`_.
+  * `Networking-Midonet <https://review.openstack.org/#/c/315033>`_.
 
-   Any subproject must have a Grafana dashboard that shows failure
-   rates for at least Gate and Check queues.
+  Any subproject must have a Grafana dashboard that shows failure
+  rates for at least Gate and Check queues.
 
- * How to integrate into neutron-lib's CI: there are a number of steps
-   required to integrate with neutron-lib CI and adopt neutron-lib in
-   general. One step is to validate that neutron-lib master is working
-   with the master of a given project that uses neutron-lib. For example
-   `patch <https://review.openstack.org/#/c/338603/>`_ introduced such
-   support for the Neutron project. Any subproject that wants to do the
-   same would need to adopt the following few lines:
+* How to integrate into neutron-lib's CI: there are a number of steps
+  required to integrate with neutron-lib CI and adopt neutron-lib in
+  general. One step is to validate that neutron-lib master is working
+  with the master of a given project that uses neutron-lib. For example
+  `patch <https://review.openstack.org/#/c/338603/>`_ introduced such
+  support for the Neutron project. Any subproject that wants to do the
+  same would need to adopt the following few lines:
 
-   #. https://review.openstack.org/#/c/338603/4/jenkins/jobs/projects.yaml@4685
-   #. https://review.openstack.org/#/c/338603/3/zuul/layout.yaml@8501
-   #. https://review.openstack.org/#/c/338603/4/grafana/neutron.yaml@39
+  #. https://review.openstack.org/#/c/338603/4/jenkins/jobs/projects.yaml@4685
+  #. https://review.openstack.org/#/c/338603/3/zuul/layout.yaml@8501
+  #. https://review.openstack.org/#/c/338603/4/grafana/neutron.yaml@39
 
-   Line 1 and 2 respectively add a job to the periodic queue for the
-   project, whereas line 3 introduced the failure rate trend for the
-   periodic job to spot failure spikes etc. Make sure your project has
-   the following:
+  Line 1 and 2 respectively add a job to the periodic queue for the
+  project, whereas line 3 introduced the failure rate trend for the
+  periodic job to spot failure spikes etc. Make sure your project has
+  the following:
 
-   #. https://review.openstack.org/#/c/357086/
-   #. https://review.openstack.org/#/c/359143/
+  #. https://review.openstack.org/#/c/357086/
+  #. https://review.openstack.org/#/c/359143/
 
- * How to port api-ref over to neutron-lib: to publish the subproject
-   API reference into the `Networking API guide <http://developer.openstack.org/api-ref/networking/>`_
-   you must contribute the API documentation into neutron-lib's api-ref
-   directory as done in the `WADL/REST transition patch <https://review.openstack.org/#/c/327510/>`_.
-   Once this is done successfully, a link to the subproject API will
-   show under the published `table of content <https://github.com/openstack/neutron-lib/blob/master/api-ref/source/index.rst>`_.
-   An RFE bug tracking this effort effectively initiates the request
-   for Stadium inclusion, where all the aspects as outlined in this
-   documented are reviewed by the PTL.
+* How to port api-ref over to neutron-lib: to publish the subproject
+  API reference into the `Networking API guide <http://developer.openstack.org/api-ref/networking/>`_
+  you must contribute the API documentation into neutron-lib's api-ref
+  directory as done in the `WADL/REST transition patch <https://review.openstack.org/#/c/327510/>`_.
+  Once this is done successfully, a link to the subproject API will
+  show under the published `table of content <https://github.com/openstack/neutron-lib/blob/master/api-ref/source/index.rst>`_.
+  An RFE bug tracking this effort effectively initiates the request
+  for Stadium inclusion, where all the aspects as outlined in this
+  documented are reviewed by the PTL.
 
- * How to port API definitions over the neutron-lib: the most basic
-   steps to port API definitions over to neutron-lib are demonstrated
-   in the following patches:
+* How to port API definitions over the neutron-lib: the most basic
+  steps to port API definitions over to neutron-lib are demonstrated
+  in the following patches:
 
-   * https://review.openstack.org/#/c/353131/
-   * https://review.openstack.org/#/c/353132/
+  * https://review.openstack.org/#/c/353131/
+  * https://review.openstack.org/#/c/353132/
 
-   The `neutron-lib patch <https://review.openstack.org/#/c/353131/>`_
-   introduces the elements that define the API, and testing coverage
-   validates that the resource and actions maps use valid keywords.
-   API reference documentation is provided alongside the definition to
-   keep everything in one place.
-   The `neutron patch <https://review.openstack.org/#/c/353132/>`_
-   uses the Neutron extension framework to plug the API definition
-   on top of the Neutron API backbone. The change can only merge when
-   there is a released version of neutron-lib.
+  The `neutron-lib patch <https://review.openstack.org/#/c/353131/>`_
+  introduces the elements that define the API, and testing coverage
+  validates that the resource and actions maps use valid keywords.
+  API reference documentation is provided alongside the definition to
+  keep everything in one place.
+  The `neutron patch <https://review.openstack.org/#/c/353132/>`_
+  uses the Neutron extension framework to plug the API definition
+  on top of the Neutron API backbone. The change can only merge when
+  there is a released version of neutron-lib.
 
- * How to integrate into the openstack release: every project in the
-   Stadium must have release notes. In order to set up release notes,
-   please see the patches below for an example on how to set up reno:
+* How to integrate into the openstack release: every project in the
+  Stadium must have release notes. In order to set up release notes,
+  please see the patches below for an example on how to set up reno:
 
-   * https://review.openstack.org/#/c/320904/
-   * https://review.openstack.org/#/c/243085/
+  * https://review.openstack.org/#/c/320904/
+  * https://review.openstack.org/#/c/243085/
 
-   For release documentation related to Neutron, please check the
-   `Neutron policies document <http://docs.openstack.org/developer/neutron/#neutron-policies>`_.
-   Once, everything is set up and your project is released, make sure
-   you see an entry on the release page (e.g. `Ocata <http://releases.openstack.org/ocata/index.html#other-projects>`_.
-   Make sure you release according to the project declared release
-   `model <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
+  For release documentation related to Neutron, please check the
+  `Neutron policies document <http://docs.openstack.org/developer/neutron/#neutron-policies>`_.
+  Once, everything is set up and your project is released, make sure
+  you see an entry on the release page (e.g. `Ocata <http://releases.openstack.org/ocata/index.html#other-projects>`_.
+  Make sure you release according to the project declared release
+  `model <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
 
- * How to port OpenStack Client over to python-neutronclient: client
-   API bindings and client command line interface support must be
-   developed in python-neutronclient under `osc module <https://github.com/openstack/python-neutronclient/tree/master/neutronclient/osc/v2>`_.
-   If your project requires one or both, consider looking at the
-   following example on how to contribute these two python-neutronclient
-   according to the OSC framework and guidelines:
+* How to port OpenStack Client over to python-neutronclient: client
+  API bindings and client command line interface support must be
+  developed in python-neutronclient under `osc module <https://github.com/openstack/python-neutronclient/tree/master/neutronclient/osc/v2>`_.
+  If your project requires one or both, consider looking at the
+  following example on how to contribute these two python-neutronclient
+  according to the OSC framework and guidelines:
 
-   * https://review.openstack.org/#/c/340624/
-   * https://review.openstack.org/#/c/340763/
-   * https://review.openstack.org/#/c/352653/
+  * https://review.openstack.org/#/c/340624/
+  * https://review.openstack.org/#/c/340763/
+  * https://review.openstack.org/#/c/352653/
 
-   More information on how to develop python-openstackclient plugins
-   can be found on the following links:
+  More information on how to develop python-openstackclient plugins
+  can be found on the following links:
 
-   * http://docs.openstack.org/developer/python-openstackclient/plugins.html
-   * http://docs.openstack.org/developer/python-openstackclient/humaninterfaceguide.html
+  * http://docs.openstack.org/developer/python-openstackclient/plugins.html
+  * http://docs.openstack.org/developer/python-openstackclient/humaninterfaceguide.html
 
-   It is worth prefixing the commands being added with the keyword
-   `network <https://review.openstack.org/#/c/340624/10/setup.cfg>`_ to
-   avoid potential clash with other commands with similar names. This
-   is only required if the command object name is highly likely to have
-   an ambiguous meaning.
+  It is worth prefixing the commands being added with the keyword
+  `network <https://review.openstack.org/#/c/340624/10/setup.cfg>`_ to
+  avoid potential clash with other commands with similar names. This
+  is only required if the command object name is highly likely to have
+  an ambiguous meaning.

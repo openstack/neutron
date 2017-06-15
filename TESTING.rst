@@ -50,17 +50,17 @@ We will talk about three classes of tests: unit, functional and integration.
 Each respective category typically targets a larger scope of code. Other than
 that broad categorization, here are a few more characteristic:
 
-  * Unit tests - Should be able to run on your laptop, directly following a
-    'git clone' of the project. The underlying system must not be mutated,
-    mocks can be used to achieve this. A unit test typically targets a function
-    or class.
-  * Functional tests - Run against a pre-configured environment
-    (tools/configure_for_func_testing.sh). Typically test a component
-    such as an agent using no mocks.
-  * Integration tests - Run against a running cloud, often target the API level,
-    but also 'scenarios' or 'user stories'. You may find such tests under
-    tests/tempest/api, tests/tempest/scenario, tests/fullstack, and in the
-    Tempest and Rally projects.
+* Unit tests - Should be able to run on your laptop, directly following a
+  'git clone' of the project. The underlying system must not be mutated,
+  mocks can be used to achieve this. A unit test typically targets a function
+  or class.
+* Functional tests - Run against a pre-configured environment
+  (tools/configure_for_func_testing.sh). Typically test a component
+  such as an agent using no mocks.
+* Integration tests - Run against a running cloud, often target the API level,
+  but also 'scenarios' or 'user stories'. You may find such tests under
+  tests/tempest/api, tests/tempest/scenario, tests/fullstack, and in the
+  Tempest and Rally projects.
 
 Tests in the Neutron tree are typically organized by the testing infrastructure
 used, and not by the scope of the test. For example, many tests under the
@@ -469,9 +469,7 @@ the tracking of long-running tests and other things.
 
 For more information on the standard Tox-based test infrastructure used by
 OpenStack and how to do some common test/debugging procedures with Testr,
-see this wiki page:
-
-  https://wiki.openstack.org/wiki/Testr
+see this wiki page: https://wiki.openstack.org/wiki/Testr
 
 .. _Testr: https://wiki.openstack.org/wiki/Testr
 .. _tox: http://tox.readthedocs.org/en/latest/
@@ -593,10 +591,10 @@ doc/source/devref/testing_coverage.rst. You could also rely on Zuul
 logs, that are generated post-merge (not every project builds coverage
 results). To access them, do the following:
 
-  * Check out the latest `merge commit <https://review.openstack.org/gitweb?p=openstack/neutron.git;a=search;s=Jenkins;st=author>`_
-  * Go to: http://logs.openstack.org/<first-2-digits-of-sha1>/<sha1>/post/neutron-coverage/.
-  * `Spec <https://review.openstack.org/#/c/221494/>`_ is a work in progress to
-    provide a better landing page.
+* Check out the latest `merge commit <https://review.openstack.org/gitweb?p=openstack/neutron.git;a=search;s=Jenkins;st=author>`_
+* Go to: http://logs.openstack.org/<first-2-digits-of-sha1>/<sha1>/post/neutron-coverage/.
+* `Spec <https://review.openstack.org/#/c/221494/>`_ is a work in progress to
+  provide a better landing page.
 
 Debugging
 ---------
