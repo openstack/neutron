@@ -55,5 +55,7 @@ Grab the code::
     git clone git://git.openstack.org/openstack/neutron.git
     cd neutron
 
+Testing Neutron
+---------------
 
-.. include:: ../../../TESTING.rst
+See :ref:`testing_neutron`.

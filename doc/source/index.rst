@@ -59,7 +59,7 @@ Neutron Feature Classification
 ------------------------------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    feature_classification/index
 
@@ -67,9 +67,11 @@ Developer Docs
 --------------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    devref/index
+   devref/testing_index
+   devref/neutron_internals
 
 Dashboards
 ----------

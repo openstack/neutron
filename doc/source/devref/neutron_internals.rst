@@ -23,23 +23,41 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
-
-Developer Guide
-===============
-
-In the Developer Guide, you will find information on Neutron's lower level
-programming APIs. There are sections that cover the core pieces of Neutron,
-including its database, message queue, and scheduler components. There are
-also subsections that describe specific plugins inside Neutron. Finally,
-the developer guide includes information about Neutron testing infrastructure.
+=================
+Neutron Internals
+=================
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 1
 
-    effective_neutron
-    development.environment
-    contribute
-    neutron_api
-    client_command_extensions
-    alembic_migrations
-    modules
+   services_and_agents
+   api_layer
+   ml2_ext_manager
+   calling_ml2_plugin
+   quota
+   api_extensions
+   plugin-api
+   db_layer
+   db_models
+   policy
+   rpc_api
+   rpc_callbacks
+   layer3
+   l2_agents
+   agent_extensions
+   ovs_vhostuser
+   quality_of_service
+   service_extensions
+   dns_order
+   external_dns_integration
+   upgrade
+   objects_usage
+   i18n
+   address_scopes
+   openvswitch_firewall
+   network_ip_availability
+   tag
+   provisioning_blocks
+   retries
+   l3_agent_extensions
+   live_migration
