@@ -40,7 +40,8 @@ class TestNovaNotify(base.BaseTestCase):
             def get_port(self, context, port_id):
                 device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
                 return {'device_id': device_id,
-                        'device_owner': DEVICE_OWNER_COMPUTE}
+                        'device_owner': DEVICE_OWNER_COMPUTE,
+                        'id': port_id}
 
         self.nova_notifier = nova.Notifier()
         directory.add_plugin(n_const.CORE, FakePlugin())
@@ -144,7 +145,8 @@ class TestNovaNotify(base.BaseTestCase):
                          'device_id': device_id}}
 
         expected_event = {'server_uuid': device_id,
-                          'name': 'network-changed'}
+                          'name': 'network-changed',
+                          'tag': returned_obj['port']['id']}
         event = self.nova_notifier.create_port_changed_event('update_port',
                                                              {}, returned_obj)
         self.assertEqual(event, expected_event)
@@ -155,7 +157,8 @@ class TestNovaNotify(base.BaseTestCase):
                         {'port_id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
 
         expected_event = {'server_uuid': device_id,
-                          'name': 'network-changed'}
+                          'name': 'network-changed',
+                          'tag': returned_obj['floatingip']['port_id']}
         event = self.nova_notifier.create_port_changed_event(
             'create_floatingip', {}, returned_obj)
         self.assertEqual(event, expected_event)
@@ -174,7 +177,8 @@ class TestNovaNotify(base.BaseTestCase):
                         {'port_id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
 
         expected_event = {'server_uuid': device_id,
-                          'name': 'network-changed'}
+                          'name': 'network-changed',
+                          'tag': returned_obj['floatingip']['port_id']}
         event = self.nova_notifier.create_port_changed_event(
             'delete_floatingip', {}, returned_obj)
         self.assertEqual(expected_event, event)
@@ -205,7 +209,8 @@ class TestNovaNotify(base.BaseTestCase):
         original_obj = {'port_id': None}
 
         expected_event = {'server_uuid': device_id,
-                          'name': 'network-changed'}
+                          'name': 'network-changed',
+                          'tag': returned_obj['floatingip']['port_id']}
         event = self.nova_notifier.create_port_changed_event(
             'update_floatingip', original_obj, returned_obj)
         self.assertEqual(expected_event, event)
@@ -216,7 +221,8 @@ class TestNovaNotify(base.BaseTestCase):
         original_obj = {'port_id': '5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}
 
         expected_event = {'server_uuid': device_id,
-                          'name': 'network-changed'}
+                          'name': 'network-changed',
+                          'tag': original_obj['port_id']}
 
         event = self.nova_notifier.create_port_changed_event(
             'update_floatingip', original_obj, returned_obj)
