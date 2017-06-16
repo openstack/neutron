@@ -14,39 +14,6 @@ from neutron_lib import worker
 from oslo_service import loopingcall
 
 
-class WorkerSupportServiceMixin(object):
-
-    @property
-    def _workers(self):
-        try:
-            return self.__workers
-        except AttributeError:
-            self.__workers = []
-        return self.__workers
-
-    def get_workers(self):
-        """Returns a collection neutron_lib.worker.BaseWorker instances
-        needed by this service
-        """
-        return list(self._workers)
-
-    def add_worker(self, worker):
-        """Adds neutron_lib.worker.BaseWorker needed for this service
-
-        If a object needs to define workers thread/processes outside of API/RPC
-        workers then it will call this method to register worker. Should be
-        called on initialization stage before running services
-        """
-        self._workers.append(worker)
-
-    def add_workers(self, workers):
-        """Adds neutron_lib.worker.BaseWorker list needed for this service
-
-        The same as add_worker but adds a list of workers
-        """
-        self._workers.extend(workers)
-
-
 class PeriodicWorker(worker.BaseWorker):
     """A worker that runs a function at a fixed interval."""
 
