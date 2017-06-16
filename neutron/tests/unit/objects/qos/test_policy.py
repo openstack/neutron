@@ -397,12 +397,14 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         #                 local version on the class definition
         policy_obj, rule_objs = self._create_test_policy_with_rules(
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
-             qos_consts.RULE_TYPE_DSCP_MARKING], reload_rules=True)
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH], reload_rules=True)
 
         policy_obj_v1_0 = self._policy_through_version(policy_obj, '1.0')
 
         self.assertIn(rule_objs[0], policy_obj_v1_0.rules)
         self.assertNotIn(rule_objs[1], policy_obj_v1_0.rules)
+        self.assertNotIn(rule_objs[2], policy_obj_v1_0.rules)
 
     def test_object_version_degradation_1_2_to_1_1(self):
         #NOTE(mangelajo): we should not check .VERSION, since that's the
@@ -417,6 +419,19 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertIn(rule_objs[0], policy_obj_v1_1.rules)
         self.assertIn(rule_objs[1], policy_obj_v1_1.rules)
         self.assertNotIn(rule_objs[2], policy_obj_v1_1.rules)
+
+    def test_object_version_degradation_1_3_to_1_2(self):
+        #NOTE(mangelajo): we should not check .VERSION, since that's the
+        #                 local version on the class definition
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH], reload_rules=True)
+
+        policy_obj_v1_2 = self._policy_through_version(policy_obj, '1.2')
+
+        for rule_obj in rule_objs:
+            self.assertIn(rule_obj, policy_obj_v1_2.rules)
 
     def test_v1_4_to_v1_3_drops_project_id(self):
         policy_new = self._create_test_policy()
