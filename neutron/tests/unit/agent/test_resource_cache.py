@@ -46,26 +46,24 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         self.duck = OVOLikeThing(2)
         self.ctx = context.get_admin_context()
         self.rcache = resource_cache.RemoteResourceCache(rtypes)
-
-    def test_bulk_flood_cache(self):
-        with mock.patch('neutron.api.rpc.handlers.resources_rpc.'
-                        'ResourcesPullRpcApi') as rpc_pull_mock:
-            pull = rpc_pull_mock.return_value.bulk_pull
-            pull.side_effect = [[self.duck], [self.goose]]
-            self.rcache.bulk_flood_cache()
-            pull.assert_any_call(mock.ANY, 'duck')
-            pull.assert_any_call(mock.ANY, 'goose')
-            self.assertEqual(self.goose,
-                             self.rcache.get_resource_by_id('goose', 1))
-            self.assertEqual(self.duck,
-                             self.rcache.get_resource_by_id('duck', 2))
-            self.assertIsNone(self.rcache.get_resource_by_id('duck', 1))
+        self._pullmock = mock.patch.object(self.rcache, '_puller').start()
 
     def test_get_resource_by_id(self):
         self.rcache.record_resource_update(self.ctx, 'goose', self.goose)
         self.assertEqual(self.goose,
                          self.rcache.get_resource_by_id('goose', 1))
         self.assertIsNone(self.rcache.get_resource_by_id('goose', 2))
+
+    def test__flood_cache_for_query_pulls_once(self):
+        self.rcache._flood_cache_for_query('goose', id=66)
+        self._pullmock.bulk_pull.assert_called_once_with(
+            mock.ANY, 'goose', filter_kwargs={'id': 66})
+        self._pullmock.bulk_pull.reset_mock()
+        self.rcache._flood_cache_for_query('goose', id=66)
+        self.assertFalse(self._pullmock.called)
+        self.rcache._flood_cache_for_query('goose', id=67)
+        self._pullmock.bulk_pull.assert_called_once_with(
+            mock.ANY, 'goose', filter_kwargs={'id': 67})
 
     def test_get_resources(self):
         geese = [OVOLikeThing(3, size='large'), OVOLikeThing(5, size='medium'),
