@@ -123,7 +123,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
         # fetch sg from db to load the sg rules with sg model.
         sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)
-        secgroup_dict = self._make_security_group_dict(sg.db_obj)
+        secgroup_dict = self._make_security_group_dict(sg)
 
         kwargs['security_group'] = secgroup_dict
         registry.notify(resources.SECURITY_GROUP, events.AFTER_CREATE, self,
@@ -264,10 +264,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                'name': security_group['name'],
                'tenant_id': security_group['tenant_id'],
                'description': security_group['description']}
-        res['security_group_rules'] = [self._make_security_group_rule_dict(r)
-                                       for r in security_group.rules]
+        res['security_group_rules'] = [
+            self._make_security_group_rule_dict(r.db_obj)
+            for r in security_group.rules
+        ]
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPS, res,
-                                    security_group)
+                                    security_group.db_obj)
         return db_utils.resource_fields(res, fields)
 
     @staticmethod
@@ -388,6 +390,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             self._registry_notify(resources.SECURITY_GROUP_RULE,
                               events.PRECOMMIT_CREATE,
                               exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
+        # fetch sg_rule from db to load the sg rules with sg model otherwise
+        # a DetachedInstanceError can occur for model extensions
+        sg_rule = sg_obj.SecurityGroupRule.get_object(context, id=sg_rule.id)
         return self._make_security_group_rule_dict(sg_rule.db_obj)
 
     def _get_ip_proto_number(self, protocol):
@@ -640,7 +645,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             context, _pager=pager, validate_filters=False, **filters
         )
         return [
-            self._make_security_group_rule_dict(obj, fields)
+            self._make_security_group_rule_dict(obj.db_obj, fields)
             for obj in rule_objs
         ]
 
@@ -653,7 +658,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
     @db_api.retry_if_session_inactive()
     def get_security_group_rule(self, context, id, fields=None):
         security_group_rule = self._get_security_group_rule(context, id)
-        return self._make_security_group_rule_dict(security_group_rule, fields)
+        return self._make_security_group_rule_dict(
+            security_group_rule.db_obj, fields)
 
     def _get_security_group_rule(self, context, id):
         sgr = sg_obj.SecurityGroupRule.get_object(context, id=id)
@@ -766,7 +772,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if port_sg_missing:
             raise ext_sg.SecurityGroupNotFound(id=', '.join(port_sg_missing))
 
-        return requested_groups
+        return list(requested_groups)
 
     def _ensure_default_security_group_on_port(self, context, port):
         # we don't apply security groups for dhcp, router
