@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import dvr_snat_ns
@@ -29,7 +30,7 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
 
     def setUp(self):
         super(NamespaceManagerTestFramework, self).setUp()
-        self.agent_conf = mock.MagicMock()
+        self.agent_conf = cfg.CONF
         self.metadata_driver_mock = mock.Mock()
         self.namespace_manager = namespace_manager.NamespaceManager(
             self.agent_conf, driver=None,
