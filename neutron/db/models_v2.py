@@ -110,6 +110,9 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
         model_base.BASEV2.__table_args__
     )
     api_collections = [port_def.COLLECTION_NAME]
+    collection_resource_map = {port_def.COLLECTION_NAME:
+                               port_def.RESOURCE_NAME}
+    tag_support = True
 
     def __init__(self, id=None, tenant_id=None, project_id=None, name=None,
                  network_id=None, mac_address=None, admin_state_up=None,
@@ -202,6 +205,9 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
         foreign_keys='Subnet.network_id',
         primaryjoin='Subnet.network_id==NetworkRBAC.object_id')
     api_collections = [subnet_def.COLLECTION_NAME]
+    collection_resource_map = {subnet_def.COLLECTION_NAME:
+                               subnet_def.RESOURCE_NAME}
+    tag_support = True
 
 
 class SubnetPoolPrefix(model_base.BASEV2):
@@ -239,6 +245,9 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 cascade='all, delete, delete-orphan',
                                 lazy='subquery')
     api_collections = [subnetpool_def.COLLECTION_NAME]
+    collection_resource_map = {subnetpool_def.COLLECTION_NAME:
+                               subnetpool_def.RESOURCE_NAME}
+    tag_support = True
 
 
 class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -260,3 +269,5 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
         'Agent', lazy='subquery', viewonly=True,
         secondary=ndab_model.NetworkDhcpAgentBinding.__table__)
     api_collections = [net_def.COLLECTION_NAME]
+    collection_resource_map = {net_def.COLLECTION_NAME: net_def.RESOURCE_NAME}
+    tag_support = True

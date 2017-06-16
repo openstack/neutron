@@ -21,7 +21,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import session as se
 
-from neutron._i18n import _LE
+from neutron._i18n import _, _LE
 from neutron.db import sqlalchemytypes
 
 
@@ -98,6 +98,18 @@ class HasStandardAttributes(object):
             return cls.api_collections
         raise NotImplementedError("%s must define api_collections" % cls)
 
+    @classmethod
+    def get_collection_resource_map(cls):
+        try:
+            return cls.collection_resource_map
+        except AttributeError:
+            raise NotImplementedError("%s must define "
+                                      "collection_resource_map" % cls)
+
+    @classmethod
+    def validate_tag_support(cls):
+        return getattr(cls, 'tag_support', False)
+
     @declarative.declared_attr
     def standard_attr_id(cls):
         return sa.Column(
@@ -173,6 +185,22 @@ def get_standard_attr_resource_model_map():
                                         res=resource))
             rs_map[resource] = subclass
     return rs_map
+
+
+def get_tag_resource_parent_map():
+    parent_map = {}
+    for subclass in HasStandardAttributes.__subclasses__():
+        if subclass.validate_tag_support():
+            for collection, resource in (subclass.get_collection_resource_map()
+                                         .items()):
+                if collection in parent_map:
+                    msg = (_("API parent %(collection)s/%(resource)s for "
+                             "model %(subclass)s is already registered.") %
+                           dict(collection=collection, resource=resource,
+                                subclass=subclass))
+                    raise RuntimeError(msg)
+                parent_map[collection] = resource
+    return parent_map
 
 
 @event.listens_for(se.Session, 'after_bulk_delete')

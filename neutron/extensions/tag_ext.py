@@ -21,7 +21,10 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
 from neutron.extensions import l3
-from neutron.extensions import tag as tag_base
+from neutron.extensions import tagging
+
+
+# This extension is deprecated because tagging supports all resources
 
 TAG_SUPPORTED_RESOURCES = {
     # We shouldn't add new resources here. If more resources need to be tagged,
@@ -33,9 +36,9 @@ TAG_SUPPORTED_RESOURCES = {
 }
 
 
-class TagExtController(tag_base.TagController):
+class TagExtController(tagging.TaggingController):
     def __init__(self):
-        self.plugin = directory.get_plugin(tag_base.TAG_PLUGIN_TYPE)
+        self.plugin = directory.get_plugin(tagging.TAG_PLUGIN_TYPE)
         self.supported_resources = TAG_SUPPORTED_RESOURCES
 
 
@@ -75,7 +78,7 @@ class Tag_ext(api_extensions.ExtensionDescriptor):
             parent = {'member_name': member_name,
                       'collection_name': collection_name}
             exts.append(extensions.ResourceExtension(
-                tag_base.TAGS, controller, parent,
+                tagging.TAGS, controller, parent,
                 collection_methods=collection_methods))
         return exts
 
@@ -88,5 +91,5 @@ class Tag_ext(api_extensions.ExtensionDescriptor):
         EXTENDED_ATTRIBUTES_2_0 = {}
         for collection_name in TAG_SUPPORTED_RESOURCES:
             EXTENDED_ATTRIBUTES_2_0[collection_name] = (
-                tag_base.TAG_ATTRIBUTE_MAP)
+                tagging.TAG_ATTRIBUTE_MAP)
         return EXTENDED_ATTRIBUTES_2_0

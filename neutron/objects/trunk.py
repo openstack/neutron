@@ -126,6 +126,17 @@ class Trunk(base.NeutronDbObject):
         self.update_fields(kwargs)
         super(Trunk, self).update()
 
+    # TODO(hichihara): For tag mechanism. This will be removed in bug/1704137
+    def to_dict(self):
+        _dict = super(Trunk, self).to_dict()
+        try:
+            _dict['tags'] = [t.tag for t in self.db_obj.standard_attr.tags]
+        except AttributeError:
+            # AttrtibuteError can be raised when accessing self.db_obj
+            # or self.db_obj.standard_attr
+            pass
+        return _dict
+
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
 

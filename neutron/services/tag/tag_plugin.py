@@ -14,10 +14,6 @@
 
 import functools
 
-from neutron_lib.api.definitions import network as net_def
-from neutron_lib.api.definitions import port as port_def
-from neutron_lib.api.definitions import subnet as subnet_def
-from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
@@ -26,32 +22,22 @@ from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
-from neutron.db.models import l3 as l3_model
-from neutron.db import models_v2
+from neutron.db import standard_attr
 from neutron.db import tag_db as tag_methods
-from neutron.extensions import l3 as l3_ext
-from neutron.extensions import tag as tag_ext
+from neutron.extensions import tagging
 from neutron.objects import exceptions as obj_exc
 from neutron.objects import tag as tag_obj
 
 
 # Taggable resources
-resource_model_map = {
-    # When we'll add other resources, we must add new extension for them
-    # if we don't have better discovery mechanism instead of it.
-    net_def.COLLECTION_NAME: models_v2.Network,
-    subnet_def.COLLECTION_NAME: models_v2.Subnet,
-    port_def.COLLECTION_NAME: models_v2.Port,
-    subnetpool_def.COLLECTION_NAME: models_v2.SubnetPool,
-    l3_ext.ROUTERS: l3_model.Router,
-}
+resource_model_map = standard_attr.get_standard_attr_resource_model_map()
 
 
 @resource_extend.has_resource_extenders
-class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
+class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
     """Implementation of the Neutron Tag Service Plugin."""
 
-    supported_extension_aliases = ['tag', 'tag-ext']
+    supported_extension_aliases = ['tag', 'tag-ext', 'standard-attr-tag']
 
     def __new__(cls, *args, **kwargs):
         inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
@@ -68,7 +54,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
     @staticmethod
     @resource_extend.extends(list(resource_model_map))
     def _extend_tags_dict(response_data, db_data):
-        if not directory.get_plugin(tag_ext.TAG_PLUGIN_TYPE):
+        if not directory.get_plugin(tagging.TAG_PLUGIN_TYPE):
             return
         tags = [tag_db.tag for tag_db in db_data.standard_attr.tags]
         response_data['tags'] = tags
@@ -78,7 +64,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
         try:
             return model_query.get_by_id(context, model, resource_id)
         except exc.NoResultFound:
-            raise tag_ext.TagResourceNotFound(resource=resource,
+            raise tagging.TagResourceNotFound(resource=resource,
                                               resource_id=resource_id)
 
     @log_helpers.log_method_call
@@ -91,7 +77,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
     def get_tag(self, context, resource, resource_id, tag):
         res = self._get_resource(context, resource, resource_id)
         if not any(tag == tag_db.tag for tag_db in res.standard_attr.tags):
-            raise tag_ext.TagNotFound(tag=tag)
+            raise tagging.TagNotFound(tag=tag)
 
     @log_helpers.log_method_call
     @db_api.retry_if_session_inactive()
@@ -140,4 +126,4 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tag_ext.TagPluginBase):
         res = self._get_resource(context, resource, resource_id)
         if not tag_obj.Tag.delete_objects(context,
             tag=tag, standard_attr_id=res.standard_attr_id):
-            raise tag_ext.TagNotFound(tag=tag)
+            raise tagging.TagNotFound(tag=tag)

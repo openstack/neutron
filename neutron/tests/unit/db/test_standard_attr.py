@@ -55,6 +55,40 @@ class StandardAttrTestCase(base.BaseTestCase):
         with testtools.ExpectedException(RuntimeError):
             standard_attr.get_standard_attr_resource_model_map()
 
+    def test_standard_attr_resource_parent_map(self):
+        base = self._make_decl_base()
+
+        class TagSupportModel(standard_attr.HasStandardAttributes,
+                              standard_attr.model_base.HasId,
+                              base):
+            collection_resource_map = {'collection_name': 'member_name'}
+            tag_support = True
+
+        class TagUnsupportModel(standard_attr.HasStandardAttributes,
+                                standard_attr.model_base.HasId,
+                                base):
+            collection_resource_map = {'collection_name2': 'member_name2'}
+            tag_support = False
+
+        class TagUnsupportModel2(standard_attr.HasStandardAttributes,
+                                 standard_attr.model_base.HasId,
+                                 base):
+            collection_resource_map = {'collection_name3': 'member_name3'}
+
+        parent_map = standard_attr.get_tag_resource_parent_map()
+        self.assertEqual('member_name', parent_map['collection_name'])
+        self.assertNotIn('collection_name2', parent_map)
+        self.assertNotIn('collection_name3', parent_map)
+
+        class DupTagSupportModel(standard_attr.HasStandardAttributes,
+                                 standard_attr.model_base.HasId,
+                                 base):
+            collection_resource_map = {'collection_name': 'member_name'}
+            tag_support = True
+
+        with testtools.ExpectedException(RuntimeError):
+            standard_attr.get_tag_resource_parent_map()
+
 
 class StandardAttrAPIImapctTestCase(testlib_api.SqlTestCase):
     """Test case to determine if a resource has had new fields exposed."""
@@ -74,6 +108,18 @@ class StandardAttrAPIImapctTestCase(testlib_api.SqlTestCase):
         self.assertEqual(
             set(expected),
             set(standard_attr.get_standard_attr_resource_model_map().keys())
+        )
+
+    def test_api_tag_support_is_expected(self):
+        # NOTE: If this test is being modified, it means the resources for tag
+        # support are extended. It changes tag support API. The API change
+        # should be exposed in release note for API users. And also it should
+        # be list as other tag support resources in doc/source/devref/tag.rst
+        expected = ['subnets', 'trunks', 'routers', 'networks', 'policies',
+                    'subnetpools', 'ports', 'security_groups', 'floatingips']
+        self.assertEqual(
+            set(expected),
+            set(standard_attr.get_tag_resource_parent_map().keys())
         )
 
 

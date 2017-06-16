@@ -87,6 +87,11 @@ may appear under. In most cases, this will only be one (e.g. 'ports' for
 the Port model). This is used by all of the service plugins that add standard
 attribute fields to determine which API responses need to be populated.
 
+A model that supports tag mechanism must implement the property
+'collection_resource_map' which is a dict of 'collection_name' and
+'resource_name' for API resources. And also the model must implement
+'tag_support' with a value True.
+
 The introduction of a new standard attribute only requires one column addition
 to the 'standardattribute' table for one-to-one relationships or a new table
 for one-to-many or one-to-zero relationships. Then all of the models using the

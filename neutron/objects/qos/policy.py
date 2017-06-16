@@ -102,6 +102,17 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         raise exceptions.QosRuleNotFound(policy_id=self.id,
                                          rule_id=rule_id)
 
+    # TODO(hichihara): For tag mechanism. This will be removed in bug/1704137
+    def to_dict(self):
+        _dict = super(QosPolicy, self).to_dict()
+        try:
+            _dict['tags'] = [t.tag for t in self.db_obj.standard_attr.tags]
+        except AttributeError:
+            # AttrtibuteError can be raised when accessing self.db_obj
+            # or self.db_obj.standard_attr
+            pass
+        return _dict
+
     @classmethod
     def get_object(cls, context, **kwargs):
         # We want to get the policy regardless of its tenant id. We'll make

@@ -1,0 +1,10 @@
+---
+features:
+  - The resource tag mechanism is refactored so that the tag support
+    for new resources can be supported easily.
+    The resources with tag support are network, subnet, port, subnetpool,
+    trunk, floatingip, policy, security_group, and router.
+deprecations:
+  - Users can use 'tagging' extension instead of the 'tag' extension and
+    'tag-ext' extension. Those extensions are now deprecated and will be
+    removed in the Queens release.
