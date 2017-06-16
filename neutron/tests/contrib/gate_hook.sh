@@ -93,6 +93,8 @@ case $VENV in
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
         load_conf_hook iptables_verify
         load_rc_hook ubuntu_image
+        # bug/1662109
+        export DEVSTACK_GATE_TEMPEST_REGEX="^(?!.*(?:neutron\.tests\.tempest\.scenario\.test_qos.*))^neutron\.tests\.tempest\.scenario\."
     fi
     if [[ "$VENV" =~ "pecan" ]]; then
         load_conf_hook pecan
