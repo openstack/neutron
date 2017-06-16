@@ -470,7 +470,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # Allow multicast listener, neighbor solicitation and
         # neighbor advertisement into the instance
         icmpv6_rules = []
-        for icmp6_type in firewall.ICMPV6_ALLOWED_TYPES:
+        for icmp6_type in firewall.ICMPV6_ALLOWED_INGRESS_TYPES:
             icmpv6_rules += ['-p ipv6-icmp -m icmp6 --icmpv6-type %s '
                              '-j RETURN' % icmp6_type]
         return icmpv6_rules

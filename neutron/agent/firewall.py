@@ -34,10 +34,16 @@ DIRECTION_IP_PREFIX = {INGRESS_DIRECTION: 'source_ip_prefix',
 # List of ICMPv6 types that should be permitted (ingress) by default. This list
 # depends on iptables conntrack behavior of recognizing ICMP errors (types 1-4)
 # as related traffic.
-ICMPV6_ALLOWED_TYPES = [n_const.ICMPV6_TYPE_MLD_QUERY,
-                        n_const.ICMPV6_TYPE_RA,
-                        n_const.ICMPV6_TYPE_NS,
-                        n_const.ICMPV6_TYPE_NA]
+ICMPV6_ALLOWED_INGRESS_TYPES = (n_const.ICMPV6_TYPE_MLD_QUERY,
+                                n_const.ICMPV6_TYPE_RA,
+                                n_const.ICMPV6_TYPE_NS,
+                                n_const.ICMPV6_TYPE_NA)
+
+# List of ICMPv6 types that should be permitted (egress) by default.
+ICMPV6_ALLOWED_EGRESS_TYPES = (n_const.ICMPV6_TYPE_MLD_QUERY,
+                               n_const.ICMPV6_TYPE_RS,
+                               n_const.ICMPV6_TYPE_NS,
+                               n_const.ICMPV6_TYPE_NA)
 
 
 def port_sec_enabled(port):
