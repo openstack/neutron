@@ -1077,15 +1077,23 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                 # platforms (>=Ubuntu 14.04), arping exit code can be 1.
                 ip_wrapper.netns.execute(arping_cmd, extra_ok_codes=[1])
             except Exception as exc:
+                # Since this is spawned in a thread and executed 2 seconds
+                # apart, the interface may have been deleted while we were
+                # sleeping. Downgrade message to a warning and return early.
+                exists = device_exists(iface_name, namespace=ns_name)
                 msg = _("Failed sending gratuitous ARP to %(addr)s on "
                         "%(iface)s in namespace %(ns)s: %(err)s")
                 logger_method = LOG.exception
-                if not log_exception:
+                if not (log_exception or exists):
                     logger_method = LOG.warning
                 logger_method(msg, {'addr': address,
                                     'iface': iface_name,
                                     'ns': ns_name,
                                     'err': exc})
+                if not exists:
+                    LOG.warning(_LW("Interface %s might have been deleted "
+                                    "concurrently"), iface_name)
+                    return
 
 
 def send_ip_addr_adv_notif(
