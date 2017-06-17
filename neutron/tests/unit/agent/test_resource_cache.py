@@ -55,23 +55,29 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         self.assertIsNone(self.rcache.get_resource_by_id('goose', 2))
 
     def test__flood_cache_for_query_pulls_once(self):
-        self.rcache._flood_cache_for_query('goose', id=66)
+        self.rcache._flood_cache_for_query('goose', id=(66, 67),
+                                           name=('a', 'b'))
         self._pullmock.bulk_pull.assert_called_once_with(
-            mock.ANY, 'goose', filter_kwargs={'id': 66})
+            mock.ANY, 'goose',
+            filter_kwargs={'id': (66, 67), 'name': ('a', 'b')})
         self._pullmock.bulk_pull.reset_mock()
-        self.rcache._flood_cache_for_query('goose', id=66)
+        self.rcache._flood_cache_for_query('goose', id=(66, ), name=('a', ))
         self.assertFalse(self._pullmock.called)
-        self.rcache._flood_cache_for_query('goose', id=67)
+        self.rcache._flood_cache_for_query('goose', id=(67, ), name=('b', ))
+        self.assertFalse(self._pullmock.called)
+        # querying by just ID should trigger a new call since ID+name is a more
+        # specific query
+        self.rcache._flood_cache_for_query('goose', id=(67, ))
         self._pullmock.bulk_pull.assert_called_once_with(
-            mock.ANY, 'goose', filter_kwargs={'id': 67})
+            mock.ANY, 'goose', filter_kwargs={'id': (67, )})
 
     def test_get_resources(self):
         geese = [OVOLikeThing(3, size='large'), OVOLikeThing(5, size='medium'),
                  OVOLikeThing(4, size='large'), OVOLikeThing(6, size='small')]
         for goose in geese:
             self.rcache.record_resource_update(self.ctx, 'goose', goose)
-        is_large = {'size': 'large'}
-        is_small = {'size': 'small'}
+        is_large = {'size': ('large', )}
+        is_small = {'size': ('small', )}
         self.assertItemsEqual([geese[0], geese[2]],
                               self.rcache.get_resources('goose', is_large))
         self.assertItemsEqual([geese[3]],
