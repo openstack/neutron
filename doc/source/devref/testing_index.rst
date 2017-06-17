@@ -23,23 +23,15 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
-
-Developer Guide
-===============
-
-In the Developer Guide, you will find information on Neutron's lower level
-programming APIs. There are sections that cover the core pieces of Neutron,
-including its database, message queue, and scheduler components. There are
-also subsections that describe specific plugins inside Neutron. Finally,
-the developer guide includes information about Neutron testing infrastructure.
+=======
+Testing
+=======
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 2
 
-    effective_neutron
-    development.environment
-    contribute
-    neutron_api
-    client_command_extensions
-    alembic_migrations
-    modules
+   testing
+   fullstack_testing
+   testing_coverage
+   template_model_sync_test
+   db_transient_failure_injection

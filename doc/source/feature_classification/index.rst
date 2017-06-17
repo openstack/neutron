@@ -28,16 +28,8 @@ Neutron Feature Classification
 ==============================
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
     feature_classification_introduction
     general_feature_support_matrix
     provider_network_support_matrix
-
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
