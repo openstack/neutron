@@ -131,11 +131,18 @@ overridden. In the future we may want to have a flag in QoSNetworkPolicyBinding
 or QosRule to enforce such type of application (for example when limiting all
 the ingress of routers devices on an external network automatically).
 
+Each project can have at most one default QoS policy, although is not
+mandatory. If a default QoS policy is defined, all new networks created within
+this project will have assigned this policy, as long as no other QoS policy is
+explicitly attached during the creation process. If the default QoS policy is
+unset, no change to existing networks will be made.
+
 From database point of view, following objects are defined in schema:
 
 * QosPolicy: directly maps to the conceptual policy resource.
 * QosNetworkPolicyBinding, QosPortPolicyBinding: defines attachment between a
   Neutron resource and a QoS policy.
+* QosPolicyDefault: defines a default QoS policy per project.
 * QosBandwidthLimitRule: defines the rule to limit the maximum egress
   bandwidth.
 * QosDscpMarkingRule: defines the rule that marks the Differentiated Service
@@ -154,6 +161,7 @@ QoS versioned objects
 For QoS, the following neutron objects are implemented:
 
 * QosPolicy: directly maps to the conceptual policy resource, as defined above.
+* QosPolicyDefault: defines a default QoS policy per project.
 * QosBandwidthLimitRule: defines the instance bandwidth limit rule type,
   characterized by a max kbps and a max burst kbits. This rule has also a
   direction parameter to set the traffic direction, from the instance's point of view.
