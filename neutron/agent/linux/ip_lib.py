@@ -1094,8 +1094,8 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                                     'ns': ns_name,
                                     'err': exc})
                 if not exists:
-                    LOG.warning("Interface %s might have been deleted "
-                                "concurrently", iface_name)
+                    LOG.warning(_LW("Interface %s might have been deleted "
+                                    "concurrently"), iface_name)
                     return
 
 
