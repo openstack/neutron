@@ -126,7 +126,6 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 portbindings.VHOST_USER_OVS_PLUG: True,
                 portbindings.VHOST_USER_SOCKET: sock_path
             }
-        return self.vif_details
 
     @staticmethod
     def agent_vhu_sockpath(agent, port_id):
