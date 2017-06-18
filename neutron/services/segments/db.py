@@ -114,6 +114,9 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
             registry.notify(
                 resources.SEGMENT, events.PRECOMMIT_CREATE, self,
                 context=context, segment=new_segment)
+            # The new segment might have been updated by the callbacks
+            # subscribed to the PRECOMMIT_CREATE event. So update it in the DB
+            new_segment.update()
             return new_segment
 
     @log_helpers.log_method_call
