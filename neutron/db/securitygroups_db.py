@@ -251,17 +251,17 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             sg = self._get_security_group(context, id)
             if sg.name == 'default' and 'name' in s:
                 raise ext_sg.SecurityGroupCannotUpdateDefault()
-            kwargs['security_group'] = self._make_security_group_dict(sg)
-
+            sg_dict = self._make_security_group_dict(sg)
+            kwargs['original_security_group'] = sg_dict
+            sg.update_fields(s)
+            sg.update()
+            sg_dict = self._make_security_group_dict(sg)
+            kwargs['security_group'] = sg_dict
             self._registry_notify(
                     resources.SECURITY_GROUP,
                     events.PRECOMMIT_UPDATE,
                     exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
-            sg.update_fields(s)
-            sg.update()
-        sg_dict = self._make_security_group_dict(sg)
 
-        kwargs['security_group'] = sg_dict
         registry.notify(resources.SECURITY_GROUP, events.AFTER_UPDATE, self,
                         **kwargs)
         return sg_dict

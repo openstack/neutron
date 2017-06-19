@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import mock
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -309,13 +310,19 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self._test_security_group_precommit_create_event()
 
     def test_security_group_precommit_update_event(self):
-        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        original_sg_dict = self.mixin.create_security_group(self.ctx,
+                                                            FAKE_SECGROUP)
+        sg_id = original_sg_dict['id']
         with mock.patch.object(registry, "notify") as mock_notify:
+            fake_secgroup = copy.deepcopy(FAKE_SECGROUP)
+            fake_secgroup['security_group']['name'] = 'updated_fake'
+            sg_dict = self.mixin.update_security_group(
+                    self.ctx, sg_id, fake_secgroup)
             mock_notify.assert_has_calls([mock.call('security_group',
                 'precommit_update', mock.ANY, context=mock.ANY,
-                security_group=self.mixin.update_security_group(
-                    self.ctx, sg_dict['id'], FAKE_SECGROUP),
-                security_group_id=sg_dict['id'])])
+                original_security_group=original_sg_dict,
+                security_group=sg_dict,
+                security_group_id=sg_id)])
 
     def test_security_group_precommit_and_after_delete_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
