@@ -556,7 +556,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # Also, Trigger notification for successful binding commit.
             kwargs = {
                 'context': plugin_context,
-                'port': port,
+                'port': self._make_port_dict(port_db),  # ensure latest state
                 'mac_address_updated': False,
                 'original_port': oport,
             }
