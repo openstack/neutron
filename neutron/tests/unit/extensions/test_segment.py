@@ -1424,12 +1424,32 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
 
 
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
+
+    VLAN_MIN = 200
+    VLAN_MAX = 209
+
     def setUp(self):
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     ['physnet:200:209', 'physnet0:200:209',
-                                      'physnet1:200:209', 'physnet2:200:209'],
-                                     group='ml2_type_vlan')
+        # NOTE(mlavalle): ml2_type_vlan requires to be registered before used.
+        # This piece was refactored and removed from .config, so it causes
+        # a problem, when tests are executed with pdb.
+        # There is no problem when tests are running without debugger.
+        driver_type.register_ml2_drivers_vlan_opts()
+        config.cfg.CONF.set_override(
+            'network_vlan_ranges',
+            ['physnet:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
+             'physnet0:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
+             'physnet1:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
+             'physnet2:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX)],
+            group='ml2_type_vlan')
         super(TestSegmentAwareIpamML2, self).setUp(plugin='ml2')
+
+    def test_segmentation_id_stored_in_db(self):
+        network, segment, subnet = self._create_test_segment_with_subnet()
+        self.assertTrue(self.VLAN_MIN <=
+                        segment['segment']['segmentation_id'] <= self.VLAN_MAX)
+        retrieved_segment = self._show('segments', segment['segment']['id'])
+        self.assertEqual(segment['segment']['segmentation_id'],
+                         retrieved_segment['segment']['segmentation_id'])
 
 
 class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
