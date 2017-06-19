@@ -369,6 +369,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_db_errors
     def _bind_port_if_needed(self, context, allow_notify=False,
                              need_notify=False):
+        if not context.network.network_segments:
+            LOG.debug("Network %s has no segments, skipping binding",
+                      context.network.current['id'])
+            return context
         for count in range(1, MAX_BIND_TRIES + 1):
             if count > 1:
                 # yield for binding retries so that we give other threads a
