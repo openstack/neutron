@@ -263,6 +263,8 @@ class Port(base.NeutronDbObject):
         # field in later object iterations
     }
 
+    extra_filter_names = {'security_group_ids'}
+
     fields_no_update = ['project_id', 'network_id']
 
     synthetic_fields = [
