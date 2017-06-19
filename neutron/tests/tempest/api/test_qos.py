@@ -31,6 +31,12 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
     required_extensions = ['qos']
 
+    @staticmethod
+    def _get_driver_details(rule_type_details, driver_name):
+        for driver in rule_type_details['drivers']:
+            if driver['name'] == driver_name:
+                return driver
+
     @decorators.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
     def test_create_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -171,6 +177,31 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         # Verify that only required fields present in rule details
         for rule in actual_list_rule_types:
             self.assertEqual(tuple(expected_rule_keys), tuple(rule.keys()))
+
+    @decorators.idempotent_id('8ececa21-ef97-4904-a152-9f04c90f484d')
+    def test_show_rule_type_details_as_user(self):
+        self.assertRaises(
+            exceptions.Forbidden,
+            self.client.show_qos_rule_type,
+            qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
+
+    @decorators.idempotent_id('d0a2460b-7325-481f-a531-050bd96ab25e')
+    def test_show_rule_type_details_as_admin(self):
+        # Since returned rule types depend on loaded backend drivers this test
+        # is checking only if returned keys are same as expected keys
+
+        # In theory, we could make the test conditional on which ml2 drivers
+        # are enabled in gate, but that option doesn't seem to be
+        # available through tempest.lib framework
+        expected_rule_type_details_keys = ['type', 'drivers']
+
+        rule_type_details = self.admin_client.show_qos_rule_type(
+            qos_consts.RULE_TYPE_BANDWIDTH_LIMIT).get("rule_type")
+
+        # Verify that only required fields present in rule details
+        self.assertEqual(
+            sorted(tuple(expected_rule_type_details_keys)),
+            sorted(tuple(rule_type_details.keys())))
 
     def _disassociate_network(self, client, network_id):
         updated_network = client.update_network(network_id,

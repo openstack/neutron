@@ -16,6 +16,7 @@
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
+from neutron_lib import exceptions as lib_exc
 
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
@@ -40,7 +41,8 @@ class QoSPlugin(qos.QoSPluginBase):
     """
     supported_extension_aliases = ['qos',
                                    'qos-bw-limit-direction',
-                                   'qos-default']
+                                   'qos-default',
+                                   'qos-rule-type-details']
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -266,12 +268,22 @@ class QoSPlugin(qos.QoSPluginBase):
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
+    def get_rule_type(self, context, rule_type_name, fields=None):
+        if not context.is_admin:
+            raise lib_exc.NotAuthorized()
+        return rule_type_object.QosRuleType.get_object(rule_type_name)
+
+    @db_base_plugin_common.filter_fields
+    @db_base_plugin_common.convert_result_to_dict
     def get_rule_types(self, context, filters=None, fields=None,
                        sorts=None, limit=None,
                        marker=None, page_reverse=False):
         if not filters:
             filters = {}
         return rule_type_object.QosRuleType.get_objects(**filters)
+
+    def supported_rule_type_details(self, rule_type_name):
+        return self.driver_manager.supported_rule_type_details(rule_type_name)
 
     @property
     def supported_rule_types(self):

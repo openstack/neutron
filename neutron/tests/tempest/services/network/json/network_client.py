@@ -727,6 +727,14 @@ class NetworkClientJSON(service_client.RestClient):
         body = jsonutils.loads(body)
         return service_client.ResponseBody(resp, body)
 
+    def show_qos_rule_type(self, rule_type_name):
+        uri = '%s/qos/rule-types/%s' % (
+            self.uri_prefix, rule_type_name)
+        resp, body = self.get(uri)
+        self.expected_success(200, resp.status)
+        body = jsonutils.loads(body)
+        return service_client.ResponseBody(resp, body)
+
     def create_trunk(self, parent_port_id, subports,
                      tenant_id=None, name=None, admin_state_up=None,
                      description=None):

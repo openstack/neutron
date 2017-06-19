@@ -1,0 +1,8 @@
+---
+prelude: >
+    New API to get details of supported rule types.
+features:
+  - |
+    The QoS service plugin can now expose details about supported QoS rule
+    types in Neutron deployment.
+    New API call is allowed only for users with admin priviliges.

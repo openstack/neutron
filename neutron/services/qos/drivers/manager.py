@@ -20,6 +20,7 @@ from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import constants
 from neutron.common import exceptions
 from neutron.objects.qos import policy as policy_object
 from neutron.services.qos import qos_consts
@@ -82,6 +83,20 @@ class QosServiceDriverManager(object):
                    'port_id': port_id,
                    'driver': driver.name})
         return False
+
+    @staticmethod
+    def _parse_parameter_values(parameter_values):
+        validator, possible_values = list(parameter_values.items())[0]
+        if validator == 'type:range':
+            parameter_values = {
+                "start": possible_values[0],
+                "end": possible_values[1]
+            }
+            parameter_type = constants.VALUES_TYPE_RANGE
+        elif validator == 'type:values':
+            parameter_values = possible_values
+            parameter_type = constants.VALUES_TYPE_CHOICES
+        return parameter_values, parameter_type
 
     def call(self, method_name, *args, **kwargs):
         """Helper method for calling a method across all extension drivers."""
@@ -158,3 +173,27 @@ class QosServiceDriverManager(object):
         LOG.debug("Supported QoS rule types "
                   "(common subset for all loaded QoS drivers): %s", rule_types)
         return rule_types
+
+    def supported_rule_type_details(self, rule_type_name):
+        if not self._drivers:
+            return []
+
+        rule_type_drivers = []
+        for driver in self._drivers:
+            if rule_type_name in driver.supported_rules:
+                supported_parameters = []
+                rule_parameters = driver.supported_rules.get(rule_type_name)
+                for name, values in rule_parameters.items():
+                    parameter_values, parameter_type = (
+                        self._parse_parameter_values(values))
+                    supported_parameters.append({
+                        "parameter_name": name,
+                        "parameter_values": parameter_values,
+                        "parameter_type": parameter_type
+                    })
+                rule_type_drivers.append({
+                    "name": driver.name,
+                    "supported_parameters": supported_parameters
+                })
+
+        return rule_type_drivers
