@@ -355,7 +355,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         # Append IP's to bridge if necessary
         if ips:
             for ip in ips:
-                dst_device.addr.add(cidr=ip['cidr'])
+                # If bridge ip address already exists, then don't add
+                # otherwise will report error
+                if not dst_device.addr.list(to=ip['cidr']):
+                    dst_device.addr.add(cidr=ip['cidr'])
 
         if gateway:
             # Ensure that the gateway can be updated by changing the metric
