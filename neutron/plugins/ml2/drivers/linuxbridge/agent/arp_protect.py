@@ -28,19 +28,24 @@ MAC_CHAIN_PREFIX = 'neutronMAC-'
 
 
 def setup_arp_spoofing_protection(vif, port_details):
-    current_rules = ebtables(['-L']).splitlines()
     if not port_details.get('port_security_enabled', True):
         # clear any previous entries related to this port
-        delete_arp_spoofing_protection([vif], current_rules)
+        delete_arp_spoofing_protection([vif])
         LOG.info(_LI("Skipping ARP spoofing rules for port '%s' because "
                      "it has port security disabled"), vif)
         return
     if net.is_port_trusted(port_details):
         # clear any previous entries related to this port
-        delete_arp_spoofing_protection([vif], current_rules)
+        delete_arp_spoofing_protection([vif])
         LOG.debug("Skipping ARP spoofing rules for network owned port "
                   "'%s'.", vif)
         return
+    _setup_arp_spoofing_protection(vif, port_details)
+
+
+@lockutils.synchronized('ebtables')
+def _setup_arp_spoofing_protection(vif, port_details):
+    current_rules = ebtables(['-L']).splitlines()
     _install_mac_spoofing_protection(vif, port_details, current_rules)
     # collect all of the addresses and cidrs that belong to the port
     addresses = {f['ip_address'] for f in port_details['fixed_ips']}
@@ -55,7 +60,7 @@ def setup_arp_spoofing_protection(vif, port_details):
         # address anyway and the ARP_SPA can only match on /1 or more.
         return
 
-    install_arp_spoofing_protection(vif, addresses, current_rules)
+    _install_arp_spoofing_protection(vif, addresses, current_rules)
 
 
 def chain_name(vif):
@@ -64,9 +69,12 @@ def chain_name(vif):
 
 
 @lockutils.synchronized('ebtables')
-def delete_arp_spoofing_protection(vifs, current_rules=None):
-    if not current_rules:
-        current_rules = ebtables(['-L']).splitlines()
+def delete_arp_spoofing_protection(vifs):
+    current_rules = ebtables(['-L']).splitlines()
+    _delete_arp_spoofing_protection(vifs, current_rules)
+
+
+def _delete_arp_spoofing_protection(vifs, current_rules):
     # delete the jump rule and then delete the whole chain
     jumps = [vif for vif in vifs if vif_jump_present(vif, current_rules)]
     for vif in jumps:
@@ -78,12 +86,13 @@ def delete_arp_spoofing_protection(vifs, current_rules=None):
     _delete_mac_spoofing_protection(vifs, current_rules)
 
 
+@lockutils.synchronized('ebtables')
 def delete_unreferenced_arp_protection(current_vifs):
     # deletes all jump rules and chains that aren't in current_vifs but match
     # the spoof prefix
-    output = ebtables(['-L']).splitlines()
+    current_rules = ebtables(['-L']).splitlines()
     to_delete = []
-    for line in output:
+    for line in current_rules:
         # we're looking to find and turn the following:
         # Bridge chain: SPOOF_CHAIN_PREFIXtap199, entries: 0, policy: DROP
         # into 'tap199'
@@ -93,11 +102,16 @@ def delete_unreferenced_arp_protection(current_vifs):
                 to_delete.append(devname)
     LOG.info(_LI("Clearing orphaned ARP spoofing entries for devices %s"),
              to_delete)
-    delete_arp_spoofing_protection(to_delete, output)
+    _delete_arp_spoofing_protection(to_delete, current_rules)
 
 
 @lockutils.synchronized('ebtables')
-def install_arp_spoofing_protection(vif, addresses, current_rules):
+def install_arp_spoofing_protection(vif, addresses):
+    current_rules = ebtables(['-L']).splitlines()
+    _install_arp_spoofing_protection(vif, addresses, current_rules)
+
+
+def _install_arp_spoofing_protection(vif, addresses, current_rules):
     # make a VIF-specific ARP chain so we don't conflict with other rules
     vif_chain = chain_name(vif)
     if not chain_exists(vif_chain, current_rules):
@@ -130,7 +144,6 @@ def vif_jump_present(vif, current_rules):
     return False
 
 
-@lockutils.synchronized('ebtables')
 def _install_mac_spoofing_protection(vif, port_details, current_rules):
     mac_addresses = {port_details['mac_address']}
     if port_details.get('allowed_address_pairs'):
