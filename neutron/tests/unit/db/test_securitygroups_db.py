@@ -24,6 +24,7 @@ import testtools
 from neutron.db import common_db_mixin
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup
+from neutron.services.revisions import revision_plugin
 from neutron.tests.unit import testlib_api
 
 
@@ -253,7 +254,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                               self.ctx, sg_dict['id'])
             self.assertTrue(mock_rollback.called)
 
-    def test_security_group_precommit_create_event(self):
+    def _test_security_group_precommit_create_event(self,
+                                                    with_revisions=False):
         DEFAULT_SECGROUP = {
             'tenant_id': FAKE_SECGROUP['security_group']['tenant_id'],
             'name': 'default',
@@ -265,8 +267,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             'project_id': FAKE_SECGROUP['security_group']['tenant_id'],
             'name': 'default',
             'description': 'Default security group',
-            'security_group_rules': mock.ANY,
+            'security_group_rules': [
+                # Four rules for egress/ingress and ipv4/ipv6
+                mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+            ],
         }
+        if with_revisions:
+            DEFAULT_SECGROUP_DICT.update({
+                'revision_number': mock.ANY,
+            })
         with mock.patch.object(registry, "notify") as mock_notify:
             sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
             mock_notify.assert_has_calls([
@@ -290,6 +299,14 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 mock.call('security_group', 'after_create', mock.ANY,
                           context=mock.ANY, is_default=False,
                           security_group=sg_dict)])
+
+    def test_security_group_precommit_create_event_with_revisions(self):
+        revision = revision_plugin.RevisionPlugin()
+        self._test_security_group_precommit_create_event(True)
+        del revision  # appease pep8
+
+    def test_security_group_precommit_create_event(self):
+        self._test_security_group_precommit_create_event()
 
     def test_security_group_precommit_update_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
