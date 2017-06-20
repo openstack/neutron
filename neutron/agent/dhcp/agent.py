@@ -109,7 +109,8 @@ class DhcpAgent(manager.Manager):
                 self.conf
             )
             for net_id in existing_networks:
-                net = dhcp.NetModel({"id": net_id, "subnets": [], "ports": []})
+                net = dhcp.NetModel({"id": net_id, "subnets": [],
+                                     "non_local_subnets": [], "ports": []})
                 self.cache.put(net)
         except NotImplementedError:
             # just go ahead with an empty networks cache
@@ -334,8 +335,12 @@ class DhcpAgent(manager.Manager):
             return
         # NOTE(kevinbenton): we don't exclude dhcp disabled subnets because
         # they still change the indexes used for tags
-        old_cidrs = [s.cidr for s in old_network.subnets]
-        new_cidrs = [s.cidr for s in network.subnets]
+        old_non_local_subnets = getattr(old_network, 'non_local_subnets', [])
+        new_non_local_subnets = getattr(network, 'non_local_subnets', [])
+        old_cidrs = [s.cidr for s in (old_network.subnets +
+                                      old_non_local_subnets)]
+        new_cidrs = [s.cidr for s in (network.subnets +
+                                      new_non_local_subnets)]
         if old_cidrs == new_cidrs:
             self.call_driver('reload_allocations', network)
             self.cache.put(network)
@@ -639,7 +644,8 @@ class NetworkCache(object):
 
         self.cache[network.id] = network
 
-        for subnet in network.subnets:
+        non_local_subnets = getattr(network, 'non_local_subnets', [])
+        for subnet in (network.subnets + non_local_subnets):
             self.subnet_lookup[subnet.id] = network.id
 
         for port in network.ports:
@@ -648,7 +654,8 @@ class NetworkCache(object):
     def remove(self, network):
         del self.cache[network.id]
 
-        for subnet in network.subnets:
+        non_local_subnets = getattr(network, 'non_local_subnets', [])
+        for subnet in (network.subnets + non_local_subnets):
             del self.subnet_lookup[subnet.id]
 
         for port in network.ports:
@@ -688,7 +695,9 @@ class NetworkCache(object):
         num_ports = 0
         for net_id in net_ids:
             network = self.get_network_by_id(net_id)
+            non_local_subnets = getattr(network, 'non_local_subnets', [])
             num_subnets += len(network.subnets)
+            num_subnets += len(non_local_subnets)
             num_ports += len(network.ports)
         return {'networks': num_nets,
                 'subnets': num_subnets,

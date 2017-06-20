@@ -195,6 +195,11 @@ class DhcpLocalProcess(DhcpBase):
     def _remove_config_files(self):
         shutil.rmtree(self.network_conf_dir, ignore_errors=True)
 
+    @staticmethod
+    def _get_all_subnets(network):
+        non_local_subnets = getattr(network, 'non_local_subnets', [])
+        return network.subnets + non_local_subnets
+
     def _enable_dhcp(self):
         """check if there is a subnet within the network with dhcp enabled."""
         for subnet in self.network.subnets:
@@ -346,7 +351,7 @@ class Dnsmasq(DhcpLocalProcess):
             ]
 
         possible_leases = 0
-        for i, subnet in enumerate(self.network.subnets):
+        for i, subnet in enumerate(self._get_all_subnets(self.network)):
             mode = None
             # if a subnet is specified to have dhcp disabled
             if not subnet.enable_dhcp:
@@ -562,7 +567,8 @@ class Dnsmasq(DhcpLocalProcess):
         )
         """
         v6_nets = dict((subnet.id, subnet) for subnet in
-                       self.network.subnets if subnet.ip_version == 6)
+                       self._get_all_subnets(self.network)
+                       if subnet.ip_version == 6)
 
         for port in self.network.ports:
             fixed_ips = self._sort_fixed_ips_for_dnsmasq(port.fixed_ips,
@@ -625,7 +631,8 @@ class Dnsmasq(DhcpLocalProcess):
             timestamp = 0
         else:
             timestamp = int(time.time()) + self.conf.dhcp_lease_duration
-        dhcp_enabled_subnet_ids = [s.id for s in self.network.subnets
+        dhcp_enabled_subnet_ids = [s.id for s in
+                                   self._get_all_subnets(self.network)
                                    if s.enable_dhcp]
         for host_tuple in self._iter_hosts():
             port, alloc, hostname, name, no_dhcp, no_opts = host_tuple
@@ -674,7 +681,8 @@ class Dnsmasq(DhcpLocalProcess):
         filename = self.get_conf_file_name('host')
 
         LOG.debug('Building host file: %s', filename)
-        dhcp_enabled_subnet_ids = [s.id for s in self.network.subnets
+        dhcp_enabled_subnet_ids = [s.id for s in
+                                   self._get_all_subnets(self.network)
                                    if s.enable_dhcp]
         # NOTE(ihrachyshka): the loop should not log anything inside it, to
         # avoid potential performance drop when lots of hosts are dumped
@@ -867,7 +875,7 @@ class Dnsmasq(DhcpLocalProcess):
         if self.conf.enable_isolated_metadata or self.conf.force_metadata:
             subnet_to_interface_ip = self._make_subnet_interface_ip_map()
         isolated_subnets = self.get_isolated_subnets(self.network)
-        for i, subnet in enumerate(self.network.subnets):
+        for i, subnet in enumerate(self._get_all_subnets(self.network)):
             addr_mode = getattr(subnet, 'ipv6_address_mode', None)
             segment_id = getattr(subnet, 'segment_id', None)
             if (not subnet.enable_dhcp or
@@ -915,7 +923,7 @@ class Dnsmasq(DhcpLocalProcess):
                 )
 
             if subnet.ip_version == 4:
-                for s in self.network.subnets:
+                for s in self._get_all_subnets(self.network):
                     sub_segment_id = getattr(s, 'segment_id', None)
                     if (s.ip_version == 4 and
                             s.cidr != subnet.cidr and
@@ -1046,7 +1054,8 @@ class Dnsmasq(DhcpLocalProcess):
         gateway. The port must be owned by a neutron router.
         """
         isolated_subnets = collections.defaultdict(lambda: True)
-        subnets = dict((subnet.id, subnet) for subnet in network.subnets)
+        all_subnets = cls._get_all_subnets(network)
+        subnets = dict((subnet.id, subnet) for subnet in all_subnets)
 
         for port in network.ports:
             if port.device_owner not in constants.ROUTER_INTERFACE_OWNERS:
@@ -1074,7 +1083,8 @@ class Dnsmasq(DhcpLocalProcess):
         with 3rd party backends.
         """
         # Only IPv4 subnets, with dhcp enabled, will use the metadata proxy.
-        v4_dhcp_subnets = [s for s in network.subnets
+        all_subnets = cls._get_all_subnets(network)
+        v4_dhcp_subnets = [s for s in all_subnets
                            if s.ip_version == 4 and s.enable_dhcp]
         if not v4_dhcp_subnets:
             return False
@@ -1089,7 +1099,7 @@ class Dnsmasq(DhcpLocalProcess):
             # check if the network has a metadata subnet
             meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
             if any(netaddr.IPNetwork(s.cidr) in meta_cidr
-                   for s in network.subnets):
+                   for s in all_subnets):
                 return True
 
         isolated_subnets = cls.get_isolated_subnets(network)
@@ -1294,7 +1304,7 @@ class DeviceManager(object):
         # The ID that the DHCP port will have (or already has).
         device_id = self.get_device_id(network)
 
-        # Get the set of DHCP-enabled subnets on this network.
+        # Get the set of DHCP-enabled local subnets on this network.
         dhcp_subnets = {subnet.id: subnet for subnet in network.subnets
                         if subnet.enable_dhcp}
 
