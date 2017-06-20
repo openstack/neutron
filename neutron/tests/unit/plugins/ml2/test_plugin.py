@@ -1641,7 +1641,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             mech_context = driver_context.PortContext(
                 plugin, ctx, None,
                 plugin.get_network(self.context, n['network']['id']),
-                None, None)
+                models.PortBinding(), None)
             with mock.patch.object(plugin, '_attempt_binding') as ab:
                 plugin._bind_port_if_needed(mech_context)
                 self.assertFalse(ab.called)
@@ -1740,16 +1740,16 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         plugin = directory.get_plugin()
         mock_network = {'id': 'net_id'}
         mock_port = {'id': 'port_id'}
-        context = mock.Mock()
+        ctxt = context.get_admin_context()
         new_router_id = 'new_router'
         attrs = {'device_id': new_router_id, portbindings.HOST_ID: host_id}
         with mock.patch.object(plugin, '_update_port_dict_binding'):
             with mock.patch.object(segments_db, 'get_network_segments',
                                    return_value=[]):
                 mech_context = driver_context.PortContext(
-                    self, context, mock_port, mock_network, binding, None)
+                    self, ctxt, mock_port, mock_network, binding, None)
                 plugin._process_distributed_port_binding(mech_context,
-                                                         context, attrs)
+                                                         ctxt, attrs)
                 self.assertEqual(new_router_id,
                                  mech_context._binding.router_id)
                 self.assertEqual(host_id, mech_context._binding.host)

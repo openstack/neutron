@@ -13,19 +13,44 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api as ml2_api
 from oslo_log import log
 from oslo_serialization import jsonutils
+import sqlalchemy
 
 from neutron._i18n import _LW
 from neutron.db import segments_db
 from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
+
+
+class InstanceSnapshot(object):
+    """Used to avoid holding references to DB objects in PortContext."""
+    def __init__(self, obj):
+        self._model_class = obj.__class__
+        self._identity_key = sqlalchemy.orm.util.identity_key(instance=obj)[1]
+        self._cols = [col.key
+                      for col in sqlalchemy.inspect(self._model_class).columns]
+        for col in self._cols:
+            setattr(self, col, getattr(obj, col))
+
+    def persist_state_to_session(self, session):
+        """Updates the state of the snapshot in the session.
+
+        Finds the SQLA object in the session if it exists or creates a new
+        object and updates the object with the column values stored in this
+        snapshot.
+        """
+        db_obj = session.query(self._model_class).get(self._identity_key)
+        if db_obj:
+            for col in self._cols:
+                setattr(db_obj, col, getattr(self, col))
+        else:
+            session.add(self._model_class(**{col: getattr(self, col)
+                                             for col in self._cols}))
 
 
 class MechanismDriverContext(object):
@@ -101,10 +126,11 @@ class PortContext(MechanismDriverContext, api.PortContext):
         else:
             self._network_context = NetworkContext(
                 plugin, plugin_context, network) if network else None
-        # NOTE(kevinbenton): these copys can go away once we are working with
-        # OVO objects here instead of native SQLA objects.
-        self._binding = copy.deepcopy(binding)
-        self._binding_levels = copy.deepcopy(binding_levels)
+        # NOTE(kevinbenton): InstanceSnapshot can go away once we are working
+        # with OVO objects instead of native SQLA objects.
+        self._binding = InstanceSnapshot(binding)
+        self._binding_levels = [InstanceSnapshot(l)
+                                for l in (binding_levels or [])]
         self._segments_to_bind = None
         self._new_bound_segment = None
         self._next_segments_to_bind = None
@@ -130,7 +156,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         self._binding_levels = []
 
     def _push_binding_level(self, binding_level):
-        self._binding_levels.append(binding_level)
+        self._binding_levels.append(InstanceSnapshot(binding_level))
 
     def _pop_binding_level(self):
         return self._binding_levels.pop()

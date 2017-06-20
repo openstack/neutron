@@ -111,8 +111,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         ctx = context.get_admin_context()
         with self.port(name='name') as port:
             # emulating concurrent binding deletion
-            (ctx.session.query(ml2_models.PortBinding).
-             filter_by(port_id=port['port']['id']).delete())
+            with ctx.session.begin():
+                for item in (ctx.session.query(ml2_models.PortBinding).
+                             filter_by(port_id=port['port']['id'])):
+                    ctx.session.delete(item)
             self.assertIsNone(
                 self.plugin.get_bound_port_context(ctx, port['port']['id']))
 
@@ -196,7 +198,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 profile=jsonutils.dumps(original_port['binding:profile']),
                 vif_type=original_port['binding:vif_type'],
                 vif_details=original_port['binding:vif_details'])
-            levels = 1
+            levels = []
             mech_context = driver_context.PortContext(
                 plugin, ctx, updated_port, network, binding, levels,
                 original_port=original_port)
