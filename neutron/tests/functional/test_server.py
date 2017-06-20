@@ -130,7 +130,7 @@ class TestNeutronServer(base.BaseTestCase):
         return True
 
     def _fake_start(self):
-        with open(self.temp_file, 'a') as f:
+        with open(self.temp_file, 'ab') as f:
             f.write(FAKE_START_MSG)
 
     def _test_restart_service_on_sighup(self, service, workers=1):
@@ -164,7 +164,7 @@ class TestNeutronServer(base.BaseTestCase):
         # Verify that start has been called twice for each worker (one for
         # initial start, and the second one on SIGHUP after children were
         # terminated).
-        with open(self.temp_file, 'r') as f:
+        with open(self.temp_file, 'rb') as f:
             res = f.readline()
             self.assertEqual(expected_msg, res)
 
