@@ -840,8 +840,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.extension_manager.process_update_network(context, net_data,
                                                           updated_network)
             self._process_l3_update(context, updated_network, net_data)
-            self.type_manager.extend_network_dict_provider(context,
-                                                           updated_network)
 
             # ToDO(QoS): This would change once EngineFacade moves out
             db_network = self._get_network(context, id)
@@ -850,6 +848,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             context.session.expire(db_network)
             updated_network = self._make_network_dict(
                 db_network, context=context)
+            self.type_manager.extend_network_dict_provider(
+                context, updated_network)
 
             kwargs = {'context': context, 'network': updated_network,
                       'original_network': original_network,

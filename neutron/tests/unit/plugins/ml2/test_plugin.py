@@ -2613,6 +2613,16 @@ class TestML2Segments(Ml2PluginV2TestCase):
             mech_context = all_args[0][0][0]
             self.assertEqual(1100, mech_context.__dict__['_network']['mtu'])
 
+    def test_provider_info_update_network(self):
+        with self.network() as network:
+            network_id = network['network']['id']
+            plugin = directory.get_plugin()
+            updated_network = plugin.update_network(
+                self.context, network_id, {'network': {'name': 'test-net'}})
+            self.assertIn('provider:network_type', updated_network)
+            self.assertIn('provider:physical_network', updated_network)
+            self.assertIn('provider:segmentation_id', updated_network)
+
     def test_reserve_segment_update_network_mtu(self):
         with self.network() as network:
             network_id = network['network']['id']
