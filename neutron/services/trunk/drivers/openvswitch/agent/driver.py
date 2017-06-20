@@ -86,7 +86,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
         # we could check for incompatibilities and abort the creation request
         # only if the trunk is indeed associated with ports that have security
         # groups and QoS rules, though this would be a lot more work.
-        if "iptables_hybrid" in cfg.CONF.securitygroup.firewall_driver:
+        if "iptables_hybrid" in cfg.CONF.SECURITYGROUP.firewall_driver:
             LOG.warning(_LW(
                 "Firewall driver iptables_hybrid is not compatible with "
                 "trunk ports. Trunk %(trunk_id)s may be insecure."),
