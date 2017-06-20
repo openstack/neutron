@@ -1249,33 +1249,28 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv4(self):
         for direction in ['ingress', 'egress']:
-            for protocol in [None, 'tcp', 'icmp', 'udp']:
-                self._test_remove_conntrack_entries_sg_member_changed(
-                    'IPv4', protocol, direction, ct_zone=10)
+            self._test_remove_conntrack_entries_sg_member_changed(
+                'IPv4', direction, ct_zone=10)
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv4_no_ct_zone(
         self):
         for direction in ['ingress', 'egress']:
-            for protocol in [None, 'tcp', 'icmp', 'udp']:
-                self._test_remove_conntrack_entries_sg_member_changed(
-                    'IPv4', protocol, direction, ct_zone=10)
+            self._test_remove_conntrack_entries_sg_member_changed(
+                'IPv4', direction, ct_zone=None)
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv6(self):
         for direction in ['ingress', 'egress']:
-            for protocol in [None, 'tcp', 'icmp', 'udp']:
-                self._test_remove_conntrack_entries_sg_member_changed(
-                    'IPv6', protocol, direction, ct_zone=10)
+            self._test_remove_conntrack_entries_sg_member_changed(
+                'IPv6', direction, ct_zone=10)
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv6_no_ct_zone(
         self):
         for direction in ['ingress', 'egress']:
-            for protocol in [None, 'tcp', 'icmp', 'udp']:
-                self._test_remove_conntrack_entries_sg_member_changed(
-                    'IPv6', protocol, direction, ct_zone=None)
+            self._test_remove_conntrack_entries_sg_member_changed(
+                'IPv6', direction, ct_zone=None)
 
     def _test_remove_conntrack_entries_sg_member_changed(self, ethertype,
-                                                         protocol, direction,
-                                                         ct_zone):
+                                                         direction, ct_zone):
         port = self._fake_port()
         port['security_groups'] = ['fake_sg_id']
         port['security_group_source_groups'] = ['fake_sg_id2']
