@@ -20,6 +20,7 @@ import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
+import six
 import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
@@ -1226,7 +1227,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 ip_version=lib_constants.IP_VERSION_4,
                 table=router_fip_table_idx,
                 via=str(next_hop))
-            expected_extra_route = [{'cidr': unicode(destination),
+            expected_extra_route = [{'cidr': six.u(destination),
                                      'dev': fg_port_name,
                                      'table': router_fip_table_idx,
                                      'via': next_hop}]
