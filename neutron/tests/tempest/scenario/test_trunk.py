@@ -86,7 +86,7 @@ class TrunkTest(base.BaseTempestTestCase):
     def _detach_and_delete_trunk(self, server, trunk):
         # we have to detach the interface from the server before
         # the trunk can be deleted.
-        self.manager.compute.InterfacesClient().delete_interface(
+        self.os_primary.compute.InterfacesClient().delete_interface(
             server['id'], trunk['port_id'])
 
         def is_port_detached():
@@ -137,7 +137,7 @@ class TrunkTest(base.BaseTempestTestCase):
         }
 
     def _wait_for_server(self, server):
-        waiters.wait_for_server_status(self.manager.servers_client,
+        waiters.wait_for_server_status(self.os_primary.servers_client,
                                        server['server']['id'],
                                        constants.SERVER_STATUS_ACTIVE)
         self.check_connectivity(server['fip']['floating_ip_address'],

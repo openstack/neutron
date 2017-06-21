@@ -153,19 +153,19 @@ class QoSTest(base.BaseTempestTestCase):
         ssh_client = ssh.Client(self.fip['floating_ip_address'],
                                 CONF.validation.image_ssh_user,
                                 pkey=self.keypair['private_key'])
-        policy = self.admin_manager.network_client.create_qos_policy(
+        policy = self.os_admin.network_client.create_qos_policy(
                                         name='test-policy',
                                         description='test-qos-policy',
                                         shared=True)
         policy_id = policy['policy']['id']
-        self.admin_manager.network_client.create_bandwidth_limit_rule(
+        self.os_admin.network_client.create_bandwidth_limit_rule(
             policy_id, max_kbps=constants.LIMIT_KILO_BITS_PER_SECOND,
             max_burst_kbps=constants.LIMIT_KILO_BITS_PER_SECOND)
         port = self.client.list_ports(network_id=self.network['id'],
                                       device_id=self.server[
                                       'server']['id'])['ports'][0]
-        self.admin_manager.network_client.update_port(port['id'],
-                                                      qos_policy_id=policy_id)
+        self.os_admin.network_client.update_port(port['id'],
+                                                 qos_policy_id=policy_id)
         self._create_file_for_bw_tests(ssh_client)
         utils.wait_until_true(lambda: self._check_bw(
             ssh_client,

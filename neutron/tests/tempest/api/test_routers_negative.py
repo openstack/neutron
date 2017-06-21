@@ -54,7 +54,7 @@ class RoutersNegativePolicyTest(RoutersNegativeTestBase):
     @test.attr(type='negative')
     @decorators.idempotent_id('159f576d-a423-46b5-b501-622694c02f6b')
     def test_add_interface_wrong_tenant(self):
-        client2 = self.alt_manager.network_client
+        client2 = self.os_alt.network_client
         network = client2.create_network()['network']
         self.addCleanup(client2.delete_network, network['id'])
         subnet = self.create_subnet(network, client=client2)
