@@ -17,12 +17,12 @@ NOTE: This module shall not be used by external projects. It will be moved
 
 import contextlib
 
+from neutron_lib.api import attributes
 from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy.ext import associationproxy
 
 from neutron._i18n import _LE
-from neutron.api.v2 import attributes
 
 LOG = logging.getLogger(__name__)
 

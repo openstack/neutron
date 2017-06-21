@@ -20,6 +20,7 @@ import collections
 import contextlib
 import hashlib
 
+from neutron_lib.api import attributes as lib_attrs
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -150,16 +151,17 @@ def in_pending_status(status):
 
 def _fixup_res_dict(context, attr_name, res_dict, check_allow_post=True):
     attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[attr_name]
+    attr_ops = lib_attrs.AttributeInfo(attr_info)
     try:
-        attributes.populate_tenant_id(context, res_dict, attr_info, True)
-        attributes.verify_attributes(res_dict, attr_info)
+        attr_ops.populate_project_id(context, res_dict, True)
+        lib_attrs.populate_project_info(attr_info)
+        attr_ops.verify_attributes(res_dict)
     except webob.exc.HTTPBadRequest as e:
         # convert webob exception into ValueError as these functions are
         # for internal use. webob exception doesn't make sense.
         raise ValueError(e.detail)
-    attributes.fill_default_value(attr_info, res_dict,
-                                  check_allow_post=check_allow_post)
-    attributes.convert_value(attr_info, res_dict)
+    attr_ops.fill_post_defaults(res_dict, check_allow_post=check_allow_post)
+    attr_ops.convert_values(res_dict)
     return res_dict
 
 
