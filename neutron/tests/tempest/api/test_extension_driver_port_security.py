@@ -69,7 +69,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertFalse(port['port_security_enabled'])
         self.assertEmpty(port['security_groups'])
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('ff11226c-a5ff-4ad4-8480-0840e36e47a9')
     @test.requires_ext(extension='port-security', service='network')
     def test_port_sec_update_port_failed(self):
@@ -133,7 +133,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertTrue(
             self.client.is_resource_deleted('network', network['id']))
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('ed93e453-3f8d-495e-8e7e-b0e268c2ebd9')
     @test.requires_ext(extension='port-security', service='network')
     @test.requires_ext(extension='allowed-address-pairs', service='network')

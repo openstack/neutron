@@ -16,7 +16,6 @@
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 import testtools
 
 from neutron.tests.tempest.api import base
@@ -42,7 +41,7 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
         cls.create_router_interface(cls.router['id'], cls.subnet['id'])
         cls.port = cls.create_port(cls.network)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('11116ee9-4e99-5b15-b8e1-aa7df92ca589')
     def test_associate_floating_ip_with_port_from_another_tenant(self):
         if not CONF.identity_feature_enabled.api_v2_admin:

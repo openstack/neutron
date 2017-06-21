@@ -15,7 +15,6 @@
 from neutron_lib.db import constants as db_const
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -26,7 +25,7 @@ class MeteringNegativeTestJSON(base.BaseAdminNetworkTest):
 
     required_extensions = ['metering']
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('8b3f7c84-9d37-4771-8681-bfd2c07f3c2d')
     def test_create_metering_label_with_too_long_name(self):
         self.assertRaises(lib_exc.BadRequest,

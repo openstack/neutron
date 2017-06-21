@@ -16,7 +16,6 @@
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 import testtools
 
 from neutron.tests.tempest.api import base_routers as base
@@ -36,7 +35,7 @@ class RoutersNegativeTestBase(base.BaseRouterTest):
 
 class RoutersNegativeTest(RoutersNegativeTestBase):
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('e3e751af-15a2-49cc-b214-a7154579e94f')
     def test_delete_router_in_use(self):
         # This port is deleted after a test by remove_router_interface.
@@ -51,7 +50,7 @@ class RoutersNegativePolicyTest(RoutersNegativeTestBase):
 
     credentials = ['admin', 'primary', 'alt']
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('159f576d-a423-46b5-b501-622694c02f6b')
     def test_add_interface_wrong_tenant(self):
         client2 = self.os_alt.network_client
@@ -73,7 +72,7 @@ class DvrRoutersNegativeTest(RoutersNegativeTestBase):
 
     required_extensions = ['dvr']
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('4990b055-8fc7-48ab-bba7-aa28beaad0b9')
     def test_router_create_tenant_distributed_returns_forbidden(self):
         with testtools.ExpectedException(lib_exc.Forbidden):
@@ -85,7 +84,7 @@ class HaRoutersNegativeTest(RoutersNegativeTestBase):
 
     required_extensions = ['l3-ha']
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('821b85b9-9c51-40f3-831f-bf223a7e0084')
     def test_router_create_tenant_ha_returns_forbidden(self):
         with testtools.ExpectedException(lib_exc.Forbidden):
