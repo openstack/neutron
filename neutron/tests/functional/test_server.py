@@ -213,7 +213,7 @@ class TestWsgiServer(TestNeutronServer):
 
             # Memorize a port that was chosen for the service
             self.port = server.port
-            os.write(self.pipeout, str(self.port))
+            os.write(self.pipeout, bytes(self.port))
 
             server.wait()
 
