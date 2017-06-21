@@ -755,9 +755,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 vlt = vlantransparent.get_vlan_transparent(net_data)
                 net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
-            mech_context = driver_context.NetworkContext(self, context,
-                                                         result)
-            self.mechanism_manager.create_network_precommit(mech_context)
 
             result[api.MTU] = self._get_network_mtu(result)
 
@@ -768,6 +765,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                 net_data[az_ext.AZ_HINTS])
                 net_db[az_ext.AZ_HINTS] = az_hints
                 result[az_ext.AZ_HINTS] = az_hints
+
+            mech_context = driver_context.NetworkContext(self, context,
+                                                         result)
+            self.mechanism_manager.create_network_precommit(mech_context)
 
         self._apply_dict_extend_functions('networks', result, net_db)
         return result, mech_context
