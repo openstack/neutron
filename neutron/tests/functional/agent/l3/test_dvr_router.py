@@ -1260,6 +1260,145 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._setup_dvr_router_static_routes(
             router_namespace=False, check_fpr_int_rule_delete=True)
 
+    def _assert_fip_namespace_interface_static_routes(
+        self, address_scopes, fpr_device,
+        router_info, rtr_2_fip, fpr_device_name):
+        fixed_ips_1 = router_info[lib_constants.INTERFACE_KEY][0]['fixed_ips']
+        fixed_ips_2 = router_info[lib_constants.INTERFACE_KEY][1]['fixed_ips']
+        actual_routes = fpr_device.route.list_routes(
+                ip_version=lib_constants.IP_VERSION_4, table='main',
+                via=str(rtr_2_fip.ip))
+        if not address_scopes:
+            self.assertEqual([], actual_routes)
+
+        if address_scopes:
+            cidr1 = (
+                str(fixed_ips_1[0]['ip_address']) +
+                '/' + str(fixed_ips_1[0]['prefixlen']))
+            cidr2 = (
+                str(fixed_ips_2[0]['ip_address']) +
+                '/' + str(fixed_ips_2[0]['prefixlen']))
+            net_addr_1 = netaddr.IPNetwork(cidr1).network
+            net_addr_2 = netaddr.IPNetwork(cidr2).network
+            route_cidr_1 = (
+                str(net_addr_1) + '/' +
+                str(fixed_ips_1[0]['prefixlen']))
+            route_cidr_2 = (
+                str(net_addr_2) + '/' +
+                str(fixed_ips_2[0]['prefixlen']))
+            expected_routes = [{'dev': fpr_device_name,
+                                'cidr': unicode(route_cidr_1),
+                                'via': str(rtr_2_fip.ip),
+                                'table': 'main'},
+                               {'dev': fpr_device_name,
+                                'cidr': unicode(route_cidr_2),
+                                'via': str(rtr_2_fip.ip),
+                                'table': 'main'}]
+            # Comparing the static routes for both internal interfaces on the
+            # main table.
+            self.assertEqual(expected_routes, actual_routes)
+        else:
+            self.assertEqual([], actual_routes)
+
+    def _assert_interface_rules_on_gateway_remove(
+        self, router, agent, address_scopes, agent_gw_port,
+        rfp_device, fpr_device):
+
+        router.router[n_const.SNAT_ROUTER_INTF_KEY] = []
+        router.router['gw_port'] = ""
+        router.router['gw_port_host'] = ""
+        self.agent._process_updated_router(router.router)
+        router_updated = self.agent.router_info[router.router['id']]
+        self.assertFalse(rfp_device.exists())
+        self.assertFalse(fpr_device.exists())
+        self.assertTrue(self._namespace_exists(router_updated.ns_name))
+        self._assert_fip_namespace_deleted(
+            agent_gw_port, assert_ovs_interface=False)
+        if not address_scopes:
+            ns_ipr = ip_lib.IPRule(namespace=router_updated.ns_name)
+            ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+            ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+            self.assertEqual(3, len(ip4_rules_list))
+            self.assertEqual(2, len(ip6_rules_list))
+
+    def _setup_dvr_router_for_fast_path_exit(self, address_scopes=True):
+        """Test to validate the fip and router namespace routes.
+
+        This test validates the fip and router namespace routes
+        that are based on the address scopes.
+        If the address scopes of internal network and external network
+        matches, the traffic will be forwarded to the fip namespace and
+        the reverse traffic to the private network is forwarded to the
+        router namespace.
+        """
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info(
+            enable_snat=True, enable_gw=True, enable_floating_ip=True)
+        fip_agent_gw_port = router_info[n_const.FLOATINGIP_AGENT_INTF_KEY]
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_port[0])
+        router_info[lib_constants.FLOATINGIP_KEY] = []
+        if address_scopes:
+            address_scope1 = {
+                str(lib_constants.IP_VERSION_4): 'scope1'}
+            address_scope2 = {
+                str(lib_constants.IP_VERSION_4): 'scope1'}
+        else:
+            address_scope1 = {
+                str(lib_constants.IP_VERSION_4): 'scope2'}
+            address_scope2 = {
+                str(lib_constants.IP_VERSION_4): 'scope2'}
+        router_info['gw_port']['address_scopes'] = {
+            str(lib_constants.IP_VERSION_4): 'scope1'}
+        router_info[lib_constants.INTERFACE_KEY][0]['address_scopes'] = (
+            address_scope1)
+        router_info[lib_constants.INTERFACE_KEY][1]['address_scopes'] = (
+            address_scope2)
+        router1 = self.manage_router(self.agent, router_info)
+        fip_ns_name = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertTrue(self._namespace_exists(fip_ns_name))
+
+        # Check the router namespace for default route.
+        rfp_device_name = router1.fip_ns.get_rtr_ext_device_name(
+            router1.router_id)
+        rfp_device = ip_lib.IPDevice(rfp_device_name,
+                                     namespace=router1.ns_name)
+        fpr_device_name = router1.fip_ns.get_int_device_name(router1.router_id)
+        fpr_device = ip_lib.IPDevice(fpr_device_name,
+                                     namespace=fip_ns_name)
+        rtr_2_fip, fip_2_rtr = router1.rtr_fip_subnet.get_pair()
+        self._assert_default_gateway(
+            fip_2_rtr, rfp_device, rfp_device_name)
+
+        # Check if any snat redirect rules in the router namespace exist.
+        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
+        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+        ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+        # Just make sure the basic set of rules are there in the router
+        # namespace
+        self.assertEqual(5, len(ip4_rules_list))
+        self.assertEqual(2, len(ip6_rules_list))
+        # Now check the fip namespace static routes for reaching the private
+        # network.
+        self._assert_fip_namespace_interface_static_routes(
+            address_scopes, fpr_device,
+            router_info, rtr_2_fip, fpr_device_name)
+
+        # Now remove the gateway and validate if the respective interface
+        # routes in router namespace is deleted respectively.
+        self. _assert_interface_rules_on_gateway_remove(
+            router1, self.agent, address_scopes, fip_agent_gw_port[0],
+            rfp_device, fpr_device)
+
+    def test_dvr_fip_and_router_namespace_rules_with_address_scopes_match(
+        self):
+        self._setup_dvr_router_for_fast_path_exit(address_scopes=True)
+
+    def test_dvr_fip_and_router_namespace_rules_with_address_scopes_mismatch(
+        self):
+        self._setup_dvr_router_for_fast_path_exit(address_scopes=False)
+
     def test_dvr_router_gateway_update_to_none(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info(enable_snat=True)
@@ -1293,13 +1432,15 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertIsNone(ex_gw_device.route.get_gateway())
         self.assertIsNone(fg_device.route.get_gateway())
 
-    def _assert_fip_namespace_deleted(self, ext_gateway_port):
+    def _assert_fip_namespace_deleted(
+        self, ext_gateway_port, assert_ovs_interface=True):
         ext_net_id = ext_gateway_port['network_id']
         fip_ns = self.agent.get_fip_ns(ext_net_id)
         fip_ns.unsubscribe = mock.Mock()
         self.agent.fipnamespace_delete_on_ext_net(
             self.agent.context, ext_net_id)
-        self._assert_interfaces_deleted_from_ovs()
+        if assert_ovs_interface:
+            self._assert_interfaces_deleted_from_ovs()
         fip_ns_name = fip_ns.get_name()
         self.assertFalse(self._namespace_exists(fip_ns_name))
         self.assertTrue(fip_ns.destroyed)

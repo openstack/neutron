@@ -175,10 +175,53 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.get_floating_ips = mock.Mock(return_value=True)
         ri.fip_ns = mock.Mock()
         ri.fip_ns.subscribe.return_value = False
+        ri.rtr_fip_connect = True
         ex_gw_port = {'network_id': 'fake_net_id'}
         ri.create_dvr_external_gateway_on_agent(ex_gw_port)
         ri.fip_ns.create_or_update_gateway_port.assert_called_once_with(
             fip_agent_port)
+
+    def test_create_dvr_fip_interfaces_with_matching_address_scope(self):
+        self._setup_create_dvr_fip_interfaces_for_setting_routing_rules(
+            address_scopes_match=True)
+
+    def test_create_dvr_fip_interfaces_with_address_scope_mismatch(self):
+        self._setup_create_dvr_fip_interfaces_for_setting_routing_rules()
+
+    def _setup_create_dvr_fip_interfaces_for_setting_routing_rules(
+        self, address_scopes_match=False):
+        ri = self._create_router()
+        ri.get_floating_agent_gw_interface = mock.Mock()
+        ri.fip_ns = mock.Mock()
+        ri._add_interface_routing_rule_to_router_ns = mock.Mock()
+        ri._add_interface_route_to_fip_ns = mock.Mock()
+        ri.fip_ns._create_rtr_2_fip_link = mock.Mock()
+        ri.internal_ports = ['moke_port_1', 'moke_port_2']
+        if address_scopes_match:
+            ri._check_if_address_scopes_match = mock.Mock(
+                return_value=True)
+        else:
+            ri._check_if_address_scopes_match = mock.Mock(
+                return_value=False)
+        ri.rtr_fip_connect = False
+        ex_gw_port = {'network_id': 'fake_net_id'}
+        ri.create_dvr_external_gateway_on_agent(ex_gw_port)
+        ri.connect_rtr_2_fip()
+        self.assertTrue(ri._check_if_address_scopes_match.called)
+        if address_scopes_match:
+            self.assertTrue(
+                ri.fip_ns.create_rtr_2_fip_link.called)
+            self.assertTrue(
+                ri._add_interface_routing_rule_to_router_ns.called)
+            self.assertTrue(
+                ri._add_interface_route_to_fip_ns.called)
+        else:
+            self.assertFalse(
+                ri._add_interface_routing_rule_to_router_ns.called)
+            self.assertFalse(
+                ri._add_interface_route_to_fip_ns.called)
+            self.assertTrue(
+                ri.fip_ns.create_rtr_2_fip_link.called)
 
     def test_get_floating_ips_dvr(self):
         router = mock.MagicMock()
@@ -298,7 +341,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.fip_ns.local_subnets.allocate.assert_not_called()
 
         # Validate that fip_ns.local_subnets is called when
-        # rtr_fip_subnet is None
+        # ri.rtr_fip_subnet is None
         ri.rtr_fip_subnet = None
         ri.floating_ip_added_dist(fip, ip_cidr)
         mIPRule().rule.add.assert_called_with(ip='192.168.0.1',
