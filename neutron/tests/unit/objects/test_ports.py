@@ -233,6 +233,12 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
         obj = ports.Port.get_object(self.context, id=obj.id)
         self.assertEqual(groups, obj.security_group_ids)
+        self.assertEqual([obj],
+                         ports.Port.get_objects(
+                             self.context, security_group_ids=(sg1_id, )))
+        self.assertEqual([obj],
+                         ports.Port.get_objects(
+                             self.context, security_group_ids=(sg2_id, )))
 
         sg3_id = self._create_test_security_group_id()
         obj.security_group_ids = {sg3_id}
