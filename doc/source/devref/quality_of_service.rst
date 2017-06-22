@@ -283,7 +283,7 @@ point of view)
     +----------------------+----------------+----------------+----------------+
     | Rule \ Backend       | Open vSwitch   | SR-IOV         | Linux Bridge   |
     +----------------------+----------------+----------------+----------------+
-    | Bandwidth Limit      | Egress/Ingress | Egress (1)     | Egress         |
+    | Bandwidth Limit      | Egress/Ingress | Egress (1)     | Egress/Ingress |
     +----------------------+----------------+----------------+----------------+
     | Minimum Bandwidth    | -              | Egress         | -              |
     +----------------------+----------------+----------------+----------------+
@@ -348,11 +348,19 @@ value.
 Linux bridge
 ~~~~~~~~~~~~
 
-The Linux bridge implementation relies on the new tc_lib functions:
+The Linux bridge implementation relies on the new tc_lib functions.
 
-* set_bw_limit
-* update_bw_limit
-* delete_bw_limit
+For egress bandwidth limit rule:
+
+* set_filters_bw_limit
+* update_filters_bw_limit
+* delete_filters_bw_limit
+
+For ingress bandwidth limit rule:
+
+* set_tbf_bw_limit
+* update_tbf_bw_limit
+* delete_tbf_bw_limit
 
 The ingress bandwidth limit is configured on the tap port by setting a simple
 `tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on the

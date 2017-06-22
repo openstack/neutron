@@ -18,6 +18,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import tc_lib
+from neutron.common import constants
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.linuxbridge.agent.extension_drivers import (
@@ -36,15 +37,19 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
         cfg.CONF.set_override("tbf_latency", TEST_LATENCY_VALUE, "QOS")
         self.qos_driver = qos_driver.QosLinuxbridgeAgentDriver()
         self.qos_driver.initialize()
-        self.rule_bw_limit = self._create_bw_limit_rule_obj()
+        self.rule_egress_bw_limit = self._create_bw_limit_rule_obj(
+            constants.EGRESS_DIRECTION)
+        self.rule_ingress_bw_limit = self._create_bw_limit_rule_obj(
+            constants.INGRESS_DIRECTION)
         self.rule_dscp_marking = self._create_dscp_marking_rule_obj()
         self.port = self._create_fake_port(uuidutils.generate_uuid())
 
-    def _create_bw_limit_rule_obj(self):
+    def _create_bw_limit_rule_obj(self, direction):
         rule_obj = rule.QosBandwidthLimitRule()
         rule_obj.id = uuidutils.generate_uuid()
         rule_obj.max_kbps = 2
         rule_obj.max_burst_kbps = 200
+        rule_obj.direction = direction
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -73,32 +78,77 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
     def _dscp_rule_tag(self, device):
         return "dscp-%s" % device
 
-    def test_create_bandwidth_limit(self):
+    def test_create_egress_bandwidth_limit(self):
         with mock.patch.object(
             tc_lib.TcCommand, "set_filters_bw_limit"
-        ) as set_bw_limit:
+        ) as set_filters_bw_limit, mock.patch.object(
+            tc_lib.TcCommand, "set_tbf_bw_limit"
+        ) as set_tbf_limit:
             self.qos_driver.create_bandwidth_limit(self.port,
-                                                   self.rule_bw_limit)
-            set_bw_limit.assert_called_once_with(
-                self.rule_bw_limit.max_kbps, self.rule_bw_limit.max_burst_kbps,
+                                                   self.rule_egress_bw_limit)
+            set_filters_bw_limit.assert_called_once_with(
+                self.rule_egress_bw_limit.max_kbps,
+                self.rule_egress_bw_limit.max_burst_kbps,
+            )
+            set_tbf_limit.assert_not_called()
+
+    def test_create_ingress_bandwidth_limit(self):
+        with mock.patch.object(
+            tc_lib.TcCommand, "set_filters_bw_limit"
+        ) as set_filters_bw_limit, mock.patch.object(
+            tc_lib.TcCommand, "set_tbf_bw_limit"
+        ) as set_tbf_limit:
+            self.qos_driver.create_bandwidth_limit(self.port,
+                                                   self.rule_ingress_bw_limit)
+            set_filters_bw_limit.assert_not_called()
+            set_tbf_limit.assert_called_once_with(
+                self.rule_ingress_bw_limit.max_kbps,
+                self.rule_ingress_bw_limit.max_burst_kbps,
+                TEST_LATENCY_VALUE
             )
 
-    def test_update_bandwidth_limit(self):
+    def test_update_egress_bandwidth_limit(self):
         with mock.patch.object(
             tc_lib.TcCommand, "update_filters_bw_limit"
-        ) as update_bw_limit:
+        ) as update_filters_bw_limit, mock.patch.object(
+            tc_lib.TcCommand, "update_tbf_bw_limit"
+        ) as update_tbf_bw_limit:
             self.qos_driver.update_bandwidth_limit(self.port,
-                                                   self.rule_bw_limit)
-            update_bw_limit.assert_called_once_with(
-                self.rule_bw_limit.max_kbps, self.rule_bw_limit.max_burst_kbps,
+                                                   self.rule_egress_bw_limit)
+            update_filters_bw_limit.assert_called_once_with(
+                self.rule_egress_bw_limit.max_kbps,
+                self.rule_egress_bw_limit.max_burst_kbps,
+            )
+            update_tbf_bw_limit.assert_not_called()
+
+    def test_update_ingress_bandwidth_limit(self):
+        with mock.patch.object(
+            tc_lib.TcCommand, "update_filters_bw_limit"
+        ) as update_filters_bw_limit, mock.patch.object(
+            tc_lib.TcCommand, "update_tbf_bw_limit"
+        ) as update_tbf_bw_limit:
+            self.qos_driver.update_bandwidth_limit(self.port,
+                                                   self.rule_ingress_bw_limit)
+            update_filters_bw_limit.assert_not_called()
+            update_tbf_bw_limit.assert_called_once_with(
+                self.rule_egress_bw_limit.max_kbps,
+                self.rule_egress_bw_limit.max_burst_kbps,
+                TEST_LATENCY_VALUE
             )
 
     def test_delete_bandwidth_limit(self):
         with mock.patch.object(
             tc_lib.TcCommand, "delete_filters_bw_limit"
-        ) as delete_bw_limit:
+        ) as delete_filters_bw_limit:
             self.qos_driver.delete_bandwidth_limit(self.port)
-            delete_bw_limit.assert_called_once_with()
+            delete_filters_bw_limit.assert_called_once_with()
+
+    def test_delete_ingress_bandwidth_limit(self):
+        with mock.patch.object(
+            tc_lib.TcCommand, "delete_tbf_bw_limit"
+        ) as delete_tbf_bw_limit:
+            self.qos_driver.delete_bandwidth_limit_ingress(self.port)
+            delete_tbf_bw_limit.assert_called_once_with()
 
     def test_create_dscp_marking(self):
         expected_calls = [

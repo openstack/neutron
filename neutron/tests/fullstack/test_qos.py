@@ -112,15 +112,10 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
     number_of_hosts = 1
 
     @staticmethod
-    def _get_expected_burst_value(limit, direction):
-        # For egress bandwidth limit this value should be calculated as
-        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        if direction == common_constants.EGRESS_DIRECTION:
-            return int(
-                limit * qos_consts.DEFAULT_BURST_RATE
-            )
-        else:
-            return 0
+    def _get_expected_egress_burst_value(limit):
+        return int(
+            limit * qos_consts.DEFAULT_BURST_RATE
+        )
 
     def _wait_for_bw_rule_removed(self, vm, direction):
         # No values are provided when port doesn't have qos policy
@@ -176,26 +171,6 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
             body={'port': {'qos_policy_id': None}})
         self._wait_for_bw_rule_removed(vm, self.direction)
 
-
-class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
-    l2_agent_type = constants.AGENT_TYPE_OVS
-    direction_scenarios = [
-        ('ingress', {'direction': common_constants.INGRESS_DIRECTION}),
-        ('egress', {'direction': common_constants.EGRESS_DIRECTION})
-    ]
-    scenarios = testscenarios.multiply_scenarios(
-        direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
-
-    def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
-        if direction == common_constants.EGRESS_DIRECTION:
-            utils.wait_until_true(
-                lambda: vm.bridge.get_egress_bw_limit_for_port(
-                    vm.port.name) == (limit, burst))
-        elif direction == common_constants.INGRESS_DIRECTION:
-            utils.wait_until_true(
-                lambda: vm.bridge.get_ingress_bw_limit_for_port(
-                    vm.port.name) == (limit, burst))
-
     def test_bw_limit_direction_change(self):
         # Create port with qos policy attached, with rule self.direction
         vm, qos_policy = self._prepare_vm_with_qos_policy(
@@ -217,11 +192,64 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
             vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.reverse_direction)
 
 
+class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
+    l2_agent_type = constants.AGENT_TYPE_OVS
+    direction_scenarios = [
+        ('ingress', {'direction': common_constants.INGRESS_DIRECTION}),
+        ('egress', {'direction': common_constants.EGRESS_DIRECTION})
+    ]
+    scenarios = testscenarios.multiply_scenarios(
+        direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
+
+    @staticmethod
+    def _get_expected_burst_value(limit, direction):
+        # For egress bandwidth limit this value should be calculated as
+        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
+        if direction == common_constants.EGRESS_DIRECTION:
+            return TestBwLimitQoSOvs._get_expected_egress_burst_value(limit)
+        else:
+            return 0
+
+    def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
+        if direction == common_constants.EGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: vm.bridge.get_egress_bw_limit_for_port(
+                    vm.port.name) == (limit, burst))
+        elif direction == common_constants.INGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: vm.bridge.get_ingress_bw_limit_for_port(
+                    vm.port.name) == (limit, burst))
+
+
 class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
     scenarios = [
-        ('egress', {'direction': common_constants.EGRESS_DIRECTION})
+        ('egress', {'direction': common_constants.EGRESS_DIRECTION}),
+        ('ingress', {'direction': common_constants.INGRESS_DIRECTION}),
     ]
+
+    @staticmethod
+    def _get_expected_burst_value(limit, direction):
+        # For egress bandwidth limit this value should be calculated as
+        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
+        if direction == common_constants.EGRESS_DIRECTION:
+            return TestBwLimitQoSLinuxbridge._get_expected_egress_burst_value(
+                limit)
+        else:
+            return TestBwLimitQoSLinuxbridge._get_expected_ingress_burst_value(
+                limit)
+
+    @staticmethod
+    def _get_expected_ingress_burst_value(limit):
+        # calculate expected burst in same way as it's done in tc_lib but
+        # burst value = 0 so it's always value calculated from kernel's hz
+        # value
+        # as in tc_lib.bits_to_kilobits result is rounded up that even
+        # 1 bit gives 1 kbit same should be added here to expected burst
+        # value
+        return int(
+            float(limit) /
+            float(linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE) + 1)
 
     def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
         port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
@@ -231,8 +259,12 @@ class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
             linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE,
             namespace=vm.host.host_namespace
         )
-        utils.wait_until_true(
-            lambda: tc.get_filters_bw_limits() == (limit, burst))
+        if direction == common_constants.EGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: tc.get_filters_bw_limits() == (limit, burst))
+        elif direction == common_constants.INGRESS_DIRECTION:
+            utils.wait_until_true(
+                lambda: tc.get_tbf_bw_limits() == (limit, burst))
 
 
 class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
