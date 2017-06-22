@@ -1224,6 +1224,21 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
             self.assertGreater(updated_ports[0]['revision_number'],
                                port['revision_number'])
 
+    def test_bind_port_bumps_revision(self):
+        updated_ports = []
+        created_ports = []
+        ureceiver = lambda *a, **k: updated_ports.append(k['port'])
+        creceiver = lambda *a, **k: created_ports.append(k['port'])
+        registry.subscribe(ureceiver, resources.PORT,
+                           events.AFTER_UPDATE)
+        registry.subscribe(creceiver, resources.PORT,
+                           events.AFTER_CREATE)
+        host_arg = {portbindings.HOST_ID: HOST}
+        with self.port(arg_list=(portbindings.HOST_ID,),
+                       **host_arg):
+            self.assertGreater(updated_ports[0]['revision_number'],
+                               created_ports[0]['revision_number'])
+
 
 class TestMl2PortsV2WithL3(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     """For testing methods that require the L3 service plugin."""

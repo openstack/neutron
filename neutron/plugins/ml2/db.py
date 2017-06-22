@@ -110,9 +110,9 @@ def get_binding_levels(context, port_id, host):
 @db_api.context_manager.writer
 def clear_binding_levels(context, port_id, host):
     if host:
-        (context.session.query(models.PortBindingLevel).
-         filter_by(port_id=port_id, host=host).
-         delete())
+        for l in (context.session.query(models.PortBindingLevel).
+                  filter_by(port_id=port_id, host=host)):
+            context.session.delete(l)
         LOG.debug("For port %(port_id)s, host %(host)s, "
                   "cleared binding levels",
                   {'port_id': port_id,
