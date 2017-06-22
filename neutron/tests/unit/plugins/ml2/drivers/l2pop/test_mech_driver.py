@@ -37,6 +37,7 @@ from neutron.plugins.ml2.drivers.l2pop import mech_driver as l2pop_mech_driver
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2 import managers
+from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import rpc
 from neutron.scheduler import l3_agent_scheduler
 from neutron.tests import base
@@ -1110,12 +1111,12 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
 
         with self.port() as port:
             port['port'][portbindings.HOST_ID] = host
-            bindings = [mock.Mock()]
+            bindings = [models.PortBindingLevel()]
             port_context = driver_context.PortContext(
                 self.driver, self.context, port['port'],
                 self.driver.get_network(
                     self.context, port['port']['network_id']),
-                None, bindings)
+                models.PortBinding(), bindings)
             mock.patch.object(port_context, '_expand_segment').start()
             # The point is to provide coverage and to assert that no exceptions
             # are raised.
@@ -1139,12 +1140,12 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.mock_fanout.reset_mock()
 
                 p['port'][portbindings.HOST_ID] = HOST
-                bindings = [mock.Mock()]
+                bindings = [models.PortBindingLevel()]
                 port_context = driver_context.PortContext(
                     self.driver, self.context, p['port'],
                     self.driver.get_network(
                         self.context, p['port']['network_id']),
-                    None, bindings)
+                    models.PortBinding(), bindings)
                 mock.patch.object(port_context, '_expand_segment').start()
                 # The point is to provide coverage and to assert that
                 # no exceptions are raised.
@@ -1160,7 +1161,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.driver, self.context, port['port'],
                 self.driver.get_network(
                     self.context, port['port']['network_id']),
-                None, None)
+                models.PortBinding(), None)
             l2pop_mech._fixed_ips_changed(
                 port_context, None, port['port'], (set(['10.0.0.1']), set()))
 
@@ -1302,8 +1303,8 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                                              mock.Mock(),
                                              port,
                                              mock.MagicMock(),
-                                             mock.Mock(),
-                                             None,
+                                             models.PortBinding(),
+                                             [models.PortBindingLevel()],
                                              original_port=original_port)
 
         mech_driver = l2pop_mech_driver.L2populationMechanismDriver()

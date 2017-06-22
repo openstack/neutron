@@ -82,7 +82,7 @@ def get_locked_port_and_binding(context, port_id):
 def set_binding_levels(context, levels):
     if levels:
         for level in levels:
-            context.session.add(level)
+            level.persist_state_to_session(context.session)
         LOG.debug("For port %(port_id)s, host %(host)s, "
                   "set binding levels %(levels)s",
                   {'port_id': levels[0].port_id,

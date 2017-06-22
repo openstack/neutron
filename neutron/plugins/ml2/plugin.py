@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 from eventlet import greenthread
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import port_security as psec
@@ -360,10 +358,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.host = ''
 
         self._update_port_dict_binding(port, binding)
-        # merging here brings binding changes into the session so they can be
-        # committed since the binding attached to the context is detached from
-        # the session
-        plugin_context.session.merge(binding)
+        binding.persist_state_to_session(plugin_context.session)
         return changes
 
     @db_api.retry_db_errors
@@ -537,7 +532,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 db.set_binding_levels(plugin_context,
                                       bind_context._binding_levels)
                 # refresh context with a snapshot of updated state
-                cur_context._binding = copy.deepcopy(cur_binding)
+                cur_context._binding = driver_context.InstanceSnapshot(
+                    cur_binding)
                 cur_context._binding_levels = bind_context._binding_levels
 
                 # Update PortContext's port dictionary to reflect the
@@ -1369,7 +1365,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding.host = attrs and attrs.get(portbindings.HOST_ID)
         binding.router_id = attrs and attrs.get('device_id')
         # merge into session to reflect changes
-        plugin_context.session.merge(binding)
+        binding.persist_state_to_session(plugin_context.session)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
