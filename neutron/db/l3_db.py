@@ -464,7 +464,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 raise e.errors[0].error
 
             self._check_for_dup_router_subnets(context, router,
-                                               new_network_id, subnets)
+                                               new_network_id,
+                                               subnets,
+                                               include_gateway=True)
             self._create_router_gw_port(context, router,
                                         new_network_id, ext_ips)
             registry.notify(resources.ROUTER_GATEWAY,
@@ -579,7 +581,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                 filters=filters)
 
     def _check_for_dup_router_subnets(self, context, router,
-                                      network_id, new_subnets):
+                                      network_id, new_subnets,
+                                      include_gateway=False):
         # It's possible these ports are on the same network, but
         # different subnets.
         new_subnet_ids = {s['id'] for s in new_subnets}
@@ -590,7 +593,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     msg = (_("Router already has a port on subnet %s")
                            % ip['subnet_id'])
                     raise n_exc.BadRequest(resource='router', msg=msg)
-                router_subnets.append(ip['subnet_id'])
+                gw_owner = (p.get('device_owner') == DEVICE_OWNER_ROUTER_GW)
+                if include_gateway == gw_owner:
+                    router_subnets.append(ip['subnet_id'])
+
         # Ignore temporary Prefix Delegation CIDRs
         new_subnets = [s for s in new_subnets
                        if s['cidr'] != n_const.PROVISIONAL_IPV6_PD_PREFIX]
