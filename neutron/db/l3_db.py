@@ -1077,7 +1077,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             models_v2.IPAllocation.subnet_id == internal_subnet['id']
         ).join(gw_port, gw_port.device_id == RouterPort.router_id).filter(
             gw_port.network_id == external_network_id,
-            gw_port.device_owner == constants.DEVICE_OWNER_ROUTER_GW
+            gw_port.device_owner == DEVICE_OWNER_ROUTER_GW
         ).distinct()
 
         first_router_id = None
@@ -1774,7 +1774,7 @@ class L3RpcNotifierMixin(object):
         subnet_id = updated['id']
         query = context.session.query(models_v2.Port).filter_by(
                     network_id=network_id,
-                    device_owner=constants.DEVICE_OWNER_ROUTER_GW)
+                    device_owner=DEVICE_OWNER_ROUTER_GW)
         query = query.join(models_v2.Port.fixed_ips).filter(
                     models_v2.IPAllocation.subnet_id == subnet_id)
         router_ids = set(port['device_id'] for port in query)
