@@ -260,6 +260,10 @@ class DictOfMiscValuesField(obj_fields.AutoTypedField):
     AUTO_TYPE = DictOfMiscValues
 
 
+class ListOfDictOfMiscValuesField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.List(DictOfMiscValuesField())
+
+
 class IPNetwork(obj_fields.FieldType):
     """IPNetwork custom field.
 
