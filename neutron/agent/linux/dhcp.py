@@ -378,9 +378,9 @@ class Dnsmasq(DhcpLocalProcess):
             # mode is optional and is not set - skip it
             if mode:
                 if subnet.ip_version == 4:
-                    cmd.append('--dhcp-range=%s%s,%s,%s,%s' %
+                    cmd.append('--dhcp-range=%s%s,%s,%s,%s,%s' %
                                ('set:', self._TAG_PREFIX % i,
-                                cidr.network, mode, lease))
+                                cidr.network, mode, cidr.netmask, lease))
                 else:
                     if cidr.prefixlen < 64:
                         LOG.debug('Ignoring subnet %(subnet)s, CIDR has '

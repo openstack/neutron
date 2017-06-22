@@ -1168,10 +1168,10 @@ class TestDnsmasq(TestBase):
         else:
             seconds = 's'
         if has_static:
-            prefix = '--dhcp-range=set:tag%d,%s,static,%s%s'
+            prefix = '--dhcp-range=set:tag%d,%s,static,%s,%s%s'
             prefix6 = '--dhcp-range=set:tag%d,%s,static,%s,%s%s'
         elif has_stateless:
-            prefix = '--dhcp-range=set:tag%d,%s,%s%s'
+            prefix = '--dhcp-range=set:tag%d,%s,%s,%s%s'
             prefix6 = '--dhcp-range=set:tag%d,%s,%s,%s%s'
         possible_leases = 0
         for i, s in enumerate(network.subnets):
@@ -1179,7 +1179,9 @@ class TestDnsmasq(TestBase):
                 or s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
                 if s.ip_version == 4:
                     expected.extend([prefix % (
-                        i, s.cidr.split('/')[0], lease_duration, seconds)])
+                        i, s.cidr.split('/')[0],
+                        netaddr.IPNetwork(s.cidr).netmask, lease_duration,
+                        seconds)])
                 else:
                     expected.extend([prefix6 % (
                         i, s.cidr.split('/')[0], s.cidr.split('/')[1],
