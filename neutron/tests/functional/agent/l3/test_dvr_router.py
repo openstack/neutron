@@ -603,7 +603,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # if the agent is anything else the test is misconfigured
         # we force a test failure with message
         else:
-            self.assertTrue(False, " agent not configured for dvr or dvr_snat")
+            self.fail("Agent not configured for dvr or dvr_snat")
 
     def _assert_dvr_gateway(self, router):
         gateway_expected_in_snat_namespace = (

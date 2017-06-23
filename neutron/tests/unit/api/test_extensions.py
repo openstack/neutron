@@ -187,7 +187,7 @@ class ResourceExtensionTest(base.BaseTestCase):
         try:
             test_app.get("/tweedles/some_id/notimplemented_function")
             # Shouldn't be reached
-            self.assertTrue(False)
+            self.fail()
         except webtest.AppError as e:
             self.assertIn('501', str(e))
 

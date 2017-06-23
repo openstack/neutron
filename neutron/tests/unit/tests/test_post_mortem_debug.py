@@ -26,7 +26,7 @@ class TestTesttoolsExceptionHandler(base.BaseTestCase):
 
     def test_exception_handler(self):
         try:
-            self.assertTrue(False)
+            self.fail()
         except Exception:
             exc_info = sys.exc_info()
         with mock.patch('traceback.print_exception') as mock_print_exception:
