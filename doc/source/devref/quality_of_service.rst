@@ -356,6 +356,16 @@ For egress bandwidth limit rule:
 * update_filters_bw_limit
 * delete_filters_bw_limit
 
+The egress bandwidth limit is configured on the tap port by setting traffic
+policing on tc ingress queueing discipline (qdisc). Details about ingress
+qdisc can be found on `lartc how-to <http://lartc.org/howto/lartc.adv-qdisc.ingress.html>`__.
+The reason why ingress qdisc is used to configure egress bandwidth limit is that
+tc is working on traffic which is visible from "inside bridge" perspective. So
+traffic incoming to bridge via tap interface is in fact outgoing from Neutron's
+port.
+This implementation is the same as what Open vSwitch is doing when
+ingress_policing_rate and ingress_policing_burst are set for port.
+
 For ingress bandwidth limit rule:
 
 * set_tbf_bw_limit
