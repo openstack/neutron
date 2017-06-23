@@ -13,6 +13,7 @@
 # under the License.
 
 from neutron_lib import constants
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
@@ -36,7 +37,7 @@ class MeteringAgentNotifyAPI(object):
     def _agent_notification(self, context, method, routers):
         """Notify l3 metering agents hosted by l3 agent hosts."""
         adminContext = context if context.is_admin else context.elevated()
-        plugin = directory.get_plugin(constants.L3)
+        plugin = directory.get_plugin(plugin_constants.L3)
 
         l3_routers = {}
         state = agentschedulers_db.get_admin_state_up_filter()
@@ -71,7 +72,7 @@ class MeteringAgentNotifyAPI(object):
 
     def _notification(self, context, method, routers):
         """Notify all the agents that are hosting the routers."""
-        plugin = directory.get_plugin(constants.L3)
+        plugin = directory.get_plugin(plugin_constants.L3)
         if utils.is_extension_supported(
             plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             self._agent_notification(context, method, routers)

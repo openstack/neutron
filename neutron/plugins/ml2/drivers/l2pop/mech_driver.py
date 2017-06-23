@@ -16,6 +16,7 @@
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
@@ -242,7 +243,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def update_port_down(self, context):
         port = context.current
         agent_host = context.host
-        l3plugin = directory.get_plugin(const.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         # when agent transitions to backup, don't remove flood flows
         if agent_host and l3plugin and getattr(
             l3plugin, "list_router_ids_on_host", None):

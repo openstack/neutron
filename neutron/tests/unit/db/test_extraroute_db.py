@@ -14,8 +14,8 @@
 #    under the License.
 
 import mock
-from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
 from neutron.db import common_db_mixin

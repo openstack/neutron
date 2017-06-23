@@ -18,6 +18,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from sqlalchemy import or_
@@ -94,7 +95,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             # Make sure we create the floatingip agent gateway port
             # for the destination node if fip is associated with this
             # fixed port
-            l3plugin = directory.get_plugin(n_const.L3)
+            l3plugin = directory.get_plugin(plugin_constants.L3)
             (
                 l3plugin.
                 check_for_fip_and_create_agent_gw_port_on_host_if_not_exists(
@@ -373,7 +374,7 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
         return
 
     if n_utils.is_dvr_serviced(port['device_owner']):
-        l3plugin = directory.get_plugin(n_const.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         context = kwargs['context']
         l3plugin.dvr_handle_new_service_port(context, port)
         l3plugin.update_arp_entry_for_dvr_service_port(context, port)
@@ -382,7 +383,7 @@ def _notify_l3_agent_new_port(resource, event, trigger, **kwargs):
 def _notify_port_delete(event, resource, trigger, **kwargs):
     context = kwargs['context']
     port = kwargs['port']
-    l3plugin = directory.get_plugin(n_const.L3)
+    l3plugin = directory.get_plugin(plugin_constants.L3)
     if port:
         port_host = port.get(portbindings.HOST_ID)
         allowed_address_pairs_list = port.get('allowed_address_pairs')
@@ -405,7 +406,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         original_device_owner = original_port.get('device_owner', '')
         new_device_owner = new_port.get('device_owner', '')
         is_new_device_dvr_serviced = n_utils.is_dvr_serviced(new_device_owner)
-        l3plugin = directory.get_plugin(n_const.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         context = kwargs['context']
         is_port_no_longer_serviced = (
             n_utils.is_dvr_serviced(original_device_owner) and

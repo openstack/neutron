@@ -14,8 +14,8 @@
 #
 
 import netaddr
-from neutron_lib import constants
 from neutron_lib import context as nctx
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 

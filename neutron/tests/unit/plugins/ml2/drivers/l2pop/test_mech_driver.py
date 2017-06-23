@@ -20,6 +20,7 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_serialization import jsonutils
 import testtools
@@ -279,7 +280,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         # is added on HOST4.
         # HOST4 should get flood entries for HOST1 and HOST2
         router = self._create_ha_router()
-        directory.add_plugin(constants.L3, self.plugin)
+        directory.add_plugin(plugin_constants.L3, self.plugin)
         with self.subnet(network=self._network, enable_dhcp=False) as snet:
             subnet = snet['subnet']
             port = self._add_router_interface(subnet, router, HOST)
@@ -312,7 +313,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         # Remove_fdb should carry flood entry of only HOST2 and not HOST
         router = self._create_ha_router()
 
-        directory.add_plugin(constants.L3, self.plugin)
+        directory.add_plugin(plugin_constants.L3, self.plugin)
         with self.subnet(network=self._network, enable_dhcp=False) as snet:
             host_arg = {portbindings.HOST_ID: HOST, 'admin_state_up': True}
             with self.port(subnet=snet,
@@ -345,7 +346,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         # Both HA agents should be notified to other agents.
         router = self._create_ha_router()
 
-        directory.add_plugin(constants.L3, self.plugin)
+        directory.add_plugin(plugin_constants.L3, self.plugin)
         with self.subnet(network=self._network, enable_dhcp=False) as snet:
             host_arg = {portbindings.HOST_ID: HOST_4, 'admin_state_up': True}
             with self.port(subnet=snet,

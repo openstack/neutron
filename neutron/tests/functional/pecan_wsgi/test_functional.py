@@ -16,9 +16,9 @@
 import os
 
 import mock
-from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants
 from oslo_config import cfg
 from oslo_middleware import base
 from oslo_service import wsgi

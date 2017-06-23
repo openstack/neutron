@@ -16,7 +16,7 @@
 import weakref
 
 import fixtures
-from neutron_lib import constants as lib_const
+from neutron_lib.plugins import constants as lib_const
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 

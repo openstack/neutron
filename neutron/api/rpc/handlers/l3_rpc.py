@@ -17,6 +17,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context as neutron_context
 from neutron_lib import exceptions
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -56,7 +57,7 @@ class L3RpcCallback(object):
     @property
     def l3plugin(self):
         if not hasattr(self, '_l3plugin'):
-            self._l3plugin = directory.get_plugin(constants.L3)
+            self._l3plugin = directory.get_plugin(plugin_constants.L3)
         return self._l3plugin
 
     def _update_ha_network_port_status(self, context, host_id):

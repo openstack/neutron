@@ -22,6 +22,7 @@ import collections
 import mock
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_context import context as oslo_context
@@ -49,7 +50,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         self.callbacks = plugin_rpc.RpcCallbacks(self.notifier,
                                                  self.type_manager)
         self.plugin = mock.MagicMock()
-        directory.add_plugin(constants.CORE, self.plugin)
+        directory.add_plugin(plugin_constants.CORE, self.plugin)
 
     def _test_update_device_up(self, host=None):
         kwargs = {

@@ -23,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -69,7 +70,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         cfg.CONF.set_override('allow_overlapping_ips', True)
 
         self.plugin = FakeL3PluginWithAgents()
-        directory.add_plugin(constants.L3, self.plugin)
+        directory.add_plugin(plugin_constants.L3, self.plugin)
         self.plugin.router_scheduler = l3_agent_scheduler.ChanceScheduler()
         self.agent1 = helpers.register_l3_agent()
         self.agent2 = helpers.register_l3_agent(

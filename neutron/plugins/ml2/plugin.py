@@ -26,6 +26,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import port_security as psec_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
@@ -1431,7 +1432,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._pre_delete_port(context, id, l3_port_check)
         # TODO(armax): get rid of the l3 dependency in the with block
         router_ids = []
-        l3plugin = directory.get_plugin(const.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
 
         with db_api.context_manager.writer.using(context):
             try:
