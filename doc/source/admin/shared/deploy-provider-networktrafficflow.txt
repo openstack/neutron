@@ -1,0 +1,31 @@
+The following sections describe the flow of network traffic in several
+common scenarios. *North-south* network traffic travels between an instance
+and external network such as the Internet. *East-west* network traffic
+travels between instances on the same or different networks. In all scenarios,
+the physical network infrastructure handles switching and routing among
+provider networks and external networks such as the Internet. Each case
+references one or more of the following components:
+
+* Provider network 1 (VLAN)
+
+  * VLAN ID 101 (tagged)
+  * IP address ranges 203.0.113.0/24 and fd00:203:0:113::/64
+  * Gateway (via physical network infrastructure)
+
+    * IP addresses 203.0.113.1 and fd00:203:0:113:0::1
+
+* Provider network 2 (VLAN)
+
+  * VLAN ID 102 (tagged)
+  * IP address range 192.0.2.0/24 and fd00:192:0:2::/64
+  * Gateway
+
+    * IP addresses 192.0.2.1 and fd00:192:0:2::1
+
+* Instance 1
+
+  * IP addresses 203.0.113.101 and fd00:203:0:113:0::101
+
+* Instance 2
+
+  * IP addresses 192.0.2.101 and fd00:192:0:2:0::101

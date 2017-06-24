@@ -1,0 +1,15 @@
+#. Begin a continuous ``ping`` of both the floating IPv4 address and IPv6
+   address of the instance. While performing the next three steps, you
+   should see a minimal, if any, interruption of connectivity to the
+   instance.
+
+#. On the network node with the master router, administratively disable
+   the overlay network interface.
+
+#. On the other network node, verify promotion of the backup router to
+   master router by noting addition of IP addresses to the interfaces
+   in the ``qrouter`` namespace.
+
+#. On the original network node in step 2, administratively enable the
+   overlay network interface. Note that the master router remains on
+   the network node in step 3.

@@ -1,0 +1,63 @@
+#. On each compute node, verify creation of the ``qdhcp`` namespace.
+
+   .. code-block:: console
+
+      # ip netns
+      qdhcp-8b868082-e312-4110-8627-298109d4401c
+
+#. Source a regular (non-administrative) project credentials.
+#. Create the appropriate security group rules to allow ``ping`` and SSH
+   access instances using the network.
+
+   .. include:: shared/deploy-secgrouprules.txt
+
+#. Launch an instance with an interface on the provider network. For example,
+   a CirrOS image using flavor ID 1.
+
+   .. code-block:: console
+
+      $ openstack server create --flavor 1 --image cirros \
+        --nic net-id=NETWORK_ID provider-instance1
+
+   Replace ``NETWORK_ID`` with the ID of the provider network.
+
+#. Determine the IPv4 and IPv6 addresses of the instance.
+
+   .. code-block:: console
+
+      $ openstack server list
+      +--------------------------------------+--------------------+--------+------------------------------------------------------------+------------+
+      | ID                                   | Name               | Status | Networks                                                   | Image Name |
+      +--------------------------------------+--------------------+--------+------------------------------------------------------------+------------+
+      | 018e0ae2-b43c-4271-a78d-62653dd03285 | provider-instance1 | ACTIVE | provider1=203.0.113.13, fd00:203:0:113:f816:3eff:fe58:be4e | cirros     |
+      +--------------------------------------+--------------------+--------+------------------------------------------------------------+------------+
+
+#. On the controller node or any host with access to the provider network,
+   ``ping`` the IPv4 and IPv6 addresses of the instance.
+
+   .. code-block:: console
+
+      $ ping -c 4 203.0.113.13
+      PING 203.0.113.13 (203.0.113.13) 56(84) bytes of data.
+      64 bytes from 203.0.113.13: icmp_req=1 ttl=63 time=3.18 ms
+      64 bytes from 203.0.113.13: icmp_req=2 ttl=63 time=0.981 ms
+      64 bytes from 203.0.113.13: icmp_req=3 ttl=63 time=1.06 ms
+      64 bytes from 203.0.113.13: icmp_req=4 ttl=63 time=0.929 ms
+
+      --- 203.0.113.13 ping statistics ---
+      4 packets transmitted, 4 received, 0% packet loss, time 3002ms
+      rtt min/avg/max/mdev = 0.929/1.539/3.183/0.951 ms
+
+      $ ping6 -c 4 fd00:203:0:113:f816:3eff:fe58:be4e
+      PING fd00:203:0:113:f816:3eff:fe58:be4e(fd00:203:0:113:f816:3eff:fe58:be4e) 56 data bytes
+      64 bytes from fd00:203:0:113:f816:3eff:fe58:be4e icmp_seq=1 ttl=64 time=1.25 ms
+      64 bytes from fd00:203:0:113:f816:3eff:fe58:be4e icmp_seq=2 ttl=64 time=0.683 ms
+      64 bytes from fd00:203:0:113:f816:3eff:fe58:be4e icmp_seq=3 ttl=64 time=0.762 ms
+      64 bytes from fd00:203:0:113:f816:3eff:fe58:be4e icmp_seq=4 ttl=64 time=0.486 ms
+
+      --- fd00:203:0:113:f816:3eff:fe58:be4e ping statistics ---
+      4 packets transmitted, 4 received, 0% packet loss, time 2999ms
+      rtt min/avg/max/mdev = 0.486/0.796/1.253/0.282 ms
+
+#. Obtain access to the instance.
+#. Test IPv4 and IPv6 connectivity to the Internet or other external network.
