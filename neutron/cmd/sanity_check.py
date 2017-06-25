@@ -345,6 +345,8 @@ def enable_tests_from_config():
     """
 
     cfg.CONF.set_default('vf_management', True)
+    cfg.CONF.set_default('arp_header_match', True)
+    cfg.CONF.set_default('icmpv6_header_match', True)
     if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_default('ovs_vxlan', True)
     if 'geneve' in cfg.CONF.AGENT.tunnel_types:
@@ -361,9 +363,6 @@ def enable_tests_from_config():
         cfg.CONF.set_default('nova_notify', True)
     if cfg.CONF.AGENT.arp_responder:
         cfg.CONF.set_default('arp_responder', True)
-    if cfg.CONF.AGENT.prevent_arp_spoofing:
-        cfg.CONF.set_default('arp_header_match', True)
-        cfg.CONF.set_default('icmpv6_header_match', True)
     if not cfg.CONF.AGENT.use_helper_for_ns_read:
         cfg.CONF.set_default('read_netns', True)
     if cfg.CONF.OVS.ovsdb_interface == 'native':

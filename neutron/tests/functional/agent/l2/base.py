@@ -106,7 +106,6 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         bridge_mappings = ['physnet:%s' % self.br_phys]
         self.config.set_override('tunnel_types', tunnel_types, "AGENT")
         self.config.set_override('polling_interval', 1, "AGENT")
-        self.config.set_override('prevent_arp_spoofing', False, "AGENT")
         self.config.set_override('local_ip', local_ip, "OVS")
         self.config.set_override('bridge_mappings', bridge_mappings, "OVS")
         # Physical bridges should be created prior to running

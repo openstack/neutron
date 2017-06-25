@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The deprecated ``prevent_arp_spoofing`` option has been removed and the
+    default behavior is to always prevent ARP spoofing unless port security
+    is disabled on the port (or network).

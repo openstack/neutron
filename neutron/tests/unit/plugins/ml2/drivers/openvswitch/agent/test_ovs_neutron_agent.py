@@ -114,7 +114,6 @@ class TestOvsNeutronAgent(object):
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
-        cfg.CONF.set_default('prevent_arp_spoofing', False, 'AGENT')
         cfg.CONF.set_default('local_ip', '127.0.0.1', 'OVS')
         mock.patch(
             'neutron.agent.ovsdb.native.helpers.enable_connection_uri').start()
@@ -718,9 +717,11 @@ class TestOvsNeutronAgent(object):
         port_details = [
             {'network_id': 'net1', 'vif_port': vif_port1,
              'device': devices_up[0],
+             'device_owner': 'network:dhcp',
              'admin_state_up': True},
             {'network_id': 'net1', 'vif_port': vif_port2,
              'device': devices_down[0],
+             'device_owner': 'network:dhcp',
              'admin_state_up': False}]
         with mock.patch.object(
             self.agent.plugin_rpc, 'update_device_list',
