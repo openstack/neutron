@@ -66,7 +66,8 @@ class StandardAttribute(model_base.BASEV2):
     __mapper_args__ = {
         # see http://docs.sqlalchemy.org/en/latest/orm/versioning.html for
         # details about how this works
-        "version_id_col": revision_number
+        "version_id_col": revision_number,
+        "version_id_generator": False  # revision plugin increments manually
     }
 
     def bump_revision(self):

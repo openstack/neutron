@@ -34,12 +34,16 @@ class RevisionPlugin(service_base.ServicePluginBase):
     def __init__(self):
         super(RevisionPlugin, self).__init__()
         db_api.sqla_listen(se.Session, 'before_flush', self.bump_revisions)
+        db_api.sqla_listen(se.Session, 'after_commit',
+                           self._clear_rev_bumped_flags)
+        db_api.sqla_listen(se.Session, 'after_rollback',
+                           self._clear_rev_bumped_flags)
 
     def bump_revisions(self, session, context, instances):
         # bump revision number for any updated objects in the session
         for obj in session.dirty:
             if isinstance(obj, standard_attr.HasStandardAttributes):
-                obj.bump_revision()
+                self._bump_obj_revision(session, obj)
 
         # see if any created/updated/deleted objects bump the revision
         # of another object
@@ -63,7 +67,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
                 self._bump_related_revisions(session, related_obj)
                 # no need to bump revisions on related objects being deleted
                 if related_obj not in session.deleted:
-                    related_obj.bump_revision()
+                    self._bump_obj_revision(session, related_obj)
             except exc.ObjectDeletedError:
                 # object was in session but another writer deleted it
                 pass
@@ -98,3 +102,20 @@ class RevisionPlugin(service_base.ServicePluginBase):
                                      "have load_on_pending set to True to "
                                      "bump parent revisions on create: %s"),
                                    relationship_col)
+
+    def _clear_rev_bumped_flags(self, session):
+        """This clears all flags on commit/rollback to enable rev bumps."""
+        for inst in session:
+            setattr(inst, '_rev_bumped', False)
+
+    def _bump_obj_revision(self, session, obj):
+        """Increment object revision in compare and swap fashion.
+
+        Before the increment, this checks and enforces any revision number
+        constraints.
+        """
+        if getattr(obj, '_rev_bumped', False):
+            # we've already bumped the revision of this object in this txn
+            return
+        obj.bump_revision()
+        setattr(obj, '_rev_bumped', True)
