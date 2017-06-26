@@ -294,10 +294,11 @@ class FipNamespace(namespaces.Namespace):
 
         # Now add the filter match rule for the table.
         ip_rule = ip_lib.IPRule(namespace=self.get_name())
-        ip_rule.rule.add(ip=str(fip_2_rtr.ip),
-                         iif=fip_2_rtr_name,
-                         table=rt_tbl_index,
-                         priority=rt_tbl_index)
+        ip_rule.rule.add(**{'ip': str(fip_2_rtr.ip),
+                            'iif': fip_2_rtr_name,
+                            'table': rt_tbl_index,
+                            'priority': rt_tbl_index,
+                            'from': '0.0.0.0/0'})
 
     def _update_gateway_port(self, agent_gateway_port, interface_name):
         if (self.agent_gateway_port and
