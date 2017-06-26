@@ -428,8 +428,8 @@ class OVSFlowTestCase(OVSAgentTestBase):
     @helpers.skip_if_ovs_older_than("2.5.1")
     def test_install_flood_to_tun(self):
         attrs = {
-            'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
-            'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
+            'remote_ip': self.get_test_net_address(1),
+            'local_ip': self.get_test_net_address(2),
         }
         kwargs = {'vlan': 777, 'tun_id': 888}
         port_name = common_utils.get_rand_device_name(net_helpers.PORT_PREFIX)

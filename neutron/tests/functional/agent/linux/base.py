@@ -14,6 +14,7 @@
 
 import testscenarios
 
+from neutron.tests.common.exclusive_resources import ip_address
 from neutron.tests.functional import base
 
 
@@ -37,3 +38,11 @@ class BaseOVSLinuxTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
     def setUp(self):
         super(BaseOVSLinuxTestCase, self).setUp()
         self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
+
+    def get_test_net_address(self, block):
+        """Return exclusive address based on RFC 5737.
+
+        :param block: One of constants 1, 2 or 3
+        """
+        return str(self.useFixture(
+            ip_address.get_test_net_address_fixture(block)).address)

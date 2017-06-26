@@ -206,8 +206,8 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 
     def test_add_tunnel_port_ipv4(self):
         attrs = {
-            'remote_ip': '192.0.2.1',  # RFC 5737 TEST-NET-1
-            'local_ip': '198.51.100.1',  # RFC 5737 TEST-NET-2
+            'remote_ip': self.get_test_net_address(1),
+            'local_ip': self.get_test_net_address(2),
         }
         self._test_add_tunnel_port(attrs)
 
