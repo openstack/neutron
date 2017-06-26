@@ -188,6 +188,7 @@ First, create a QoS policy and its bandwidth limit rule:
    +-------------+--------------------------------------+
    | description |                                      |
    | id          | 5df855e9-a833-49a3-9c82-c0839a5f103f |
+   | is_default  | False                                |
    | name        | qos1                                 |
    | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
    | rules       | []                                   |
@@ -315,6 +316,49 @@ network, or initially create the network attached to the policy.
    value is too high, too few packets could be limited and achieved bandwidth
    limit would be higher than expected.
 
+Each project can have at most one default QoS policy, although it is not
+mandatory. If a default QoS policy is defined, all new networks created within
+this project will have this policy assigned, as long as no other QoS policy is
+explicitly attached during the creation process. If the default QoS policy is
+unset, no change to existing networks will be made.
+
+In order to set a QoS policy as default, the parameter ``--default`` must be
+used. To unset this QoS policy as default, the parameter ``--no-default`` must
+be used.
+
+.. code-block:: console
+
+    $ openstack network qos policy create --default bw-limiter
+
+    Created a new policy:
+    +-------------+--------------------------------------+
+    | Field       | Value                                |
+    +-------------+--------------------------------------+
+    | description |                                      |
+    | id          | 5df855e9-a833-49a3-9c82-c0839a5f103f |
+    | is_default  | True                                 |
+    | name        | qos1                                 |
+    | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
+    | rules       | []                                   |
+    | shared      | False                                |
+    +-------------+--------------------------------------+
+
+    $ openstack network qos policy set --no-default bw-limiter
+
+    Created a new policy:
+    +-------------+--------------------------------------+
+    | Field       | Value                                |
+    +-------------+--------------------------------------+
+    | description |                                      |
+    | id          | 5df855e9-a833-49a3-9c82-c0839a5f103f |
+    | is_default  | False                                |
+    | name        | qos1                                 |
+    | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
+    | rules       | []                                   |
+    | shared      | False                                |
+    +-------------+--------------------------------------+
+
+
 Administrator enforcement
 -------------------------
 
@@ -360,6 +404,7 @@ Just like with bandwidth limiting, create a policy for DSCP marking rule:
     +-------------+--------------------------------------+
     | description |                                      |
     | id          | d1f90c76-fbe8-4d6f-bb87-a9aea997ed1e |
+    | is_default  | False                                |
     | name        | dscp-marking                         |
     | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
     | rules       | []                                   |
@@ -420,6 +465,7 @@ You can also include minimum bandwidth rules in your policy:
     +-------------+--------------------------------------+
     | description |                                      |
     | id          | 8491547e-add1-4c6c-a50e-42121237256c |
+    | is_default  | False                                |
     | name        | bandwidth-control                    |
     | project_id  | 7cc5a84e415d48e69d2b06aa67b317d8     |
     | rules       | []                                   |
@@ -465,6 +511,7 @@ It is also possible to combine several rules in one policy:
     +-------------+-------------------------------------------------------------------+
     | description |                                                                   |
     | id          | 8491547e-add1-4c6c-a50e-42121237256c                              |
+    | is_default  | False                                                             |
     | name        | bandwidth-control                                                 |
     | project_id  | 7cc5a84e415d48e69d2b06aa67b317d8                                  |
     | rules       | [{u'max_kbps': 50000, u'type': u'bandwidth_limit',                |
