@@ -1351,7 +1351,8 @@ class DeviceManager(object):
         ns_ip = ip_lib.IPWrapper(namespace=network.namespace)
         if not ns_ip.netns.exists(network.namespace):
             return
-        for d in ns_ip.get_devices(exclude_loopback=True):
+        for d in ns_ip.get_devices(exclude_loopback=True,
+                                   exclude_gre_devices=True):
             # delete all devices except current active DHCP port device
             if d.name != skip_dev_name:
                 LOG.debug("Found stale device %s, deleting", d.name)

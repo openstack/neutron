@@ -336,7 +336,8 @@ class TestNetnsCleanup(base.BaseTestCase):
                             expected.extend([
                                 mock.call().netns.exists(ns),
                                 mock.call().get_devices(
-                                    exclude_loopback=True)])
+                                    exclude_loopback=True,
+                                    exclude_gre_devices=True)])
                             self.assertTrue(kill_dhcp.called)
                             unplug.assert_has_calls(
                                 [mock.call(conf, d) for d in

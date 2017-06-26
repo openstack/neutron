@@ -208,7 +208,8 @@ class FipNamespace(namespaces.Namespace):
     @namespaces.check_ns_existence
     def _delete(self):
         ip_wrapper = ip_lib.IPWrapper(namespace=self.name)
-        for d in ip_wrapper.get_devices(exclude_loopback=True):
+        for d in ip_wrapper.get_devices(exclude_loopback=True,
+                                        exclude_gre_devices=True):
             if d.name.startswith(FIP_2_ROUTER_DEV_PREFIX):
                 # internal link between IRs and FIP NS
                 ip_wrapper.del_veth(d.name)
