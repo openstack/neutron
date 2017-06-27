@@ -156,29 +156,21 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
     def _test_list_rule_types(self, client):
         # List supported rule types
-        # TODO(QoS): since in gate we run both ovs and linuxbridge ml2 drivers,
-        # and since Linux Bridge ml2 driver does not have QoS support yet, ml2
-        # plugin reports no rule types are supported. Once linuxbridge will
-        # receive support for QoS, the list of expected rule types will change.
+        # Since returned rule types depends on loaded backend drivers this test
+        # is checking only if returned keys are same as expected keys
         #
         # In theory, we could make the test conditional on which ml2 drivers
         # are enabled in gate (or more specifically, on which supported qos
         # rules are claimed by core plugin), but that option doesn't seem to be
         # available through tempest.lib framework
-        expected_rule_types = []
-        expected_rule_details = ['type']
+        expected_rule_keys = ['type']
 
         rule_types = client.list_qos_rule_types()
         actual_list_rule_types = rule_types['rule_types']
-        actual_rule_types = [rule['type'] for rule in actual_list_rule_types]
 
         # Verify that only required fields present in rule details
         for rule in actual_list_rule_types:
-            self.assertEqual(tuple(rule.keys()), tuple(expected_rule_details))
-
-        # Verify if expected rules are present in the actual rules list
-        for rule in expected_rule_types:
-            self.assertIn(rule, actual_rule_types)
+            self.assertEqual(tuple(expected_rule_keys), tuple(rule.keys()))
 
     def _disassociate_network(self, client, network_id):
         updated_network = client.update_network(network_id,
