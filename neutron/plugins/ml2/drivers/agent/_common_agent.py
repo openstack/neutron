@@ -347,9 +347,14 @@ class CommonAgentLoop(service.Service):
             else:
                 LOG.debug("Device %s not defined on plugin", device)
             port_id = self._clean_network_ports(device)
-            self.ext_manager.delete_port(self.context,
-                                         {'device': device,
-                                          'port_id': port_id})
+            try:
+                self.ext_manager.delete_port(self.context,
+                                             {'device': device,
+                                              'port_id': port_id})
+            except Exception:
+                LOG.exception("Error occurred while processing extensions "
+                              "for port removal %s", device)
+                resync = True
             registry.notify(local_resources.PORT_DEVICE, events.AFTER_DELETE,
                             self, context=self.context, device=device,
                             port_id=port_id)
