@@ -17,8 +17,8 @@
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
-from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 

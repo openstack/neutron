@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import helpers as log_helper
@@ -70,7 +71,7 @@ class DVRResourceOperationHandler(object):
 
     @property
     def l3plugin(self):
-        return directory.get_plugin(const.L3)
+        return directory.get_plugin(plugin_constants.L3)
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _set_distributed_flag(self, resource, event, trigger, context,
@@ -500,7 +501,7 @@ class DVRResourceOperationHandler(object):
         if not router.extra_attributes.distributed:
             return
 
-        plugin = directory.get_plugin(const.L3)
+        plugin = directory.get_plugin(plugin_constants.L3)
 
         # we calculate which hosts to notify by checking the hosts for
         # the removed port's subnets and then subtract out any hosts still

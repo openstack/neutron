@@ -23,6 +23,7 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import constants as plugin_constants
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
@@ -2534,7 +2535,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertEqual(2, mocked_func.call_count)
 
     def test_get_service_plugin_list(self):
-        service_plugins = [lib_constants.L3]
+        service_plugins = [plugin_constants.L3]
         self.plugin_api.get_service_plugin_list.return_value = service_plugins
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.assertEqual(service_plugins, agent.neutron_service_plugins)

@@ -13,6 +13,7 @@
 # under the License.
 
 from neutron_lib import constants as consts
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
@@ -31,7 +32,7 @@ class MeteringRpcCallbacks(object):
         self.meter_plugin = meter_plugin
 
     def get_sync_data_metering(self, context, **kwargs):
-        l3_plugin = directory.get_plugin(consts.L3)
+        l3_plugin = directory.get_plugin(plugin_constants.L3)
         if not l3_plugin:
             return
 

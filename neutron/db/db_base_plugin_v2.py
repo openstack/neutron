@@ -24,6 +24,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as ctx
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
@@ -621,7 +622,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise exc.BadRequest(resource='subnets', msg=reason)
 
     def _update_router_gw_ports(self, context, network, subnet):
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             gw_ports = self._get_router_gw_ports_by_network(context,
                     network['id'])
@@ -635,7 +636,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                               {'id': id, 's': subnet})
 
     def _update_router_gw_port(self, context, router_id, network, subnet):
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         ctx_admin = context.elevated()
         ext_subnets_dict = {s['id']: s for s in network['subnets']}
         router = l3plugin.get_router(ctx_admin, router_id)
@@ -1406,7 +1407,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     except l3.RouterNotFound:
                         return
                 else:
-                    l3plugin = directory.get_plugin(constants.L3)
+                    l3plugin = directory.get_plugin(plugin_constants.L3)
                     if l3plugin:
                         try:
                             ctx_admin = context.elevated()

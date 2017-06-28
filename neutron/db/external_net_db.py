@@ -19,6 +19,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from sqlalchemy.sql import expression as expr
 
@@ -139,7 +140,7 @@ class External_net_db_mixin(object):
             net_data[external_net.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             l3plugin.delete_disassociated_floatingips(context, network_id)
 

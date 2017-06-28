@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 
@@ -34,7 +35,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
     def setUp(self):
         super(TestDhcpRpcCallback, self).setUp()
         self.plugin = mock.MagicMock()
-        directory.add_plugin(constants.CORE, self.plugin)
+        directory.add_plugin(plugin_constants.CORE, self.plugin)
         self.callbacks = dhcp_rpc.DhcpRpcCallback()
         self.log_p = mock.patch('neutron.api.rpc.handlers.dhcp_rpc.LOG')
         self.log = self.log_p.start()

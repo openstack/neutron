@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -116,7 +117,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     @classmethod
     def get_plugin_type(cls):
-        return n_const.L3
+        return plugin_constants.L3
 
     def get_plugin_description(self):
         """returns string description of the plugin."""

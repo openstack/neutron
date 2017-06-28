@@ -21,6 +21,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib import exceptions
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
@@ -48,7 +49,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.core_plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self.mixin = FakeL3Plugin()
-        directory.add_plugin(const.L3, self.mixin)
+        directory.add_plugin(plugin_constants.L3, self.mixin)
 
     def _create_router(self, router):
         with self.ctx.session.begin(subtransactions=True):
@@ -173,7 +174,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def test__get_agent_gw_ports_exist_for_network(self):
         plugin = mock.Mock()
-        directory.add_plugin(const.CORE, plugin)
+        directory.add_plugin(plugin_constants.CORE, plugin)
         plugin.get_ports.return_value = []
         self.mixin._get_agent_gw_ports_exist_for_network(
             self.ctx, 'network_id', 'host', 'agent_id')
@@ -184,7 +185,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _test_prepare_direct_delete_dvr_internal_ports(self, port):
         plugin = mock.Mock()
-        directory.add_plugin(const.CORE, plugin)
+        directory.add_plugin(plugin_constants.CORE, plugin)
         plugin.get_port.return_value = port
         self.mixin._router_exists = mock.Mock(return_value=True)
         self.assertRaises(exceptions.ServicePortInUse,
@@ -249,7 +250,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'device_owner': const.DEVICE_OWNER_ROUTER_GW
         }]
         plugin = mock.Mock()
-        directory.add_plugin(const.CORE, plugin)
+        directory.add_plugin(plugin_constants.CORE, plugin)
         plugin.get_ports.return_value = ports
         self.mixin.delete_floatingip_agent_gateway_port(
             self.ctx, port_host, 'ext_network_id')
@@ -286,7 +287,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             router.gw_port = None
 
         plugin = mock.Mock()
-        directory.add_plugin(const.CORE, plugin)
+        directory.add_plugin(plugin_constants.CORE, plugin)
         with mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
                                'router_gw_port_has_floating_ips',
                                return_value=False),\
@@ -690,7 +691,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                        'distributed': True}
         router = self._create_router(router_dict)
         plugin = mock.Mock()
-        directory.add_plugin(const.CORE, plugin)
+        directory.add_plugin(plugin_constants.CORE, plugin)
         l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
         port = {
             'id': 'my_port_id',

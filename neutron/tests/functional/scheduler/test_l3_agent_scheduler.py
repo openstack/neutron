@@ -18,6 +18,7 @@ import random
 
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 import testscenarios
@@ -46,7 +47,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         super(L3SchedulerBaseTest, self).setUp(PLUGIN_NAME)
 
         self.l3_plugin = l3_router_plugin.L3RouterPlugin()
-        directory.add_plugin(constants.L3, self.l3_plugin)
+        directory.add_plugin(plugin_constants.L3, self.l3_plugin)
         self.adminContext = context.get_admin_context()
         self.adminContext.tenant_id = _uuid()
 
@@ -298,9 +299,9 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         super(L3AZSchedulerBaseTest, self).setUp(plugin='ml2')
 
         self.l3_plugin = l3_router_plugin.L3RouterPlugin()
-        directory.add_plugin(constants.L3, self.l3_plugin)
+        directory.add_plugin(plugin_constants.L3, self.l3_plugin)
         self.l3_plugin.router_scheduler = None
-        directory.add_plugin(constants.L3, self.l3_plugin)
+        directory.add_plugin(plugin_constants.L3, self.l3_plugin)
         self.adminContext = context.get_admin_context()
         self.adminContext.tenant_id = '_func_test_tenant_'
 

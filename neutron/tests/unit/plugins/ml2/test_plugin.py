@@ -29,6 +29,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api as driver_api
 from oslo_db import exception as db_exc
@@ -772,7 +773,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                'create_port_postcommit',
                                side_effect=ml2_exc.MechanismDriverError(
                                    method='create_port_postcommit')):
-            l3_plugin = directory.get_plugin(constants.L3)
+            l3_plugin = directory.get_plugin(plugin_constants.L3)
             data = {'router': {'name': 'router', 'admin_state_up': True,
                                'tenant_id': 'fake_tenant'}}
             r = l3_plugin.create_router(self.context, data)
@@ -789,7 +790,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         with mock.patch.object(ml2_plugin.Ml2Plugin, '_bind_port_if_needed',
                                side_effect=ml2_exc.MechanismDriverError(
                                    method='_bind_port_if_needed')):
-            l3_plugin = directory.get_plugin(constants.L3)
+            l3_plugin = directory.get_plugin(plugin_constants.L3)
             data = {'router': {'name': 'router', 'admin_state_up': True,
                                'tenant_id': 'fake_tenant'}}
             r = l3_plugin.create_router(self.context, data)
@@ -918,7 +919,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             ])
 
     def test_l3_cleanup_on_net_delete(self):
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         kwargs = {'arg_list': (external_net.EXTERNAL,),
                   external_net.EXTERNAL: True}
         with self.network(**kwargs) as n:
@@ -1045,7 +1046,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         with self.port() as port,\
                 mock.patch.object(
                     l3plugin,
@@ -1101,7 +1102,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_disassociate_floatingips_do_notify_returns_nothing(self):
         ctx = context.get_admin_context()
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         with self.port() as port:
 
             port_id = port['port']['id']
@@ -1248,7 +1249,7 @@ class TestMl2PortsV2WithL3(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         # enable subscription for events
         l3_router_plugin.L3RouterPlugin()
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         host_arg = {portbindings.HOST_ID: HOST}
         with mock.patch.object(l3plugin.l3_rpc_notifier,
                                'routers_updated_on_host') as mock_updated:
@@ -1454,7 +1455,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             mock.PropertyMock(return_value=extensions))
 
     def test_delete_port_notifies_l3_plugin(self, floating_ip=False):
-        directory.add_plugin(constants.L3, self.l3plugin)
+        directory.add_plugin(plugin_constants.L3, self.l3plugin)
         ns_to_delete = {'host': 'myhost', 'agent_id': 'vm_l3_agent',
                         'router_id': 'my_router'}
         router_ids = set()
@@ -1484,7 +1485,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         self.test_delete_port_notifies_l3_plugin(floating_ip=True)
 
     def test_concurrent_csnat_port_delete(self):
-        plugin = directory.get_plugin(constants.L3)
+        plugin = directory.get_plugin(plugin_constants.L3)
         r = plugin.create_router(
             self.context,
             {'router': {'name': 'router', 'admin_state_up': True,

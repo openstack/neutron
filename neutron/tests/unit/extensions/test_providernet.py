@@ -15,8 +15,8 @@
 
 import mock
 from neutron_lib.api.definitions import provider_net
-from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils

@@ -13,6 +13,7 @@
 import mock
 from neutron_lib import constants as n_const
 from neutron_lib import context
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -689,7 +690,7 @@ class TestRequestProcessing(TestRootController):
         self.assertEqual('router', self.req_stash['resource_type'])
         # make sure the core plugin was identified as the handler for ports
         self.assertEqual(
-            directory.get_plugin(n_const.L3),
+            directory.get_plugin(plugin_constants.L3),
             self.req_stash['plugin'])
 
     def test_service_plugin_uri(self):
@@ -719,7 +720,7 @@ class TestRouterController(TestResourceController):
         self.addCleanup(policy.reset)
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        l3_plugin = directory.get_plugin(n_const.L3)
+        l3_plugin = directory.get_plugin(plugin_constants.L3)
         network_id = pecan_utils.create_network(ctx, plugin)['id']
         self.subnet = pecan_utils.create_subnet(ctx, plugin, network_id)
         self.router = pecan_utils.create_router(ctx, l3_plugin)
@@ -820,7 +821,7 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
                  'get_l3-routers': 'role:admin'}),
             overwrite=False)
         ctx = context.get_admin_context()
-        l3_plugin = directory.get_plugin(n_const.L3)
+        l3_plugin = directory.get_plugin(plugin_constants.L3)
         self.router = pecan_utils.create_router(ctx, l3_plugin)
         self.agent = helpers.register_l3_agent()
         # NOTE(blogan): Not sending notifications because this test is for

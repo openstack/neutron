@@ -17,6 +17,7 @@
 import mock
 from neutron_lib import constants as n_const
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from novaclient import api_versions
 from novaclient import exceptions as nova_exceptions
@@ -44,7 +45,7 @@ class TestNovaNotify(base.BaseTestCase):
                         'id': port_id}
 
         self.nova_notifier = nova.Notifier()
-        directory.add_plugin(n_const.CORE, FakePlugin())
+        directory.add_plugin(plugin_constants.CORE, FakePlugin())
 
     def test_notify_port_status_all_values(self):
         states = [n_const.PORT_STATUS_ACTIVE, n_const.PORT_STATUS_DOWN,

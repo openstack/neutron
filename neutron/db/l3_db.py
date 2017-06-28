@@ -26,6 +26,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as base_services
 from oslo_log import log as logging
@@ -95,7 +96,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         context = kwargs['context']
         port_id = kwargs['port_id']
         port_check = kwargs['port_check']
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin and port_check:
             l3plugin.prevent_l3_port_deletion(context, port_id)
 
@@ -271,7 +272,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             candidates = None
         router_db = self._update_router_db(context, id, r)
         if candidates:
-            l3_plugin = directory.get_plugin(constants.L3)
+            l3_plugin = directory.get_plugin(plugin_constants.L3)
             l3_plugin.reschedule_router(context, id, candidates)
         updated = self._make_router_dict(router_db)
         registry.notify(resources.ROUTER, events.AFTER_UPDATE, self,
@@ -307,7 +308,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         # first get plugin supporting l3 agent scheduling
         # (either l3 service plugin or core_plugin)
-        l3_plugin = directory.get_plugin(constants.L3)
+        l3_plugin = directory.get_plugin(plugin_constants.L3)
         if (not utils.is_extension_supported(
                 l3_plugin,
                 constants.L3_AGENT_SCHEDULER_EXT_ALIAS) or
@@ -1753,16 +1754,16 @@ class L3RpcNotifierMixin(object):
     def _notify_routers_callback(resource, event, trigger, **kwargs):
         context = kwargs['context']
         router_ids = kwargs['router_ids']
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             l3plugin.notify_routers_updated(context, router_ids)
         else:
-            LOG.debug('%s not configured', constants.L3)
+            LOG.debug('%s not configured', plugin_constants.L3)
 
     @staticmethod
     @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
     def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         if not l3plugin:
             return
         context = kwargs['context']
@@ -1800,11 +1801,11 @@ class L3RpcNotifierMixin(object):
         query = query.distinct()
 
         router_ids = [r[0] for r in query]
-        l3plugin = directory.get_plugin(constants.L3)
+        l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             l3plugin.notify_routers_updated(context, router_ids)
         else:
-            LOG.debug('%s not configured', constants.L3)
+            LOG.debug('%s not configured', plugin_constants.L3)
 
     @property
     def l3_rpc_notifier(self):

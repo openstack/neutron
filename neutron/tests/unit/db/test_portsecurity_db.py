@@ -11,7 +11,7 @@
 #    under the License.
 
 import mock
-from neutron_lib import constants
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
 from neutron.db import portsecurity_db as pd
