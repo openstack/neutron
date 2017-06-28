@@ -70,7 +70,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'service_plugins': env_desc.service_plugins,
                 'auth_strategy': 'noauth',
                 'debug': 'True',
-                'agent_down_time': env_desc.agent_down_time,
+                'agent_down_time': str(env_desc.agent_down_time),
                 'transport_url':
                     'rabbit://%(user)s:%(password)s@%(host)s:5672/%(vhost)s' %
                     {'user': rabbitmq_environment.user,
@@ -88,7 +88,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'policy_file': self._generate_policy_json(),
             },
             'agent': {
-                'report_interval': env_desc.agent_down_time / 2.0
+                'report_interval': str(env_desc.agent_down_time / 2.0)
             },
         })
         # Set root_helper/root_helper_daemon only when env var is set
