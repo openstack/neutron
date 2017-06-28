@@ -242,8 +242,15 @@ class DvrRoutersTest(base_routers.BaseRouterTest):
 
     @decorators.idempotent_id('644d7a4a-01a1-4b68-bb8d-0c0042cb1729')
     def test_convert_centralized_router(self):
-        router = self._create_router(data_utils.rand_name('router'))
-        self.assertNotIn('distributed', router)
+        router_args = {'tenant_id': self.client.tenant_id,
+                       'distributed': False, 'ha': False}
+        router = self.admin_client.create_router(
+            data_utils.rand_name('router'), admin_state_up=False,
+            **router_args)['router']
+        self.addCleanup(self.admin_client.delete_router,
+                        router['id'])
+        self.assertFalse(router['distributed'])
+        self.assertFalse(router['ha'])
         update_body = self.admin_client.update_router(router['id'],
                                                       distributed=True)
         self.assertTrue(update_body['router']['distributed'])
@@ -251,6 +258,7 @@ class DvrRoutersTest(base_routers.BaseRouterTest):
         self.assertTrue(show_body['router']['distributed'])
         show_body = self.client.show_router(router['id'])
         self.assertNotIn('distributed', show_body['router'])
+        self.assertNotIn('ha', show_body['router'])
 
 
 class HaRoutersTest(base_routers.BaseRouterTest):
