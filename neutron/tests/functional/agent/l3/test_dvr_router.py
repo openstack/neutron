@@ -1287,11 +1287,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 str(net_addr_2) + '/' +
                 str(fixed_ips_2[0]['prefixlen']))
             expected_routes = [{'dev': fpr_device_name,
-                                'cidr': unicode(route_cidr_1),
+                                'cidr': six.u(route_cidr_1),
                                 'via': str(rtr_2_fip.ip),
                                 'table': 'main'},
                                {'dev': fpr_device_name,
-                                'cidr': unicode(route_cidr_2),
+                                'cidr': six.u(route_cidr_2),
                                 'via': str(rtr_2_fip.ip),
                                 'table': 'main'}]
             # Comparing the static routes for both internal interfaces on the
