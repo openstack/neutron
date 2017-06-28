@@ -34,7 +34,7 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
         super(FloatingIPAdminTestJSON, cls).resource_setup()
         cls.ext_net_id = CONF.network.public_network_id
         cls.floating_ip = cls.create_floatingip(cls.ext_net_id)
-        cls.alt_client = cls.alt_manager.network_client
+        cls.alt_client = cls.os_alt.network_client
         cls.network = cls.create_network()
         cls.subnet = cls.create_subnet(cls.network)
         cls.router = cls.create_router(data_utils.rand_name('router-'),

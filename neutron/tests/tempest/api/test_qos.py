@@ -561,7 +561,7 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(RbacSharedQosPoliciesTest, cls).resource_setup()
-        cls.client2 = cls.alt_manager.network_client
+        cls.client2 = cls.os_alt.network_client
 
     def _create_qos_policy(self, tenant_id=None):
         args = {'name': data_utils.rand_name('test-policy'),

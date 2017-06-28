@@ -179,7 +179,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
     @classmethod
     def resource_setup(cls):
         super(RBACSharedNetworksTest, cls).resource_setup()
-        cls.client2 = cls.alt_manager.network_client
+        cls.client2 = cls.os_alt.network_client
 
     def _make_admin_net_and_subnet_shared_to_tenant_id(self, tenant_id):
         net = self.admin_client.create_network(

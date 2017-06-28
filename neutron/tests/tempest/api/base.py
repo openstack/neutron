@@ -343,7 +343,7 @@ class BaseNetworkTest(test.BaseTestCase):
 
     @classmethod
     def create_admin_router(cls, *args, **kwargs):
-        return cls._create_router_with_client(cls.admin_manager.network_client,
+        return cls._create_router_with_client(cls.os_admin.network_client,
                                               *args, **kwargs)
 
     @classmethod

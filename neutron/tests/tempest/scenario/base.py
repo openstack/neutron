@@ -41,7 +41,7 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
     @classmethod
     def resource_cleanup(cls):
         for keypair in cls.keypairs:
-            cls.manager.keypairs_client.delete_keypair(
+            cls.os_primary.keypairs_client.delete_keypair(
                 keypair_name=keypair['name'])
 
         super(BaseTempestTestCase, cls).resource_cleanup()
@@ -89,7 +89,7 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
 
     @classmethod
     def create_keypair(cls, client=None):
-        client = client or cls.manager.keypairs_client
+        client = client or cls.os_primary.keypairs_client
         name = data_utils.rand_name('keypair-test')
         body = client.create_keypair(name=name)
         cls.keypairs.append(body['keypair'])
@@ -97,7 +97,7 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
 
     @classmethod
     def create_secgroup_rules(cls, rule_list, secgroup_id=None):
-        client = cls.manager.network_client
+        client = cls.os_primary.network_client
         if not secgroup_id:
             sgs = client.list_security_groups()['security_groups']
             for sg in sgs:
