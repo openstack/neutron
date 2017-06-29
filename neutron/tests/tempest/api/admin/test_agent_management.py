@@ -28,7 +28,6 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
         body = cls.admin_client.list_agents()
         agents = body['agents']
         cls.agent = agents[0]  # don't modify this agent
-        cls.dyn_agent = agents[1]
 
     @decorators.idempotent_id('9c80f04d-11f3-44a4-8738-ed2f879b0ff4')
     def test_list_agent(self):
@@ -66,20 +65,26 @@ class AgentManagementTestJSON(base.BaseAdminNetworkTest):
 
     @decorators.idempotent_id('68a94a14-1243-46e6-83bf-157627e31556')
     def test_update_agent_description(self):
+        agents = self.admin_client.list_agents()['agents']
+        try:
+            dyn_agent = agents[1]
+        except IndexError:
+            raise self.skipException("This test requires at least two agents.")
+
         self.useFixture(tempest_fixtures.LockFixture('agent_description'))
         description = 'description for update agent.'
         agent_description = {'description': description}
-        body = self.admin_client.update_agent(agent_id=self.dyn_agent['id'],
+        body = self.admin_client.update_agent(agent_id=dyn_agent['id'],
                                               agent_info=agent_description)
-        self.addCleanup(self._restore_agent)
+        self.addCleanup(self._restore_agent, dyn_agent)
         updated_description = body['agent']['description']
         self.assertEqual(updated_description, description)
 
-    def _restore_agent(self):
+    def _restore_agent(self, dyn_agent):
         """
         Restore the agent description after update test.
         """
-        description = self.dyn_agent['description']
+        description = dyn_agent['description']
         origin_agent = {'description': description}
-        self.admin_client.update_agent(agent_id=self.dyn_agent['id'],
+        self.admin_client.update_agent(agent_id=dyn_agent['id'],
                                        agent_info=origin_agent)
