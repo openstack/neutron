@@ -1,0 +1,18 @@
+The health of your ``keepalived`` instances can be automatically monitored via
+a bash script that verifies connectivity to all available and configured
+gateway addresses. In the event that connectivity is lost, the master router
+is rescheduled to another node.
+
+If all routers lose connectivity simultaneously, the process of selecting a
+new master router will be repeated in a round-robin fashion until one or more
+routers have their connectivity restored.
+
+To enable this feature, edit the ``l3_agent.ini`` file:
+
+.. code-block:: ini
+
+   ha_vrrp_health_check_interval = 30
+
+Where ``ha_vrrp_health_check_interval`` indicates how often in seconds the
+health check should run. The default value is ``0``, which indicates that the
+check should not run at all.

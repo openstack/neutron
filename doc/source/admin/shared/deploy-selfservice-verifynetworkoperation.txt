@@ -1,0 +1,120 @@
+#. On each compute node, verify creation of a second ``qdhcp`` namespace.
+
+   .. code-block:: console
+
+      # ip netns
+      qdhcp-8b868082-e312-4110-8627-298109d4401c
+      qdhcp-8fbc13ca-cfe0-4b8a-993b-e33f37ba66d1
+
+#. On the network node, verify creation of the ``qrouter`` namespace.
+
+   .. code-block:: console
+
+      # ip netns
+      qrouter-17db2a15-e024-46d0-9250-4cd4d336a2cc
+
+#. Source a regular (non-administrative) project credentials.
+#. Create the appropriate security group rules to allow ``ping`` and SSH
+   access instances using the network.
+
+   .. include:: shared/deploy-secgrouprules.txt
+
+#. Launch an instance with an interface on the self-service network. For
+   example, a CirrOS image using flavor ID 1.
+
+   .. code-block:: console
+
+      $ openstack server create --flavor 1 --image cirros --nic net-id=NETWORK_ID selfservice-instance1
+
+   Replace ``NETWORK_ID`` with the ID of the self-service network.
+
+#. Determine the IPv4 and IPv6 addresses of the instance.
+
+   .. code-block:: console
+
+      $ openstack server list
+      +--------------------------------------+-----------------------+--------+--------------------------------------------------------------+
+      | ID                                   | Name                  | Status | Networks                                                     |
+      +--------------------------------------+-----------------------+--------+--------------------------------------------------------------+
+      | c055cdb0-ebb4-4d65-957c-35cbdbd59306 | selfservice-instance1 | ACTIVE | selfservice1=192.0.2.4, fd00:192:0:2:f816:3eff:fe30:9cb0     |
+      +--------------------------------------+-----------------------+--------+--------------------------------------------------------------+
+
+   .. warning::
+
+      The IPv4 address resides in a private IP address range (RFC1918). Thus,
+      the Networking service performs source network address translation (SNAT)
+      for the instance to access external networks such as the Internet. Access
+      from external networks such as the Internet to the instance requires a
+      floating IPv4 address. The Networking service performs destination
+      network address translation (DNAT) from the floating IPv4 address to the
+      instance IPv4 address on the self-service network. On the other hand,
+      the Networking service architecture for IPv6 lacks support for NAT due
+      to the significantly larger address space and complexity of NAT. Thus,
+      floating IP addresses do not exist for IPv6 and the Networking service
+      only performs routing for IPv6 subnets on self-service networks. In
+      other words, you cannot rely on NAT to "hide" instances with IPv4 and
+      IPv6 addresses or only IPv6 addresses and must properly implement
+      security groups to restrict access.
+
+#. On the controller node or any host with access to the provider network,
+   ``ping`` the IPv6 address of the instance.
+
+   .. code-block:: console
+
+      $ ping6 -c 4 fd00:192:0:2:f816:3eff:fe30:9cb0
+      PING fd00:192:0:2:f816:3eff:fe30:9cb0(fd00:192:0:2:f816:3eff:fe30:9cb0) 56 data bytes
+      64 bytes from fd00:192:0:2:f816:3eff:fe30:9cb0: icmp_seq=1 ttl=63 time=2.08 ms
+      64 bytes from fd00:192:0:2:f816:3eff:fe30:9cb0: icmp_seq=2 ttl=63 time=1.88 ms
+      64 bytes from fd00:192:0:2:f816:3eff:fe30:9cb0: icmp_seq=3 ttl=63 time=1.55 ms
+      64 bytes from fd00:192:0:2:f816:3eff:fe30:9cb0: icmp_seq=4 ttl=63 time=1.62 ms
+
+      --- fd00:192:0:2:f816:3eff:fe30:9cb0 ping statistics ---
+      4 packets transmitted, 4 received, 0% packet loss, time 3004ms
+      rtt min/avg/max/mdev = 1.557/1.788/2.085/0.217 ms
+
+#. Optionally, enable IPv4 access from external networks such as the
+   Internet to the instance.
+
+   #. Create a floating IPv4 address on the provider network.
+
+      .. code-block:: console
+
+         $ openstack floating ip create provider1
+         +-------------+--------------------------------------+
+         | Field       | Value                                |
+         +-------------+--------------------------------------+
+         | fixed_ip    | None                                 |
+         | id          | 22a1b088-5c9b-43b4-97f3-970ce5df77f2 |
+         | instance_id | None                                 |
+         | ip          | 203.0.113.16                         |
+         | pool        | provider1                            |
+         +-------------+--------------------------------------+
+
+   #. Associate the floating IPv4 address with the instance.
+
+      .. code-block:: console
+
+         $ openstack server add floating ip selfservice-instance1 203.0.113.16
+
+      .. note::
+
+         This command provides no output.
+
+   #. On the controller node or any host with access to the provider network,
+      ``ping`` the floating IPv4 address of the instance.
+
+      .. code-block:: console
+
+         $ ping -c 4 203.0.113.16
+         PING 203.0.113.16 (203.0.113.16) 56(84) bytes of data.
+         64 bytes from 203.0.113.16: icmp_seq=1 ttl=63 time=3.41 ms
+         64 bytes from 203.0.113.16: icmp_seq=2 ttl=63 time=1.67 ms
+         64 bytes from 203.0.113.16: icmp_seq=3 ttl=63 time=1.47 ms
+         64 bytes from 203.0.113.16: icmp_seq=4 ttl=63 time=1.59 ms
+
+         --- 203.0.113.16 ping statistics ---
+         4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+         rtt min/avg/max/mdev = 1.473/2.040/3.414/0.798 ms
+
+#. Obtain access to the instance.
+#. Test IPv4 and IPv6 connectivity to the Internet or other external network.

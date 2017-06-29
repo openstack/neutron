@@ -1,0 +1,91 @@
+The configuration supports one flat or multiple VLAN provider networks. For
+simplicity, the following procedure creates one flat provider network.
+
+#. Source the administrative project credentials.
+#. Create a flat network.
+
+   .. code-block:: console
+
+      $ openstack network create --share --provider-physical-network provider \
+        --provider-network-type flat provider1
+      +---------------------------+-----------+-
+      | Field                     | Value     |
+      +---------------------------+-----------+
+      | admin_state_up            | UP        |
+      | mtu                       | 1500      |
+      | name                      | provider1 |
+      | port_security_enabled     | True      |
+      | provider:network_type     | flat      |
+      | provider:physical_network | provider  | 
+      | provider:segmentation_id  | None      |
+      | router:external           | Internal  |
+      | shared                    | True      |
+      | status                    | ACTIVE    |
+      +---------------------------+-----------+
+
+   .. note::
+
+      The ``share`` option allows any project to use this network. To limit
+      access to provider networks, see :ref:`config-rbac`.
+
+   .. note::
+
+      To create a VLAN network instead of a flat network, change
+      ``--provider:network_type flat`` to ``--provider-network-type vlan``
+      and add ``--provider-segment`` with a value referencing
+      the VLAN ID.
+
+#. Create a IPv4 subnet on the provider network.
+
+   .. code-block:: console
+
+      $ openstack subnet create --subnet-range 203.0.113.0/24 --gateway 203.0.113.1 \
+        --network provider1 --allocation-pool start=203.0.113.11,end=203.0.113.250 \
+        --dns-nameserver 8.8.4.4 provider1-v4
+      +-------------------+----------------------------+
+      | Field             | Value                      |
+      +-------------------+----------------------------+
+      | allocation_pools  | 203.0.113.11-203.0.113.250 |
+      | cidr              | 203.0.113.0/24             |
+      | dns_nameservers   | 8.8.4.4                    |
+      | enable_dhcp       | True                       |
+      | gateway_ip        | 203.0.113.1                |
+      | ip_version        | 4                          |
+      | name              | provider1-v4               |
+      +-------------------+----------------------------+
+
+   .. important::
+
+      Enabling DHCP causes the Networking service to provide DHCP which can
+      interfere with existing DHCP services on the physical network
+      infrastructure. Use the ``--no-dhcp`` option to have the subnet managed
+      by existing DHCP services.
+
+#. Create a IPv6 subnet on the provider network.
+
+   .. code-block:: console
+
+      $ openstack subnet create --subnet-range fd00:203:0:113::/64 --gateway fd00:203:0:113::1 \
+        --ip-version 6 --ipv6-address-mode slaac --network provider1 \
+        --dns-nameserver 2001:4860:4860::8844 provider1-v6
+      +-------------------+------------------------------------------------------+
+      | Field             | Value                                                |
+      +-------------------+------------------------------------------------------+
+      | allocation_pools  | fd00:203:0:113::2-fd00:203:0:113:ffff:ffff:ffff:ffff |
+      | cidr              | fd00:203:0:113::/64                                  |
+      | dns_nameservers   | 2001:4860:4860::8844                                 |
+      | enable_dhcp       | True                                                 |
+      | gateway_ip        | fd00:203:0:113::1                                    |
+      | ip_version        | 6                                                    |
+      | ipv6_address_mode | slaac                                                |
+      | ipv6_ra_mode      | None                                                 |
+      | name              | provider1-v6                                         |
+      +-------------------+------------------------------------------------------+
+
+   .. note::
+
+      The Networking service uses the layer-3 agent to provide router
+      advertisement. Provider networks rely on physical network infrastructure
+      for layer-3 services rather than the layer-3 agent. Thus, the physical
+      network infrastructure must provide router advertisement on provider
+      networks for proper operation of IPv6.

@@ -39,6 +39,14 @@ The `Neutron Development wiki`_ is also a good resource for new contributors.
 
 Enjoy!
 
+Networking Guide
+----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   admin/index
+
 Neutron Policies
 ----------------
 

@@ -1,0 +1,23 @@
+.. code-block:: ini
+
+   [DEFAULT]
+   core_plugin = ml2
+   auth_strategy = keystone
+
+   [database]
+   # ...
+
+   [keystone_authtoken]
+   # ...
+
+   [nova]
+   # ...
+
+   [agent]
+   # ...
+
+See the `Installation Tutorials and Guides <https://docs.openstack.org>`_ and
+`Configuration Reference <https://docs.openstack.org>`_ for your OpenStack
+release to obtain the appropriate additional configuration for the
+``[DEFAULT]``, ``[database]``, ``[keystone_authtoken]``, ``[nova]``, and
+``[agent]`` sections.

@@ -1,0 +1,65 @@
+This architecture example augments the self-service deployment example
+with a high-availability mechanism using the Virtual Router Redundancy
+Protocol (VRRP) via ``keepalived`` and provides failover of routing
+for self-service networks. It requires a minimum of two network nodes
+because VRRP creates one master (active) instance and at least one backup
+instance of each router.
+
+During normal operation, ``keepalived`` on the master router periodically
+transmits *heartbeat* packets over a hidden network that connects all VRRP
+routers for a particular project. Each project with VRRP routers uses a
+separate hidden network. By default this network uses the first value in
+the ``tenant_network_types`` option in the ``ml2_conf.ini`` file. For
+additional control, you can specify the self-service network type and physical
+network name for the hidden network using the ``l3_ha_network_type`` and
+``l3_ha_network_name`` options in the ``neutron.conf`` file.
+
+If ``keepalived`` on the backup router stops receiving *heartbeat* packets,
+it assumes failure of the master router and promotes the backup router to
+master router by configuring IP addresses on the interfaces in the
+``qrouter`` namespace. In environments with more than one backup router,
+``keepalived`` on the backup router with the next highest priority promotes
+that backup router to master router.
+
+.. note::
+
+   This high-availability mechanism configures VRRP using the same priority
+   for all routers. Therefore, VRRP promotes the backup router with the
+   highest IP address to the master router.
+
+.. warning::
+
+   There is a known bug with ``keepalived`` v1.2.15 and earlier which can
+   cause packet loss when ``max_l3_agents_per_router`` is set to 3 or more.
+   Therefore, we recommend that you upgrade to ``keepalived`` v1.2.16
+   or greater when using this feature.
+
+Interruption of VRRP *heartbeat* traffic between network nodes, typically
+due to a network interface or physical network infrastructure failure,
+triggers a failover. Restarting the layer-3 agent, or failure of it, does
+not trigger a failover providing ``keepalived`` continues to operate.
+
+Consider the following attributes of this high-availability mechanism to
+determine practicality in your environment:
+
+* Instance network traffic on self-service networks using a particular
+  router only traverses the master instance of that router. Thus,
+  resource limitations of a particular network node can impact all
+  master instances of routers on that network node without triggering
+  failover to another network node. However, you can configure the
+  scheduler to distribute the master instance of each router uniformly
+  across a pool of network nodes to reduce the chance of resource
+  contention on any particular network node.
+
+* Only supports self-service networks using a router. Provider networks
+  operate at layer-2 and rely on physical network infrastructure for
+  redundancy.
+
+* For instances with a floating IPv4 address, maintains state of network
+  connections during failover as a side effect of 1:1 static NAT. The
+  mechanism does not actually implement connection tracking.
+
+For production deployments, we recommend at least three network nodes
+with sufficient resources to handle network traffic for the entire
+environment if one network node fails. Also, the remaining two nodes
+can continue to provide redundancy.

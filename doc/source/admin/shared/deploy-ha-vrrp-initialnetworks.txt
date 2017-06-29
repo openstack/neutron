@@ -1,0 +1,96 @@
+Similar to the self-service deployment example, this configuration supports
+multiple VXLAN self-service networks. After enabling high-availability, all
+additional routers use VRRP. The following procedure creates an additional
+self-service network and router. The Networking service also supports adding
+high-availability to existing routers. However, the procedure requires
+administratively disabling and enabling each router which temporarily
+interrupts network connectivity for self-service networks with interfaces
+on that router.
+
+#. Source a regular (non-administrative) project credentials.
+#. Create a self-service network.
+
+   .. code-block:: console
+
+      $ openstack network create selfservice2
+      +-------------------------+--------------+
+      | Field                   | Value        |
+      +-------------------------+--------------+
+      | admin_state_up          | UP           |
+      | mtu                     | 1450         |
+      | name                    | selfservice2 |
+      | port_security_enabled   | True         |
+      | router:external         | Internal     |
+      | shared                  | False        |
+      | status                  | ACTIVE       |
+      +-------------------------+--------------+
+
+#. Create a IPv4 subnet on the self-service network.
+
+   .. code-block:: console
+
+      $ openstack subnet create --subnet-range 198.51.100.0/24 \
+        --network selfservice2 --dns-nameserver 8.8.4.4 selfservice2-v4
+      +-------------------+------------------------------+
+      | Field             | Value                        |
+      +-------------------+------------------------------+
+      | allocation_pools  | 198.51.100.2-198.51.100.254  |
+      | cidr              | 198.51.100.0/24              |
+      | dns_nameservers   | 8.8.4.4                      |
+      | enable_dhcp       | True                         |
+      | gateway_ip        | 198.51.100.1                 |
+      | ip_version        | 4                            |
+      | name              | selfservice2-v4              |
+      +-------------------+------------------------------+
+
+#. Create a IPv6 subnet on the self-service network.
+
+   .. code-block:: console
+
+      $ openstack subnet create --subnet-range fd00:198:51:100::/64 --ip-version 6 \
+        --ipv6-ra-mode slaac --ipv6-address-mode slaac --network selfservice2 \
+        --dns-nameserver 2001:4860:4860::8844 selfservice2-v6
+      +-------------------+--------------------------------------------------------+
+      | Field             | Value                                                  |
+      +-------------------+--------------------------------------------------------+
+      | allocation_pools  | fd00:198:51:100::2-fd00:198:51:100:ffff:ffff:ffff:ffff |
+      | cidr              | fd00:198:51:100::/64                                   |
+      | dns_nameservers   | 2001:4860:4860::8844                                   |
+      | enable_dhcp       | True                                                   |
+      | gateway_ip        | fd00:198:51:100::1                                     |
+      | ip_version        | 6                                                      |
+      | ipv6_address_mode | slaac                                                  |
+      | ipv6_ra_mode      | slaac                                                  |
+      | name              | selfservice2-v6                                        |
+      +-------------------+--------------------------------------------------------+
+
+#. Create a router.
+
+   .. code-block:: console
+
+      $ openstack router create router2
+      +-----------------------+---------+
+      | Field                 | Value   |
+      +-----------------------+---------+
+      | admin_state_up        | UP      |
+      | name                  | router2 |
+      | status                | ACTIVE  |
+      +-----------------------+---------+
+
+#. Add the IPv4 and IPv6 subnets as interfaces on the router.
+
+   .. code-block:: console
+
+      $ openstack router add subnet router2 selfservice2-v4
+      $ openstack router add subnet router2 selfservice2-v6
+
+   .. note::
+
+      These commands provide no output.
+
+#. Add the provider network as a gateway on the router.
+
+   .. code-block:: console
+
+      $ neutron router-gateway-set router2 provider1
+      Set gateway for router router2

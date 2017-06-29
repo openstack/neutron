@@ -1,0 +1,109 @@
+The configuration supports multiple VXLAN self-service networks. For
+simplicity, the following procedure creates one self-service network and
+a router with a gateway on the flat provider network. The router uses
+NAT for IPv4 network traffic and directly routes IPv6 network traffic.
+
+.. note::
+
+   IPv6 connectivity with self-service networks often requires addition of
+   static routes to nodes and physical network infrastructure.
+
+#. Source the administrative project credentials.
+#. Update the provider network to support external connectivity for
+   self-service networks.
+
+   .. code-block:: console
+
+      $ openstack network set --external provider1
+
+   .. note::
+
+      This command provides no output.
+
+#. Source a regular (non-administrative) project credentials.
+#. Create a self-service network.
+
+   .. code-block:: console
+
+      $ openstack network create selfservice1
+      +-------------------------+--------------+
+      | Field                   | Value        |
+      +-------------------------+--------------+
+      | admin_state_up          | UP           |
+      | mtu                     | 1450         |
+      | name                    | selfservice1 |
+      | port_security_enabled   | True         |
+      | router:external         | Internal     |
+      | shared                  | False        |
+      | status                  | ACTIVE       |
+      +-------------------------+--------------+
+
+#. Create a IPv4 subnet on the self-service network.
+
+   .. code-block:: console
+
+      $ openstack subnet create --subnet-range 192.0.2.0/24 \
+        --network selfservice1 --dns-nameserver 8.8.4.4 selfservice1-v4
+      +-------------------+---------------------------+
+      | Field             | Value                     |
+      +-------------------+---------------------------+
+      | allocation_pools  | 192.0.2.2-192.0.2.254     |
+      | cidr              | 192.0.2.0/24              |
+      | dns_nameservers   | 8.8.4.4                   |
+      | enable_dhcp       | True                      |
+      | gateway_ip        | 192.0.2.1                 |
+      | ip_version        | 4                         |
+      | name              | selfservice1-v4           |
+      +-------------------+---------------------------+
+
+#. Create a IPv6 subnet on the self-service network.
+
+   .. code-block:: console
+
+      $ openstack subnet create --subnet-range fd00:192:0:2::/64 --ip-version 6 \
+        --ipv6-ra-mode slaac --ipv6-address-mode slaac --network selfservice1 \
+        --dns-nameserver 2001:4860:4860::8844 selfservice1-v6
+      +-------------------+------------------------------------------------------+
+      | Field             | Value                                                |
+      +-------------------+------------------------------------------------------+
+      | allocation_pools  | fd00:192:0:2::2-fd00:192:0:2:ffff:ffff:ffff:ffff     |
+      | cidr              | fd00:192:0:2::/64                                    |
+      | dns_nameservers   | 2001:4860:4860::8844                                 |
+      | enable_dhcp       | True                                                 |
+      | gateway_ip        | fd00:192:0:2::1                                      |
+      | ip_version        | 6                                                    |
+      | ipv6_address_mode | slaac                                                |
+      | ipv6_ra_mode      | slaac                                                |
+      | name              | selfservice1-v6                                      |
+      +-------------------+------------------------------------------------------+
+
+#. Create a router.
+
+   .. code-block:: console
+
+      $ openstack router create router1
+      +-----------------------+---------+
+      | Field                 | Value   |
+      +-----------------------+---------+
+      | admin_state_up        | UP      |
+      | name                  | router1 |
+      | status                | ACTIVE  |
+      +-----------------------+---------+
+
+#. Add the IPv4 and IPv6 subnets as interfaces on the router.
+
+   .. code-block:: console
+
+      $ openstack router add subnet router1 selfservice1-v4
+      $ openstack router add subnet router1 selfservice1-v6
+
+   .. note::
+
+      These commands provide no output.
+
+#. Add the provider network as the gateway on the router.
+
+   .. code-block:: console
+
+      $ neutron router-gateway-set router1 provider1
+      Set gateway for router router1

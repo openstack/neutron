@@ -1,0 +1,29 @@
+The following sections describe the flow of network traffic in several
+common scenarios. *North-south* network traffic travels between an instance
+and external network such as the Internet. *East-west* network traffic
+travels between instances on the same or different networks. In all scenarios,
+the physical network infrastructure handles switching and routing among
+provider networks and external networks such as the Internet. Each case
+references one or more of the following components:
+
+* Provider network (VLAN)
+
+  * VLAN ID 101 (tagged)
+
+* Self-service network 1 (VXLAN)
+
+  * VXLAN ID (VNI) 101
+
+* Self-service network 2 (VXLAN)
+
+  * VXLAN ID (VNI) 102
+
+* Self-service router
+
+  * Gateway on the provider network
+  * Interface on self-service network 1
+  * Interface on self-service network 2
+
+* Instance 1
+
+* Instance 2
