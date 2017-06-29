@@ -177,7 +177,7 @@ class TagFilterTestJSON(base.BaseAdminNetworkTest):
     @classmethod
     def setup_clients(cls):
         super(TagFilterTestJSON, cls).setup_clients()
-        cls.client = cls.alt_manager.network_client
+        cls.client = cls.os_alt.network_client
 
     def _assertEqualResources(self, expected, res):
         actual = [n['name'] for n in res if n['name'].startswith('tag-res')]

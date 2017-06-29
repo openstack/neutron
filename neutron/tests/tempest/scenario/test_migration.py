@@ -32,7 +32,7 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
         super(NetworkMigrationTestBase, cls).skip_checks()
 
     def _check_update(self, router, is_dvr, is_ha):
-        router = self.admin_manager.network_client.show_router(router['id'])
+        router = self.os_admin.network_client.show_router(router['id'])
         self.assertEqual(is_dvr, router['router']['distributed'])
         self.assertEqual(is_ha, router['router']['ha'])
 
@@ -44,13 +44,13 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
         self.setup_network_and_server(router=router)
         self._check_connectivity()
 
-        self.admin_manager.network_client.update_router(
+        self.os_admin.network_client.update_router(
             router_id=router['id'], admin_state_up=False)
-        self.admin_manager.network_client.update_router(
+        self.os_admin.network_client.update_router(
             router_id=router['id'], distributed=after_dvr, ha=after_ha)
         self._check_update(router, after_dvr, after_ha)
 
-        self.admin_manager.network_client.update_router(
+        self.os_admin.network_client.update_router(
             router_id=router['id'], admin_state_up=True)
         self._check_connectivity()
 

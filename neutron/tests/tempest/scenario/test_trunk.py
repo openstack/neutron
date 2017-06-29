@@ -55,7 +55,7 @@ class TrunkTest(base.BaseTempestTestCase):
         router = cls.create_router_by_client()
         cls.create_router_interface(router['id'], cls.subnet['id'])
         cls.keypair = cls.create_keypair()
-        cls.secgroup = cls.manager.network_client.create_security_group(
+        cls.secgroup = cls.os_primary.network_client.create_security_group(
             name=data_utils.rand_name('secgroup-'))
         cls.security_groups.append(cls.secgroup['security_group'])
         cls.create_loginable_secgroup_rule(

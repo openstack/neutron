@@ -40,7 +40,7 @@ class NetworkTestMixin(object):
         port_id = self.client.list_ports(
             network_id=network_id,
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT)['ports'][0]['id']
-        self.admin_manager.network_client.update_port(
+        self.os_admin.network_client.update_port(
             port_id, admin_state_up=False)
 
 
