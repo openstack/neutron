@@ -50,7 +50,7 @@ function load_rc_for_rally {
 
 
 case $VENV in
-"dsvm-functional"|"dsvm-fullstack"|"dsvm-functional-python35")
+"dsvm-functional"|"dsvm-fullstack"|"dsvm-functional-python35"|"dsvm-fullstack-python35")
     # The following need to be set before sourcing
     # configure_for_func_testing.
     GATE_STACK_USER=stack
