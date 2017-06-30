@@ -17,7 +17,6 @@ import functools
 
 from keystoneauth1 import exceptions as ks_exc
 from keystoneauth1 import loading as ks_loading
-from keystoneauth1 import session
 from oslo_config import cfg
 
 from neutron._i18n import _
@@ -45,7 +44,8 @@ class PlacementAPIClient(object):
     def __init__(self):
         auth_plugin = ks_loading.load_auth_from_conf_options(
             cfg.CONF, 'placement')
-        self._client = session.Session(auth=auth_plugin)
+        self._client = ks_loading.load_session_from_conf_options(
+            cfg.CONF, 'placement', auth=auth_plugin)
         self._disabled = False
 
     def _get(self, url, **kwargs):

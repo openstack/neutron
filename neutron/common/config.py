@@ -62,7 +62,8 @@ common_config.register_nova_opts()
 
 ks_loading.register_auth_conf_options(cfg.CONF,
                                       common_config.PLACEMENT_CONF_SECTION)
-
+ks_loading.register_session_conf_options(cfg.CONF,
+                                         common_config.PLACEMENT_CONF_SECTION)
 
 # Register the placement configuration options
 common_config.register_placement_opts()

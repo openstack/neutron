@@ -2130,7 +2130,10 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         placement_client.PlacementAPIClient()
 
         load_auth_mock.assert_called_once_with(cfg.CONF, 'placement')
-        ks_sess_mock.assert_called_once_with(auth=load_auth_mock.return_value)
+        ks_sess_mock.assert_called_once_with(auth=load_auth_mock.return_value,
+                                             cert=None,
+                                             timeout=None,
+                                             verify=True)
 
     def test_create_resource_provider(self):
         expected_payload = 'fake_resource_provider'
