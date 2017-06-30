@@ -374,6 +374,19 @@ class FakeNeutronObjectDictOfMiscValues(base.NeutronDbObject):
     }
 
 
+@obj_base.VersionedObjectRegistry.register_if(False)
+class FakeNeutronObjectListOfDictOfMiscValues(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = FakeModel
+
+    fields = {
+        'id': common_types.UUIDField(),
+        'list_of_dicts_field': common_types.ListOfDictOfMiscValuesField(),
+    }
+
+
 def get_random_dscp_mark():
     return random.choice(constants.VALID_DSCP_MARKS)
 
@@ -417,6 +430,10 @@ def get_random_dict():
     }
 
 
+def get_random_dicts_list():
+    return [get_random_dict() for _ in range(5)]
+
+
 def get_set_of_random_uuids():
     return {
         uuidutils.generate_uuid()
@@ -427,6 +444,7 @@ def get_set_of_random_uuids():
 # NOTE: The keys in this dictionary have alphabetic order.
 FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.DictOfMiscValuesField: get_random_dict,
+    common_types.ListOfDictOfMiscValuesField: get_random_dicts_list,
     common_types.DomainNameField: get_random_domain_name,
     common_types.DscpMarkField: get_random_dscp_mark,
     common_types.EtherTypeEnumField: tools.get_random_ether_type,
@@ -1270,6 +1288,28 @@ class BaseObjectIfaceDictMiscValuesTestCase(_BaseObjectTestCase,
         self.assertTrue(obj.dict_field['bool'])
         self.assertEqual(float_value, obj.dict_field['float'])
         self.assertEqual(misc_list, obj.dict_field['misc_list'])
+
+
+class BaseObjectIfaceListDictMiscValuesTestCase(_BaseObjectTestCase,
+                                                test_base.BaseTestCase):
+
+    _test_class = FakeNeutronObjectListOfDictOfMiscValues
+
+    def test_list_of_dict_of_misc_values(self):
+        obj_id = uuidutils.generate_uuid()
+        float_value = 1.23
+        misc_list = [True, float_value]
+        obj_dict = {
+            'bool': True,
+            'float': float_value,
+            'misc_list': misc_list
+        }
+        obj = self._test_class(
+            self.context, id=obj_id, list_of_dicts_field=[obj_dict])
+        self.assertEqual(1, len(obj.list_of_dicts_field))
+        self.assertTrue(obj.list_of_dicts_field[0]['bool'])
+        self.assertEqual(float_value, obj.list_of_dicts_field[0]['float'])
+        self.assertEqual(misc_list, obj.list_of_dicts_field[0]['misc_list'])
 
 
 class BaseDbObjectTestCase(_BaseObjectTestCase,
