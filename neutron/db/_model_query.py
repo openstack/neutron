@@ -16,12 +16,12 @@ NOTE: This module shall not be used by external projects. It will be moved
       to neutron-lib in due course, and then it can be used from there.
 """
 
+from neutron_lib.api import attributes
 from neutron_lib.db import utils as db_utils
 from oslo_db.sqlalchemy import utils as sa_utils
 from sqlalchemy import sql, or_, and_
 from sqlalchemy.ext import associationproxy
 
-from neutron.api.v2 import attributes
 from neutron.common import utils
 from neutron.db import _utils as ndb_utils
 

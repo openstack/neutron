@@ -17,18 +17,17 @@ import collections
 import copy
 
 import netaddr
+from neutron_lib.api import attributes
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
-from oslo_utils import strutils
 import webob.exc
 
 from neutron._i18n import _, _LE, _LI
 from neutron.api import api_common
-from neutron.api.v2 import attributes
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
@@ -693,8 +692,7 @@ class Controller(object):
         if not body:
             raise webob.exc.HTTPBadRequest(_("Resource body required"))
 
-        LOG.debug("Request body: %(body)s",
-                  {'body': strutils.mask_password(body)})
+        LOG.debug("Request body: %(body)s", {'body': body})
         try:
             if collection in body:
                 if not allow_bulk:
@@ -717,19 +715,21 @@ class Controller(object):
             msg = _("Unable to find '%s' in request body") % resource
             raise webob.exc.HTTPBadRequest(msg)
 
-        attributes.populate_tenant_id(context, res_dict, attr_info, is_create)
-        attributes.verify_attributes(res_dict, attr_info)
+        attr_ops = attributes.AttributeInfo(attr_info)
+        attr_ops.populate_project_id(context, res_dict, is_create)
+        attributes.populate_project_info(attr_info)
+        attr_ops.verify_attributes(res_dict)
 
         if is_create:  # POST
-            attributes.fill_default_value(attr_info, res_dict,
-                                          webob.exc.HTTPBadRequest)
+            attr_ops.fill_post_defaults(
+                res_dict, exc_cls=webob.exc.HTTPBadRequest)
         else:  # PUT
             for attr, attr_vals in attr_info.items():
                 if attr in res_dict and not attr_vals['allow_put']:
                     msg = _("Cannot update read-only attribute %s") % attr
                     raise webob.exc.HTTPBadRequest(msg)
 
-        attributes.convert_value(attr_info, res_dict, webob.exc.HTTPBadRequest)
+        attr_ops.convert_values(res_dict, exc_cls=webob.exc.HTTPBadRequest)
         return body
 
     def _validate_network_tenant_ownership(self, request, resource_item):

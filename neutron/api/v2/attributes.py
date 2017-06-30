@@ -14,12 +14,8 @@
 #    under the License.
 
 from neutron_lib.api import converters as lib_converters
-from neutron_lib.api import validators as lib_validators
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
-import webob.exc
-
-from neutron._i18n import _
 
 
 # Defining a constant to avoid repeating string literal in several modules
@@ -289,9 +285,6 @@ RESOURCE_FOREIGN_KEYS = {
     NETWORKS: 'network_id'
 }
 
-# Removing PLURALS breaks subprojects, but they don't need it so they
-# need to be patched.
-
 
 def get_collection_info(collection):
     """Helper function to retrieve attribute info.
@@ -299,106 +292,3 @@ def get_collection_info(collection):
     :param collection: Collection or plural name of the resource
     """
     return RESOURCE_ATTRIBUTE_MAP.get(collection)
-
-
-def fill_default_value(attr_info, res_dict,
-                       exc_cls=ValueError,
-                       check_allow_post=True):
-    for attr, attr_vals in attr_info.items():
-        if attr_vals['allow_post']:
-            if 'default' not in attr_vals and attr not in res_dict:
-                msg = _("Failed to parse request. Required "
-                        "attribute '%s' not specified") % attr
-                raise exc_cls(msg)
-            res_dict[attr] = res_dict.get(attr,
-                                          attr_vals.get('default'))
-        elif check_allow_post:
-            if attr in res_dict:
-                msg = _("Attribute '%s' not allowed in POST") % attr
-                raise exc_cls(msg)
-
-
-def convert_value(attr_info, res_dict, exc_cls=ValueError):
-    for attr, attr_vals in attr_info.items():
-        if (attr not in res_dict or
-                res_dict[attr] is constants.ATTR_NOT_SPECIFIED):
-            continue
-        # Convert values if necessary
-        if 'convert_to' in attr_vals:
-            res_dict[attr] = attr_vals['convert_to'](res_dict[attr])
-        # Check that configured values are correct
-        if 'validate' not in attr_vals:
-            continue
-        for rule in attr_vals['validate']:
-            validator = lib_validators.get_validator(rule)
-            res = validator(res_dict[attr], attr_vals['validate'][rule])
-
-            if res:
-                msg_dict = dict(attr=attr, reason=res)
-                msg = _("Invalid input for %(attr)s. "
-                        "Reason: %(reason)s.") % msg_dict
-                raise exc_cls(msg)
-
-
-def populate_project_info(attributes):
-    """
-    Ensure that both project_id and tenant_id attributes are present.
-
-    If either project_id or tenant_id is present in attributes then ensure
-    that both are present.
-
-    If neither are present then attributes is not updated.
-
-    :param attributes: a dictionary of resource/API attributes
-    :type attributes: dict
-
-    :return: the updated attributes dictionary
-    :rtype: dict
-    """
-    if 'tenant_id' in attributes and 'project_id' not in attributes:
-        # TODO(HenryG): emit a deprecation warning here
-        attributes['project_id'] = attributes['tenant_id']
-    elif 'project_id' in attributes and 'tenant_id' not in attributes:
-        # Backward compatibility for code still using tenant_id
-        attributes['tenant_id'] = attributes['project_id']
-
-    if attributes.get('project_id') != attributes.get('tenant_id'):
-        msg = _("'project_id' and 'tenant_id' do not match")
-        raise webob.exc.HTTPBadRequest(msg)
-
-    return attributes
-
-
-def _validate_privileges(context, res_dict):
-    if ('project_id' in res_dict and
-            res_dict['project_id'] != context.project_id and
-            not context.is_admin):
-        msg = _("Specifying 'project_id' or 'tenant_id' other than "
-                "authenticated project in request requires admin privileges")
-        raise webob.exc.HTTPBadRequest(msg)
-
-
-def populate_tenant_id(context, res_dict, attr_info, is_create):
-    populate_project_info(res_dict)
-    _validate_privileges(context, res_dict)
-
-    if is_create and 'project_id' not in res_dict:
-        if context.project_id:
-            res_dict['project_id'] = context.project_id
-
-            # For backward compatibility
-            res_dict['tenant_id'] = context.project_id
-
-        elif 'tenant_id' in attr_info:
-            msg = _("Running without keystone AuthN requires "
-                    "that tenant_id is specified")
-            raise webob.exc.HTTPBadRequest(msg)
-
-
-def verify_attributes(res_dict, attr_info):
-    populate_project_info(attr_info)
-
-    extra_keys = set(res_dict.keys()) - set(attr_info.keys())
-    if extra_keys:
-        msg = _("Unrecognized attribute(s) '%s'") % ', '.join(extra_keys)
-        raise webob.exc.HTTPBadRequest(msg)
