@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_last_updated_fmt = '%b %d, %Y'
 git_cmd = "git log --pretty=format:'%ad, commit %h' --date=local -n1"
 try:
-    html_last_updated_fmt = os.popen(git_cmd).read()
+    html_last_updated_fmt = subprocess.check_output(git_cmd).decode('utf-8')
 except Exception:
     warnings.warn('Cannot get last updated time from git repository. '
                   'Not setting "html_last_updated_fmt".')
