@@ -1204,6 +1204,10 @@ class BaseObjectIfaceWithProjectIdTestCase(BaseObjectIfaceTestCase):
         self.assertEqual(set(['field2']), obj.obj_what_changed())
         self.assertEqual(tenant_id, obj.project_id)
 
+    def test_tenant_id_filter_added_when_project_id_present(self):
+        self._test_class.get_objects(
+            self.context, tenant_id=self.obj_fields[0]['project_id'])
+
 
 class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,
                                               test_base.BaseTestCase):
