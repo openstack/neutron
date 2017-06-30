@@ -247,6 +247,13 @@ class LinuxInterfaceDriver(object):
                                                               'value': value}]
         ip_lib.sysctl(cmd, namespace=namespace)
 
+    @staticmethod
+    def configure_ipv6_forwarding(namespace, dev_name, enabled):
+        """Configure IPv6 forwarding on an interface."""
+        cmd = ['net.ipv6.conf.%(dev)s.forwarding=%(enabled)s' %
+               {'dev': dev_name, 'enabled': int(enabled)}]
+        ip_lib.sysctl(cmd, namespace=namespace)
+
     @abc.abstractmethod
     def plug_new(self, network_id, port_id, device_name, mac_address,
                  bridge=None, namespace=None, prefix=None, mtu=None):
