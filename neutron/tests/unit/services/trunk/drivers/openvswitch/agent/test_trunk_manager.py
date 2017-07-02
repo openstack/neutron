@@ -14,8 +14,8 @@
 #    under the License.
 
 import contextlib
-import mock
 
+import mock
 import testtools
 
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager

@@ -15,9 +15,9 @@
 
 
 import collections
+from operator import itemgetter
 
 from neutron_lib import constants
-from operator import itemgetter
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging

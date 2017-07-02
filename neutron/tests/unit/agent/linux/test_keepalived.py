@@ -14,12 +14,11 @@
 #
 
 import os
-
-import mock
-import testtools
 import textwrap
 
+import mock
 from neutron_lib import constants as n_consts
+import testtools
 
 from neutron.agent.linux import keepalived
 from neutron.tests import base

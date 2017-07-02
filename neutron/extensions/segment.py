@@ -13,7 +13,6 @@
 #    under the License.
 
 import abc
-import six
 
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import provider_net as providernet
@@ -21,6 +20,7 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
+import six
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes

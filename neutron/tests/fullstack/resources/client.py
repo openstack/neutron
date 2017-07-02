@@ -13,9 +13,9 @@
 #    under the License.
 #
 import functools
-import netaddr
 
 import fixtures
+import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutronclient.common import exceptions

@@ -13,10 +13,10 @@
 #    under the License.
 
 import functools
-import netaddr
 import os
 import time
 
+import netaddr
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router

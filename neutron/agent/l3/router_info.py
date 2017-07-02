@@ -13,6 +13,7 @@
 #    under the License.
 
 import collections
+
 import netaddr
 from neutron_lib import constants as lib_constants
 from neutron_lib.utils import helpers

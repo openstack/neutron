@@ -14,9 +14,9 @@
 
 
 import copy
+
 import fixtures
 import mock
-
 from neutron_lib import context
 from neutron_lib.db import constants as db_const
 from oslo_config import cfg

@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+
 import mock
 import netaddr
 from neutron_lib import constants
