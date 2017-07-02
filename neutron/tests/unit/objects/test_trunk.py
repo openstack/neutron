@@ -178,3 +178,20 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
         trunk_v1_0 = trunk_new.obj_to_primitive(target_version='1.0')
         self.assertNotIn('project_id', trunk_v1_0['versioned_object.data'])
         self.assertIn('tenant_id', trunk_v1_0['versioned_object.data'])
+
+    def test_get_objects_tenant_id(self):
+        trunk = t_obj.Trunk(context=self.context,
+                            project_id='faketenant',
+                            port_id=self.db_objs[0]['port_id'])
+        trunk.create()
+        self.assertIsNotNone(
+            t_obj.Trunk.get_objects(self.context, tenant_id='faketenant'))
+
+    def test_get_objects_both_tenant_and_project_ids(self):
+        trunk = t_obj.Trunk(context=self.context,
+                            project_id='faketenant',
+                            port_id=self.db_objs[0]['port_id'])
+        trunk.create()
+        self.assertIsNotNone(
+            t_obj.Trunk.get_objects(
+                self.context, tenant_id='faketenant', project_id='faketenant'))

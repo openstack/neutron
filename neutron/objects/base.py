@@ -285,6 +285,9 @@ class DeclarativeObject(abc.ABCMeta):
             standardattributes.add_standard_attributes(cls)
         # Instantiate extra filters per class
         cls.extra_filter_names = set(cls.extra_filter_names)
+        # add tenant_id filter for objects that have project_id
+        if 'project_id' in cls.fields and 'tenant_id' not in cls.fields:
+            cls.extra_filter_names.add('tenant_id')
 
 
 @six.add_metaclass(DeclarativeObject)
