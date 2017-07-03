@@ -592,22 +592,18 @@ class _DVRAgentInterfaceMixin(object):
 
     def _build_routers_list(self, context, routers, gw_ports):
         # Perform a single query up front for all routers
+        routers = super(_DVRAgentInterfaceMixin, self)._build_routers_list(
+            context, routers, gw_ports)
         if not routers:
             return []
         router_ids = [r['id'] for r in routers]
         binding_objs = rb_obj.RouterL3AgentBinding.get_objects(
             context, router_id=router_ids)
         bindings = dict((b.router_id, b) for b in binding_objs)
-
         for rtr in routers:
             gw_port_id = rtr['gw_port_id']
             # Collect gw ports only if available
             if gw_port_id and gw_ports.get(gw_port_id):
-                rtr['gw_port'] = gw_ports[gw_port_id]
-                if 'enable_snat' in rtr[l3.EXTERNAL_GW_INFO]:
-                    rtr['enable_snat'] = (
-                        rtr[l3.EXTERNAL_GW_INFO]['enable_snat'])
-
                 binding = bindings.get(rtr['id'])
                 if not binding:
                     rtr['gw_port_host'] = None
@@ -964,10 +960,6 @@ class _DVRAgentInterfaceMixin(object):
             return update_port
 
 
-# NOTE: The order in which the parent classes are inherited sometimes
-# determines the functions defined in those classes to be executed.
-# So any new classes that overrides a function in the parent class should
-# be added before the parent class.
 class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
                                DVRResourceOperationHandler,
                                l3_attrs_db.ExtraAttributesMixin,

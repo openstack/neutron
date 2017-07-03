@@ -79,6 +79,8 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         return cfg.CONF.enable_snat_by_default
 
     def _build_routers_list(self, context, routers, gw_ports):
+        routers = super(L3_NAT_dbonly_mixin, self)._build_routers_list(
+            context, routers, gw_ports)
         for rtr in routers:
             gw_port_id = rtr['gw_port_id']
             # Collect gw ports only if available
