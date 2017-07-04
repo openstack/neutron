@@ -55,6 +55,14 @@ Networking Guide
 
    admin/index
 
+CLI Reference
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   cli/index
+
 Neutron Feature Classification
 ------------------------------
 
