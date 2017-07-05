@@ -15,11 +15,11 @@
 import mock
 
 from neutron_lib.api.definitions import data_plane_status as dps_lib
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
 
-from neutron.api.v2 import attributes as attrs
 from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.extensions import data_plane_status
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -47,7 +47,8 @@ class DataPlaneStatusSML2ExtDriverTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_show_port_has_data_plane_status(self):
         with self.port() as port:
-            req = self.new_show_request(attrs.PORTS, port['port']['id'],
+            req = self.new_show_request(port_def.COLLECTION_NAME,
+                                        port['port']['id'],
                                         self.fmt)
             p = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertIsNone(p['port'][dps_lib.DATA_PLANE_STATUS])
@@ -57,7 +58,8 @@ class DataPlaneStatusSML2ExtDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             admin_ctx = context.get_admin_context()
             p = {'port': {dps_lib.DATA_PLANE_STATUS: constants.ACTIVE}}
             self.plugin.update_port(admin_ctx, port['port']['id'], p)
-            req = self.new_show_request(attrs.PORTS, port['port']['id'])
+            req = self.new_show_request(
+                port_def.COLLECTION_NAME, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(res['port'][dps_lib.DATA_PLANE_STATUS],
                              constants.ACTIVE)

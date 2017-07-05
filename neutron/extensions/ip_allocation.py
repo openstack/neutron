@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import extensions
 
-from neutron.api.v2 import attributes
 
 IP_ALLOCATION = 'ip_allocation'
 IP_ALLOCATION_IMMEDIATE = 'immediate'
@@ -23,7 +23,7 @@ IP_ALLOCATION_NONE = 'none'
 
 # Attribute Map
 RESOURCE_ATTRIBUTE_MAP = {
-    attributes.PORTS: {
+    port_def.COLLECTION_NAME: {
         IP_ALLOCATION: {'allow_post': False,
                         'allow_put': False,
                         'is_visible': True, },

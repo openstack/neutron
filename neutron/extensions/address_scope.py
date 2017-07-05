@@ -15,6 +15,8 @@
 import abc
 
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
@@ -64,14 +66,14 @@ RESOURCE_ATTRIBUTE_MAP = {
                        'validate': {'type:values': [4, 6]},
                        'is_visible': True},
     },
-    attr.SUBNETPOOLS: {
+    subnetpool_def.COLLECTION_NAME: {
         ADDRESS_SCOPE_ID: {'allow_post': True,
                            'allow_put': True,
                            'default': constants.ATTR_NOT_SPECIFIED,
                            'validate': {'type:uuid_or_none': None},
                            'is_visible': True}
     },
-    attr.NETWORKS: {
+    net_def.COLLECTION_NAME: {
         IPV4_ADDRESS_SCOPE: {'allow_post': False,
                              'allow_put': False,
                              'is_visible': True},

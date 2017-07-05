@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
@@ -25,7 +26,6 @@ from neutron_lib.plugins import directory
 from oslo_serialization import jsonutils
 import testtools
 
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron.db import agents_db
@@ -237,7 +237,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             else:
                 port[portbindings.HOST_ID] = self.agent2['host']
             plugin.update_port(self.adminContext, port['id'],
-                               {attributes.PORT: port})
+                               {port_def.RESOURCE_NAME: port})
 
     def _get_first_interface(self, net_id, router_id):
         plugin = directory.get_plugin()

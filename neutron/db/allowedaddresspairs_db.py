@@ -13,9 +13,9 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
 
-from neutron.api.v2 import attributes as attr
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
@@ -65,7 +65,7 @@ class AllowedAddressPairsMixin(object):
                 for pair in pairs]
 
     @staticmethod
-    @resource_extend.extends([attr.PORTS])
+    @resource_extend.extends([port_def.COLLECTION_NAME])
     def _extend_port_dict_allowed_address_pairs(port_res, port_db):
         # If port_db is provided, allowed address pairs will be accessed via
         # sqlalchemy models. As they're loaded together with ports this

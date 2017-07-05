@@ -15,9 +15,9 @@
 from webob import exc as web_exc
 
 from neutron_lib.api.definitions import data_plane_status as dps_lib
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib import constants
 
-from neutron.api.v2 import attributes as attrs
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import data_plane_status_db as dps_db
 from neutron.db import db_base_plugin_v2
@@ -48,7 +48,7 @@ class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["data-plane-status"]
 
     @staticmethod
-    @resource_extend.extends([attrs.PORTS])
+    @resource_extend.extends([port_def.COLLECTION_NAME])
     def _extend_port_data_plane_status(port_res, port_db):
         return dps_db.DataPlaneStatusMixin._extend_port_data_plane_status(
             port_res, port_db)
@@ -77,7 +77,7 @@ class DataPlaneStatusExtensionTestCase(
     def test_update_port_data_plane_status(self):
         with self.port() as port:
             data = {'port': {'data_plane_status': constants.ACTIVE}}
-            req = self.new_update_request(attrs.PORTS,
+            req = self.new_update_request(port_def.COLLECTION_NAME,
                                           data,
                                           port['port']['id'])
             res = req.get_response(self.api)
@@ -87,7 +87,8 @@ class DataPlaneStatusExtensionTestCase(
 
     def test_port_create_data_plane_status_default_none(self):
         with self.port(name='port1') as port:
-            req = self.new_show_request(attrs.PORTS, port['port']['id'])
+            req = self.new_show_request(
+                port_def.COLLECTION_NAME, port['port']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertIsNone(res['port'][dps_lib.DATA_PLANE_STATUS])
 
@@ -102,10 +103,10 @@ class DataPlaneStatusExtensionTestCase(
 
     def test_port_update_preserves_data_plane_status(self):
         with self.port(name='port1') as port:
-            res = self._update(attrs.PORTS, port['port']['id'],
+            res = self._update(port_def.COLLECTION_NAME, port['port']['id'],
                                {'port': {dps_lib.DATA_PLANE_STATUS:
                                          constants.ACTIVE}})
-            res = self._update(attrs.PORTS, port['port']['id'],
+            res = self._update(port_def.COLLECTION_NAME, port['port']['id'],
                                {'port': {'name': 'port2'}})
             self.assertEqual(res['port']['name'], 'port2')
             self.assertEqual(res['port'][dps_lib.DATA_PLANE_STATUS],
@@ -113,7 +114,7 @@ class DataPlaneStatusExtensionTestCase(
 
     def test_port_update_with_invalid_data_plane_status(self):
         with self.port(name='port1') as port:
-            self._update(attrs.PORTS, port['port']['id'],
+            self._update(port_def.COLLECTION_NAME, port['port']['id'],
                          {'port': {dps_lib.DATA_PLANE_STATUS: "abc"}},
                          web_exc.HTTPBadRequest.code)
 
@@ -121,7 +122,7 @@ class DataPlaneStatusExtensionTestCase(
         expect_notify = set(['port.update.start',
                              'port.update.end'])
         with self.port(name='port1') as port:
-            self._update(attrs.PORTS, port['port']['id'],
+            self._update(port_def.COLLECTION_NAME, port['port']['id'],
                          {'port': {dps_lib.DATA_PLANE_STATUS:
                                    constants.ACTIVE}})
             notify = set(n['event_type'] for n in fake_notifier.NOTIFICATIONS)

@@ -14,11 +14,14 @@
 
 import functools
 
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
 
-from neutron.api.v2 import attributes
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
@@ -36,10 +39,10 @@ from neutron.objects import tag as tag_obj
 resource_model_map = {
     # When we'll add other resources, we must add new extension for them
     # if we don't have better discovery mechanism instead of it.
-    attributes.NETWORKS: models_v2.Network,
-    attributes.SUBNETS: models_v2.Subnet,
-    attributes.PORTS: models_v2.Port,
-    attributes.SUBNETPOOLS: models_v2.SubnetPool,
+    net_def.COLLECTION_NAME: models_v2.Network,
+    subnet_def.COLLECTION_NAME: models_v2.Subnet,
+    port_def.COLLECTION_NAME: models_v2.Port,
+    subnetpool_def.COLLECTION_NAME: models_v2.SubnetPool,
     l3_ext.ROUTERS: l3_model.Router,
 }
 

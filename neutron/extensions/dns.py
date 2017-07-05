@@ -15,6 +15,7 @@
 
 import re
 
+from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
@@ -22,7 +23,6 @@ from oslo_config import cfg
 import six
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes as attr
 from neutron.extensions import l3
 
 DNS_LABEL_MAX_LEN = 63
@@ -226,7 +226,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
                     'validate': {'type:dns_domain': FQDN_MAX_LEN},
                     'is_visible': True},
     },
-    attr.NETWORKS: {
+    net_def.COLLECTION_NAME: {
         DNSDOMAIN: {'allow_post': True, 'allow_put': True,
                     'default': '',
                     'convert_to': convert_to_lowercase,

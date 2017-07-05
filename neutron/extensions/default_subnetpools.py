@@ -12,14 +12,13 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api import extensions
 from neutron_lib import constants
 
-from neutron.api.v2 import attributes
-
 
 EXTENDED_ATTRIBUTES_2_0 = {
-    attributes.SUBNETS: {
+    subnet_def.COLLECTION_NAME: {
         'use_default_subnetpool': {'allow_post': True,
                                    'allow_put': False,
                                    'default': False,

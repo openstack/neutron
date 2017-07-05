@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import constants
@@ -18,7 +19,6 @@ import six
 import webob.exc
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 
 
 # List for service plugins to register their own prefixes
@@ -57,7 +57,7 @@ validators.add_validator('type:validate_subnet_service_types',
 
 
 EXTENDED_ATTRIBUTES_2_0 = {
-    attributes.SUBNETS: {
+    subnet_def.COLLECTION_NAME: {
         'service_types': {'allow_post': True,
                           'allow_put': True,
                           'default': constants.ATTR_NOT_SPECIFIED,

@@ -16,7 +16,8 @@
 # TODO(ihrachys): consider renaming the module since now it does not contain
 # any models at all
 
-from neutron.api.v2 import attributes
+from neutron_lib.api.definitions import subnet as subnet_def
+
 from neutron.db import _resource_extend as resource_extend
 
 
@@ -25,7 +26,7 @@ class SubnetServiceTypeMixin(object):
     """Mixin class to extend subnet with service type attribute"""
 
     @staticmethod
-    @resource_extend.extends([attributes.SUBNETS])
+    @resource_extend.extends([subnet_def.COLLECTION_NAME])
     def _extend_subnet_service_types(subnet_res, subnet_db):
         subnet_res['service_types'] = [service_type['service_type'] for
                                        service_type in

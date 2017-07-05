@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import network as net_def
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes as attr
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
@@ -119,7 +119,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
             address_scope.delete()
 
     @staticmethod
-    @resource_extend.extends([attr.NETWORKS])
+    @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_network_dict_address_scope(network_res, network_db):
         network_res[ext_address_scope.IPV4_ADDRESS_SCOPE] = None
         network_res[ext_address_scope.IPV6_ADDRESS_SCOPE] = None

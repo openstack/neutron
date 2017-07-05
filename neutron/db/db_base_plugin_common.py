@@ -15,6 +15,10 @@
 
 import functools
 
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
@@ -23,7 +27,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.db import _model_query as model_query
@@ -154,7 +157,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         # The shared attribute for a subnet is the same as its parent network
         res['shared'] = self._is_network_shared(context, subnet.rbac_entries)
         # Call auxiliary extend functions, if any
-        resource_extend.apply_funcs(attributes.SUBNETS, res, subnet)
+        resource_extend.apply_funcs(subnet_def.COLLECTION_NAME, res, subnet)
         return db_utils.resource_fields(res, fields)
 
     def _make_subnetpool_dict(self, subnetpool, fields=None):
@@ -173,7 +176,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'ip_version': subnetpool['ip_version'],
                'default_quota': subnetpool['default_quota'],
                'address_scope_id': subnetpool['address_scope_id']}
-        resource_extend.apply_funcs(attributes.SUBNETPOOLS, res, subnetpool)
+        resource_extend.apply_funcs(
+            subnetpool_def.COLLECTION_NAME, res, subnetpool)
         return db_utils.resource_fields(res, fields)
 
     def _make_port_dict(self, port, fields=None,
@@ -192,7 +196,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                "device_owner": port["device_owner"]}
         # Call auxiliary extend functions, if any
         if process_extensions:
-            resource_extend.apply_funcs(attributes.PORTS, res, port)
+            resource_extend.apply_funcs(port_def.COLLECTION_NAME, res, port)
         return db_utils.resource_fields(res, fields)
 
     def _get_network(self, context, id):
@@ -276,7 +280,7 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         res['shared'] = self._is_network_shared(context, network.rbac_entries)
         # Call auxiliary extend functions, if any
         if process_extensions:
-            resource_extend.apply_funcs(attributes.NETWORKS, res, network)
+            resource_extend.apply_funcs(net_def.COLLECTION_NAME, res, network)
         return db_utils.resource_fields(res, fields)
 
     def _is_network_shared(self, context, rbac_entries):

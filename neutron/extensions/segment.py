@@ -17,13 +17,13 @@ import six
 
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import provider_net as providernet
+from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 
 SEGMENT = 'segment'
@@ -80,7 +80,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                         'validate': {'type:string_or_none': DESC_LEN},
                         'is_visible': True},
     },
-    attributes.SUBNETS: {
+    subnet_def.COLLECTION_NAME: {
         SEGMENT_ID: {'allow_post': True,
                      'allow_put': False,
                      'default': None,

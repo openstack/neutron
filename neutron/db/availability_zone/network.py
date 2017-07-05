@@ -11,9 +11,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import network as net_def
 from neutron_lib.plugins import directory
 
-from neutron.api.v2 import attributes
 from neutron.db import _resource_extend as resource_extend
 from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import network_availability_zone as net_az
@@ -24,7 +24,7 @@ class NetworkAvailabilityZoneMixin(net_az.NetworkAvailabilityZonePluginBase):
     """Mixin class to enable network's availability zone attributes."""
 
     @staticmethod
-    @resource_extend.extends([attributes.NETWORKS])
+    @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_availability_zone(net_res, net_db):
         net_res[az_ext.AZ_HINTS] = az_ext.convert_az_string_to_list(
             net_db[az_ext.AZ_HINTS])
