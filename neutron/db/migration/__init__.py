@@ -107,14 +107,13 @@ def rename_table_if_exists(old_table_name, new_table_name):
         op.rename_table(old_table_name, new_table_name)
 
 
-def alter_enum_add_value(table, column, new_value, enum, nullable):
+def alter_enum_add_value(table, column, enum, nullable):
     '''If we need to expand Enum values for some column - for PostgreSQL this
     can be done with ALTER TYPE function. For MySQL, it can be done with
     ordinary alembic alter_column function.
 
     :param table:table name
     :param column: column name
-    :param new_value: value that we want to add for Enum
     :param enum: sqlalchemy Enum with updated values
     :param nullable: existing nullable for column.
     '''
@@ -122,9 +121,15 @@ def alter_enum_add_value(table, column, new_value, enum, nullable):
     bind = op.get_bind()
     engine = bind.engine
     if engine.name == 'postgresql':
-        values = {'value': new_value,
-                  'name': enum.name}
-        op.execute("ALTER TYPE %(name)s ADD VALUE '%(value)s'" % values)
+        values = {'name': enum.name,
+                  'values': ", ".join("'" + i + "'" for i in enum.enums),
+                  'column': column,
+                  'table': table}
+        op.execute("ALTER TYPE %(name)s rename to old_%(name)s" % values)
+        op.execute("CREATE TYPE %(name)s AS enum (%(values)s)" % values)
+        op.execute("ALTER TABLE %(table)s ALTER COLUMN %(column)s TYPE "
+                   "%(name)s USING %(column)s::text::%(name)s " % values)
+        op.execute("DROP TYPE old_%(name)s" % values)
     else:
         op.alter_column(table, column, type_=enum,
                         existing_nullable=nullable)
