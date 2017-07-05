@@ -1044,7 +1044,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         for port in self._get_router_port_bindings(router['id']):
             self.assertEqual(self.agent2['host'], port[portbindings.HOST_ID])
 
-    def test_get_router_ids_updates_ha_network_port_status(self):
+    def test_update_all_ha_network_port_statuses(self):
         router = self._create_router(ha=True)
         callback = l3_rpc.L3RpcCallback()
         callback._l3plugin = self.plugin
@@ -1071,7 +1071,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
                 ctx, port['id'], constants.PORT_STATUS_ACTIVE, host=host)
             port = self.core_plugin.get_port(ctx, port['id'])
             self.assertEqual(constants.PORT_STATUS_ACTIVE, port['status'])
-            callback.get_router_ids(ctx, host)
+            callback.update_all_ha_network_port_statuses(ctx, host)
             port = self.core_plugin.get_port(ctx, port['id'])
             self.assertEqual(constants.PORT_STATUS_DOWN, port['status'])
 
