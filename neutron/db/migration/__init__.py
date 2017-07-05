@@ -124,7 +124,7 @@ def alter_enum_add_value(table, column, new_value, enum, nullable):
     if engine.name == 'postgresql':
         values = {'value': new_value,
                   'name': enum.name}
-        op.execute("ALTER TYPE %(name)s ADD VALUE %(value)s" % values)
+        op.execute("ALTER TYPE %(name)s ADD VALUE '%(value)s'" % values)
     else:
         op.alter_column(table, column, type_=enum,
                         existing_nullable=nullable)
