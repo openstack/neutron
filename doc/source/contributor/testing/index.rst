@@ -23,4 +23,15 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
-.. include:: ../../../TESTING.rst
+=======
+Testing
+=======
+
+.. toctree::
+   :maxdepth: 2
+
+   testing
+   fullstack
+   coverage
+   template_model_sync_test
+   db_transient_failure_injection

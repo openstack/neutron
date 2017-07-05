@@ -23,15 +23,62 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
-=======
-Testing
-=======
+=================
+Contributor Guide
+=================
+
+Neutron Policies
+----------------
 
 .. toctree::
    :maxdepth: 2
 
-   testing
-   fullstack_testing
-   testing_coverage
-   template_model_sync_test
-   db_transient_failure_injection
+   policies/index
+
+Neutron Stadium
+---------------
+
+.. toctree::
+   :maxdepth: 2
+
+   stadium/index
+
+Developer Guide
+---------------
+
+In the Developer Guide, you will find information on Neutron's lower level
+programming APIs. There are sections that cover the core pieces of Neutron,
+including its database, message queue, and scheduler components. There are
+also subsections that describe specific plugins inside Neutron. Finally,
+the developer guide includes information about Neutron testing infrastructure.
+
+.. toctree::
+   :maxdepth: 2
+
+   effective_neutron
+   development_environment
+   contribute
+   neutron_api
+   client_command_extensions
+   alembic_migrations
+   testing/index
+
+Neutron Internals
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   internals/index
+   modules
+
+Dashboards
+----------
+
+There is a collection of dashboards to help developers and reviewers
+located here.
+
+.. toctree::
+   :maxdepth: 2
+
+   dashboards/index
