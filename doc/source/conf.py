@@ -27,11 +27,7 @@
 # serve to show the default.
 
 import os
-import subprocess
 import sys
-import warnings
-
-import openstackdocstheme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -50,7 +46,13 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.ifconfig',
               'sphinx.ext.graphviz',
               'sphinx.ext.todo',
+              'openstackdocstheme',
               'support_matrix']
+
+# openstackdocstheme options
+repository_name = 'openstack/neutron'
+bug_project = 'neutron'
+bug_tag = 'doc'
 
 todo_include_todos = True
 
@@ -136,7 +138,6 @@ html_theme = 'openstackdocs'
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = ['_theme']
-html_theme_path = [openstackdocstheme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -161,23 +162,7 @@ html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-#html_last_updated_fmt = '%b %d, %Y'
-git_cmd = "git log --pretty=format:'%ad, commit %h' --date=local -n1"
-try:
-    html_last_updated_fmt = subprocess.check_output(git_cmd).decode('utf-8')
-except Exception:
-    warnings.warn('Cannot get last updated time from git repository. '
-                  'Not setting "html_last_updated_fmt".')
-
-gitsha = os.popen("/usr/bin/git rev-parse HEAD").read()
-giturl = u'https://git.openstack.org/cgit/openstack/neutron/tree/doc/source'
-# html_context allows us to pass arbitrary values into the html template
-html_context = {
-    "gitsha": gitsha,
-    "giturl": giturl,
-    "bug_project": "neutron",
-    "bug_tag": "doc",
-   }
+html_last_updated_fmt = '%Y-%m-%d %H:%M'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
