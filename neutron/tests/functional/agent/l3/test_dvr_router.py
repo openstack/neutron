@@ -765,6 +765,18 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self._assert_dvr_snat_gateway(router1)
         self.assertTrue(self._namespace_exists(fip_ns))
 
+    def test_dvr_router_update_on_restarted_agent_sets_rtr_fip_connect(self):
+        self.agent.conf.agent_mode = 'dvr_snat'
+        router_info = self.generate_dvr_router_info()
+        router1 = self.manage_router(self.agent, router_info)
+        self.assertTrue(router1.rtr_fip_connect)
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(fip_ns))
+        restarted_agent = neutron_l3_agent.L3NATAgentWithStateReport(
+            self.agent.host, self.agent.conf)
+        router_updated = self.manage_router(restarted_agent, router1.router)
+        self.assertTrue(router_updated.rtr_fip_connect)
+
     def test_dvr_router_add_fips_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr'
         router_info = self.generate_dvr_router_info()
