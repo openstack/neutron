@@ -1384,7 +1384,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
         floatingip_dict = self._make_floatingip_dict(floatingip)
-        if utils.is_extension_supported(self._core_plugin, 'dns-integration'):
+        if self._is_dns_integration_supported:
             self._process_dns_floatingip_delete(context, floatingip_dict)
         # Foreign key cascade will take care of the removal of the
         # floating IP record once the port is deleted. We can't start
