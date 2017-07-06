@@ -49,18 +49,23 @@ function prepare_for_compilation {
 
     # TODO: Can you create package list files like you can inside devstack?
     install_package autoconf automake libtool gcc patch make
+    KERNEL_VERSION=`uname -r`
 
     if is_fedora ; then
         # is_fedora covers Fedora, RHEL, CentOS, etc...
-        echo NOTE: if kernel-devel-$(uname -r) or kernel-headers-$(uname -r) installation
+        # dash is illegal character in rpm version so replace
+        # them with underscore like it is done in the kernel
+        # https://github.com/torvalds/linux/blob/master/scripts/package/mkspec#L25
+        KERNEL_VERSION=`echo $KERNEL_VERSION | sed -e "s/-/_/g"`
+        echo NOTE: if kernel-devel-$KERNEL_VERSION or kernel-headers-$KERNEL_VERSION installation
         echo failed, please, provide a repository with the package, or yum update / reboot
         echo your machine to get the latest kernel.
 
-        install_package kernel-devel-$(uname -r)
-        install_package kernel-headers-$(uname -r)
+        install_package kernel-devel-$KERNEL_VERSION
+        install_package kernel-headers-$KERNEL_VERSION
 
     elif is_ubuntu ; then
-        install_package linux-headers-$(uname -r)
+        install_package linux-headers-$KERNEL_VERSION
     fi
 }
 
