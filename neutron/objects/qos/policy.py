@@ -15,6 +15,7 @@
 
 import itertools
 
+from oslo_db import exception as db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
@@ -30,6 +31,7 @@ from neutron.db.rbac_db_models import QosPolicyRBAC
 from neutron.objects import base as base_db
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
+from neutron.objects.qos import binding
 from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac_db
 
@@ -67,8 +69,11 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     extra_filter_names = {'is_default'}
 
-    binding_models = {'network': network_binding_model,
-                      'port': port_binding_model}
+    binding_models = {'network': network_binding_model}
+
+    #NOTE(ralonsoh): once 'network_binding_model' is converted to OVO, both
+    #                bindings will be in the same variable.
+    binding_models2 = {'port': binding.QosPolicyPortBinding}
 
     def obj_load_attr(self, attrname):
         if attrname == 'rules':
@@ -172,6 +177,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     def delete(self):
         with db_api.autonested_transaction(self.obj_context.session):
+            #NOTE(ralonsoh): once 'network_binding_model' is converted to OVO,
+            #                this loop will be deleted.
             for object_type, model in self.binding_models.items():
                 binding_db_obj = obj_db_api.get_object(self.obj_context, model,
                                                        policy_id=self.id)
@@ -181,6 +188,17 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                         object_type=object_type,
                         object_id=binding_db_obj['%s_id' % object_type])
 
+            for object_type, obj_class in self.binding_models2.items():
+                pager = base_db.Pager(limit=1)
+                binding_obj = obj_class.get_objects(self.obj_context,
+                                                    policy_id=self.id,
+                                                    _pager=pager)
+                if binding_obj:
+                    raise exceptions.QosPolicyInUse(
+                        policy_id=self.id,
+                        object_type=object_type,
+                        object_id=binding_obj[0]['%s_id' % object_type])
+
             super(QosPolicy, self).delete()
 
     def attach_network(self, network_id):
@@ -189,9 +207,14 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                  network_id=network_id)
 
     def attach_port(self, port_id):
-        qos_db_api.create_policy_port_binding(self.obj_context,
-                                              policy_id=self.id,
-                                              port_id=port_id)
+        port_binding_obj = binding.QosPolicyPortBinding(
+            self.obj_context, policy_id=self.id, port_id=port_id)
+        try:
+            port_binding_obj.create()
+        except db_exc.DBReferenceError as e:
+            raise exceptions.PortQosBindingError(policy_id=self.id,
+                                                 port_id=port_id,
+                                                 db_error=e)
 
     def detach_network(self, network_id):
         qos_db_api.delete_policy_network_binding(self.obj_context,
@@ -199,9 +222,11 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                  network_id=network_id)
 
     def detach_port(self, port_id):
-        qos_db_api.delete_policy_port_binding(self.obj_context,
-                                              policy_id=self.id,
-                                              port_id=port_id)
+        deleted = binding.QosPolicyPortBinding.delete_objects(self.obj_context,
+                                                              port_id=port_id)
+        if not deleted:
+            raise exceptions.PortQosBindingNotFound(port_id=port_id,
+                                                    policy_id=self.id)
 
     def set_default(self):
         if not self.get_default():
@@ -230,8 +255,11 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             self.obj_context, self.id)
 
     def get_bound_ports(self):
-        return qos_db_api.get_port_ids_by_port_policy_binding(
-            self.obj_context, self.id)
+        return [
+            pb.port_id
+            for pb in binding.QosPolicyPortBinding.get_objects(
+                self.obj_context, policy_id=self.id)
+        ]
 
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,

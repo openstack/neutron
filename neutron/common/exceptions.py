@@ -40,6 +40,11 @@ class PortQosBindingNotFound(e.NotFound):
                 "could not be found.")
 
 
+class PortQosBindingError(e.NeutronException):
+    message = _("QoS binding for port %(port_id)s and policy %(policy_id)s "
+                "could not be created: %(db_error)s.")
+
+
 class NetworkQosBindingNotFound(e.NotFound):
     message = _("QoS binding for network %(net_id)s and policy %(policy_id)s "
                 "could not be found.")
