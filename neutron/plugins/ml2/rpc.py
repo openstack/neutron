@@ -302,6 +302,13 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 'l2population')
         if not l2pop_driver:
             return
+        port = ml2_db.get_port(rpc_context, port_id)
+        if not port:
+            return
+        # NOTE: DVR ports are already handled and updated through l2pop
+        # and so we don't need to update it again here
+        if port['device_owner'] == n_const.DEVICE_OWNER_DVR_INTERFACE:
+            return
         port_context = plugin.get_bound_port_context(
                 rpc_context, port_id)
         if not port_context:
