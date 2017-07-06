@@ -281,6 +281,10 @@ def get_random_ip_address(version=4):
         return ip
 
 
+def get_random_floatingip_status():
+    return random.choice(n_const.VALID_FLOATINGIP_STATUS)
+
+
 def get_random_flow_direction():
     return random.choice(n_const.VALID_DIRECTIONS)
 

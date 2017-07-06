@@ -167,6 +167,10 @@ PORT_BINDING_STATUS_INACTIVE = 'INACTIVE'
 PORT_BINDING_STATUSES = (PORT_BINDING_STATUS_ACTIVE,
                          PORT_BINDING_STATUS_INACTIVE)
 
+VALID_FLOATINGIP_STATUS = (lib_constants.FLOATINGIP_STATUS_ACTIVE,
+                           lib_constants.FLOATINGIP_STATUS_DOWN,
+                           lib_constants.FLOATINGIP_STATUS_ERROR)
+
 # Possible types of values (e.g. in QoS rule types)
 VALUES_TYPE_CHOICES = "choices"
 VALUES_TYPE_RANGE = "range"
