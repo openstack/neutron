@@ -15,6 +15,7 @@
 
 import copy
 import functools
+import textwrap
 
 import mock
 import netaddr
@@ -23,7 +24,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 import testtools
-import textwrap
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent

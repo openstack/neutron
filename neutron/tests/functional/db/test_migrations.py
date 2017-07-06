@@ -13,10 +13,11 @@
 #    under the License.
 
 import collections
+from contextlib import contextmanager
+import subprocess
 
 from alembic.ddl import base as alembic_ddl
 from alembic import script as alembic_script
-from contextlib import contextmanager
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_db.sqlalchemy import test_migrations
@@ -25,7 +26,6 @@ import six
 import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy.sql import ddl as sqla_ddl
-import subprocess
 
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration

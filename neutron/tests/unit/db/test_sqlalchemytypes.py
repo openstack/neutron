@@ -11,8 +11,8 @@
 #    under the License.
 
 import abc
-import netaddr
 
+import netaddr
 from neutron_lib import context
 from oslo_db import exception
 from oslo_db.tests.sqlalchemy import base as test_base

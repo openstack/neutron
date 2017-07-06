@@ -13,6 +13,7 @@
 #    under the License.
 
 import copy
+
 import mock
 from oslo_config import cfg
 from oslo_utils import uuidutils

@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+
 import mock
 from neutron_lib import constants
 

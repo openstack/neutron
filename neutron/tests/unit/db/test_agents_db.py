@@ -16,8 +16,8 @@
 
 import copy
 import datetime
-import mock
 
+import mock
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc

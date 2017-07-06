@@ -13,8 +13,8 @@
 #    under the License.
 
 import copy
-from keystoneauth1 import exceptions as ks_exc
 
+from keystoneauth1 import exceptions as ks_exc
 import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings

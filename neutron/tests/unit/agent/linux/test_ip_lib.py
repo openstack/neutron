@@ -14,6 +14,7 @@
 #    under the License.
 
 import errno
+import socket
 
 import mock
 import netaddr
@@ -21,7 +22,6 @@ from neutron_lib import exceptions
 import pyroute2
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
-import socket
 import testtools
 
 from neutron.agent.common import utils  # noqa

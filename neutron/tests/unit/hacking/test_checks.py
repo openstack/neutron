@@ -15,6 +15,7 @@ import re
 from flake8 import engine
 from hacking.tests import test_doctest as hacking_doctest
 import pep8
+import pkg_resources
 import testscenarios
 import testtools
 from testtools import content
@@ -288,10 +289,13 @@ def _get_lines(check):
 
 def load_tests(loader, tests, pattern):
 
-    flake8_style = engine.get_style_guide(parse_argv=False,
-                                          # Ignore H104 otherwise it's
-                                          # raised on doctests.
-                                          ignore=('F', 'H104'))
+    default_checks = [e.name for e
+                      in pkg_resources.iter_entry_points('flake8.extension')]
+    flake8_style = engine.get_style_guide(
+        parse_argv=False,
+        # We are testing neutron-specific hacking rules, so there is no need
+        # to run the checks registered by hacking or other flake8 extensions.
+        ignore=default_checks)
     options = flake8_style.options
 
     for name, check in checks.__dict__.items():

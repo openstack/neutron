@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import mock
 import os.path
 
+import mock
 from oslo_utils import fileutils
 import psutil
 
