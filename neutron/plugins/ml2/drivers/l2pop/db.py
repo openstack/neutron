@@ -16,6 +16,7 @@
 from neutron_lib import constants as const
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
+from sqlalchemy import orm
 
 from neutron.db import agents_db
 from neutron.db import l3_hamode_db
@@ -70,6 +71,7 @@ def _get_active_network_ports(session, network_id):
         query = query.join(agents_db.Agent,
                            agents_db.Agent.host == ml2_models.PortBinding.host)
         query = query.join(models_v2.Port)
+        query = query.options(orm.subqueryload(ml2_models.PortBinding.port))
         query = query.filter(models_v2.Port.network_id == network_id,
                              models_v2.Port.status == const.PORT_STATUS_ACTIVE)
         return query
@@ -109,6 +111,8 @@ def get_dvr_active_network_ports(session, network_id):
                            agents_db.Agent.host ==
                            ml2_models.DistributedPortBinding.host)
         query = query.join(models_v2.Port)
+        query = query.options(
+            orm.subqueryload(ml2_models.DistributedPortBinding.port))
         query = query.filter(models_v2.Port.network_id == network_id,
                              models_v2.Port.status == const.PORT_STATUS_ACTIVE,
                              models_v2.Port.device_owner ==
