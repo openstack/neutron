@@ -473,6 +473,18 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 actions='drop'
             )
 
+        # Drop Router Advertisements from instances
+        self._add_flow(
+            table=ovs_consts.BASE_EGRESS_TABLE,
+            priority=70,
+            in_port=port.ofport,
+            reg_port=port.ofport,
+            dl_type=constants.ETHERTYPE_IPV6,
+            nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
+            icmp_type=lib_const.ICMPV6_TYPE_RA,
+            actions='drop'
+        )
+
         # Drop all remaining not tracked egress connections
         self._add_flow(
             table=ovs_consts.BASE_EGRESS_TABLE,
