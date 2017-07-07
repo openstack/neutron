@@ -1569,6 +1569,36 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   expected_code=exc.
                                                   HTTPBadRequest.code)
 
+    def test_router_add_interface_cidr_overlapped_with_gateway(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s1, self.subnet(
+                    cidr='10.0.0.0/16') as s2:
+                self._set_net_external(s2['subnet']['network_id'])
+                self._add_external_gateway_to_router(
+                    r['router']['id'],
+                    s2['subnet']['network_id'])
+                res = self._router_interface_action('add',
+                                                    r['router']['id'],
+                                                    s1['subnet']['id'],
+                                                    None)
+                self.assertIn('port_id', res)
+
+    def test_router_add_interface_by_port_cidr_overlapped_with_gateway(self):
+        with self.router() as r:
+            with self.subnet(cidr='10.0.1.0/24') as s1, self.subnet(
+                    cidr='10.0.0.0/16') as s2:
+                with self.port(subnet=s1) as p:
+                    self._set_net_external(s2['subnet']['network_id'])
+                    self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        s2['subnet']['network_id'])
+
+                    res = self._router_interface_action('add',
+                                                        r['router']['id'],
+                                                        None,
+                                                        p['port']['id'])
+                    self.assertIn('port_id', res)
+
     def test_router_add_gateway_dup_subnet1_returns_400(self):
         with self.router() as r:
             with self.subnet() as s:
