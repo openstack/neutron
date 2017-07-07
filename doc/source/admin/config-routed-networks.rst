@@ -426,10 +426,12 @@ segment contains one IPv4 subnet and one IPv6 subnet.
 
    .. note::
 
-      Creating a port and passing it to an instance yields a different
-      behavior than conventional networks. The Networking service
-      defers assignment of IP addresses to the port until the particular
-      compute node becomes apparent. For example:
+      If a fixed IP is specified by the user in the port create request, that
+      particular IP is allocated immediately to the port. However, creating a
+      port and passing it to an instance yields a different behavior than
+      conventional networks. The Networking service defers assignment of IP
+      addresses to the port until the particular compute node becomes
+      apparent. For example:
 
       .. code-block:: console
 
