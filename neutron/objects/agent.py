@@ -21,6 +21,7 @@ from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
 from neutron.objects import base
 from neutron.objects import common_types
+from neutron.objects import utils as obj_utils
 
 
 @obj_base.VersionedObjectRegistry.register
@@ -50,11 +51,15 @@ class Agent(base.NeutronDbObject):
     @classmethod
     def modify_fields_to_db(cls, fields):
         result = super(Agent, cls).modify_fields_to_db(fields)
-        if 'configurations' in result:
+        if ('configurations' in result and
+                not isinstance(result['configurations'],
+                               obj_utils.StringMatchingFilterObj)):
             # dump configuration into string, set '' if empty '{}'
             result['configurations'] = (
                 cls.filter_to_json_str(result['configurations'], default=''))
-        if 'resource_versions' in result:
+        if ('resource_versions' in result and
+                not isinstance(result['resource_versions'],
+                               obj_utils.StringMatchingFilterObj)):
             # dump resource version into string, set None if empty '{}' or None
             result['resource_versions'] = (
                 cls.filter_to_json_str(result['resource_versions']))

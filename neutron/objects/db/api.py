@@ -17,6 +17,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 
 from neutron.db import _model_query as model_query
+from neutron.objects import utils as obj_utils
 
 
 # Common database operation implementations
@@ -36,7 +37,9 @@ def count(context, model, **kwargs):
 
 
 def _kwargs_to_filters(**kwargs):
-    return {k: v if isinstance(v, list) else [v]
+    return {k: v if (isinstance(v, list) or
+                     isinstance(v, obj_utils.StringMatchingFilterObj))
+            else [v]
             for k, v in kwargs.items()}
 
 
