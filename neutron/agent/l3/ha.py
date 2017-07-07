@@ -78,6 +78,8 @@ class AgentMixin(object):
     def __init__(self, host):
         self._init_ha_conf_path()
         super(AgentMixin, self).__init__(host)
+        # BatchNotifier queue is needed to ensure that the HA router
+        # state change sequence is under the proper order.
         self.state_change_notifier = batch_notifier.BatchNotifier(
             self._calculate_batch_duration(), self.notify_server)
         eventlet.spawn(self._start_keepalived_notifications_server)
@@ -103,14 +105,9 @@ class AgentMixin(object):
         state_change_server.run()
 
     def _calculate_batch_duration(self):
-        # Slave becomes the master after not hearing from it 3 times
-        detection_time = self.conf.ha_vrrp_advert_int * 3
-
-        # Keepalived takes a couple of seconds to configure the VIPs
-        configuration_time = 2
-
-        # Give it enough slack to batch all events due to the same failure
-        return (detection_time + configuration_time) * 2
+        # Set the BatchNotifier interval to ha_vrrp_advert_int,
+        # default 2 seconds.
+        return self.conf.ha_vrrp_advert_int
 
     def enqueue_state_change(self, router_id, state):
         LOG.info(_LI('Router %(router_id)s transitioned to %(state)s'),
