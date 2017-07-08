@@ -1066,6 +1066,15 @@ class Dnsmasq(DhcpLocalProcess):
 
         return isolated_subnets
 
+    @staticmethod
+    def has_metadata_subnet(subnets):
+        """Check if the subnets has a metadata subnet."""
+        meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
+        if any(netaddr.IPNetwork(s.cidr) in meta_cidr
+               for s in subnets):
+            return True
+        return False
+
     @classmethod
     def should_enable_metadata(cls, conf, network):
         """Determine whether the metadata proxy is needed for a network
@@ -1094,12 +1103,9 @@ class Dnsmasq(DhcpLocalProcess):
         if not conf.enable_isolated_metadata:
             return False
 
-        if conf.enable_metadata_network:
-            # check if the network has a metadata subnet
-            meta_cidr = netaddr.IPNetwork(METADATA_DEFAULT_CIDR)
-            if any(netaddr.IPNetwork(s.cidr) in meta_cidr
-                   for s in all_subnets):
-                return True
+        if (conf.enable_metadata_network and
+            cls.has_metadata_subnet(all_subnets)):
+            return True
 
         isolated_subnets = cls.get_isolated_subnets(network)
         return any(isolated_subnets[s.id] for s in v4_dhcp_subnets)
