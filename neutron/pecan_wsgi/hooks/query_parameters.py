@@ -88,6 +88,7 @@ class QueryParametersHook(hooks.PecanHook):
     priority = policy_enforcement.PolicyHook.priority - 1
 
     def before(self, state):
+        self._process_if_match_headers(state)
         state.request.context['query_params'] = {}
         if state.request.method != 'GET':
             return
@@ -107,6 +108,23 @@ class QueryParametersHook(hooks.PecanHook):
         pagination_helper.update_fields(query_params.get('fields', []),
                                         added_fields)
         state.request.context['query_params'] = query_params
+
+    def _process_if_match_headers(self, state):
+        collection = state.request.context.get('collection')
+        if not collection:
+            return
+        # add in if-match criterion to the context if present
+        revision_number = api_common.check_request_for_revision_constraint(
+            state.request)
+        if revision_number is None:
+            return
+        constraint = {
+            'if_revision_match': revision_number,
+            'resource': collection,
+            'resource_id': state.request.context['resource_id']}
+        # TODO(kevinbenton): add an interface to context to do this
+        setattr(state.request.context['neutron_context'],
+                '_CONSTRAINT', constraint)
 
     def after(self, state):
         resource = state.request.context.get('resource')
