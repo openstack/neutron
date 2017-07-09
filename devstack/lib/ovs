@@ -173,6 +173,15 @@ function start_new_ovs () {
     sudo /usr/share/openvswitch/scripts/ovs-ctl start
 }
 
+# stop_new_ovs() - stops ovs
+function stop_new_ovs () {
+    local ovs_ctl='/usr/share/openvswitch/scripts/ovs-ctl'
+
+    if [ -x $ovs_ctl ] ; then
+        sudo $ovs_ctl stop
+    fi
+}
+
 # remove_ovs_packages() - removes old ovs packages from the system
 function remove_ovs_packages() {
     for package in openvswitch openvswitch-switch openvswitch-common; do
