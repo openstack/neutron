@@ -76,6 +76,7 @@ object_data = {
     'Route': '1.0-a9883a63b416126f9e345523ec09483b',
     'RouterExtraAttributes': '1.0-ef8d61ae2864f0ec9af0ab7939cab318',
     'RouterL3AgentBinding': '1.0-c5ba6c95e3a4c1236a55f490cd67da82',
+    'RouterPort': '1.0-c8c8f499bcdd59186fcd83f323106908',
     'RouterRoute': '1.0-07fc5337c801fb8c6ccfbcc5afb45907',
     'SecurityGroup': '1.0-e26b90c409b31fd2e3c6fcec402ac0b9',
     'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',
