@@ -14,8 +14,8 @@
       License for the specific language governing permissions and limitations
       under the License.
 
-Welcome to Neutron's developer documentation!
-=============================================
+Welcome to Neutron's documentation!
+===================================
 
 Neutron is an OpenStack project to provide "network connectivity as a service"
 between interface devices (e.g., vNICs) managed by other OpenStack services
@@ -55,22 +55,6 @@ Networking Guide
 
    admin/index
 
-Neutron Policies
-----------------
-
-.. toctree::
-   :maxdepth: 2
-
-   policies/index
-
-Neutron Stadium
-----------------
-
-.. toctree::
-   :maxdepth: 2
-
-   stadium/index
-
 Neutron Feature Classification
 ------------------------------
 
@@ -79,26 +63,13 @@ Neutron Feature Classification
 
    feature_classification/index
 
-Developer Docs
---------------
+Contributor Guide
+-----------------
 
 .. toctree::
    :maxdepth: 2
 
-   devref/index
-   devref/testing_index
-   devref/neutron_internals
-
-Dashboards
-----------
-
-There is a collection of dashboards to help developers and reviewers
-located here.
-
-.. toctree::
-   :maxdepth: 2
-
-   dashboards/index
+   contributor/index
 
 API Extensions
 --------------
