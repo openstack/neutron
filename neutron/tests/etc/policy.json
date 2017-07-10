@@ -118,9 +118,6 @@
     "create_router:external_gateway_info:external_fixed_ips": "rule:admin_only",
     "update_router:external_gateway_info:external_fixed_ips": "rule:admin_only",
 
-    "insert_rule": "rule:admin_or_owner",
-    "remove_rule": "rule:admin_or_owner",
-
     "create_qos_queue": "rule:admin_only",
     "get_qos_queue": "rule:admin_only",
 
