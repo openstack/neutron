@@ -22,7 +22,7 @@ from oslo_utils import uuidutils
 import testtools
 
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.db import models_v2
+from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.tests.unit import testlib_api
 
@@ -64,7 +64,7 @@ class IpamTestCase(testlib_api.SqlTestCase):
         return dicts
 
     def assert_ip_alloc_matches(self, expected):
-        result_set = self.cxt.session.query(models_v2.IPAllocation).all()
+        result_set = port_obj.IPAllocation.get_objects(self.cxt)
         keys = ['port_id', 'ip_address', 'subnet_id', 'network_id']
         actual = self.result_set_to_dicts(result_set, keys)
         self.assertEqual(expected, actual)
@@ -119,7 +119,8 @@ class IpamTestCase(testlib_api.SqlTestCase):
         self._create_port(self.port_id, fixed_ip)
 
         ip_alloc_expected = [{'port_id': self.port_id,
-                              'ip_address': fixed_ip[0].get('ip_address'),
+                              'ip_address': netaddr.IPAddress(
+                                  fixed_ip[0].get('ip_address')),
                               'subnet_id': self.subnet_id,
                               'network_id': self.network_id}]
         ip_alloc_pool_expected = [{'start': netaddr.IPAddress('10.10.10.2'),

@@ -24,6 +24,7 @@ from webob import exc
 
 from neutron.db import api as db_api
 from neutron.db import models_v2
+from neutron.objects import ports as port_obj
 from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -66,9 +67,12 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         rp = directory.get_plugin('revision_plugin')
         with self.port():
             with self.ctx.session.begin():
-                ipal_obj = self.ctx.session.query(models_v2.IPAllocation).one()
+                ipal_objs = port_obj.IPAllocation.get_objects(self.ctx)
+                if not ipal_objs:
+                    raise Exception("No IP allocations available.")
+                ipal_obj = ipal_objs[0]
                 # load port into our session
-                port_obj = self.ctx.session.query(models_v2.Port).one()
+                port = self.ctx.session.query(models_v2.Port).one()
                 # simulate concurrent delete in another session
                 other_ctx = nctx.get_admin_context()
                 other_ctx.session.delete(
@@ -76,7 +80,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                 )
                 # expire the port so the revision bumping code will trigger a
                 # lookup on its attributes and encounter an ObjectDeletedError
-                self.ctx.session.expire(port_obj)
+                self.ctx.session.expire(port)
                 rp._bump_related_revisions(self.ctx.session, ipal_obj)
 
     def test_port_name_update_revises(self):

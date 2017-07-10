@@ -35,6 +35,7 @@ from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
+from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
 
@@ -105,12 +106,9 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                   {'ip_address': ip_address,
                    'network_id': network_id,
                    'subnet_id': subnet_id})
-        with db_api.context_manager.writer.using(context):
-            for ipal in (context.session.query(models_v2.IPAllocation).
-                         filter_by(network_id=network_id,
-                                   ip_address=ip_address,
-                                   subnet_id=subnet_id)):
-                context.session.delete(ipal)
+        port_obj.IPAllocation.delete_objects(
+            context, network_id=network_id, ip_address=ip_address,
+            subnet_id=subnet_id)
 
     @staticmethod
     @db_api.context_manager.writer
@@ -122,16 +120,20 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                    'network_id': network_id,
                    'subnet_id': subnet_id,
                    'port_id': port_id})
-        allocated = models_v2.IPAllocation(
-            network_id=network_id,
-            port_id=port_id,
-            ip_address=ip_address,
-            subnet_id=subnet_id
-        )
-        port_db = context.session.query(models_v2.Port).get(port_id)
-        port_db.fixed_ips.append(allocated)
-        port_db.fixed_ips.sort(key=lambda fip: (fip['ip_address'],
-                                                fip['subnet_id']))
+        allocated = port_obj.IPAllocation(
+            context, network_id=network_id, port_id=port_id,
+            ip_address=ip_address, subnet_id=subnet_id)
+        # NOTE(lujinluo): Add IPAllocations obj to the port fixed_ips
+        # in Port OVO integration, i.e. the same way we did in
+        # Ib32509d974c8654131112234bcf19d6eae8f7cca
+        allocated.create()
+
+        # NOTE(kevinbenton): We add this to the session info so the sqlalchemy
+        # object isn't immediately garbage collected. Otherwise when the
+        # fixed_ips relationship is referenced a new persistent object will be
+        # added to the session that will interfere with retry operations.
+        # See bug 1556178 for details.
+        context.session.info.setdefault('allocated_ips', []).append(allocated)
 
     def _make_subnet_dict(self, subnet, fields=None, context=None):
         res = {'id': subnet['id'],
