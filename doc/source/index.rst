@@ -39,6 +39,14 @@ The `Neutron Development wiki`_ is also a good resource for new contributors.
 
 Enjoy!
 
+Installation Guide
+------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   Installation Guide <install/index>
+
 Networking Guide
 ----------------
 
