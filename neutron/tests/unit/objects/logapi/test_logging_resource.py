@@ -63,7 +63,7 @@ class LogDBObjectTestCase(test_base.BaseDbObjectTestCase,
         sg_log.create()
         self.assertEqual(port_id, sg_log.target_id)
 
-    def _test_update_multiple_fields(self):
+    def test_update_multiple_log_fields(self):
         sg_log = log_res.Log(context=self.context,
                              id=uuidutils.generate_uuid(),
                              name='test-create',
@@ -73,7 +73,7 @@ class LogDBObjectTestCase(test_base.BaseDbObjectTestCase,
         sg_log.create()
         fields = {'name': 'test-update', 'description': 'test-update-descr',
                   'enabled': True}
-        sg_log.update_fields(**fields)
+        sg_log.update_fields(fields)
         sg_log.update()
 
         new_sg_log = log_res.Log.get_object(self.context, id=sg_log.id)
