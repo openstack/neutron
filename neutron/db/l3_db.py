@@ -534,7 +534,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.retry_if_session_inactive()
     def delete_router(self, context, id):
-
+        registry.notify(resources.ROUTER, events.BEFORE_DELETE,
+                        self, context=context, router_id=id)
         #TODO(nati) Refactor here when we have router insertion model
         router = self._ensure_router_not_in_use(context, id)
         original = self._make_router_dict(router)
