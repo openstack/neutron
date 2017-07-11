@@ -1571,6 +1571,8 @@ class TestDeviceManager(base.BaseTestCase):
         dh.driver.plug.side_effect = OSError()
         net = copy.deepcopy(fake_network)
         self.assertRaises(OSError, dh.setup, net)
+        dh.driver.unplug.assert_called_once_with(mock.ANY,
+                                                 namespace=net.namespace)
         plugin.release_dhcp_port.assert_called_once_with(
             net.id, mock.ANY)
 
