@@ -109,6 +109,8 @@ class FlatNetworkInUse(e.InUse):
 
 
 class TenantNetworksDisabled(e.ServiceUnavailable):
+    # NOTE(vvargaszte): May be removed in the future as it is not used in
+    # Neutron, only in the Neutron plugin of OpenContrail.
     message = _("Tenant network creation is not enabled.")
 
 
@@ -182,10 +184,6 @@ class QoSRuleParameterConflict(e.Conflict):
                 "%(existing_value)s.")
 
 
-class InvalidExtensionEnv(e.BadRequest):
-    message = _("Invalid extension environment: %(reason)s.")
-
-
 class ExtensionsNotFound(e.NotFound):
     message = _("Extensions not found: %(extensions)s.")
 
@@ -244,10 +242,6 @@ class RouterNotCompatibleWithAgent(e.NeutronException):
     message = _("Router '%(router_id)s' is not compatible with this agent.")
 
 
-class DvrHaRouterNotSupported(e.NeutronException):
-    message = _("Router '%(router_id)s' cannot be both DVR and HA.")
-
-
 class FailToDropPrivilegesExit(SystemExit):
     """Exit exception raised when a drop privileges action fails."""
     code = 99
@@ -272,10 +266,6 @@ class NetworkIdOrRouterIdRequiredError(e.NeutronException):
 
 class AbortSyncRouters(e.NeutronException):
     message = _("Aborting periodic_sync_routers_task due to an error.")
-
-
-class MissingMinSubnetPoolPrefix(e.BadRequest):
-    message = _("Unspecified minimum subnet pool prefix.")
 
 
 class EmptySubnetPoolPrefixList(e.BadRequest):
