@@ -116,3 +116,21 @@ class RouterExtraAttributes(base.NeutronDbObject):
                  outerjoin(sub_query))
 
         return [(router, agent_count) for router, agent_count in query]
+
+
+@obj_base.VersionedObjectRegistry.register
+class RouterPort(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = l3.RouterPort
+
+    primary_keys = ['router_id', 'port_id']
+
+    foreign_keys = {'Router': {'router_id': 'id'}}
+
+    fields = {
+        'router_id': common_types.UUIDField(),
+        'port_id': common_types.UUIDField(),
+        'port_type': obj_fields.StringField(nullable=True),
+    }
