@@ -69,4 +69,8 @@ elif [[ "$1" == "unstack" ]]; then
     if is_service_enabled q-sriov-agt neutron-sriov-agent; then
         stop_l2_agent_sriov
     fi
+    if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
+       [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
+        stop_new_ovs
+    fi
 fi
