@@ -1118,7 +1118,6 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.driver.get_network(
                     self.context, port['port']['network_id']),
                 models.PortBinding(), bindings)
-            mock.patch.object(port_context, '_expand_segment').start()
             # The point is to provide coverage and to assert that no exceptions
             # are raised.
             l2pop_mech.delete_port_postcommit(port_context)
@@ -1147,7 +1146,6 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.driver.get_network(
                         self.context, p['port']['network_id']),
                     models.PortBinding(), bindings)
-                mock.patch.object(port_context, '_expand_segment').start()
                 # The point is to provide coverage and to assert that
                 # no exceptions are raised.
                 l2pop_mech.delete_port_postcommit(port_context)
