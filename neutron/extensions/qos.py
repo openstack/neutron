@@ -48,6 +48,8 @@ QOS_RULE_COMMON_FIELDS = {
                   'is_visible': True},
 }
 
+RULE_TYPES = "rule_types"
+
 RESOURCE_ATTRIBUTE_MAP = {
     COLLECTION_NAME: {
         'id': {'allow_post': False, 'allow_put': False,
@@ -66,7 +68,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True},
         'rules': {'allow_post': False, 'allow_put': False, 'is_visible': True},
     },
-    'rule_types': {
+    RULE_TYPES: {
         'type': {'allow_post': False, 'allow_put': False,
                  'is_visible': True}
     }
@@ -308,6 +310,10 @@ class QoSPluginBase(service_base.ServicePluginBase):
     @classmethod
     def get_plugin_type(cls):
         return constants.QOS
+
+    @abc.abstractmethod
+    def get_rule_type(self, context, rule_type_name, fields=None):
+        pass
 
     @abc.abstractmethod
     def get_rule_types(self, context, filters=None, fields=None, sorts=None,

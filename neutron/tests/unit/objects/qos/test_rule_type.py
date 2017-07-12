@@ -16,6 +16,7 @@
 import mock
 from oslo_config import cfg
 
+from neutron.common import constants
 from neutron import manager
 from neutron.objects.qos import rule_type
 from neutron.services.qos import qos_consts
@@ -24,6 +25,22 @@ from neutron.tests import base as test_base
 
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+DRIVER_SUPPORTED_PARAMETERS = [
+    {
+        'parameter_name': qos_consts.MAX_KBPS,
+        'parameter_type': constants.VALUES_TYPE_RANGE,
+        'parameter_values': {"start": 0, "end": constants.DB_INTEGER_MAX_VALUE}
+    }, {
+        'parameter_name': qos_consts.MAX_BURST,
+        'parameter_type': constants.VALUES_TYPE_RANGE,
+        'parameter_values': {"start": 0, "end": constants.DB_INTEGER_MAX_VALUE}
+    }, {
+        'parameter_name': qos_consts.DIRECTION,
+        'parameter_type': constants.VALUES_TYPE_CHOICES,
+        'parameter_values': constants.VALID_DIRECTIONS
+    }
+]
 
 
 class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
@@ -36,6 +53,26 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins", ["qos"])
         manager.init()
+
+    def test_get_object(self):
+        driver_details = {
+            'name': "backend_driver",
+            'supported_parameters': DRIVER_SUPPORTED_PARAMETERS
+        }
+        with mock.patch.object(
+            qos_plugin.QoSPlugin, 'supported_rule_type_details',
+            return_value=[driver_details]
+        ):
+            rule_type_details = rule_type.QosRuleType.get_object(
+                qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
+            self.assertEqual(
+                driver_details['name'], rule_type_details.drivers[0].name)
+            self.assertEqual(
+                driver_details['supported_parameters'],
+                rule_type_details.drivers[0].supported_parameters)
+            self.assertEqual(1, len(rule_type_details.drivers))
+            self.assertEqual(
+                qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, rule_type_details.type)
 
     def test_get_objects(self):
         rule_types_mock = mock.PropertyMock(
@@ -64,3 +101,14 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
         self.assertIn(qos_consts.RULE_TYPE_DSCP_MARKING,
                       tuple(rule_type_v1_1.fields['type'].AUTO_TYPE.
                       _valid_values))
+
+    def test_object_version_degradation_1_3_to_1_2(self):
+        drivers_obj = rule_type.QosRuleTypeDriver(
+            name="backend_driver", supported_parameters=[{}]
+        )
+        qos_rule_type = rule_type.QosRuleType(
+            type=qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, drivers=[drivers_obj])
+
+        rule_type_v1_2 = self._policy_through_version(qos_rule_type, '1.2')
+        self.assertNotIn("drivers", rule_type_v1_2)
+        self.assertIn("type", rule_type_v1_2)

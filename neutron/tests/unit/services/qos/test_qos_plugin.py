@@ -12,16 +12,18 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron import manager
 from neutron.objects import base as base_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
-from neutron.plugins.common import constants
+from neutron.plugins.common import constants as plugins_constants
 from neutron.services.qos import qos_consts
 from neutron.services.qos import qos_plugin
 from neutron.tests.unit.services.qos import base
@@ -55,7 +57,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         cfg.CONF.set_override("service_plugins", ["qos"])
 
         manager.init()
-        self.qos_plugin = directory.get_plugin(constants.QOS)
+        self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
 
         self.qos_plugin.driver_manager = mock.Mock()
 
@@ -810,6 +812,34 @@ class TestQosPlugin(base.BaseQosTestCase):
     def test_verify_bad_method_call(self):
         self.assertRaises(AttributeError, getattr, self.qos_plugin,
                           'create_policy_bandwidth_limit_rules')
+
+    def test_get_rule_type(self):
+        admin_ctxt = context.get_admin_context()
+        drivers_details = [{
+            'name': 'fake-driver',
+            'supported_parameters': [{
+                'parameter_name': 'max_kbps',
+                'parameter_type': constants.VALUES_TYPE_RANGE,
+                'parameter_range': {'start': 0, 'end': 100}
+            }]
+        }]
+        with mock.patch.object(
+            qos_plugin.QoSPlugin, "supported_rule_type_details",
+            return_value=drivers_details
+        ):
+            rule_type_details = self.qos_plugin.get_rule_type(
+                admin_ctxt, qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
+            self.assertEqual(
+                qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                rule_type_details['type'])
+            self.assertEqual(
+                drivers_details, rule_type_details['drivers'])
+
+    def test_get_rule_type_as_user(self):
+        self.assertRaises(
+            lib_exc.NotAuthorized,
+            self.qos_plugin.get_rule_type,
+            self.ctxt, qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
 
     def test_get_rule_types(self):
         rule_types_mock = mock.PropertyMock(
