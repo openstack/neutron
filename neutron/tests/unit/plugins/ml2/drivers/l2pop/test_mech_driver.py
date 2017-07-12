@@ -1146,6 +1146,14 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.driver.get_network(
                         self.context, p['port']['network_id']),
                     models.PortBinding(), bindings)
+                fdbs = {
+                    p['port']['network_id']: {
+                        'segment_id': 'fakeid',
+                        'ports': {},
+                    }
+                }
+                mock.patch.object(
+                    l2pop_mech, '_get_agent_fdb', return_value=fdbs).start()
                 # The point is to provide coverage and to assert that
                 # no exceptions are raised.
                 l2pop_mech.delete_port_postcommit(port_context)

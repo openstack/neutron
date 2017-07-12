@@ -76,7 +76,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         fdb_entries = self._get_agent_fdb(
             plugin_context, context.bottom_bound_segment, port, agent_host)
         if fdb_entries and l3_hamode_db.is_ha_router_port(
-                context, port['device_owner'], port['device_id']):
+                plugin_context, port['device_owner'], port['device_id']):
             session = db_api.get_reader_session()
             network_id = port['network_id']
             other_fdb_ports = self._get_ha_port_agents_fdb(
