@@ -118,13 +118,8 @@ class QueryParametersHook(hooks.PecanHook):
             state.request)
         if revision_number is None:
             return
-        constraint = {
-            'if_revision_match': revision_number,
-            'resource': collection,
-            'resource_id': state.request.context['resource_id']}
-        # TODO(kevinbenton): add an interface to context to do this
-        setattr(state.request.context['neutron_context'],
-                '_CONSTRAINT', constraint)
+        state.request.context['neutron_context'].set_transaction_constraint(
+            collection, state.request.context['resource_id'], revision_number)
 
     def after(self, state):
         resource = state.request.context.get('resource')

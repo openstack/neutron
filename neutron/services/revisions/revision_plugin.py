@@ -147,18 +147,18 @@ class RevisionPlugin(service_base.ServicePluginBase):
         instance that is constrained as well as the requested revision number
         to match.
         """
-        criteria = getattr(session.info.get('using_context'),
-                           '_CONSTRAINT', None)
+        context = session.info.get('using_context')
+        criteria = context.get_transaction_constraint() if context else None
         if not criteria:
             return None, None
-        match = criteria['if_revision_match']
+        match = criteria.if_revision_match
         mmap = standard_attr.get_standard_attr_resource_model_map()
-        model = mmap.get(criteria['resource'])
+        model = mmap.get(criteria.resource)
         if not model:
             msg = _("Revision matching not supported for this resource")
-            raise exc.BadRequest(resource=criteria['resource'], msg=msg)
+            raise exc.BadRequest(resource=criteria.resource, msg=msg)
         instance = self._find_instance_by_column_value(
-            session, model, 'id', criteria['resource_id'])
+            session, model, 'id', criteria.resource_id)
         return instance, match
 
     def _enforce_if_match_constraints(self, session):
