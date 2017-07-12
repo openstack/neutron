@@ -271,15 +271,14 @@ Configure neutron-server (Controller)
 
       mechanism_drivers = openvswitch,sriovnicswitch
 
-#. Add the ``ml2_conf_sriov.ini`` file as parameter to the ``neutron-server``
+#. Add the ``plugin.ini`` file as a parameter to the ``neutron-server``
    service. Edit the appropriate initialization script to configure the
-   ``neutron-server`` service to load the SR-IOV configuration file:
+   ``neutron-server`` service to load the plugin configuration file:
 
    .. code-block:: bash
 
       --config-file /etc/neutron/neutron.conf
       --config-file /etc/neutron/plugin.ini
-      --config-file /etc/neutron/plugins/ml2/ml2_conf_sriov.ini
 
 #. Restart the ``neutron-server`` service.
 
