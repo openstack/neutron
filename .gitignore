@@ -6,6 +6,7 @@ cover/
 covhtml/
 dist/
 doc/build
+doc/source/_static/config-samples/*.sample
 etc/*.sample
 etc/neutron/plugins/ml2/*.sample
 *.DS_Store
