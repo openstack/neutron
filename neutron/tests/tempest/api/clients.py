@@ -16,6 +16,7 @@
 from tempest.lib.services.compute import keypairs_client
 from tempest.lib.services.compute import servers_client
 from tempest.lib.services.identity.v2 import tenants_client
+from tempest.lib.services.identity.v3 import projects_client
 from tempest import manager
 
 from neutron.tests.tempest import config
@@ -85,3 +86,6 @@ class Manager(manager.Manager):
         # Client uses admin endpoint type of Keystone API v2
         self.tenants_client = tenants_client.TenantsClient(self.auth_provider,
                                                            **params_v2_admin)
+        # Client uses admin endpoint type of Keystone API v3
+        self.projects_client = projects_client.ProjectsClient(
+            self.auth_provider, **params_v2_admin)
