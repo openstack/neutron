@@ -21,6 +21,7 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.models import dns as dns_models
+from neutron.db.models import l3
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.objects import base
@@ -410,3 +411,14 @@ class Port(base.NeutronDbObject):
 
         if _target_version < (1, 1):
             primitive.pop('data_plane_status', None)
+
+    @classmethod
+    def get_ports_by_router(cls, context, router_id, owner, subnet):
+        rport_qry = context.session.query(models_v2.Port).join(
+            l3.RouterPort)
+        ports = rport_qry.filter(
+            l3.RouterPort.router_id == router_id,
+            l3.RouterPort.port_type == owner,
+            models_v2.Port.network_id == subnet['network_id']
+        )
+        return [cls._load_object(context, db_obj) for db_obj in ports.all()]

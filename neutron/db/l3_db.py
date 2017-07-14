@@ -51,6 +51,8 @@ from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import external_net
 from neutron.extensions import l3
+from neutron.objects import ports as port_obj
+from neutron.objects import router as l3_obj
 from neutron.plugins.common import utils as p_utils
 from neutron import worker as neutron_worker
 
@@ -369,13 +371,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             with context.session.begin(subtransactions=True):
                 router.gw_port = self._core_plugin._get_port(
                     context.elevated(), gw_port['id'])
-                router_port = l3_models.RouterPort(
+                router_port = l3_obj.RouterPort(
+                    context,
                     router_id=router.id,
                     port_id=gw_port['id'],
                     port_type=DEVICE_OWNER_ROUTER_GW
                 )
                 context.session.add(router)
-                context.session.add(router_port)
+                router_port.create()
 
     def _validate_gw_info(self, context, gw_port, info, ext_ips):
         network_id = info['network_id'] if info else None
@@ -853,13 +856,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 self._notify_attaching_interface(context, router_db=router,
                                                  port=port,
                                                  interface_info=interface_info)
-                with context.session.begin(subtransactions=True):
-                    router_port = l3_models.RouterPort(
-                        port_id=port['id'],
-                        router_id=router.id,
-                        port_type=device_owner
-                    )
-                    context.session.add(router_port)
+                l3_obj.RouterPort(
+                    context,
+                    port_id=port['id'],
+                    router_id=router.id,
+                    port_type=device_owner
+                ).create()
                 # Update owner after actual process again in order to
                 # make sure the records in routerports table and ports
                 # table are consistent.
@@ -915,15 +917,19 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _remove_interface_by_port(self, context, router_id,
                                   port_id, subnet_id, owner):
-        qry = context.session.query(l3_models.RouterPort)
-        qry = qry.filter_by(
+        obj = l3_obj.RouterPort.get_object(
+            context,
             port_id=port_id,
             router_id=router_id,
             port_type=owner
         )
-        try:
-            port = self._core_plugin.get_port(context, qry.one().port_id)
-        except (n_exc.PortNotFound, exc.NoResultFound):
+        if obj:
+            try:
+                port = self._core_plugin.get_port(context, obj.port_id)
+            except n_exc.PortNotFound:
+                raise l3.RouterInterfaceNotFound(router_id=router_id,
+                                                 port_id=port_id)
+        else:
             raise l3.RouterInterfaceNotFound(router_id=router_id,
                                              port_id=port_id)
         port_subnet_ids = [fixed_ip['subnet_id']
@@ -947,13 +953,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         subnet = self._core_plugin.get_subnet(context, subnet_id)
 
         try:
-            rport_qry = context.session.query(models_v2.Port).join(
-                l3_models.RouterPort)
-            ports = rport_qry.filter(
-                l3_models.RouterPort.router_id == router_id,
-                l3_models.RouterPort.port_type == owner,
-                models_v2.Port.network_id == subnet['network_id']
-            )
+            ports = port_obj.Port.get_ports_by_router(
+                context, router_id, owner, subnet)
 
             for p in ports:
                 try:
@@ -1074,6 +1075,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # Otherwise return the first router.
         RouterPort = l3_models.RouterPort
         gw_port = orm.aliased(models_v2.Port, name="gw_port")
+        # TODO(lujinluo): Need IPAllocation and Port object
         routerport_qry = context.session.query(
             RouterPort.router_id, models_v2.IPAllocation.ip_address).join(
             models_v2.Port, models_v2.IPAllocation).filter(
@@ -1599,14 +1601,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                           DEVICE_OWNER_HA_REPLICATED_INT]
         if not router_ids:
             return []
-        qry = context.session.query(l3_models.RouterPort)
-        qry = qry.filter(
-            l3_models.RouterPort.router_id.in_(router_ids),
-            l3_models.RouterPort.port_type.in_(device_owners)
-        )
+        # TODO(lujinluo): Need Port as synthetic field
+        objs = l3_obj.RouterPort.get_objects(
+            context, router_id=router_ids, port_type=list(device_owners))
 
-        interfaces = [self._core_plugin._make_port_dict(rp.port)
-                      for rp in qry]
+        interfaces = [self._core_plugin._make_port_dict(rp.db_obj.port)
+                      for rp in objs]
         return interfaces
 
     @staticmethod
@@ -1794,17 +1794,9 @@ class L3RpcNotifierMixin(object):
         context = kwargs['context']
         subnetpool_id = kwargs['subnetpool_id']
 
-        query = context.session.query(l3_models.RouterPort.router_id)
-        query = query.join(models_v2.Port)
-        query = query.join(
-            models_v2.Subnet,
-            models_v2.Subnet.network_id == models_v2.Port.network_id)
-        query = query.filter(
-            models_v2.Subnet.subnetpool_id == subnetpool_id,
-            l3_models.RouterPort.port_type.in_(n_const.ROUTER_PORT_OWNERS))
-        query = query.distinct()
+        router_ids = l3_obj.RouterPort.get_router_ids_by_subnetpool(
+            context, subnetpool_id)
 
-        router_ids = [r[0] for r in query]
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             l3plugin.notify_routers_updated(context, router_ids)

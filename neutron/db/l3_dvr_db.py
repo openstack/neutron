@@ -42,6 +42,7 @@ from neutron.extensions import l3
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
+from neutron.objects import router as l3_obj
 from neutron.plugins.common import utils as p_utils
 
 
@@ -168,14 +169,14 @@ class DVRResourceOperationHandler(object):
 
     def _get_snat_interface_ports_for_router(self, context, router_id):
         """Return all existing snat_router_interface ports."""
-        qry = context.session.query(l3_models.RouterPort)
-        qry = qry.filter_by(
+        objs = l3_obj.RouterPort.get_objects(
+            context,
             router_id=router_id,
-            port_type=const.DEVICE_OWNER_ROUTER_SNAT
-        )
+            port_type=const.DEVICE_OWNER_ROUTER_SNAT)
 
-        ports = [self.l3plugin._core_plugin._make_port_dict(rp.port)
-                 for rp in qry]
+        # TODO(lujinluo): Need Port as synthetic field
+        ports = [self.l3plugin._core_plugin._make_port_dict(rp.db_obj.port)
+                 for rp in objs]
         return ports
 
     def _add_csnat_router_interface_port(
@@ -194,13 +195,12 @@ class DVRResourceOperationHandler(object):
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
 
-        with context.session.begin(subtransactions=True):
-            router_port = l3_models.RouterPort(
-                port_id=snat_port['id'],
-                router_id=router.id,
-                port_type=const.DEVICE_OWNER_ROUTER_SNAT
-            )
-            context.session.add(router_port)
+        l3_obj.RouterPort(
+            context,
+            port_id=snat_port['id'],
+            router_id=router.id,
+            port_type=const.DEVICE_OWNER_ROUTER_SNAT
+        ).create()
 
         if do_pop:
             return self.l3plugin._populate_mtu_and_subnets_for_ports(
@@ -566,15 +566,16 @@ class _DVRAgentInterfaceMixin(object):
         """Query router interfaces that relate to list of router_ids."""
         if not router_ids:
             return []
-        qry = context.session.query(l3_models.RouterPort)
-        qry = qry.filter(
-            l3_models.RouterPort.router_id.in_(router_ids),
-            l3_models.RouterPort.port_type == const.DEVICE_OWNER_ROUTER_SNAT
-        )
+        objs = l3_obj.RouterPort.get_objects(
+            context,
+            router_id=router_ids,
+            port_type=const.DEVICE_OWNER_ROUTER_SNAT)
+
         interfaces = collections.defaultdict(list)
-        for rp in qry:
+        for rp in objs:
+            # TODO(lujinluo): Need Port as synthetic field
             interfaces[rp.router_id].append(
-                self._core_plugin._make_port_dict(rp.port))
+                self._core_plugin._make_port_dict(rp.db_obj.port))
         LOG.debug("Return the SNAT ports: %s", interfaces)
         return interfaces
 
