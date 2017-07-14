@@ -25,6 +25,7 @@ import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
+from neutron_lib import fixture
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_utils import netutils
@@ -37,7 +38,7 @@ from neutron.plugins.common import constants as p_const
 from neutron.services.logapi.common import constants as log_const
 
 
-class AttributeMapMemento(fixtures.Fixture):
+class AttributeMapMemento(fixture.APIDefinitionFixture):
     """Create a copy of the resource attribute map so it can be restored during
     test cleanup.
 
@@ -53,6 +54,8 @@ class AttributeMapMemento(fixtures.Fixture):
     """
 
     def _setUp(self):
+        self.backup_global_resources = False
+        super(AttributeMapMemento, self)._setUp()
         # Shallow copy is not a proper choice for keeping a backup copy as
         # the RESOURCE_ATTRIBUTE_MAP map is modified in place through the
         # 0th level keys. Ideally deepcopy() would be used but this seems
@@ -64,6 +67,7 @@ class AttributeMapMemento(fixtures.Fixture):
         self.addCleanup(self.restore)
 
     def restore(self):
+        super(AttributeMapMemento, self)._restore()
         attributes.RESOURCE_ATTRIBUTE_MAP = self.contents_backup
 
 
