@@ -310,7 +310,7 @@ Verify network operation
       also appear on network node 1 because of creation prior to enabling
       distributed routing.
 
-#. Launch an instance with an interface on the addtional self-service network.
+#. Launch an instance with an interface on the additional self-service network.
    For example, a CirrOS image using flavor ID 1.
 
    .. code-block:: console
