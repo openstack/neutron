@@ -21,3 +21,4 @@ This guide documents the OpenStack Ocata release.
    ops
    migration
    misc
+   archives/index
