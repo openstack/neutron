@@ -323,4 +323,4 @@ def get_random_ipv6_mode():
 
 
 def get_random_security_event():
-    return random.choice(log_const.VALID_EVENTS)
+    return random.choice(log_const.LOG_EVENTS)

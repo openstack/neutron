@@ -25,6 +25,7 @@ VPN = "VPN"
 METERING = "METERING"
 FLAVORS = "FLAVORS"
 QOS = "QOS"
+LOG_API = "LOGGING"
 
 # Maps extension alias to service type that
 # can be implemented by the core plugin.

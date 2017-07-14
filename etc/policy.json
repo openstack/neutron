@@ -225,5 +225,12 @@
     "get_security_group_rules": "rule:admin_or_owner",
     "get_security_group_rule": "rule:admin_or_owner",
     "create_security_group_rule": "rule:admin_or_owner",
-    "delete_security_group_rule": "rule:admin_or_owner"
+    "delete_security_group_rule": "rule:admin_or_owner",
+
+    "get_loggable_resources": "rule:admin_only",
+    "create_log": "rule:admin_only",
+    "update_log": "rule:admin_only",
+    "delete_log": "rule:admin_only",
+    "get_logs": "rule:admin_only",
+    "get_log": "rule:admin_only"
 }

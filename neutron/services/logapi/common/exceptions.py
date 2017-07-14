@@ -1,5 +1,4 @@
-# Copyright 2016 Fujitsu Limited.
-#
+# Copyright 2017 Fujitsu Limited.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -18,13 +17,9 @@ from neutron._i18n import _
 from neutron_lib import exceptions as n_exc
 
 
-class ResourceLogNotFound(n_exc.NotFound):
-    message = _("Resource log %(id)s could not be found.")
+class LogResourceNotFound(n_exc.NotFound):
+    message = _("Log resource %(log_id)s could not be found.")
 
 
-class ParentResourceNotFound(n_exc.NotFound):
-    message = _("Parent resource %(parent_resource_id)s could not be found.")
-
-
-class ResourceNotFound(n_exc.NotFound):
-    message = _("Resource %(resource_id)s could not be found.")
+class InvalidLogReosurceType(n_exc.InvalidInput):
+    message = _("Invalid log resource_type: %(resource_type)s.")

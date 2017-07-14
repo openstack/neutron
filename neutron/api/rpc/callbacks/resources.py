@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import network
 from neutron.objects import ports
 from neutron.objects.qos import policy
@@ -19,6 +20,7 @@ from neutron.objects import trunk
 
 
 # Supported types
+LOGGING_RESOURCE = log_object.Log.obj_name()
 TRUNK = trunk.Trunk.obj_name()
 QOS_POLICY = policy.QosPolicy.obj_name()
 SUBPORT = trunk.SubPort.obj_name()
@@ -38,6 +40,7 @@ _VALID_CLS = (
     network.Network,
     securitygroup.SecurityGroup,
     securitygroup.SecurityGroupRule,
+    log_object.Log,
 )
 
 _TYPE_TO_CLS_MAP = {cls.obj_name(): cls for cls in _VALID_CLS}
