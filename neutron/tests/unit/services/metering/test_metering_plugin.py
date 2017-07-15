@@ -17,6 +17,7 @@ from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
+from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.api.v2 import attributes as attr
 from neutron.common import utils
 from neutron.db import api as db_api
@@ -132,6 +133,23 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                        '.remove_metering_label_rule')
         self.remove_rule_patch = mock.patch(remove_rule)
         self.mock_remove_rule = self.remove_rule_patch.start()
+
+    def test_routers_updated_on_host_rpc_call(self):
+        router_test = {
+            'id': 'xyz',
+            'name': 'testrouter'}
+        notify_host = ('neutron.api.rpc.agentnotifiers.' +
+                       'metering_rpc_agent_api.MeteringAgentNotifyAPI' +
+                       '._notification_host')
+        self.notify_patch = mock.patch(notify_host)
+        self.mock_notify_host = self.notify_patch.start()
+        metering_rpc_handle = metering_rpc_agent_api.MeteringAgentNotifyAPI()
+        metering_rpc_handle.routers_updated_on_host(
+            self.ctx,
+            [router_test['id']],
+            'test_host')
+        self.mock_notify_host.assert_called_with(self.ctx, 'routers_updated',
+                                                 'test_host', routers=['xyz'])
 
     def test_add_metering_label_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'

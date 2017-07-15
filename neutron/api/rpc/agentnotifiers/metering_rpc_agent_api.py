@@ -70,6 +70,14 @@ class MeteringAgentNotifyAPI(object):
         cctxt = self.client.prepare(fanout=True)
         cctxt.cast(context, method, router_id=router_id)
 
+    def _notification_host(self, context, method, host, **kwargs):
+        """Notify the agent that is hosting the router."""
+        LOG.debug('Notify agent at %(host)s the message '
+                  '%(method)s', {'host': host,
+                                 'method': method})
+        cctxt = self.client.prepare(server=host)
+        cctxt.cast(context, method, **kwargs)
+
     def _notification(self, context, method, routers):
         """Notify all the agents that are hosting the routers."""
         plugin = directory.get_plugin(plugin_constants.L3)
@@ -101,3 +109,8 @@ class MeteringAgentNotifyAPI(object):
 
     def remove_metering_label(self, context, routers):
         self._notification(context, 'remove_metering_label', routers)
+
+    def routers_updated_on_host(self, context, router_ids, host):
+        """Notify router updates to specific hosts hosting DVR routers."""
+        self._notification_host(context, 'routers_updated', host,
+                                routers=router_ids)
