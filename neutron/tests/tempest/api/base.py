@@ -430,6 +430,7 @@ class BaseAdminNetworkTest(BaseNetworkTest):
         super(BaseAdminNetworkTest, cls).setup_clients()
         cls.admin_client = cls.os_adm.network_client
         cls.identity_admin_client = cls.os_adm.tenants_client
+        cls.identity_admin_clientv3 = cls.os_admin.projects_client
 
     @classmethod
     def create_metering_label(cls, name, description):

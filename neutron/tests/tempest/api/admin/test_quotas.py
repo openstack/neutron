@@ -30,21 +30,18 @@ class QuotasTestBase(base.BaseAdminNetworkTest):
 
     @classmethod
     def resource_setup(cls):
-        if not CONF.identity_feature_enabled.api_v2_admin:
-            # TODO(ihrachys) adopt to v3
-            raise cls.skipException('Identity v2 admin not available')
         super(QuotasTestBase, cls).resource_setup()
 
     def _create_tenant(self):
         # Add a tenant to conduct the test
         test_tenant = data_utils.rand_name('test_tenant_')
         test_description = data_utils.rand_name('desc_')
-        tenant = self.identity_admin_client.create_tenant(
+        project = self.identity_admin_clientv3.create_project(
             name=test_tenant,
-            description=test_description)['tenant']
+            description=test_description)['project']
         self.addCleanup(
-            self.identity_admin_client.delete_tenant, tenant['id'])
-        return tenant
+            self.identity_admin_clientv3.delete_project, project['id'])
+        return project
 
     def _setup_quotas(self, project_id, **new_quotas):
         # Change quotas for tenant
