@@ -56,7 +56,7 @@ class RemoteResourceCache(object):
         if cached_item:
             return cached_item
         # try server in case object existed before agent start
-        self._flood_cache_for_query(rtype, id=obj_id)
+        self._flood_cache_for_query(rtype, id=(obj_id, ))
         return self._type_cache(rtype).get(obj_id)
 
     def _flood_cache_for_query(self, rtype, **filter_kwargs):
@@ -65,21 +65,70 @@ class RemoteResourceCache(object):
         Queries the server if this is the first time a given query for
         rtype has been issued.
         """
-        query_id = (rtype, ) + tuple(sorted(filter_kwargs.items()))
-        if query_id in self._satisfied_server_queries:
+        query_ids = self._get_query_ids(rtype, filter_kwargs)
+        if query_ids.issubset(self._satisfied_server_queries):
             # we've already asked the server this question so we don't
-            # ask again because any updates will have been pushed to us
+            # ask directly again because any updates will have been
+            # pushed to us
             return
         context = n_ctx.get_admin_context()
-        for resource in self._puller.bulk_pull(context, rtype,
-                                               filter_kwargs=filter_kwargs):
+        resources = self._puller.bulk_pull(context, rtype,
+                                           filter_kwargs=filter_kwargs)
+        for resource in resources:
             self._type_cache(rtype)[resource.id] = resource
-        self._satisfied_server_queries.add(query_id)
+        LOG.debug("%s resources returned for queries %s", len(resources),
+                  query_ids)
+        self._satisfied_server_queries.update(query_ids)
+
+    def _get_query_ids(self, rtype, filters):
+        """Turns filters for a given rypte into a set of query IDs.
+
+        This can result in multiple queries due to the nature of the query
+        processing on the server side. Since multiple values are treated as
+        an OR condition, a query for {'id': ('1', '2')} is equivalent
+        to a query for {'id': ('1',)} and {'id': ('2')}. This method splits
+        the former into the latter to ensure we aren't asking the server
+        something we already know.
+        """
+        query_ids = set()
+        for k, values in tuple(sorted(filters.items())):
+            if len(values) > 1:
+                for v in values:
+                    new_filters = filters.copy()
+                    new_filters[k] = (v, )
+                    query_ids.update(self._get_query_ids(rtype, new_filters))
+                break
+        else:
+            # no multiple value filters left so add an ID
+            query_ids.add((rtype, ) + tuple(sorted(filters.items())))
+        return query_ids
 
     def get_resources(self, rtype, filters):
-        """Find resources that match key:value in filters dict."""
+        """Find resources that match key:values in filters dict.
+
+        If the attribute on the object is a list, each value is checked if it
+        is in the list.
+
+        The values in the dicionary for a single key are matched in an OR
+        fashion.
+        """
         self._flood_cache_for_query(rtype, **filters)
-        match = lambda o: all(v == getattr(o, k) for k, v in filters.items())
+
+        def match(obj):
+            for key, values in filters.items():
+                for value in values:
+                    attr = getattr(obj, key)
+                    if isinstance(attr, (list, tuple, set)):
+                        # attribute is a list so we check if value is in
+                        # list
+                        if value in attr:
+                            break
+                    elif value == attr:
+                        break
+                else:
+                    # no match found for this key
+                    return False
+            return True
         return self.match_resources_with_func(rtype, match)
 
     def match_resources_with_func(self, rtype, matcher):
