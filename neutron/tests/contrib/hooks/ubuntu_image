@@ -3,3 +3,8 @@ IMAGE_URLS="http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg
 DEFAULT_INSTANCE_TYPE="ds1G"
 DEFAULT_INSTANCE_USER="ubuntu"
 BUILD_TIMEOUT=392
+
+[[test-config|$TEMPEST_CONFIG]]
+
+[neutron_plugin_options]
+image_is_advanced=True
