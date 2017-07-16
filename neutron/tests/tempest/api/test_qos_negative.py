@@ -13,7 +13,6 @@
 from neutron_lib.db import constants as db_const
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -26,21 +25,21 @@ class QosNegativeTestJSON(base.BaseAdminNetworkTest):
 
     required_extensions = ['qos']
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('b9dce555-d3b3-11e5-950a-54ee757c77da')
     def test_add_policy_with_too_long_name(self):
         self.assertRaises(lib_exc.BadRequest,
                           self.client.create_qos_policy,
                           LONG_NAME_NG, 'test policy desc1', False)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('b9dce444-d3b3-11e5-950a-54ee747c99db')
     def test_add_policy_with_too_long_description(self):
         self.assertRaises(lib_exc.BadRequest,
                           self.client.create_qos_policy,
                           'test-policy', LONG_DESCRIPTION_NG, False)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('b9dce444-d3b3-11e5-950a-54ee757c77dc')
     def test_add_policy_with_too_long_tenant_id(self):
         self.assertRaises(lib_exc.BadRequest,

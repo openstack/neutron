@@ -16,7 +16,6 @@
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -78,7 +77,7 @@ class QuotasTest(QuotasTestBase):
         quota_driver = neutron.db.driver.DbQuotaDriver
     """
 
-    @test.attr(type='gate')
+    @decorators.attr(type='gate')
     @decorators.idempotent_id('2390f766-836d-40ef-9aeb-e810d78207fb')
     def test_quotas(self):
         tenant_id = self._create_tenant()['id']
