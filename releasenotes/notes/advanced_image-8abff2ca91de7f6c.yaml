@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Some scenario tests require advanced ``Glance`` images (for example,
+    ``Ubuntu`` or ``CentOS``) in order to pass. They are now skipped by
+    default. If you need to execute those tests, please configure
+    ``tempest.conf`` to use an advanced image, and set ``image_is_advanced`` in
+    ``neutron_plugin_options`` section of ``tempest.conf`` file to ``True``.
+    The first scenario test case that requires the new option set to execute is
+    ``test_trunk``.
+

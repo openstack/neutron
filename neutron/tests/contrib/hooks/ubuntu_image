@@ -3,3 +3,8 @@ IMAGE_URLS="http://cloud-images.ubuntu.com/releases/16.04/release-20170113/ubunt
 DEFAULT_INSTANCE_TYPE=ds512M
 DEFAULT_INSTANCE_USER=ubuntu
 BUILD_TIMEOUT=392
+
+[[test-config|$TEMPEST_CONFIG]]
+
+[neutron_plugin_options]
+image_is_advanced=True
