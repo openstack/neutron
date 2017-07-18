@@ -15,13 +15,11 @@
 
 import functools
 
-import netaddr
 from neutron_lib.db import model_base
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
-from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
 from six.moves.urllib import parse
 from webob import exc
@@ -429,8 +427,8 @@ def convert_exception_to_http_exc(e, faults, language):
         e.body = body
         e.content_type = kwargs['content_type']
         return e
-    if isinstance(e, (exceptions.NeutronException, netaddr.AddrFormatError,
-                      oslo_policy.PolicyNotAuthorized)):
+    faults_tuple = tuple(faults.keys()) + (exceptions.NeutronException,)
+    if isinstance(e, faults_tuple):
         for fault in faults:
             if isinstance(e, fault):
                 mapped_exc = faults[fault]
