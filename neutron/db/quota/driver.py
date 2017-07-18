@@ -15,12 +15,15 @@
 
 from neutron_lib.api import attributes
 from neutron_lib import exceptions
+from neutron_lib.plugins import constants
+from neutron_lib.plugins import directory
 from oslo_log import log
 
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db.quota import api as quota_api
 from neutron.objects import quota as quota_obj
+from neutron.quota import resource as res
 
 LOG = log.getLogger(__name__)
 
@@ -71,6 +74,39 @@ class DbQuotaDriver(object):
             tenant_quota[item['resource']] = item['limit']
 
         return tenant_quota
+
+    @staticmethod
+    @db_api.retry_if_session_inactive()
+    def get_detailed_tenant_quotas(context, resources, tenant_id):
+        """Given a list of resources and a sepecific tenant, retrieve
+        the detailed quotas (limit, used, reserved).
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :return dict: mapping resource name in dict to its correponding limit
+            used and reserved. Reserved currently returns default value of 0
+        """
+        res_reserve_info = quota_api.get_reservations_for_resources(
+            context, tenant_id, resources.keys())
+        tenant_quota_ext = {}
+        for key, resource in resources.items():
+            if isinstance(resource, res.TrackedResource):
+                used = resource.count_used(context, tenant_id,
+                                           resync_usage=False)
+            else:
+                plugins = directory.get_plugins()
+                plugin = plugins.get(key, plugins[constants.CORE])
+                used = resource.count(context, plugin, tenant_id)
+
+            tenant_quota_ext[key] = {
+                'limit': resource.default,
+                'used': used,
+                'reserved': res_reserve_info.get(key, 0),
+            }
+        #update with specific tenant limits
+        quota_objs = quota_obj.Quota.get_objects(context, project_id=tenant_id)
+        for item in quota_objs:
+            tenant_quota_ext[item['resource']]['limit'] = item['limit']
+        return tenant_quota_ext
 
     @staticmethod
     @db_api.retry_if_session_inactive()

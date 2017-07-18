@@ -18,12 +18,24 @@ from neutron_lib import exceptions as lib_exc
 
 from neutron.common import exceptions
 from neutron.db import db_base_plugin_v2 as base_plugin
+from neutron.db.quota import api as quota_api
 from neutron.db.quota import driver
+from neutron.objects import quota as quota_obj
+from neutron.quota import resource
 from neutron.tests import base
+from neutron.tests.unit import quota as test_quota
 from neutron.tests.unit import testlib_api
 
-
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
+
+def _count_resource(context, plugin, resource, tenant_id):
+    """A fake counting function to determine current used counts"""
+    if resource[-1] == 's':
+        resource = resource[:-1]
+    result = quota_obj.QuotaUsage.get_object_dirty_protected(
+        context, resource=resource)
+    return 0 if not result else result.in_use
 
 
 class FakePlugin(base_plugin.NeutronDbPluginV2, driver.DbQuotaDriver):
@@ -45,6 +57,28 @@ class TestResource(object):
     def count(self, *args, **kwargs):
         return self.fake_count
 
+
+class TestTrackedResource(resource.TrackedResource):
+    """Describes a test tracked resource for detailed quota checking"""
+    def __init__(self, name, model_class, flag=None,
+                 plural_name=None):
+        super(TestTrackedResource, self).__init__(
+            name, model_class, flag=flag, plural_name=None)
+
+    @property
+    def default(self):
+        return self.flag
+
+
+class TestCountableResource(resource.CountableResource):
+    """Describes a test countable resource for detailed quota checking"""
+    def __init__(self, name, count, flag=-1, plural_name=None):
+        super(TestCountableResource, self).__init__(
+            name, count, flag=flag, plural_name=None)
+
+    @property
+    def default(self):
+        return self.flag
 
 PROJECT = 'prj_test'
 RESOURCE = 'res_test'
@@ -227,3 +261,48 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
                           resources,
                           deltas,
                           self.plugin)
+
+    def test_get_detailed_tenant_quotas_resource(self):
+        res = {RESOURCE: TestTrackedResource(RESOURCE, test_quota.MehModel)}
+
+        self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 6)
+        quota_driver = driver.DbQuotaDriver()
+        quota_driver.make_reservation(self.context, PROJECT, res,
+                                      {RESOURCE: 1}, self.plugin)
+        quota_api.set_quota_usage(self.context, RESOURCE, PROJECT, 2)
+        detailed_quota = self.plugin.get_detailed_tenant_quotas(self.context,
+                                                                res, PROJECT)
+        self.assertEqual(6, detailed_quota[RESOURCE]['limit'])
+        self.assertEqual(2, detailed_quota[RESOURCE]['used'])
+        self.assertEqual(1, detailed_quota[RESOURCE]['reserved'])
+
+    def test_get_detailed_tenant_quotas_multiple_resource(self):
+        project_1 = 'prj_test_1'
+        resource_1 = 'res_test_1'
+        resource_2 = 'res_test_2'
+        resources = {resource_1:
+                     TestTrackedResource(resource_1, test_quota.MehModel),
+                     resource_2:
+                     TestCountableResource(resource_2, _count_resource)}
+
+        self.plugin.update_quota_limit(self.context, project_1, resource_1, 6)
+        self.plugin.update_quota_limit(self.context, project_1, resource_2, 9)
+        quota_driver = driver.DbQuotaDriver()
+        quota_driver.make_reservation(self.context, project_1,
+                                      resources,
+                                      {resource_1: 1, resource_2: 7},
+                                      self.plugin)
+
+        quota_api.set_quota_usage(self.context, resource_1, project_1, 2)
+        quota_api.set_quota_usage(self.context, resource_2, project_1, 3)
+        detailed_quota = self.plugin.get_detailed_tenant_quotas(self.context,
+                                                                resources,
+                                                                project_1)
+
+        self.assertEqual(6, detailed_quota[resource_1]['limit'])
+        self.assertEqual(1, detailed_quota[resource_1]['reserved'])
+        self.assertEqual(2, detailed_quota[resource_1]['used'])
+
+        self.assertEqual(9, detailed_quota[resource_2]['limit'])
+        self.assertEqual(7, detailed_quota[resource_2]['reserved'])
+        self.assertEqual(3, detailed_quota[resource_2]['used'])
