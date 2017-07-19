@@ -41,25 +41,6 @@ def flake8ext(f):
 #  - Add test cases for each new rule to
 #    neutron/tests/unit/hacking/test_checks.py
 
-_all_log_levels = {
-    'reserved': '_',  # this should never be used with a log unless
-                      # it is a variable used for a log message and
-                      # a exception
-    'error': '_LE',
-    'info': '_LI',
-    'warning': '_LW',
-    'critical': '_LC',
-    'exception': '_LE',
-}
-_all_hints = set(_all_log_levels.values())
-
-
-def _regex_for_level(level, hint):
-    return r".*LOG\.%(level)s\(\s*((%(wrong_hints)s)\(|'|\")" % {
-        'level': level,
-        'wrong_hints': '|'.join(_all_hints - set([hint])),
-    }
-
 
 unittest_imports_dot = re.compile(r"\bimport[\s]+unittest\b")
 unittest_imports_from = re.compile(r"\bfrom[\s]+unittest\b")
