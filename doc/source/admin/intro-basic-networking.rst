@@ -64,7 +64,7 @@ As mentioned earlier, modern Ethernet networks use switches to
 interconnect the network hosts. A switch is a box of networking
 hardware with a large number of ports that forward Ethernet frames
 from one connected host to another. When hosts first send frames over
-the switch, the switch doesn’t know which MAC address is associated
+the switch, the switch doesn't know which MAC address is associated
 with which port. If an Ethernet frame is destined for an unknown MAC
 address, the switch broadcasts the frame to all ports. The switch learns
 which MAC addresses are at which ports by observing the traffic. Once
@@ -248,9 +248,9 @@ client, or the server will not receive the broadcast. The DHCP server
 responds by sending a UDP packet from port 67 to port 68 on the
 client. The exchange looks like this:
 
-1. The client sends a discover ("I’m a client at MAC address
+1. The client sends a discover ("I'm a client at MAC address
    ``08:00:27:b9:88:74``, I need an IP address")
-2. The server sends an offer ("OK ``08:00:27:b9:88:74``, I’m offering
+2. The server sends an offer ("OK ``08:00:27:b9:88:74``, I'm offering
    IP address ``192.0.2.112``")
 3. The client sends a request ("Server ``192.0.2.131``, I would like
    to have IP ``192.0.2.112``")

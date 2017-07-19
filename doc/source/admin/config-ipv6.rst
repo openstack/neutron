@@ -334,9 +334,9 @@ hand, external router ports are allowed to have a dual-stack configuration
 with both an IPv4 and an IPv6 address assigned to them.
 
 Neutron project networks that are assigned Global Unicast Address (GUA)
-prefixes and addresses don’t require NAT on the neutron router external gateway
+prefixes and addresses don't require NAT on the neutron router external gateway
 port to access the outside world. As a consequence of the lack of NAT the
-external router port doesn’t require a GUA to send and receive to the external
+external router port doesn't require a GUA to send and receive to the external
 networks. This implies a GUA IPv6 subnet prefix is not necessarily needed for
 the neutron external network. By default, a IPv6 LLA associated with the
 external gateway port can be used for routing purposes. To handle this
