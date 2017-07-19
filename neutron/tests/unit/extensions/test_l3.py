@@ -3416,6 +3416,22 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             plugin._clean_garbage()
             self._show('ports', port['port']['id'])
 
+    def test_router_delete_callback(self):
+        def prevent_router_deletion(*args, **kwargs):
+            # unsubscribe now that we have invoked the callback
+            registry.unsubscribe(prevent_router_deletion, resources.ROUTER,
+                                 events.BEFORE_DELETE)
+            raise exc.HTTPForbidden
+
+        registry.subscribe(prevent_router_deletion, resources.ROUTER,
+                           events.BEFORE_DELETE)
+
+        with self.subnet():
+            res = self._create_router(self.fmt, _uuid())
+            router = self.deserialize(self.fmt, res)
+            self._delete('routers', router['router']['id'],
+                         exc.HTTPForbidden.code)
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
