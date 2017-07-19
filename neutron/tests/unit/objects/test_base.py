@@ -519,6 +519,7 @@ class _BaseObjectTestCase(object):
         objects.register_objects()
         self.context = context.get_admin_context()
         self._unique_tracker = collections.defaultdict(set)
+        self.locked_obj_fields = collections.defaultdict(set)
         self.db_objs = [
             self._test_class.db_model(**self.get_random_db_fields())
             for _ in range(3)
@@ -562,6 +563,9 @@ class _BaseObjectTestCase(object):
             if field not in obj_cls.synthetic_fields:
                 generator = FIELD_TYPE_VALUE_GENERATOR_MAP[type(field_obj)]
                 fields[field] = get_value(generator, ip_version)
+        for k, v in self.locked_obj_fields.items():
+            if k in fields:
+                fields[k] = v
         for keys in obj_cls.unique_keys:
             keytup = tuple(keys)
             unique_values = tuple(fields[k] for k in keytup)
@@ -611,6 +615,7 @@ class _BaseObjectTestCase(object):
                     obj[k] = val
             if k in self.valid_field_filter:
                 self.valid_field_filter[k] = val
+            self.locked_obj_fields[k] = v() if callable(v) else v
 
     @classmethod
     def generate_object_keys(cls, obj_cls, field_names=None):
