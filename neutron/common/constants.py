@@ -29,6 +29,7 @@ METERING_LABEL_KEY = '_metering_labels'
 FLOATINGIP_AGENT_INTF_KEY = '_floatingip_agent_interfaces'
 SNAT_ROUTER_INTF_KEY = '_snat_router_interfaces'
 DVR_SNAT_BOUND = 'dvr_snat_bound'
+L3_AGENT_MODE_DVR_NO_EXTERNAL = 'dvr_no_external'
 
 HA_NETWORK_NAME = 'HA network tenant %s'
 HA_SUBNET_NAME = 'HA subnet tenant %s'

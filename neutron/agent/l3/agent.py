@@ -572,8 +572,9 @@ class L3NATAgent(ha.AgentMixin,
         chunk = []
         is_snat_agent = (self.conf.agent_mode ==
                          lib_const.L3_AGENT_MODE_DVR_SNAT)
-        is_dvr_only_agent = (self.conf.agent_mode ==
-                             lib_const.L3_AGENT_MODE_DVR)
+        is_dvr_only_agent = (self.conf.agent_mode in
+                             [lib_const.L3_AGENT_MODE_DVR,
+                              l3_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL])
         try:
             router_ids = self.plugin_rpc.get_router_ids(context)
             # We set HA network port status to DOWN to let l2 agent update it
