@@ -787,9 +787,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         port = port['port']
         if port.get('device_owner') and net.is_port_trusted(port):
             return
-        default_sg = self._ensure_default_security_group(context,
-                                                         port['tenant_id'])
         if not validators.is_attr_set(port.get(ext_sg.SECURITYGROUPS)):
+            default_sg = self._ensure_default_security_group(context,
+                                                             port['tenant_id'])
             port[ext_sg.SECURITYGROUPS] = [default_sg]
 
     def _check_update_deletes_security_groups(self, port):
