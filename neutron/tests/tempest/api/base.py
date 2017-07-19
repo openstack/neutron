@@ -90,7 +90,7 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def setup_clients(cls):
         super(BaseNetworkTest, cls).setup_clients()
-        cls.client = cls.os.network_client
+        cls.client = cls.os_primary.network_client
 
     @classmethod
     def resource_setup(cls):
@@ -429,8 +429,8 @@ class BaseAdminNetworkTest(BaseNetworkTest):
     @classmethod
     def setup_clients(cls):
         super(BaseAdminNetworkTest, cls).setup_clients()
-        cls.admin_client = cls.os_adm.network_client
-        cls.identity_admin_client = cls.os_adm.tenants_client
+        cls.admin_client = cls.os_admin.network_client
+        cls.identity_admin_client = cls.os_admin.tenants_client
         cls.identity_admin_clientv3 = cls.os_admin.projects_client
 
     @classmethod
