@@ -92,11 +92,8 @@ def Resource(controller, faults=None, deserializers=None, serializers=None,
             revision_number = api_common.check_request_for_revision_constraint(
                 request)
             if revision_number is not None:
-                constraint = {'if_revision_match': revision_number,
-                              'resource': controller._collection,
-                              'resource_id': args['id']}
-                # TODO(kevinbenton): add an interface to context to do this
-                setattr(request.context, '_CONSTRAINT', constraint)
+                request.context.set_transaction_constraint(
+                    controller._collection, args['id'], revision_number)
 
             method = getattr(controller, action)
             result = method(request=request, **args)
