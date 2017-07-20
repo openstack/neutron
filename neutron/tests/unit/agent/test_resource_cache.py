@@ -144,6 +144,17 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         self.assertIsNone(received_kw[1]['existing'])
         self.assertEqual(4, received_kw[1]['resource_id'])
 
+    def test_record_resource_delete_ignores_dups(self):
+        received_kw = []
+        receiver = lambda *a, **k: received_kw.append(k)
+        registry.subscribe(receiver, 'goose', events.AFTER_DELETE)
+        self.rcache.record_resource_delete(self.ctx, 'goose', 3)
+        self.assertEqual(1, len(received_kw))
+        self.rcache.record_resource_delete(self.ctx, 'goose', 4)
+        self.assertEqual(2, len(received_kw))
+        self.rcache.record_resource_delete(self.ctx, 'goose', 3)
+        self.assertEqual(2, len(received_kw))
+
     def test_resource_change_handler(self):
         with mock.patch.object(resource_cache.RemoteResourceWatcher,
                                '_init_rpc_listeners'):
