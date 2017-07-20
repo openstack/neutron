@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The web_framework option has been removed. This should have no impact on
+    operators/users since it was just an option used for development of the
+    new web framework.
