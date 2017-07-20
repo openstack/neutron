@@ -14,7 +14,6 @@ while other rules are specific to Neutron repository.
 
 Below you can find a list of checks specific to this repository.
 
-- [N320] Validate that LOG messages, except debug ones, have translations
 - [N322] Detect common errors with assert_called_once_with
 - [N328] Detect wrong usage with assertEqual
 - [N330] Use assertEqual(*empty*, observed) instead of
