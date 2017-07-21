@@ -33,7 +33,7 @@ def _raise_if_updates_provider_attributes(attrs):
         raise n_exc.InvalidInput(error_message=msg)
 
 
-class Providernet(extensions.ExtensionDescriptor):
+class Providernet(extensions.APIExtensionDescriptor):
     """Extension class supporting provider networks.
 
     This class is used by neutron's extension framework to make
@@ -45,25 +45,4 @@ class Providernet(extensions.ExtensionDescriptor):
     With admin rights, network dictionaries returned will also include
     provider attributes.
     """
-
-    @classmethod
-    def get_name(cls):
-        return provider_net.NAME
-
-    @classmethod
-    def get_alias(cls):
-        return provider_net.ALIAS
-
-    @classmethod
-    def get_description(cls):
-        return provider_net.DESCRIPTION
-
-    @classmethod
-    def get_updated(cls):
-        return provider_net.UPDATED_TIMESTAMP
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return provider_net.RESOURCE_ATTRIBUTE_MAP
-        else:
-            return {}
+    api_definition = provider_net

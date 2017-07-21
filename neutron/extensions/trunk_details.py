@@ -23,32 +23,5 @@ from neutron_lib.api import extensions
 # config-drive configuration.
 
 
-class Trunk_details(extensions.ExtensionDescriptor):
-
-    @classmethod
-    def get_name(cls):
-        return trunk_details.NAME
-
-    @classmethod
-    def get_alias(cls):
-        return trunk_details.ALIAS
-
-    @classmethod
-    def get_description(cls):
-        return trunk_details.DESCRIPTION
-
-    @classmethod
-    def get_updated(cls):
-        return trunk_details.TIMESTAMP
-
-    def get_required_extensions(self):
-        return trunk_details.REQUIRED_EXTENSIONS or []
-
-    def get_optional_extensions(self):
-        return trunk_details.OPTIONAL_EXTENSIONS or []
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return trunk_details.RESOURCE_ATTRIBUTE_MAP
-        else:
-            return {}
+class Trunk_details(extensions.APIExtensionDescriptor):
+    api_definition = trunk_details
