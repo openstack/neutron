@@ -737,6 +737,7 @@ class OVSPortFixture(PortFixture):
                  hybrid_plug=False):
         super(OVSPortFixture, self).__init__(bridge, namespace, mac, port_id)
         self.hybrid_plug = hybrid_plug
+        self.vlan_tag = None
 
     def _create_bridge_fixture(self):
         return OVSBridgeFixture()

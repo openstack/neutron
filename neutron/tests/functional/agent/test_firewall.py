@@ -111,6 +111,8 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
         # FIXME(jlibosva): We should consider to call prepare_port_filter with
         # deferred bridge depending on its performance
         self.firewall.prepare_port_filter(self.src_port_desc)
+        # Traffic coming from patch-port is always VLAN tagged
+        self.tester.set_peer_port_as_patch_port()
 
     def initialize_iptables(self):
         cfg.CONF.set_override('enable_ipset', self.enable_ipset,
@@ -542,6 +544,8 @@ class FirewallTestCase(BaseFirewallTestCase):
         self.assertEqual(packets_received, 0)
 
     def test_remote_security_groups(self):
+        self.tester.set_peer_port_as_vm_port()
+
         remote_sg_id = 'remote_sg_id'
         peer_port_desc = self._create_port_description(
             self.tester.peer_port_id,
