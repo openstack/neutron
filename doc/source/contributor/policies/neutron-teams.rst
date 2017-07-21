@@ -120,8 +120,6 @@ updating the core review team for the sub-project's repositories.
 +------------------------+---------------------------+----------------------+
 | networking-midonet     | Ryu Ishimoto              | ryu25                |
 |                        +---------------------------+----------------------+
-|                        | Jaume Devesa              | devvesa              |
-|                        +---------------------------+----------------------+
 |                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
 | networking-odl         | Isaku Yamahata            | yamahata             |
