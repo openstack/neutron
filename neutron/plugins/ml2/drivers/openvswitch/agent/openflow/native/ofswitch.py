@@ -150,6 +150,8 @@ class OpenFlowSwitchMixin(object):
     def cleanup_flows(self):
         cookies = set([f.cookie for f in self.dump_flows()]) - \
                   self.reserved_cookies
+        LOG.debug("Reserved cookies for %s: %s", self.br_name,
+                  self.reserved_cookies)
         for c in cookies:
             LOG.warning(_LW("Deleting flow with cookie 0x%(cookie)x"),
                         {'cookie': c})
