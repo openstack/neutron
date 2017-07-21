@@ -100,9 +100,10 @@ class L3HATestCase(framework.L3AgentTestFramework):
                                v6_ext_gw_with_sub=False)
 
     @testtools.skipUnless(ipv6_utils.is_enabled(), "IPv6 is not enabled")
-    def test_ipv6_router_advts_after_router_state_change(self):
+    def test_ipv6_router_advts_and_fwd_after_router_state_change_master(self):
         # Schedule router to l3 agent, and then add router gateway. Verify
-        # that router gw interface is configured to receive Router Advts.
+        # that router gw interface is configured to receive Router Advts and
+        # IPv6 forwarding is enabled.
         router_info = l3_test_common.prepare_router_data(
             enable_snat=True, enable_ha=True, dual_stack=True, enable_gw=False)
         router = self.manage_router(self.agent, router_info)
@@ -112,6 +113,24 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router_info['gw_port'] = ex_port
         router.process(self.agent)
         self._assert_ipv6_accept_ra(router)
+        self._assert_ipv6_forwarding(router)
+
+    @testtools.skipUnless(ipv6_utils.is_enabled(), "IPv6 is not enabled")
+    def test_ipv6_router_advts_and_fwd_after_router_state_change_backup(self):
+        # Schedule router to l3 agent, and then add router gateway. Verify
+        # that router gw interface is configured to discard Router Advts and
+        # IPv6 forwarding is disabled.
+        router_info = l3_test_common.prepare_router_data(
+            enable_snat=True, enable_ha=True, dual_stack=True, enable_gw=False)
+        router = self.manage_router(self.agent, router_info)
+        self.fail_ha_router(router)
+        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+        _ext_dev_name, ex_port = l3_test_common.prepare_ext_gw_test(
+            mock.Mock(), router)
+        router_info['gw_port'] = ex_port
+        router.process(self.agent)
+        self._assert_ipv6_accept_ra(router, False)
+        self._assert_ipv6_forwarding(router, False)
 
     def test_keepalived_configuration(self):
         router_info = self.generate_router_info(enable_ha=True)

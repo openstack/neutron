@@ -248,6 +248,14 @@ class LinuxInterfaceDriver(object):
                 'dev': dev_name,
                 'value': value}])
 
+    @staticmethod
+    def configure_ipv6_forwarding(namespace, dev_name, enabled):
+        """Configure IPv6 forwarding on an interface."""
+        ip_lib.IPWrapper(namespace=namespace).netns.execute(
+            ['sysctl', '-w', 'net.ipv6.conf.%(dev)s.forwarding=%(value)d' % {
+                'dev': dev_name,
+                'value': int(enabled)}])
+
     @abc.abstractmethod
     def plug_new(self, network_id, port_id, device_name, mac_address,
                  bridge=None, namespace=None, prefix=None, mtu=None):
