@@ -22,10 +22,10 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
 
-from neutron.db import api as db_api
 from neutron.db import dvr_mac_db
-from neutron.db.models import dvr as dvr_models
 from neutron.extensions import dvr
+from neutron.objects import router
+from neutron.tests import tools
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -43,19 +43,16 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self.mixin = DVRDbMixinImpl(mock.Mock())
 
     def _create_dvr_mac_entry(self, host, mac_address):
-        with db_api.context_manager.writer.using(self.ctx):
-            entry = dvr_models.DistributedVirtualRouterMacAddress(
-                host=host, mac_address=mac_address)
-            self.ctx.session.add(entry)
+        router.DVRMacAddress(
+            self.ctx, host=host, mac_address=mac_address).create()
 
     def test__get_dvr_mac_address_by_host(self):
-        with db_api.context_manager.writer.using(self.ctx):
-            entry = dvr_models.DistributedVirtualRouterMacAddress(
-                host='foo_host', mac_address='foo_mac_address')
-            self.ctx.session.add(entry)
-            result = self.mixin._get_dvr_mac_address_by_host(self.ctx,
-                                                             'foo_host')
-        self.assertEqual(entry, result)
+        entry = router.DVRMacAddress(
+            self.ctx, host='foo_host',
+            mac_address=tools.get_random_EUI())
+        entry.create()
+        result = self.mixin._get_dvr_mac_address_by_host(self.ctx, 'foo_host')
+        self.assertEqual(entry.to_dict(), result)
 
     def test__get_dvr_mac_address_by_host_not_found(self):
         self.assertRaises(dvr.DVRMacAddressNotFound,
@@ -63,8 +60,8 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                           self.ctx, 'foo_host')
 
     def test__create_dvr_mac_address_success(self):
-        entry = {'host': 'foo_host', 'mac_address': '00:11:22:33:44:55:66'}
-        with mock.patch.object(dvr_mac_db.net, 'get_random_mac') as f:
+        entry = {'host': 'foo_host', 'mac_address': tools.get_random_EUI()}
+        with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
             f.return_value = entry['mac_address']
             expected = self.mixin._create_dvr_mac_address(
                 self.ctx, entry['host'])
@@ -74,17 +71,21 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         # limit retries so test doesn't take 40 seconds
         mock.patch('neutron.db.api._retry_db_errors.max_retries',
                    new=2).start()
-        self._create_dvr_mac_entry('foo_host_1', 'non_unique_mac')
-        with mock.patch.object(dvr_mac_db.net, 'get_random_mac') as f:
-            f.return_value = 'non_unique_mac'
+
+        non_unique_mac = tools.get_random_EUI()
+        self._create_dvr_mac_entry('foo_host_1', non_unique_mac)
+        with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
+            f.return_value = non_unique_mac
             self.assertRaises(dvr.MacAddressGenerationFailure,
                               self.mixin._create_dvr_mac_address,
                               self.ctx, "foo_host_2")
 
     def test_mac_not_cleared_on_agent_delete_event_with_remaining_agents(self):
         plugin = directory.get_plugin()
-        self._create_dvr_mac_entry('host_1', 'mac_1')
-        self._create_dvr_mac_entry('host_2', 'mac_2')
+        mac_1 = tools.get_random_EUI()
+        mac_2 = tools.get_random_EUI()
+        self._create_dvr_mac_entry('host_1', mac_1)
+        self._create_dvr_mac_entry('host_2', mac_2)
         agent1 = {'host': 'host_1', 'id': 'a1'}
         agent2 = {'host': 'host_1', 'id': 'a2'}
         with mock.patch.object(plugin, 'get_agents', return_value=[agent2]):
@@ -92,33 +93,41 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                 registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
                                 context=self.ctx, agent=agent1)
         mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
+        for mac in mac_list:
+            self.assertIsInstance(mac, dict)
         self.assertEqual(2, len(mac_list))
         self.assertFalse(notifier.dvr_mac_address_update.called)
 
     def test_mac_cleared_on_agent_delete_event(self):
         plugin = directory.get_plugin()
-
-        with db_api.context_manager.writer.using(self.ctx):
-            self._create_dvr_mac_entry('host_1', 'mac_1')
-            self._create_dvr_mac_entry('host_2', 'mac_2')
-            agent = {'host': 'host_1', 'id': 'a1'}
-            with mock.patch.object(plugin, 'notifier') as notifier:
-                registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
-                                context=self.ctx, agent=agent)
-            mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
+        mac_1 = tools.get_random_EUI()
+        mac_2 = tools.get_random_EUI()
+        self._create_dvr_mac_entry('host_1', mac_1)
+        self._create_dvr_mac_entry('host_2', mac_2)
+        agent = {'host': 'host_1', 'id': 'a1'}
+        with mock.patch.object(plugin, 'notifier') as notifier:
+            registry.notify(resources.AGENT, events.BEFORE_DELETE, self,
+                            context=self.ctx, agent=agent)
+        mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
         self.assertEqual(1, len(mac_list))
+        for mac in mac_list:
+            self.assertIsInstance(mac, dict)
         self.assertEqual('host_2', mac_list[0]['host'])
         notifier.dvr_mac_address_update.assert_called_once_with(
             self.ctx, mac_list)
 
     def test_get_dvr_mac_address_list(self):
-        self._create_dvr_mac_entry('host_1', 'mac_1')
-        self._create_dvr_mac_entry('host_2', 'mac_2')
+        mac_1 = tools.get_random_EUI()
+        mac_2 = tools.get_random_EUI()
+        self._create_dvr_mac_entry('host_1', mac_1)
+        self._create_dvr_mac_entry('host_2', mac_2)
         mac_list = self.mixin.get_dvr_mac_address_list(self.ctx)
         self.assertEqual(2, len(mac_list))
+        for mac in mac_list:
+            self.assertIsInstance(mac, dict)
 
     def test_get_dvr_mac_address_by_host_existing_host(self):
-        self._create_dvr_mac_entry('foo_host', 'foo_mac')
+        self._create_dvr_mac_entry('foo_host', tools.get_random_EUI())
         with mock.patch.object(self.mixin,
                                '_get_dvr_mac_address_by_host') as f:
             self.mixin.get_dvr_mac_address_by_host(self.ctx, 'foo_host')

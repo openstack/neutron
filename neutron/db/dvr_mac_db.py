@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -20,20 +22,18 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
-from neutron_lib.utils import net
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from sqlalchemy import or_
-from sqlalchemy.orm import exc
 
 from neutron._i18n import _, _LE
 from neutron.common import utils
 from neutron.db import api as db_api
-from neutron.db.models import dvr as dvr_models
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
+from neutron.objects import exceptions
+from neutron.objects import router
 
 
 LOG = logging.getLogger(__name__)
@@ -81,42 +81,33 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             # there are still agents on this host, don't mess with the mac
             # entry until they are all deleted.
             return
-        try:
-            with db_api.context_manager.writer.using(context):
-                entry = (context.session.
-                         query(dvr_models.DistributedVirtualRouterMacAddress).
-                         filter_by(host=host).
-                         one())
-                context.session.delete(entry)
-        except exc.NoResultFound:
+
+        if not router.DVRMacAddress.delete_objects(context, host=host):
             return
+
         # notify remaining agents so they cleanup flows
         dvr_macs = plugin.get_dvr_mac_address_list(context)
         plugin.notifier.dvr_mac_address_update(context, dvr_macs)
 
     @db_api.context_manager.reader
     def _get_dvr_mac_address_by_host(self, context, host):
-        try:
-            query = context.session.query(
-                dvr_models.DistributedVirtualRouterMacAddress)
-            dvrma = query.filter(
-                dvr_models.DistributedVirtualRouterMacAddress.host == host
-            ).one()
-        except exc.NoResultFound:
+        dvr_obj = router.DVRMacAddress.get_object(context, host=host)
+        if not dvr_obj:
             raise ext_dvr.DVRMacAddressNotFound(host=host)
-        return dvrma
+        return self._make_dvr_mac_address_dict(dvr_obj)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def _create_dvr_mac_address_retry(self, context, host, base_mac):
         with db_api.context_manager.writer.using(context):
-            mac_address = net.get_random_mac(base_mac)
-            dvr_mac_binding = dvr_models.DistributedVirtualRouterMacAddress(
-                host=host, mac_address=mac_address)
-            context.session.add(dvr_mac_binding)
+            mac_address = utils.get_random_mac(base_mac)
+            dvr_mac_binding = router.DVRMacAddress(
+                context, host=host, mac_address=netaddr.EUI(mac_address))
+            dvr_mac_binding.create()
             LOG.debug("Generated DVR mac for host %(host)s "
                       "is %(mac_address)s",
                       {'host': host, 'mac_address': mac_address})
+
         dvr_macs = self.get_dvr_mac_address_list(context)
         # TODO(vivek): improve scalability of this fanout by
         # sending a single mac address rather than the entire set
@@ -128,15 +119,17 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         base_mac = cfg.CONF.dvr_base_mac.split(':')
         try:
             return self._create_dvr_mac_address_retry(context, host, base_mac)
-        except db_exc.DBDuplicateEntry:
+        except exceptions.NeutronDbObjectDuplicateEntry:
             LOG.error(_LE("MAC generation error after %s attempts"),
                       db_api.MAX_RETRIES)
         raise ext_dvr.MacAddressGenerationFailure(host=host)
 
     @db_api.context_manager.reader
     def get_dvr_mac_address_list(self, context):
-        return (context.session.
-                query(dvr_models.DistributedVirtualRouterMacAddress).all())
+        return [
+            dvr_mac.to_dict()
+            for dvr_mac in router.DVRMacAddress.get_objects(context)
+        ]
 
     def get_dvr_mac_address_by_host(self, context, host):
         """Determine the MAC for the DVR port associated to host."""
@@ -150,7 +143,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
 
     def _make_dvr_mac_address_dict(self, dvr_mac_entry, fields=None):
         return {'host': dvr_mac_entry['host'],
-                'mac_address': dvr_mac_entry['mac_address']}
+                'mac_address': str(dvr_mac_entry['mac_address'])}
 
     @log_helpers.log_method_call
     @db_api.retry_if_session_inactive()
