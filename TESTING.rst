@@ -381,7 +381,7 @@ Scenario Tests
 Scenario tests (neutron/tests/tempest/scenario), like API tests, use the
 Tempest test infrastructure and have the same requirements. Guidelines for
 writing a good scenario test may be found at the Tempest developer guide:
-http://docs.openstack.org/developer/tempest/field_guide/scenario.html
+https://docs.openstack.org/tempest/latest/field_guide/scenario.html
 
 Scenario tests, like API tests, are split between the Tempest and Neutron
 repositories according to the Neutron API the test is targeting.

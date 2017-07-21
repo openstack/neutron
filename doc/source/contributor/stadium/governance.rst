@@ -78,8 +78,8 @@ team. Some of these practices are typically already followed by the most
 mature OpenStack projects:
 
 * Exhaustive documentation: it is expected that each project will have a
-  `developer <http://docs.openstack.org/developer/neutron/>`_,
-  `user/operator <http://docs.openstack.org/mitaka/networking-guide/>`_
+  :doc:`developer </contributor/index>`,
+  :doc:`user/operator </admin/index>`
   and `API <http://developer.openstack.org/api-ref/networking/>`_
   documentations available.
 
@@ -99,14 +99,14 @@ mature OpenStack projects:
 
   More Database related information can be found on:
 
-  * http://docs.openstack.org/developer/neutron/devref/alembic_migrations.html
-  * http://docs.openstack.org/developer/neutron/devref/db_layer.html
+  * :doc:`/contributor/alembic_migrations`
+  * :doc:`/contributor/internals/db_layer`
 
   Bear in mind that many projects have been transitioning their codebase and
   tests to fully support Python 3+, and it is important that each Stadium
   project supports Python 3+ the same way Neutron core does. For more
   information on how to do testing, please refer to the
-  `Neutron testing documentation <http://docs.openstack.org/developer/neutron/devref/development.environment.html#testing-neutron>`_.
+  :doc:`Neutron testing documentation </contributor/testing/testing>`.
 
 * Good release footprint, according to the chosen `release model <http://governance.openstack.org/reference/tags/#release-management-tags>`_.
 
@@ -117,7 +117,7 @@ mature OpenStack projects:
   where applicable. This means having grenade support on top of the CI
   coverage as described above.
 
-* Client bindings and CLI developed according to the OpenStack Client `plugin model <http://docs.openstack.org/developer/python-openstackclient/plugins.html>`_.
+* Client bindings and CLI developed according to the OpenStack Client `plugin model <https://docs.openstack.org/python-openstackclient/latest/plugins.html>`_.
 
 On top of the above mentioned criteria, the following also are taken into
 consideration:
@@ -139,6 +139,8 @@ consideration:
   service plugins respectively. A service plugin can expose a driver
   interface to support multiple backend technologies, and/or adopt the
   flavor framework as necessary.
+
+.. _add-remove-projects-to-stadium:
 
 Adding or removing projects to the Stadium
 ------------------------------------------
@@ -171,7 +173,8 @@ provides an informal checklist that shows what steps a project needs to
 go through in order to enable the PTL and the TC to vote positively on
 the proposed inclusion.
 
-Once a project is included, it abides by the Neutron `RFE submission process <http://docs.openstack.org/developer/neutron/policies/blueprints.html>`_,
+Once a project is included, it abides by the Neutron
+:doc:`RFE submission process </contributor/policies/blueprints>`,
 where specifications to neutron-specs are required for major API as well
 as major architectural changes that may require core Neutron platform
 enhancements.
@@ -180,10 +183,10 @@ Checklist
 ---------
 
 * How to integrate documentation into docs.o.o: The documentation
-  website has a section for `project developer documentation <http://docs.openstack.org/developer/openstack-projects.html>`_.
+  website has a section for `project developer documentation <https://docs.openstack.org/openstack-projects.html>`_.
   Each project in the Neutron Stadium must have an entry under the
   'Networking Sub Projects' section that points to the developer
-  documentation for the project, available at http://docs.openstack.org/developer/<your-project>/.
+  documentation for the project, available at ``https://docs.openstack.org/<your-project>/latest/``.
   This is a two step process that involves the following:
 
   * Build the artefacts: this can be done by following example
@@ -260,7 +263,7 @@ Checklist
   * https://review.openstack.org/#/c/243085/
 
   For release documentation related to Neutron, please check the
-  `Neutron policies document <http://docs.openstack.org/developer/neutron/#neutron-policies>`_.
+  :doc:`/contributor/policies/index`.
   Once, everything is set up and your project is released, make sure
   you see an entry on the release page (e.g. `Ocata <http://releases.openstack.org/ocata/index.html#other-projects>`_.
   Make sure you release according to the project declared release
@@ -280,8 +283,8 @@ Checklist
   More information on how to develop python-openstackclient plugins
   can be found on the following links:
 
-  * http://docs.openstack.org/developer/python-openstackclient/plugins.html
-  * http://docs.openstack.org/developer/python-openstackclient/humaninterfaceguide.html
+  * https://docs.openstack.org/python-openstackclient/latest/contributor/plugins.html
+  * https://docs.openstack.org/python-openstackclient/latest/contributor/humaninterfaceguide.html
 
   It is worth prefixing the commands being added with the keyword
   `network <https://review.openstack.org/#/c/340624/10/setup.cfg>`_ to

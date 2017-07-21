@@ -40,7 +40,7 @@ def safe_creation(context, create_fn, delete_fn, create_bindings,
 
     More information when this method could be used can be found in
     developer guide - Effective Neutron: Database interaction section.
-    http://docs.openstack.org/developer/neutron/devref/effective_neutron.html
+    https://docs.openstack.org/neutron/latest/contributor/effective_neutron.html
 
     :param context: context
 

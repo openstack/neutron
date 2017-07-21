@@ -89,8 +89,7 @@ and examples below. We'll describe best practices for:
 * Documentation;
 
 Once you have everything in place you may want to add your project to the list
-of Neutron sub-projects. See `Adding or removing projects to the stadium
-<http://docs.openstack.org/developer/neutron/stadium/governance.html#adding-or-removing-projects-to-the-stadium>`_
+of Neutron sub-projects. See :ref:`add-remove-projects-to-stadium`
 for details.
 
 
@@ -109,16 +108,15 @@ automatically provided. Contributors should follow the review guidelines
 similar to those of Neutron. However, you as the maintainer have the
 flexibility to choose who can approve/merge changes in your own repo.
 
-It is recommended (but not required, see `policies
-<http://docs.openstack.org/developer/neutron/policies/thirdparty-ci.html>`_)
+It is recommended (but not required,
+see :doc:`policies <policies/thirdparty-ci>`)
 that you set up a third-party CI system. This will provide a vehicle for
 checking the third-party code against Neutron changes. See `Testing and
 Continuous Integration`_ below for more detailed recommendations.
 
 Design documents can still be supplied in form of Restructured Text (RST)
 documents, within the same third-party library repo. If changes to the common
-Neutron code are required, an `RFE
-<http://docs.openstack.org/developer/neutron/policies/blueprints.html#neutron-request-for-feature-enhancements>`_
+Neutron code are required, an :ref:`RFE <request-for-feature-enhancement>`
 may need to be filed. However, every case is different and you are invited to
 seek guidance from Neutron core reviewers about what steps to follow.
 
@@ -262,7 +260,7 @@ driver.
 
 If you are contributing a new plugin, the approach to choose should be based on
 `Extras.d Hooks' externally hosted plugins
-<http://docs.openstack.org/developer/devstack/plugins.html#extras-d-hooks>`_.
+<https://docs.openstack.org/devstack/latest/plugins.html#extras-d-hooks>`_.
 With the extra.d hooks, the DevStack integration is co-located with the
 third-party integration library, and it leads to the greatest level of
 flexibility when dealing with DevStack based dev/test deployments.
@@ -339,7 +337,7 @@ oslo.i18n
 
 * Each subproject repository should have its own oslo.i18n integration
   wrapper module ``${MODULE_NAME}/_i18n.py``. The detail is found at
-  http://docs.openstack.org/developer/oslo.i18n/usage.html.
+  https://docs.openstack.org/oslo.i18n/latest/usage.html.
 
   .. note::
 
@@ -486,11 +484,10 @@ directory as an entrypoint in the ``neutron.db.alembic_migrations`` group::
 DB Model/Migration Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here is a `template functional test
-<http://docs.openstack.org/developer/neutron/devref/template_model_sync_test.html>`_ third-party
-maintainers can use to develop tests for model-vs-migration sync in their
-repos. It is recommended that each third-party CI sets up such a test, and runs
-it regularly against Neutron master.
+Here is a :doc:`template functional test <testing/template_model_sync_test>`
+third-party maintainers can use to develop tests for model-vs-migration sync in
+their repos. It is recommended that each third-party CI sets up such a test,
+and runs it regularly against Neutron master.
 
 Entry Points
 ~~~~~~~~~~~~

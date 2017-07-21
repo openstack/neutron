@@ -22,5 +22,5 @@ For example, do not just put an empty "recheck" comment but find the related
 bug number and put a "recheck bug ######" comment instead. If a bug does not
 exist yet, create one so other team members can have a look. It helps us
 maintain better visibility of gate failures. You can find how to troubleshoot
-gate failures in the `Gate Failure Triage <http://docs.openstack.org/developer/neutron/policies/gate-failure-triage.html#troubleshooting-tempest-job>`_
+gate failures in the :ref:`Gate Failure Triage <troubleshooting-tempest-jobs>`
 documentation.

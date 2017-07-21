@@ -45,8 +45,7 @@ node. For more information, see the
 installation guide (select an appropriate OVS version in the
 :guilabel:`Branch` drop-down menu).
 
-`Neutron configuration reference for OVS-DPDK
-<https://docs.openstack.org/developer/neutron/devref/ovs_vhostuser.html>`__
+:doc:`/contributor/internals/ovs_vhostuser`
 for configuration of neutron OVS agent.
 
 In case you wish to configure multiqueue, see the

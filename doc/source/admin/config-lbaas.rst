@@ -15,7 +15,7 @@ There are two reference implementations of LBaaS v2.
 The one is an agent based implementation with HAProxy.
 The agents handle the HAProxy configuration and manage the HAProxy daemon.
 Another LBaaS v2 implementation, `Octavia
-<https://docs.openstack.org/developer/octavia/>`_, has a separate API and
+<https://docs.openstack.org/octavia/latest/>`_, has a separate API and
 separate worker processes that build load balancers within virtual machines on
 hypervisors that are managed by the Compute service. You do not need an agent
 for Octavia.
@@ -141,7 +141,7 @@ The `Hands on Lab - Install and Configure OpenStack Octavia
 session at the OpenStack Summit in Tokyo provides an overview of Octavia.
 
 The DevStack documentation offers a `simple method to deploy Octavia
-<https://docs.openstack.org/developer/devstack/guides/devstack-with-lbaas-v2.html>`_
+<https://docs.openstack.org/devstack/latest/guides/devstack-with-lbaas-v2.html>`_
 and test the service with redundant load balancer instances. If you already
 have Octavia installed and configured within your environment, you can
 configure the Network service to use Octavia:

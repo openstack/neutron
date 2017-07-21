@@ -42,6 +42,8 @@ error causing job failures end up here. It should be duty of the diligent Neutro
 classification rate for neutron jobs is as close as possible to 100%. To this aim, the diligent Neutron
 developer should adopt the procedure outlined in the following sections.
 
+.. _troubleshooting-tempest-jobs:
+
 Troubleshooting Tempest jobs
 ----------------------------
 1. Open logs for failed jobs and look for logs/testr_results.html.gz.
@@ -52,7 +54,7 @@ Troubleshooting Tempest jobs
    logstash.
 4. On logstash, search for occurrences of this error message, and try to identify the root cause for the failure
    (see below).
-5. File a bug for this failure, and push an `Elastic Recheck Query <http://docs.openstack.org/developer/neutron/policies/gate-failure-triage.html#filing-an-elastic-recheck-query>`_ for it.
+5. File a bug for this failure, and push an :ref:`Elastic Recheck Query <elastic-recheck-query>` for it.
 6. If you are confident with the area of this bug, and you have time, assign it to yourself; otherwise look for an
     assignee or talk to the Neutron's bug czar to find an assignee.
 
@@ -68,11 +70,13 @@ Troubleshooting functional/fullstack job
    forget to put a snippet of the trace into the new launchpad bug. If the
    log file for a particular job doesn't contain any trace, pick the one
    from testr_results.html.gz.
-5. Create an `Elastic Recheck Query <http://docs.openstack.org/developer/neutron/policies/gate-failure-triage.html#filing-an-elastic-recheck-query>`_
+5. Create an :ref:`Elastic Recheck Query <elastic-recheck-query>`
 
 Root Causing a Gate Failure
 ---------------------------
 Time-based identification, i.e. find the naughty patch by log scavenging.
+
+.. _elastic-recheck-query:
 
 Filing An Elastic Recheck Query
 -------------------------------

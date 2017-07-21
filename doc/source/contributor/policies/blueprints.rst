@@ -27,8 +27,10 @@ repository is only meant for specs from Neutron itself, and the advanced
 services repositories as well. This includes FWaaS, LBaaS, and VPNaaS. Other
 sub-projects are encouraged to fold their specs into their own devref code
 in their sub-project gerrit repositories. Please see additional comments
-in the Neutron teams `section <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html#neutron-specs-core-reviewer-team>`_
+in the Neutron teams :ref:`section <specs-core-reviewer-team>`
 for reviewer requirements of the neutron-specs repository.
+
+.. _request-for-feature-enhancement:
 
 Neutron Request for Feature Enhancements
 ----------------------------------------
@@ -261,10 +263,9 @@ Documentation
 
 The above process involves two places where any given feature can start to be
 documented - namely in the RFE bug, and in the spec - and in addition to those
-Neutron has a substantial `developer reference guide
-<http://docs.openstack.org/developer/neutron/devref/index.html>`_ (aka
-'devref'), and user-facing docs such as the `networking guide
-<http://docs.openstack.org/networking-guide/>`_.  So it might be asked:
+Neutron has a substantial :doc:`developer reference guide </contributor/index>`
+(aka 'devref'), and user-facing docs such as
+the :doc:`networking guide </admin/index>`. So it might be asked:
 
 * What is the relationship between all of those?
 

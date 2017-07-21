@@ -28,4 +28,4 @@ The client command extension adds support for extending the neutron client while
 considering ease of creation.
 
 The full document can be found in the python-neutronclient repository:
-http://docs.openstack.org/developer/python-neutronclient/contributor/client_command_extensions.html
+https://docs.openstack.org/python-neutronclient/latest/contributor/client_command_extensions.html

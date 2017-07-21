@@ -34,14 +34,12 @@ What does the test do?
 
 This test compares models with the result of existing migrations. It is based on
 `ModelsMigrationsSync
-<http://docs.openstack.org/developer/oslo.db/api/oslo_db.sqlalchemy.test_migrations.html>`_
+<https://docs.openstack.org/oslo.db/latest/reference/api/oslo_db.sqlalchemy.test_migrations.html>`_
 which is provided by oslo.db and was adapted for Neutron. It compares core
 Neutron models and vendor specific models with migrations from Neutron core and
 migrations from the driver/plugin repo. This test is functional - it runs against
 MySQL and PostgreSQL dialects. The detailed description of this test can be
-found in Neutron Database Layer section - `Tests to verify that database
-migrations and models are in sync
-<http://docs.openstack.org/developer/neutron/devref/db_layer.html#module-neutron.tests.functional.db.test_migrations>`_.
+found in Neutron Database Layer section - :ref:`testing-database-migrations`.
 
 Steps for implementing the test
 -------------------------------

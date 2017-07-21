@@ -196,4 +196,4 @@ More Info
 ---------
 
 For more information, see the oslo.messaging documentation:
-http://docs.openstack.org/developer/oslo.messaging/.
+https://docs.openstack.org/oslo.messaging/latest/.

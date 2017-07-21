@@ -52,6 +52,7 @@ Database migrations
 For details on the neutron-db-manage wrapper and alembic migrations, see
 `Alembic Migrations <alembic_migrations.html>`_.
 
+.. _testing-database-migrations:
 
 Tests to verify that database migrations and models are in sync
 ---------------------------------------------------------------

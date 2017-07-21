@@ -214,8 +214,8 @@ and interacting with linux utils.
   tool, check if common platforms ship packages with the aforementioned
   feature. Also, tag such a patch with ``UpgradeImpact`` to raise its
   visibility (as these patches are brought up to the attention of the core team
-  during team meetings). More details in `review guidelines
-  <http://docs.openstack.org/developer/neutron/policies/code-reviews.html#neutron-spec-review-practices>`_.
+  during team meetings).
+  More details in :ref:`review guidelines <spec-review-practices>`.
 * When a patch or the code depends on a new feature in the kernel or in any platform tools
   (dnsmasq, ip, Open vSwitch etc.), consider introducing a new sanity check to
   validate deployments for the expected features. Note that sanity checks *must
@@ -301,9 +301,9 @@ Deprecation
 
 Sometimes we want to refactor things in a non-backward compatible way. In most
 cases you can use `debtcollector
-<http://docs.openstack.org/developer/debtcollector>`_ to mark things for
+<http://docs.openstack.org/debtcollector/latest/>`_ to mark things for
 deprecation. Config items have `deprecation options supported by oslo.config
-<http://docs.openstack.org/developer/oslo.config/opts.html>`_.
+<https://docs.openstack.org/oslo.config/latest/reference/opts.html>`_.
 
 The deprecation process must follow the `standard deprecation requirements
 <http://governance.openstack.org/reference/tags/assert_follows-standard-deprecation.html#requirements>`_.
@@ -312,7 +312,7 @@ In terms of neutron development, this means:
 * A launchpad bug to track the deprecation.
 * A patch to mark the deprecated items. If the deprecation affects
   users (config items, API changes) then a `release note
-  <http://docs.openstack.org/developer/reno/usage.html>`_ must be
+  <https://docs.openstack.org/reno/latest/user/usage.html>`_ must be
   included.
 * Wait at least one cycle and at least three months linear time.
 * A patch that removes the deprecated items. Make sure to refer to the
@@ -334,7 +334,7 @@ Document common pitfalls as well as good practices done when instrumenting your 
   to avoid littering the logs with traces logged at inappropriate levels.
 * The logger should only be passed unicode values. For example, do not pass it
   exceptions or other objects directly (LOG.error(exc), LOG.error(port), etc.).
-  See http://docs.openstack.org/developer/oslo.log/usage.html#no-more-implicit-conversion-to-unicode-str
+  See https://docs.openstack.org/oslo.log/latest/user/migration.html#no-more-implicit-conversion-to-unicode-str
   for more details.
 * Don't pass exceptions into LOG.exception: it is already implicitly included
   in the log message by Python logging module.
@@ -450,7 +450,7 @@ IRC
   and send public questions to the channel rather then to a specific person if possible.
   (This increase the chances of getting faster answers to your questions).
   A list of the areas and lieutenants nicknames can be found at
-  `Core Reviewers <http://docs.openstack.org/developer/neutron/policies/neutron-teams.html>`_.
+  :doc:`Core Reviewers <policies/neutron-teams>`.
 
 Commit messages
 ~~~~~~~~~~~~~~~

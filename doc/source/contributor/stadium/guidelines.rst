@@ -122,6 +122,8 @@ following the stable branch policies as defined by on the `Stable Branch wiki
 means that, among other things, no features are allowed to be backported into
 stable branches.
 
+.. _guideline-releases:
+
 Releases
 --------
 
