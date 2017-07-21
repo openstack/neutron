@@ -320,6 +320,17 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
         return True
 
 
+class DNSDomainPortsExtensionDriver(DNSExtensionDriverML2):
+    _supported_extension_alias = 'dns-domain-ports'
+
+    @property
+    def extension_alias(self):
+        return self._supported_extension_alias
+
+    def initialize(self):
+        LOG.info(_LI("DNSDomainPortsExtensionDriver initialization complete"))
+
+
 DNS_DRIVER = None
 
 

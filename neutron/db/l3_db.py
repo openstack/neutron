@@ -103,8 +103,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     @property
     def _is_dns_integration_supported(self):
         if self._dns_integration is None:
-            self._dns_integration = utils.is_extension_supported(
-                self._core_plugin, 'dns-integration')
+            self._dns_integration = (
+                utils.is_extension_supported(self._core_plugin,
+                    'dns-integration') or
+                utils.is_extension_supported(self._core_plugin,
+                    'dns-domain-ports'))
         return self._dns_integration
 
     @property
