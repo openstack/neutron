@@ -50,10 +50,16 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 IPTABLES_FW_DRIVER_FULL, 'iptables_hybrid')) and sg_enabled
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.OVS_HYBRID_PLUG: hybrid_plug_required}
+        # NOTE(moshele): Bind DIRECT (SR-IOV) port allows
+        # to offload the OVS flows using tc to the SR-IOV NIC.
+        # We are using OVS mechanism driver because the openvswitch (>=2.8.0)
+        # support hardware offload via tc and that allow us to manage the VF by
+        # OpenFlow control plane using representor net-device.
         super(OpenvswitchMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
-            vif_details)
+            vif_details, supported_vnic_types=[portbindings.VNIC_NORMAL,
+                                               portbindings.VNIC_DIRECT])
         ovs_qos_driver.register()
 
     def get_allowed_network_types(self, agent):

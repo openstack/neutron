@@ -236,3 +236,16 @@ class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
 
         result = self.driver.get_vif_type(None, self.AGENT_SYSTEM, None)
         self.assertEqual(portbindings.VIF_TYPE_OVS, result)
+
+
+class OpenvswitchMechanismSRIOVTestCase(OpenvswitchMechanismBaseTestCase):
+
+    def _make_port_ctx(self, agents):
+        segments = [{api.ID: 'local_segment_id', api.NETWORK_TYPE: 'local'}]
+        return base.FakePortContext(self.AGENT_TYPE, agents, segments,
+                                    vnic_type=portbindings.VNIC_DIRECT)
+
+    def test_get_vif_type(self):
+        context = self._make_port_ctx(self.AGENTS)
+        result = self.driver.get_vif_type(context, self.AGENTS[0], None)
+        self.assertEqual(self.VIF_TYPE, result)
