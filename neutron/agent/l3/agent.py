@@ -90,6 +90,7 @@ class L3PluginApi(object):
               - delete_agent_gateway_port
         1.8 - Added address scope information
         1.9 - Added get_router_ids
+        1.10 Added update_all_ha_network_port_statuses
     """
 
     def __init__(self, topic, host):
@@ -102,6 +103,12 @@ class L3PluginApi(object):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'sync_routers', host=self.host,
                           router_ids=router_ids)
+
+    def update_all_ha_network_port_statuses(self, context):
+        """Make a remote process call to update HA network port status."""
+        cctxt = self.client.prepare(version='1.10')
+        return cctxt.call(context, 'update_all_ha_network_port_statuses',
+                          host=self.host)
 
     def get_router_ids(self, context):
         """Make a remote process call to retrieve scheduled routers ids."""
@@ -569,6 +576,10 @@ class L3NATAgent(ha.AgentMixin,
                              lib_const.L3_AGENT_MODE_DVR)
         try:
             router_ids = self.plugin_rpc.get_router_ids(context)
+            # We set HA network port status to DOWN to let l2 agent update it
+            # to ACTIVE after wiring. This allows us to spawn keepalived only
+            # when l2 agent finished wiring the port.
+            self.plugin_rpc.update_all_ha_network_port_statuses(context)
             # fetch routers by chunks to reduce the load on server and to
             # start router processing earlier
             for i in range(0, len(router_ids), self.sync_routers_chunk_size):
