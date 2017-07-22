@@ -244,7 +244,6 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         hybrid_plug = getattr(self.sg_agent.firewall,
                               'OVS_HYBRID_PLUG_REQUIRED', False)
         self.prevent_arp_spoofing = (
-            agent_conf.prevent_arp_spoofing and
             not self.sg_agent.firewall.provides_arp_spoofing_protection)
 
         #TODO(mangelajo): optimize resource_versions to only report

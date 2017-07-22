@@ -78,8 +78,6 @@ class CommonAgentLoop(service.Service):
             sys.exit(1)
 
     def start(self):
-        self.prevent_arp_spoofing = cfg.CONF.AGENT.prevent_arp_spoofing
-
         # stores all configured ports on agent
         self.network_ports = collections.defaultdict(list)
         # flag to do a sync after revival
@@ -238,9 +236,8 @@ class CommonAgentLoop(service.Service):
             if 'port_id' in device_details:
                 LOG.info(_LI("Port %(device)s updated. Details: %(details)s"),
                          {'device': device, 'details': device_details})
-                if self.prevent_arp_spoofing:
-                    self.mgr.setup_arp_spoofing_protection(device,
-                                                           device_details)
+                self.mgr.setup_arp_spoofing_protection(device,
+                                                       device_details)
 
                 segment = amb.NetworkSegment(
                     device_details.get('network_type'),
@@ -358,8 +355,7 @@ class CommonAgentLoop(service.Service):
             registry.notify(local_resources.PORT_DEVICE, events.AFTER_DELETE,
                             self, context=self.context, device=device,
                             port_id=port_id)
-        if self.prevent_arp_spoofing:
-            self.mgr.delete_arp_spoofing_protection(devices)
+        self.mgr.delete_arp_spoofing_protection(devices)
         return resync
 
     @staticmethod
@@ -390,8 +386,7 @@ class CommonAgentLoop(service.Service):
                         'timestamps': {}}
             # clear any orphaned ARP spoofing rules (e.g. interface was
             # manually deleted)
-            if self.prevent_arp_spoofing:
-                self.mgr.delete_unreferenced_arp_protection(current_devices)
+            self.mgr.delete_unreferenced_arp_protection(current_devices)
 
         # check to see if any devices were locally modified based on their
         # timestamps changing since the previous iteration. If a timestamp
