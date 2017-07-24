@@ -64,8 +64,8 @@ path rendering.
 .. image:: figures/port-chain-diagram.png
    :alt: Port chain model
 
-See the `developer documentation
-<https://docs.openstack.org/developer/networking-sfc/>`_ for more information.
+See the `networking-sfc documentation
+<https://docs.openstack.org/networking-sfc/latest/>`_ for more information.
 
 Resources
 ~~~~~~~~~

@@ -41,7 +41,7 @@ dictionary messages by defining a strict structure and keeping strong typing.
 Because of it, you can be sure of what is sent and how to use the data on the
 receiving end.
 
-.. _Oslo VersionedObjects: http://docs.openstack.org/developer/oslo.versionedobjects/
+.. _Oslo VersionedObjects: https://docs.openstack.org/oslo.versionedobjects/latest/
 
 Usage of objects
 ----------------
@@ -635,6 +635,6 @@ References
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/db/standard_attr.py?h=stable/ocata
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n516
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n542
-.. [#] http://docs.openstack.org/developer/neutron/devref/db_layer.html#the-standard-attribute-table
+.. [#] https://docs.openstack.org/neutron/latest/contributor/internals/db_layer.html#the-standard-attribute-table
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/rbac_db.py?h=stable/ocata#n291
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/utils.py?h=stable/ocata

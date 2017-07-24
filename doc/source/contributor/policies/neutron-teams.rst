@@ -29,6 +29,8 @@ In essence, core reviewers share the following common ideals:
 A core reviewer's responsibility doesn't end up with merging code. The above
 lists are adding context around these responsibilities.
 
+.. _core-review-hierarchy:
+
 Core Review Hierarchy
 ---------------------
 
@@ -189,6 +191,8 @@ they choose to use them.  However, by choosing to be a part of the Neutron
 project, they submit to oversight and veto by the Neutron PTL if any issues
 arise.
 
+.. _specs-core-reviewer-team:
+
 Neutron Specs Core Reviewer Team
 --------------------------------
 Neutron `specs core reviewers <https://review.openstack.org/#/admin/groups/314,members>`_
@@ -218,7 +222,7 @@ the group of people who have full rights to the specs repo. This team, which mat
 instituted to ensure a consistent architectural vision for the Neutron project, and
 to continue to disaggregate and share the responsibilities of the Neutron PTL.
 The team is in charge of reviewing and commenting on
-`RFEs <http://docs.openstack.org/developer/neutron/policies/blueprints.html#neutron-request-for-feature-enhancements>`_,
+:ref:`RFEs <request-for-feature-enhancement>`,
 and working with specification contributors to provide guidance on the process
 that govern contributions to the Neutron project as a whole. The team
 `meets regularly <https://wiki.openstack.org/wiki/Meetings/NeutronDrivers>`_

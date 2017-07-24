@@ -50,6 +50,6 @@ Enable the native OVS firewall driver
      [securitygroup]
      firewall_driver = openvswitch
 
-For more information, see the `Open vSwitch Firewall Driver
-<https://docs.openstack.org/developer/neutron/devref/openvswitch_firewall.html>`_
+For more information, see the
+:doc:`/contributor/internals/openvswitch_firewall`
 and the `video <https://www.youtube.com/watch?v=SOHeZ3g9yxM>`_.

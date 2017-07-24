@@ -25,7 +25,7 @@ Neutron Stadium i18n
 ====================
 
 * Refer to oslo_i18n documentation for the general mechanisms that should
-  be used: http://docs.openstack.org/developer/oslo.i18n/usage.html
+  be used: https://docs.openstack.org/oslo.i18n/latest/user/usage.html
 
 * Each stadium project should NOT consume _i18n module from neutron-lib
   or neutron.

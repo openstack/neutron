@@ -59,6 +59,8 @@ In addition to that, the following rules are to follow:
      that would help interested parties to identify their platform limitation
      in timely manner.
 
+.. _spec-review-practices:
+
 Neutron Spec Review Practices
 -----------------------------
 In addition to code reviews, Neutron also maintains a BP specification git repository. Detailed

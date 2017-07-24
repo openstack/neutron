@@ -27,7 +27,7 @@ Neutron Messaging Callback System
 =================================
 
 Neutron already has a `callback system
-<https://docs.openstack.org/developer/neutron-lib/devref/callbacks.html>`_
+<https://docs.openstack.org/neutron-lib/latest/contributor/callbacks.html>`_
 for in-process resource callbacks where publishers and subscribers are
 able to publish and subscribe for resource events.
 

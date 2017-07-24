@@ -33,7 +33,7 @@ Networking API call has a corresponding :command:`neutron` command.
 The :command:`openstack` CLI is a common interface for all OpenStack
 projects, however, not every API operation has been implemented. For the
 list of available commands, see `Command List
-<https://docs.openstack.org/developer/python-openstackclient/command-list.html>`__.
+<https://docs.openstack.org/python-openstackclient/latest/cli/command-list.html>`__.
 
 The :command:`neutron` CLI includes a number of options. For details, see
 `Create and manage networks <https://docs.openstack.org/user-guide/cli-create-and-manage-networks.html>`__.

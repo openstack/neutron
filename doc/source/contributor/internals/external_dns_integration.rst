@@ -20,7 +20,7 @@ external DNS service. This interface is based on an abstract driver that can be
 used as the base class to implement concrete drivers to interact with various
 DNS services. The reference implementation of such a driver integrates neutron
 with
-`OpenStack Designate <http://docs.openstack.org/developer/designate/index.html>`_.
+`OpenStack Designate <https://docs.openstack.org/designate/latest/index.html>`_.
 
 This integration allows users to publish *dns_name* and *dns_domain*
 attributes associated with floating IP addresses, ports, and networks in an

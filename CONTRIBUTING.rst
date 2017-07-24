@@ -1,7 +1,7 @@
 If you would like to contribute to the development of OpenStack Networking,
 you must follow the steps documented at:
 
-   http://docs.openstack.org/developer/neutron/policies/blueprints.html
+   https://docs.openstack.org/neutron/latest/policies/blueprints.html
 
 Pull requests submitted through GitHub will be ignored.
 

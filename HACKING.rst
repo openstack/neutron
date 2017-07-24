@@ -2,14 +2,14 @@ Neutron Style Commandments
 ==========================
 
 - Step 1: Read the OpenStack Style Commandments
-  http://docs.openstack.org/developer/hacking/
+  https://docs.openstack.org/hacking/latest/
 - Step 2: Read on
 
 Neutron Specific Commandments
 -----------------------------
 
 Some rules are enforced by `neutron-lib hacking factory
-<https://docs.openstack.org/developer/neutron-lib/usage.html#hacking-checks>`_
+<https://docs.openstack.org/neutron-lib/latest/user/hacking.html>`_
 while other rules are specific to Neutron repository.
 
 Below you can find a list of checks specific to this repository.

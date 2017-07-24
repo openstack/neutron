@@ -24,7 +24,7 @@ depends_on = ('89ab9a816d70',)
 # therefore the following column addition ( which should have been in an
 # expand phase ) is also submitted in the contract phase. For information
 # about the expand and contract scripts and how the depends_on works, please
-# refer <http://docs.openstack.org/developer/neutron/devref/
+# refer <https://docs.openstack.org/neutron/latest/contributor/
 # alembic_migrations.html#expand-and-contract-scripts>
 
 from alembic import op

@@ -296,7 +296,7 @@ References
 ----------
 
 .. [#] `Oslo policy module <http://git.openstack.org/cgit/openstack/oslo.policy/>`_
-.. [#] `Oslo policy developer <documentation: http://docs.openstack.org/developer/oslo.policy/>`_
+.. [#] `Oslo policy developer <https://docs.openstack.org/oslo.policy/latest/>`_
 .. [#] API controller item_ method
 
 .. _item: http://git.openstack.org/cgit/openstack/neutron/tree/neutron/api/v2/base.py?id=2015.1.1#n282
