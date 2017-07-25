@@ -63,6 +63,8 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
         'Agent', lazy='subquery', viewonly=True,
         secondary=rb_model.RouterL3AgentBinding.__table__)
     api_collections = [l3.ROUTERS]
+    collection_resource_map = {l3.ROUTERS: l3.ROUTER}
+    tag_support = True
 
 
 class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
@@ -103,6 +105,8 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
                  '0fixedportid0fixedipaddress')),
         model_base.BASEV2.__table_args__,)
     api_collections = [l3.FLOATINGIPS]
+    collection_resource_map = {l3.FLOATINGIPS: l3.FLOATINGIP}
+    tag_support = True
 
 
 class RouterRoute(model_base.BASEV2, models_v2.Route):

@@ -29,6 +29,8 @@ class FakeDbModelWithStandardAttributes(
     id = sa.Column(sa.String(36), primary_key=True, nullable=False)
     item = sa.Column(sa.String(64))
     api_collections = []
+    collection_resource_map = {}
+    tag_support = False
 
 
 @obj_base.VersionedObjectRegistry.register_if(False)

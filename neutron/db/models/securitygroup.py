@@ -28,6 +28,8 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     api_collections = [sg.SECURITYGROUPS]
+    collection_resource_map = {sg.SECURITYGROUPS: 'security_group'}
+    tag_support = True
 
 
 class DefaultSecurityGroup(model_base.BASEV2, model_base.HasProjectPrimaryKey):

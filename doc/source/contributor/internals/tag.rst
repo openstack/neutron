@@ -50,9 +50,28 @@ Which Resources
 ---------------
 
 Tag system uses standardattr mechanism so it's targeting to resources that have
-the mechanism. The system is provided by 'tag' extension and 'tag-ext'
-extension. The 'tag' extension supports networks only. The 'tag-ext' extension
-supports subnets, ports, routers, and subnet pools.
+the mechanism. The system is provided by 'tag' extension, 'tag-ext'
+extension, and 'tagging' extension. The 'tag' extension supports networks only.
+The 'tag-ext' extension supports subnets, ports, routers, and subnet pools.
+The 'tagging' extension supports resources with standard attribute so it
+means that 'tag' and 'tag-ext' extensions are unnecessary now. These extensions
+will be removed. Some resources with standard attribute don't suit fit tag
+support usecases (e.g. security_group_rule). If new tag support resource is
+added, the resource model should inherit HasStandardAttributes and then it must
+implement the property 'api_parent' and 'tag_support'. And also the change
+must include a release note for API user.
+
+Current API resources extended by tag extensions:
+
+- floatingips
+- networks
+- policies
+- ports
+- routers
+- security_groups
+- subnetpools
+- subnets
+- trunks
 
 Model
 -----

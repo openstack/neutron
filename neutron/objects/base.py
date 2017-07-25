@@ -283,6 +283,7 @@ class DeclarativeObject(abc.ABCMeta):
                     property(lambda x: x.db_obj.standard_attr_id
                              if x.db_obj else None))
             standardattributes.add_standard_attributes(cls)
+            standardattributes.add_tag_filter_names(cls)
         # Instantiate extra filters per class
         cls.extra_filter_names = set(cls.extra_filter_names)
         # add tenant_id filter for objects that have project_id

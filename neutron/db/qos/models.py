@@ -31,6 +31,8 @@ class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                        backref='qos_policy', lazy='subquery',
                                        cascade='all, delete, delete-orphan')
     api_collections = ['policies']
+    collection_resource_map = {'policies': 'policy'}
+    tag_support = True
 
 
 class QosNetworkPolicyBinding(model_base.BASEV2):

@@ -45,6 +45,8 @@ class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
     sub_ports = sa.orm.relationship(
         'SubPort', lazy='subquery', uselist=True, cascade="all, delete-orphan")
     api_collections = ['trunks']
+    collection_resource_map = {'trunks': 'trunk'}
+    tag_support = True
 
 
 class SubPort(model_base.BASEV2):

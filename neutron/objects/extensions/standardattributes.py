@@ -30,3 +30,10 @@ def add_standard_attributes(cls):
     # revision numbers are managed by service plugin and are bumped
     # automatically; consumers should not bump them explicitly
     cls.fields_no_update.append('revision_number')
+
+
+def add_tag_filter_names(cls):
+    cls.add_extra_filter_name("tags")
+    cls.add_extra_filter_name("not-tags")
+    cls.add_extra_filter_name("tags-any")
+    cls.add_extra_filter_name("not-tags-any")
