@@ -425,7 +425,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                                 constants.PROTO_NAME_IPV6_ICMP_LEGACY,
                                 constants.PROTO_NAME_IPV6_NONXT,
                                 constants.PROTO_NAME_IPV6_OPTS,
-                                constants.PROTO_NAME_IPV6_ROUTE]:
+                                constants.PROTO_NAME_IPV6_ROUTE,
+                                str(constants.PROTO_NUM_IPV6_ENCAP),
+                                str(constants.PROTO_NUM_IPV6_FRAG),
+                                str(constants.PROTO_NUM_IPV6_ICMP),
+                                str(constants.PROTO_NUM_IPV6_NONXT),
+                                str(constants.PROTO_NUM_IPV6_OPTS),
+                                str(constants.PROTO_NUM_IPV6_ROUTE)]:
             if rule['ethertype'] == constants.IPv4:
                 raise ext_sg.SecurityGroupEthertypeConflictWithProtocol(
                         ethertype=rule['ethertype'], protocol=rule['protocol'])
