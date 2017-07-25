@@ -3890,22 +3890,6 @@ class TestL3DbOperationBounds(test_db_base_plugin_v2.DbOperationBoundMixin,
 
             self._assert_object_list_queries_constant(router_maker, 'routers')
 
-    def test_floatingip_list_queries_constant(self):
-        with self.floatingip_with_assoc(**self.kwargs) as flip:
-            internal_port = self._show('ports', flip['floatingip']['port_id'])
-            internal_net_id = internal_port['port']['network_id']
-
-            def float_maker():
-                port = self._make_port(
-                    self.fmt, internal_net_id, **self.kwargs)
-                return self._make_floatingip(
-                    self.fmt, flip['floatingip']['floating_network_id'],
-                    port_id=port['port']['id'],
-                    **self.kwargs)
-
-            self._assert_object_list_queries_constant(float_maker,
-                                                      'floatingips')
-
 
 class TestL3DbOperationBoundsTenant(TestL3DbOperationBounds):
     admin = False

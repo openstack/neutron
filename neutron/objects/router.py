@@ -10,11 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
+
 import netaddr
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from oslo_versionedobjects import fields as obj_fields
+import six
 from sqlalchemy import func
 
 from neutron.common import constants as n_const
@@ -222,9 +225,11 @@ class FloatingIP(base.NeutronDbObject):
         'router_id': common_types.UUIDField(nullable=True),
         'last_known_router_id': common_types.UUIDField(nullable=True),
         'status': common_types.FloatingIPStatusEnumField(nullable=True),
+        'dns': obj_fields.ObjectField('FloatingIPDNS', nullable=True),
     }
     fields_no_update = ['project_id', 'floating_ip_address',
                         'floating_network_id', 'floating_port_id']
+    synthetic_fields = ['dns']
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
@@ -241,9 +246,40 @@ class FloatingIP(base.NeutronDbObject):
     def modify_fields_to_db(cls, fields):
         result = super(FloatingIP, cls).modify_fields_to_db(fields)
         if 'fixed_ip_address' in result:
-            result['fixed_ip_address'] = cls.filter_to_str(
-                result['fixed_ip_address'])
+            if result['fixed_ip_address'] is not None:
+                result['fixed_ip_address'] = cls.filter_to_str(
+                    result['fixed_ip_address'])
         if 'floating_ip_address' in result:
             result['floating_ip_address'] = cls.filter_to_str(
                 result['floating_ip_address'])
         return result
+
+    @classmethod
+    def get_scoped_floating_ips(cls, context, router_ids):
+        query = context.session.query(l3.FloatingIP,
+                                      models_v2.SubnetPool.address_scope_id)
+        query = query.join(models_v2.Port,
+            l3.FloatingIP.fixed_port_id == models_v2.Port.id)
+        # Outer join of Subnet can cause each ip to have more than one row.
+        query = query.outerjoin(models_v2.Subnet,
+            models_v2.Subnet.network_id == models_v2.Port.network_id)
+        query = query.filter(models_v2.Subnet.ip_version == 4)
+        query = query.outerjoin(models_v2.SubnetPool,
+            models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id)
+
+        # Filter out on router_ids
+        query = query.filter(l3.FloatingIP.router_id.in_(router_ids))
+        return cls._unique_floatingip_iterator(context, query)
+
+    @classmethod
+    def _unique_floatingip_iterator(cls, context, query):
+        """Iterates over only one row per floating ip. Ignores others."""
+        # Group rows by fip id. They must be sorted by same.
+        q = query.order_by(l3.FloatingIP.id)
+        keyfunc = lambda row: row[0]['id']
+        group_iterator = itertools.groupby(q, keyfunc)
+
+        # Just hit the first row of each group
+        for key, value in group_iterator:
+            row = [r for r in six.next(value)]
+            yield (cls._load_object(context, row[0]), row[1])

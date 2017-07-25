@@ -32,7 +32,6 @@ from oslo_versionedobjects import fields as obj_fields
 import testtools
 
 from neutron.db import _model_query as model_query
-from neutron.db.models import l3 as l3_model
 from neutron.db import standard_attr
 from neutron import objects
 from neutron.objects import agent
@@ -1448,16 +1447,17 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
     def _create_test_fip_id(self, fip_id=None):
         fake_fip = '172.23.3.0'
         ext_net_id = self._create_external_network_id()
-        # TODO(manjeets) replace this with fip ovo
-        # once it is implemented
-        values = {'floating_ip_address': fake_fip,
-                  'floating_network_id': ext_net_id,
-                  'floating_port_id': self._create_test_port_id(
-                      network_id=ext_net_id)}
+        values = {
+            'floating_ip_address': netaddr.IPAddress(fake_fip),
+            'floating_network_id': ext_net_id,
+            'floating_port_id': self._create_test_port_id(
+                network_id=ext_net_id)
+        }
         if fip_id:
             values['id'] = fip_id
-        return obj_db_api.create_object(
-            self.context, l3_model.FloatingIP, values).id
+        fip_obj = router.FloatingIP(self.context, **values)
+        fip_obj.create()
+        return fip_obj.id
 
     def _create_test_subnet_id(self, network_id=None):
         if not network_id:

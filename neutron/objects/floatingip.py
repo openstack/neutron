@@ -26,6 +26,7 @@ class FloatingIPDNS(base.NeutronDbObject):
     db_model = models.FloatingIPDNS
 
     primary_keys = ['floatingip_id']
+    foreign_keys = {'FloatingIP': {'floatingip_id': 'id'}}
 
     fields = {
         'floatingip_id': common_types.UUIDField(),

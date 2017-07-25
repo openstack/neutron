@@ -207,9 +207,10 @@ class DNSDbMixin(object):
 
     def _delete_floatingip_from_external_dns_service(self, context, dns_domain,
                                                      dns_name, records):
+        ips = [str(r) for r in records]
         try:
             self.dns_driver.delete_record_set(context, dns_domain, dns_name,
-                                              records)
+                                              ips)
         except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
             LOG.exception("Error deleting Floating IP data from external "
                           "DNS service. Name: '%(name)s'. Domain: "
@@ -218,7 +219,7 @@ class DNSDbMixin(object):
                           {"name": dns_name,
                            "domain": dns_domain,
                            "message": e.msg,
-                           "ips": ', '.join(records)})
+                           "ips": ', '.join(ips)})
 
     def _get_requested_state_for_external_dns_service_create(self, context,
                                                              floatingip_data,
@@ -238,9 +239,10 @@ class DNSDbMixin(object):
 
     def _add_ips_to_external_dns_service(self, context, dns_domain, dns_name,
                                          records):
+        ips = [str(r) for r in records]
         try:
             self.dns_driver.create_record_set(context, dns_domain, dns_name,
-                                              records)
+                                              ips)
         except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
             LOG.exception("Error publishing floating IP data in external "
                           "DNS service. Name: '%(name)s'. Domain: "

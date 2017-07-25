@@ -14,17 +14,21 @@
 # limitations under the License.
 
 import mock
+import netaddr
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
+from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
+from neutron.objects import router as l3_obj
 from neutron.tests import base
 
 
@@ -131,6 +135,7 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             'id': mock.sentinel.fip_ip}, result)
 
     def test__unique_floatingip_iterator(self):
+        context = mock.MagicMock()
         query = mock.MagicMock()
         query.order_by().__iter__.return_value = [
             ({'id': 'id1'}, 'scope1'),
@@ -140,12 +145,15 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
             ({'id': 'id2'}, 'scope2'),
             ({'id': 'id3'}, 'scope3')]
         query.reset_mock()
-        result = list(
-            l3_db.L3_NAT_dbonly_mixin._unique_floatingip_iterator(query))
-        query.order_by.assert_called_once_with(l3_models.FloatingIP.id)
-        self.assertEqual([({'id': 'id1'}, 'scope1'),
-                          ({'id': 'id2'}, 'scope2'),
-                          ({'id': 'id3'}, 'scope3')], result)
+        with mock.patch.object(
+                l3_obj.FloatingIP, '_load_object',
+                side_effect=({'id': 'id1'}, {'id': 'id2'}, {'id': 'id3'})):
+            result = list(
+                l3_obj.FloatingIP._unique_floatingip_iterator(context, query))
+            query.order_by.assert_called_once_with(l3_models.FloatingIP.id)
+            self.assertEqual([({'id': 'id1'}, 'scope1'),
+                              ({'id': 'id2'}, 'scope2'),
+                              ({'id': 'id3'}, 'scope3')], result)
 
     @mock.patch.object(directory, 'get_plugin')
     def test_prevent_l3_port_deletion_port_not_found(self, gp):
@@ -191,13 +199,16 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
 
     @mock.patch.object(directory, 'get_plugin')
     def test_prevent_l3_port_existing_floating_ip(self, gp):
+        ctx = context.get_admin_context()
         gp.return_value.get_port.return_value = {
             'device_owner': n_const.DEVICE_OWNER_FLOATINGIP,
             'device_id': 'some_flip', 'id': 'f',
             'fixed_ips': [{'ip_address': '1.1.1.1', 'subnet_id': '4'}]}
-        self.db.get_floatingip = mock.Mock()
-        with testtools.ExpectedException(n_exc.ServicePortInUse):
-            self.db.prevent_l3_port_deletion(mock.Mock(), None)
+        with mock.patch.object(l3_obj.FloatingIP, 'objects_exist',
+                               return_value=mock.Mock()),\
+            testtools.ExpectedException(n_exc.ServicePortInUse):
+
+            self.db.prevent_l3_port_deletion(ctx, None)
 
     @mock.patch.object(directory, 'get_plugin')
     def test_subscribe_address_scope_of_subnetpool(self, gp):
@@ -211,20 +222,21 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
     def test__check_and_get_fip_assoc_with_extra_association_no_change(self):
         fip = {'extra_key': 'value'}
         context = mock.MagicMock()
-        floatingip_db = l3_models.FloatingIP(
-            id='fake_fip_id',
-            floating_network_id='fake_floating_network_id',
-            floating_ip_address='8.8.8.8',
-            fixed_port_id='fake_fixed_port_id',
-            floating_port_id='fake_floating_port_id')
+        floatingip_obj = l3_obj.FloatingIP(
+            context,
+            id=uuidutils.generate_uuid(),
+            floating_network_id=uuidutils.generate_uuid(),
+            floating_ip_address=netaddr.IPAddress('8.8.8.8'),
+            fixed_port_id=uuidutils.generate_uuid(),
+            floating_port_id=uuidutils.generate_uuid())
         with mock.patch.object(
                 l3_db.L3_NAT_dbonly_mixin,
                 '_get_assoc_data',
                 return_value=('1', '2', '3')) as mock_get_assoc_data:
-            self.db._check_and_get_fip_assoc(context, fip, floatingip_db)
+            self.db._check_and_get_fip_assoc(context, fip, floatingip_obj)
             context.session.query.assert_not_called()
             mock_get_assoc_data.assert_called_once_with(
-                mock.ANY, fip, floatingip_db)
+                mock.ANY, fip, floatingip_obj)
 
     def test__notify_attaching_interface(self):
         with mock.patch.object(l3_db.registry, 'notify') as mock_notify:

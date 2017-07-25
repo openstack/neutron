@@ -37,6 +37,7 @@ from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
+from neutron.objects import router as l3_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -226,9 +227,10 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
             ip_address='3.3.3.3')
-        self.fip = l3_models.FloatingIP(
+        self.fip = l3_obj.FloatingIP(
+            self.context,
             id=_uuid(),
-            floating_ip_address='1.1.1.2',
+            floating_ip_address=netaddr.IPAddress('1.1.1.2'),
             floating_network_id=self.ext_net_id,
             floating_port_id=FAKE_FIP_EXT_PORT_ID,
             fixed_port_id=None,
@@ -236,7 +238,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             router_id=None)
         self.fip_int_port.create()
         self.fip_int_ip_info.create()
-        self.context.session.add(self.fip)
+        self.fip.create()
         self.context.session.flush()
         self.context.session.expire_all()
         self.fip_request = {'port_id': FAKE_FIP_INT_PORT_ID,

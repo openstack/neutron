@@ -59,7 +59,7 @@ class FloatingQoSDbMixin(object):
         self._create_fip_qos_db(context, fip_id, qos_policy_id)
 
     def _process_extra_fip_qos_update(
-            self, context, floatingip_db, fip, old_floatingip):
+            self, context, floatingip_obj, fip, old_floatingip):
         if qos_consts.QOS_POLICY_ID not in fip:
             # No qos_policy_id in API input, do nothing
             return
@@ -71,15 +71,16 @@ class FloatingQoSDbMixin(object):
             return
         if old_qos_policy_id:
             self._delete_fip_qos_db(context,
-                                    floatingip_db['id'],
+                                    floatingip_obj['id'],
                                     old_qos_policy_id)
-        if floatingip_db.qos_policy_binding:
-            floatingip_db.qos_policy_binding['policy_id'] = new_qos_policy_id
+        if floatingip_obj.db_obj.qos_policy_binding:
+            floatingip_obj.db_obj.qos_policy_binding['policy_id'] = (
+                new_qos_policy_id)
         if not new_qos_policy_id:
             return
         qos_policy_binding = self._create_fip_qos_db(
             context,
-            floatingip_db['id'],
+            floatingip_obj['id'],
             new_qos_policy_id)
-        if not floatingip_db.qos_policy_binding:
-            floatingip_db.qos_policy_binding = qos_policy_binding
+        if not floatingip_obj.db_obj.qos_policy_binding:
+            floatingip_obj.db_obj.qos_policy_binding = qos_policy_binding
