@@ -15,18 +15,19 @@
 
 import mock
 
+from neutron.agent.common import ovs_lib
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
+    import ofswitch
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
 
 class OVSAgentBridgeTestCase(ovs_test_base.OVSRyuTestBase):
     def test__get_dp(self):
-        mock.patch(
-            'neutron.agent.common.ovs_lib.OVSBridge.get_datapath_id',
-            return_value="3e9").start()
-        mock.patch(
-            "neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native."
-            "ofswitch.OpenFlowSwitchMixin._get_dp_by_dpid",
+        mock.patch.object(
+            ovs_lib.OVSBridge, 'get_datapath_id', return_value="3e9").start()
+        mock.patch.object(
+            ofswitch.OpenFlowSwitchMixin, "_get_dp_by_dpid",
             side_effect=RuntimeError).start()
         br = self.br_int_cls('br-int')
         br._cached_dpid = int("3e9", 16)
@@ -40,8 +41,8 @@ class OVSAgentBridgeTestCase(ovs_test_base.OVSRyuTestBase):
             if tb == 'Bridge':
                 return []
 
-        mock.patch('neutron.agent.common.ovs_lib.OVSBridge.db_get_val',
-                   side_effect=_mock_db_get_val).start()
+        mock.patch.object(ovs_lib.OVSBridge, 'db_get_val',
+                          side_effect=_mock_db_get_val).start()
         br = self.br_int_cls('br-int')
         # make sure that in case of any misconfiguration when no datapath is
         # found a proper exception, not a TypeError is raised

@@ -13,13 +13,13 @@
 import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
+from neutron_lib.services.qos import base as qos_driver_base
 from oslo_utils import uuidutils
 
 from neutron.common import constants
 from neutron.common import exceptions
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import rule as rule_object
-from neutron.services.qos.drivers import base as qos_driver_base
 from neutron.services.qos.drivers import manager as driver_mgr
 from neutron.services.qos import qos_consts
 from neutron.tests.unit.services.qos import base
