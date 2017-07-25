@@ -1596,8 +1596,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             plugin = manager.NeutronManager.get_plugin()
             binding = ml2_db.get_locked_port_and_binding(self.context.session,
                                                          port['port']['id'])[1]
-            with self.context.session.begin(subtransactions=True):
-                binding.host = 'test'
+            binding['host'] = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
@@ -1605,9 +1604,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         with mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.'
                         '_update_port_dict_binding') as update_mock:
             attrs = {portbindings.HOST_ID: None}
-            self.assertEqual('test', binding.host)
-            with self.context.session.begin(subtransactions=True):
-                plugin._process_port_binding(mech_context, attrs)
+            plugin._process_port_binding(mech_context, attrs)
             self.assertTrue(update_mock.mock_calls)
             self.assertEqual('', binding.host)
 
@@ -2510,7 +2507,7 @@ class TestMl2PluginCreateUpdateDeletePort(base.BaseTestCase):
         binding.host = 'vm_host'
         binding.vnic_type = portbindings.VNIC_NORMAL
         binding.profile = ''
-        binding.vif_type = 'unbound'
+        binding.vif_type = ''
         binding.vif_details = ''
 
         with mock.patch.object(ml2_plugin.Ml2Plugin, '__init__') as init,\

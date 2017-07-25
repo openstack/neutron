@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 from neutron_lib import constants
 from oslo_log import log
 from oslo_serialization import jsonutils
@@ -98,10 +96,8 @@ class PortContext(MechanismDriverContext, api.PortContext):
         else:
             self._network_context = NetworkContext(
                 plugin, plugin_context, network) if network else None
-        # NOTE(kevinbenton): these copys can go away once we are working with
-        # OVO objects here instead of native SQLA objects.
-        self._binding = copy.deepcopy(binding)
-        self._binding_levels = copy.deepcopy(binding_levels)
+        self._binding = binding
+        self._binding_levels = binding_levels
         self._segments_to_bind = None
         self._new_bound_segment = None
         self._next_segments_to_bind = None
