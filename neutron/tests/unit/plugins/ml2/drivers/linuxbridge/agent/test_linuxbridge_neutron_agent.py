@@ -942,11 +942,16 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
         segment.segmentation_id = 1
         self.lb_rpc.network_map['net_id'] = segment
 
-    def test_network_delete(self):
+    def test_network_delete_mapped_net(self):
         mock_net = mock.Mock()
         mock_net.physical_network = None
+        self._test_network_delete({NETWORK_ID: mock_net})
 
-        self.lb_rpc.network_map = {NETWORK_ID: mock_net}
+    def test_network_delete_unmapped_net(self):
+        self._test_network_delete({})
+
+    def _test_network_delete(self, net_map):
+        self.lb_rpc.network_map = net_map
 
         with mock.patch.object(self.lb_rpc.agent.mgr,
                                "get_bridge_name") as get_br_fn,\

@@ -848,9 +848,6 @@ class LinuxBridgeRpcCallbacks(
                              "bridge_mappings and cannot be deleted."),
                          network_id)
                 return
-        else:
-            LOG.debug("Network %s is not on this agent.", network_id)
-            return
 
         bridge_name = self.agent.mgr.get_bridge_name(network_id)
         LOG.debug("Delete %s", bridge_name)
