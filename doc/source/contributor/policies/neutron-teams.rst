@@ -131,8 +131,6 @@ updating the core review team for the sub-project's repositories.
 | networking-sfc         | Cathy Zhang               | cathy                |
 +------------------------+---------------------------+----------------------+
 
-(*) To be retired after Ocata (mitaka last stable branch).
-
 Existing Core Reviewers
 -----------------------
 
