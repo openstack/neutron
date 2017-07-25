@@ -15,10 +15,9 @@
 import os
 
 import fixtures
+from neutron_lib.utils import runtime
 from oslo_log import log as logging
 from oslo_utils import fileutils
-
-from neutron.common import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -68,7 +67,8 @@ class ResourceAllocator(object):
         self._validator = validator if validator else is_valid
         self._resource_name = resource_name
 
-    @utils.synchronized('resource_allocator', external=True, lock_path='/tmp')
+    @runtime.synchronized('resource_allocator', external=True,
+                          lock_path='/tmp')
     def allocate(self):
         allocations = self._get_allocations()
 
@@ -86,7 +86,8 @@ class ResourceAllocator(object):
             'Could not allocate a new resource of type %s from pool %s' %
             (self._resource_name, allocations))
 
-    @utils.synchronized('resource_allocator', external=True, lock_path='/tmp')
+    @runtime.synchronized('resource_allocator', external=True,
+                          lock_path='/tmp')
     def release(self, resource):
         allocations = self._get_allocations()
         allocations.remove(resource)

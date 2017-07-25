@@ -16,6 +16,7 @@ import contextlib
 import os
 
 from neutron_lib import constants as lib_constants
+from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -112,7 +113,7 @@ class FipNamespace(namespaces.Namespace):
         # Use a namespace and port-specific lock semaphore to allow for
         # concurrency
         lock_name = 'port-lock-' + self.name + '-' + interface_name
-        with lockutils.lock(lock_name, common_utils.SYNCHRONIZED_PREFIX):
+        with lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX):
             try:
                 yield
             except Exception:

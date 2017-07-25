@@ -11,9 +11,8 @@
 #    under the License.
 
 import eventlet
+from neutron_lib.utils import runtime
 from oslo_utils import uuidutils
-
-from neutron.common import utils
 
 
 class BatchNotifier(object):
@@ -47,7 +46,7 @@ class BatchNotifier(object):
 
         self.pending_events.append(event)
 
-        @utils.synchronized(self._lock_identifier)
+        @runtime.synchronized(self._lock_identifier)
         def synced_send():
             self._notify()
             # sleeping after send while holding the lock allows subsequent

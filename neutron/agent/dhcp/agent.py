@@ -20,6 +20,7 @@ import eventlet
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
+from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -65,7 +66,7 @@ def _wait_if_syncing(f):
 def _net_lock(network_id):
     """Returns a context manager lock based on network_id."""
     lock_name = 'dhcp-agent-network-lock-%s' % network_id
-    return lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX)
+    return lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX)
 
 
 class DhcpAgent(manager.Manager):

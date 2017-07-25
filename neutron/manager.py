@@ -17,6 +17,7 @@ from collections import defaultdict
 
 from neutron_lib.plugins import constants as lib_const
 from neutron_lib.plugins import directory
+from neutron_lib.utils import runtime
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -223,7 +224,7 @@ class NeutronManager(object):
                        "desc": plugin_inst.get_plugin_description()})
 
     @classmethod
-    @utils.synchronized("manager")
+    @runtime.synchronized("manager")
     def _create_instance(cls):
         if not cls.has_instance():
             cls._instance = cls()

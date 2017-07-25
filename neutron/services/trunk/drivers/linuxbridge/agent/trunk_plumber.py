@@ -12,12 +12,12 @@
 #    under the License.
 import re
 
+from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 from oslo_utils import excutils
 
 from neutron.agent.linux import ip_lib
-from neutron.common import utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import utils as lutil
 
 LOG = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class Plumber(object):
 
     def _trunk_lock(self, trunk_dev):
         lock_name = 'trunk-%s' % trunk_dev
-        return lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX)
+        return lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX)
 
     def _create_vlan_subint(self, trunk_name, devname, vlan_id):
         ip_wrap = ip_lib.IPWrapper(namespace=self.namespace)

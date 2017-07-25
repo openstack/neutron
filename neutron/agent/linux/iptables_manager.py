@@ -25,6 +25,7 @@ import os
 import re
 import sys
 
+from neutron_lib.utils import runtime
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -35,7 +36,6 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
-from neutron.common import utils
 from neutron.conf.agent import common as config
 
 LOG = logging.getLogger(__name__)
@@ -442,7 +442,7 @@ class IptablesManager(object):
         # NOTE(ihrachys) we may get rid of the lock once all supported
         # platforms get iptables with 999eaa241212d3952ddff39a99d0d55a74e3639e
         # ("iptables-restore: support acquiring the lock.")
-        with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
+        with lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX, True):
             first = self._apply_synchronized()
             if not cfg.CONF.AGENT.debug_iptables_rules:
                 return first
