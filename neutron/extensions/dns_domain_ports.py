@@ -14,19 +14,20 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api import extensions
-
-from neutron.extensions import dns
+from neutron_lib.db import constants
 
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'ports': {
-        dns.DNSDOMAIN: {'allow_post': True, 'allow_put': True,
-                        'default': '',
-                        'convert_to':
-                            converters.convert_string_to_case_insensitive,
-                        'validate': {'type:dns_domain': dns.FQDN_MAX_LEN},
-                        'is_visible': True},
+        dns_apidef.DNSDOMAIN: {
+            'allow_post': True, 'allow_put': True,
+            'default': '',
+            'convert_to': converters.convert_string_to_case_insensitive,
+            'validate': {
+                'type:dns_domain_name': constants.FQDN_FIELD_SIZE},
+            'is_visible': True},
     },
 }
 
@@ -51,7 +52,7 @@ class Dns_domain_ports(extensions.ExtensionDescriptor):
         return "2017-06-25T18:00:00-00:00"
 
     def get_required_extensions(self):
-        return ["dns-integration"]
+        return [dns_apidef.ALIAS]
 
     def get_extended_resources(self, version):
         if version == "2.0":

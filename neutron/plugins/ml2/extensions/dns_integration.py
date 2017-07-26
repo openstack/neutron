@@ -13,16 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as lib_const
+from neutron_lib.exceptions import dns as dns_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.db import segments_db
-from neutron.extensions import dns
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.common import utils as plugin_utils
@@ -30,18 +32,17 @@ from neutron.plugins.ml2 import driver_api as api
 from neutron.services.externaldns import driver
 
 LOG = logging.getLogger(__name__)
-DNS_DOMAIN_DEFAULT = 'openstacklocal.'
 
 
 class DNSExtensionDriver(api.ExtensionDriver):
-    _supported_extension_alias = 'dns-integration'
+    _supported_extension_alias = dns_apidef.ALIAS
 
     @property
     def extension_alias(self):
         return self._supported_extension_alias
 
     def process_create_network(self, plugin_context, request_data, db_data):
-        dns_domain = request_data.get(dns.DNSDOMAIN)
+        dns_domain = request_data.get(dns_apidef.DNSDOMAIN)
         if not validators.is_attr_set(dns_domain):
             return
 
@@ -49,14 +50,14 @@ class DNSExtensionDriver(api.ExtensionDriver):
             net_obj.NetworkDNSDomain(plugin_context,
                                      network_id=db_data['id'],
                                      dns_domain=dns_domain).create()
-        db_data[dns.DNSDOMAIN] = dns_domain
+        db_data[dns_apidef.DNSDOMAIN] = dns_domain
 
     def process_update_network(self, plugin_context, request_data, db_data):
-        new_value = request_data.get(dns.DNSDOMAIN)
+        new_value = request_data.get(dns_apidef.DNSDOMAIN)
         if not validators.is_attr_set(new_value):
             return
 
-        current_dns_domain = db_data.get(dns.DNSDOMAIN)
+        current_dns_domain = db_data.get(dns_apidef.DNSDOMAIN)
         if current_dns_domain == new_value:
             return
 
@@ -67,20 +68,20 @@ class DNSExtensionDriver(api.ExtensionDriver):
                 network_id=net_id)
             if new_value:
                 net_dns_domain['dns_domain'] = new_value
-                db_data[dns.DNSDOMAIN] = new_value
+                db_data[dns_apidef.DNSDOMAIN] = new_value
                 net_dns_domain.update()
             else:
                 net_dns_domain.delete()
-                db_data[dns.DNSDOMAIN] = ''
+                db_data[dns_apidef.DNSDOMAIN] = ''
         elif new_value:
             net_obj.NetworkDNSDomain(plugin_context,
                                      network_id=net_id,
                                      dns_domain=new_value).create()
-            db_data[dns.DNSDOMAIN] = new_value
+            db_data[dns_apidef.DNSDOMAIN] = new_value
 
     def process_create_port(self, plugin_context, request_data, db_data):
-        if not (request_data.get(dns.DNSNAME) or
-                request_data.get(dns.DNSDOMAIN)):
+        if not (request_data.get(dns_apidef.DNSNAME) or
+                request_data.get(dns_apidef.DNSDOMAIN)):
             return
         dns_name, is_dns_domain_default = self._get_request_dns_name(
             request_data)
@@ -92,8 +93,8 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def _create_port_dns_record(self, plugin_context, request_data, db_data,
                                 network, dns_name):
-        external_dns_domain = (request_data.get(dns.DNSDOMAIN) or
-                               network.get(dns.DNSDOMAIN))
+        external_dns_domain = (request_data.get(dns_apidef.DNSDOMAIN) or
+                               network.get(dns_apidef.DNSDOMAIN))
         current_dns_name, current_dns_domain = (
             self._calculate_current_dns_name_and_domain(
                 dns_name, external_dns_domain,
@@ -107,7 +108,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
             previous_dns_name='',
             previous_dns_domain='',
             dns_name=dns_name,
-            dns_domain=request_data.get(dns.DNSDOMAIN, ''))
+            dns_domain=request_data.get(dns_apidef.DNSDOMAIN, ''))
         dns_data_obj.create()
         return dns_data_obj
 
@@ -130,17 +131,17 @@ class DNSExtensionDriver(api.ExtensionDriver):
         return dns_name, external_dns_domain
 
     def _update_dns_db(self, plugin_context, request_data, db_data, network):
-        dns_name = request_data.get(dns.DNSNAME)
-        dns_domain = request_data.get(dns.DNSDOMAIN)
+        dns_name = request_data.get(dns_apidef.DNSNAME)
+        dns_domain = request_data.get(dns_apidef.DNSDOMAIN)
         has_fixed_ips = 'fixed_ips' in request_data
         dns_data_db = port_obj.PortDNS.get_object(
             plugin_context,
             port_id=db_data['id'])
         if dns_data_db:
             is_dns_name_changed = (dns_name is not None and
-                    dns_data_db[dns.DNSNAME] != dns_name)
+                    dns_data_db[dns_apidef.DNSNAME] != dns_name)
             is_dns_domain_changed = (dns_domain is not None and
-                dns_data_db[dns.DNSDOMAIN] != dns_domain)
+                dns_data_db[dns_apidef.DNSDOMAIN] != dns_domain)
             if (is_dns_name_changed or is_dns_domain_changed or
                 (has_fixed_ips and dns_data_db['current_dns_name'])):
                 dns_data_db = self._populate_previous_external_dns_data(
@@ -174,15 +175,15 @@ class DNSExtensionDriver(api.ExtensionDriver):
                                             is_dns_domain_changed):
         if is_dns_name_changed or is_dns_domain_changed:
             if is_dns_name_changed:
-                dns_data_db[dns.DNSNAME] = dns_name
-            external_dns_domain = (dns_data_db[dns.DNSDOMAIN] or
-                                   network.get(dns.DNSDOMAIN))
+                dns_data_db[dns_apidef.DNSNAME] = dns_name
+            external_dns_domain = (dns_data_db[dns_apidef.DNSDOMAIN] or
+                                   network.get(dns_apidef.DNSDOMAIN))
             if is_dns_domain_changed:
-                dns_data_db[dns.DNSDOMAIN] = dns_domain
-                external_dns_domain = request_data[dns.DNSDOMAIN]
+                dns_data_db[dns_apidef.DNSDOMAIN] = dns_domain
+                external_dns_domain = request_data[dns_apidef.DNSDOMAIN]
                 if not external_dns_domain:
-                    external_dns_domain = network.get(dns.DNSDOMAIN)
-            dns_data_db['current_dns_name'] = dns_data_db[dns.DNSNAME]
+                    external_dns_domain = network.get(dns_apidef.DNSDOMAIN)
+            dns_data_db['current_dns_name'] = dns_data_db[dns_apidef.DNSNAME]
             dns_data_db['current_dns_domain'] = external_dns_domain
             if not (dns_data_db['current_dns_name'] and
                     dns_data_db['current_dns_domain']):
@@ -191,9 +192,9 @@ class DNSExtensionDriver(api.ExtensionDriver):
         return dns_data_db
 
     def process_update_port(self, plugin_context, request_data, db_data):
-        has_dns_name = dns.DNSNAME in request_data
+        has_dns_name = dns_apidef.DNSNAME in request_data
         has_fixed_ips = 'fixed_ips' in request_data
-        has_dns_domain = dns.DNSDOMAIN in request_data
+        has_dns_domain = dns_apidef.DNSDOMAIN in request_data
         if not any((has_dns_name, has_fixed_ips, has_dns_domain)):
             return
         is_dns_domain_default = self._get_request_dns_name(
@@ -218,17 +219,18 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def _process_only_port_update(self, plugin_context, request_data,
                                   db_data):
-        dns_name = request_data.get(dns.DNSNAME)
-        dns_domain = request_data.get(dns.DNSDOMAIN)
+        dns_name = request_data.get(dns_apidef.DNSNAME)
+        dns_domain = request_data.get(dns_apidef.DNSDOMAIN)
         dns_data_db = port_obj.PortDNS.get_object(
             plugin_context,
             port_id=db_data['id'])
         if dns_data_db:
-            if dns_name is not None and dns_data_db[dns.DNSNAME] != dns_name:
-                dns_data_db[dns.DNSNAME] = dns_name
+            if dns_name is not None and dns_data_db[
+                    dns_apidef.DNSNAME] != dns_name:
+                dns_data_db[dns_apidef.DNSNAME] = dns_name
             if (dns_domain is not None and
-                    dns_data_db[dns.DNSDOMAIN] != dns_domain):
-                dns_data_db[dns.DNSDOMAIN] = dns_domain
+                    dns_data_db[dns_apidef.DNSDOMAIN] != dns_domain):
+                dns_data_db[dns_apidef.DNSDOMAIN] = dns_domain
             dns_data_db.update()
             return dns_data_db
         dns_data_db = port_obj.PortDNS(plugin_context,
@@ -252,9 +254,10 @@ class DNSExtensionDriver(api.ExtensionDriver):
         pass
 
     def extend_network_dict(self, session, db_data, response_data):
-        response_data[dns.DNSDOMAIN] = ''
+        response_data[dns_apidef.DNSDOMAIN] = ''
         if db_data.dns_domain:
-            response_data[dns.DNSDOMAIN] = db_data.dns_domain[dns.DNSDOMAIN]
+            response_data[dns_apidef.DNSDOMAIN] = db_data.dns_domain[
+                dns_apidef.DNSDOMAIN]
         return response_data
 
     def _get_dns_domain(self):
@@ -266,14 +269,14 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def _get_request_dns_name(self, port):
         dns_domain = self._get_dns_domain()
-        if ((dns_domain and dns_domain != DNS_DOMAIN_DEFAULT)):
-            return (port.get(dns.DNSNAME, ''), False)
-        return ('', True)
+        if dns_domain and dns_domain != lib_const.DNS_DOMAIN_DEFAULT:
+            return port.get(dns_apidef.DNSNAME, ''), False
+        return '', True
 
     def _get_request_dns_name_and_domain_name(self, dns_data_db):
         dns_domain = self._get_dns_domain()
         dns_name = ''
-        if ((dns_domain and dns_domain != DNS_DOMAIN_DEFAULT)):
+        if dns_domain and dns_domain != lib_const.DNS_DOMAIN_DEFAULT:
             if dns_data_db:
                 dns_name = dns_data_db.dns_name
         return dns_name, dns_domain
@@ -306,9 +309,9 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
     def _extend_port_dict(self, session, db_data, response_data, dns_data_db):
         if not dns_data_db:
-            response_data[dns.DNSNAME] = ''
+            response_data[dns_apidef.DNSNAME] = ''
         else:
-            response_data[dns.DNSNAME] = dns_data_db[dns.DNSNAME]
+            response_data[dns_apidef.DNSNAME] = dns_data_db[dns_apidef.DNSNAME]
         response_data['dns_assignment'] = self._get_dns_name_for_port_get(
             db_data, dns_data_db)
         return response_data
@@ -377,7 +380,7 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
 
 
 class DNSDomainPortsExtensionDriver(DNSExtensionDriverML2):
-    _supported_extension_aliases = ['dns-integration', 'dns-domain-ports']
+    _supported_extension_aliases = [dns_apidef.ALIAS, 'dns-domain-ports']
 
     @property
     def extension_aliases(self):
@@ -391,9 +394,10 @@ class DNSDomainPortsExtensionDriver(DNSExtensionDriverML2):
             super(DNSDomainPortsExtensionDriver, self).extend_port_dict(
                 session, db_data, response_data))
         dns_data_db = db_data.dns
-        response_data[dns.DNSDOMAIN] = ''
+        response_data[dns_apidef.DNSDOMAIN] = ''
         if dns_data_db:
-            response_data[dns.DNSDOMAIN] = dns_data_db[dns.DNSDOMAIN]
+            response_data[dns_apidef.DNSDOMAIN] = dns_data_db[
+                dns_apidef.DNSDOMAIN]
 
 
 DNS_DRIVER = None
@@ -413,7 +417,7 @@ def _get_dns_driver():
     except ImportError:
         LOG.exception("ImportError exception occurred while loading "
                       "the external DNS service driver")
-        raise dns.ExternalDNSDriverNotFound(
+        raise dns_exc.ExternalDNSDriverNotFound(
             driver=cfg.CONF.external_dns_driver)
 
 
@@ -438,7 +442,7 @@ def _send_data_to_external_dns_service(context, dns_driver, dns_domain,
                                        dns_name, records):
     try:
         dns_driver.create_record_set(context, dns_domain, dns_name, records)
-    except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
+    except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
         LOG.exception("Error publishing port data in external DNS "
                       "service. Name: '%(name)s'. Domain: '%(domain)s'. "
                       "DNS service driver message '%(message)s'",
@@ -451,7 +455,7 @@ def _remove_data_from_external_dns_service(context, dns_driver, dns_domain,
                                            dns_name, records):
     try:
         dns_driver.delete_record_set(context, dns_domain, dns_name, records)
-    except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
+    except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
         LOG.exception("Error deleting port data from external DNS "
                       "service. Name: '%(name)s'. Domain: '%(domain)s'. "
                       "IP addresses '%(ips)s'. DNS service driver message "
@@ -473,11 +477,11 @@ def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):
         return
     original_ips = [ip['ip_address'] for ip in original_port['fixed_ips']]
     updated_ips = [ip['ip_address'] for ip in updated_port['fixed_ips']]
-    is_dns_name_changed = (updated_port[dns.DNSNAME] !=
-                           original_port[dns.DNSNAME])
-    is_dns_domain_changed = (dns.DNSDOMAIN in updated_port and
-                             updated_port[dns.DNSDOMAIN] !=
-                             original_port[dns.DNSDOMAIN])
+    is_dns_name_changed = (updated_port[dns_apidef.DNSNAME] !=
+                           original_port[dns_apidef.DNSNAME])
+    is_dns_domain_changed = (dns_apidef.DNSDOMAIN in updated_port and
+                             updated_port[dns_apidef.DNSDOMAIN] !=
+                             original_port[dns_apidef.DNSDOMAIN])
     ips_changed = set(original_ips) != set(updated_ips)
     if not any((is_dns_name_changed, is_dns_domain_changed, ips_changed)):
         return
