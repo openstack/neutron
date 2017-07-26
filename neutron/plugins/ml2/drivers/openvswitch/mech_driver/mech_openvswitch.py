@@ -120,18 +120,18 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 # we only override the vif_details for hybrid plugging set
                 # in the constructor if the agent specifically requests it
                 details[hybrid] = a_config[hybrid]
-            return details
         else:
             sock_path = self.agent_vhu_sockpath(agent, context.current['id'])
             caps = a_config.get('ovs_capabilities', {})
             mode = self.get_vhost_mode(caps.get('iface_types', []))
-            return {
-                portbindings.CAP_PORT_FILTER: False,
-                portbindings.OVS_HYBRID_PLUG: False,
-                portbindings.VHOST_USER_MODE: mode,
-                portbindings.VHOST_USER_OVS_PLUG: True,
-                portbindings.VHOST_USER_SOCKET: sock_path
-            }
+            details = {portbindings.CAP_PORT_FILTER: False,
+                       portbindings.OVS_HYBRID_PLUG: False,
+                       portbindings.VHOST_USER_MODE: mode,
+                       portbindings.VHOST_USER_OVS_PLUG: True,
+                       portbindings.VHOST_USER_SOCKET: sock_path}
+        details[portbindings.OVS_DATAPATH_TYPE] = a_config.get(
+            'datapath_type', a_const.OVS_DATAPATH_SYSTEM)
+        return details
 
     @staticmethod
     def agent_vhu_sockpath(agent, port_id):
