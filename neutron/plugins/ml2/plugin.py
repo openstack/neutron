@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 from eventlet import greenthread
 from neutron_lib.api import validators
 from neutron_lib import constants as const
@@ -350,10 +348,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             binding.host = ''
 
         self._update_port_dict_binding(port, binding)
-        # merging here brings binding changes into the session so they can be
-        # committed since the binding attached to the context is detached from
-        # the session
-        mech_context._plugin_context.session.merge(binding)
         return changes
 
     def _bind_port_if_needed(self, context, allow_notify=False,
@@ -516,8 +510,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 cur_binding.vif_details = new_binding.vif_details
                 db.clear_binding_levels(session, port_id, cur_binding.host)
                 db.set_binding_levels(session, bind_context._binding_levels)
-                # refresh context with a snapshot of updated state
-                cur_context._binding = copy.deepcopy(cur_binding)
                 cur_context._binding_levels = bind_context._binding_levels
 
                 # Update PortContext's port dictionary to reflect the
@@ -1422,8 +1414,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._update_port_dict_binding(port, binding)
         binding.host = attrs and attrs.get(portbindings.HOST_ID)
         binding.router_id = attrs and attrs.get('device_id')
-        # merge into session to reflect changes
-        mech_context._plugin_context.session.merge(binding)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
@@ -1645,7 +1635,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     session, port['id'], host)
                 if not binding:
                     return
-                binding.status = status
+                binding['status'] = status
+                binding.update(binding)
                 updated = True
 
         if (updated and
