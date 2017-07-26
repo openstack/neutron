@@ -12,6 +12,7 @@
 
 import mock
 from neutron_lib import constants as n_const
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 from oslo_versionedobjects import exception
 import testtools
@@ -22,7 +23,6 @@ from neutron.objects.db import api as db_api
 from neutron.objects import network as net_obj
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
-from neutron.services.qos import qos_consts
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 

@@ -24,13 +24,13 @@ from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
+from neutron_lib.services.qos import constants as qos_consts
 import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
 from neutron.objects.qos import rule as rule_object
-from neutron.services.qos import qos_consts
 
 
 ALIAS = "qos"

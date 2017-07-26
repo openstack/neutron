@@ -16,12 +16,12 @@
 import mock
 from neutron_lib import constants as lib_consts
 from neutron_lib.db import constants as db_consts
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 
 from neutron.common import constants
 from neutron import manager
 from neutron.objects.qos import rule_type
-from neutron.services.qos import qos_consts
 from neutron.services.qos import qos_plugin
 from neutron.tests import base as test_base
 

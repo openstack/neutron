@@ -17,6 +17,7 @@ import mock
 from neutron_lib import constants as common_constants
 from neutron_lib import context
 from neutron_lib.db import constants as db_consts
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import qos
@@ -33,7 +34,6 @@ from neutron.plugins.ml2.drivers.openvswitch.agent import (
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
     ovs_bridge)
-from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 BASE_TEST_POLICY = {'context': None,

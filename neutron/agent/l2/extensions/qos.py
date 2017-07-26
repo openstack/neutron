@@ -17,6 +17,7 @@ import abc
 import collections
 
 from neutron_lib import constants
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import six
@@ -27,7 +28,6 @@ from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron import manager
-from neutron.services.qos import qos_consts
 
 LOG = logging.getLogger(__name__)
 

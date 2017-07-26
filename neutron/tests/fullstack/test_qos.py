@@ -15,13 +15,13 @@
 import functools
 
 from neutron_lib import constants
+from neutron_lib.services.qos import constants as qos_consts
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.agent.linux import tc_lib
 from neutron.common import utils
-from neutron.services.qos import qos_consts
 from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment

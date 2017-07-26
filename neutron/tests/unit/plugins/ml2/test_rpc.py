@@ -24,6 +24,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_context import context as oslo_context
 from sqlalchemy.orm import exc
@@ -35,7 +36,6 @@ from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc as plugin_rpc
-from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 

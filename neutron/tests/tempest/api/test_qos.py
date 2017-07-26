@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services.qos import constants as qos_consts
 from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
@@ -20,7 +21,6 @@ from tempest.lib import exceptions
 import testscenarios
 import testtools
 
-from neutron.services.qos import qos_consts
 from neutron.tests.tempest.api import base
 
 

@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
-from neutron.services.qos import qos_consts
 
 
 def check_bandwidth_rule_conflict(policy, rule_data):

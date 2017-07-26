@@ -16,6 +16,7 @@
 import mock
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
 from neutron.objects.qos import policy
@@ -23,7 +24,6 @@ from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import exceptions
 from neutron.plugins.ml2.drivers.mech_sriov.agent.extension_drivers import (
     qos_driver)
-from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 
