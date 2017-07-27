@@ -61,3 +61,4 @@ Neutron Internals
    retries
    l3_agent_extensions
    live_migration
+   segments
