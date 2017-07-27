@@ -2148,6 +2148,23 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.router_added_to_agent(None, [FAKE_ID])
         self.assertEqual(1, agent._queue.add.call_count)
 
+    def test_create_router_namespace(self):
+        self.mock_ip.ensure_namespace.return_value = self.mock_ip
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ns = namespaces.Namespace(
+            'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
+        ns.create()
+
+        calls = [mock.call(['sysctl', '-w', 'net.ipv4.ip_forward=1']),
+                 mock.call(['sysctl', '-w', 'net.ipv4.conf.all.arp_ignore=1']),
+                 mock.call(
+                     ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2'])]
+        if agent.use_ipv6:
+            calls.append(mock.call(
+                ['sysctl', '-w', 'net.ipv6.conf.all.forwarding=1']))
+
+        self.mock_ip.netns.execute.assert_has_calls(calls)
+
     def test_destroy_namespace(self):
         namespace = 'qrouter-bar'
 
