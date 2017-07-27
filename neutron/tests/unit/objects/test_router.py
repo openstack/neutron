@@ -76,3 +76,21 @@ class DVRMacAddressDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                                     testlib_api.SqlTestCase):
 
     _test_class = router.DVRMacAddress
+
+
+class FloatingIPIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = router.FloatingIP
+
+
+class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
+                                 testlib_api.SqlTestCase):
+
+    _test_class = router.FloatingIP
+
+    def setUp(self):
+        super(FloatingIPDbObjectTestCase, self).setUp()
+        self.update_obj_fields(
+            {'floating_port_id': lambda: self._create_test_port_id(),
+             'fixed_port_id': lambda: self._create_test_port_id(),
+             'router_id': lambda: self._create_test_router_id()})
