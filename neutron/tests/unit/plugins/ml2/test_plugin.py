@@ -738,9 +738,14 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         ups = mock.patch.object(plugin, 'update_port_status').start()
         port_id = 'fake_port_id'
-        binding = mock.Mock(vif_type=portbindings.VIF_TYPE_OVS)
-        port = mock.Mock(
-            id=port_id, admin_state_up=False, port_binding=binding)
+
+        def getitem(key):
+            return constants.ACTIVE
+
+        binding = mock.MagicMock(vif_type=portbindings.VIF_TYPE_OVS)
+        binding.__getitem__.side_effect = getitem
+        port = mock.MagicMock(
+            id=port_id, admin_state_up=False, port_binding=[binding])
         with mock.patch('neutron.plugins.ml2.plugin.db.get_port',
                         return_value=port):
             plugin._port_provisioned('port', 'evt', 'trigger',
@@ -1801,8 +1806,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         # create a port and delete it so we have an expired mechanism context
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(self.context,
-                                       port['port']['id']).port_binding
+            binding = utils.get_port_binding_by_status_and_host(
+                plugin._get_port(self.context,
+                                 port['port']['id']).port_binding,
+                constants.ACTIVE)
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
@@ -1822,8 +1829,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def _create_port_and_bound_context(self, port_vif_type, bound_vif_type):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
+            binding = utils.get_port_binding_by_status_and_host(
+                plugin._get_port(self.context,
+                                 port['port']['id']).port_binding,
+                constants.ACTIVE)
             binding['host'] = 'fake_host'
             binding['vif_type'] = port_vif_type
             # Generates port context to be used before the bind.
@@ -1937,8 +1946,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_none(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
+            binding = utils.get_port_binding_by_status_and_host(
+                plugin._get_port(self.context,
+                                 port['port']['id']).port_binding,
+                constants.ACTIVE)
             with self.context.session.begin(subtransactions=True):
                 binding.host = 'test'
             mech_context = driver_context.PortContext(
@@ -1957,8 +1968,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_not_changed(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
+            binding = utils.get_port_binding_by_status_and_host(
+                plugin._get_port(self.context,
+                                 port['port']['id']).port_binding,
+                constants.ACTIVE)
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
@@ -2944,8 +2957,10 @@ class TestML2Segments(Ml2PluginV2TestCase):
             # add writer here to make sure that the following operations are
             # performed in the same session
             with db_api.context_manager.writer.using(self.context):
-                binding = plugin._get_port(
-                    self.context, port['port']['id']).port_binding
+                binding = utils.get_port_binding_by_status_and_host(
+                    plugin._get_port(self.context,
+                                     port['port']['id']).port_binding,
+                    constants.ACTIVE)
                 binding['host'] = 'host-ovs-no_filter'
                 mech_context = driver_context.PortContext(
                     plugin, self.context, port['port'],

@@ -264,7 +264,8 @@ class Port(base.NeutronDbObject):
     # Version 1.1: Add data_plane_status field
     # Version 1.2: Added segment_id to binding_levels
     # Version 1.3: distributed_binding -> distributed_bindings
-    VERSION = '1.3'
+    # Version 1.4: Attribute binding becomes ListOfObjectsField
+    VERSION = '1.4'
 
     db_model = models_v2.Port
 
@@ -282,7 +283,7 @@ class Port(base.NeutronDbObject):
         'allowed_address_pairs': obj_fields.ListOfObjectsField(
             'AllowedAddressPair', nullable=True
         ),
-        'binding': obj_fields.ObjectField(
+        'binding': obj_fields.ListOfObjectsField(
             'PortBinding', nullable=True
         ),
         'data_plane_status': obj_fields.ObjectField(
@@ -473,6 +474,19 @@ class Port(base.NeutronDbObject):
             bindings = primitive.pop('distributed_bindings', [])
             primitive['distributed_binding'] = (bindings[0]
                                                 if bindings else None)
+        if _target_version < (1, 4):
+            # In version 1.4 we add support for multiple port bindings.
+            # Previous versions only support one port binding. The following
+            # lines look for the active port binding, which is the only one
+            # needed in previous versions
+            if 'binding' in primitive:
+                original_binding = primitive['binding']
+                primitive['binding'] = None
+                for a_binding in original_binding:
+                    if (a_binding['versioned_object.data']['status'] ==
+                            constants.ACTIVE):
+                        primitive['binding'] = a_binding
+                        break
 
     @classmethod
     def get_ports_by_router(cls, context, router_id, owner, subnet):

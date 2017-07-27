@@ -105,7 +105,7 @@ class TestLogDriversLoggingTypeValidations(drv_mgr.TestLogDriversManagerBase):
         port_binding = ports.PortBinding(
             self.ctxt, port_id=port_id, vif_type=vif_type, vnic_type=vnic_type)
         return ports.Port(
-            self.ctxt, id=uuidutils.generate_uuid(), binding=port_binding)
+            self.ctxt, id=uuidutils.generate_uuid(), binding=[port_binding])
 
     def _test_validate_log_type_for_port(self, port, expected_result):
         driver_manager = self._create_manager_with_drivers({

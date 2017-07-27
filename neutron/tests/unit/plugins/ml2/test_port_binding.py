@@ -15,16 +15,23 @@
 
 import mock
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_serialization import jsonutils
+import webob.exc
 
+from neutron.common import exceptions
+from neutron.common import utils
+from neutron.conf.plugins.ml2 import config
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import models as ml2_models
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron.tests.unit.plugins.ml2.drivers import mechanism_test
 
 
 class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -327,3 +334,309 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             # Get port and verify status is still DOWN.
             port = self._show('ports', port_id)
             self.assertEqual('DOWN', port['port']['status'])
+
+
+class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
+
+    host = 'host-ovs-no_filter'
+
+    def setUp(self):
+        # Enable the test mechanism driver to ensure that
+        # we can successfully call through to all mechanism
+        # driver apis.
+        config.register_ml2_plugin_opts()
+        cfg.CONF.set_override('mechanism_drivers',
+                              ['logger', 'test'],
+                              'ml2')
+
+        driver_type.register_ml2_drivers_vlan_opts()
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ['physnet1:1000:1099'],
+                              group='ml2_type_vlan')
+        super(ExtendedPortBindingTestCase, self).setUp('ml2')
+        self.port_create_status = 'DOWN'
+        self.plugin = directory.get_plugin()
+        self.plugin.start_rpc_listeners()
+
+    def _create_port_binding(self, fmt, port_id, host, tenant_id=None,
+                             **kwargs):
+        tenant_id = tenant_id or self._tenant_id
+        data = {'binding': {'host': host, 'tenant_id': tenant_id}}
+        if kwargs:
+            data['binding'].update(kwargs)
+        binding_resource = 'ports/%s/bindings' % port_id
+        binding_req = self.new_create_request(binding_resource, data, fmt)
+        return binding_req.get_response(self.api)
+
+    def _make_port_binding(self, fmt, port_id, host, **kwargs):
+        res = self._create_port_binding(fmt, port_id, host, **kwargs)
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
+    def _update_port_binding(self, fmt, port_id, host, **kwargs):
+        data = {'binding': kwargs}
+        binding_req = self.new_update_request('ports', data, port_id, fmt,
+                                              subresource='bindings',
+                                              sub_id=host)
+        return binding_req.get_response(self.api)
+
+    def _do_update_port_binding(self, fmt, port_id, host, **kwargs):
+        res = self._update_port_binding(fmt, port_id, host, **kwargs)
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=res.status_int)
+        return self.deserialize(fmt, res)
+
+    def _activate_port_binding(self, port_id, host, raw_response=True):
+        response = self._req('PUT', 'ports', id=port_id,
+                             data={'port_id': port_id},
+                             subresource='bindings', sub_id=host,
+                             action='activate').get_response(self.api)
+        return self._check_code_and_serialize(response, raw_response)
+
+    def _check_code_and_serialize(self, response, raw_response):
+        if raw_response:
+            return response
+        if response.status_int >= webob.exc.HTTPClientError.code:
+            raise webob.exc.HTTPClientError(code=response.status_int)
+        return self.deserialize(self.fmt, response)
+
+    def _list_port_bindings(self, port_id, params=None, raw_response=True):
+        response = self._req(
+            'GET', 'ports', fmt=self.fmt, id=port_id, subresource='bindings',
+            params=params).get_response(self.api)
+        return self._check_code_and_serialize(response, raw_response)
+
+    def _show_port_binding(self, port_id, host, params=None,
+                           raw_response=True):
+        response = self._req(
+            'GET', 'ports', fmt=self.fmt, id=port_id, subresource='bindings',
+            sub_id=host, params=params).get_response(self.api)
+        return self._check_code_and_serialize(response, raw_response)
+
+    def _delete_port_binding(self, port_id, host):
+        response = self._req(
+            'DELETE', 'ports', fmt=self.fmt, id=port_id,
+            subresource='bindings', sub_id=host).get_response(self.api)
+        return response
+
+    def _create_port_and_binding(self, **kwargs):
+        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        with self.port(device_owner=device_owner) as port:
+            port_id = port['port']['id']
+            binding = self._make_port_binding(self.fmt, port_id, self.host,
+                                              **kwargs)['binding']
+            self._assert_bound_port_binding(binding)
+            return port['port'], binding
+
+    def _assert_bound_port_binding(self, binding):
+        self.assertEqual(self.host, binding[pbe_ext.HOST])
+        self.assertEqual(portbindings.VIF_TYPE_OVS,
+                         binding[pbe_ext.VIF_TYPE])
+        self.assertEqual({'port_filter': False},
+                         binding[pbe_ext.VIF_DETAILS])
+
+    def _assert_unbound_port_binding(self, binding):
+        self.assertFalse(binding[pbe_ext.HOST])
+        self.assertEqual(portbindings.VIF_TYPE_UNBOUND,
+                         binding[pbe_ext.VIF_TYPE])
+        self.assertEqual({}, binding[pbe_ext.VIF_DETAILS])
+        self.assertEqual({}, binding[pbe_ext.PROFILE])
+
+    def test_create_port_binding(self):
+        profile = {'key1': 'value1'}
+        kwargs = {pbe_ext.PROFILE: profile}
+        port, binding = self._create_port_and_binding(**kwargs)
+        self._assert_bound_port_binding(binding)
+        self.assertEqual({"key1": "value1"}, binding[pbe_ext.PROFILE])
+
+    def test_create_duplicate_port_binding(self):
+        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        host_arg = {portbindings.HOST_ID: self.host}
+        with self.port(device_owner=device_owner,
+                       arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as port:
+            response = self._create_port_binding(self.fmt, port['port']['id'],
+                                                 self.host)
+            self.assertEqual(webob.exc.HTTPConflict.code,
+                             response.status_int)
+
+    def test_create_port_binding_failure(self):
+        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        with self.port(device_owner=device_owner) as port:
+            port_id = port['port']['id']
+            response = self._create_port_binding(self.fmt, port_id,
+                                                 'host-fail')
+            self.assertEqual(webob.exc.HTTPInternalServerError.code,
+                             response.status_int)
+            self.assertTrue(exceptions.PortBindingError.__name__ in
+                            response.text)
+
+    def test_create_port_binding_for_non_compute_owner(self):
+        with self.port() as port:
+            port_id = port['port']['id']
+            response = self._create_port_binding(self.fmt, port_id,
+                                                 'host-ovs-no_filter')
+            self.assertEqual(webob.exc.HTTPBadRequest.code,
+                             response.status_int)
+
+    def test_update_port_binding(self):
+        port, binding = self._create_port_and_binding()
+        profile = {'key1': 'value1'}
+        kwargs = {pbe_ext.PROFILE: profile}
+        binding = self._do_update_port_binding(self.fmt, port['id'], self.host,
+                                               **kwargs)['binding']
+        self._assert_bound_port_binding(binding)
+        self.assertEqual({"key1": "value1"}, binding[pbe_ext.PROFILE])
+
+    def test_update_non_existing_binding(self):
+        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        with self.port(device_owner=device_owner) as port:
+            port_id = port['port']['id']
+            profile = {'key1': 'value1'}
+            kwargs = {pbe_ext.PROFILE: profile}
+            response = self._update_port_binding(self.fmt, port_id, 'a_host',
+                                                 **kwargs)
+            self.assertEqual(webob.exc.HTTPNotFound.code, response.status_int)
+
+    def test_update_port_binding_for_non_compute_owner(self):
+        with self.port() as port:
+            port_id = port['port']['id']
+            profile = {'key1': 'value1'}
+            kwargs = {pbe_ext.PROFILE: profile}
+            response = self._update_port_binding(self.fmt, port_id, 'a_host',
+                                                 **kwargs)
+            self.assertEqual(webob.exc.HTTPBadRequest.code,
+                             response.status_int)
+
+    def test_update_port_binding_failure(self):
+        class FakeBinding(object):
+            vif_type = portbindings.VIF_TYPE_BINDING_FAILED
+
+        class FakePortContext(object):
+            _binding = FakeBinding()
+
+        port, binding = self._create_port_and_binding()
+        profile = {'key1': 'value1'}
+        kwargs = {pbe_ext.PROFILE: profile}
+        with mock.patch.object(
+                self.plugin, '_bind_port_if_needed',
+                return_value=FakePortContext()):
+            response = self._update_port_binding(self.fmt, port['id'],
+                                                 self.host, **kwargs)
+            self.assertEqual(webob.exc.HTTPInternalServerError.code,
+                             response.status_int)
+            self.assertTrue(exceptions.PortBindingError.__name__ in
+                            response.text)
+
+    def test_activate_port_binding(self):
+        port, new_binding = self._create_port_and_binding()
+        with mock.patch.object(mechanism_test.TestMechanismDriver,
+                '_check_port_context'):
+            active_binding = self._activate_port_binding(
+                port['id'], self.host, raw_response=False)
+        self._assert_bound_port_binding(active_binding)
+        updated_port = self._show('ports', port['id'])['port']
+        self.assertEqual(new_binding[pbe_ext.HOST],
+            updated_port[portbindings.HOST_ID])
+        self.assertEqual(new_binding[pbe_ext.PROFILE],
+                updated_port[portbindings.PROFILE])
+        self.assertEqual(new_binding[pbe_ext.VNIC_TYPE],
+                updated_port[portbindings.VNIC_TYPE])
+        self.assertEqual(new_binding[pbe_ext.VIF_TYPE],
+                updated_port[portbindings.VIF_TYPE])
+        self.assertEqual(new_binding[pbe_ext.VIF_DETAILS],
+                updated_port[portbindings.VIF_DETAILS])
+        retrieved_bindings = self._list_port_bindings(
+            port['id'], raw_response=False)['bindings']
+        retrieved_active_binding = utils.get_port_binding_by_status_and_host(
+            retrieved_bindings, const.ACTIVE)
+        self._assert_bound_port_binding(retrieved_active_binding)
+        retrieved_inactive_binding = utils.get_port_binding_by_status_and_host(
+            retrieved_bindings, const.INACTIVE)
+        self._assert_unbound_port_binding(retrieved_inactive_binding)
+
+    def test_activate_port_binding_for_non_compute_owner(self):
+        port, new_binding = self._create_port_and_binding()
+        data = {'port': {'device_owner': ''}}
+        self.new_update_request('ports', data, port['id'],
+                                self.fmt).get_response(self.api)
+        response = self._activate_port_binding(port['id'], self.host)
+        self.assertEqual(webob.exc.HTTPBadRequest.code,
+                         response.status_int)
+
+    def test_activate_port_binding_already_active(self):
+        port, new_binding = self._create_port_and_binding()
+        with mock.patch.object(mechanism_test.TestMechanismDriver,
+                '_check_port_context'):
+            self._activate_port_binding(port['id'], self.host)
+        response = self._activate_port_binding(port['id'], self.host)
+        self.assertEqual(webob.exc.HTTPConflict.code,
+                         response.status_int)
+
+    def test_activate_port_binding_failure(self):
+        port, new_binding = self._create_port_and_binding()
+        with mock.patch.object(self.plugin, '_commit_port_binding',
+                               return_value=(None, None, True,)) as p_mock:
+            response = self._activate_port_binding(port['id'], self.host)
+            self.assertEqual(webob.exc.HTTPInternalServerError.code,
+                             response.status_int)
+            self.assertTrue(exceptions.PortBindingError.__name__ in
+                            response.text)
+            self.assertEqual(ml2_plugin.MAX_BIND_TRIES, p_mock.call_count)
+
+    def test_activate_port_binding_non_existing_binding(self):
+        port, new_binding = self._create_port_and_binding()
+        response = self._activate_port_binding(port['id'], 'other-host')
+        self.assertEqual(webob.exc.HTTPNotFound.code, response.status_int)
+
+    def test_list_port_bindings(self):
+        port, new_binding = self._create_port_and_binding()
+        retrieved_bindings = self._list_port_bindings(
+            port['id'], raw_response=False)['bindings']
+        self.assertEqual(2, len(retrieved_bindings))
+        status = const.ACTIVE
+        self._assert_unbound_port_binding(
+            utils.get_port_binding_by_status_and_host(retrieved_bindings,
+                                                      status))
+        status = const.INACTIVE
+        self._assert_bound_port_binding(
+            utils.get_port_binding_by_status_and_host(retrieved_bindings,
+                                                      status, host=self.host))
+
+    def test_list_port_bindings_with_query_parameters(self):
+        port, new_binding = self._create_port_and_binding()
+        params = '%s=%s' % (pbe_ext.STATUS, const.INACTIVE)
+        retrieved_bindings = self._list_port_bindings(
+            port['id'], params=params, raw_response=False)['bindings']
+        self.assertEqual(1, len(retrieved_bindings))
+        self._assert_bound_port_binding(retrieved_bindings[0])
+
+    def test_show_port_binding(self):
+        port, new_binding = self._create_port_and_binding()
+        retrieved_binding = self._show_port_binding(
+            port['id'], self.host, raw_response=False)['binding']
+        self._assert_bound_port_binding(retrieved_binding)
+
+    def test_show_port_binding_with_fields(self):
+        port, new_binding = self._create_port_and_binding()
+        fields = 'fields=%s' % pbe_ext.HOST
+        retrieved_binding = self._show_port_binding(
+            port['id'], self.host, raw_response=False,
+            params=fields)['binding']
+        self.assertEqual(self.host, retrieved_binding[pbe_ext.HOST])
+        for key in (pbe_ext.STATUS, pbe_ext.PROFILE, pbe_ext.VNIC_TYPE,
+                    pbe_ext.VIF_TYPE, pbe_ext.VIF_DETAILS,):
+            self.assertNotIn(key, retrieved_binding)
+
+    def test_delete_port_binding(self):
+        port, new_binding = self._create_port_and_binding()
+        response = self._delete_port_binding(port['id'], self.host)
+        self.assertEqual(webob.exc.HTTPNoContent.code, response.status_int)
+        response = self._show_port_binding(port['id'], self.host)
+        self.assertEqual(webob.exc.HTTPNotFound.code, response.status_int)
+
+    def test_delete_non_existing_port_binding(self):
+        port, new_binding = self._create_port_and_binding()
+        response = self._delete_port_binding(port['id'], 'other-host')
+        self.assertEqual(webob.exc.HTTPNotFound.code, response.status_int)

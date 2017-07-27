@@ -14,11 +14,13 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib import constants
 from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
+from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.db.models import securitygroup as sg_db
 from neutron.objects import ports
@@ -93,13 +95,16 @@ def validate_log_type_for_port(log_type, port):
 
     log_plugin = directory.get_plugin(alias=plugin_const.LOG_API)
     drivers = log_plugin.driver_manager.drivers
+    port_binding = utils.get_port_binding_by_status_and_host(
+        port.binding, constants.ACTIVE, raise_if_not_found=True,
+        port_id=port['id'])
     for driver in drivers:
-        vif_type = port.binding.vif_type
+        vif_type = port_binding.vif_type
         if vif_type not in SKIPPED_VIF_TYPES:
             if not _validate_vif_type(driver, vif_type, port['id']):
                 continue
         else:
-            vnic_type = port.binding.vnic_type
+            vnic_type = port_binding.vnic_type
             if not _validate_vnic_type(driver, vnic_type, port['id']):
                 continue
 
