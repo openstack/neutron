@@ -17,6 +17,7 @@ import uuid
 import netaddr
 from neutron_lib import constants as lib_constants
 from neutron_lib.db import constants as lib_db_const
+from neutron_lib.objects import exceptions as o_exc
 
 from oslo_serialization import jsonutils
 from oslo_versionedobjects import fields as obj_fields
@@ -25,7 +26,6 @@ import six
 from neutron._i18n import _
 from neutron.common import constants
 from neutron.common import utils
-from neutron.objects import exceptions as o_exc
 from neutron.plugins.common import constants as plugin_constants
 
 

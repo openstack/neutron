@@ -19,6 +19,7 @@ import mock
 import netaddr
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.utils import helpers
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
@@ -38,7 +39,6 @@ from neutron.objects import agent
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
-from neutron.objects import exceptions as o_exc
 from neutron.objects import flavor
 from neutron.objects.logapi import event_types
 from neutron.objects import network as net_obj

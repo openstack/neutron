@@ -19,6 +19,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
@@ -32,7 +33,6 @@ from neutron.db import common_db_mixin
 from neutron.extensions import l3
 from neutron.objects import auto_allocate as auto_allocate_obj
 from neutron.objects import base as base_obj
-from neutron.objects import exceptions as obj_exc
 from neutron.objects import network as net_obj
 from neutron.plugins.common import utils as p_utils
 from neutron.services.auto_allocate import exceptions

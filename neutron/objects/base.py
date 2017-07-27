@@ -17,6 +17,7 @@ import functools
 import itertools
 
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as o_exc
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_serialization import jsonutils
@@ -28,7 +29,6 @@ from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
-from neutron.objects import exceptions as o_exc
 from neutron.objects.extensions import standardattributes
 
 _NO_DB_MODEL = object()

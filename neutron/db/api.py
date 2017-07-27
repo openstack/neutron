@@ -20,6 +20,7 @@ import weakref
 from debtcollector import removals
 from neutron_lib.db import api
 from neutron_lib import exceptions
+from neutron_lib.objects import exceptions as obj_exc
 from oslo_config import cfg
 from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
@@ -34,8 +35,6 @@ from sqlalchemy import event  # noqa
 from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
-
-from neutron.objects import exceptions as obj_exc
 
 
 def set_hook(engine):
