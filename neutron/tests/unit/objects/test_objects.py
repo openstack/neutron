@@ -61,7 +61,7 @@ object_data = {
     'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
     'PortBindingLevel': '1.0-de66a4c61a083b8f34319fa9dde5b060',
     'PortDataPlaneStatus': '1.0-25be74bda46c749653a10357676c0ab2',
-    'PortDNS': '1.0-201cf6d057fde75539c3d1f2bbf05902',
+    'PortDNS': '1.1-c5ca2dc172bdd5fafee3fc986d1d7023',
     'PortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
     'ProviderResourceAssociation': '1.0-05ab2d5a3017e5ce9dd381328f285f34',
     'ProvisioningBlock': '1.0-c19d6d05bfa8143533471c1296066125',
