@@ -84,7 +84,7 @@ STATUS_DICT = {
 
 class SupportMatrixTarget(object):
     def __init__(self, key, title, driver, plugin=None,
-                 architecture=None, api=None):
+                 architecture=None, api=None, link=None):
         """:param key: Unique identifier for plugin
         :param title: Human readable name for plugin
         :param driver: name of the driver
@@ -97,6 +97,7 @@ class SupportMatrixTarget(object):
         self.driver = driver
         self.plugin = plugin
         self.architecture = architecture
+        self.link = link
 
 
 class SupportMatrixDirective(rst.Directive):
@@ -133,29 +134,20 @@ class SupportMatrixDirective(rst.Directive):
         return matrix
 
     def _get_targets(self, cfg):
-        # The 'targets' section is special - it lists all the
+        # The 'target.<foo>' sections are special - they list all the
         # backend drivers that this file records data for
 
         targets = {}
-        network_target = "networking-"
 
-        for item in cfg.options("targets"):
-            if not item.startswith(network_target):
+        for section in cfg.sections():
+            if not section.startswith("target."):
                 continue
 
-            # The driver string will optionally contain
-            # 'networking-*' qualifier
-            # so we expect between 1 and 3 components
-            # in the name
-            key = item[len(network_target):]
-            title = cfg.get("targets", item)
+            key = cfg.get(section, "label")
             name = key.split("-")
-            if len(name) > 3:
-                raise Exception("'%s' field is malformed in '[%s]' section" %
-                                (item, "DEFAULT"))
-            else:
-                target = SupportMatrixTarget(key, title, *name)
-
+            title = cfg.get(section, "title")
+            link = cfg.get(section, "link")
+            target = SupportMatrixTarget(key, title, *name, link=link)
             targets[key] = target
 
         return targets
@@ -167,7 +159,7 @@ class SupportMatrixDirective(rst.Directive):
         features = []
 
         for section in cfg.sections():
-            if section == "targets":
+            if section.startswith("target."):
                 continue
             if not cfg.has_option(section, "title"):
                 raise Exception(
@@ -210,14 +202,12 @@ class SupportMatrixDirective(rst.Directive):
             # Now we've got the basic feature details, we must process
             # the backend driver implementation for each feature
             for item in cfg.options(section):
-                network_target = "networking-"
                 network_notes = "networking-notes-"
 
-                if not item.startswith(network_target):
+                if not item.startswith("networking-"):
                     continue
 
-                key = item[len(network_target):]
-                if key not in targets:
+                if item not in targets:
                     raise Exception(
                         "networking-'%s' in '[%s]' not declared" %
                         (item, section))
@@ -233,7 +223,7 @@ class SupportMatrixDirective(rst.Directive):
                 if cfg.has_option(section, notes_key):
                     notes = cfg.get(section, notes_key)
 
-                target = targets[key]
+                target = targets[item]
                 impl = SupportMatrixImplementation(status, notes)
                 feature.implementations[target.key] = impl
 
@@ -299,7 +289,15 @@ class SupportMatrixDirective(rst.Directive):
             target = matrix.targets[key]
             implcol = nodes.entry()
             header.append(implcol)
-            implcol.append(nodes.strong(text=target.title))
+            if target.link:
+                uri = target.link
+                target_ref = nodes.reference("", refuri=uri)
+                target_txt = nodes.inline()
+                implcol.append(target_txt)
+                target_txt.append(target_ref)
+                target_ref.append(nodes.strong(text=target.title))
+            else:
+                implcol.append(nodes.strong(text=target.title))
 
         # We now produce the body of the table, one row for
         # each feature to report on
