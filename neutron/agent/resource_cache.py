@@ -190,6 +190,9 @@ class RemoteResourceCache(object):
         LOG.debug("Resource %s deleted: %s", rtype, resource_id)
         # TODO(kevinbenton): we need a way to expire items from the set at
         # some TTL so it doesn't grow indefinitely with churn
+        if resource_id in self._deleted_ids_by_type[rtype]:
+            LOG.debug("Skipped duplicate delete event for %s", resource_id)
+            return
         self._deleted_ids_by_type[rtype].add(resource_id)
         existing = self._type_cache(rtype).pop(resource_id, None)
         # local notification for agent internals to subscribe to
