@@ -33,7 +33,6 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 
 from neutron._i18n import _LE, _LI
-from neutron.callbacks import events as n_events
 from neutron.common import config
 from neutron.common import profiler
 from neutron.common import rpc as n_rpc
@@ -264,8 +263,7 @@ def _start_workers(workers):
 def start_all_workers():
     workers = _get_rpc_workers() + _get_plugins_workers()
     launcher = _start_workers(workers)
-    # TODO(yamahata): replace n_events with neutron_lib.callback.events
-    registry.notify(resources.PROCESS, n_events.AFTER_SPAWN, None)
+    registry.notify(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
 
 

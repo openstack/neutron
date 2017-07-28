@@ -15,11 +15,11 @@
 
 import mock
 
+from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from oslo_config import cfg
 
-from neutron.callbacks import events as n_events
 from neutron import service
 from neutron.tests import base
 from neutron.tests.unit import test_wsgi
@@ -66,8 +66,7 @@ class TestRunWsgiApp(base.BaseTestCase):
         mock.patch.object(service, '_start_workers').start()
 
         callback = mock.Mock()
-        # TODO(yamahata): replace n_events with neutron_lib.callback.events
-        registry.subscribe(callback, resources.PROCESS, n_events.AFTER_SPAWN)
+        registry.subscribe(callback, resources.PROCESS, events.AFTER_SPAWN)
         service.start_all_workers()
         callback.assert_called_once_with(
-            resources.PROCESS, n_events.AFTER_SPAWN, mock.ANY)
+            resources.PROCESS, events.AFTER_SPAWN, mock.ANY)
