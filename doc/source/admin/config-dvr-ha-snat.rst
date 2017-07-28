@@ -113,7 +113,7 @@ Network nodes
 -------------
 
 #. Configure the Open vSwitch agent. Add the following to
-   ``/etc/neutron/plugins/ml2/ml2_conf.ini``:
+   ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``:
 
    .. code-block:: ini
 
@@ -148,7 +148,7 @@ Compute nodes
 -------------
 
 #. Configure the Open vSwitch agent. Add the following to
-   ``/etc/neutron/plugins/ml2/ml2_conf.ini``:
+   ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``:
 
    .. code-block:: ini
 
