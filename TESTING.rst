@@ -386,6 +386,20 @@ https://docs.openstack.org/tempest/latest/field_guide/scenario.html
 Scenario tests, like API tests, are split between the Tempest and Neutron
 repositories according to the Neutron API the test is targeting.
 
+Some scenario tests require advanced ``Glance`` images (for example, ``Ubuntu``
+or ``CentOS``) in order to pass. Those tests are skipped by default. To enable
+them, make sure ``tempest.conf`` is configured to use an advanced image, and
+then set the following in ``tempest`` configuration file::
+
+.. code-block:: ini
+
+    [neutron_plugin_options]
+    image_is_advanced = True
+
+Specific test requirements for advanced images are:
+
+#. ``test_trunk`` requires ``802.11q`` kernel module loaded.
+
 Rally Tests
 ~~~~~~~~~~~
 

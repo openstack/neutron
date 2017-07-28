@@ -18,6 +18,7 @@ from tempest.common import waiters
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest import test
+import testtools
 
 from neutron.common import utils
 from neutron.tests.tempest.common import ssh
@@ -221,6 +222,9 @@ class TrunkTest(base.BaseTempestTestCase):
                                 CONF.validation.image_ssh_user,
                                 self.keypair['private_key'])
 
+    @testtools.skipUnless(
+          CONF.neutron_plugin_options.image_is_advanced,
+          "Advanced image is required to run this test.")
     @decorators.idempotent_id('a8a02c9b-b453-49b5-89a2-cce7da66aafb')
     def test_subport_connectivity(self):
         vlan_tag = 10

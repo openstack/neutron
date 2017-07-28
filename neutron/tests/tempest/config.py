@@ -30,6 +30,10 @@ NeutronPluginOptions = [
                 default=[],
                 help='List of network types available to neutron, '
                      'e.g. vxlan,vlan,gre.'),
+    cfg.BoolOpt('image_is_advanced',
+                default=False,
+                help='Image that supports features that cirros does not, like'
+                     ' Ubuntu or CentOS supporting advanced features'),
 ]
 
 # TODO(amuller): Redo configuration options registration as part of the planned
