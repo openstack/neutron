@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import address_scope as apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib import constants
+from neutron_lib.exceptions import address_scope as api_err
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
@@ -44,7 +46,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
     def _get_address_scope(self, context, id):
         obj = obj_addr_scope.AddressScope.get_object(context, id=id)
         if obj is None:
-            raise ext_address_scope.AddressScopeNotFound(address_scope_id=id)
+            raise api_err.AddressScopeNotFound(address_scope_id=id)
         return obj
 
     def is_address_scope_owned_by_tenant(self, context, id):
@@ -84,7 +86,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         address_scope = self._get_address_scope(context, id)
         if address_scope.shared and not a_s.get('shared', True):
             reason = _("Shared address scope can't be unshared")
-            raise ext_address_scope.AddressScopeUpdateError(
+            raise api_err.AddressScopeUpdateError(
                 address_scope_id=id, reason=reason)
 
         address_scope.update_fields(a_s)
@@ -114,24 +116,24 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         with db_api.context_manager.writer.using(context):
             if subnetpool_obj.SubnetPool.get_objects(context,
                                                      address_scope_id=id):
-                raise ext_address_scope.AddressScopeInUse(address_scope_id=id)
+                raise api_err.AddressScopeInUse(address_scope_id=id)
             address_scope = self._get_address_scope(context, id)
             address_scope.delete()
 
     @staticmethod
     @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_network_dict_address_scope(network_res, network_db):
-        network_res[ext_address_scope.IPV4_ADDRESS_SCOPE] = None
-        network_res[ext_address_scope.IPV6_ADDRESS_SCOPE] = None
+        network_res[apidef.IPV4_ADDRESS_SCOPE] = None
+        network_res[apidef.IPV6_ADDRESS_SCOPE] = None
         subnetpools = {subnet.subnetpool for subnet in network_db.subnets
                        if subnet.subnetpool}
         for subnetpool in subnetpools:
             # A network will be constrained to only one subnetpool per address
             # family. Retrieve the address scope of subnetpools as the address
             # scopes of network.
-            as_id = subnetpool[ext_address_scope.ADDRESS_SCOPE_ID]
+            as_id = subnetpool[apidef.ADDRESS_SCOPE_ID]
             if subnetpool['ip_version'] == constants.IP_VERSION_4:
-                network_res[ext_address_scope.IPV4_ADDRESS_SCOPE] = as_id
+                network_res[apidef.IPV4_ADDRESS_SCOPE] = as_id
             if subnetpool['ip_version'] == constants.IP_VERSION_6:
-                network_res[ext_address_scope.IPV6_ADDRESS_SCOPE] = as_id
+                network_res[apidef.IPV6_ADDRESS_SCOPE] = as_id
         return network_res

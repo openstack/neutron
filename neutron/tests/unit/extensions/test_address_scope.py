@@ -16,6 +16,7 @@ import contextlib
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import address_scope as apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -41,7 +42,7 @@ class AddressScopeTestExtensionManager(object):
         # initialize the main API router which extends
         # the global attribute map
         attr.RESOURCE_ATTRIBUTE_MAP.update(
-            ext_address_scope.RESOURCE_ATTRIBUTE_MAP)
+            apidef.RESOURCE_ATTRIBUTE_MAP)
         return ext_address_scope.Address_scope.get_resources()
 
     def get_actions(self):
@@ -433,8 +434,8 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
     def test_network_create_contain_address_scope_attr(self):
         with self.network() as network:
             result = self._show('networks', network['network']['id'])
-            keys = [ext_address_scope.IPV4_ADDRESS_SCOPE,
-                    ext_address_scope.IPV6_ADDRESS_SCOPE]
+            keys = [apidef.IPV4_ADDRESS_SCOPE,
+                    apidef.IPV6_ADDRESS_SCOPE]
             for k in keys:
                 # Correlated address scopes should initially be None
                 self.assertIsNone(result['network'][k])
@@ -471,10 +472,10 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
             result = self._show('networks', network['network']['id'])
             self.assertEqual(
                 v4_as_id,
-                result['network'][ext_address_scope.IPV4_ADDRESS_SCOPE])
+                result['network'][apidef.IPV4_ADDRESS_SCOPE])
             self.assertEqual(
                 v6_as_id,
-                result['network'][ext_address_scope.IPV6_ADDRESS_SCOPE])
+                result['network'][apidef.IPV6_ADDRESS_SCOPE])
 
     def test_delete_address_scope_in_use(self):
         with self.address_scope(name='foo-address-scope') as addr_scope:
