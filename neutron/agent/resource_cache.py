@@ -172,8 +172,10 @@ class RemoteResourceCache(object):
                       rtype, resource.id)
             return
         if existing:
-            LOG.debug("Resource %s %s updated. Old fields: %s New fields: %s",
-                      rtype, existing.id,
+            LOG.debug("Resource %s %s updated (revision_number %s->%s). "
+                      "Old fields: %s New fields: %s",
+                      rtype, existing.id, existing.revision_number,
+                      resource.revision_number,
                       {f: existing.get(f) for f in changed_fields},
                       {f: resource.get(f) for f in changed_fields})
         else:
