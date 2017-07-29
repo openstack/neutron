@@ -296,7 +296,7 @@ class Service(service.Service):
         # errors, go ahead and ignore them.. as we're shutting down anyway
         try:
             self.conn.close()
-        except Exception:
+        except Exception:  # nosec
             pass
         super(Service, self).stop()
 
