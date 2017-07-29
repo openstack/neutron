@@ -110,10 +110,7 @@ class TestNeutronServer(base.BaseTestCase):
 
         def safe_ppid(proc):
             try:
-                if psutil.version_info[0] == 1:
-                    return proc.ppid
-                else:
-                    return proc.ppid()
+                return proc.ppid()
             except psutil.NoSuchProcess:
                 return None
 

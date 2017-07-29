@@ -150,7 +150,7 @@ test execution.
 
 ::
 
- psutil>=1.1.1,<2.0.0
+ psutil>=3.2.2 # BSD
  psycopg2
  PyMySQL>=0.6.2  # MIT License
 
