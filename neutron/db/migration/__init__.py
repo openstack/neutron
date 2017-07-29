@@ -165,7 +165,7 @@ def alter_enum(table, column, enum_type, nullable, do_drop=True,
         op.execute("ALTER TABLE %(table)s RENAME COLUMN %(column)s TO "
                    "old_%(column)s" % values)
         op.add_column(table, sa.Column(column, enum_type, nullable=nullable))
-        op.execute("UPDATE %(table)s SET %(column)s = "
+        op.execute("UPDATE %(table)s SET %(column)s = "  # nosec
                    "old_%(column)s::text::%(name)s" % values)
         op.execute("ALTER TABLE %(table)s DROP COLUMN old_%(column)s" % values)
         if do_drop:
