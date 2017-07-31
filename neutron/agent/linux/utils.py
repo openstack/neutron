@@ -149,8 +149,6 @@ def execute(cmd, process_input=None, addl_env=None,
                 LOG.error(msg)
             if check_exit_code:
                 raise ProcessExecutionError(msg, returncode=returncode)
-        else:
-            LOG.debug("Exit code: %d", returncode)
 
     finally:
         # NOTE(termie): this appears to be necessary to let the subprocess
