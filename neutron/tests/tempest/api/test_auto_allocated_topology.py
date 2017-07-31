@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import auto_allocated_topology
 from oslo_config import cfg
 from tempest.lib import decorators
 
@@ -30,7 +31,7 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
     # all tests are added under TestAutoAllocatedTopology,
     # nothing bad should happen.
     force_tenant_isolation = True
-    required_extensions = ['auto-allocated-topology']
+    required_extensions = [auto_allocated_topology.ALIAS]
 
     @classmethod
     def resource_setup(cls):
@@ -84,7 +85,7 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
         self.assertEqual((0, 0, 0), resources_before)
 
         body = self.client.get_auto_allocated_topology()
-        topology = body['auto_allocated_topology']
+        topology = body[auto_allocated_topology.RESOURCE_NAME]
         self.assertIsNotNone(topology)
         self._add_topology_cleanup(self.client)
 
@@ -97,7 +98,7 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
         self.assertEqual((1, self.num_subnetpools, 1), resources_after1)
 
         body = self.client.get_auto_allocated_topology()
-        topology = body['auto_allocated_topology']
+        topology = body[auto_allocated_topology.RESOURCE_NAME]
         network_id2 = topology['id']
         resources_after2 = self._count_topology_resources()
         # After the initial GET, the API should be idempotent
@@ -109,7 +110,7 @@ class TestAutoAllocatedTopology(base.BaseAdminNetworkTest):
         resources_before = self._count_topology_resources()
         self.assertEqual((0, 0, 0), resources_before)
         body = self.client.get_auto_allocated_topology()
-        topology = body['auto_allocated_topology']
+        topology = body[auto_allocated_topology.RESOURCE_NAME]
         self.assertIsNotNone(topology)
         self.client.delete_auto_allocated_topology()
         resources_after = self._count_topology_resources()
