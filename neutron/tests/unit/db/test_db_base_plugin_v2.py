@@ -58,6 +58,7 @@ from neutron.db import rbac_db_models
 from neutron.db import standard_attr
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
+from neutron.objects import router as l3_obj
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
@@ -4620,18 +4621,18 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     with db_api.context_manager.writer.using(ctx):
                         router = l3_models.Router()
                         ctx.session.add(router)
-                    with db_api.context_manager.writer.using(ctx):
-                        rp = l3_models.RouterPort(router_id=router.id,
-                                                  port_id=port['port']['id'])
-                        ctx.session.add(rp)
+                    rp = l3_obj.RouterPort(ctx, router_id=router.id,
+                                           port_id=port['port']['id'])
+                    rp.create()
+
                     data = {'subnet': {'gateway_ip': '10.0.0.99'}}
                     req = self.new_update_request('subnets', data,
                                                   s['id'])
                     res = req.get_response(self.api)
                     self.assertEqual(409, res.status_int)
                     # should work fine if it's not a router port
+                    rp.delete()
                     with db_api.context_manager.writer.using(ctx):
-                        ctx.session.delete(rp)
                         ctx.session.delete(router)
                     res = req.get_response(self.api)
                     self.assertEqual(res.status_int, 200)

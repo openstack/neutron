@@ -16,11 +16,13 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
 
+from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db.models import dvr as dvr_models
 from neutron.db.models import l3
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent as rb_model
+from neutron.db import models_v2
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import base
 from neutron.objects import common_types
@@ -135,6 +137,19 @@ class RouterPort(base.NeutronDbObject):
         'port_id': common_types.UUIDField(),
         'port_type': obj_fields.StringField(nullable=True),
     }
+
+    @classmethod
+    def get_router_ids_by_subnetpool(cls, context, subnetpool_id):
+        query = context.session.query(l3.RouterPort.router_id)
+        query = query.join(models_v2.Port)
+        query = query.join(
+            models_v2.Subnet,
+            models_v2.Subnet.network_id == models_v2.Port.network_id)
+        query = query.filter(
+            models_v2.Subnet.subnetpool_id == subnetpool_id,
+            l3.RouterPort.port_type.in_(n_const.ROUTER_PORT_OWNERS))
+        query = query.distinct()
+        return [r[0] for r in query]
 
 
 @obj_base.VersionedObjectRegistry.register
