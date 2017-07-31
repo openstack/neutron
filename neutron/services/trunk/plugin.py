@@ -433,3 +433,23 @@ class TrunkPlugin(service_base.ServicePluginBase):
             self.update_trunk(
                 context, trunk_id,
                 {'trunk': {'status': constants.TRUNK_DOWN_STATUS}})
+
+    @registry.receives(trunk_apidef.TRUNK,
+                       [events.AFTER_CREATE, events.AFTER_DELETE])
+    @registry.receives(resources.SUBPORTS,
+                       [events.AFTER_CREATE, events.AFTER_DELETE])
+    def _process_subport_device_id_event(self, resource, event,
+                                        trunk_plugin, payload):
+        context = payload.context
+        if resource == resources.SUBPORTS:
+            subports = payload.subports
+            trunk = payload.original_trunk
+        elif resource == trunk_apidef.TRUNK:
+            trunk = payload.current_trunk or payload.original_trunk
+            subports = trunk.sub_ports
+        if subports and trunk:
+            core_plugin = directory.get_plugin()
+            device_id = trunk.id if event == events.AFTER_CREATE else ''
+            for subport in subports:
+                core_plugin.update_port(context, subport.port_id,
+                                        {'port': {'device_id': device_id}})

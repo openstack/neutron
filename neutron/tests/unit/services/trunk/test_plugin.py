@@ -345,6 +345,40 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(final_trunk_status, current_trunk.status)
         return trunk, current_trunk
 
+    def test__process_subport_device_id_event(self):
+        plugin = directory.get_plugin()
+        with self.port() as parent_port, self.port() as child_port1:
+            with self.port() as child_port2:
+                subport1 = create_subport_dict(child_port1['port']['id'])
+                trunk = self._create_test_trunk(parent_port,
+                                                subports=[subport1])
+                child_port1 = plugin.get_port(self.context,
+                                              child_port1['port']['id'])
+                self.assertEqual(trunk['id'], child_port1['device_id'])
+
+                subport2 = {
+                    'segmentation_type': 'vlan',
+                    'segmentation_id': 321,
+                    'port_id': child_port2['port']['id']
+                }
+                self.trunk_plugin.add_subports(self.context, trunk['id'],
+                                               {'sub_ports': [subport2]})
+                child_port2 = plugin.get_port(self.context,
+                                              child_port2['port']['id'])
+                self.assertEqual(trunk['id'], child_port2['device_id'])
+
+                trunk = self.trunk_plugin.remove_subports(
+                    self.context, trunk['id'],
+                    {'sub_ports': [{'port_id': child_port2['id']}]})
+                child_port2 = plugin.get_port(self.context,
+                                              child_port2['id'])
+                self.assertEqual('', child_port2['device_id'])
+
+                self.trunk_plugin.delete_trunk(self.context, trunk['id'])
+                child_port1 = plugin.get_port(self.context,
+                                              child_port1['id'])
+                self.assertEqual('', child_port1['device_id'])
+
 
 class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
 
