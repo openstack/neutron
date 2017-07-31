@@ -54,8 +54,8 @@ class TestFipRulePriorityAllocator(base.BaseTestCase):
 
     def test__init__(self):
         _frpa = frpa.FipRulePriorityAllocator(self.data_store_path,
-                                            self.priority_rule_start,
-                                            self.priority_rule_end)
+                                              self.priority_rule_start,
+                                              self.priority_rule_end)
         self.assertEqual(self.data_store_path, _frpa.state_file)
         self.assertEqual(frpa.FipPriority, _frpa.ItemClass)
         self.assertEqual(100, len(_frpa.pool))

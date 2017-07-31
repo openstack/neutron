@@ -149,25 +149,25 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.snat_ports = [{'subnets': [{'cidr': '152.2.0.0/16',
                                          'gateway_ip': '152.2.0.1',
                                          'id': subnet_id_1}],
-                           'network_id': _uuid(),
-                           'device_owner':
-                           lib_constants.DEVICE_OWNER_ROUTER_SNAT,
-                           'mac_address': 'fa:16:3e:80:8d:80',
-                           'fixed_ips': [{'subnet_id': subnet_id_1,
-                                          'ip_address': '152.2.0.13',
-                                          'prefixlen': 16}],
-                           'id': _uuid(), 'device_id': _uuid()},
-                          {'subnets': [{'cidr': '152.10.0.0/16',
-                                        'gateway_ip': '152.10.0.1',
-                                        'id': subnet_id_2}],
-                           'network_id': _uuid(),
-                           'device_owner':
-                           lib_constants.DEVICE_OWNER_ROUTER_SNAT,
-                           'mac_address': 'fa:16:3e:80:8d:80',
-                           'fixed_ips': [{'subnet_id': subnet_id_2,
-                                         'ip_address': '152.10.0.13',
-                                         'prefixlen': 16}],
-                           'id': _uuid(), 'device_id': _uuid()}]
+                            'network_id': _uuid(),
+                            'device_owner':
+                            lib_constants.DEVICE_OWNER_ROUTER_SNAT,
+                            'mac_address': 'fa:16:3e:80:8d:80',
+                            'fixed_ips': [{'subnet_id': subnet_id_1,
+                                           'ip_address': '152.2.0.13',
+                                           'prefixlen': 16}],
+                            'id': _uuid(), 'device_id': _uuid()},
+                           {'subnets': [{'cidr': '152.10.0.0/16',
+                                         'gateway_ip': '152.10.0.1',
+                                         'id': subnet_id_2}],
+                            'network_id': _uuid(),
+                            'device_owner':
+                            lib_constants.DEVICE_OWNER_ROUTER_SNAT,
+                            'mac_address': 'fa:16:3e:80:8d:80',
+                            'fixed_ips': [{'subnet_id': subnet_id_2,
+                                           'ip_address': '152.10.0.13',
+                                           'prefixlen': 16}],
+                            'id': _uuid(), 'device_id': _uuid()}]
 
         self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': self.mock_driver}
@@ -343,10 +343,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = 'dvr_snat'
         dvr_ha_router = {'id': _uuid(),
-                      'external_gateway_info': {},
-                      'routes': [],
-                      'distributed': True,
-                      'ha': True}
+                         'external_gateway_info': {},
+                         'routes': [],
+                         'distributed': True,
+                         'ha': True}
         dvr_router = {'id': _uuid(),
                       'external_gateway_info': {},
                       'routes': [],
@@ -468,12 +468,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.host = HOSTNAME
         agent.conf.agent_mode = 'dvr_snat'
         sn_port = {'fixed_ips': [{'ip_address': '20.0.0.31',
-                                 'subnet_id': _uuid()}],
-                  'subnets': [{'gateway_ip': '20.0.0.1'}],
-                  'extra_subnets': [{'cidr': '172.16.0.0/24'}],
-                  'id': _uuid(),
-                  'network_id': _uuid(),
-                  'mac_address': 'ca:fe:de:ad:be:ef'}
+                                  'subnet_id': _uuid()}],
+                   'subnets': [{'gateway_ip': '20.0.0.1'}],
+                   'extra_subnets': [{'cidr': '172.16.0.0/24'}],
+                   'id': _uuid(),
+                   'network_id': _uuid(),
+                   'mac_address': 'ca:fe:de:ad:be:ef'}
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'prefixlen': 24,
                                      'subnet_id': _uuid()}],
@@ -1153,13 +1153,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 {'ip_address': '20.0.0.30',
                  'prefixlen': 24,
                  'subnet_id': subnet_id}],
-             'subnets': [
-                 {'id': subnet_id,
-                  'cidr': '20.0.0.0/24',
-                  'gateway_ip': '20.0.0.1'}],
-             'id': _uuid(),
-             'network_id': fake_network_id,
-             'mac_address': 'ca:fe:de:ad:be:ef'}]
+              'subnets': [
+                  {'id': subnet_id,
+                   'cidr': '20.0.0.0/24',
+                   'gateway_ip': '20.0.0.1'}],
+              'id': _uuid(),
+              'network_id': fake_network_id,
+              'mac_address': 'ca:fe:de:ad:be:ef'}]
         )
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
@@ -1175,7 +1175,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.fip_ns.create_rtr_2_fip_link = mock.Mock()
         with mock.patch.object(ri, 'get_floating_ips') as fips, \
                 mock.patch.object(ri.fip_ns,
-                               'create') as create_fip, \
+                                  'create') as create_fip, \
                 mock.patch.object(ri, 'get_floating_agent_gw_interface'
                                   ) as fip_gw_port:
             fips.return_value = fake_floatingips
@@ -1262,13 +1262,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 {'ip_address': '20.0.0.30',
                  'prefixlen': 24,
                  'subnet_id': subnet_id}],
-             'subnets': [
-                 {'id': subnet_id,
-                  'cidr': '20.0.0.0/24',
-                  'gateway_ip': '20.0.0.1'}],
-             'id': _uuid(),
-             'network_id': fake_network_id,
-             'mac_address': 'ca:fe:de:ad:be:ef'}]
+              'subnets': [
+                  {'id': subnet_id,
+                   'cidr': '20.0.0.0/24',
+                   'gateway_ip': '20.0.0.1'}],
+              'id': _uuid(),
+              'network_id': fake_network_id,
+              'mac_address': 'ca:fe:de:ad:be:ef'}]
         )
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
@@ -1312,13 +1312,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 {'ip_address': '20.0.0.30',
                  'prefixlen': 24,
                  'subnet_id': 'subnet_id'}],
-             'subnets': [
-                 {'id': 'subnet_id',
-                  'cidr': '20.0.0.0/24',
-                  'gateway_ip': '20.0.0.1'}],
-             'id': _uuid(),
-             'network_id': 'fake_network_id',
-             'mac_address': 'ca:fe:de:ad:be:ef'}]
+              'subnets': [
+                  {'id': 'subnet_id',
+                   'cidr': '20.0.0.0/24',
+                   'gateway_ip': '20.0.0.1'}],
+              'id': _uuid(),
+              'network_id': 'fake_network_id',
+              'mac_address': 'ca:fe:de:ad:be:ef'}]
         )
 
         router = l3_test_common.prepare_router_data(enable_snat=True)
