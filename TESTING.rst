@@ -389,12 +389,12 @@ repositories according to the Neutron API the test is targeting.
 Some scenario tests require advanced ``Glance`` images (for example, ``Ubuntu``
 or ``CentOS``) in order to pass. Those tests are skipped by default. To enable
 them, make sure ``tempest.conf`` is configured to use an advanced image, and
-then set the following in ``tempest`` configuration file::
+then set the following in ``tempest`` configuration file:
 
-.. code-block:: ini
+   .. code-block:: ini
 
-    [neutron_plugin_options]
-    image_is_advanced = True
+      [neutron_plugin_options]
+      image_is_advanced = True
 
 Specific test requirements for advanced images are:
 
@@ -551,10 +551,8 @@ When running full-stack tests on a clean VM for the first time, we
 advise to run ./stack.sh successfully to make sure all Neutron's
 dependencies are met. Full-stack based Neutron daemons produce logs to a
 sub-folder in /opt/stack/logs/dsvm-fullstack-logs (for example, a test named
-"test_example" will produce logs to /opt/stack/logs/dsvm-fullstack-logs/test_example/),
+"test_example" will produce logs to /opt/stack/logs/dsvm-fullstack-logs/test_example.log),
 so that will be a good place to look if your test is failing.
-Logging from the test infrastructure itself is placed in:
-/opt/stack/logs/dsvm-fullstack-logs/test_example.log.
 Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
 the test machine is available for its usage.
 
@@ -585,7 +583,8 @@ For example, the following would run only a single test or test case::
       $ tox -e py27 neutron.tests.unit.test_manager.NeutronManagerTestCase.test_service_plugin_is_loaded
 
 If you want to pass other arguments to ostestr, you can do the following::
-      $ tox -e -epy27 -- --regex neutron.tests.unit.test_manager --serial
+
+      $ tox -e py27 -- --regex neutron.tests.unit.test_manager --serial
 
 
 Coverage
