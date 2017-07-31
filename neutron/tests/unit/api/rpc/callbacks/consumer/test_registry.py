@@ -18,9 +18,6 @@ from neutron.tests import base
 
 class ConsumerRegistryTestCase(base.BaseTestCase):
 
-    def setUp(self):
-        super(ConsumerRegistryTestCase, self).setUp()
-
     def test__get_manager_is_singleton(self):
         self.assertIs(registry._get_manager(), registry._get_manager())
 

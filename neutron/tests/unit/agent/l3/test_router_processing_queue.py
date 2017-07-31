@@ -26,8 +26,6 @@ FAKE_ID_2 = _uuid()
 
 
 class TestExclusiveRouterProcessor(base.BaseTestCase):
-    def setUp(self):
-        super(TestExclusiveRouterProcessor, self).setUp()
 
     def test_i_am_master(self):
         master = l3_queue.ExclusiveRouterProcessor(FAKE_ID)

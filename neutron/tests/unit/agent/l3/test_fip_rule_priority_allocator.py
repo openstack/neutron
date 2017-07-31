@@ -17,9 +17,6 @@ from neutron.tests import base
 
 
 class TestFipPriority(base.BaseTestCase):
-    def setUp(self):
-        super(TestFipPriority, self).setUp()
-
     def test__init__(self):
         test_pr = frpa.FipPriority(10)
         self.assertEqual(10, test_pr.index)

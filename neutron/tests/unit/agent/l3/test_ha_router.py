@@ -25,8 +25,6 @@ _uuid = uuidutils.generate_uuid
 
 
 class TestBasicRouterOperations(base.BaseTestCase):
-    def setUp(self):
-        super(TestBasicRouterOperations, self).setUp()
 
     def _create_router(self, router=None, **kwargs):
         if not router:

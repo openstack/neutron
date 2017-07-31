@@ -240,9 +240,6 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
 class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
     """Test timestamp_db.TimeStamp_db_mixin()"""
 
-    def setUp(self):
-        super(TimeStampDBMixinTestCase, self).setUp()
-
     def _save_network(self, network_id):
         ctx = context.get_admin_context()
         with ctx.session.begin(subtransactions=True):

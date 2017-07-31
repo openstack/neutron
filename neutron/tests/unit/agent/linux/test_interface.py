@@ -595,9 +595,6 @@ class TestBridgeInterfaceDriver(TestBase):
 
 class TestIVSInterfaceDriver(TestBase):
 
-    def setUp(self):
-        super(TestIVSInterfaceDriver, self).setUp()
-
     def test_get_device_name(self):
         br = interface.IVSInterfaceDriver(self.conf)
         device_name = br.get_device_name(FakePort())

@@ -187,9 +187,6 @@ class TestAddressRequest(base.BaseTestCase):
 
     EUI64 = ipam_req.AutomaticAddressRequest.EUI64
 
-    def setUp(self):
-        super(TestAddressRequest, self).setUp()
-
     def test_specific_address_ipv6(self):
         request = ipam_req.SpecificAddressRequest('2000::45')
         self.assertEqual(netaddr.IPAddress('2000::45'), request.address)
