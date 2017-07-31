@@ -71,6 +71,16 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         self._pullmock.bulk_pull.assert_called_once_with(
             mock.ANY, 'goose', filter_kwargs={'id': (67, )})
 
+    def test_bulk_pull_doesnt_wipe_out_newer_data(self):
+        self.rcache.record_resource_update(
+            self.ctx, 'goose', OVOLikeThing(1, revision_number=5))
+        updated = OVOLikeThing(1)
+        updated.revision_number = 1  # older revision number
+        self._pullmock.bulk_pull.return_value = [updated]
+        self.rcache._flood_cache_for_query('goose', id=(1,),)
+        self.assertEqual(
+             5, self.rcache.get_resource_by_id('goose', 1).revision_number)
+
     def test_get_resources(self):
         geese = [OVOLikeThing(3, size='large'), OVOLikeThing(5, size='medium'),
                  OVOLikeThing(4, size='large'), OVOLikeThing(6, size='small')]
