@@ -42,6 +42,7 @@ EXTRA_LOG_LEVEL_DEFAULTS = [
     'OfctlService=INFO',
     'ryu.base.app_manager=INFO',
     'ryu.controller.controller=INFO',
+    'ovsdbapp.backend.ovs_idl.vlog=INFO'
 ]
 
 # Register the configuration options
