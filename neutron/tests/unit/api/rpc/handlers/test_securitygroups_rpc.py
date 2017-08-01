@@ -13,8 +13,15 @@
 #    under the License.
 
 import mock
+from neutron_lib import context
+from oslo_utils import uuidutils
 
+from neutron.agent import resource_cache
+from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc
+from neutron import objects
+from neutron.objects import ports
+from neutron.objects import securitygroup
 from neutron.tests import base
 
 
@@ -57,3 +64,94 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
         self.rpc.security_groups_provider_updated(None)
         # this is now a NOOP on the agent side. provider rules don't change
         self.assertFalse(self.rpc.sg_agent.called)
+
+
+class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(SecurityGroupServerAPIShimTestCase, self).setUp()
+        objects.register_objects()
+        resource_types = [resources.PORT, resources.SECURITYGROUP,
+                          resources.SECURITYGROUPRULE]
+        self.rcache = resource_cache.RemoteResourceCache(resource_types)
+        # prevent any server lookup attempts
+        mock.patch.object(self.rcache, '_flood_cache_for_query').start()
+        self.shim = securitygroups_rpc.SecurityGroupServerAPIShim(self.rcache)
+        self.sg_agent = mock.Mock()
+        self.shim.register_legacy_sg_notification_callbacks(self.sg_agent)
+        self.ctx = context.get_admin_context()
+
+    def _make_port_ovo(self, ip, **kwargs):
+        attrs = {'id': uuidutils.generate_uuid(),
+                 'network_id': uuidutils.generate_uuid(),
+                 'security_group_ids': set(),
+                 'device_owner': 'compute:None',
+                 'allowed_address_pairs': []}
+        attrs['fixed_ips'] = [ports.IPAllocation(
+            port_id=attrs['id'], subnet_id=uuidutils.generate_uuid(),
+            network_id=attrs['network_id'], ip_address=ip)]
+        attrs.update(**kwargs)
+        p = ports.Port(self.ctx, **attrs)
+        self.rcache.record_resource_update(self.ctx, 'Port', p)
+        return p
+
+    def _make_security_group_ovo(self, **kwargs):
+        attrs = {'id': uuidutils.generate_uuid(), 'revision_number': 1}
+        sg_rule = securitygroup.SecurityGroupRule(
+            id=uuidutils.generate_uuid(),
+            security_group_id=attrs['id'],
+            direction='ingress',
+            ethertype='IPv4', protocol='tcp',
+            port_range_min=400,
+            remote_group_id=attrs['id'],
+            revision_number=1,
+        )
+        attrs['rules'] = [sg_rule]
+        attrs.update(**kwargs)
+        sg = securitygroup.SecurityGroup(self.ctx, **attrs)
+        self.rcache.record_resource_update(self.ctx, 'SecurityGroup', sg)
+        return sg
+
+    def test_sg_parent_ops_affect_rules(self):
+        s1 = self._make_security_group_ovo()
+        filters = {'security_group_id': (s1.id, )}
+        self.assertEqual(
+            s1.rules,
+            self.rcache.get_resources('SecurityGroupRule', filters))
+        self.sg_agent.security_groups_rule_updated.assert_called_once_with(
+            [s1.id])
+        self.sg_agent.security_groups_rule_updated.reset_mock()
+        self.rcache.record_resource_delete(self.ctx, 'SecurityGroup', s1.id)
+        self.assertEqual(
+            [],
+            self.rcache.get_resources('SecurityGroupRule', filters))
+        self.sg_agent.security_groups_rule_updated.assert_called_once_with(
+            [s1.id])
+
+    def test_security_group_info_for_devices(self):
+        s1 = self._make_security_group_ovo()
+        p1 = self._make_port_ovo(ip='1.1.1.1', security_group_ids={s1.id})
+        p2 = self._make_port_ovo(ip='2.2.2.2', security_group_ids={s1.id})
+        p3 = self._make_port_ovo(ip='3.3.3.3', security_group_ids={s1.id},
+                                 device_owner='network:dhcp')
+        ids = [p1.id, p2.id, p3.id]
+        info = self.shim.security_group_info_for_devices(self.ctx, ids)
+        self.assertIn('1.1.1.1', info['sg_member_ips'][s1.id]['IPv4'])
+        self.assertIn('2.2.2.2', info['sg_member_ips'][s1.id]['IPv4'])
+        self.assertIn('3.3.3.3', info['sg_member_ips'][s1.id]['IPv4'])
+        self.assertIn(p1.id, info['devices'].keys())
+        self.assertIn(p2.id, info['devices'].keys())
+        # P3 is a trusted port so it doesn't have rules
+        self.assertNotIn(p3.id, info['devices'].keys())
+        self.assertEqual([s1.id], list(info['security_groups'].keys()))
+
+    def test_sg_member_update_events(self):
+        s1 = self._make_security_group_ovo()
+        p1 = self._make_port_ovo(ip='1.1.1.1', security_group_ids={s1.id})
+        self._make_port_ovo(ip='2.2.2.2', security_group_ids={s1.id})
+        self.sg_agent.security_groups_member_updated.assert_called_with(
+            {s1.id})
+        self.sg_agent.security_groups_member_updated.reset_mock()
+        self.rcache.record_resource_delete(self.ctx, 'Port', p1.id)
+        self.sg_agent.security_groups_member_updated.assert_called_with(
+            {s1.id})
