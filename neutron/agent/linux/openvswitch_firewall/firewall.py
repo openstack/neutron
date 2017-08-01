@@ -160,6 +160,8 @@ class SGPortMap(object):
     def __init__(self):
         self.ports = {}
         self.sec_groups = {}
+        # Maps port_id to ofport number
+        self.unfiltered = {}
 
     def get_sg(self, sg_id):
         return self.sec_groups.get(sg_id, None)
@@ -630,12 +632,19 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
 
     def _initialize_egress_no_port_security(self, port_id):
-        ovs_port = self.get_ovs_port(port_id)
         try:
+            ovs_port = self.get_ovs_port(port_id)
             vlan_tag = self._get_port_vlan_tag(ovs_port.port_name)
         except exceptions.OVSFWTagNotFound:
             # It's a patch port, don't set anything
             return
+        except exceptions.OVSFWPortNotFound as not_found_e:
+            LOG.error("Initializing unfiltered port %(port_id)s that does not "
+                      "exist in ovsdb: %(err)s.",
+                      {'port_id': port_id,
+                       'err': not_found_e})
+            return
+        self.sg_port_map.unfiltered[port_id] = ovs_port.ofport
         self._add_flow(
             table=ovs_consts.TRANSIENT_TABLE,
             priority=100,
@@ -657,21 +666,20 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         )
 
     def _remove_egress_no_port_security(self, port_id):
-        ovs_port = self.get_ovs_port(port_id)
         try:
-            # Test if it's a patch port
-            self._get_port_vlan_tag(ovs_port.port_name)
-        except exceptions.OVSFWTagNotFound:
-            # It's a patch port, don't do anything
+            ofport = self.sg_port_map.unfiltered[port_id]
+        except KeyError:
+            LOG.debug("Port %s is not handled by the firewall.", port_id)
             return
         self._delete_flows(
             table=ovs_consts.TRANSIENT_TABLE,
-            in_port=ovs_port.ofport
+            in_port=ofport
         )
         self._delete_flows(
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
-            reg_port=ovs_port.ofport
+            reg_port=ofport
         )
+        del self.sg_port_map.unfiltered[port_id]
 
     def _initialize_egress(self, port):
         """Identify egress traffic and send it to egress base"""
