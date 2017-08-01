@@ -398,20 +398,51 @@ class FirewallTestCase(BaseFirewallTestCase):
         port_mac = self.tester.vm_mac_address
         allowed_ip = netaddr.IPAddress(self.tester.vm_ip_address) + 1
         not_allowed_ip = "%s/24" % (allowed_ip + 1)
+        allowed_mac = 'fa:16:3e:8c:84:13'
+        not_allowed_mac = 'fa:16:3e:8c:84:14'
         self.src_port_desc['allowed_address_pairs'] = [
             {'mac_address': port_mac,
+             'ip_address': "%s/32" % allowed_ip},
+            {'mac_address': allowed_mac,
              'ip_address': "%s/32" % allowed_ip}]
         allowed_ip = "%s/24" % allowed_ip
 
         self.firewall.update_port_filter(self.src_port_desc)
         self.tester.assert_connection(protocol=self.tester.ICMP,
                                       direction=self.tester.INGRESS)
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.EGRESS)
         self.tester.vm_ip_cidr = allowed_ip
         self.tester.assert_connection(protocol=self.tester.ICMP,
                                       direction=self.tester.INGRESS)
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.EGRESS)
         self.tester.vm_ip_cidr = not_allowed_ip
         self.tester.assert_no_connection(protocol=self.tester.ICMP,
                                          direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
+        self.tester.vm_mac_address = allowed_mac
+        self.tester.vm_ip_cidr = allowed_ip
+        self.tester.flush_arp_tables()
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.INGRESS)
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.EGRESS)
+        self.tester.vm_mac_address = allowed_mac
+        self.tester.vm_ip_cidr = not_allowed_ip
+        self.tester.flush_arp_tables()
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
+        self.tester.vm_mac_address = not_allowed_mac
+        self.tester.vm_ip_cidr = allowed_ip
+        self.tester.flush_arp_tables()
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.EGRESS)
 
     def test_arp_is_allowed(self):
         self.tester.assert_connection(protocol=self.tester.ARP,

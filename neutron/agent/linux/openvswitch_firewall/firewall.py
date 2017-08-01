@@ -114,6 +114,13 @@ class OFPort(object):
                 if netaddr.IPNetwork(aap['ip_address']).version == version}
 
     @property
+    def all_allowed_macs(self):
+        macs = {item[0] for item in self.allowed_pairs_v4.union(
+            self.allowed_pairs_v6)}
+        macs.add(self.mac)
+        return macs
+
+    @property
     def ipv4_addresses(self):
         return [ip_addr for ip_addr in self.fixed_ips
                 if netaddr.IPAddress(ip_addr).version == 4]
@@ -450,12 +457,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._initialize_egress_no_port_security(port['device'])
             return
         old_of_port = self.get_ofport(port)
-        of_port = self.get_or_create_ofport(port)
+        # Make sure delete old allow_address_pair MACs because
+        # allow_address_pair MACs will be updated in
+        # self.get_or_create_ofport(port)
         if old_of_port:
             LOG.error(_LE("Initializing port %s that was already "
                           "initialized."),
                       port['device'])
             self.delete_all_port_flows(old_of_port)
+        of_port = self.get_or_create_ofport(port)
         self.initialize_port_flows(of_port)
         self.add_flows_from_rules(of_port)
 
@@ -571,21 +581,22 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                         ovs_consts.BASE_EGRESS_TABLE)
         )
 
-        # Identify ingress flows after egress filtering
-        self._add_flow(
-            table=ovs_consts.TRANSIENT_TABLE,
-            priority=90,
-            dl_dst=port.mac,
-            dl_vlan='0x%x' % port.vlan_tag,
-            actions='set_field:{:d}->reg{:d},'
-                    'set_field:{:d}->reg{:d},'
-                    'strip_vlan,resubmit(,{:d})'.format(
-                        port.ofport,
-                        ovsfw_consts.REG_PORT,
-                        port.vlan_tag,
-                        ovsfw_consts.REG_NET,
-                        ovs_consts.BASE_INGRESS_TABLE),
-        )
+        # Identify ingress flows
+        for mac_addr in port.all_allowed_macs:
+            self._add_flow(
+                table=ovs_consts.TRANSIENT_TABLE,
+                priority=90,
+                dl_dst=mac_addr,
+                dl_vlan='0x%x' % port.vlan_tag,
+                actions='set_field:{:d}->reg{:d},'
+                        'set_field:{:d}->reg{:d},'
+                        'strip_vlan,resubmit(,{:d})'.format(
+                            port.ofport,
+                            ovsfw_consts.REG_PORT,
+                            port.vlan_tag,
+                            ovsfw_consts.REG_NET,
+                            ovs_consts.BASE_INGRESS_TABLE),
+            )
 
         self._initialize_egress(port)
         self._initialize_ingress(port)
@@ -753,16 +764,17 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # Fill in accept_or_ingress table by checking that traffic is ingress
         # and if not, accept it
-        self._add_flow(
-            table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
-            priority=100,
-            dl_dst=port.mac,
-            reg_net=port.vlan_tag,
-            actions='set_field:{:d}->reg{:d},resubmit(,{:d})'.format(
-                port.ofport,
-                ovsfw_consts.REG_PORT,
-                ovs_consts.BASE_INGRESS_TABLE),
-        )
+        for mac_addr in port.all_allowed_macs:
+            self._add_flow(
+                table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+                priority=100,
+                dl_dst=mac_addr,
+                reg_net=port.vlan_tag,
+                actions='set_field:{:d}->reg{:d},resubmit(,{:d})'.format(
+                    port.ofport,
+                    ovsfw_consts.REG_PORT,
+                    ovs_consts.BASE_INGRESS_TABLE),
+            )
         for ethertype in [constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6]:
             self._add_flow(
                 table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
@@ -836,7 +848,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=100,
                 reg_port=port.ofport,
-                dl_dst=port.mac,
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
@@ -850,7 +861,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=100,
             dl_type=constants.ETHERTYPE_ARP,
             reg_port=port.ofport,
-            dl_dst=port.mac,
             actions='output:{:d}'.format(port.ofport),
         )
         self._initialize_ingress_ipv6_icmp(port)
@@ -887,7 +897,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             ct_state=ovsfw_consts.OF_STATE_TRACKED,
             priority=80,
             reg_port=port.ofport,
-            dl_dst=port.mac,
             actions='resubmit(,{:d})'.format(ovs_consts.RULES_INGRESS_TABLE)
         )
 
@@ -914,7 +923,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._add_flow(
                 table=ovs_consts.RULES_INGRESS_TABLE,
                 priority=50,
-                dl_dst=port.mac,
                 reg_port=port.ofport,
                 ct_state=state,
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
@@ -995,18 +1003,17 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def delete_all_port_flows(self, port):
         """Delete all flows for given port"""
-        self._strict_delete_flow(
-            priority=90,
-            table=ovs_consts.TRANSIENT_TABLE,
-            dl_dst=port.mac,
-            dl_vlan=port.vlan_tag)
-        self._strict_delete_flow(
-            priority=100,
-            table=ovs_consts.TRANSIENT_TABLE,
-            in_port=port.ofport)
+        for mac_addr in port.all_allowed_macs:
+            self._strict_delete_flow(priority=90,
+                                     table=ovs_consts.TRANSIENT_TABLE,
+                                     dl_dst=mac_addr,
+                                     dl_vlan=port.vlan_tag)
+            self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
+                               dl_dst=mac_addr, reg_net=port.vlan_tag)
+        self._strict_delete_flow(priority=100,
+                                 table=ovs_consts.TRANSIENT_TABLE,
+                                 in_port=port.ofport)
         self._delete_flows(reg_port=port.ofport)
-        self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
-                           dl_dst=port.mac, reg_net=port.vlan_tag)
 
     def delete_flows_for_ip_addresses(
             self, ip_addresses, direction, ethertype, vlan_tag):

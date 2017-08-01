@@ -186,7 +186,6 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         rule = {'protocol': constants.PROTO_NAME_TCP}
         expected_flows = [{
             'table': ovs_consts.RULES_INGRESS_TABLE,
-            'dl_dst': self.port.mac,
             'actions': 'output:1',
             'nw_proto': constants.PROTO_NUM_TCP,
         }]
@@ -197,7 +196,6 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         rule = {'protocol': constants.PROTO_NAME_TCP}
         expected_flows = [{
             'table': ovs_consts.RULES_EGRESS_TABLE,
-            'dl_src': self.port.mac,
             'actions': 'resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
             'nw_proto': constants.PROTO_NUM_TCP,
@@ -209,7 +207,6 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         rule = {}
         expected_flows = [{
             'table': ovs_consts.RULES_EGRESS_TABLE,
-            'dl_src': self.port.mac,
             'actions': 'resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
         }]
@@ -221,7 +218,6 @@ class TestCreateProtocolFlows(base.BaseTestCase):
                 'protocol': constants.PROTO_NAME_ICMP}
         expected_flows = [{
             'table': ovs_consts.RULES_EGRESS_TABLE,
-            'dl_src': self.port.mac,
             'actions': 'resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
             'nw_proto': constants.PROTO_NUM_IPV6_ICMP,
@@ -236,7 +232,6 @@ class TestCreateProtocolFlows(base.BaseTestCase):
                 'port_range_max': 23}
         expected_flows = [{
             'table': ovs_consts.RULES_EGRESS_TABLE,
-            'dl_src': self.port.mac,
             'actions': 'resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
             'nw_proto': constants.PROTO_NUM_TCP,
@@ -353,7 +348,6 @@ class TestCreateConjFlows(base.BaseTestCase):
         conj_id = 1234
         expected_template = {
             'table': ovs_consts.RULES_INGRESS_TABLE,
-            'dl_dst': port.mac,
             'dl_type': n_const.ETHERTYPE_IPV6,
             'priority': 70,
             'conj_id': conj_id,
