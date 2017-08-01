@@ -55,6 +55,13 @@ Networking Guide
 
    admin/index
 
+Configuration Reference
+-----------------------
+.. toctree::
+   :maxdepth: 2
+
+   configuration/index
+
 CLI Reference
 -------------
 
