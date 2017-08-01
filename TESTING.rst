@@ -388,11 +388,12 @@ repositories according to the Neutron API the test is targeting.
 
 Some scenario tests require advanced ``Glance`` images (for example, ``Ubuntu``
 or ``CentOS``) in order to pass. Those tests are skipped by default. To enable
-them, make sure ``tempest.conf`` is configured to use an advanced image, and
-then set the following in ``tempest`` configuration file:
+them, include the following in ``tempest.conf``:
 
    .. code-block:: ini
 
+      [compute]
+      image_ref = <uuid of advanced image>
       [neutron_plugin_options]
       image_is_advanced = True
 
