@@ -136,19 +136,24 @@ the second security group. Ports have following attributes:
    - mac address: fa:16:3e:24:57:c7
    - security group 2: can receive icmp packets from security group 1
 
-The first ``table 0`` distinguishes the traffic to ingress or egress and loads
-to ``register 5`` value identifying port traffic.
+``table 0`` contains a low priority rule to continue packets processing in
+``table 60`` aka TRANSIENT table. ``table 0`` is left for use to other
+features that take precedence over firewall, e.g. DVR. The only requirement is
+that after feature is done with its processing, it needs to pass packets for
+processing to the TRANSIENT table. This TRANSIENT table distinguishes the
+traffic to ingress or egress and loads to ``register 5`` value identifying port
+traffic.
 Egress flow is determined by switch port number and ingress flow is determined
 by destination mac address. ``register 6`` contains port tag to isolate
 connections into separate conntrack zones.
 
 ::
 
- table=0,  priority=100,in_port=1 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
- table=0,  priority=100,in_port=2 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
- table=0,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
- table=0,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
- table=0,  priority=0 actions=NORMAL
+ table=60,  priority=100,in_port=1 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
+ table=60,  priority=100,in_port=2 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,71)
+ table=60,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:a4:22:10 actions=load:0x1->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=60,  priority=90,dl_vlan=0x284,dl_dst=fa:16:3e:24:57:c7 actions=load:0x2->NXM_NX_REG5[],load:0x284->NXM_NX_REG6[],resubmit(,81)
+ table=60,  priority=0 actions=NORMAL
 
 Following ``table 71`` implements arp spoofing protection, ip spoofing
 protection, allows traffic for obtaining ip addresses (dhcp, dhcpv6, slaac,
