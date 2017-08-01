@@ -1258,7 +1258,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         port_info['removed'] &= port_info['current']
         # retry failed devices
         port_info['added'] |= failed_devices['added']
-        LOG.debug("retrying failed devices %s", failed_devices['added'])
+        if failed_devices['added']:
+            LOG.debug("retrying failed devices %s", failed_devices['added'])
         port_info['removed'] |= failed_devices['removed']
         # Update current ports
         port_info['current'] |= port_info['added']
