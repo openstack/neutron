@@ -99,8 +99,6 @@ case $VENV in
     load_conf_hook osprofiler
     if [[ "$VENV" =~ "dsvm-scenario" ]]; then
         load_rc_hook ubuntu_image
-        # bug/1662109
-        export DEVSTACK_GATE_TEMPEST_REGEX="^(?!.*(?:neutron\.tests\.tempest\.scenario\.test_qos.*))^neutron\.tests\.tempest\.scenario\."
     fi
     if [[ "$VENV" =~ "dsvm-scenario-linuxbridge" ]]; then
         load_conf_hook iptables_verify
