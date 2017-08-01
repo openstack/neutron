@@ -639,6 +639,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
 
     def test__remove_egress_no_port_security_deletes_flow(self):
         self.mock_bridge.br.db_get_val.return_value = {'tag': TESTING_VLAN_TAG}
+        self.firewall.sg_port_map.unfiltered['port_id'] = 1
         self.firewall._remove_egress_no_port_security('port_id')
         expected_call = mock.call(
             table=ovs_consts.TRANSIENT_TABLE,
@@ -651,3 +652,23 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.mock_bridge.br.db_get_val.return_value = {}
         self.firewall._remove_egress_no_port_security('port_id')
         self.assertFalse(self.mock_bridge.br.delete_flows.called)
+
+    def test_process_trusted_ports_caches_port_id(self):
+        self.firewall.process_trusted_ports(['port_id'])
+        self.assertIn('port_id', self.firewall.sg_port_map.unfiltered)
+
+    def test_process_trusted_ports_port_not_found(self):
+        """Check that exception is not propagated outside."""
+        self.mock_bridge.br.get_vif_port_by_id.return_value = None
+        self.firewall.process_trusted_ports(['port_id'])
+        # Processing should have failed so port is not cached
+        self.assertNotIn('port_id', self.firewall.sg_port_map.unfiltered)
+
+    def test_remove_trusted_ports_clears_cached_port_id(self):
+        self.firewall.sg_port_map.unfiltered['port_id'] = 1
+        self.firewall.remove_trusted_ports(['port_id'])
+        self.assertNotIn('port_id', self.firewall.sg_port_map.unfiltered)
+
+    def test_remove_trusted_ports_not_managed_port(self):
+        """Check that exception is not propagated outside."""
+        self.firewall.remove_trusted_ports(['port_id'])
