@@ -1033,23 +1033,6 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(expected_error, data['NeutronError']['type'])
                 self.assertEqual(msg, data['NeutronError']['message'])
 
-    def test_create_port_with_too_many_fixed_ips(self):
-        with self.network() as network:
-            with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
-                fixed_ips = [{'subnet_id': subnet['subnet']['id'],
-                              'ip_address': '10.0.0.%s' % id}
-                             for id in range(3,
-                                 cfg.CONF.max_fixed_ips_per_port + 4)]
-                res = self._create_port(self.fmt,
-                                        network['network']['id'],
-                                        webob.exc.HTTPBadRequest.code,
-                                        fixed_ips=fixed_ips,
-                                        set_context=True)
-                data = self.deserialize(self.fmt, res)
-                expected_error = 'InvalidInput'
-                self.assertEqual(expected_error,
-                                 data['NeutronError']['type'])
-
     def test_create_ports_bulk_native(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk port create")
@@ -1429,32 +1412,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         self.check_update_port_mac()
         # sub-classes for plugins/drivers that support mac address update
         # override this method
-
-    def test_update_dhcp_port_with_exceeding_fixed_ips(self):
-        """
-        Max fixed ips per port is configured in configuration file
-        by max_fixed_ips_per_port parameter.
-
-        DHCP port is not restricted by this parameter.
-        """
-        with self.subnet() as subnet:
-            updated_fixed_ips = [{'subnet_id': subnet['subnet']['id'],
-                                  'ip_address': '10.0.0.%s' % id}
-                                 for id in range(3,
-                                     cfg.CONF.max_fixed_ips_per_port + 4)]
-            host_arg = None or {}
-            arg_list = None or []
-            with self.port(device_owner=constants.DEVICE_OWNER_DHCP,
-                           subnet=subnet, arg_list=arg_list,
-                           **host_arg) as port:
-                data = {'port': {'fixed_ips': updated_fixed_ips}}
-                req = self.new_update_request('ports',
-                                              data, port['port']['id'])
-                res = req.get_response(self.api)
-                self.assertEqual(webob.exc.HTTPOk.code, res.status_int)
-                result = self.deserialize(self.fmt, res)
-                for fixed_ip in updated_fixed_ips:
-                    self.assertIn(fixed_ip, result['port']['fixed_ips'])
 
     def test_dhcp_port_ips_prefer_next_available_ip(self):
         # test to check that DHCP ports get the first available IP in the
@@ -2530,40 +2487,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             port_req = self.new_create_request('ports', data)
             res = port_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
-
-    def test_max_fixed_ips_exceeded(self):
-        with self.subnet(gateway_ip='10.0.0.3',
-                         cidr='10.0.0.0/24') as subnet:
-                kwargs = {"fixed_ips":
-                          [{'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']},
-                           {'subnet_id': subnet['subnet']['id']}]}
-                net_id = subnet['subnet']['network_id']
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
-                self.assertEqual(webob.exc.HTTPClientError.code,
-                                 res.status_int)
-
-    def test_update_max_fixed_ips_exceeded(self):
-        with self.subnet(gateway_ip='10.0.0.3',
-                         cidr='10.0.0.0/24') as subnet:
-            with self.port(subnet) as port:
-                data = {'port': {'fixed_ips':
-                                 [{'subnet_id': subnet['subnet']['id'],
-                                   'ip_address': '10.0.0.2'},
-                                  {'subnet_id': subnet['subnet']['id'],
-                                   'ip_address': '10.0.0.4'},
-                                  {'subnet_id': subnet['subnet']['id']},
-                                  {'subnet_id': subnet['subnet']['id']},
-                                  {'subnet_id': subnet['subnet']['id']},
-                                  {'subnet_id': subnet['subnet']['id']}]}}
-                req = self.new_update_request('ports', data,
-                                              port['port']['id'])
-                res = req.get_response(self.api)
-                self.assertEqual(webob.exc.HTTPClientError.code,
-                                 res.status_int)
 
     def test_delete_ports_by_device_id(self):
         plugin = directory.get_plugin()
