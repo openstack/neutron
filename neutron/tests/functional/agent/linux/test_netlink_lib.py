@@ -57,8 +57,25 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
         entries_list = nl_lib.list_entries(zone=zone)
         self.assertEqual(remain_entries, entries_list)
 
+    @staticmethod
+    def _find_unused_zone_id(start, end):
+        """Find unused zone ID starting from a specified ID"""
+        while start <= end:
+            cmd = ['conntrack', '-L', '-w', start]
+            try:
+                current_entries = linux_utils.execute(cmd,
+                                                      run_as_root=True,
+                                                      check_exit_code=True,
+                                                      extra_ok_codes=[1])
+            except RuntimeError:
+                raise Exception('Error while listing entries')
+            if not current_entries:
+                return start
+            start += 1
+        raise Exception("Can not find usable zone_id")
+
     def test_list_entries(self):
-        _zone = 10
+        _zone = self._find_unused_zone_id(10, 30)
         self._create_entries(zone=_zone)
         expected = (
             (4, 'icmp', 8, 0, '1.1.1.1', '2.2.2.2', 3333, _zone),
@@ -69,7 +86,7 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(expected, entries_list)
 
     def test_delete_icmp_entry(self):
-        _zone = 20
+        _zone = self._find_unused_zone_id(31, 50)
         self._create_entries(zone=_zone)
         icmp_entry = [(4, 'icmp', 8, 0, '1.1.1.1', '2.2.2.2', 3333, _zone)]
         remain_entries = (
@@ -79,7 +96,7 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
         self._delete_entry(icmp_entry, remain_entries, _zone)
 
     def test_delete_tcp_entry(self):
-        _zone = 30
+        _zone = self._find_unused_zone_id(51, 70)
         self._create_entries(zone=_zone)
         tcp_entry = [(4, 'tcp', 1, 2, '1.1.1.1', '2.2.2.2', _zone)]
         remain_entries = (
@@ -89,7 +106,7 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
         self._delete_entry(tcp_entry, remain_entries, _zone)
 
     def test_delete_udp_entry(self):
-        _zone = 40
+        _zone = self._find_unused_zone_id(71, 90)
         self._create_entries(zone=_zone)
         udp_entry = [(4, 'udp', 4, 5, '1.1.1.1', '2.2.2.2', _zone)]
         remain_entries = (
@@ -99,7 +116,7 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
         self._delete_entry(udp_entry, remain_entries, _zone)
 
     def test_delete_multiple_entries(self):
-        _zone = 50
+        _zone = self._find_unused_zone_id(91, 110)
         self._create_entries(zone=_zone)
         delete_entries = (
             (4, 'icmp', 8, 0, '1.1.1.1', '2.2.2.2', 3333, _zone),
