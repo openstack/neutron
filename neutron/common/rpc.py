@@ -107,12 +107,12 @@ class _ContextWrapper(object):
     def cast(self, ctxt, method, **kwargs):
         try:
             self._original_context.cast(ctxt, method, **kwargs)
-        except Exception:
+        except Exception as e:
             # TODO(kevinbenton): make catch specific to missing exchange once
             # bug/1705351 is resolved on the oslo.messaging side; if
             # oslo.messaging auto-creates the exchange, then just remove the
             # code completely
-            LOG.exception("Ignored exception during cast")
+            LOG.debug("Ignored exception during cast: %e", e)
 
 
 class _BackingOffContextWrapper(_ContextWrapper):
