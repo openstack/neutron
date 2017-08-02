@@ -61,11 +61,11 @@ def _get_path(resource, id=None, action=None,
     if action is not None:
         path = path + '/%s' % action
 
-    if fmt is not None:
-        path = path + '.%s' % fmt
-
     if endpoint is not None:
         path = path + '/%s' % endpoint
+
+    if fmt is not None:
+        path = path + '.%s' % fmt
 
     return path
 
