@@ -423,6 +423,21 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                                        target_tenant=self.client2.tenant_id)
         self.client.delete_port(port['id'])
 
+    @test.requires_ext(extension="standard-attr-revisions", service="network")
+    @decorators.idempotent_id('86c3529b-1231-40de-1234-89664291a4cb')
+    def test_rbac_bumps_network_revision(self):
+        resp = self._make_admin_net_and_subnet_shared_to_tenant_id(
+            self.client.tenant_id)
+        net_id = resp['network']['id']
+        rev = self.client.show_network(net_id)['network']['revision_number']
+        self.admin_client.create_rbac_policy(
+            object_type='network', object_id=net_id,
+            action='access_as_shared', target_tenant='*')
+        self.assertGreater(
+            self.client.show_network(net_id)['network']['revision_number'],
+            rev
+        )
+
     @decorators.idempotent_id('86c3529b-1231-40de-803c-aeeeeeee7fff')
     def test_filtering_works_with_rbac_records_present(self):
         resp = self._make_admin_net_and_subnet_shared_to_tenant_id(

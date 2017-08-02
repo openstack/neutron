@@ -94,6 +94,7 @@ class NetworkRBAC(RBACColumns, model_base.BASEV2):
 
     object_id = _object_id_column('networks.id')
     object_type = 'network'
+    revises_on_change = ('network', )
 
     def get_valid_actions(self):
         actions = (ACCESS_SHARED,)
