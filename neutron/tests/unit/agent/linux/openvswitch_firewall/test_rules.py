@@ -404,3 +404,96 @@ class TestCreateConjFlows(base.BaseTestCase):
             del f['ct_state']
             self.assertEqual(expected_template, f)
             expected_template['conj_id'] += 1
+
+
+class TestMergeRules(base.BaseTestCase):
+    def setUp(self):
+        super(TestMergeRules, self).setUp()
+        self.rule_tmpl = [('direction', 'ingress'), ('ethertype', 'IPv4'),
+                          ('protocol', 6)]
+
+    def _test_merge_port_ranges_helper(self, expected, result):
+        """Take a list of (port_range_min, port_range_max, conj_ids)
+        and an output from rules.merge_port_ranges and check if they
+        are identical, ignoring the other rule fields.
+        """
+        self.assertEqual(len(expected), len(result))
+        for (range_min, range_max, conj_ids), result1 in zip(
+                expected, result):
+            self.assertEqual(range_min, result1[0]['port_range_min'])
+            self.assertEqual(range_max, result1[0]['port_range_max'])
+            self.assertEqual(conj_ids, set(result1[1]))
+
+    def test__assert_mergeable_rules(self):
+        self.assertRaises(RuntimeError,
+                          rules._assert_mergeable_rules,
+                          [({'direction': 'ingress', 'ethertype': 'IPv4',
+                             'protocol': 1}, 8),
+                           ({'direction': 'ingress', 'ethertype': 'IPv6'},
+                            16)])
+
+    def test_merge_common_rules_single(self):
+        rule_conj_tuple = ({'direction': 'egress', 'ethertype': 'IPv4',
+                            'protocol': 1}, 8)
+        result = rules.merge_common_rules([rule_conj_tuple])
+        self.assertEqual([(rule_conj_tuple[0], [rule_conj_tuple[1]])],
+                         result)
+
+    def test_merge_common_rules(self):
+        rule_conj_list = [({'direction': 'ingress', 'ethertype': 'IPv4',
+                            'protocol': 1}, 8),
+                          ({'direction': 'ingress', 'ethertype': 'IPv4',
+                            'protocol': 1, 'port_range_min': 3}, 16),
+                          ({'direction': 'ingress', 'ethertype': 'IPv4',
+                            'protocol': 1, 'port_range_min': 3,
+                            'port_range_max': 0}, 40),
+                          ({'direction': 'ingress', 'ethertype': 'IPv4',
+                            'protocol': 1}, 24)]
+        result = rules.merge_common_rules(rule_conj_list)
+        self.assertItemsEqual(
+            [({'direction': 'ingress', 'ethertype': 'IPv4',
+               'protocol': 1}, [8, 24]),
+             ({'direction': 'ingress', 'ethertype': 'IPv4',
+               'protocol': 1, 'port_range_min': 3}, [16]),
+             ({'direction': 'ingress', 'ethertype': 'IPv4',
+               'protocol': 1, 'port_range_min': 3, 'port_range_max': 0},
+              [40])],
+            result)
+
+    def test_merge_port_ranges_overlapping(self):
+        result = rules.merge_port_ranges(
+            [(dict([('port_range_min', 20), ('port_range_max', 30)] +
+                   self.rule_tmpl), 6),
+             (dict([('port_range_min', 30), ('port_range_max', 40)] +
+                   self.rule_tmpl), 14),
+             (dict([('port_range_min', 35), ('port_range_max', 40)] +
+                   self.rule_tmpl), 22),
+             (dict([('port_range_min', 20), ('port_range_max', 20)] +
+                   self.rule_tmpl), 30)])
+        self._test_merge_port_ranges_helper([
+            # port_range_min, port_range_max, conj_ids
+            (20, 20, {6, 30}),
+            (21, 29, {6}),
+            (30, 30, {6, 14}),
+            (31, 34, {14}),
+            (35, 40, {14, 22})], result)
+
+    def test_merge_port_ranges_no_port_ranges(self):
+        result = rules.merge_port_ranges(
+            [(dict(self.rule_tmpl), 10),
+             (dict(self.rule_tmpl), 12),
+             (dict([('port_range_min', 30), ('port_range_max', 40)] +
+                   self.rule_tmpl), 4)])
+        self._test_merge_port_ranges_helper([
+                (1, 29, {10, 12}),
+                (30, 40, {10, 12, 4}),
+                (41, 65535, {10, 12})], result)
+
+    def test_merge_port_ranges_nonoverlapping(self):
+        result = rules.merge_port_ranges(
+            [(dict([('port_range_min', 30), ('port_range_max', 40)] +
+                   self.rule_tmpl), 32),
+             (dict([('port_range_min', 100), ('port_range_max', 140)] +
+                   self.rule_tmpl), 40)])
+        self._test_merge_port_ranges_helper(
+            [(30, 40, {32}), (100, 140, {40})], result)
