@@ -984,24 +984,46 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         The remaining part is done by ConjIPFlowManager.
         """
+        port_rules = collections.defaultdict(list)
         for sec_group_id, rule in (
                 self._create_remote_rules_generator_for_port(port)):
             direction = rule['direction']
             ethertype = rule['ethertype']
+            protocol = rule.get('protocol')
 
             conj_id = self.conj_ip_manager.add(port.vlan_tag, sec_group_id,
                                                rule['remote_group_id'],
                                                direction, ethertype)
 
-            flows = rules.create_flows_from_rule_and_port(rule, port)
-            for flow in rules.substitute_conjunction_actions(
-                    flows, 2, [conj_id]):
-                self._add_flow(**flow)
+            rule1 = rule.copy()
+            del rule1['remote_group_id']
+            port_rules_key = (direction, ethertype, protocol)
+            port_rules[port_rules_key].append((rule1, conj_id))
+
+        for (direction, ethertype, protocol), rule_conj_list in (
+                port_rules.items()):
+            all_conj_ids = set()
+            for rule, conj_id in rule_conj_list:
+                all_conj_ids.add(conj_id)
+
+            if protocol in [lib_const.PROTO_NUM_SCTP,
+                            lib_const.PROTO_NUM_TCP,
+                            lib_const.PROTO_NUM_UDP]:
+                rule_conj_list = rules.merge_port_ranges(rule_conj_list)
+            else:
+                rule_conj_list = rules.merge_common_rules(rule_conj_list)
+
+            for rule, conj_ids in rule_conj_list:
+                flows = rules.create_flows_from_rule_and_port(rule, port)
+                for flow in rules.substitute_conjunction_actions(
+                        flows, 2, conj_ids):
+                    self._add_flow(**flow)
 
             # Install actions=accept flows.
-            for flow in rules.create_conj_flows(
-                    port, conj_id, direction, ethertype):
-                self._add_flow(**flow)
+            for conj_id in all_conj_ids:
+                for flow in rules.create_conj_flows(
+                        port, conj_id, direction, ethertype):
+                    self._add_flow(**flow)
 
     def add_flows_from_rules(self, port):
         self._initialize_tracked_ingress(port)

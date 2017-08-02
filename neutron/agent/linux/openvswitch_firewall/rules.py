@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 import netaddr
 from neutron_lib import constants as n_consts
 from oslo_log import log as logging
@@ -44,6 +46,110 @@ def is_valid_prefix(ip_prefix):
     # IPNetwork and back to string unifies it
     return (ip_prefix and
             str(netaddr.IPNetwork(ip_prefix)) not in FORBIDDEN_PREFIXES)
+
+
+def _assert_mergeable_rules(rule_conj_list):
+    """Assert a given (rule, conj_ids) list has mergeable rules.
+
+    The given rules must be the same except for port_range_{min,max}
+    differences.
+    """
+    rule_tmpl = rule_conj_list[0][0].copy()
+    rule_tmpl.pop('port_range_min', None)
+    rule_tmpl.pop('port_range_max', None)
+    for rule, conj_id in rule_conj_list[1:]:
+        rule1 = rule.copy()
+        rule1.pop('port_range_min', None)
+        rule1.pop('port_range_max', None)
+        if rule_tmpl != rule1:
+            raise RuntimeError(
+                "Incompatible SG rules detected: %(rule1)s and %(rule2)s. "
+                "They cannot be merged. This should not happen." %
+                {'rule1': rule_tmpl, 'rule2': rule})
+
+
+def merge_common_rules(rule_conj_list):
+    """Take a list of (rule, conj_id) and merge elements with the same rules.
+    Return a list of (rule, conj_id_list).
+    """
+    if len(rule_conj_list) == 1:
+        rule, conj_id = rule_conj_list[0]
+        return [(rule, [conj_id])]
+
+    _assert_mergeable_rules(rule_conj_list)
+    rule_conj_map = collections.defaultdict(list)
+    for rule, conj_id in rule_conj_list:
+        rule_conj_map[(rule.get('port_range_min'),
+                       rule.get('port_range_max'))].append(conj_id)
+
+    result = []
+    rule_tmpl = rule_conj_list[0][0]
+    rule_tmpl.pop('port_range_min', None)
+    rule_tmpl.pop('port_range_max', None)
+    for (port_min, port_max), conj_ids in rule_conj_map.items():
+        rule = rule_tmpl.copy()
+        if port_min is not None:
+            rule['port_range_min'] = port_min
+        if port_max is not None:
+            rule['port_range_max'] = port_max
+        result.append((rule, conj_ids))
+    return result
+
+
+def _merge_port_ranges_helper(port_range_item):
+    # Sort with 'port' but 'min' things must come first.
+    port, m, dummy = port_range_item
+    return port * 2 + (0 if m == 'min' else 1)
+
+
+def merge_port_ranges(rule_conj_list):
+    """Take a list of (rule, conj_id) and transform into a list
+    whose rules don't overlap. Return a list of (rule, conj_id_list).
+    """
+    if len(rule_conj_list) == 1:
+        rule, conj_id = rule_conj_list[0]
+        return [(rule, [conj_id])]
+
+    _assert_mergeable_rules(rule_conj_list)
+    port_ranges = []
+    for rule, conj_id in rule_conj_list:
+        port_ranges.append((rule.get('port_range_min', 1), 'min', conj_id))
+        port_ranges.append((rule.get('port_range_max', 65535), 'max', conj_id))
+
+    port_ranges.sort(key=_merge_port_ranges_helper)
+
+    # The idea here is to scan the port_ranges list in an ascending order,
+    # keeping active conjunction IDs and range in cur_conj and cur_range_min.
+    # A 'min' port_ranges item means an addition to cur_conj, while a 'max'
+    # item means a removal.
+    result = []
+    rule_tmpl = rule_conj_list[0][0]
+    cur_conj = set()
+    cur_range_min = None
+    for port, m, conj_id in port_ranges:
+        if m == 'min':
+            if cur_conj and cur_range_min != port:
+                rule = rule_tmpl.copy()
+                rule['port_range_min'] = cur_range_min
+                rule['port_range_max'] = port - 1
+                result.append((rule, list(cur_conj)))
+            cur_range_min = port
+            cur_conj.add(conj_id)
+        else:
+            if cur_range_min <= port:
+                rule = rule_tmpl.copy()
+                rule['port_range_min'] = cur_range_min
+                rule['port_range_max'] = port
+                result.append((rule, list(cur_conj)))
+                # The next port range without 'port' starts from (port + 1)
+                cur_range_min = port + 1
+            cur_conj.remove(conj_id)
+
+    if (len(result) == 1 and result[0][0]['port_range_min'] == 1 and
+        result[0][0]['port_range_max'] == 65535):
+        del result[0][0]['port_range_min']
+        del result[0][0]['port_range_max']
+    return result
 
 
 def create_flows_from_rule_and_port(rule, port):
