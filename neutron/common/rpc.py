@@ -73,7 +73,7 @@ def cleanup():
     assert NOTIFIER is not None
     TRANSPORT.cleanup()
     NOTIFICATION_TRANSPORT.cleanup()
-    _ContextWrapper.reset_timeouts()
+    _BackingOffContextWrapper.reset_timeouts()
     TRANSPORT = NOTIFICATION_TRANSPORT = NOTIFIER = None
 
 
@@ -98,6 +98,24 @@ def _get_default_method_timeouts():
 
 
 class _ContextWrapper(object):
+    def __init__(self, original_context):
+        self._original_context = original_context
+
+    def __getattr__(self, name):
+        return getattr(self._original_context, name)
+
+    def cast(self, ctxt, method, **kwargs):
+        try:
+            self._original_context.cast(ctxt, method, **kwargs)
+        except Exception:
+            # TODO(kevinbenton): make catch specific to missing exchange once
+            # bug/1705351 is resolved on the oslo.messaging side; if
+            # oslo.messaging auto-creates the exchange, then just remove the
+            # code completely
+            LOG.exception("Ignored exception during cast")
+
+
+class _BackingOffContextWrapper(_ContextWrapper):
     """Wraps oslo messaging contexts to set the timeout for calls.
 
     This intercepts RPC calls and sets the timeout value to the globally
@@ -129,12 +147,6 @@ class _ContextWrapper(object):
                     for k, v in cls._METHOD_TIMEOUTS.items()
                 })
             cls._max_timeout = max_timeout
-
-    def __init__(self, original_context):
-        self._original_context = original_context
-
-    def __getattr__(self, name):
-        return getattr(self._original_context, name)
 
     def call(self, ctxt, method, **kwargs):
         # two methods with the same name in different namespaces should
@@ -178,19 +190,21 @@ class BackingOffClient(oslo_messaging.RPCClient):
     """An oslo messaging RPC Client that implements a timeout backoff.
 
     This has all of the same interfaces as oslo_messaging.RPCClient but
-    if the timeout parameter is not specified, the _ContextWrapper returned
-    will track when call timeout exceptions occur and exponentially increase
-    the timeout for the given call method.
+    if the timeout parameter is not specified, the _BackingOffContextWrapper
+    returned will track when call timeout exceptions occur and exponentially
+    increase the timeout for the given call method.
     """
     def prepare(self, *args, **kwargs):
         ctx = super(BackingOffClient, self).prepare(*args, **kwargs)
-        # don't enclose Contexts that explicitly set a timeout
-        return _ContextWrapper(ctx) if 'timeout' not in kwargs else ctx
+        # don't back off contexts that explicitly set a timeout
+        if 'timeout' in kwargs:
+            return _ContextWrapper(ctx)
+        return _BackingOffContextWrapper(ctx)
 
     @staticmethod
     def set_max_timeout(max_timeout):
         '''Set RPC timeout ceiling for all backing-off RPC clients.'''
-        _ContextWrapper.set_max_timeout(max_timeout)
+        _BackingOffContextWrapper.set_max_timeout(max_timeout)
 
 
 def get_client(target, version_cap=None, serializer=None):
