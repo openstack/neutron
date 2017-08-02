@@ -53,10 +53,15 @@ function prepare_for_compilation {
 
     if is_fedora ; then
         # is_fedora covers Fedora, RHEL, CentOS, etc...
-        # dash is illegal character in rpm version so replace
-        # them with underscore like it is done in the kernel
-        # https://github.com/torvalds/linux/blob/master/scripts/package/mkspec#L25
-        KERNEL_VERSION=`echo $KERNEL_VERSION | sed -e "s/-/_/g"`
+        if [[ ${KERNEL_VERSION:0:2} != "3." ]]; then
+            # dash is illegal character in rpm version so replace
+            # them with underscore like it is done in the kernel
+            # https://github.com/torvalds/linux/blob/master/scripts/package/mkspec#L25
+            # but only for latest series of the kernel, not 3.x
+
+            KERNEL_VERSION=`echo $KERNEL_VERSION | tr - _`
+        fi
+
         echo NOTE: if kernel-devel-$KERNEL_VERSION or kernel-headers-$KERNEL_VERSION installation
         echo failed, please, provide a repository with the package, or yum update / reboot
         echo your machine to get the latest kernel.
