@@ -51,7 +51,6 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         body = self.client.create_floatingip(
             floating_network_id=self.ext_net_id,
             port_id=self.ports[0]['id'],
-            description='d1'
         )['floatingip']
         self.floating_ips.append(body)
         self.assertEqual(self.ports[0]['id'], body['port_id'])
