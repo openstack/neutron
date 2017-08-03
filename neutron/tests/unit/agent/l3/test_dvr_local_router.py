@@ -123,25 +123,25 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.snat_ports = [{'subnets': [{'cidr': '152.2.0.0/16',
                                          'gateway_ip': '152.2.0.1',
                                          'id': subnet_id_1}],
-                           'network_id': _uuid(),
-                           'device_owner':
-                           lib_constants.DEVICE_OWNER_ROUTER_SNAT,
-                           'mac_address': 'fa:16:3e:80:8d:80',
-                           'fixed_ips': [{'subnet_id': subnet_id_1,
-                                          'ip_address': '152.2.0.13',
-                                          'prefixlen': 16}],
-                           'id': _uuid(), 'device_id': _uuid()},
-                          {'subnets': [{'cidr': '152.10.0.0/16',
-                                        'gateway_ip': '152.10.0.1',
-                                        'id': subnet_id_2}],
-                           'network_id': _uuid(),
-                           'device_owner':
-                           lib_constants.DEVICE_OWNER_ROUTER_SNAT,
-                           'mac_address': 'fa:16:3e:80:8d:80',
-                           'fixed_ips': [{'subnet_id': subnet_id_2,
-                                         'ip_address': '152.10.0.13',
-                                         'prefixlen': 16}],
-                           'id': _uuid(), 'device_id': _uuid()}]
+                            'network_id': _uuid(),
+                            'device_owner':
+                            lib_constants.DEVICE_OWNER_ROUTER_SNAT,
+                            'mac_address': 'fa:16:3e:80:8d:80',
+                            'fixed_ips': [{'subnet_id': subnet_id_1,
+                                           'ip_address': '152.2.0.13',
+                                           'prefixlen': 16}],
+                            'id': _uuid(), 'device_id': _uuid()},
+                           {'subnets': [{'cidr': '152.10.0.0/16',
+                                         'gateway_ip': '152.10.0.1',
+                                         'id': subnet_id_2}],
+                            'network_id': _uuid(),
+                            'device_owner':
+                            lib_constants.DEVICE_OWNER_ROUTER_SNAT,
+                            'mac_address': 'fa:16:3e:80:8d:80',
+                            'fixed_ips': [{'subnet_id': subnet_id_2,
+                                           'ip_address': '152.10.0.13',
+                                           'prefixlen': 16}],
+                            'id': _uuid(), 'device_id': _uuid()}]
 
         self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': self.mock_driver}
@@ -479,10 +479,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
         subnet_id = l3_test_common.get_subnet_id(ports[0])
         test_ports = [{'mac_address': '00:11:22:33:44:55',
-                      'device_owner': lib_constants.DEVICE_OWNER_DHCP,
-                      'fixed_ips': [{'ip_address': '1.2.3.4',
-                                     'prefixlen': 24,
-                                     'subnet_id': subnet_id}]}]
+                       'device_owner': lib_constants.DEVICE_OWNER_DHCP,
+                       'fixed_ips': [{'ip_address': '1.2.3.4',
+                                      'prefixlen': 24,
+                                      'subnet_id': subnet_id}]}]
 
         self.plugin_api.get_ports_by_subnet.return_value = test_ports
 
