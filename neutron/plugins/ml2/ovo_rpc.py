@@ -21,7 +21,6 @@ from neutron_lib import context as n_ctx
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
-from neutron._i18n import _LE
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.db import api as db_api
@@ -40,6 +39,7 @@ class _ObjectChangeHandler(object):
         self._resource_push_api = resource_push_api
         self._resources_to_push = {}
         self._worker_pool = eventlet.GreenPool()
+        self._semantic_warned = False
         for event in (events.AFTER_CREATE, events.AFTER_UPDATE,
                       events.AFTER_DELETE):
             registry.subscribe(self.handle_event, resource, event)
@@ -48,8 +48,7 @@ class _ObjectChangeHandler(object):
         """Waits for all outstanding events to be dispatched."""
         self._worker_pool.waitall()
 
-    @staticmethod
-    def _is_session_semantic_violated(context, resource, event):
+    def _is_session_semantic_violated(self, context, resource, event):
         """Return True and print an ugly error on transaction violation.
 
         This code is to print ugly errors when AFTER_CREATE/UPDATE
@@ -58,13 +57,15 @@ class _ObjectChangeHandler(object):
         """
         if not context.session.is_active:
             return False
-        stack = traceback.extract_stack()
-        stack = "".join(traceback.format_list(stack))
-        LOG.error(_LE("This handler is supposed to handle AFTER "
-                      "events, as in 'AFTER it's committed', "
-                      "not BEFORE. Offending resource event: "
-                      "%(r)s, %(e)s. Location:\n%(l)s"),
-                  {'r': resource, 'e': event, 'l': stack})
+        if not self._semantic_warned:
+            stack = traceback.extract_stack()
+            stack = "".join(traceback.format_list(stack))
+            LOG.warning("This handler is supposed to handle AFTER "
+                        "events, as in 'AFTER it's committed', "
+                        "not BEFORE. Offending resource event: "
+                        "%(r)s, %(e)s. Location:\n%(l)s",
+                        {'r': resource, 'e': event, 'l': stack})
+            self._semantic_warned = True
         return True
 
     def handle_event(self, resource, event, trigger,
