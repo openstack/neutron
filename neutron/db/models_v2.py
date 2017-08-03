@@ -262,7 +262,9 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     admin_state_up = sa.Column(sa.Boolean)
     vlan_transparent = sa.Column(sa.Boolean, nullable=True)
     rbac_entries = orm.relationship(rbac_db_models.NetworkRBAC,
-                                    backref='network', lazy='subquery',
+                                    backref=orm.backref('network',
+                                                        load_on_pending=True),
+                                    lazy='subquery',
                                     cascade='all, delete, delete-orphan')
     availability_zone_hints = sa.Column(sa.String(255))
     dhcp_agents = orm.relationship(
