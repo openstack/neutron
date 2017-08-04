@@ -1,0 +1,4 @@
+---
+upgrade:
+  - The ``max_fixed_ips_per_port`` configuration option was deprecated
+    in the Newton cycle and removed in Pike.

@@ -22,7 +22,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
-from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -318,14 +317,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
 
-    def _validate_max_ips_per_port(self, fixed_ip_list, device_owner):
-        if net.is_port_trusted({'device_owner': device_owner}):
-            return
-
-        if len(fixed_ip_list) > cfg.CONF.max_fixed_ips_per_port:
-            msg = _('Exceeded maximum amount of fixed ips per port')
-            raise exc.InvalidInput(error_message=msg)
-
     def _validate_segment(self, context, network_id, segment_id):
         query = context.session.query(models_v2.Subnet.segment_id)
         query = query.filter(models_v2.Subnet.network_id == network_id)
@@ -422,8 +413,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                 if ip.get('delete_subnet'))
         ips = [ip for ip in new_ips
                if ip.get('subnet_id') not in delete_subnet_ids]
-        # the new_ips contain all of the fixed_ips that are to be updated
-        self._validate_max_ips_per_port(ips, device_owner)
 
         add_ips, prev_ips, remove_candidates = [], [], []
 

@@ -65,11 +65,6 @@ core_opts = [
                help=_("Maximum number of DNS nameservers per subnet")),
     cfg.IntOpt('max_subnet_host_routes', default=20,
                help=_("Maximum number of host routes per subnet")),
-    cfg.IntOpt('max_fixed_ips_per_port', default=5,
-               deprecated_for_removal=True,
-               help=_("Maximum number of fixed ips per port. This option "
-                      "is deprecated and will be removed in the Ocata "
-                      "release.")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Enables IPv6 Prefix Delegation for automatic subnet "
                        "CIDR allocation. "
