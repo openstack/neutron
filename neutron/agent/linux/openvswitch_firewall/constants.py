@@ -35,7 +35,14 @@ CT_MARK_INVALID = '0x1'
 REG_PORT = 5
 REG_NET = 6
 
-PROTOCOLS_WITH_PORTS = (constants.PROTO_NAME_TCP, constants.PROTO_NAME_UDP)
+PROTOCOLS_WITH_PORTS = (constants.PROTO_NAME_SCTP,
+                        constants.PROTO_NAME_TCP,
+                        constants.PROTO_NAME_UDP)
+
+# Only map protocols that need special handling
+REVERSE_IP_PROTOCOL_MAP_WITH_PORTS = {
+    constants.IP_PROTOCOL_MAP[proto]: proto for proto in
+    PROTOCOLS_WITH_PORTS}
 
 ethertype_to_dl_type_map = {
     constants.IPv4: n_const.ETHERTYPE_IP,

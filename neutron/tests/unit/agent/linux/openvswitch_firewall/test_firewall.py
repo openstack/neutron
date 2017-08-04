@@ -56,7 +56,7 @@ class TestSecurityGroup(base.BaseTestCase):
         self.sg = ovsfw.SecurityGroup('123')
         self.sg.members = {'type': [1, 2, 3, 4]}
 
-    def test_update_rules(self):
+    def test_update_rules_split(self):
         rules = [
             {'foo': 'bar', 'rule': 'all'}, {'bar': 'foo'},
             {'remote_group_id': '123456', 'foo': 'bar'}]
@@ -66,6 +66,29 @@ class TestSecurityGroup(base.BaseTestCase):
 
         self.assertEqual(expected_raw_rules, self.sg.raw_rules)
         self.assertEqual(expected_remote_rules, self.sg.remote_rules)
+
+    def test_update_rules_protocols(self):
+        rules = [
+            {'foo': 'bar', 'protocol': constants.PROTO_NAME_ICMP,
+             'ethertype': constants.IPv4},
+            {'foo': 'bar', 'protocol': constants.PROTO_NAME_ICMP,
+             'ethertype': constants.IPv6},
+            {'foo': 'bar', 'protocol': constants.PROTO_NAME_IPV6_ICMP_LEGACY,
+             'ethertype': constants.IPv6},
+            {'foo': 'bar', 'protocol': constants.PROTO_NAME_TCP},
+            {'foo': 'bar', 'protocol': '94'},
+            {'foo': 'bar', 'protocol': 'baz'},
+            {'foo': 'no_proto'}]
+        self.sg.update_rules(rules)
+
+        self.assertEqual({'foo': 'no_proto'}, self.sg.raw_rules.pop())
+        protos = [rule['protocol'] for rule in self.sg.raw_rules]
+        self.assertEqual([constants.PROTO_NUM_ICMP,
+                          constants.PROTO_NUM_IPV6_ICMP,
+                          constants.PROTO_NUM_IPV6_ICMP,
+                          constants.PROTO_NUM_TCP,
+                          94,
+                          'baz'], protos)
 
     def test_get_ethertype_filtered_addresses(self):
         addresses = self.sg.get_ethertype_filtered_addresses('type')

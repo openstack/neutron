@@ -82,11 +82,27 @@ class SecurityGroup(object):
         self.ports = set()
 
     def update_rules(self, rules):
-        """Separate raw and remote rules."""
-        self.raw_rules = [rule for rule in rules
-                          if 'remote_group_id' not in rule]
-        self.remote_rules = [rule for rule in rules
-                             if 'remote_group_id' in rule]
+        """Separate raw and remote rules.
+        If a rule has a protocol field, it is normalized to a number
+        here in order to ease later processing.
+        """
+        self.raw_rules = []
+        self.remote_rules = []
+        for rule in rules:
+            protocol = rule.get('protocol')
+            if protocol is not None:
+                if protocol.isdigit():
+                    rule['protocol'] = int(protocol)
+                elif (rule.get('ethertype') == lib_const.IPv6 and
+                      protocol == lib_const.PROTO_NAME_ICMP):
+                    rule['protocol'] = lib_const.PROTO_NUM_IPV6_ICMP
+                else:
+                    rule['protocol'] = lib_const.IP_PROTOCOL_MAP.get(
+                        protocol, protocol)
+            if 'remote_group_id' in rule:
+                self.remote_rules.append(rule)
+            else:
+                self.raw_rules.append(rule)
 
     def get_ethertype_filtered_addresses(self, ethertype):
         return self.members.get(ethertype, [])
