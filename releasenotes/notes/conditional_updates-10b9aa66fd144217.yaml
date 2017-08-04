@@ -1,9 +1,4 @@
 ---
-prelude: >
-    The Neutron API now supports conditional updates to resources with the
-    'revision_number' attribute by setting the desired revision number in
-    an HTTP If-Match header. This allows clients to ensure that a resource
-    hasn't been modified since it was retrieved by the client.
 features:
   - |
     The Neutron API now supports conditional updates to resources with the

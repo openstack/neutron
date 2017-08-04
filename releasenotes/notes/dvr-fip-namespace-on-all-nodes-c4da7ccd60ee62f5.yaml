@@ -1,13 +1,11 @@
 ---
-prelude: >
-    Add DVR Floating IP (FIP) Namespace creation event
-    on all nodes, based on the gateway configuration.
 features:
-  - Proactively create Floating IP Namespace on all compute nodes
+  - Proactively create DVR floating IP namespace on all compute nodes
     when a gateway is configured.
 issues:
-  - This might consume public IP Address, but by using
-    subnet service-types as explained in the docs below
-    https://docs.openstack.org/networking-guide/config-service-subnets.html
+  - Creating DVR floating IP namespace on all nodes proactively
+    might consume public IP Address, but by using
+    subnet service-types as explained in `the networking guide
+    <https://docs.openstack.org/neutron/latest/admin/config-service-subnets.html>`__
     consumers can use the private IPs for floating IP agent gateway ports
     and need not consume any public IP addresses.

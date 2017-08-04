@@ -12,6 +12,14 @@ Writing release notes
 For information on how to create release notes, please consult the
 `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html>`__.
 
+Please keep the following in your mind when you write release notes.
+
+* **Avoid using "prelude" section** for individual release notes.
+  "prelude" section is for general comments about the release.
+* **Use one entry per section** (like "feature" or "upgrade").
+  All entries which belong to a same release will be merged and rendered,
+  so there is less meaning to use multiple entries by a single topic.
+
 Maintaining release notes
 -------------------------
 
