@@ -1,5 +1,5 @@
 function configure_dns_extension {
-    neutron_ml2_extension_driver_add "dns"
+    neutron_ml2_extension_driver_add "dns_domain_ports"
 }
 function post_config_dns_extension {
     iniset $NEUTRON_CONF DEFAULT dns_domain openstackgate.local
