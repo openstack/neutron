@@ -27,6 +27,10 @@
 Contributor Guide
 =================
 
+This document describes Neutron for contributors of the project, and assumes
+that you are already familiar with Neutron from an
+:doc:`end-user perspective </admin/index>`.
+
 Neutron Policies
 ----------------
 

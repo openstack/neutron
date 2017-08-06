@@ -250,7 +250,8 @@ Neutron can also be configured to create `provider networks <http://docs.opensta
 
 Further Reading
 ---------------
+
 * `Packet Pushers - Neutron Network Implementation on Linux <http://packetpushers.net/openstack-quantum-network-implementation-in-linux/>`_
 * `OpenStack Administrator Guide <http://docs.openstack.org/admin-guide/networking.html>`_
-* `Neutron - Layer 3 API extension usage guide <http://docs.openstack.org/api/openstack-network/2.0/content/router_ext.html>`_
-*  `Darragh O'Reilly -  The Quantum L3 router and floating IPs <http://techbackground.blogspot.com/2013/05/the-quantum-l3-router-and-floating-ips.html>`_
+* `Neutron - Layer 3 API extension <https://developer.openstack.org/api-ref/networking/v2/index.html#layer-3-networking>`_
+* `Darragh O'Reilly -  The Quantum L3 router and floating IPs <http://techbackground.blogspot.com/2013/05/the-quantum-l3-router-and-floating-ips.html>`_
