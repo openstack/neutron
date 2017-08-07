@@ -122,6 +122,8 @@ class LinuxInterfaceDriver(object):
 
             # skip the IPv6 link-local
             if cidr == default_ipv6_lla:
+                # it's already configured, leave it alone
+                cidrs.discard(cidr)
                 continue
 
             if cidr in preserve_ips:
