@@ -1414,6 +1414,11 @@ class DeviceManager(object):
         if ip_lib.ensure_device_is_ready(interface_name,
                                          namespace=network.namespace):
             LOG.debug('Reusing existing device: %s.', interface_name)
+            # force mtu on the port for in case it was changed for the network
+            mtu = getattr(network, 'mtu', 0)
+            if mtu:
+                self.driver.set_mtu(interface_name, mtu,
+                                    namespace=network.namespace)
         else:
             try:
                 self.plug(network, port, interface_name)
