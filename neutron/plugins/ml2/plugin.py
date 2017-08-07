@@ -858,6 +858,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_network(self, context, id, network):
         net_data = network[net_def.RESOURCE_NAME]
         provider._raise_if_updates_provider_attributes(net_data)
+        need_network_update_notify = False
 
         with db_api.context_manager.writer.using(context):
             original_network = super(Ml2Plugin, self).get_network(context, id)
@@ -883,6 +884,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 db_network.mtu is None):
                 db_network.mtu = self._get_network_mtu(db_network,
                                                        validate=False)
+                # agents should now update all ports to reflect new MTU
+                need_network_update_notify = True
 
             updated_network = self._make_network_dict(
                 db_network, context=context)
@@ -896,7 +899,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 resources.NETWORK, events.PRECOMMIT_UPDATE, self, **kwargs)
 
             # TODO(QoS): Move out to the extension framework somehow.
-            need_network_update_notify = (
+            need_network_update_notify |= (
                 qos_consts.QOS_POLICY_ID in net_data and
                 original_network[qos_consts.QOS_POLICY_ID] !=
                 updated_network[qos_consts.QOS_POLICY_ID])

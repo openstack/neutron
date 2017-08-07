@@ -476,10 +476,13 @@ class RouterInfo(object):
         for existing_port in existing_ports:
             current_port = current_ports_dict.get(existing_port['id'])
             if current_port:
-                if (sorted(existing_port['fixed_ips'],
+                fixed_ips_changed = (
+                    sorted(existing_port['fixed_ips'],
                            key=helpers.safe_sort_key) !=
-                        sorted(current_port['fixed_ips'],
-                               key=helpers.safe_sort_key)):
+                    sorted(current_port['fixed_ips'],
+                           key=helpers.safe_sort_key))
+                mtu_changed = existing_port['mtu'] != current_port['mtu']
+                if fixed_ips_changed or mtu_changed:
                     updated_ports[current_port['id']] = current_port
         return updated_ports
 
@@ -502,7 +505,9 @@ class RouterInfo(object):
                   self.router_id)
         self.radvd.disable()
 
-    def internal_network_updated(self, interface_name, ip_cidrs):
+    def internal_network_updated(self, interface_name, ip_cidrs, mtu):
+        self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
+                            prefix=INTERNAL_DEV_PREFIX)
         self.driver.init_router_port(
             interface_name,
             ip_cidrs=ip_cidrs,
@@ -562,7 +567,8 @@ class RouterInfo(object):
                 ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
                 LOG.debug("updating internal network for port %s", p)
                 updated_cidrs += ip_cidrs
-                self.internal_network_updated(interface_name, ip_cidrs)
+                self.internal_network_updated(
+                    interface_name, ip_cidrs, p['mtu'])
                 enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         # Check if there is any pd prefix update

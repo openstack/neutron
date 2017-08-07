@@ -34,9 +34,6 @@ architectures should avoid cases 2 and 3.
    networks that need a new MTU. (Network MTU update is available for all core
    plugins that implement the ``net-mtu-writable`` API extension.)
 
-   When using the Open vSwitch or Linux bridge drivers, new MTU calculations
-   will be propogated automatically after restarting the ``l3-agent`` service.
-
 Case 1
 ------
 

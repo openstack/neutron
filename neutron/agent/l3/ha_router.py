@@ -297,7 +297,9 @@ class HaRouter(router.RouterInfo):
         if device.addr.list(to=ip_cidr):
             super(HaRouter, self).remove_floating_ip(device, ip_cidr)
 
-    def internal_network_updated(self, interface_name, ip_cidrs):
+    def internal_network_updated(self, interface_name, ip_cidrs, mtu):
+        self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
+                            prefix=router.INTERNAL_DEV_PREFIX)
         self._clear_vips(interface_name)
         self._disable_ipv6_addressing_on_interface(interface_name)
         for ip_cidr in ip_cidrs:
