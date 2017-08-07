@@ -1367,8 +1367,8 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
         plugin.type_manager.drivers['driver1'].obj = mock_type_driver
         net = {
             'name': 'net1',
-            pnet.NETWORK_TYPE: 'driver1',
-            pnet.PHYSICAL_NETWORK: 'physnet1',
+            'network_type': 'driver1',
+            'physical_network': 'physnet1',
         }
         plugin._get_network_mtu(net)
         mock_type_driver.get_mtu.assert_called_once_with('physnet1')
@@ -1379,6 +1379,12 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
         class FakeDriver(object):
             def get_mtu(self, physical_network=None):
                 return mtu
+
+            def validate_provider_segment(self, segment):
+                pass
+
+            def is_partial_segment(self, segment):
+                return False
 
         driver_mock = mock.Mock()
         driver_mock.obj = FakeDriver()
@@ -1392,8 +1398,8 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
             'name': 'net1',
             mpnet.SEGMENTS: [
                 {
-                    pnet.NETWORK_TYPE: 'driver1',
-                    pnet.PHYSICAL_NETWORK: 'physnet1'
+                    'network_type': 'driver1',
+                    'physical_network': 'physnet1'
                 },
             ]
         }
@@ -1408,12 +1414,12 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
             'name': 'net1',
             mpnet.SEGMENTS: [
                 {
-                    pnet.NETWORK_TYPE: 'driver1',
-                    pnet.PHYSICAL_NETWORK: 'physnet1'
+                    'network_type': 'driver1',
+                    'physical_network': 'physnet1'
                 },
                 {
-                    pnet.NETWORK_TYPE: 'driver2',
-                    pnet.PHYSICAL_NETWORK: 'physnet2'
+                    'network_type': 'driver2',
+                    'physical_network': 'physnet2'
                 },
             ]
         }
@@ -1425,8 +1431,8 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
         net = {
             'name': 'net1',
-            pnet.NETWORK_TYPE: 'driver1',
-            pnet.PHYSICAL_NETWORK: 'physnet1',
+            'network_type': 'driver1',
+            'physical_network': 'physnet1',
         }
         self.assertEqual(1400, plugin._get_network_mtu(net))
 
@@ -1436,10 +1442,10 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
         net = {
             'name': 'net1',
-            pnet.NETWORK_TYPE: 'driver1',
-            pnet.PHYSICAL_NETWORK: 'physnet1',
+            'network_type': 'driver1',
+            'physical_network': 'physnet1',
         }
-        self.assertEqual(0, plugin._get_network_mtu(net))
+        self.assertEqual(1500, plugin._get_network_mtu(net))
 
     def test_unknown_segment_type_ignored(self):
         plugin = directory.get_plugin()
@@ -1450,12 +1456,12 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
             'name': 'net1',
             mpnet.SEGMENTS: [
                 {
-                    pnet.NETWORK_TYPE: 'driver1',
-                    pnet.PHYSICAL_NETWORK: 'physnet1'
+                    'network_type': 'driver1',
+                    'physical_network': 'physnet1'
                 },
                 {
-                    pnet.NETWORK_TYPE: 'driver2',
-                    pnet.PHYSICAL_NETWORK: 'physnet2'
+                    'network_type': 'driver2',
+                    'physical_network': 'physnet2'
                 },
             ]
         }

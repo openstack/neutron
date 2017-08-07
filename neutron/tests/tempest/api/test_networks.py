@@ -15,8 +15,10 @@
 
 from tempest.lib import decorators
 from tempest import test
+import testtools
 
 from neutron.tests.tempest.api import base
+from neutron.tests.tempest import config
 
 
 class NetworksTestJSON(base.BaseNetworkTest):
@@ -127,6 +129,35 @@ class NetworksTestJSON(base.BaseNetworkTest):
         _check_list_networks_fields(['tenant_id'], False, True)
         _check_list_networks_fields(['project_id'], True, False)
         _check_list_networks_fields(['project_id', 'tenant_id'], True, True)
+
+
+# TODO(ihrachys): check that bad mtu is not allowed; current API extension
+# definition doesn't enforce values
+# TODO(ihrachys): check that new segment reservation updates mtu, once
+# https://review.openstack.org/#/c/353115/ is merged
+class NetworksMtuTestJSON(base.BaseNetworkTest):
+    required_extensions = ['net-mtu', 'net-mtu-writable']
+
+    @decorators.idempotent_id('c79dbf94-ee26-420f-a56f-382aaccb1a41')
+    def test_create_network_custom_mtu(self):
+        # 68 should be supported by all implementations, as per api-ref
+        network = self.create_network(mtu=68)
+        body = self.client.show_network(network['id'])['network']
+        self.assertEqual(68, body['mtu'])
+
+    @decorators.idempotent_id('2d35d49d-9d16-465c-92c7-4768eb717688')
+    @testtools.skipUnless(config.CONF.network_feature_enabled.ipv6,
+                          'IPv6 is not enabled')
+    def test_update_network_custom_mtu(self):
+        # 68 should be supported by all implementations, as per api-ref
+        network = self.create_network(mtu=68)
+        body = self.client.show_network(network['id'])['network']
+        self.assertEqual(68, body['mtu'])
+
+        # 1280 should be supported by all ipv6 compliant implementations
+        self.client.update_network(network['id'], mtu=1280)
+        body = self.client.show_network(network['id'])['network']
+        self.assertEqual(1280, body['mtu'])
 
 
 class NetworksSearchCriteriaTest(base.BaseSearchCriteriaTest):

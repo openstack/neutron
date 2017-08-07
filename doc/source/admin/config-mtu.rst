@@ -29,10 +29,10 @@ architectures should avoid cases 2 and 3.
 
 .. note::
 
-   You can trigger MTU recalculation for existing networks by changing the
-   MTU configuration and restarting the ``neutron-server`` service.
-   However, propagating MTU calculations to the data plane may require
-   users to delete and recreate ports on the network.
+   After you adjust MTU configuration options in ``neutron.conf`` and
+   ``ml2_conf.ini``, you should update ``mtu`` attribute for all existing
+   networks that need a new MTU. (Network MTU update is available for all core
+   plugins that implement the ``net-mtu-writable`` API extension.)
 
    When using the Open vSwitch or Linux bridge drivers, new MTU calculations
    will be propogated automatically after restarting the ``l3-agent`` service.

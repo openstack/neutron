@@ -379,6 +379,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             args = {'tenant_id': n['tenant_id'],
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
+                    'mtu': n.get('mtu'),
                     'admin_state_up': n['admin_state_up'],
                     'status': n.get('status', constants.NET_STATUS_ACTIVE),
                     'description': n.get('description')}
@@ -466,20 +467,33 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return self._make_network_dict(network, fields, context=context)
 
     @db_api.retry_if_session_inactive()
+    def _get_networks(self, context, filters=None, fields=None,
+                      sorts=None, limit=None, marker=None,
+                      page_reverse=False):
+        marker_obj = ndb_utils.get_marker_obj(self, context, 'network',
+                                              limit, marker)
+        return model_query.get_collection(
+            context, models_v2.Network,
+            # if caller needs postprocessing, it should implement it explicitly
+            dict_func=None,
+            filters=filters, fields=fields,
+            sorts=sorts,
+            limit=limit,
+            marker_obj=marker_obj,
+            page_reverse=page_reverse)
+
+    @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
-        marker_obj = ndb_utils.get_marker_obj(self, context, 'network',
-                                              limit, marker)
         make_network_dict = functools.partial(self._make_network_dict,
                                               context=context)
-        return model_query.get_collection(context, models_v2.Network,
-                                          make_network_dict,
-                                          filters=filters, fields=fields,
-                                          sorts=sorts,
-                                          limit=limit,
-                                          marker_obj=marker_obj,
-                                          page_reverse=page_reverse)
+        return [
+            make_network_dict(net, fields)
+            for net in self._get_networks(
+                context, filters=filters, fields=fields, sorts=sorts,
+                limit=limit, marker=marker, page_reverse=page_reverse)
+        ]
 
     @db_api.retry_if_session_inactive()
     def get_networks_count(self, context, filters=None):

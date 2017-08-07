@@ -6150,6 +6150,7 @@ class DbModelMixin(object):
                         "admin_state_up=True, "
                         "vlan_transparent=None, "
                         "availability_zone_hints=None, "
+                        "mtu=None, "
                         "standard_attr_id=None}>")
         final_exp = exp_start_with + exp_middle + exp_end_with
         self.assertEqual(final_exp, actual_repr_output)

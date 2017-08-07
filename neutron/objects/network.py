@@ -186,10 +186,6 @@ class Network(rbac_db.NeutronRbacObject):
 
     synthetic_fields = [
         'dns_domain',
-        # MTU is not stored in the database any more, it's a synthetic field
-        # that may be used by plugins to provide a canonical representation for
-        # the resource
-        'mtu',
         'qos_policy_id',
         'security',
         'segments',
