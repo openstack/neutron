@@ -50,6 +50,13 @@ class ClientFixture(fixtures.Fixture):
         self.addCleanup(_safe_method(delete), data['id'])
         return data
 
+    def _update_resource(self, resource_type, id, spec):
+        update = getattr(self.client, 'update_%s' % resource_type)
+
+        body = {resource_type: spec}
+        resp = update(id, body=body)
+        return resp[resource_type]
+
     def create_router(self, tenant_id, name=None, ha=False,
                       external_network=None):
         resource_type = 'router'
@@ -78,6 +85,9 @@ class ClientFixture(fixtures.Fixture):
             spec['provider:physical_network'] = physical_network
 
         return self._create_resource(resource_type, spec)
+
+    def update_network(self, id, **kwargs):
+        return self._update_resource('network', id, kwargs)
 
     def create_subnet(self, tenant_id, network_id,
                       cidr, gateway_ip=None, name=None, enable_dhcp=True,
