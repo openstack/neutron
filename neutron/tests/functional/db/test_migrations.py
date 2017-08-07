@@ -27,6 +27,7 @@ import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy.sql import ddl as sqla_ddl
 
+from neutron.db import migration as migration_root
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
 from neutron.db.migration.models import head as head_models
@@ -290,10 +291,19 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         find_migration_exceptions()
         engine = self.engine
         cfg.CONF.set_override('connection', engine.url, group='database')
+
         with engine.begin() as connection:
             self.alembic_config.attributes['connection'] = connection
-            migration.do_alembic_command(self.alembic_config, 'upgrade',
-                                         'kilo')
+
+            # upgrade to latest release first; --expand users are expected to
+            # apply all alembic scripts from previous releases before applying
+            # the new ones
+            for release in migration_root.NEUTRON_MILESTONES:
+                release_revisions = migration._find_milestone_revisions(
+                    self.alembic_config, release)
+                for rev in release_revisions:
+                    migration.do_alembic_command(
+                        self.alembic_config, 'upgrade', rev[0])
 
             with self._listener(engine, check_expand_branch):
                 migration.do_alembic_command(

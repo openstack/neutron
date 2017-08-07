@@ -34,6 +34,7 @@ NEUTRON_MILESTONES = [
     LIBERTY,
     MITAKA,
     NEWTON,
+    OCATA,
     # Do not add the milestone until the end of the release
 ]
 
