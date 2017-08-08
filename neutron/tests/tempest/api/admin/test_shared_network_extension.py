@@ -65,19 +65,22 @@ class SharedNetworksTest(base.BaseAdminNetworkTest):
                                     client=self.admin_client)
         self.assertIn(shared['id'],
                       self._list_subnets_ids(self.client, shared=True))
-        self.assertIn(shared,
-            self.admin_client.list_subnets(shared=True)['subnets'])
-        self.assertNotIn(priv,
-            self.client.list_subnets(shared=True)['subnets'])
-        self.assertNotIn(priv,
-            self.admin_client.list_subnets(shared=True)['subnets'])
-        self.assertIn(priv, self.client.list_subnets(shared=False)['subnets'])
+        self.assertIn(shared['id'],
+                      self._list_subnets_ids(self.admin_client, shared=True))
+        self.assertNotIn(priv['id'],
+                         self._list_subnets_ids(self.client, shared=True))
+        self.assertNotIn(
+            priv['id'],
+            self._list_subnets_ids(self.admin_client, shared=True))
+        self.assertIn(priv['id'],
+                      self._list_subnets_ids(self.client, shared=False))
         self.assertIn(priv['id'],
                       self._list_subnets_ids(self.admin_client, shared=False))
-        self.assertNotIn(shared,
-            self.client.list_subnets(shared=False)['subnets'])
-        self.assertNotIn(shared,
-            self.admin_client.list_subnets(shared=False)['subnets'])
+        self.assertNotIn(shared['id'],
+                         self._list_subnets_ids(self.client, shared=False))
+        self.assertNotIn(
+            shared['id'],
+            self._list_subnets_ids(self.admin_client, shared=False))
 
     @decorators.idempotent_id('6661d219-b96d-4597-ad10-55766ce4abf7')
     def test_create_update_shared_network(self):
