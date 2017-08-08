@@ -342,6 +342,8 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
             # will be required for linux bridge and others that don't have the
             # full port UUID
             port['device'] = port['id']
+            port['port_security_enabled'] = getattr(
+                ovo.security, 'port_security_enabled', True)
             result[device] = port
         return result
 
