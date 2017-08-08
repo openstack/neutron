@@ -18,10 +18,13 @@
 .. toctree::
    :maxdepth: 1
 
-   README.rst
    unreleased
    ocata
    newton
    mitaka
    liberty
 
+.. toctree::
+   :maxdepth: 1
+
+   README.rst

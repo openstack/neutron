@@ -1,17 +1,14 @@
 ---
-prelude: >
-    Enable creation of VXLANs with different multicast
-    addresses allocated by VNI-address mappings.
 features:
-  - The ability to control vni-multicast address
-    distribution in linuxbridge agent via new config
-    option - multicast_ranges.
+  - Enable creation of VXLANs with different multicast addresses
+    in linuxbridge agent allocated by VNI-address mappings.
+    A new config option ``multicast_ranges`` was introduced.
 other:
-  - Example configuration of `multicast_ranges` in
-    ml2_conf.ini under the `[vxlan]` config. section
-    multicast_ranges = 224.0.0.10:10:90,225.0.0.15:100:900
+  - Example configuration of ``multicast_ranges`` in
+    ml2_conf.ini under the ``[vxlan]`` config. section
+    ``multicast_ranges = 224.0.0.10:10:90,225.0.0.15:100:900``.
     For VNI between 10 and 90, the multicast address
     224.0.0.0.10 will be used, and for 100 through 900
     225.0.0.15 will be used. Other VNI values will get
-    standard `vxlan_group` address. For more info see RFE
-    `<https://bugs.launchpad.net/neutron/+bug/1579068>`
+    standard ``vxlan_group`` address. For more info see RFE
+    https://bugs.launchpad.net/neutron/+bug/1579068

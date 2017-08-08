@@ -1,16 +1,14 @@
 ---
-prelude: >
-    Add ``data_plane_status`` attribute to port resources to represent the
-    status of the underlying data plane. This attribute is to be managed by
-    entities outside of the Networking service, while the ``status`` attribute
-    is managed by the Networking service. Both status attributes are independent
-    from one another.
 features:
-  - The port resource can have a ``data_plane_status`` attribute.
+  - Add ``data_plane_status`` attribute to port resources to represent the
+    status of the underlying data plane. This attribute is to be managed
+    by entities outside of the Networking service,
+    while the ``status`` attribute is managed by the Networking service.
+    Both status attributes are independent from one another.
     Third parties can report via Neutron API issues in the underlying data
     plane affecting connectivity from/to Neutron ports.
     Attribute can take values ``None`` (default), ``ACTIVE`` or ``DOWN``,
     and is readable by users and writable by admins and users granted the
-    ``data-plane-integrator`` role. Append ``data_plane_status`` to
-    [ml2]/extension_drivers section to load the extension driver.
-
+    ``data-plane-integrator`` role.
+    Append ``data_plane_status`` to ``[ml2] extension_drivers`` config
+    option to load the extension driver.

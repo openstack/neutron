@@ -1,7 +1,6 @@
 ---
-prelude: >
-    The ``openvswitch`` mechanism driver now supports hardware offload via SR-IOV.
 features:
-  - The ``openvswitch`` mechanism driver now allows binding direct (SR-IOV) ports.
-    Using ``openvswitch`` 2.8.0 and 'Linux Kernel' 4.8 allows to control the SR-IOV VF
+  - The ``openvswitch`` mechanism driver now supports hardware offload via
+    SR-IOV. It allows binding direct (SR-IOV) ports. Using ``openvswitch``
+    2.8.0 and 'Linux Kernel' 4.8 allows to control the SR-IOV VF
     via OpenFlow control plane and gain accelerated 'Open vSwitch'.
