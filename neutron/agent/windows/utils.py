@@ -15,14 +15,21 @@
 
 import os
 
+import eventlet
+from eventlet import tpool
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import encodeutils
 
 from neutron._i18n import _
-from neutron.agent.windows import winutils
 
 LOG = logging.getLogger(__name__)
+
+# subprocess.Popen will spawn two threads consuming stdout/stderr when passing
+# data through stdin. We need to make sure that *native* threads will be used
+# as pipes are blocking on Windows.
+subprocess = eventlet.patcher.original('subprocess')
+subprocess.threading = eventlet.patcher.original('threading')
 
 
 def create_process(cmd, addl_env=None):
@@ -33,7 +40,14 @@ def create_process(cmd, addl_env=None):
     if addl_env:
         env.update(addl_env)
 
-    obj = winutils.ProcessWithNamedPipes(cmd, env)
+    popen = subprocess.Popen
+    obj = popen(cmd, shell=False,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+                preexec_fn=None,
+                close_fds=False)
 
     return obj, cmd
 
@@ -47,7 +61,7 @@ def execute(cmd, process_input=None, addl_env=None,
     else:
         _process_input = None
     obj, cmd = create_process(cmd, addl_env=addl_env)
-    _stdout, _stderr = obj.communicate(_process_input)
+    _stdout, _stderr = avoid_blocking_call(obj.communicate, _process_input)
     obj.stdin.close()
     _stdout = helpers.safe_decode_utf8(_stdout)
     _stderr = helpers.safe_decode_utf8(_stderr)
@@ -74,3 +88,22 @@ def execute(cmd, process_input=None, addl_env=None,
         raise RuntimeError(m)
 
     return (_stdout, _stderr) if return_stderr else _stdout
+
+
+def avoid_blocking_call(f, *args, **kwargs):
+    """Ensure that the method "f" will not block other greenthreads.
+
+    Performs the call to the function "f" received as parameter in a
+    different thread using tpool.execute when called from a greenthread.
+    This will ensure that the function "f" will not block other greenthreads.
+    If not called from a greenthread, it will invoke the function "f" directly.
+    The function "f" will receive as parameters the arguments "args" and
+    keyword arguments "kwargs".
+    """
+    # Note that eventlet.getcurrent will always return a greenlet object.
+    # In case of a greenthread, the parent greenlet will always be the hub
+    # loop greenlet.
+    if eventlet.getcurrent().parent:
+        return tpool.execute(f, *args, **kwargs)
+    else:
+        return f(*args, **kwargs)
