@@ -21,5 +21,5 @@ class LogResourceNotFound(n_exc.NotFound):
     message = _("Log resource %(log_id)s could not be found.")
 
 
-class InvalidLogReosurceType(n_exc.InvalidInput):
+class InvalidLogResourceType(n_exc.InvalidInput):
     message = _("Invalid log resource_type: %(resource_type)s.")
