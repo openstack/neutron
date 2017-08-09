@@ -23,3 +23,22 @@ class LogResourceNotFound(n_exc.NotFound):
 
 class InvalidLogResourceType(n_exc.InvalidInput):
     message = _("Invalid log resource_type: %(resource_type)s.")
+
+
+class LoggingTypeNotSupported(n_exc.Conflict):
+    message = _("Logging type %(log_type)s is not supported on "
+                "port %(port_id)s.")
+
+
+class TargetResourceNotFound(n_exc.NotFound):
+    message = _("Target resource %(target_id)s could not be found.")
+
+
+class ResourceNotFound(n_exc.NotFound):
+    message = _("Resource %(resource_id)s could not be found.")
+
+
+class InvalidResourceConstraint(n_exc.InvalidInput):
+    message = _("Invalid resource constraint between resource "
+                "(%(resource)s %(resource_id)s) and target resource "
+                "(%(target_resource)s %(target_id)s).")
