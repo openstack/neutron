@@ -20,6 +20,7 @@ from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron import objects
+from neutron.objects.port.extensions import port_security as psec
 from neutron.objects import ports
 from neutron.objects import securitygroup
 from neutron.tests import base
@@ -131,9 +132,13 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
     def test_security_group_info_for_devices(self):
         s1 = self._make_security_group_ovo()
         p1 = self._make_port_ovo(ip='1.1.1.1', security_group_ids={s1.id})
-        p2 = self._make_port_ovo(ip='2.2.2.2', security_group_ids={s1.id})
+        p2 = self._make_port_ovo(
+            ip='2.2.2.2',
+            security_group_ids={s1.id},
+            security=psec.PortSecurity(port_security_enabled=False))
         p3 = self._make_port_ovo(ip='3.3.3.3', security_group_ids={s1.id},
                                  device_owner='network:dhcp')
+
         ids = [p1.id, p2.id, p3.id]
         info = self.shim.security_group_info_for_devices(self.ctx, ids)
         self.assertIn('1.1.1.1', info['sg_member_ips'][s1.id]['IPv4'])
@@ -144,6 +149,8 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         # P3 is a trusted port so it doesn't have rules
         self.assertNotIn(p3.id, info['devices'].keys())
         self.assertEqual([s1.id], list(info['security_groups'].keys()))
+        self.assertTrue(info['devices'][p1.id]['port_security_enabled'])
+        self.assertFalse(info['devices'][p2.id]['port_security_enabled'])
 
     def test_sg_member_update_events(self):
         s1 = self._make_security_group_ovo()
