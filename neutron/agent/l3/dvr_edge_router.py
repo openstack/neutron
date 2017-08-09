@@ -21,6 +21,7 @@ from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.common import constants as n_const
 
 LOG = logging.getLogger(__name__)
 
@@ -260,3 +261,92 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                     bridge=self.agent_conf.external_network_bridge,
                     namespace=self.snat_namespace.name,
                     prefix=router.EXTERNAL_DEV_PREFIX)
+
+    def get_snat_external_device_interface_name(self, ex_gw_port):
+        long_name = router.EXTERNAL_DEV_PREFIX + ex_gw_port['id']
+        return long_name[:self.driver.DEV_NAME_LEN]
+
+    def _get_centralized_fip_cidr_set(self):
+        """Returns the fip_cidr set for centralized floatingips."""
+        interface_name = self.get_snat_external_device_interface_name(
+                self.get_ex_gw_port())
+        device = ip_lib.IPDevice(
+            interface_name, namespace=self.snat_namespace.name)
+        return set([addr['cidr'] for addr in device.addr.list()])
+
+    def get_router_cidrs(self, device):
+        """Over-ride the get_router_cidrs function to return the list.
+
+        This function is overridden to provide the complete list of
+        floating_ip cidrs that the router hosts.
+        This includes the centralized floatingip cidr list and the
+        regular floatingip cidr list that are bound to fip namespace.
+        """
+        fip_cidrs = super(DvrEdgeRouter, self).get_router_cidrs(device)
+        centralized_cidrs = set()
+        if self.get_ex_gw_port():
+            centralized_cidrs = self._get_centralized_fip_cidr_set()
+        return fip_cidrs | centralized_cidrs
+
+    def remove_centralized_floatingip(self, fip_cidr):
+        """Function to handle the centralized Floatingip remove."""
+        if not self.get_ex_gw_port():
+            return
+        if not self._is_this_snat_host():
+            return
+        interface_name = self.get_snat_external_device_interface_name(
+            self.get_ex_gw_port())
+        device = ip_lib.IPDevice(
+            interface_name, namespace=self.snat_namespace.name)
+        device.delete_addr_and_conntrack_state(fip_cidr)
+        self.process_floating_ip_nat_rules_for_centralized_floatingip()
+
+    def add_centralized_floatingip(self, fip, fip_cidr):
+        """Function to handle the centralized Floatingip addition."""
+        if not self.get_ex_gw_port():
+            return
+        if not self._is_this_snat_host():
+            return
+        interface_name = self.get_snat_external_device_interface_name(
+            self.get_ex_gw_port())
+        device = ip_lib.IPDevice(
+            interface_name, namespace=self.snat_namespace.name)
+        try:
+            device.addr.add(fip_cidr)
+        except RuntimeError:
+            LOG.warning("Unable to configure IP address for centralized "
+                        "floating IP: %s", fip['id'])
+            return lib_constants.FLOATINGIP_STATUS_ERROR
+        self.process_floating_ip_nat_rules_for_centralized_floatingip()
+        # Send a GARP message on the external interface for the
+        # centralized floatingip configured.
+        ip_lib.send_ip_addr_adv_notif(self.snat_namespace.name,
+                                      interface_name,
+                                      fip['floating_ip_address'],
+                                      self.agent_conf)
+        return lib_constants.FLOATINGIP_STATUS_ACTIVE
+
+    def _centralized_floating_forward_rules(self, floating_ip, fixed_ip):
+        return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
+                 (floating_ip, fixed_ip)),
+                ('OUTPUT', '-d %s/32 -j DNAT --to-destination %s' %
+                 (floating_ip, fixed_ip)),
+                ('float-snat', '-s %s/32 -j SNAT --to-source %s' %
+                 (fixed_ip, floating_ip))]
+
+    def _set_floating_ip_nat_rules_for_centralized_floatingip(self, fip):
+        if fip.get(n_const.DVR_SNAT_BOUND):
+            fixed = fip['fixed_ip_address']
+            fip_ip = fip['floating_ip_address']
+            for chain, rule in self._centralized_floating_forward_rules(
+                fip_ip, fixed):
+                self.snat_iptables_manager.ipv4['nat'].add_rule(
+                    chain, rule, tag='floating_ip')
+
+    def process_floating_ip_nat_rules_for_centralized_floatingip(self):
+        self.snat_iptables_manager.ipv4['nat'].clear_rules_by_tag(
+            'floating_ip')
+        floating_ips = self.get_floating_ips()
+        for fip in floating_ips:
+            self._set_floating_ip_nat_rules_for_centralized_floatingip(fip)
+        self.snat_iptables_manager.apply()

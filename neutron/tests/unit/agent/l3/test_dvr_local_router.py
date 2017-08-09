@@ -21,6 +21,7 @@ from oslo_log import log
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as l3_agent
+from neutron.agent.l3 import dvr_edge_router as dvr_edge_rtr
 from neutron.agent.l3 import dvr_local_router as dvr_router
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
@@ -178,6 +179,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.rtr_fip_connect = True
         ex_gw_port = {'network_id': 'fake_net_id'}
         ri.create_dvr_external_gateway_on_agent(ex_gw_port)
+        ri._get_floatingips_bound_to_host = mock.Mock(return_value=True)
         ri.fip_ns.create_or_update_gateway_port.assert_called_once_with(
             fip_agent_port)
 
@@ -231,16 +233,16 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
         fips = ri.get_floating_ips()
 
-        self.assertEqual([{'host': HOSTNAME}], fips)
+        self.assertEqual(
+            [{'host': HOSTNAME}, {'host': mock.sentinel.otherhost}], fips)
 
     def test_floating_forward_rules_no_fip_ns(self):
         router = mock.MagicMock()
         router.get.return_value = [{'host': HOSTNAME},
                                    {'host': mock.sentinel.otherhost}]
+        fip = {'id': _uuid()}
         ri = self._create_router(router)
-        floating_ip = mock.Mock()
-        fixed_ip = mock.Mock()
-        self.assertFalse(ri.floating_forward_rules(floating_ip, fixed_ip))
+        self.assertFalse(ri.floating_forward_rules(fip))
 
     def test_floating_forward_rules(self):
         router = mock.MagicMock()
@@ -250,6 +252,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
         floating_ip = '15.1.2.3'
         rtr_2_fip_name = 'fake_router'
         fixed_ip = '192.168.0.1'
+        fip = {'id': _uuid(),
+               'fixed_ip_address': '192.168.0.1',
+               'floating_ip_address': '15.1.2.3'}
         instance = mock.Mock()
         instance.get_rtr_ext_device_name = mock.Mock(
                                                return_value=rtr_2_fip_name)
@@ -260,7 +265,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         snat_from_fixedip_to_floatingip = (
             'float-snat', '-s %s/32 -j SNAT --to-source %s' % (
                 fixed_ip, floating_ip))
-        actual = ri.floating_forward_rules(floating_ip, fixed_ip)
+        actual = ri.floating_forward_rules(fip)
         expected = [dnat_from_floatingip_to_fixedip,
                     snat_from_fixedip_to_floatingip]
         self.assertEqual(expected, actual)
@@ -405,9 +410,13 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                               table=16,
                                               priority=FIP_PRI)
 
-    def _test_add_floating_ip(self, ri, fip, is_failure):
-        ri.floating_ip_added_dist = mock.Mock()
-
+    def _test_add_floating_ip(self, ri, fip, is_failure=False):
+        if not is_failure:
+            ri.floating_ip_added_dist = mock.Mock(
+                return_value=lib_constants.FLOATINGIP_STATUS_ACTIVE)
+        else:
+            ri.floating_ip_added_dist = mock.Mock(
+                return_value=lib_constants.FLOATINGIP_STATUS_ERROR)
         result = ri.add_floating_ip(fip,
                                     mock.sentinel.interface_name,
                                     mock.sentinel.device)
@@ -419,9 +428,17 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri = self._create_router(mock.MagicMock())
         ip = '15.1.2.3'
         fip = {'floating_ip_address': ip}
-        result = self._test_add_floating_ip(ri, fip, True)
+        result = self._test_add_floating_ip(ri, fip)
         ri.floating_ip_added_dist.assert_called_once_with(fip, ip + '/32')
         self.assertEqual(lib_constants.FLOATINGIP_STATUS_ACTIVE, result)
+
+    def test_add_floating_ip_failure(self):
+        ri = self._create_router(mock.MagicMock())
+        ip = '15.1.2.3'
+        fip = {'floating_ip_address': ip}
+        result = self._test_add_floating_ip(ri, fip, True)
+        ri.floating_ip_added_dist.assert_called_once_with(fip, ip + '/32')
+        self.assertEqual(lib_constants.FLOATINGIP_STATUS_ERROR, result)
 
     @mock.patch.object(router_info.RouterInfo, 'remove_floating_ip')
     def test_remove_floating_ip(self, super_remove_floating_ip):
@@ -694,14 +711,14 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     def test_external_gateway_removed_ext_gw_port_and_fip(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        agent.conf.agent_mode = 'dvr'
+        agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         router['gw_port_host'] = HOSTNAME
         self.mock_driver.unplug.reset_mock()
 
         external_net_id = router['gw_port']['network_id']
         self._set_ri_kwargs(agent, router['id'], router)
-        ri = dvr_router.DvrLocalRouter(HOSTNAME, **self.ri_kwargs)
+        ri = dvr_edge_rtr.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ri.remove_floating_ip = mock.Mock()
         agent._fetch_external_net_id = mock.Mock(return_value=external_net_id)
         ri.ex_gw_port = ri.router['gw_port']

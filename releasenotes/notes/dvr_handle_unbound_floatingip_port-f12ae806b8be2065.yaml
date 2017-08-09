@@ -1,0 +1,20 @@
+---
+features:
+  - |
+    Floating IPs associated with an unbound port with DVR routers will
+    not be distributed, but will be centralized and implemented in the
+    SNAT namespace of the Network node or ``dvr_snat`` node.
+    Floating IPs associated with allowed_address_pair port IP and are
+    bound to multiple active VMs with DVR routers will be implemented
+    in the SNAT namespace in the Network node or ``dvr_snat`` node. This
+    will address VRRP use cases.
+    More information about this is captured in
+    `bug 1583694 <https://bugs.launchpad.net/neutron/+bug/1583694>`__.
+issues:
+  - |
+    While the bound port Floating IPs are distributed, the unbound port
+    Floating IPs are centralized.
+fixes:
+  - |
+    Allows the unbound port Floating IPs to be configured
+    properly with DVR routers irrespective of its device_owner.

@@ -445,6 +445,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                                  enable_ha=False,
                                  enable_snat=False,
                                  enable_gw=True,
+                                 snat_bound_fip=False,
                                  agent=None,
                                  extra_routes=False,
                                  enable_floating_ip=True,
@@ -465,6 +466,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         if enable_floating_ip:
                 floating_ip = router['_floatingips'][0]
                 floating_ip['host'] = agent.conf.host
+
+        if snat_bound_fip:
+            floating_ip[n_const.DVR_SNAT_BOUND] = True
         if enable_gw:
             external_gw_port = router['gw_port']
             router['gw_port'][portbindings.HOST_ID] = agent.conf.host
@@ -481,6 +485,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 floating_ip['port_id'] = internal_ports[0]['id']
                 floating_ip['status'] = 'ACTIVE'
 
+            if not snat_bound_fip:
                 self._add_fip_agent_gw_port_info_to_router(router,
                                                            external_gw_port)
         return router
@@ -683,10 +688,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         # In the router namespace, check the iptables rules are set correctly
         for fip in floating_ips:
-            floatingip = fip['floating_ip_address']
-            fixedip = fip['fixed_ip_address']
-            expected_rules = router.floating_forward_rules(floatingip,
-                                                           fixedip)
+            expected_rules = router.floating_forward_rules(fip)
             self._assert_iptables_rules_exist(
                 router.iptables_manager, 'nat', expected_rules)
 
@@ -985,6 +987,19 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         sg_device_created_successfully = ip_lib.device_exists(
             internal_dev_name, namespace=snat_ns)
         return qg_device_created_successfully, sg_device_created_successfully
+
+    def test_snat_bound_floating_ip(self):
+        """Test to validate the snat bound floatingip lifecycle."""
+        self.agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
+        router_info = self.generate_dvr_router_info(snat_bound_fip=True)
+        router1 = self.manage_router(self.agent, router_info)
+        snat_bound_floatingips = router_info[lib_constants.FLOATINGIP_KEY]
+        self._assert_snat_namespace_exists(router1)
+        # In the snat namespace, check the iptables rules are set correctly
+        for fip in snat_bound_floatingips:
+            expected_rules = router1.floating_forward_rules(fip)
+            self._assert_iptables_rules_exist(
+                router1.snat_iptables_manager, 'nat', expected_rules)
 
     def test_dvr_router_snat_namespace_with_interface_remove(self):
         """Test to validate the snat namespace with interface remove.
