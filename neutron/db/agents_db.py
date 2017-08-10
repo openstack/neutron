@@ -429,9 +429,6 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             resource_versions = agent.get('resource_versions', {})
             consumer = version_manager.AgentConsumer(
                 agent_type=agent['agent_type'], host=agent['host'])
-            LOG.debug("Update consumer %(consumer)s versions to: "
-                      "%(versions)s", {'consumer': consumer,
-                                       'versions': resource_versions})
             tracker.set_versions(consumer, resource_versions)
 
 
