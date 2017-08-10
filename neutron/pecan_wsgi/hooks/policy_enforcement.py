@@ -15,6 +15,7 @@
 
 import copy
 
+from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
 from pecan import hooks
@@ -28,6 +29,8 @@ from neutron.pecan_wsgi import constants as pecan_constants
 from neutron.pecan_wsgi.controllers import quota
 from neutron.pecan_wsgi.hooks import utils
 from neutron import policy
+
+LOG = logging.getLogger(__name__)
 
 
 def _custom_getter(resource, resource_id):
@@ -250,4 +253,7 @@ class PolicyHook(hooks.PecanHook):
             # This should be migrated to project_id later.
             if attr_name == 'tenant_id':
                 attributes_to_exclude.append('project_id')
+        if attributes_to_exclude:
+            LOG.debug("Attributes excluded by policy engine: %s",
+                      attributes_to_exclude)
         return attributes_to_exclude
