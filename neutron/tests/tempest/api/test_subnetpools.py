@@ -336,6 +336,10 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
 
 class DefaultSubnetPoolsTest(SubnetPoolsTestBase):
 
+    def setUp(self):
+        self.addCleanup(self.resource_cleanup)
+        super(DefaultSubnetPoolsTest, self).setUp()
+
     @classmethod
     def resource_setup(cls):
         super(DefaultSubnetPoolsTest, cls).resource_setup()
