@@ -389,7 +389,7 @@ class DefaultSubnetPoolsTest(SubnetPoolsTestBase):
         subnetpool_data = {'is_default': False}
         self.admin_client.update_subnetpool(subnetpool_id,
                                             **subnetpool_data)
-        show_body = self.client.show_subnetpool(subnetpool_id)
+        show_body = self.admin_client.show_subnetpool(subnetpool_id)
         self.assertFalse(show_body['subnetpool']['is_default'])
 
 
