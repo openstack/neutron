@@ -188,9 +188,6 @@ class TrackedResource(BaseResource):
             dirty_tenants_snap = self._dirty_tenants.copy()
             for tenant_id in dirty_tenants_snap:
                 quota_api.set_quota_usage_dirty(context, self.name, tenant_id)
-                LOG.debug(("Persisted dirty status for tenant:%(tenant_id)s "
-                           "on resource:%(resource)s"),
-                          {'tenant_id': tenant_id, 'resource': self.name})
         self._out_of_sync_tenants |= dirty_tenants_snap
         self._dirty_tenants -= dirty_tenants_snap
 
