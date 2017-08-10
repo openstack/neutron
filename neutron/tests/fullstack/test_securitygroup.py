@@ -43,10 +43,6 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
     ovsdb_interface = None
 
     def setUp(self):
-        if (self.firewall_driver == 'openvswitch' and
-            not OVSVersionChecker.supports_ovsfirewall()):
-            self.skipTest("Open vSwitch firewall_driver doesn't work "
-                          "with this version of ovs.")
         host_descriptions = [
             environment.HostDescription(
                 of_interface=self.of_interface,
@@ -59,6 +55,11 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
                 network_type=self.network_type),
             host_descriptions)
         super(BaseSecurityGroupsSameNetworkTest, self).setUp(env)
+
+        if (self.firewall_driver == 'openvswitch' and
+            not OVSVersionChecker.supports_ovsfirewall()):
+            self.skipTest("Open vSwitch firewall_driver doesn't work "
+                          "with this version of ovs.")
 
     def assert_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
