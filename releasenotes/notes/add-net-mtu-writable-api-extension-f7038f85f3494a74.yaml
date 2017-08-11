@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    The new ``net-mtu-writable`` extension API definition has been added. The
+    new extension indicates that the network ``mtu`` attribute is writeable.
+    Plugins supporting the new extension are expected to also support
+    ``net-mtu``. The first plugin that gets support for the new extension is
+    ``ml2``.
+other:
+  - |
+    Changing MTU configuration options (``global_physnet_mtu``,
+    ``physical_network_mtus``, and ``path_mtu``) and restarting
+    ``neutron-serer`` no longer affects existing networks' MTUs. Nevertheless,
+    new networks will use new option values for MTU calculation. To reflect
+    configuration changes for existing networks, one may use the new
+    ``net-mtu-writable`` API extension to update ``mtu`` attribute for those
+    networks.

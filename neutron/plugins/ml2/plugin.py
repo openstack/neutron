@@ -19,7 +19,6 @@ from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
-from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -77,9 +76,10 @@ from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import availability_zone as az_ext
-from neutron.extensions import multiprovidernet as mpnet
+from neutron.extensions import netmtu_writable as mtu_ext
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
+from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import config  # noqa
 from neutron.plugins.ml2 import db
@@ -146,7 +146,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "dhcp_agent_scheduler",
                                     "multi-provider", "allowed-address-pairs",
                                     "extra_dhcp_opt", "subnet_allocation",
-                                    "net-mtu", "vlan-transparent",
+                                    "net-mtu", "net-mtu-writable",
+                                    "vlan-transparent",
                                     "address-scope",
                                     "availability_zone",
                                     "network_availability_zone",
@@ -724,14 +725,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self._delete_objects(context, resource, to_delete)
         return objects
 
-    def _get_network_mtu(self, network):
+    def _get_network_mtu(self, network_db, validate=True):
         mtus = []
         try:
-            segments = network[mpnet.SEGMENTS]
+            segments = network_db['segments']
         except KeyError:
-            segments = [network]
+            segments = [network_db]
         for s in segments:
-            segment_type = s[provider_net.NETWORK_TYPE]
+            segment_type = s.get('network_type')
+            if segment_type is None:
+                continue
             try:
                 type_driver = self.type_manager.drivers[segment_type].obj
             except KeyError:
@@ -742,7 +745,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # a bad setup, it's better to be safe than sorry here. Also,
                 # several unit tests use non-existent driver types that may
                 # trigger the exception here.
-                if segment_type and s[provider_net.SEGMENTATION_ID]:
+                if segment_type and s['segmentation_id']:
                     LOG.warning(
                         _LW("Failed to determine MTU for segment "
                             "%(segment_type)s:%(segment_id)s; network "
@@ -750,18 +753,29 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                             "accurate"),
                         {
                             'segment_type': segment_type,
-                            'segment_id': s[provider_net.SEGMENTATION_ID],
-                            'network_id': network['id'],
+                            'segment_id': s['segmentation_id'],
+                            'network_id': network_db['id'],
                         }
                     )
             else:
-                mtu = type_driver.get_mtu(s[provider_net.PHYSICAL_NETWORK])
+                mtu = type_driver.get_mtu(s['physical_network'])
                 # Some drivers, like 'local', may return None; the assumption
                 # then is that for the segment type, MTU has no meaning or
                 # unlimited, and so we should then ignore those values.
                 if mtu:
                     mtus.append(mtu)
-        return min(mtus) if mtus else 0
+
+        max_mtu = min(mtus) if mtus else p_utils.get_deployment_physnet_mtu()
+        net_mtu = network_db.get('mtu')
+
+        if validate:
+            # validate that requested mtu conforms to allocated segments
+            if net_mtu and max_mtu and max_mtu < net_mtu:
+                msg = _("Requested MTU is too big, maximum is %d") % max_mtu
+                raise exc.InvalidInput(error_message=msg)
+
+        # if mtu is not set in database, use the maximum possible
+        return net_mtu or max_mtu
 
     def _before_create_network(self, context, network):
         net_data = network[net_def.RESOURCE_NAME]
@@ -773,22 +787,28 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         tenant_id = net_data['tenant_id']
         with db_api.context_manager.writer.using(context):
             net_db = self.create_network_db(context, network)
-            result = self._make_network_dict(net_db, process_extensions=False,
-                                             context=context)
-            self.extension_manager.process_create_network(context, net_data,
-                                                          result)
-            self._process_l3_create(context, result, net_data)
-            net_data['id'] = result['id']
+            net_data['id'] = net_db.id
             self.type_manager.create_network_segments(context, net_data,
                                                       tenant_id)
+            net_db.mtu = self._get_network_mtu(net_db)
+
+            result = self._make_network_dict(net_db, process_extensions=False,
+                                             context=context)
+
+            self.extension_manager.process_create_network(
+                context,
+                # NOTE(ihrachys) extensions expect no id in the dict
+                {k: v for k, v in net_data.items() if k != 'id'},
+                result)
+
+            self._process_l3_create(context, result, net_data)
             self.type_manager.extend_network_dict_provider(context, result)
+
             # Update the transparent vlan if configured
             if utils.is_extension_supported(self, 'vlan-transparent'):
                 vlt = vlantransparent.get_vlan_transparent(net_data)
                 net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
-
-            result[api.MTU] = self._get_network_mtu(result)
 
             if az_ext.AZ_HINTS in net_data:
                 self.validate_availability_zones(context, 'network',
@@ -853,6 +873,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # Expire the db_network in current transaction, so that the join
             # relationship can be updated.
             context.session.expire(db_network)
+
+            if (
+                mtu_ext.MTU in net_data or
+                # NOTE(ihrachys) mtu may be null for existing networks,
+                # calculate and update it as needed; the conditional can be
+                # removed in Queens when we populate all mtu attributes and
+                # enforce it's not nullable on database level
+                db_network.mtu is None):
+                db_network.mtu = self._get_network_mtu(db_network,
+                                                       validate=False)
+
             updated_network = self._make_network_dict(
                 db_network, context=context)
             self.type_manager.extend_network_dict_provider(
@@ -889,27 +920,42 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @db_api.retry_if_session_inactive()
     def get_network(self, context, id, fields=None):
-        with db_api.context_manager.reader.using(context):
-            result = super(Ml2Plugin, self).get_network(context, id, None)
-            self.type_manager.extend_network_dict_provider(context, result)
-            result[api.MTU] = self._get_network_mtu(result)
+        # NOTE(ihrachys) use writer manager to be able to update mtu
+        # TODO(ihrachys) remove in Queens+ when mtu is not nullable
+        with db_api.context_manager.writer.using(context):
+            net_db = self._get_network(context, id)
 
-        return db_utils.resource_fields(result, fields)
+            # NOTE(ihrachys) pre Pike networks may have null mtus; update them
+            # in database if needed
+            # TODO(ihrachys) remove in Queens+ when mtu is not nullable
+            if net_db.mtu is None:
+                net_db.mtu = self._get_network_mtu(net_db, validate=False)
+
+            net_data = self._make_network_dict(net_db, context=context)
+            self.type_manager.extend_network_dict_provider(context, net_data)
+
+        return db_utils.resource_fields(net_data, fields)
 
     @db_api.retry_if_session_inactive()
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
-        with db_api.context_manager.reader.using(context):
-            nets = super(Ml2Plugin,
-                         self).get_networks(context, filters, None, sorts,
-                                            limit, marker, page_reverse)
-            self.type_manager.extend_networks_dict_provider(context, nets)
+        # NOTE(ihrachys) use writer manager to be able to update mtu
+        # TODO(ihrachys) remove in Queens when mtu is not nullable
+        with db_api.context_manager.writer.using(context):
+            nets_db = super(Ml2Plugin, self)._get_networks(
+                context, filters, None, sorts, limit, marker, page_reverse)
 
-            nets = self._filter_nets_provider(context, nets, filters)
+            # NOTE(ihrachys) pre Pike networks may have null mtus; update them
+            # in database if needed
+            # TODO(ihrachys) remove in Queens+ when mtu is not nullable
+            net_data = []
+            for net in nets_db:
+                if net.mtu is None:
+                    net.mtu = self._get_network_mtu(net, validate=False)
+                net_data.append(self._make_network_dict(net, context=context))
 
-            for net in nets:
-                net[api.MTU] = self._get_network_mtu(net)
-
+            self.type_manager.extend_networks_dict_provider(context, net_data)
+            nets = self._filter_nets_provider(context, net_data, filters)
         return [db_utils.resource_fields(net, fields) for net in nets]
 
     def get_network_contexts(self, context, network_ids):
@@ -970,11 +1016,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.context_manager.writer.using(context):
             result, net_db, ipam_sub = self._create_subnet_precommit(
                 context, subnet)
+
+            # NOTE(ihrachys) pre Pike networks may have null mtus; update them
+            # in database if needed
+            # TODO(ihrachys) remove in Queens+ when mtu is not nullable
+            if net_db['mtu'] is None:
+                net_db['mtu'] = self._get_network_mtu(net_db, validate=False)
+
             self.extension_manager.process_create_subnet(
                 context, subnet[subnet_def.RESOURCE_NAME], result)
             network = self._make_network_dict(net_db, context=context)
             self.type_manager.extend_network_dict_provider(context, network)
-            network[api.MTU] = self._get_network_mtu(network)
             mech_context = driver_context.SubnetContext(self, context,
                                                         result, network)
             self.mechanism_manager.create_subnet_precommit(mech_context)
@@ -1513,7 +1565,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive(context_var_name='plugin_context')
     def get_bound_port_context(self, plugin_context, port_id, host=None,
                                cached_networks=None):
-        with db_api.context_manager.reader.using(plugin_context) as session:
+        # NOTE(ihrachys) use writer manager to be able to update mtu when
+        # fetching network
+        # TODO(ihrachys) remove in Queens+ when mtu is not nullable
+        with db_api.context_manager.writer.using(plugin_context) as session:
             try:
                 port_db = (session.query(models_v2.Port).
                            enable_eagerloads(False).
@@ -1566,7 +1621,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @db_api.retry_if_session_inactive(context_var_name='plugin_context')
     def get_bound_ports_contexts(self, plugin_context, dev_ids, host=None):
         result = {}
-        with db_api.context_manager.reader.using(plugin_context):
+        # NOTE(ihrachys) use writer manager to be able to update mtu when
+        # fetching network
+        # TODO(ihrachys) remove in Queens+ when mtu is not nullable
+        with db_api.context_manager.writer.using(plugin_context):
             dev_to_full_pids = db.partial_port_ids_to_full_ids(
                 plugin_context, dev_ids)
             # get all port objects for IDs
@@ -1815,6 +1873,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             segment[api.SEGMENTATION_ID] = updated_segment[api.SEGMENTATION_ID]
         elif event == events.PRECOMMIT_DELETE:
             self.type_manager.release_network_segment(context, segment)
+
+        # change in segments could affect resulting network mtu, so let's
+        # recalculate it
+        network_db = self._get_network(context, network_id)
+        network_db.mtu = self._get_network_mtu(network_db)
+        network_db.save(session=context.session)
 
         try:
             self._notify_mechanism_driver_for_segment_change(

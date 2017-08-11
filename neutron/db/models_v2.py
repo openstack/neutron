@@ -267,6 +267,9 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                     lazy='subquery',
                                     cascade='all, delete, delete-orphan')
     availability_zone_hints = sa.Column(sa.String(255))
+    # TODO(ihrachys) provide data migration path to fill in mtus for existing
+    # networks in Queens when all controllers run Pike+ code
+    mtu = sa.Column(sa.Integer, nullable=True)
     dhcp_agents = orm.relationship(
         'Agent', lazy='subquery', viewonly=True,
         secondary=ndab_model.NetworkDhcpAgentBinding.__table__)
