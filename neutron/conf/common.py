@@ -118,6 +118,7 @@ core_opts = [
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
     cfg.StrOpt('web_framework', default='pecan',
+               deprecated_for_removal=True,
                choices=('legacy', 'pecan'),
                help=_("This will choose the web framework in which to run "
                       "the Neutron API server. 'pecan' is a new "

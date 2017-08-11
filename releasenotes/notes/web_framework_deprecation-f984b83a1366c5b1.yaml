@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    The web_framework option has been deprecated and will be removed during
+    Queens. This option was just added to make the transition to pecan easier
+    so there is no reason operators should be using the non-default option
+    anyway.
