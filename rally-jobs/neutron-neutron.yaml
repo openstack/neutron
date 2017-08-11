@@ -308,7 +308,7 @@
   NeutronTrunks.create_and_list_trunk_subports:
     -
       args:
-        subport_count: 250
+        subport_count: 125
       runner:
         type: "constant"
         times: 4
