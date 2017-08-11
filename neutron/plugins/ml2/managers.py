@@ -902,8 +902,10 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
     def extension_aliases(self):
         exts = []
         for driver in self.ordered_ext_drivers:
-            alias = driver.obj.extension_alias
-            if alias:
+            aliases = driver.obj.extension_aliases
+            for alias in aliases:
+                if not alias:
+                    continue
                 exts.append(alias)
                 LOG.info(_LI("Got %(alias)s extension from driver '%(drv)s'"),
                          {'alias': alias, 'drv': driver.name})
