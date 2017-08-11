@@ -52,8 +52,8 @@ class DetailQuotaSetsController(quotasv2.QuotaSetsController):
                 reason = _("Only admin is authorized to access quotas for"
                            " another tenant")
                 raise n_exc.AdminRequired(reason=reason)
-            return {self._resource_name:
-                    self._get_detailed_quotas(request, id)}
+        return {self._resource_name:
+                self._get_detailed_quotas(request, id)}
 
 
 class Quotasv2_detail(api_extensions.ExtensionDescriptor):

@@ -69,8 +69,7 @@ class DetailQuotaExtensionDbTestCase(DetailQuotaExtensionTestCase):
 
     def test_show_detail_quotas(self):
         tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id,
-                                                  is_admin=True)}
+        env = {'neutron.context': context.Context('', tenant_id)}
         res = self.api.get(_get_path('quotas', id=tenant_id,
                                      fmt=self.fmt,
                                      endpoint=DEFAULT_QUOTAS_ACTION),
@@ -144,7 +143,7 @@ class DetailQuotaExtensionDbTestCase(DetailQuotaExtensionTestCase):
 
     def test_detail_quotas_without_admin_forbidden_returns_403(self):
         tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id,
+        env = {'neutron.context': context.Context('', tenant_id + '2',
                                                   is_admin=False)}
         res = self.api.get(_get_path('quotas', id=tenant_id,
                                      fmt=self.fmt,
