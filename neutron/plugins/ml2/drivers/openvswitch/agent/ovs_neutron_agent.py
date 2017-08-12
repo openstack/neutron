@@ -419,13 +419,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # they are not used since there is no guarantee the notifications
         # are processed in the same order as the relevant API requests
         self.updated_ports.add(port['id'])
-        LOG.debug("port_update message processed for port %s", port['id'])
 
     def port_delete(self, context, **kwargs):
         port_id = kwargs.get('port_id')
         self.deleted_ports.add(port_id)
         self.updated_ports.discard(port_id)
-        LOG.debug("port_delete message processed for port %s", port_id)
 
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']
