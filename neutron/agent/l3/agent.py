@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+import itertools
+
 import eventlet
 import netaddr
 from neutron_lib.callbacks import events
@@ -29,6 +31,7 @@ from oslo_service import loopingcall
 from oslo_service import periodic_task
 from oslo_utils import excutils
 from oslo_utils import timeutils
+from osprofiler import profiler
 
 from neutron._i18n import _, _LE, _LI, _LW
 from neutron.agent.common import utils as common_utils
@@ -167,6 +170,7 @@ class L3PluginApi(object):
                           host=self.host, network_id=fip_net)
 
 
+@profiler.trace_cls("l3-agent")
 class L3NATAgent(ha.AgentMixin,
                  dvr.AgentMixin,
                  manager.Manager):
@@ -185,8 +189,9 @@ class L3NATAgent(ha.AgentMixin,
         1.3 - fipnamespace_delete_on_ext_net - to delete fipnamespace
               after the external network is removed
               Needed by the L3 service when dealing with DVR
+        1.4 - support network_update to get MTU updates
     """
-    target = oslo_messaging.Target(version='1.3')
+    target = oslo_messaging.Target(version='1.4')
 
     def __init__(self, host, conf=None):
         if conf:
@@ -255,6 +260,10 @@ class L3NATAgent(ha.AgentMixin,
                                       self.plugin_rpc.process_prefix_update,
                                       self.create_pd_router_update,
                                       self.conf)
+
+        # Consume network updates to trigger router resync
+        consumers = [[topics.NETWORK, topics.UPDATE]]
+        agent_rpc.create_consumers([self], topics.AGENT, consumers)
 
     def _check_config_params(self):
         """Check items in configuration files.
@@ -428,6 +437,16 @@ class L3NATAgent(ha.AgentMixin,
     def router_added_to_agent(self, context, payload):
         LOG.debug('Got router added to agent :%r', payload)
         self.routers_updated(context, payload)
+
+    def network_update(self, context, **kwargs):
+        network_id = kwargs['network']['id']
+        for ri in self.router_info.values():
+            ports = itertools.chain(ri.internal_ports, [ri.ex_gw_port])
+            port_belongs = lambda p: p['network_id'] == network_id
+            if any(port_belongs(p) for p in ports):
+                update = queue.RouterUpdate(
+                    ri.router_id, queue.PRIORITY_SYNC_ROUTERS_TASK)
+                self._resync_router(update)
 
     def _process_router_if_compatible(self, router):
         if (self.conf.external_network_bridge and

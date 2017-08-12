@@ -149,6 +149,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.snat_ports = [{'subnets': [{'cidr': '152.2.0.0/16',
                                          'gateway_ip': '152.2.0.1',
                                          'id': subnet_id_1}],
+                            'mtu': 1500,
                             'network_id': _uuid(),
                             'device_owner':
                             lib_constants.DEVICE_OWNER_ROUTER_SNAT,
@@ -160,6 +161,7 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                            {'subnets': [{'cidr': '152.10.0.0/16',
                                          'gateway_ip': '152.10.0.1',
                                          'id': subnet_id_2}],
+                            'mtu': 1450,
                             'network_id': _uuid(),
                             'device_owner':
                             lib_constants.DEVICE_OWNER_ROUTER_SNAT,
@@ -425,6 +427,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         port = {'network_id': _uuid(),
                 'id': _uuid(),
                 'mac_address': 'ca:fe:de:ad:be:ef',
+                'mtu': 1500,
                 'fixed_ips': [{'subnet_id': _uuid(),
                                'ip_address': '99.0.1.9',
                                'prefixlen': 24}]}
@@ -459,6 +462,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         port = {'network_id': _uuid(),
                 'id': _uuid(),
                 'mac_address': 'ca:fe:de:ad:be:ef',
+                'mtu': 1500,
                 'fixed_ips': [{'subnet_id': subnet_id,
                                'ip_address': '99.0.1.9',
                                'prefixlen': 24}],
@@ -473,6 +477,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                    'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                    'id': _uuid(),
                    'network_id': _uuid(),
+                   'mtu': 1500,
                    'mac_address': 'ca:fe:de:ad:be:ef'}
         ex_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
                                      'prefixlen': 24,
@@ -482,6 +487,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                       'id': _uuid(),
                       portbindings.HOST_ID: HOSTNAME,
                       'network_id': _uuid(),
+                      'mtu': 1500,
                       'mac_address': 'ca:fe:de:ad:be:ef'}
         ri.snat_ports = sn_port
         ri.ex_gw_port = ex_gw_port
@@ -513,7 +519,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 sn_port['mac_address'],
                 ri._get_snat_int_device_name(sn_port['id']),
                 lib_constants.SNAT_INT_DEV_PREFIX,
-                mtu=None)
+                mtu=1500)
             self.assertTrue(ri._check_if_address_scopes_match.called)
             if scope_match:
                 self.assertTrue(
@@ -667,10 +673,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                       'extra_subnets': [{'cidr': '172.16.0.0/24'}],
                       'id': _uuid(),
                       'network_id': ex_net_id,
+                      'mtu': 1500,
                       'mac_address': 'ca:fe:de:ad:be:ef'}
         ex_gw_port_no_sub = {'fixed_ips': [],
                              'id': _uuid(),
                              'network_id': ex_net_id,
+                             'mtu': 1500,
                              'mac_address': 'ca:fe:de:ad:be:ef'}
         interface_name = ri.get_external_device_name(ex_gw_port['id'])
 
@@ -1159,6 +1167,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                    'gateway_ip': '20.0.0.1'}],
               'id': _uuid(),
               'network_id': fake_network_id,
+              'mtu': 1500,
               'mac_address': 'ca:fe:de:ad:be:ef'}]
         )
 
@@ -1290,6 +1299,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   'gateway_ip': '20.0.0.1'}],
              'id': _uuid(),
              'network_id': fake_network_id,
+             'mtu': 1500,
              'mac_address': 'ca:fe:de:ad:be:ef'}
         )
 
@@ -1336,6 +1346,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                    'gateway_ip': '20.0.0.1'}],
               'id': _uuid(),
               'network_id': fake_network_id,
+              'mtu': 1500,
               'mac_address': 'ca:fe:de:ad:be:ef'}]
         )
 
@@ -1388,6 +1399,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                    'gateway_ip': '20.0.0.1'}],
               'id': _uuid(),
               'network_id': 'fake_network_id',
+              'mtu': 1500,
               'mac_address': 'ca:fe:de:ad:be:ef'}]
         )
 
@@ -2588,6 +2600,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                     'gateway_ip': '20.0.0.1'}],
                        'id': port_id,
                        'network_id': _uuid(),
+                       'mtu': 1500,
                        'mac_address': 'ca:fe:de:ad:be:ef'}
 
         interface_name = ri._get_snat_int_device_name(port_id)
