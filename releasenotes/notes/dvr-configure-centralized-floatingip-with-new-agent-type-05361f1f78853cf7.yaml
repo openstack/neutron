@@ -1,0 +1,21 @@
+---
+prelude: >
+    A new agent_mode(``dvr_no_external``) for DVR routers has been added
+    to allow the server to configure Floating IPs associated with DVR at
+    the centralized node.
+features:
+  - |
+    A new DVR agent type ``dvr_no_external`` has been introduced with this
+    release. This agent type allows the Floating IPs (DNAT/North-South routing)
+    to be centralized while the East/West routing is still distributed.
+issues:
+  - |
+    There can be a mixture of ``dvr`` agents and ``dvr_no_external`` agents.
+    But please avoid any VM with Floating IP migration between a ``dvr`` agent
+    and a ``dvr_no_external`` agent. All VM ports with Floating IPs should be
+    migrated to same agent_mode.
+    This would be one of the restrictions.
+upgrade:
+  - |
+    A new DVR agent mode of ``dvr_no_external`` was added. Changing between
+    this mode and ``dvr`` is a disruptive operation to the dataplane.
