@@ -17,8 +17,10 @@ import random
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
+from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.tests.fullstack import base
+from neutron.tests.fullstack.cmd import dhcp_agent as cmd
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
@@ -98,6 +100,25 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 
         # And check if IP and gateway config is fine on FakeMachine
         self.vm.block_until_dhcp_config_done()
+
+    def test_mtu_update(self):
+        self.vm.block_until_dhcp_config_done()
+
+        namespace = cmd._get_namespace_name(
+            self.network['id'],
+            suffix=self.environment.hosts[0].dhcp_agent.get_namespace_suffix())
+        ip = ip_lib.IPWrapper(namespace)
+
+        devices = ip.get_devices()
+        self.assertEqual(1, len(devices))
+
+        dhcp_dev = devices[0]
+        mtu = dhcp_dev.link.mtu
+        self.assertEqual(1450, mtu)
+
+        mtu -= 1
+        self.safe_client.update_network(self.network['id'], mtu=mtu)
+        common_utils.wait_until_true(lambda: dhcp_dev.link.mtu == mtu)
 
 
 class TestDhcpAgentHA(BaseDhcpAgentTest):
