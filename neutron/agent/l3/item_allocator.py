@@ -16,7 +16,6 @@ import os
 
 from oslo_log import log as logging
 
-from neutron._i18n import _LW
 
 LOG = logging.getLogger(__name__)
 
@@ -55,8 +54,8 @@ class ItemAllocator(object):
                 self.remembered[key] = self.ItemClass(saved_value)
             except ValueError:
                 read_error = True
-                LOG.warning(_LW("Invalid line in %(file)s, "
-                                "ignoring: %(line)s"),
+                LOG.warning("Invalid line in %(file)s, "
+                            "ignoring: %(line)s",
                             {'file': state_file, 'line': line})
 
         self.pool.difference_update(self.remembered.values())

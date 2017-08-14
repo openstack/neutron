@@ -24,7 +24,6 @@ from oslo_log import log
 import oslo_messaging
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _LE, _LW
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import rpc as n_rpc
@@ -116,9 +115,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         port = port_context.current
 
         if not segment:
-            LOG.warning(_LW("Device %(device)s requested by agent "
-                            "%(agent_id)s on network %(network_id)s not "
-                            "bound, vif_type: %(vif_type)s"),
+            LOG.warning("Device %(device)s requested by agent "
+                        "%(agent_id)s on network %(network_id)s not "
+                        "bound, vif_type: %(vif_type)s",
                         {'device': device,
                          'agent_id': agent_id,
                          'network_id': port['network_id'],
@@ -187,7 +186,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                                device=device,
                                port_context=bound_contexts[device]))
             except Exception:
-                LOG.exception(_LE("Failed to get details for device %s"),
+                LOG.exception("Failed to get details for device %s",
                               device)
                 failed_devices.append(device)
         new_status_map = {ctxt.current['id']: self._get_new_status(host, ctxt)
@@ -346,7 +345,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                         **kwargs)
                 except Exception:
                     failed_devices_up.append(device)
-                    LOG.error(_LE("Failed to update device %s up"), device)
+                    LOG.error("Failed to update device %s up", device)
                 else:
                     devices_up.append(device)
 
@@ -360,7 +359,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                         **kwargs)
                 except Exception:
                     failed_devices_down.append(device)
-                    LOG.error(_LE("Failed to update device %s down"), device)
+                    LOG.error("Failed to update device %s down", device)
                 else:
                     devices_down.append(dev)
 

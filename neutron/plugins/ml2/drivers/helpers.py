@@ -21,7 +21,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
 
-from neutron._i18n import _LE
 from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.objects import base as base_obj
@@ -43,7 +42,7 @@ class BaseTypeDriver(api.ML2TypeDriver):
                 cfg.CONF.ml2.physical_network_mtus, unique_values=False
             )
         except Exception as e:
-            LOG.error(_LE("Failed to parse physical_network_mtus: %s"), e)
+            LOG.error("Failed to parse physical_network_mtus: %s", e)
             self.physnet_mtus = []
 
     def get_mtu(self, physical_network=None):

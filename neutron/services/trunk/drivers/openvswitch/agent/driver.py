@@ -15,7 +15,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron._i18n import _LE, _LW
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
@@ -56,7 +55,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
 
         if self.ovsdb_handler.manages_this_trunk(trunk_id):
             if event_type not in (events.CREATED, events.DELETED):
-                LOG.error(_LE("Unknown or unimplemented event %s"), event_type)
+                LOG.error("Unknown or unimplemented event %s", event_type)
                 return
 
             ctx = self.ovsdb_handler.context
@@ -71,9 +70,9 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
                         trunk_id, subport_ids)
                 self.ovsdb_handler.report_trunk_status(ctx, trunk_id, status)
             except oslo_messaging.MessagingException as e:
-                LOG.error(_LE(
+                LOG.error(
                     "Error on event %(event)s for subports "
-                    "%(subports)s: %(err)s"),
+                    "%(subports)s: %(err)s",
                     {'event': event_type, 'subports': subports, 'err': e})
 
     @local_registry.receives(constants.TRUNK, [local_events.BEFORE_CREATE])
@@ -87,9 +86,9 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
         # only if the trunk is indeed associated with ports that have security
         # groups and QoS rules, though this would be a lot more work.
         if "iptables_hybrid" in cfg.CONF.SECURITYGROUP.firewall_driver:
-            LOG.warning(_LW(
+            LOG.warning(
                 "Firewall driver iptables_hybrid is not compatible with "
-                "trunk ports. Trunk %(trunk_id)s may be insecure."),
+                "trunk ports. Trunk %(trunk_id)s may be insecure.",
                 {'trunk_id': kwargs['trunk'].id})
 
 

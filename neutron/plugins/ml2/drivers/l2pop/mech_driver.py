@@ -22,7 +22,7 @@ from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.conf.plugins.ml2.drivers import l2pop as config
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
@@ -264,7 +264,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         port_context = context._plugin_context
         agent = l2pop_db.get_agent_by_host(session, agent_host)
         if not agent:
-            LOG.warning(_LW("Unable to retrieve active L2 agent on host %s"),
+            LOG.warning("Unable to retrieve active L2 agent on host %s",
                         agent_host)
             return
 
@@ -319,7 +319,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         agent = l2pop_db.get_agent_by_host(session,
                                            agent_host)
         if not agent:
-            LOG.warning(_LW("Unable to retrieve active L2 agent on host %s"),
+            LOG.warning("Unable to retrieve active L2 agent on host %s",
                         agent_host)
             return
         if not self._validate_segment(segment, port['id'], agent):

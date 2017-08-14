@@ -26,7 +26,7 @@ from oslo_policy import policy as oslo_policy
 from oslo_utils import excutils
 import webob.exc
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.api import api_common
 from neutron.api.v2 import resource as wsgi_resource
 from neutron.common import constants as n_const
@@ -125,8 +125,8 @@ class Controller(object):
                     _("Native pagination depend on native sorting")
                 )
             if not self._allow_sorting:
-                LOG.info(_LI("Allow sorting is enabled because native "
-                             "pagination requires native sorting"))
+                LOG.info("Allow sorting is enabled because native "
+                         "pagination requires native sorting")
                 self._allow_sorting = True
         self.parent = parent
         if parent:
@@ -419,8 +419,8 @@ class Controller(object):
                     except Exception:
                         # broad catch as our only purpose is to log the
                         # exception
-                        LOG.exception(_LE("Unable to undo add for "
-                                          "%(resource)s %(id)s"),
+                        LOG.exception("Unable to undo add for "
+                                      "%(resource)s %(id)s",
                                       {'resource': self._resource,
                                        'id': obj['id']})
                 # TODO(salvatore-orlando): The object being processed when the

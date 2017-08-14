@@ -18,7 +18,6 @@ from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron._i18n import _LE
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
@@ -44,7 +43,7 @@ class MeteringRpcCallbacks(object):
         else:
             agents = l3_plugin.get_l3_agents(context, filters={'host': [host]})
             if not agents:
-                LOG.error(_LE('Unable to find agent %s.'), host)
+                LOG.error('Unable to find agent %s.', host)
                 return
 
             routers = l3_plugin.list_routers_on_l3_agent(context, agents[0].id)

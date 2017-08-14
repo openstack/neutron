@@ -16,7 +16,6 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _LE, _LI
 from neutron.common import config
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
     import linuxbridge_neutron_agent
@@ -30,17 +29,17 @@ def remove_empty_bridges():
         interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
     except ValueError as e:
-        LOG.error(_LE("Parsing physical_interface_mappings failed: %s."), e)
+        LOG.error("Parsing physical_interface_mappings failed: %s.", e)
         sys.exit(1)
-    LOG.info(_LI("Interface mappings: %s."), interface_mappings)
+    LOG.info("Interface mappings: %s.", interface_mappings)
 
     try:
         bridge_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.bridge_mappings)
     except ValueError as e:
-        LOG.error(_LE("Parsing bridge_mappings failed: %s."), e)
+        LOG.error("Parsing bridge_mappings failed: %s.", e)
         sys.exit(1)
-    LOG.info(_LI("Bridge mappings: %s."), bridge_mappings)
+    LOG.info("Bridge mappings: %s.", bridge_mappings)
 
     lb_manager = linuxbridge_neutron_agent.LinuxBridgeManager(
         bridge_mappings, interface_mappings)
@@ -52,10 +51,10 @@ def remove_empty_bridges():
 
         try:
             lb_manager.delete_bridge(bridge_name)
-            LOG.info(_LI("Linux bridge %s deleted"), bridge_name)
+            LOG.info("Linux bridge %s deleted", bridge_name)
         except RuntimeError:
-            LOG.exception(_LE("Linux bridge %s delete failed"), bridge_name)
-    LOG.info(_LI("Linux bridge cleanup completed successfully"))
+            LOG.exception("Linux bridge %s delete failed", bridge_name)
+    LOG.info("Linux bridge cleanup completed successfully")
 
 
 def main():

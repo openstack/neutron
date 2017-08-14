@@ -33,7 +33,7 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 from six.moves import http_client as httplib
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.linux import xenapi_root_helper
 from neutron.common import utils
 from neutron.conf.agent import common as config
@@ -111,7 +111,7 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
         return client.execute(cmd, process_input)
     except Exception:
         with excutils.save_and_reraise_exception():
-            LOG.error(_LE("Rootwrap error running command: %s"), cmd)
+            LOG.error("Rootwrap error running command: %s", cmd)
 
 
 def execute(cmd, process_input=None, addl_env=None,
@@ -249,7 +249,7 @@ def get_value_from_file(filename, converter=None):
             try:
                 return converter(f.read()) if converter else f.read()
             except ValueError:
-                LOG.error(_LE('Unable to convert value in %s'), filename)
+                LOG.error('Unable to convert value in %s', filename)
     except IOError:
         LOG.debug('Unable to access %s', filename)
 

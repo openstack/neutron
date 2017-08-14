@@ -42,7 +42,7 @@ from oslo_utils import uuidutils
 import sqlalchemy
 from sqlalchemy.orm import exc as sa_exc
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
@@ -194,7 +194,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.add_agent_status_check_worker(self.agent_health_check)
         self.add_workers(self.mechanism_manager.get_workers())
         self._verify_service_plugins_requirements()
-        LOG.info(_LI("Modular L2 Plugin initialization complete"))
+        LOG.info("Modular L2 Plugin initialization complete")
 
     def _setup_rpc(self):
         """Initialize components to support agent communication."""
@@ -380,7 +380,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                 # multiple attempts shouldn't happen very often so we log each
                 # attempt after the 1st.
-                LOG.info(_LI("Attempt %(count)s to bind port %(port)s"),
+                LOG.info("Attempt %(count)s to bind port %(port)s",
                          {'count': count, 'port': context.current['id']})
 
             bind_context, need_notify, try_again = self._attempt_binding(
@@ -403,8 +403,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self._notify_port_updated(context)
                 return context
 
-        LOG.error(_LE("Failed to commit binding results for %(port)s "
-                      "after %(max)s tries"),
+        LOG.error("Failed to commit binding results for %(port)s "
+                  "after %(max)s tries",
                   {'port': context.current['id'], 'max': MAX_BIND_TRIES})
         return context
 
@@ -598,8 +598,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 return jsonutils.loads(binding.vif_details)
             except Exception:
-                LOG.error(_LE("Serialized vif_details DB value '%(value)s' "
-                              "for port %(port)s is invalid"),
+                LOG.error("Serialized vif_details DB value '%(value)s' "
+                          "for port %(port)s is invalid",
                           {'value': binding.vif_details,
                            'port': binding.port_id})
         return {}
@@ -609,8 +609,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 return jsonutils.loads(binding.profile)
             except Exception:
-                LOG.error(_LE("Serialized profile DB value '%(value)s' for "
-                              "port %(port)s is invalid"),
+                LOG.error("Serialized profile DB value '%(value)s' for "
+                          "port %(port)s is invalid",
                           {'value': binding.profile,
                            'port': binding.port_id})
         return {}
@@ -675,10 +675,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             try:
                 delete_op(context, obj['result']['id'])
             except KeyError:
-                LOG.exception(_LE("Could not find %s to delete."),
+                LOG.exception("Could not find %s to delete.",
                               resource)
             except Exception:
-                LOG.exception(_LE("Could not delete %(res)s %(id)s."),
+                LOG.exception("Could not delete %(res)s %(id)s.",
                               {'res': resource,
                                'id': obj['result']['id']})
 
@@ -702,8 +702,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 except Exception as e:
                     with excutils.save_and_reraise_exception():
                         utils.attach_exc_details(
-                            e, _LE("An exception occurred while creating "
-                                   "the %(resource)s:%(item)s"),
+                            e, ("An exception occurred while creating "
+                                "the %(resource)s:%(item)s"),
                             {'resource': resource, 'item': item})
 
         postcommit_op = getattr(self, '_after_create_%s' % resource)
@@ -713,10 +713,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             except Exception:
                 with excutils.save_and_reraise_exception():
                     resource_ids = [res['result']['id'] for res in objects]
-                    LOG.exception(_LE("ML2 _after_create_%(res)s "
-                                      "failed for %(res)s: "
-                                      "'%(failed_id)s'. Deleting "
-                                      "%(res)ss %(resource_ids)s"),
+                    LOG.exception("ML2 _after_create_%(res)s "
+                                  "failed for %(res)s: "
+                                  "'%(failed_id)s'. Deleting "
+                                  "%(res)ss %(resource_ids)s",
                                   {'res': resource,
                                    'failed_id': obj['result']['id'],
                                    'resource_ids': ', '.join(resource_ids)})
@@ -747,10 +747,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # trigger the exception here.
                 if segment_type and s['segmentation_id']:
                     LOG.warning(
-                        _LW("Failed to determine MTU for segment "
-                            "%(segment_type)s:%(segment_id)s; network "
-                            "%(network_id)s MTU calculation may be not "
-                            "accurate"),
+                        "Failed to determine MTU for segment "
+                        "%(segment_type)s:%(segment_id)s; network "
+                        "%(network_id)s MTU calculation may be not "
+                        "accurate",
                         {
                             'segment_type': segment_type,
                             'segment_id': s['segmentation_id'],
@@ -840,8 +840,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_network_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("mechanism_manager.create_network_postcommit "
-                              "failed, deleting network '%s'"), result['id'])
+                LOG.error("mechanism_manager.create_network_postcommit "
+                          "failed, deleting network '%s'", result['id'])
                 self.delete_network(context, result['id'])
 
         return result
@@ -1007,8 +1007,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # TODO(apech) - One or more mechanism driver failed to
             # delete the network.  Ideally we'd notify the caller of
             # the fact that an error occurred.
-            LOG.error(_LE("mechanism_manager.delete_network_postcommit"
-                          " failed"))
+            LOG.error("mechanism_manager.delete_network_postcommit"
+                      " failed")
         self.notifier.network_delete(context, network['id'])
 
     def _before_create_subnet(self, context, subnet):
@@ -1054,8 +1054,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_subnet_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("mechanism_manager.create_subnet_postcommit "
-                              "failed, deleting subnet '%s'"), result['id'])
+                LOG.error("mechanism_manager.create_subnet_postcommit "
+                          "failed, deleting subnet '%s'", result['id'])
                 self.delete_subnet(context, result['id'])
         return result
 
@@ -1118,7 +1118,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # TODO(apech) - One or more mechanism driver failed to
             # delete the subnet.  Ideally we'd notify the caller of
             # the fact that an error occurred.
-            LOG.error(_LE("mechanism_manager.delete_subnet_postcommit failed"))
+            LOG.error("mechanism_manager.delete_subnet_postcommit failed")
 
     # TODO(yalei) - will be simplified after security group and address pair be
     # converted to ext driver too.
@@ -1216,15 +1216,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.create_port_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("mechanism_manager.create_port_postcommit "
-                              "failed, deleting port '%s'"), result['id'])
+                LOG.error("mechanism_manager.create_port_postcommit "
+                          "failed, deleting port '%s'", result['id'])
                 self.delete_port(context, result['id'], l3_port_check=False)
         try:
             bound_context = self._bind_port_if_needed(mech_context)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("_bind_port_if_needed "
-                              "failed, deleting port '%s'"), result['id'])
+                LOG.error("_bind_port_if_needed "
+                          "failed, deleting port '%s'", result['id'])
                 self.delete_port(context, result['id'], l3_port_check=False)
 
         return bound_context.current
@@ -1394,8 +1394,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self.mechanism_manager.update_port_postcommit(
                     mech_context)
         except ml2_exc.MechanismDriverError:
-            LOG.error(_LE("mechanism_manager.update_port_postcommit "
-                          "failed for port %s"), id)
+            LOG.error("mechanism_manager.update_port_postcommit "
+                      "failed for port %s", id)
 
         self.check_and_notify_security_group_member_changed(
             context, original_port, updated_port)
@@ -1445,7 +1445,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         host_set = validators.is_attr_set(host)
 
         if not host_set:
-            LOG.error(_LE("No Host supplied to bind DVR Port %s"), id)
+            LOG.error("No Host supplied to bind DVR Port %s", id)
             return
 
         binding = db.get_distributed_port_binding_by_host(context,
@@ -1560,8 +1560,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # TODO(apech) - One or more mechanism driver failed to
             # delete the port.  Ideally we'd notify the caller of the
             # fact that an error occurred.
-            LOG.error(_LE("mechanism_manager.delete_port_postcommit failed for"
-                          " port %s"), port['id'])
+            LOG.error("mechanism_manager.delete_port_postcommit failed for"
+                      " port %s", port['id'])
         self.notifier.port_delete(context, port['id'])
 
     @utils.transaction_guard
@@ -1578,11 +1578,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                            filter(models_v2.Port.id.startswith(port_id)).
                            one())
             except sa_exc.NoResultFound:
-                LOG.info(_LI("No ports have port_id starting with %s"),
+                LOG.info("No ports have port_id starting with %s",
                          port_id)
                 return
             except sa_exc.MultipleResultsFound:
-                LOG.error(_LE("Multiple ports have port_id starting with %s"),
+                LOG.error("Multiple ports have port_id starting with %s",
                           port_id)
                 return
             port = self._make_port_dict(port_db)
@@ -1595,7 +1595,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 binding = db.get_distributed_port_binding_by_host(
                     plugin_context, port['id'], host)
                 if not binding:
-                    LOG.error(_LE("Binding info for DVR port %s not found"),
+                    LOG.error("Binding info for DVR port %s not found",
                               port_id)
                     return None
                 levels = db.get_binding_levels(plugin_context,
@@ -1609,8 +1609,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # It's not an error condition.
                 binding = port_db.port_binding
                 if not binding:
-                    LOG.info(_LI("Binding info for port %s was not found, "
-                                 "it might have been deleted already."),
+                    LOG.info("Binding info for port %s was not found, "
+                             "it might have been deleted already.",
                              port_id)
                     return
                 levels = db.get_binding_levels(plugin_context, port_db.id,
@@ -1653,8 +1653,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     binding = port_db.port_binding
                     bindlevelhost_match = binding.host if binding else None
                 if not binding:
-                    LOG.info(_LI("Binding info for port %s was not found, "
-                                 "it might have been deleted already."),
+                    LOG.info("Binding info for port %s was not found, "
+                             "it might have been deleted already.",
                              port_id)
                     result[dev_id] = None
                     continue
@@ -1754,7 +1754,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             with db_api.context_manager.writer.using(context):
                 port = db.get_port(context, port_id)
                 if not port:
-                    LOG.warning(_LW("Port %s not found during update"),
+                    LOG.warning("Port %s not found during update",
                                 port_id)
                     return
                 original_port = self._make_port_dict(port)
@@ -1888,9 +1888,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 event, context, network_id)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("mechanism_manager error occurred when "
-                              "handle event %(event)s for segment "
-                              "'%(segment)s'"),
+                LOG.error("mechanism_manager error occurred when "
+                          "handle event %(event)s for segment "
+                          "'%(segment)s'",
                           {'event': event, 'segment': segment['id']})
 
     def _notify_mechanism_driver_for_segment_change(self, event,

@@ -23,7 +23,6 @@ from ryu.base import app_manager
 from ryu.lib import hub
 from ryu.ofproto import ofproto_v1_3
 
-from neutron._i18n import _LE
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_int
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -41,7 +40,7 @@ def agent_main_wrapper(bridge_classes):
         ovs_agent.main(bridge_classes)
     except Exception:
         with excutils.save_and_reraise_exception():
-            LOG.exception(_LE("Agent main thread died of an exception"))
+            LOG.exception("Agent main thread died of an exception")
     finally:
         # The following call terminates Ryu's AppManager.run_apps(),
         # which is needed for clean shutdown of an agent process.

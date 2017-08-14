@@ -17,7 +17,6 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron._i18n import _LE
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.objects.plugins.ml2 import greallocation as gre_obj
 from neutron.plugins.common import constants as p_const
@@ -41,8 +40,8 @@ class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         try:
             self._initialize(cfg.CONF.ml2_type_gre.tunnel_id_ranges)
         except n_exc.NetworkTunnelRangeError:
-            LOG.exception(_LE("Failed to parse tunnel_id_ranges. "
-                              "Service terminated!"))
+            LOG.exception("Failed to parse tunnel_id_ranges. "
+                          "Service terminated!")
             raise SystemExit()
 
     def get_endpoints(self):

@@ -16,7 +16,6 @@
 from neutron_lib import constants as n_const
 from oslo_log import log
 
-from neutron._i18n import _LW
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import constants
 
 LOG = log.getLogger(__name__)
@@ -25,8 +24,8 @@ LOG = log.getLogger(__name__)
 def get_tap_device_name(interface_id):
     """Convert port ID into device name format expected by linux bridge."""
     if not interface_id:
-        LOG.warning(_LW("Invalid Interface ID, will lead to incorrect "
-                        "tap device name"))
+        LOG.warning("Invalid Interface ID, will lead to incorrect "
+                    "tap device name")
     tap_device_name = (n_const.TAP_DEVICE_PREFIX +
                        interface_id[:constants.RESOURCE_ID_LENGTH])
     return tap_device_name

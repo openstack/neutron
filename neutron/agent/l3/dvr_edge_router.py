@@ -15,7 +15,6 @@
 from neutron_lib import constants as lib_constants
 from oslo_log import log as logging
 
-from neutron._i18n import _LE
 from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import router_info as router
@@ -211,8 +210,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                 super(DvrEdgeRouter, self)._update_routing_table(
                     operation, route, namespace=ns_name)
             else:
-                LOG.error(_LE("The SNAT namespace %s does not exist for "
-                              "the router."), ns_name)
+                LOG.error("The SNAT namespace %s does not exist for "
+                          "the router.", ns_name)
         super(DvrEdgeRouter, self).update_routing_table(operation, route)
 
     def delete(self):

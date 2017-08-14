@@ -20,7 +20,7 @@ import eventlet.queue
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
@@ -182,7 +182,7 @@ class AsyncProcess(object):
             # root and need to be killed via the same helper.
             utils.kill_process(pid, kill_signal, self.run_as_root)
         except Exception:
-            LOG.exception(_LE('An error occurred while killing [%s].'),
+            LOG.exception('An error occurred while killing [%s].',
                           self.cmd)
             return False
 
@@ -211,8 +211,8 @@ class AsyncProcess(object):
                 if not output and output != "":
                     break
             except Exception:
-                LOG.exception(_LE('An error occurred while communicating '
-                                  'with async process [%s].'), self.cmd)
+                LOG.exception('An error occurred while communicating '
+                              'with async process [%s].', self.cmd)
                 break
             # Ensure that watching a process with lots of output does
             # not block execution of other greenthreads.
@@ -242,11 +242,11 @@ class AsyncProcess(object):
     def _read_stderr(self):
         data = self._read(self._process.stderr, self._stderr_lines)
         if self.log_output:
-            LOG.error(_LE('Error received from [%(cmd)s]: %(err)s'),
+            LOG.error('Error received from [%(cmd)s]: %(err)s',
                       {'cmd': self.cmd,
                        'err': data})
         if self.die_on_error:
-            LOG.error(_LE("Process [%(cmd)s] dies due to the error: %(err)s"),
+            LOG.error("Process [%(cmd)s] dies due to the error: %(err)s",
                       {'cmd': self.cmd,
                        'err': data})
             # the callback caller will use None to indicate the need to bail

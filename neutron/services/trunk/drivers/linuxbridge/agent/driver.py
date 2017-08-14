@@ -17,7 +17,6 @@ from neutron_lib.callbacks import resources as local_resources
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron._i18n import _LE
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.services.trunk import constants as t_const
@@ -113,8 +112,7 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
                 LOG.debug("Trunk %s removed during wiring", trunk.port_id)
                 return
             # something broke
-            LOG.exception(_LE("Failure setting up subports for %s"),
-                          trunk.port_id)
+            LOG.exception("Failure setting up subports for %s", trunk.port_id)
             self._tapi.set_trunk_status(context, trunk,
                                         t_const.DEGRADED_STATUS)
 

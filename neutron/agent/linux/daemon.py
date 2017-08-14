@@ -25,7 +25,7 @@ import sys
 from debtcollector import removals
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.common import exceptions
 
 LOG = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ def drop_privileges(user=None, group=None):
     if user is not None:
         setuid(user)
 
-    LOG.info(_LI("Process runs with uid/gid: %(uid)s/%(gid)s"),
+    LOG.info("Process runs with uid/gid: %(uid)s/%(gid)s",
              {'uid': os.getuid(), 'gid': os.getgid()})
 
 
@@ -126,7 +126,7 @@ class Pidfile(object):
             self.fd = os.open(pidfile, os.O_CREAT | os.O_RDWR)
             fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:
-            LOG.exception(_LE("Error while handling pidfile: %s"), pidfile)
+            LOG.exception("Error while handling pidfile: %s", pidfile)
             sys.exit(1)
 
     def __str__(self):
@@ -191,7 +191,7 @@ class Daemon(object):
             if pid > 0:
                 os._exit(0)
         except OSError:
-            LOG.exception(_LE('Fork failed'))
+            LOG.exception('Fork failed')
             sys.exit(1)
 
     def daemonize(self):
@@ -244,8 +244,8 @@ class Daemon(object):
 
         if self.pidfile is not None and self.pidfile.is_running():
             self.pidfile.unlock()
-            LOG.error(_LE('Pidfile %s already exist. Daemon already '
-                          'running?'), self.pidfile)
+            LOG.error('Pidfile %s already exist. Daemon already '
+                      'running?', self.pidfile)
             sys.exit(1)
 
         # Start the daemon

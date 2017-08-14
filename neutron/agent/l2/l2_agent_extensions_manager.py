@@ -12,7 +12,6 @@
 
 from oslo_log import log
 
-from neutron._i18n import _LE
 from neutron.agent import agent_extensions_manager as agent_ext_manager
 from neutron.conf.agent import agent_extensions_manager as agent_ext_mgr_config
 
@@ -43,8 +42,8 @@ class L2AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                 extension.obj.handle_port(context, data)
             else:
                 LOG.error(
-                    _LE("Agent Extension '%(name)s' does not "
-                        "implement method handle_port"),
+                    "Agent Extension '%(name)s' does not "
+                    "implement method handle_port",
                     {'name': extension.name}
                 )
 
@@ -55,7 +54,7 @@ class L2AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                 extension.obj.delete_port(context, data)
             else:
                 LOG.error(
-                    _LE("Agent Extension '%(name)s' does not "
-                        "implement method delete_port"),
+                    "Agent Extension '%(name)s' does not "
+                    "implement method delete_port",
                     {'name': extension.name}
                 )

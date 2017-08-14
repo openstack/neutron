@@ -22,7 +22,7 @@ from oslo_log import log as logging
 import oslo_messaging
 from sqlalchemy import or_
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _
 from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as l_consts
 from neutron.common import utils as n_utils
@@ -66,8 +66,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def add_periodic_l3_agent_status_check(self):
         if not cfg.CONF.allow_automatic_l3agent_failover:
-            LOG.info(_LI("Skipping period L3 agent status check because "
-                         "automatic router rescheduling is disabled."))
+            LOG.info("Skipping period L3 agent status check because "
+                     "automatic router rescheduling is disabled.")
             return
 
         self.add_agent_status_check_worker(
@@ -322,8 +322,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         agent = self._get_agent_by_type_and_host(
             context, constants.AGENT_TYPE_L3, host)
         if not agentschedulers_db.services_available(agent.admin_state_up):
-            LOG.info(_LI("Agent has its services disabled. Returning "
-                         "no active routers. Agent: %s"), agent)
+            LOG.info("Agent has its services disabled. Returning "
+                     "no active routers. Agent: %s", agent)
             return []
         scheduled_router_ids = self._get_router_ids_for_agent(
             context, agent, router_ids)

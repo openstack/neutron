@@ -23,8 +23,6 @@ import netaddr
 from neutron_lib import constants as const
 from oslo_log import log
 
-from neutron._i18n import _LI
-
 
 LOG = log.getLogger(__name__)
 _IS_IPV6_ENABLED = None
@@ -45,10 +43,10 @@ def is_enabled_and_bind_by_default():
         else:
             _IS_IPV6_ENABLED = False
         if not _IS_IPV6_ENABLED:
-            LOG.info(_LI("IPv6 not present or configured not to bind to new "
-                         "interfaces on this system. Please ensure IPv6 is "
-                         "enabled and /proc/sys/net/ipv6/conf/default/"
-                         "disable_ipv6 is set to 0 to enable IPv6."))
+            LOG.info("IPv6 not present or configured not to bind to new "
+                     "interfaces on this system. Please ensure IPv6 is "
+                     "enabled and /proc/sys/net/ipv6/conf/default/"
+                     "disable_ipv6 is set to 0 to enable IPv6.")
     return _IS_IPV6_ENABLED
 
 

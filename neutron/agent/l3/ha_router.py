@@ -21,7 +21,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_consts
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import external_process
@@ -93,7 +92,7 @@ class HaRouter(router.RouterInfo):
             with open(ha_state_path, 'w') as f:
                 f.write(new_state)
         except (OSError, IOError):
-            LOG.error(_LE('Error while writing HA state for %s'),
+            LOG.error('Error while writing HA state for %s',
                       self.router_id)
 
     @property
@@ -112,8 +111,8 @@ class HaRouter(router.RouterInfo):
     def initialize(self, process_monitor):
         ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
         if not ha_port:
-            msg = _("Unable to process HA router %s without "
-                    "HA port") % self.router_id
+            msg = ("Unable to process HA router %s without HA port" %
+                   self.router_id)
             LOG.exception(msg)
             raise Exception(msg)
         super(HaRouter, self).initialize(process_monitor)

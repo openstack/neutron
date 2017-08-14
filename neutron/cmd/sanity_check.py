@@ -18,7 +18,7 @@ import sys
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
@@ -52,52 +52,52 @@ class BoolOptCallback(cfg.BoolOpt):
 def check_ovs_vxlan():
     result = checks.ovs_vxlan_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch VXLAN support failed. '
-                      'Please ensure that the version of openvswitch '
-                      'being used has VXLAN support.'))
+        LOG.error('Check for Open vSwitch VXLAN support failed. '
+                  'Please ensure that the version of openvswitch '
+                  'being used has VXLAN support.')
     return result
 
 
 def check_ovs_geneve():
     result = checks.ovs_geneve_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch Geneve support failed. '
-                      'Please ensure that the version of openvswitch '
-                      'and kernel being used has Geneve support.'))
+        LOG.error('Check for Open vSwitch Geneve support failed. '
+                  'Please ensure that the version of openvswitch '
+                  'and kernel being used has Geneve support.')
     return result
 
 
 def check_iproute2_vxlan():
     result = checks.iproute2_vxlan_supported()
     if not result:
-        LOG.error(_LE('Check for iproute2 VXLAN support failed. Please ensure '
-                      'that the iproute2 has VXLAN support.'))
+        LOG.error('Check for iproute2 VXLAN support failed. Please ensure '
+                  'that the iproute2 has VXLAN support.')
     return result
 
 
 def check_ovs_patch():
     result = checks.patch_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch patch port support failed. '
-                      'Please ensure that the version of openvswitch '
-                      'being used has patch port support or disable features '
-                      'requiring patch ports (gre/vxlan, etc.).'))
+        LOG.error('Check for Open vSwitch patch port support failed. '
+                  'Please ensure that the version of openvswitch '
+                  'being used has patch port support or disable features '
+                  'requiring patch ports (gre/vxlan, etc.).')
     return result
 
 
 def check_read_netns():
     required = checks.netns_read_requires_helper()
     if not required and cfg.CONF.AGENT.use_helper_for_ns_read:
-        LOG.warning(_LW("The user that is executing neutron can read the "
-                        "namespaces without using the root_helper. Disable "
-                        "the use_helper_for_ns_read option to avoid a "
-                        "performance impact."))
+        LOG.warning("The user that is executing neutron can read the "
+                    "namespaces without using the root_helper. Disable "
+                    "the use_helper_for_ns_read option to avoid a "
+                    "performance impact.")
         # Don't fail because nothing is actually broken. Just not optimal.
         result = True
     elif required and not cfg.CONF.AGENT.use_helper_for_ns_read:
-        LOG.error(_LE("The user that is executing neutron does not have "
-                      "permissions to read the namespaces. Enable the "
-                      "use_helper_for_ns_read configuration option."))
+        LOG.error("The user that is executing neutron does not have "
+                  "permissions to read the namespaces. Enable the "
+                  "use_helper_for_ns_read configuration option.")
         result = False
     else:
         # everything is configured appropriately
@@ -112,8 +112,8 @@ def check_read_netns():
 def check_dnsmasq_version():
     result = checks.dnsmasq_version_supported()
     if not result:
-        LOG.error(_LE('The installed version of dnsmasq is too old. '
-                      'Please update to at least version %s.'),
+        LOG.error('The installed version of dnsmasq is too old. '
+                  'Please update to at least version %s.',
                   checks.get_minimal_dnsmasq_version_supported())
     return result
 
@@ -121,17 +121,17 @@ def check_dnsmasq_version():
 def check_keepalived_ipv6_support():
     result = checks.keepalived_ipv6_supported()
     if not result:
-        LOG.error(_LE('The installed version of keepalived does not support '
-                      'IPv6. Please update to at least version 1.2.10 for '
-                      'IPv6 support.'))
+        LOG.error('The installed version of keepalived does not support '
+                  'IPv6. Please update to at least version 1.2.10 for '
+                  'IPv6 support.')
     return result
 
 
 def check_dibbler_version():
     result = checks.dibbler_version_supported()
     if not result:
-        LOG.error(_LE('The installed version of dibbler-client is too old. '
-                      'Please update to at least version %s.'),
+        LOG.error('The installed version of dibbler-client is too old. '
+                  'Please update to at least version %s.',
                   checks.get_minimal_dibbler_version_supported())
     return result
 
@@ -139,56 +139,56 @@ def check_dibbler_version():
 def check_nova_notify():
     result = checks.nova_notify_supported()
     if not result:
-        LOG.error(_LE('Nova notifications are enabled, but novaclient is not '
-                      'installed. Either disable nova notifications or '
-                      'install python-novaclient.'))
+        LOG.error('Nova notifications are enabled, but novaclient is not '
+                  'installed. Either disable nova notifications or '
+                  'install python-novaclient.')
     return result
 
 
 def check_arp_responder():
     result = checks.arp_responder_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch ARP responder support failed. '
-                      'Please ensure that the version of openvswitch '
-                      'being used has ARP flows support.'))
+        LOG.error('Check for Open vSwitch ARP responder support failed. '
+                  'Please ensure that the version of openvswitch '
+                  'being used has ARP flows support.')
     return result
 
 
 def check_arp_header_match():
     result = checks.arp_header_match_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch support of ARP header matching '
-                      'failed. ARP spoofing suppression will not work. A '
-                      'newer version of OVS is required.'))
+        LOG.error('Check for Open vSwitch support of ARP header matching '
+                  'failed. ARP spoofing suppression will not work. A '
+                  'newer version of OVS is required.')
     return result
 
 
 def check_icmpv6_header_match():
     result = checks.icmpv6_header_match_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch support of ICMPv6 header '
-                      'matching failed. ICMPv6 Neighbor Advt spoofing (part '
-                      'of arp spoofing) suppression will not work. A newer '
-                      'version of OVS is required.'))
+        LOG.error('Check for Open vSwitch support of ICMPv6 header '
+                  'matching failed. ICMPv6 Neighbor Advt spoofing (part '
+                  'of arp spoofing) suppression will not work. A newer '
+                  'version of OVS is required.')
     return result
 
 
 def check_vf_management():
     result = checks.vf_management_supported()
     if not result:
-        LOG.error(_LE('Check for VF management support failed. '
-                      'Please ensure that the version of ip link '
-                      'being used has VF support.'))
+        LOG.error('Check for VF management support failed. '
+                  'Please ensure that the version of ip link '
+                  'being used has VF support.')
     return result
 
 
 def check_vf_extended_management():
     result = checks.vf_extended_management_supported()
     if not result:
-        LOG.error(_LE('Check for VF extended management support failed. '
-                      'Please ensure that the version of ip link '
-                      'being used has VF extended support: version '
-                      '"iproute2-ss140804", git tag "v3.16.0"'))
+        LOG.error('Check for VF extended management support failed. '
+                  'Please ensure that the version of ip link '
+                  'being used has VF extended support: version '
+                  '"iproute2-ss140804", git tag "v3.16.0"')
     return result
 
 
@@ -196,67 +196,67 @@ def check_ovsdb_native():
     cfg.CONF.set_override('ovsdb_interface', 'native', group='OVS')
     result = checks.ovsdb_native_supported()
     if not result:
-        LOG.error(_LE('Check for native OVSDB support failed.'))
+        LOG.error('Check for native OVSDB support failed.')
     return result
 
 
 def check_ovs_conntrack():
     result = checks.ovs_conntrack_supported()
     if not result:
-        LOG.error(_LE('Check for Open vSwitch support of conntrack support '
-                      'failed. OVS/CT firewall will not work. A newer '
-                      'version of OVS (2.5+) and linux kernel (4.3+) are '
-                      'required. See '
-                      'https://github.com/openvswitch/ovs/blob/master/FAQ.md '
-                      'for more information.'))
+        LOG.error('Check for Open vSwitch support of conntrack support '
+                  'failed. OVS/CT firewall will not work. A newer '
+                  'version of OVS (2.5+) and linux kernel (4.3+) are '
+                  'required. See '
+                  'https://github.com/openvswitch/ovs/blob/master/FAQ.md '
+                  'for more information.')
     return result
 
 
 def check_ebtables():
     result = checks.ebtables_supported()
     if not result:
-        LOG.error(_LE('Cannot run ebtables. Please ensure that it '
-                      'is installed.'))
+        LOG.error('Cannot run ebtables. Please ensure that it '
+                  'is installed.')
     return result
 
 
 def check_ipset():
     result = checks.ipset_supported()
     if not result:
-        LOG.error(_LE('Cannot run ipset. Please ensure that it '
-                      'is installed.'))
+        LOG.error('Cannot run ipset. Please ensure that it '
+                  'is installed.')
     return result
 
 
 def check_ip6tables():
     result = checks.ip6tables_supported()
     if not result:
-        LOG.error(_LE('Cannot run ip6tables. Please ensure that it '
-                      'is installed.'))
+        LOG.error('Cannot run ip6tables. Please ensure that it '
+                  'is installed.')
     return result
 
 
 def check_conntrack():
     result = checks.conntrack_supported()
     if not result:
-        LOG.error(_LE('Cannot run conntrack. Please ensure that it '
-                      'is installed.'))
+        LOG.error('Cannot run conntrack. Please ensure that it '
+                  'is installed.')
     return result
 
 
 def check_dhcp_release6():
     result = checks.dhcp_release6_supported()
     if not result:
-        LOG.error(_LE('No dhcp_release6 tool detected. The installed version '
-                      'of dnsmasq does not support releasing IPv6 leases. '
-                      'Please update to at least version %s if you need this '
-                      'feature. If you do not use IPv6 stateful subnets you '
-                      'can continue to use this version of dnsmasq, as '
-                      'other IPv6 address assignment mechanisms besides '
-                      'stateful DHCPv6 should continue to work without '
-                      'the dhcp_release6 utility. '
-                      'Current version of dnsmasq is ok if other checks '
-                      'pass.'),
+        LOG.error('No dhcp_release6 tool detected. The installed version '
+                  'of dnsmasq does not support releasing IPv6 leases. '
+                  'Please update to at least version %s if you need this '
+                  'feature. If you do not use IPv6 stateful subnets you '
+                  'can continue to use this version of dnsmasq, as '
+                  'other IPv6 address assignment mechanisms besides '
+                  'stateful DHCPv6 should continue to work without '
+                  'the dhcp_release6 utility. '
+                  'Current version of dnsmasq is ok if other checks '
+                  'pass.',
                   checks.get_dnsmasq_version_with_dhcp_release6())
     return result
 
@@ -264,19 +264,19 @@ def check_dhcp_release6():
 def check_bridge_firewalling_enabled():
     result = checks.bridge_firewalling_enabled()
     if not result:
-        LOG.error(_LE('Bridge firewalling is not enabled. It may be the case '
-                      'that bridge and/or br_netfilter kernel modules are not '
-                      'loaded. Alternatively, corresponding sysctl settings '
-                      'may be overridden to disable it by default.'))
+        LOG.error('Bridge firewalling is not enabled. It may be the case '
+                  'that bridge and/or br_netfilter kernel modules are not '
+                  'loaded. Alternatively, corresponding sysctl settings '
+                  'may be overridden to disable it by default.')
     return result
 
 
 def check_ip_nonlocal_bind():
     result = checks.ip_nonlocal_bind()
     if not result:
-        LOG.error(_LE('This kernel does not isolate ip_nonlocal_bind kernel '
-                      'option in namespaces. Please update to kernel '
-                      'version > 3.19.'))
+        LOG.error('This kernel does not isolate ip_nonlocal_bind kernel '
+                  'option in namespaces. Please update to kernel '
+                  'version > 3.19.')
     return result
 
 

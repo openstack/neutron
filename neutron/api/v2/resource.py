@@ -21,7 +21,6 @@ from oslo_log import log as logging
 import webob.dec
 import webob.exc
 
-from neutron._i18n import _LE, _LI
 from neutron.api import api_common
 from neutron.common import utils
 from neutron import wsgi
@@ -101,16 +100,15 @@ def Resource(controller, faults=None, deserializers=None, serializers=None,
             mapped_exc = api_common.convert_exception_to_http_exc(e, faults,
                                                                   language)
             if hasattr(mapped_exc, 'code') and 400 <= mapped_exc.code < 500:
-                LOG.info(_LI('%(action)s failed (client error): %(exc)s'),
+                LOG.info('%(action)s failed (client error): %(exc)s',
                          {'action': action, 'exc': mapped_exc})
             else:
-                LOG.exception(
-                    _LE('%(action)s failed: %(details)s'),
-                    {
-                        'action': action,
-                        'details': utils.extract_exc_details(e),
-                    }
-                )
+                LOG.exception('%(action)s failed: %(details)s',
+                              {
+                                  'action': action,
+                                  'details': utils.extract_exc_details(e),
+                              }
+                              )
             raise mapped_exc
 
         status = action_status.get(action, 200)

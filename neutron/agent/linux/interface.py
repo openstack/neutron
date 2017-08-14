@@ -22,7 +22,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import six
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
@@ -265,12 +265,12 @@ class LinuxInterfaceDriver(object):
             self.plug_new(network_id, port_id, device_name, mac_address,
                           bridge, namespace, prefix, mtu)
         else:
-            LOG.info(_LI("Device %s already exists"), device_name)
+            LOG.info("Device %s already exists", device_name)
             if mtu:
                 self.set_mtu(
                     device_name, mtu, namespace=namespace, prefix=prefix)
             else:
-                LOG.warning(_LW("No MTU configured for port %s"), port_id)
+                LOG.warning("No MTU configured for port %s", port_id)
 
     @abc.abstractmethod
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
@@ -296,7 +296,7 @@ class LinuxInterfaceDriver(object):
     def set_mtu(self, device_name, mtu, namespace=None, prefix=None):
         """Set MTU on the interface."""
         if not self._mtu_update_warn_logged:
-            LOG.warning(_LW("Interface driver cannot update MTU for ports"))
+            LOG.warning("Interface driver cannot update MTU for ports")
             self._mtu_update_warn_logged = True
 
 
@@ -367,7 +367,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                 ns_dev.link.set_address(mac_address)
                 break
             except RuntimeError as e:
-                LOG.warning(_LW("Got error trying to set mac, retrying: %s"),
+                LOG.warning("Got error trying to set mac, retrying: %s",
                             str(e))
                 time.sleep(1)
         else:
@@ -386,7 +386,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         if mtu:
             self.set_mtu(device_name, mtu, namespace=namespace, prefix=prefix)
         else:
-            LOG.warning(_LW("No MTU configured for port %s"), port_id)
+            LOG.warning("No MTU configured for port %s", port_id)
 
         ns_dev.link.set_up()
         if self.conf.ovs_use_veth:
@@ -408,7 +408,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                 device.link.delete()
                 LOG.debug("Unplugged interface '%s'", device_name)
         except RuntimeError:
-            LOG.error(_LE("Failed unplugging interface '%s'"),
+            LOG.error("Failed unplugging interface '%s'",
                       device_name)
 
     def set_mtu(self, device_name, mtu, namespace=None, prefix=None):
@@ -458,7 +458,7 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
             ns_dev.link.set_mtu(mtu)
             root_dev.link.set_mtu(mtu)
         else:
-            LOG.warning(_LW("No MTU configured for port %s"), port_id)
+            LOG.warning("No MTU configured for port %s", port_id)
 
         if namespace:
             namespace_obj = ip.ensure_namespace(namespace)
@@ -477,7 +477,7 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
             device.link.delete()
             LOG.debug("Unplugged interface '%s'", device_name)
         except RuntimeError:
-            LOG.error(_LE("Failed unplugging interface '%s'"),
+            LOG.error("Failed unplugging interface '%s'",
                       device_name)
 
 
@@ -503,7 +503,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
         if mtu:
             self.set_mtu(device_name, mtu, namespace=namespace, prefix=prefix)
         else:
-            LOG.warning(_LW("No MTU configured for port %s"), port_id)
+            LOG.warning("No MTU configured for port %s", port_id)
 
         root_veth.link.set_up()
         ns_veth.link.set_up()
@@ -515,7 +515,7 @@ class BridgeInterfaceDriver(LinuxInterfaceDriver):
             device.link.delete()
             LOG.debug("Unplugged interface '%s'", device_name)
         except RuntimeError:
-            LOG.error(_LE("Failed unplugging interface '%s'"),
+            LOG.error("Failed unplugging interface '%s'",
                       device_name)
 
     def set_mtu(self, device_name, mtu, namespace=None, prefix=None):

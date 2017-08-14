@@ -27,7 +27,7 @@ import oslo_messaging
 from oslo_middleware import cors
 from oslo_service import wsgi
 
-from neutron._i18n import _, _LI
+from neutron._i18n import _
 from neutron.conf import common as common_config
 from neutron import policy
 from neutron import version
@@ -97,8 +97,8 @@ def setup_logging():
     logging.set_defaults(default_log_levels=logging.get_default_log_levels() +
                          EXTRA_LOG_LEVEL_DEFAULTS)
     logging.setup(cfg.CONF, product_name)
-    LOG.info(_LI("Logging enabled!"))
-    LOG.info(_LI("%(prog)s version %(version)s"),
+    LOG.info("Logging enabled!")
+    LOG.info("%(prog)s version %(version)s",
              {'prog': sys.argv[0],
               'version': version.version_info.release_string()})
     LOG.debug("command line: %s", " ".join(sys.argv))

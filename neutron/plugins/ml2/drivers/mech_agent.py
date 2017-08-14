@@ -22,7 +22,6 @@ from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 import six
 
-from neutron._i18n import _LW
 from neutron.db import provisioning_blocks
 from neutron.plugins.common import constants as p_constants
 
@@ -110,8 +109,8 @@ class AgentMechanismDriverBase(api.MechanismDriver):
                         LOG.debug("Bound using segment: %s", segment)
                         return
             else:
-                LOG.warning(_LW("Refusing to bind port %(pid)s to dead agent: "
-                                "%(agent)s"),
+                LOG.warning("Refusing to bind port %(pid)s to dead agent: "
+                            "%(agent)s",
                             {'pid': context.current['id'], 'agent': agent})
 
     @abc.abstractmethod

@@ -39,7 +39,7 @@ import six
 import webob.dec
 import webob.exc
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.common import config
 from neutron.common import exceptions as n_exc
 from neutron.conf import wsgi as wsgi_config
@@ -129,7 +129,7 @@ class Server(object):
             family = info[0]
             bind_addr = info[-1]
         except Exception:
-            LOG.exception(_LE("Unable to listen on %(host)s:%(port)s"),
+            LOG.exception("Unable to listen on %(host)s:%(port)s",
                           {'host': host, 'port': port})
             sys.exit(1)
 
@@ -583,27 +583,27 @@ class Resource(Application):
     def __call__(self, request):
         """WSGI method that controls (de)serialization and method dispatch."""
 
-        LOG.info(_LI("%(method)s %(url)s"),
+        LOG.info("%(method)s %(url)s",
                  {"method": request.method, "url": request.url})
 
         try:
             action, args, accept = self.deserializer.deserialize(request)
         except exception.InvalidContentType:
             msg = _("Unsupported Content-Type")
-            LOG.exception(_LE("InvalidContentType: %s"), msg)
+            LOG.exception("InvalidContentType: %s", msg)
             return Fault(webob.exc.HTTPBadRequest(explanation=msg))
         except n_exc.MalformedRequestBody:
             msg = _("Malformed request body")
-            LOG.exception(_LE("MalformedRequestBody: %s"), msg)
+            LOG.exception("MalformedRequestBody: %s", msg)
             return Fault(webob.exc.HTTPBadRequest(explanation=msg))
 
         try:
             action_result = self.dispatch(request, action, args)
         except webob.exc.HTTPException as ex:
-            LOG.info(_LI("HTTP exception thrown: %s"), ex)
+            LOG.info("HTTP exception thrown: %s", ex)
             action_result = Fault(ex, self._fault_body_function)
         except Exception:
-            LOG.exception(_LE("Internal error"))
+            LOG.exception("Internal error")
             # Do not include the traceback to avoid returning it to clients.
             action_result = Fault(webob.exc.HTTPServerError(),
                                   self._fault_body_function)
@@ -616,10 +616,10 @@ class Resource(Application):
             response = action_result
 
         try:
-            LOG.info(_LI("%(url)s returned with HTTP %(status)d"),
+            LOG.info("%(url)s returned with HTTP %(status)d",
                      dict(url=request.url, status=response.status_int))
         except AttributeError as e:
-            LOG.info(_LI("%(url)s returned a fault: %(exception)s"),
+            LOG.info("%(url)s returned a fault: %(exception)s",
                      dict(url=request.url, exception=e))
 
         return response
@@ -633,7 +633,7 @@ class Resource(Application):
             # an argument whose name is 'request'
             return controller_method(request=request, **action_args)
         except TypeError:
-            LOG.exception(_LE('Invalid request'))
+            LOG.exception('Invalid request')
             return Fault(webob.exc.HTTPBadRequest())
 
 

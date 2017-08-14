@@ -17,7 +17,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import interface
@@ -111,8 +111,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         if not self.conf.interface_driver:
             raise SystemExit(_('An interface driver must be specified'))
-        LOG.info(_LI("Loading interface driver %s"),
-                 self.conf.interface_driver)
+        LOG.info("Loading interface driver %s", self.conf.interface_driver)
         self.driver = importutils.import_object(self.conf.interface_driver,
                                                 self.conf)
 
@@ -419,8 +418,8 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
                     chain_acc = rm.iptables_manager.get_traffic_counters(
                         chain, wrap=False, zero=True)
                 except RuntimeError:
-                    LOG.exception(_LE('Failed to get traffic counters, '
-                                      'router: %s'), router)
+                    LOG.exception('Failed to get traffic counters, '
+                                  'router: %s', router)
                     routers_to_reconfigure.add(router['id'])
                     continue
 

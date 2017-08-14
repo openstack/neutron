@@ -19,7 +19,7 @@ from neutron_lib import constants as lib_constants
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LE, _LW
+from neutron._i18n import _
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
@@ -298,8 +298,8 @@ class RouterInfo(object):
         except RuntimeError:
             # any exception occurred here should cause the floating IP
             # to be set in error state
-            LOG.warning(_LW("Unable to configure IP address for "
-                            "floating IP: %s"), fip['id'])
+            LOG.warning("Unable to configure IP address for "
+                        "floating IP: %s", fip['id'])
 
     def add_floating_ip(self, fip, interface_name, device):
         raise NotImplementedError()
@@ -882,7 +882,7 @@ class RouterInfo(object):
 
         except n_exc.FloatingIpSetupException:
             # All floating IPs must be put in error state
-            LOG.exception(_LE("Failed to process floating IPs."))
+            LOG.exception("Failed to process floating IPs.")
             fip_statuses = self.put_fips_in_error_state()
         finally:
             self.update_fip_statuses(fip_statuses)
@@ -908,7 +908,7 @@ class RouterInfo(object):
         except (n_exc.FloatingIpSetupException,
                 n_exc.IpTablesApplyException):
                 # All floating IPs must be put in error state
-                LOG.exception(_LE("Failed to process floating IPs."))
+                LOG.exception("Failed to process floating IPs.")
                 fip_statuses = self.put_fips_in_error_state()
         finally:
             self.update_fip_statuses(fip_statuses)
@@ -1102,8 +1102,8 @@ class RouterInfo(object):
             self.agent.pd.sync_router(self.router['id'])
             self._process_external_on_delete()
         else:
-            LOG.warning(_LW("Can't gracefully delete the router %s: "
-                            "no router namespace found."), self.router['id'])
+            LOG.warning("Can't gracefully delete the router %s: "
+                        "no router namespace found.", self.router['id'])
 
     @common_utils.exception_logger()
     def process(self):

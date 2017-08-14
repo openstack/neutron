@@ -18,7 +18,7 @@ from sqlalchemy.orm import exc
 from sqlalchemy.orm import session as se
 import webob.exc
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import standard_attr
@@ -62,8 +62,8 @@ class RevisionPlugin(service_base.ServicePluginBase):
             try:
                 related_obj = self._find_related_obj(session, obj, revises_col)
                 if not related_obj:
-                    LOG.warning(_LW("Could not find related %(col)s for "
-                                    "resource %(obj)s to bump revision."),
+                    LOG.warning("Could not find related %(col)s for "
+                                "resource %(obj)s to bump revision.",
                                 {'obj': obj, 'col': revises_col})
                     continue
                 # if related object revises others, bump those as well

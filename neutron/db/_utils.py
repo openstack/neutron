@@ -22,7 +22,6 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from sqlalchemy.ext import associationproxy
 
-from neutron._i18n import _LE
 
 LOG = logging.getLogger(__name__)
 
@@ -67,9 +66,9 @@ def safe_creation(context, create_fn, delete_fn, create_bindings,
                 try:
                     delete_fn(obj['id'])
                 except Exception as e:
-                    LOG.error(_LE("Cannot clean up created object %(obj)s. "
-                                  "Exception: %(exc)s"), {'obj': obj['id'],
-                                                          'exc': e})
+                    LOG.error("Cannot clean up created object %(obj)s. "
+                              "Exception: %(exc)s", {'obj': obj['id'],
+                                                     'exc': e})
         return obj, value
 
 

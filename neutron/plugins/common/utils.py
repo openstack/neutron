@@ -32,7 +32,7 @@ from oslo_utils import encodeutils
 from oslo_utils import excutils
 import webob.exc
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 from neutron.plugins.common import constants as p_const
@@ -201,7 +201,7 @@ def delete_port_on_error(core_plugin, context, port_id):
             except exceptions.PortNotFound:
                 LOG.debug("Port %s not found", port_id)
             except Exception:
-                LOG.exception(_LE("Failed to delete port: %s"), port_id)
+                LOG.exception("Failed to delete port: %s", port_id)
 
 
 @contextlib.contextmanager
@@ -214,7 +214,7 @@ def update_port_on_error(core_plugin, context, port_id, revert_value):
                 core_plugin.update_port(context, port_id,
                                         {'port': revert_value})
             except Exception:
-                LOG.exception(_LE("Failed to update port: %s"), port_id)
+                LOG.exception("Failed to update port: %s", port_id)
 
 
 def get_interface_name(name, prefix='', max_len=n_const.DEVICE_NAME_MAX_LEN):
@@ -240,9 +240,9 @@ def get_interface_name(name, prefix='', max_len=n_const.DEVICE_NAME_MAX_LEN):
     new_name = ('%(prefix)s%(truncated)s%(hash)s' %
                 {'prefix': prefix, 'truncated': name[0:namelen],
                  'hash': hashed_name.hexdigest()[0:INTERFACE_HASH_LEN]})
-    LOG.info(_LI("The requested interface name %(requested_name)s exceeds the "
-                 "%(limit)d character limitation. It was shortened to "
-                 "%(new_name)s to fit."),
+    LOG.info("The requested interface name %(requested_name)s exceeds the "
+             "%(limit)d character limitation. It was shortened to "
+             "%(new_name)s to fit.",
              {'requested_name': requested_name,
               'limit': max_len, 'new_name': new_name})
     return new_name

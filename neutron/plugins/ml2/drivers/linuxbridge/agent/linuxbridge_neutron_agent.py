@@ -31,7 +31,6 @@ from oslo_service import service
 from oslo_utils import excutils
 from six import moves
 
-from neutron._i18n import _LE, _LI, _LW
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
@@ -85,16 +84,16 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
     def validate_interface_mappings(self):
         for physnet, interface in self.interface_mappings.items():
             if not ip_lib.device_exists(interface):
-                LOG.error(_LE("Interface %(intf)s for physical network %(net)s"
-                              " does not exist. Agent terminated!"),
+                LOG.error("Interface %(intf)s for physical network %(net)s"
+                          " does not exist. Agent terminated!",
                           {'intf': interface, 'net': physnet})
                 sys.exit(1)
 
     def validate_bridge_mappings(self):
         for physnet, bridge in self.bridge_mappings.items():
             if not ip_lib.device_exists(bridge):
-                LOG.error(_LE("Bridge %(brq)s for physical network %(net)s"
-                              " does not exist. Agent terminated!"),
+                LOG.error("Bridge %(brq)s for physical network %(net)s"
+                          " does not exist. Agent terminated!",
                           {'brq': bridge, 'net': physnet})
                 sys.exit(1)
 
@@ -133,10 +132,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             if not ip_addr.version == group_net.version:
                 raise ValueError()
         except (netaddr.core.AddrFormatError, ValueError):
-            LOG.error(_LE("Invalid VXLAN Group: %(group)s, must be an address "
-                          "or network (in CIDR notation) in a multicast "
-                          "range of the same address family as local_ip: "
-                          "%(ip)s"),
+            LOG.error("Invalid VXLAN Group: %(group)s, must be an address "
+                      "or network (in CIDR notation) in a multicast "
+                      "range of the same address family as local_ip: "
+                      "%(ip)s",
                       {'group': cfg.CONF.VXLAN.vxlan_group,
                        'ip': self.local_ip})
             sys.exit(1)
@@ -145,10 +144,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         """Return the device with local_ip on the host."""
         device = self.ip.get_device_by_ip(self.local_ip)
         if not device:
-            LOG.error(_LE("Tunneling cannot be enabled without the local_ip "
-                          "bound to an interface on the host. Please "
-                          "configure local_ip %s on the host interface to "
-                          "be used for tunneling and restart the agent."),
+            LOG.error("Tunneling cannot be enabled without the local_ip "
+                      "bound to an interface on the host. Please "
+                      "configure local_ip %s on the host interface to "
+                      "be used for tunneling and restart the agent.",
                       self.local_ip)
             sys.exit(1)
         return device
@@ -161,16 +160,16 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
     @staticmethod
     def get_bridge_name(network_id):
         if not network_id:
-            LOG.warning(_LW("Invalid Network ID, will lead to incorrect "
-                            "bridge name"))
+            LOG.warning("Invalid Network ID, will lead to incorrect "
+                        "bridge name")
         bridge_name = BRIDGE_NAME_PREFIX + \
             network_id[:lconst.RESOURCE_ID_LENGTH]
         return bridge_name
 
     def get_subinterface_name(self, physical_interface, vlan_id):
         if not vlan_id:
-            LOG.warning(_LW("Invalid VLAN ID, will lead to incorrect "
-                            "subinterface name"))
+            LOG.warning("Invalid VLAN ID, will lead to incorrect "
+                        "subinterface name")
         vlan_postfix = '.%s' % vlan_id
 
         # For the vlan subinterface name prefix we use:
@@ -206,8 +205,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if 0 <= int(segmentation_id) <= p_const.MAX_VXLAN_VNI:
             return VXLAN_INTERFACE_PREFIX + str(segmentation_id)
         else:
-            LOG.warning(_LW("Invalid Segmentation ID: %s, will lead to "
-                            "incorrect vxlan device name"), segmentation_id)
+            LOG.warning("Invalid Segmentation ID: %s, will lead to "
+                        "incorrect vxlan device name", segmentation_id)
 
     @staticmethod
     def _match_multicast_range(segmentation_id):
@@ -252,8 +251,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         """Create a vxlan and bridge unless they already exist."""
         interface = self.ensure_vxlan(segmentation_id)
         if not interface:
-            LOG.error(_LE("Failed creating vxlan interface for "
-                          "%(segmentation_id)s"),
+            LOG.error("Failed creating vxlan interface for "
+                      "%(segmentation_id)s",
                       {segmentation_id: segmentation_id})
             return
         bridge_name = self.get_bridge_name(network_id)
@@ -304,9 +303,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                 with excutils.save_and_reraise_exception() as ctxt:
                     if ip_lib.vlan_in_use(vlan_id):
                         ctxt.reraise = False
-                        LOG.error(_LE("Unable to create VLAN interface for "
-                                      "VLAN ID %s because it is in use by "
-                                      "another interface."), vlan_id)
+                        LOG.error("Unable to create VLAN interface for "
+                                  "VLAN ID %s because it is in use by "
+                                  "another interface.", vlan_id)
                         return
             int_vlan.disable_ipv6()
             int_vlan.link.set_up()
@@ -341,9 +340,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                     # to avoid excessive lookups and a possible race condition.
                     if ip_lib.vxlan_in_use(segmentation_id):
                         ctxt.reraise = False
-                        LOG.error(_LE("Unable to create VXLAN interface for "
-                                      "VNI %s because it is in use by another "
-                                      "interface."), segmentation_id)
+                        LOG.error("Unable to create VXLAN interface for "
+                                  "VNI %s because it is in use by another "
+                                  "interface.", segmentation_id)
                         return None
             int_vxlan.disable_ipv6()
             int_vxlan.link.set_up()
@@ -445,8 +444,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
                 bridge_device.addif(interface)
             except Exception as e:
-                LOG.error(_LE("Unable to add %(interface)s to %(bridge_name)s"
-                              "! Exception: %(e)s"),
+                LOG.error("Unable to add %(interface)s to %(bridge_name)s"
+                          "! Exception: %(e)s",
                           {'interface': interface, 'bridge_name': bridge_name,
                            'e': e})
                 return
@@ -458,7 +457,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                   segmentation_id):
         if network_type == p_const.TYPE_VXLAN:
             if self.vxlan_mode == lconst.VXLAN_NONE:
-                LOG.error(_LE("Unable to add vxlan interface for network %s"),
+                LOG.error("Unable to add vxlan interface for network %s",
                           network_id)
                 return
             return self.ensure_vxlan_bridge(network_id, segmentation_id)
@@ -467,8 +466,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         physical_bridge = self.get_existing_bridge_name(physical_network)
         physical_interface = self.interface_mappings.get(physical_network)
         if not physical_bridge and not physical_interface:
-            LOG.error(_LE("No bridge or interface mappings"
-                          " for physical network %s"),
+            LOG.error("No bridge or interface mappings"
+                      " for physical network %s",
                       physical_network)
             return
         if network_type == p_const.TYPE_FLAT:
@@ -479,9 +478,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                            physical_interface,
                                            segmentation_id)
         else:
-            LOG.error(_LE("Unknown network_type %(network_type)s for network "
-                          "%(network_id)s."), {network_type: network_type,
-                                             network_id: network_id})
+            LOG.error("Unknown network_type %(network_type)s for network "
+                      "%(network_id)s.", {network_type: network_type,
+                                          network_id: network_id})
 
     def add_tap_interface(self, network_id, network_type, physical_network,
                           segmentation_id, tap_device_name, device_owner, mtu):
@@ -664,8 +663,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             return False
         if not ip_lib.iproute_arg_supported(
                 ['bridge', 'fdb'], 'append'):
-            LOG.warning(_LW('Option "%(option)s" must be supported by command '
-                            '"%(command)s" to enable %(mode)s mode'),
+            LOG.warning('Option "%(option)s" must be supported by command '
+                        '"%(command)s" to enable %(mode)s mode',
                         {'option': 'append',
                          'command': 'bridge fdb',
                          'mode': 'VXLAN UCAST'})
@@ -679,7 +678,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             test_iface = self.ensure_vxlan(seg_id)
             break
         else:
-            LOG.error(_LE('No valid Segmentation ID to perform UCAST test.'))
+            LOG.error('No valid Segmentation ID to perform UCAST test.')
             return False
 
         try:
@@ -694,14 +693,14 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
     def vxlan_mcast_supported(self):
         if not cfg.CONF.VXLAN.vxlan_group:
-            LOG.warning(_LW('VXLAN muticast group(s) must be provided in '
-                            'vxlan_group option to enable VXLAN MCAST mode'))
+            LOG.warning('VXLAN muticast group(s) must be provided in '
+                        'vxlan_group option to enable VXLAN MCAST mode')
             return False
         if not ip_lib.iproute_arg_supported(
                 ['ip', 'link', 'add', 'type', 'vxlan'],
                 'proxy'):
-            LOG.warning(_LW('Option "%(option)s" must be supported by command '
-                            '"%(command)s" to enable %(mode)s mode'),
+            LOG.warning('Option "%(option)s" must be supported by command '
+                        '"%(command)s" to enable %(mode)s mode',
                         {'option': 'proxy',
                          'command': 'ip link add type vxlan',
                          'mode': 'VXLAN MCAST'})
@@ -776,8 +775,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                 if mac:
                     break
             else:
-                LOG.error(_LE("Unable to obtain MAC address for unique ID. "
-                              "Agent terminated!"))
+                LOG.error("Unable to obtain MAC address for unique ID. "
+                          "Agent terminated!")
                 sys.exit(1)
         return 'lb%s' % mac.replace(":", "")
 
@@ -844,8 +843,8 @@ class LinuxBridgeRpcCallbacks(
         if network_id in self.network_map:
             phynet = self.network_map[network_id].physical_network
             if phynet and phynet in self.agent.mgr.bridge_mappings:
-                LOG.info(_LI("Physical network %s is defined in "
-                             "bridge_mappings and cannot be deleted."),
+                LOG.info("Physical network %s is defined in "
+                         "bridge_mappings and cannot be deleted.",
                          network_id)
                 return
 
@@ -960,19 +959,19 @@ def main():
         interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
     except ValueError as e:
-        LOG.error(_LE("Parsing physical_interface_mappings failed: %s. "
-                      "Agent terminated!"), e)
+        LOG.error("Parsing physical_interface_mappings failed: %s. "
+                  "Agent terminated!", e)
         sys.exit(1)
-    LOG.info(_LI("Interface mappings: %s"), interface_mappings)
+    LOG.info("Interface mappings: %s", interface_mappings)
 
     try:
         bridge_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.bridge_mappings)
     except ValueError as e:
-        LOG.error(_LE("Parsing bridge_mappings failed: %s. "
-                      "Agent terminated!"), e)
+        LOG.error("Parsing bridge_mappings failed: %s. "
+                  "Agent terminated!", e)
         sys.exit(1)
-    LOG.info(_LI("Bridge mappings: %s"), bridge_mappings)
+    LOG.info("Bridge mappings: %s", bridge_mappings)
 
     manager = LinuxBridgeManager(bridge_mappings, interface_mappings)
     linuxbridge_capabilities.register()
@@ -983,6 +982,6 @@ def main():
                                constants.AGENT_TYPE_LINUXBRIDGE,
                                LB_AGENT_BINARY)
     setup_profiler.setup("neutron-linuxbridge-agent", cfg.CONF.host)
-    LOG.info(_LI("Agent initialized successfully, now running... "))
+    LOG.info("Agent initialized successfully, now running... ")
     launcher = service.launch(cfg.CONF, agent)
     launcher.wait()

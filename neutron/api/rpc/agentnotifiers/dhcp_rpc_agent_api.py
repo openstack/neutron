@@ -22,7 +22,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron._i18n import _LE, _LW
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -105,9 +104,9 @@ class DhcpAgentNotifyAPI(object):
                     context, 'network_create_end',
                     {'network': {'id': network['id']}}, agent['host'])
         elif not existing_agents:
-            LOG.warning(_LW('Unable to schedule network %s: no agents '
-                            'available; will retry on subsequent port '
-                            'and subnet creation events.'),
+            LOG.warning('Unable to schedule network %s: no agents '
+                        'available; will retry on subsequent port '
+                        'and subnet creation events.',
                         network['id'])
         return new_agents + existing_agents
 
@@ -123,10 +122,10 @@ class DhcpAgentNotifyAPI(object):
         len_enabled_agents = len(enabled_agents)
         len_active_agents = len(active_agents)
         if len_active_agents < len_enabled_agents:
-            LOG.warning(_LW("Only %(active)d of %(total)d DHCP agents "
-                            "associated with network '%(net_id)s' "
-                            "are marked as active, so notifications "
-                            "may be sent to inactive agents."),
+            LOG.warning("Only %(active)d of %(total)d DHCP agents "
+                        "associated with network '%(net_id)s' "
+                        "are marked as active, so notifications "
+                        "may be sent to inactive agents.",
                         {'active': len_active_agents,
                          'total': len_enabled_agents,
                          'net_id': network_id})
@@ -136,9 +135,9 @@ class DhcpAgentNotifyAPI(object):
             notification_required = (
                 num_ports > 0 and len(network['subnets']) >= 1)
             if notification_required:
-                LOG.error(_LE("Will not send event %(method)s for network "
-                              "%(net_id)s: no agent available. Payload: "
-                              "%(payload)s"),
+                LOG.error("Will not send event %(method)s for network "
+                          "%(net_id)s: no agent available. Payload: "
+                          "%(payload)s",
                           {'method': method,
                            'net_id': network_id,
                            'payload': payload})

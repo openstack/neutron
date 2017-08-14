@@ -16,7 +16,6 @@ from oslo_concurrency import lockutils
 from oslo_log import log as logging
 from oslo_utils import excutils
 
-from neutron._i18n import _LW
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import utils as lutil
@@ -141,7 +140,7 @@ class _InterfaceInfo(object):
             name_section = line.split(': ')[1]
         except IndexError:
             name_section = None
-            LOG.warning(_LW("Bad interface line: %s"), line)
+            LOG.warning("Bad interface line: %s", line)
         if not name_section or '@' not in name_section:
             self.devname = name_section
             self.parent_devname = self.vlan_tag = None
