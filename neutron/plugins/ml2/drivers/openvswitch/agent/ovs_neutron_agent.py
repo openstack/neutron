@@ -384,6 +384,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def setup_old_topic_sinkhole(self):
         class SinkHole(object):
+            target = oslo_messaging.Target(version='1.4')
+
             def __getattr__(self, attr):
                 return self._receiver
 
