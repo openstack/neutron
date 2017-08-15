@@ -28,6 +28,7 @@ MITAKA = 'mitaka'
 NEWTON = 'newton'
 OCATA = 'ocata'
 PIKE = 'pike'
+QUEENS = 'queens'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
