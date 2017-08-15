@@ -110,6 +110,34 @@ class TestLegacyL3Agent(TestL3Agent):
             self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
         self._assert_namespace_exists(namespace)
 
+    def test_mtu_update(self):
+        tenant_id = uuidutils.generate_uuid()
+
+        router = self.safe_client.create_router(tenant_id)
+        network = self.safe_client.create_network(tenant_id)
+        subnet = self.safe_client.create_subnet(
+            tenant_id, network['id'], '20.0.0.0/24', gateway_ip='20.0.0.1')
+        self.safe_client.add_router_interface(router['id'], subnet['id'])
+
+        namespace = "%s@%s" % (
+            self._get_namespace(router['id']),
+            self.environment.hosts[0].l3_agent.get_namespace_suffix(), )
+        self._assert_namespace_exists(namespace)
+
+        ip = ip_lib.IPWrapper(namespace)
+        common_utils.wait_until_true(lambda: ip.get_devices())
+
+        devices = ip.get_devices()
+        self.assertEqual(1, len(devices))
+
+        ri_dev = devices[0]
+        mtu = ri_dev.link.mtu
+        self.assertEqual(1500, mtu)
+
+        mtu -= 1
+        network = self.safe_client.update_network(network['id'], mtu=mtu)
+        common_utils.wait_until_true(lambda: ri_dev.link.mtu == mtu)
+
     def test_east_west_traffic(self):
         tenant_id = uuidutils.generate_uuid()
         router = self.safe_client.create_router(tenant_id)
