@@ -17,6 +17,7 @@ import collections
 
 from neutron_lib import exceptions
 from oslo_log import helpers as log_helpers
+from oslo_log import log as logging
 import oslo_messaging
 
 from neutron._i18n import _
@@ -29,6 +30,8 @@ from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
 from neutron.objects import base as obj_base
+
+LOG = logging.getLogger(__name__)
 
 
 class ResourcesRpcError(exceptions.NeutronException):
@@ -221,7 +224,6 @@ class ResourcesPushRpcApi(object):
             resources_by_type[resource_type].append(resource)
         return resources_by_type
 
-    @log_helpers.log_method_call
     def push(self, context, resource_list, event_type):
         """Push an event and list of resources to agents, batched per type.
         When a list of different resource types is passed to this method,
@@ -230,6 +232,12 @@ class ResourcesPushRpcApi(object):
         """
 
         resources_by_type = self._classify_resources_by_type(resource_list)
+        LOG.debug(
+            "Pushing event %s for resources: %s", event_type,
+            {t: ["ID=%s,revision_number=%s" % (
+                     obj.id, getattr(obj, 'revision_number', None))
+                 for obj in resources_by_type[t]]
+             for t in resources_by_type})
         for resource_type, type_resources in resources_by_type.items():
             self._push(context, resource_type, type_resources, event_type)
 
