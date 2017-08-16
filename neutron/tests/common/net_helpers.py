@@ -29,6 +29,7 @@ import fixtures
 import netaddr
 from neutron_lib import constants as n_const
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import uuidutils
 import six
 
@@ -45,6 +46,8 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
 from neutron.tests.common import base as common_base
 from neutron.tests import tools
+
+LOG = logging.getLogger(__name__)
 
 UNDEFINED = object()
 
@@ -277,6 +280,7 @@ class RootHelperProcess(subprocess.Popen):
         root_helper = config.get_root_helper(utils.cfg.CONF)
         cmd = shlex.split(root_helper) + cmd
         self.child_pid = None
+        LOG.debug("Spawning process %s", cmd)
         super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
         self._wait_for_child_process()
 
