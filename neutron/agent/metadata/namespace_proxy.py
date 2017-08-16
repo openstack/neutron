@@ -115,19 +115,21 @@ class NetworkMetadataProxyHandler(object):
 
 class ProxyDaemon(daemon.Daemon):
     def __init__(self, pidfile, port, network_id=None, router_id=None,
-                 user=None, group=None, watch_log=True):
+                 user=None, group=None, watch_log=True, proxy_threads=None):
         uuid = network_id or router_id
         super(ProxyDaemon, self).__init__(pidfile, uuid=uuid, user=user,
                                          group=group, watch_log=watch_log)
         self.network_id = network_id
         self.router_id = router_id
         self.port = port
+        self.proxy_threads = proxy_threads
 
     def run(self):
         handler = NetworkMetadataProxyHandler(
             self.network_id,
             self.router_id)
-        proxy = wsgi.Server('neutron-network-metadata-proxy')
+        proxy = wsgi.Server('neutron-network-metadata-proxy',
+                            num_threads=self.proxy_threads)
         proxy.start(handler, self.port)
 
         # Drop privileges after port bind
@@ -168,6 +170,10 @@ def main():
                     help=_("Watch file log. Log watch should be disabled when "
                            "metadata_proxy_user/group has no read/write "
                            "permissions on metadata proxy log file.")),
+        cfg.IntOpt('metadata_proxy_num_threads',
+                   default=1000,
+                   help=_("Number of threads for the metadata_proxy wsgi "
+                          "pool. Default is 1000.")),
     ]
 
     cfg.CONF.register_cli_opts(opts)
@@ -182,7 +188,8 @@ def main():
                         router_id=cfg.CONF.router_id,
                         user=cfg.CONF.metadata_proxy_user,
                         group=cfg.CONF.metadata_proxy_group,
-                        watch_log=cfg.CONF.metadata_proxy_watch_log)
+                        watch_log=cfg.CONF.metadata_proxy_watch_log,
+                        proxy_threads=cfg.CONF.metadata_proxy_num_threads)
 
     if cfg.CONF.daemonize:
         proxy.start()
