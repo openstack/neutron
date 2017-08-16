@@ -41,11 +41,11 @@ traffic directions (from the VM point of view).
 .. table:: **Networking back ends, supported rules, and traffic direction**
 
     ====================  ================  ================  ================
-     Rule \ back end        Open vSwitch      SR-IOV            Linux bridge
+     Rule \ back end       Open vSwitch      SR-IOV            Linux bridge
     ====================  ================  ================  ================
-     Bandwidth limit        Egress            Egress (1)        Egress
-     Minimum bandwidth      -                 Egress            -
-     DSCP marking           Egress            -                 Egress
+     Bandwidth limit       Egress\Ingress    Egress (1)        Egress\Ingress
+     Minimum bandwidth     -                 Egress            -
+     DSCP marking          Egress            -                 Egress
     ====================  ================  ================  ================
 
 .. note::
