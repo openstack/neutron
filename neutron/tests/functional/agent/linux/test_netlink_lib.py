@@ -27,15 +27,6 @@ class NetlinkLibTestCase(functional_base.BaseSudoTestCase):
     as expected.
     """
 
-    def setUp(self):
-        super(NetlinkLibTestCase, self).setUp()
-        self.skipTest(
-            "Current upstream Neutron infrastructure uses a kernel containing "
-            "a bug when creating conntrack entries. This skip is a temporary "
-            "solution to allow upstream CI run functional tests. For more "
-            "information please see following bug: "
-            "https://bugs.launchpad.net/linux/+bug/1709032")
-
     def _create_entries(self, zone):
         conntrack_cmds = (
             ['conntrack', '-I', '-p', 'tcp',
