@@ -727,18 +727,20 @@ class L3_NAT_with_dvr_db_mixin(l3_db.L3_NAT_db_mixin,
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
 
-        with context.session.begin(subtransactions=True):
-            router_port = l3_models.RouterPort(
-                port_id=snat_port['id'],
-                router_id=router.id,
-                port_type=const.DEVICE_OWNER_ROUTER_SNAT
-            )
-            context.session.add(router_port)
+        with p_utils.delete_port_on_error(
+                self._core_plugin, context.elevated(), snat_port['id']):
+            with context.session.begin(subtransactions=True):
+                router_port = l3_models.RouterPort(
+                    port_id=snat_port['id'],
+                    router_id=router.id,
+                    port_type=const.DEVICE_OWNER_ROUTER_SNAT
+                )
+                context.session.add(router_port)
 
-        if do_pop:
-            return self._populate_mtu_and_subnets_for_ports(context,
-                                                            [snat_port])
-        return snat_port
+            if do_pop:
+                return self._populate_mtu_and_subnets_for_ports(context,
+                                                                [snat_port])
+            return snat_port
 
     def _create_snat_intf_ports_if_not_exists(self, context, router):
         """Function to return the snat interface port list.
