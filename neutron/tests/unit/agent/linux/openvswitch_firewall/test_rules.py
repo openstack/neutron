@@ -77,7 +77,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'direction': firewall.INGRESS_DIRECTION,
         }
         expected_template = {
-            'priority': 70,
+            'priority': 74,
             'dl_type': n_const.ETHERTYPE_IP,
             'reg_port': self.port.ofport,
         }
@@ -92,7 +92,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'dest_ip_prefix': '10.0.0.1/32',
         }
         expected_template = {
-            'priority': 70,
+            'priority': 74,
             'dl_type': n_const.ETHERTYPE_IP,
             'reg_port': self.port.ofport,
             'nw_src': '192.168.0.0/24',
@@ -109,7 +109,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'dest_ip_prefix': '0.0.0.0/0',
         }
         expected_template = {
-            'priority': 70,
+            'priority': 74,
             'dl_type': n_const.ETHERTYPE_IP,
             'reg_port': self.port.ofport,
             'nw_src': '192.168.0.0/24',
@@ -123,7 +123,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'direction': firewall.INGRESS_DIRECTION,
         }
         expected_template = {
-            'priority': 70,
+            'priority': 74,
             'dl_type': n_const.ETHERTYPE_IPV6,
             'reg_port': self.port.ofport,
         }
@@ -138,7 +138,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'dest_ip_prefix': '2001:db8:aaaa::1/64',
         }
         expected_template = {
-            'priority': 70,
+            'priority': 74,
             'dl_type': n_const.ETHERTYPE_IPV6,
             'reg_port': self.port.ofport,
             'ipv6_src': '2001:db8:bbbb::1/64',
@@ -155,7 +155,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'dest_ip_prefix': '::/0',
         }
         expected_template = {
-            'priority': 70,
+            'priority': 74,
             'dl_type': n_const.ETHERTYPE_IPV6,
             'reg_port': self.port.ofport,
             'ipv6_src': '2001:db8:bbbb::1/64',
@@ -343,7 +343,7 @@ class TestCreateFlowsForIpAddress(base.BaseTestCase):
     def test_create_flows_for_ip_address_egress(self):
         expected_template = {
             'table': ovs_consts.RULES_EGRESS_TABLE,
-            'priority': 70,
+            'priority': 72,
             'dl_type': n_const.ETHERTYPE_IP,
             'reg_net': 0x123,
             'nw_dst': '192.168.0.1/32'
@@ -359,10 +359,9 @@ class TestCreateFlowsForIpAddress(base.BaseTestCase):
                          flows[0]['ct_state'])
         self.assertEqual(ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
                          flows[1]['ct_state'])
-        self.assertEqual(self._generate_conjuncion_actions(conj_ids, 0),
-                         flows[0]['actions'])
-        self.assertEqual(self._generate_conjuncion_actions(conj_ids, 1),
-                         flows[1]['actions'])
+        for i in range(2):
+            self.assertEqual(self._generate_conjuncion_actions(conj_ids, i),
+                             flows[i]['actions'])
         for f in flows:
             del f['actions']
             del f['ct_state']
@@ -380,7 +379,7 @@ class TestCreateConjFlows(base.BaseTestCase):
         expected_template = {
             'table': ovs_consts.RULES_INGRESS_TABLE,
             'dl_type': n_const.ETHERTYPE_IPV6,
-            'priority': 70,
+            'priority': 71,
             'conj_id': conj_id,
             'reg_port': port.ofport
         }
@@ -497,3 +496,28 @@ class TestMergeRules(base.BaseTestCase):
                    self.rule_tmpl), 40)])
         self._test_merge_port_ranges_helper(
             [(30, 40, {32}), (100, 140, {40})], result)
+
+
+class TestFlowPriority(base.BaseTestCase):
+    def test_flow_priority_offset(self):
+        self.assertEqual(0,
+                         rules.flow_priority_offset(
+                             {'foo': 'bar',
+                              'remote_group_id': 'hoge'}))
+        self.assertEqual(4,
+                         rules.flow_priority_offset({'foo': 'bar'}))
+        self.assertEqual(5,
+                         rules.flow_priority_offset(
+                             {'protocol': constants.PROTO_NUM_ICMP}))
+        self.assertEqual(7,
+                         rules.flow_priority_offset(
+                             {'protocol': constants.PROTO_NUM_TCP}))
+
+        self.assertEqual(6,
+                         rules.flow_priority_offset(
+                             {'protocol': constants.PROTO_NUM_ICMP,
+                              'port_range_min': 0}))
+        self.assertEqual(7,
+                         rules.flow_priority_offset(
+                             {'protocol': constants.PROTO_NUM_IPV6_ICMP,
+                              'port_range_min': 0, 'port_range_max': 0}))
