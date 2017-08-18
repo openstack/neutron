@@ -646,16 +646,19 @@ class RouterInfo(object):
         if not self.use_ipv6:
             return
 
-        if not enabled:
+        disable_ra = not enabled
+        if enabled:
+            gateway_ips = self._get_external_gw_ips(ex_gw_port)
+            if not self.is_v6_gateway_set(gateway_ips):
+                # There is no IPv6 gw_ip, use RouterAdvt for default route.
+                self.driver.configure_ipv6_ra(
+                    ns_name, interface_name, n_const.ACCEPT_RA_WITH_FORWARDING)
+            else:
+                # Otherwise, disable it
+                disable_ra = True
+        if disable_ra:
             self.driver.configure_ipv6_ra(ns_name, interface_name,
                                           n_const.ACCEPT_RA_DISABLED)
-        else:
-            gateway_ips = self._get_external_gw_ips(ex_gw_port)
-            if self.is_v6_gateway_set(gateway_ips):
-                return
-            # There is no IPv6 gw_ip, use RouterAdvt for default route.
-            self.driver.configure_ipv6_ra(ns_name, interface_name,
-                                          n_const.ACCEPT_RA_WITH_FORWARDING)
         self.driver.configure_ipv6_forwarding(ns_name, interface_name, enabled)
 
     def _external_gateway_added(self, ex_gw_port, interface_name,
