@@ -112,7 +112,7 @@ class OFPort(object):
     def _get_allowed_pairs(port_dict, version):
         aap_dict = port_dict.get('allowed_address_pairs', set())
         return {(aap['mac_address'], aap['ip_address']) for aap in aap_dict
-                if netaddr.IPAddress(aap['ip_address']).version == version}
+                if netaddr.IPNetwork(aap['ip_address']).version == version}
 
     @property
     def ipv4_addresses(self):
