@@ -43,25 +43,22 @@ class FloatingIPAdminTestJSON(base.BaseAdminNetworkTest):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('11116ee9-4e99-5b15-b8e1-aa7df92ca589')
-    def test_associate_floating_ip_with_port_from_another_tenant(self):
-        if not CONF.identity_feature_enabled.api_v2_admin:
-            # TODO(ihrachys) adopt to v3
-            raise self.skipException('Identity v2 admin not available')
-        body = self.admin_client.create_floatingip(
+    def test_associate_floating_ip_with_port_from_another_project(self):
+        body = self.client.create_floatingip(
             floating_network_id=self.ext_net_id)
         floating_ip = body['floatingip']
-        test_tenant = data_utils.rand_name('test_tenant_')
+        test_project = data_utils.rand_name('test_project_')
         test_description = data_utils.rand_name('desc_')
-        tenant = self.identity_admin_client.create_tenant(
-            name=test_tenant, description=test_description)['tenant']
-        tenant_id = tenant['id']
-        self.addCleanup(self.identity_admin_client.delete_tenant, tenant_id)
+        project = self.identity_admin_client.create_project(
+            name=test_project, description=test_description)['project']
+        project_id = project['id']
+        self.addCleanup(self.identity_admin_client.delete_project, project_id)
 
         port = self.admin_client.create_port(network_id=self.network['id'],
-                                             tenant_id=tenant_id)
+                                             project_id=project_id)
         self.addCleanup(self.admin_client.delete_port, port['port']['id'])
         self.assertRaises(lib_exc.BadRequest,
-                          self.admin_client.update_floatingip,
+                          self.client.update_floatingip,
                           floating_ip['id'], port_id=port['port']['id'])
 
     @testtools.skipUnless(
