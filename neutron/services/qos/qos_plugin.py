@@ -262,6 +262,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: QosPolicy objects meeting the search criteria
         """
+        filters = filters or dict()
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         return policy_object.QosPolicy.get_objects(context, _pager=pager,
                                                    **filters)
