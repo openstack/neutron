@@ -126,20 +126,21 @@
         subnet_cidr_start: "1.4.0.0/16"
         subnets_per_network: 2
         subnet_update_args:
-            enable_dhcp: False
+            enable_dhcp: True
             name: "_subnet_updated"
       runner:
         type: "constant"
-        times: 40
+        times: 400
         concurrency: 20
       context:
         users:
-          tenants: 5
+          tenants: 1
           users_per_tenant: 5
         quotas:
           neutron:
             network: -1
             subnet: -1
+            port: -1
       sla:
         failure_rate:
           max: 0
