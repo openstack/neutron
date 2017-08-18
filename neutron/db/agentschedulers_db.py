@@ -292,7 +292,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
             dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
             dead_bindings = [b for b in
                              self._filter_bindings(context, down_bindings)]
-            agents = self.get_agents_db(
+            agents = self.get_agent_objects(
                 context, {'agent_type': [constants.AGENT_TYPE_DHCP]})
             if not agents:
                 # No agents configured so nothing to do.

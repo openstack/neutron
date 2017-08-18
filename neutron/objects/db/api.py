@@ -37,9 +37,8 @@ def count(context, model, **kwargs):
 
 
 def _kwargs_to_filters(**kwargs):
-    return {k: v if (isinstance(v, list) or
-                     isinstance(v, obj_utils.StringMatchingFilterObj))
-            else [v]
+    retain_classes = (list, set, obj_utils.StringMatchingFilterObj)
+    return {k: v if isinstance(v, retain_classes) else [v]
             for k, v in kwargs.items()}
 
 

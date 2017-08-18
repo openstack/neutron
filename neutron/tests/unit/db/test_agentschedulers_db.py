@@ -532,7 +532,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                'get_dhcp_agents_hosting_networks',
                                autospec=True) as mock_hosting_agents:
 
-            mock_hosting_agents.return_value = plugin.get_agents_db(
+            mock_hosting_agents.return_value = plugin.get_agent_objects(
                 self.adminContext)
             with self.network('test') as net1:
                 pass

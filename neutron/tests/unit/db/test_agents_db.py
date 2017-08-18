@@ -28,7 +28,8 @@ import testscenarios
 
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2 as base_plugin
-from neutron.db.models import agent as agent_model
+from neutron.objects import agent as agent_obj
+from neutron.objects import base
 from neutron.tests.unit import testlib_api
 
 # the below code is required for the following reason
@@ -62,23 +63,18 @@ class TestAgentsDbBase(testlib_api.SqlTestCase):
 
     def _get_agents(self, hosts, agent_type):
         return [
-            agent_model.Agent(
+            agent_obj.Agent(
+                context=self.context,
                 binary='foo-agent',
                 host=host,
                 agent_type=agent_type,
                 topic='foo_topic',
                 configurations="{}",
-                resource_versions="{}",
                 created_at=timeutils.utcnow(),
                 started_at=timeutils.utcnow(),
                 heartbeat_timestamp=timeutils.utcnow())
             for host in hosts
         ]
-
-    def _save_agents(self, agents):
-        for agent in agents:
-            with self.context.session.begin(subtransactions=True):
-                self.context.session.add(agent)
 
     def _create_and_save_agents(self, hosts, agent_type, down_agents_count=0,
                                 down_but_version_considered=0):
@@ -93,7 +89,8 @@ class TestAgentsDbBase(testlib_api.SqlTestCase):
             agent['heartbeat_timestamp'] -= datetime.timedelta(
                 seconds=(cfg.CONF.agent_down_time + 1))
 
-        self._save_agents(agents)
+        for agent in agents:
+            agent.create()
         return agents
 
 
@@ -159,12 +156,16 @@ class TestAgentsDbMixin(TestAgentsDbBase):
         # NOTE(rpodolyaka): emulate violation of the unique constraint caused
         #                   by a concurrent insert. Ensure we make another
         #                   attempt on fail
-        with mock.patch('sqlalchemy.orm.Session.add') as add_mock:
+        mock.patch(
+            'neutron.objects.base.NeutronDbObject.modify_fields_from_db'
+        ).start()
+        mock.patch.object(self.context.session, 'expunge').start()
+
+        with mock.patch('neutron.objects.db.api.create_object') as add_mock:
             add_mock.side_effect = [
                 exc.DBDuplicateEntry(),
-                None
+                mock.Mock()
             ]
-
             self.plugin.create_or_update_agent(self.context, self.agent_status)
 
             self.assertEqual(add_mock.call_count, 2,
@@ -360,7 +361,10 @@ class TestAgentExtRpcCallback(TestAgentsDbBase):
 
     def _take_down_agent(self):
         with self.context.session.begin(subtransactions=True):
-            query = self.context.session.query(agent_model.Agent)
-            agt = query.first()
-            agt.heartbeat_timestamp = (
-                agt.heartbeat_timestamp - datetime.timedelta(hours=1))
+            pager = base.Pager(limit=1)
+            agent_objs = agent_obj.Agent.get_objects(self.context,
+                                                     _pager=pager)
+            agent_objs[0].heartbeat_timestamp = (
+                agent_objs[0].heartbeat_timestamp - datetime.timedelta(
+                    hours=1))
+            agent_objs[0].update()

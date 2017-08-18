@@ -22,10 +22,9 @@ from neutron_lib import constants
 from neutron_lib.objects import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
-from sqlalchemy import sql
 
 from neutron.agent.common import utils as agent_utils
-from neutron.db.models import agent as agent_model
+from neutron.objects import agent as agent_obj
 from neutron.objects import network
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
@@ -56,12 +55,9 @@ class AutoScheduler(object):
             if not net_ids:
                 LOG.debug('No non-hosted networks')
                 return False
-            query = context.session.query(agent_model.Agent)
-            query = query.filter(
-                agent_model.Agent.agent_type == constants.AGENT_TYPE_DHCP,
-                agent_model.Agent.host == host,
-                agent_model.Agent.admin_state_up == sql.true())
-            dhcp_agents = query.all()
+            dhcp_agents = agent_obj.Agent.get_objects(
+                context, agent_type=constants.AGENT_TYPE_DHCP,
+                host=host, admin_state_up=True)
 
             segment_host_mapping = network.SegmentHostMapping.get_objects(
                 context, host=host)
@@ -244,7 +240,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                        'admin_state_up': [True]}
             if az_hints:
                 filters['availability_zone'] = az_hints
-            active_dhcp_agents = plugin.get_agents_db(
+            active_dhcp_agents = plugin.get_agent_objects(
                 context, filters=filters)
             if not active_dhcp_agents:
                 LOG.warning('No more DHCP agents')

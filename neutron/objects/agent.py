@@ -144,3 +144,15 @@ class Agent(base.NeutronDbObject):
         hosts = [host[0] for host in query]
         agents = cls.get_objects(context, host=hosts)
         return agents
+
+    @classmethod
+    def _get_agents_by_availability_zones_and_agent_type(
+            cls, context, agent_type, availability_zones):
+        query = context.session.query(
+            agent_model.Agent).filter_by(
+            agent_type=agent_type).group_by(
+            agent_model.Agent.availability_zone)
+        query = query.filter(
+            agent_model.Agent.availability_zone.in_(availability_zones)).all()
+        agents = [cls._load_object(context, record) for record in query]
+        return agents
