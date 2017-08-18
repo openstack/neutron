@@ -21,7 +21,6 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _LE, _LI
 from neutron.db import segments_db
 from neutron.extensions import dns
 from neutron.objects import network as net_obj
@@ -273,7 +272,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
 class DNSExtensionDriverML2(DNSExtensionDriver):
 
     def initialize(self):
-        LOG.info(_LI("DNSExtensionDriverML2 initialization complete"))
+        LOG.info("DNSExtensionDriverML2 initialization complete")
 
     def _is_tunnel_tenant_network(self, provider_net):
         if provider_net['network_type'] == 'geneve':
@@ -331,7 +330,7 @@ class DNSDomainPortsExtensionDriver(DNSExtensionDriverML2):
         return self._supported_extension_alias
 
     def initialize(self):
-        LOG.info(_LI("DNSDomainPortsExtensionDriver initialization complete"))
+        LOG.info("DNSDomainPortsExtensionDriver initialization complete")
 
 
 DNS_DRIVER = None
@@ -349,8 +348,8 @@ def _get_dns_driver():
                   cfg.CONF.external_dns_driver)
         return DNS_DRIVER
     except ImportError:
-        LOG.exception(_LE("ImportError exception occurred while loading "
-                          "the external DNS service driver"))
+        LOG.exception("ImportError exception occurred while loading "
+                      "the external DNS service driver")
         raise dns.ExternalDNSDriverNotFound(
             driver=cfg.CONF.external_dns_driver)
 
@@ -377,9 +376,9 @@ def _send_data_to_external_dns_service(context, dns_driver, dns_domain,
     try:
         dns_driver.create_record_set(context, dns_domain, dns_name, records)
     except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
-        LOG.exception(_LE("Error publishing port data in external DNS "
-                          "service. Name: '%(name)s'. Domain: '%(domain)s'. "
-                          "DNS service driver message '%(message)s'"),
+        LOG.exception("Error publishing port data in external DNS "
+                      "service. Name: '%(name)s'. Domain: '%(domain)s'. "
+                      "DNS service driver message '%(message)s'",
                       {"name": dns_name,
                        "domain": dns_domain,
                        "message": e.msg})
@@ -390,10 +389,10 @@ def _remove_data_from_external_dns_service(context, dns_driver, dns_domain,
     try:
         dns_driver.delete_record_set(context, dns_domain, dns_name, records)
     except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
-        LOG.exception(_LE("Error deleting port data from external DNS "
-                          "service. Name: '%(name)s'. Domain: '%(domain)s'. "
-                          "IP addresses '%(ips)s'. DNS service driver message "
-                          "'%(message)s'"),
+        LOG.exception("Error deleting port data from external DNS "
+                      "service. Name: '%(name)s'. Domain: '%(domain)s'. "
+                      "IP addresses '%(ips)s'. DNS service driver message "
+                      "'%(message)s'",
                       {"name": dns_name,
                        "domain": dns_domain,
                        "message": e.msg,

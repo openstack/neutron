@@ -42,7 +42,7 @@ import re
 from neutron_lib import constants
 from oslo_log import log as logging
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.common import exceptions
 from neutron import privileged
 from neutron.privileged.agent.linux import netlink_constants as nl_constants
@@ -167,7 +167,7 @@ class ConntrackManager(object):
         result = nfct.nfct_query(self.conntrack_handler, query_type,
                                  query_data)
         if result == nl_constants.NFCT_CB_FAILURE:
-            LOG.warning(_LW("Netlink query failed"))
+            LOG.warning("Netlink query failed")
 
     def _convert_text_to_binary(self, source, addr_family):
         dest = ctypes.create_string_buffer(

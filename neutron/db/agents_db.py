@@ -33,7 +33,7 @@ from oslo_utils import timeutils
 from sqlalchemy.orm import exc
 from sqlalchemy import sql
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
 from neutron.common import constants as n_const
@@ -163,7 +163,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             return
 
         if utils.is_agent_down(agent.heartbeat_timestamp):
-            LOG.warning(_LW('%(agent_type)s agent %(agent_id)s is not active'),
+            LOG.warning('%(agent_type)s agent %(agent_id)s is not active',
                         {'agent_type': agent_type, 'agent_id': agent.id})
         return agent
 
@@ -193,8 +193,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             conf = jsonutils.loads(json_value)
         except Exception:
             if json_value or not ignore_missing:
-                msg = _LW('Dictionary %(dict_name)s for agent %(agent_type)s '
-                          'on host %(host)s is invalid.')
+                msg = ('Dictionary %(dict_name)s for agent %(agent_type)s '
+                       'on host %(host)s is invalid.')
                 LOG.warning(msg, {'dict_name': dict_name,
                                   'agent_type': agent_db.agent_type,
                                   'host': agent_db.host})
@@ -271,8 +271,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                (agent['agent_type'],
                                 agent['heartbeat_timestamp'],
                                 agent['host']) for agent in dead_agents])
-            LOG.warning(_LW("Agent healthcheck: found %(count)s dead agents "
-                            "out of %(total)s:\n%(data)s"),
+            LOG.warning("Agent healthcheck: found %(count)s dead agents "
+                        "out of %(total)s:\n%(data)s",
                         {'count': len(dead_agents),
                          'total': len(agents),
                          'data': data})
@@ -314,8 +314,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     def _log_heartbeat(self, state, agent_db, agent_conf):
         if agent_conf.get('log_agent_heartbeats'):
             delta = timeutils.utcnow() - agent_db.heartbeat_timestamp
-            LOG.info(_LI("Heartbeat received from %(type)s agent on "
-                         "host %(host)s, uuid %(uuid)s after %(delta)s"),
+            LOG.info("Heartbeat received from %(type)s agent on "
+                     "host %(host)s, uuid %(uuid)s after %(delta)s",
                      {'type': agent_db.agent_type,
                       'host': agent_db.host,
                       'uuid': state.get('uuid'),
@@ -492,10 +492,10 @@ class AgentExtRpcCallback(object):
                             'serv_time': (datetime.datetime.isoformat
                                           (time_server_now)),
                             'diff': diff}
-                LOG.error(_LE("Message received from the host: %(host)s "
-                              "during the registration of %(agent_name)s has "
-                              "a timestamp: %(agent_time)s. This differs from "
-                              "the current server timestamp: %(serv_time)s by "
-                              "%(diff)s seconds, which is more than the "
-                              "threshold agent down"
-                              "time: %(threshold)s."), log_dict)
+                LOG.error("Message received from the host: %(host)s "
+                          "during the registration of %(agent_name)s has "
+                          "a timestamp: %(agent_time)s. This differs from "
+                          "the current server timestamp: %(serv_time)s by "
+                          "%(diff)s seconds, which is more than the "
+                          "threshold agent down"
+                          "time: %(threshold)s.", log_dict)

@@ -16,7 +16,6 @@ from oslo_log import log as logging
 import pecan
 from pecan import request
 
-from neutron._i18n import _LW
 from neutron import manager
 from neutron.pecan_wsgi.controllers import utils
 
@@ -85,8 +84,8 @@ class ItemController(utils.NeutronPecanController):
             collection_path)
         if not controller:
             if collection not in self._member_actions:
-                LOG.warning(_LW("No controller found for: %s - returning"
-                                "response code 404"), collection)
+                LOG.warning("No controller found for: %s - returning"
+                            "response code 404", collection)
                 pecan.abort(404)
             # collection is a member action, so we create a new controller
             # for it.

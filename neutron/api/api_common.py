@@ -24,7 +24,7 @@ from oslo_serialization import jsonutils
 from six.moves.urllib import parse
 from webob import exc
 
-from neutron._i18n import _, _LW
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.common import constants
 from neutron import wsgi
@@ -153,8 +153,8 @@ def _get_pagination_max_limit():
             if max_limit == 0:
                 raise ValueError()
         except ValueError:
-            LOG.warning(_LW("Invalid value for pagination_max_limit: %s. It "
-                            "should be an integer greater to 0"),
+            LOG.warning("Invalid value for pagination_max_limit: %s. It "
+                        "should be an integer greater to 0",
                         cfg.CONF.pagination_max_limit)
     return max_limit
 

@@ -14,7 +14,6 @@
 
 from oslo_log import log as logging
 
-from neutron._i18n import _LE, _LI
 from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common import (
     exceptions as exc)
@@ -58,9 +57,9 @@ class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
                     device, pci_slot, max_kbps)
             except exc.SriovNicError:
                 LOG.exception(
-                    _LE("Failed to set device %s max rate"), device)
+                    "Failed to set device %s max rate", device)
         else:
-            LOG.info(_LI("No device with MAC %s defined on agent."), device)
+            LOG.info("No device with MAC %s defined on agent.", device)
 
     # TODO(ihrachys): those handlers are pretty similar, probably could make
     # use of some code deduplication
@@ -87,6 +86,6 @@ class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
                     device, pci_slot, min_tx_kbps)
             except exc.SriovNicError:
                 LOG.exception(
-                    _LE("Failed to set device %s min_tx_rate"), device)
+                    "Failed to set device %s min_tx_rate", device)
         else:
-            LOG.info(_LI("No device with MAC %s defined on agent."), device)
+            LOG.info("No device with MAC %s defined on agent.", device)

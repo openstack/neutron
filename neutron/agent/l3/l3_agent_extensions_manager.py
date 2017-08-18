@@ -15,7 +15,6 @@
 
 from oslo_log import log
 
-from neutron._i18n import _LE
 from neutron.agent import agent_extensions_manager as agent_ext_manager
 from neutron.conf.agent import agent_extensions_manager as agent_ext_mgr_config
 
@@ -43,8 +42,8 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                 extension.obj.add_router(context, data)
             else:
                 LOG.error(
-                    _LE("Agent Extension '%(name)s' does not "
-                        "implement method add_router"),
+                    "Agent Extension '%(name)s' does not "
+                    "implement method add_router",
                     {'name': extension.name}
                 )
 
@@ -55,8 +54,8 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                 extension.obj.update_router(context, data)
             else:
                 LOG.error(
-                    _LE("Agent Extension '%(name)s' does not "
-                        "implement method update_router"),
+                    "Agent Extension '%(name)s' does not "
+                    "implement method update_router",
                     {'name': extension.name}
                 )
 
@@ -67,7 +66,7 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                 extension.obj.delete_router(context, data)
             else:
                 LOG.error(
-                    _LE("Agent Extension '%(name)s' does not "
-                        "implement method delete_router"),
+                    "Agent Extension '%(name)s' does not "
+                    "implement method delete_router",
                     {'name': extension.name}
                 )

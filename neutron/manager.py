@@ -25,7 +25,7 @@ from oslo_utils import excutils
 from osprofiler import profiler
 import six
 
-from neutron._i18n import _, _LE, _LI
+from neutron._i18n import _
 from neutron.common import utils
 from neutron.plugins.common import constants
 
@@ -126,7 +126,7 @@ class NeutronManager(object):
         #                intentionally to allow v2 plugins to be monitored
         #                for performance metrics.
         plugin_provider = cfg.CONF.core_plugin
-        LOG.info(_LI("Loading core plugin: %s"), plugin_provider)
+        LOG.info("Loading core plugin: %s", plugin_provider)
         # NOTE(armax): keep hold of the actual plugin object
         plugin = self._get_plugin_instance(CORE_PLUGINS_NAMESPACE,
                                            plugin_provider)
@@ -159,7 +159,7 @@ class NeutronManager(object):
                     plugin_provider)
         except ImportError:
             with excutils.save_and_reraise_exception():
-                LOG.error(_LE("Plugin '%s' not found."), plugin_provider)
+                LOG.error("Plugin '%s' not found.", plugin_provider)
 
     def _get_plugin_instance(self, namespace, plugin_provider):
         plugin_class = self.load_class_for_provider(namespace, plugin_provider)
@@ -174,7 +174,7 @@ class NeutronManager(object):
             if ext_alias in constants.EXT_TO_SERVICE_MAPPING:
                 service_type = constants.EXT_TO_SERVICE_MAPPING[ext_alias]
                 directory.add_plugin(service_type, plugin)
-                LOG.info(_LI("Service %s is supported by the core plugin"),
+                LOG.info("Service %s is supported by the core plugin",
                          service_type)
 
     def _get_default_service_plugins(self):
@@ -194,7 +194,7 @@ class NeutronManager(object):
             if provider == '':
                 continue
 
-            LOG.info(_LI("Loading Plugin: %s"), provider)
+            LOG.info("Loading Plugin: %s", provider)
             plugin_inst = self._get_plugin_instance('neutron.service_plugins',
                                                     provider)
 

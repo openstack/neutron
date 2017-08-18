@@ -16,7 +16,6 @@ from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log
 
-from neutron._i18n import _LI
 from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import tc_lib
@@ -41,7 +40,7 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
                                  const.EGRESS_DIRECTION: "o"}
 
     def initialize(self):
-        LOG.info(_LI("Initializing Linux bridge QoS extension"))
+        LOG.info("Initializing Linux bridge QoS extension")
         self.iptables_manager = iptables_manager.IptablesManager(use_ipv6=True)
         self.tbf_latency = cfg.CONF.QOS.tbf_latency
 

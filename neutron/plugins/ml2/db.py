@@ -27,7 +27,7 @@ import six
 from sqlalchemy import or_
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.db import api as db_api
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
@@ -166,7 +166,7 @@ def get_port(context, port_id):
         except exc.NoResultFound:
             return
         except exc.MultipleResultsFound:
-            LOG.error(_LE("Multiple ports have port_id starting with %s"),
+            LOG.error("Multiple ports have port_id starting with %s",
                       port_id)
             return
 
@@ -251,7 +251,7 @@ def get_port_binding_host(context, port_id):
                   {'port_id': port_id})
         return
     except exc.MultipleResultsFound:
-        LOG.error(_LE("Multiple ports have port_id starting with %s"),
+        LOG.error("Multiple ports have port_id starting with %s",
                   port_id)
         return
     return query.host
@@ -312,7 +312,7 @@ def partial_port_ids_to_full_ids(context, partial_ids):
         if len(matching) < 1:
             LOG.info("No ports have port_id starting with %s", partial_id)
         elif len(matching) > 1:
-            LOG.error(_LE("Multiple ports have port_id starting with %s"),
+            LOG.error("Multiple ports have port_id starting with %s",
                       partial_id)
     return result
 

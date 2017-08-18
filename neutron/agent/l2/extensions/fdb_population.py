@@ -20,7 +20,6 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron._i18n import _LE, _LW
 from neutron.agent.l2 import l2_agent_extension
 from neutron.agent.linux import bridge_lib
 from neutron.conf.agent import l2_ext_fdb_population
@@ -73,9 +72,9 @@ class FdbPopulationAgentExtension(
                 try:
                     _stdout = bridge_lib.FdbInterface.show(device)
                 except RuntimeError as e:
-                    LOG.warning(_LW(
+                    LOG.warning(
                         'Unable to find FDB Interface %(device)s. '
-                        'Exception: %(e)s'), {'device': device, 'e': e})
+                        'Exception: %(e)s', {'device': device, 'e': e})
                     continue
                 self.device_to_macs[device] = _stdout.split()[::3]
 
@@ -94,10 +93,10 @@ class FdbPopulationAgentExtension(
             try:
                 bridge_lib.FdbInterface.add(mac, device)
             except RuntimeError as e:
-                LOG.warning(_LW(
+                LOG.warning(
                     'Unable to add mac %(mac)s '
                     'to FDB Interface %(device)s. '
-                    'Exception: %(e)s'),
+                    'Exception: %(e)s',
                     {'mac': mac, 'device': device, 'e': e})
                 return
             self.device_to_macs[device].append(mac)
@@ -105,19 +104,19 @@ class FdbPopulationAgentExtension(
         def delete_port(self, devices, port_id):
             mac = self.portid_to_mac.get(port_id)
             if mac is None:
-                LOG.warning(_LW('Port Id %(port_id)s does not have a rule for '
-                    'devices %(devices)s in FDB table'),
-                    {'port_id': port_id, 'devices': devices})
+                LOG.warning('Port Id %(port_id)s does not have a rule for '
+                            'devices %(devices)s in FDB table',
+                            {'port_id': port_id, 'devices': devices})
                 return
             for device in devices:
                 if mac in self.device_to_macs[device]:
                     try:
                         bridge_lib.FdbInterface.delete(mac, device)
                     except RuntimeError as e:
-                        LOG.warning(_LW(
+                        LOG.warning(
                             'Unable to delete mac %(mac)s '
                             'from FDB Interface %(device)s. '
-                            'Exception: %(e)s'),
+                            'Exception: %(e)s',
                             {'mac': mac, 'device': device, 'e': e})
                         return
                     self.device_to_macs[device].remove(mac)
@@ -129,17 +128,17 @@ class FdbPopulationAgentExtension(
         valid_driver_types = (linux_bridge_constants.EXTENSION_DRIVER_TYPE,
                               ovs_constants.EXTENSION_DRIVER_TYPE)
         if driver_type not in valid_driver_types:
-            LOG.error(_LE('FDB extension is only supported for OVS and '
-                          'linux bridge agent, currently uses '
-                          '%(driver_type)s'), {'driver_type': driver_type})
+            LOG.error('FDB extension is only supported for OVS and '
+                      'linux bridge agent, currently uses '
+                      '%(driver_type)s', {'driver_type': driver_type})
             sys.exit(1)
 
         self.device_mappings = helpers.parse_mappings(
             cfg.CONF.FDB.shared_physical_device_mappings, unique_keys=False)
         devices = self._get_devices()
         if not devices:
-            LOG.error(_LE('Invalid configuration provided for FDB extension: '
-                          'no physical devices'))
+            LOG.error('Invalid configuration provided for FDB extension: '
+                      'no physical devices')
             sys.exit(1)
         self.fdb_tracker = self.FdbTableTracker(devices)
 

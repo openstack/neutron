@@ -35,7 +35,7 @@ import six
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
-from neutron._i18n import _, _LE, _LI, _LW
+from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
@@ -145,21 +145,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             try:
                 self._fix_or_kill_floating_port(context, port_id)
             except Exception:
-                LOG.exception(_LE("Error cleaning up floating IP port: %s"),
+                LOG.exception("Error cleaning up floating IP port: %s",
                               port_id)
 
     def _fix_or_kill_floating_port(self, context, port_id):
         fip = (context.session.query(l3_models.FloatingIP).
                filter_by(floating_port_id=port_id).first())
         if fip:
-            LOG.warning(_LW("Found incorrect device_id on floating port "
-                            "%(pid)s, correcting to %(fip)s."),
+            LOG.warning("Found incorrect device_id on floating port "
+                        "%(pid)s, correcting to %(fip)s.",
                         {'pid': port_id, 'fip': fip.id})
             self._core_plugin.update_port(
                 context, port_id, {'port': {'device_id': fip.id}})
         else:
-            LOG.warning(_LW("Found floating IP port %s without floating IP, "
-                            "deleting."), port_id)
+            LOG.warning("Found floating IP port %s without floating IP, "
+                        "deleting.", port_id)
             self._core_plugin.delete_port(
                 context, port_id, l3_port_check=False)
 
@@ -1616,8 +1616,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if not fixed_ips:
                 # Skip ports without IPs, which can occur if a subnet
                 # attached to a router is deleted
-                LOG.info(_LI("Skipping port %s as no IP is configure on "
-                             "it"),
+                LOG.info("Skipping port %s as no IP is configure on "
+                         "it",
                          port['id'])
                 continue
             yield port

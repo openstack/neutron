@@ -26,7 +26,6 @@ from oslo_log import log as logging
 from oslo_log import versionutils
 import six
 
-from neutron._i18n import _LW
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
@@ -94,9 +93,9 @@ class L3Scheduler(object):
         if router_ids is not None:
             versionutils.report_deprecated_feature(
                 LOG,
-                _LW('Passing router_ids has no effect on L3 agent '
-                    'scheduling. This is deprecated and will be '
-                    'removed in the Queens release.'))
+                'Passing router_ids has no effect on L3 agent '
+                'scheduling. This is deprecated and will be '
+                'removed in the Queens release.')
 
         l3_agent = plugin.get_enabled_agent_on_host(
             context, lib_const.AGENT_TYPE_L3, host)
@@ -144,13 +143,13 @@ class L3Scheduler(object):
 
             active_l3_agents = plugin.get_l3_agents(context, active=True)
             if not active_l3_agents:
-                LOG.warning(_LW('No active L3 agents'))
+                LOG.warning('No active L3 agents')
                 return []
             candidates = plugin.get_l3_agent_candidates(context,
                                                         sync_router,
                                                         active_l3_agents)
             if not candidates:
-                LOG.warning(_LW('No L3 agents can host the router %s'),
+                LOG.warning('No L3 agents can host the router %s',
                             sync_router['id'])
 
             return candidates

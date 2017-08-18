@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron._i18n import _LE
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
@@ -102,15 +101,15 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 if orig_source != macvtap_src:
                     source_host = context.original[portbindings.HOST_ID]
                     target_host = agent['host']
-                    LOG.error(_LE("Vif binding denied by mechanism driver. "
-                                  "MacVTap source device '%(target_dev)s' on "
-                                  "the migration target '%(target_host)s'is "
-                                  "not equal to device '%(source_dev)s' on "
-                                  "the migration source '%(source_host)s. "
-                                  "Make sure that the "
-                                  "interface mapping of macvtap "
-                                  "agent on both hosts is equal "
-                                  "for the physical network '%(physnet)s'!"),
+                    LOG.error("Vif binding denied by mechanism driver. "
+                              "MacVTap source device '%(target_dev)s' on "
+                              "the migration target '%(target_host)s'is "
+                              "not equal to device '%(source_dev)s' on "
+                              "the migration source '%(source_host)s. "
+                              "Make sure that the "
+                              "interface mapping of macvtap "
+                              "agent on both hosts is equal "
+                              "for the physical network '%(physnet)s'!",
                               {'source_dev': orig_source,
                                'target_dev': macvtap_src,
                                'target_host': target_host,

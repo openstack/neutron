@@ -20,7 +20,6 @@ from oslo_concurrency import lockutils
 from oslo_log import log as logging
 import six
 
-from neutron._i18n import _LW, _LI
 from neutron.agent.l2 import l2_agent_extension
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
@@ -107,8 +106,8 @@ class QosAgentDriver(object):
             if rule_type in self.SUPPORTED_RULES:
                 yield rule
             else:
-                LOG.warning(_LW('Unsupported QoS rule type for %(rule_id)s: '
-                                '%(rule_type)s; skipping'),
+                LOG.warning('Unsupported QoS rule type for %(rule_id)s: '
+                            '%(rule_type)s; skipping',
                             {'rule_id': rule.id, 'rule_type': rule_type})
 
     def _handle_rule_delete(self, port, rule_type, ingress=False):
@@ -261,9 +260,9 @@ class QosAgentExtension(l2_agent_extension.L2AgentExtension):
         qos_policy = self.resource_rpc.pull(
             context, resources.QOS_POLICY, qos_policy_id)
         if qos_policy is None:
-            LOG.info(_LI("QoS policy %(qos_policy_id)s applied to port "
-                         "%(port_id)s is not available on server, "
-                         "it has been deleted. Skipping."),
+            LOG.info("QoS policy %(qos_policy_id)s applied to port "
+                     "%(port_id)s is not available on server, "
+                     "it has been deleted. Skipping.",
                      {'qos_policy_id': qos_policy_id, 'port_id': port_id})
             self._process_reset_port(port)
         else:

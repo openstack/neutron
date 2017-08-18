@@ -16,7 +16,6 @@ from neutron_lib.callbacks import resources
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
-from neutron._i18n import _LI
 from neutron.db import api as db_api
 from neutron.db.models import segment as segments_model
 from neutron.objects import base as base_obj
@@ -55,8 +54,8 @@ def add_network_segment(context, network_id, segment, segment_index=0,
                         context=context,
                         segment=netseg_obj)
         segment['id'] = netseg_obj.id
-    LOG.info(_LI("Added segment %(id)s of type %(network_type)s for network "
-                 "%(network_id)s"),
+    LOG.info("Added segment %(id)s of type %(network_type)s for network "
+             "%(network_id)s",
              {'id': netseg_obj.id,
               'network_type': netseg_obj.network_type,
               'network_id': netseg_obj.network_id})

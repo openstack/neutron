@@ -23,7 +23,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron._i18n import _LE, _LW
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_snat_ns
@@ -197,7 +196,7 @@ def _kill_listen_processes(namespace, force=False):
         # implementation in the right module. Ideally, netns_cleanup wouldn't
         # kill any processes as the responsible module should've killed them
         # before cleaning up the namespace
-        LOG.warning(_LW("Killing (%(signal)d) [%(pid)s] %(cmdline)s"),
+        LOG.warning("Killing (%(signal)d) [%(pid)s] %(cmdline)s",
                     {'signal': kill_signal,
                      'pid': pid,
                      'cmdline': ' '.join(utils.get_cmdline_from_pid(pid))[:80]
@@ -205,8 +204,8 @@ def _kill_listen_processes(namespace, force=False):
         try:
             utils.kill_process(pid, kill_signal, run_as_root=True)
         except Exception as ex:
-            LOG.error(_LE('An error occurred while killing '
-                          '[%(pid)s]: %(msg)s'), {'pid': pid, 'msg': ex})
+            LOG.error('An error occurred while killing '
+                      '[%(pid)s]: %(msg)s', {'pid': pid, 'msg': ex})
     return len(pids)
 
 
@@ -246,14 +245,14 @@ def destroy_namespace(conf, namespace, force=False):
                     # This is unlikely since, at this point, we have SIGKILLed
                     # all remaining processes but if there are still some, log
                     # the error and continue with the cleanup
-                    LOG.error(_LE('Not all processes were killed in %s'),
+                    LOG.error('Not all processes were killed in %s',
                               namespace)
                 for device in ip.get_devices():
                     unplug_device(conf, device)
 
         ip.garbage_collect_namespace()
     except Exception:
-        LOG.exception(_LE('Error unable to destroy namespace: %s'), namespace)
+        LOG.exception('Error unable to destroy namespace: %s', namespace)
 
 
 def cleanup_network_namespaces(conf):

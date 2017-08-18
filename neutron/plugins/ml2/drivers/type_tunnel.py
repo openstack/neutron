@@ -27,7 +27,7 @@ import six
 from six import moves
 from sqlalchemy import or_
 
-from neutron._i18n import _, _LI, _LW
+from neutron._i18n import _
 from neutron.common import topics
 from neutron.db import api as db_api
 from neutron.objects import base as base_obj
@@ -133,7 +133,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
                 raise exc.NetworkTunnelRangeError(tunnel_range=entry, error=ex)
             plugin_utils.verify_tunnel_range(tunnel_range, self.get_type())
             current_range.append(tunnel_range)
-        LOG.info(_LI("%(type)s ID ranges: %(range)s"),
+        LOG.info("%(type)s ID ranges: %(range)s",
                  {'type': self.get_type(), 'range': current_range})
 
     @db_api.retry_db_errors
@@ -259,7 +259,7 @@ class TunnelTypeDriver(_TunnelTypeDriverBase):
                               info)
 
         if not count:
-            LOG.warning(_LW("%(type)s tunnel %(id)s not found"), info)
+            LOG.warning("%(type)s tunnel %(id)s not found", info)
 
     def get_allocation(self, session, tunnel_id):
         return (session.query(self.model).
@@ -327,7 +327,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase):
                               info)
 
         if not count:
-            LOG.warning(_LW("%(type)s tunnel %(id)s not found"), info)
+            LOG.warning("%(type)s tunnel %(id)s not found", info)
 
     @db_api.context_manager.reader
     def get_allocation(self, context, tunnel_id):
@@ -385,7 +385,7 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
         except db_exc.DBDuplicateEntry:
             endpoint = (session.query(self.endpoint_model).
                         filter_by(ip_address=ip).one())
-            LOG.warning(_LW("Endpoint with ip %s already exists"), ip)
+            LOG.warning("Endpoint with ip %s already exists", ip)
         return endpoint
 
 
@@ -450,8 +450,8 @@ class TunnelRpcCallbackMixin(object):
                     driver.obj.delete_endpoint(ip_endpoint.ip_address)
                 elif (ip_endpoint and ip_endpoint.host != host):
                     LOG.info(
-                        _LI("Tunnel IP %(ip)s was used by host %(host)s and "
-                            "will be assigned to %(new_host)s"),
+                        "Tunnel IP %(ip)s was used by host %(host)s and "
+                        "will be assigned to %(new_host)s",
                         {'ip': ip_endpoint.ip_address,
                          'host': ip_endpoint.host,
                          'new_host': host})

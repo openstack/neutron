@@ -23,7 +23,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import fileutils
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.agent.linux import external_process
 from neutron.common import constants
 from neutron.common import utils
@@ -406,8 +406,8 @@ class KeepalivedManager(object):
             os.remove(pid_file)
         except OSError as e:
             if e.errno != errno.ENOENT:
-                LOG.error(_LE("Could not delete file %s, keepalived can "
-                              "refuse to start."), pid_file)
+                LOG.error("Could not delete file %s, keepalived can "
+                          "refuse to start.", pid_file)
 
     def get_vrrp_pid_file_name(self, base_pid_file):
         return '%s-vrrp' % base_pid_file

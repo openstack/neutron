@@ -21,7 +21,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import netutils
 
-from neutron._i18n import _LI
 from neutron.agent import firewall
 from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import ipset_manager
@@ -160,8 +159,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def update_port_filter(self, port):
         LOG.debug("Updating device (%s) filter", port['device'])
         if port['device'] not in self.ports:
-            LOG.info(_LI('Attempted to update port filter which is not '
-                         'filtered %s'), port['device'])
+            LOG.info('Attempted to update port filter which is not '
+                     'filtered %s', port['device'])
             return
         self._remove_chains()
         self._set_ports(port)
@@ -171,8 +170,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def remove_port_filter(self, port):
         LOG.debug("Removing device (%s) filter", port['device'])
         if port['device'] not in self.ports:
-            LOG.info(_LI('Attempted to remove port filter which is not '
-                         'filtered %r'), port)
+            LOG.info('Attempted to remove port filter which is not '
+                     'filtered %r', port)
             return
         self._remove_chains()
         self._remove_conntrack_entries_from_port_deleted(port)

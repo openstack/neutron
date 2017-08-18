@@ -21,7 +21,6 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import importutils
 
-from neutron._i18n import _LI
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import rpc as n_rpc
@@ -47,7 +46,7 @@ LOG = logging.getLogger(__name__)
 
 def disable_dvr_extension_by_config(aliases):
     if not cfg.CONF.enable_dvr:
-        LOG.info(_LI('Disabled DVR extension.'))
+        LOG.info('Disabled DVR extension.')
         if 'dvr' in aliases:
             aliases.remove('dvr')
 

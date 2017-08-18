@@ -17,7 +17,6 @@ import re
 
 from oslo_log import log as logging
 
-from neutron._i18n import _LE, _LW
 from neutron.agent.linux import ip_lib
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
@@ -82,7 +81,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         try:
             out = self._as_root([], "link", ("show", self.dev_name))
         except Exception as e:
-            LOG.exception(_LE("Failed executing ip command"))
+            LOG.exception("Failed executing ip command")
             raise exc.IpCommandDeviceError(dev_name=self.dev_name,
                                            reason=e)
         vf_to_mac_mapping = {}
@@ -105,7 +104,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         try:
             out = self._as_root([], "link", ("show", self.dev_name))
         except Exception as e:
-            LOG.exception(_LE("Failed executing ip command"))
+            LOG.exception("Failed executing ip command")
             raise exc.IpCommandDeviceError(dev_name=self.dev_name,
                                            reason=e)
         vf_lines = self._get_vf_link_show([vf_index], out)
@@ -164,7 +163,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
                 if index in vf_list:
                     vf_lines.append(line)
         if not vf_lines:
-            LOG.warning(_LW("Cannot find vfs %(vfs)s in device %(dev_name)s"),
+            LOG.warning("Cannot find vfs %(vfs)s in device %(dev_name)s",
                         {'vfs': vf_list, 'dev_name': self.dev_name})
         return vf_lines
 
@@ -180,8 +179,8 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
             vf_details["MAC"] = pattern_match.group("mac")
             vf_details["link-state"] = pattern_match.group("state")
         else:
-            LOG.warning(_LW("failed to parse vf link show line %(line)s: "
-                            "for %(device)s"),
+            LOG.warning("failed to parse vf link show line %(line)s: "
+                        "for %(device)s",
                         {'line': vf_line, 'device': self.dev_name})
         return vf_details
 
@@ -190,7 +189,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         try:
             out = cls._execute([], "link", ("show", ), run_as_root=True)
         except Exception as e:
-            LOG.error(_LE("Failed executing ip command: %s"), e)
+            LOG.error("Failed executing ip command: %s", e)
             raise exc.IpCommandError(reason=e)
         return out
 

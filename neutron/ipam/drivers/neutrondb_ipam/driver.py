@@ -23,7 +23,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import uuidutils
 
-from neutron._i18n import _, _LE
+from neutron._i18n import _
 from neutron.ipam import driver as ipam_base
 from neutron.ipam.drivers.neutrondb_ipam import db_api as ipam_db_api
 from neutron.ipam import exceptions as ipam_exc
@@ -90,9 +90,8 @@ class NeutronDbSubnet(ipam_base.Subnet):
         ipam_subnet = ipam_db_api.IpamSubnetManager.load_by_neutron_subnet_id(
             ctx, neutron_subnet_id)
         if not ipam_subnet:
-            LOG.error(_LE("IPAM subnet referenced to "
-                          "Neutron subnet %s does not exist"),
-                      neutron_subnet_id)
+            LOG.error("IPAM subnet referenced to "
+                      "Neutron subnet %s does not exist", neutron_subnet_id)
             raise n_exc.SubnetNotFound(subnet_id=neutron_subnet_id)
         pools = []
         for pool in ipam_subnet.allocation_pools:
@@ -316,9 +315,8 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
         count = ipam_db_api.IpamSubnetManager.delete(self._context,
                                                      subnet_id)
         if count < 1:
-            LOG.error(_LE("IPAM subnet referenced to "
-                          "Neutron subnet %s does not exist"),
-                      subnet_id)
+            LOG.error("IPAM subnet referenced to "
+                      "Neutron subnet %s does not exist", subnet_id)
             raise n_exc.SubnetNotFound(subnet_id=subnet_id)
 
     def needs_rollback(self):

@@ -17,8 +17,6 @@ import osprofiler.initializer
 from osprofiler import opts as profiler_opts
 import osprofiler.web
 
-from neutron._i18n import _LI
-
 
 CONF = cfg.CONF
 profiler_opts.set_defaults(CONF)
@@ -41,11 +39,11 @@ def setup(name, host='0.0.0.0'):  # nosec
             service=name,
             host=host
         )
-        LOG.info(_LI("OSProfiler is enabled.\n"
-                     "Traces provided from the profiler "
-                     "can only be subscribed to using the same HMAC keys that "
-                     "are configured in Neutron's configuration file "
-                     "under the [profiler] section.\n To disable OSprofiler "
-                     "set in /etc/neutron/neutron.conf:\n"
-                     "[profiler]\n"
-                     "enabled=false"))
+        LOG.info("OSProfiler is enabled.\n"
+                 "Traces provided from the profiler "
+                 "can only be subscribed to using the same HMAC keys that "
+                 "are configured in Neutron's configuration file "
+                 "under the [profiler] section.\n To disable OSprofiler "
+                 "set in /etc/neutron/neutron.conf:\n"
+                 "[profiler]\n"
+                 "enabled=false")
