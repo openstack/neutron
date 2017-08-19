@@ -714,22 +714,56 @@ class _DVRAgentInterfaceMixin(object):
                 # All unbound ports with floatingip irrespective of
                 # the device owner should be included as valid ports
                 # and updated.
-                if (port[portbindings.HOST_ID] == host or port_in_migration or
+                port_host = port[portbindings.HOST_ID]
+                if (port_host == host or port_in_migration or
                     self._is_unbound_port(port)):
                     port_dict.update({port['id']: port})
+                if port_host and port_host != host:
+                    # Consider the ports where the portbinding host and
+                    # request host does not match.
+                    l3_agent_on_host = self.get_l3_agents(
+                        context,
+                        filters={'host': [port_host]})
+                    if len(l3_agent_on_host):
+                        l3_agent_mode = self._get_agent_mode(
+                            l3_agent_on_host[0])
+                        # If the agent requesting is dvr_snat but
+                        # the portbinding host resides in dvr_no_external
+                        # agent then include the port.
+                        requesting_agent_mode = self._get_agent_mode(agent)
+                        if (l3_agent_mode == (
+                            l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
+                            requesting_agent_mode == (
+                            const.L3_AGENT_MODE_DVR_SNAT)):
+                            port['agent'] = (
+                                l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL)
+                            port_dict.update({port['id']: port})
             # Add the port binding host to the floatingip dictionary
             for fip in floating_ips:
                 vm_port = port_dict.get(fip['port_id'], None)
                 if vm_port:
-                    fip['host'] = self._get_dvr_service_port_hostid(
-                        context, fip['port_id'], port=vm_port)
-                    fip['dest_host'] = (
-                        self._get_dvr_migrating_service_port_hostid(
-                            context, fip['port_id'], port=vm_port))
+                    port_host = vm_port[portbindings.HOST_ID]
+                    if port_host:
+                        fip['host'] = port_host
+                        fip['dest_host'] = (
+                            self._get_dvr_migrating_service_port_hostid(
+                                context, fip['port_id'], port=vm_port))
+                        vm_port_agent_mode = vm_port.get('agent', None)
+                        if vm_port_agent_mode == (
+                            l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL):
+                            # For floatingip configured on ports that
+                            # reside on 'dvr_no_external' agent, get rid of
+                            # the fip host binding since it would be created
+                            # in the 'dvr_snat' agent.
+                            fip['host'] = None
+                    else:
+                        # If no port-binding assign the fip['host']
+                        # value to None.
+                        fip['host'] = None
                     # Handle the case were there is no host binding
                     # for the private ports that are associated with
                     # floating ip.
-                    if not fip['host']:
+                    if not fip['host'] or fip['host'] is None:
                         fip[l3_const.DVR_SNAT_BOUND] = True
         routers_dict = self._process_routers(context, routers, agent)
         self._process_floating_ips_dvr(context, routers_dict,
@@ -961,6 +995,10 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
         self._notify_floating_ip_change(context, floating_ip)
         return floating_ip
 
+    def get_dvr_agent_on_host(self, context, fip_host):
+        agent_filters = {'host': [fip_host]}
+        return self.get_l3_agents(context, filters=agent_filters)
+
     def _notify_floating_ip_change(self, context, floating_ip):
         router_id = floating_ip['router_id']
         fixed_port_id = floating_ip['port_id']
@@ -982,13 +1020,28 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             dest_host = self._get_dvr_migrating_service_port_hostid(
                 context, fixed_port_id)
             if host is not None:
+                l3_agent_on_host = self.get_dvr_agent_on_host(
+                    context, host)
+                agent_mode = self._get_agent_mode(l3_agent_on_host[0])
+                if agent_mode == l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
+                    # If the agent hosting the fixed port is in
+                    # 'dvr_no_external' mode, then set the host to None,
+                    # since we would be centralizing the floatingip for
+                    # those fixed_ports.
+                    host = None
+
+            if host is not None:
                 self.l3_rpc_notifier.routers_updated_on_host(
                     context, [router_id], host)
                 if dest_host and dest_host != host:
                     self.l3_rpc_notifier.routers_updated_on_host(
                         context, [router_id], dest_host)
             else:
-                self.notify_router_updated(context, router_id)
+                centralized_agent_list = self.list_l3_agents_hosting_router(
+                    context, router_id)['agents']
+                for agent in centralized_agent_list:
+                    self.l3_rpc_notifier.routers_updated_on_host(
+                        context, [router_id], agent['host'])
         else:
             self.notify_router_updated(context, router_id)
 

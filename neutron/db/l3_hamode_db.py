@@ -641,19 +641,22 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
         self._populate_mtu_and_subnets_for_ports(context, interfaces)
 
-        # If this is a DVR+HA router, but the agent is question is in 'dvr'
-        # mode (as opposed to 'dvr_snat'), then we want to always return it
-        # even though it's missing the '_ha_interface' key.
+        # If this is a DVR+HA router, but the agent in question is in 'dvr'
+        # or 'dvr_no_external' mode (as opposed to 'dvr_snat'), then we want to
+        # always return it even though it's missing the '_ha_interface' key.
         return [r for r in list(routers_dict.values())
                 if (agent_mode == constants.L3_AGENT_MODE_DVR or
+                    agent_mode == n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL or
                     not r.get('ha') or r.get(constants.HA_INTERFACE_KEY))]
 
     @log_helpers.log_method_call
     def get_ha_sync_data_for_host(self, context, host, agent,
                                   router_ids=None, active=None):
         agent_mode = self._get_agent_mode(agent)
-        dvr_agent_mode = (agent_mode in [constants.L3_AGENT_MODE_DVR_SNAT,
-                                         constants.L3_AGENT_MODE_DVR])
+        dvr_agent_mode = (
+            agent_mode in [constants.L3_AGENT_MODE_DVR_SNAT,
+                           constants.L3_AGENT_MODE_DVR,
+                           n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL])
         if (dvr_agent_mode and n_utils.is_extension_supported(
                 self, constants.L3_DISTRIBUTED_EXT_ALIAS)):
             # DVR has to be handled differently
