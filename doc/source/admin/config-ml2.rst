@@ -266,6 +266,16 @@ For more details, see the
     Configuration of those drivers is not part of this document.
 
 
+Extension Drivers
+-----------------
+
+The ML2 plug-in also supports extension drivers that allows other pluggable
+drivers to extend the core resources implemented in the ML2 plug-in
+(``networks``, ``ports``, etc.). Examples of extension drivers include support
+for QoS, port security, etc. For more details see the ``extension_drivers``
+configuration option in the `Configuration Reference <https://docs.openstack.org/ocata/config-reference/networking/networking_options_reference.html#modular-layer-2-ml2-plug-in-configuration-options>`__.
+
+
 Agents
 ------
 
