@@ -23,6 +23,7 @@ import testtools
 from neutron._i18n import _
 from neutron.agent.linux import iptables_comments as ic
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.tests import base
@@ -373,6 +374,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
     def setUp(self):
         super(IptablesManagerStateFulTestCase, self).setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
+        cfg.CONF.set_override('report_interval', 30, 'AGENT')
         self.iptables = iptables_manager.IptablesManager()
         self.execute = mock.patch.object(self.iptables, "execute").start()
 
@@ -1025,7 +1027,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             '\n'.join(logged)
         )
 
-    def test_iptables_failure_on_specific_line(self):
+    def test_iptables_failure(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
             # generate Runtime errors on iptables-restore calls
             def iptables_restore_failer(*args, **kwargs):
@@ -1034,13 +1036,22 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                     # pretend line 11 failed
                     msg = ("Exit code: 1\nStdout: ''\n"
                            "Stderr: 'iptables-restore: line 11 failed\n'")
-                    raise RuntimeError(msg)
+                    raise linux_utils.ProcessExecutionError(
+                        msg, iptables_manager.XTABLES_RESOURCE_PROBLEM_CODE)
                 return FILTER_DUMP
             self.execute.side_effect = iptables_restore_failer
             # _apply_synchronized calls iptables-restore so it should raise
             # a RuntimeError
             self.assertRaises(RuntimeError,
                               self.iptables._apply_synchronized)
+
+        # check that we tried with -w when the first attempt failed
+        self.execute.assert_has_calls(
+            [mock.call(['iptables-restore', '-n'],
+                       process_input=mock.ANY, run_as_root=True),
+             mock.call(['iptables-restore', '-n', '-w', '10'],
+                       process_input=mock.ANY, run_as_root=True)])
+
         # The RuntimeError should have triggered a log of the input to the
         # process that it failed to execute. Verify by comparing the log
         # call to the 'process_input' arg given to the failed iptables-restore
@@ -1077,35 +1088,35 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         expected_calls_and_values = [
             (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
-                        '-n', '-v', '-x'],
+                        '-n', '-v', '-x', '-w', '10'],
                        run_as_root=True),
              TRAFFIC_COUNTERS_DUMP),
             (mock.call(['iptables', '-t', 'raw', '-L', 'OUTPUT', '-n',
-                        '-v', '-x'],
+                        '-v', '-x', '-w', '10'],
                        run_as_root=True),
              ''),
             (mock.call(['iptables', '-t', 'mangle', '-L', 'OUTPUT', '-n',
-                        '-v', '-x'],
+                        '-v', '-x', '-w', '10'],
                        run_as_root=True),
              ''),
             (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
-                        '-v', '-x'],
+                        '-v', '-x', '-w', '10'],
                        run_as_root=True),
              ''),
         ]
         if use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
-                           '-n', '-v', '-x'], run_as_root=True),
+                           '-n', '-v', '-x', '-w', '10'], run_as_root=True),
                  ''))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
-                           '-n', '-v', '-x'],
+                           '-n', '-v', '-x', '-w', '10'],
                            run_as_root=True),
                  TRAFFIC_COUNTERS_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'mangle', '-L', 'OUTPUT',
-                           '-n', '-v', '-x'], run_as_root=True),
+                           '-n', '-v', '-x', '-w', '10'], run_as_root=True),
                  ''))
             exp_packets *= 2
             exp_bytes *= 2
@@ -1134,35 +1145,37 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         expected_calls_and_values = [
             (mock.call(['iptables', '-t', 'filter', '-L', 'OUTPUT',
-                        '-n', '-v', '-x', '-Z'],
+                        '-n', '-v', '-x', '-w', '10', '-Z'],
                        run_as_root=True),
              TRAFFIC_COUNTERS_DUMP),
             (mock.call(['iptables', '-t', 'raw', '-L', 'OUTPUT', '-n',
-                        '-v', '-x', '-Z'],
+                        '-v', '-x', '-w', '10', '-Z'],
                        run_as_root=True),
              ''),
             (mock.call(['iptables', '-t', 'mangle', '-L', 'OUTPUT', '-n',
-                        '-v', '-x', '-Z'],
+                        '-v', '-x', '-w', '10', '-Z'],
                        run_as_root=True),
              ''),
             (mock.call(['iptables', '-t', 'nat', '-L', 'OUTPUT', '-n',
-                        '-v', '-x', '-Z'],
+                        '-v', '-x', '-w', '10', '-Z'],
                        run_as_root=True),
              '')
         ]
         if use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
-                            '-n', '-v', '-x', '-Z'], run_as_root=True),
+                            '-n', '-v', '-x', '-w', '10', '-Z'],
+                           run_as_root=True),
                  ''))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'filter', '-L', 'OUTPUT',
-                            '-n', '-v', '-x', '-Z'],
+                            '-n', '-v', '-x', '-w', '10', '-Z'],
                            run_as_root=True),
                  TRAFFIC_COUNTERS_DUMP))
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'mangle', '-L', 'OUTPUT',
-                            '-n', '-v', '-x', '-Z'], run_as_root=True),
+                            '-n', '-v', '-x', '-w', '10', '-Z'],
+                           run_as_root=True),
                  ''))
             exp_packets *= 2
             exp_bytes *= 2
