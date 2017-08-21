@@ -442,6 +442,13 @@ class FakeV4SubnetAgentWithManyDnsProvided(FakeV4Subnet):
         self.host_routes = []
 
 
+class FakeV4SubnetAgentWithNoDnsProvided(FakeV4Subnet):
+    def __init__(self):
+        super(FakeV4SubnetAgentWithNoDnsProvided, self).__init__()
+        self.dns_nameservers = ['0.0.0.0']
+        self.host_routes = []
+
+
 class FakeV4MultipleAgentsWithoutDnsProvided(object):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
@@ -464,6 +471,15 @@ class FakeV4AgentWithManyDnsProvided(object):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.subnets = [FakeV4SubnetAgentWithManyDnsProvided()]
+        self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
+                      FakePortMultipleAgents1()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeV4AgentWithNoDnsProvided(object):
+    def __init__(self):
+        self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.subnets = [FakeV4SubnetAgentWithNoDnsProvided()]
         self.ports = [FakePort1(), FakePort2(), FakePort3(), FakeRouterPort(),
                       FakePortMultipleAgents1()]
         self.namespace = 'qdhcp-ns'
@@ -541,6 +557,19 @@ class FakeV6SubnetStateless(object):
         self.gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
         self.dns_nameservers = []
+        self.host_routes = []
+        self.ipv6_address_mode = constants.DHCPV6_STATELESS
+        self.ipv6_ra_mode = None
+
+
+class FakeV6SubnetStatelessNoDnsProvided(object):
+    def __init__(self):
+        self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.ip_version = 6
+        self.cidr = 'ffea:3ba5:a17a:4ba3::/64'
+        self.gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
+        self.enable_dhcp = True
+        self.dns_nameservers = ['::']
         self.host_routes = []
         self.ipv6_address_mode = constants.DHCPV6_STATELESS
         self.ipv6_ra_mode = None
@@ -895,6 +924,14 @@ class FakeV6NetworkStatelessDHCP(object):
         self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         self.subnets = [FakeV6SubnetStateless()]
         self.ports = [FakeV6PortExtraOpt()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeV6NetworkStatelessDHCPNoDnsProvided(object):
+    def __init__(self):
+        self.id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        self.subnets = [FakeV6SubnetStatelessNoDnsProvided()]
+        self.ports = [FakeV6Port()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -1428,6 +1465,18 @@ class TestDnsmasq(TestBase):
 
         self._test_output_opts_file(expected,
                                     FakeV4AgentWithManyDnsProvided())
+
+    def test_output_opts_file_agent_with_no_dns_provided(self):
+        expected = ('tag:tag0,'
+                    'option:dns-server\n'
+                    'tag:tag0,option:classless-static-route,'
+                    '169.254.169.254/32,192.168.0.1,0.0.0.0/0,192.168.0.1\n'
+                    'tag:tag0,249,169.254.169.254/32,192.168.0.1,0.0.0.0/0,'
+                    '192.168.0.1\n'
+                    'tag:tag0,option:router,192.168.0.1').lstrip()
+
+        self._test_output_opts_file(expected,
+                                    FakeV4AgentWithNoDnsProvided())
 
     def test_output_opts_file_multiple_agents_with_dns_provided(self):
         expected = ('tag:tag0,option:dns-server,8.8.8.8\n'
@@ -2237,6 +2286,18 @@ class TestDnsmasq(TestBase):
         dm._output_hosts_file()
         dm._output_opts_file()
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
+                                    mock.call(exp_opt_name, exp_opt_data)])
+
+    def test_host_and_opts_file_on_stateless_dhcpv6_network_no_dns(self):
+        exp_host_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/host'
+        exp_opt_name = '/dhcp/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/opts'
+        exp_opt_data = ('tag:tag0,option6:dns-server\n'
+                        'tag:tag0,'
+                        'option6:domain-search,openstacklocal').lstrip()
+        dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCPNoDnsProvided())
+        dm._output_hosts_file()
+        dm._output_opts_file()
+        self.safe.assert_has_calls([mock.call(exp_host_name, ''),
                                     mock.call(exp_opt_name, exp_opt_data)])
 
     def test_host_file_on_net_with_v6_slaac_and_v4(self):
