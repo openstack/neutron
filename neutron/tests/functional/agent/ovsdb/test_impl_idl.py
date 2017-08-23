@@ -73,5 +73,5 @@ class ImplIdlTestCase(base.BaseSudoTestCase):
     def test_post_commit_vswitchd_incomplete_timeout(self, *args):
         # Due to timing issues we may rarely hit the global timeout, which
         # raises RuntimeError to match the vsctl implementation
-        self.ovs.ovsdb.connection.timeout = 3
+        self.ovs.ovsdb.ovsdb_connection.timeout = 3
         self.assertRaises((exc.TimeoutException, RuntimeError), self._add_br)
