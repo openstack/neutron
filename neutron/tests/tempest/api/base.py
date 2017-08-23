@@ -118,14 +118,6 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def resource_cleanup(cls):
         if CONF.service_available.neutron:
-            # Clean up QoS rules
-            for qos_rule in cls.qos_rules:
-                cls._try_delete_resource(cls.admin_client.delete_qos_rule,
-                                         qos_rule['id'])
-            # Clean up QoS policies
-            for qos_policy in cls.qos_policies:
-                cls._try_delete_resource(cls.admin_client.delete_qos_policy,
-                                         qos_policy['id'])
             # Clean up floating IPs
             for floating_ip in cls.floating_ips:
                 cls._try_delete_resource(cls.client.delete_floatingip,
@@ -193,6 +185,17 @@ class BaseNetworkTest(test.BaseTestCase):
                 cls._try_delete_resource(
                     cls.admin_client.delete_address_scope,
                     address_scope['id'])
+
+            # Clean up QoS rules
+            for qos_rule in cls.qos_rules:
+                cls._try_delete_resource(cls.admin_client.delete_qos_rule,
+                                         qos_rule['id'])
+            # Clean up QoS policies
+            # as all networks and ports are already removed, QoS policies
+            # shouldn't be "in use"
+            for qos_policy in cls.qos_policies:
+                cls._try_delete_resource(cls.admin_client.delete_qos_policy,
+                                         qos_policy['id'])
 
         super(BaseNetworkTest, cls).resource_cleanup()
 
