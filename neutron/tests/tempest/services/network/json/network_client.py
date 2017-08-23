@@ -559,12 +559,13 @@ class NetworkClientJSON(service_client.RestClient):
         return service_client.ResponseBody(resp, body)
 
     def create_qos_policy(self, name, description=None, shared=False,
-                          tenant_id=None):
+                          tenant_id=None, is_default=False):
         uri = '%s/qos/policies' % self.uri_prefix
         post_data = {
             'policy': {
                 'name': name,
-                'shared': shared
+                'shared': shared,
+                'is_default': is_default
             }
         }
         if description is not None:

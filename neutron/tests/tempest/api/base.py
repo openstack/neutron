@@ -370,10 +370,10 @@ class BaseNetworkTest(test.BaseTestCase):
 
     @classmethod
     def create_qos_policy(cls, name, description=None, shared=False,
-                          tenant_id=None):
+                          tenant_id=None, is_default=False):
         """Wrapper utility that returns a test QoS policy."""
         body = cls.admin_client.create_qos_policy(
-            name, description, shared, tenant_id)
+            name, description, shared, tenant_id, is_default)
         qos_policy = body['policy']
         cls.qos_policies.append(qos_policy)
         return qos_policy

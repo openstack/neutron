@@ -15,6 +15,7 @@
 
 import mock
 from neutron_lib import context
+from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exc
 from neutron.core_extensions import base as base_core
@@ -336,3 +337,26 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
         qos_policy = mock.Mock()
         qos_policy.id = qos_policy_id
         self._test_extract_fields_for_network(qos_policy_id)
+
+    def test__create_network_policy(self):
+        default_policy_id = uuidutils.generate_uuid()
+        network_policy_id = uuidutils.generate_uuid()
+        policy_mock = mock.MagicMock(qos_policy_id=default_policy_id)
+        network_changes = mock.Mock()
+        network = {'id': 'dummy_id', 'project_id': 'dummy_project',
+                   qos_consts.QOS_POLICY_ID: None}
+        with mock.patch.object(policy.QosPolicyDefault, 'get_object',
+                               return_value=policy_mock),\
+                mock.patch.object(policy.QosPolicy, 'get_object'):
+            # Creating network with policy id
+            network_changes.get.return_value = network_policy_id
+            self.core_extension._create_network_policy(
+                self.context, network, network_changes)
+            self.assertEqual(network_policy_id,
+                             network[qos_consts.QOS_POLICY_ID])
+            # Creating network without policy id
+            network_changes.get.return_value = None
+            self.core_extension._create_network_policy(
+                self.context, network, network_changes)
+            self.assertEqual(default_policy_id,
+                             network[qos_consts.QOS_POLICY_ID])
