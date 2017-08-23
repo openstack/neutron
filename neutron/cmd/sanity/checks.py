@@ -347,6 +347,7 @@ def keepalived_ipv6_supported():
 
             ha_dev.link.set_up()
             gw_dev.link.set_up()
+            ha_dev.addr.add('169.254.192.8/18')
 
             ka.configure()
 
