@@ -114,6 +114,7 @@ class BaseNetworkTest(test.BaseTestCase):
         cls.subnetpools = []
         cls.admin_subnetpools = []
         cls.security_groups = []
+        cls.projects = []
 
     @classmethod
     def resource_cleanup(cls):
@@ -185,6 +186,11 @@ class BaseNetworkTest(test.BaseTestCase):
                 cls._try_delete_resource(
                     cls.admin_client.delete_address_scope,
                     address_scope['id'])
+
+            for project in cls.projects:
+                cls._try_delete_resource(
+                    cls.identity_admin_client.delete_project,
+                    project['id'])
 
             # Clean up QoS rules
             for qos_rule in cls.qos_rules:
@@ -426,6 +432,16 @@ class BaseNetworkTest(test.BaseTestCase):
             body = cls.client.create_subnetpool(name, **kwargs)
             cls.subnetpools.append(body['subnetpool'])
         return body['subnetpool']
+
+    @classmethod
+    def create_project(cls, name=None, description=None):
+        test_project = name or data_utils.rand_name('test_project_')
+        test_description = description or data_utils.rand_name('desc_')
+        project = cls.identity_admin_client.create_project(
+            name=test_project,
+            description=test_description)['project']
+        cls.projects.append(project)
+        return project
 
 
 class BaseAdminNetworkTest(BaseNetworkTest):
