@@ -214,11 +214,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             sorted(tuple(expected_rule_type_details_keys)),
             sorted(tuple(rule_type_details.keys())))
 
-    def _disassociate_network(self, client, network_id):
-        updated_network = client.update_network(network_id,
-                                                qos_policy_id=None)
-        self.assertIsNone(updated_network['network']['qos_policy_id'])
-
     @decorators.idempotent_id('65b9ef75-1911-406a-bbdb-ca1d68d528b0')
     def test_policy_association_with_admin_network(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -231,8 +226,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(
             policy['id'], retrieved_network['network']['qos_policy_id'])
 
-        self._disassociate_network(self.admin_client, network['id'])
-
     @decorators.idempotent_id('1738de5d-0476-4163-9022-5e1b548c208e')
     def test_policy_association_with_tenant_network(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -244,8 +237,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         retrieved_network = self.admin_client.show_network(network['id'])
         self.assertEqual(
             policy['id'], retrieved_network['network']['qos_policy_id'])
-
-        self._disassociate_network(self.client, network['id'])
 
     @decorators.idempotent_id('9efe63d0-836f-4cc2-b00c-468e63aa614e')
     def test_policy_association_with_network_nonexistent_policy(self):
@@ -280,13 +271,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(
             policy['id'], retrieved_network['network']['qos_policy_id'])
 
-        self._disassociate_network(self.admin_client, network['id'])
-
-    def _disassociate_port(self, port_id):
-        self.client.update_port(port_id, qos_policy_id=None)
-        updated_port = self.admin_client.show_port(port_id)
-        self.assertIsNone(updated_port['port']['qos_policy_id'])
-
     @decorators.idempotent_id('98fcd95e-84cf-4746-860e-44692e674f2e')
     def test_policy_association_with_port_shared_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -298,8 +282,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         retrieved_port = self.admin_client.show_port(port['id'])
         self.assertEqual(
             policy['id'], retrieved_port['port']['qos_policy_id'])
-
-        self._disassociate_port(port['id'])
 
     @decorators.idempotent_id('49e02f5a-e1dd-41d5-9855-cfa37f2d195e')
     def test_policy_association_with_port_nonexistent_policy(self):
@@ -336,21 +318,15 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertEqual(
             policy['id'], retrieved_port['port']['qos_policy_id'])
 
-        self._disassociate_port(port['id'])
-
     @decorators.idempotent_id('18163237-8ba9-4db5-9525-bad6d2343c75')
     def test_delete_not_allowed_if_policy_in_use_by_network(self):
         policy = self.create_qos_policy(name='test-policy',
                                         description='test policy',
                                         shared=True)
-        network = self.create_shared_network(
-            'test network', qos_policy_id=policy['id'])
+        self.create_shared_network('test network', qos_policy_id=policy['id'])
         self.assertRaises(
             exceptions.Conflict,
             self.admin_client.delete_qos_policy, policy['id'])
-
-        self._disassociate_network(self.admin_client, network['id'])
-        self.admin_client.delete_qos_policy(policy['id'])
 
     @decorators.idempotent_id('24153230-84a9-4dd5-9525-bad6d2343c75')
     def test_delete_not_allowed_if_policy_in_use_by_port(self):
@@ -358,13 +334,10 @@ class QosTestJSON(base.BaseAdminNetworkTest):
                                         description='test policy',
                                         shared=True)
         network = self.create_shared_network('test network')
-        port = self.create_port(network, qos_policy_id=policy['id'])
+        self.create_port(network, qos_policy_id=policy['id'])
         self.assertRaises(
             exceptions.Conflict,
             self.admin_client.delete_qos_policy, policy['id'])
-
-        self._disassociate_port(port['id'])
-        self.admin_client.delete_qos_policy(policy['id'])
 
     @decorators.idempotent_id('a2a5849b-dd06-4b18-9664-0b6828a1fc27')
     def test_qos_policy_delete_with_rules(self):
@@ -404,8 +377,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
                                         is_default=True)
         network = self.create_network('test network', client=self.admin_client,
                                       project_id=project_id)
-        self.addCleanup(self._disassociate_network,
-                        self.admin_client, network['id'])
         retrieved_network = self.admin_client.show_network(network['id'])
         self.assertEqual(
             policy['id'], retrieved_network['network']['qos_policy_id'])
@@ -421,8 +392,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         network = self.create_network('test network', client=self.admin_client,
                                       project_id=project_id,
                                       qos_policy_id=policy['id'])
-        self.addCleanup(self._disassociate_network,
-                        self.admin_client, network['id'])
         retrieved_network = self.admin_client.show_network(network['id'])
         self.assertEqual(
             policy['id'], retrieved_network['network']['qos_policy_id'])
