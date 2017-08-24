@@ -440,9 +440,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         pass
 
     def get_external_device_interface_name(self, ex_gw_port):
-        floating_ips = self.get_floating_ips()
-        if not self._get_floatingips_bound_to_host(floating_ips):
-            return self.get_snat_external_device_interface_name(ex_gw_port)
         fip_int = self.fip_ns.get_int_device_name(self.router_id)
         if ip_lib.device_exists(fip_int, namespace=self.fip_ns.get_name()):
             return self.fip_ns.get_rtr_ext_device_name(self.router_id)
@@ -543,12 +540,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         ports_scopemark[lib_constants.IP_VERSION_4][ext_device_name] = (
             ext_scope_mark)
         return ports_scopemark
-
-    def _get_floatingips_bound_to_host(self, floating_ips):
-        """Filter Floating IPs to be hosted on this agent."""
-        return [i for i in floating_ips
-                if (i['host'] == self.host or
-                    i.get('dest_host') == self.host)]
 
     def process_external(self):
         if self.agent_conf.agent_mode != (
