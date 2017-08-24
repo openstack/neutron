@@ -30,35 +30,40 @@ Neutron Internals
 .. toctree::
    :maxdepth: 1
 
-   services_and_agents
-   api_layer
-   ml2_ext_manager
-   calling_ml2_plugin
-   quota
+   address_scopes
+   agent_extensions
    api_extensions
-   plugin-api
+   api_layer
+   calling_ml2_plugin
    db_layer
    db_models
-   policy
-   rpc_api
-   rpc_callbacks
-   layer3
-   l2_agents
-   agent_extensions
-   ovs_vhostuser
-   quality_of_service
-   service_extensions
    dns_order
    external_dns_integration
-   upgrade
-   objects_usage
    i18n
-   address_scopes
-   openvswitch_firewall
-   network_ip_availability
-   tag
-   provisioning_blocks
-   retries
+   l2_agent_extensions
+   l2_agents
    l3_agent_extensions
+   layer3
+   linuxbridge_agent
    live_migration
+   ml2_ext_manager
+   network_ip_availability
+   objects_usage
+   openvswitch_agent
+   openvswitch_firewall
+   ovs_vhostuser
+   plugin-api
+   policy
+   provisioning_blocks
+   quality_of_service
+   quota
+   retries
+   rpc_api
+   rpc_callbacks
+   security_group_api
    segments
+   service_extensions
+   services_and_agents
+   sriov_nic_agent
+   tag
+   upgrade
