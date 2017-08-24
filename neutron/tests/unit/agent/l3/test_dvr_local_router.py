@@ -179,7 +179,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.rtr_fip_connect = True
         ex_gw_port = {'network_id': 'fake_net_id'}
         ri.create_dvr_external_gateway_on_agent(ex_gw_port)
-        ri._get_floatingips_bound_to_host = mock.Mock(return_value=True)
         ri.fip_ns.create_or_update_gateway_port.assert_called_once_with(
             fip_agent_port)
 
