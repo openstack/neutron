@@ -144,6 +144,9 @@ class ResourceConsumerTracker(object):
             self._versions_by_consumer[consumer].keys())
         cur_resource_types = set(versions.keys())
         removed_resource_types = prev_resource_types - cur_resource_types
+        if removed_resource_types:
+            LOG.debug("Removing stale tracked versions: %s",
+                      removed_resource_types)
         for resource_type in removed_resource_types:
             self._set_version(consumer, resource_type, None)
 
@@ -151,6 +154,7 @@ class ResourceConsumerTracker(object):
         """Handle consumers reporting no versions."""
         if self._versions_by_consumer[consumer]:
             self._needs_recalculation = True
+            LOG.debug("Clearing versions for consumer %s", consumer)
         self._versions_by_consumer[consumer] = {}
 
     def get_resource_versions(self, resource_type):
