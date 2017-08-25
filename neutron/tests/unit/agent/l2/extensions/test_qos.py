@@ -25,6 +25,7 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron import manager
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
@@ -229,10 +230,10 @@ class QosExtensionBaseTestCase(base.BaseTestCase):
         self.qos_ext.consume_api(self.agent_api)
 
         # Don't rely on used driver
-        mock.patch(
-            'neutron.manager.NeutronManager.load_class_for_provider',
-            return_value=lambda: mock.Mock(spec=qos_linux.QosLinuxAgentDriver)
-        ).start()
+        mock.patch.object(
+            manager.NeutronManager, 'load_class_for_provider',
+            return_value=lambda: mock.Mock(
+                spec=qos_linux.QosLinuxAgentDriver)).start()
 
 
 class QosExtensionRpcTestCase(QosExtensionBaseTestCase):

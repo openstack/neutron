@@ -27,7 +27,6 @@ from osprofiler import profiler
 import six
 
 from neutron._i18n import _
-from neutron.common import utils
 from neutron.plugins.common import constants
 
 
@@ -156,8 +155,8 @@ class NeutronManager(object):
         """
 
         try:
-            return utils.load_class_by_alias_or_classname(namespace,
-                    plugin_provider)
+            return runtime.load_class_by_alias_or_classname(namespace,
+                                                            plugin_provider)
         except ImportError:
             with excutils.save_and_reraise_exception():
                 LOG.error("Plugin '%s' not found.", plugin_provider)

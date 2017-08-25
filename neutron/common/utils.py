@@ -42,9 +42,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import fileutils
-from oslo_utils import importutils
 import six
-from stevedore import driver
 
 import neutron
 from neutron._i18n import _
@@ -281,37 +279,6 @@ class DelayedStringRenderer(object):
 
     def __str__(self):
         return str(self.function(*self.args, **self.kwargs))
-
-
-def load_class_by_alias_or_classname(namespace, name):
-    """Load class using stevedore alias or the class name
-
-    :param namespace: namespace where the alias is defined
-    :param name: alias or class name of the class to be loaded
-    :returns: class if calls can be loaded
-    :raises ImportError if class cannot be loaded
-    """
-
-    if not name:
-        LOG.error("Alias or class name is not set")
-        raise ImportError(_("Class not found."))
-    try:
-        # Try to resolve class by alias
-        mgr = driver.DriverManager(
-            namespace, name, warn_on_missing_entrypoint=False)
-        class_to_load = mgr.driver
-    except RuntimeError:
-        e1_info = sys.exc_info()
-        # Fallback to class name
-        try:
-            class_to_load = importutils.import_class(name)
-        except (ImportError, ValueError):
-            LOG.error("Error loading class by alias",
-                      exc_info=e1_info)
-            LOG.error("Error loading class by class name",
-                      exc_info=True)
-            raise ImportError(_("Class not found."))
-    return class_to_load
 
 
 def _hex_format(port, mask=0):
