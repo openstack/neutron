@@ -50,7 +50,7 @@ mkdir -p -m 755 ${dst_rootwrap_path}
 cp -p ${src_rootwrap_path}/* ${dst_rootwrap_path}/
 cp -p ${src_conf} ${dst_conf}
 sed -i "s:^filters_path=.*$:filters_path=${dst_rootwrap_path}:" ${dst_conf}
-sed -i "s:^\(exec_dirs=.*\)$:\1,${target_bin_path},${fullstack_path}:" ${dst_conf}
+sed -i "s:^exec_dirs=\(.*\)$:exec_dirs=${target_bin_path},${fullstack_path},\1:" ${dst_conf}
 
 if [[ "$OS_SUDO_TESTING" = "1" ]]; then
     sed -i 's/use_syslog=False/use_syslog=True/g' ${dst_conf}
