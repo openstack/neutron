@@ -66,8 +66,10 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
     def _create_network_policy(self, context, network, network_changes):
         qos_policy_id = network_changes.get(qos_consts.QOS_POLICY_ID)
         if not qos_policy_id:
-            qos_policy_id = policy_object.QosPolicyDefault.get_object(
+            policy_obj = policy_object.QosPolicyDefault.get_object(
                 context, project_id=network['project_id'])
+            if policy_obj is not None:
+                qos_policy_id = policy_obj.qos_policy_id
 
         if qos_policy_id is not None:
             policy = self._get_policy_obj(context, qos_policy_id)

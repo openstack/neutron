@@ -37,6 +37,17 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             if driver['name'] == driver_name:
                 return driver
 
+    def _create_project(self):
+        # Add a project to conduct the test
+        test_project = data_utils.rand_name('test_project_')
+        test_description = data_utils.rand_name('desc_')
+        project = self.identity_admin_client.create_project(
+            name=test_project,
+            description=test_description)['project']
+        self.addCleanup(
+            self.identity_admin_client.delete_project, project['id'])
+        return project
+
     @decorators.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
     def test_create_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -384,6 +395,37 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             exceptions.Forbidden,
             self.client.create_qos_policy,
             'test-policy', 'test policy', False)
+
+    @decorators.idempotent_id('18d94f22-b9d5-4390-af12-d30a0cfc4cd3')
+    def test_default_policy_creating_network_without_policy(self):
+        project_id = self._create_project()['id']
+        policy = self.create_qos_policy(name='test-policy',
+                                        tenant_id=project_id,
+                                        is_default=True)
+        network = self.create_network('test network', client=self.admin_client,
+                                      project_id=project_id)
+        self.addCleanup(self._disassociate_network,
+                        self.admin_client, network['id'])
+        retrieved_network = self.admin_client.show_network(network['id'])
+        self.assertEqual(
+            policy['id'], retrieved_network['network']['qos_policy_id'])
+
+    @decorators.idempotent_id('807cce45-38e5-482d-94db-36e1796aba73')
+    def test_default_policy_creating_network_with_policy(self):
+        project_id = self._create_project()['id']
+        self.create_qos_policy(name='test-policy',
+                               tenant_id=project_id,
+                               is_default=True)
+        policy = self.create_qos_policy(name='test-policy',
+                                        tenant_id=project_id)
+        network = self.create_network('test network', client=self.admin_client,
+                                      project_id=project_id,
+                                      qos_policy_id=policy['id'])
+        self.addCleanup(self._disassociate_network,
+                        self.admin_client, network['id'])
+        retrieved_network = self.admin_client.show_network(network['id'])
+        self.assertEqual(
+            policy['id'], retrieved_network['network']['qos_policy_id'])
 
 
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
