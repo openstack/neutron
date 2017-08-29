@@ -368,9 +368,6 @@ def check(context, action, target, plugin=None, might_not_exist=False,
                                target,
                                credentials,
                                pluralized=pluralized)
-    # logging applied rules in case of failure
-    if not result:
-        log_rule_list(match_rule)
     return result
 
 
