@@ -102,6 +102,13 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
         self.vm.block_until_dhcp_config_done()
 
     def test_mtu_update(self):
+        # The test case needs access to devices in nested namespaces. ip_lib
+        # doesn't support it, and it's probably unsafe to touch the library for
+        # testing matters.
+        # TODO(jlibosva) revisit when ip_lib supports nested namespaces
+        if self.environment.hosts[0].dhcp_agent.namespace is not None:
+            self.skip("ip_lib doesn't support nested namespaces")
+
         self.vm.block_until_dhcp_config_done()
 
         namespace = cmd._get_namespace_name(
