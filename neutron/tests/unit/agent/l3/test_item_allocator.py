@@ -28,8 +28,6 @@ class TestObject(object):
 
 
 class TestItemAllocator(base.BaseTestCase):
-    def setUp(self):
-        super(TestItemAllocator, self).setUp()
 
     def test__init__(self):
         test_pool = set(TestObject(s) for s in range(32768, 40000))

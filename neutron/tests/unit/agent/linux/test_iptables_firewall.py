@@ -2091,9 +2091,6 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
 
 class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
-    def setUp(self):
-        super(OVSHybridIptablesFirewallTestCase, self).setUp()
-
     def test__populate_initial_zone_map(self):
         self.assertEqual(self._dev_zone_map,
                    self.firewall.ipconntrack._device_zone_map)
