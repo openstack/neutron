@@ -170,6 +170,7 @@ Create the address scope and subnet pools
         | project_id        | 86acdbd1d72745fd8e8320edd7543400     |
         | revision_number   | 1                                    |
         | shared            | False                                |
+        | tags              | []                                   |
         | updated_at        | 2017-01-12T14:58:57Z                 |
         +-------------------+--------------------------------------+
 
@@ -200,6 +201,7 @@ Create the address scope and subnet pools
         | project_id        | 86acdbd1d72745fd8e8320edd7543400     |
         | revision_number   | 1                                    |
         | shared            | True                                 |
+        | tags              | []                                   |
         | updated_at        | 2017-01-12T15:02:31Z                 |
         +-------------------+--------------------------------------+
 
@@ -269,6 +271,7 @@ Create the provider and self-service networks
       | name              | provider                                          |
       | network_id        | 68ec148c-181f-4656-8334-8f4eb148689d              |
       | subnetpool_id     | 3771c0e7-7096-46d3-a3bd-699c58e70259              |
+      | tags              | []                                                |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                  |
       | updated_at        | 2016-03-17T23:17:16                               |
       +-------------------+---------------------------------------------------+
@@ -398,6 +401,7 @@ Create the provider and self-service networks
       | name              | selfservice1                                       |
       | network_id        | be79de1e-5f56-11e6-9dfb-233e41cec48c               |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92               |
+      | tags              | []                                                 |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
       | updated_at        | 2016-03-17T23:20:20                                |
       +-------------------+----------------------------------------------------+
@@ -423,6 +427,7 @@ Create the provider and self-service networks
       | name              | selfservice2                                   |
       | network_id        | c1fd9846-5f56-11e6-a8ac-0f998d9cc0a2           |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92           |
+      | tags              | []                                             |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d               |
       | updated_at        | 2016-03-17T23:20:20                            |
       +-------------------+------------------------------------------------+
@@ -452,6 +457,7 @@ Create the provider and self-service networks
       | name              | selfservice3                                       |
       | network_id        | c283dc1c-5f56-11e6-bfb6-efc30e1eb73b               |
       | subnetpool_id     |                                                    |
+      | tags              | []                                                 |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
       | updated_at        | 2016-03-17T23:20:20                                |
       +-------------------+----------------------------------------------------+
@@ -483,6 +489,7 @@ Create and configure the routers
       | revision_number         | 1                                    |
       | routes                  |                                      |
       | status                  | ACTIVE                               |
+      | tags                    | []                                   |
       | updated_at              | 2017-01-10T13:15:19Z                 |
       +-------------------------+--------------------------------------+
 
@@ -506,6 +513,7 @@ Create and configure the routers
       | revision_number         | 1                                    |
       | routes                  |                                      |
       | status                  | ACTIVE                               |
+      | tags                    | []                                   |
       | updated_at              | 2017-01-10T13:15:19Z                 |
       +-------------------------+--------------------------------------+
 
@@ -529,6 +537,7 @@ Create and configure the routers
       | revision_number         | 1                                    |
       | routes                  |                                      |
       | status                  | ACTIVE                               |
+      | tags                    | []                                   |
       | updated_at              | 2017-01-10T13:15:19Z                 |
       +-------------------------+--------------------------------------+
 

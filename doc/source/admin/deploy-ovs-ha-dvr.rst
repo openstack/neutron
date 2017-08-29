@@ -188,6 +188,7 @@ supports adding distributed routing to existing routers.
       | router:external         | Internal     |
       | shared                  | False        |
       | status                  | ACTIVE       |
+      | tags                    | []           |
       +-------------------------+--------------+
 
 #. Create a IPv4 subnet on the self-service network.
@@ -206,6 +207,7 @@ supports adding distributed routing to existing routers.
       | gateway_ip        | 192.0.2.1                 |
       | ip_version        | 4                         |
       | name              | selfservice2-v4           |
+      | tags              | []                        |
       +-------------------+---------------------------+
 
 #. Create a IPv6 subnet on the self-service network.
@@ -227,6 +229,7 @@ supports adding distributed routing to existing routers.
       | ipv6_address_mode | slaac                                                |
       | ipv6_ra_mode      | slaac                                                |
       | name              | selfservice2-v6                                      |
+      | tags              | []                                                   |
       +-------------------+------------------------------------------------------+
 
 #. Create a router.
@@ -240,6 +243,7 @@ supports adding distributed routing to existing routers.
       | admin_state_up        | UP      |
       | name                  | router2 |
       | status                | ACTIVE  |
+      | tags                  | []      |
       +-----------------------+---------+
 
 #. Add the IPv4 and IPv6 subnets as interfaces on the router.
@@ -344,6 +348,7 @@ Verify network operation
       | instance_id | None                                 |
       | ip          | 203.0.113.17                         |
       | pool        | provider1                            |
+      | tags        | []                                   |
       +-------------+--------------------------------------+
 
 #. Associate the floating IPv4 address with the instance.

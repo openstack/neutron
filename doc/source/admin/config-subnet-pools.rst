@@ -140,6 +140,7 @@ First, as admin, create a shared subnet pool:
     |                   | 7c                             |
     | revision_number   | 1                              |
     | shared            | True                           |
+    | tags              | []                             |
     | updated_at        | 2016-12-14T07:21:26Z           |
     +-------------------+--------------------------------+
 
@@ -192,6 +193,7 @@ Now, use them. It is easy to create a subnet from a pool:
     | revision_number   | 2                                    |
     | service_types     |                                      |
     | subnetpool_id     | d3aefb76-2527-43d4-bc21-0ec253908545 |
+    | tags              | []                                   |
     | updated_at        | 2016-12-14T07:33:13Z                 |
     +-------------------+--------------------------------------+
 
@@ -227,6 +229,7 @@ from the subnet pool.
     | revision_number   | 2                                    |
     | service_types     |                                      |
     | subnetpool_id     | d3aefb76-2527-43d4-bc21-0ec253908545 |
+    | tags              | []                                   |
     | updated_at        | 2016-12-14T07:27:40Z                 |
     +-------------------+--------------------------------------+
 
@@ -256,6 +259,7 @@ If the pool becomes exhausted, load some more prefixes:
     | project_id        | cfd1889ac7d64ad891d4f20aef9f8d7c     |
     | revision_number   | 2                                    |
     | shared            | True                                 |
+    | tags              | []                                   |
     | updated_at        | 2016-12-14T07:30:32Z                 |
     +-------------------+--------------------------------------+
 

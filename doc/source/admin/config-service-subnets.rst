@@ -102,6 +102,7 @@ to allow users to experiment with configuring service subnets.
       | name              | demo-subnet1                         |
       | network_id        | b5b729d8-31cc-4d2c-8284-72b3291fec02 |
       | service_types     | ['compute:nova']                     |
+      | tags              | []                                   |
       | tenant_id         | a8b3054cc1214f18b1186b291525650f     |
       +-------------------+--------------------------------------+
 
@@ -121,6 +122,7 @@ to allow users to experiment with configuring service subnets.
       | name              | demo-subnet2                         |
       | network_id        | b5b729d8-31cc-4d2c-8284-72b3291fec02 |
       | service_types     | ['compute:foo']                      |
+      | tags              | []                                   |
       | tenant_id         | a8b3054cc1214f18b1186b291525650f     |
       +-------------------+--------------------------------------+
 
@@ -289,6 +291,7 @@ This example uses again the private network, ``demo-net1``
       | project_id          | d44c19e056674381b86430575184b167     |
       | router_id           | 5a8ca19f-3703-4f81-bc29-db6bc2f528d6 |
       | status              | ACTIVE                               |
+      | tags                | []                                   |
       +---------------------+--------------------------------------+
 
 #. As the `admin` user, verify the neutron routers are allocated IP
@@ -314,6 +317,7 @@ This example uses again the private network, ``demo-net1``
       | network_id            | 02d236d5-dad9-4082-bb6b-5245f9f84d13                                     |
       | project_id            |                                                                          |
       | status                | ACTIVE                                                                   |
+      | tags                  | []                                                                       |
       +-----------------------+--------------------------------------------------------------------------+
 
    Second, the router floating IP agent gateway external port:
@@ -335,4 +339,5 @@ This example uses again the private network, ``demo-net1``
       | network_id            | 02d236d5-dad9-4082-bb6b-5245f9f84d13                                     |
       | project_id            |                                                                          |
       | status                | ACTIVE                                                                   |
+      | tags                  | []                                                                       |
       +-----------------------+--------------------------------------------------------------------------+

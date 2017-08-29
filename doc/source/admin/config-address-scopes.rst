@@ -127,6 +127,7 @@ allow simple routing for project networks with the same subnet pools.
       | project_id        | 098429d072d34d3596c88b7dbf7e91b6     |
       | revision_number   | 1                                    |
       | shared            | True                                 |
+      | tags              | []                                   |
       | updated_at        | 2016-12-13T22:53:30Z                 |
       +-------------------+--------------------------------------+
 
@@ -154,6 +155,7 @@ allow simple routing for project networks with the same subnet pools.
       | project_id        | 098429d072d34d3596c88b7dbf7e91b6     |
       | revision_number   | 1                                    |
       | shared            | True                                 |
+      | tags              | []                                   |
       | updated_at        | 2016-12-13T22:55:09Z                 |
       +-------------------+--------------------------------------+
 
@@ -187,6 +189,7 @@ allow simple routing for project networks with the same subnet pools.
       | segment_id        | None                                     |
       | service_types     |                                          |
       | subnetpool_id     | a59ff52b-0367-41ff-9781-6318b927dd0e     |
+      | tags              | []                                       |
       | updated_at        | 2016-12-10T21:36:04Z                     |
       +-------------------+------------------------------------------+
 
@@ -216,6 +219,7 @@ allow simple routing for project networks with the same subnet pools.
       | segment_id        | None                                 |
       | service_types     |                                      |
       | subnetpool_id     | d02af70b-d622-426f-8e60-ed9df2a8301f |
+      | tags              | []                                   |
       | updated_at        | 2016-12-10T21:35:52Z                 |
       +-------------------+--------------------------------------+
 
@@ -319,6 +323,7 @@ route straight to an external network without NAT.
       | revision_number   | 2                                    |
       | service_types     |                                      |
       | subnetpool_id     | None                                 |
+      | tags              | []                                   |
       | updated_at        | 2016-12-13T23:24:16Z                 |
       +-------------------+--------------------------------------+
 
@@ -351,6 +356,7 @@ route straight to an external network without NAT.
       | revision_number   | 2                                       |
       | service_types     |                                         |
       | subnetpool_id     | None                                    |
+      | tags              | []                                      |
       | updated_at        | 2016-12-13T23:28:28Z                    |
       +-------------------+-----------------------------------------+
 
@@ -384,6 +390,7 @@ route straight to an external network without NAT.
       | revision_number   | 2                                    |
       | service_types     |                                      |
       | subnetpool_id     | d02af70b-d622-426f-8e60-ed9df2a8301f |
+      | tags              | []                                   |
       | updated_at        | 2016-12-13T23:32:12Z                 |
       +-------------------+--------------------------------------+
 
@@ -415,6 +422,7 @@ route straight to an external network without NAT.
       | revision_number   | 2                                    |
       | service_types     |                                      |
       | subnetpool_id     | a59ff52b-0367-41ff-9781-6318b927dd0e |
+      | tags              | []                                   |
       | updated_at        | 2016-12-13T23:31:17Z                 |
       +-------------------+--------------------------------------+
 

@@ -198,6 +198,7 @@ hosted:
     | revision_number         | 3                                    |
     | routes                  |                                      |
     | status                  | ACTIVE                               |
+    | tags                    | []                                   |
     | updated_at              | 2016-12-14T06:25:40Z                 |
     +-------------------------+--------------------------------------+
 
@@ -285,6 +286,7 @@ which zone the resource is hosted:
     | revision_number         | 3                                    |
     | routes                  |                                      |
     | status                  | ACTIVE                               |
+    | tags                    | []                                   |
     | updated_at              | 2016-12-14T06:25:40Z                 |
     +-------------------------+--------------------------------------+
 

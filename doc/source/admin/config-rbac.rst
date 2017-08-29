@@ -62,6 +62,7 @@ Create a network to share:
    | shared                    | False                                |
    | status                    | ACTIVE                               |
    | subnets                   |                                      |
+   | tags                      | []                                   |
    | updated_at                | 2017-01-25T20:16:40Z                 |
    +---------------------------+--------------------------------------+
 
@@ -137,6 +138,7 @@ Create a QoS policy to share:
    | project_id  | 61b7eba037fd41f29cfba757c010faff     |
    | rules       | []                                   |
    | shared      | False                                |
+   | tags        | []                                   |
    +-------------+--------------------------------------+
 
 
@@ -232,6 +234,7 @@ This is accomplished using the ``shared`` flag on the supported object:
    | shared                    | True                                 |
    | status                    | ACTIVE                               |
    | subnets                   |                                      |
+   | tags                      | []                                   |
    | updated_at                | 2017-01-25T20:32:07Z                 |
    +---------------------------+--------------------------------------+
 
@@ -331,6 +334,7 @@ rather than all projects, use the ``access_as_external`` action.
       | shared                    | False                                |
       | status                    | ACTIVE                               |
       | subnets                   |                                      |
+      | tags                      | []                                   |
       | updated_at                | 2017-01-25T20:36:59Z                 |
       +---------------------------+--------------------------------------+
 
@@ -423,6 +427,7 @@ previous behavior before this feature was added.
    | shared                    | False                                |
    | status                    | ACTIVE                               |
    | subnets                   |                                      |
+   | tags                      | []                                   |
    | updated_at                | 2017-01-25T20:41:44Z                 |
    +---------------------------+--------------------------------------+
 

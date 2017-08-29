@@ -112,6 +112,7 @@ Create the trunk
      | mac_address       | fa:16:3e:dd:c4:d1                                                       |
      | name              | trunk-parent                                                            |
      | network_id        | 1b47d3e7-cda5-48e4-b0c8-d20bd7e35f55                                    |
+     | tags              | []                                                                      |
      +-------------------+-------------------------------------------------------------------------+
 
 * Create the trunk using ``--parent-port`` to reference the port from
@@ -155,6 +156,7 @@ or adding subports to an existing trunk.
      | mac_address       | fa:16:3e:dd:c4:d1                                                       |
      | name              | trunk-parent                                                            |
      | network_id        | 1b47d3e7-cda5-48e4-b0c8-d20bd7e35f55                                    |
+     | tags              | []                                                                      |
      +-------------------+-------------------------------------------------------------------------+
 
      $ openstack port create --network trunked-net subport1
@@ -169,6 +171,7 @@ or adding subports to an existing trunk.
      | mac_address       | fa:16:3e:ba:f0:4d                                                          |
      | name              | subport1                                                                   |
      | network_id        | aef78ec5-16e3-4445-b82d-b2b98c6a86d9                                       |
+     | tags              | []                                                                      |
      +-------------------+----------------------------------------------------------------------------+
 
      $ openstack network trunk create \
@@ -183,6 +186,7 @@ or adding subports to an existing trunk.
      | name           | trunk1                                                                                          |
      | port_id        | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38                                                            |
      | sub_ports      | port_id='73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38', segmentation_id='100', segmentation_type='vlan' |
+     | tags           | []                                                                                              |
      +----------------+-------------------------------------------------------------------------------------------------+
 
 * Add subports to an existing trunk:
@@ -211,6 +215,7 @@ or adding subports to an existing trunk.
      | name           | trunk1                                                                                          |
      | port_id        | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38                                                            |
      | sub_ports      | port_id='73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38', segmentation_id='100', segmentation_type='vlan' |
+     | tags           | []                                                                                              |
      +----------------+-------------------------------------------------------------------------------------------------+
 
 Launch an instance on the trunk
@@ -229,6 +234,7 @@ Launch an instance on the trunk
      | name           | trunk                                |
      | port_id        | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38 |
      | sub_ports      |                                      |
+     | tags           | []                                   |
      +----------------+--------------------------------------+
 
 * Launch the instance by specifying ``port-id`` using the value of ``port_id``

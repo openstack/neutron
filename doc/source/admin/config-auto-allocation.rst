@@ -97,6 +97,7 @@ topology creation. To perform this task, proceed with the following steps:
         | project_id        | 86acdbd1d72745fd8e8320edd7543400     |
         | revision_number   | 1                                    |
         | shared            | True                                 |
+        | tags              | []                                   |
         | updated_at        | 2017-01-12T15:10:34Z                 |
         +-------------------+--------------------------------------+
 
@@ -123,6 +124,7 @@ topology creation. To perform this task, proceed with the following steps:
       | project_id        | 86acdbd1d72745fd8e8320edd7543400     |
       | revision_number   | 1                                    |
       | shared            | True                                 |
+      | tags              | []                                   |
       | updated_at        | 2017-01-12T15:14:35Z                 |
       +-------------------+--------------------------------------+
 

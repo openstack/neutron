@@ -7,13 +7,21 @@ Resource tags
 Various virtual networking resources support tags for use by external
 systems or any other clients of the Networking service API.
 
-The currently supported resources are:
+All resources that support standard attributes are applicable for tagging.
+This includes:
 
 * networks
 * subnets
 * subnetpools
 * ports
 * routers
+* floatingips
+* logs
+* security-groups
+* security-group-rules
+* segments
+* policies
+* trunks
 
 Use cases
 ~~~~~~~~~

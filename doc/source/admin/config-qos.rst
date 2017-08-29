@@ -193,6 +193,7 @@ First, create a QoS policy and its bandwidth limit rule:
    | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
    | rules       | []                                   |
    | shared      | False                                |
+   | tags        | []                                   |
    +-------------+--------------------------------------+
 
    $ openstack network qos rule create --type bandwidth-limit --max-kbps 3000 \
@@ -284,6 +285,7 @@ Ports can be created with a policy attached to them too.
    | security_group_ids    | 0531cc1a-19d1-4cc7-ada5-49f8b08245be             |
    | status                | DOWN                                             |
    | subnet_id             | None                                             |
+   | tags                  | []                                               |
    | updated_at            | 2017-05-15T08:43:00Z                             |
    +-----------------------+--------------------------------------------------+
 
@@ -341,6 +343,7 @@ be used.
     | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
     | rules       | []                                   |
     | shared      | False                                |
+    | tags        | []                                   |
     +-------------+--------------------------------------+
 
     $ openstack network qos policy set --no-default bw-limiter
@@ -356,6 +359,7 @@ be used.
     | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
     | rules       | []                                   |
     | shared      | False                                |
+    | tags        | []                                   |
     +-------------+--------------------------------------+
 
 
@@ -409,6 +413,7 @@ Just like with bandwidth limiting, create a policy for DSCP marking rule:
     | project_id  | 4db7c1ed114a4a7fb0f077148155c500     |
     | rules       | []                                   |
     | shared      | False                                |
+    | tags        | []                                   |
     +-------------+--------------------------------------+
 
 You can create, update, list, delete, and show DSCP markings
@@ -470,6 +475,7 @@ You can also include minimum bandwidth rules in your policy:
     | project_id  | 7cc5a84e415d48e69d2b06aa67b317d8     |
     | rules       | []                                   |
     | shared      | False                                |
+    | tags        | []                                   |
     +-------------+--------------------------------------+
 
     $ openstack network qos rule create \
@@ -523,4 +529,5 @@ It is also possible to combine several rules in one policy:
     |             |   u'id': u'da858b32-44bc-43c9-b92b-cf6e2fa836ab',                 |
     |             |   u'qos_policy_id': u'8491547e-add1-4c6c-a50e-42121237256c'}]     |
     | shared      | False                                                             |
+    | tags        | []                                                                |
     +-------------+-------------------------------------------------------------------+

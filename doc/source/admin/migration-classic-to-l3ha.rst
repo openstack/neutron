@@ -51,6 +51,7 @@ Here is the router we have used in our demonstration:
    | project_id              | bb8b84ab75be4e19bd0dfe02f6c3f5c1          |
    | routes                  |                                           |
    | status                  | ACTIVE                                    |
+   | tags                    | []                                        |
    +-------------------------+-------------------------------------------+
 
 #. Source the administrative project credentials.
@@ -91,6 +92,7 @@ Here is the router we have used in our demonstration:
       | project_id              | bb8b84ab75be4e19bd0dfe02f6c3f5c1          |
       | routes                  |                                           |
       | status                  | ACTIVE                                    |
+      | tags                    | []                                        |
       +-------------------------+-------------------------------------------+
 
 
@@ -123,6 +125,7 @@ Here is the router we have used in our demonstration:
    | project_id              | bb8b84ab75be4e19bd0dfe02f6c3f5c1          |
    | routes                  |                                           |
    | status                  | ACTIVE                                    |
+   | tags                    | []                                        |
    +-------------------------+-------------------------------------------+
 
 #. Source the administrative project credentials.
@@ -163,4 +166,5 @@ Here is the router we have used in our demonstration:
       | project_id              | bb8b84ab75be4e19bd0dfe02f6c3f5c1          |
       | routes                  |                                           |
       | status                  | ACTIVE                                    |
+      | tags                    | []                                        |
       +-------------------------+-------------------------------------------+

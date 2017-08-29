@@ -261,6 +261,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | network_type     | vlan                                 |
       | physical_network | provider2                            |
       | segmentation_id  | 2016                                 |
+      | tags             | []                                   |
       +------------------+--------------------------------------+
 
 #. Verify that the network contains the ``segment1`` and ``segment2`` segments.
@@ -296,6 +297,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | name              | multisegment1-segment1-v4            |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
       | segment_id        | 43e16869-ad31-48e4-87ce-acf756709e18 |
+      | tags              | []                                   |
       +-------------------+--------------------------------------+
 
       $ openstack subnet create \
@@ -316,6 +318,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | name              | multisegment1-segment1-v6                            |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9                 |
       | segment_id        | 43e16869-ad31-48e4-87ce-acf756709e18                 |
+      | tags              | []                                                   |
       +-------------------+------------------------------------------------------+
 
    .. note::
@@ -345,6 +348,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | name              | multisegment1-segment2-v4            |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
       | segment_id        | 053b7925-9a89-4489-9992-e164c8cc8763 |
+      | tags              | []                                   |
       +-------------------+--------------------------------------+
 
       $ openstack subnet create \
@@ -365,6 +369,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | name              | multisegment1-segment2-v6                              |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9                   |
       | segment_id        | 053b7925-9a89-4489-9992-e164c8cc8763                   |
+      | tags              | []                                                     |
       +-------------------+--------------------------------------------------------+
 
 #. Verify that each IPv4 subnet associates with at least one DHCP agent.
@@ -449,4 +454,5 @@ segment contains one IPv4 subnet and one IPv6 subnet.
          | port_security_enabled | True                                 |
          | security_groups       | e4fcef0d-e2c5-40c3-a385-9c33ac9289c5 |
          | status                | DOWN                                 |
+         | tags                  | []                                   |
          +-----------------------+--------------------------------------+

@@ -175,6 +175,7 @@ The following is an example of an instance creation, showing how its
    | port_security_enabled | True                                                                                  |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                  |
    | status                | ACTIVE                                                                                |
+   | tags                  | []                                                                                    |
    | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                      |
    +-----------------------+---------------------------------------------------------------------------------------+
 
@@ -281,6 +282,7 @@ external DNS service. This is an example:
    | status                    | ACTIVE                               |
    | subnets                   | eab47748-3f0a-4775-a09f-b0c24bb64bc4 |
    |                           | 277eca5d-9869-474b-960e-6da5951d09f7 |
+   | tags                      | []                                   |
    | tenant_id                 | 04fc2f83966245dba907efb783f8eab9     |
    +---------------------------+--------------------------------------+
 
@@ -314,6 +316,7 @@ external DNS service. This is an example:
    | port_security_enabled | True                                                                                  |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                  |
    | status                | DOWN                                                                                  |
+   | tags                  | []                                                                                    |
    | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                      |
    +-----------------------+---------------------------------------------------------------------------------------+
 
@@ -444,6 +447,7 @@ Following is an example of these steps:
    | status                  | ACTIVE                               |
    | subnets                 | 43414c53-62ae-49bc-aa6c-c9dd7705818a |
    |                         | 5b9282a1-0be1-4ade-b478-7868ad2a16ff |
+   | tags                    | []                                   |
    | tenant_id               | d5660cb1e6934612a01b4fb2fb630725     |
    +-------------------------+--------------------------------------+
 
@@ -518,6 +522,7 @@ Following is an example of these steps:
    | port_security_enabled | True                                                                                                        |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                        |
    | status                | ACTIVE                                                                                                      |
+   | tags                  | []                                                                                                          |
    | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                                            |
    +-----------------------+-------------------------------------------------------------------------------------------------------------+
 
@@ -544,6 +549,7 @@ Following is an example of these steps:
    | port_id             | da0b1f75-c895-460f-9fc1-4d6ec84cf85f |
    | router_id           | 970ebe83-c4a3-4642-810e-43ab7b0c2b5f |
    | status              | DOWN                                 |
+   | tags                | []                                   |
    | tenant_id           | d5660cb1e6934612a01b4fb2fb630725     |
    +---------------------+--------------------------------------+
 
@@ -604,6 +610,7 @@ allocated for the instance:
    | status                  | ACTIVE                               |
    | subnets                 | 43414c53-62ae-49bc-aa6c-c9dd7705818a |
    |                         | 5b9282a1-0be1-4ade-b478-7868ad2a16ff |
+   | tags                    | []                                   |
    | tenant_id               | d5660cb1e6934612a01b4fb2fb630725     |
    +-------------------------+--------------------------------------+
 
@@ -678,6 +685,7 @@ allocated for the instance:
    | port_security_enabled | True                                                                                                        |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                        |
    | status                | ACTIVE                                                                                                      |
+   | tags                  | []                                                                                                          |
    | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                                            |
    +-----------------------+-------------------------------------------------------------------------------------------------------------+
 
@@ -704,6 +712,7 @@ allocated for the instance:
    | port_id             |                                      |
    | router_id           |                                      |
    | status              | DOWN                                 |
+   | tags                | []                                   |
    | tenant_id           | d5660cb1e6934612a01b4fb2fb630725     |
    +---------------------+--------------------------------------+
 

@@ -655,6 +655,7 @@ First, create a network and IPv6 subnet:
    | revision_number        | 2                                    |
    | service_types          |                                      |
    | subnetpool_id          | prefix_delegation                    |
+   | tags                   | []                                   |
    | updated_at             | 2017-01-25T19:31:53Z                 |
    | use_default_subnetpool | True                                 |
    +------------------------+--------------------------------------+
@@ -701,6 +702,7 @@ to all ports:
     | revision_number   | 4                                    |
     | service_types     |                                      |
     | subnetpool_id     | prefix_delegation                    |
+    | tags              | []                                   |
     | updated_at        | 2017-01-25T19:35:26Z                 |
     +-------------------+--------------------------------------+
 
