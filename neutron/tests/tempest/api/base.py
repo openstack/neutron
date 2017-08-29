@@ -224,7 +224,10 @@ class BaseNetworkTest(test.BaseTestCase):
         client = client or cls.client
         body = client.create_network(name=network_name, **kwargs)
         network = body['network']
-        cls.networks.append(network)
+        if client is cls.client:
+            cls.networks.append(network)
+        else:
+            cls.admin_networks.append(network)
         return network
 
     @classmethod
