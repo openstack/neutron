@@ -132,7 +132,9 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                 db_api.sqla_remove(se.Session, 'before_commit',
                                    concurrent_increment)
                 # slip in a concurrent update that will bump the revision
-                self._update('ports', port['port']['id'], new)
+                plugin = directory.get_plugin()
+                plugin.update_port(nctx.get_admin_context(),
+                                   port['port']['id'], new)
                 raise db_exc.DBDeadlock()
             db_api.sqla_listen(se.Session, 'before_commit',
                                concurrent_increment)

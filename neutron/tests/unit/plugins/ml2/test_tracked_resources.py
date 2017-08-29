@@ -36,15 +36,6 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
 
     def setUp(self):
         self.ctx = context.get_admin_context()
-        # Prevent noise from default security group operations
-        def_sec_group_patch = mock.patch(
-            'neutron.db.securitygroups_db.SecurityGroupDbMixin.'
-            '_ensure_default_security_group')
-        def_sec_group_patch.start()
-        get_sec_group_port_patch = mock.patch(
-            'neutron.db.securitygroups_db.SecurityGroupDbMixin.'
-            '_get_security_groups_on_port')
-        get_sec_group_port_patch.start()
         super(BaseTestTrackedResources, self).setUp()
         self._tenant_id = uuidutils.generate_uuid()
 
@@ -56,6 +47,15 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
 class BaseTestEventHandler(object):
 
     def setUp(self):
+        # Prevent noise from default security group operations
+        def_sec_group_patch = mock.patch(
+            'neutron.db.securitygroups_db.SecurityGroupDbMixin.'
+            '_ensure_default_security_group')
+        def_sec_group_patch.start()
+        get_sec_group_port_patch = mock.patch(
+            'neutron.db.securitygroups_db.SecurityGroupDbMixin.'
+            '_get_security_groups_on_port')
+        get_sec_group_port_patch.start()
         handler_patch = mock.patch(
             'neutron.quota.resource.TrackedResource._db_event_handler')
         self.handler_mock = handler_patch.start()

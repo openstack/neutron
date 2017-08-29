@@ -56,7 +56,6 @@ from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import plugin as ml2_plugin
-from neutron.services.l3_router import l3_router_plugin
 from neutron.services.revisions import revision_plugin
 from neutron.services.segments import db as segments_plugin_db
 from neutron.services.segments import plugin as segments_plugin
@@ -583,12 +582,12 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                                      network['network']['tenant_id'],
                                      'name': 'port1',
                                      'admin_state_up': 1,
+                                     'device_id': '',
                                      'device_owner':
                                      constants.DEVICE_OWNER_DHCP,
                                      'fixed_ips': [{'subnet_id': subnet_id}]}}
-                    port_req = self.new_create_request('ports', data)
-                    port_res = port_req.get_response(self.api)
-                    self.assertEqual(201, port_res.status_int)
+                    plugin = directory.get_plugin()
+                    plugin.create_port(context.get_admin_context(), data)
 
                 # we mock _subnet_check_ip_allocations with method
                 # that creates DHCP port 'in the middle' of subnet_delete
@@ -1273,11 +1272,14 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
 class TestMl2PortsV2WithL3(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     """For testing methods that require the L3 service plugin."""
 
+    l3_plugin = 'neutron.services.l3_router.l3_router_plugin.L3RouterPlugin'
+
+    def get_additional_service_plugins(self):
+        return {'flavors': 'flavors'}
+
     def test_update_port_status_notify_port_event_after_update(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
-        # enable subscription for events
-        l3_router_plugin.L3RouterPlugin()
         l3plugin = directory.get_plugin(plugin_constants.L3)
         host_arg = {portbindings.HOST_ID: HOST}
         with mock.patch.object(l3plugin.l3_rpc_notifier,

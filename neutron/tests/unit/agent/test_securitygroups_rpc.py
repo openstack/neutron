@@ -143,6 +143,7 @@ class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
         self.devices[id] = updated_port
         self.update_security_group_on_port(
             context, id, port, original_port, updated_port)
+        return updated_port
 
     def delete_port(self, context, id):
         port = self.get_port(context, id)
