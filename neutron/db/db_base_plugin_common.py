@@ -92,10 +92,8 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
 
     @db_api.context_manager.reader
     def _is_mac_in_use(self, context, network_id, mac_address):
-        return bool(context.session.query(models_v2.Port).
-                    filter(models_v2.Port.network_id == network_id).
-                    filter(models_v2.Port.mac_address == mac_address).
-                    count())
+        return port_obj.Port.objects_exist(context, network_id=network_id,
+                                           mac_address=mac_address)
 
     @staticmethod
     def _delete_ip_allocation(context, network_id, subnet_id, ip_address):
@@ -227,9 +225,9 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                                             subnet_id=subnet_id)
 
     def _get_router_gw_ports_by_network(self, context, network_id):
-        port_qry = context.session.query(models_v2.Port)
-        return port_qry.filter_by(network_id=network_id,
-                device_owner=constants.DEVICE_OWNER_ROUTER_GW).all()
+        return port_obj.Port.get_objects(
+            context, network_id=network_id,
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW)
 
     @db_api.context_manager.reader
     def _get_subnets_by_network(self, context, network_id):

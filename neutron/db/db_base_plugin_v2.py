@@ -643,7 +643,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if l3plugin:
             gw_ports = self._get_router_gw_ports_by_network(context,
                     network['id'])
-            router_ids = [p['device_id'] for p in gw_ports]
+            router_ids = [p.device_id for p in gw_ports]
             for id in router_ids:
                 try:
                     self._update_router_gw_port(context, id, network, subnet)
