@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -243,12 +244,23 @@ class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
 
 class OpenvswitchMechanismSRIOVTestCase(OpenvswitchMechanismBaseTestCase):
 
-    def _make_port_ctx(self, agents):
+    def _make_port_ctx(self, agents, profile=None):
         segments = [{api.ID: 'local_segment_id', api.NETWORK_TYPE: 'local'}]
         return base.FakePortContext(self.AGENT_TYPE, agents, segments,
-                                    vnic_type=portbindings.VNIC_DIRECT)
+                                    vnic_type=portbindings.VNIC_DIRECT,
+                                    profile=profile)
 
-    def test_get_vif_type(self):
+    @mock.patch('neutron.plugins.ml2.drivers.mech_agent.'
+                'SimpleAgentMechanismDriverBase.bind_port')
+    def test_bind_port_sriov_legacy(self, mocked_bind_port):
         context = self._make_port_ctx(self.AGENTS)
-        result = self.driver.get_vif_type(context, self.AGENTS[0], None)
-        self.assertEqual(self.VIF_TYPE, result)
+        self.driver.bind_port(context)
+        mocked_bind_port.assert_not_called()
+
+    @mock.patch('neutron.plugins.ml2.drivers.mech_agent.'
+                'SimpleAgentMechanismDriverBase.bind_port')
+    def test_bind_port_sriov_switchdev(self, mocked_bind_port):
+        profile = {'capabilities': ['switchdev']}
+        context = self._make_port_ctx(self.AGENTS, profile=profile)
+        self.driver.bind_port(context)
+        mocked_bind_port.assert_called()
