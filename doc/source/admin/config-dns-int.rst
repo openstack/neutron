@@ -93,6 +93,7 @@ in its ``dns_name`` attribute.
    | name                  |                                                                                     |
    | network_id            | bf2802a0-99a0-4e8c-91e4-107d03f158ea                                                |
    | port_security_enabled | True                                                                                |
+   | revision_number       | 1                                                                                   |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                |
    | status                | DOWN                                                                                |
    | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                    |
@@ -173,6 +174,7 @@ The following is an example of an instance creation, showing how its
    | name                  |                                                                                       |
    | network_id            | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                                  |
    | port_security_enabled | True                                                                                  |
+   | revision_number       | 1                                                                                     |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                  |
    | status                | ACTIVE                                                                                |
    | tags                  | []                                                                                    |
@@ -277,6 +279,7 @@ external DNS service. This is an example:
    | provider:network_type     | vlan                                 |
    | provider:physical_network |                                      |
    | provider:segmentation_id  | 2016                                 |
+   | revision_number           | 4                                    |
    | router:external           | False                                |
    | shared                    | True                                 |
    | status                    | ACTIVE                               |
@@ -314,6 +317,7 @@ external DNS service. This is an example:
    | name                  |                                                                                       |
    | network_id            | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                                  |
    | port_security_enabled | True                                                                                  |
+   | revision_number       | 1                                                                                     |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                  |
    | status                | DOWN                                                                                  |
    | tags                  | []                                                                                    |
@@ -442,6 +446,7 @@ Following is an example of these steps:
    | mtu                     | 1450                                 |
    | name                    | private                              |
    | port_security_enabled   | True                                 |
+   | revision_number         | 1                                    |
    | router:external         | False                                |
    | shared                  | False                                |
    | status                  | ACTIVE                               |
@@ -520,6 +525,7 @@ Following is an example of these steps:
    | name                  |                                                                                                             |
    | network_id            | 38c5e950-b450-4c30-83d4-ee181c28aad3                                                                        |
    | port_security_enabled | True                                                                                                        |
+   | revision_number       | 1                                                                                                           |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                        |
    | status                | ACTIVE                                                                                                      |
    | tags                  | []                                                                                                          |
@@ -547,6 +553,7 @@ Following is an example of these steps:
    | floating_network_id | 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a |
    | id                  | e78f6eb1-a35f-4a90-941d-87c888d5fcc7 |
    | port_id             | da0b1f75-c895-460f-9fc1-4d6ec84cf85f |
+   | revision_number     | 1                                    |
    | router_id           | 970ebe83-c4a3-4642-810e-43ab7b0c2b5f |
    | status              | DOWN                                 |
    | tags                | []                                   |
@@ -605,6 +612,7 @@ allocated for the instance:
    | mtu                     | 1450                                 |
    | name                    | private                              |
    | port_security_enabled   | True                                 |
+   | revision_number         | 1                                    |
    | router:external         | False                                |
    | shared                  | False                                |
    | status                  | ACTIVE                               |
@@ -683,6 +691,7 @@ allocated for the instance:
    | name                  |                                                                                                             |
    | network_id            | 38c5e950-b450-4c30-83d4-ee181c28aad3                                                                        |
    | port_security_enabled | True                                                                                                        |
+   | revision_number       | 1                                                                                                           |
    | security_groups       | 1f0ddd73-7e3c-48bd-a64c-7ded4fe0e635                                                                        |
    | status                | ACTIVE                                                                                                      |
    | tags                  | []                                                                                                          |
@@ -710,6 +719,7 @@ allocated for the instance:
    | floating_network_id | 41fa3995-9e4a-4cd9-bb51-3e5424f2ff2a |
    | id                  | 9f23a9c6-eceb-42eb-9f45-beb58c473728 |
    | port_id             |                                      |
+   | revision_number     | 1                                    |
    | router_id           |                                      |
    | status              | DOWN                                 |
    | tags                | []                                   |

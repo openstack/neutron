@@ -217,6 +217,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | provider:network_type     | vlan                                 |
       | provider:physical_network | provider1                            |
       | provider:segmentation_id  | 2016                                 |
+      | revision_number           | 1                                    |
       | router:external           | Internal                             |
       | shared                    | True                                 |
       | status                    | ACTIVE                               |
@@ -260,6 +261,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | network_id       | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
       | network_type     | vlan                                 |
       | physical_network | provider2                            |
+      | revision_number  | 1                                    |
       | segmentation_id  | 2016                                 |
       | tags             | []                                   |
       +------------------+--------------------------------------+
@@ -296,6 +298,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | ip_version        | 4                                    |
       | name              | multisegment1-segment1-v4            |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
+      | revision_number   | 1                                    |
       | segment_id        | 43e16869-ad31-48e4-87ce-acf756709e18 |
       | tags              | []                                   |
       +-------------------+--------------------------------------+
@@ -317,6 +320,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | ipv6_ra_mode      | None                                                 |
       | name              | multisegment1-segment1-v6                            |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9                 |
+      | revision_number   | 1                                    |
       | segment_id        | 43e16869-ad31-48e4-87ce-acf756709e18                 |
       | tags              | []                                                   |
       +-------------------+------------------------------------------------------+
@@ -347,6 +351,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | ip_version        | 4                                    |
       | name              | multisegment1-segment2-v4            |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
+      | revision_number   | 1                                    |
       | segment_id        | 053b7925-9a89-4489-9992-e164c8cc8763 |
       | tags              | []                                   |
       +-------------------+--------------------------------------+
@@ -368,6 +373,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       | ipv6_ra_mode      | None                                                   |
       | name              | multisegment1-segment2-v6                              |
       | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9                   |
+      | revision_number   | 1                                                      |
       | segment_id        | 053b7925-9a89-4489-9992-e164c8cc8763                   |
       | tags              | []                                                     |
       +-------------------+--------------------------------------------------------+
@@ -452,6 +458,7 @@ segment contains one IPv4 subnet and one IPv6 subnet.
          | name                  | port1                                |
          | network_id            | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
          | port_security_enabled | True                                 |
+         | revision_number       | 1                                    |
          | security_groups       | e4fcef0d-e2c5-40c3-a385-9c33ac9289c5 |
          | status                | DOWN                                 |
          | tags                  | []                                   |

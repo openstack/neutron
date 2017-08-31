@@ -112,6 +112,7 @@ Create the trunk
      | mac_address       | fa:16:3e:dd:c4:d1                                                       |
      | name              | trunk-parent                                                            |
      | network_id        | 1b47d3e7-cda5-48e4-b0c8-d20bd7e35f55                                    |
+     | revision_number   | 1                                                                       |
      | tags              | []                                                                      |
      +-------------------+-------------------------------------------------------------------------+
 
@@ -128,6 +129,7 @@ Create the trunk
      | id              | fdf02fcb-1844-45f1-9d9b-e4c2f522c164 |
      | name            | trunk1                               |
      | port_id         | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38 |
+     | revision_number | 1                                    |
      | sub_ports       |                                      |
      +-----------------+--------------------------------------+
 
@@ -156,6 +158,7 @@ or adding subports to an existing trunk.
      | mac_address       | fa:16:3e:dd:c4:d1                                                       |
      | name              | trunk-parent                                                            |
      | network_id        | 1b47d3e7-cda5-48e4-b0c8-d20bd7e35f55                                    |
+     | revision_number   | 1                                                                       |
      | tags              | []                                                                      |
      +-------------------+-------------------------------------------------------------------------+
 
@@ -171,7 +174,8 @@ or adding subports to an existing trunk.
      | mac_address       | fa:16:3e:ba:f0:4d                                                          |
      | name              | subport1                                                                   |
      | network_id        | aef78ec5-16e3-4445-b82d-b2b98c6a86d9                                       |
-     | tags              | []                                                                      |
+     | revision_number   | 1                                                                          |
+     | tags              | []                                                                         |
      +-------------------+----------------------------------------------------------------------------+
 
      $ openstack network trunk create \
@@ -185,6 +189,7 @@ or adding subports to an existing trunk.
      | id             | 61d8e620-fe3a-4d8f-b9e6-e1b0dea6d9e3                                                            |
      | name           | trunk1                                                                                          |
      | port_id        | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38                                                            |
+     | revision_number| 1                                                                                               |
      | sub_ports      | port_id='73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38', segmentation_id='100', segmentation_type='vlan' |
      | tags           | []                                                                                              |
      +----------------+-------------------------------------------------------------------------------------------------+
@@ -214,6 +219,7 @@ or adding subports to an existing trunk.
      | id             | 61d8e620-fe3a-4d8f-b9e6-e1b0dea6d9e3                                                            |
      | name           | trunk1                                                                                          |
      | port_id        | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38                                                            |
+     | revision_number| 1                                                                                               |
      | sub_ports      | port_id='73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38', segmentation_id='100', segmentation_type='vlan' |
      | tags           | []                                                                                              |
      +----------------+-------------------------------------------------------------------------------------------------+
@@ -233,6 +239,7 @@ Launch an instance on the trunk
      | id             | 61d8e620-fe3a-4d8f-b9e6-e1b0dea6d9e3 |
      | name           | trunk                                |
      | port_id        | 73fb9d54-43a7-4bb1-a8dc-569e0e0a0a38 |
+     | revision_number| 1                                    |
      | sub_ports      |                                      |
      | tags           | []                                   |
      +----------------+--------------------------------------+

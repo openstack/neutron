@@ -129,17 +129,18 @@ Create a QoS policy to share:
 .. code-block:: console
 
    $ openstack network qos policy create secret_policy
-   +-------------+--------------------------------------+
-   | Field       | Value                                |
-   +-------------+--------------------------------------+
-   | description |                                      |
-   | id          | 1f730d69-1c45-4ade-a8f2-89070ac4f046 |
-   | name        | secret_policy                        |
-   | project_id  | 61b7eba037fd41f29cfba757c010faff     |
-   | rules       | []                                   |
-   | shared      | False                                |
-   | tags        | []                                   |
-   +-------------+--------------------------------------+
+   +-------------------+--------------------------------------+
+   | Field             | Value                                |
+   +-------------------+--------------------------------------+
+   | description       |                                      |
+   | id                | 1f730d69-1c45-4ade-a8f2-89070ac4f046 |
+   | name              | secret_policy                        |
+   | project_id        | 61b7eba037fd41f29cfba757c010faff     |
+   | revision_number   | 1                                    |
+   | rules             | []                                   |
+   | shared            | False                                |
+   | tags              | []                                   |
+   +-------------------+--------------------------------------+
 
 
 Create the RBAC policy entry using the :command:`openstack network rbac create`

@@ -400,6 +400,7 @@ Create the provider and self-service networks
       | ipv6_ra_mode      |                                                    |
       | name              | selfservice1                                       |
       | network_id        | be79de1e-5f56-11e6-9dfb-233e41cec48c               |
+      | revision_number   | 1                                                  |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92               |
       | tags              | []                                                 |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
@@ -426,6 +427,7 @@ Create the provider and self-service networks
       | ipv6_ra_mode      |                                                |
       | name              | selfservice2                                   |
       | network_id        | c1fd9846-5f56-11e6-a8ac-0f998d9cc0a2           |
+      | revision_number   | 1                                              |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92           |
       | tags              | []                                             |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d               |
@@ -456,6 +458,7 @@ Create the provider and self-service networks
       | ipv6_ra_mode      |                                                    |
       | name              | selfservice3                                       |
       | network_id        | c283dc1c-5f56-11e6-bfb6-efc30e1eb73b               |
+      | revision_number   | 1                                                  |
       | subnetpool_id     |                                                    |
       | tags              | []                                                 |
       | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |

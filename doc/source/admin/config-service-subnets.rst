@@ -78,6 +78,7 @@ to allow users to experiment with configuring service subnets.
       | provider:network_type     | vxlan                                |
       | provider:physical_network | None                                 |
       | provider:segmentation_id  | 110                                  |
+      | revision_number           | 1                                    |
       | router:external           | Internal                             |
       | shared                    | False                                |
       | status                    | ACTIVE                               |
@@ -101,6 +102,7 @@ to allow users to experiment with configuring service subnets.
       | cidr              | 192.0.2.0/24                         |
       | name              | demo-subnet1                         |
       | network_id        | b5b729d8-31cc-4d2c-8284-72b3291fec02 |
+      | revision_number   | 1                                    |
       | service_types     | ['compute:nova']                     |
       | tags              | []                                   |
       | tenant_id         | a8b3054cc1214f18b1186b291525650f     |
@@ -121,6 +123,7 @@ to allow users to experiment with configuring service subnets.
       | cidr              | 198.51.100.0/24                      |
       | name              | demo-subnet2                         |
       | network_id        | b5b729d8-31cc-4d2c-8284-72b3291fec02 |
+      | revision_number   | 1                                    |
       | service_types     | ['compute:foo']                      |
       | tags              | []                                   |
       | tenant_id         | a8b3054cc1214f18b1186b291525650f     |
@@ -289,6 +292,7 @@ This example uses again the private network, ``demo-net1``
       | id                  | f15cae7f-5e05-4b19-bd25-4bb71edcf3de |
       | port_id             | a752bb24-9bf2-4d37-b9d6-07da69c86f19 |
       | project_id          | d44c19e056674381b86430575184b167     |
+      | revision_number     | 1                                    |
       | router_id           | 5a8ca19f-3703-4f81-bc29-db6bc2f528d6 |
       | status              | ACTIVE                               |
       | tags                | []                                   |
@@ -315,6 +319,7 @@ This example uses again the private network, ``demo-net1``
       | id                    | f148ffeb-3c26-4067-bc5f-5c3dfddae2f5                                     |
       | mac_address           | fa:16:3e:2c:0f:69                                                        |
       | network_id            | 02d236d5-dad9-4082-bb6b-5245f9f84d13                                     |
+      | revision_number       | 1                                                                        |
       | project_id            |                                                                          |
       | status                | ACTIVE                                                                   |
       | tags                  | []                                                                       |
@@ -338,6 +343,7 @@ This example uses again the private network, ``demo-net1``
       | mac_address           | fa:16:3e:f4:5d:fa                                                        |
       | network_id            | 02d236d5-dad9-4082-bb6b-5245f9f84d13                                     |
       | project_id            |                                                                          |
+      | revision_number       | 1                                                                        |
       | status                | ACTIVE                                                                   |
       | tags                  | []                                                                       |
       +-----------------------+--------------------------------------------------------------------------+
