@@ -200,7 +200,7 @@ Compute nodes
    .. code-block:: ini
 
       [DEFAULT]
-      nova_metadata_ip = controller
+      nova_metadata_host = controller
       metadata_proxy_shared_secret = METADATA_SECRET
 
    The value of ``METADATA_SECRET`` must match the value of the same option
