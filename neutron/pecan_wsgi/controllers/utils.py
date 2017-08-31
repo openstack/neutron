@@ -21,10 +21,12 @@ from neutron_lib import constants
 import pecan
 from pecan import request
 
+from neutron._i18n import _
 from neutron.api import api_common
 from neutron.api.v2 import attributes as api_attributes
 from neutron.db import api as db_api
 from neutron import manager
+from neutron_lib import exceptions
 
 # Utility functions for Pecan controllers.
 
@@ -156,6 +158,11 @@ class NeutronPecanController(object):
             self.plugin)
         self.native_sorting = api_common.is_native_sorting_supported(
             self.plugin)
+        if self.allow_pagination and self.native_pagination:
+            if not self.native_sorting:
+                raise exceptions.Invalid(
+                    _("Native pagination depends on native sorting")
+                )
         self.primary_key = self._get_primary_key()
 
         self.parent = parent_resource
