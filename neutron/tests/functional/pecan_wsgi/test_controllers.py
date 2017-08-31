@@ -421,6 +421,14 @@ class TestResourceController(TestRootController):
         self.assertEqual(response.status_int, 204)
         self.assertFalse(response.body)
 
+    def test_delete_disallows_body(self):
+        response = self.app.delete_json(
+            '/v2.0/ports/%s.json' % self.port['id'],
+            params={'port': {'name': 'test'}},
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(response.status_int, 400)
+
     def test_plugin_initialized(self):
         self.assertIsNotNone(manager.NeutronManager._instance)
 
@@ -431,6 +439,22 @@ class TestResourceController(TestRootController):
         self._test_method_returns_code('delete', 405)
         self._test_method_returns_code('head', 405)
         self._test_method_returns_code('delete', 405)
+
+    def test_post_with_empty_body(self):
+        response = self.app.post_json(
+            '/v2.0/ports.json',
+            headers={'X-Project-Id': 'tenid'},
+            params={},
+            expect_errors=True)
+        self.assertEqual(response.status_int, 400)
+
+    def test_post_with_unsupported_json_type(self):
+        response = self.app.post_json(
+            '/v2.0/ports.json',
+            headers={'X-Project-Id': 'tenid'},
+            params=[1, 2, 3],
+            expect_errors=True)
+        self.assertEqual(response.status_int, 400)
 
     def test_bulk_create(self):
         response = self.app.post_json(

@@ -301,8 +301,8 @@ class ShimItemController(NeutronPecanController):
         shim_request = ShimRequest(request.context['neutron_context'])
         kwargs = request.context['uri_identifiers']
         try:
-            kwargs['body'] = request.json
-        except ValueError:
+            kwargs['body'] = request.context['request_data']
+        except KeyError:
             pass
         result = self.controller_update(shim_request, self.item,
                                         **kwargs)
@@ -353,7 +353,7 @@ class ShimCollectionsController(NeutronPecanController):
         uri_identifiers = request.context['uri_identifiers']
         args = [shim_request]
         if request.method == 'PUT':
-            args.append(request.json)
+            args.append(request.context.get('request_data'))
         result = controller_method(*args, **uri_identifiers)
         if not status:
             self._set_response_code(result, 'index')
@@ -367,7 +367,8 @@ class ShimCollectionsController(NeutronPecanController):
             pecan.abort(405)
         shim_request = ShimRequest(request.context['neutron_context'])
         uri_identifiers = request.context['uri_identifiers']
-        result = self.controller_create(shim_request, request.json,
+        result = self.controller_create(shim_request,
+                                        request.context.get('request_data'),
                                         **uri_identifiers)
         self._set_response_code(result, 'create')
         return result
