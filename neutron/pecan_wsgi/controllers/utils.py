@@ -18,6 +18,8 @@ import copy
 import functools
 
 from neutron_lib import constants
+from oslo_log import log as logging
+from oslo_utils import excutils
 import pecan
 from pecan import request
 
@@ -27,6 +29,8 @@ from neutron.db import api as db_api
 from neutron import manager
 
 # Utility functions for Pecan controllers.
+
+LOG = logging.getLogger(__name__)
 
 
 class Fakecode(object):
@@ -227,8 +231,32 @@ class NeutronPecanController(object):
 
     @property
     def plugin_bulk_creator(self):
-        return getattr(self.plugin,
-                       '%s_bulk' % self._plugin_handlers[self.CREATE])
+        native = getattr(self.plugin,
+                         '%s_bulk' % self._plugin_handlers[self.CREATE],
+                         None)
+        # NOTE(kevinbenton): this flag is just to make testing easier since we
+        # don't have any in-tree plugins without native bulk support
+        if getattr(self.plugin, '_FORCE_EMULATED_BULK', False) or not native:
+            return self._emulated_bulk_creator
+        return native
+
+    def _emulated_bulk_creator(self, context, **kwargs):
+        objs = []
+        body = kwargs[self.collection]
+        try:
+            for item in body[self.collection]:
+                objs.append(self.plugin_creator(context, item))
+            return objs
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                for obj in objs:
+                    try:
+                        self.plugin_deleter(context, obj['id'])
+                    except Exception:
+                        LOG.exception("Unable to undo bulk create for "
+                                      "%(resource)s %(id)s",
+                                      {'resource': self.collection,
+                                       'id': obj['id']})
 
     @property
     def plugin_deleter(self):
