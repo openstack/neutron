@@ -386,6 +386,17 @@ class TestResourceController(TestRootController):
         self._check_item(['id', 'tenant_id'],
                          jsonutils.loads(item_resp.body)['port'])
 
+    def test_duped_and_empty_fields_stripped(self):
+        mock_get = mock.patch.object(self.plugin, 'get_ports',
+                                     return_value=[]).start()
+        self.app.get(
+            '/v2.0/ports.json?fields=id&fields=name&fields=&fields=name',
+            headers={'X-Project-Id': 'tenid'}
+        )
+        received = mock_get.mock_calls[-1][2]['fields']
+        self.assertNotIn('', received)
+        self.assertEqual(len(received), len(set(received)))
+
     def test_post(self):
         response = self.app.post_json(
             '/v2.0/ports.json',
