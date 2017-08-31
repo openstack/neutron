@@ -140,6 +140,10 @@ class NeutronPecanController(object):
             self._mandatory_fields = set([field for (field, data) in
                                           self.resource_info.items() if
                                           data.get('required_by_policy')])
+            if 'tenant_id' in self._mandatory_fields:
+                # ensure that project_id is queried in the database when
+                # tenant_id is required
+                self._mandatory_fields.add('project_id')
         else:
             self._mandatory_fields = set()
         self.allow_pagination = allow_pagination
