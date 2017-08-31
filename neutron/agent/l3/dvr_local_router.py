@@ -546,9 +546,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def _get_floatingips_bound_to_host(self, floating_ips):
         """Filter Floating IPs to be hosted on this agent."""
-        return [i for i in floating_ips
-                if (i['host'] == self.host or
-                    i.get('dest_host') == self.host)]
+        return [fip for fip in floating_ips
+                if self.host in (fip.get('host'), fip.get('dest_host'))]
 
     def process_external(self):
         if self.agent_conf.agent_mode != (
