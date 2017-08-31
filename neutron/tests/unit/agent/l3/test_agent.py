@@ -1191,8 +1191,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_external_gateway_on_agent(ext_gw_port)
             ri.connect_rtr_2_fip()
-            ri._get_floatingips_bound_to_host = mock.Mock(
-                return_value=True)
             self.assertTrue(fip_gw_port.called)
             self.assertTrue(create_fip.called)
             self.assertEqual(agent_gateway_port[0],
@@ -1210,6 +1208,64 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.assertTrue(fip_gw_port.called)
             create_fip.assert_called_once_with()
             self.assertEqual(1, ri.fip_ns.create_rtr_2_fip_link.call_count)
+
+    @mock.patch.object(lla.LinkLocalAllocator, '_write')
+    def test_floating_ip_not_configured_if_no_host_or_dest_host(
+        self, lla_write):
+        fake_network_id = _uuid()
+        subnet_id = _uuid()
+        fake_floatingips = {'floatingips': [
+            {'id': _uuid(),
+             'floating_ip_address': '20.0.0.3',
+             'fixed_ip_address': '192.168.0.1',
+             'floating_network_id': _uuid(),
+             'port_id': _uuid()}]}
+        agent_gateway_port = (
+            [{'fixed_ips': [
+                {'ip_address': '20.0.0.30',
+                 'prefixlen': 24,
+                 'subnet_id': subnet_id}],
+              'subnets': [
+                  {'id': subnet_id,
+                   'cidr': '20.0.0.0/24',
+                   'gateway_ip': '20.0.0.1'}],
+              'id': _uuid(),
+              'network_id': fake_network_id,
+              'mac_address': 'ca:fe:de:ad:be:ef'}]
+        )
+
+        router = l3_test_common.prepare_router_data(enable_snat=True)
+        router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
+        router[n_const.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
+        router['distributed'] = True
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
+        ext_gw_port = ri.router.get('gw_port')
+        ri.fip_ns = agent.get_fip_ns(ext_gw_port['network_id'])
+        agent.process_router_add = mock.Mock()
+        ri.fip_ns.create_rtr_2_fip_link = mock.Mock()
+        with mock.patch.object(ri, 'get_floating_ips') as fips, \
+                mock.patch.object(ri, 'get_floating_agent_gw_interface'
+                                  ) as fip_gw_port, \
+                mock.patch.object(ri,
+                                  '_add_floating_ip_rule') as add_rule, \
+                mock.patch.object(ri.fip_ns,
+                                  'create') as create_fip:
+            fips.return_value = fake_floatingips
+            fip_gw_port.return_value = agent_gateway_port[0]
+            ri.create_dvr_external_gateway_on_agent(ext_gw_port)
+            ri.connect_rtr_2_fip()
+            self.assertTrue(fip_gw_port.called)
+            self.assertTrue(create_fip.called)
+            self.assertEqual(agent_gateway_port[0],
+                             ri.fip_ns.agent_gateway_port)
+            self.assertTrue(ri.rtr_fip_connect)
+            # Now let us associate the fip to the router
+            status = ri.floating_ip_added_dist(fips, "192.168.0.1/32")
+            self.assertIsNone(status)
+            self.assertEqual(0, self.send_adv_notif.call_count)
+            self.assertFalse(add_rule.called)
 
     @mock.patch.object(lla.LinkLocalAllocator, '_write')
     def test_floating_ip_centralized(self, lla_write):
@@ -1370,8 +1426,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_external_gateway_on_agent(ext_gw_port)
             ri.connect_rtr_2_fip()
-            ri._get_floatingips_bound_to_host = mock.Mock(
-                return_value=True)
             self.assertTrue(fip_gw_port.called)
             self.assertEqual(agent_gateway_port[0],
                              ri.fip_ns.agent_gateway_port)
@@ -1421,8 +1475,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             fip_gw_port.return_value = agent_gateway_port[0]
             ri.create_dvr_external_gateway_on_agent(ext_gw_port)
             ri.connect_rtr_2_fip()
-            ri._get_floatingips_bound_to_host = mock.Mock(
-                return_value=True)
             self.assertTrue(fip_gw_port.called)
             self.assertEqual(agent_gateway_port[0],
                              ri.fip_ns.agent_gateway_port)

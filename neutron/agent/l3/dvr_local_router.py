@@ -100,6 +100,16 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if floating_ip_status == lib_constants.FLOATINGIP_STATUS_ACTIVE:
                 self.centralized_floatingips_set.add(fip_cidr)
             return floating_ip_status
+        if not self._check_if_floatingip_bound_to_host(fip):
+            # TODO(Swami): Need to figure out what status
+            # should be returned when the floating IP is
+            # not destined for this agent and if the floating
+            # IP is configured in a different compute host.
+            # This should not happen once we fix the server
+            # side code, but still a check to make sure if
+            # the floating IP is intended for this host should
+            # be done.
+            return
         floating_ip = fip['floating_ip_address']
         fixed_ip = fip['fixed_ip_address']
         self._add_floating_ip_rule(floating_ip, fixed_ip)
@@ -440,9 +450,6 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         pass
 
     def get_external_device_interface_name(self, ex_gw_port):
-        floating_ips = self.get_floating_ips()
-        if not self._get_floatingips_bound_to_host(floating_ips):
-            return self.get_snat_external_device_interface_name(ex_gw_port)
         fip_int = self.fip_ns.get_int_device_name(self.router_id)
         if ip_lib.device_exists(fip_int, namespace=self.fip_ns.get_name()):
             return self.fip_ns.get_rtr_ext_device_name(self.router_id)
@@ -544,10 +551,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             ext_scope_mark)
         return ports_scopemark
 
-    def _get_floatingips_bound_to_host(self, floating_ips):
-        """Filter Floating IPs to be hosted on this agent."""
-        return [fip for fip in floating_ips
-                if self.host in (fip.get('host'), fip.get('dest_host'))]
+    def _check_if_floatingip_bound_to_host(self, fip):
+        """Check if the floating IP is bound to this host."""
+        return self.host in (fip.get('host'), fip.get('dest_host'))
 
     def process_external(self):
         if self.agent_conf.agent_mode != (
