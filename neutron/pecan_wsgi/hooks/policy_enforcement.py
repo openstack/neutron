@@ -211,10 +211,8 @@ class PolicyHook(hooks.PecanHook):
         # This routine will remove the fields that were requested to the
         # plugin for policy evaluation but were not specified in the
         # API request
-        user_fields = request.params.getall('fields')
         return dict(item for item in data.items()
-                    if (item[0] not in fields_to_strip and
-                        (not user_fields or item[0] in user_fields)))
+                    if item[0] not in fields_to_strip)
 
     def _exclude_attributes_by_policy(self, context, controller, resource,
                                       collection, data):
