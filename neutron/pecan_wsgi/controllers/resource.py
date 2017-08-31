@@ -58,7 +58,6 @@ class ItemController(utils.NeutronPecanController):
     def put(self, *args, **kwargs):
         neutron_context = request.context['neutron_context']
         resources = request.context['resources']
-        # TODO(kevinbenton): bulk?
         # Bulk update is not supported, 'resources' always contains a single
         # elemenet
         data = {self.resource: resources[0]}

@@ -448,6 +448,47 @@ class TestResourceController(TestRootController):
         self.assertIn('ports', json_body)
         self.assertEqual(2, len(json_body['ports']))
 
+    def test_emulated_bulk_create(self):
+        self.plugin._FORCE_EMULATED_BULK = True
+        response = self.app.post_json(
+            '/v2.0/ports.json',
+            params={'ports': [{'network_id': self.port['network_id'],
+                             'admin_state_up': True,
+                             'tenant_id': 'tenid'},
+                             {'network_id': self.port['network_id'],
+                              'admin_state_up': True,
+                              'tenant_id': 'tenid'}]
+                    },
+            headers={'X-Project-Id': 'tenid'})
+        self.assertEqual(response.status_int, 201)
+        json_body = jsonutils.loads(response.body)
+        self.assertIn('ports', json_body)
+        self.assertEqual(2, len(json_body['ports']))
+
+    def test_emulated_bulk_create_rollback(self):
+        self.plugin._FORCE_EMULATED_BULK = True
+        response = self.app.post_json(
+            '/v2.0/ports.json',
+            params={'ports': [{'network_id': self.port['network_id'],
+                             'admin_state_up': True,
+                             'tenant_id': 'tenid'},
+                             {'network_id': self.port['network_id'],
+                              'admin_state_up': True,
+                              'tenant_id': 'tenid'},
+                             {'network_id': 'bad_net_id',
+                              'admin_state_up': True,
+                              'tenant_id': 'tenid'}]
+                    },
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        self.assertEqual(response.status_int, 400)
+        response = self.app.get(
+            '/v2.0/ports.json',
+            headers={'X-Project-Id': 'tenid'})
+        # all ports should be rolled back from above so we are just left
+        # with the one created in setup
+        self.assertEqual(1, len(jsonutils.loads(response.body)['ports']))
+
     def test_bulk_create_one_item(self):
         response = self.app.post_json(
             '/v2.0/ports.json',
