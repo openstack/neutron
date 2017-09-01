@@ -83,7 +83,7 @@ Controller node
    * Disable service plug-ins because provider networks do not require
      any. However, this breaks portions of the dashboard that manage
      the Networking service. See the
-     `Ocata Install Tutorials and Guides <https://docs.openstack.org/project-install-guide/ocata>`__
+     `Pike Install Tutorials and Guides <../install/>`__
      for more information.
 
      .. code-block:: ini

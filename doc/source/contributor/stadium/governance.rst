@@ -265,7 +265,7 @@ Checklist
   For release documentation related to Neutron, please check the
   :doc:`/contributor/policies/index`.
   Once, everything is set up and your project is released, make sure
-  you see an entry on the release page (e.g. `Ocata <http://releases.openstack.org/ocata/index.html#other-projects>`_.
+  you see an entry on the release page (e.g. `Pike <http://releases.openstack.org/pike/index.html#other-projects>`_.
   Make sure you release according to the project declared release
   `model <http://governance.openstack.org/reference/projects/neutron.html#deliverables-and-tags>`_.
 

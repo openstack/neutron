@@ -36,4 +36,4 @@ Configuration
 .. note::
 
    For general configuration, see the `Configuration Reference
-   <https://docs.openstack.org/ocata/config-reference/>`_.
+   <../configuration/>`_.
