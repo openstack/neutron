@@ -61,6 +61,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'service_plugins': env_desc.service_plugins,
                 'auth_strategy': 'noauth',
                 'debug': 'True',
+                'global_physnet_mtu': env_desc.global_mtu,
                 'agent_down_time': str(env_desc.agent_down_time),
                 'transport_url':
                     'rabbit://%(user)s:%(password)s@%(host)s:5672/%(vhost)s' %

@@ -1937,7 +1937,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # change in segments could affect resulting network mtu, so let's
         # recalculate it
         network_db = self._get_network(context, network_id)
-        network_db.mtu = self._get_network_mtu(network_db)
+        network_db.mtu = self._get_network_mtu(network_db,
+            validate=(event != events.PRECOMMIT_DELETE))
         network_db.save(session=context.session)
 
         try:
