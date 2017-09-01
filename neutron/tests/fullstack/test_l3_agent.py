@@ -232,9 +232,12 @@ class TestHAL3Agent(TestL3Agent):
 
         tenant_id = uuidutils.generate_uuid()
         router = self.safe_client.create_router(tenant_id, ha=True)
-        agents = self.client.list_l3_agent_hosting_routers(router['id'])
-        self.assertEqual(2, len(agents['agents']),
-                         'HA router must be scheduled to both nodes')
+
+        common_utils.wait_until_true(
+            lambda:
+            len(self.client.list_l3_agent_hosting_routers(
+                router['id'])['agents']) == 2,
+            timeout=90)
 
         common_utils.wait_until_true(
             functools.partial(
