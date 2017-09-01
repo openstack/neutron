@@ -362,9 +362,10 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'id': _uuid(),
             'port_id': _uuid(),
             'router_id': 'foo_router_id',
-            'host': hostid
         }
-        if not hostid:
+        if hostid is not None:
+            floatingip['host'] = hostid
+        else:
             hostid = 'not_my_host_id'
         routers = {
             'foo_router_id': router
@@ -388,7 +389,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                              hostid, agent)
         return (router, floatingip)
 
-    def test_floatingip_on_port_not_host(self):
+    def test_floatingip_on_port_no_host_key(self):
         router, fip = self._floatingip_on_port_test_setup(None)
 
         self.assertNotIn(const.FLOATINGIP_KEY, router)
