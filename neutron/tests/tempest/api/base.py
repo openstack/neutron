@@ -95,6 +95,7 @@ class BaseNetworkTest(test.BaseTestCase):
         cls.networks = []
         cls.admin_networks = []
         cls.subnets = []
+        cls.admin_subnets = []
         cls.ports = []
         cls.routers = []
         cls.floating_ips = []
@@ -157,6 +158,10 @@ class BaseNetworkTest(test.BaseTestCase):
             # Clean up subnets
             for subnet in cls.subnets:
                 cls._try_delete_resource(cls.client.delete_subnet,
+                                         subnet['id'])
+            # Clean up admin subnets
+            for subnet in cls.admin_subnets:
+                cls._try_delete_resource(cls.admin_client.delete_subnet,
                                          subnet['id'])
             # Clean up networks
             for network in cls.networks:
@@ -297,7 +302,10 @@ class BaseNetworkTest(test.BaseTestCase):
             message = 'Available CIDR for subnet creation could not be found'
             raise ValueError(message)
         subnet = body['subnet']
-        cls.subnets.append(subnet)
+        if client is cls.client:
+            cls.subnets.append(subnet)
+        else:
+            cls.admin_subnets.append(subnet)
         return subnet
 
     @classmethod
