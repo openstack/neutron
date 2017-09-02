@@ -123,10 +123,10 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
     def _update_port_for_test(self, port, new_dns_name=NEWDNSNAME,
                               new_dns_domain=None, **kwargs):
         mock_client.reset_mock()
-        records_v4 = [ip['ip_address'] for ip in port['fixed_ips']
-                      if netaddr.IPAddress(ip['ip_address']).version == 4]
-        records_v6 = [ip['ip_address'] for ip in port['fixed_ips']
-                      if netaddr.IPAddress(ip['ip_address']).version == 6]
+        ip_addresses = [netaddr.IPAddress(ip['ip_address'])
+                        for ip in port['fixed_ips']]
+        records_v4 = [ip for ip in ip_addresses if ip.version == 4]
+        records_v6 = [ip for ip in ip_addresses if ip.version == 6]
         recordsets = []
         if records_v4:
             recordsets.append({'id': V4UUID, 'records': records_v4})
