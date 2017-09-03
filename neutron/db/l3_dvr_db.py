@@ -114,7 +114,8 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
     def _handle_distributed_migration(self, resource, event, trigger, context,
-                                      router_id, router, router_db, **kwargs):
+                                      router_id, router, router_db, old_router,
+                                      **kwargs):
         """Event handler for router update migration to distributed."""
         if not self._validate_router_migration(context, router_db, router):
             return
@@ -124,17 +125,25 @@ class DVRResourceOperationHandler(object):
             router.get('distributed') is True)
 
         if migrating_to_distributed:
+            if old_router['ha']:
+                old_owner = const.DEVICE_OWNER_HA_REPLICATED_INT
+            else:
+                old_owner = const.DEVICE_OWNER_ROUTER_INTF
             self.l3plugin._migrate_router_ports(
                 context, router_db,
-                old_owner=const.DEVICE_OWNER_ROUTER_INTF,
+                old_owner=old_owner,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
             self.l3plugin.set_extra_attr_value(context, router_db,
                                                'distributed', True)
         else:
+            if router.get('ha'):
+                new_owner = const.DEVICE_OWNER_HA_REPLICATED_INT
+            else:
+                new_owner = const.DEVICE_OWNER_ROUTER_INTF
             self.l3plugin._migrate_router_ports(
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_DVR_INTERFACE,
-                new_owner=const.DEVICE_OWNER_ROUTER_INTF)
+                new_owner=new_owner)
             self.l3plugin.set_extra_attr_value(context, router_db,
                                                'distributed', False)
 

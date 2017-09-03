@@ -981,6 +981,68 @@ class L3HAModeDbTestCase(L3HATestFramework):
         created_subnet = plugin.create_subnet(ctx, subnet)
         return created_subnet
 
+    def _test_device_owner(self, router_id, dvr, ha):
+        if dvr:
+            device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
+        elif ha:
+            device_owner = constants.DEVICE_OWNER_HA_REPLICATED_INT
+        else:
+            device_owner = constants.DEVICE_OWNER_ROUTER_INTF
+        filters = {'device_id': [router_id], 'device_owner': [device_owner]}
+        ports = self.core_plugin.get_ports(self.admin_ctx, filters=filters)
+        self.assertEqual(1, len(ports))
+
+    def _test_device_owner_during_router_migration(
+            self, before_ha=False, before_dvr=False,
+            after_ha=False, after_dvr=False):
+        # As HA router is supported only in this test file,
+        # we test all migrations here
+        router = self._create_router(
+            ctx=self.admin_ctx, ha=before_ha, distributed=before_dvr)
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(
+            self.core_plugin, self.admin_ctx, network_id)
+        interface_info = {'subnet_id': subnet['id']}
+        self.plugin.add_router_interface(
+            self.admin_ctx, router['id'], interface_info)
+        self._test_device_owner(router['id'], before_dvr, before_ha)
+
+        self.plugin.update_router(
+            self.admin_ctx, router['id'],
+            {'router': {'admin_state_up': False}})
+        self.plugin.update_router(
+            self.admin_ctx, router['id'],
+            {'router': {'distributed': after_dvr, 'ha': after_ha}})
+        self._test_device_owner(router['id'], after_dvr, after_ha)
+
+    def test_device_owner_during_router_migration_from_dvr_to_ha(self):
+        self._test_device_owner_during_router_migration(
+            before_dvr=True, after_ha=True)
+
+    def test_device_owner_during_router_migration_from_dvr_to_dvrha(self):
+        self._test_device_owner_during_router_migration(
+            before_dvr=True, after_ha=True, after_dvr=True)
+
+    def test_device_owner_during_router_migration_from_dvr_to_legacy(self):
+        self._test_device_owner_during_router_migration(before_dvr=True)
+
+    def test_device_owner_during_router_migration_from_ha_to_legacy(self):
+        self._test_device_owner_during_router_migration(before_ha=True)
+
+    def test_device_owner_during_router_migration_from_ha_to_dvr(self):
+        self._test_device_owner_during_router_migration(
+            before_ha=True, after_dvr=True)
+
+    def test_device_owner_during_router_migration_from_ha_to_dvrha(self):
+        self._test_device_owner_during_router_migration(
+            before_ha=True, after_ha=True, after_dvr=True)
+
+    def test_device_owner_during_router_migration_from_legacy_to_dvr(self):
+        self._test_device_owner_during_router_migration(after_dvr=True)
+
+    def test_device_owner_during_router_migration_from_legacy_to_ha(self):
+        self._test_device_owner_during_router_migration(after_ha=True)
+
     def test_remove_ha_in_use(self):
         router = self._create_router(ctx=self.admin_ctx)
         network_id = self._create_network(self.core_plugin, self.admin_ctx)
