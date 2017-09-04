@@ -43,7 +43,12 @@ function load_conf_hook {
 # Tweak gate configuration for our rally scenarios
 function load_rc_for_rally {
     for file in $(ls $RALLY_EXTRA_DIR/*.setup); do
-        $DSCONF merge_lc $LOCAL_CONF $file
+        tmpfile=$(tempfile)
+        config=$(cat $file)
+        echo "[[local|localrc]]" > $tmpfile
+        $DSCONF setlc_raw $tmpfile "$config"
+        $DSCONF merge_lc $LOCAL_CONF $tmpfile
+        rm -f $tmpfile
     done
 }
 
