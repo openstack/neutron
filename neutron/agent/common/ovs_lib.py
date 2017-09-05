@@ -692,6 +692,8 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbps
 
     def delete_egress_bw_limit_for_port(self, port_name):
+        if not self.port_exists(port_name):
+            return
         self._set_egress_bw_limit_for_port(
             port_name, 0, 0)
 
@@ -781,6 +783,11 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbit
 
     def delete_ingress_bw_limit_for_port(self, port_name):
+        if not self.port_exists(port_name):
+            return
+        self._delete_ingress_bw_limit_for_port(port_name)
+
+    def _delete_ingress_bw_limit_for_port(self, port_name):
         qos = self._find_qos(port_name)
         queue = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
         with self.ovsdb.transaction(check_error=True) as txn:
