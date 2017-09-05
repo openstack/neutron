@@ -190,12 +190,31 @@ class BaseOVS(object):
         return {k: _cfg.get(k, OVS_DEFAULT_CAPS[k]) for k in OVS_DEFAULT_CAPS}
 
 
+# Map from version string to on-the-wire protocol version encoding:
+OF_PROTOCOL_TO_VERSION = {
+    constants.OPENFLOW10: 1,
+    constants.OPENFLOW11: 2,
+    constants.OPENFLOW12: 3,
+    constants.OPENFLOW13: 4,
+    constants.OPENFLOW14: 5
+}
+
+
+def version_from_protocol(protocol):
+    if protocol not in OF_PROTOCOL_TO_VERSION:
+        raise Exception("unknown OVS protocol string, cannot compare: %s, "
+                        "(known: %s)" % (protocol,
+                                         list(OF_PROTOCOL_TO_VERSION)))
+    return OF_PROTOCOL_TO_VERSION[protocol]
+
+
 class OVSBridge(BaseOVS):
     def __init__(self, br_name, datapath_type=constants.OVS_DATAPATH_SYSTEM):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
         self._default_cookie = generate_random_cookie()
+        self._highest_protocol_needed = constants.OPENFLOW10
 
     @property
     def default_cookie(self):
@@ -238,6 +257,13 @@ class OVSBridge(BaseOVS):
         self.ovsdb.db_add('Bridge', self.br_name,
                           'protocols', *protocols).execute(check_error=True)
 
+    def use_at_least_protocol(self, protocol):
+        """Calls to ovs-ofctl will use a protocol version >= 'protocol'"""
+        self.add_protocols(protocol)
+        self._highest_protocol_needed = max(self._highest_protocol_needed,
+                                            protocol,
+                                            key=version_from_protocol)
+
     def create(self, secure_mode=False):
         with self.ovsdb.transaction() as txn:
             txn.add(
@@ -249,7 +275,7 @@ class OVSBridge(BaseOVS):
             # transactions
             txn.add(
                 self.ovsdb.db_add('Bridge', self.br_name,
-                                  'protocols', constants.OPENFLOW10))
+                                  'protocols', self._highest_protocol_needed))
             if secure_mode:
                 txn.add(self.ovsdb.set_fail_mode(self.br_name,
                                                  FAILMODE_SECURE))
@@ -283,7 +309,9 @@ class OVSBridge(BaseOVS):
         self.ovsdb.del_port(port_name, self.br_name).execute()
 
     def run_ofctl(self, cmd, args, process_input=None):
-        full_args = ["ovs-ofctl", cmd, self.br_name] + args
+        full_args = ["ovs-ofctl", cmd,
+                     "-O", self._highest_protocol_needed,
+                     self.br_name] + args
         # TODO(kevinbenton): This error handling is really brittle and only
         # detects one specific type of failure. The callers of this need to
         # be refactored to expect errors so we can re-raise and they can
@@ -424,12 +452,12 @@ class OVSBridge(BaseOVS):
         flows = self.run_ofctl("dump-flows", [flow_str])
         if flows:
             retval = '\n'.join(item for item in flows.splitlines()
-                               if 'NXST' not in item)
+                               if is_a_flow_line(item))
         return retval
 
     def dump_all_flows(self):
         return [f for f in self.run_ofctl("dump-flows", []).splitlines()
-                if 'NXST' not in f]
+                if is_a_flow_line(f)]
 
     def deferred(self, **kwargs):
         return DeferredOVSBridge(self, **kwargs)
@@ -888,3 +916,17 @@ def check_cookie_mask(cookie):
         return cookie + '/-1'
     else:
         return cookie
+
+
+def is_a_flow_line(line):
+    # this is used to filter out from ovs-ofctl dump-flows the lines that
+    # are not flow descriptions but mere indications of the type of openflow
+    # message that was used ; e.g.:
+    #
+    # # ovs-ofctl dump-flows br-int
+    # NXST_FLOW reply (xid=0x4):
+    #  cookie=0xb7dff131a697c6a5, duration=2411726.809s, table=0, ...
+    #  cookie=0xb7dff131a697c6a5, duration=2411726.786s, table=23, ...
+    #  cookie=0xb7dff131a697c6a5, duration=2411726.760s, table=24, ...
+    #
+    return 'NXST' not in line and 'OFPST' not in line
