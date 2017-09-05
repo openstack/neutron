@@ -183,8 +183,8 @@ class SecurityGroupAgentRpcCallbackMixin(object):
     """A mix-in that enable SecurityGroup support in agent implementations.
 
     This class implements the server side of an rpc interface.  The client side
-    can be found in SecurityGroupServerRpcApi. For more information on changing
-    rpc interfaces, see doc/source/devref/rpc_api.rst.
+    can be found in SecurityGroupAgentRpcApiMixin. For more information on
+    changing rpc interfaces, see doc/source/devref/rpc_api.rst.
 
     The sg_agent reference implementation is available in neutron/agent
     """
