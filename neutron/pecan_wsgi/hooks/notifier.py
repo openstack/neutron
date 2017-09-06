@@ -100,5 +100,6 @@ class NotifierHook(hooks.PecanHook):
 
         if action == 'delete':
             resource_id = state.request.context.get('resource_id')
-            result = {resource_name + '_id': resource_id}
+            result[resource_name + '_id'] = resource_id
+
         self._notifier.info(neutron_context, notifier_method, result)
