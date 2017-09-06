@@ -9,17 +9,14 @@ must create a database, service credentials, and API endpoints.
 
 #. To create the database, complete these steps:
 
+   * Use the database access client to connect to the database
+     server as the ``root`` user:
 
-* Use the database access client to connect to the database
-  server as the ``root`` user:
+     .. code-block:: console
 
-  .. code-block:: console
+        # mysql
 
-     # mysql
-
-  .. end
-
-
+     .. end
 
    * Create the ``neutron`` database:
 
