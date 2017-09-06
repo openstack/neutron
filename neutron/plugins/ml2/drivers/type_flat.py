@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import exceptions as exc
+from neutron_lib.objects import exceptions as obj_base
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log
@@ -22,7 +23,6 @@ from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import api as db_api
-from neutron.objects import exceptions as obj_base
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import helpers

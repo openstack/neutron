@@ -14,6 +14,7 @@
 
 import functools
 
+from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
@@ -25,7 +26,6 @@ from neutron.db import common_db_mixin
 from neutron.db import standard_attr
 from neutron.db import tag_db as tag_methods
 from neutron.extensions import tagging
-from neutron.objects import exceptions as obj_exc
 from neutron.objects import tag as tag_obj
 
 

@@ -15,13 +15,13 @@
 
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
+from neutron_lib.objects import exceptions
 
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.extensions import allowedaddresspairs as addr_pair
-from neutron.objects import exceptions
 from neutron.objects.port.extensions import (allowedaddresspairs
     as obj_addr_pair)
 
