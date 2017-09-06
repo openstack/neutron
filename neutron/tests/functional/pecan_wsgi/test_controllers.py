@@ -359,6 +359,17 @@ class TestResourceController(TestRootController):
     def test_get_collection_without_fields_selector(self):
         self._test_get_collection_with_fields_selector(fields=[])
 
+    def test_project_id_in_mandatory_fields(self):
+        # ports only specifies that tenant_id is mandatory, but project_id
+        # should still be passed to the plugin.
+        mock_get = mock.patch.object(self.plugin, 'get_ports',
+                                     return_value=[]).start()
+        self.app.get(
+            '/v2.0/ports.json?fields=id',
+            headers={'X-Project-Id': 'tenid'}
+        )
+        self.assertIn('project_id', mock_get.mock_calls[-1][2]['fields'])
+
     def test_get_item_with_fields_selector(self):
         item_resp = self.app.get(
             '/v2.0/ports/%s.json?fields=id&fields=name' % self.port['id'],
