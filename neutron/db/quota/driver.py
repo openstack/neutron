@@ -93,6 +93,8 @@ class DbQuotaDriver(object):
                 used = resource.count_used(context, tenant_id,
                                            resync_usage=False)
             else:
+                # NOTE(ihrachys) .count won't use the plugin we pass, but we
+                # pass it regardless to keep the quota driver API intact
                 plugins = directory.get_plugins()
                 plugin = plugins.get(key, plugins[constants.CORE])
                 used = resource.count(context, plugin, tenant_id)
