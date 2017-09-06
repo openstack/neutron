@@ -26,13 +26,29 @@ following table shows the attributes available for each one of these resources:
      - dns_domain
    * - Ports
      - Yes
-     - No
+     - Yes
    * - Networks
      - No
      - Yes
    * - Floating IPs
      - Yes
      - Yes
+
+.. note::
+   The ``DNS Integration`` extension enables all the attribute and resource
+   combinations shown in the previous table, except for ``dns_domain`` for
+   ports, which requires the ``dns_domain for ports`` extension.
+
+.. note::
+   Since the ``DNS Integration`` extension is a subset of
+   ``dns_domain for ports``, if ``dns_domain`` functionality for ports is
+   required, only the latter extension has to be configured.
+
+.. note::
+   When the ``dns_domain for ports`` extension is configured, ``DNS
+   Integration`` is also included when the Neutron server responds to a request
+   to list the active API extensions. This preserves backwards API
+   compatibility.
 
 .. _config-dns-int-dns-resolution:
 
@@ -50,13 +66,15 @@ the internal DNS. To enable this functionality, do the following:
 
       dns_domain = example.org.
 
-2. Add ``dns`` to ``extension_drivers`` in the ``[ml2]`` section of
-   ``/etc/neutron/plugins/ml2/ml2_conf.ini``. The following is an example:
+2. Add ``dns`` (for the ``DNS Integration`` extension) or ``dns_domain_ports``
+   (for the ``dns_domain for ports`` extension) to ``extension_drivers`` in the
+   ``[ml2]`` section of ``/etc/neutron/plugins/ml2/ml2_conf.ini``. The
+   following is an example:
 
    .. code-block:: console
 
       [ml2]
-      extension_drivers = port_security,dns
+      extension_drivers = port_security,dns_domain_ports
 
 After re-starting the ``neutron-server``, users will be able to assign a
 ``dns_name`` attribute to their ports.
@@ -231,8 +249,9 @@ Use case 1: Ports are published directly in the external DNS service
 --------------------------------------------------------------------
 
 In this case, the user is creating ports or booting instances on a network
-that is accessible externally. The steps to publish the port in the external
-DNS service are the following:
+that is accessible externally. If the user wants to publish a port in the
+external DNS service in a zone specified by the ``dns_domain`` attribute of the
+network, these are the steps to be taken:
 
 #. Assign a valid domain name to the network's ``dns_domain`` attribute. This
    name must end with a period (``.``).
@@ -409,6 +428,75 @@ value of ipv6_ptr_zone_prefix_size is 116. For more details, see
 
 See :ref:`config-dns-int-ext-serv` for detailed instructions on how
 to create the externally accessible network.
+
+Alternatively, if the ``dns_domain for ports`` extension has been configured,
+the user can create a port specifying a non-blank value in its
+``dns_domain`` attribute, as shown here:
+
+.. code-block:: console
+
+   $ neutron port-create 37aaff3a-6047-45ac-bf4f-a825e56fd2b3 \
+     --dns-name my-vm --dns_domain port-domain.org.
+   Created a new port:
+   +-----------------------+---------------------------------------------------------------------------------------+
+   | Field                 | Value                                                                                 |
+   +-----------------------+---------------------------------------------------------------------------------------+
+   | admin_state_up        | True                                                                                  |
+   | allowed_address_pairs |                                                                                       |
+   | binding:vnic_type     | normal                                                                                |
+   | created_at            | 2017-08-16T22:05:57Z                                                                  |
+   | description           |                                                                                       |
+   | device_id             |                                                                                       |
+   | device_owner          |                                                                                       |
+   | dns_assignment        | {"hostname": "my-vm", "ip_address": "203.0.113.9", "fqdn": "my-vm.example.org."}      |
+   |                       | {"hostname": "my-vm", "ip_address": "2001:db8:10::9", "fqdn": "my-vm.example.org."}   |
+   | dns_domain            | port-domain.org.                                                                      |
+   | dns_name              | my-vm                                                                                 |
+   | extra_dhcp_opts       |                                                                                       |
+   | fixed_ips             | {"subnet_id": "277eca5d-9869-474b-960e-6da5951d09f7", "ip_address": "203.0.113.9"}    |
+   |                       | {"subnet_id": "eab47748-3f0a-4775-a09f-b0c24bb64bc4", "ip_address": "2001:db8:10::9"} |
+   | id                    | 422134a8-1088-458d-adbd-880863d8c07c                                                  |
+   | ip_allocation         | immediate                                                                             |
+   | mac_address           | fa:16:3e:fb:d6:24                                                                     |
+   | name                  |                                                                                       |
+   | network_id            | 37aaff3a-6047-45ac-bf4f-a825e56fd2b3                                                  |
+   | port_security_enabled | True                                                                                  |
+   | project_id            | d5660cb1e6934612a01b4fb2fb630725                                                      |
+   | revision_number       | 5                                                                                     |
+   | security_groups       | 07b21ad4-edb6-420b-bd76-9bb4aab0d135                                                  |
+   | status                | DOWN                                                                                  |
+   | tags                  |                                                                                       |
+   | tenant_id             | d5660cb1e6934612a01b4fb2fb630725                                                      |
+   | updated_at            | 2017-08-16T22:05:58Z                                                                  |
+   +-----------------------+---------------------------------------------------------------------------------------+
+
+In this case, the port's ``dns_name`` (``my-vm``) will be published in the
+``port-domain.org.`` zone, as shown here:
+
+.. code-block:: console
+
+   $ designate record-list port-domain.org.
+   +--------------------------------------+------+-------------------------+-----------------------------------------------------------------------+
+   | id                                   | type | name                    | data                                                                  |
+   +--------------------------------------+------+-------------------------+-----------------------------------------------------------------------+
+   | 03e5a35b-d984-4d10-942a-2de8ccb9b941 | SOA  | port-domain.org.        | ns1.devstack.org. malavall.us.ibm.com. 1503272259 3549 600 86400 3600 |
+   | d2dd1dfe-531d-4fea-8c0e-f5b559942ac5 | NS   | port-domain.org.        | ns1.devstack.org.                                                     |
+   | 67a8e83d-7e3c-4fb1-9261-0481318bb7b5 | A    | my-vm.port-domain.org.  | 203.0.113.9                                                           |
+   | 5a4f671c-9969-47aa-82e1-e05754021852 | AAAA | my-vm.port-domain.org.  | 2001:db8:10::9                                                        |
+   +--------------------------------------+------+-------------------------+-----------------------------------------------------------------------+
+
+.. note::
+   If both the port and its network have a valid non-blank string assigned to
+   their ``dns_domain`` attributes, the port's ``dns_domain`` takes precedence
+   over the network's.
+
+.. note::
+   The name assigned to the port's ``dns_domain`` attribute must end with a
+   period (``.``).
+
+.. note::
+   In the above example, the ``port-domain.org.`` zone must be created before
+   Neutron can publish any port data to it.
 
 Use case 2: Floating IPs are published with associated port DNS attributes
 --------------------------------------------------------------------------
