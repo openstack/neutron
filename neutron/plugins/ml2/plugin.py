@@ -1379,8 +1379,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     bound_mech_contexts.append(dist_mech_context)
             else:
                 self.mechanism_manager.update_port_precommit(mech_context)
-                self._setup_dhcp_agent_provisioning_component(
-                    context, updated_port)
+                if any(updated_port[k] != original_port[k]
+                       for k in ('fixed_ips', 'mac_address')):
+                    # only add block if fixed_ips or mac_address changed
+                    self._setup_dhcp_agent_provisioning_component(
+                        context, updated_port)
                 bound_mech_contexts.append(mech_context)
 
         # Notifications must be sent after the above transaction is complete
