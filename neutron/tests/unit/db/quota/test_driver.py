@@ -29,7 +29,7 @@ from neutron.tests.unit import testlib_api
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 
-def _count_resource(context, plugin, resource, tenant_id):
+def _count_resource(context, resource, tenant_id):
     """A fake counting function to determine current used counts"""
     if resource[-1] == 's':
         resource = resource[:-1]
