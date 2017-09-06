@@ -1,0 +1,15 @@
+---
+features:
+  - The DSCP value for outer headers in openvswitch overlay tunnel ports can
+    now be set through a configuration option ``dscp`` for both OVS and
+    linuxbridge agents.
+  - DSCP can also be inherited from the inner header through a new
+    boolean configuration option ``dscp_inherit`` for both openvswitch and
+    linuxbridge. If this option is set to true, then the value of ``dscp``
+    will be ignored.
+deprecations:
+  - the ``tos`` configuration option in vxlan group for linuxbridge is
+    deprecated and replaced with the more precise option ``dscp``. The
+    TOS value is made of DSCP and ECN bits. It is not possible to set the
+    ECN value through the TOS value, and ECN is always inherited from the
+    inner in case of tunneling.

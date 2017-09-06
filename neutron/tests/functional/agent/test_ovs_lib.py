@@ -223,6 +223,21 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         options = self.ovs.db_get_val('Interface', port_name, 'options')
         self.assertEqual("12345", options['dst_port'])
 
+    def test_add_tunnel_port_tos(self):
+        attrs = {
+            'remote_ip': self.get_test_net_address(1),
+            'local_ip': self.get_test_net_address(2),
+            'tos': 'inherit',
+        }
+        port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
+        self.br.add_tunnel_port(port_name, attrs['remote_ip'],
+                                attrs['local_ip'], tos=attrs['tos'])
+        self.assertEqual('gre',
+                         self.ovs.db_get_val('Interface', port_name, 'type'))
+        options = self.ovs.db_get_val('Interface', port_name, 'options')
+        for attr, val in attrs.items():
+            self.assertEqual(val, options[attr])
+
     def test_add_patch_port(self):
         local = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         peer = 'remotepeer'

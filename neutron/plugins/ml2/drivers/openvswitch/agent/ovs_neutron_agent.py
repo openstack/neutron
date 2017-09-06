@@ -195,6 +195,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.vxlan_udp_port = agent_conf.vxlan_udp_port
         self.dont_fragment = agent_conf.dont_fragment
         self.tunnel_csum = agent_conf.tunnel_csum
+        self.tos = ('inherit'
+                    if agent_conf.dscp_inherit
+                    else (int(agent_conf.dscp) << 2
+                          if agent_conf.dscp
+                          else None))
         self.tun_br = None
         self.patch_int_ofport = constants.OFPORT_INVALID
         self.patch_tun_ofport = constants.OFPORT_INVALID
@@ -1460,7 +1465,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                     tunnel_type,
                                     self.vxlan_udp_port,
                                     self.dont_fragment,
-                                    self.tunnel_csum)
+                                    self.tunnel_csum,
+                                    self.tos)
         if ofport == ovs_lib.INVALID_OFPORT:
             LOG.error("Failed to set-up %(type)s tunnel port to %(ip)s",
                       {'type': tunnel_type, 'ip': remote_ip})

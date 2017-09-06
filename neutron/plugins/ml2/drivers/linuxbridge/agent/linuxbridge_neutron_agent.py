@@ -328,8 +328,18 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                     'srcport': (cfg.CONF.VXLAN.udp_srcport_min,
                                 cfg.CONF.VXLAN.udp_srcport_max),
                     'dstport': cfg.CONF.VXLAN.udp_dstport,
-                    'ttl': cfg.CONF.VXLAN.ttl,
-                    'tos': cfg.CONF.VXLAN.tos}
+                    'ttl': cfg.CONF.VXLAN.ttl}
+            if cfg.CONF.VXLAN.tos:
+                args['tos'] = cfg.CONF.VXLAN.tos
+                if cfg.CONF.AGENT.dscp or cfg.CONF.AGENT.dscp_inherit:
+                    LOG.warning('The deprecated tos option in group VXLAN '
+                                'is set and takes precedence over dscp and '
+                                'dscp_inherit in group AGENT.')
+            elif cfg.CONF.AGENT.dscp_inherit:
+                args['tos'] = 'inherit'
+            elif cfg.CONF.AGENT.dscp:
+                args['tos'] = int(cfg.CONF.AGENT.dscp) << 2
+
             if self.vxlan_mode == lconst.VXLAN_MCAST:
                 args['group'] = self.get_vxlan_group(segmentation_id)
             if cfg.CONF.VXLAN.l2_population:
