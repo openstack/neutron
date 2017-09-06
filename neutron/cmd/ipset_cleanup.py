@@ -43,6 +43,7 @@ def remove_iptables_reference(ipset):
 
     if ipset in iptables_save:
         cmd = ['iptables'] if 'IPv4' in ipset else ['ip6tables']
+        cmd += ['-w', '10']  # wait for xlock release
         LOG.info(_LI("Removing iptables rule for IPset: %s"), ipset)
         for rule in iptables_save.splitlines():
             if '--match-set %s ' % ipset in rule and rule.startswith('-A'):

@@ -64,6 +64,10 @@ MAX_CHAIN_LEN_NOWRAP = 28
 IPTABLES_ERROR_LINES_OF_CONTEXT = 5
 
 
+# RESOURCE_PROBLEM in include/xtables.h
+XTABLES_RESOURCE_PROBLEM_CODE = 4
+
+
 def comment_rule(rule, comment):
     if not cfg.CONF.AGENT.comment_iptables_rules or not comment:
         return rule
@@ -436,6 +440,9 @@ class IptablesManager(object):
         if self.namespace:
             lock_name += '-' + self.namespace
 
+        # NOTE(ihrachys) we may get rid of the lock once all supported
+        # platforms get iptables with 999eaa241212d3952ddff39a99d0d55a74e3639e
+        # ("iptables-restore: support acquiring the lock.")
         with lockutils.lock(lock_name, utils.SYNCHRONIZED_PREFIX, True):
             first = self._apply_synchronized()
             if not cfg.CONF.AGENT.debug_iptables_rules:
@@ -454,6 +461,42 @@ class IptablesManager(object):
         if self.namespace:
             args = ['ip', 'netns', 'exec', self.namespace] + args
         return self.execute(args, run_as_root=True).split('\n')
+
+    @property
+    def xlock_wait_time(self):
+        # give agent some time to report back to server
+        return str(int(cfg.CONF.AGENT.report_interval / 3.0))
+
+    def _run_restore(self, args, commands, lock=False):
+        args = args[:]
+        if lock:
+            args += ['-w', self.xlock_wait_time]
+        try:
+            self.execute(args, process_input='\n'.join(commands),
+                         run_as_root=True)
+        except RuntimeError as error:
+            return error
+
+    def _log_restore_err(self, err, commands):
+        try:
+            line_no = int(re.search(
+                'iptables-restore: line ([0-9]+?) failed',
+                str(err)).group(1))
+            context = IPTABLES_ERROR_LINES_OF_CONTEXT
+            log_start = max(0, line_no - context)
+            log_end = line_no + context
+        except AttributeError:
+            # line error wasn't found, print all lines instead
+            log_start = 0
+            log_end = len(commands)
+        log_lines = ('%7d. %s' % (idx, l)
+                     for idx, l in enumerate(
+                         commands[log_start:log_end],
+                         log_start + 1)
+                     )
+        LOG.error(_LE("IPTablesManager.apply failed to apply the "
+                      "following set of iptables rules:\n%s"),
+                  '\n'.join(log_lines))
 
     def _apply_synchronized(self):
         """Apply the current in-memory set of iptables rules.
@@ -508,35 +551,27 @@ class IptablesManager(object):
             if not commands:
                 continue
             all_commands += commands
+
+            # always end with a new line
+            commands.append('')
+
             args = ['%s-restore' % (cmd,), '-n']
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
-            try:
-                # always end with a new line
-                commands.append('')
-                self.execute(args, process_input='\n'.join(commands),
-                             run_as_root=True)
-            except RuntimeError as r_error:
-                with excutils.save_and_reraise_exception():
-                    try:
-                        line_no = int(re.search(
-                            'iptables-restore: line ([0-9]+?) failed',
-                            str(r_error)).group(1))
-                        context = IPTABLES_ERROR_LINES_OF_CONTEXT
-                        log_start = max(0, line_no - context)
-                        log_end = line_no + context
-                    except AttributeError:
-                        # line error wasn't found, print all lines instead
-                        log_start = 0
-                        log_end = len(commands)
-                    log_lines = ('%7d. %s' % (idx, l)
-                                 for idx, l in enumerate(
-                                     commands[log_start:log_end],
-                                     log_start + 1)
-                                 )
-                    LOG.error(_LE("IPTablesManager.apply failed to apply the "
-                                  "following set of iptables rules:\n%s"),
-                              '\n'.join(log_lines))
+
+            err = self._run_restore(args, commands)
+            if (isinstance(err, linux_utils.ProcessExecutionError) and
+                err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
+                # maybe we run on a platform that includes iptables commit
+                # 999eaa241212d3952ddff39a99d0d55a74e3639e (for example, latest
+                # RHEL) and failed because of xlock acquired by another
+                # iptables process running in parallel. Try to use -w to
+                # acquire xlock.
+                err = self._run_restore(args, commands, lock=True)
+            if err:
+                self._log_restore_err(err, commands)
+                raise err
+
         LOG.debug("IPTablesManager.apply completed with success. %d iptables "
                   "commands were issued", len(all_commands))
         return all_commands
@@ -684,7 +719,8 @@ class IptablesManager(object):
         acc = {'pkts': 0, 'bytes': 0}
 
         for cmd, table in cmd_tables:
-            args = [cmd, '-t', table, '-L', name, '-n', '-v', '-x']
+            args = [cmd, '-t', table, '-L', name, '-n', '-v', '-x',
+                    '-w', self.xlock_wait_time]
             if zero:
                 args.append('-Z')
             if self.namespace:
