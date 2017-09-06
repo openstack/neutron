@@ -17,3 +17,16 @@ function configure_ml2 {
         fi
     done
 }
+
+function configure_ml2_extension_drivers {
+    if is_neutron_legacy_enabled; then
+        # NOTE(yamamoto): This overwrites what neutron-legacy set,
+        # with the latest set of drivers.
+        # While we modifies Q_ML2_PLUGIN_EXT_DRIVERS (via
+        # neutron_ml2_extension_driver_add calls) in the post-config phase,
+        # lib/neutron-legcay populates this in "configure_neutron", which is
+        # before post-config.
+        # REVISIT(yamamoto): Probably this ought to be in lib/neutron-legcay
+        iniset /$NEUTRON_CORE_PLUGIN_CONF ml2 extension_drivers ${Q_ML2_PLUGIN_EXT_DRIVERS}
+    fi
+}
