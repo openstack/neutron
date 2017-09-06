@@ -89,14 +89,14 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
         agent = l2pop_db.get_agent_by_host(
-            self.ctx.session, helpers.HOST)
+            self.ctx, helpers.HOST)
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
 
     def test_get_agent_by_host_no_candidate(self):
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         agent = l2pop_db.get_agent_by_host(
-            self.ctx.session, helpers.HOST)
+            self.ctx, helpers.HOST)
         self.assertIsNone(agent)
 
     def _setup_port_binding(self, **kwargs):
@@ -141,7 +141,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
         tunnel_network_ports = l2pop_db.get_distributed_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(tunnel_network_ports))
         _, agent = tunnel_network_ports[0]
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
@@ -153,7 +153,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         tunnel_network_ports = l2pop_db.get_distributed_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(0, len(tunnel_network_ports))
 
     def test_get_nondistributed_active_network_ports(self):
@@ -163,7 +163,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_dhcp_agent()
         helpers.register_ovs_agent()
         fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(fdb_network_ports))
         _, agent = fdb_network_ports[0]
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
@@ -174,7 +174,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         helpers.register_l3_agent()
         helpers.register_dhcp_agent()
         fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(0, len(fdb_network_ports))
 
     def test__get_ha_router_interface_ids_with_ha_dvr_snat_port(self):
@@ -186,7 +186,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
         ha_iface_ids = l2pop_db._get_ha_router_interface_ids(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(list(ha_iface_ids)))
 
     def test__get_ha_router_interface_ids_with_ha_replicated_port(self):
@@ -198,7 +198,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
             device_id=TEST_ROUTER_ID)
         ha_iface_ids = l2pop_db._get_ha_router_interface_ids(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(list(ha_iface_ids)))
 
     def test__get_ha_router_interface_ids_with_no_ha_port(self):
@@ -207,7 +207,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
         ha_iface_ids = l2pop_db._get_ha_router_interface_ids(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(0, len(list(ha_iface_ids)))
 
     def test_active_network_ports_with_dvr_snat_port(self):
@@ -223,7 +223,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_id=TEST_ROUTER_ID)
         helpers.register_dhcp_agent()
         fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(fdb_network_ports))
 
     def test_active_network_ports_with_ha_dvr_snat_port(self):
@@ -238,10 +238,10 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
         fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(0, len(fdb_network_ports))
         ha_ports = l2pop_db.get_ha_active_network_ports(
-            self.ctx.session, TEST_NETWORK_ID)
+            self.ctx, TEST_NETWORK_ID)
         self.assertEqual(2, len(ha_ports))
 
     def test_active_port_count_with_dvr_snat_port(self):
@@ -254,10 +254,10 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_id=TEST_ROUTER_ID)
         helpers.register_dhcp_agent()
         port_count = l2pop_db.get_agent_network_active_port_count(
-            self.ctx.session, HOST, TEST_NETWORK_ID)
+            self.ctx, HOST, TEST_NETWORK_ID)
         self.assertEqual(1, port_count)
         port_count = l2pop_db.get_agent_network_active_port_count(
-            self.ctx.session, HOST_2, TEST_NETWORK_ID)
+            self.ctx, HOST_2, TEST_NETWORK_ID)
         self.assertEqual(0, port_count)
 
     def test_active_port_count_with_ha_dvr_snat_port(self):
@@ -269,10 +269,10 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
         port_count = l2pop_db.get_agent_network_active_port_count(
-            self.ctx.session, HOST, TEST_NETWORK_ID)
+            self.ctx, HOST, TEST_NETWORK_ID)
         self.assertEqual(1, port_count)
         port_count = l2pop_db.get_agent_network_active_port_count(
-            self.ctx.session, HOST_2, TEST_NETWORK_ID)
+            self.ctx, HOST_2, TEST_NETWORK_ID)
         self.assertEqual(1, port_count)
 
     def test_get_ha_agents_by_router_id(self):
@@ -284,6 +284,6 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
         agents = l2pop_db.get_ha_agents_by_router_id(
-            self.ctx.session, TEST_ROUTER_ID)
+            self.ctx, TEST_ROUTER_ID)
         ha_agents = [agent.host for agent in agents]
         self.assertEqual(tools.UnorderedList([HOST, HOST_2]), ha_agents)

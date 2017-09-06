@@ -1262,11 +1262,10 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
                 mock.patch.object(l2pop_db,
                                   'get_distributed_active_network_ports',
                                   return_value=tunnel_network_ports):
-            session = mock.Mock()
             agent = mock.Mock()
             agent.host = HOST
             segment = {'segmentation_id': 1, 'network_type': 'vxlan'}
-            return mech_driver._create_agent_fdb(session,
+            return mech_driver._create_agent_fdb(context,
                                                  agent,
                                                  segment,
                                                  'network_id')
