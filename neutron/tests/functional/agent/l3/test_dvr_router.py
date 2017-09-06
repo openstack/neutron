@@ -1040,6 +1040,17 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             self.assertFalse(self._assert_iptables_rules_exist(
                 router1.iptables_manager, 'nat', expected_rules))
 
+    def test_floating_ip_create_does_not_raise_keyerror_on_missing_host(self):
+        """Test to check floating ips configure does not raise Keyerror."""
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info(
+            enable_floating_ip=True)
+        del router_info[lib_constants.FLOATINGIP_KEY][0]['host']
+        centralized_floatingips = router_info[lib_constants.FLOATINGIP_KEY][0]
+        self.assertIsNone(centralized_floatingips.get('host'))
+        # No Keyerror should be raised when calling manage_router
+        self.manage_router(self.agent, router_info)
+
     def test_dvr_router_snat_namespace_with_interface_remove(self):
         """Test to validate the snat namespace with interface remove.
 
