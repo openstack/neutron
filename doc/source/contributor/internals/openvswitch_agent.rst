@@ -45,7 +45,7 @@ GRE Tunnels
 -----------
 
 GRE Tunneling is documented in depth in the `Networking in too much
-detail <http://openstack.redhat.com/Networking_in_too_much_detail>`_
+detail <http://openstack.redhat.com/networking/networking-in-too-much-detail/>`_
 by RedHat.
 
 VXLAN Tunnels
