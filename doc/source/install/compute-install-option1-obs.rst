@@ -50,4 +50,18 @@ networking infrastructure for instances and handles security groups.
 
     .. end
 
+  * Ensure your Linux operating system kernel supports network bridge filters
+    by verifying all the following ``sysctl`` values are set to ``1``:
+
+    .. code-block:: ini
+
+        net.bridge.bridge-nf-call-iptables
+        net.bridge.bridge-nf-call-ip6tables
+
+    .. end
+
+    To enable networking bridge support, typically the ``br_netfilter`` kernel
+    module needs to be loaded. Check your operating system's documentation for
+    additional details on enabling this module.
+
 Return to *Networking compute node configuration*
