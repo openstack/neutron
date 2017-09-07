@@ -47,4 +47,4 @@ Further Reading
 ---------------
 
 * `Nir Yechiel - SR-IOV Networking – Part I: Understanding the Basics <http://redhatstackblog.redhat.com/2015/03/05/red-hat-enterprise-linux-openstack-platform-6-sr-iov-networking-part-i-understanding-the-basics/>`_
-* `SR-IOV Passthrough For Networking <https://wiki.openstack.org/wiki/SR-IOV-Passthrough-For-Networking/>`_
+* `SR-IOV Passthrough For Networking <https://wiki.openstack.org/wiki/SR-IOV-Passthrough-For-Networking>`_
