@@ -14,10 +14,10 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.services.qos import base
 from oslo_log import log as logging
 
 from neutron.common import constants
-from neutron.services.qos.drivers import base
 from neutron.services.qos import qos_consts
 
 LOG = logging.getLogger(__name__)
