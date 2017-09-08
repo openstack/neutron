@@ -28,9 +28,9 @@ tree.  Additional documentation on Neutron and other components of OpenStack
 can be found on the `OpenStack wiki`_ and the `Neutron section of the wiki`.
 The `Neutron Development wiki`_ is also a good resource for new contributors.
 
-.. _`OpenStack wiki`: http://wiki.openstack.org
-.. _`Neutron section of the wiki`: http://wiki.openstack.org/Neutron
-.. _`Neutron Development wiki`: http://wiki.openstack.org/NeutronDevelopment
+.. _`OpenStack wiki`: https://wiki.openstack.org
+.. _`Neutron section of the wiki`: https://wiki.openstack.org/Neutron
+.. _`Neutron Development wiki`: https://wiki.openstack.org/NeutronDevelopment
 
 Enjoy!
 
