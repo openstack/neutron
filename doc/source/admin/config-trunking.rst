@@ -26,8 +26,15 @@ The network presented by the subport is the network of the associated
 port. When creating a subport, a ``segmentation-id`` may be required by
 the driver. ``segmentation-id`` defines the segmentation ID on which the
 subport network is presented to the instance. ``segmentation-type`` may be
-required by certain drivers like OVS, although at this time only ``vlan`` is
-supported as a ``segmentation-type``.
+required by certain drivers like OVS. At this time the following
+``segmentation-type`` values are supported:
+
+* ``vlan`` uses VLAN for segmentation.
+* ``inherit`` uses the ``segmentation-type`` from the network the subport
+  is connected to if no ``segmentation-type`` is specified for the subport.
+  Note that using the ``inherit`` type requires the ``provider`` extension
+  to be enabled and only works when the connected network's
+  ``segmentation-type`` is ``vlan``.
 
 .. note::
 
