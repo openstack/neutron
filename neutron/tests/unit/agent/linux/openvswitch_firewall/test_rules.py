@@ -240,6 +240,36 @@ class TestCreateProtocolFlows(base.BaseTestCase):
         self._test_create_protocol_flows_helper(
             firewall.EGRESS_DIRECTION, rule, expected_flows)
 
+    def test_create_protocol_flows_icmp(self):
+        rule = {'ethertype': constants.IPv4,
+                'protocol': constants.PROTO_NUM_ICMP,
+                'port_range_min': 0}
+        expected_flows = [{
+            'table': ovs_consts.RULES_EGRESS_TABLE,
+            'actions': 'resubmit(,{:d})'.format(
+                ovs_consts.ACCEPT_OR_INGRESS_TABLE),
+            'nw_proto': constants.PROTO_NUM_ICMP,
+            'icmp_type': 0
+        }]
+        self._test_create_protocol_flows_helper(
+            firewall.EGRESS_DIRECTION, rule, expected_flows)
+
+    def test_create_protocol_flows_ipv6_icmp(self):
+        rule = {'ethertype': constants.IPv6,
+                'protocol': constants.PROTO_NUM_IPV6_ICMP,
+                'port_range_min': 5,
+                'port_range_max': 0}
+        expected_flows = [{
+            'table': ovs_consts.RULES_EGRESS_TABLE,
+            'actions': 'resubmit(,{:d})'.format(
+                ovs_consts.ACCEPT_OR_INGRESS_TABLE),
+            'nw_proto': constants.PROTO_NUM_IPV6_ICMP,
+            'icmp_type': 5,
+            'icmp_code': 0,
+        }]
+        self._test_create_protocol_flows_helper(
+            firewall.EGRESS_DIRECTION, rule, expected_flows)
+
 
 class TestCreatePortRangeFlows(base.BaseTestCase):
     def _test_create_port_range_flows_helper(self, expected_flows, rule):
@@ -294,6 +324,7 @@ class TestCreatePortRangeFlows(base.BaseTestCase):
         self._test_create_port_range_flows_helper(expected_flows, rule)
 
     def test_create_port_range_with_icmp_protocol(self):
+        # NOTE: such call is prevented by create_protocols_flows
         rule = {
             'protocol': constants.PROTO_NUM_ICMP,
             'port_range_min': 10,
