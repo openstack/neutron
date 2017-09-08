@@ -65,3 +65,7 @@ class L3AgentExtensionAPI(object):
         local_namespaces = self._local_namespaces()
         ri = self._router_info.get(router_id)
         return ri and ri.ns_name in local_namespaces
+
+    def get_router_info(self, router_id):
+        """Return RouterInfo for the given router id."""
+        return self._router_info.get(router_id)

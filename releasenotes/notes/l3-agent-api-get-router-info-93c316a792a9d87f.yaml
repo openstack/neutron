@@ -1,0 +1,4 @@
+---
+features:
+  - A new method ``get_router_info`` has been added to
+    ``L3AgentExtensionAPI``.

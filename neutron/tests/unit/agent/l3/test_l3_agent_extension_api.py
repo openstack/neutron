@@ -94,3 +94,14 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             router_in_ns = api_object.is_router_in_namespace(ri.router_id)
             self.assertFalse(router_in_ns)
+
+    def test_get_router_info(self):
+        router_info, ri = self._prepare_router_data()
+        api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+        self.assertEqual(ri, api_object.get_router_info(self.router_id))
+
+    def test_get_router_info_nonexistent(self):
+        router_info, ri = self._prepare_router_data()
+        api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
+        self.assertIsNone(
+            api_object.get_router_info(uuidutils.generate_uuid()))
