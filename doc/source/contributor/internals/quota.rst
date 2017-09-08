@@ -55,7 +55,7 @@ High Level View
 
 There are two main components in the Neutron quota system:
 
- * The Quota API extension;
+ * The Quota API extensions.
  * The Quota Engine.
 
 Both components rely on a quota driver. The neutron codebase currently defines
@@ -75,6 +75,11 @@ In the Quota API simple CRUD operations are used for managing project quotas.
 Please note that the current behaviour when deleting a project quota is to reset
 quota limits for that project to configuration defaults. The API
 extension does not validate the project identifier with the identity service.
+
+In addition, the Quota Detail API extension complements the Quota API extension
+by allowing users (typically admins) the ability to retrieve details about
+quotas per project. Quota details include the used/limit/reserved
+count for the project's resources (networks, ports, etc.).
 
 Performing quota enforcement is the responsibility of the Quota Engine.
 RESTful API controllers, before sending a request to the plugin, try to obtain
