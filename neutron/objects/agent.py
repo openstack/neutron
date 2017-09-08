@@ -156,3 +156,8 @@ class Agent(base.NeutronDbObject):
             agent_model.Agent.availability_zone.in_(availability_zones)).all()
         agents = [cls._load_object(context, record) for record in query]
         return agents
+
+    @classmethod
+    def get_objects_by_agent_mode(cls, context, agent_mode=None, **kwargs):
+        mode_filter = obj_utils.StringContains(agent_mode)
+        return cls.get_objects(context, configurations=mode_filter, **kwargs)

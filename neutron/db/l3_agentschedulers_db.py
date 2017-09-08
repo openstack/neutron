@@ -20,7 +20,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import oslo_messaging
-from sqlalchemy import or_
 
 from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as l_consts
@@ -374,30 +373,31 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 for router_model, agent_count in l3_model_list]
 
     def get_l3_agents(self, context, active=None, filters=None):
-        query = context.session.query(agent_model.Agent)
-        query = query.filter(
-            agent_model.Agent.agent_type == constants.AGENT_TYPE_L3)
+        agent_filters = {'agent_type': constants.AGENT_TYPE_L3}
         if active is not None:
-            query = (query.filter(agent_model.Agent.admin_state_up == active))
+            agent_filters['admin_state_up'] = active
+        config_filters = []
         if filters:
             for key, value in filters.items():
                 column = getattr(agent_model.Agent, key, None)
                 if column:
                     if not value:
                         return []
-                    query = query.filter(column.in_(value))
 
-            agent_modes = filters.get('agent_modes', [])
+            agent_modes = filters.pop('agent_modes', [])
             if agent_modes:
-                agent_mode_key = '\"agent_mode\": \"'
-                configuration_filter = (
-                    [agent_model.Agent.configurations.contains('%s%s\"' %
-                     (agent_mode_key, agent_mode))
-                     for agent_mode in agent_modes])
-                query = query.filter(or_(*configuration_filter))
-
+                config_filters = set('\"agent_mode\": \"%s\"' % agent_mode
+                                     for agent_mode in agent_modes)
+            agent_filters.update(filters)
+        agent_objs = []
+        if config_filters:
+            for conf_filter in config_filters:
+                agent_objs.extend(ag_obj.Agent.get_objects_by_agent_mode(
+                    context, conf_filter, **agent_filters))
+        else:
+            agent_objs = ag_obj.Agent.get_objects(context, **agent_filters)
         return [l3_agent
-                for l3_agent in query
+                for l3_agent in agent_objs
                 if agentschedulers_db.AgentSchedulerDbMixin.is_eligible_agent(
                     active, l3_agent)]
 

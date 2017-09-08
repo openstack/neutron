@@ -1909,7 +1909,7 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
         self.assertEqual(len(self.expected_agent_modes), len(l3_agents))
         returned_agent_modes = [self._get_agent_mode(agent)
                                 for agent in l3_agents]
-        self.assertEqual(self.expected_agent_modes, returned_agent_modes)
+        self.assertItemsEqual(self.expected_agent_modes, returned_agent_modes)
 
 
 class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
