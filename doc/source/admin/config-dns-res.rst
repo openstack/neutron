@@ -21,25 +21,26 @@ one DNS resolver, use a comma between each value.
 
   .. code-block:: console
 
-     $ neutron subnet-create --dns-nameserver DNS_RESOLVER
+     $ openstack subnet create --dns-nameserver DNS_RESOLVER
 
   Replace ``DNS_RESOLVER`` with the IP address of a DNS resolver reachable
-  from the virtual network. For example:
+  from the virtual network. Repeat the option if you want to specify
+  multiple IP addresses. For example:
 
   .. code-block:: console
 
-     $ neutron subnet-create --dns-nameserver 203.0.113.8,198.51.100.53
+     $ openstack subnet create --dns-nameserver 203.0.113.8 --dns-nameserver 198.51.100.53
 
   .. note::
 
-     This command requires other options outside the scope of this
+     This command requires additional options outside the scope of this
      content.
 
-* Configure a DNS resolver on an existing subnet.
+* Add a DNS resolver to an existing subnet.
 
   .. code-block:: console
 
-     $ neutron subnet-update --dns-nameserver DNS_RESOLVER SUBNET_ID_OR_NAME
+     $ openstack subnet set --dns-nameserver DNS_RESOLVER SUBNET_ID_OR_NAME
 
   Replace ``DNS_RESOLVER`` with the IP address of a DNS resolver reachable
   from the virtual network and ``SUBNET_ID_OR_NAME`` with the UUID or name
@@ -47,7 +48,28 @@ one DNS resolver, use a comma between each value.
 
   .. code-block:: console
 
-     $ neutron subnet-update --dns-nameserver 203.0.113.8,198.51.100.53 selfservice
+     $ openstack subnet set --dns-nameserver 203.0.113.9 selfservice
+
+* Remove all DNS resolvers from a subnet.
+
+  .. code-block:: console
+
+     $ openstack subnet set --no-dns-nameservers SUBNET_ID_OR_NAME
+
+  Replace ``SUBNET_ID_OR_NAME`` with the UUID or name
+  of the subnet. For example, using the ``selfservice`` subnet:
+
+  .. code-block:: console
+
+     $ openstack subnet set --no-dns-nameservers selfservice
+
+  .. note::
+     You can use this option in combination with the previous one in order
+     to replace all existing DNS resolver addresses with new ones.
+
+.. note::
+   When DNS resolvers are explicitly specified for a subnet this way, that
+   setting will take precedence over the options presented in case 2 and 3.
 
 Case 2: All virtual networks use same DNS resolver(s)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
