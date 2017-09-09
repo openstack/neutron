@@ -38,7 +38,7 @@ total of five nodes. Each building block could also require additional
 infrastructure or changes to existing infrastructure such as networks.
 
 For basic configuration of prerequisites, see the
-`Ocata Install Tutorials and Guides <https://docs.openstack.org/project-install-guide/ocata>`__.
+`Pike Install Tutorials and Guides <../install/>`__.
 
 .. note::
 

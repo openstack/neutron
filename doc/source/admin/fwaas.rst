@@ -66,6 +66,5 @@ effect this.
 \*\* This feature is planned for Ocata.
 
 For further information, see `v1 configuration guide
-<https://docs.openstack.org/ocata/networking-guide/fwaas-v1-scenario.html>`_ or
-`v2 configuration guide
-<https://docs.openstack.org/ocata/networking-guide/fwaas-v2-scenario.html>`_.
+<./fwaas-v1-scenario.html>`_ or
+`v2 configuration guide <./fwaas-v2-scenario.html>`_.
