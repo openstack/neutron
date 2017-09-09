@@ -1432,6 +1432,8 @@ class DeviceManager(object):
                     LOG.exception('Unable to plug DHCP port for '
                                   'network %s. Releasing port.',
                                   network.id)
+                    # We should unplug the interface in bridge side.
+                    self.unplug(interface_name, network)
                     self.plugin.release_dhcp_port(network.id, port.device_id)
 
             self.fill_dhcp_udp_checksums(namespace=network.namespace)
