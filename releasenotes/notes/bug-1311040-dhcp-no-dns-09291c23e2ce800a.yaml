@@ -1,0 +1,16 @@
+---
+prelude: >
+    DNS server assignment can now be disabled in replies sent from the DHCP agent.
+features:
+  - |
+    It is now possible to instruct the DHCP agent not to supply any DNS server
+    address to their clients by setting the ``dns_nameservers`` attribute for
+    the corresponding subnet to ``0.0.0.0`` or ``::``, for IPv4 or IPv6 subnets
+    (respectively).
+upgrade:
+  - |
+    The functionality when a subnet has its DNS server set to ``0.0.0.0`` or
+    ``::`` has been changed with this release. The old behaviour was that each
+    DHCP agent would supply only its own IP address as the DNS server to its
+    clients. The new behaviour is that the DHCP agent will not supply any DNS
+    server IP address at all.

@@ -882,12 +882,22 @@ class Dnsmasq(DhcpLocalProcess):
                  addr_mode == constants.IPV6_SLAAC)):
                 continue
             if subnet.dns_nameservers:
-                options.append(
-                    self._format_option(
-                        subnet.ip_version, i, 'dns-server',
-                        ','.join(
-                            Dnsmasq._convert_to_literal_addrs(
-                                subnet.ip_version, subnet.dns_nameservers))))
+                if ((subnet.ip_version == 4 and
+                     subnet.dns_nameservers == ['0.0.0.0']) or
+                    (subnet.ip_version == 6 and
+                     subnet.dns_nameservers == ['::'])):
+                    # Special case: Do not announce DNS servers
+                    options.append(
+                        self._format_option(
+                            subnet.ip_version, i, 'dns-server'))
+                else:
+                    options.append(
+                        self._format_option(
+                            subnet.ip_version, i, 'dns-server',
+                            ','.join(
+                                Dnsmasq._convert_to_literal_addrs(
+                                    subnet.ip_version,
+                                    subnet.dns_nameservers))))
             else:
                 # use the dnsmasq ip as nameservers only if there is no
                 # dns-server submitted by the server
