@@ -316,13 +316,16 @@ class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
             self.mock_notifier.mock_calls)
         self.mock_notifier.reset_mock()
 
+        before_payload = {'network_id': network_id}
+        after_payload = before_payload.copy()
+        after_payload['network'] = directory.get_plugin().get_network(
+            context.get_admin_context(), network_id)
         response = self.app.delete(
             '/v2.0/networks/%s.json' % network_id, headers=req_headers)
         self.assertEqual(204, response.status_int)
-        payload = {'network_id': network_id}
         self.assertEqual(
-            [mock.call(mock.ANY, 'network.delete.start', payload),
-             mock.call(mock.ANY, 'network.delete.end', payload)],
+            [mock.call(mock.ANY, 'network.delete.start', before_payload),
+             mock.call(mock.ANY, 'network.delete.end', after_payload)],
             self.mock_notifier.mock_calls)
 
     def test_bulk_create_triggers_notification(self):
