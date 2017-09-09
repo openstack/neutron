@@ -505,8 +505,11 @@ class DhcpAgent(manager.Manager):
                                 {'port_num': len(router_ports),
                                  'port_id': router_ports[0].id,
                                  'router_id': router_ports[0].device_id})
-                kwargs = {'router_id': router_ports[0].device_id}
-                self._metadata_routers[network.id] = router_ports[0].device_id
+                all_subnets = self.dhcp_driver_cls._get_all_subnets(network)
+                if self.dhcp_driver_cls.has_metadata_subnet(all_subnets):
+                    kwargs = {'router_id': router_ports[0].device_id}
+                    self._metadata_routers[network.id] = (
+                        router_ports[0].device_id)
 
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, dhcp.METADATA_PORT,

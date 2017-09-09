@@ -2279,6 +2279,14 @@ class TestDnsmasq(TestBase):
         self.safe.assert_has_calls([mock.call(exp_host_name, exp_host_data),
                                     mock.call(exp_opt_name, exp_opt_data)])
 
+    def test_has_metadata_subnet_returns_true(self):
+        self.assertTrue(dhcp.Dnsmasq.has_metadata_subnet(
+            [FakeV4MetadataSubnet()]))
+
+    def test_has_metadata_subnet_returns_false(self):
+        self.assertFalse(dhcp.Dnsmasq.has_metadata_subnet(
+            [FakeV4Subnet()]))
+
     def test_should_enable_metadata_isolated_network_returns_true(self):
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4NetworkNoRouter()))
