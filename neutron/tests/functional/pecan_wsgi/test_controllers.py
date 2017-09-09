@@ -535,8 +535,9 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
         if limit and marker:
             links_key = '%s_links' % collection
             self.assertIn(links_key, list_resp)
-        list_resp_ids = [item['id'] for item in list_resp[collection]]
-        self.assertEqual(expected_list, list_resp_ids)
+        if not fields or 'id' in fields:
+            list_resp_ids = [item['id'] for item in list_resp[collection]]
+            self.assertEqual(expected_list, list_resp_ids)
         if fields:
             for item in list_resp[collection]:
                 for field in fields:
@@ -545,6 +546,10 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
     def test_get_collection_with_pagination_limit(self):
         self._test_get_collection_with_pagination([self.networks[0]['id']],
                                                   limit=1)
+
+    def test_get_collection_with_pagination_fields_no_pk(self):
+        self._test_get_collection_with_pagination([self.networks[0]['id']],
+                                                  limit=1, fields=['name'])
 
     def test_get_collection_with_pagination_limit_over_count(self):
         expected_ids = [network['id'] for network in self.networks]

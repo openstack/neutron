@@ -21,6 +21,7 @@ from neutron.pecan_wsgi.hooks import policy_enforcement
 from neutron.pecan_wsgi.hooks import query_parameters
 from neutron.pecan_wsgi.hooks import quota_enforcement
 from neutron.pecan_wsgi.hooks import translation
+from neutron.pecan_wsgi.hooks import userfilters
 
 
 ExceptionTranslationHook = translation.ExceptionTranslationHook
@@ -31,3 +32,4 @@ PolicyHook = policy_enforcement.PolicyHook
 QuotaEnforcementHook = quota_enforcement.QuotaEnforcementHook
 NotifierHook = notifier.NotifierHook
 QueryParametersHook = query_parameters.QueryParametersHook
+UserFilterHook = userfilters.UserFilterHook
