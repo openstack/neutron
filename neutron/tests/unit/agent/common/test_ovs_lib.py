@@ -762,6 +762,46 @@ class OVS_Lib_Test(base.BaseTestCase):
             with testtools.ExpectedException(Exception):
                 self.br.get_local_port_mac()
 
+    def test_delete_egress_bw_limit_for_port(self):
+        with mock.patch.object(
+            self.br, "_set_egress_bw_limit_for_port"
+        ) as set_egress_mock, mock.patch.object(
+            self.br, "port_exists", return_value=True
+        ) as port_exists_mock:
+            self.br.delete_egress_bw_limit_for_port("test_port")
+            port_exists_mock.assert_called_once_with("test_port")
+            set_egress_mock.assert_called_once_with("test_port", 0, 0)
+
+    def test_delete_egress_bw_limit_for_port_port_not_exists(self):
+        with mock.patch.object(
+            self.br, "_set_egress_bw_limit_for_port"
+        ) as set_egress_mock, mock.patch.object(
+            self.br, "port_exists", return_value=False
+        ) as port_exists_mock:
+            self.br.delete_egress_bw_limit_for_port("test_port")
+            port_exists_mock.assert_called_once_with("test_port")
+            set_egress_mock.assert_not_called()
+
+    def test_delete_ingress_bw_limit_for_port(self):
+        with mock.patch.object(
+            self.br, "_delete_ingress_bw_limit_for_port"
+        ) as delete_ingress_mock, mock.patch.object(
+            self.br, "port_exists", return_value=True
+        ) as port_exists_mock:
+            self.br.delete_ingress_bw_limit_for_port("test_port")
+            port_exists_mock.assert_called_once_with("test_port")
+            delete_ingress_mock.assert_called_once_with("test_port")
+
+    def test_delete_ingress_bw_limit_for_port_port_not_exists(self):
+        with mock.patch.object(
+            self.br, "_delete_ingress_bw_limit_for_port"
+        ) as delete_ingress_mock, mock.patch.object(
+            self.br, "port_exists", return_value=False
+        ) as port_exists_mock:
+            self.br.delete_ingress_bw_limit_for_port("test_port")
+            port_exists_mock.assert_called_once_with("test_port")
+            delete_ingress_mock.assert_not_called()
+
     def test_get_vifs_by_ids(self):
         db_list_res = [
             {'name': 'qvo1', 'ofport': 1,
