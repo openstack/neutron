@@ -1,0 +1,5 @@
+---
+fixes:
+  - In security group rules API, API level validation for port_range values
+    has been performed only against TCP and UDP. Now it is performed
+    against DCCP, SCTP and UDP-Lite, too.

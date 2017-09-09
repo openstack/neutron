@@ -444,7 +444,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if not rule['protocol']:
             raise ext_sg.SecurityGroupProtocolRequiredWithPorts()
         ip_proto = self._get_ip_proto_number(rule['protocol'])
-        if ip_proto in [constants.PROTO_NUM_TCP, constants.PROTO_NUM_UDP]:
+        # Not all firewall_driver support all these protocols,
+        # but being strict here doesn't hurt.
+        if ip_proto in [constants.PROTO_NUM_DCCP, constants.PROTO_NUM_SCTP,
+                        constants.PROTO_NUM_TCP, constants.PROTO_NUM_UDP,
+                        constants.PROTO_NUM_UDPLITE]:
             if rule['port_range_min'] == 0 or rule['port_range_max'] == 0:
                 raise ext_sg.SecurityGroupInvalidPortValue(port=0)
             elif (rule['port_range_min'] is not None and
