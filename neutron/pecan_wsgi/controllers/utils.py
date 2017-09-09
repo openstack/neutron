@@ -181,11 +181,13 @@ class NeutronPecanController(object):
     def build_field_list(self, request_fields):
         added_fields = []
         combined_fields = []
-        if request_fields:
-            req_fields_set = set(request_fields)
+        req_fields_set = {f for f in request_fields if f}
+        if req_fields_set:
             added_fields = self._mandatory_fields - req_fields_set
             combined_fields = req_fields_set | self._mandatory_fields
-        return list(combined_fields), list(added_fields)
+        # field sorting is to match old behavior of legacy API and to make
+        # this drop-in compatible with the old API unit tests
+        return sorted(combined_fields), list(added_fields)
 
     @property
     def plugin(self):
