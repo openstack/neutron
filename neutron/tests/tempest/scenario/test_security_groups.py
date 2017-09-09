@@ -12,6 +12,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from neutron_lib import constants
 
 from tempest.common import waiters
 from tempest.lib import decorators
@@ -19,7 +20,7 @@ from tempest.lib import decorators
 from neutron.tests.tempest.common import ssh
 from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import base
-from neutron.tests.tempest.scenario import constants
+from neutron.tests.tempest.scenario import constants as const
 
 CONF = config.CONF
 
@@ -49,7 +50,7 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
         for i, server in enumerate(servers):
             waiters.wait_for_server_status(
                 self.os_primary.servers_client, server['server']['id'],
-                constants.SERVER_STATUS_ACTIVE)
+                const.SERVER_STATUS_ACTIVE)
             port = self.client.list_ports(
                 network_id=self.network['id'], device_id=server['server'][
                     'id'])['ports'][0]
@@ -90,3 +91,18 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
                 break
         self.assertTrue(ext_net_ip)
         self.check_remote_connectivity(server_ssh_clients[0], ext_net_ip)
+
+    @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d864')
+    def test_protocol_number_rule(self):
+        # protocol number is added instead of str in security rule creation
+        server_ssh_clients, fips = self.create_vm_default_sec_grp(
+            num_servers=1)
+        self.ping_ip_address(fips[0]['floating_ip_address'],
+                             should_succeed=False)
+        rule_list = [{'protocol': constants.PROTO_NUM_ICMP,
+                      'direction': constants.INGRESS_DIRECTION,
+                      'remote_ip_prefix': '0.0.0.0/0'}]
+        secgroup_id = self.os_primary.network_client.list_security_groups()[
+            'security_groups'][0]['id']
+        self.create_secgroup_rules(rule_list, secgroup_id=secgroup_id)
+        self.ping_ip_address(fips[0]['floating_ip_address'])
