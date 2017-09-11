@@ -19,12 +19,13 @@ from operator import attrgetter
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib import constants
 from neutron_lib import context
+from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db import common_db_mixin
-from neutron.db.network_dhcp_agent_binding import models as ndab_model
+from neutron.objects import network
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -359,10 +360,10 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
     def get_subnets(self, context, fields=None):
         subnets = []
-        for net_id in self._networks:
-            enable_dhcp = (not self._strip_host_index(net_id) in
+        for net in self._networks:
+            enable_dhcp = (self._strip_host_index(net['name']) not in
                            self.networks_with_dhcp_disabled)
-            subnets.append({'network_id': net_id,
+            subnets.append({'network_id': net.id,
                             'enable_dhcp': enable_dhcp,
                             'segment_id': None})
         return subnets
@@ -374,13 +375,9 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
         return {'availability_zone_hints': az_hints}
 
     def _get_hosted_networks_on_dhcp_agent(self, agent_id):
-        query = self.ctx.session.query(
-            ndab_model.NetworkDhcpAgentBinding.network_id)
-        query = query.filter(
-            ndab_model.NetworkDhcpAgentBinding.dhcp_agent_id ==
-            agent_id)
-
-        return [item[0] for item in query]
+        binding_objs = network.NetworkDhcpAgentBinding.get_objects(
+            self.ctx, dhcp_agent_id=agent_id)
+        return [item.network_id for item in binding_objs]
 
     def _test_auto_schedule(self, host_index):
         self.config(dhcp_agents_per_network=self.max_agents_per_network)
@@ -394,9 +391,16 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
         dhcp_agents = self._create_and_set_agents_down(hosts)
 
         # create networks
-        self._networks = ['%s-network-%s' % (host_index, i)
-                          for i in range(self.network_count)]
-        self._save_networks(self._networks)
+        self._networks = [
+            network.Network(
+                self.ctx,
+                id=uuidutils.generate_uuid(),
+                name='%s-network-%s' % (host_index, i))
+            for i in range(self.network_count)
+        ]
+        for i in range(len(self._networks)):
+            self._networks[i].create()
+        network_ids = [net.id for net in self._networks]
 
         # pre schedule the networks to the agents defined in
         # self.hosted_networks before calling auto_schedule_network
@@ -406,7 +410,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                 net_index = self._extract_index(net)
                 scheduler.resource_filter.bind(self.ctx,
                                                [dhcp_agents[agent_index]],
-                                               self._networks[net_index])
+                                               network_ids[net_index])
 
         retval = scheduler.auto_schedule_networks(self, self.ctx,
                                                   hosts[host_index])
@@ -415,11 +419,14 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
         agent_id = dhcp_agents[host_index].id
         hosted_networks = self._get_hosted_networks_on_dhcp_agent(agent_id)
-        hosted_net_ids = [self._strip_host_index(net)
-                          for net in hosted_networks]
+        hosted_net_names = [
+            self._strip_host_index(net['name'])
+            for net in network.Network.get_objects(
+                self.ctx, id=hosted_networks)
+        ]
         expected_hosted_networks = self.expected_hosted_networks['agent-%s' %
                                                                  host_index]
-        self.assertItemsEqual(hosted_net_ids, expected_hosted_networks, msg)
+        self.assertItemsEqual(hosted_net_names, expected_hosted_networks, msg)
 
     def test_auto_schedule(self):
         for i in range(self.agent_count):
