@@ -30,6 +30,7 @@ from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.extensions import l3
+from neutron.objects import router as router_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 _uuid = uuidutils.generate_uuid
@@ -762,6 +763,36 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.assertEqual(1, len(router_ports))
                 self.assertEqual(const.DEVICE_OWNER_ROUTER_GW,
                                  router_ports[0]['device_owner'])
+
+    def test_csnat_port_not_created_on_RouterPort_update_exception(self):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        with self.network() as net_ext,\
+                self.subnet() as subnet:
+            ext_net_id = net_ext['network']['id']
+            self.core_plugin.update_network(
+                self.ctx, ext_net_id,
+                {'network': {'router:external': True}})
+            self.mixin.update_router(
+                self.ctx, router['id'],
+                {'router': {'external_gateway_info':
+                            {'network_id': ext_net_id}}})
+            net_id = subnet['subnet']['network_id']
+            with mock.patch.object(
+                router_obj.RouterPort, 'create') as rtrport_update:
+                rtrport_update.side_effect = Exception()
+                self.assertRaises(
+                    l3.RouterInterfaceAttachmentConflict,
+                    self.mixin.add_router_interface,
+                    self.ctx, router['id'],
+                    {'subnet_id': subnet['subnet']['id']})
+                filters = {
+                    'network_id': [net_id],
+                    'device_owner': [const.DEVICE_OWNER_ROUTER_SNAT]
+                }
+                router_ports = self.core_plugin.get_ports(self.ctx, filters)
+                self.assertEqual(0, len(router_ports))
 
     def test_add_router_interface_by_port_failure(self):
         router_dict = {'name': 'test_router',
