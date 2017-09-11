@@ -245,7 +245,7 @@ For more details, see the
 
   The administrator can configure some optional configuration options. For more
   details, see the related section in the
-  `Configuration Reference <https://docs.openstack.org/ocata/config-reference/networking/networking_options_reference.html#modular-layer-2-ml2-l2-population-mechanism-configuration-options>`__.
+  `Configuration Reference <../configuration/ml2-conf.html#l2pop>`__.
 
 * Specialized
 
