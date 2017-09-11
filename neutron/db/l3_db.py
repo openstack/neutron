@@ -436,11 +436,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _delete_router_gw_port_db(self, context, router):
         with context.session.begin(subtransactions=True):
-            gw_port = router.gw_port
             router.gw_port = None
             if router not in context.session:
                 context.session.add(router)
-            context.session.expire(gw_port)
             try:
                 kwargs = {'context': context, 'router_id': router.id}
                 registry.notify(
