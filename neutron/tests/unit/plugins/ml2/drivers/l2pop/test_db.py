@@ -20,8 +20,8 @@ from oslo_utils import uuidutils
 
 from neutron.common import constants as n_const
 from neutron.db.models import l3 as l3_models
-from neutron.db.models import l3ha as l3ha_model
 from neutron.db import models_v2
+from neutron.objects import l3_hamode
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_objs
 from neutron.plugins.ml2.drivers.l2pop import db as l2pop_db
@@ -128,13 +128,10 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
 
             if network_id == TEST_HA_NETWORK_ID:
                 agent = self.get_l3_agent_by_host(host)
-                haport_bindings_cls = l3ha_model.L3HARouterAgentPortBinding
-                habinding_kwarg = {'port_id': port_id,
-                                   'router_id': device_id,
-                                   'l3_agent_id': agent['id'],
-                                   'state': kwargs.get('host_state',
-                                       n_const.HA_ROUTER_STATE_ACTIVE)}
-                self.ctx.session.add(haport_bindings_cls(**habinding_kwarg))
+                l3_hamode.L3HARouterAgentPortBinding(
+                    self.ctx, port_id=port_id, router_id=device_id,
+                    l3_agent_id=agent['id'], state=kwargs.get(
+                        'host_state', n_const.HA_ROUTER_STATE_ACTIVE)).create()
 
     def test_get_distributed_active_network_ports(self):
         self._setup_port_binding(
