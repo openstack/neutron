@@ -353,11 +353,10 @@ class DVRResourceOperationHandler(object):
                         if not addr_pair_active_service_port_list:
                             return
                         self._inherit_service_port_and_arp_update(
-                            context, addr_pair_active_service_port_list[0],
-                            port)
+                            context, addr_pair_active_service_port_list[0])
 
     def _inherit_service_port_and_arp_update(
-        self, context, service_port, allowed_address_port):
+        self, context, service_port):
         """Function inherits port host bindings for allowed_address_pair."""
         service_port_dict = self.l3plugin._core_plugin._make_port_dict(
             service_port)
