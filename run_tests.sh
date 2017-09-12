@@ -168,9 +168,9 @@ function run_tests {
 }
 
 function copy_subunit_log {
-    LOGNAME=`cat .testrepository/next-stream`
+    LOGNAME=`cat .stestr/next-stream`
     LOGNAME=$(($LOGNAME - 1))
-    LOGNAME=".testrepository/${LOGNAME}"
+    LOGNAME=".stestr/${LOGNAME}"
     cp $LOGNAME subunit.log
 }
 
