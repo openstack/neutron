@@ -2719,13 +2719,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertEqual(service_plugins, agent.neutron_service_plugins)
         self.assertTrue(self.plugin_api.get_service_plugin_list.called)
 
-    def test_get_service_plugin_list_failed(self):
-        raise_rpc = oslo_messaging.RemoteError()
-        self.plugin_api.get_service_plugin_list.side_effect = raise_rpc
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        self.assertIsNone(agent.neutron_service_plugins)
-        self.assertTrue(self.plugin_api.get_service_plugin_list.called)
-
     def test_get_service_plugin_list_retried(self):
         raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout the first 2 times it calls

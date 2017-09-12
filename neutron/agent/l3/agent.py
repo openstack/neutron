@@ -220,15 +220,6 @@ class L3NATAgent(ha.AgentMixin,
             try:
                 self.neutron_service_plugins = (
                     self.plugin_rpc.get_service_plugin_list(self.context))
-            except oslo_messaging.RemoteError as e:
-                LOG.warning('l3-agent cannot check service plugins '
-                            'enabled at the neutron server when '
-                            'startup due to RPC error. It happens '
-                            'when the server does not support this '
-                            'RPC API. If the error is '
-                            'UnsupportedVersion you can ignore this '
-                            'warning. Detail message: %s', e)
-                self.neutron_service_plugins = None
             except oslo_messaging.MessagingTimeout as e:
                 LOG.warning('l3-agent cannot contact neutron server '
                             'to retrieve service plugins enabled. '
