@@ -1,13 +1,19 @@
 .. _config-dns-res:
 
-=============================
-Name resolution for instances
-=============================
+============================
+DNS resolution for instances
+============================
 
 The Networking service offers several methods to configure name
 resolution (DNS) for instances. Most deployments should implement
-case 1 or 2. Case 3 requires security considerations to prevent
+case 1 or 2a. Case 2b requires security considerations to prevent
 leaking internal DNS information to instances.
+
+.. note::
+   All of these setups require the configured DNS resolvers to be reachable
+   from the virtual network in question. So unless the resolvers are located
+   inside the virtual network itself, this implies the need for a router to
+   be attached to that network having an external gateway configured.
 
 Case 1: Each virtual network uses unique DNS resolver(s)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,7 +21,7 @@ Case 1: Each virtual network uses unique DNS resolver(s)
 In this case, the DHCP agent offers one or more unique DNS resolvers
 to instances via DHCP on each virtual network. You can configure a DNS
 resolver when creating or updating a subnet. To configure more than
-one DNS resolver, use a comma between each value.
+one DNS resolver, repeat the option multiple times.
 
 * Configure a DNS resolver when creating a subnet.
 
@@ -69,51 +75,62 @@ one DNS resolver, use a comma between each value.
 
 .. note::
    When DNS resolvers are explicitly specified for a subnet this way, that
-   setting will take precedence over the options presented in case 2 and 3.
+   setting will take precedence over the options presented in case 2.
 
-Case 2: All virtual networks use same DNS resolver(s)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Case 2: DHCP agents forward DNS queries from instances
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this case, the DHCP agent offers the same DNS resolver(s) to
-instances via DHCP on all virtual networks.
+In this case, the DHCP agent offers the list of all DHCP agent's IP addresses
+on a subnet as DNS resolver(s) to instances via DHCP on that subnet.
 
-* In the ``dhcp_agent.ini`` file, configure one or more DNS resolvers. To
-  configure more than one DNS resolver, use a comma between each value.
+The DHCP agent then runs a masquerading forwarding DNS resolver with two
+possible options to determine where the DNS queries are sent to.
 
-  .. code-block:: ini
+.. note::
+   The DHCP agent will answer queries for names and addresses of instances
+   running within the virtual network directly instead of forwarding them.
 
-     [DEFAULT]
-     dnsmasq_dns_servers = DNS_RESOLVER
+Case 2a: Queries are forwarded to an explicitly configured set of DNS resolvers
+-------------------------------------------------------------------------------
 
-  Replace ``DNS_RESOLVER`` with the IP address of a DNS resolver reachable
-  from all virtual networks. For example:
+In the ``dhcp_agent.ini`` file, configure one or more DNS resolvers. To
+configure more than one DNS resolver, use a comma between the values.
 
-  .. code-block:: ini
+.. code-block:: ini
 
-     [DEFAULT]
-     dnsmasq_dns_servers = 203.0.113.8, 198.51.100.53
+   [DEFAULT]
+   dnsmasq_dns_servers = DNS_RESOLVER
 
-  .. note::
+Replace ``DNS_RESOLVER`` with a list of IP addresses of DNS resolvers reachable
+from all virtual networks. For example:
 
-     You must configure this option for all eligible DHCP agents and
-     restart them to activate the values.
+.. code-block:: ini
 
-Case 3: All virtual networks use DNS resolver(s) on the host
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   [DEFAULT]
+   dnsmasq_dns_servers = 203.0.113.8, 198.51.100.53
 
-In this case, the DHCP agent offers the DNS resolver(s) in the
-``resolv.conf`` file on the host running the DHCP agent via DHCP to
-instances on all virtual networks.
+.. note::
 
-* In the ``dhcp_agent.ini`` file, enable advertisement of the DNS resolver(s)
-  on the host.
+   You must configure this option for all eligible DHCP agents and
+   restart them to activate the values.
 
-  .. code-block:: ini
+Case 2b: Queries are forwarded to DNS resolver(s) configured on the host
+------------------------------------------------------------------------
 
-     [DEFAULT]
-     dnsmasq_local_resolv = True
+In this case, the DHCP agent forwards queries from the instances to
+the DNS resolver(s) configured in the
+``resolv.conf`` file on the host running the DHCP agent. This requires
+these resolvers being reachable from all virtual networks.
 
-  .. note::
+In the ``dhcp_agent.ini`` file, enable using the DNS resolver(s) configured
+on the host.
 
-     You must configure this option for all eligible DHCP agents and
-     restart them to activate the values.
+.. code-block:: ini
+
+   [DEFAULT]
+   dnsmasq_local_resolv = True
+
+.. note::
+
+   You must configure this option for all eligible DHCP agents and
+   restart them to activate this setting.
