@@ -47,7 +47,12 @@ class NotifierHook(hooks.PecanHook):
         if action in ('create', 'update'):
             # notifier just gets plain old body without any treatment other
             # than the population of the object ID being operated on
-            payload = state.request.json.copy()
+            try:
+                payload = state.request.json.copy()
+                if not payload:
+                    return
+            except ValueError:
+                return
             if action == 'update':
                 payload['id'] = state.request.context.get('resource_id')
         elif action == 'delete':

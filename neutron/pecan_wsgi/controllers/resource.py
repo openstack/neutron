@@ -15,7 +15,9 @@
 from oslo_log import log as logging
 import pecan
 from pecan import request
+import webob
 
+from neutron._i18n import _
 from neutron import manager
 from neutron.pecan_wsgi.controllers import utils
 
@@ -70,6 +72,9 @@ class ItemController(utils.NeutronPecanController):
 
     @utils.when_delete(index)
     def delete(self):
+        if request.body:
+            msg = _("Request body is not supported in DELETE.")
+            raise webob.exc.HTTPBadRequest(msg)
         neutron_context = request.context['neutron_context']
         deleter_args = [neutron_context, self.item]
         if 'parent_id' in request.context:
@@ -145,7 +150,11 @@ class CollectionsController(utils.NeutronPecanController):
 
     @utils.when(index, method='POST')
     def post(self, *args, **kwargs):
-        # TODO(kevinbenton): emulated bulk!
+        if 'resources' not in request.context:
+            # user didn't specify any body, which is invalid for collections
+            msg = (_("Unable to find '%s' in request body") %
+                   request.context['resource'])
+            raise webob.exc.HTTPBadRequest(msg)
         resources = request.context['resources']
         pecan.response.status = 201
         return self.create(resources)
