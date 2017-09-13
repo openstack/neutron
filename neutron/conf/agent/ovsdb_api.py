@@ -25,6 +25,7 @@ interface_map = {
 
 API_OPTS = [
     cfg.StrOpt('ovsdb_interface',
+               deprecated_for_removal=True,
                choices=interface_map.keys(),
                default='native',
                help=_('The interface for interacting with the OVSDB')),

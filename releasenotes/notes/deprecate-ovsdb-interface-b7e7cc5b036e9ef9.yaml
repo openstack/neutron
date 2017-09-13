@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    The ``ovsdb_interface`` configuration option is now deprecated. In future
+    releases, the value of the option will be ignored. The ``native`` driver
+    will then be used.
