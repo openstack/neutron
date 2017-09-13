@@ -1269,6 +1269,35 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
             self.assertGreater(updated_ports[0]['revision_number'],
                                created_ports[0]['revision_number'])
 
+    def test_update_port_status_dvr_port_no_update_on_same_status(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        # enable subscription for events
+        p_update_receiver = mock.Mock()
+        registry.subscribe(p_update_receiver, resources.PORT,
+                           events.AFTER_UPDATE)
+        host_arg = {portbindings.HOST_ID: HOST}
+        with self.port(device_owner=constants.DEVICE_OWNER_DVR_INTERFACE,
+                       device_id=TEST_ROUTER_ID,
+                       arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as port:
+            ml2_db.ensure_distributed_port_binding(ctx, port['port']['id'],
+                                                   HOST)
+            p_update_receiver.reset_mock()
+            plugin.update_port_status(
+                ctx, port['port']['id'],
+                constants.PORT_STATUS_ACTIVE, host=HOST)
+            self.assertTrue(p_update_receiver.called)
+            after_1 = plugin.get_port(ctx, port['port']['id'])
+            p_update_receiver.reset_mock()
+            plugin.update_port_status(
+                ctx, port['port']['id'],
+                constants.PORT_STATUS_ACTIVE, host=HOST)
+            self.assertFalse(p_update_receiver.called)
+            after_2 = plugin.get_port(ctx, port['port']['id'])
+            self.assertEqual(after_1['revision_number'],
+                             after_2['revision_number'])
+
 
 class TestMl2PortsV2WithL3(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     """For testing methods that require the L3 service plugin."""
