@@ -12,8 +12,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from tempest.common import utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest import config
 from neutron.tests.tempest.scenario import base
@@ -49,7 +49,7 @@ class NetworkDvrTest(base.BaseTempestTestCase, NetworkTestMixin):
     force_tenant_isolation = False
 
     @classmethod
-    @test.requires_ext(extension="dvr", service="network")
+    @utils.requires_ext(extension="dvr", service="network")
     def skip_checks(cls):
         super(NetworkDvrTest, cls).skip_checks()
 

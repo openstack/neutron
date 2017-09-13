@@ -14,9 +14,9 @@
 #    under the License.
 
 import six
+from tempest.common import utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -115,7 +115,7 @@ class QuotasTest(QuotasTestBase):
 
     @decorators.idempotent_id('e974b5ba-090a-452c-a578-f9710151d9fc')
     @decorators.attr(type='gate')
-    @test.requires_ext(extension="quota_details", service="network")
+    @utils.requires_ext(extension="quota_details", service="network")
     def test_detail_quotas(self):
         tenant_id = self.create_project()['id']
         new_quotas = {'network': {'used': 1, 'limit': 2, 'reserved': 0},
