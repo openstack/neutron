@@ -290,6 +290,6 @@ Devref content should be added as part of the implementation of a new feature.
 Since the spec is not maintained after the feature is implemented, the devref
 should include a maintained version of the information from the spec.
 
-If a feature requires OS docs (4), the commit message for the feature patch
-shall include 'DocImpact'.  If the feature is purely a developer facing thing,
-(4) is not needed.
+If a feature requires OS docs (4), the feature patch shall include the new,
+or updated, documentation changes.  If the feature is purely a developer
+facing thing, (4) is not needed.

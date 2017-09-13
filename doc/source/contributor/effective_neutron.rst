@@ -288,6 +288,25 @@ For anything more elaborate, please visit the testing section.
   consider using `OpenFixture <https://review.openstack.org/#/c/232716/>`_, but
   it is better not to mock open() at all.
 
+Documentation
+~~~~~~~~~~~~~
+
+The documenation for Neutron that exists in this repository is broken
+down into the following directories based on content:
+
+* doc/source/admin/ - feature-specific configuration documentation aimed
+  at operators.
+* doc/source/configuration - stubs for auto-generated configuration files.
+  Only needs updating if new config files are added.
+* doc/source/contributor/internals - developer documentation for lower-level
+  technical details.
+* doc/source/contributor/policies - neutron team policies and best practices.
+* doc/source/install - install-specific documentation for standing-up
+  network-enabled nodes.
+
+Additional documentation resides in the neutron-lib repository:
+
+* api-ref - API reference documentation for Neutron resource and API extensions.
 
 Backward compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -461,7 +480,12 @@ This is the TL;DR version with the important points for committing to Neutron.
 
 
 * One liners are bad, unless the change is trivial.
-* Remember to use DocImpact, APIImpact, UpgradeImpact appropriately.
+* Use ``UpgradeImpact`` when the change could cause issues during the upgrade
+  from one version to the next.
+* ``APIImpact`` should be used when the api-ref in neutron-lib must be updated
+  to reflect the change, and only as a last resort. Rather, the ideal workflow
+  includes submitting a corresponding neutron-lib api-ref change along with
+  the implementation, thereby removing the need to use ``APIImpact``.
 * Make sure the commit message doesn't have any spelling/grammar errors. This
   is the first thing reviewers read and they can be distracting enough to
   invite -1's.
