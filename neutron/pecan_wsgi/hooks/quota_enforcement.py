@@ -62,11 +62,19 @@ class QuotaEnforcementHook(hooks.PecanHook):
         state.request.context['reservations'] = reservations
 
     def after(self, state):
-        # Commit reservation(s)
-        reservations = state.request.context.get('reservations')
-        if not reservations:
-            return
         neutron_context = state.request.context.get('neutron_context')
+        if not neutron_context:
+            return
+        collection = state.request.context.get('collection')
+        resource = state.request.context.get('resource')
+        if state.request.method == 'GET' and collection:
+            # resync on list operations to preserve behavior of old API
+            resource_registry.resync_resource(
+                neutron_context, resource, neutron_context.tenant_id)
+        # Commit reservation(s)
+        reservations = state.request.context.get('reservations') or []
+        if not reservations and state.request.method != 'DELETE':
+            return
         with db_api.context_manager.writer.using(neutron_context):
             # Commit the reservation(s)
             for reservation in reservations:
