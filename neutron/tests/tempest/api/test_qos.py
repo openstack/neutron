@@ -37,17 +37,6 @@ class QosTestJSON(base.BaseAdminNetworkTest):
             if driver['name'] == driver_name:
                 return driver
 
-    def _create_project(self):
-        # Add a project to conduct the test
-        test_project = data_utils.rand_name('test_project_')
-        test_description = data_utils.rand_name('desc_')
-        project = self.identity_admin_client.create_project(
-            name=test_project,
-            description=test_description)['project']
-        self.addCleanup(
-            self.identity_admin_client.delete_project, project['id'])
-        return project
-
     @decorators.idempotent_id('108fbdf7-3463-4e47-9871-d07f3dcf5bbb')
     def test_create_policy(self):
         policy = self.create_qos_policy(name='test-policy',
@@ -371,7 +360,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
     @decorators.idempotent_id('18d94f22-b9d5-4390-af12-d30a0cfc4cd3')
     def test_default_policy_creating_network_without_policy(self):
-        project_id = self._create_project()['id']
+        project_id = self.create_project()['id']
         policy = self.create_qos_policy(name='test-policy',
                                         tenant_id=project_id,
                                         is_default=True)
@@ -383,7 +372,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 
     @decorators.idempotent_id('807cce45-38e5-482d-94db-36e1796aba73')
     def test_default_policy_creating_network_with_policy(self):
-        project_id = self._create_project()['id']
+        project_id = self.create_project()['id']
         self.create_qos_policy(name='test-policy',
                                tenant_id=project_id,
                                is_default=True)

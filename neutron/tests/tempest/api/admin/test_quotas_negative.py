@@ -26,7 +26,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.attr(type='negative')
     @decorators.idempotent_id('952f9b24-9156-4bdc-90f3-682a3d4302f0')
     def test_create_network_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         new_quotas = {'network': 1}
         self._setup_quotas(tenant_id, **new_quotas)
 
@@ -40,7 +40,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.attr(type='negative')
     @decorators.idempotent_id('0b7f99e3-9f77-45ce-9a89-b39a184de618')
     def test_create_subnet_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         new_quotas = {'subnet': 1}
         self._setup_quotas(tenant_id, **new_quotas)
 
@@ -62,7 +62,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.attr(type='negative')
     @decorators.idempotent_id('fe20d9f9-346c-4a20-bbfa-d9ca390f4dc6')
     def test_create_port_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         new_quotas = {'port': 1}
         self._setup_quotas(tenant_id, **new_quotas)
 
@@ -90,7 +90,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.idempotent_id('bb1e9c3c-7e6f-41f1-b579-63dbc655ecb7')
     @test.requires_ext(extension="router", service="network")
     def test_create_router_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         new_quotas = {'router': 1}
         self._setup_quotas(tenant_id, **new_quotas)
 
@@ -108,7 +108,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.idempotent_id('5c924ff7-b7a9-474f-92a3-dbe0f976ec13')
     @test.requires_ext(extension="security-group", service="network")
     def test_create_security_group_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         sg_args = {'tenant_id': tenant_id}
         # avoid a number that is made by default
         sg_list = self.admin_client.list_security_groups(
@@ -129,7 +129,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.idempotent_id('b7143480-6118-4ed4-be38-1b6f15f30d05')
     @test.requires_ext(extension="security-group", service="network")
     def test_create_security_group_rule_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         sg_args = {'tenant_id': tenant_id}
 
         sg = self.admin_client.create_security_group(
@@ -161,7 +161,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
     @decorators.idempotent_id('d00fe5bb-9db8-4e1a-9c31-490f52897e6f')
     @test.requires_ext(extension="router", service="network")
     def test_create_floatingip_when_quotas_is_full(self):
-        tenant_id = self._create_tenant()['id']
+        tenant_id = self.create_project()['id']
         new_quotas = {'floatingip': 1}
         self._setup_quotas(tenant_id, **new_quotas)
 
