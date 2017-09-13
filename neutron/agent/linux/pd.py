@@ -21,23 +21,15 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import netutils
 import six
 from stevedore import driver
 
-from neutron._i18n import _
 from neutron.common import constants as l3_constants
 from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
-
-OPTS = [
-    cfg.StrOpt('pd_dhcp_driver',
-               default='dibbler',
-               help=_('Service to handle DHCPv6 Prefix delegation.')),
-]
 
 
 class PrefixDelegation(object):

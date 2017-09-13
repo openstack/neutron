@@ -29,14 +29,12 @@ from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import config
 from neutron.conf.agent import cmd
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import dhcp as dhcp_config
-
 
 LOG = logging.getLogger(__name__)
 LB_NS_PREFIX = 'qlbaas-'
@@ -73,7 +71,7 @@ def setup_conf():
     cmd.register_cmd_opts(cmd.netns_opts, conf)
     agent_config.register_interface_driver_opts_helper(conf)
     dhcp_config.register_agent_dhcp_opts(conf)
-    conf.register_opts(interface.OPTS)
+    agent_config.register_interface_opts()
     return conf
 
 

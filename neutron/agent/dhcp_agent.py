@@ -19,7 +19,6 @@ import sys
 from oslo_config import cfg
 from oslo_service import service
 
-from neutron.agent.linux import interface
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.conf.agent import common as config
@@ -34,7 +33,7 @@ def register_options(conf):
     config.register_availability_zone_opts_helper(conf)
     dhcp_config.register_agent_dhcp_opts(conf)
     meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, conf)
-    conf.register_opts(interface.OPTS)
+    config.register_interface_opts(conf)
 
 
 def main():

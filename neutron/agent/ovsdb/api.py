@@ -21,7 +21,7 @@ from oslo_utils import importutils
 from ovsdbapp import api
 from ovsdbapp import exceptions
 
-from neutron._i18n import _
+from neutron.conf.agent import ovsdb_api
 
 API = moves.moved_class(api.API, 'API', __name__)
 Command = moves.moved_class(api.Command, 'Command', __name__)
@@ -29,31 +29,14 @@ Transaction = moves.moved_class(api.Transaction, 'Transaction', __name__)
 TimeoutException = moves.moved_class(exceptions.TimeoutException,
                                      'TimeoutException', __name__)
 
-interface_map = {
-    'vsctl': 'neutron.agent.ovsdb.impl_vsctl',
-    'native': 'neutron.agent.ovsdb.impl_idl',
-}
 
-OPTS = [
-    cfg.StrOpt('ovsdb_interface',
-               choices=interface_map.keys(),
-               default='native',
-               help=_('The interface for interacting with the OVSDB')),
-    cfg.StrOpt('ovsdb_connection',
-               default='tcp:127.0.0.1:6640',
-               help=_('The connection string for the OVSDB backend. '
-                      'Will be used by ovsdb-client when monitoring and '
-                      'used for the all ovsdb commands when native '
-                      'ovsdb_interface is enabled'
-                      ))
-]
-cfg.CONF.register_opts(OPTS, 'OVS')
+ovsdb_api.register_ovsdb_api_opts()
 
 
 def from_config(context, iface_name=None):
     """Return the configured OVSDB API implementation"""
     iface = importutils.import_module(
-        interface_map[iface_name or cfg.CONF.OVS.ovsdb_interface])
+        ovsdb_api.interface_map[iface_name or cfg.CONF.OVS.ovsdb_interface])
     return iface.api_factory(context)
 
 

@@ -23,7 +23,6 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 import testtools
 
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.conf.agent import common as config
@@ -49,7 +48,7 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
         cfg.CONF.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
-        cfg.CONF.register_opts(interface.OPTS)
+        config.register_interface_opts()
         self.driver = importutils.import_object(cfg.CONF.interface_driver,
                                                 cfg.CONF)
 

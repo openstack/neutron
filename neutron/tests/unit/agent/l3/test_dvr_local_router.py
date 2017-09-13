@@ -25,7 +25,6 @@ from neutron.agent.l3 import dvr_edge_router as dvr_edge_rtr
 from neutron.agent.l3 import dvr_local_router as dvr_router
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
-from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import constants as n_const
@@ -55,8 +54,8 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ha_conf.register_l3_agent_ha_opts(self.conf)
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
-        self.conf.register_opts(interface.OPTS)
-        self.conf.register_opts(external_process.OPTS)
+        agent_config.register_interface_opts(self.conf)
+        agent_config.register_external_process_opts(self.conf)
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('state_path', cfg.CONF.state_path)

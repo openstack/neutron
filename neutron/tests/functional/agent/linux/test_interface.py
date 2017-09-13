@@ -23,6 +23,7 @@ from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
 from neutron.common import utils
+from neutron.conf.agent import common as config
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base
@@ -74,7 +75,7 @@ class OVSInterfaceDriverTestCase(linux_base.BaseOVSLinuxTestCase,
     def setUp(self):
         super(OVSInterfaceDriverTestCase, self).setUp()
         conf = cfg.ConfigOpts()
-        conf.register_opts(interface.OPTS)
+        config.register_interface_opts(conf)
         self.interface = interface.OVSInterfaceDriver(conf)
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
@@ -130,7 +131,7 @@ class BridgeInterfaceDriverTestCase(base.BaseSudoTestCase,
     def setUp(self):
         super(BridgeInterfaceDriverTestCase, self).setUp()
         conf = cfg.ConfigOpts()
-        conf.register_opts(interface.OPTS)
+        config.register_interface_opts(conf)
         self.interface = interface.BridgeInterfaceDriver(conf)
         self.bridge = self.useFixture(net_helpers.LinuxBridgeFixture()).bridge
 

@@ -58,7 +58,7 @@ class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
         self.conf = config.setup_conf()
-        self.conf.register_opts(interface.OPTS)
+        config.register_interface_opts(self.conf)
         self.ip_dev_p = mock.patch.object(ip_lib, 'IPDevice')
         self.ip_dev = self.ip_dev_p.start()
         self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')

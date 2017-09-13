@@ -25,7 +25,6 @@ from oslo_utils import fileutils
 import testtools
 
 from neutron.agent.linux import dhcp
-from neutron.agent.linux import external_process
 from neutron.common import constants as n_const
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
@@ -977,7 +976,7 @@ class TestConfBase(base.BaseTestCase):
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp_config.DHCP_OPTS)
         self.conf.register_opts(dhcp_config.DNSMASQ_OPTS)
-        self.conf.register_opts(external_process.OPTS)
+        config.register_external_process_opts(self.conf)
         config.register_interface_driver_opts_helper(self.conf)
 
 

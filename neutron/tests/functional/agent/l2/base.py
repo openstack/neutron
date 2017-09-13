@@ -70,8 +70,8 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
     def _get_config_opts(self):
         config = cfg.ConfigOpts()
         config.register_opts(common_config.core_opts)
-        config.register_opts(interface.OPTS)
         ovs_conf.register_ovs_agent_opts(config)
+        agent_config.register_interface_opts(config)
         agent_config.register_interface_driver_opts_helper(config)
         agent_config.register_agent_state_opts_helper(config)
         ext_manager.register_opts(config)

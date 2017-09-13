@@ -41,7 +41,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3router
 from neutron.agent.l3 import router_processing_queue
 from neutron.agent.linux import dibbler
-from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import pd
@@ -77,10 +76,10 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         agent_config.register_interface_driver_opts_helper(self.conf)
         agent_config.register_process_monitor_opts(self.conf)
         agent_config.register_availability_zone_opts_helper(self.conf)
-        self.conf.register_opts(interface.OPTS)
-        self.conf.register_opts(external_process.OPTS)
-        self.conf.register_opts(pd.OPTS)
-        self.conf.register_opts(ra.OPTS)
+        agent_config.register_interface_opts(self.conf)
+        agent_config.register_external_process_opts(self.conf)
+        agent_config.register_pd_opts(self.conf)
+        agent_config.register_ra_opts(self.conf)
         self.conf.set_override('interface_driver',
                                'neutron.agent.linux.interface.NullDriver')
         self.conf.set_override('state_path', cfg.CONF.state_path)

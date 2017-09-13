@@ -18,10 +18,6 @@ from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
 
 import neutron.agent.agent_extensions_manager
-import neutron.agent.linux.interface
-import neutron.agent.linux.pd
-import neutron.agent.linux.ra
-import neutron.agent.ovsdb.api
 import neutron.agent.securitygroups_rpc
 import neutron.common.cache_utils
 import neutron.conf.agent.agent_extensions_manager
@@ -29,8 +25,10 @@ import neutron.conf.agent.common
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
+import neutron.conf.agent.linux
 import neutron.conf.agent.metadata.config as meta_conf
 import neutron.conf.agent.ovs_conf
+import neutron.conf.agent.ovsdb_api
 import neutron.conf.agent.xenapi_conf
 import neutron.conf.cache_utils
 import neutron.conf.common
@@ -146,12 +144,12 @@ def list_base_agent_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.agent.linux.interface.OPTS,
+             neutron.conf.agent.common.INTERFACE_OPTS,
              neutron.conf.agent.common.INTERFACE_DRIVER_OPTS,
              neutron.conf.agent.ovs_conf.OPTS)
          ),
         ('agent', neutron.conf.agent.common.AGENT_STATE_OPTS),
-        ('ovs', neutron.agent.ovsdb.api.OPTS),
+        ('ovs', neutron.conf.agent.ovsdb_api.API_OPTS),
     ]
 
 
@@ -196,8 +194,8 @@ def list_l3_agent_opts():
              neutron.conf.agent.l3.config.OPTS,
              neutron.conf.service.service_opts,
              neutron.conf.agent.l3.ha.OPTS,
-             neutron.agent.linux.pd.OPTS,
-             neutron.agent.linux.ra.OPTS)
+             neutron.conf.agent.common.PD_DRIVER_OPTS,
+             neutron.conf.agent.common.RA_OPTS)
          ),
         ('agent',
          neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS),
@@ -258,7 +256,7 @@ def list_ovs_opts():
         ('ovs',
          itertools.chain(
              neutron.conf.plugins.ml2.drivers.ovs_conf.ovs_opts,
-             neutron.agent.ovsdb.api.OPTS)
+             neutron.conf.agent.ovsdb_api.API_OPTS)
          ),
         ('agent',
          itertools.chain(

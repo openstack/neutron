@@ -1,4 +1,4 @@
-# Copyright 2016 Cloudbase Solutions.
+# Copyright 2017 OpenStack Foundation
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,17 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
+from neutron._i18n import _
 
-if os.name == 'nt':
-    from neutron.agent.windows import ip_lib
-    from neutron.conf.agent import windows
-    OPTS = windows.IP_LIB_OPTS_WINDOWS
-else:
-    from neutron.agent.linux import ip_lib
-    from neutron.conf.agent import linux
-    OPTS = linux.IP_LIB_OPTS_LINUX
+from oslo_config import cfg
+
+IP_LIB_OPTS_LINUX = [
+    cfg.BoolOpt('ip_lib_force_root',
+                default=False,
+                help=_('Force ip_lib calls to use the root helper')),
+]
 
 
-IPWrapper = ip_lib.IPWrapper
-IPDevice = ip_lib.IPDevice
+def register_iplib_opts(cfg=cfg.CONF):
+    cfg.register_opts(IP_LIB_OPTS_LINUX)

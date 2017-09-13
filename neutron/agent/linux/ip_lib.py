@@ -35,11 +35,6 @@ from neutron.privileged.agent.linux import ip_lib as privileged
 
 LOG = logging.getLogger(__name__)
 
-OPTS = [
-    cfg.BoolOpt('ip_lib_force_root',
-                default=False,
-                help=_('Force ip_lib calls to use the root helper')),
-]
 
 IP_NONLOCAL_BIND = 'net.ipv4.ip_nonlocal_bind'
 
