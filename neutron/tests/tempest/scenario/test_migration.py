@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import test_dvr
@@ -26,8 +26,8 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
     force_tenant_isolation = False
 
     @classmethod
-    @test.requires_ext(extension="dvr", service="network")
-    @test.requires_ext(extension="l3-ha", service="network")
+    @utils.requires_ext(extension="dvr", service="network")
+    @utils.requires_ext(extension="l3-ha", service="network")
     def skip_checks(cls):
         super(NetworkMigrationTestBase, cls).skip_checks()
 

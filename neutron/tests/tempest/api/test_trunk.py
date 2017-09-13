@@ -12,11 +12,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib.common.utils import test_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -95,7 +95,7 @@ class TrunkTestJSON(TrunkTestJSONBase):
         self.assertRaises(lib_exc.NotFound, self._show_trunk, trunk_id)
 
     @decorators.idempotent_id('8d83a6ca-662d-45b8-8062-d513077296aa')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_show_trunk_has_project_id(self):
         trunk = self._create_trunk_with_network_and_parent(None)
         body = self._show_trunk(trunk['trunk']['id'])

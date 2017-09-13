@@ -15,10 +15,10 @@
 
 import netaddr
 from oslo_utils import uuidutils
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import test_subnetpools
 
@@ -61,7 +61,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('6ae09d8f-95be-40ed-b1cf-8b850d45bab5')
-    @test.requires_ext(extension='default-subnetpools', service='network')
+    @utils.requires_ext(extension='default-subnetpools', service='network')
     def test_tenant_create_default_subnetpool(self):
         # 'default' subnetpool can only be created by admin.
         self.assertRaises(lib_exc.Forbidden, self._create_subnetpool,
@@ -113,21 +113,21 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('9589e332-638e-476e-81bd-013d964aa3cb')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_invalid_address_scope(self):
         self.assertRaises(lib_exc.BadRequest, self._create_subnetpool,
                           address_scope_id='foo-addr-scope')
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('3b6c5942-485d-4964-a560-55608af020b5')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_non_exist_address_scope(self):
         self.assertRaises(lib_exc.NotFound, self._create_subnetpool,
                           address_scope_id=uuidutils.generate_uuid())
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('2dfb4269-8657-485a-a053-b022e911456e')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope_prefix_intersect(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'),
@@ -143,7 +143,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('83a19a13-5384-42e2-b579-43fc69c80914')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_create_sp_associate_address_scope_multiple_prefix_intersect(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'),
@@ -161,7 +161,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('f06d8e7b-908b-4e94-b570-8156be6a4bf1')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_create_subnetpool_associate_address_scope_of_other_owner(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
@@ -171,7 +171,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('3396ec6c-cb80-4ebe-b897-84e904580bdf')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_tenant_create_subnetpool_associate_shared_address_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
@@ -181,7 +181,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('6d3d9ad5-32d4-4d63-aa00-8c62f73e2881')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope_of_other_owner(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
@@ -214,7 +214,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('96006292-7214-40e0-a471-153fb76e6b31')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_prefix_intersect(self):
         pool_1_prefix = [u'20.0.0.0/18']
         pool_2_prefix = [u'20.10.0.0/24']
@@ -224,7 +224,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('4d3f8a79-c530-4e59-9acf-6c05968adbfe')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_multiple_prefix_intersect(self):
         pool_1_prefixes = [u'20.0.0.0/18', u'30.0.0.0/18']
         pool_2_prefixes = [u'20.10.0.0/24', u'40.0.0.0/18', '50.0.0.0/18']
@@ -235,7 +235,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('7438e49e-1351-45d8-937b-892059fb97f5')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_tenant_update_sp_prefix_associated_with_shared_addr_scope(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'), is_admin=True,
@@ -266,7 +266,7 @@ class SubnetPoolsNegativeTestJSON(test_subnetpools.SubnetPoolsTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('648fee7d-a909-4ced-bad3-3a169444c0a8')
-    @test.requires_ext(extension='address-scope', service='network')
+    @utils.requires_ext(extension='address-scope', service='network')
     def test_update_subnetpool_associate_address_scope_wrong_ip_version(self):
         address_scope = self.create_address_scope(
             name=data_utils.rand_name('smoke-address-scope'),

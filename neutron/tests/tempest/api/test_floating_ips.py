@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -58,7 +58,7 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         self.assertFalse(body['port_id'])
 
     @decorators.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442641ffff')
-    @test.requires_ext(extension="standard-attr-description",
+    @utils.requires_ext(extension="standard-attr-description",
                        service="network")
     def test_create_update_floatingip_description(self):
         body = self.client.create_floatingip(
@@ -80,7 +80,7 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         self.assertEqual('d2', body['floatingip']['description'])
 
     @decorators.idempotent_id('fd7161e1-2167-4686-a6ff-0f3df08001bb')
-    @test.requires_ext(extension="standard-attr-description",
+    @utils.requires_ext(extension="standard-attr-description",
                        service="network")
     def test_floatingip_update_extra_attributes_port_id_not_changed(self):
         port_id = self.ports[1]['id']
