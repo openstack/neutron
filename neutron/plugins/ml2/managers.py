@@ -25,6 +25,7 @@ from oslo_utils import excutils
 import stevedore
 
 from neutron._i18n import _
+from neutron.conf.plugins.ml2 import config
 from neutron.db import api as db_api
 from neutron.db import segments_db
 from neutron.extensions import external_net
@@ -37,6 +38,7 @@ from neutron.plugins.ml2 import models
 LOG = log.getLogger(__name__)
 
 MAX_BINDING_LEVELS = 10
+config.register_ml2_plugin_opts()
 
 
 class TypeManager(stevedore.named.NamedExtensionManager):

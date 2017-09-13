@@ -16,11 +16,11 @@
 from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
+from oslo_config import cfg
 
 from neutron.common import exceptions as n_exc
 from neutron.objects.plugins.ml2 import flatallocation as flat_obj
 from neutron.plugins.common import constants as p_const
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.drivers import type_flat
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
@@ -35,7 +35,7 @@ class FlatTypeTest(testlib_api.SqlTestCase):
     def setUp(self):
         super(FlatTypeTest, self).setUp()
         self.setup_coreplugin(CORE_PLUGIN)
-        config.cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
+        cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
                               group='ml2_type_flat')
         self.driver = type_flat.FlatTypeDriver()
         self.context = context.Context()
@@ -127,28 +127,28 @@ class FlatTypeTest(testlib_api.SqlTestCase):
         self.assertIsNone(observed)
 
     def test_get_mtu(self):
-        config.cfg.CONF.set_override('global_physnet_mtu', 1475)
-        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 1475)
+        cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1450, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('global_physnet_mtu', 1375)
-        config.cfg.CONF.set_override('path_mtu', 1400, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 1375)
+        cfg.CONF.set_override('path_mtu', 1400, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1375, self.driver.get_mtu('physnet1'))
 
-        config.cfg.CONF.set_override('global_physnet_mtu', 0)
-        config.cfg.CONF.set_override('path_mtu', 1425, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 0)
+        cfg.CONF.set_override('path_mtu', 1425, group='ml2')
         self.driver.physnet_mtus = {'physnet1': 1450, 'physnet2': 1400}
         self.assertEqual(1400, self.driver.get_mtu('physnet2'))
 
-        config.cfg.CONF.set_override('global_physnet_mtu', 0)
-        config.cfg.CONF.set_override('path_mtu', 0, group='ml2')
+        cfg.CONF.set_override('global_physnet_mtu', 0)
+        cfg.CONF.set_override('path_mtu', 0, group='ml2')
         self.driver.physnet_mtus = {}
         self.assertEqual(0, self.driver.get_mtu('physnet1'))
 
     def test_parse_physical_network_mtus(self):
-        config.cfg.CONF.set_override(
+        cfg.CONF.set_override(
             'physical_network_mtus',
             ['physnet1:1500', 'physnet2:1500', 'physnet3:9000'],
             group='ml2')

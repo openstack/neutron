@@ -38,7 +38,7 @@ from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 
-cfg.CONF.import_group('ml2', 'neutron.plugins.ml2.config')
+cfg.CONF.import_group('ml2', 'neutron.conf.plugins.ml2.config')
 
 
 class RpcCallbacksTestCase(base.BaseTestCase):

@@ -44,7 +44,6 @@ from neutron.extensions import l2_adjacency
 from neutron.extensions import segment as ext_segment
 from neutron.objects import network
 from neutron.plugins.common import constants as p_constants
-from neutron.plugins.ml2 import config
 from neutron.services.segments import db
 from neutron.services.segments import exceptions as segment_exc
 from neutron.services.segments import placement_client
@@ -472,9 +471,9 @@ class HostSegmentMappingTestCase(SegmentTestCase):
     _mechanism_drivers = ['logger']
 
     def setUp(self, plugin=None):
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     self._mechanism_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('mechanism_drivers',
+                              self._mechanism_drivers,
+                              group='ml2')
 
         # NOTE(dasm): ml2_type_vlan requires to be registered before used.
         # This piece was refactored and removed from .config, so it causes
@@ -482,9 +481,9 @@ class HostSegmentMappingTestCase(SegmentTestCase):
         # There is no problem when tests are running without debugger.
         driver_type.register_ml2_drivers_vlan_opts()
 
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     ['phys_net1', 'phys_net2'],
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ['phys_net1', 'phys_net2'],
+                              group='ml2_type_vlan')
         if not plugin:
             plugin = 'ml2'
         super(HostSegmentMappingTestCase, self).setUp(plugin=plugin)
@@ -1434,7 +1433,7 @@ class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
         # a problem, when tests are executed with pdb.
         # There is no problem when tests are running without debugger.
         driver_type.register_ml2_drivers_vlan_opts()
-        config.cfg.CONF.set_override(
+        cfg.CONF.set_override(
             'network_vlan_ranges',
             ['physnet:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
              'physnet0:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
@@ -1456,13 +1455,13 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
 
     def setUp(self):
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     self._mechanism_drivers,
-                                     group='ml2')
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     ['physnet:200:209', 'physnet0:200:209',
-                                      'physnet1:200:209', 'physnet2:200:209'],
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('mechanism_drivers',
+                              self._mechanism_drivers,
+                              group='ml2')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ['physnet:200:209', 'physnet0:200:209',
+                               'physnet1:200:209', 'physnet2:200:209'],
+                              group='ml2_type_vlan')
         super(TestNovaSegmentNotifier, self).setUp(plugin='ml2')
         # Need notifier here
         self.patch_notifier.stop()

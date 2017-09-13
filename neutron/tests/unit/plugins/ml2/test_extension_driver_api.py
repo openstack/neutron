@@ -13,9 +13,9 @@
 import mock
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.plugins.ml2 import config
 from neutron.tests.unit.plugins.ml2.drivers import ext_test
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
@@ -25,9 +25,9 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['test']
 
     def setUp(self):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         super(ExtensionDriverTestCase, self).setUp()
         self._plugin = directory.get_plugin()
         self._ctxt = context.get_admin_context()
@@ -178,9 +178,9 @@ class DBExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['testdb']
 
     def setUp(self):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         super(DBExtensionDriverTestCase, self).setUp()
         self._plugin = directory.get_plugin()
         self._ctxt = context.get_admin_context()

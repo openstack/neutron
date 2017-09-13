@@ -33,6 +33,7 @@ import neutron.conf.agent.xenapi_conf
 import neutron.conf.cache_utils
 import neutron.conf.common
 import neutron.conf.extensions.allowedaddresspairs
+import neutron.conf.plugins.ml2.config
 import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.driver_type
 import neutron.conf.plugins.ml2.drivers.linuxbridge
@@ -54,7 +55,6 @@ import neutron.db.l3_hamode_db
 import neutron.db.migration.cli
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
-import neutron.plugins.ml2.config
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
 import neutron.wsgi
 
@@ -235,7 +235,7 @@ def list_metering_agent_opts():
 def list_ml2_conf_opts():
     return [
         ('ml2',
-         neutron.plugins.ml2.config.ml2_opts),
+         neutron.conf.plugins.ml2.config.ml2_opts),
         ('ml2_type_flat',
          neutron.conf.plugins.ml2.drivers.driver_type.flat_opts),
         ('ml2_type_vlan',

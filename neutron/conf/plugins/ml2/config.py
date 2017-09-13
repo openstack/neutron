@@ -69,4 +69,5 @@ ml2_opts = [
 ]
 
 
-cfg.CONF.register_opts(ml2_opts, "ml2")
+def register_ml2_plugin_opts(cfg=cfg.CONF):
+    cfg.register_opts(ml2_opts, "ml2")

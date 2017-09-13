@@ -17,10 +17,10 @@
 import mock
 
 from neutron_lib.plugins.ml2 import api
+from oslo_config import cfg
 from oslo_db import exception as db_exc
 
 from neutron.plugins.ml2.common import exceptions as ml2_exc
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import managers
 from neutron.tests import base
 from neutron.tests.unit.plugins.ml2.drivers import mechanism_test
@@ -45,8 +45,8 @@ class TestManagers(base.BaseTestCase):
     @mock.patch.object(managers.LOG, 'critical')
     @mock.patch.object(managers.MechanismManager, '_driver_not_loaded')
     def test__driver_not_found(self, mock_not_loaded, mock_log):
-        config.cfg.CONF.set_override('mechanism_drivers', ['invalidmech'],
-                                     group='ml2')
+        cfg.CONF.set_override('mechanism_drivers', ['invalidmech'],
+                              group='ml2')
         self.assertRaises(SystemExit, managers.MechanismManager)
         mock_not_loaded.assert_not_called()
         mock_log.assert_called_once_with("The following mechanism drivers "
@@ -56,8 +56,8 @@ class TestManagers(base.BaseTestCase):
     @mock.patch.object(managers.LOG, 'critical')
     @mock.patch.object(managers.MechanismManager, '_driver_not_found')
     def test__driver_not_loaded(self, mock_not_found, mock_log):
-        config.cfg.CONF.set_override('mechanism_drivers', ['faulty_agent'],
-                                     group='ml2')
+        cfg.CONF.set_override('mechanism_drivers', ['faulty_agent'],
+                              group='ml2')
         self.assertRaises(SystemExit, managers.MechanismManager)
         mock_log.assert_called_once_with(u"The '%(entrypoint)s' entrypoint "
                                          "could not be loaded for the "
@@ -68,8 +68,7 @@ class TestManagers(base.BaseTestCase):
 
 class TestMechManager(base.BaseTestCase):
     def setUp(self):
-        config.cfg.CONF.set_override('mechanism_drivers', ['test'],
-                                     group='ml2')
+        cfg.CONF.set_override('mechanism_drivers', ['test'], group='ml2')
         super(TestMechManager, self).setUp()
         self._manager = managers.MechanismManager()
 

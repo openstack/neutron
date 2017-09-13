@@ -21,12 +21,12 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
 
 from neutron.extensions import dns
 from neutron.objects import ports as port_obj
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2.extensions import dns_integration
 from neutron.services.externaldns.drivers.designate import driver
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -52,17 +52,17 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
     _domain = DNSDOMAIN
 
     def setUp(self):
-        config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
-        config.cfg.CONF.set_override('external_dns_driver', 'designate')
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
+        cfg.CONF.set_override('external_dns_driver', 'designate')
         mock_client.reset_mock()
         mock_admin_client.reset_mock()
         super(DNSIntegrationTestCase, self).setUp()
         dns_integration.DNS_DRIVER = None
         dns_integration.subscribe()
         self.plugin = directory.get_plugin()
-        config.cfg.CONF.set_override('dns_domain', self._domain)
+        cfg.CONF.set_override('dns_domain', self._domain)
 
     def _create_port_for_test(self, provider_net=True, dns_domain=True,
                               dns_name=True, ipv4=True, ipv6=True,
@@ -257,9 +257,9 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         if 'in-addr.arpa' in in_addr_name:
             return ((
                 constants.IPv4_BITS -
-                config.cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
+                cfg.CONF.designate.ipv4_ptr_zone_prefix_size) / 8)
         return (constants.IPv6_BITS -
-                config.cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
+                cfg.CONF.designate.ipv6_ptr_zone_prefix_size) / 4
 
     def test_create_port(self, *mocks):
         port, dns_data_db = self._create_port_for_test()
@@ -278,7 +278,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self._verify_port_dns(port, dns_data_db, dns_domain=False)
 
     def test_create_port_no_dns_driver(self, *mocks):
-        config.cfg.CONF.set_override('external_dns_driver', '')
+        cfg.CONF.set_override('external_dns_driver', '')
         port, dns_data_db = self._create_port_for_test()
         self._verify_port_dns(port, dns_data_db, dns_driver=False)
 
@@ -291,12 +291,12 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self._verify_port_dns(port, dns_data_db)
 
     def test_create_port_no_ptr_zones(self, *mocks):
-        config.cfg.CONF.set_override('allow_reverse_dns_lookup', False,
-                                     group='designate')
+        cfg.CONF.set_override(
+            'allow_reverse_dns_lookup', False, group='designate')
         port, dns_data_db = self._create_port_for_test()
         self._verify_port_dns(port, dns_data_db, ptr_zones=False)
-        config.cfg.CONF.set_override('allow_reverse_dns_lookup', True,
-                                     group='designate')
+        cfg.CONF.set_override('allow_reverse_dns_lookup', True,
+                              group='designate')
 
     def test_update_port(self, *mocks):
         port, dns_data_db = self._create_port_for_test()
@@ -772,24 +772,24 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
 
     def setUp(self):
         super(TestDesignateClientKeystoneV2, self).setUp()
-        config.cfg.CONF.set_override('url',
-                                     self.TEST_URL,
-                                     group='designate')
-        config.cfg.CONF.set_override('admin_username',
-                                     self.TEST_ADMIN_USERNAME,
-                                     group='designate')
-        config.cfg.CONF.set_override('admin_password',
-                                     self.TEST_ADMIN_PASSWORD,
-                                     group='designate')
-        config.cfg.CONF.set_override('admin_auth_url',
-                                     self.TEST_ADMIN_AUTH_URL,
-                                     group='designate')
-        config.cfg.CONF.set_override('admin_tenant_id',
-                                     self.TEST_ADMIN_TENANT_ID,
-                                     group='designate')
-        config.cfg.CONF.set_override('admin_tenant_name',
-                                     self.TEST_ADMIN_TENANT_NAME,
-                                     group='designate')
+        cfg.CONF.set_override('url',
+                              self.TEST_URL,
+                              group='designate')
+        cfg.CONF.set_override('admin_username',
+                              self.TEST_ADMIN_USERNAME,
+                              group='designate')
+        cfg.CONF.set_override('admin_password',
+                              self.TEST_ADMIN_PASSWORD,
+                              group='designate')
+        cfg.CONF.set_override('admin_auth_url',
+                              self.TEST_ADMIN_AUTH_URL,
+                              group='designate')
+        cfg.CONF.set_override('admin_tenant_id',
+                              self.TEST_ADMIN_TENANT_ID,
+                              group='designate')
+        cfg.CONF.set_override('admin_tenant_name',
+                              self.TEST_ADMIN_TENANT_NAME,
+                              group='designate')
 
         # enforce session recalculation
         mock.patch.object(driver, '_SESSION', new=None).start()
@@ -802,21 +802,21 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
             mock.patch.object(driver.password, 'Password').start())
 
     def test_insecure_client(self):
-        config.cfg.CONF.set_override('insecure',
-                                     True,
-                                     group='designate')
+        cfg.CONF.set_override('insecure',
+                              True,
+                              group='designate')
         driver.get_clients(self.TEST_CONTEXT)
         self.driver_session.assert_called_with(cert=None,
                                                timeout=None,
                                                verify=False)
 
     def test_secure_client(self):
-        config.cfg.CONF.set_override('insecure',
-                                     False,
-                                     group='designate')
-        config.cfg.CONF.set_override('cafile',
-                                     self.TEST_CA_CERT,
-                                     group='designate')
+        cfg.CONF.set_override('insecure',
+                              False,
+                              group='designate')
+        cfg.CONF.set_override('cafile',
+                              self.TEST_CA_CERT,
+                              group='designate')
         driver.get_clients(self.TEST_CONTEXT)
         self.driver_session.assert_called_with(cert=None,
                                                timeout=None,
@@ -853,32 +853,31 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
         # Register the Password auth plugin options,
         # so we can use CONF.set_override
         password_option = loading.get_auth_plugin_conf_options('password')
-        config.cfg.CONF.register_opts(password_option, group='designate')
+        cfg.CONF.register_opts(password_option, group='designate')
         self.addCleanup(
-            config.cfg.CONF.unregister_opts,
-            password_option, group='designate')
+            cfg.CONF.unregister_opts, password_option, group='designate')
 
-        config.cfg.CONF.set_override('url',
-                                     self.TEST_URL,
-                                     group='designate')
-        config.cfg.CONF.set_override('auth_type',
-                                     'password',
-                                     group='designate')
-        config.cfg.CONF.set_override('username',
-                                     self.TEST_ADMIN_USERNAME,
-                                     group='designate')
-        config.cfg.CONF.set_override('password',
-                                     self.TEST_ADMIN_PASSWORD,
-                                     group='designate')
-        config.cfg.CONF.set_override('user_domain_id',
-                                     self.TEST_ADMIN_USER_DOMAIN_ID,
-                                     group='designate')
-        config.cfg.CONF.set_override('project_domain_id',
-                                     self.TEST_ADMIN_PROJECT_DOMAIN_ID,
-                                     group='designate')
-        config.cfg.CONF.set_override('auth_url',
-                                     self.TEST_ADMIN_AUTH_URL,
-                                     group='designate')
+        cfg.CONF.set_override('url',
+                              self.TEST_URL,
+                              group='designate')
+        cfg.CONF.set_override('auth_type',
+                              'password',
+                              group='designate')
+        cfg.CONF.set_override('username',
+                              self.TEST_ADMIN_USERNAME,
+                              group='designate')
+        cfg.CONF.set_override('password',
+                              self.TEST_ADMIN_PASSWORD,
+                              group='designate')
+        cfg.CONF.set_override('user_domain_id',
+                              self.TEST_ADMIN_USER_DOMAIN_ID,
+                              group='designate')
+        cfg.CONF.set_override('project_domain_id',
+                              self.TEST_ADMIN_PROJECT_DOMAIN_ID,
+                              group='designate')
+        cfg.CONF.set_override('auth_url',
+                              self.TEST_ADMIN_AUTH_URL,
+                              group='designate')
 
         # enforce session recalculation
         mock.patch.object(driver, '_SESSION', new=None).start()
@@ -891,21 +890,21 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
             mock.patch.object(driver.password, 'Password').start())
 
     def test_insecure_client(self):
-        config.cfg.CONF.set_override('insecure',
-                                     True,
-                                     group='designate')
+        cfg.CONF.set_override('insecure',
+                              True,
+                              group='designate')
         driver.get_clients(self.TEST_CONTEXT)
         self.driver_session.assert_called_with(cert=None,
                                                timeout=None,
                                                verify=False)
 
     def test_secure_client(self):
-        config.cfg.CONF.set_override('insecure',
-                                     False,
-                                     group='designate')
-        config.cfg.CONF.set_override('cafile',
-                                     self.TEST_CA_CERT,
-                                     group='designate')
+        cfg.CONF.set_override('insecure',
+                              False,
+                              group='designate')
+        cfg.CONF.set_override('cafile',
+                              self.TEST_CA_CERT,
+                              group='designate')
         driver.get_clients(self.TEST_CONTEXT)
         self.driver_session.assert_called_with(cert=None,
                                                timeout=None,
@@ -913,5 +912,5 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
 
     def test_auth_type_password(self):
         driver.get_clients(self.TEST_CONTEXT)
-        self.load_auth.assert_called_with(config.cfg.CONF, 'designate')
+        self.load_auth.assert_called_with(cfg.CONF, 'designate')
         self.password.assert_not_called()

@@ -18,10 +18,10 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_serialization import jsonutils
 
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron.plugins.ml2 import config
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import models as ml2_models
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
@@ -33,18 +33,18 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Enable the test mechanism driver to ensure that
         # we can successfully call through to all mechanism
         # driver apis.
-        config.cfg.CONF.set_override('mechanism_drivers',
-                                     ['logger', 'test'],
-                                     'ml2')
+        cfg.CONF.set_override('mechanism_drivers',
+                              ['logger', 'test'],
+                              'ml2')
 
         # NOTE(dasm): ml2_type_vlan requires to be registered before used.
         # This piece was refactored and removed from .config, so it causes
         # a problem, when tests are executed with pdb.
         # There is no problem when tests are running without debugger.
         driver_type.register_ml2_drivers_vlan_opts()
-        config.cfg.CONF.set_override('network_vlan_ranges',
-                                     ['physnet1:1000:1099'],
-                                     group='ml2_type_vlan')
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ['physnet1:1000:1099'],
+                              group='ml2_type_vlan')
         super(PortBindingTestCase, self).setUp('ml2')
         self.port_create_status = 'DOWN'
         self.plugin = directory.get_plugin()
