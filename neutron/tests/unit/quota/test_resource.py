@@ -14,6 +14,8 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib.plugins import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
@@ -325,3 +327,45 @@ class TestTrackedResource(testlib_api.SqlTestCase):
             self.assertNotIn(self.tenant_id, res._out_of_sync_tenants)
             mock_set_quota_usage.assert_called_once_with(
                 self.context, self.resource, self.tenant_id, in_use=2)
+
+
+class Test_CountResource(base.BaseTestCase):
+
+    def test_all_plugins_checked(self):
+        plugin1 = mock.Mock()
+        plugin2 = mock.Mock()
+        plugins = {'plugin1': plugin1, 'plugin2': plugin2}
+
+        for name, plugin in plugins.items():
+            plugin.get_floatingips_count.side_effect = NotImplementedError
+            plugin.get_floatingips.side_effect = NotImplementedError
+            directory.add_plugin(name, plugin)
+
+        context = mock.Mock()
+        collection_name = 'floatingips'
+        tenant_id = 'fakeid'
+        self.assertRaises(
+            NotImplementedError,
+            resource._count_resource, context, collection_name, tenant_id)
+
+        for plugin in plugins.values():
+            for func in (plugin.get_floatingips_count, plugin.get_floatingips):
+                func.assert_called_with(
+                    context, filters={'tenant_id': [tenant_id]})
+
+    def test_core_plugin_checked_first(self):
+        plugin1 = mock.Mock()
+        plugin2 = mock.Mock()
+
+        plugin1.get_floatingips_count.side_effect = NotImplementedError
+        plugin1.get_floatingips.side_effect = NotImplementedError
+        directory.add_plugin('plugin1', plugin1)
+
+        plugin2.get_floatingips_count.return_value = 10
+        directory.add_plugin(constants.CORE, plugin2)
+
+        context = mock.Mock()
+        collection_name = 'floatingips'
+        tenant_id = 'fakeid'
+        self.assertEqual(
+            10, resource._count_resource(context, collection_name, tenant_id))

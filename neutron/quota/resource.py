@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import constants
+from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
@@ -24,20 +26,32 @@ from neutron.db.quota import api as quota_api
 LOG = log.getLogger(__name__)
 
 
-def _count_resource(context, plugin, collection_name, tenant_id):
+def _count_resource(context, collection_name, tenant_id):
     count_getter_name = "get_%s_count" % collection_name
+    getter_name = "get_%s" % collection_name
 
-    # Some plugins support a count method for particular resources,
-    # using a DB's optimized counting features. We try to use that one
-    # if present. Otherwise just use regular getter to retrieve all objects
-    # and count in python, allowing older plugins to still be supported
-    try:
-        obj_count_getter = getattr(plugin, count_getter_name)
-        return obj_count_getter(context, filters={'tenant_id': [tenant_id]})
-    except (NotImplementedError, AttributeError):
-        obj_getter = getattr(plugin, "get_%s" % collection_name)
-        obj_list = obj_getter(context, filters={'tenant_id': [tenant_id]})
-        return len(obj_list) if obj_list else 0
+    plugins = directory.get_plugins()
+    for pname in sorted(plugins,
+                        # inspect core plugin first
+                        key=lambda n: n != constants.CORE):
+        # Some plugins support a count method for particular resources, using a
+        # DB's optimized counting features. We try to use that one if present.
+        # Otherwise just use regular getter to retrieve all objects and count
+        # in python, allowing older plugins to still be supported
+        try:
+            obj_count_getter = getattr(plugins[pname], count_getter_name)
+            return obj_count_getter(
+                context, filters={'tenant_id': [tenant_id]})
+        except (NotImplementedError, AttributeError):
+            try:
+                obj_getter = getattr(plugins[pname], getter_name)
+                obj_list = obj_getter(
+                    context, filters={'tenant_id': [tenant_id]})
+                return len(obj_list) if obj_list else 0
+            except (NotImplementedError, AttributeError):
+                pass
+    raise NotImplementedError(
+        'No plugins that support counting %s found.' % collection_name)
 
 
 class BaseResource(object):
@@ -129,7 +143,8 @@ class CountableResource(BaseResource):
         self._count_func = count
 
     def count(self, context, plugin, tenant_id, **kwargs):
-        return self._count_func(context, plugin, self.plural_name, tenant_id)
+        # NOTE(ihrachys) _count_resource doesn't receive plugin
+        return self._count_func(context, self.plural_name, tenant_id)
 
 
 class TrackedResource(BaseResource):
