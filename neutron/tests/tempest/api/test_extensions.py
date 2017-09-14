@@ -10,8 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -22,7 +22,7 @@ class ExtensionsTest(base.BaseNetworkTest):
         body = self.client.list_extensions()
         extensions = {ext_['alias'] for ext_ in body['extensions']}
         self.assertNotEmpty(extensions, "Extension list returned is empty")
-        ext_enabled = test.is_extension_enabled(ext, "network")
+        ext_enabled = utils.is_extension_enabled(ext, "network")
         if ext_enabled:
             self.assertIn(ext, extensions)
         else:
