@@ -14,10 +14,10 @@
 #    under the License.
 
 import netaddr
+from tempest.common import utils
 from tempest.common import waiters
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 import testscenarios
 from testscenarios.scenarios import multiply_scenarios
 
@@ -37,7 +37,7 @@ class FloatingIpTestCasesMixin(object):
     credentials = ['primary', 'admin']
 
     @classmethod
-    @test.requires_ext(extension="router", service="network")
+    @utils.requires_ext(extension="router", service="network")
     def resource_setup(cls):
         super(FloatingIpTestCasesMixin, cls).resource_setup()
         cls.network = cls.create_network()

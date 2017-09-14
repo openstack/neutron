@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions
-from tempest import test
 
 import testscenarios
 import testtools
@@ -56,7 +56,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
         self.assertIn(policy['id'], policies_ids)
 
     @decorators.idempotent_id('606a48e2-5403-4052-b40f-4d54b855af76')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_show_policy_has_project_id(self):
         policy = self.create_qos_policy(name='test-policy', shared=False)
         body = self.admin_client.show_qos_policy(policy['id'])

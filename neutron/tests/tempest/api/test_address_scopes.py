@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 
@@ -78,7 +78,7 @@ class AddressScopeTest(AddressScopeTestBase):
         self.assertFalse(returned_address_scope['shared'])
 
     @decorators.idempotent_id('bbd57364-6d57-48e4-b0f1-8b9a998f5e06')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_show_address_scope_project_id(self):
         address_scope = self._create_address_scope(ip_version=4)
         body = self.client.show_address_scope(address_scope['id'])

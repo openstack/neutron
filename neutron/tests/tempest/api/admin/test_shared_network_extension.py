@@ -15,10 +15,10 @@
 #    under the License.
 
 from oslo_utils import uuidutils
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 import testtools
 
 from neutron.tests.tempest.api import base
@@ -384,7 +384,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                 action='access_as_shared', target_tenant=self.client.tenant_id)
 
     @decorators.idempotent_id('c5f8f785-ce8d-4430-af7e-a236205862fb')
-    @test.requires_ext(extension="quotas", service="network")
+    @utils.requires_ext(extension="quotas", service="network")
     def test_rbac_policy_quota(self):
         quota = self.client.show_quotas(self.client.tenant_id)['quota']
         max_policies = quota['rbac_policy']
@@ -426,7 +426,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
                                        target_tenant=self.client2.tenant_id)
         self.client.delete_port(port['id'])
 
-    @test.requires_ext(extension="standard-attr-revisions", service="network")
+    @utils.requires_ext(extension="standard-attr-revisions", service="network")
     @decorators.idempotent_id('86c3529b-1231-40de-1234-89664291a4cb')
     def test_rbac_bumps_network_revision(self):
         resp = self._make_admin_net_and_subnet_shared_to_tenant_id(
