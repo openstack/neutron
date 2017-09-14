@@ -143,6 +143,17 @@ class DVRResourceOperationHandler(object):
         for agent in cur_agents:
             self.l3plugin._unbind_router(context, router_db['id'], agent['id'])
 
+    @registry.receives(resources.ROUTER, [events.AFTER_UPDATE])
+    def _delete_snat_interfaces_after_change(self, resource, event, trigger,
+                                             context, router_id, router,
+                                             request_attrs, router_db,
+                                             **kwargs):
+        if router.get(l3.EXTERNAL_GW_INFO) and not router['distributed']:
+            old_router = kwargs['old_router']
+            if old_router and old_router['distributed']:
+                self.delete_csnat_router_interface_ports(
+                    context.elevated(), router_db)
+
     @registry.receives(resources.ROUTER,
                        [events.AFTER_CREATE, events.AFTER_UPDATE])
     def _create_snat_interfaces_after_change(self, resource, event, trigger,
@@ -528,19 +539,11 @@ class DVRResourceOperationHandler(object):
         # Each csnat router interface port is associated
         # with a subnet, so we need to pass the subnet id to
         # delete the right ports.
-
-        # TODO(markmcclain): This is suboptimal but was left to reduce
-        # changeset size since it is late in cycle
-        ports = [
-            rp.port.id for rp in
-            router.attached_ports.filter_by(
-                    port_type=const.DEVICE_OWNER_ROUTER_SNAT)
-            if rp.port
-        ]
-
+        filters = {'device_owner': [const.DEVICE_OWNER_ROUTER_SNAT],
+                   'device_id': [router.id]}
         c_snat_ports = self.l3plugin._core_plugin.get_ports(
             context,
-            filters={'id': ports}
+            filters=filters
         )
         for p in c_snat_ports:
             if subnet_id is None or not p['fixed_ips']:
