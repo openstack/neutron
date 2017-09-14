@@ -70,31 +70,6 @@ def _get_path(resource, id=None, action=None,
     return path
 
 
-class ResourceIndexTestCase(base.BaseTestCase):
-    def test_index_json(self):
-        index = webtest.TestApp(router.Index({'foo': 'bar'}))
-        res = index.get('')
-
-        self.assertIn('resources', res.json)
-        self.assertEqual(1, len(res.json['resources']))
-
-        resource = res.json['resources'][0]
-        self.assertIn('collection', resource)
-        self.assertEqual('bar', resource['collection'])
-
-        self.assertIn('name', resource)
-        self.assertEqual('foo', resource['name'])
-
-        self.assertIn('links', resource)
-        self.assertEqual(1, len(resource['links']))
-
-        link = resource['links'][0]
-        self.assertIn('href', link)
-        self.assertEqual(link['href'], 'http://localhost/bar')
-        self.assertIn('rel', link)
-        self.assertEqual('self', link['rel'])
-
-
 class APIv2TestBase(base.BaseTestCase):
     def setUp(self):
         super(APIv2TestBase, self).setUp()
