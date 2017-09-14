@@ -1,4 +1,0 @@
-[[post-config|/etc/neutron/neutron.conf]]
-
-[DEFAULT]
-web_framework=pecan

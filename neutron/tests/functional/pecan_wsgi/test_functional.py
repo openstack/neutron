@@ -85,7 +85,6 @@ class PecanFunctionalTest(testlib_api.SqlTestCase):
         self.app = create_test_app()
 
     def set_config_overrides(self):
-        cfg.CONF.set_override('web_framework', 'pecan')
         cfg.CONF.set_override('auth_strategy', 'noauth')
 
     def do_request(self, url, tenant_id=None, admin=False,

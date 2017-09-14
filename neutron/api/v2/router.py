@@ -67,9 +67,8 @@ class APIRouter(base_wsgi.Router):
 
     @classmethod
     def factory(cls, global_config, **local_config):
-        if cfg.CONF.web_framework == 'pecan':
-            return pecan_app.v2_factory(global_config, **local_config)
-        return cls(**local_config)
+        # TODO(kevinbenton): dump this whole class
+        return pecan_app.v2_factory(global_config, **local_config)
 
     def __init__(self, **local_config):
         mapper = routes_mapper.Mapper()

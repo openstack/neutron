@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
 import oslo_i18n
 import webob.dec
 
@@ -27,9 +26,8 @@ class Versions(object):
 
     @classmethod
     def factory(cls, global_config, **local_config):
-        if cfg.CONF.web_framework == 'pecan':
-            return pecan_app.versions_factory(global_config, **local_config)
-        return cls(app=None)
+        # TODO(kevinbenton): get rid of whole class
+        return pecan_app.versions_factory(global_config, **local_config)
 
     @webob.dec.wsgify(RequestClass=wsgi.Request)
     def __call__(self, req):

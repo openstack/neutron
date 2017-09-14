@@ -11,7 +11,6 @@
 #    under the License.
 
 import mock
-from oslo_config import cfg
 
 from neutron.api.v2 import router
 from neutron.tests import base
@@ -21,14 +20,7 @@ from neutron.tests import base
 @mock.patch('neutron.pecan_wsgi.app.v2_factory')
 class TestRouter(base.BaseTestCase):
 
-    def test_legacy_factory(self, pecan_mock, legacy_mock):
-        cfg.CONF.set_override('web_framework', 'legacy')
-        router.APIRouter.factory({})
-        pecan_mock.assert_not_called()
-        legacy_mock.assert_called_once_with()
-
     def test_pecan_factory(self, pecan_mock, legacy_mock):
-        cfg.CONF.set_override('web_framework', 'pecan')
         router.APIRouter.factory({})
         pecan_mock.assert_called_once_with({})
         legacy_mock.assert_not_called()
