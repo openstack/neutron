@@ -33,6 +33,7 @@ class NetworksTestDHCPv6(base.BaseNetworkTest):
 
     @classmethod
     def skip_checks(cls):
+        super(NetworksTestDHCPv6, cls).skip_checks()
         msg = None
         if not CONF.network_feature_enabled.ipv6:
             msg = "IPv6 is not enabled"
