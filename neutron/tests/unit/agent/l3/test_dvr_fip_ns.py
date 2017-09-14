@@ -24,6 +24,7 @@ from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
 from neutron.tests import base
 
@@ -189,8 +190,12 @@ class TestDvrFipNs(base.BaseTestCase):
 
     @mock.patch.object(iptables_manager, 'IptablesManager')
     @mock.patch.object(utils, 'execute')
+    @mock.patch.object(ip_lib.IpNetnsCommand, 'add')
     @mock.patch.object(ip_lib.IpNetnsCommand, 'exists')
-    def _test_create(self, old_kernel, exists, execute, IPTables):
+    def _test_create(self, old_kernel, exists, add, execute, IPTables):
+        add.side_effect = linux_utils.ProcessExecutionError(
+            message="Cannot create namespace file ns: File exists",
+            returncode=1)
         exists.return_value = True
         # There are up to six sysctl calls - two to enable forwarding,
         # two for arp_ignore and arp_announce, and two for ip_nonlocal_bind
