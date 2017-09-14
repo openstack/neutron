@@ -16,7 +16,6 @@ import functools
 import itertools
 import random
 
-from debtcollector import removals
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -1926,11 +1925,3 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
         for rp in router_db.attached_ports.filter_by(port_type=old_owner):
             rp.port_type = new_owner
             rp.port.device_owner = new_owner
-
-
-@removals.remove(
-    message="This will be removed in the Pike release. "
-            "Subscriptions are now registered during object creation."
-)
-def subscribe():
-    pass
