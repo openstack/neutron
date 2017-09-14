@@ -494,7 +494,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, filters=csnat_filters)
             self.assertEqual(1, len(csnat_ports))
 
-    def test_distributed_to_centralized_csnat_ports_removal(self):
+    def _test_csnat_ports_removal(self, ha=False):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
@@ -522,11 +522,17 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 {'router': {'admin_state_up': False}})
             self.mixin.update_router(
                 self.ctx, router['id'],
-                {'router': {'distributed': False}})
+                {'router': {'distributed': False, 'ha': ha}})
 
             csnat_ports = self.core_plugin.get_ports(
                 self.ctx, filters=csnat_filters)
             self.assertEqual(0, len(csnat_ports))
+
+    def test_distributed_to_centralized_csnat_ports_removal(self):
+        self._test_csnat_ports_removal()
+
+    def test_distributed_to_ha_csnat_ports_removal(self):
+        self._test_csnat_ports_removal(ha=True)
 
     def test_remove_router_interface_csnat_ports_removal(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
