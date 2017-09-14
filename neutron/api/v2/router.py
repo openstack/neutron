@@ -63,7 +63,18 @@ class Index(wsgi.Application):
         return webob.Response(body=body, content_type=content_type)
 
 
-class APIRouter(base_wsgi.Router):
+def APIRouter(**local_config):
+    return pecan_app.v2_factory(None, **local_config)
+
+
+def _factory(global_config, **local_config):
+    return pecan_app.v2_factory(global_config, **local_config)
+
+
+setattr(APIRouter, 'factory', _factory)
+
+
+class _APIRouter(base_wsgi.Router):
 
     @classmethod
     def factory(cls, global_config, **local_config):
@@ -120,4 +131,4 @@ class APIRouter(base_wsgi.Router):
         # calling reset will cause the next policy check to
         # re-initialize with all of the required data in place.
         policy.reset()
-        super(APIRouter, self).__init__(mapper)
+        super(_APIRouter, self).__init__(mapper)

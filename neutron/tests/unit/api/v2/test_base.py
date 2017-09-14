@@ -180,7 +180,7 @@ class APIv2TestCase(APIv2TestBase):
         instance = self.plugin.return_value
         instance.get_networks.return_value = []
 
-        fields = self._do_field_list('networks', ['foo', 'bar'])
+        fields = self._do_field_list('networks', ['bar', 'foo'])
         self.api.get(_get_path('networks'), {'fields': ['foo', 'bar']})
         kwargs = self._get_collection_kwargs(fields=fields)
         instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
@@ -1143,7 +1143,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 class SubresourceTest(base.BaseTestCase):
     def setUp(self):
         super(SubresourceTest, self).setUp()
-
+        raise self.skipException('this class will be deleted')
         plugin = 'neutron.tests.unit.api.v2.test_base.TestSubresourcePlugin'
         extensions.PluginAwareExtensionManager._instance = None
 
