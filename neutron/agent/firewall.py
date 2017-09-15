@@ -35,7 +35,6 @@ DIRECTION_IP_PREFIX = {INGRESS_DIRECTION: 'source_ip_prefix',
 # depends on iptables conntrack behavior of recognizing ICMP errors (types 1-4)
 # as related traffic.
 ICMPV6_ALLOWED_INGRESS_TYPES = (n_const.ICMPV6_TYPE_MLD_QUERY,
-                                n_const.ICMPV6_TYPE_RA,
                                 n_const.ICMPV6_TYPE_NS,
                                 n_const.ICMPV6_TYPE_NA)
 
