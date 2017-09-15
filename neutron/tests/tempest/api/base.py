@@ -17,6 +17,7 @@ import functools
 import math
 
 import netaddr
+from tempest.common import utils as tutils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions as lib_exc
 from tempest import test
@@ -77,7 +78,7 @@ class BaseNetworkTest(test.BaseTestCase):
         if cls._ip_version == 6 and not CONF.network_feature_enabled.ipv6:
             raise cls.skipException("IPv6 Tests are disabled.")
         for req_ext in getattr(cls, 'required_extensions', []):
-            if not test.is_extension_enabled(req_ext, 'network'):
+            if not tutils.is_extension_enabled(req_ext, 'network'):
                 msg = "%s extension not enabled." % req_ext
                 raise cls.skipException(msg)
 
@@ -558,7 +559,7 @@ def require_qos_rule_type(rule_type):
 def _require_sorting(f):
     @functools.wraps(f)
     def inner(self, *args, **kwargs):
-        if not test.is_extension_enabled("sorting", "network"):
+        if not tutils.is_extension_enabled("sorting", "network"):
             self.skipTest('Sorting feature is required')
         return f(self, *args, **kwargs)
     return inner
@@ -567,7 +568,7 @@ def _require_sorting(f):
 def _require_pagination(f):
     @functools.wraps(f)
     def inner(self, *args, **kwargs):
-        if not test.is_extension_enabled("pagination", "network"):
+        if not tutils.is_extension_enabled("pagination", "network"):
             self.skipTest('Pagination feature is required')
         return f(self, *args, **kwargs)
     return inner

@@ -15,7 +15,6 @@
 
 from tempest.common import utils
 from tempest.lib import decorators
-from tempest import test
 import testtools
 
 from neutron.tests.tempest.api import base
@@ -46,13 +45,13 @@ class NetworksTestJSON(base.BaseNetworkTest):
         body = self.client.show_network(self.network['id'])
         network = body['network']
         fields = ['id', 'name']
-        if test.is_extension_enabled('net-mtu', 'network'):
+        if utils.is_extension_enabled('net-mtu', 'network'):
             fields.append('mtu')
         for key in fields:
             self.assertEqual(network[key], self.network[key])
         project_id = self.client.tenant_id
         self.assertEqual(project_id, network['tenant_id'])
-        if test.is_extension_enabled('project-id', 'network'):
+        if utils.is_extension_enabled('project-id', 'network'):
             self.assertEqual(project_id, network['project_id'])
 
     @decorators.idempotent_id('26f2b7a5-2cd1-4f3a-b11f-ad259b099b11')
