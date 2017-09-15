@@ -36,6 +36,7 @@ import neutron.conf.extensions.allowedaddresspairs
 import neutron.conf.plugins.ml2.config
 import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.driver_type
+import neutron.conf.plugins.ml2.drivers.l2pop
 import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.plugins.ml2.drivers.macvtap
 import neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common
@@ -247,7 +248,9 @@ def list_ml2_conf_opts():
         ('ml2_type_geneve',
          neutron.conf.plugins.ml2.drivers.driver_type.geneve_opts),
         ('securitygroup',
-         neutron.conf.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts),
+        ('l2pop',
+         neutron.conf.plugins.ml2.drivers.l2pop.l2_population_options)
     ]
 
 
