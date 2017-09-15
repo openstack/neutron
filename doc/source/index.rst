@@ -84,4 +84,4 @@ Contributor Guide
 API Extensions
 --------------
 
-Go to http://api.openstack.org for information about OpenStack Network API extensions.
+Go to https://developer.openstack.org/api-ref/network/ for information about the OpenStack Network API and its extensions.
