@@ -15,7 +15,6 @@
 
 import datetime
 
-import debtcollector
 from eventlet import greenthread
 from neutron_lib.api import converters
 from neutron_lib.callbacks import events
@@ -166,16 +165,6 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             LOG.warning('%(agent_type)s agent %(agent_id)s is not active',
                         {'agent_type': agent_type, 'agent_id': agent.id})
         return agent
-
-    @debtcollector.removals.remove(
-        message="This will be removed in the future. "
-                "Please use 'neutron.agent.common.utils.is_agent_down' "
-                "instead.",
-        version='ocata'
-    )
-    @staticmethod
-    def is_agent_down(heart_beat_time):
-        return utils.is_agent_down(heart_beat_time)
 
     @staticmethod
     def is_agent_considered_for_versions(agent_dict):
