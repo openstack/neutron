@@ -76,8 +76,17 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                   "network %(network)s",
                   {'port': context.current['id'],
                    'network': context.network.current['id']})
+        profile = context.current.get(portbindings.PROFILE)
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
                                         portbindings.VNIC_NORMAL)
+        capabilities = []
+        if profile:
+            capabilities = profile.get('capabilities', [])
+        if (vnic_type == portbindings.VNIC_DIRECT and
+            'switchdev' in capabilities):
+            LOG.debug("Refusing to bind due to unsupported vnic_type: %s "
+                      "with switchdev capability", portbindings.VNIC_DIRECT)
+            return
         if vnic_type not in self.supported_vnic_types:
             LOG.debug("Refusing to bind due to unsupported vnic_type: %s",
                       vnic_type)

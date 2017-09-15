@@ -20,6 +20,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from oslo_config import cfg
+from oslo_log import log
 
 from neutron.agent import securitygroups_rpc
 from neutron.plugins.common import constants as p_constants
@@ -28,6 +29,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as a_const
 from neutron.services.qos.drivers.openvswitch import driver as ovs_qos_driver
 
+LOG = log.getLogger(__name__)
 
 IPTABLES_FW_DRIVER_FULL = ("neutron.agent.linux.iptables_firewall."
                            "OVSHybridIptablesFirewallDriver")
@@ -73,6 +75,20 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def check_vlan_transparency(self, context):
         """Currently Openvswitch driver doesn't support vlan transparency."""
         return False
+
+    def bind_port(self, context):
+        vnic_type = context.current.get(portbindings.VNIC_TYPE,
+                                        portbindings.VNIC_NORMAL)
+        profile = context.current.get(portbindings.PROFILE)
+        capabilities = []
+        if profile:
+            capabilities = profile.get('capabilities', [])
+        if (vnic_type == portbindings.VNIC_DIRECT and
+            'switchdev' not in capabilities):
+            LOG.debug("Refusing to bind due to unsupported vnic_type: %s with "
+                      "no switchdev capability", portbindings.VNIC_DIRECT)
+            return
+        super(OpenvswitchMechanismDriver, self).bind_port(context)
 
     def get_vif_type(self, context, agent, segment):
         caps = agent['configurations'].get('ovs_capabilities', {})

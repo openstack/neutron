@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
@@ -24,25 +25,16 @@ from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver import mech_driver
 from neutron.tests.unit.plugins.ml2 import _test_mech_agent as base
 
-MELLANOX_CONNECTX3_PCI_INFO = '15b3:1004'
-
 
 class TestFakePortContext(base.FakePortContext):
         def __init__(self, agent_type, agents, segments,
                      vnic_type=portbindings.VNIC_NORMAL,
-                     profile={'pci_vendor_info':
-                              MELLANOX_CONNECTX3_PCI_INFO}):
+                     profile=None):
             super(TestFakePortContext, self).__init__(agent_type,
                                                       agents,
                                                       segments,
-                                                      vnic_type)
-            self._bound_profile = profile
-
-        @property
-        def current(self):
-            return {'id': base.PORT_ID,
-                    portbindings.VNIC_TYPE: self._bound_vnic_type,
-                    portbindings.PROFILE: self._bound_profile}
+                                                      vnic_type=vnic_type,
+                                                      profile=profile)
 
         def set_binding(self, segment_id, vif_type, vif_details, state):
             self._bound_segment_id = segment_id
@@ -144,6 +136,18 @@ class SriovSwitchMechVnicTypeTestCase(SriovNicSwitchMechanismBaseTestCase):
     def test_vnic_type_direct_physical(self):
         self._check_vif_type_for_vnic_type(portbindings.VNIC_DIRECT_PHYSICAL,
                                            portbindings.VIF_TYPE_HOSTDEV_PHY)
+
+    @mock.patch.object(mech_driver.SriovNicSwitchMechanismDriver,
+                       'try_to_bind_segment_for_agent')
+    def test_vnic_type_direct_with_switchdev_cap(self, mocked_bind_segment):
+        profile = {'capabilities': ['switchdev']}
+        context = TestFakePortContext(self.AGENT_TYPE,
+                                      self.AGENTS,
+                                      self.VLAN_SEGMENTS,
+                                      portbindings.VNIC_DIRECT,
+                                      profile)
+        self.driver.bind_port(context)
+        mocked_bind_segment.assert_not_called()
 
 
 class SriovSwitchMechVifDetailsTestCase(SriovNicSwitchMechanismBaseTestCase):
