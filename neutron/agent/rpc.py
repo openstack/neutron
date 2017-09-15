@@ -229,6 +229,9 @@ class CacheBackedPluginApi(PluginApi):
             LOG.warning("Device %s is not bound.", port_obj)
             return {'device': device}
         segment = port_obj.binding_levels[-1].segment
+        if not segment:
+            LOG.debug("Device %s is not bound to any segment.", port_obj)
+            return {'device': device}
         net = self.remote_resource_cache.get_resource_by_id(
             resources.NETWORK, port_obj.network_id)
         net_qos_policy_id = net.qos_policy_id
