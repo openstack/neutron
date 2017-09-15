@@ -10,3 +10,6 @@ type_drivers=flat,geneve,vlan,gre,local,vxlan
 
 [ml2_type_vxlan]
 vni_ranges = 1:2000
+
+[ml2_type_gre]
+tunnel_id_ranges = 1:1000
