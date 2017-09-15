@@ -53,6 +53,7 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config
 from neutron.common import constants as c_const
 from neutron.common import topics
+from neutron.common import utils as n_utils
 from neutron.conf.agent import xenapi_conf
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
@@ -125,7 +126,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     #   1.4 Added support for network_update
     target = oslo_messaging.Target(version='1.4')
 
-    def __init__(self, bridge_classes, conf=None):
+    def __init__(self, bridge_classes, ext_manager, conf=None):
         '''Constructor.
 
         :param bridge_classes: a dict for bridge classes.
@@ -134,6 +135,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         super(OVSNeutronAgent, self).__init__()
         self.conf = conf or cfg.CONF
         self.ovs = ovs_lib.BaseOVS()
+        self.ext_manager = ext_manager
         agent_conf = self.conf.AGENT
         ovs_conf = self.conf.OVS
 
@@ -203,7 +205,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.setup_tunnel_br(ovs_conf.tunnel_bridge)
             self.setup_tunnel_br_flows()
 
-        self.init_extension_manager(self.connection)
+        agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br, self.tun_br)
+        self.ext_manager.initialize(
+            self.connection, constants.EXTENSION_DRIVER_TYPE, agent_api)
 
         self.dvr_agent = ovs_dvr_neutron_agent.OVSDVRNeutronAgent(
             self.context,
@@ -403,16 +407,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             [self._sinkhole], topics.AGENT, old_consumers,
             start_listening=False
         )
-
-    def init_extension_manager(self, connection):
-        ext_manager.register_opts(self.conf)
-        self.ext_manager = (
-            ext_manager.L2AgentExtensionsManager(self.conf))
-        self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br,
-                                                          self.tun_br)
-        self.ext_manager.initialize(
-            connection, constants.EXTENSION_DRIVER_TYPE,
-            self.agent_api)
 
     def port_update(self, context, **kwargs):
         port = kwargs.get('port')
@@ -2194,10 +2188,17 @@ def prepare_xen_compute():
 def main(bridge_classes):
     prepare_xen_compute()
     ovs_capabilities.register()
+    ext_manager.register_opts(cfg.CONF)
+
+    ext_mgr = ext_manager.L2AgentExtensionsManager(cfg.CONF)
+
+    # now that all extensions registered their options, we can log them
+    n_utils.log_opt_values(LOG)
+
     validate_tunnel_config(cfg.CONF.AGENT.tunnel_types, cfg.CONF.OVS.local_ip)
 
     try:
-        agent = OVSNeutronAgent(bridge_classes, cfg.CONF)
+        agent = OVSNeutronAgent(bridge_classes, ext_mgr, cfg.CONF)
         capabilities.notify_init_event(n_const.AGENT_TYPE_OVS, agent)
     except (RuntimeError, ValueError) as e:
         LOG.error("%s Agent terminated!", e)

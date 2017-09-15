@@ -110,8 +110,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.config.set_override('bridge_mappings', bridge_mappings, "OVS")
         # Physical bridges should be created prior to running
         self._bridge_classes()['br_phys'](self.br_phys).create()
+        ext_mgr = ext_manager.L2AgentExtensionsManager(self.config)
         agent = ovs_agent.OVSNeutronAgent(self._bridge_classes(),
-                                          self.config)
+                                          ext_mgr, self.config)
         self.addCleanup(self.ovs.delete_bridge, self.br_int)
         if tunnel_types:
             self.addCleanup(self.ovs.delete_bridge, self.br_tun)

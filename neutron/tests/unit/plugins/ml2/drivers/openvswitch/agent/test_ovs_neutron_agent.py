@@ -143,8 +143,9 @@ class TestOvsNeutronAgent(object):
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
+            ext_manager = mock.Mock()
             agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                   cfg.CONF)
+                                                   ext_manager, cfg.CONF)
             agent.tun_br = self.br_tun_cls(br_name='br-tun')
             return agent
 
@@ -204,8 +205,9 @@ class TestOvsNeutronAgent(object):
             cfg.CONF.set_override('datapath_type',
                                   expected,
                                   group='OVS')
+            ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        cfg.CONF)
+                                                        ext_manager, cfg.CONF)
             self.assertEqual(expected, self.agent.int_br.datapath_type)
 
     def test_agent_type_ovs(self):
@@ -248,8 +250,9 @@ class TestOvsNeutronAgent(object):
             cfg.CONF.set_override('agent_type',
                                   expected,
                                   group='AGENT')
+            ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        cfg.CONF)
+                                                        ext_manager, cfg.CONF)
             self.assertEqual(expected,
                              self.agent.agent_state['agent_type'])
 
@@ -2214,8 +2217,9 @@ class AncillaryBridgesTest(object):
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
+            ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        cfg.CONF)
+                                                        ext_manager, cfg.CONF)
             self.assertEqual(len(ancillary), len(self.agent.ancillary_brs))
             if ancillary:
                 bridges = [br.br_name for br in self.agent.ancillary_brs]
@@ -2251,8 +2255,9 @@ class AncillaryBridgesTest(object):
                 mock.patch('neutron.agent.common.ovs_lib.OVSBridge.'
                            'get_vif_port_set',
                            return_value=vif_port_set):
+            ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                        cfg.CONF)
+                                                        ext_manager, cfg.CONF)
             return self.agent.scan_ancillary_ports(registered_ports, sync)
 
     def test_scan_ancillary_ports_returns_cur_only_for_unchanged_ports(self):
@@ -2325,8 +2330,9 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch(
                     'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
                     return_value=[]):
+            ext_manager = mock.Mock()
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                       cfg.CONF)
+                                                       ext_manager, cfg.CONF)
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
         self.agent.sg_agent = mock.Mock()
 
