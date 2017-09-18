@@ -23,6 +23,7 @@ Configuration
    config-macvtap
    config-mtu
    config-ovs-dpdk
+   config-ovs-offload
    config-ovsfwdriver
    config-qos
    config-rbac
