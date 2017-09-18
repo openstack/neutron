@@ -70,5 +70,5 @@ class L3HARouterVRIdAllocationDbObjectTestCase(base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(L3HARouterVRIdAllocationDbObjectTestCase, self).setUp()
-        network = self._create_test_network()
-        self.update_obj_fields({'network_id': network.id})
+        self.update_obj_fields(
+            {'network_id': lambda: self._create_test_network().id})

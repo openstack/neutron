@@ -601,6 +601,8 @@ class _BaseObjectTestCase(object):
         Note: if a value is a dict itself, the method will recursively update
         corresponding embedded objects.
         '''
+        # TODO(ihrachys) make the method update db_objs to keep generated test
+        # objects unique despite new locked fields
         for k, v in values_dict.items():
             for db_obj, fields, obj in zip(
                     db_objs or self.db_objs,
