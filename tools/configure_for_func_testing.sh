@@ -233,6 +233,9 @@ function _install_post_devstack {
     elif is_fedora; then
         install_package dhclient
         install_package nmap-ncat
+    elif is_suse; then
+        install_package dhcp-client
+        install_package ncat
     else
         exit_distro_not_supported "installing dhclient and ncat packages"
     fi
@@ -290,3 +293,5 @@ if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
     _configure_iptables_rules
     sudo modprobe ip_conntrack_proto_sctp
 fi
+
+echo "Phew, we're done!"
