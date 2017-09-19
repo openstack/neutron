@@ -55,17 +55,16 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                     # NOTE(yamamoto): Open vSwitch change its dpid on
                     # some events.
                     # REVISIT(yamamoto): Consider to set dpid statically.
-                    old_dpid_str = format(self._cached_dpid, '0x')
-                    new_dpid_str = self.get_datapath_id()
-                    if new_dpid_str != old_dpid_str:
+                    new_dpid = int(self.get_datapath_id(), 16)
+                    if new_dpid != self._cached_dpid:
                         LOG.info("Bridge %(br_name)s changed its "
-                                 "datapath-ID from %(old)s to %(new)s", {
+                                 "datapath-ID from %(old)x to %(new)x", {
                                      "br_name": self.br_name,
-                                     "old": old_dpid_str,
-                                     "new": new_dpid_str,
+                                     "old": self._cached_dpid,
+                                     "new": new_dpid,
                                  })
                         ctx.reraise = False
-                    self._cached_dpid = int(new_dpid_str, 16)
+                    self._cached_dpid = new_dpid
 
     def setup_controllers(self, conf):
         controllers = [
