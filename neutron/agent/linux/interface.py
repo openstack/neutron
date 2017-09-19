@@ -19,6 +19,7 @@ import time
 import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
+from oslo_log import versionutils
 import six
 
 from neutron.agent.common import ovs_lib
@@ -414,6 +415,9 @@ class IVSInterfaceDriver(LinuxInterfaceDriver):
 
     def __init__(self, conf):
         super(IVSInterfaceDriver, self).__init__(conf)
+        versionutils.report_deprecated_feature(
+            LOG, "IVS interface driver is deprecated in Queens and will be "
+                 "removed in Rocky.")
         self.DEV_NAME_PREFIX = 'ns-'
 
     def _get_tap_name(self, dev_name, prefix=None):
