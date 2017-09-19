@@ -13,11 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
+
 from tempest.common import utils
 from tempest.lib import decorators
 
+from neutron.common import utils as common_utils
 from neutron.tests.tempest.scenario import base
 from neutron.tests.tempest.scenario import test_dvr
+from neutron_lib.api.definitions import portbindings as pb
+from neutron_lib import constants as const
 
 
 class NetworkMigrationTestBase(base.BaseTempestTestCase,
@@ -36,12 +41,77 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
         self.assertEqual(is_dvr, router['router']['distributed'])
         self.assertEqual(is_ha, router['router']['ha'])
 
+    def _wait_until_port_deleted(self, router_id, device_owner):
+        common_utils.wait_until_true(
+            functools.partial(
+                self._is_port_deleted,
+                router_id,
+                device_owner),
+            timeout=300, sleep=5)
+
+    def _is_port_deleted(self, router_id, device_owner):
+        ports = self.os_admin.network_client.list_ports(
+            device_id=router_id,
+            device_owner=device_owner)
+        return not ports.get('ports')
+
+    def _wait_until_port_ready(self, router_id, device_owner):
+        common_utils.wait_until_true(
+            functools.partial(
+                self._is_port_active,
+                router_id,
+                device_owner),
+            timeout=300, sleep=5)
+
+    def _is_port_active(self, router_id, device_owner):
+        ports = self.os_admin.network_client.list_ports(
+            device_id=router_id,
+            device_owner=device_owner,
+            status=const.ACTIVE).get('ports')
+        if ports:
+            if ports[0][pb.VIF_TYPE] not in [pb.VIF_TYPE_UNBOUND,
+                                             pb.VIF_TYPE_BINDING_FAILED]:
+                return True
+        return False
+
+    def _wait_until_router_ports_ready(self, router_id, dvr, ha):
+        if dvr:
+            self._wait_until_port_ready(
+                router_id, const.DEVICE_OWNER_DVR_INTERFACE)
+        if ha:
+            self._wait_until_port_ready(
+                router_id, const.DEVICE_OWNER_ROUTER_HA_INTF)
+            if dvr:
+                self._wait_until_port_ready(
+                    router_id, const.DEVICE_OWNER_ROUTER_SNAT)
+            else:
+                self._wait_until_port_ready(
+                    router_id, const.DEVICE_OWNER_HA_REPLICATED_INT)
+        self._wait_until_port_ready(
+            router_id, const.DEVICE_OWNER_ROUTER_GW)
+
+    def _wait_until_router_ports_migrated(
+            self, router_id, before_dvr, before_ha, after_dvr, after_ha):
+        if before_ha and not after_ha:
+            self._wait_until_port_deleted(
+                router_id, const.DEVICE_OWNER_ROUTER_HA_INTF)
+            self._wait_until_port_deleted(
+                    router_id, const.DEVICE_OWNER_HA_REPLICATED_INT)
+        if before_dvr and not after_dvr:
+            self._wait_until_port_deleted(
+                router_id, const.DEVICE_OWNER_DVR_INTERFACE)
+            self._wait_until_port_deleted(
+                router_id, const.DEVICE_OWNER_ROUTER_SNAT)
+        self._wait_until_router_ports_ready(router_id, after_dvr, after_ha)
+
     def _test_migration(self, before_dvr, before_ha, after_dvr, after_ha):
         router = self.create_router_by_client(
             distributed=before_dvr, ha=before_ha,
             tenant_id=self.client.tenant_id, is_admin=True)
 
         self.setup_network_and_server(router=router)
+        self._wait_until_router_ports_ready(
+            router['id'], before_dvr, before_ha)
         self._check_connectivity()
 
         self.os_admin.network_client.update_router(
@@ -52,6 +122,9 @@ class NetworkMigrationTestBase(base.BaseTempestTestCase,
 
         self.os_admin.network_client.update_router(
             router_id=router['id'], admin_state_up=True)
+
+        self._wait_until_router_ports_migrated(
+            router['id'], before_dvr, before_ha, after_dvr, after_ha)
         self._check_connectivity()
 
 
