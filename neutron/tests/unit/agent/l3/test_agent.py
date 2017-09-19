@@ -1132,6 +1132,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         ex_gw_port = {'id': _uuid(), 'network_id': mock.sentinel.ext_net_id}
 
+        ri.get_centralized_router_cidrs = mock.Mock(
+            return_value=set())
         ri.add_floating_ip = mock.Mock(
             return_value=lib_constants.FLOATINGIP_STATUS_ACTIVE)
         with mock.patch.object(lla.LinkLocalAllocator, '_write'):
@@ -1962,7 +1964,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         with mock.patch.object(
             agent.plugin_rpc, 'update_floatingip_statuses'
         ) as mock_update_fip_status,\
+                mock.patch.object(
+                    ri, 'get_centralized_router_cidrs') as cent_cidrs,\
                 mock.patch.object(ri, 'get_router_cidrs') as mock_get_cidrs:
+            cent_cidrs.return_value = set()
             mock_get_cidrs.return_value = set(
                 [fip1['floating_ip_address'] + '/32'])
             ri.process()
@@ -2034,8 +2039,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         with mock.patch.object(
             agent.plugin_rpc, 'update_floatingip_statuses'
         ) as mock_update_fip_status,\
+                mock.patch.object(
+                    ri, 'get_centralized_router_cidrs') as cent_cidrs,\
                 mock.patch.object(ri, 'get_router_cidrs') as mock_get_cidrs:
             mock_get_cidrs.return_value = set()
+            cent_cidrs.return_value = set()
             ri.process()
             # make sure both was sent since not existed in existing cidrs
             mock_update_fip_status.assert_called_once_with(
@@ -2060,6 +2068,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                             router,
                                             **self.ri_kwargs)
             ri.external_gateway_added = mock.Mock()
+            ri.get_centralized_router_cidrs = mock.Mock(
+                return_value=set())
             ri.process()
             # Assess the call for putting the floating IP up was performed
             mock_update_fip_status.assert_called_once_with(
