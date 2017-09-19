@@ -33,6 +33,8 @@ Prior to major release,
    the context of the release planned;
 #. check that release notes and sample configuration files render correctly,
    arrange clean-up if needed.
+#. ensure all doc links are valid by running ``tox -e linkcheck`` and
+   addressing any broken links.
 
 New major release process contains several phases:
 
