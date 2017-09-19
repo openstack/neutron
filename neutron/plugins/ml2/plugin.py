@@ -464,6 +464,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # It would be addressed during EventPayload conversion.
         registry.notify(resources.PORT, events.BEFORE_UPDATE, self,
                         context=plugin_context, port=orig_context.current,
+                        original_port=orig_context.current,
                         orig_binding=orig_binding, new_binding=new_binding)
 
         # After we've attempted to bind the port, we begin a
@@ -1284,8 +1285,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         attrs = port[port_def.RESOURCE_NAME]
         need_port_update_notify = False
         bound_mech_contexts = []
+        original_port = self.get_port(context, id)
         registry.notify(resources.PORT, events.BEFORE_UPDATE, self,
-                        context=context, port=attrs)
+                        context=context, port=attrs,
+                        original_port=original_port)
         with db_api.context_manager.writer.using(context):
             port_db = self._get_port(context, id)
             binding = port_db.port_binding
@@ -1726,6 +1729,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 'status': status
             }
             registry.notify(resources.PORT, events.BEFORE_UPDATE, self,
+                            original_port=port,
                             context=context, port=attr)
         with db_api.context_manager.writer.using(context):
             context.session.add(port)  # bring port into writer session

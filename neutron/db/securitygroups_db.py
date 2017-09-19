@@ -740,11 +740,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         if default_group:
             return default_group.security_group_id
 
-    @registry.receives(resources.PORT, [events.BEFORE_CREATE])
+    @registry.receives(resources.PORT, [events.BEFORE_CREATE,
+                                        events.BEFORE_UPDATE])
     @registry.receives(resources.NETWORK, [events.BEFORE_CREATE])
     def _ensure_default_security_group_handler(self, resource, event, trigger,
                                                context, **kwargs):
-        tenant_id = kwargs[resource]['tenant_id']
+        if event == events.BEFORE_UPDATE:
+            tenant_id = kwargs['original_' + resource]['tenant_id']
+        else:
+            tenant_id = kwargs[resource]['tenant_id']
         self._ensure_default_security_group(context, tenant_id)
 
     def _ensure_default_security_group(self, context, tenant_id):
