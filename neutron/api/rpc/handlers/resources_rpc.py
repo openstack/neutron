@@ -235,7 +235,8 @@ class ResourcesPushRpcApi(object):
         LOG.debug(
             "Pushing event %s for resources: %s", event_type,
             {t: ["ID=%s,revision_number=%s" % (
-                     obj.id, getattr(obj, 'revision_number', None))
+                     getattr(obj, 'id', None),
+                     getattr(obj, 'revision_number', None))
                  for obj in resources_by_type[t]]
              for t in resources_by_type})
         for resource_type, type_resources in resources_by_type.items():
