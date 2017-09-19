@@ -18,7 +18,7 @@ from neutron.tests.common.exclusive_resources import port
 from neutron.tests.functional import base
 
 
-class TestExclusivePort(base.BaseLoggingTestCase):
+class TestExclusivePort(base.BaseSudoTestCase):
     def test_port(self):
         port_1 = self.useFixture(port.ExclusivePort(
             constants.PROTO_NAME_TCP)).port
