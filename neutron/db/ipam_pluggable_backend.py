@@ -198,15 +198,16 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         a subnet_id then allocate an IP address accordingly.
         """
         p = port['port']
+        fixed_configured = p['fixed_ips'] is not constants.ATTR_NOT_SPECIFIED
         subnets = self._ipam_get_subnets(context,
                                          network_id=p['network_id'],
                                          host=p.get(portbindings.HOST_ID),
-                                         service_type=p.get('device_owner'))
+                                         service_type=p.get('device_owner'),
+                                         fixed_configured=fixed_configured)
 
         v4, v6_stateful, v6_stateless = self._classify_subnets(
             context, subnets)
 
-        fixed_configured = p['fixed_ips'] is not constants.ATTR_NOT_SPECIFIED
         if fixed_configured:
             ips = self._test_fixed_ips_for_port(context,
                                                 p["network_id"],
