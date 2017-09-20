@@ -363,8 +363,9 @@ class TestNetnsCleanup(base.BaseTestCase):
 
     def test_main(self):
         namespaces = ['ns1', 'ns2']
-        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
-            ip_wrap.get_namespaces.return_value = namespaces
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'list_network_namespaces') as listnetns:
+            listnetns.return_value = namespaces
 
             with mock.patch('time.sleep') as time_sleep:
                 conf = mock.Mock()
@@ -388,15 +389,15 @@ class TestNetnsCleanup(base.BaseTestCase):
                             [mock.call(conf, 'ns1', False),
                              mock.call(conf, 'ns2', False)])
 
-                        ip_wrap.assert_has_calls(
-                            [mock.call.get_namespaces()])
+                        self.assertEqual(1, listnetns.call_count)
 
                         time_sleep.assert_called_once_with(2)
 
     def test_main_no_candidates(self):
         namespaces = ['ns1', 'ns2']
-        with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip_wrap:
-            ip_wrap.get_namespaces.return_value = namespaces
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'list_network_namespaces') as listnetns:
+            listnetns.return_value = namespaces
 
             with mock.patch('time.sleep') as time_sleep:
                 conf = mock.Mock()
@@ -412,8 +413,7 @@ class TestNetnsCleanup(base.BaseTestCase):
                     with mock.patch('neutron.common.config.setup_logging'):
                         util.main()
 
-                        ip_wrap.assert_has_calls(
-                            [mock.call.get_namespaces()])
+                        self.assertEqual(1, listnetns.call_count)
 
                         mocks['eligible_for_deletion'].assert_has_calls(
                             [mock.call(conf, 'ns1', False),

@@ -523,7 +523,7 @@ class IptablesManager(object):
                 # exist.
                 with excutils.save_and_reraise_exception() as ctx:
                     if (self.namespace and not
-                            ip_lib.IPWrapper().netns.exists(self.namespace)):
+                            ip_lib.network_namespace_exists(self.namespace)):
                         ctx.reraise = False
                         LOG.error("Namespace %s was deleted during IPTables "
                                   "operations.", self.namespace)

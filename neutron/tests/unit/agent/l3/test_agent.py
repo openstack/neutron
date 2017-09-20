@@ -89,6 +89,10 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()
 
+        self.list_network_namespaces_p = mock.patch(
+            'neutron.agent.linux.ip_lib.list_network_namespaces')
+        self.list_network_namespaces = self.list_network_namespaces_p.start()
+
         self.ensure_dir = mock.patch(
             'oslo_utils.fileutils.ensure_tree').start()
 
@@ -373,7 +377,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                           for r_id in stale_router_ids]
         namespace_list += [namespaces.NS_PREFIX + r['id']
                            for r in active_routers]
-        self.mock_ip.get_namespaces.return_value = namespace_list
+        self.list_network_namespaces.return_value = namespace_list
         driver = metadata_driver.MetadataDriver
         with mock.patch.object(
                 driver, 'destroy_monitored_metadata_proxy') as destroy_proxy:
@@ -2327,7 +2331,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_destroy_namespace(self):
         namespace = 'qrouter-bar'
 
-        self.mock_ip.get_namespaces.return_value = [namespace]
+        self.list_network_namespaces.return_value = [namespace]
         self.mock_ip.get_devices.return_value = [
             l3_test_common.FakeDev('qr-aaaa'),
             l3_test_common.FakeDev('rfp-aaaa')]
@@ -2356,7 +2360,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_destroy_snat_namespace(self):
         namespace = 'snat-bar'
 
-        self.mock_ip.get_namespaces.return_value = [namespace]
+        self.list_network_namespaces.return_value = [namespace]
         self.mock_ip.get_devices.return_value = [
             l3_test_common.FakeDev('qg-aaaa'),
             l3_test_common.FakeDev('sg-aaaa')]
@@ -2614,9 +2618,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                for r in router_list]
         good_namespace_list += [dvr_snat_ns.SNAT_NS_PREFIX + r['id']
                                 for r in router_list]
-        self.mock_ip.get_namespaces.return_value = (stale_namespace_list +
-                                                    good_namespace_list +
-                                                    other_namespaces)
+        self.list_network_namespaces.return_value = (stale_namespace_list +
+                                                     good_namespace_list +
+                                                     other_namespaces)
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
 

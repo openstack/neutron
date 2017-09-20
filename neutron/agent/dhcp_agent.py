@@ -34,12 +34,14 @@ def register_options(conf):
     dhcp_config.register_agent_dhcp_opts(conf)
     meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, conf)
     config.register_interface_opts(conf)
+    config.register_root_helper(conf)
 
 
 def main():
     register_options(cfg.CONF)
     common_config.init(sys.argv[1:])
     config.setup_logging()
+    config.setup_privsep()
     server = neutron_service.Service.create(
         binary='neutron-dhcp-agent',
         topic=topics.DHCP_AGENT,

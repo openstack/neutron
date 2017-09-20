@@ -200,8 +200,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         # All associated vlan interfaces are deleted too
         self.bridge.delete_port(self.port.name)
 
-        ip_wrap = ip_lib.IPWrapper(self.namespace)
-        ip_wrap.netns.delete(self.namespace)
+        ip_lib.delete_network_namespace(self.namespace)
 
 
 class FakeFullstackTrunkMachine(FakeFullstackMachine):

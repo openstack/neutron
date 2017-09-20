@@ -98,14 +98,13 @@ class NeutronDebugAgent(object):
         bridge = None
         if network.external:
             bridge = self.conf.external_network_bridge
-        ip = ip_lib.IPWrapper()
         namespace = self._get_namespace(port)
-        if ip.netns.exists(namespace):
+        if ip_lib.network_namespace_exists(namespace):
             self.driver.unplug(self.driver.get_device_name(port),
                                bridge=bridge,
                                namespace=namespace)
             try:
-                ip.netns.delete(namespace)
+                ip_lib.delete_network_namespace(namespace)
             except Exception:
                 LOG.warning('Failed to delete namespace %s', namespace)
         else:

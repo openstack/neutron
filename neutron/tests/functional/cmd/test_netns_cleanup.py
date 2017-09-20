@@ -30,7 +30,7 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 from neutron.tests.functional.cmd import process_spawn
 
-GET_NAMESPACES = 'neutron.agent.linux.ip_lib.IPWrapper.get_namespaces'
+GET_NAMESPACES = 'neutron.agent.linux.ip_lib.list_network_namespaces'
 TEST_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
 NUM_SUBPROCESSES = 6
 

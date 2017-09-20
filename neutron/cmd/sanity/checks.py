@@ -181,15 +181,13 @@ def vf_extended_management_supported():
 
 
 def netns_read_requires_helper():
-    ipw = ip_lib.IPWrapper()
     nsname = "netnsreadtest-" + uuidutils.generate_uuid()
-    ipw.netns.add(nsname)
+    ip_lib.create_network_namespace(nsname)
     try:
         # read without root_helper. if exists, not required.
-        ipw_nohelp = ip_lib.IPWrapper()
-        exists = ipw_nohelp.netns.exists(nsname)
+        exists = ip_lib.network_namespace_exists(nsname)
     finally:
-        ipw.netns.delete(nsname)
+        ip_lib.delete_network_namespace(nsname)
     return not exists
 
 
@@ -294,7 +292,7 @@ class KeepalivedIPv6Test(object):
         common_utils.wait_until_true(_gw_vip_assigned)
 
     def __enter__(self):
-        ip_lib.IPWrapper().netns.add(self.nsname)
+        ip_lib.create_network_namespace(self.nsname)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
@@ -304,7 +302,7 @@ class KeepalivedIPv6Test(object):
             self.manager.disable()
         if self.config_path:
             shutil.rmtree(self.config_path, ignore_errors=True)
-        ip_lib.IPWrapper().netns.delete(self.nsname)
+        ip_lib.delete_network_namespace(self.nsname)
         cfg.CONF.set_override('check_child_processes_interval',
                               self.orig_interval, 'AGENT')
 
@@ -450,13 +448,12 @@ def _fix_ip_nonlocal_bind_root_value(original_value):
 
 
 def ip_nonlocal_bind():
-    ipw = ip_lib.IPWrapper()
     nsname1 = "ipnonlocalbind1-" + uuidutils.generate_uuid()
     nsname2 = "ipnonlocalbind2-" + uuidutils.generate_uuid()
 
-    ipw.netns.add(nsname1)
+    ip_lib.create_network_namespace(nsname1)
     try:
-        ipw.netns.add(nsname2)
+        ip_lib.create_network_namespace(nsname2)
         try:
             original_value = ip_lib.get_ip_nonlocal_bind(namespace=None)
             try:
@@ -470,7 +467,7 @@ def ip_nonlocal_bind():
                       "Exception: %s", e)
             return False
         finally:
-            ipw.netns.delete(nsname2)
+            ip_lib.delete_network_namespace(nsname2)
     finally:
-        ipw.netns.delete(nsname1)
+        ip_lib.delete_network_namespace(nsname1)
     return ns1_value == 0

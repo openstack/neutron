@@ -658,8 +658,7 @@ class MacvtapFixture(fixtures.Fixture):
         self.addCleanup(self.destroy)
 
     def destroy(self):
-        ip_wrapper = ip_lib.IPWrapper(self.ip_dev.namespace)
-        if (ip_wrapper.netns.exists(self.ip_dev.namespace) or
+        if (ip_lib.network_namespace_exists(self.ip_dev.namespace) or
             self.ip_dev.namespace is None):
             try:
                 self.ip_dev.link.delete()

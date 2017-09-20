@@ -77,7 +77,7 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
                     'dhcp-' + _uuid(), ]
 
         # Test the normal path
-        with mock.patch.object(ip_lib.IPWrapper, 'get_namespaces',
+        with mock.patch.object(ip_lib, 'list_network_namespaces',
                                return_value=ns_names):
             retrieved_ns_names = self.ns_manager.list_all()
         self.assertEqual(len(ns_names) - 1, len(retrieved_ns_names))
@@ -85,8 +85,8 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
             self.assertIn(ns_names[i], retrieved_ns_names)
         self.assertNotIn(ns_names[-1], retrieved_ns_names)
 
-        # Test path where IPWrapper raises exception
-        with mock.patch.object(ip_lib.IPWrapper, 'get_namespaces',
+        # Test path where list_network_namespaces() raises exception
+        with mock.patch.object(ip_lib, 'list_network_namespaces',
                                side_effect=RuntimeError):
             retrieved_ns_names = self.ns_manager.list_all()
         self.assertFalse(retrieved_ns_names)
@@ -104,7 +104,7 @@ class TestNamespaceManager(NamespaceManagerTestCaseFramework):
         ns_names += [dvr_snat_ns.SNAT_NS_PREFIX + _uuid() for _ in range(5)]
         ns_names += [namespaces.NS_PREFIX + router_id,
                      dvr_snat_ns.SNAT_NS_PREFIX + router_id]
-        with mock.patch.object(ip_lib.IPWrapper, 'get_namespaces',
+        with mock.patch.object(ip_lib, 'list_network_namespaces',
                                return_value=ns_names), \
                 mock.patch.object(self.ns_manager, '_cleanup') as mock_cleanup:
             self.ns_manager.ensure_router_cleanup(router_id)

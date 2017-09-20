@@ -43,14 +43,14 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
         ports = [{'id': pid} for pid in port_ids]
         router_info, ri = self._prepare_router_data(ports)
 
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_namespaces') as mock_get_namespaces:
+        with mock.patch.object(ip_lib,
+                               'list_network_namespaces') as mock_list_netns:
 
-            mock_get_namespaces.return_value = []
+            mock_list_netns.return_value = []
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             router = api_object.get_router_hosting_port(port_ids[0])
 
-        mock_get_namespaces.assert_called_once_with()
+        mock_list_netns.assert_called_once_with()
         self.assertFalse(router)
 
     def test_get_router_hosting_port_for_router_in_ns(self):
@@ -58,9 +58,9 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
         ports = [{'id': pid} for pid in port_ids]
         router_info, ri = self._prepare_router_data(ports)
 
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = [ri.ns_name]
+        with mock.patch.object(ip_lib,
+                               'list_network_namespaces') as mock_list_netns:
+            mock_list_netns.return_value = [ri.ns_name]
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             router = api_object.get_router_hosting_port(port_ids[0])
             self.assertEqual(ri, router)
@@ -68,9 +68,9 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
     def test_get_routers_in_project(self):
         router_info, ri = self._prepare_router_data()
 
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = [ri.ns_name]
+        with mock.patch.object(ip_lib,
+                               'list_network_namespaces') as mock_list_netns:
+            mock_list_netns.return_value = [ri.ns_name]
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             routers = api_object.get_routers_in_project(self.project_id)
             self.assertEqual([ri], routers)
@@ -78,9 +78,9 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
     def test_is_router_in_namespace_for_in_ns(self):
         router_info, ri = self._prepare_router_data()
 
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = [ri.ns_name]
+        with mock.patch.object(ip_lib,
+                               'list_network_namespaces') as mock_list_netns:
+            mock_list_netns.return_value = [ri.ns_name]
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             router_in_ns = api_object.is_router_in_namespace(ri.router_id)
             self.assertTrue(router_in_ns)
@@ -88,9 +88,9 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
     def test_is_router_in_namespace_for_not_in_ns(self):
         router_info, ri = self._prepare_router_data()
 
-        with mock.patch.object(ip_lib.IPWrapper,
-                               'get_namespaces') as mock_get_namespaces:
-            mock_get_namespaces.return_value = [uuidutils.generate_uuid()]
+        with mock.patch.object(ip_lib,
+                               'list_network_namespaces') as mock_list_netns:
+            mock_list_netns.return_value = [uuidutils.generate_uuid()]
             api_object = l3_agent_api.L3AgentExtensionAPI(router_info)
             router_in_ns = api_object.is_router_in_namespace(ri.router_id)
             self.assertFalse(router_in_ns)

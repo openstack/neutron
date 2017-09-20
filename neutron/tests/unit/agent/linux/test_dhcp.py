@@ -1096,7 +1096,9 @@ class TestDhcpLocalProcess(TestBase):
         self.assertTrue(lp.process_monitor.unregister.called)
         self.assertTrue(self.external_process().disable.called)
 
-    def test_disable_not_active(self):
+    @mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists')
+    def test_disable_not_active(self, namespace_exists):
+        namespace_exists.return_value = False
         attrs_to_mock = dict([(a, mock.DEFAULT) for a in
                               ['active', 'interface_name']])
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
@@ -1121,30 +1123,38 @@ class TestDhcpLocalProcess(TestBase):
             lp.disable(retain_port=True)
             self._assert_disabled(lp)
 
-    def test_disable(self):
+    @mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists')
+    def test_disable(self, namespace_exists):
+        namespace_exists.return_value = True
         attrs_to_mock = {'active': mock.DEFAULT}
 
         with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
             mocks['active'].__get__ = mock.Mock(return_value=False)
             lp = LocalChild(self.conf, FakeDualNetwork())
-            with mock.patch('neutron.agent.linux.ip_lib.IPWrapper') as ip:
+            with mock.patch('neutron.agent.linux.ip_lib.'
+                            'delete_network_namespace') as delete_ns:
                 lp.disable()
 
             self._assert_disabled(lp)
 
-        ip.return_value.netns.delete.assert_called_with('qdhcp-ns')
+        delete_ns.assert_called_with('qdhcp-ns')
 
-    def test_disable_config_dir_removed_after_destroy(self):
+    @mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists')
+    def test_disable_config_dir_removed_after_destroy(self, namespace_exists):
+        namespace_exists.return_value = True
         parent = mock.MagicMock()
         parent.attach_mock(self.rmtree, 'rmtree')
         parent.attach_mock(self.mock_mgr, 'DeviceManager')
 
         lp = LocalChild(self.conf, FakeDualNetwork())
-        lp.disable(retain_port=False)
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'delete_network_namespace') as delete_ns:
+            lp.disable(retain_port=False)
 
         expected = [mock.call.DeviceManager().destroy(mock.ANY, mock.ANY),
                     mock.call.rmtree(mock.ANY, ignore_errors=True)]
         parent.assert_has_calls(expected)
+        delete_ns.assert_called_with('qdhcp-ns')
 
     def test_get_interface_name(self):
         net = FakeDualNetwork()

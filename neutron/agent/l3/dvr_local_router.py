@@ -596,8 +596,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _delete_interface_route_in_fip_ns(self, router_port):
         rtr_2_fip_ip, fip_2_rtr_name = self.get_rtr_fip_ip_and_interface_name()
         fip_ns_name = self.fip_ns.get_name()
-        ip_wrapper = ip_lib.IPWrapper(namespace=fip_ns_name)
-        if ip_wrapper.netns.exists(fip_ns_name):
+        if ip_lib.network_namespace_exists(fip_ns_name):
             device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
             if not device.exists():
                 return
@@ -608,8 +607,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def _add_interface_route_to_fip_ns(self, router_port):
         rtr_2_fip_ip, fip_2_rtr_name = self.get_rtr_fip_ip_and_interface_name()
         fip_ns_name = self.fip_ns.get_name()
-        ip_wrapper = ip_lib.IPWrapper(namespace=fip_ns_name)
-        if ip_wrapper.netns.exists(fip_ns_name):
+        if ip_lib.network_namespace_exists(fip_ns_name):
             device = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
             if not device.exists():
                 return

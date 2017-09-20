@@ -81,7 +81,7 @@ class RouterWithMetering(object):
                 self.id)
             # Check for namespace existence before we assign the
             # snat_iptables_manager
-            if ip_lib.IPWrapper().netns.exists(snat_ns_name):
+            if ip_lib.network_namespace_exists(snat_ns_name):
                 self.snat_iptables_manager = iptables_manager.IptablesManager(
                     namespace=snat_ns_name,
                     binary_name=WRAP_NAME,
@@ -91,8 +91,7 @@ class RouterWithMetering(object):
         # NOTE(Swami): If distributed routers, all external traffic on a
         # compute node will flow through the rfp interface in the router
         # namespace.
-        ip_wrapper = ip_lib.IPWrapper(namespace=self.ns_name)
-        if ip_wrapper.netns.exists(self.ns_name):
+        if ip_lib.network_namespace_exists(self.ns_name):
             self.iptables_manager = iptables_manager.IptablesManager(
                 namespace=self.ns_name,
                 binary_name=WRAP_NAME,
