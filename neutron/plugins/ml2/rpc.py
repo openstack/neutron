@@ -17,7 +17,6 @@ from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
-from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
@@ -253,9 +252,10 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             # this might mean that a VM is in the process of live migration
             # and vif was plugged on the destination compute node;
             # need to notify nova explicitly
-            try:
-                port = plugin._get_port(rpc_context, port_id)
-            except exceptions.PortNotFound:
+            port = ml2_db.get_port(rpc_context, port_id)
+            # _device_to_port_id may have returned a truncated UUID if the
+            # agent did not provide a full one (e.g. Linux Bridge case).
+            if not port:
                 LOG.debug("Port %s not found, will not notify nova.", port_id)
                 return
             else:
