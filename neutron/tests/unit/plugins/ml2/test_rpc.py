@@ -30,6 +30,7 @@ from neutron.agent import rpc as agent_rpc
 from neutron.callbacks import resources
 from neutron.common import topics
 from neutron.db import provisioning_blocks
+from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import rpc as plugin_rpc
@@ -62,7 +63,8 @@ class RpcCallbacksTestCase(base.BaseTestCase):
             mock.patch.object(self.callbacks, 'notify_ha_port_status'):
             with mock.patch('neutron.db.provisioning_blocks.'
                             'provisioning_complete') as pc:
-                self.callbacks.update_device_up(mock.Mock(), **kwargs)
+                with mock.patch.object(ml2_db, 'get_port'):
+                    self.callbacks.update_device_up(mock.Mock(), **kwargs)
                 return pc
 
     def test_update_device_up_notify(self):
@@ -221,11 +223,12 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         return res
 
     def test_update_device_up_with_device_not_bound_to_host(self):
-        self.assertIsNone(self._test_update_device_not_bound_to_host(
-            self.callbacks.update_device_up))
-        port = self.plugin._get_port.return_value
-        (self.plugin.nova_notifier.notify_port_active_direct.
-         assert_called_once_with(port))
+        with mock.patch.object(ml2_db, 'get_port') as ml2_db_get_port:
+            self.assertIsNone(self._test_update_device_not_bound_to_host(
+                self.callbacks.update_device_up))
+            port = ml2_db_get_port.return_value
+            (self.plugin.nova_notifier.notify_port_active_direct.
+             assert_called_once_with(port))
 
     def test_update_device_down_with_device_not_bound_to_host(self):
         self.assertEqual(
