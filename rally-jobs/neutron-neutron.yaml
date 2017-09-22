@@ -1,319 +1,298 @@
 ---
-  NeutronNetworks.create_and_list_networks:
+  version: 2
+  title: Rally Task for OpenStack Neutron CI
+  description: >
+    The task contains various scenarios to prevent concurrency issues
+  subtasks:
     -
-      runner:
-        type: "constant"
-        times: 100
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-             # worst case is other 19 writers have created
-             # resources, but quota reservation hasn't cleared
-             # yet on any of them. This value could be 100
-             # without concurrency. see bug/1623390
-             network: 119
-      sla:
-        max_avg_duration_per_atomic:
-          neutron.list_networks: 15  # reduce as perf is fixed
+      title: Network related workloads.
+      workloads:
+        -
+          description: Check performance of list_networks action and ensure >
+            network quotas are not exceeded
+          scenario:
+            NeutronNetworks.create_and_list_networks: {}
+          runner:
+            constant:
+              times: 100
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                 # worst case is other 19 writers have created
+                 # resources, but quota reservation hasn't cleared
+                 # yet on any of them. This value could be 100
+                 # without concurrency. see bug/1623390
+                 network: 119
+          sla:
+            max_avg_duration_per_atomic:
+              neutron.list_networks: 15  # reduce as perf is fixed
 
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_list_subnets:
+            failure_rate:
+              max: 0
+        -
+          description: Check network update action
+          scenario:
+            NeutronNetworks.create_and_update_networks:
+              network_create_args: {}
+              network_update_args:
+                  admin_state_up: False
+                  name: "_updated"
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_delete_networks: {}
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+                subnet: -1
     -
-      args:
-        subnets_per_network: 2
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-             subnet: -1
-             network: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_list_routers:
+      title: Subnet related workloads.
+      workloads:
+        -
+          scenario:
+            NeutronNetworks.create_and_list_subnets:
+              subnets_per_network: 2
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                 subnet: -1
+                 network: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_update_subnets:
+              network_create_args: {}
+              subnet_create_args: {}
+              subnet_cidr_start: "1.4.0.0/16"
+              subnets_per_network: 2
+              subnet_update_args:
+                  enable_dhcp: True
+                  name: "_subnet_updated"
+          runner:
+            constant:
+              times: 100
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 5
+            quotas:
+              neutron:
+                network: -1
+                subnet: -1
+                port: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_delete_subnets:
+              network_create_args: {}
+              subnet_create_args: {}
+              subnet_cidr_start: "1.1.0.0/30"
+              subnets_per_network: 2
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+                subnet: -1
     -
-      args:
-        network_create_args:
-        subnet_create_args:
-        subnet_cidr_start: "1.1.0.0/30"
-        subnets_per_network: 2
-        router_create_args:
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-             network: -1
-             subnet: -1
-             router: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_list_ports:
+      title: Routers related workloads.
+      workloads:
+        -
+          scenario:
+            NeutronNetworks.create_and_list_routers:
+              network_create_args:
+              subnet_create_args:
+              subnet_cidr_start: "1.1.0.0/30"
+              subnets_per_network: 2
+              router_create_args:
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                 network: -1
+                 subnet: -1
+                 router: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_update_routers:
+              network_create_args: {}
+              subnet_create_args: {}
+              subnet_cidr_start: "1.1.0.0/30"
+              subnets_per_network: 2
+              router_create_args: {}
+              router_update_args:
+                  admin_state_up: False
+                  name: "_router_updated"
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+                subnet: -1
+                router: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_delete_routers:
+              network_create_args: {}
+              subnet_create_args: {}
+              subnet_cidr_start: "1.1.0.0/30"
+              subnets_per_network: 2
+              router_create_args: {}
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+                subnet: -1
+                router: -1
     -
-      args:
-        network_create_args:
-        port_create_args:
-        ports_per_network: 50
-      runner:
-        type: "constant"
-        times: 8
-        concurrency: 4
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-             network: -1
-             subnet: -1
-             router: -1
-             # ((ports per net + 1 dhcp) * times) + (concurrency-1)
-             # see bug/1623390 for concurrency explanation
-             port: 811
-      sla:
-        max_avg_duration_per_atomic:
-          neutron.list_ports: 15  # reduce as perf is fixed
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_update_networks:
+      title: Ports related workloads.
+      workloads:
+        -
+          description: Check performance of list ports action and ensure >
+            network quotas are not exceeded
+          scenario:
+            NeutronNetworks.create_and_list_ports:
+              network_create_args:
+              port_create_args:
+              ports_per_network: 50
+          runner:
+            constant:
+              times: 8
+              concurrency: 4
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                 network: -1
+                 subnet: -1
+                 router: -1
+                 # ((ports per net + 1 dhcp) * times) + (concurrency-1)
+                 # see bug/1623390 for concurrency explanation
+                 port: 811
+          sla:
+            max_avg_duration_per_atomic:
+              neutron.list_ports: 15  # reduce as perf is fixed
+            failure_rate:
+              max: 0
+        -
+          scenario:
+            NeutronNetworks.create_and_update_ports:
+              network_create_args: {}
+              port_create_args: {}
+              ports_per_network: 5
+              port_update_args:
+                  admin_state_up: False
+                  device_id: "dummy_id"
+                  device_owner: "dummy_owner"
+                  name: "_port_updated"
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+                port: -1
+        -
+          scenario:
+            NeutronNetworks.create_and_delete_ports:
+              network_create_args: {}
+              port_create_args: {}
+              ports_per_network: 5
+          runner:
+            constant:
+              times: 40
+              concurrency: 20
+          contexts:
+            users:
+              tenants: 1
+              users_per_tenant: 1
+            quotas:
+              neutron:
+                network: -1
+                port: -1
     -
-      args:
-        network_create_args: {}
-        network_update_args:
-            admin_state_up: False
-            name: "_updated"
+      title: Quotas update check
+      scenario:
+        Quotas.neutron_update:
+          max_quota: 1024
       runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_update_subnets:
-    -
-      args:
-        network_create_args: {}
-        subnet_create_args: {}
-        subnet_cidr_start: "1.4.0.0/16"
-        subnets_per_network: 2
-        subnet_update_args:
-            enable_dhcp: True
-            name: "_subnet_updated"
-      runner:
-        type: "constant"
-        times: 100
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 5
-        quotas:
-          neutron:
-            network: -1
-            subnet: -1
-            port: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_update_routers:
-    -
-      args:
-        network_create_args: {}
-        subnet_create_args: {}
-        subnet_cidr_start: "1.1.0.0/30"
-        subnets_per_network: 2
-        router_create_args: {}
-        router_update_args:
-            admin_state_up: False
-            name: "_router_updated"
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-            subnet: -1
-            router: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_update_ports:
-    -
-      args:
-        network_create_args: {}
-        port_create_args: {}
-        ports_per_network: 5
-        port_update_args:
-            admin_state_up: False
-            device_id: "dummy_id"
-            device_owner: "dummy_owner"
-            name: "_port_updated"
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-            port: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_delete_networks:
-    -
-      args:
-        network_create_args: {}
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-            subnet: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_delete_subnets:
-    -
-      args:
-        network_create_args: {}
-        subnet_create_args: {}
-        subnet_cidr_start: "1.1.0.0/30"
-        subnets_per_network: 2
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-            subnet: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  NeutronNetworks.create_and_delete_routers:
-    -
-      args:
-        network_create_args: {}
-        subnet_create_args: {}
-        subnet_cidr_start: "1.1.0.0/30"
-        subnets_per_network: 2
-        router_create_args: {}
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-            subnet: -1
-            router: -1
-      sla:
-          failure_rate:
-            max: 0
-
-  NeutronNetworks.create_and_delete_ports:
-    -
-      args:
-        network_create_args: {}
-        port_create_args: {}
-        ports_per_network: 5
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
-        users:
-          tenants: 1
-          users_per_tenant: 1
-        quotas:
-          neutron:
-            network: -1
-            port: -1
-      sla:
-        failure_rate:
-          max: 0
-
-  Quotas.neutron_update:
-    -
-      args:
-        max_quota: 1024
-      runner:
-        type: "constant"
-        times: 40
-        concurrency: 20
-      context:
+        constant:
+          times: 40
+          concurrency: 20
+      contexts:
         users:
           tenants: 20
           users_per_tenant: 1
-      sla:
-        failure_rate:
-          max: 0
-  NeutronTrunks.create_and_list_trunk_subports:
     -
-      args:
-        subport_count: 125
+      title: Trunks related workload
+      scenario:
+        NeutronTrunks.create_and_list_trunk_subports:
+          subport_count: 125
       runner:
-        type: "constant"
-        times: 4
-        concurrency: 4
-      context:
+        constant:
+          times: 4
+          concurrency: 4
+      contexts:
         users:
           tenants: 1
           users_per_tenant: 1
