@@ -13,12 +13,6 @@
 
 def get_ovs_interface_scenarios():
     return [
-        ('openflow-cli_ovsdb-cli', {'of_interface': 'ovs-ofctl',
-                                    'ovsdb_interface': 'vsctl'}),
-        ('openflow-native_ovsdb-cli', {'of_interface': 'native',
-                                       'ovsdb_interface': 'vsctl'}),
-        ('openflow-cli_ovsdb-native', {'of_interface': 'ovs-ofctl',
-                                       'ovsdb_interface': 'native'}),
-        ('openflow-native_ovsdb-native', {'of_interface': 'native',
-                                          'ovsdb_interface': 'native'}),
+        ('openflow-cli', {'of_interface': 'ovs-ofctl'}),
+        ('openflow-native', {'of_interface': 'native'}),
     ]

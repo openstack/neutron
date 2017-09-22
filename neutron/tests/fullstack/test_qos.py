@@ -46,7 +46,6 @@ DSCP_MARK = 16
 
 class BaseQoSRuleTestCase(object):
     of_interface = None
-    ovsdb_interface = None
     number_of_hosts = 1
 
     @property
@@ -61,7 +60,6 @@ class BaseQoSRuleTestCase(object):
             environment.HostDescription(
                 l3_agent=False,
                 of_interface=self.of_interface,
-                ovsdb_interface=self.ovsdb_interface,
                 l2_agent_type=self.l2_agent_type
             ) for _ in range(self.number_of_hosts)]
         env_desc = environment.EnvironmentDescription(
