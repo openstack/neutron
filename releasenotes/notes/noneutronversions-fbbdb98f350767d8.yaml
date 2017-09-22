@@ -1,0 +1,8 @@
+---
+deprecations:
+  - |
+    The api-paste entrypoint ``neutron.api.versions:Versions.factory`` has been
+    deprecated and will be removed in the Rocky release. Please update your
+    api-paste.ini file to use the one that ships with Queens or update any
+    references to the Versions factory to point to
+    ``neutron.pecan_wsgi.app:versions_factory`` instead.
