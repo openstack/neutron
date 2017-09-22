@@ -37,7 +37,6 @@ from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib.utils import helpers
-from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -144,15 +143,6 @@ def is_extension_supported(plugin, ext_alias):
 
 def log_opt_values(log):
     cfg.CONF.log_opt_values(log, logging.DEBUG)
-
-
-@removals.remove(
-    message="Use get_random_mac from neutron_lib.utils.net",
-    version="Pike",
-    removal_version="Queens"
-)
-def get_random_mac(base_mac):
-    return net.get_random_mac(base_mac)
 
 
 def get_dhcp_agent_device_id(network_id, host):

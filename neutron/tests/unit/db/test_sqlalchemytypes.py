@@ -14,6 +14,7 @@ import abc
 
 import netaddr
 from neutron_lib import context
+from neutron_lib.utils import net
 from oslo_db import exception
 from oslo_db.tests.sqlalchemy import base as test_base
 from oslo_utils import timeutils
@@ -216,7 +217,8 @@ class MACAddressTestCase(SqlAlchemyTypesBaseTestCase):
             self._add_row(id=uuidutils.generate_uuid(), mac=mac)
             obj = self._get_one(mac)
             self.assertEqual(mac, obj['mac'])
-            random_mac = netaddr.EUI(tools.get_random_mac())
+            random_mac = netaddr.EUI(net.get_random_mac(
+                ['fe', '16', '3e', '00', '00', '00']))
             self._update_row(mac, random_mac)
             obj = self._get_one(random_mac)
             self.assertEqual(random_mac, obj['mac'])

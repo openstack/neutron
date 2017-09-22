@@ -21,6 +21,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
+from neutron_lib.utils import net
 
 from neutron.db import dvr_mac_db
 from neutron.extensions import dvr
@@ -61,7 +62,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test__create_dvr_mac_address_success(self):
         entry = {'host': 'foo_host', 'mac_address': tools.get_random_EUI()}
-        with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
+        with mock.patch.object(net, 'get_random_mac') as f:
             f.return_value = entry['mac_address']
             expected = self.mixin._create_dvr_mac_address(
                 self.ctx, entry['host'])
@@ -74,7 +75,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
         non_unique_mac = tools.get_random_EUI()
         self._create_dvr_mac_entry('foo_host_1', non_unique_mac)
-        with mock.patch.object(dvr_mac_db.utils, 'get_random_mac') as f:
+        with mock.patch.object(net, 'get_random_mac') as f:
             f.return_value = non_unique_mac
             self.assertRaises(dvr.MacAddressGenerationFailure,
                               self.mixin._create_dvr_mac_address,
