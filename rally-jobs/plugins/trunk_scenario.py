@@ -23,7 +23,7 @@ from rally.task import validation
 
 @validation.required_services(consts.Service.NEUTRON)
 @validation.required_openstack(users=True)
-@scenario.configure(context={"cleanup": ["neutron"]},
+@scenario.configure(context={"cleanup@openstack": ["neutron"]},
                     name="NeutronTrunks.create_and_list_trunk_subports")
 class TrunkLifeCycle(utils.NeutronScenario):
 
