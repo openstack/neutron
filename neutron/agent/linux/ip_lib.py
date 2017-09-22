@@ -859,15 +859,6 @@ class IpNeighCommand(IpDeviceCommandBase):
                                   self._parent.namespace,
                                   **kwargs)
 
-    @removals.remove(
-        version='Ocata', removal_version='Pike',
-        message="Use 'dump' in IpNeighCommand() class instead")
-    def show(self, ip_version):
-        options = [ip_version]
-        return self._as_root(options,
-                             ('show',
-                              'dev', self.name))
-
     def flush(self, ip_version, ip_address):
         """Flush neighbour entries
 
