@@ -61,11 +61,6 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
         self.rpc.sg_agent.assert_has_calls(
             [mock.call.security_groups_member_updated(['fake_sgid'])])
 
-    def test_security_groups_provider_updated(self):
-        self.rpc.security_groups_provider_updated(None)
-        # this is now a NOOP on the agent side. provider rules don't change
-        self.assertFalse(self.rpc.sg_agent.called)
-
 
 class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
 

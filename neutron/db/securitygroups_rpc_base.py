@@ -108,36 +108,16 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
         ingress packet from the dhcp server (as a part of provider rules),
         so we need to notify an update of dhcp server ip
         address to the plugin agent.
-        security_groups_provider_updated() just notifies that an event
-        occurs and the plugin agent fetches the update provider
-        rule in the other RPC call (security_group_rules_for_devices).
         """
-        sg_provider_updated_networks = set()
         sec_groups = set()
         for port in ports:
-            if port['device_owner'] == const.DEVICE_OWNER_DHCP:
-                sg_provider_updated_networks.add(
-                    port['network_id'])
-            # For IPv6, provider rule need to be updated in case router
-            # interface is created or updated after VM port is created.
             # NOTE (Swami): ROUTER_INTERFACE_OWNERS check is required
             # since it includes the legacy router interface device owners
             # and DVR router interface device owners.
-            elif port['device_owner'] in const.ROUTER_INTERFACE_OWNERS:
-                if any(netaddr.IPAddress(fixed_ip['ip_address']).version == 6
-                       for fixed_ip in port['fixed_ips']):
-                    sg_provider_updated_networks.add(
-                        port['network_id'])
-            else:
+            if (port['device_owner'] not in
+                [const.DEVICE_OWNER_DHCP, const.ROUTER_INTERFACE_OWNERS]):
                 sec_groups |= set(port.get(ext_sg.SECURITYGROUPS))
 
-        if sg_provider_updated_networks:
-            ports_query = context.session.query(models_v2.Port.id).filter(
-                models_v2.Port.network_id.in_(
-                    sg_provider_updated_networks)).all()
-            ports_to_update = [p.id for p in ports_query]
-            self.notifier.security_groups_provider_updated(
-                context, ports_to_update)
         if sec_groups:
             self.notifier.security_groups_member_updated(
                 context, list(sec_groups))
