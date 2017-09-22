@@ -25,9 +25,6 @@ class RPCCallBackImpl(amb.CommonAgentManagerRpcCallBackBase):
     def security_groups_member_updated(self, context, **kwargs):
         pass
 
-    def security_groups_provider_updated(self, context, **kwargs):
-        pass
-
 
 class Test_CommonAgentManagerRpcCallBackBase(base.BaseTestCase):
     def setUp(self):

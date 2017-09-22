@@ -59,10 +59,6 @@ class CommonAgentManagerRpcCallBackBase(object):
         :param security_groups: list of updated security_groups
         """
 
-    @abc.abstractmethod
-    def security_groups_provider_updated(self, context, **kwargs):
-        """Callback for security group provider update."""
-
     def add_network(self, network_id, network_segment):
         """Add a network to the agent internal network list
 

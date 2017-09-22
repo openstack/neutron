@@ -966,9 +966,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         with self.network() as net,\
                 mock.patch.object(plugin.notifier,
-                                  'security_groups_member_updated') as m_upd,\
-                mock.patch.object(plugin.notifier,
-                                  'security_groups_provider_updated') as p_upd:
+                                  'security_groups_member_updated') as m_upd:
 
             res = self._create_port_bulk(self.fmt, 3, net['network']['id'],
                                          'test', True, context=ctx)
@@ -976,25 +974,13 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             used_sg = ports['ports'][0]['security_groups']
             m_upd.assert_has_calls(
                 [mock.call(ctx, [sg]) for sg in used_sg], any_order=True)
-            self.assertFalse(p_upd.called)
-
-    def _check_security_groups_provider_updated_args(self, p_upd_mock, net_id):
-        query_params = "network_id=%s" % net_id
-        network_ports = self._list('ports', query_params=query_params)
-        network_ports_ids = [port['id'] for port in network_ports['ports']]
-        self.assertTrue(p_upd_mock.called)
-        p_upd_args = p_upd_mock.call_args
-        ports_ids = p_upd_args[0][1]
-        self.assertEqual(sorted(network_ports_ids), sorted(ports_ids))
 
     def test_create_ports_bulk_with_sec_grp_member_provider_update(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
         with self.network() as net,\
                 mock.patch.object(plugin.notifier,
-                                  'security_groups_member_updated') as m_upd,\
-                mock.patch.object(plugin.notifier,
-                                  'security_groups_provider_updated') as p_upd:
+                                  'security_groups_member_updated') as m_upd:
 
             net_id = net['network']['id']
             data = [{
@@ -1013,14 +999,11 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             ports = self.deserialize(self.fmt, res)
             used_sg = ports['ports'][0]['security_groups']
             m_upd.assert_called_once_with(ctx, used_sg)
-            self._check_security_groups_provider_updated_args(p_upd, net_id)
             m_upd.reset_mock()
-            p_upd.reset_mock()
             data[0]['device_owner'] = constants.DEVICE_OWNER_DHCP
             self._create_bulk_from_list(self.fmt, 'port',
                                         data, context=ctx)
             self.assertFalse(m_upd.called)
-            self._check_security_groups_provider_updated_args(p_upd, net_id)
 
     def test_create_ports_bulk_with_sec_grp_provider_update_ipv6(self):
         ctx = context.get_admin_context()
@@ -1034,10 +1017,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                              ip_version=6) as snet_v6,\
                     mock.patch.object(
                         plugin.notifier,
-                        'security_groups_member_updated') as m_upd,\
-                    mock.patch.object(
-                        plugin.notifier,
-                        'security_groups_provider_updated') as p_upd:
+                        'security_groups_member_updated') as m_upd:
 
                 net_id = net['network']['id']
                 data = [{
@@ -1050,8 +1030,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 self._create_bulk_from_list(self.fmt, 'port',
                                             data, context=ctx)
                 self.assertFalse(m_upd.called)
-                self._check_security_groups_provider_updated_args(
-                    p_upd, net_id)
 
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
