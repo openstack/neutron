@@ -189,7 +189,7 @@ def _get_source_ports_from_ss_output(output):
 def get_unused_port(used, start=1024, end=None):
     if end is None:
         port_range = utils.execute(
-            ['sysctl', '-n', 'net.ipv4.ip_local_port_range'])
+            ['sysctl', '-n', 'net.ipv4.ip_local_port_range'], run_as_root=True)
         end = int(port_range.split()[0]) - 1
 
     candidates = set(range(start, end + 1))
@@ -219,7 +219,7 @@ def get_free_namespace_port(protocol, namespace=None, start=1024, end=None):
         raise ValueError("Unsupported protocol %s" % protocol)
 
     ip_wrapper = ip_lib.IPWrapper(namespace=namespace)
-    output = ip_wrapper.netns.execute(['ss', param])
+    output = ip_wrapper.netns.execute(['ss', param], run_as_root=True)
     used_ports = _get_source_ports_from_ss_output(output)
 
     return get_unused_port(used_ports, start, end)
