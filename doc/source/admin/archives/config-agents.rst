@@ -41,7 +41,7 @@ agent on each node.
    management network, and an IP address on the data network that is used
    for tunneling data traffic. For full details on configuring your
    forwarding node, see the `NSX Administration Guide
-   <https://pubs.vmware.com/NSX-62/index.jsp#com.vmware.nsx.admin.doc/GUID-B5C70003-8194-4EC3-AB36-54C848508818.html>`__.
+   <https://www.vmware.com/support/pubs/>`__.
 
 #. Use the NSX Administrator Guide to add the node as a Hypervisor
    by using the NSX Manager GUI. Even if your forwarding node has no
