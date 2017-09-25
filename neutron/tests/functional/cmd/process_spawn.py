@@ -22,7 +22,6 @@ import time
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 
-from neutron._i18n import _
 from neutron.agent.linux import daemon
 
 UNIX_FAMILY = 'UNIX'
@@ -31,13 +30,13 @@ OPTS = [
     cfg.IntOpt('num_children',
                short='n',
                default=0,
-               help=_('Number of children to spawn'),
+               help='Number of children to spawn',
                required=False),
     cfg.StrOpt('family',
                short='f',
                default=n_const.IPv4,
                choices=[n_const.IPv4, n_const.IPv6, UNIX_FAMILY],
-               help=_('Listen socket family (%(v4)s, %(v6)s or %(unix)s)') %
+               help='Listen socket family (%(v4)s, %(v6)s or %(unix)s)' %
                      {
                          'v4': n_const.IPv4,
                          'v6': n_const.IPv6,
@@ -48,7 +47,7 @@ OPTS = [
                short='p',
                default=n_const.PROTO_NAME_TCP,
                choices=[n_const.PROTO_NAME_TCP, n_const.PROTO_NAME_UDP],
-               help=_('Protocol (%(tcp)s or %(udp)s)') %
+               help='Protocol (%(tcp)s or %(udp)s)' %
                      {
                          'tcp': n_const.PROTO_NAME_TCP,
                          'udp': n_const.PROTO_NAME_UDP
@@ -57,12 +56,12 @@ OPTS = [
     cfg.BoolOpt('parent_listen',
                short='pl',
                default=True,
-               help=_('Parent process must listen too'),
+               help='Parent process must listen too',
                required=False),
     cfg.BoolOpt('ignore_sigterm',
                 short='i',
                 default=False,
-                help=_('Ignore SIGTERM'),
+                help='Ignore SIGTERM',
                 required=False)
 ]
 

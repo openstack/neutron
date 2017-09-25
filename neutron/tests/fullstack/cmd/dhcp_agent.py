@@ -26,7 +26,7 @@ from neutron.cmd.eventlet.agents import dhcp as dhcp_agent
 
 OPTS = [
     cfg.StrOpt('test_namespace_suffix', default='testprefix',
-               help=_("Suffix to append to all DHCP namespace names.")),
+               help="Suffix to append to all DHCP namespace names."),
 ]
 
 

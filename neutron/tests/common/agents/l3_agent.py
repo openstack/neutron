@@ -18,7 +18,6 @@ import types
 import mock
 from oslo_config import cfg
 
-from neutron._i18n import _
 from neutron.agent.l3 import agent
 from neutron.agent.l3 import namespaces
 from neutron.agent import l3_agent
@@ -98,7 +97,7 @@ def get_external_device_name(ri, port_id):
 
 OPTS = [
     cfg.StrOpt('test_namespace_suffix', default='testprefix',
-               help=_("Suffix to append to all namespace names.")),
+               help="Suffix to append to all namespace names."),
 ]
 
 

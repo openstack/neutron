@@ -16,7 +16,6 @@ import time
 
 from oslo_config import cfg
 
-from neutron._i18n import _
 from neutron.agent.linux import daemon
 
 
@@ -35,12 +34,12 @@ def main():
 
     opts = [
         cfg.StrOpt('uuid',
-                   help=_('uuid provided from the command line '
-                          'so external_process can track us via /proc/'
-                          'cmdline interface.'),
+                   help='uuid provided from the command line '
+                        'so external_process can track us via /proc/'
+                        'cmdline interface.',
                    required=True),
         cfg.StrOpt('pid_file',
-                   help=_('Location of pid file of this process.'),
+                   help='Location of pid file of this process.',
                    required=True)
     ]
 
