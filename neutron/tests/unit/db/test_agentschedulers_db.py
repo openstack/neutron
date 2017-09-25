@@ -31,7 +31,6 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.api.v2 import attributes
-from neutron.common import constants as n_const
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
@@ -640,7 +639,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 network_id=port1['port']['network_id'])
             port_list = self.deserialize('json', port_res)
             self.assertEqual(port_list['ports'][0]['device_id'],
-                             n_const.DEVICE_ID_RESERVED_DHCP_PORT)
+                             constants.DEVICE_ID_RESERVED_DHCP_PORT)
 
     def _test_get_active_networks_from_admin_state_down_agent(self,
                                                               keep_services):
@@ -1441,7 +1440,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                     return dhcp_notifier_schedule.call_count > 1
 
     def test_reserved_dhcp_port_creation(self):
-        device_id = n_const.DEVICE_ID_RESERVED_DHCP_PORT
+        device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
         self.assertFalse(self._is_schedule_network_called(device_id))
 
     def test_unreserved_dhcp_port_creation(self):

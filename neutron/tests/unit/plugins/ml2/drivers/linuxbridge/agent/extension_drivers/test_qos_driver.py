@@ -14,11 +14,11 @@
 
 import mock
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import tc_lib
-from neutron.common import constants
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import config  # noqa
 from neutron.plugins.ml2.drivers.linuxbridge.agent.extension_drivers import (

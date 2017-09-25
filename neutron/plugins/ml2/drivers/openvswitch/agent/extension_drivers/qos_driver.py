@@ -14,11 +14,11 @@
 
 import collections
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.l2.extensions import qos_linux as qos
-from neutron.common import constants
 from neutron.services.qos.drivers.openvswitch import driver
 from neutron.services.qos import qos_consts
 

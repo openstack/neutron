@@ -27,7 +27,6 @@ from sqlalchemy.orm import exc
 
 from neutron._i18n import _
 from neutron.agent.common import utils as agent_utils
-from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db.availability_zone import network as network_az
@@ -432,7 +431,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         # DHCP agent per network so we don't have to worry about one
         # update_port passing and another failing
         for port in ports:
-            port['device_id'] = n_const.DEVICE_ID_RESERVED_DHCP_PORT
+            port['device_id'] = constants.DEVICE_ID_RESERVED_DHCP_PORT
             self.update_port(context, port['id'], dict(port=port))
         binding_obj.delete()
 

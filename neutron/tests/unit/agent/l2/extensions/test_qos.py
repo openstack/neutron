@@ -14,7 +14,9 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants as common_constants
 from neutron_lib import context
+from neutron_lib.db import constants as db_consts
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import qos
@@ -23,7 +25,6 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import constants as common_constants
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
@@ -62,9 +63,9 @@ class FakeDriver(qos_linux.QosLinuxAgentDriver):
     SUPPORTED_RULES = {
         qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: {
             qos_consts.MAX_KBPS: {
-                'type:range': [0, common_constants.DB_INTEGER_MAX_VALUE]},
+                'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
             qos_consts.MAX_BURST: {
-                'type:range': [0, common_constants.DB_INTEGER_MAX_VALUE]},
+                'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
             qos_consts.DIRECTION: {
                 'type:values': [common_constants.EGRESS_DIRECTION,
                                 common_constants.INGRESS_DIRECTION]}

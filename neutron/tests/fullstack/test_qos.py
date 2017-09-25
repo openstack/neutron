@@ -20,7 +20,6 @@ from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.agent.linux import tc_lib
-from neutron.common import constants as common_constants
 from neutron.common import utils
 from neutron.services.qos import qos_consts
 from neutron.tests.common.agents import l2_extensions
@@ -51,10 +50,10 @@ class BaseQoSRuleTestCase(object):
 
     @property
     def reverse_direction(self):
-        if self.direction == common_constants.INGRESS_DIRECTION:
-            return common_constants.EGRESS_DIRECTION
-        elif self.direction == common_constants.EGRESS_DIRECTION:
-            return common_constants.INGRESS_DIRECTION
+        if self.direction == constants.INGRESS_DIRECTION:
+            return constants.EGRESS_DIRECTION
+        elif self.direction == constants.EGRESS_DIRECTION:
+            return constants.INGRESS_DIRECTION
 
     def setUp(self):
         host_desc = [
@@ -195,8 +194,8 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
 class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_OVS
     direction_scenarios = [
-        ('ingress', {'direction': common_constants.INGRESS_DIRECTION}),
-        ('egress', {'direction': common_constants.EGRESS_DIRECTION})
+        ('ingress', {'direction': constants.INGRESS_DIRECTION}),
+        ('egress', {'direction': constants.EGRESS_DIRECTION})
     ]
     scenarios = testscenarios.multiply_scenarios(
         direction_scenarios, fullstack_utils.get_ovs_interface_scenarios())
@@ -205,17 +204,17 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
     def _get_expected_burst_value(limit, direction):
         # For egress bandwidth limit this value should be calculated as
         # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        if direction == common_constants.EGRESS_DIRECTION:
+        if direction == constants.EGRESS_DIRECTION:
             return TestBwLimitQoSOvs._get_expected_egress_burst_value(limit)
         else:
             return 0
 
     def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
-        if direction == common_constants.EGRESS_DIRECTION:
+        if direction == constants.EGRESS_DIRECTION:
             utils.wait_until_true(
                 lambda: vm.bridge.get_egress_bw_limit_for_port(
                     vm.port.name) == (limit, burst))
-        elif direction == common_constants.INGRESS_DIRECTION:
+        elif direction == constants.INGRESS_DIRECTION:
             utils.wait_until_true(
                 lambda: vm.bridge.get_ingress_bw_limit_for_port(
                     vm.port.name) == (limit, burst))
@@ -224,15 +223,15 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
 class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
     l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
     scenarios = [
-        ('egress', {'direction': common_constants.EGRESS_DIRECTION}),
-        ('ingress', {'direction': common_constants.INGRESS_DIRECTION}),
+        ('egress', {'direction': constants.EGRESS_DIRECTION}),
+        ('ingress', {'direction': constants.INGRESS_DIRECTION}),
     ]
 
     @staticmethod
     def _get_expected_burst_value(limit, direction):
         # For egress bandwidth limit this value should be calculated as
         # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        if direction == common_constants.EGRESS_DIRECTION:
+        if direction == constants.EGRESS_DIRECTION:
             return TestBwLimitQoSLinuxbridge._get_expected_egress_burst_value(
                 limit)
         else:
@@ -259,10 +258,10 @@ class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
             linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE,
             namespace=vm.host.host_namespace
         )
-        if direction == common_constants.EGRESS_DIRECTION:
+        if direction == constants.EGRESS_DIRECTION:
             utils.wait_until_true(
                 lambda: tc.get_filters_bw_limits() == (limit, burst))
-        elif direction == common_constants.INGRESS_DIRECTION:
+        elif direction == constants.INGRESS_DIRECTION:
             utils.wait_until_true(
                 lambda: tc.get_tbf_bw_limits() == (limit, burst))
 

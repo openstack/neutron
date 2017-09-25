@@ -26,9 +26,9 @@ revision = '2b42d90729da'
 down_revision = '804a3c76314c'
 
 from alembic import op
+from neutron_lib import constants
 import sqlalchemy as sa
 
-from neutron.common import constants
 from neutron.db import migration
 
 

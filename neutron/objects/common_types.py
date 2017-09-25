@@ -157,7 +157,7 @@ class IPVersionEnumField(obj_fields.AutoTypedField):
 class DscpMark(IntegerEnum):
     def __init__(self, valid_values=None, **kwargs):
         super(DscpMark, self).__init__(
-            valid_values=constants.VALID_DSCP_MARKS)
+            valid_values=lib_constants.VALID_DSCP_MARKS)
 
 
 class DscpMarkField(obj_fields.AutoTypedField):
@@ -165,7 +165,7 @@ class DscpMarkField(obj_fields.AutoTypedField):
 
 
 class FlowDirectionEnumField(obj_fields.AutoTypedField):
-    AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_DIRECTIONS)
+    AUTO_TYPE = obj_fields.Enum(valid_values=lib_constants.VALID_DIRECTIONS)
 
 
 class IpamAllocationStatusEnumField(obj_fields.AutoTypedField):

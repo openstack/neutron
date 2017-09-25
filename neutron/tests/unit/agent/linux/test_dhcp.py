@@ -25,7 +25,6 @@ from oslo_utils import fileutils
 import testtools
 
 from neutron.agent.linux import dhcp
-from neutron.common import constants as n_const
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
@@ -91,7 +90,7 @@ class FakeReservedPort(object):
             FakeIPAllocation('fdca:3ba5:a17a:4ba3::2',
                              'ffffffff-ffff-ffff-ffff-ffffffffffff')]
         self.mac_address = '00:00:80:aa:bb:ee'
-        self.device_id = n_const.DEVICE_ID_RESERVED_DHCP_PORT
+        self.device_id = constants.DEVICE_ID_RESERVED_DHCP_PORT
         self.extra_dhcp_opts = []
         self.id = id
 

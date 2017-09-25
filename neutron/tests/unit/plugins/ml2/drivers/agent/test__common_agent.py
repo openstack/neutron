@@ -15,6 +15,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -23,7 +24,6 @@ from oslo_config import cfg
 import testtools
 
 from neutron.agent.linux import bridge_lib
-from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.tests import base
@@ -537,7 +537,7 @@ class TestCommonAgentLoop(base.BaseTestCase):
     def test_report_state_revived(self):
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
-            report_st.return_value = n_const.AGENT_REVIVED
+            report_st.return_value = agent_consts.AGENT_REVIVED
             self.agent._report_state()
             self.assertTrue(self.agent.fullsync)
 

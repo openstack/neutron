@@ -16,13 +16,13 @@
 import copy
 
 import mock
+from neutron_lib import constants
 from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.api.rpc.callbacks.consumer import registry as consumer_reg
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
-from neutron.common import constants
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests.common.agents import l2_extensions

@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 
-from neutron.common import constants
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.db import standard_attr

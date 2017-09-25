@@ -84,7 +84,7 @@ class DscpMarkFieldTest(test_base.BaseTestCase, TestField):
         super(DscpMarkFieldTest, self).setUp()
         self.field = common_types.DscpMarkField()
         self.coerce_good_values = [(val, val)
-                                   for val in constants.VALID_DSCP_MARKS]
+                                   for val in const.VALID_DSCP_MARKS]
         self.coerce_bad_values = ['6', 'str', [], {}, object()]
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values
@@ -176,7 +176,7 @@ class FlowDirectionEnumFieldTest(test_base.BaseTestCase, TestField):
         super(FlowDirectionEnumFieldTest, self).setUp()
         self.field = common_types.FlowDirectionEnumField()
         self.coerce_good_values = [(val, val)
-                                   for val in constants.VALID_DIRECTIONS]
+                                   for val in const.VALID_DIRECTIONS]
         self.coerce_bad_values = ['test', '8', 10, []]
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values

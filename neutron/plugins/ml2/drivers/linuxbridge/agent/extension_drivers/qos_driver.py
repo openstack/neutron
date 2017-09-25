@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as const
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log
@@ -19,7 +20,6 @@ from oslo_log import log
 from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import tc_lib
-import neutron.common.constants as const
 from neutron.services.qos.drivers.linuxbridge import driver
 
 LOG = log.getLogger(__name__)

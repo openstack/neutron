@@ -17,6 +17,7 @@ import collections
 import os
 
 import eventlet
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
@@ -736,7 +737,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
             ctx = context.get_admin_context_without_session()
             agent_status = self.state_rpc.report_state(
                 ctx, self.agent_state, True)
-            if agent_status == n_const.AGENT_REVIVED:
+            if agent_status == agent_consts.AGENT_REVIVED:
                 LOG.info("Agent has just been revived. "
                          "Scheduling full sync")
                 self.schedule_resync("Agent has just been revived")

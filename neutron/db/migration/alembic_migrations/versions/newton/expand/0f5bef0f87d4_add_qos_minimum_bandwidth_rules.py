@@ -26,9 +26,8 @@ revision = '0f5bef0f87d4'
 down_revision = 'a5648cfeeadf'
 
 from alembic import op
+from neutron_lib import constants
 import sqlalchemy as sa
-
-from neutron.common import constants
 
 
 def upgrade():

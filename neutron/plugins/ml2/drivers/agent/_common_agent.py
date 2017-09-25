@@ -19,6 +19,7 @@ import contextlib
 import sys
 import time
 
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as local_resources
@@ -37,7 +38,6 @@ from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import constants as n_const
 from neutron.common import topics
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import capabilities
@@ -126,7 +126,7 @@ class CommonAgentLoop(service.Service):
             agent_status = self.state_rpc.report_state(self.context,
                                                        self.agent_state,
                                                        True)
-            if agent_status == n_const.AGENT_REVIVED:
+            if agent_status == agent_consts.AGENT_REVIVED:
                 LOG.info('%s Agent has just been revived. '
                          'Doing a full sync.',
                          self.agent_type)

@@ -16,6 +16,7 @@
 import datetime
 
 from eventlet import greenthread
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api import converters
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -318,7 +319,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         Status is from server point of view: alive, new or revived.
         It could be used by agent to do some sync with the server if needed.
         """
-        status = n_const.AGENT_ALIVE
+        status = agent_consts.AGENT_ALIVE
         with context.session.begin(subtransactions=True):
             res_keys = ['agent_type', 'binary', 'host', 'topic']
             res = dict((k, agent_state[k]) for k in res_keys)
@@ -336,7 +337,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 agent_db = self._get_agent_by_type_and_host(
                     context, agent_state['agent_type'], agent_state['host'])
                 if not agent_db.is_active:
-                    status = n_const.AGENT_REVIVED
+                    status = agent_consts.AGENT_REVIVED
                     if 'resource_versions' not in agent_state:
                         # updating agent_state with resource_versions taken
                         # from db so that
@@ -362,7 +363,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 context.session.add(agent_db)
                 event_type = events.AFTER_CREATE
                 self._log_heartbeat(agent_state, agent_db, configurations_dict)
-                status = n_const.AGENT_NEW
+                status = agent_consts.AGENT_NEW
             greenthread.sleep(0)
 
         registry.notify(resources.AGENT, event_type, self, context=context,

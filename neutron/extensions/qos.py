@@ -19,6 +19,7 @@ import re
 
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib import constants as common_constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
@@ -27,7 +28,6 @@ import six
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
-from neutron.common import constants as common_constants
 from neutron.objects.qos import rule as rule_object
 from neutron.plugins.common import constants
 from neutron.services.qos import qos_consts
@@ -85,12 +85,12 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True, 'default': None,
                                   'validate': {'type:range': [0,
-                                      common_constants.DB_INTEGER_MAX_VALUE]}},
+                                      db_const.DB_INTEGER_MAX_VALUE]}},
                               'max_burst_kbps': {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True, 'default': 0,
                                   'validate': {'type:range': [0,
-                                  common_constants.DB_INTEGER_MAX_VALUE]}}}),
+                                  db_const.DB_INTEGER_MAX_VALUE]}}}),
     },
     'dscp_marking_rules': {
         'parent': {'collection_name': 'policies',
@@ -111,7 +111,7 @@ SUB_RESOURCE_ATTRIBUTE_MAP = {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True,
                                   'validate': {'type:range': [0,
-                                  common_constants.DB_INTEGER_MAX_VALUE]}},
+                                  db_const.DB_INTEGER_MAX_VALUE]}},
                               'direction': {
                                   'allow_post': True, 'allow_put': True,
                                   'is_visible': True, 'default': 'egress',

@@ -477,7 +477,7 @@ class L3HATestCase(L3HATestFramework):
 
     @mock.patch('neutron.db.l3_hamode_db.VR_ID_RANGE', new=set(range(1, 1)))
     def test_vr_id_depleted(self):
-        self.assertEqual(n_const.ROUTER_STATUS_ERROR,
+        self.assertEqual(constants.ERROR,
                          self._create_router()['status'])
 
     @mock.patch('neutron.db.l3_hamode_db.VR_ID_RANGE', new=set(range(1, 2)))
@@ -698,7 +698,7 @@ class L3HATestCase(L3HATestFramework):
                        '_notify_router_updated'):
             with mock.patch.object(self.plugin, method,
                                    side_effect=ValueError):
-                self.assertEqual(n_const.ROUTER_STATUS_ERROR,
+                self.assertEqual(constants.ERROR,
                                  self._create_router()['status'])
 
     def test_get_active_host_for_ha_router(self):
