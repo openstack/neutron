@@ -459,24 +459,18 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         if allowed_address_pairs_list and new_port_host:
             new_port_state = new_port.get('admin_state_up')
             original_port_state = original_port.get('admin_state_up')
-            if new_port_state and not original_port_state:
-                # Case were we activate the port from inactive state.
+            if new_port_state:
+                # Case were we activate the port from inactive state,
+                # or the same port has additional address_pairs added.
                 for address_pair in allowed_address_pairs_list:
                     _dvr_handle_unbound_allowed_addr_pair_add(
                         l3plugin, context, new_port, address_pair)
                 return
-            elif original_port_state and not new_port_state:
+            elif original_port_state:
                 # Case were we deactivate the port from active state.
                 for address_pair in allowed_address_pairs_list:
                     _dvr_handle_unbound_allowed_addr_pair_del(
                         l3plugin, context, original_port, address_pair)
-                return
-            elif new_port_state and original_port_state:
-                # Case were the same port has additional address_pairs
-                # added.
-                for address_pair in allowed_address_pairs_list:
-                    _dvr_handle_unbound_allowed_addr_pair_add(
-                        l3plugin, context, new_port, address_pair)
                 return
 
         is_fixed_ips_changed = (
