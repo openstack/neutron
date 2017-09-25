@@ -163,10 +163,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_get_existing_bridge_name(self):
         phy_net = 'physnet0'
         self.assertEqual('br-eth2',
-                         self.lbm.get_existing_bridge_name(phy_net))
+                         self.lbm.bridge_mappings.get(phy_net))
 
         phy_net = ''
-        self.assertIsNone(self.lbm.get_existing_bridge_name(phy_net))
+        self.assertIsNone(self.lbm.bridge_mappings.get(phy_net))
 
     def test_get_bridge_name(self):
         nw_id = "123456789101112"
