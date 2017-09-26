@@ -185,18 +185,6 @@ class IpLibTestCase(IpLibTestFramework):
 
         device.link.delete()
 
-    def test_ensure_namespace(self):
-        attr = self.generate_device_details()
-        ip = ip_lib.IPWrapper()
-
-        # Try to create same namespace twice, should be no error in both cases
-        ns = ip.ensure_namespace(attr.namespace)
-        ns2 = ip.ensure_namespace(attr.namespace)
-
-        self.assertTrue(ip.netns.exists(attr.namespace))
-        self.assertEqual(attr.namespace, ns.namespace)
-        self.assertEqual(attr.namespace, ns2.namespace)
-
     def test_get_routing_table(self):
         attr = self.generate_device_details(
             ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]

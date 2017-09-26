@@ -26,7 +26,6 @@ import testtools
 
 from neutron.agent.common import utils  # noqa
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib as priv_lib
@@ -404,39 +403,21 @@ class TestIpWrapper(base.BaseTestCase):
             ip = ip_lib.IPWrapper()
             with mock.patch.object(ip.netns, 'exists') as ns_exists:
                 with mock.patch('neutron.agent.common.utils.execute'):
+                    ns_exists.return_value = False
                     ip.ensure_namespace('ns')
                     self.execute.assert_has_calls(
                         [mock.call([], 'netns', ('add', 'ns'),
                                    run_as_root=True, namespace=None,
-                                   log_fail_as_error=False)])
-                    ns_exists.assert_not_called()
+                                   log_fail_as_error=True)])
                     ip_dev.assert_has_calls([mock.call('lo', namespace='ns'),
                                              mock.call().link.set_up()])
 
     def test_ensure_namespace_existing(self):
-        with mock.patch.object(ip_lib, 'IPDevice') as ip_dev:
-            ip = ip_lib.IPWrapper()
-            with mock.patch.object(ip.netns, 'add') as ns_add_cmd, \
-                    mock.patch.object(ip.netns, 'exists') as ns_exists_cmd:
-                ns_add_cmd.side_effect = linux_utils.ProcessExecutionError(
-                    message=("Cannot create namespace file /var/run/netns/ns: "
-                             "File exists"),
-                    returncode=1)
-                ns_exists_cmd.return_value = True
-                ns = ip.ensure_namespace('ns')
-                self.assertEqual(ns.namespace, 'ns')
-                ip_dev.assert_not_called()
-
-    def test_ensure_namespace_error(self):
-        with mock.patch.object(ip_lib, 'IPDevice'):
-            ip = ip_lib.IPWrapper()
-            with mock.patch.object(ip.netns, 'add') as ns_add_cmd, \
-                    mock.patch.object(ip.netns, 'exists') as ns_exists_cmd:
-                ns_add_cmd.side_effect = linux_utils.ProcessExecutionError(
-                    message="Test add namespace failed", returncode=1)
-                ns_exists_cmd.return_value = False
-                self.assertRaises(linux_utils.ProcessExecutionError,
-                                  ip.ensure_namespace, 'ns')
+        with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd:
+            ip_ns_cmd.exists.return_value = True
+            ns = ip_lib.IPWrapper().ensure_namespace('ns')
+            self.assertFalse(self.execute.called)
+            self.assertEqual(ns.namespace, 'ns')
 
     def test_namespace_is_empty_no_devices(self):
         ip = ip_lib.IPWrapper(namespace='ns')
