@@ -152,11 +152,6 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             sys.exit(1)
         return device
 
-    def get_existing_bridge_name(self, physical_network):
-        if not physical_network:
-            return None
-        return self.bridge_mappings.get(physical_network)
-
     @staticmethod
     def get_bridge_name(network_id):
         if not network_id:
@@ -463,7 +458,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             return self.ensure_vxlan_bridge(network_id, segmentation_id)
 
         # NOTE(nick-ma-z): Obtain mappings of physical bridge and interfaces
-        physical_bridge = self.get_existing_bridge_name(physical_network)
+        physical_bridge = self.bridge_mappings.get(physical_network)
         physical_interface = self.interface_mappings.get(physical_network)
         if not physical_bridge and not physical_interface:
             LOG.error("No bridge or interface mappings"
@@ -510,7 +505,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       "this host, skipped", tap_device_name)
             return False
 
-        bridge_name = self.get_existing_bridge_name(physical_network)
+        bridge_name = self.bridge_mappings.get(physical_network)
         if not bridge_name:
             bridge_name = self.get_bridge_name(network_id)
 
