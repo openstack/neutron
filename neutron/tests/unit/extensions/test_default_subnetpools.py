@@ -56,6 +56,26 @@ class DefaultSubnetpoolsExtensionTestCase(
         super(DefaultSubnetpoolsExtensionTestCase,
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
 
+    def _create_subnet_using_default_subnetpool(
+            self, network_id, tenant_id, ip_version=4, **kwargs):
+        data = {'subnet': {
+                    'network_id': network_id,
+                    'ip_version': str(ip_version),
+                    'tenant_id': tenant_id,
+                    'use_default_subnetpool': True}}
+        data['subnet'].update(kwargs)
+        subnet_req = self.new_create_request('subnets', data)
+        res = subnet_req.get_response(self.api)
+
+        return self.deserialize(self.fmt, res)['subnet']
+
+    def _update_subnetpool(self, subnetpool_id, **data):
+        update_req = self.new_update_request(
+            'subnetpools', {'subnetpool': data}, subnetpool_id)
+        res = update_req.get_response(self.api)
+
+        return self.deserialize(self.fmt, res)['subnetpool']
+
     def test_create_subnet_only_ip_version_v4(self):
         with self.network() as network:
             tenant_id = network['network']['tenant_id']
@@ -67,18 +87,50 @@ class DefaultSubnetpoolsExtensionTestCase(
                                  min_prefixlen='25',
                                  is_default=True) as subnetpool:
                 subnetpool_id = subnetpool['subnetpool']['id']
-                data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '4',
-                        'prefixlen': '27',
-                        'tenant_id': tenant_id,
-                        'use_default_subnetpool': True}}
-                subnet_req = self.new_create_request('subnets', data)
-                res = subnet_req.get_response(self.api)
-                subnet = self.deserialize(self.fmt, res)['subnet']
+                subnet = self._create_subnet_using_default_subnetpool(
+                    network['network']['id'], tenant_id, prefixlen='27')
                 ip_net = netaddr.IPNetwork(subnet['cidr'])
                 self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
                 self.assertEqual(27, ip_net.prefixlen)
                 self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
+
+    def test_convert_subnetpool_to_default_subnetpool(self):
+        with self.network() as network:
+            tenant_id = network['network']['tenant_id']
+            subnetpool_prefix = '10.0.0.0/8'
+            with self.subnetpool(prefixes=[subnetpool_prefix],
+                                 admin=True,
+                                 name="My subnet pool",
+                                 tenant_id=tenant_id,
+                                 min_prefixlen='25',
+                                 is_default=False) as subnetpool:
+                self.assertFalse(subnetpool['subnetpool']['is_default'])
+                subnetpool_id = subnetpool['subnetpool']['id']
+                updated_subnetpool = self._update_subnetpool(
+                    subnetpool_id, is_default=True)
+                self.assertTrue(updated_subnetpool['is_default'])
+
+                subnet = self._create_subnet_using_default_subnetpool(
+                    network['network']['id'], tenant_id)
+                ip_net = netaddr.IPNetwork(subnet['cidr'])
+                self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
+                self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
+
+    def test_convert_default_subnetpool_to_non_default(self):
+        with self.network() as network:
+            tenant_id = network['network']['tenant_id']
+            subnetpool_prefix = '10.0.0.0/8'
+            with self.subnetpool(prefixes=[subnetpool_prefix],
+                                 admin=True,
+                                 name="My subnet pool",
+                                 tenant_id=tenant_id,
+                                 min_prefixlen='25',
+                                 is_default=True) as subnetpool:
+                self.assertTrue(subnetpool['subnetpool']['is_default'])
+                subnetpool_id = subnetpool['subnetpool']['id']
+                updated_subnetpool = self._update_subnetpool(
+                    subnetpool_id, is_default=False)
+                self.assertFalse(updated_subnetpool['is_default'])
 
     def test_create_subnet_only_ip_version_v6(self):
         # this test mirrors its v4 counterpart
@@ -93,13 +145,8 @@ class DefaultSubnetpoolsExtensionTestCase(
                                  is_default=True) as subnetpool:
                 subnetpool_id = subnetpool['subnetpool']['id']
                 cfg.CONF.set_override('ipv6_pd_enabled', False)
-                data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '6',
-                        'tenant_id': tenant_id,
-                        'use_default_subnetpool': True}}
-                subnet_req = self.new_create_request('subnets', data)
-                res = subnet_req.get_response(self.api)
-                subnet = self.deserialize(self.fmt, res)['subnet']
+                subnet = self._create_subnet_using_default_subnetpool(
+                    network['network']['id'], tenant_id, ip_version=6)
                 self.assertEqual(subnetpool_id, subnet['subnetpool_id'])
                 ip_net = netaddr.IPNetwork(subnet['cidr'])
                 self.assertIn(ip_net, netaddr.IPNetwork(subnetpool_prefix))
