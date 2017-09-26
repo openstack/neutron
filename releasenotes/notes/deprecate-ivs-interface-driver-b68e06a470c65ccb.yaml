@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    The ``ivs`` interface driver is deprecated in Queens and will be removed in
+    Rocky.
