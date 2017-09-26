@@ -283,28 +283,6 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                                                         port['mac_address'])
         self.assertEqual(port_id, observed_port.id)
 
-    def test_get_locked_port_and_binding(self):
-        network_id = uuidutils.generate_uuid()
-        port_id = uuidutils.generate_uuid()
-        host = 'fake_host'
-        vif_type = portbindings.VIF_TYPE_UNBOUND
-        self._setup_neutron_network(network_id)
-        self._setup_neutron_port(network_id, port_id)
-        self._setup_neutron_portbinding(port_id, vif_type, host)
-
-        port, binding = ml2_db.get_locked_port_and_binding(self.ctx,
-                                                           port_id)
-        self.assertEqual(port_id, port.id)
-        self.assertEqual(port_id, binding.port_id)
-
-    def test_get_locked_port_and_binding_result_not_found(self):
-        port_id = uuidutils.generate_uuid()
-
-        port, binding = ml2_db.get_locked_port_and_binding(self.ctx,
-                                                           port_id)
-        self.assertIsNone(port)
-        self.assertIsNone(binding)
-
 
 class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 

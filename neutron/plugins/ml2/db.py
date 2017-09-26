@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from debtcollector import removals
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -48,34 +47,6 @@ def add_port_binding(context, port_id):
         vif_type=portbindings.VIF_TYPE_UNBOUND)
     context.session.add(record)
     return record
-
-
-@removals.remove(
-    message="Use get_port from inside of a transaction. The revision plugin "
-            "provides protection against concurrent updates to the same "
-            "resource with compare and swap updates of the revision_number.",
-    removal_version='Queens')
-def get_locked_port_and_binding(context, port_id):
-    """Get port and port binding records for update within transaction."""
-
-    try:
-        # REVISIT(rkukura): We need the Port and PortBinding records
-        # to both be added to the session and locked for update. A
-        # single joined query should work, but the combination of left
-        # outer joins and postgresql doesn't seem to work.
-        port = (context.session.query(models_v2.Port).
-                enable_eagerloads(False).
-                filter_by(id=port_id).
-                with_lockmode('update').
-                one())
-        binding = (context.session.query(models.PortBinding).
-                   enable_eagerloads(False).
-                   filter_by(port_id=port_id).
-                   with_lockmode('update').
-                   one())
-        return port, binding
-    except exc.NoResultFound:
-        return None, None
 
 
 @db_api.context_manager.writer
