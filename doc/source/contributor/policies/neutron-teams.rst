@@ -69,13 +69,13 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 | DB                     | Ann Taraday               | ataraday             |
 +------------------------+---------------------------+----------------------+
-| Built-In Control Plane | Kevin Benton              | kevinbenton          |
+| Built-In Control Plane | Miguel Lavalle            | mlavalle             |
 +------------------------+---------------------------+----------------------+
 | Client                 | Akihiro Motoki            | amotoki              |
 |                        +---------------------------+----------------------+
 |                        | Abhishek Raut             | abhiraut             |
 +------------------------+---------------------------+----------------------+
-| Docs                   | Miguel Lavalle            | mlavalle             |
+| Docs                   | Boden Russell             | boden                |
 +------------------------+---------------------------+----------------------+
 | Infra                  | Ihar Hrachyshka           | ihrachys             |
 |                        +---------------------------+----------------------+
