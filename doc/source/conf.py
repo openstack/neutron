@@ -30,6 +30,11 @@ import logging
 import os
 import sys
 
+import eventlet
+
+# module ref generation can cause partial greening resulting in thread issues
+# during the linkcheck builder, so initialize eventlet upfront
+eventlet.monkey_patch()
 
 # NOTE(amotoki): In case of oslo_config.sphinxext is enabled,
 # when resolving automodule neutron.tests.functional.db.test_migrations,
@@ -270,4 +275,11 @@ def _get_config_generator_config_definition(config_file):
 config_generator_config_file = [
     _get_config_generator_config_definition(conf)
     for conf in _config_generator_config_files
+]
+
+linkcheck_anchors_ignore = [
+    # skip gerrit anchors
+    '\/q\/.*',
+    'q\,.*',
+    '\/c\/.*'
 ]
