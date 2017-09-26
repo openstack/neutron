@@ -334,69 +334,6 @@ class SubnetPoolsTest(SubnetPoolsTestBase):
         self.assertFalse(created_subnetpool['is_default'])
 
 
-class DefaultSubnetPoolsTest(SubnetPoolsTestBase):
-
-    def setUp(self):
-        self.addCleanup(self.resource_cleanup)
-        super(DefaultSubnetPoolsTest, self).setUp()
-
-    @classmethod
-    def resource_setup(cls):
-        super(DefaultSubnetPoolsTest, cls).resource_setup()
-        body = cls.admin_client.list_subnetpools()
-        subnetpools = body['subnetpools']
-        for subnetpool in subnetpools:
-            if subnetpool.get('is_default'):
-                msg = 'Default subnetpool already exists. Only one is allowed.'
-                raise cls.skipException(msg)
-
-    @decorators.idempotent_id('cb839106-6184-4332-b292-5d07c074de4f')
-    @utils.requires_ext(extension='default-subnetpools', service='network')
-    def test_admin_create_default_subnetpool(self):
-        """
-        Test uses administrative credentials to create a default subnetpool,
-        using the is_default=True.
-        """
-        created_subnetpool = self._create_subnetpool(is_admin=True,
-                                                     is_default=True)
-        self.assertTrue(created_subnetpool['is_default'])
-
-    @decorators.idempotent_id('9e79730c-29b6-44a4-9504-bf3c7cedc56c')
-    @utils.requires_ext(extension='default-subnetpools', service='network')
-    def test_convert_subnetpool_to_default_subnetpool(self):
-        """
-        Test creates a subnetpool, which is non default subnetpool.
-        Then it will update to a default subnetpool, by setting "is_default"
-        attribute to True.
-        """
-        created_subnetpool = self._create_subnetpool()
-        subnetpool_id = created_subnetpool['id']
-        self.assertFalse(created_subnetpool['is_default'])
-        subnetpool_data = {'is_default': True}
-        self.admin_client.update_subnetpool(subnetpool_id,
-                                            **subnetpool_data)
-        show_body = self.client.show_subnetpool(subnetpool_id)
-        self.assertTrue(show_body['subnetpool']['is_default'])
-
-    @decorators.idempotent_id('39687561-7a37-47b8-91ce-f9143ae26969')
-    @utils.requires_ext(extension='default-subnetpools', service='network')
-    def test_convert_default_subnetpool_to_non_default(self):
-        """
-        Test uses administrative credentials to create a default subnetpool,
-        using the is_default=True.
-        Then it will update "is_default" attribute to False.
-        """
-        created_subnetpool = self._create_subnetpool(is_admin=True,
-                                                     is_default=True)
-        subnetpool_id = created_subnetpool['id']
-        self.assertTrue(created_subnetpool['is_default'])
-        subnetpool_data = {'is_default': False}
-        self.admin_client.update_subnetpool(subnetpool_id,
-                                            **subnetpool_data)
-        show_body = self.admin_client.show_subnetpool(subnetpool_id)
-        self.assertFalse(show_body['subnetpool']['is_default'])
-
-
 class SubnetPoolsTestV6(SubnetPoolsTest):
 
     min_prefixlen = '48'
