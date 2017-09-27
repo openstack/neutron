@@ -1071,7 +1071,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         # one to change the host_id, the second to commit a binding
         self.assertEqual(2, len(b_update_events))
         self.assertEqual({'context': ctx,
-                          'port': {'binding:host_id': 'newhost'}},
+                          'port': {'binding:host_id': 'newhost'},
+                          'original_port': mock.ANY},
                          b_update_events[0])
         self.assertIn('orig_binding', b_update_events[1])
         self.assertIn('new_binding', b_update_events[1])
