@@ -100,9 +100,10 @@ class RoutersTest(base_routers.BaseRouterTest):
         self.assertGreaterEqual(len(fixed_ips), 1)
         public_net_body = self.admin_client.show_network(
             CONF.network.public_network_id)
-        public_subnet_id = public_net_body['network']['subnets'][0]
-        self.assertIn(public_subnet_id,
-                      [x['subnet_id'] for x in fixed_ips])
+        public_subnet_ids = public_net_body['network']['subnets']
+        for fixed_ip in fixed_ips:
+            self.assertIn(fixed_ip['subnet_id'],
+                          public_subnet_ids)
 
     @decorators.idempotent_id('b386c111-3b21-466d-880c-5e72b01e1a33')
     @tutils.requires_ext(extension='ext-gw-mode', service='network')
