@@ -1698,8 +1698,17 @@ class TestArpPing(TestIPCmdBase):
         self.assertTrue(spawn_n.called)
         mIPWrapper.assert_has_calls([
             mock.call(namespace=mock.sentinel.ns_name),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=mock.ANY)
-        ] * ARPING_COUNT)
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1]),
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1]),
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
+            mock.call(namespace=mock.sentinel.ns_name),
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2])])
 
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
 
@@ -1711,7 +1720,7 @@ class TestArpPing(TestIPCmdBase):
                           '-w', mock.ANY,
                           address]
             ip_wrapper.netns.execute.assert_any_call(arping_cmd,
-                                                     extra_ok_codes=[1])
+                                                     extra_ok_codes=mock.ANY)
 
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch('eventlet.spawn_n')
@@ -1721,7 +1730,8 @@ class TestArpPing(TestIPCmdBase):
         ip_wrapper.netns.execute.side_effect = RuntimeError
         ARPING_COUNT = 3
         address = '20.0.0.1'
-        with mock.patch.object(ip_lib, 'device_exists', return_value=False):
+        with mock.patch.object(ip_lib, 'device_exists_with_ips_and_mac',
+                               return_value=False):
             ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
                                           mock.sentinel.iface_name,
                                           address,
@@ -1730,7 +1740,7 @@ class TestArpPing(TestIPCmdBase):
         # should return early with a single call when ENODEV
         mIPWrapper.assert_has_calls([
             mock.call(namespace=mock.sentinel.ns_name),
-            mock.call().netns.execute(mock.ANY, extra_ok_codes=mock.ANY)
+            mock.call().netns.execute(mock.ANY, extra_ok_codes=[1])
         ] * 1)
 
     @mock.patch('eventlet.spawn_n')
