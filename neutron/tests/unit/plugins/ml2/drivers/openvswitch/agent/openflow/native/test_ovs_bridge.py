@@ -21,16 +21,18 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
+DPID = "0003e9"
+
 
 class OVSAgentBridgeTestCase(ovs_test_base.OVSRyuTestBase):
     def test__get_dp(self):
         mock.patch.object(
-            ovs_lib.OVSBridge, 'get_datapath_id', return_value="3e9").start()
+            ovs_lib.OVSBridge, 'get_datapath_id', return_value=DPID).start()
         mock.patch.object(
             ofswitch.OpenFlowSwitchMixin, "_get_dp_by_dpid",
             side_effect=RuntimeError).start()
         br = self.br_int_cls('br-int')
-        br._cached_dpid = int("3e9", 16)
+        br._cached_dpid = int(DPID, 16)
         # make sure it correctly raises RuntimeError, not UnboundLocalError as
         # in LP https://bugs.launchpad.net/neutron/+bug/1588042
         self.assertRaises(RuntimeError, br._get_dp)
