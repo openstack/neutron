@@ -43,11 +43,13 @@ class MeteringRpcCallbacks(object):
         else:
             agents = l3_plugin.get_l3_agents(context, filters={'host': [host]})
             if not agents:
-                LOG.error('Unable to find agent %s.', host)
+                LOG.error('Unable to find agent on host %s.', host)
                 return
 
-            routers = l3_plugin.list_routers_on_l3_agent(context, agents[0].id)
-            router_ids = [router['id'] for router in routers['routers']]
+            router_ids = []
+            for agent in agents:
+                routers = l3_plugin.list_routers_on_l3_agent(context, agent.id)
+                router_ids += [router['id'] for router in routers['routers']]
             if not router_ids:
                 return
             else:

@@ -1838,12 +1838,9 @@ class L3HALeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         self.assertIn(self.agent_id4, agent_ids)
 
 
-class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
-                                         L3SchedulerBaseMixin):
+class TestGetL3AgentsWithFilter(testlib_api.SqlTestCase,
+                                L3SchedulerBaseMixin):
     """Test cases to test get_l3_agents.
-
-    This class tests the L3AgentSchedulerDbMixin.get_l3_agents()
-    for the 'agent_mode' filter with various values.
 
     5 l3 agents are registered in the order - legacy, dvr_snat, dvr, fake_mode
     and legacy
@@ -1852,45 +1849,63 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
     scenarios = [
         ('no filter',
             dict(agent_modes=[],
+                 host=['host_1'],
                  expected_agent_modes=['legacy', 'dvr_snat', 'dvr',
-                                       'fake_mode', 'legacy'])),
+                                       'fake_mode', 'legacy'],
+                 expected_host=['host_1'])),
 
         ('legacy',
             dict(agent_modes=['legacy'],
-                 expected_agent_modes=['legacy', 'legacy'])),
+                 host=['host_1'],
+                 expected_agent_modes=['legacy', 'legacy'],
+                 expected_host=['host_1'])),
 
         ('dvr_snat',
             dict(agent_modes=['dvr_snat'],
-                 expected_agent_modes=['dvr_snat'])),
+                 host=['host_2'],
+                 expected_agent_modes=['dvr_snat'],
+                 expected_host=['host_2'])),
 
-        ('dvr ',
+        ('dvr',
             dict(agent_modes=['dvr'],
-                 expected_agent_modes=['dvr'])),
+                 host=['host_2'],
+                 expected_agent_modes=['dvr'],
+                 expected_host=['host_2'])),
 
         ('legacy and dvr snat',
             dict(agent_modes=['legacy', 'dvr_snat', 'legacy'],
-                 expected_agent_modes=['legacy', 'dvr_snat', 'legacy'])),
+                 host=['host_3'],
+                 expected_agent_modes=['legacy', 'dvr_snat', 'legacy'],
+                 expected_host=['host_3'])),
 
         ('legacy and dvr',
             dict(agent_modes=['legacy', 'dvr'],
-                 expected_agent_modes=['legacy', 'dvr', 'legacy'])),
+                 host=['host_3'],
+                 expected_agent_modes=['legacy', 'dvr', 'legacy'],
+                 expected_host=['host_3'])),
 
         ('dvr_snat and dvr',
             dict(agent_modes=['dvr_snat', 'dvr'],
-                 expected_agent_modes=['dvr_snat', 'dvr'])),
+                 host=['host_4'],
+                 expected_agent_modes=['dvr_snat', 'dvr'],
+                 expected_host=['host_4'])),
 
         ('legacy, dvr_snat and dvr',
             dict(agent_modes=['legacy', 'dvr_snat', 'dvr'],
+                 host=['host_5'],
                  expected_agent_modes=['legacy', 'dvr_snat', 'dvr',
-                                       'legacy'])),
+                                       'legacy'],
+                 expected_host=['host_5'])),
 
         ('invalid',
             dict(agent_modes=['invalid'],
-                 expected_agent_modes=[])),
+                 host=['host_invalid'],
+                 expected_agent_modes=[],
+                 expected_host=[])),
     ]
 
     def setUp(self):
-        super(TestGetL3AgentsWithAgentModeFilter, self).setUp()
+        super(TestGetL3AgentsWithFilter, self).setUp()
         self.plugin = L3HAPlugin()
         self.setup_coreplugin('ml2')
         self.adminContext = n_context.get_admin_context()
@@ -1899,6 +1914,13 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
         for host, agent_mode in zip(hosts, agent_modes):
             helpers.register_l3_agent(host, agent_mode)
 
+
+class TestGetL3AgentsWithAgentModeFilter(TestGetL3AgentsWithFilter):
+    """Test cases to test get_l3_agents 'agent_mode'.
+
+    This class tests the L3AgentSchedulerDbMixin.get_l3_agents()
+    for the 'agent_mode' filter with various values.
+    """
     def _get_agent_mode(self, agent):
         agent_conf = self.plugin.get_configuration_dict(agent)
         return agent_conf.get('agent_mode', 'None')
@@ -1910,6 +1932,24 @@ class TestGetL3AgentsWithAgentModeFilter(testlib_api.SqlTestCase,
         returned_agent_modes = [self._get_agent_mode(agent)
                                 for agent in l3_agents]
         self.assertEqual(self.expected_agent_modes, returned_agent_modes)
+
+
+class TestGetL3AgentsWithHostFilter(TestGetL3AgentsWithFilter):
+    """Test cases to test get_l3_agents 'hosts'.
+
+    This class tests the L3AgentSchedulerDbMixin.get_l3_agents()
+    for the 'host' filter with various values.
+    """
+    def _get_host(self, agent):
+        return agent.get('host', 'None')
+
+    def test_get_l3_agents(self):
+        l3_agents = self.plugin.get_l3_agents(
+            self.adminContext, filters={'host': self.host})
+        self.assertEqual(len(self.expected_host), len(l3_agents))
+        returned_host = [self._get_host(agent)
+                         for agent in l3_agents]
+        self.assertEqual(self.expected_host, returned_host)
 
 
 class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
