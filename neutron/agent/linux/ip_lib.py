@@ -28,7 +28,6 @@ import six
 
 from neutron._i18n import _
 from neutron.agent.common import utils
-from neutron.agent.linux import utils as linux_utils
 from neutron.common import exceptions as n_exc
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as privileged
@@ -202,23 +201,12 @@ class IPWrapper(SubProcessBase):
         return IPDevice(name, namespace=self.namespace)
 
     def ensure_namespace(self, name):
-        # we must save and restore this before returning
-        orig_log_fail_as_error = self.get_log_fail_as_error()
-        self.set_log_fail_as_error(False)
-        try:
+        if not self.netns.exists(name):
             ip = self.netns.add(name)
-        except linux_utils.ProcessExecutionError:
-            if self.netns.exists(name):
-                # NOTE(slaweq): error which was catched here might be actually
-                # because of namespace already exists, in such case it's not
-                # a real issue
-                return IPWrapper(namespace=name)
-            raise
-        finally:
-            self.set_log_fail_as_error(orig_log_fail_as_error)
-
-        lo = ip.device(LOOPBACK_DEVNAME)
-        lo.link.set_up()
+            lo = ip.device(LOOPBACK_DEVNAME)
+            lo.link.set_up()
+        else:
+            ip = IPWrapper(namespace=name)
         return ip
 
     def namespace_is_empty(self):
