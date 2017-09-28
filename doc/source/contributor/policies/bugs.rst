@@ -355,7 +355,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | Tag                           | Description                             | Contact              |
 +===============================+=========================================+======================+
-| access-control_               | A bug affecting RBAC and policy.json    | Kevin Benton         |
+| access-control_               | A bug affecting RBAC and policy.json    | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
 | api_                          | A bug affecting the API layer           | Akihiro Motoki       |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -371,7 +371,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | dns_                          | A bug affecting DNS integration         | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
-| doc_                          | A bug affecting in-tree doc             | John Davidge         |
+| doc_                          | A bug affecting in-tree doc             | Boden Russell        |
 +-------------------------------+-----------------------------------------+----------------------+
 | fullstack_                    | A bug in the fullstack subtree          | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -381,31 +381,28 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | gate-failure_                 | A bug affecting gate stability          | Armando Migliaccio   |
 +-------------------------------+-----------------------------------------+----------------------+
-| ipv6_                         | A bug affecting IPv6 support            | John Davidge/        |
-|                               |                                         | Sean Collins/        |
-|                               |                                         | Brian Haley          |
+| ipv6_                         | A bug affecting IPv6 support            | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
-| l2-pop_                       | A bug in L2 Population mech driver      | Kevin Benton         |
+| l2-pop_                       | A bug in L2 Population mech driver      | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
 | l3-bgp_                       | A bug affecting neutron-dynamic-routing | Vikram Choudhary     |
 +-------------------------------+-----------------------------------------+----------------------+
-| l3-dvr-backlog_               | A bug affecting distributed routing     | Oleg Bondarev/       |
+| l3-dvr-backlog_               | A bug affecting distributed routing     | Swami V./            |
 |                               |                                         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
-| l3-ha_                        | A bug affecting L3 HA (vrrp)            | John Schwarz/        |
-|                               |                                         | Brian Haley          |
+| l3-ha_                        | A bug affecting L3 HA (vrrp)            | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 | l3-ipam-dhcp_                 | A bug affecting L3/DHCP/metadata        | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
 | lib_                          | An issue affecting neutron-lib          | Boden Russell        |
 +-------------------------------+-----------------------------------------+----------------------+
-| linuxbridge_                  | A bug affecting ML2/linuxbridge         | Sean Collins         |
+| linuxbridge_                  | A bug affecting ML2/linuxbridge         | N/A                  |
 +-------------------------------+-----------------------------------------+----------------------+
-| loadimpact_                   | Performance penalty/improvements        | Kevin Benton         |
+| loadimpact_                   | Performance penalty/improvements        | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
 | logging_                      | An issue with logging guidelines        | Matt Riedemann       |
 +-------------------------------+-----------------------------------------+----------------------+
-| low-hanging-fruit_            | Starter bugs for new contributors       | N/A                  |
+| low-hanging-fruit_            | Starter bugs for new contributors       | Miguel Lavalle       |
 +-------------------------------+-----------------------------------------+----------------------+
 | metering_                     | A bug affecting the metering layer      | ?                    |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -415,15 +412,15 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | ops_                          | Reported by or affecting operators      | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
-| oslo_                         | An interop/cross-project issue          | Victor Morales       |
+| oslo_                         | An interop/cross-project issue          | N/A                  |
 +-------------------------------+-----------------------------------------+----------------------+
-| ovs_                          | A bug affecting ML2/OVS                 | Kevin Benton         |
+| ovs_                          | A bug affecting ML2/OVS                 | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
 | ovs-fw_                       | A bug affecting OVS firewall            | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
 | ovs-lib_                      | A bug affecting OVS Lib                 | Terry Wilson         |
 +-------------------------------+-----------------------------------------+----------------------+
-| py34_                         | Issues affecting the Python 3 porting   | Cedric Brandily      |
+| py35_                         | Issues affecting the Python 3 porting   | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
 | qos_                          | A bug affecting ML2/QoS                 | Miguel Ajo           |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -431,7 +428,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe-approved_                 | Approved feature enhancements           | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
-| sg-fw_                        | A bug affecting security groups         | Kevin Benton         |
+| sg-fw_                        | A bug affecting security groups         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 | sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough   | Moshe Levi           |
 +-------------------------------+-----------------------------------------+----------------------+
@@ -708,13 +705,13 @@ OVS Lib
 * `OVS Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovs-lib>`_
 * `OVS Lib - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovs-lib>`_
 
-.. _py34:
+.. _py35:
 
-PY34
+PY35
 ++++
 
-* `Py34 - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=py34>`_
-* `Py34 - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=py34>`_
+* `Py35 - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=py35>`_
+* `Py35 - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=py35>`_
 
 .. _qos:
 
