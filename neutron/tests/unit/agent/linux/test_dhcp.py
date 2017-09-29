@@ -1173,7 +1173,7 @@ class TestDnsmasq(TestBase):
     def _test_spawn(self, extra_options, network=FakeDualNetwork(),
                     max_leases=16777216, lease_duration=86400,
                     has_static=True, no_resolv='--no-resolv',
-                    has_stateless=True):
+                    has_stateless=True, dhcp_t1=0, dhcp_t2=0):
         def mock_get_conf_file_name(kind):
             return '/dhcp/%s/%s' % (network.id, kind)
 
@@ -1230,6 +1230,11 @@ class TestDnsmasq(TestBase):
 
         expected.append('--dhcp-lease-max=%d' % min(
             possible_leases, max_leases))
+
+        if dhcp_t1:
+            expected.append('--dhcp-option-force=option:T1,%ds' % dhcp_t1)
+        if dhcp_t2:
+            expected.append('--dhcp-option-force=option:T2,%ds' % dhcp_t2)
         expected.extend(extra_options)
 
         self.execute.return_value = ('', '')
@@ -1360,6 +1365,12 @@ class TestDnsmasq(TestBase):
         network = FakeV4Network()
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
                          network)
+
+    def test_spawn_cfg_with_dhcp_timers(self):
+        self.conf.set_override('dhcp_renewal_time', 30)
+        self.conf.set_override('dhcp_rebinding_time', 100)
+        self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
+                         dhcp_t1=30, dhcp_t2=100)
 
     def _test_output_init_lease_file(self, timestamp):
         expected = [

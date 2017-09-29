@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Allow configuration of DHCP renewal (T1) and rebinding (T2) timers in
+    ``neutron-dhcp-agent``. By allowing these timers to be set (options 58
+    and 59 as per RFC2132) in ``dnsmasq`` it allows users to change
+    other parameters, like MTU, on instances without having to wait for
+    the lease time to expire. The advantage of changing T1 over the
+    lease time is that if the DHCP server becomes unreachable within
+    the lease time, instances will not drop their IP addresses and it
+    will not cause a dataplane disruption.
