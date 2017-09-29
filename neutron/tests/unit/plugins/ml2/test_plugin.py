@@ -1027,6 +1027,18 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             plugin.update_port(ctx, port['port']['id'], port)
             self.assertTrue(sg_member_update.called)
 
+    def test_update_port_name_do_not_notify_sg(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        port_name = "port_name"
+        with self.port(name=port_name) as port,\
+            mock.patch.object(
+                plugin.notifier,
+                'security_groups_member_updated') as sg_member_update:
+            port['port']['name'] = 'new_port_name'
+            plugin.update_port(ctx, port['port']['id'], port)
+            self.assertFalse(sg_member_update.called)
+
     def test_update_port_status_with_network(self):
         registry.clear()  # don't care about callback behavior
         ctx = context.get_admin_context()

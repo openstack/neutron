@@ -45,7 +45,12 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
     def notify_sg_on_port_change(self, resource, event, trigger, context,
                                  port, *args, **kwargs):
         """Trigger notification to other SG members on port changes."""
-        self.notify_security_groups_member_updated(context, port)
+        if event == events.AFTER_UPDATE:
+            original_port = kwargs.get('original_port')
+            self.check_and_notify_security_group_member_changed(
+                context, original_port, port)
+        else:
+            self.notify_security_groups_member_updated(context, port)
 
     def create_security_group_rule(self, context, security_group_rule):
         rule = super(SecurityGroupServerNotifierRpcMixin,
