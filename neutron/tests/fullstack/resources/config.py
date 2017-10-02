@@ -284,6 +284,10 @@ class L3ConfigFixture(ConfigFixture):
             'debug': 'True',
             'test_namespace_suffix': self._generate_namespace_suffix(),
         })
+        if host_desc.availability_zone:
+            self.config['agent'].update({
+                'availability_zone': host_desc.availability_zone
+            })
 
     def _prepare_config_with_ovs_agent(self, integration_bridge):
         self.config.update({
@@ -325,6 +329,10 @@ class DhcpConfigFixture(ConfigFixture):
             'dhcp_confs': self._generate_dhcp_path(),
             'test_namespace_suffix': self._generate_namespace_suffix()
         })
+        if host_desc.availability_zone:
+            self.config['agent'].update({
+                'availability_zone': host_desc.availability_zone
+            })
 
     def _setUp(self):
         super(DhcpConfigFixture, self)._setUp()
