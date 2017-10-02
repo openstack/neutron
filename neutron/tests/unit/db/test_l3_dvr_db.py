@@ -130,6 +130,32 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertEqual(1,
                          self.mixin._migrate_router_ports.call_count)
 
+    def test_update_router_db_distributed_to_centralized(self):
+        router = {'name': 'foo_router', 'admin_state_up': True,
+                  'distributed': True}
+        agent = {'id': _uuid(), 'host': 'xyz'}
+        router_db = self._create_router(router)
+        router_id = router_db['id']
+        self.assertTrue(router_db.extra_attributes.distributed)
+        self.mixin._get_router = mock.Mock(return_value=router_db)
+        self.mixin._validate_router_migration = mock.Mock()
+        self.mixin._migrate_router_ports = mock.Mock()
+        self.mixin._core_plugin.\
+            delete_distributed_port_bindings_by_router_id = mock.Mock()
+        self.mixin.list_l3_agents_hosting_router = mock.Mock(
+            return_value={'agents': [agent]})
+        self.mixin._unbind_router = mock.Mock()
+        updated_router = self.mixin.update_router(self.ctx, router_id,
+            {'router': {'distributed': False}})
+        # Assert that the DB value has changed
+        self.assertFalse(updated_router['distributed'])
+        self.assertEqual(1,
+                         self.mixin._migrate_router_ports.call_count)
+        self.assertEqual(
+            1,
+            self.mixin._core_plugin.
+            delete_distributed_port_bindings_by_router_id.call_count)
+
     def _test_get_device_owner(self, is_distributed=False,
                                expected=const.DEVICE_OWNER_ROUTER_INTF,
                                pass_router_id=True):
