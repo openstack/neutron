@@ -1812,6 +1812,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # merge into session to reflect changes
         binding.persist_state_to_session(plugin_context.session)
 
+    def delete_distributed_port_bindings_by_router_id(self, context,
+                                                      router_id):
+        for binding in (context.session.query(models.DistributedPortBinding).
+                filter_by(router_id=router_id)):
+            db.clear_binding_levels(context, binding.port_id, binding.host)
+            context.session.delete(binding)
+
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def update_distributed_port_binding(self, context, id, port):
