@@ -74,7 +74,7 @@ Port chain
 ----------
 
 * ``id`` - Port chain ID
-* ``tenant_id`` - Project ID
+* ``project_id`` - Project ID
 * ``name`` - Readable name
 * ``description`` - Readable description
 * ``port_pair_groups`` - List of port pair group IDs
@@ -100,7 +100,7 @@ Port pair group
 ---------------
 
 * ``id`` - Port pair group ID
-* ``tenant_id`` - Project ID
+* ``project_id`` - Project ID
 * ``name`` - Readable name
 * ``description`` - Readable description
 * ``port_pairs`` - List of service function port pairs
@@ -113,7 +113,7 @@ Port pair
 ---------
 
 * ``id`` - Port pair ID
-* ``tenant_id`` - Project ID
+* ``project_id`` - Project ID
 * ``name`` - Readable name
 * ``description`` - Readable description
 * ``ingress`` - Ingress port
@@ -135,7 +135,7 @@ Flow classifier
 ---------------
 
 * ``id`` - Flow classifier ID
-* ``tenant_id`` - Project ID
+* ``project_id`` - Project ID
 * ``name`` - Readable name
 * ``description`` - Readable description
 * ``ethertype`` - Ethertype (IPv4/IPv6)
@@ -164,7 +164,7 @@ Operations
 Create a port chain
 -------------------
 
-The following example uses the ``neutron`` command-line interface (CLI) to
+The following example uses the ``openstack`` command-line interface (CLI) to
 create a port chain consisting of three service function instances to handle
 HTTP (TCP) traffic flows from 192.0.2.11:1000 to 198.51.100.11:80.
 
@@ -230,7 +230,7 @@ HTTP (TCP) traffic flows from 192.0.2.11:1000 to 198.51.100.11:80.
 
    .. code-block:: console
 
-      $ neutron flow-classifier-create \
+      $ openstack sfc flow classifier create \
         --description "HTTP traffic from 192.0.2.11 to 198.51.100.11" \
         --ethertype IPv4 \
         --source-ip-prefix 192.0.2.11/32 \
@@ -239,22 +239,27 @@ HTTP (TCP) traffic flows from 192.0.2.11:1000 to 198.51.100.11:80.
         --source-port 1000:1000 \
         --destination-port 80:80 FC1
 
+   .. note::
+
+      When using the (default) OVS driver, the ``--logical-source-port``
+      parameter is also required
+
 #. Create port pair ``PP1`` with ports ``p1`` and ``p2``, ``PP2`` with ports
    ``p3`` and ``p4``, and ``PP3`` with ports ``p5`` and ``p6``.
 
    .. code-block:: console
 
-      $ neutron port-pair-create \
+      $ openstack sfc port pair create \
         --description "Firewall SF instance 1" \
         --ingress p1 \
         --egress p2 PP1
 
-      $ neutron port-pair-create \
+      $ openstack sfc port pair create \
         --description "Firewall SF instance 2" \
         --ingress p3 \
         --egress p4 PP2
 
-      $ neutron port-pair-create \
+      $ openstack sfc port pair create \
         --description "IDS SF instance" \
         --ingress p5 \
         --egress p6 PP3
@@ -264,9 +269,9 @@ HTTP (TCP) traffic flows from 192.0.2.11:1000 to 198.51.100.11:80.
 
    .. code-block:: console
 
-      $ neutron port-pair-group-create \
+      $ openstack sfc port pair group create \
         --port-pair PP1 --port-pair PP2 PPG1
-      $ neutron port-pair-group-create \
+      $ openstack sfc port pair group create \
         --port-pair PP3 PPG2
 
    .. note::
@@ -279,7 +284,7 @@ HTTP (TCP) traffic flows from 192.0.2.11:1000 to 198.51.100.11:80.
 
    .. code-block:: console
 
-      $ neutron port-chain-create \
+      $ openstack sfc port chain create \
         --port-pair-group PPG1 --port-pair-group PPG2 \
         --flow-classifier FC1 PC1
 
@@ -296,14 +301,14 @@ HTTP (TCP) traffic flows from 192.0.2.11:1000 to 198.51.100.11:80.
 Update a port chain or port pair group
 --------------------------------------
 
-* Use the :command:`neutron port-chain-update` command to dynamically add or
+* Use the :command:`openstack sfc port chain set` command to dynamically add or
   remove port pair groups or flow classifiers on a port chain.
 
   * For example, add port pair group ``PPG3`` to port chain ``PC1``:
 
     .. code-block:: console
 
-       $ neutron port-chain-update \
+       $ openstack sfc port chain set \
          --port-pair-group PPG1 --port-pair-group PPG2 --port-pair-group PPG3 \
          --flow-classifier FC1 PC1
 
@@ -311,20 +316,20 @@ Update a port chain or port pair group
 
     .. code-block:: console
 
-       $ neutron port-chain-update \
+       $ openstack sfc port chain set \
          --port-pair-group PPG1 --port-pair-group PPG2 \
          --flow-classifier FC1 --flow-classifier FC2 PC1
 
     SFC steers traffic matching the additional flow classifier to the
     port pair groups in the port chain.
 
-* Use the :command:`neutron port-pair-group-update` command to perform dynamic
+* Use the :command:`openstack sfc port pair group set` command to perform dynamic
   scale-out or scale-in operations by adding or removing port pairs on a port
   pair group.
 
   .. code-block:: console
 
-     $ neutron port-pair-group-update \
+     $ openstack sfc port pair group set \
        --port-pair PP1 --port-pair PP2 --port-pair PP4 PPG1
 
   SFC performs load balancing/distribution over the additional service
