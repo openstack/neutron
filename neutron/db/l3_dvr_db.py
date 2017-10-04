@@ -639,57 +639,55 @@ class _DVRAgentInterfaceMixin(object):
 
         return routers_dict
 
+    @staticmethod
+    def _get_floating_ip_host(floating_ip):
+        """Function to return floating IP host binding state
+
+        By default, floating IPs are not bound to any host.  Instead
+        of using the empty string to denote this use a constant.
+        """
+        return floating_ip.get('host', l3_const.FLOATING_IP_HOST_UNBOUND)
+
     def _process_floating_ips_dvr(self, context, routers_dict,
                                   floating_ips, host, agent):
         LOG.debug("FIP Agent : %s ", agent.id)
         for floating_ip in floating_ips:
             router = routers_dict.get(floating_ip['router_id'])
             if router:
-                router_floatingips = router.get(const.FLOATINGIP_KEY, [])
                 if router['distributed']:
-                    fip_host = floating_ip.get('host')
-                    fip_dest_host = floating_ip.get('dest_host')
-                    # Skip if floatingip need not be processed for the
-                    # given agent.
-                    if self._should_skip_floating_ip_processed_for_given_agent(
-                        floating_ip, fip_host, fip_dest_host, agent):
+                    if self._skip_floating_ip_for_mismatched_agent_or_host(
+                        floating_ip, agent, host):
                         continue
-                    # Also skip floatingip if the fip port have a host defined
-                    # and if the host does not match.
-                    if self._check_floating_ip_not_valid_for_given_host(
-                        fip_host, fip_dest_host, host):
-                        continue
-                    LOG.debug("Floating IP host: %s", fip_host)
+                router_floatingips = router.get(const.FLOATINGIP_KEY, [])
                 router_floatingips.append(floating_ip)
                 router[const.FLOATINGIP_KEY] = router_floatingips
 
-    def _check_floating_ip_not_valid_for_given_host(
-        self, fip_host, fip_dest_host, host):
-        """Function to check if floatingip host match for the given agent.
+    def _skip_floating_ip_for_mismatched_agent_or_host(self, floating_ip,
+                                                       agent, host):
+        """Function to check if floating IP processing can be skipped."""
+        fip_host = self._get_floating_ip_host(floating_ip)
 
-        Check if the given floatingip host matches with the requesting
-        host when floatingip dest_host is None.
-        If floatingip dest_host is not None it means that the floatingip
-        is migrating to a new compute host and the original host will not
-        match.
-        """
-        host_mismatch = (
-            fip_host != host and fip_dest_host is None)
-        return (fip_host is not None and host_mismatch)
+        # Skip if it is unbound
+        if fip_host == l3_const.FLOATING_IP_HOST_UNBOUND:
+            return True
 
-    def _should_skip_floating_ip_processed_for_given_agent(
-        self, floating_ip, fip_host, fip_dest_host, agent):
-        """Function to check if floatingip need to be processed or skipped.
-
-        Skip if host and dest_host is none and the agent
-        requesting is not dvr_snat agent, and the fip has
-        not already been assigned 'dvr_snat_bound' state.
-        """
+        # Skip if the given agent is in the wrong mode - SNAT bound
+        # requires DVR_SNAT agent.
         agent_mode = self._get_agent_mode(agent)
-        return (fip_host is None and (fip_dest_host is None) and
-                agent_mode in [const.L3_AGENT_MODE_LEGACY,
-                               const.L3_AGENT_MODE_DVR] and
-                not floating_ip.get(l3_const.DVR_SNAT_BOUND))
+        if (agent_mode in [const.L3_AGENT_MODE_LEGACY,
+                           const.L3_AGENT_MODE_DVR] and
+                floating_ip.get(l3_const.DVR_SNAT_BOUND)):
+            return True
+
+        # Skip if it is bound, but not to the given host
+        fip_dest_host = floating_ip.get('dest_host')
+        if (fip_host != l3_const.FLOATING_IP_HOST_NEEDS_BINDING and
+            fip_host != host and fip_dest_host is None):
+            return True
+
+        # not being skipped, log host
+        LOG.debug("Floating IP host: %s", fip_host)
+        return False
 
     def _get_fip_agent_gw_ports(self, context, fip_agent_id):
         """Return list of floating agent gateway ports for the agent."""
@@ -753,30 +751,29 @@ class _DVRAgentInterfaceMixin(object):
                             port_dict.update({port['id']: port})
             # Add the port binding host to the floatingip dictionary
             for fip in floating_ips:
+                # Assume no host binding required
+                fip['host'] = l3_const.FLOATING_IP_HOST_UNBOUND
                 vm_port = port_dict.get(fip['port_id'], None)
                 if vm_port:
+                    # Default value if host port-binding required
+                    fip['host'] = l3_const.FLOATING_IP_HOST_NEEDS_BINDING
                     port_host = vm_port[portbindings.HOST_ID]
                     if port_host:
-                        fip['host'] = port_host
                         fip['dest_host'] = (
                             self._get_dvr_migrating_service_port_hostid(
                                 context, fip['port_id'], port=vm_port))
                         vm_port_agent_mode = vm_port.get('agent', None)
-                        if vm_port_agent_mode == (
+                        if vm_port_agent_mode != (
                             l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL):
-                            # For floatingip configured on ports that
-                            # reside on 'dvr_no_external' agent, get rid of
-                            # the fip host binding since it would be created
+                            # For floatingip configured on ports that do not
+                            # reside on a 'dvr_no_external' agent, add the
+                            # fip host binding, else it will be created
                             # in the 'dvr_snat' agent.
-                            fip['host'] = None
-                    else:
-                        # If no port-binding assign the fip['host']
-                        # value to None.
-                        fip['host'] = None
+                            fip['host'] = port_host
                     # Handle the case were there is no host binding
                     # for the private ports that are associated with
                     # floating ip.
-                    if not fip['host'] or fip['host'] is None:
+                    if fip['host'] == l3_const.FLOATING_IP_HOST_NEEDS_BINDING:
                         fip[l3_const.DVR_SNAT_BOUND] = True
         routers_dict = self._process_routers(context, routers, agent)
         self._process_floating_ips_dvr(context, routers_dict,
