@@ -14,9 +14,9 @@
 #    under the License.
 
 import netaddr
+from tempest.common import utils as tutils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.common import utils
 from neutron.tests.tempest.api import base
@@ -39,7 +39,7 @@ class RoutersTest(base_routers.BaseRouterTest):
             config.safe_get_config_value('network', 'project_network_v6_cidr'))
 
     @decorators.idempotent_id('c72c1c0c-2193-4aca-eeee-b1442640eeee')
-    @test.requires_ext(extension="standard-attr-description",
+    @tutils.requires_ext(extension="standard-attr-description",
                        service="network")
     def test_create_update_router_description(self):
         body = self.create_router(description='d1', router_name='test')
@@ -52,7 +52,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         self.assertEqual('d2', body['description'])
 
     @decorators.idempotent_id('847257cc-6afd-4154-b8fb-af49f5670ce8')
-    @test.requires_ext(extension='ext-gw-mode', service='network')
+    @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_create_router_with_default_snat_value(self):
         # Create a router with default snat rule
         name = data_utils.rand_name('router')
@@ -63,7 +63,7 @@ class RoutersTest(base_routers.BaseRouterTest):
                            'enable_snat': True})
 
     @decorators.idempotent_id('ea74068d-09e9-4fd7-8995-9b6a1ace920f')
-    @test.requires_ext(extension='ext-gw-mode', service='network')
+    @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_create_router_with_snat_explicit(self):
         name = data_utils.rand_name('snat-router')
         # Create a router enabling snat attributes
@@ -105,7 +105,7 @@ class RoutersTest(base_routers.BaseRouterTest):
                       [x['subnet_id'] for x in fixed_ips])
 
     @decorators.idempotent_id('b386c111-3b21-466d-880c-5e72b01e1a33')
-    @test.requires_ext(extension='ext-gw-mode', service='network')
+    @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_set_gateway_with_snat_explicit(self):
         router = self._create_router(data_utils.rand_name('router-'))
         self.admin_client.update_router_with_snat_gw_info(
@@ -120,7 +120,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         self._verify_gateway_port(router['id'])
 
     @decorators.idempotent_id('96536bc7-8262-4fb2-9967-5c46940fa279')
-    @test.requires_ext(extension='ext-gw-mode', service='network')
+    @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_set_gateway_without_snat(self):
         router = self._create_router(data_utils.rand_name('router-'))
         self.admin_client.update_router_with_snat_gw_info(
@@ -135,7 +135,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         self._verify_gateway_port(router['id'])
 
     @decorators.idempotent_id('f2faf994-97f4-410b-a831-9bc977b64374')
-    @test.requires_ext(extension='ext-gw-mode', service='network')
+    @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_reset_gateway_without_snat(self):
         router = self._create_router(
             data_utils.rand_name('router-'),
@@ -163,7 +163,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         utils.wait_until_true(status_active, exception=AssertionError)
 
     @decorators.idempotent_id('c86ac3a8-50bd-4b00-a6b8-62af84a0765c')
-    @test.requires_ext(extension='extraroute', service='network')
+    @tutils.requires_ext(extension='extraroute', service='network')
     def test_update_extra_route(self):
         self.network = self.create_network()
         self.name = self.network['name']

@@ -12,9 +12,9 @@
 import testtools
 
 from oslo_utils import uuidutils
+from tempest.common import utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -23,7 +23,7 @@ from neutron.tests.tempest import config
 class NetworksTestAdmin(base.BaseAdminNetworkTest):
 
     @decorators.idempotent_id('d3c76044-d067-4cb0-ae47-8cdd875c7f67')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_admin_create_network_keystone_v3(self):
         project_id = self.client.tenant_id  # non-admin
 
@@ -41,7 +41,7 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
         self.assertEqual(project_id, lookup_net['tenant_id'])
 
     @decorators.idempotent_id('8d21aaca-4364-4eb9-8b79-44b4fff6373b')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_admin_create_network_keystone_v3_and_tenant(self):
         project_id = self.client.tenant_id  # non-admin
 
@@ -59,7 +59,7 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
         self.assertEqual(project_id, lookup_net['tenant_id'])
 
     @decorators.idempotent_id('08b92179-669d-45ee-8233-ef6611190809')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_admin_create_network_keystone_v3_and_other_tenant(self):
         project_id = self.client.tenant_id  # non-admin
         other_tenant = uuidutils.generate_uuid()
@@ -76,7 +76,7 @@ class NetworksTestAdmin(base.BaseAdminNetworkTest):
     @testtools.skipUnless("vxlan" in config.CONF.neutron_plugin_options.
                           available_type_drivers,
                           'VXLAN type_driver is not enabled')
-    @test.requires_ext(extension="provider", service="network")
+    @utils.requires_ext(extension="provider", service="network")
     def test_create_tenant_network_vxlan(self):
         network = self.admin_client.create_network(
             **{"provider:network_type": "vxlan"})['network']

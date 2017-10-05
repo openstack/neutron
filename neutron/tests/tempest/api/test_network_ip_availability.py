@@ -15,11 +15,11 @@
 
 import netaddr
 
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib.common.utils import test_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest import config
@@ -50,7 +50,7 @@ class NetworksIpAvailabilityTest(base.BaseAdminNetworkTest):
     """
 
     @classmethod
-    @test.requires_ext(extension="network-ip-availability", service="network")
+    @utils.requires_ext(extension="network-ip-availability", service="network")
     def skip_checks(cls):
         super(NetworksIpAvailabilityTest, cls).skip_checks()
 

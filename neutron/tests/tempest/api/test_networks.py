@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib import decorators
 from tempest import test
 import testtools
@@ -55,7 +56,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
             self.assertEqual(project_id, network['project_id'])
 
     @decorators.idempotent_id('26f2b7a5-2cd1-4f3a-b11f-ad259b099b11')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_show_network_fields_keystone_v3(self):
 
         def _check_show_network_fields(fields, expect_project_id,
@@ -74,7 +75,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
         _check_show_network_fields(['project_id', 'tenant_id'], True, True)
 
     @decorators.idempotent_id('0cc0552f-afaf-4231-b7a7-c2a1774616da')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_create_network_keystone_v3(self):
         project_id = self.client.tenant_id
 
@@ -95,7 +96,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertEqual(project_id, new_net['tenant_id'])
 
     @decorators.idempotent_id('94e2a44c-3367-4253-8c2a-22deaf59e96c')
-    @test.requires_ext(extension="dns-integration",
+    @utils.requires_ext(extension="dns-integration",
                        service="network")
     def test_create_update_network_dns_domain(self):
         domain1 = 'test.org.'
@@ -111,7 +112,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
         self.assertEqual(domain2, body['dns_domain'])
 
     @decorators.idempotent_id('a23186b9-aa6f-4b08-b877-35ca3b9cd54c')
-    @test.requires_ext(extension="project-id", service="network")
+    @utils.requires_ext(extension="project-id", service="network")
     def test_list_networks_fields_keystone_v3(self):
         def _check_list_networks_fields(fields, expect_project_id,
                                         expect_tenant_id):

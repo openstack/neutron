@@ -14,10 +14,10 @@
 
 import netaddr
 from oslo_log import log as logging
+from tempest.common import utils as tutils
 from tempest.common import waiters
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
-from tempest import test
 import testtools
 
 from neutron.common import utils
@@ -47,7 +47,7 @@ class TrunkTest(base.BaseTempestTestCase):
     force_tenant_isolation = False
 
     @classmethod
-    @test.requires_ext(extension="trunk", service="network")
+    @tutils.requires_ext(extension="trunk", service="network")
     def resource_setup(cls):
         super(TrunkTest, cls).resource_setup()
         # setup basic topology for servers we can log into

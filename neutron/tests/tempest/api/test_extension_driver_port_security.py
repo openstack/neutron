@@ -14,9 +14,9 @@
 #    under the License.
 
 import ddt
+from tempest.common import utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api import base
 from neutron.tests.tempest.api import base_security_groups as base_security
@@ -30,7 +30,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
                   base.BaseNetworkTest):
 
     @decorators.idempotent_id('7c338ddf-e64e-4118-bd33-e49a1f2f1495')
-    @test.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
     def test_port_sec_default_value(self):
         # Default port-sec value is True, and the attr of the port will inherit
         # from the port-sec of the network when it not be specified in API
@@ -41,7 +41,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertTrue(port['port_security_enabled'])
 
     @decorators.idempotent_id('e60eafd2-31de-4c38-8106-55447d033b57')
-    @test.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
     @ddt.unpack
     @ddt.data({'port_sec_net': False, 'port_sec_port': True, 'expected': True},
               {'port_sec_net': True, 'port_sec_port': False,
@@ -55,7 +55,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertEqual(port['port_security_enabled'], expected)
 
     @decorators.idempotent_id('fe7c27b9-f320-4daf-b977-b1547c43daf6')
-    @test.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
     def test_create_port_sec_with_security_group(self):
         network = self.create_network(port_security_enabled=True)
         self.create_subnet(network)
@@ -71,7 +71,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('ff11226c-a5ff-4ad4-8480-0840e36e47a9')
-    @test.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
     def test_port_sec_update_port_failed(self):
         network = self.create_network()
         self.create_subnet(network)
@@ -98,7 +98,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.update_port(port, security_groups=[])
 
     @decorators.idempotent_id('05642059-1bfc-4581-9bc9-aaa5db08dd60')
-    @test.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
     def test_port_sec_update_pass(self):
         network = self.create_network()
         self.create_subnet(network)
@@ -122,7 +122,7 @@ class PortSecTest(base_security.BaseSecGroupTest,
         self.assertFalse(port['port_security_enabled'])
 
     @decorators.idempotent_id('2df6114b-b8c3-48a1-96e8-47f08159d35c')
-    @test.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
     def test_delete_with_port_sec(self):
         network = self.create_network(port_security_enabled=True)
         port = self.create_port(network=network,
@@ -135,8 +135,8 @@ class PortSecTest(base_security.BaseSecGroupTest,
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('ed93e453-3f8d-495e-8e7e-b0e268c2ebd9')
-    @test.requires_ext(extension='port-security', service='network')
-    @test.requires_ext(extension='allowed-address-pairs', service='network')
+    @utils.requires_ext(extension='port-security', service='network')
+    @utils.requires_ext(extension='allowed-address-pairs', service='network')
     def test_allow_address_pairs(self):
         network = self.create_network()
         self.create_subnet(network)

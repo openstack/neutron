@@ -10,10 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.common import utils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
-from tempest import test
 
 from neutron.tests.tempest.api.admin import test_quotas
 from neutron.tests.tempest import config
@@ -88,7 +88,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('bb1e9c3c-7e6f-41f1-b579-63dbc655ecb7')
-    @test.requires_ext(extension="router", service="network")
+    @utils.requires_ext(extension="router", service="network")
     def test_create_router_when_quotas_is_full(self):
         tenant_id = self._create_tenant()['id']
         new_quotas = {'router': 1}
@@ -106,7 +106,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('5c924ff7-b7a9-474f-92a3-dbe0f976ec13')
-    @test.requires_ext(extension="security-group", service="network")
+    @utils.requires_ext(extension="security-group", service="network")
     def test_create_security_group_when_quotas_is_full(self):
         tenant_id = self._create_tenant()['id']
         sg_args = {'tenant_id': tenant_id}
@@ -127,7 +127,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('b7143480-6118-4ed4-be38-1b6f15f30d05')
-    @test.requires_ext(extension="security-group", service="network")
+    @utils.requires_ext(extension="security-group", service="network")
     def test_create_security_group_rule_when_quotas_is_full(self):
         tenant_id = self._create_tenant()['id']
         sg_args = {'tenant_id': tenant_id}
@@ -159,7 +159,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('d00fe5bb-9db8-4e1a-9c31-490f52897e6f')
-    @test.requires_ext(extension="router", service="network")
+    @utils.requires_ext(extension="router", service="network")
     def test_create_floatingip_when_quotas_is_full(self):
         tenant_id = self._create_tenant()['id']
         new_quotas = {'floatingip': 1}
