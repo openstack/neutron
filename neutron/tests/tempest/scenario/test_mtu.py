@@ -14,9 +14,9 @@
 #    under the License.
 import netaddr
 
+from tempest.common import utils
 from tempest.common import waiters
 from tempest.lib import decorators
-from tempest import test
 
 from neutron.tests.tempest.common import ssh
 from neutron.tests.tempest import config
@@ -42,7 +42,7 @@ class NetworkMtuBaseTest(base.BaseTempestTestCase):
             raise cls.skipException("GRE or VXLAN type_driver is not enabled")
 
     @classmethod
-    @test.requires_ext(extension=provider_net.ALIAS, service="network")
+    @utils.requires_ext(extension=provider_net.ALIAS, service="network")
     def resource_setup(cls):
         super(NetworkMtuBaseTest, cls).resource_setup()
         # setup basic topology for servers we can log into it
