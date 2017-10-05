@@ -1842,8 +1842,8 @@ class TestGetL3AgentsWithFilter(testlib_api.SqlTestCase,
                                 L3SchedulerBaseMixin):
     """Test cases to test get_l3_agents.
 
-    5 l3 agents are registered in the order - legacy, dvr_snat, dvr, fake_mode
-    and legacy
+    6 l3 agents are registered in the order - legacy, dvr_snat, dvr,
+    dvr_no_external, fake_mode and legacy
     """
 
     scenarios = [
@@ -1851,7 +1851,8 @@ class TestGetL3AgentsWithFilter(testlib_api.SqlTestCase,
             dict(agent_modes=[],
                  host=['host_1'],
                  expected_agent_modes=['legacy', 'dvr_snat', 'dvr',
-                                       'fake_mode', 'legacy'],
+                                       'dvr_no_external', 'fake_mode',
+                                       'legacy'],
                  expected_host=['host_1'])),
 
         ('legacy',
@@ -1868,34 +1869,33 @@ class TestGetL3AgentsWithFilter(testlib_api.SqlTestCase,
 
         ('dvr',
             dict(agent_modes=['dvr'],
-                 host=['host_2'],
+                 host=['host_3'],
                  expected_agent_modes=['dvr'],
-                 expected_host=['host_2'])),
-
-        ('legacy and dvr snat',
-            dict(agent_modes=['legacy', 'dvr_snat', 'legacy'],
-                 host=['host_3'],
-                 expected_agent_modes=['legacy', 'dvr_snat', 'legacy'],
                  expected_host=['host_3'])),
 
-        ('legacy and dvr',
-            dict(agent_modes=['legacy', 'dvr'],
-                 host=['host_3'],
-                 expected_agent_modes=['legacy', 'dvr', 'legacy'],
-                 expected_host=['host_3'])),
+        ('dvr_no_external',
+            dict(agent_modes=['dvr_no_external'],
+                 host=['host_4'],
+                 expected_agent_modes=['dvr_no_external'],
+                 expected_host=['host_4'])),
 
         ('dvr_snat and dvr',
             dict(agent_modes=['dvr_snat', 'dvr'],
-                 host=['host_4'],
-                 expected_agent_modes=['dvr_snat', 'dvr'],
-                 expected_host=['host_4'])),
-
-        ('legacy, dvr_snat and dvr',
-            dict(agent_modes=['legacy', 'dvr_snat', 'dvr'],
                  host=['host_5'],
-                 expected_agent_modes=['legacy', 'dvr_snat', 'dvr',
-                                       'legacy'],
+                 expected_agent_modes=['dvr_snat', 'dvr'],
                  expected_host=['host_5'])),
+
+        ('dvr_snat and dvr_no_external',
+            dict(agent_modes=['dvr_snat', 'dvr_no_external'],
+                 host=['host_5'],
+                 expected_agent_modes=['dvr_snat', 'dvr_no_external'],
+                 expected_host=['host_5'])),
+
+        ('dvr_snat, dvr and dvr_no_external',
+            dict(agent_modes=['dvr_snat', 'dvr', 'dvr_no_external'],
+                 host=['host_6'],
+                 expected_agent_modes=['dvr_snat', 'dvr', 'dvr_no_external'],
+                 expected_host=['host_6'])),
 
         ('invalid',
             dict(agent_modes=['invalid'],
@@ -1909,8 +1909,9 @@ class TestGetL3AgentsWithFilter(testlib_api.SqlTestCase,
         self.plugin = L3HAPlugin()
         self.setup_coreplugin('ml2')
         self.adminContext = n_context.get_admin_context()
-        hosts = ['host_1', 'host_2', 'host_3', 'host_4', 'host_5']
-        agent_modes = ['legacy', 'dvr_snat', 'dvr', 'fake_mode', 'legacy']
+        hosts = ['host_1', 'host_2', 'host_3', 'host_4', 'host_5', 'host_6']
+        agent_modes = ['legacy', 'dvr_snat', 'dvr', 'dvr_no_external',
+                       'fake_mode', 'legacy']
         for host, agent_mode in zip(hosts, agent_modes):
             helpers.register_l3_agent(host, agent_mode)
 
