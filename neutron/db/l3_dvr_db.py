@@ -133,8 +133,6 @@ class DVRResourceOperationHandler(object):
                 context, router_db,
                 old_owner=old_owner,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
-            self.l3plugin.set_extra_attr_value(context, router_db,
-                                               'distributed', True)
         else:
             if router.get('ha'):
                 new_owner = const.DEVICE_OWNER_HA_REPLICATED_INT
@@ -144,13 +142,13 @@ class DVRResourceOperationHandler(object):
                 context, router_db,
                 old_owner=const.DEVICE_OWNER_DVR_INTERFACE,
                 new_owner=new_owner)
-            self.l3plugin.set_extra_attr_value(context, router_db,
-                                               'distributed', False)
 
         cur_agents = self.l3plugin.list_l3_agents_hosting_router(
             context, router_db['id'])['agents']
         for agent in cur_agents:
             self.l3plugin._unbind_router(context, router_db['id'], agent['id'])
+        self.l3plugin.set_extra_attr_value(
+            context, router_db, 'distributed', migrating_to_distributed)
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE])
     def _delete_snat_interfaces_after_change(self, resource, event, trigger,
