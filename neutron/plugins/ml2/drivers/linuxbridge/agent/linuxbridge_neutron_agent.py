@@ -764,7 +764,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             mac = ip_lib.get_device_mac(
                 list(self.bridge_mappings.values())[0])
         else:
-            devices = ip_lib.IPWrapper().get_devices(True)
+            devices = self.ip.get_devices(True)
             for device in devices:
                 mac = ip_lib.get_device_mac(device.name)
                 if mac:
