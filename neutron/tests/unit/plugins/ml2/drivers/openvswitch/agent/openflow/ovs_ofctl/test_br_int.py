@@ -117,8 +117,12 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                       vlan_tag=vlan_tag,
                                       dst_mac=dst_mac)
         expected = [
-            call.delete_flows(table=1, dl_dst=dst_mac, dl_vlan=vlan_tag),
-            call.delete_flows(table=60, dl_dst=dst_mac, dl_vlan=vlan_tag),
+            call.delete_flows(
+                strict=True, priority=4, table=1, dl_dst=dst_mac,
+                dl_vlan=vlan_tag),
+            call.delete_flows(
+                strict=True, priority=4, table=60, dl_dst=dst_mac,
+                dl_vlan=vlan_tag),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -155,8 +159,12 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                       vlan_tag=vlan_tag,
                                       dst_mac=dst_mac)
         expected = [
-            call.delete_flows(table=2, dl_dst=dst_mac, dl_vlan=vlan_tag),
-            call.delete_flows(table=60, dl_dst=dst_mac, dl_vlan=vlan_tag),
+            call.delete_flows(
+                strict=True, priority=4, table=2, dl_dst=dst_mac,
+                dl_vlan=vlan_tag),
+            call.delete_flows(
+                strict=True, priority=4, table=60, dl_dst=dst_mac,
+                dl_vlan=vlan_tag),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 

@@ -134,7 +134,8 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
         match = self._dvr_to_src_mac_match(ofp, ofpp,
                                            vlan_tag=vlan_tag, dst_mac=dst_mac)
         for table in (table_id, constants.TRANSIENT_TABLE):
-            self.uninstall_flows(table_id=table, match=match)
+            self.uninstall_flows(
+                strict=True, priority=4, table_id=table, match=match)
 
     def add_dvr_mac_vlan(self, mac, port):
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
