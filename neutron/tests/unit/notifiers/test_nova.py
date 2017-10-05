@@ -16,6 +16,7 @@
 
 import mock
 from neutron_lib import constants as n_const
+from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -25,8 +26,8 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
-from neutron.db import models_v2
 from neutron.notifiers import nova
+from neutron.objects import ports as port_obj
 from neutron.tests import base
 
 DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
@@ -36,6 +37,8 @@ DEVICE_OWNER_BAREMETAL = n_const.DEVICE_OWNER_BAREMETAL_PREFIX + 'fake'
 class TestNovaNotify(base.BaseTestCase):
     def setUp(self, plugin=None):
         super(TestNovaNotify, self).setUp()
+        self.ctx = n_ctx.get_admin_context()
+        self.port_uuid = uuidutils.generate_uuid()
 
         class FakePlugin(object):
             def get_port(self, context, port_id):
@@ -56,51 +59,45 @@ class TestNovaNotify(base.BaseTestCase):
         for previous_port_status in states:
             for current_port_status in states:
 
-                port = models_v2.Port(id='port-uuid', device_id=device_id,
-                                      device_owner=DEVICE_OWNER_COMPUTE,
-                                      status=current_port_status)
+                port = port_obj.Port(self.ctx, id=self.port_uuid,
+                                     device_id=device_id,
+                                     device_owner=DEVICE_OWNER_COMPUTE,
+                                     status=current_port_status)
                 self._record_port_status_changed_helper(current_port_status,
                                                         previous_port_status,
                                                         port)
 
     def test_port_without_uuid_device_id_no_notify(self):
-        port = models_v2.Port(id='port-uuid', device_id='compute_probe:',
-                              device_owner=DEVICE_OWNER_COMPUTE,
-                              status=n_const.PORT_STATUS_ACTIVE)
+        port = port_obj.Port(self.ctx, id=self.port_uuid,
+                             device_id='compute_probe:',
+                             device_owner=DEVICE_OWNER_COMPUTE,
+                             status=n_const.PORT_STATUS_ACTIVE)
         self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
     def test_port_without_device_owner_no_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        port = models_v2.Port(id='port-uuid', device_id=device_id,
-                              status=n_const.PORT_STATUS_ACTIVE)
+        port = port_obj.Port(self.ctx, id=self.port_uuid, device_id=device_id,
+                             device_owner="",
+                             status=n_const.PORT_STATUS_ACTIVE)
         self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
     def test_port_without_device_id_no_notify(self):
-        port = models_v2.Port(id='port-uuid',
-                              device_owner=n_const.DEVICE_OWNER_DHCP,
-                              status=n_const.PORT_STATUS_ACTIVE)
-        self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
-                                                sql_attr.NO_VALUE,
-                                                port)
-
-    def test_port_without_id_no_notify(self):
-        device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        port = models_v2.Port(device_id=device_id,
-                              device_owner=DEVICE_OWNER_COMPUTE,
-                              status=n_const.PORT_STATUS_ACTIVE)
+        port = port_obj.Port(self.ctx, id=self.port_uuid, device_id="",
+                             device_owner=n_const.DEVICE_OWNER_DHCP,
+                             status=n_const.PORT_STATUS_ACTIVE)
         self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
 
     def test_non_compute_instances_no_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
-        port = models_v2.Port(id='port-uuid', device_id=device_id,
-                              device_owner=n_const.DEVICE_OWNER_DHCP,
-                              status=n_const.PORT_STATUS_ACTIVE)
+        port = port_obj.Port(self.ctx, id=self.port_uuid, device_id=device_id,
+                             device_owner=n_const.DEVICE_OWNER_DHCP,
+                             status=n_const.PORT_STATUS_ACTIVE)
         self._record_port_status_changed_helper(n_const.PORT_STATUS_ACTIVE,
                                                 sql_attr.NO_VALUE,
                                                 port)
@@ -135,7 +132,7 @@ class TestNovaNotify(base.BaseTestCase):
                                                       None)
 
         event = {'server_uuid': port.device_id, 'status': status,
-                 'name': event_name, 'tag': 'port-uuid'}
+                 'name': event_name, 'tag': self.port_uuid}
         self.assertEqual(event, port._notify_event)
 
     def test_update_fixed_ip_changed(self):
@@ -354,8 +351,8 @@ class TestNovaNotify(base.BaseTestCase):
     def test_notify_port_active_direct(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
-        port = models_v2.Port(id=port_id, device_id=device_id,
-                              device_owner=DEVICE_OWNER_COMPUTE)
+        port = port_obj.Port(self.ctx, id=port_id, device_id=device_id,
+                             device_owner=DEVICE_OWNER_COMPUTE)
         expected_event = {'server_uuid': device_id,
                           'name': nova.VIF_PLUGGED,
                           'status': 'completed',
