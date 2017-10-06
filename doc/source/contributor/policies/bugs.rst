@@ -422,7 +422,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | py35_                         | Issues affecting the Python 3 porting   | Jakub Libosvar       |
 +-------------------------------+-----------------------------------------+----------------------+
-| qos_                          | A bug affecting ML2/QoS                 | Miguel Ajo           |
+| qos_                          | A bug affecting ML2/QoS                 | Rodolfo Alonso/      |
+|                               |                                         | Slawek Kaplonski     |
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
