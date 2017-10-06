@@ -280,6 +280,9 @@ class L3ConfigFixture(ConfigFixture):
             self._prepare_config_with_ovs_agent(integration_bridge)
         elif host_desc.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
             self._prepare_config_with_linuxbridge_agent()
+        if host_desc.l3_agent_mode:
+            self.config['DEFAULT'].update({
+                'agent_mode': host_desc.l3_agent_mode})
         self.config['DEFAULT'].update({
             'debug': 'True',
             'test_namespace_suffix': self._generate_namespace_suffix(),

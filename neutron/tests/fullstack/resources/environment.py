@@ -63,7 +63,8 @@ class HostDescription(object):
     def __init__(self, l3_agent=False, dhcp_agent=False,
                  of_interface='ovs-ofctl', ovsdb_interface='vsctl',
                  l2_agent_type=constants.AGENT_TYPE_OVS,
-                 firewall_driver='noop', availability_zone=None):
+                 firewall_driver='noop', availability_zone=None,
+                 l3_agent_mode=None):
         self.l2_agent_type = l2_agent_type
         self.l3_agent = l3_agent
         self.dhcp_agent = dhcp_agent
@@ -71,6 +72,7 @@ class HostDescription(object):
         self.ovsdb_interface = ovsdb_interface
         self.firewall_driver = firewall_driver
         self.availability_zone = availability_zone
+        self.l3_agent_mode = l3_agent_mode
 
 
 class Host(fixtures.Fixture):
