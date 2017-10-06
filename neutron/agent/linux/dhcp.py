@@ -403,6 +403,14 @@ class Dnsmasq(DhcpLocalProcess):
         cmd.append('--dhcp-lease-max=%d' %
                    min(possible_leases, self.conf.dnsmasq_lease_max))
 
+        if self.conf.dhcp_renewal_time > 0:
+            cmd.append('--dhcp-option-force=option:T1,%ds' %
+                       self.conf.dhcp_renewal_time)
+
+        if self.conf.dhcp_rebinding_time > 0:
+            cmd.append('--dhcp-option-force=option:T2,%ds' %
+                       self.conf.dhcp_rebinding_time)
+
         cmd.append('--conf-file=%s' % self.conf.dnsmasq_config_file)
         for server in self.conf.dnsmasq_dns_servers:
             cmd.append('--server=%s' % server)
