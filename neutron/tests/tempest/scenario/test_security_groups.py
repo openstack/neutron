@@ -39,14 +39,15 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
         cls.create_router_interface(router['id'], cls.subnet['id'])
         cls.keypair = cls.create_keypair()
 
-    def create_vm_default_sec_grp(self, num_servers=2):
+    def create_vm_testing_sec_grp(self, num_servers=2, security_groups=None):
         servers, fips, server_ssh_clients = ([], [], [])
         for i in range(num_servers):
             servers.append(self.create_server(
                 flavor_ref=CONF.compute.flavor_ref,
                 image_ref=CONF.compute.image_ref,
                 key_name=self.keypair['name'],
-                networks=[{'uuid': self.network['id']}]))
+                networks=[{'uuid': self.network['id']}],
+                security_groups=security_groups))
         for i, server in enumerate(servers):
             waiters.wait_for_server_status(
                 self.os_primary.servers_client, server['server']['id'],
@@ -58,11 +59,11 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
             server_ssh_clients.append(ssh.Client(
                 fips[i]['floating_ip_address'], CONF.validation.image_ssh_user,
                 pkey=self.keypair['private_key']))
-        return server_ssh_clients, fips
+        return server_ssh_clients, fips, servers
 
     @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d764')
     def test_default_sec_grp_scenarios(self):
-        server_ssh_clients, fips = self.create_vm_default_sec_grp()
+        server_ssh_clients, fips, _ = self.create_vm_testing_sec_grp()
         # Check ssh connectivity when you add sec group rule, enabling ssh
         self.create_loginable_secgroup_rule(
             self.os_primary.network_client.list_security_groups()[
@@ -95,7 +96,7 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
     @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d864')
     def test_protocol_number_rule(self):
         # protocol number is added instead of str in security rule creation
-        server_ssh_clients, fips = self.create_vm_default_sec_grp(
+        server_ssh_clients, fips, _ = self.create_vm_testing_sec_grp(
             num_servers=1)
         self.ping_ip_address(fips[0]['floating_ip_address'],
                              should_succeed=False)
@@ -105,4 +106,58 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
         secgroup_id = self.os_primary.network_client.list_security_groups()[
             'security_groups'][0]['id']
         self.create_secgroup_rules(rule_list, secgroup_id=secgroup_id)
+        self.ping_ip_address(fips[0]['floating_ip_address'])
+
+    @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d964')
+    def test_two_sec_groups(self):
+        # add 2 sec groups to VM and test rules of both are working
+        ssh_secgrp = self.os_primary.network_client.create_security_group(
+            name='ssh_secgrp')
+        self.create_loginable_secgroup_rule(
+            secgroup_id=ssh_secgrp['security_group']['id'])
+        icmp_secgrp = self.os_primary.network_client.create_security_group(
+            name='icmp_secgrp')
+        self.create_pingable_secgroup_rule(
+            secgroup_id=icmp_secgrp['security_group']['id'])
+        for sec_grp in (ssh_secgrp, icmp_secgrp):
+            self.security_groups.append(sec_grp['security_group'])
+        security_groups_list = [{'name': 'ssh_secgrp'},
+                                {'name': 'icmp_secgrp'}]
+        server_ssh_clients, fips, servers = self.create_vm_testing_sec_grp(
+            num_servers=1, security_groups=security_groups_list)
+        # make sure ssh connectivity works
+        self.check_connectivity(fips[0]['floating_ip_address'],
+                                CONF.validation.image_ssh_user,
+                                self.keypair['private_key'])
+        # make sure ICMP connectivity works
+        self.ping_ip_address(fips[0]['floating_ip_address'],
+                             should_succeed=True)
+        ports = self.client.list_ports(device_id=servers[0]['server']['id'])
+        port_id = ports['ports'][0]['id']
+
+        # update port with ssh security group only
+        self.os_primary.network_client.update_port(
+            port_id, security_groups=[ssh_secgrp['security_group']['id']])
+
+        # make sure ssh connectivity works
+        self.check_connectivity(fips[0]['floating_ip_address'],
+                                CONF.validation.image_ssh_user,
+                                self.keypair['private_key'])
+
+        # make sure ICMP connectivity doesn't work
+        self.ping_ip_address(fips[0]['floating_ip_address'],
+                             should_succeed=False)
+
+        # update port with ssh and ICMP security groups
+        self.os_primary.network_client.update_port(
+            port_id, security_groups=[
+                icmp_secgrp['security_group']['id'],
+                ssh_secgrp['security_group']['id']])
+
+        # make sure ssh connectivity  works after update
+        self.check_connectivity(fips[0]['floating_ip_address'],
+                                CONF.validation.image_ssh_user,
+                                self.keypair['private_key'])
+
+        # make sure ICMP connectivity works after update
         self.ping_ip_address(fips[0]['floating_ip_address'])
