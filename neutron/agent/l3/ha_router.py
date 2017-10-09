@@ -19,6 +19,7 @@ import signal
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_consts
+from neutron_lib.utils import runtime
 from oslo_log import log as logging
 
 from neutron.agent.l3 import namespaces
@@ -440,7 +441,7 @@ class HaRouter(router.RouterInfo):
                 self.ha_port['status'] == n_consts.PORT_STATUS_ACTIVE):
             self.enable_keepalived()
 
-    @common_utils.synchronized('enable_radvd')
+    @runtime.synchronized('enable_radvd')
     def enable_radvd(self, internal_ports=None):
         if (self.keepalived_manager.get_process().active and
                 self.ha_state == 'master'):

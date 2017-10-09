@@ -16,6 +16,7 @@ import sys
 
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.utils import runtime
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -30,7 +31,6 @@ from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.conf.services import metering_agent
 from neutron import manager
@@ -160,7 +160,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
             self._purge_metering_info()
             self.last_report = ts
 
-    @utils.synchronized('metering-agent')
+    @runtime.synchronized('metering-agent')
     def _invoke_driver(self, context, meterings, func_name):
         try:
             return getattr(self.metering_driver, func_name)(context, meterings)

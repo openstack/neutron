@@ -37,7 +37,6 @@ from eventlet.green import subprocess
 import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib.utils import helpers
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -53,13 +52,10 @@ from neutron.db import api as db_api
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
-SYNCHRONIZED_PREFIX = 'neutron-'
 
 DEFAULT_THROTTLER_VALUE = 2
 
 _SEPARATOR_REGEX = re.compile(r'[/\\]+')
-
-synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
 
 
 class WaitTimeout(Exception):

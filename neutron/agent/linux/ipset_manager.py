@@ -14,9 +14,9 @@
 import copy
 
 import netaddr
+from neutron_lib.utils import runtime
 
 from neutron.agent.linux import utils as linux_utils
-from neutron.common import utils
 
 IPSET_ADD_BULK_THRESHOLD = 5
 NET_PREFIX = 'N'
@@ -83,7 +83,7 @@ class IpsetManager(object):
             self.set_members_mutate(set_name, ethertype, member_ips)
         return add_ips, del_ips
 
-    @utils.synchronized('ipset', external=True)
+    @runtime.synchronized('ipset', external=True)
     def set_members_mutate(self, set_name, ethertype, member_ips):
         if not self.set_name_exists(set_name):
             # The initial creation is handled with create/refresh to
@@ -105,7 +105,7 @@ class IpsetManager(object):
             else:
                 self._refresh_set(set_name, member_ips, ethertype)
 
-    @utils.synchronized('ipset', external=True)
+    @runtime.synchronized('ipset', external=True)
     def destroy(self, id, ethertype, forced=False):
         set_name = self.get_name(id, ethertype)
         self._destroy(set_name, forced)
