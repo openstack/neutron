@@ -48,7 +48,7 @@ class DriverBase(object):
     # logging plugin can discover which resources types are supported by
     # the log driver.
     @registry.receives(log_const.LOGGING_PLUGIN, [events.AFTER_INIT])
-    def _register(self, resource, event, trigger, **kwargs):
+    def _register(self, resource, event, trigger, payload=None):
         if self.is_loaded:
             # trigger is the LoggingServiceDriverManager
             trigger.register_driver(self)

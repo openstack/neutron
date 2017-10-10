@@ -17,7 +17,7 @@ from neutron_lib.callbacks import registry
 
 def notify_init_event(agent_type, agent):
     """Notify init event for the specified agent."""
-    registry.notify(agent_type, events.AFTER_INIT, agent, agent=agent)
+    registry.publish(agent_type, events.AFTER_INIT, agent)
 
 
 def register(callback, agent_type):
