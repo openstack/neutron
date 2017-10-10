@@ -23,6 +23,7 @@ import importlib
 import os
 import os.path
 import random
+import re
 import signal
 import sys
 import threading
@@ -59,6 +60,8 @@ LOG = logging.getLogger(__name__)
 SYNCHRONIZED_PREFIX = 'neutron-'
 
 DEFAULT_THROTTLER_VALUE = 2
+
+_SEPARATOR_REGEX = re.compile(r'[/\\]+')
 
 synchronized = lockutils.synchronized_with_prefix(SYNCHRONIZED_PREFIX)
 
@@ -871,6 +874,7 @@ def extract_exc_details(e):
 
 def import_modules_recursively(topdir):
     '''Import and return all modules below the topdir directory.'''
+    topdir = _SEPARATOR_REGEX.sub('/', topdir)
     modules = []
     for root, dirs, files in os.walk(topdir):
         for file_ in files:
@@ -881,7 +885,7 @@ def import_modules_recursively(topdir):
             if module == '__init__':
                 continue
 
-            import_base = root.replace('/', '.')
+            import_base = _SEPARATOR_REGEX.sub('.', root)
 
             # NOTE(ihrachys): in Python3, or when we are not located in the
             # directory containing neutron code, __file__ is absolute, so we
