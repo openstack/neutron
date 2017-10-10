@@ -26,7 +26,7 @@ class MetadataRpcCallback(object):
     metadata service to make calls back into the Neutron plugin.  The client
     side is defined in neutron.agent.metadata.agent.MetadataPluginAPI.  For
     more information about changing rpc interfaces, see
-    doc/source/devref/rpc_api.rst.
+    doc/source/contributor/internals/rpc_api.rst.
     """
 
     # 1.0  MetadataPluginAPI BASE_RPC_API_VERSION

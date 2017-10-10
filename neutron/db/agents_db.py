@@ -397,7 +397,8 @@ class AgentExtRpcCallback(object):
 
     This class implements the server side of an rpc interface.  The client side
     can be found in neutron.agent.rpc.PluginReportStateAPI.  For more
-    information on changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    information on changing rpc interfaces, see
+    doc/source/contributor/internals/rpc_api.rst.
 
     API version history:
         1.0 - Initial version.

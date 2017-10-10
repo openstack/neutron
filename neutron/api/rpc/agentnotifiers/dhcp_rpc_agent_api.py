@@ -36,7 +36,7 @@ class DhcpAgentNotifyAPI(object):
 
     This class implements the client side of an rpc interface.  The server side
     is neutron.agent.dhcp.agent.DhcpAgent.  For more information about changing
-    rpc interfaces, please see doc/source/devref/rpc_api.rst.
+    rpc interfaces, please see doc/source/contributor/internals/rpc_api.rst.
     """
     # It seems dhcp agent does not support bulk operation
     VALID_RESOURCES = ['network', 'subnet', 'port']

@@ -69,7 +69,8 @@ class PluginReportStateAPI(object):
 
     This class implements the client side of an rpc interface.  The server side
     can be found in neutron.db.agents_db.AgentExtRpcCallback.  For more
-    information on changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    information on changing rpc interfaces, see
+    doc/source/contributor/internals/rpc_api.rst.
     """
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.0',

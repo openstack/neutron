@@ -30,7 +30,7 @@ class DVRServerRpcApi(object):
 
     This class implements the client side of an rpc interface.  The server side
     can be found below: DVRServerRpcCallback.  For more information on changing
-    rpc interfaces, see doc/source/devref/rpc_api.rst.
+    rpc interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
     # 1.0 Initial Version
     # 1.1 Support for passing 'fixed_ips' in get_subnet_for_dvr function.
@@ -71,7 +71,7 @@ class DVRServerRpcCallback(object):
 
     This class implements the server side of an rpc interface.  The client side
     can be found above: DVRServerRpcApi.  For more information on changing rpc
-    interfaces, see doc/source/devref/rpc_api.rst.
+    interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
 
     # History
