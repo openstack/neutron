@@ -14,7 +14,7 @@ must create a database, service credentials, and API endpoints.
 
      .. code-block:: console
 
-        # mysql
+        $ mysql -u root -p
 
      .. end
 
