@@ -17,6 +17,7 @@ import functools
 import math
 
 import netaddr
+from neutron_lib import constants as const
 from tempest.common import utils as tutils
 from tempest.lib.common.utils import data_utils
 from tempest.lib import exceptions as lib_exc
@@ -413,7 +414,8 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def delete_router(cls, router):
         body = cls.client.list_router_interfaces(router['id'])
-        interfaces = body['ports']
+        interfaces = [port for port in body['ports']
+                      if port['device_owner'] in const.ROUTER_INTERFACE_OWNERS]
         for i in interfaces:
             try:
                 cls.client.remove_router_interface_with_subnet_id(
