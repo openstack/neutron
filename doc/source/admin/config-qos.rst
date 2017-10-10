@@ -99,9 +99,12 @@ On network nodes:
       [ml2]
       extension_drivers = port_security, qos
 
-#. If the Open vSwitch agent is being used, set ``extensions`` to
-   ``qos`` in the ``[agent]`` section of
-   ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``. For example:
+#. Edit the configuration file for the agent you are using and set the
+   ``extensions`` to include ``qos`` in the ``[agent]`` section of the
+   configuration file. The agent configuration file will reside in
+   ``/etc/neutron/plugins/ml2/<agent_name>_agent.ini`` where ``agent_name``
+   is the name of the agent being used (for example ``openvswitch``).
+   For example:
 
    .. code-block:: ini
 
@@ -110,8 +113,12 @@ On network nodes:
 
 On compute nodes:
 
-#. In ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``, add ``qos`` to the
-   ``extensions`` setting in the ``[agent]`` section. For example:
+#. Edit the configuration file for the agent you are using and set the
+   ``extensions`` to include ``qos`` in the ``[agent]`` section of the
+   configuration file. The agent configuration file will reside in
+   ``/etc/neutron/plugins/ml2/<agent_name>_agent.ini`` where ``agent_name``
+   is the name of the agent being used (for example ``openvswitch``).
+   For example:
 
    .. code-block:: ini
 
@@ -121,7 +128,7 @@ On compute nodes:
 .. note::
 
    QoS currently works with ml2 only (SR-IOV, Open vSwitch, and linuxbridge
-   are drivers that are enabled for QoS in Mitaka release).
+   are drivers enabled for QoS).
 
 Trusted projects policy.json configuration
 ------------------------------------------
