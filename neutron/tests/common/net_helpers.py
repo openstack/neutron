@@ -69,10 +69,13 @@ LB_DEVICE_NAME_MAX_LEN = 10
 SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[^\s]+:.*')
 
-READ_TIMEOUT = os.environ.get('OS_TEST_READ_TIMEOUT', 5)
+READ_TIMEOUT = int(
+    os.environ.get('OS_TEST_READ_TIMEOUT', 5))
 
-CHILD_PROCESS_TIMEOUT = os.environ.get('OS_TEST_CHILD_PROCESS_TIMEOUT', 20)
-CHILD_PROCESS_SLEEP = os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5)
+CHILD_PROCESS_TIMEOUT = int(
+    os.environ.get('OS_TEST_CHILD_PROCESS_TIMEOUT', 20))
+CHILD_PROCESS_SLEEP = float(
+    os.environ.get('OS_TEST_CHILD_PROCESS_SLEEP', 0.5))
 
 TRANSPORT_PROTOCOLS = (n_const.PROTO_NAME_TCP, n_const.PROTO_NAME_UDP,
                        n_const.PROTO_NAME_SCTP)
