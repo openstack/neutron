@@ -37,17 +37,14 @@ OPTIONAL_EXTENSIONS = None
 # The resource attribute map for the extension.
 SUB_RESOURCE_ATTRIBUTE_MAP = {
     qos_apidef.BANDWIDTH_LIMIT_RULES: {
-        'parameters': dict(
-            qos_apidef.SUB_RESOURCE_ATTRIBUTE_MAP[
-                qos_apidef.BANDWIDTH_LIMIT_RULES]['parameters'],
-            **{'direction': {
+        'parameters': {
+            'direction': {
                 'allow_post': True,
                 'allow_put': True,
                 'is_visible': True,
                 'default': common_constants.EGRESS_DIRECTION,
                 'validate': {
                     'type:values': common_constants.VALID_DIRECTIONS}}}
-        )
     }
 }
 

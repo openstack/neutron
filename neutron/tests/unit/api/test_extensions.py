@@ -669,6 +669,67 @@ class ExtensionManagerTest(base.BaseTestCase):
         self.assertNotIn('ext1-attr', attr_map['ext2'])
         self.assertNotIn('ext2-attr', attr_map['ext1'])
 
+    def test_extension_extends_sub_resource(self):
+        """Unit test for bug 1722842
+
+        Check that an extension can extend a sub-resource
+        """
+        RESOURCE = "test_resource"
+        SUB_RESOURCE_NAME = "test_sub_resource"
+        INITIAL_PARAM = "dummy_param1"
+        ADDITIONAL_PARAM = "dummy_param2"
+
+        SUB_RESOURCE = {
+            'parent': {'member_name': RESOURCE},
+            'parameters': {
+                INITIAL_PARAM: {'allow_post': False,
+                                'allow_put': False,
+                                'validate': {'type:uuid': None},
+                                'is_visible': True}
+            }
+        }
+
+        class BaseExtension(ext_stubs.StubExtension):
+
+            def get_extended_resources(self, version):
+                return {
+                     SUB_RESOURCE_NAME: SUB_RESOURCE
+                }
+
+        class ExtensionExtendingASubresource(ext_stubs.StubExtension):
+
+            def get_extended_resources(self, version):
+                return {
+                    SUB_RESOURCE_NAME: {
+                        'parameters': {
+                            ADDITIONAL_PARAM: {'allow_post': False,
+                                               'allow_put': False,
+                                               'validate': {'type:uuid': None},
+                                               'is_visible': True}
+                        }
+                    }
+                }
+
+            def get_required_extensions(self):
+                return ['base_extension']
+
+        ext_mgr = extensions.ExtensionManager('')
+        attr_map = {}
+        ext_mgr.add_extension(BaseExtension('base_extension'))
+        ext_mgr.add_extension(
+            ExtensionExtendingASubresource())
+        ext_mgr.extend_resources("2.0", attr_map)
+
+        # check that the parent descriptor is untouched
+        self.assertEqual(SUB_RESOURCE['parent'],
+                         attr_map[SUB_RESOURCE_NAME]['parent'])
+        # check that the initial attribute is still here
+        self.assertIn(INITIAL_PARAM,
+                      attr_map[SUB_RESOURCE_NAME]['parameters'])
+        # check that the new attribute is here as well
+        self.assertIn(ADDITIONAL_PARAM,
+                      attr_map[SUB_RESOURCE_NAME]['parameters'])
+
 
 class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
