@@ -36,7 +36,7 @@ class EnvironmentDescription(object):
     def __init__(self, network_type='vxlan', l2_pop=True, qos=False,
                  mech_drivers='openvswitch,linuxbridge',
                  service_plugins='router,trunk', arp_responder=False,
-                 agent_down_time=75):
+                 agent_down_time=75, router_scheduler=None):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -44,6 +44,7 @@ class EnvironmentDescription(object):
         self.mech_drivers = mech_drivers
         self.arp_responder = arp_responder
         self.agent_down_time = agent_down_time
+        self.router_scheduler = router_scheduler
 
         self.service_plugins = service_plugins
         if self.qos:
