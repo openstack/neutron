@@ -691,9 +691,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _protocol_arg(self, protocol, is_port):
         if not protocol:
             return []
-        if protocol == 'icmpv6':
-            protocol = 'ipv6-icmp'
-        iptables_rule = ['-p', protocol]
+        rule_protocol = protocol
+        if (protocol in n_const.IPTABLES_PROTOCOL_NAME_MAP):
+            rule_protocol = n_const.IPTABLES_PROTOCOL_NAME_MAP[protocol]
+        # protocol zero is a special case and requires no '-p'
+        if rule_protocol:
+            iptables_rule = ['-p', rule_protocol]
 
         if (is_port and protocol in ['udp', 'tcp', 'icmp', 'ipv6-icmp']):
             protocol_modules = {'udp': 'udp', 'tcp': 'tcp',
