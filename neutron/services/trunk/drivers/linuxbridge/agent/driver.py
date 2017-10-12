@@ -27,10 +27,9 @@ from neutron.services.trunk.rpc import agent as trunk_rpc
 LOG = logging.getLogger(__name__)
 
 
-def init_handler(resource, event, trigger, agent=None):
+def init_handler(resource, event, trigger, payload=None):
     """Handler for agent init event."""
-    if agent:
-        LinuxBridgeTrunkDriver()
+    LinuxBridgeTrunkDriver()
 
 
 @registry.has_registry_receivers
