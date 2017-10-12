@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Adding security group rules by protocol number is documented,
+    but somehow was broken without being noticed in one of the
+    last couple of releases.  This is now fixed.  For more
+    information see bug
+    `1716045 <https://bugs.launchpad.net/neutron/+bug/1716045>`_.
