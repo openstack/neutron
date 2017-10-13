@@ -241,7 +241,7 @@ class EmbSwitch(object):
         vf_index = self.pci_slot_map.get(pci_slot)
         mac = None
         if vf_index is not None:
-            ls = pci_lib.PciDeviceIPWrapper.link_show()
+            ls = self.pci_dev_wrapper.link_show()
             if PciOsWrapper.is_assigned_vf(self.dev_name, vf_index, ls):
                 macs = self.pci_dev_wrapper.get_assigned_macs([vf_index])
                 mac = macs.get(vf_index)

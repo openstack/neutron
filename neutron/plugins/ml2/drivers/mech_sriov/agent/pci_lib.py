@@ -184,10 +184,9 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
                         {'line': vf_line, 'device': self.dev_name})
         return vf_details
 
-    @classmethod
-    def link_show(cls):
+    def link_show(self):
         try:
-            out = cls._execute([], "link", ("show", ), run_as_root=True)
+            out = self._as_root([], "link", ("show", ))
         except Exception as e:
             LOG.error("Failed executing ip command: %s", e)
             raise exc.IpCommandError(reason=e)

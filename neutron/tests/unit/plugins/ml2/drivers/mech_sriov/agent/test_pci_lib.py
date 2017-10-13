@@ -114,15 +114,15 @@ class TestPciLib(base.BaseTestCase):
                               True)
 
     def test_set_vf_spoofcheck(self):
-        with mock.patch.object(self.pci_wrapper, "_execute"):
+        with mock.patch.object(self.pci_wrapper, "_as_root"):
             result = self.pci_wrapper.set_vf_spoofcheck(self.VF_INDEX,
                                                         True)
             self.assertIsNone(result)
 
     def test_set_vf_spoofcheck_fail(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.side_effect = Exception()
+                               "_as_root") as mock_as_root:
+            mock_as_root.side_effect = Exception()
             self.assertRaises(exc.IpCommandDeviceError,
                               self.pci_wrapper.set_vf_spoofcheck,
                               self.VF_INDEX,
@@ -141,7 +141,7 @@ class TestPciLib(base.BaseTestCase):
                     [], "link", ("set", self.DEV_NAME, "vf",
                                  str(self.VF_INDEX), "rate", '1000'))
         else:
-            with mock.patch.object(self.pci_wrapper, "_execute",
+            with mock.patch.object(self.pci_wrapper, "_as_root",
                                    side_effect=Exception()):
                 self.assertRaises(exc.IpCommandDeviceError,
                                   self.pci_wrapper.set_vf_rate,
@@ -167,8 +167,8 @@ class TestPciLib(base.BaseTestCase):
 
     def test_set_vf_state_not_supported(self):
         with mock.patch.object(self.pci_wrapper,
-                               "_execute") as mock_exec:
-            mock_exec.side_effect = Exception(
+                               "_as_root") as mock_as_root:
+            mock_as_root.side_effect = Exception(
                 pci_lib.PciDeviceIPWrapper.IP_LINK_OP_NOT_SUPPORTED)
             self.assertRaises(exc.IpCommandOperationNotSupportedError,
                               self.pci_wrapper.set_vf_state,
@@ -189,7 +189,7 @@ class TestPciLib(base.BaseTestCase):
 
     def test_link_show_command_failed(self):
         with mock.patch.object(pci_lib.PciDeviceIPWrapper,
-                               "_execute") as mock_exec:
-            mock_exec.side_effect = Exception()
+                               "_as_root") as mock_as_root:
+            mock_as_root.side_effect = Exception()
             self.assertRaises(exc.IpCommandError,
-                              pci_lib.PciDeviceIPWrapper.link_show)
+                              self.pci_wrapper.link_show)

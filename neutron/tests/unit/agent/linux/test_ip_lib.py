@@ -214,22 +214,24 @@ class TestSubProcessBase(base.BaseTestCase):
         self.execute = self.execute_p.start()
 
     def test_execute_wrapper(self):
-        ip_lib.SubProcessBase._execute(['o'], 'link', ('list',),
-                                       run_as_root=True)
+        base = ip_lib.SubProcessBase()
+        base._execute(['o'], 'link', ('list',), run_as_root=True)
 
         self.execute.assert_called_once_with(['ip', '-o', 'link', 'list'],
                                              run_as_root=True,
                                              log_fail_as_error=True)
 
     def test_execute_wrapper_int_options(self):
-        ip_lib.SubProcessBase._execute([4], 'link', ('list',))
+        base = ip_lib.SubProcessBase()
+        base._execute([4], 'link', ('list',))
 
         self.execute.assert_called_once_with(['ip', '-4', 'link', 'list'],
                                              run_as_root=False,
                                              log_fail_as_error=True)
 
     def test_execute_wrapper_no_options(self):
-        ip_lib.SubProcessBase._execute([], 'link', ('list',))
+        base = ip_lib.SubProcessBase()
+        base._execute([], 'link', ('list',))
 
         self.execute.assert_called_once_with(['ip', 'link', 'list'],
                                              run_as_root=False,
@@ -343,16 +345,14 @@ class TestIpWrapper(base.BaseTestCase):
         ip_lib.IPWrapper().add_tuntap('tap0')
         self.execute.assert_called_once_with([], 'tuntap',
                                              ('add', 'tap0', 'mode', 'tap'),
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_veth(self):
         ip_lib.IPWrapper().add_veth('tap0', 'tap1')
         self.execute.assert_called_once_with([], 'link',
                                              ('add', 'tap0', 'type', 'veth',
                                               'peer', 'name', 'tap1'),
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_macvtap(self):
         ip_lib.IPWrapper().add_macvtap('macvtap0', 'eth0', 'bridge')
@@ -360,15 +360,13 @@ class TestIpWrapper(base.BaseTestCase):
                                              ('add', 'link', 'eth0', 'name',
                                               'macvtap0', 'type', 'macvtap',
                                               'mode', 'bridge'),
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_del_veth(self):
         ip_lib.IPWrapper().del_veth('fpr-1234')
         self.execute.assert_called_once_with([], 'link',
                                              ('del', 'fpr-1234'),
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_veth_with_namespaces(self):
         ns2 = 'ns2'
@@ -379,16 +377,14 @@ class TestIpWrapper(base.BaseTestCase):
                                              ('add', 'tap0', 'type', 'veth',
                                               'peer', 'name', 'tap1',
                                               'netns', ns2),
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_dummy(self):
         ip_lib.IPWrapper().add_dummy('dummy0')
         self.execute.assert_called_once_with([], 'link',
                                              ('add', 'dummy0',
                                               'type', 'dummy'),
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_get_device(self):
         dev = ip_lib.IPWrapper(namespace='ns').device('eth0')
@@ -489,8 +485,7 @@ class TestIpWrapper(base.BaseTestCase):
                                              ['add', 'link', 'eth0',
                                               'name', 'eth0.1',
                                               'type', 'vlan', 'id', '1'],
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_vxlan_valid_srcport_length(self):
         retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
@@ -508,8 +503,7 @@ class TestIpWrapper(base.BaseTestCase):
                                               'ttl', 'ttl0', 'tos', 'tos0',
                                               'local', 'local0', 'proxy',
                                               'srcport', '1', '2'],
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_vxlan_invalid_srcport_length(self):
         wrapper = ip_lib.IPWrapper()
@@ -546,8 +540,7 @@ class TestIpWrapper(base.BaseTestCase):
                                               'local', 'local0', 'proxy',
                                               'srcport', '1', '2',
                                               'dstport', '4789'],
-                                             run_as_root=True, namespace=None,
-                                             log_fail_as_error=True)
+                                             run_as_root=True, namespace=None)
 
     def test_add_device_to_namespace(self):
         dev = mock.Mock()
@@ -1309,11 +1302,12 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
 class TestDeviceExists(base.BaseTestCase):
     def test_device_exists(self):
-        with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
-            _execute.return_value = LINK_SAMPLE[1]
+        with mock.patch('neutron.agent.common.utils.execute') as execute:
+            execute.return_value = LINK_SAMPLE[1]
             self.assertTrue(ip_lib.device_exists('eth0'))
-            _execute.assert_called_once_with(['o'], 'link', ('show', 'eth0'),
-                                             log_fail_as_error=False)
+            execute.assert_called_once_with(
+                ['ip', '-o', 'link', 'show', 'eth0'],
+                run_as_root=False, log_fail_as_error=False)
 
     def test_device_exists_reset_fail(self):
         device = ip_lib.IPDevice('eth0')

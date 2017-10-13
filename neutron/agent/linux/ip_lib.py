@@ -82,27 +82,23 @@ class SubProcessBase(object):
         elif self.force_root:
             # Force use of the root helper to ensure that commands
             # will execute in dom0 when running under XenServer/XCP.
-            return self._execute(options, command, args, run_as_root=True,
-                                 log_fail_as_error=self.log_fail_as_error)
+            return self._execute(options, command, args, run_as_root=True)
         else:
-            return self._execute(options, command, args,
-                                 log_fail_as_error=self.log_fail_as_error)
+            return self._execute(options, command, args)
 
     def _as_root(self, options, command, args, use_root_namespace=False):
         namespace = self.namespace if not use_root_namespace else None
 
         return self._execute(options, command, args, run_as_root=True,
-                             namespace=namespace,
-                             log_fail_as_error=self.log_fail_as_error)
+                             namespace=namespace)
 
-    @classmethod
-    def _execute(cls, options, command, args, run_as_root=False,
-                 namespace=None, log_fail_as_error=True):
+    def _execute(self, options, command, args, run_as_root=False,
+                 namespace=None):
         opt_list = ['-%s' % o for o in options]
         ip_cmd = add_namespace_to_cmd(['ip'], namespace)
         cmd = ip_cmd + opt_list + [command] + list(args)
         return utils.execute(cmd, run_as_root=run_as_root,
-                             log_fail_as_error=log_fail_as_error)
+                             log_fail_as_error=self.log_fail_as_error)
 
     def set_log_fail_as_error(self, fail_with_error):
         self.log_fail_as_error = fail_with_error
