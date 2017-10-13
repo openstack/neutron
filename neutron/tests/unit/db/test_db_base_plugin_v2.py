@@ -4858,6 +4858,73 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(res['subnet']['network_id'],
                                  network['network']['id'])
 
+    def test_get_subnets_count(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24'),\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24'),\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.2.1',
+                                cidr='10.0.2.0/24'):
+                project_id = network['network']['project_id']
+                ctx = context.Context(user_id=None, tenant_id=project_id,
+                                      is_admin=False)
+                pl = directory.get_plugin()
+                count = pl.get_subnets_count(
+                    ctx, filters={'project_id': [project_id]})
+                self.assertEqual(3, count)
+
+    def test_get_subnets_count_filter_by_project_id(self):
+        project_id = uuidutils.generate_uuid()
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24',
+                             tenant_id=project_id),\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24'),\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.2.1',
+                                cidr='10.0.2.0/24'):
+                ctx = context.Context(user_id=None, tenant_id=project_id,
+                                      is_admin=True)
+                pl = directory.get_plugin()
+                count = pl.get_subnets_count(ctx,
+                    filters={'project_id': [project_id]})
+                self.assertEqual(1, count)
+
+                net_project_id = network['network']['project_id']
+                count = pl.get_subnets_count(
+                    ctx, filters={'project_id': [net_project_id]})
+                self.assertEqual(2, count)
+
+    def test_get_subnets_count_filter_by_unknown_filter(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24'),\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24'),\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.2.1',
+                                cidr='10.0.2.0/24'):
+                project_id = network['network']['project_id']
+                ctx = context.Context(user_id=None, tenant_id=project_id,
+                                      is_admin=False)
+                pl = directory.get_plugin()
+                count = pl.get_subnets_count(ctx,
+                                             filters={'fake_filter': [True]})
+                self.assertEqual(3, count)
+                # change the filter value and get the same result
+                count = pl.get_subnets_count(ctx,
+                                             filters={'fake_filter': [False]})
+                self.assertEqual(3, count)
+
     def test_list_subnets(self):
         with self.network() as network:
             with self.subnet(network=network,
@@ -4893,6 +4960,41 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     cidrs = [sub['cidr'] for sub in admin_res['subnets']]
                     self.assertIn(subnet['subnet']['cidr'], cidrs)
                     self.assertIn(priv_subnet['subnet']['cidr'], cidrs)
+
+    def test_list_subnets_filtering_by_project_id(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24') as v1,\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24') as v2:
+                subnets = (v1, v2)
+                query_params = ('project_id={0}'.
+                                format(network['network']['project_id']))
+                self._test_list_resources('subnet', subnets,
+                                          query_params=query_params)
+                query_params = ('project_id={0}'.
+                                format(uuidutils.generate_uuid()))
+                self._test_list_resources('subnet', [],
+                                          query_params=query_params)
+
+    def test_list_subnets_filtering_by_unknown_filter(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             gateway_ip='10.0.0.1',
+                             cidr='10.0.0.0/24') as v1,\
+                    self.subnet(network=network,
+                                gateway_ip='10.0.1.1',
+                                cidr='10.0.1.0/24') as v2:
+                subnets = (v1, v2)
+                query_params = 'admin_state_up=True'
+                self._test_list_resources('subnet', subnets,
+                                          query_params=query_params)
+                # test with other value to check if we have the same results
+                query_params = 'admin_state_up=False'
+                self._test_list_resources('subnet', subnets,
+                                          query_params=query_params)
 
     def test_list_subnets_with_parameter(self):
         with self.network() as network:
