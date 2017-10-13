@@ -618,6 +618,12 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.assertEqual(
             [], self._get_addresses_on_device(namespace, interface))
 
+    def _assert_ip_addresses_on_interface(self,
+                                          namespace, interface, ip_addresses):
+        for ip_address in ip_addresses:
+            self._assert_ip_address_on_interface(namespace, interface,
+                                                 ip_address)
+
     def _assert_ip_address_on_interface(self,
                                         namespace, interface, ip_address):
         self.assertIn(
