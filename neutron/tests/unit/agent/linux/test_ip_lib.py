@@ -36,11 +36,6 @@ NETNS_SAMPLE = [
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     'cccccccc-cccc-cccc-cccc-cccccccccccc']
 
-NETNS_SAMPLE_IPROUTE2_4 = [
-    '12345678-1234-5678-abcd-1234567890ab (id: 1)',
-    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb (id: 0)',
-    'cccccccc-cccc-cccc-cccc-cccccccccccc (id: 2)']
-
 LINK_SAMPLE = [
     '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN \\'
     'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 promiscuity 0',
@@ -318,29 +313,31 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertEqual(device_name, somedevice.name)
         self.assertFalse(devices)
 
-    def test_get_namespaces_non_root(self):
+    @mock.patch.object(pyroute2.netns, 'listnetns')
+    @mock.patch.object(priv_lib, 'list_netns')
+    def test_get_namespaces_non_root(self, priv_listnetns, listnetns):
         self.config(group='AGENT', use_helper_for_ns_read=False)
-        self.execute.return_value = '\n'.join(NETNS_SAMPLE)
-        retval = ip_lib.IPWrapper.get_namespaces()
+        listnetns.return_value = NETNS_SAMPLE
+        retval = ip_lib.list_network_namespaces()
         self.assertEqual(retval,
                          ['12345678-1234-5678-abcd-1234567890ab',
                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
+        self.assertEqual(1, listnetns.call_count)
+        self.assertFalse(priv_listnetns.called)
 
-        self.execute.assert_called_once_with([], 'netns', ('list',),
-                                             run_as_root=False)
-
-    def test_get_namespaces_iproute2_4_root(self):
+    @mock.patch.object(pyroute2.netns, 'listnetns')
+    @mock.patch.object(priv_lib, 'list_netns')
+    def test_get_namespaces_root(self, priv_listnetns, listnetns):
         self.config(group='AGENT', use_helper_for_ns_read=True)
-        self.execute.return_value = '\n'.join(NETNS_SAMPLE_IPROUTE2_4)
-        retval = ip_lib.IPWrapper.get_namespaces()
+        priv_listnetns.return_value = NETNS_SAMPLE
+        retval = ip_lib.list_network_namespaces()
         self.assertEqual(retval,
                          ['12345678-1234-5678-abcd-1234567890ab',
                           'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
                           'cccccccc-cccc-cccc-cccc-cccccccccccc'])
-
-        self.execute.assert_called_once_with([], 'netns', ('list',),
-                                             run_as_root=True)
+        self.assertEqual(1, priv_listnetns.call_count)
+        self.assertFalse(listnetns.called)
 
     def test_add_tuntap(self):
         ip_lib.IPWrapper().add_tuntap('tap0')
@@ -398,17 +395,16 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertEqual(dev.namespace, 'ns')
         self.assertEqual(dev.name, 'eth0')
 
-    def test_ensure_namespace(self):
+    @mock.patch.object(priv_lib, 'create_netns')
+    def test_ensure_namespace(self, create):
         with mock.patch.object(ip_lib, 'IPDevice') as ip_dev:
             ip = ip_lib.IPWrapper()
             with mock.patch.object(ip.netns, 'exists') as ns_exists:
                 with mock.patch('neutron.agent.common.utils.execute'):
                     ns_exists.return_value = False
                     ip.ensure_namespace('ns')
-                    self.execute.assert_has_calls(
-                        [mock.call([], 'netns', ('add', 'ns'),
-                                   run_as_root=True, namespace=None,
-                                   log_fail_as_error=True)])
+                    create.assert_called_once_with('ns')
+                    ns_exists.assert_called_once_with('ns')
                     ip_dev.assert_has_calls([mock.call('lo', namespace='ns'),
                                              mock.call().link.set_up()])
 
@@ -1235,10 +1231,11 @@ class TestIpNetnsCommand(TestIPCmdBase):
         self.command = 'netns'
         self.netns_cmd = ip_lib.IpNetnsCommand(self.parent)
 
-    def test_add_namespace(self):
+    @mock.patch.object(priv_lib, 'create_netns')
+    def test_add_namespace(self, create):
         with mock.patch('neutron.agent.common.utils.execute') as execute:
             ns = self.netns_cmd.add('ns')
-            self._assert_sudo([], ('add', 'ns'), use_root_namespace=True)
+            create.assert_called_once_with('ns')
             self.assertEqual(ns.namespace, 'ns')
             execute.assert_called_once_with(
                 ['ip', 'netns', 'exec', 'ns',
@@ -1246,36 +1243,35 @@ class TestIpNetnsCommand(TestIPCmdBase):
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None,
                 log_fail_as_error=True)
 
-    def test_delete_namespace(self):
-        with mock.patch('neutron.agent.common.utils.execute'):
-            self.netns_cmd.delete('ns')
-            self._assert_sudo([], ('delete', 'ns'), use_root_namespace=True)
+    @mock.patch.object(priv_lib, 'remove_netns')
+    def test_delete_namespace(self, remove):
+        self.netns_cmd.delete('ns')
+        remove.assert_called_once_with('ns')
 
-    def test_namespace_exists_use_helper(self):
+    @mock.patch.object(pyroute2.netns, 'listnetns')
+    @mock.patch.object(priv_lib, 'list_netns')
+    def test_namespace_exists_use_helper(self, priv_listnetns, listnetns):
         self.config(group='AGENT', use_helper_for_ns_read=True)
-        retval = '\n'.join(NETNS_SAMPLE)
+        priv_listnetns.return_value = NETNS_SAMPLE
         # need another instance to avoid mocking
         netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        with mock.patch('neutron.agent.common.utils.execute') as execute:
-            execute.return_value = retval
-            self.assertTrue(
-                netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
-            execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
-                                            run_as_root=True,
-                                            log_fail_as_error=True)
+        self.assertTrue(
+            netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
+        self.assertEqual(1, priv_listnetns.call_count)
+        self.assertFalse(listnetns.called)
 
-    def test_namespace_doest_not_exist_no_helper(self):
+    @mock.patch.object(pyroute2.netns, 'listnetns')
+    @mock.patch.object(priv_lib, 'list_netns')
+    def test_namespace_does_not_exist_no_helper(self, priv_listnetns,
+                                                listnetns):
         self.config(group='AGENT', use_helper_for_ns_read=False)
-        retval = '\n'.join(NETNS_SAMPLE)
+        listnetns.return_value = NETNS_SAMPLE
         # need another instance to avoid mocking
         netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        with mock.patch('neutron.agent.common.utils.execute') as execute:
-            execute.return_value = retval
-            self.assertFalse(
-                netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
-            execute.assert_called_once_with(['ip', '-o', 'netns', 'list'],
-                                            run_as_root=False,
-                                            log_fail_as_error=True)
+        self.assertFalse(
+            netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
+        self.assertEqual(1, listnetns.call_count)
+        self.assertFalse(priv_listnetns.called)
 
     def test_execute(self):
         self.parent.namespace = 'ns'

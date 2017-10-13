@@ -348,11 +348,10 @@ class DhcpAgentFixture(fixtures.Fixture):
         namespace suffix.
         """
 
-        ip_wrapper = ip_lib.IPWrapper()
-        for namespace in ip_wrapper.get_namespaces():
+        for namespace in ip_lib.list_network_namespaces():
             if self.dhcp_namespace_pattern.match(namespace):
                 try:
-                    ip_wrapper.netns.delete(namespace)
+                    ip_lib.delete_network_namespace(namespace)
                 except RuntimeError:
                     # Continue cleaning even if namespace deletions fails
                     pass

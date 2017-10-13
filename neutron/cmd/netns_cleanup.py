@@ -256,7 +256,7 @@ def destroy_namespace(conf, namespace, force=False):
 def cleanup_network_namespaces(conf):
     # Identify namespaces that are candidates for deletion.
     candidates = [ns for ns in
-                  ip_lib.IPWrapper.get_namespaces()
+                  ip_lib.list_network_namespaces()
                   if eligible_for_deletion(conf, ns, conf.force)]
 
     if candidates:

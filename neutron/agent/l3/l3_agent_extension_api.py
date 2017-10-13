@@ -30,8 +30,7 @@ class L3AgentExtensionAPI(object):
         self._router_info = router_info
 
     def _local_namespaces(self):
-        root_ip = ip_lib.IPWrapper()
-        local_ns_list = root_ip.get_namespaces()
+        local_ns_list = ip_lib.list_network_namespaces()
         return set(local_ns_list)
 
     def get_router_hosting_port(self, port_id):

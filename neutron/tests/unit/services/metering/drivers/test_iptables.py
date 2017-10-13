@@ -134,7 +134,7 @@ class IptablesDriverTestCase(base.BaseTestCase):
         self.v4filter_inst = mock.Mock()
         self.v6filter_inst = mock.Mock()
         self.namespace_exists_p = mock.patch(
-            'neutron.agent.linux.ip_lib.IpNetnsCommand.exists')
+            'neutron.agent.linux.ip_lib.network_namespace_exists')
         self.namespace_exists = self.namespace_exists_p.start()
         self.snat_ns_name_p = mock.patch(
             'neutron.agent.l3.dvr_snat_ns.SnatNamespace.get_snat_ns_name')

@@ -18,6 +18,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.common import utils
 from neutron.agent.l3 import dvr_snat_ns
+from neutron.agent.linux import ip_lib
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
@@ -37,7 +38,10 @@ class TestDvrSnatNs(base.BaseTestCase):
                                                  use_ipv6=False)
 
     @mock.patch.object(utils, 'execute')
-    def test_create(self, execute):
+    @mock.patch.object(ip_lib, 'create_network_namespace')
+    @mock.patch.object(ip_lib, 'network_namespace_exists')
+    def test_create(self, exists, create, execute):
+        exists.return_value = False
         self.snat_ns.create()
 
         netns_cmd = ['ip', 'netns', 'exec', self.snat_ns.name]
@@ -46,4 +50,5 @@ class TestDvrSnatNs(base.BaseTestCase):
                               check_exit_code=True, extra_ok_codes=None,
                               log_fail_as_error=True, run_as_root=True)]
 
+        create.assert_called_once_with(self.snat_ns.name)
         execute.assert_has_calls(expected)

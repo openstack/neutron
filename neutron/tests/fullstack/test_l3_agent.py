@@ -93,8 +93,8 @@ class TestLegacyL3Agent(TestL3Agent):
         return namespaces.build_ns_name(namespaces.NS_PREFIX, router_id)
 
     def _assert_namespace_exists(self, ns_name):
-        ip = ip_lib.IPWrapper(ns_name)
-        common_utils.wait_until_true(lambda: ip.netns.exists(ns_name))
+        common_utils.wait_until_true(
+            lambda: ip_lib.network_namespace_exists(ns_name))
 
     def test_namespace_exists(self):
         tenant_id = uuidutils.generate_uuid()

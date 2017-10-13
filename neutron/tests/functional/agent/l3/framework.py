@@ -340,8 +340,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 ip_version, ipv6_subnet_modes, interface_id)
 
     def _namespace_exists(self, namespace):
-        ip = ip_lib.IPWrapper(namespace=namespace)
-        return ip.netns.exists(namespace)
+        return ip_lib.network_namespace_exists(namespace)
 
     def _metadata_proxy_exists(self, conf, router):
         pm = external_process.ProcessManager(

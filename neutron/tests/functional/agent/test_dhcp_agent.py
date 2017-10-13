@@ -173,8 +173,8 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         self.assert_dhcp_device(network.namespace, iface_name, dhcp_enabled)
 
     def assert_dhcp_namespace(self, namespace, dhcp_enabled):
-        ip = ip_lib.IPWrapper()
-        self.assertEqual(dhcp_enabled, ip.netns.exists(namespace))
+        self.assertEqual(dhcp_enabled,
+                         ip_lib.network_namespace_exists(namespace))
 
     def assert_accept_ra_disabled(self, namespace):
         actual = ip_lib.IPWrapper(namespace=namespace).netns.execute(

@@ -990,11 +990,11 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.assertRaises(RuntimeError,
                           self.iptables._apply_synchronized)
         self.iptables.namespace = 'test'
-        with mock.patch('neutron.agent.linux.ip_lib.IpNetnsCommand.exists',
+        with mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists',
                         return_value=True):
             self.assertRaises(RuntimeError,
                               self.iptables._apply_synchronized)
-        with mock.patch('neutron.agent.linux.ip_lib.IpNetnsCommand.exists',
+        with mock.patch('neutron.agent.linux.ip_lib.network_namespace_exists',
                         return_value=False):
             self.assertEqual([], self.iptables._apply_synchronized())
 

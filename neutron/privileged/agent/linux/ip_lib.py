@@ -17,6 +17,7 @@ import pyroute2
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
+from pyroute2 import netns
 
 from neutron._i18n import _
 from neutron import privileged
@@ -175,3 +176,34 @@ def dump_neigh_entries(ip_version, device, namespace, **kwargs):
                      'lladdr': attrs.get('NDA_LLADDR'),
                      'device': device}]
     return entries
+
+
+@privileged.default.entrypoint
+def create_netns(name, **kwargs):
+    """Create a network namespace.
+
+    :param name: The name of the namespace to create
+    """
+    try:
+        netns.create(name, **kwargs)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+@privileged.default.entrypoint
+def remove_netns(name, **kwargs):
+    """Remove a network namespace.
+
+    :param name: The name of the namespace to remove
+    """
+    netns.remove(name, **kwargs)
+
+
+@privileged.default.entrypoint
+def list_netns(**kwargs):
+    """List network namespaces.
+
+    Caller requires raised priveleges to list namespaces
+    """
+    return netns.listnetns(**kwargs)

@@ -53,8 +53,7 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
                 raise e
 
     def _namespace_exists(self, namespace):
-        ip = ip_lib.IPWrapper(namespace=namespace)
-        return ip.netns.exists(namespace)
+        return ip_lib.network_namespace_exists(namespace)
 
 
 class NamespaceManagerTestCase(NamespaceManagerTestFramework):
