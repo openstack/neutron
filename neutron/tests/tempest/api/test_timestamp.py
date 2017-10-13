@@ -42,7 +42,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
         cls._subnetpool_data = {'min_prefixlen': '29', 'prefixes': prefixes}
 
     def _create_subnetpool(self, is_admin=False, **kwargs):
-        name = data_utils.rand_name('subnetpool-')
+        name = data_utils.rand_name('subnetpool')
         subnetpool_data = copy.deepcopy(self._subnetpool_data)
         for key in subnetpool_data.keys():
             kwargs[key] = subnetpool_data[key]

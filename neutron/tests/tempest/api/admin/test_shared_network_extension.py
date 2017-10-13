@@ -186,7 +186,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
 
     def _make_admin_net_and_subnet_shared_to_tenant_id(self, tenant_id):
         net = self.admin_client.create_network(
-            name=data_utils.rand_name('test-network-'))['network']
+            name=data_utils.rand_name('test-network'))['network']
         self.addCleanup(self.admin_client.delete_network, net['id'])
         subnet = self.create_subnet(net, client=self.admin_client)
         # network is shared to first unprivileged client by default
@@ -390,7 +390,7 @@ class RBACSharedNetworksTest(base.BaseAdminNetworkTest):
         max_policies = quota['rbac_policy']
         self.assertGreater(max_policies, 0)
         net = self.client.create_network(
-            name=data_utils.rand_name('test-network-'))['network']
+            name=data_utils.rand_name('test-network'))['network']
         self.addCleanup(self.client.delete_network, net['id'])
         with testtools.ExpectedException(lib_exc.Conflict):
             for i in range(0, max_policies + 1):

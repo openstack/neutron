@@ -72,7 +72,7 @@ class MeteringTestJSON(base.BaseAdminNetworkTest):
     @decorators.idempotent_id('ec8e15ff-95d0-433b-b8a6-b466bddb1e50')
     def test_create_delete_metering_label_with_filters(self):
         # Creates a label
-        name = data_utils.rand_name('metering-label-')
+        name = data_utils.rand_name('metering-label')
         description = "label created by tempest"
         body = self.admin_client.create_metering_label(name=name,
                                                        description=description)

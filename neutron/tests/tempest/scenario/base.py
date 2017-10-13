@@ -174,7 +174,7 @@ class BaseTempestTestCase(base_api.BaseNetworkTest):
         LOG.debug("Created subnet %s", self.subnet['id'])
 
         secgroup = self.os_primary.network_client.create_security_group(
-            name=data_utils.rand_name('secgroup-'))
+            name=data_utils.rand_name('secgroup'))
         LOG.debug("Created security group %s",
                   secgroup['security_group']['name'])
         self.security_groups.append(secgroup['security_group'])

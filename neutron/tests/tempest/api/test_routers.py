@@ -108,7 +108,7 @@ class RoutersTest(base_routers.BaseRouterTest):
     @decorators.idempotent_id('b386c111-3b21-466d-880c-5e72b01e1a33')
     @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_set_gateway_with_snat_explicit(self):
-        router = self._create_router(data_utils.rand_name('router-'))
+        router = self._create_router(data_utils.rand_name('router'))
         self.admin_client.update_router_with_snat_gw_info(
             router['id'],
             external_gateway_info={
@@ -123,7 +123,7 @@ class RoutersTest(base_routers.BaseRouterTest):
     @decorators.idempotent_id('96536bc7-8262-4fb2-9967-5c46940fa279')
     @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_set_gateway_without_snat(self):
-        router = self._create_router(data_utils.rand_name('router-'))
+        router = self._create_router(data_utils.rand_name('router'))
         self.admin_client.update_router_with_snat_gw_info(
             router['id'],
             external_gateway_info={
@@ -139,7 +139,7 @@ class RoutersTest(base_routers.BaseRouterTest):
     @tutils.requires_ext(extension='ext-gw-mode', service='network')
     def test_update_router_reset_gateway_without_snat(self):
         router = self._create_router(
-            data_utils.rand_name('router-'),
+            data_utils.rand_name('router'),
             external_network_id=CONF.network.public_network_id)
         self.admin_client.update_router_with_snat_gw_info(
             router['id'],
@@ -157,7 +157,7 @@ class RoutersTest(base_routers.BaseRouterTest):
         network = self.create_network()
         subnet = self.create_subnet(network)
         # Add router interface with subnet id
-        router = self._create_router(data_utils.rand_name('router-'), True)
+        router = self._create_router(data_utils.rand_name('router'), True)
         intf = self.create_router_interface(router['id'], subnet['id'])
         status_active = lambda: self.client.show_port(
             intf['port_id'])['port']['status'] == 'ACTIVE'
