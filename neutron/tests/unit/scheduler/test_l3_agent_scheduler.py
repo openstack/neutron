@@ -1493,6 +1493,35 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                     self.plugin, self.adminContext,
                     router['id'], router['tenant_id'], agent)
 
+    def test_create_ha_port_and_bind_wont_create_redundant_ports(self):
+        # When migrating from HA to DVR+HA router, create_ha_port_and_bind
+        # should create only one network:router_ha_interface port on a router
+        # when binding to same agent. So we need only one agent for testing
+        # (preferably with dvr_snat mode).
+        for agent in self.adminContext.session.query(
+            agent_model.Agent).all():
+            agent.admin_state_up = False
+        l3_dvr_snat_agent = helpers.register_l3_agent(
+            'fake_l3_host_dvr_snat', constants.L3_AGENT_MODE_DVR_SNAT)
+        router = self._create_ha_router(tenant_id='foo_tenant')
+        self.plugin.schedule_router(self.adminContext, router['id'])
+        router['admin_state_up'] = False
+        updated_router1 = self.plugin.update_router(
+            self.adminContext, router['id'], {'router': router})
+        updated_router1['distributed'] = True
+        self.plugin.update_router(
+            self.adminContext, router['id'], {'router': updated_router1})
+
+        self.plugin.router_scheduler.create_ha_port_and_bind(
+            self.plugin, self.adminContext, router['id'],
+            router['tenant_id'], l3_dvr_snat_agent)
+        filters = {'device_owner': ['network:router_ha_interface'],
+                   'device_id': [router['id']]}
+        self.core_plugin = directory.get_plugin()
+        ports = self.core_plugin.get_ports(
+            self.adminContext, filters=filters)
+        self.assertEqual(1, len(ports))
+
     def test_create_ha_port_and_bind_catch_router_not_found(self):
         router = self._create_ha_router(tenant_id='foo_tenant')
         self.plugin.schedule_router(self.adminContext, router['id'])

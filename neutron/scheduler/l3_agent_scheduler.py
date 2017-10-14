@@ -335,6 +335,11 @@ class L3Scheduler(object):
             LOG.debug("Router %(router)s already scheduled for agent "
                       "%(agent)s", {'router': router_id,
                                     'agent': agent['id']})
+            port_id = port_binding.port_id
+            # Below call will also delete entry from L3HARouterAgentPortBinding
+            # and RouterPort tables
+            plugin._core_plugin.delete_port(context, port_id,
+                                            l3_port_check=False)
         except l3.RouterNotFound:
             LOG.debug('Router %s has already been removed '
                       'by concurrent operation', router_id)
