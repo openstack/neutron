@@ -433,7 +433,7 @@ class CommonAgentLoop(service.Service):
         sync = True
 
         while True:
-            start = time.time()
+            start = int(time.time())
 
             if self.fullsync:
                 sync = True
@@ -457,7 +457,7 @@ class CommonAgentLoop(service.Service):
                     sync = True
 
             # sleep till end of polling interval
-            elapsed = (time.time() - start)
+            elapsed = (int(time.time()) - start)
             if (elapsed < self.polling_interval):
                 time.sleep(self.polling_interval - elapsed)
             else:
