@@ -1,0 +1,12 @@
+[[test-config|$TEMPEST_CONFIG]]
+
+[neutron_plugin_options]
+available_type_drivers=flat,geneve,vlan,local,vxlan
+
+[[post-config|/$NEUTRON_CORE_PLUGIN_CONF]]
+
+[ml2]
+type_drivers=flat,geneve,vlan,local,vxlan
+
+[ml2_type_vxlan]
+vni_ranges = 1:2000

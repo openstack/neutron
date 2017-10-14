@@ -1,0 +1,6 @@
+# ideally we would configure it in openvswitch_agent.ini but devstack doesn't
+# load it for its l2 agent
+[[post-config|/$NEUTRON_CORE_PLUGIN_CONF]]
+
+[AGENT]
+tunnel_types=gre,vxlan
