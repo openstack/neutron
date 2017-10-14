@@ -49,6 +49,16 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         self.fip_ns = None
         self._pending_arp_set = set()
 
+    def get_centralized_router_cidrs(self):
+        return self.centralized_floatingips_set
+
+    def migrate_centralized_floating_ip(self, fip, interface_name, device):
+        # Remove the centralized fip first and then add fip to the host
+        ip_cidr = common_utils.ip_to_cidr(fip['floating_ip_address'])
+        self.floating_ip_removed_dist(ip_cidr)
+        # Now add the floating_ip to the current host
+        self.floating_ip_added_dist(fip, ip_cidr)
+
     def floating_forward_rules(self, fip):
         """Override this function defined in router_info for dvr routers."""
         if not self.fip_ns:

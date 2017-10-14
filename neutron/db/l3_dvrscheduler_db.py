@@ -79,7 +79,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     the state of the router and the Compute Nodes.
     """
 
-    def dvr_handle_new_service_port(self, context, port, dest_host=None):
+    def dvr_handle_new_service_port(self, context, port,
+                                    dest_host=None, unbound_migrate=False):
         """Handle new dvr service port creation.
 
         When a new dvr service port is created, this function will
@@ -87,6 +88,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         l3 agent on that node.
         The 'dest_host' will provide the destination host of the port in
         case of service port migration.
+        If an unbound port migrates and becomes a bound port, send
+        notification to the snat_agents and to the bound host.
         """
         port_host = dest_host or port[portbindings.HOST_ID]
         l3_agent_on_host = (self.get_l3_agents(
@@ -106,12 +109,36 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
         subnet_ids = [ip['subnet_id'] for ip in port['fixed_ips']]
         router_ids = self.get_dvr_routers_by_subnet_ids(context, subnet_ids)
-        if router_ids:
+        if not router_ids:
+            return
+        agent_port_host_match = False
+        if unbound_migrate:
+            # This might be a case were it is migrating from unbound
+            # to a bound port.
+            # In that case please forward the notification to the
+            # snat_nodes hosting the routers.
+            # Make a call here to notify the snat nodes.
+            snat_agent_list = self.get_dvr_snat_agent_list(context)
+            for agent in snat_agent_list:
+                LOG.debug('DVR: Handle new unbound migration port, '
+                          'host %(host)s, router_ids %(router_ids)s',
+                    {'host': agent.host, 'router_ids': router_ids})
+                self.l3_rpc_notifier.routers_updated_on_host(
+                    context, router_ids, agent.host)
+                if agent.host == port_host:
+                    agent_port_host_match = True
+        if not agent_port_host_match:
             LOG.debug('DVR: Handle new service port, host %(host)s, '
                       'router ids %(router_ids)s',
                 {'host': port_host, 'router_ids': router_ids})
             self.l3_rpc_notifier.routers_updated_on_host(
                 context, router_ids, port_host)
+
+    def get_dvr_snat_agent_list(self, context):
+        agent_filters = {'agent_modes': [n_const.L3_AGENT_MODE_DVR_SNAT]}
+        state = agentschedulers_db.get_admin_state_up_filter()
+        return self.get_l3_agents(context, active=state,
+                                  filters=agent_filters)
 
     def get_dvr_routers_by_subnet_ids(self, context, subnet_ids):
         """Gets the dvr routers on vmport subnets."""
@@ -397,19 +424,13 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
     original_port = kwargs.get('original_port')
 
     if new_port and original_port:
-        original_device_owner = original_port.get('device_owner', '')
-        new_device_owner = new_port.get('device_owner', '')
-        is_new_device_dvr_serviced = n_utils.is_dvr_serviced(new_device_owner)
         l3plugin = directory.get_plugin(plugin_constants.L3)
         context = kwargs['context']
-        is_port_no_longer_serviced = (
-            n_utils.is_dvr_serviced(original_device_owner) and
-            not n_utils.is_dvr_serviced(new_device_owner))
-        is_port_moved = (
+        is_bound_port_moved = (
             original_port[portbindings.HOST_ID] and
             original_port[portbindings.HOST_ID] !=
             new_port[portbindings.HOST_ID])
-        if is_port_no_longer_serviced or is_port_moved:
+        if is_bound_port_moved:
             removed_routers = l3plugin.get_dvr_routers_to_remove(
                 context,
                 original_port)
@@ -429,8 +450,6 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
                 l3plugin.l3_rpc_notifier.routers_updated_on_host(
                     context, [fip['router_id']],
                     original_port[portbindings.HOST_ID])
-            if not is_new_device_dvr_serviced:
-                return
         is_new_port_binding_changed = (
             new_port[portbindings.HOST_ID] and
             (original_port[portbindings.HOST_ID] !=
@@ -446,10 +465,17 @@ def _notify_l3_agent_port_update(resource, event, trigger, **kwargs):
         # If dest_host is set, then the port profile has changed
         # and this port is in migration. The call below will
         # pre-create the router on the new host
-        if ((is_new_port_binding_changed or dest_host) and
-            is_new_device_dvr_serviced):
-            l3plugin.dvr_handle_new_service_port(context, new_port,
-                                                 dest_host=dest_host)
+        # No need to check for device_owner since we are scheduling
+        # the routers without checking for device_owner.
+        # If the original_port is None, then it is a migration
+        # from unbound to bound.
+        if (is_new_port_binding_changed or dest_host):
+            if original_port[portbindings.HOST_ID] is None:
+                l3plugin.dvr_handle_new_service_port(context, new_port,
+                                                     unbound_migrate=True)
+            else:
+                l3plugin.dvr_handle_new_service_port(context, new_port,
+                                                     dest_host=dest_host)
             l3plugin.update_arp_entry_for_dvr_service_port(
                 context, new_port)
             return

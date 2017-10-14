@@ -490,9 +490,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 floating_ip['port_id'] = internal_ports[0]['id']
                 floating_ip['status'] = 'ACTIVE'
 
-            if not snat_bound_fip:
-                self._add_fip_agent_gw_port_info_to_router(router,
-                                                           external_gw_port)
+            self._add_fip_agent_gw_port_info_to_router(router,
+                                                       external_gw_port)
         return router
 
     def _get_fip_agent_gw_port_for_router(
@@ -1018,6 +1017,42 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             expected_rules = router1.floating_forward_rules(fip)
             self._assert_iptables_rules_exist(
                 router1.snat_iptables_manager, 'nat', expected_rules)
+
+    def test_floating_ip_migration_from_unbound_to_bound(self):
+        """Test to check floating ips migrate from unboun to bound host."""
+        self.agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
+        router_info = self.generate_dvr_router_info(
+            enable_floating_ip=True, enable_centralized_fip=True,
+            enable_snat=True, snat_bound_fip=True)
+        router1 = self.manage_router(self.agent, router_info)
+        centralized_floatingips = router_info[lib_constants.FLOATINGIP_KEY]
+        # For private ports hosted in dvr_no_fip agent, the floatingip
+        # dict will contain the fip['host'] key, but the value will always
+        # be None to emulate the legacy router.
+        self.assertIsNone(centralized_floatingips[0]['host'])
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        fip_ns = router1.fip_ns.get_name()
+        self.assertTrue(self._namespace_exists(fip_ns))
+        self._assert_snat_namespace_exists(router1)
+        # If fips are centralized then, the DNAT rules are only
+        # configured in the SNAT Namespace and not in the router-ns.
+        router_ns = router1.ns_name
+        fixed_ip = centralized_floatingips[0]['fixed_ip_address']
+        for fip in centralized_floatingips:
+            expected_rules = router1.floating_forward_rules(fip)
+            self.assertFalse(self._assert_iptables_rules_exist(
+                router1.snat_iptables_manager, 'nat', expected_rules))
+        self.assertFalse(self._fixed_ip_rule_exists(router_ns, fixed_ip))
+        # Now let us edit the floatingIP info with 'host' and remove
+        # the 'dvr_snat_bound'
+        router1.router[lib_constants.FLOATINGIP_KEY][0]['host'] = (
+            self.agent.conf.host)
+        del router1.router[lib_constants.FLOATINGIP_KEY][0]['dvr_snat_bound']
+        self.agent._process_updated_router(router1.router)
+        router_updated = self.agent.router_info[router_info['id']]
+        router_ns = router_updated.ns_name
+        self.assertTrue(self._fixed_ip_rule_exists(router_ns, fixed_ip))
+        self.assertTrue(self._namespace_exists(fip_ns))
 
     def test_floating_ip_not_deployed_on_dvr_no_external_agent(self):
         """Test to check floating ips not configured for dvr_no_external."""
