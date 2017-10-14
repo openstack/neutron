@@ -482,6 +482,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                 context, router_db,
                 old_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
                 new_owner=constants.DEVICE_OWNER_ROUTER_INTF)
+        else:
+            self._migrate_router_ports(
+                context, router_db,
+                old_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+                new_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT)
 
         self.schedule_router(context, router_id)
         self._notify_router_updated(context, router_db.id)
