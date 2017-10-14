@@ -65,14 +65,14 @@ class NotifierHook(hooks.PecanHook):
         resource_name = state.request.context.get('resource')
         collection_name = state.request.context.get('collection')
         neutron_context = state.request.context.get('neutron_context')
-        if not resource_name:
-            LOG.debug("Skipping NotifierHook processing as there was no "
-                      "resource associated with the request")
-            return
         action = pecan_constants.ACTION_MAP.get(state.request.method)
         if not action or action not in ('create', 'update', 'delete'):
             return
         if utils.is_member_action(utils.get_controller(state)):
+            return
+        if not resource_name:
+            LOG.debug("Skipping NotifierHook processing as there was no "
+                      "resource associated with the request")
             return
         if state.response.status_int > 300:
             LOG.debug("No notification will be sent due to unsuccessful "
