@@ -76,7 +76,7 @@ class DhcpAgent(manager.Manager):
     of an rpc interface.  The neutron server uses
     neutron.api.rpc.agentnotifiers.dhcp_rpc_agent_api.DhcpAgentNotifyApi as the
     client side to execute the methods here.  For more information about
-    changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    changing rpc interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
     target = oslo_messaging.Target(version='1.0')
 
@@ -536,7 +536,8 @@ class DhcpPluginApi(object):
     This class implements the client side of an rpc interface.  The server side
     of this interface can be found in
     neutron.api.rpc.handlers.dhcp_rpc.DhcpRpcCallback.  For more information
-    about changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    about changing rpc interfaces, see
+    doc/source/contributor/internals/rpc_api.rst.
 
     API version history:
         1.0 - Initial version.

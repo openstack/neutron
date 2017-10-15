@@ -53,7 +53,7 @@ class MetadataPluginAPI(object):
     side is defined in
     neutron.api.rpc.handlers.metadata_rpc.MetadataRpcCallback.  For more
     information about changing rpc interfaces, see
-    doc/source/devref/rpc_api.rst.
+    doc/source/contributor/internals/rpc_api.rst.
 
     API version history:
         1.0 - Initial version.

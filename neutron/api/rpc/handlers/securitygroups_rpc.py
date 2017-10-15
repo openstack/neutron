@@ -37,7 +37,7 @@ class SecurityGroupServerRpcApi(object):
     is used by agents to call security group related methods implemented on the
     plugin side.  The other side of this interface is defined in
     SecurityGroupServerRpcCallback.  For more information about changing rpc
-    interfaces, see doc/source/devref/rpc_api.rst.
+    interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
     def __init__(self, topic):
         target = oslo_messaging.Target(
@@ -65,7 +65,7 @@ class SecurityGroupServerRpcCallback(object):
 
     This class implements the server side of an rpc interface.  The client side
     can be found in SecurityGroupServerRpcApi. For more information on changing
-    rpc interfaces, see doc/source/devref/rpc_api.rst.
+    rpc interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
 
     # API version history:
@@ -126,7 +126,7 @@ class SecurityGroupAgentRpcApiMixin(object):
     is used by plugins to call security group methods implemented on the
     agent side.  The other side of this interface can be found in
     SecurityGroupAgentRpcCallbackMixin.  For more information about changing
-    rpc interfaces, see doc/source/devref/rpc_api.rst.
+    rpc interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
 
     # history
@@ -164,7 +164,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
 
     This class implements the server side of an rpc interface.  The client side
     can be found in SecurityGroupAgentRpcApiMixin. For more information on
-    changing rpc interfaces, see doc/source/devref/rpc_api.rst.
+    changing rpc interfaces, see doc/source/contributor/internals/rpc_api.rst.
 
     The sg_agent reference implementation is available in neutron/agent
     """
