@@ -43,6 +43,7 @@ import neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common
 import neutron.conf.plugins.ml2.drivers.ovs_conf
 import neutron.conf.quota
 import neutron.conf.service
+import neutron.conf.services.logging
 import neutron.conf.services.metering_agent
 import neutron.conf.wsgi
 import neutron.db.agents_db
@@ -184,7 +185,9 @@ def list_linux_bridge_opts():
              AGENT_EXT_MANAGER_OPTS)
          ),
         ('securitygroup',
-         neutron.conf.agent.securitygroups_rpc.security_group_opts)
+         neutron.conf.agent.securitygroups_rpc.security_group_opts),
+        ('network_log',
+         neutron.conf.services.logging.log_driver_opts)
     ]
 
 
@@ -269,6 +272,8 @@ def list_ovs_opts():
          ),
         ('securitygroup',
          neutron.conf.agent.securitygroups_rpc.security_group_opts),
+        ('network_log',
+         neutron.conf.services.logging.log_driver_opts)
     ]
 
 
