@@ -94,7 +94,7 @@ class QuotasAdminNegativeTestJSON(test_quotas.QuotasTestBase):
         new_quotas = {'router': 1}
         self._setup_quotas(tenant_id, **new_quotas)
 
-        name = data_utils.rand_name('test_router_')
+        name = data_utils.rand_name('test_router')
         router_args = {'tenant_id': tenant_id}
         router = self.admin_client.create_router(
             name, True, **router_args)['router']

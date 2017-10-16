@@ -30,7 +30,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
         cls.client2 = cls.os_alt.network_client
 
     def _create_network(self, external=True):
-        post_body = {'name': data_utils.rand_name('network-')}
+        post_body = {'name': data_utils.rand_name('network')}
         if external:
             post_body['router:external'] = external
         body = self.admin_client.create_network(**post_body)
@@ -49,7 +49,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
         networks_list = [n['id'] for n in body['networks']]
         self.assertIn(net['id'], networks_list)
         r = self.client2.create_router(
-            data_utils.rand_name('router-'),
+            data_utils.rand_name('router'),
             external_gateway_info={'network_id': net['id']})['router']
         self.addCleanup(self.admin_client.delete_router, r['id'])
 
@@ -92,7 +92,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
             object_id=net_id, action='access_as_external',
             target_tenant='*')['rbac_policies'][0]
         r = self.client2.create_router(
-            data_utils.rand_name('router-'),
+            data_utils.rand_name('router'),
             external_gateway_info={'network_id': net_id})['router']
         self.addCleanup(self.admin_client.delete_router, r['id'])
         # changing wildcard to specific tenant should be okay since its the
@@ -139,7 +139,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
             action='access_as_external',
             target_tenant=self.client2.tenant_id)
         r = self.client2.create_router(
-            data_utils.rand_name('router-'),
+            data_utils.rand_name('router'),
             external_gateway_info={'network_id': net['id']})['router']
         self.addCleanup(self.admin_client.delete_router, r['id'])
 
@@ -152,7 +152,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
             action='access_as_external',
             target_tenant='*')['rbac_policy']
         r = self.client2.create_router(
-            data_utils.rand_name('router-'),
+            data_utils.rand_name('router'),
             external_gateway_info={'network_id': net['id']})['router']
         # delete should fail because the wildcard is required for the tenant's
         # access
@@ -181,7 +181,7 @@ class ExternalNetworksRBACTestJSON(base.BaseAdminNetworkTest):
         # there are no policies allowing it
         with testtools.ExpectedException(lib_exc.NotFound):
             self.client2.create_router(
-                data_utils.rand_name('router-'),
+                data_utils.rand_name('router'),
                 external_gateway_info={'network_id': net['id']})
 
     @decorators.idempotent_id('7041cec7-d8fe-4c78-9b04-b51b2fd49dc9')

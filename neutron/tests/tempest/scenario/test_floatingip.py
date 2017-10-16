@@ -47,7 +47,7 @@ class FloatingIpTestCasesMixin(object):
         cls.keypair = cls.create_keypair()
 
         cls.secgroup = cls.os_primary.network_client.create_security_group(
-            name=data_utils.rand_name('secgroup-'))['security_group']
+            name=data_utils.rand_name('secgroup'))['security_group']
         cls.security_groups.append(cls.secgroup)
         cls.create_loginable_secgroup_rule(secgroup_id=cls.secgroup['id'])
         cls.create_pingable_secgroup_rule(secgroup_id=cls.secgroup['id'])

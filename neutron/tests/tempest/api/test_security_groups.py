@@ -34,7 +34,7 @@ class SecGroupTest(base.BaseSecGroupTest):
             secgroup_list.append(secgroup['id'])
         self.assertIn(group_create_body['security_group']['id'], secgroup_list)
         # Update the security group
-        new_name = data_utils.rand_name('security-')
+        new_name = data_utils.rand_name('security')
         new_description = data_utils.rand_name('security-description')
         update_body = self.client.update_security_group(
             group_create_body['security_group']['id'],
