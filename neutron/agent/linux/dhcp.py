@@ -1284,7 +1284,7 @@ class DeviceManager(object):
                   {'device_id': device_id, 'network_id': network.id})
         for port in network.ports:
             port_device_id = getattr(port, 'device_id', None)
-            if port_device_id == n_const.DEVICE_ID_RESERVED_DHCP_PORT:
+            if port_device_id == constants.DEVICE_ID_RESERVED_DHCP_PORT:
                 try:
                     port = self.plugin.update_dhcp_port(
                         port.id, {'port': {'network_id': network.id,

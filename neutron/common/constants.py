@@ -19,11 +19,6 @@ from neutron_lib import constants as lib_constants
 ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
     (lib_constants.DEVICE_OWNER_ROUTER_GW,)
 
-ROUTER_STATUS_ACTIVE = 'ACTIVE'
-ROUTER_STATUS_ERROR = 'ERROR'
-
-DEVICE_ID_RESERVED_DHCP_PORT = "reserved_dhcp_port"
-
 HA_ROUTER_STATE_KEY = '_ha_state'
 METERING_LABEL_KEY = '_metering_labels'
 FLOATINGIP_AGENT_INTF_KEY = '_floatingip_agent_interfaces'
@@ -50,23 +45,10 @@ ETHERTYPE_IPV6 = 0x86DD
 IP_PROTOCOL_NAME_ALIASES = {lib_constants.PROTO_NAME_IPV6_ICMP_LEGACY:
                             lib_constants.PROTO_NAME_IPV6_ICMP}
 
-VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
-                    36, 38, 40, 46, 48, 56]
-
 IP_PROTOCOL_NUM_TO_NAME_MAP = {
     str(v): k for k, v in lib_constants.IP_PROTOCOL_MAP.items()}
 
-# When using iptables-save we specify '-p {proto} -m {module}',
-# but sometimes those values are not identical.  This is a map
-# of known protocols that require a '-m {module}', along with
-# the module name that should be used.
-IPTABLES_PROTOCOL_MAP = {lib_constants.PROTO_NAME_DCCP: 'dccp',
-                         lib_constants.PROTO_NAME_ICMP: 'icmp',
-                         lib_constants.PROTO_NAME_IPV6_ICMP: 'icmp6',
-                         lib_constants.PROTO_NAME_SCTP: 'sctp',
-                         lib_constants.PROTO_NAME_TCP: 'tcp',
-                         lib_constants.PROTO_NAME_UDP: 'udp'}
-
+# TODO(boden): consume with I9642ed9b513a43c5558f9611f43227299707284a
 # Special provisional prefix for IPv6 Prefix Delegation
 PROVISIONAL_IPV6_PD_PREFIX = '::/64'
 
@@ -86,11 +68,6 @@ INTERFACE_PREFIXES = (lib_constants.TAP_DEVICE_PREFIX,
                       lib_constants.SNAT_INT_DEV_PREFIX)
 
 ATTRIBUTES_TO_UPDATE = 'attributes_to_update'
-
-# Maximum value integer can take in MySQL and PostgreSQL
-# In SQLite integer can be stored in 1, 2, 3, 4, 6, or 8 bytes,
-# but here it will be limited by this value for consistency.
-DB_INTEGER_MAX_VALUE = 2 ** 31 - 1
 
 # TODO(amuller): Re-define the RPC namespaces once Oslo messaging supports
 # Targets with multiple namespaces. Neutron will then implement callbacks
@@ -115,18 +92,6 @@ IPV6_MIN_MTU = 1280
 
 ROUTER_MARK_MASK = "0xffff"
 
-# Agent states as detected by server, used to reply on agent's state report
-# agent has just been registered
-AGENT_NEW = 'new'
-# agent is alive
-AGENT_ALIVE = 'alive'
-# agent has just returned to alive after being dead
-AGENT_REVIVED = 'revived'
-
-INGRESS_DIRECTION = 'ingress'
-EGRESS_DIRECTION = 'egress'
-
-VALID_DIRECTIONS = (INGRESS_DIRECTION, EGRESS_DIRECTION)
 VALID_ETHERTYPES = (lib_constants.IPv4, lib_constants.IPv6)
 
 IP_ALLOWED_VERSIONS = [lib_constants.IP_VERSION_4, lib_constants.IP_VERSION_6]
@@ -163,10 +128,8 @@ IPAM_ALLOCATION_STATUS_ALLOCATED = 'ALLOCATED'
 VALID_IPAM_ALLOCATION_STATUSES = (IPAM_ALLOCATION_STATUS_ALLOCATED,)
 
 # Port binding states for Live Migration
-PORT_BINDING_STATUS_ACTIVE = 'ACTIVE'
-PORT_BINDING_STATUS_INACTIVE = 'INACTIVE'
-PORT_BINDING_STATUSES = (PORT_BINDING_STATUS_ACTIVE,
-                         PORT_BINDING_STATUS_INACTIVE)
+PORT_BINDING_STATUSES = (lib_constants.ACTIVE,
+                         lib_constants.INACTIVE)
 
 VALID_FLOATINGIP_STATUS = (lib_constants.FLOATINGIP_STATUS_ACTIVE,
                            lib_constants.FLOATINGIP_STATUS_DOWN,

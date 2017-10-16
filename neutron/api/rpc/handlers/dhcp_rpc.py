@@ -281,7 +281,7 @@ class DhcpRpcCallback(object):
         plugin = directory.get_plugin()
         try:
             old_port = plugin.get_port(context, port['id'])
-            if (old_port['device_id'] != n_const.DEVICE_ID_RESERVED_DHCP_PORT
+            if (old_port['device_id'] != constants.DEVICE_ID_RESERVED_DHCP_PORT
                 and old_port['device_id'] !=
                 utils.get_dhcp_agent_device_id(port['port']['network_id'],
                                                host)):

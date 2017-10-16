@@ -13,10 +13,10 @@
 import copy
 
 import mock
+from neutron_lib import constants
 from neutron_lib import context
 from oslo_utils import uuidutils
 
-from neutron.common import constants
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (

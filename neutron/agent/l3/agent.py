@@ -17,6 +17,7 @@ import itertools
 
 import eventlet
 import netaddr
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -731,7 +732,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
             agent_status = self.state_rpc.report_state(self.context,
                                                        self.agent_state,
                                                        True)
-            if agent_status == l3_constants.AGENT_REVIVED:
+            if agent_status == agent_consts.AGENT_REVIVED:
                 LOG.info('Agent has just been revived. '
                          'Doing a full sync.')
                 self.fullsync = True

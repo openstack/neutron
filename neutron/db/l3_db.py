@@ -210,7 +210,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 tenant_id=router['tenant_id'],
                 name=router['name'],
                 admin_state_up=router['admin_state_up'],
-                status=n_const.ROUTER_STATUS_ACTIVE,
+                status=constants.ACTIVE,
                 description=router.get('description'))
             context.session.add(router_db)
             registry.notify(resources.ROUTER, events.PRECOMMIT_CREATE,

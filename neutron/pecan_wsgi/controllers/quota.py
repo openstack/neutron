@@ -23,7 +23,6 @@ from pecan import request
 
 from neutron._i18n import _
 from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.pecan_wsgi.controllers import utils
 from neutron.quota import resource_registry
 
@@ -91,7 +90,7 @@ class QuotaController(utils.NeutronPecanController):
                 'allow_put': True,
                 'convert_to': converters.convert_to_int,
                 'validate': {
-                    'type:range': [-1, constants.DB_INTEGER_MAX_VALUE]},
+                    'type:range': [-1, db_const.DB_INTEGER_MAX_VALUE]},
                 'is_visible': True}
         # The quota resource must always declare a tenant_id attribute,
         # otherwise the attribute will be stripped off when generating the

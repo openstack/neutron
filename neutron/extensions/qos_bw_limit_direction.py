@@ -14,8 +14,8 @@
 #    under the License.
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib import constants as common_constants
 
-from neutron.common import constants as common_constants
 from neutron.extensions import qos
 
 

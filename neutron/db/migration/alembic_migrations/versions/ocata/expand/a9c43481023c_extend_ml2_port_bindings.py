@@ -26,10 +26,10 @@ revision = 'a9c43481023c'
 down_revision = '929c968efe70'
 
 from alembic import op
+from neutron_lib import constants
 import sqlalchemy as sa
 from sqlalchemy.engine.reflection import Inspector as insp
 
-from neutron.common import constants
 from neutron.db import migration
 
 MYSQL_ENGINE = 'mysql'
@@ -45,7 +45,7 @@ def upgrade():
                   sa.Column('status',
                   sa.String(length=16),
                   nullable=False,
-                  server_default=constants.PORT_BINDING_STATUS_ACTIVE))
+                  server_default=constants.ACTIVE))
 
     if (engine.name == MYSQL_ENGINE):
         op.execute("ALTER TABLE ml2_port_bindings DROP PRIMARY KEY,"

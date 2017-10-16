@@ -20,6 +20,7 @@ from itertools import combinations as iter_combinations
 import eventlet
 import mock
 import netaddr
+from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib import exceptions as exc
@@ -329,12 +330,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                'report_state') as report_state:
             agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
                                                        conf=self.conf)
-            report_state.return_value = n_const.AGENT_REVIVED
+            report_state.return_value = agent_consts.AGENT_REVIVED
             agent._report_state()
             self.assertTrue(agent.fullsync)
 
             agent.fullsync = False
-            report_state.return_value = n_const.AGENT_ALIVE
+            report_state.return_value = agent_consts.AGENT_ALIVE
             agent._report_state()
             self.assertFalse(agent.fullsync)
 

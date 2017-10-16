@@ -13,11 +13,11 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import constants
 from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import constants
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.models import dns as dns_models
@@ -76,7 +76,7 @@ class PortBinding(PortBindingBase):
         'vif_details': common_types.DictOfMiscValuesField(nullable=True),
         'vnic_type': obj_fields.StringField(),
         'status': common_types.PortBindingStatusEnumField(
-            default=constants.PORT_BINDING_STATUS_ACTIVE),
+            default=constants.ACTIVE),
     }
 
     primary_keys = ['port_id', 'host']

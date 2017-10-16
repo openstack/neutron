@@ -414,7 +414,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                   router_id)
                 router['status'] = self._update_router_db(
                     context, router_id,
-                    {'status': n_const.ROUTER_STATUS_ERROR})['status']
+                    {'status': constants.ERROR})['status']
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
     def _validate_migration(self, resource, event, trigger, context,

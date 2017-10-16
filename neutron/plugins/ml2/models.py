@@ -14,11 +14,11 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib import constants
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.common import constants
 from neutron.db import models_v2
 
 BINDING_PROFILE_LEN = 4095
@@ -49,8 +49,8 @@ class PortBinding(model_base.BASEV2):
     vif_details = sa.Column(sa.String(4095), nullable=False, default='',
                             server_default='')
     status = sa.Column(sa.String(16), nullable=False,
-                       default=constants.PORT_BINDING_STATUS_ACTIVE,
-                       server_default=constants.PORT_BINDING_STATUS_ACTIVE)
+                       default=constants.ACTIVE,
+                       server_default=constants.ACTIVE)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly load port bindings

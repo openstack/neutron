@@ -275,7 +275,7 @@ def get_random_floatingip_status():
 
 
 def get_random_flow_direction():
-    return random.choice(n_const.VALID_DIRECTIONS)
+    return random.choice(constants.VALID_DIRECTIONS)
 
 
 def get_random_ha_states():

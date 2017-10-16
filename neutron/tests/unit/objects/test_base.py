@@ -17,6 +17,7 @@ import random
 
 import mock
 import netaddr
+from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
@@ -30,7 +31,6 @@ from oslo_versionedobjects import fields as obj_fields
 from oslo_versionedobjects import fixture
 import testtools
 
-from neutron.common import constants
 from neutron.db import _model_query as model_query
 from neutron.db.models import l3 as l3_model
 from neutron.db import standard_attr

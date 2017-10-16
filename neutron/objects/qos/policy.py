@@ -15,13 +15,13 @@
 
 import itertools
 
+from neutron_lib import constants as n_const
 from oslo_db import exception as db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.db import api as db_api
 from neutron.db import models_v2

@@ -403,7 +403,7 @@ class BaseNetworkTest(test.BaseTestCase):
     @classmethod
     def create_qos_bandwidth_limit_rule(cls, policy_id, max_kbps,
                                         max_burst_kbps,
-                                        direction=constants.EGRESS_DIRECTION):
+                                        direction=const.EGRESS_DIRECTION):
         """Wrapper utility that returns a test QoS bandwidth limit rule."""
         body = cls.admin_client.create_bandwidth_limit_rule(
             policy_id, max_kbps, max_burst_kbps, direction)
