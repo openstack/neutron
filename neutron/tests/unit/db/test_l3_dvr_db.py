@@ -29,6 +29,8 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
+from neutron.db.models import l3 as l3_models
+from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.objects import router as router_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -274,26 +276,44 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _setup_delete_current_gw_port_deletes_dvr_internal_ports(
         self, port=None, gw_port=True, new_network_id='ext_net_id_2'):
-        router = mock.MagicMock()
-        router.extra_attributes.distributed = True
+        router_db = {
+            'name': 'foo_router',
+            'admin_state_up': True,
+            'distributed': True
+        }
+        router = self._create_router(router_db)
         if gw_port:
-            gw_port_db = {
-                'id': 'my_gw_id',
-                'network_id': 'ext_net_id',
-                'device_owner': const.DEVICE_OWNER_ROUTER_GW,
-                'fixed_ips': [{'ip_address': '1.2.3.4'}]
-            }
-            router.gw_port = gw_port_db
+            with self.subnet(cidr='10.10.10.0/24') as subnet:
+                port_dict = {
+                    'device_id': router.id,
+                    'device_owner': const.DEVICE_OWNER_ROUTER_GW,
+                    'admin_state_up': True,
+                    'fixed_ips': [{'subnet_id': subnet['subnet']['id'],
+                                   'ip_address': '10.10.10.100'}]
+                }
+            net_id = subnet['subnet']['network_id']
+            port_res = self.create_port(net_id, port_dict)
+            port_res_dict = self.deserialize(self.fmt, port_res)
+            with self.ctx.session.begin(subtransactions=True):
+                port_db = self.ctx.session.query(models_v2.Port).filter_by(
+                    id=port_res_dict['port']['id']).one()
+                router.gw_port = port_db
+                router_port = l3_models.RouterPort(
+                    router_id=router.id,
+                    port_id=port_db.id,
+                    port_type=const.DEVICE_OWNER_ROUTER_GW
+                )
+                self.ctx.session.add(router)
+                self.ctx.session.add(router_port)
+
         else:
-            router.gw_port = None
+            net_id = None
 
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
         with mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
                                'router_gw_port_has_floating_ips',
                                return_value=False),\
-            mock.patch.object(l3_dvr_db.l3_db.L3_NAT_db_mixin,
-                              '_delete_router_gw_port_db'),\
             mock.patch.object(
                 self.mixin,
                 '_get_router') as grtr,\
@@ -310,16 +330,17 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             grtr.return_value = router
             self.mixin._delete_current_gw_port(
                 self.ctx, router['id'], router, new_network_id)
-            return router, plugin, del_csnat_port, del_agent_gw_port, del_fip
+            return router, plugin, net_id, del_csnat_port,\
+                del_agent_gw_port, del_fip
 
     def test_delete_current_gw_port_deletes_fip_agent_gw_port_and_fipnamespace(
             self):
-        rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
+        rtr, plugin, ext_net_id, d_csnat_port, d_agent_gw_port, del_fip = (
             self._setup_delete_current_gw_port_deletes_dvr_internal_ports())
         self.assertFalse(d_csnat_port.called)
         self.assertTrue(d_agent_gw_port.called)
-        d_agent_gw_port.assert_called_once_with(mock.ANY, None, 'ext_net_id')
-        del_fip.assert_called_once_with(mock.ANY, 'ext_net_id')
+        d_agent_gw_port.assert_called_once_with(mock.ANY, None, ext_net_id)
+        del_fip.assert_called_once_with(self.ctx, ext_net_id)
 
     def test_delete_current_gw_port_never_calls_delete_fip_agent_gw_port(self):
         port = [{
@@ -332,30 +353,32 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'network_id': 'ext_net_id',
             'device_owner': const.DEVICE_OWNER_ROUTER_GW
         }]
-        rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
+        rtr, plugin, ext_net_id, d_csnat_port, d_agent_gw_port, del_fip = (
             self._setup_delete_current_gw_port_deletes_dvr_internal_ports(
                 port=port))
         self.assertFalse(d_csnat_port.called)
         self.assertFalse(d_agent_gw_port.called)
         self.assertFalse(del_fip.called)
+        self.assertIsNotNone(ext_net_id)
 
     def test_delete_current_gw_port_never_calls_delete_fipnamespace(self):
-        rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
+        rtr, plugin, ext_net_id, d_csnat_port, d_agent_gw_port, del_fip = (
             self._setup_delete_current_gw_port_deletes_dvr_internal_ports(
                 gw_port=False))
         self.assertFalse(d_csnat_port.called)
         self.assertFalse(d_agent_gw_port.called)
         self.assertFalse(del_fip.called)
+        self.assertIsNone(ext_net_id)
 
     def test_delete_current_gw_port_deletes_csnat_port(self):
-        rtr, plugin, d_csnat_port, d_agent_gw_port, del_fip = (
+        rtr, plugin, ext_net_id, d_csnat_port, d_agent_gw_port, del_fip = (
             self._setup_delete_current_gw_port_deletes_dvr_internal_ports(
                 new_network_id=None))
         self.assertTrue(d_csnat_port.called)
         self.assertTrue(d_agent_gw_port.called)
         d_csnat_port.assert_called_once_with(mock.ANY, rtr)
-        d_agent_gw_port.assert_called_once_with(mock.ANY, None, 'ext_net_id')
-        del_fip.assert_called_once_with(mock.ANY, 'ext_net_id')
+        d_agent_gw_port.assert_called_once_with(mock.ANY, None, ext_net_id)
+        del_fip.assert_called_once_with(mock.ANY, ext_net_id)
 
     def _floatingip_on_port_test_setup(self, hostid):
         router = {'id': 'foo_router_id', 'distributed': True}

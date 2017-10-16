@@ -242,10 +242,8 @@ class DVRResourceOperationHandler(object):
         port_list = []
 
         int_ports = (
-            rp.port for rp in
-            router.attached_ports.filter_by(
-                port_type=const.DEVICE_OWNER_DVR_INTERFACE
-            )
+            rp.port for rp in router.attached_ports
+            if rp.port_type == const.DEVICE_OWNER_DVR_INTERFACE
         )
         LOG.info('SNAT interface port list does not exist,'
                  ' so create one: %s', port_list)
