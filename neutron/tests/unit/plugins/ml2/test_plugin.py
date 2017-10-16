@@ -731,6 +731,16 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             self.assertEqual('DOWN', port['port']['status'])
             self.assertEqual('DOWN', self.port_create_status)
 
+    def test_notify_port_updated_for_status_change(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        with self.port() as port:
+            with mock.patch.object(self.plugin,
+                                   '_notify_port_updated') as notify_mock:
+                port['port']['status'] = constants.PORT_STATUS_ACTIVE
+                plugin.update_port(ctx, port['port']['id'], port)
+                self.assertTrue(notify_mock.called)
+
     def test_update_port_status_short_id(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
