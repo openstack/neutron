@@ -1699,15 +1699,10 @@ class TestArpPing(TestIPCmdBase):
         mIPWrapper.assert_has_calls([
             mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1]),
-            mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1]),
-            mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
-            mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
-            mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2]),
-            mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2])])
 
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
