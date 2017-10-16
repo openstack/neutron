@@ -2307,6 +2307,26 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.router_added_to_agent(None, [FAKE_ID])
         self.assertEqual(1, agent._queue.add.call_count)
 
+    def test_network_update_not_called(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._queue = mock.Mock()
+        network = {'id': _uuid()}
+        agent.network_update(None, network=network)
+        self.assertFalse(agent._queue.add.called)
+
+    def test_network_update(self):
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._process_added_router(router)
+        ri = l3router.RouterInfo(agent, router['id'],
+                                 router, **self.ri_kwargs)
+        internal_ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
+        network_id = internal_ports[0]['network_id']
+        agent._queue = mock.Mock()
+        network = {'id': network_id}
+        agent.network_update(None, network=network)
+        self.assertEqual(1, agent._queue.add.call_count)
+
     def test_create_router_namespace(self):
         self.mock_ip.ensure_namespace.return_value = self.mock_ip
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
