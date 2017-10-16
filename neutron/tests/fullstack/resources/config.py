@@ -98,6 +98,9 @@ class NeutronConfigFixture(ConfigFixture):
         root_helper_daemon = os.environ.get('OS_ROOTWRAP_DAEMON_CMD')
         if root_helper_daemon:
             self.config['agent']['root_helper_daemon'] = root_helper_daemon
+        if env_desc.router_scheduler:
+            self.config['DEFAULT']['router_scheduler_driver'] = (
+                env_desc.router_scheduler)
 
     def _setUp(self):
         self.config['DEFAULT'].update({
