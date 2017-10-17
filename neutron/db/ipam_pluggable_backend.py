@@ -439,12 +439,12 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                       'eui64_address': True,
                       'mac': port['mac_address']}
                 ip_request = factory.get_request(context, port, ip)
-                ip_address = ipam_subnet.allocate(ip_request)
-                allocated = models_v2.IPAllocation(network_id=network_id,
-                                                   port_id=port['id'],
-                                                   ip_address=ip_address,
-                                                   subnet_id=subnet['id'])
                 try:
+                    ip_address = ipam_subnet.allocate(ip_request)
+                    allocated = models_v2.IPAllocation(network_id=network_id,
+                                                       port_id=port['id'],
+                                                       ip_address=ip_address,
+                                                       subnet_id=subnet['id'])
                     # Do the insertion of each IP allocation entry within
                     # the context of a nested transaction, so that the entry
                     # is rolled back independently of other entries whenever
@@ -462,6 +462,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     except Exception:
                         LOG.debug("Reverting IP allocation failed for %s",
                                   ip_address)
+                except ipam_exc.IpAddressAlreadyAllocated:
+                    LOG.debug("Port %s got IPv6 auto-address in a concurrent "
+                              "create or update port request. Ignoring.",
+                              port['id'])
             return updated_ports
 
     def allocate_subnet(self, context, network, subnet, subnetpool_id):
