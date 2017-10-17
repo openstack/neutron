@@ -468,8 +468,11 @@ class IpRuleCommand(IpCommandBase):
         ip_version = get_ip_version(ip)
 
         # In case if we need to add in a rule based on incoming
-        # interface we don't need to pass in the ip.
-        if not kwargs.get('iif'):
+        # interface, pass the "any" IP address, for example, 0.0.0.0/0,
+        # else pass the given IP.
+        if kwargs.get('iif'):
+            kwargs.update({'from': constants.IP_ANY[ip_version]})
+        else:
             kwargs.update({'from': ip})
         canonical_kwargs = self._make_canonical(ip_version, kwargs)
 
