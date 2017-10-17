@@ -16,6 +16,7 @@
 import abc
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import faults
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
@@ -26,7 +27,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.common import rpc as n_rpc
 from neutron.extensions import agent
@@ -132,7 +132,7 @@ class L3agentscheduler(api_extensions.ExtensionDescriptor):
                       collection_name="agents")
 
         controller = resource.Resource(RouterSchedulerController(),
-                                       base.FAULT_MAP)
+                                       faults.FAULT_MAP)
         exts.append(extensions.ResourceExtension(
             L3_ROUTERS, controller, parent))
 
@@ -140,7 +140,7 @@ class L3agentscheduler(api_extensions.ExtensionDescriptor):
                       collection_name="routers")
 
         controller = resource.Resource(L3AgentsHostingRouterController(),
-                                       base.FAULT_MAP)
+                                       faults.FAULT_MAP)
         exts.append(extensions.ResourceExtension(
             L3_AGENTS, controller, parent))
         return exts

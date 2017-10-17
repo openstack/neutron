@@ -14,6 +14,7 @@
 import abc
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import faults
 from neutron_lib.api import validators
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -23,7 +24,6 @@ import webob.exc
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
 from neutron.common import rpc as n_rpc
 from neutron.db import standard_attr
@@ -198,7 +198,7 @@ class Tagging(api_extensions.ExtensionDescriptor):
         action_status = {'index': 200, 'show': 204, 'update': 201,
                          'update_all': 200, 'delete': 204, 'delete_all': 204}
         controller = api_resource.Resource(TaggingController(),
-                                           base.FAULT_MAP,
+                                           faults.FAULT_MAP,
                                            action_status=action_status)
         collection_methods = {"delete_all": "DELETE",
                               "update_all": "PUT"}

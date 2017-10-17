@@ -15,10 +15,10 @@ from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import faults
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
-from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
 from neutron.extensions import l3
 from neutron.extensions import tagging
@@ -69,7 +69,7 @@ class Tag_ext(api_extensions.ExtensionDescriptor):
         action_status = {'index': 200, 'show': 204, 'update': 201,
                          'update_all': 200, 'delete': 204, 'delete_all': 204}
         controller = api_resource.Resource(TagExtController(),
-                                           base.FAULT_MAP,
+                                           faults.FAULT_MAP,
                                            action_status=action_status)
         collection_methods = {"delete_all": "DELETE",
                               "update_all": "PUT"}

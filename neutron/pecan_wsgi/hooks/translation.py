@@ -13,12 +13,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.api import faults
 import oslo_i18n
 from oslo_log import log as logging
 from pecan import hooks
 
 from neutron.api import api_common
-from neutron.api.v2 import base as v2base
 
 
 LOG = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class ExceptionTranslationHook(hooks.PecanHook):
         if state.request.accept_language:
             language = state.request.accept_language.best_match(
                 oslo_i18n.get_available_languages('neutron'))
-        exc = api_common.convert_exception_to_http_exc(e, v2base.FAULT_MAP,
+        exc = api_common.convert_exception_to_http_exc(e, faults.FAULT_MAP,
                                                        language)
         if hasattr(exc, 'code') and 400 <= exc.code < 500:
             LOG.info('%(action)s failed (client error): %(exc)s',

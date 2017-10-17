@@ -40,9 +40,6 @@ from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
 
-# TODO(boden): remove shim once consumers are using lib's FAULT_MAP
-FAULT_MAP = faults.FAULT_MAP
-
 
 class Controller(object):
     LIST = 'list'
@@ -755,4 +752,4 @@ def create_resource(collection, resource, plugin, params, allow_bulk=False,
                             allow_pagination=allow_pagination,
                             allow_sorting=allow_sorting)
 
-    return wsgi_resource.Resource(controller, FAULT_MAP)
+    return wsgi_resource.Resource(controller, faults.FAULT_MAP)

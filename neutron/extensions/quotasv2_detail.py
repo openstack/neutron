@@ -15,13 +15,13 @@
 #    under the License.
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import faults
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.extensions import quotasv2
 from neutron.quota import resource_registry
@@ -85,7 +85,7 @@ class Quotasv2_detail(api_extensions.ExtensionDescriptor):
         """Returns Extension Resources."""
         controller = resource.Resource(
             DetailQuotaSetsController(directory.get_plugin()),
-            faults=base.FAULT_MAP)
+            faults=faults.FAULT_MAP)
         return [extensions.ResourceExtension(
             RESOURCE_COLLECTION,
             controller,

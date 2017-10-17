@@ -13,10 +13,10 @@
 
 from neutron_lib.api.definitions import network
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import faults
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
-from neutron.api.v2 import base
 from neutron.api.v2 import resource as api_resource
 from neutron.extensions import tagging
 
@@ -62,7 +62,7 @@ class Tag(api_extensions.ExtensionDescriptor):
         action_status = {'index': 200, 'show': 204, 'update': 201,
                          'update_all': 200, 'delete': 204, 'delete_all': 204}
         controller = api_resource.Resource(TagController(),
-                                           base.FAULT_MAP,
+                                           faults.FAULT_MAP,
                                            action_status=action_status)
         collection_methods = {"delete_all": "DELETE",
                               "update_all": "PUT"}

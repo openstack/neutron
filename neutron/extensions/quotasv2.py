@@ -15,6 +15,7 @@
 
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import faults
 from neutron_lib.db import constants as const
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
@@ -155,7 +156,7 @@ class Quotasv2(api_extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         controller = resource.Resource(
             QuotaSetsController(directory.get_plugin()),
-            faults=base.FAULT_MAP)
+            faults=faults.FAULT_MAP)
         return [extensions.ResourceExtension(
             Quotasv2.get_alias(),
             controller,
