@@ -323,8 +323,7 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
         # centralized floatingip configured.
         ip_lib.send_ip_addr_adv_notif(self.snat_namespace.name,
                                       interface_name,
-                                      fip['floating_ip_address'],
-                                      self.agent_conf)
+                                      fip['floating_ip_address'])
         return lib_constants.FLOATINGIP_STATUS_ACTIVE
 
     def _centralized_floating_forward_rules(self, floating_ip, fixed_ip):
