@@ -73,9 +73,11 @@ updated:
 Configuration
 ~~~~~~~~~~~~~
 
-To enable the service, follow the steps below:
+To enable the service on a cloud with the architecture described in
+`Networking architecture <https://docs.openstack.org/security-guide/networking/architecture.html#openstack-networking-service-placement-on-physical-servers>`_,
+follow the steps below:
 
-On network nodes:
+On the controller nodes:
 
 #. Add the QoS service to the ``service_plugins`` setting in
    ``/etc/neutron/neutron.conf``. For example:
@@ -111,7 +113,7 @@ On network nodes:
       [agent]
       extensions = qos
 
-On compute nodes:
+On the network and compute nodes:
 
 #. Edit the configuration file for the agent you are using and set the
    ``extensions`` to include ``qos`` in the ``[agent]`` section of the
