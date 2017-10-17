@@ -85,6 +85,63 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
                 self.context, 'network_id', 'host', 'agent_id'))
 
+    def test_csnat_ports_are_created_and_deleted_based_on_router_subnet(self):
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        net1 = self._make_network(self.fmt, 'net1', True)
+        subnet1 = self._make_subnet(
+            self.fmt, net1, '10.1.0.1', '10.1.0.0/24', enable_dhcp=True)
+        subnet2 = self._make_subnet(
+            self.fmt, net1, '10.2.0.1', '10.2.0.0/24', enable_dhcp=True)
+        ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
+        self._make_subnet(
+            self.fmt, ext_net, '20.0.0.1', '20.0.0.0/24', enable_dhcp=True)
+        # Create first router and add an interface
+        router1 = self._create_router()
+        ext_net_id = ext_net['network']['id']
+        net1_id = net1['network']['id']
+        # Set gateway to router
+        self.l3_plugin._update_router_gw_info(
+            self.context, router1['id'],
+            {'network_id': ext_net_id})
+        # Now add router interface (subnet1) from net1 to router
+        self.l3_plugin.add_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': subnet1['subnet']['id']})
+        # Now add router interface (subnet2) from net1 to router
+        self.l3_plugin.add_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': subnet2['subnet']['id']})
+        # Now check the valid snat interfaces passed to the agent
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router1['id']])
+        self.assertEqual(2, len(snat_router_intfs[router1['id']]))
+        # Also make sure that there are no csnat ports created and
+        # left over.
+        csnat_ports = self.core_plugin.get_ports(
+            self.context, filters={
+                'network_id': [net1_id],
+                'device_owner': [constants.DEVICE_OWNER_ROUTER_SNAT]})
+        self.assertEqual(2, len(csnat_ports))
+        # Now remove router interface (subnet1) from net1 to router
+        self.l3_plugin.remove_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': subnet1['subnet']['id']})
+        # Now remove router interface (subnet2) from net1 to router
+        self.l3_plugin.remove_router_interface(
+            self.context, router1['id'],
+            {'subnet_id': subnet2['subnet']['id']})
+        snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
+            self.context, [router1['id']])
+        self.assertEqual(0, len(snat_router_intfs[router1['id']]))
+        # Also make sure that there are no csnat ports created and
+        # left over.
+        csnat_ports = self.core_plugin.get_ports(
+            self.context, filters={
+                'network_id': [net1_id],
+                'device_owner': [constants.DEVICE_OWNER_ROUTER_SNAT]})
+        self.assertEqual(0, len(csnat_ports))
+
     def _test_remove_router_interface_leaves_snat_intact(self, by_subnet):
         with self.subnet() as subnet1, \
                 self.subnet(cidr='20.0.0.0/24') as subnet2:

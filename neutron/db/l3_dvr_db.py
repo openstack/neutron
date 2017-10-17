@@ -215,17 +215,19 @@ class DVRResourceOperationHandler(object):
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
 
-        l3_obj.RouterPort(
-            context,
-            port_id=snat_port['id'],
-            router_id=router.id,
-            port_type=const.DEVICE_OWNER_ROUTER_SNAT
-        ).create()
+        with p_utils.delete_port_on_error(
+            self.l3plugin._core_plugin, context.elevated(), snat_port['id']):
+            l3_obj.RouterPort(
+                context,
+                port_id=snat_port['id'],
+                router_id=router.id,
+                port_type=const.DEVICE_OWNER_ROUTER_SNAT
+            ).create()
 
-        if do_pop:
-            return self.l3plugin._populate_mtu_and_subnets_for_ports(
-                context, [snat_port])
-        return snat_port
+            if do_pop:
+                return self.l3plugin._populate_mtu_and_subnets_for_ports(
+                    context, [snat_port])
+            return snat_port
 
     def _create_snat_intf_ports_if_not_exists(self, context, router):
         """Function to return the snat interface port list.
