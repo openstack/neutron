@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 
 from neutron.common import exceptions as n_exc
 from neutron.core_extensions import base
 from neutron.db import api as db_api
 from neutron.objects.qos import policy as policy_object
-from neutron.plugins.common import constants as plugin_constants
 from neutron.services.qos import qos_consts
 
 

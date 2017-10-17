@@ -24,7 +24,6 @@ import netaddr
 from neutron_lib import constants as const
 
 from neutron.common import constants as n_const
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
     import ovs_bridge
@@ -71,7 +70,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge):
 
     @staticmethod
     def _dvr_to_src_mac_table_id(network_type):
-        if network_type == p_const.TYPE_VLAN:
+        if network_type == const.TYPE_VLAN:
             return constants.DVR_TO_SRC_MAC_VLAN
         else:
             return constants.DVR_TO_SRC_MAC

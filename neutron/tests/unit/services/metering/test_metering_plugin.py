@@ -14,6 +14,7 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
@@ -25,7 +26,6 @@ from neutron.db.metering import metering_rpc
 from neutron.db.models import agent as agent_model
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
-from neutron.plugins.common import constants
 from neutron.tests.common import helpers
 from neutron.tests import tools
 from neutron.tests.unit.db.metering import test_metering_db

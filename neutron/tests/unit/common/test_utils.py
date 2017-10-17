@@ -30,7 +30,6 @@ import testtools
 
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as plugin_utils
 from neutron.tests import base
 from neutron.tests.unit import tests
@@ -145,16 +144,16 @@ class TestParseTunnelRangesMixin(object):
 
 class TestGreTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
                                     base.BaseTestCase):
-    TUN_MIN = p_const.MIN_GRE_ID
-    TUN_MAX = p_const.MAX_GRE_ID
-    TYPE = p_const.TYPE_GRE
+    TUN_MIN = constants.MIN_GRE_ID
+    TUN_MAX = constants.MAX_GRE_ID
+    TYPE = constants.TYPE_GRE
 
 
 class TestVxlanTunnelRangeVerifyValid(TestParseTunnelRangesMixin,
                                       base.BaseTestCase):
-    TUN_MIN = p_const.MIN_VXLAN_VNI
-    TUN_MAX = p_const.MAX_VXLAN_VNI
-    TYPE = p_const.TYPE_VXLAN
+    TUN_MIN = constants.MIN_VXLAN_VNI
+    TUN_MAX = constants.MAX_VXLAN_VNI
+    TYPE = constants.TYPE_VXLAN
 
 
 class UtilTestParseVlanRanges(base.BaseTestCase):

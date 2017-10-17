@@ -55,7 +55,6 @@ from neutron.common import config
 from neutron.common import topics
 from neutron.common import utils as n_utils
 from neutron.conf.agent import xenapi_conf
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
@@ -148,8 +147,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self.use_veth_interconnection = ovs_conf.use_veth_interconnection
         self.veth_mtu = agent_conf.veth_mtu
-        self.available_local_vlans = set(moves.range(p_const.MIN_VLAN_TAG,
-                                                     p_const.MAX_VLAN_TAG + 1))
+        self.available_local_vlans = set(moves.range(n_const.MIN_VLAN_TAG,
+                                                     n_const.MAX_VLAN_TAG + 1))
         self.tunnel_types = agent_conf.tunnel_types or []
         self.l2_pop = agent_conf.l2_population
         # TODO(ethuleau): Change ARP responder so it's not dependent on the
@@ -359,9 +358,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self._local_vlan_hints = {}
 
     def _reset_tunnel_ofports(self):
-        self.tun_br_ofports = {p_const.TYPE_GENEVE: {},
-                               p_const.TYPE_GRE: {},
-                               p_const.TYPE_VXLAN: {}}
+        self.tun_br_ofports = {n_const.TYPE_GENEVE: {},
+                               n_const.TYPE_GRE: {},
+                               n_const.TYPE_VXLAN: {}}
 
     def setup_rpc(self):
         self.plugin_rpc = OVSPluginApi(topics.PLUGIN)
@@ -676,7 +675,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                           "net-id=%(net_uuid)s - tunneling disabled",
                           {'network_type': network_type,
                            'net_uuid': net_uuid})
-        elif network_type == p_const.TYPE_FLAT:
+        elif network_type == n_const.TYPE_FLAT:
             if physical_network in self.phys_brs:
                 self._local_vlan_for_flat(lvid, physical_network)
             else:
@@ -685,7 +684,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                           "physical_network %(physical_network)s",
                           {'net_uuid': net_uuid,
                            'physical_network': physical_network})
-        elif network_type == p_const.TYPE_VLAN:
+        elif network_type == n_const.TYPE_VLAN:
             if physical_network in self.phys_brs:
                 self._local_vlan_for_vlan(lvid, physical_network,
                                           segmentation_id)
@@ -695,7 +694,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                           "physical_network %(physical_network)s",
                           {'net_uuid': net_uuid,
                            'physical_network': physical_network})
-        elif network_type == p_const.TYPE_LOCAL:
+        elif network_type == n_const.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:
@@ -732,7 +731,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     for ofport in lvm.tun_ofports:
                         self.cleanup_tunnel_port(self.tun_br, ofport,
                                                  lvm.network_type)
-        elif lvm.network_type == p_const.TYPE_FLAT:
+        elif lvm.network_type == n_const.TYPE_FLAT:
             if lvm.physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[lvm.physical_network]
@@ -744,7 +743,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 br.reclaim_local_vlan(
                     port=self.int_ofports[lvm.physical_network],
                     segmentation_id=None)
-        elif lvm.network_type == p_const.TYPE_VLAN:
+        elif lvm.network_type == n_const.TYPE_VLAN:
             if lvm.physical_network in self.phys_brs:
                 # outbound
                 br = self.phys_brs[lvm.physical_network]
@@ -756,7 +755,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 br.reclaim_local_vlan(
                     port=self.int_ofports[lvm.physical_network],
                     segmentation_id=lvm.segmentation_id)
-        elif lvm.network_type == p_const.TYPE_LOCAL:
+        elif lvm.network_type == n_const.TYPE_LOCAL:
             # no flows needed for local networks
             pass
         else:

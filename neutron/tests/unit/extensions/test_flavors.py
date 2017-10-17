@@ -19,6 +19,7 @@ import fixtures
 import mock
 from neutron_lib import context
 from neutron_lib.db import constants as db_const
+from neutron_lib.plugins import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
@@ -28,12 +29,12 @@ from neutron.db.models import l3 as l3_models
 from neutron.db import servicetype_db
 from neutron.extensions import flavors
 from neutron.objects import flavor as flavor_obj
-from neutron.plugins.common import constants
 from neutron.services.flavors import flavors_plugin
 from neutron.services import provider_configuration as provconf
 from neutron.tests import base
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit.extensions import base as extension
 
 _uuid = uuidutils.generate_uuid
@@ -41,7 +42,7 @@ _get_path = test_base._get_path
 
 _driver = ('neutron.tests.unit.extensions.test_flavors.'
            'DummyServiceDriver')
-_provider = 'dummy'
+_provider = dummy_plugin.RESOURCE_NAME
 _long_name = 'x' * (db_const.NAME_FIELD_SIZE + 1)
 _long_description = 'x' * (db_const.LONG_DESCRIPTION_FIELD_SIZE + 1)
 
@@ -416,7 +417,7 @@ class DummyServicePlugin(object):
 
     @classmethod
     def get_plugin_type(cls):
-        return constants.DUMMY
+        return dummy_plugin.DUMMY_SERVICE_TYPE
 
     def get_plugin_description(self):
         return "Dummy service plugin, aware of flavors"
@@ -426,7 +427,7 @@ class DummyServiceDriver(object):
 
     @staticmethod
     def get_service_type():
-        return constants.DUMMY
+        return dummy_plugin.DUMMY_SERVICE_TYPE
 
     def __init__(self, plugin):
         pass
@@ -462,7 +463,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     def _create_flavor(self, description=None):
         flavor = {'flavor': {'name': 'GOLD',
-                             'service_type': constants.DUMMY,
+                             'service_type': dummy_plugin.DUMMY_SERVICE_TYPE,
                              'description': description or 'the best flavor',
                              'enabled': True}}
         return self.plugin.create_flavor(self.ctx, flavor), flavor
@@ -472,7 +473,8 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         res = flavor_obj.Flavor.get_objects(self.ctx)
         self.assertEqual(1, len(res))
         self.assertEqual('GOLD', res[0]['name'])
-        self.assertEqual(constants.DUMMY, res[0]['service_type'])
+        self.assertEqual(
+            dummy_plugin.DUMMY_SERVICE_TYPE, res[0]['service_type'])
 
     def test_update_flavor(self):
         fl, flavor = self._create_flavor()

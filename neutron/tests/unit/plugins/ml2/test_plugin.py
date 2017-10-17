@@ -48,7 +48,6 @@ from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
 from neutron.objects import router as l3_obj
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_context
@@ -392,7 +391,7 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
         network = self._create_external_network()
         # For external network, expected network type to be
         # tenant_network_types which is by default 'local'.
-        self.assertEqual(p_const.TYPE_LOCAL,
+        self.assertEqual(constants.TYPE_LOCAL,
                          network['network'][pnet.NETWORK_TYPE])
         # No physical network specified, expected 'None'.
         self.assertIsNone(network['network'][pnet.PHYSICAL_NETWORK])
@@ -403,12 +402,12 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
 
     def test_external_network_type_vlan(self):
         cfg.CONF.set_default('external_network_type',
-                             p_const.TYPE_VLAN,
+                             constants.TYPE_VLAN,
                              group='ml2')
 
         network = self._create_external_network()
         # For external network, expected network type to be 'vlan'.
-        self.assertEqual(p_const.TYPE_VLAN,
+        self.assertEqual(constants.TYPE_VLAN,
                          network['network'][pnet.NETWORK_TYPE])
         # Physical network is expected.
         self.assertIsNotNone(network['network'][pnet.PHYSICAL_NETWORK])

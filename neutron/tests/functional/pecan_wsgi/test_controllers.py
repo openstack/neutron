@@ -32,6 +32,8 @@ from neutron import policy
 from neutron.tests.common import helpers
 from neutron.tests.functional.pecan_wsgi import test_functional
 from neutron.tests.functional.pecan_wsgi import utils as pecan_utils
+from neutron.tests.unit import dummy_plugin
+
 
 _SERVICE_PLUGIN_RESOURCE = 'serviceplugin'
 _SERVICE_PLUGIN_COLLECTION = _SERVICE_PLUGIN_RESOURCE + 's'
@@ -787,7 +789,7 @@ class TestRequestProcessing(TestRootController):
 
     def test_service_plugin_uri(self):
         nm = manager.NeutronManager.get_instance()
-        nm.path_prefix_resource_mappings['dummy'] = [
+        nm.path_prefix_resource_mappings[dummy_plugin.RESOURCE_NAME] = [
             _SERVICE_PLUGIN_COLLECTION]
         response = self.do_request('/v2.0/dummy/serviceplugins.json')
         self.assertEqual(200, response.status_int)

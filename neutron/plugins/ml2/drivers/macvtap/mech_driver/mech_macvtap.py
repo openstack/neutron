@@ -19,7 +19,6 @@ from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 
-from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers.macvtap import macvtap_common
 from neutron.plugins.ml2.drivers import mech_agent
 
@@ -45,7 +44,7 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             {portbindings.CAP_PORT_FILTER: False})
 
     def get_allowed_network_types(self, agent):
-        return [p_constants.TYPE_FLAT, p_constants.TYPE_VLAN]
+        return [constants.TYPE_FLAT, constants.TYPE_VLAN]
 
     def get_mappings(self, agent):
         return agent['configurations'].get('interface_mappings', {})
@@ -80,7 +79,7 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             interface = mappings[segment['physical_network']]
             network_type = segment[api.NETWORK_TYPE]
 
-            if network_type == p_constants.TYPE_VLAN:
+            if network_type == constants.TYPE_VLAN:
                 vlan_id = segment[api.SEGMENTATION_ID]
                 macvtap_src = macvtap_common.get_vlan_device_name(interface,
                                                                   vlan_id)

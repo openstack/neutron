@@ -29,7 +29,6 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import topics
 from neutron.conf.plugins.ml2.drivers import macvtap as config
-from neutron.plugins.common import constants as p_constants
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.plugins.ml2.drivers.macvtap import macvtap_common
@@ -61,7 +60,7 @@ class MacvtapRPCCallBack(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             return
 
         segment = self.network_map.get(network_id)
-        if segment and segment.network_type == p_constants.TYPE_VLAN:
+        if segment and segment.network_type == constants.TYPE_VLAN:
             if_mappings = self.agent.mgr.interface_mappings
             vlan_device_name = macvtap_common.get_vlan_device_name(
                 if_mappings[segment.physical_network],

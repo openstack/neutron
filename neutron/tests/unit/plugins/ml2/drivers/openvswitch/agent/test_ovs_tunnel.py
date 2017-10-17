@@ -24,7 +24,6 @@ import six
 
 from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
@@ -53,7 +52,7 @@ FIXED_IPS = [{'subnet_id': 'my-subnet-uuid',
               'ip_address': '1.1.1.1'}]
 VM_DEVICE_OWNER = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
-TUN_OFPORTS = {p_const.TYPE_GRE: {'ip1': '11', 'ip2': '12'}}
+TUN_OFPORTS = {n_const.TYPE_GRE: {'ip1': '11', 'ip2': '12'}}
 
 BCAST_MAC = "01:00:00:00:00:00/01:00:00:00:00:00"
 UCAST_MAC = "00:00:00:00:00:00/01:00:00:00:00:00"
@@ -353,11 +352,11 @@ class TunnelTest(object):
         self._verify_mock_calls()
 
     def test_provision_local_vlan(self):
-        ofports = list(TUN_OFPORTS[p_const.TYPE_GRE].values())
+        ofports = list(TUN_OFPORTS[n_const.TYPE_GRE].values())
         self.mock_tun_bridge_expected += [
             mock.call.install_flood_to_tun(LV_ID, LS_ID, ofports),
             mock.call.provision_local_vlan(
-                network_type=p_const.TYPE_GRE,
+                network_type=n_const.TYPE_GRE,
                 lvid=LV_ID,
                 segmentation_id=LS_ID),
         ]
@@ -365,7 +364,7 @@ class TunnelTest(object):
         a = self._build_agent()
         a.available_local_vlans = set([LV_ID])
         a.tun_br_ofports = TUN_OFPORTS
-        a.provision_local_vlan(NET_UUID, p_const.TYPE_GRE, None, LS_ID)
+        a.provision_local_vlan(NET_UUID, n_const.TYPE_GRE, None, LS_ID)
         self._verify_mock_calls()
 
     def test_provision_local_vlan_flat(self):
@@ -386,12 +385,12 @@ class TunnelTest(object):
         a.phys_brs['net1'] = self.mock_map_tun_bridge
         a.phys_ofports['net1'] = self.MAP_TUN_PHY_OFPORT
         a.int_ofports['net1'] = self.INT_OFPORT
-        a.provision_local_vlan(NET_UUID, p_const.TYPE_FLAT, 'net1', LS_ID)
+        a.provision_local_vlan(NET_UUID, n_const.TYPE_FLAT, 'net1', LS_ID)
         self._verify_mock_calls()
 
     def test_provision_local_vlan_flat_fail(self):
         a = self._build_agent()
-        a.provision_local_vlan(NET_UUID, p_const.TYPE_FLAT, 'net2', LS_ID)
+        a.provision_local_vlan(NET_UUID, n_const.TYPE_FLAT, 'net2', LS_ID)
         self._verify_mock_calls()
 
     def test_provision_local_vlan_vlan(self):
@@ -411,12 +410,12 @@ class TunnelTest(object):
         a.phys_brs['net1'] = self.mock_map_tun_bridge
         a.phys_ofports['net1'] = self.MAP_TUN_PHY_OFPORT
         a.int_ofports['net1'] = self.INT_OFPORT
-        a.provision_local_vlan(NET_UUID, p_const.TYPE_VLAN, 'net1', LS_ID)
+        a.provision_local_vlan(NET_UUID, n_const.TYPE_VLAN, 'net1', LS_ID)
         self._verify_mock_calls()
 
     def test_provision_local_vlan_vlan_fail(self):
         a = self._build_agent()
-        a.provision_local_vlan(NET_UUID, p_const.TYPE_VLAN, 'net2', LS_ID)
+        a.provision_local_vlan(NET_UUID, n_const.TYPE_VLAN, 'net2', LS_ID)
         self._verify_mock_calls()
 
     def test_reclaim_local_vlan(self):
@@ -534,7 +533,7 @@ class TunnelTest(object):
         a = self._build_agent()
         a.tunnel_update(
             mock.sentinel.ctx, tunnel_ip='10.0.10.1',
-            tunnel_type=p_const.TYPE_GRE)
+            tunnel_type=n_const.TYPE_GRE)
         self._verify_mock_calls()
 
     def test_tunnel_update_self(self):

@@ -15,6 +15,7 @@
 import collections
 
 import mock
+from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
@@ -24,7 +25,6 @@ import testtools
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.conf.agent import common as config
-from neutron.plugins.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as p_const
 from neutron.tests import base

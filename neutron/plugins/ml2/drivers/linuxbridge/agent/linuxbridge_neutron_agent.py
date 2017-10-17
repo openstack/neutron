@@ -39,7 +39,6 @@ from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler
 from neutron.common import topics
 from neutron.common import utils
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
@@ -197,7 +196,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         return lb_utils.get_tap_device_name(interface_id)
 
     def get_vxlan_device_name(self, segmentation_id):
-        if 0 <= int(segmentation_id) <= p_const.MAX_VXLAN_VNI:
+        if 0 <= int(segmentation_id) <= constants.MAX_VXLAN_VNI:
             return VXLAN_INTERFACE_PREFIX + str(segmentation_id)
         else:
             LOG.warning("Invalid Segmentation ID: %s, will lead to "
@@ -450,7 +449,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                   network_type,
                                   physical_network,
                                   segmentation_id):
-        if network_type == p_const.TYPE_VXLAN:
+        if network_type == constants.TYPE_VXLAN:
             if self.vxlan_mode == lconst.VXLAN_NONE:
                 LOG.error("Unable to add vxlan interface for network %s",
                           network_id)
@@ -465,10 +464,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       " for physical network %s",
                       physical_network)
             return
-        if network_type == p_const.TYPE_FLAT:
+        if network_type == constants.TYPE_FLAT:
             return self.ensure_flat_bridge(network_id, physical_bridge,
                                            physical_interface)
-        elif network_type == p_const.TYPE_VLAN:
+        elif network_type == constants.TYPE_VLAN:
             return self.ensure_vlan_bridge(network_id, physical_bridge,
                                            physical_interface,
                                            segmentation_id)
@@ -509,7 +508,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if not bridge_name:
             bridge_name = self.get_bridge_name(network_id)
 
-        if network_type == p_const.TYPE_LOCAL:
+        if network_type == constants.TYPE_LOCAL:
             self.ensure_local_bridge(network_id, bridge_name)
         elif not self.ensure_physical_in_bridge(network_id,
                                                 network_type,
@@ -666,7 +665,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             return False
 
         test_iface = None
-        for seg_id in moves.range(1, p_const.MAX_VXLAN_VNI + 1):
+        for seg_id in moves.range(1, constants.MAX_VXLAN_VNI + 1):
             if (ip_lib.device_exists(self.get_vxlan_device_name(seg_id))
                     or ip_lib.vxlan_in_use(seg_id)):
                 continue
@@ -781,7 +780,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                           }
         if self.vxlan_mode != lconst.VXLAN_NONE:
             configurations['tunneling_ip'] = self.local_ip
-            configurations['tunnel_types'] = [p_const.TYPE_VXLAN]
+            configurations['tunnel_types'] = [constants.TYPE_VXLAN]
             configurations['l2_population'] = cfg.CONF.VXLAN.l2_population
         return configurations
 
@@ -874,7 +873,7 @@ class LinuxBridgeRpcCallbacks(
             if not segment:
                 return
 
-            if segment.network_type != p_const.TYPE_VXLAN:
+            if segment.network_type != constants.TYPE_VXLAN:
                 return
 
             interface = self.agent.mgr.get_vxlan_device_name(
@@ -896,7 +895,7 @@ class LinuxBridgeRpcCallbacks(
             if not segment:
                 return
 
-            if segment.network_type != p_const.TYPE_VXLAN:
+            if segment.network_type != constants.TYPE_VXLAN:
                 return
 
             interface = self.agent.mgr.get_vxlan_device_name(
@@ -918,7 +917,7 @@ class LinuxBridgeRpcCallbacks(
             if not segment:
                 return
 
-            if segment.network_type != p_const.TYPE_VXLAN:
+            if segment.network_type != constants.TYPE_VXLAN:
                 return
 
             interface = self.agent.mgr.get_vxlan_device_name(

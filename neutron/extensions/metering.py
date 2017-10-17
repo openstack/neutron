@@ -18,12 +18,12 @@ from neutron_lib.api import converters
 from neutron_lib.api import extensions
 from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as nexception
+from neutron_lib.plugins import constants
 from neutron_lib.services import base as service_base
 import six
 
 from neutron._i18n import _
 from neutron.api.v2 import resource_helper
-from neutron.plugins.common import constants
 
 
 class MeteringLabelNotFound(nexception.NotFound):

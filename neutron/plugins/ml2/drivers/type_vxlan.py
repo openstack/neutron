@@ -13,13 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as p_const
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
 
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.objects.plugins.ml2 import vxlanallocation as vxlan_obj
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import type_tunnel
 
 LOG = log.getLogger(__name__)

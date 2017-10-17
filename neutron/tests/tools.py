@@ -33,7 +33,6 @@ import unittest2
 
 from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
-from neutron.plugins.common import constants as p_const
 from neutron.services.logapi.common import constants as log_const
 
 
@@ -231,7 +230,7 @@ def get_random_port(start=n_const.PORT_RANGE_MIN):
 
 
 def get_random_vlan():
-    return random.randint(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)
+    return random.randint(constants.MIN_VLAN_TAG, constants.MAX_VLAN_TAG)
 
 
 def get_random_ip_version():

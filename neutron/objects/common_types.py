@@ -26,7 +26,6 @@ import six
 from neutron._i18n import _
 from neutron.common import constants
 from neutron.common import utils
-from neutron.plugins.common import constants as plugin_constants
 
 
 class HARouterEnumField(obj_fields.AutoTypedField):
@@ -85,8 +84,8 @@ class PortRangeWith0Field(obj_fields.AutoTypedField):
 
 class VlanIdRange(RangeConstrainedInteger):
     def __init__(self, **kwargs):
-        super(VlanIdRange, self).__init__(start=plugin_constants.MIN_VLAN_TAG,
-                                          end=plugin_constants.MAX_VLAN_TAG,
+        super(VlanIdRange, self).__init__(start=lib_constants.MIN_VLAN_TAG,
+                                          end=lib_constants.MAX_VLAN_TAG,
                                           **kwargs)
 
 

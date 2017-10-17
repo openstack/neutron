@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neutron.plugins.common import constants as p_const
+from neutron_lib import constants as p_const
 
 
 # Special vlan_id value in ovs_vlan_allocations table indicating flat network

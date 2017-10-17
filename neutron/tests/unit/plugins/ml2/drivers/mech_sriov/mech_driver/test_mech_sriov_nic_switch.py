@@ -19,7 +19,6 @@ from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
 import testtools
 
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver import mech_driver
@@ -75,10 +74,10 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
     def test_check_segment(self):
         """Validate the check_segment call."""
         segment = {'api.NETWORK_TYPE': ""}
-        segment[api.NETWORK_TYPE] = p_const.TYPE_VLAN
+        segment[api.NETWORK_TYPE] = constants.TYPE_VLAN
         self.assertTrue(self.driver.check_segment_for_agent(segment))
         # Validate a network type not currently supported
-        segment[api.NETWORK_TYPE] = p_const.TYPE_GRE
+        segment[api.NETWORK_TYPE] = constants.TYPE_GRE
         self.assertFalse(self.driver.check_segment_for_agent(segment))
 
     def test_check_segment_allows_supported_network_types(self):
@@ -169,7 +168,7 @@ class SriovSwitchMechVifDetailsTestCase(SriovNicSwitchMechanismBaseTestCase):
         self.assertEqual(1234, vlan_id)
 
     def test_get_vif_details_for_flat_network(self):
-        segment = {api.NETWORK_TYPE: p_const.TYPE_FLAT}
+        segment = {api.NETWORK_TYPE: constants.TYPE_FLAT}
         vif_details = self.driver._get_vif_details(segment)
         vlan_id = vif_details[portbindings.VIF_DETAILS_VLAN]
         self.assertEqual('0', vlan_id)

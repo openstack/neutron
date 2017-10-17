@@ -18,7 +18,6 @@ from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 
-from neutron.plugins.common import constants as p_const
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.plugins.ml2.drivers.mech_sriov.mech_driver \
     import exceptions as exc
@@ -66,7 +65,7 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         sriov_qos_driver.register()
 
     def get_allowed_network_types(self, agent):
-        return (p_const.TYPE_FLAT, p_const.TYPE_VLAN)
+        return (constants.TYPE_FLAT, constants.TYPE_VLAN)
 
     def get_mappings(self, agent):
         return agent['configurations'].get('device_mappings', {})
@@ -157,9 +156,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def _get_vif_details(self, segment):
         network_type = segment[api.NETWORK_TYPE]
-        if network_type == p_const.TYPE_FLAT:
+        if network_type == constants.TYPE_FLAT:
             vlan_id = FLAT_VLAN
-        elif network_type == p_const.TYPE_VLAN:
+        elif network_type == constants.TYPE_VLAN:
             vlan_id = segment[api.SEGMENTATION_ID]
         else:
             raise exc.SriovUnsupportedNetworkType(net_type=network_type)

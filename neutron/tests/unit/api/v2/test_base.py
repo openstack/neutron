@@ -43,6 +43,7 @@ from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests import fake_notifier
 from neutron.tests import tools
+from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import testlib_api
 
 
@@ -1134,7 +1135,7 @@ class SubresourceTest(base.BaseTestCase):
 
         SUB_RESOURCES = {}
         RESOURCE_ATTRIBUTE_MAP = {}
-        SUB_RESOURCES['dummy'] = {
+        SUB_RESOURCES[dummy_plugin.RESOURCE_NAME] = {
             'collection_name': 'dummies',
             'parent': {'collection_name': 'networks',
                        'member_name': 'network'}
@@ -1148,9 +1149,10 @@ class SubresourceTest(base.BaseTestCase):
                           'required_by_policy': True,
                           'is_visible': True}
         }
-        collection_name = SUB_RESOURCES['dummy'].get('collection_name')
-        resource_name = 'dummy'
-        parent = SUB_RESOURCES['dummy'].get('parent')
+        collection_name = SUB_RESOURCES[
+            dummy_plugin.RESOURCE_NAME].get('collection_name')
+        resource_name = dummy_plugin.RESOURCE_NAME
+        parent = SUB_RESOURCES[dummy_plugin.RESOURCE_NAME].get('parent')
         params = RESOURCE_ATTRIBUTE_MAP['dummies']
         member_actions = {'mactions': 'GET'}
         _plugin = directory.get_plugin()
@@ -1197,8 +1199,12 @@ class SubresourceTest(base.BaseTestCase):
         instance = self.plugin.return_value
         tenant_id = _uuid()
 
-        body = {'dummy': {'foo': 'bar', 'tenant_id': tenant_id,
-                          'project_id': tenant_id}}
+        body = {
+            dummy_plugin.RESOURCE_NAME: {
+                'foo': 'bar', 'tenant_id': tenant_id,
+                'project_id': tenant_id
+            }
+        }
         self.api.post_json('/networks/id1/dummies', body)
         instance.create_network_dummy.assert_called_once_with(mock.ANY,
                                                               network_id='id1',
@@ -1208,7 +1214,7 @@ class SubresourceTest(base.BaseTestCase):
         instance = self.plugin.return_value
 
         dummy_id = _uuid()
-        body = {'dummy': {'foo': 'bar'}}
+        body = {dummy_plugin.RESOURCE_NAME: {'foo': 'bar'}}
         self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
                           body)
         instance.update_network_dummy.assert_called_once_with(mock.ANY,
@@ -1220,7 +1226,7 @@ class SubresourceTest(base.BaseTestCase):
         instance = self.plugin.return_value
 
         dummy_id = _uuid()
-        body = {'dummy': {}}
+        body = {dummy_plugin.RESOURCE_NAME: {}}
         self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
                           body)
         instance.update_network_dummy.assert_called_once_with(mock.ANY,

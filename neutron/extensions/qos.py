@@ -21,6 +21,7 @@ from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants as common_constants
 from neutron_lib.db import constants as db_const
+from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 import six
@@ -29,7 +30,6 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource_helper
 from neutron.objects.qos import rule as rule_object
-from neutron.plugins.common import constants
 from neutron.services.qos import qos_consts
 
 

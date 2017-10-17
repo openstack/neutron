@@ -23,7 +23,6 @@ from oslo_log import log
 import six
 
 from neutron.db import provisioning_blocks
-from neutron.plugins.common import constants as p_constants
 
 LOG = log.getLogger(__name__)
 
@@ -249,7 +248,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase):
                  'allowed_network_types': allowed_network_types})
             return False
 
-        if network_type in [p_constants.TYPE_FLAT, p_constants.TYPE_VLAN]:
+        if network_type in [const.TYPE_FLAT, const.TYPE_VLAN]:
             physnet = segment[api.PHYSICAL_NETWORK]
             if not self.physnet_in_mappings(physnet, mappings):
                 LOG.debug(
