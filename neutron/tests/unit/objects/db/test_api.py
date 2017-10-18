@@ -20,6 +20,7 @@ from neutron.db import _model_query as model_query
 from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects.db import api
+from neutron.objects import utils as obj_utils
 from neutron.tests import base as test_base
 from neutron.tests.unit import testlib_api
 
@@ -97,6 +98,42 @@ class CRUDScenarioTestCase(testlib_api.SqlTestCase):
         new_objs = api.get_objects(
             self.ctxt, self.model, name='foo', status=None)
         self.assertEqual(obj, new_objs[0])
+
+    def test_get_objects_with_string_matching_filters_contains(self):
+        obj1 = api.create_object(self.ctxt, self.model, {'name': 'obj_con_1'})
+        obj2 = api.create_object(self.ctxt, self.model, {'name': 'obj_con_2'})
+        obj3 = api.create_object(self.ctxt, self.model, {'name': 'obj_3'})
+
+        objs = api.get_objects(
+            self.ctxt, self.model, name=obj_utils.StringContains('con'))
+        self.assertEqual(2, len(objs))
+        self.assertIn(obj1, objs)
+        self.assertIn(obj2, objs)
+        self.assertNotIn(obj3, objs)
+
+    def test_get_objects_with_string_matching_filters_starts(self):
+        obj1 = api.create_object(self.ctxt, self.model, {'name': 'pre_obj1'})
+        obj2 = api.create_object(self.ctxt, self.model, {'name': 'pre_obj2'})
+        obj3 = api.create_object(self.ctxt, self.model, {'name': 'obj_3'})
+
+        objs = api.get_objects(
+            self.ctxt, self.model, name=obj_utils.StringStarts('pre'))
+        self.assertEqual(2, len(objs))
+        self.assertIn(obj1, objs)
+        self.assertIn(obj2, objs)
+        self.assertNotIn(obj3, objs)
+
+    def test_get_objects_with_string_matching_filters_ends(self):
+        obj1 = api.create_object(self.ctxt, self.model, {'name': 'obj1_end'})
+        obj2 = api.create_object(self.ctxt, self.model, {'name': 'obj2_end'})
+        obj3 = api.create_object(self.ctxt, self.model, {'name': 'obj_3'})
+
+        objs = api.get_objects(
+            self.ctxt, self.model, name=obj_utils.StringEnds('end'))
+        self.assertEqual(2, len(objs))
+        self.assertIn(obj1, objs)
+        self.assertIn(obj2, objs)
+        self.assertNotIn(obj3, objs)
 
     def test_get_object_create_update_delete(self):
         obj = api.create_object(self.ctxt, self.model, {'name': 'foo'})

@@ -73,7 +73,7 @@ using example of DNSNameServer:
 
     # for fetching objects with substrings in a string field:
     from neutron.objects import utils as obj_utils
-    dnses = DNSNameServer.get_objects(context, address=obj_utils.StringMatchingContains('10.0.0'))
+    dnses = DNSNameServer.get_objects(context, address=obj_utils.StringContains('10.0.0'))
     # will return list of all dns name servers from DB that has '10.0.0' in their addresses
 
     # to update fields:
