@@ -16,8 +16,8 @@
 import collections
 import copy
 
-import netaddr
 from neutron_lib.api import attributes
+from neutron_lib.api import faults
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import exceptions
@@ -40,15 +40,8 @@ from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
 
-FAULT_MAP = {exceptions.NotFound: webob.exc.HTTPNotFound,
-             exceptions.Conflict: webob.exc.HTTPConflict,
-             exceptions.InUse: webob.exc.HTTPConflict,
-             exceptions.BadRequest: webob.exc.HTTPBadRequest,
-             exceptions.ServiceUnavailable: webob.exc.HTTPServiceUnavailable,
-             exceptions.NotAuthorized: webob.exc.HTTPForbidden,
-             netaddr.AddrFormatError: webob.exc.HTTPBadRequest,
-             oslo_policy.PolicyNotAuthorized: webob.exc.HTTPForbidden
-             }
+# TODO(boden): remove shim once consumers are using lib's FAULT_MAP
+FAULT_MAP = faults.FAULT_MAP
 
 
 class Controller(object):
