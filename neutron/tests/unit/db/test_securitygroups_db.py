@@ -313,6 +313,11 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 mock.call('security_group', 'after_create', mock.ANY,
                           context=mock.ANY, is_default=False,
                           security_group=sg_dict)])
+            # Ensure that the result of create is same as get.
+            # Especially we want to check the revision number here.
+            sg_dict_got = self.mixin.get_security_group(
+                self.ctx, sg_dict['id'])
+            self.assertEqual(sg_dict, sg_dict_got)
 
     def test_security_group_precommit_create_event_with_revisions(self):
         revision = revision_plugin.RevisionPlugin()
