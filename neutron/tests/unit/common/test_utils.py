@@ -28,6 +28,7 @@ import six
 import testscenarios
 import testtools
 
+from neutron.common import constants as common_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.plugins.common import utils as plugin_utils
@@ -775,3 +776,54 @@ class TestThrottler(base.BaseTestCase):
 
         obj = Klass()
         obj.method()
+
+
+class BaseUnitConversionTest(object):
+
+    def test_bytes_to_bits(self):
+        test_values = [
+            (0, 0),  # 0 bytes should be 0 bits
+            (1, 8)   # 1 byte should be 8 bits
+        ]
+        for input_bytes, expected_bits in test_values:
+            self.assertEqual(
+                expected_bits, utils.bytes_to_bits(input_bytes)
+            )
+
+
+class TestSIUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
+
+    base_unit = common_constants.SI_BASE
+
+    def test_bits_to_kilobits(self):
+        test_values = [
+            (0, 0),  # 0 bites should be 0 kilobites
+            (1, 1),  # 1 bit should be 1 kilobit
+            (999, 1),  # 999 bits should be 1 kilobit
+            (1000, 1),  # 1000 bits should be 1 kilobit
+            (1001, 2)   # 1001 bits should be 2 kilobits
+        ]
+        for input_bits, expected_kilobits in test_values:
+            self.assertEqual(
+                expected_kilobits,
+                utils.bits_to_kilobits(input_bits, self.base_unit)
+            )
+
+
+class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
+
+    base_unit = common_constants.IEC_BASE
+
+    def test_bits_to_kilobits(self):
+        test_values = [
+            (0, 0),  # 0 bites should be 0 kilobites
+            (1, 1),  # 1 bit should be 1 kilobit
+            (1023, 1),  # 1023 bits should be 1 kilobit
+            (1024, 1),  # 1024 bits should be 1 kilobit
+            (1025, 2)   # 1025 bits should be 2 kilobits
+        ]
+        for input_bits, expected_kilobits in test_values:
+            self.assertEqual(
+                expected_kilobits,
+                utils.bits_to_kilobits(input_bits, self.base_unit)
+            )

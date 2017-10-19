@@ -20,13 +20,12 @@ from neutron_lib.services.qos import constants as qos_consts
 
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
+from neutron.common import constants
+from neutron.common import utils
 
 
 INGRESS_QDISC_ID = "ffff:"
 MAX_MTU_VALUE = 65535
-
-SI_BASE = 1000
-IEC_BASE = 1024
 
 LATENCY_UNIT = "ms"
 BW_LIMIT_UNIT = "kbit"  # kilobits per second in tc's notation
@@ -66,10 +65,10 @@ def convert_to_kilobits(value, base):
     if value.isdigit():
         value = int(value)
         if input_in_bits:
-            return bits_to_kilobits(value, base)
+            return utils.bits_to_kilobits(value, base)
         else:
-            bits_value = bytes_to_bits(value)
-            return bits_to_kilobits(bits_value, base)
+            bits_value = utils.bytes_to_bits(value)
+            return utils.bits_to_kilobits(bits_value, base)
     unit = value[-1:]
     if unit not in UNITS.keys():
         raise InvalidUnit(unit=unit)
@@ -77,17 +76,8 @@ def convert_to_kilobits(value, base):
     if input_in_bits:
         bits_value = val * (base ** UNITS[unit])
     else:
-        bits_value = bytes_to_bits(val * (base ** UNITS[unit]))
-    return bits_to_kilobits(bits_value, base)
-
-
-def bytes_to_bits(value):
-    return value * 8
-
-
-def bits_to_kilobits(value, base):
-    #NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result
-    return int((value + (base - 1)) / base)
+        bits_value = utils.bytes_to_bits(val * (base ** UNITS[unit]))
+    return utils.bits_to_kilobits(bits_value, base)
 
 
 class TcCommand(ip_lib.IPDevice):
@@ -124,10 +114,11 @@ class TcCommand(ip_lib.IPDevice):
             if m:
                 #NOTE(slaweq): because tc is giving bw limit in SI units
                 # we need to calculate it as 1000bit = 1kbit:
-                bw_limit = convert_to_kilobits(m.group(1), SI_BASE)
+                bw_limit = convert_to_kilobits(m.group(1), constants.SI_BASE)
                 #NOTE(slaweq): because tc is giving burst limit in IEC units
                 # we need to calculate it as 1024bit = 1kbit:
-                burst_limit = convert_to_kilobits(m.group(2), IEC_BASE)
+                burst_limit = convert_to_kilobits(
+                    m.group(2), constants.IEC_BASE)
                 return bw_limit, burst_limit
         return None, None
 
@@ -144,10 +135,10 @@ class TcCommand(ip_lib.IPDevice):
             return None, None
         #NOTE(slaweq): because tc is giving bw limit in SI units
         # we need to calculate it as 1000bit = 1kbit:
-        bw_limit = convert_to_kilobits(m.group(2), SI_BASE)
+        bw_limit = convert_to_kilobits(m.group(2), constants.SI_BASE)
         #NOTE(slaweq): because tc is giving burst limit in IEC units
         # we need to calculate it as 1024bit = 1kbit:
-        burst_limit = convert_to_kilobits(m.group(3), IEC_BASE)
+        burst_limit = convert_to_kilobits(m.group(3), constants.IEC_BASE)
         return bw_limit, burst_limit
 
     def set_filters_bw_limit(self, bw_limit, burst_limit):

@@ -17,6 +17,8 @@ import mock
 from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.agent.linux import tc_lib
+from neutron.common import constants
+from neutron.common import utils
 from neutron.tests import base
 
 DEVICE_NAME = "tap_device"
@@ -58,7 +60,7 @@ class BaseUnitConversionTest(object):
 
     def test_convert_to_kilobits_bits_value(self):
         value = "1000bit"
-        expected_value = tc_lib.bits_to_kilobits(1000, self.base_unit)
+        expected_value = utils.bits_to_kilobits(1000, self.base_unit)
         self.assertEqual(
             expected_value,
             tc_lib.convert_to_kilobits(value, self.base_unit)
@@ -66,7 +68,7 @@ class BaseUnitConversionTest(object):
 
     def test_convert_to_kilobits_megabytes_value(self):
         value = "1m"
-        expected_value = tc_lib.bits_to_kilobits(
+        expected_value = utils.bits_to_kilobits(
             self.base_unit ** 2 * 8, self.base_unit)
         self.assertEqual(
             expected_value,
@@ -75,7 +77,7 @@ class BaseUnitConversionTest(object):
 
     def test_convert_to_kilobits_megabits_value(self):
         value = "1mbit"
-        expected_value = tc_lib.bits_to_kilobits(
+        expected_value = utils.bits_to_kilobits(
             self.base_unit ** 2, self.base_unit)
         self.assertEqual(
             expected_value,
@@ -89,53 +91,15 @@ class BaseUnitConversionTest(object):
             tc_lib.convert_to_kilobits, value, self.base_unit
         )
 
-    def test_bytes_to_bits(self):
-        test_values = [
-            (0, 0),  # 0 bytes should be 0 bits
-            (1, 8)   # 1 byte should be 8 bits
-        ]
-        for input_bytes, expected_bits in test_values:
-            self.assertEqual(
-                expected_bits, tc_lib.bytes_to_bits(input_bytes)
-            )
-
 
 class TestSIUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
 
-    base_unit = tc_lib.SI_BASE
-
-    def test_bits_to_kilobits(self):
-        test_values = [
-            (0, 0),  # 0 bites should be 0 kilobites
-            (1, 1),  # 1 bit should be 1 kilobit
-            (999, 1),  # 999 bits should be 1 kilobit
-            (1000, 1),  # 1000 bits should be 1 kilobit
-            (1001, 2)   # 1001 bits should be 2 kilobits
-        ]
-        for input_bits, expected_kilobits in test_values:
-            self.assertEqual(
-                expected_kilobits,
-                tc_lib.bits_to_kilobits(input_bits, self.base_unit)
-            )
+    base_unit = constants.SI_BASE
 
 
 class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
 
-    base_unit = tc_lib.IEC_BASE
-
-    def test_bits_to_kilobits(self):
-        test_values = [
-            (0, 0),  # 0 bites should be 0 kilobites
-            (1, 1),  # 1 bit should be 1 kilobit
-            (1023, 1),  # 1023 bits should be 1 kilobit
-            (1024, 1),  # 1024 bits should be 1 kilobit
-            (1025, 2)   # 1025 bits should be 2 kilobits
-        ]
-        for input_bits, expected_kilobits in test_values:
-            self.assertEqual(
-                expected_kilobits,
-                tc_lib.bits_to_kilobits(input_bits, self.base_unit)
-            )
+    base_unit = constants.IEC_BASE
 
 
 class TestTcCommand(base.BaseTestCase):
