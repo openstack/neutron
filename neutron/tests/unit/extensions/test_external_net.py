@@ -24,7 +24,7 @@ from webob import exc
 
 from neutron.db import external_net_db
 from neutron.db import models_v2
-from neutron.extensions import external_net as external_net
+from neutron.extensions import external_net
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
