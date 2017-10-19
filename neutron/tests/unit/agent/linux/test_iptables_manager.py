@@ -1064,7 +1064,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             [mock.call(['iptables-restore', '-n'],
                        process_input=mock.ANY, run_as_root=True,
                        log_fail_as_error=False),
-             mock.call(['iptables-restore', '-n', '-w', '10'],
+             mock.call(['iptables-restore', '-n', '-w', '10',
+                        '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
                        process_input=mock.ANY, run_as_root=True)])
 
         # The RuntimeError should have triggered a log of the input to the
@@ -1100,7 +1101,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
              mock.call(['iptables-restore', '-n'],
                        process_input=mock.ANY, run_as_root=True,
                        log_fail_as_error=False),
-             mock.call(['iptables-restore', '-n', '-w', '10'],
+             mock.call(['iptables-restore', '-n', '-w', '10',
+                        '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
                        process_input=mock.ANY, run_as_root=True)])
 
         self.execute.reset_mock()
@@ -1108,7 +1110,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.assertEqual(2, self.execute.call_count)
         self.execute.assert_has_calls(
             [mock.call(['iptables-save'], run_as_root=True),
-             mock.call(['iptables-restore', '-n', '-w', '10'],
+             mock.call(['iptables-restore', '-n', '-w', '10',
+                        '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
                        process_input=mock.ANY, run_as_root=True)])
 
         # Another instance of the class should behave similarly now
@@ -1118,7 +1121,8 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.assertEqual(2, self.execute.call_count)
         self.execute.assert_has_calls(
             [mock.call(['iptables-save'], run_as_root=True),
-             mock.call(['iptables-restore', '-n', '-w', '10'],
+             mock.call(['iptables-restore', '-n', '-w', '10',
+                        '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
                        process_input=mock.ANY, run_as_root=True)])
 
     def test_get_traffic_counters_chain_notexists(self):
