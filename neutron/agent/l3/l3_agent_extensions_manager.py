@@ -70,3 +70,15 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                     "implement method delete_router",
                     {'name': extension.name}
                 )
+
+    def ha_state_change(self, context, data):
+        """Notify all agent extensions for HA router state change."""
+        for extension in self:
+            if hasattr(extension.obj, 'ha_state_change'):
+                extension.obj.ha_state_change(context, data)
+            else:
+                LOG.warning(
+                    "Agent Extension '%(name)s' does not "
+                    "implement method ha_state_change",
+                    {'name': extension.name}
+                )

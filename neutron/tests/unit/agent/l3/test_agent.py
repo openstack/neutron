@@ -216,6 +216,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.enqueue_state_change(router.id, 'master')
         self.assertFalse(agent._update_metadata_proxy.call_count)
 
+    def test_enqueue_state_change_l3_extension(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = mock.Mock()
+        router_info = mock.MagicMock()
+        agent.router_info[router.id] = router_info
+        agent.l3_ext_manager.ha_state_change = mock.Mock()
+        agent.enqueue_state_change(router.id, 'master')
+        agent.l3_ext_manager.ha_state_change.assert_called_once_with(
+            agent.context,
+            {'router_id': router.id, 'state': 'master'})
+
     def _test__configure_ipv6_params_on_ext_gw_port_if_necessary_helper(
             self, state, enable_expected):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

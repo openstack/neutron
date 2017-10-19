@@ -109,9 +109,9 @@ class AgentMixin(object):
         return self.conf.ha_vrrp_advert_int
 
     def enqueue_state_change(self, router_id, state):
+        state_change_data = {"router_id": router_id, "state": state}
         LOG.info('Router %(router_id)s transitioned to %(state)s',
-                 {'router_id': router_id,
-                  'state': state})
+                 state_change_data)
 
         ri = self._get_router_info(router_id)
         if ri is None:
@@ -127,6 +127,7 @@ class AgentMixin(object):
         self._update_radvd_daemon(ri, state)
         self.pd.process_ha_state(router_id, state == 'master')
         self.state_change_notifier.queue_event((router_id, state))
+        self.l3_ext_manager.ha_state_change(self.context, state_change_data)
 
     def _configure_ipv6_params_on_ext_gw_port_if_necessary(self, ri, state):
         # If ipv6 is enabled on the platform, ipv6_gateway config flag is
