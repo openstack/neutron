@@ -24,7 +24,7 @@ from neutron.db import extraroute_db
 from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.tests.unit.api.v2 import test_base
-from neutron.tests.unit.extensions import test_l3 as test_l3
+from neutron.tests.unit.extensions import test_l3
 
 
 _uuid = uuidutils.generate_uuid

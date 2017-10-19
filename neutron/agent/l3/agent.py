@@ -39,7 +39,7 @@ from neutron.agent.common import utils as common_utils
 from neutron.agent.l3 import dvr
 from neutron.agent.l3 import dvr_edge_ha_router
 from neutron.agent.l3 import dvr_edge_router as dvr_router
-from neutron.agent.l3 import dvr_local_router as dvr_local_router
+from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api

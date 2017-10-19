@@ -15,7 +15,7 @@
 
 from oslo_log import log as logging
 
-from neutron.common import utils as utils
+from neutron.common import utils
 
 
 LOG = logging.getLogger(__name__)
