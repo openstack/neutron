@@ -310,6 +310,15 @@ class OvsdbVsctl(ovsdb.API):
     def list_ifaces(self, bridge):
         return MultiLineCommand(self.context, 'list-ifaces', args=[bridge])
 
+    def db_remove(self, table, record, column, *values, **keyvalues):
+        raise NotImplementedError()
+
+    def db_find_rows(self, table, *conditions, **kwargs):
+        raise NotImplementedError()
+
+    def db_list_rows(self, table, record=None, if_exists=False):
+        raise NotImplementedError()
+
 
 def _set_colval_args(*col_values):
     args = []
