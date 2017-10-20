@@ -848,6 +848,9 @@ class _DVRAgentInterfaceMixin(object):
         """
         l3_agent_db = self._get_agent_by_type_and_host(
             context, const.AGENT_TYPE_L3, host)
+        l3_agent_mode = self._get_agent_mode(l3_agent_db)
+        if l3_agent_mode == l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL:
+            return
         if l3_agent_db:
             LOG.debug("Agent ID exists: %s", l3_agent_db['id'])
             f_port = self._get_agent_gw_ports_exist_for_network(
