@@ -26,7 +26,7 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
 
-class TestOVSAgentExtensionAPI(ovs_test_base.OVSOFCtlTestBase):
+class TestOVSAgentExtensionAPI(ovs_test_base.OVSOSKenTestBase):
 
     def setUp(self):
         super(TestOVSAgentExtensionAPI, self).setUp()
@@ -67,121 +67,6 @@ class TestOVSAgentExtensionAPI(ovs_test_base.OVSOFCtlTestBase):
              'phys2': self.br_phys['br-phys2']})
         for phys_br in agent_extension_api.request_phy_brs():
             self._test_bridge(self.br_phys[phys_br.br_name], phys_br)
-
-
-class TestOVSCookieBridgeOFCtl(ovs_test_base.OVSOFCtlTestBase):
-
-    def setUp(self):
-        super(TestOVSCookieBridgeOFCtl, self).setUp()
-        self.bridge = self.br_int_cls("br-int")
-        mock.patch.object(self.bridge, "run_ofctl").start()
-
-        self.tested_bridge = ovs_ext_agt.OVSCookieBridge(self.bridge)
-
-        # mocking do_action_flows does not work, because this method is
-        # later wrapped by the cookie bridge code, and six.wraps apparently
-        # can't wrap a mock, so we mock deeper
-        self.mock_build_flow_expr_str = mock.patch(
-            'neutron.agent.common.ovs_lib._build_flow_expr_str',
-            return_value="").start()
-
-    def test_cookie(self):
-        self.assertNotEqual(self.bridge._default_cookie,
-                            self.tested_bridge._default_cookie)
-
-    def test_reserved(self):
-        self.assertIn(self.tested_bridge._default_cookie,
-                      self.bridge.reserved_cookies)
-
-    def assert_mock_build_flow_expr_str_call(self, action, kwargs_list,
-                                             strict=False):
-        self.mock_build_flow_expr_str.assert_called_once_with(
-            kwargs_list[0],
-            action,
-            strict
-        )
-
-    def test_add_flow_without_cookie(self):
-        self.tested_bridge.add_flow(in_port=1, actions="output:2")
-        self.assert_mock_build_flow_expr_str_call(
-            'add',
-            [{"in_port": 1,
-              "actions": "output:2",
-              "cookie": self.tested_bridge._default_cookie}]
-        )
-
-    def test_mod_flow_without_cookie(self):
-        self.tested_bridge.mod_flow(in_port=1, actions="output:2")
-        self.assert_mock_build_flow_expr_str_call(
-            'mod',
-            [{"in_port": 1,
-              "actions": "output:2",
-              "cookie": self.tested_bridge._default_cookie}]
-        )
-
-    def test_del_flows_without_cookie(self):
-        self.tested_bridge.delete_flows(in_port=1)
-        self.assert_mock_build_flow_expr_str_call(
-            'del',
-            [{"in_port": 1,
-              "cookie": str(self.tested_bridge._default_cookie) + '/-1'}]
-        )
-
-    def test_add_flow_with_cookie(self):
-        self.tested_bridge.add_flow(cookie=1234,
-                                    in_port=1, actions="output:2")
-        self.assert_mock_build_flow_expr_str_call(
-            'add',
-            [{"in_port": 1,
-              "actions": "output:2",
-              "cookie": 1234}]
-        )
-
-    def test_mod_flow_with_cookie(self):
-        self.tested_bridge.mod_flow(cookie='1234',
-                                    in_port=1, actions="output:2")
-        self.assert_mock_build_flow_expr_str_call(
-            'mod',
-            [{"in_port": 1,
-              "actions": "output:2",
-              "cookie": "1234"}]
-        )
-
-    def test_del_flows_with_cookie(self):
-        self.tested_bridge.delete_flows(cookie=1234, in_port=1)
-        self.assert_mock_build_flow_expr_str_call(
-            'del',
-            [{"in_port": 1,
-              "cookie": "1234/-1"}]
-        )
-
-    def test_mod_flow_with_cookie_mask(self):
-        self.tested_bridge.mod_flow(cookie='1234/3',
-                                    in_port=1, actions="output:2")
-        self.assert_mock_build_flow_expr_str_call(
-            'mod',
-            [{"in_port": 1,
-              "actions": "output:2",
-              "cookie": str(1234) + '/3'}]
-        )
-
-    def test_del_flows_with_cookie_mask(self):
-        self.tested_bridge.delete_flows(cookie='1234/7', in_port=1)
-        self.assert_mock_build_flow_expr_str_call(
-            'del',
-            [{"in_port": 1,
-              "cookie": str(1234) + '/7'}]
-        )
-
-    def test_install_drop(self):
-        self.tested_bridge.install_drop()
-        self.assert_mock_build_flow_expr_str_call(
-            'add',
-            [{"table": 0,
-              "priority": 0,
-              "actions": "drop",
-              "cookie": self.tested_bridge._default_cookie}]
-        )
 
 
 class TestOVSCookieBridgeOSKen(native_ovs_bridge_test_base.OVSBridgeTestBase):

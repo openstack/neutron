@@ -17,6 +17,7 @@
 import functools
 import random
 
+import debtcollector
 import eventlet
 import netaddr
 from neutron_lib import exceptions
@@ -220,9 +221,8 @@ class OpenFlowSwitchMixin(object):
         (dp, ofp, ofpp) = self._get_dp()
         match = self._match(ofp, ofpp, match, **match_kwargs)
         if isinstance(instructions, six.string_types):
-            # NOTE: instructions must be str for the ofctl of_interface.
-            # After the ofctl driver is removed, a deprecation warning
-            # could be added here.
+            debtcollector.deprecate("Use of string instruction is "
+                "deprecated", removal_version='U')
             jsonlist = ofctl_string.ofp_instruction_from_str(
                 ofp, instructions)
             instructions = ofproto_parser.ofp_instruction_from_jsondict(

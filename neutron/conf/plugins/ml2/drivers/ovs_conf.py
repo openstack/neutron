@@ -95,10 +95,6 @@ ovs_opts = [
                        "integration bridge to physical networks. "
                        "Support kernel without Open vSwitch patch port "
                        "support so long as it is set to True.")),
-    cfg.StrOpt('of_interface', default='native',
-               deprecated_for_removal=True,
-               choices=['ovs-ofctl', 'native'],
-               help=_("OpenFlow interface to use.")),
     cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
                choices=[constants.OVS_DATAPATH_SYSTEM,
                         constants.OVS_DATAPATH_NETDEV],

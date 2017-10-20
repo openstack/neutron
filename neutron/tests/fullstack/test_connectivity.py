@@ -25,7 +25,6 @@ from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
-from neutron.tests.fullstack import utils
 from neutron.tests.unit import testlib_api
 
 load_tests = testlib_api.module_load_tests
@@ -37,7 +36,6 @@ LOG = logging.getLogger(__name__)
 
 class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 
-    of_interface = None
     arp_responder = False
     use_dhcp = True
 
@@ -50,7 +48,6 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
             # agent types present on machines.
             environment.HostDescription(
                 l3_agent=self.l2_pop,
-                of_interface=self.of_interface,
                 l2_agent_type=self.l2_agent_type,
                 dhcp_agent=self.use_dhcp,
             )
@@ -104,7 +101,7 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
 
     l2_agent_type = constants.AGENT_TYPE_OVS
-    network_scenarios = [
+    scenarios = [
         ('VXLAN', {'network_type': 'vxlan',
                    'l2_pop': False}),
         ('GRE-l2pop-arp_responder', {'network_type': 'gre',
@@ -112,8 +109,6 @@ class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
                                      'arp_responder': True}),
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
-    scenarios = testscenarios.multiply_scenarios(
-        network_scenarios, utils.get_ovs_interface_scenarios())
 
     def test_connectivity(self):
         self._test_connectivity()
@@ -125,19 +120,13 @@ class TestOvsConnectivitySameNetworkOnOvsBridgeControllerStop(
     num_hosts = 2
 
     l2_agent_type = constants.AGENT_TYPE_OVS
-    network_scenarios = [
+    scenarios = [
         ('VXLAN', {'network_type': 'vxlan',
                    'l2_pop': False}),
         ('GRE and l2pop', {'network_type': 'gre',
                            'l2_pop': True}),
         ('VLANs', {'network_type': 'vlan',
                    'l2_pop': False})]
-
-    # Do not test for CLI ofctl interface as controller is irrelevant for CLI
-    scenarios = testscenarios.multiply_scenarios(
-        network_scenarios,
-        [(m, v) for (m, v) in utils.get_ovs_interface_scenarios()
-         if v['of_interface'] != 'ovs-ofctl'])
 
     def _test_controller_timeout_does_not_break_connectivity(self,
                                                              kill_signal=None):
@@ -203,7 +192,6 @@ class TestConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
     use_dhcp = False
     network_type = 'vxlan'
     l2_pop = False
-    of_interface = 'native'
 
     def test_connectivity(self):
         self._test_connectivity()
@@ -228,8 +216,8 @@ class TestUninterruptedConnectivityOnL2AgentRestart(
                    'l2_pop': False}),
     ]
     scenarios = (
-        testscenarios.multiply_scenarios(ovs_agent_scenario, network_scenarios,
-                                         utils.get_ovs_interface_scenarios()) +
+        testscenarios.multiply_scenarios(ovs_agent_scenario,
+                                         network_scenarios) +
         testscenarios.multiply_scenarios(lb_agent_scenario, network_scenarios)
     )
 

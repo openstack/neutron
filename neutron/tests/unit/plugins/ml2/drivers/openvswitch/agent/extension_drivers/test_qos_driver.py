@@ -23,7 +23,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent import (
         ovs_agent_extension_api as ovs_ext_api)
 from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers import (
     qos_driver)
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native import (
     ovs_bridge)
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent import (
     ovs_test_base)
@@ -41,10 +41,14 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver = qos_driver.QosOVSAgentDriver()
         self.mock_clear_minimum_bandwidth_qos = mock.patch.object(
             self.qos_driver, '_minimum_bandwidth_initialize').start()
+        os_ken_app = mock.Mock()
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
-                         ovs_bridge.OVSAgentBridge('br-int'),
-                         ovs_bridge.OVSAgentBridge('br-tun'),
-                         {'phys1': ovs_bridge.OVSAgentBridge('br-phys1')})
+                         ovs_bridge.OVSAgentBridge(
+                             'br-int', os_ken_app=os_ken_app),
+                         ovs_bridge.OVSAgentBridge(
+                             'br-tun', os_ken_app=os_ken_app),
+                         {'phys1': ovs_bridge.OVSAgentBridge(
+                             'br-phys1', os_ken_app=os_ken_app)})
         self.qos_driver.consume_api(self.agent_api)
         self.qos_driver.initialize()
         self.qos_driver.br_int = mock.Mock()

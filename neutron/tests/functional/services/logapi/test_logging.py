@@ -27,8 +27,6 @@ from neutron.plugins.ml2.drivers.openvswitch.agent import (
     ovs_agent_extension_api as ovs_ext_api)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as ovs_consts)
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl import (
-    ovs_bridge)
 from neutron.services.logapi.drivers.openvswitch import (
     ovs_firewall_log as ovs_fw_log)
 from neutron.tests.functional.agent import test_firewall
@@ -62,11 +60,12 @@ class LoggingExtensionTestFramework(test_firewall.BaseFirewallTestCase):
         self.log_driver = self.initialize_ovs_fw_log()
 
     def initialize_ovs_fw_log(self):
-        mock.patch('os_ken.base.app_manager.AppManager.get_instance').start()
+        self.int_br = ovs_ext_api.OVSCookieBridge(
+            self.of_helper.br_int_cls(self.tester.bridge.br_name))
+        self.tun_br = self.of_helper.br_tun_cls('br-tun')
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(
-            ovs_bridge.OVSAgentBridge(self.tester.bridge.br_name),
-            ovs_bridge.OVSAgentBridge('br-tun'),
-            {'physnet1': ovs_bridge.OVSAgentBridge('br-physnet1')})
+            self.int_br, self.tun_br,
+            {'physnet1': self.of_helper.br_phys_cls('br-physnet1')})
         log_driver = ovs_fw_log.OVSFirewallLoggingDriver(agent_api)
         log_driver.initialize(self.resource_rpc)
         return log_driver

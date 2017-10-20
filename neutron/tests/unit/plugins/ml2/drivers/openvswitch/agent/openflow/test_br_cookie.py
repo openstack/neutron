@@ -16,7 +16,7 @@
 import mock
 
 from neutron.agent.common import ovs_lib
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge
 from neutron.tests import base
 
@@ -29,7 +29,7 @@ class TestBRCookieOpenflow(base.BaseTestCase):
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.addCleanup(conn_patcher.stop)
-        self.br = ovs_bridge.OVSAgentBridge('br-int')
+        self.br = ovs_bridge.OVSAgentBridge('br-int', os_ken_app=mock.Mock())
 
     def test_reserved_cookies(self):
         def_cookie = self.br.default_cookie
@@ -49,7 +49,7 @@ class TestBRCookieOpenflow(base.BaseTestCase):
         self.assertNotIn(requested_cookie, self.br.reserved_cookies)
 
     def test_set_agent_uuid_stamp(self):
-        self.br = ovs_bridge.OVSAgentBridge('br-int')
+        self.br = ovs_bridge.OVSAgentBridge('br-int', os_ken_app=mock.Mock())
         def_cookie = self.br.default_cookie
         new_cookie = ovs_lib.generate_random_cookie()
 
@@ -60,7 +60,7 @@ class TestBRCookieOpenflow(base.BaseTestCase):
         self.assertNotIn(def_cookie, self.br.reserved_cookies)
 
     def test_set_agent_uuid_stamp_with_reserved_cookie(self):
-        self.br = ovs_bridge.OVSAgentBridge('br-int')
+        self.br = ovs_bridge.OVSAgentBridge('br-int', os_ken_app=mock.Mock())
         def_cookie = self.br.default_cookie
         new_cookie = self.br.request_cookie()
 

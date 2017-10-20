@@ -2422,31 +2422,8 @@ class TestOvsNeutronAgent(object):
             mock_update_segid.assert_not_called()
 
 
-class TestOvsNeutronAgentOFCtl(TestOvsNeutronAgent,
-                               ovs_test_base.OVSOFCtlTestBase):
-    def test_cleanup_stale_flows(self):
-        with mock.patch.object(self.agent.int_br,
-                              'dump_flows_all_tables') as dump_flows,\
-                mock.patch.object(self.agent.int_br,
-                                  'delete_flows') as del_flow:
-            self.agent.int_br.set_agent_uuid_stamp(1234)
-            dump_flows.return_value = [
-                'cookie=0x4d2, duration=50.156s, table=0,actions=drop',
-                'cookie=0x4321, duration=54.143s, table=2, priority=0',
-                'cookie=0x2345, duration=50.125s, table=2, priority=0',
-                'cookie=0x4d2, duration=52.112s, table=3, actions=drop',
-            ]
-            self.agent.iter_num = 3
-            self.agent.cleanup_stale_flows()
-            expected = [
-                mock.call(cookie='0x4321/-1', table='2'),
-                mock.call(cookie='0x2345/-1', table='2'),
-            ]
-            self.assertEqual(expected, del_flow.mock_calls)
-
-
 class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
-                             ovs_test_base.OVSOSKenTestBase):
+                               ovs_test_base.OVSOSKenTestBase):
     def test_cleanup_stale_flows(self):
         uint64_max = (1 << 64) - 1
         with mock.patch.object(self.agent.int_br,
@@ -2598,11 +2575,6 @@ class AncillaryBridgesTest(object):
         actual = self.mock_scan_ancillary_ports(vif_port_set, registered_ports,
                                                 sync=True)
         self.assertEqual(expected, actual)
-
-
-class AncillaryBridgesTestOFCtl(AncillaryBridgesTest,
-                                ovs_test_base.OVSOFCtlTestBase):
-    pass
 
 
 class AncillaryBridgesTestOSKen(AncillaryBridgesTest,
@@ -3612,11 +3584,6 @@ class TestOvsDvrNeutronAgent(object):
             with mock.patch.object(self.agent, 'update_stale_ofport_rules'):
                 self.agent.ancillary_brs = mock.Mock()
                 self._test_scan_ports_failure('scan_ancillary_ports')
-
-
-class TestOvsDvrNeutronAgentOFCtl(TestOvsDvrNeutronAgent,
-                                  ovs_test_base.OVSOFCtlTestBase):
-    pass
 
 
 class TestOvsDvrNeutronAgentOSKen(TestOvsDvrNeutronAgent,

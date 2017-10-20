@@ -648,10 +648,6 @@ class TunnelTest(object):
             self._verify_mock_calls()
 
 
-class TunnelTestOFCtl(TunnelTest, ovs_test_base.OVSOFCtlTestBase):
-    pass
-
-
 class TunnelTestOSKen(TunnelTest, ovs_test_base.OVSOSKenTestBase):
     pass
 
@@ -745,11 +741,6 @@ class TunnelTestUseVethInterco(TunnelTest):
                                             '--timeout=10'])]
 
 
-class TunnelTestUseVethIntercoOFCtl(TunnelTestUseVethInterco,
-                                    ovs_test_base.OVSOFCtlTestBase):
-    pass
-
-
 class TunnelTestUseVethIntercoOSKen(TunnelTestUseVethInterco,
                                   ovs_test_base.OVSOSKenTestBase):
     pass
@@ -762,11 +753,6 @@ class TunnelTestWithMTU(TunnelTestUseVethInterco):
         super(TunnelTestWithMTU, self)._define_expected_calls(arp_responder)
         self.inta_expected.append(mock.call.link.set_mtu(self.VETH_MTU))
         self.intb_expected.append(mock.call.link.set_mtu(self.VETH_MTU))
-
-
-class TunnelTestWithMTUOFCtl(TunnelTestWithMTU,
-                             ovs_test_base.OVSOFCtlTestBase):
-    pass
 
 
 class TunnelTestWithMTUOSKen(TunnelTestWithMTU,

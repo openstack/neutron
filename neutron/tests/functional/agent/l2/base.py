@@ -17,6 +17,7 @@
 import random
 
 import eventlet
+import fixtures
 import mock
 from neutron_lib import constants as n_const
 from neutron_lib.utils import net
@@ -35,19 +36,77 @@ from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers \
     import qos_driver as ovs_qos_driver
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
-    import br_int
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
-    import br_phys
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
-    import br_tun
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
+    import main as main_mod
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
 
-class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
+class OVSOFControllerHelper(object):
+    """Helper class that runs os-ken openflow controller."""
+
+    def start_of_controller(self, conf):
+        self.br_int_cls = None
+        self.br_tun_cls = None
+        self.br_phys_cls = None
+        self.init_done = False
+        self.init_done_ev = eventlet.event.Event()
+        self.main_ev = eventlet.event.Event()
+        self.addCleanup(self._kill_main)
+        retry_count = 3
+        while True:
+            # Try a few different ports as a port conflict
+            # causes the test to fail.
+            conf.set_override('of_listen_port',
+                              net_helpers.get_free_namespace_port(
+                                  n_const.PROTO_NAME_TCP),
+                              group='OVS')
+            cfg.CONF.set_override('of_listen_port',
+                                  conf.OVS.of_listen_port,
+                                  group='OVS')
+            main_mod.init_config()
+            self._main_thread = eventlet.spawn(self._kick_main)
+
+            # Wait for _kick_main -> openflow main -> _agent_main
+            # NOTE(yamamoto): This complexity came from how we run openflow
+            # controller. Main routine blocks while running the embedded
+            # openflow controller.  In that case, the agent rpc_loop runs in
+            # another thread.  However, for FT we need to run setUp() and
+            # test_xxx() in the same thread.  So I made this run openflow main
+            # in a separate thread instead.
+            try:
+                while not self.init_done:
+                    self.init_done_ev.wait()
+                break
+            except fixtures.TimeoutException:
+                self._kill_main()
+            retry_count -= 1
+            if retry_count < 0:
+                raise Exception('port allocation failed')
+
+    def _kick_main(self):
+        with mock.patch.object(ovs_agent, 'main', self._agent_main):
+            main_mod.main()
+
+    def _kill_main(self):
+        self.main_ev.send()
+        self._main_thread.wait()
+
+    def _agent_main(self, bridge_classes):
+        self.br_int_cls = bridge_classes['br_int']
+        self.br_phys_cls = bridge_classes['br_phys']
+        self.br_tun_cls = bridge_classes['br_tun']
+
+        # signal to setUp()
+        self.init_done = True
+        self.init_done_ev.send()
+
+        self.main_ev.wait()
+
+
+class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
 
     def setUp(self):
         super(OVSAgentTestFramework, self).setUp()
@@ -68,6 +127,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self.config = self._configure_agent()
         self.driver = interface.OVSInterfaceDriver(self.config)
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
+        self.start_of_controller(self.config)
 
     def _get_config_opts(self):
         config = cfg.ConfigOpts()
@@ -95,9 +155,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
 
     def _bridge_classes(self):
         return {
-            'br_int': br_int.OVSIntegrationBridge,
-            'br_phys': br_phys.OVSPhysicalBridge,
-            'br_tun': br_tun.OVSTunnelBridge
+            'br_int': self.br_int_cls,
+            'br_phys': self.br_phys_cls,
+            'br_tun': self.br_tun_cls
         }
 
     def create_agent(self, create_tunnels=True, ancillary_bridge=None,

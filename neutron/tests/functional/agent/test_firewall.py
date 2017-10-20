@@ -34,6 +34,7 @@ from neutron.cmd.sanity import checks
 from neutron.conf.agent import securitygroups_rpc as security_config
 from neutron.tests.common import conn_testers
 from neutron.tests.common import helpers
+from neutron.tests.functional.agent.l2 import base as l2_base
 from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import constants as test_constants
 
@@ -131,8 +132,12 @@ class BaseFirewallTestCase(linux_base.BaseOVSLinuxTestCase):
                           "OVS>=2.5). More info at "
                           "https://github.com/openvswitch/ovs/blob/master/"
                           "FAQ.md")
+        self.of_helper = l2_base.OVSOFControllerHelper()
+        self.of_helper.addCleanup = self.addCleanup
+        self.of_helper.start_of_controller(cfg.CONF)
         tester = self.useFixture(
-            conn_testers.OVSConnectionTester(self.ip_cidr))
+            conn_testers.OVSConnectionTester(self.ip_cidr,
+                                             self.of_helper.br_int_cls))
         firewall_drv = openvswitch_firewall.OVSFirewallDriver(tester.bridge)
         return tester, firewall_drv
 

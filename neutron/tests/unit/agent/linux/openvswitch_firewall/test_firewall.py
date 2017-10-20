@@ -26,7 +26,7 @@ from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
-from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge
 from neutron.tests import base
 
@@ -752,7 +752,7 @@ class TestCookieContext(base.BaseTestCase):
 
         self.execute = mock.patch.object(
             utils, "execute", spec=utils.execute).start()
-        bridge = ovs_bridge.OVSAgentBridge('foo')
+        bridge = ovs_bridge.OVSAgentBridge('foo', os_ken_app=mock.Mock())
         mock.patch.object(
             ovsfw.OVSFirewallDriver, 'initialize_bridge',
             return_value=bridge.deferred(
