@@ -14,19 +14,18 @@
 
 import abc
 
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api import extensions
 import six
-
-from neutron.extensions import availability_zone as az_ext
 
 
 EXTENDED_ATTRIBUTES_2_0 = {
     'routers': {
-        az_ext.AVAILABILITY_ZONES: {'allow_post': False, 'allow_put': False,
-                                    'is_visible': True},
-        az_ext.AZ_HINTS: {
+        az_def.COLLECTION_NAME: {'allow_post': False, 'allow_put': False,
+                                 'is_visible': True},
+        az_def.AZ_HINTS: {
                 'allow_post': True, 'allow_put': False, 'is_visible': True,
-                'validate': {'type:availability_zone_hints': None},
+                'validate': {'type:availability_zone_hint_list': None},
                 'default': []}}
 }
 

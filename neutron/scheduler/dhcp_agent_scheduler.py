@@ -17,6 +17,7 @@
 import collections
 from operator import itemgetter
 
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants
 from neutron_lib.objects import exceptions
 from oslo_config import cfg
@@ -25,7 +26,6 @@ from sqlalchemy import sql
 
 from neutron.agent.common import utils as agent_utils
 from neutron.db.models import agent as agent_model
-from neutron.extensions import availability_zone as az_ext
 from neutron.objects import network
 from neutron.scheduler import base_resource_filter
 from neutron.scheduler import base_scheduler
@@ -86,7 +86,7 @@ class AutoScheduler(object):
                     if any(dhcp_agent.id == agent.id for agent in agents):
                         continue
                     net = plugin.get_network(context, net_id)
-                    az_hints = (net.get(az_ext.AZ_HINTS) or
+                    az_hints = (net.get(az_def.AZ_HINTS) or
                                 cfg.CONF.default_availability_zones)
                     if (az_hints and
                         dhcp_agent['availability_zone'] not in az_hints):
@@ -263,7 +263,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         if hosted_agents is None:
             return {'n_agents': 0, 'hostable_agents': [], 'hosted_agents': []}
         n_agents = cfg.CONF.dhcp_agents_per_network - len(hosted_agents)
-        az_hints = (network.get(az_ext.AZ_HINTS) or
+        az_hints = (network.get(az_def.AZ_HINTS) or
                     cfg.CONF.default_availability_zones)
         active_dhcp_agents = self._get_active_agents(plugin, context, az_hints)
         hosted_agent_ids = [agent['id'] for agent in hosted_agents]

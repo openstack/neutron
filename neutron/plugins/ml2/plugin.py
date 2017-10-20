@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
@@ -21,6 +22,7 @@ from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api import validators
+from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
@@ -75,7 +77,6 @@ from neutron.db import segments_db
 from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
 from neutron.extensions import allowedaddresspairs as addr_pair
-from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import netmtu_writable as mtu_ext
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
@@ -810,13 +811,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
 
-            if az_ext.AZ_HINTS in net_data:
+            if az_def.AZ_HINTS in net_data:
                 self.validate_availability_zones(context, 'network',
-                                                 net_data[az_ext.AZ_HINTS])
-                az_hints = az_ext.convert_az_list_to_string(
-                                                net_data[az_ext.AZ_HINTS])
-                net_db[az_ext.AZ_HINTS] = az_hints
-                result[az_ext.AZ_HINTS] = az_hints
+                                                 net_data[az_def.AZ_HINTS])
+                az_hints = az_validator.convert_az_list_to_string(
+                                                net_data[az_def.AZ_HINTS])
+                net_db[az_def.AZ_HINTS] = az_hints
+                result[az_def.AZ_HINTS] = az_hints
             registry.notify(resources.NETWORK, events.PRECOMMIT_CREATE, self,
                             context=context, request=net_data, network=result)
 
