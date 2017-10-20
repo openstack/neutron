@@ -1409,6 +1409,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if original_port['admin_state_up'] != updated_port['admin_state_up']:
             need_port_update_notify = True
+        if original_port['status'] != updated_port['status']:
+            need_port_update_notify = True
         # NOTE: In the case of DVR ports, the port-binding is done after
         # router scheduling when sync_routers is called and so this call
         # below may not be required for DVR routed interfaces. But still
