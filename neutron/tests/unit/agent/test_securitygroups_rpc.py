@@ -18,6 +18,7 @@ import contextlib
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
@@ -33,7 +34,6 @@ from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import rpc as n_rpc
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
-from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import securitygroup as ext_sg
 from neutron.tests import base
 from neutron.tests import tools
@@ -303,7 +303,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
             res1 = self._create_port(
                 self.fmt, n['network']['id'],
                 security_groups=[sg1_id],
-                arg_list=(addr_pair.ADDRESS_PAIRS,),
+                arg_list=(addr_apidef.ADDRESS_PAIRS,),
                 allowed_address_pairs=address_pairs)
             yield self.deserialize(self.fmt, res1)
 
