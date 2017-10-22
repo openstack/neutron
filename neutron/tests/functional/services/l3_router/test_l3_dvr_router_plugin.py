@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -24,7 +25,6 @@ from neutron_lib import context
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as n_const
 from neutron.common import topics
-from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
@@ -86,8 +86,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.context, 'network_id', 'host', 'agent_id'))
 
     def test_csnat_ports_are_created_and_deleted_based_on_router_subnet(self):
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         net1 = self._make_network(self.fmt, 'net1', True)
         subnet1 = self._make_subnet(
             self.fmt, net1, '10.1.0.1', '10.1.0.0/24', enable_dhcp=True)
@@ -145,8 +145,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
     def _test_remove_router_interface_leaves_snat_intact(self, by_subnet):
         with self.subnet() as subnet1, \
                 self.subnet(cidr='20.0.0.0/24') as subnet2:
-            kwargs = {'arg_list': (external_net.EXTERNAL,),
-                      external_net.EXTERNAL: True}
+            kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                      extnet_apidef.EXTERNAL: True}
             with self.network(**kwargs) as ext_net, \
                     self.subnet(network=ext_net,
                                 cidr='30.0.0.0/24'):
@@ -255,8 +255,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.context, [router['id']])
 
     def test_agent_gw_port_delete_when_last_gateway_for_ext_net_removed(self):
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         net1 = self._make_network(self.fmt, 'net1', True)
         net2 = self._make_network(self.fmt, 'net2', True)
         subnet1 = self._make_subnet(
@@ -321,7 +321,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
 
             router = self._create_router(distributed=dvr)
             self.l3_plugin.update_router(
@@ -405,7 +405,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
 
             router1 = self._create_router(distributed=dvr)
             router2 = self._create_router(distributed=dvr)
@@ -513,7 +513,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
 
             router = self._create_router(distributed=dvr)
             self.l3_plugin.update_router(
@@ -576,8 +576,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         self._test_delete_floating_ip_agent_notification(dvr=False)
 
     def test_router_with_ipv4_and_multiple_ipv6_on_same_network(self):
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.0.0.1', '10.0.0.0/24',
@@ -647,8 +647,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         test_allocation_pools = [{'start': '10.1.0.2',
                                   'end': '10.1.0.20'}]
         fixed_vrrp_ip = [{'ip_address': '10.1.0.201'}]
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -754,8 +754,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
         router = self._create_router(ha=False)
         private_net1 = self._make_network(self.fmt, 'net1', True)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -835,8 +835,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             host=HOST1, agent_mode=constants.L3_AGENT_MODE_DVR)
         router = self._create_router(ha=False)
         private_net1 = self._make_network(self.fmt, 'net1', True)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -910,8 +910,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             host=HOST1, agent_mode=n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL)
         router = self._create_router(ha=False)
         private_net1 = self._make_network(self.fmt, 'net1', True)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -982,8 +982,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         test_allocation_pools = [{'start': '10.1.0.2',
                                   'end': '10.1.0.20'}]
         fixed_vrrp_ip = [{'ip_address': '10.1.0.201'}]
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -1112,8 +1112,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
     def test_dvr_gateway_host_binding_is_set(self):
         router = self._create_router(ha=False)
         private_net1 = self._make_network(self.fmt, 'net1', True)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -1152,8 +1152,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         test_allocation_pools = [{'start': '10.1.0.2',
                                   'end': '10.1.0.20'}]
         fixed_vrrp_ip = [{'ip_address': '10.1.0.201'}]
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, '', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.20.0.1', '10.20.0.0/24',
@@ -1288,8 +1288,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
 
     def test_dvr_router_manual_rescheduling_removes_router(self):
         router = self._create_router()
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.network(**kwargs) as ext_net,\
                 self.subnet(network=ext_net),\
                 self.subnet(cidr='20.0.0.0/24') as subnet,\
@@ -1315,8 +1315,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
 
     def test_dvr_router_manual_rescheduling_updates_router(self):
         router = self._create_router()
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.network(**kwargs) as ext_net,\
                 self.subnet(network=ext_net),\
                 self.subnet(cidr='20.0.0.0/24') as subnet,\
@@ -1409,7 +1409,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
             # add external gateway to router
             self.l3_plugin.update_router(
                 self.context, router['id'],
@@ -1492,7 +1492,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
 
             with mock.patch.object(self.l3_plugin.l3_rpc_notifier.client,
                                    'prepare') as mock_prepare:
@@ -1560,8 +1560,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         SNAT for it on router interface removal
         """
         router = self._create_router()
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.subnet() as subnet,\
                 self.network(**kwargs) as ext_net,\
                 self.subnet(network=ext_net, cidr='20.0.0.0/24'):
@@ -1590,8 +1590,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         SNAT for it on DHCP port removal
         """
         router = self._create_router()
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.network(**kwargs) as ext_net,\
                 self.subnet(network=ext_net),\
                 self.subnet(cidr='20.0.0.0/24') as subnet,\
@@ -1790,7 +1790,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
             # add external gateway to router
             self.l3_plugin.update_router(
                 self.context, router3['id'],
@@ -1929,8 +1929,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
 class L3DvrTestCaseMigration(L3DvrTestCaseBase):
     def test_update_router_db_centralized_to_distributed_with_ports(self):
         with self.subnet() as subnet1:
-            kwargs = {'arg_list': (external_net.EXTERNAL,),
-                      external_net.EXTERNAL: True}
+            kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                      extnet_apidef.EXTERNAL: True}
             with self.network(**kwargs) as ext_net, \
                     self.subnet(network=ext_net,
                                 cidr='30.0.0.0/24'):

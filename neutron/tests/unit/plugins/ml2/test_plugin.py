@@ -18,6 +18,7 @@ import functools
 import fixtures
 import mock
 from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
@@ -43,7 +44,6 @@ from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
 from neutron.db import segments_db
-from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
 from neutron.objects import router as l3_obj
@@ -938,8 +938,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_l3_cleanup_on_net_delete(self):
         l3plugin = directory.get_plugin(plugin_constants.L3)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.network(**kwargs) as n:
             with self.subnet(network=n, cidr='200.0.0.0/22'):
                 l3plugin.create_floatingip(

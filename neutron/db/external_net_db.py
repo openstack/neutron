@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -20,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import external_net as extnet_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from sqlalchemy.sql import expression as expr
@@ -31,7 +33,6 @@ from neutron.db import _utils as db_utils
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
-from neutron.extensions import external_net
 from neutron.extensions import rbac as rbac_ext
 from neutron.objects import network as net_obj
 
@@ -57,7 +58,7 @@ def _network_filter_hook(context, original_model, conditions):
 
 
 def _network_result_filter_hook(query, filters):
-    vals = filters and filters.get(external_net.EXTERNAL, [])
+    vals = filters and filters.get(extnet_apidef.EXTERNAL, [])
     if not vals:
         return query
     if vals[0]:
@@ -87,11 +88,11 @@ class External_net_db_mixin(object):
     @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_network_dict_l3(network_res, network_db):
         # Comparing with None for converting uuid into bool
-        network_res[external_net.EXTERNAL] = network_db.external is not None
+        network_res[extnet_apidef.EXTERNAL] = network_db.external is not None
         return network_res
 
     def _process_l3_create(self, context, net_data, req_data):
-        external = req_data.get(external_net.EXTERNAL)
+        external = req_data.get(extnet_apidef.EXTERNAL)
         external_set = validators.is_attr_set(external)
 
         if not external_set:
@@ -103,21 +104,21 @@ class External_net_db_mixin(object):
             context.session.add(rbac_db.NetworkRBAC(
                   object_id=net_data['id'], action='access_as_external',
                   target_tenant='*', tenant_id=net_data['tenant_id']))
-        net_data[external_net.EXTERNAL] = external
+        net_data[extnet_apidef.EXTERNAL] = external
 
     def _process_l3_update(self, context, net_data, req_data, allow_all=True):
-        new_value = req_data.get(external_net.EXTERNAL)
+        new_value = req_data.get(extnet_apidef.EXTERNAL)
         net_id = net_data['id']
         if not validators.is_attr_set(new_value):
             return
 
-        if net_data.get(external_net.EXTERNAL) == new_value:
+        if net_data.get(extnet_apidef.EXTERNAL) == new_value:
             return
 
         if new_value:
             net_obj.ExternalNetwork(
                 context, network_id=net_id).create()
-            net_data[external_net.EXTERNAL] = True
+            net_data[extnet_apidef.EXTERNAL] = True
             if allow_all:
                 context.session.add(rbac_db.NetworkRBAC(
                       object_id=net_id, action='access_as_external',
@@ -130,14 +131,14 @@ class External_net_db_mixin(object):
                 device_owner=DEVICE_OWNER_ROUTER_GW,
                 network_id=net_data['id']).first()
             if port:
-                raise external_net.ExternalNetworkInUse(net_id=net_id)
+                raise extnet_exc.ExternalNetworkInUse(net_id=net_id)
 
             net_obj.ExternalNetwork.delete_objects(
                 context, network_id=net_id)
             for rbdb in (context.session.query(rbac_db.NetworkRBAC).filter_by(
                          object_id=net_id, action='access_as_external')):
                 context.session.delete(rbdb)
-            net_data[external_net.EXTERNAL] = False
+            net_data[extnet_apidef.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):
         l3plugin = directory.get_plugin(plugin_constants.L3)
@@ -145,7 +146,7 @@ class External_net_db_mixin(object):
             l3plugin.delete_disassociated_floatingips(context, network_id)
 
     def get_external_network_id(self, context):
-        nets = self.get_networks(context, {external_net.EXTERNAL: [True]})
+        nets = self.get_networks(context, {extnet_apidef.EXTERNAL: [True]})
         if len(nets) > 1:
             raise n_exc.TooManyExternalNetworks()
         else:
@@ -165,7 +166,7 @@ class External_net_db_mixin(object):
         if not self._network_is_external(context, policy['object_id']):
             # we automatically convert the network into an external network
             self._process_l3_update(context, net,
-                                    {external_net.EXTERNAL: True},
+                                    {extnet_apidef.EXTERNAL: True},
                                     allow_all=False)
 
     @registry.receives('rbac-policy', (events.BEFORE_UPDATE,

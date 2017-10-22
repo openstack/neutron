@@ -13,11 +13,11 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.common import topics
-from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.tests.common import helpers
 from neutron.tests.functional.services.l3_router import \
@@ -147,7 +147,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                         {'network': {external_net.EXTERNAL: True}})
+                         {'network': {extnet_apidef.EXTERNAL: True}})
             with mock.patch.object(self.l3_plugin.l3_rpc_notifier.client,
                                    'prepare') as mock_prepare:
                 # add external gateway to router
@@ -227,8 +227,8 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         on router interface removal
         """
         router = self._create_router(distributed=True, ha=True)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.subnet() as subnet, \
                 self.network(**kwargs) as ext_net, \
                 self.subnet(network=ext_net, cidr='20.0.0.0/24'):
@@ -253,8 +253,8 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         SNAT for it on DHCP port removal
         """
         router = self._create_router(distributed=True, ha=True)
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         with self.network(**kwargs) as ext_net, \
                 self.subnet(network=ext_net), \
                 self.subnet(cidr='20.0.0.0/24') as subnet, \
@@ -297,8 +297,8 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
                          len(self._get_ha_interface_list_for_router(rtr)))
 
     def _create_external_network(self):
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        kwargs = {'arg_list': (extnet_apidef.EXTERNAL,),
+                  extnet_apidef.EXTERNAL: True}
         ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
         self._make_subnet(
             self.fmt, ext_net, '10.0.0.1', '10.0.0.0/24',

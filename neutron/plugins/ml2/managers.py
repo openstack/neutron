@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
@@ -28,7 +29,6 @@ from neutron._i18n import _
 from neutron.conf.plugins.ml2 import config
 from neutron.db import api as db_api
 from neutron.db import segments_db
-from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import vlantransparent
 from neutron.plugins.ml2.common import exceptions as ml2_exc
@@ -203,7 +203,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                     self._add_network_segment(context, network_id, segment,
                                               segment_index)
             elif (cfg.CONF.ml2.external_network_type and
-                  self._get_attribute(network, external_net.EXTERNAL)):
+                  self._get_attribute(network, extnet_apidef.EXTERNAL)):
                 segment = self._allocate_ext_net_segment(context)
                 self._add_network_segment(context, network_id, segment)
             else:
