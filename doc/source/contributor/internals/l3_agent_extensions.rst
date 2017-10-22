@@ -36,3 +36,4 @@ router information to L3 agent extensions::
 #. get_routers_in_project
 #. get_router_hosting_port
 #. is_router_in_namespace
+#. get_router_info
