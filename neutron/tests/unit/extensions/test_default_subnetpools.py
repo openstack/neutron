@@ -11,6 +11,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.api.definitions import default_subnetpools as api_def
 from neutron_lib import constants
 from oslo_config import cfg
 import webob.exc
@@ -41,7 +42,7 @@ class DefaultSubnetpoolsExtensionTestPlugin(
     """Test plugin to mixin the default subnet pools extension.
     """
 
-    supported_extension_aliases = ["default-subnetpools", "subnet_allocation"]
+    supported_extension_aliases = [api_def.ALIAS, "subnet_allocation"]
 
 
 class DefaultSubnetpoolsExtensionTestCase(
