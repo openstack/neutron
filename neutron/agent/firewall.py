@@ -20,8 +20,7 @@ import six
 
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib import constants as n_const
-
-from neutron.common import utils
+from neutron_lib.utils import runtime
 
 
 INGRESS_DIRECTION = n_const.INGRESS_DIRECTION
@@ -49,7 +48,7 @@ def port_sec_enabled(port):
 
 
 def load_firewall_driver_class(driver):
-    return utils.load_class_by_alias_or_classname(
+    return runtime.load_class_by_alias_or_classname(
         'neutron.agent.firewall_drivers', driver)
 
 
