@@ -24,7 +24,6 @@ from neutron_lib import constants
 from neutron_lib import context
 import webob.exc
 
-from neutron.api.v2 import attributes as attr
 from neutron.db import address_scope_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import address_scope as ext_address_scope
@@ -37,12 +36,6 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_address_scope.'
 class AddressScopeTestExtensionManager(object):
 
     def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attr.RESOURCE_ATTRIBUTE_MAP.update(
-            apidef.RESOURCE_ATTRIBUTE_MAP)
         return ext_address_scope.Address_scope.get_resources()
 
     def get_actions(self):

@@ -15,7 +15,6 @@
 from oslo_config import cfg
 from webob import exc as web_exc
 
-from neutron.api.v2 import attributes
 from neutron.db import db_base_plugin_v2
 from neutron.db import vlantransparent_db as vlt_db
 from neutron.extensions import vlantransparent as vlt
@@ -65,24 +64,14 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
         plugin = ('neutron.tests.unit.extensions.test_vlantransparent.'
                   'VlanTransparentExtensionTestPlugin')
 
-        # Save the global RESOURCE_ATTRIBUTE_MAP
-        self.saved_attr_map = {}
-        for res, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.items():
-            self.saved_attr_map[res] = attrs.copy()
-
         # Update the plugin and extensions path
         ext_mgr = VlanTransparentExtensionManager()
-        self.addCleanup(self._restore_attribute_map)
         super(VlanTransparentExtensionTestCase, self).setUp(plugin=plugin,
                                                             ext_mgr=ext_mgr)
 
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
                               group='QUOTAS')
-
-    def _restore_attribute_map(self):
-        # Restore the global RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.saved_attr_map
 
     def test_network_create_with_vlan_transparent_attr(self):
         vlantrans = {'vlan_transparent': True}

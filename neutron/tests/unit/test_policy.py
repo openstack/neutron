@@ -210,15 +210,11 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCES)
         self._set_rules()
 
-        def remove_fake_resource():
-            del attributes.RESOURCE_ATTRIBUTE_MAP["%ss" % FAKE_RESOURCE_NAME]
-
         self.patcher = mock.patch.object(neutron.policy,
                                          'init',
                                          new=self.fakepolicyinit)
         self.patcher.start()
         policy.refresh()
-        self.addCleanup(remove_fake_resource)
         self.addCleanup(policy.refresh)
         self.context = context.Context('fake', 'fake', roles=['user'])
         plugin_klass = importutils.import_class(

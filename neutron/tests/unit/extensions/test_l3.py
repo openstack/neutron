@@ -39,7 +39,6 @@ from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.api.v2 import attributes
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import common_db_mixin
 from neutron.db import db_base_plugin_v2
@@ -78,12 +77,6 @@ DEVICE_OWNER_COMPUTE = lib_constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 class L3TestExtensionManager(object):
 
     def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            l3.RESOURCE_ATTRIBUTE_MAP)
         return l3.L3.get_resources()
 
     def get_actions(self):
@@ -100,9 +93,8 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
         super(L3NatExtensionTestCase, self).setUp()
         self._setUpExtension(
             'neutron.services.l3_router.l3_router_plugin.L3RouterPlugin',
-            plugin_constants.L3, l3.RESOURCE_ATTRIBUTE_MAP,
-            l3.L3, '', allow_pagination=True, allow_sorting=True,
-            supported_extension_aliases=['router'],
+            plugin_constants.L3, l3.L3, '', allow_pagination=True,
+            allow_sorting=True, supported_extension_aliases=['router'],
             use_quota=True)
 
     def test_router_create(self):
@@ -3974,14 +3966,7 @@ class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase,
 class L3TestExtensionManagerWithDNS(L3TestExtensionManager):
 
     def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            l3.RESOURCE_ATTRIBUTE_MAP)
-        attributes.RESOURCE_ATTRIBUTE_MAP[l3.FLOATINGIPS].update(
-            dns_apidef.RESOURCE_ATTRIBUTE_MAP[l3.FLOATINGIPS])
+        l3.L3().update_attributes_map(dns_apidef.RESOURCE_ATTRIBUTE_MAP)
         return l3.L3.get_resources()
 
 
@@ -4001,6 +3986,8 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
     _extension_drivers = ['dns']
 
     def setUp(self):
+        self._l3_resource_backup = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
+        self.addCleanup(self._restore)
         ext_mgr = L3TestExtensionManagerWithDNS()
         plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
         cfg.CONF.set_override('extension_drivers',
@@ -4011,6 +3998,9 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         cfg.CONF.set_override('external_dns_driver', 'designate')
         self.mock_client.reset_mock()
         self.mock_admin_client.reset_mock()
+
+    def _restore(self):
+        l3.RESOURCE_ATTRIBUTE_MAP = self._l3_resource_backup
 
     def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, set_context=False, tenant_id=None,

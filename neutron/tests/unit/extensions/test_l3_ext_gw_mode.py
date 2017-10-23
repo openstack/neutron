@@ -14,6 +14,8 @@
 #    under the License.
 #
 
+import copy
+
 import mock
 import netaddr
 from neutron_lib import constants
@@ -365,10 +367,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     def setUp(self, plugin=None, svc_plugins=None, ext_mgr=None):
         # Store l3 resource attribute map as it will be updated
-        self._l3_attribute_map_bk = {}
-        for item in l3.RESOURCE_ATTRIBUTE_MAP:
-            self._l3_attribute_map_bk[item] = (
-                l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
+        self._l3_attribute_map_bk = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
         plugin = plugin or (
             'neutron.tests.unit.extensions.test_l3_ext_gw_mode.'
             'TestDbIntPlugin')

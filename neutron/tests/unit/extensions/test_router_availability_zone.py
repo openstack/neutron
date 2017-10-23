@@ -11,6 +11,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 from neutron_lib.plugins import constants
 
 from neutron.db.availability_zone import router as router_az_db
@@ -61,9 +63,7 @@ class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
                                             service_plugins=service_plugins)
 
     def _backup(self):
-        self.contents_backup = {}
-        for res, attrs in l3.RESOURCE_ATTRIBUTE_MAP.items():
-            self.contents_backup[res] = attrs.copy()
+        self.contents_backup = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
         self.addCleanup(self._restore)
 
     def _restore(self):
