@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 
@@ -64,3 +65,60 @@ class SecGroupTest(base.BaseSecGroupTest):
                             secgrp['id'])
             self.assertIn(secgrp['name'], sec_nm)
             self.assertIsNotNone(secgrp['id'])
+
+
+class SecGroupProtocolTest(base.BaseSecGroupTest):
+
+    @decorators.idempotent_id('282e3681-aa6e-42a7-b05c-c341aa1e3cdf')
+    def test_create_show_delete_security_group_rule_names(self):
+        group_create_body, _ = self._create_security_group()
+        for protocol in base.V4_PROTOCOL_NAMES:
+            self._test_create_show_delete_security_group_rule(
+                security_group_id=group_create_body['security_group']['id'],
+                protocol=protocol,
+                direction=constants.INGRESS_DIRECTION,
+                ethertype=self.ethertype)
+
+    @decorators.idempotent_id('66e47f1f-20b6-4417-8839-3cc671c7afa3')
+    def test_create_show_delete_security_group_rule_integers(self):
+        group_create_body, _ = self._create_security_group()
+        for protocol in base.V4_PROTOCOL_INTS:
+            self._test_create_show_delete_security_group_rule(
+                security_group_id=group_create_body['security_group']['id'],
+                protocol=protocol,
+                direction=constants.INGRESS_DIRECTION,
+                ethertype=self.ethertype)
+
+
+class SecGroupProtocolIPv6Test(SecGroupProtocolTest):
+    _ip_version = constants.IP_VERSION_6
+
+    @decorators.idempotent_id('1f7cc9f5-e0d5-487c-8384-3d74060ab530')
+    def test_create_security_group_rule_with_ipv6_protocol_names(self):
+        group_create_body, _ = self._create_security_group()
+        for protocol in base.V6_PROTOCOL_NAMES:
+            self._test_create_show_delete_security_group_rule(
+                security_group_id=group_create_body['security_group']['id'],
+                protocol=protocol,
+                direction=constants.INGRESS_DIRECTION,
+                ethertype=self.ethertype)
+
+    @decorators.idempotent_id('c7d17b41-3b4e-4add-bb3b-6af59baaaffa')
+    def test_create_security_group_rule_with_ipv6_protocol_legacy_names(self):
+        group_create_body, _ = self._create_security_group()
+        for protocol in base.V6_PROTOCOL_LEGACY:
+            self._test_create_show_delete_security_group_rule(
+                security_group_id=group_create_body['security_group']['id'],
+                protocol=protocol,
+                direction=constants.INGRESS_DIRECTION,
+                ethertype=self.ethertype)
+
+    @decorators.idempotent_id('bcfce0b7-bc96-40ae-9b08-3f6774ee0260')
+    def test_create_security_group_rule_with_ipv6_protocol_integers(self):
+        group_create_body, _ = self._create_security_group()
+        for protocol in base.V6_PROTOCOL_INTS:
+            self._test_create_show_delete_security_group_rule(
+                security_group_id=group_create_body['security_group']['id'],
+                protocol=protocol,
+                direction=constants.INGRESS_DIRECTION,
+                ethertype=self.ethertype)
