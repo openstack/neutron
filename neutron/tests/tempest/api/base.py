@@ -454,6 +454,12 @@ class BaseNetworkTest(test.BaseTestCase):
         cls.projects.append(project)
         return project
 
+    @classmethod
+    def create_security_group(cls, name, **kwargs):
+        body = cls.client.create_security_group(name=name, **kwargs)
+        cls.security_groups.append(body['security_group'])
+        return body['security_group']
+
 
 class BaseAdminNetworkTest(BaseNetworkTest):
 
