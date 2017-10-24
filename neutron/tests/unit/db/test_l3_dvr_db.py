@@ -29,6 +29,7 @@ from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_dvr_db
 from neutron.db import l3_dvrscheduler_db
+from neutron.db.models import agent as agent_model
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
@@ -469,6 +470,39 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self._setup_test_create_floatingip(
                 fip, floatingip, router))
         self.assertTrue(create_fip.called)
+
+    def test_create_fip_agent_gw_port_if_not_exists_with_l3_agent(self):
+        fport_db = {'id': _uuid()}
+        self.mixin._get_agent_gw_ports_exist_for_network = mock.Mock(
+            return_value=fport_db)
+
+        fipagent = agent_model.Agent(
+                binary='foo-agent',
+                host='host',
+                agent_type='L3 agent',
+                topic='foo_topic',
+                configurations='{"agent_mode": "dvr_no_external"}')
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value=fipagent)
+        fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
+                                                self.ctx,
+                                                'network_id',
+                                                'host')
+        self.assertIsNone(fport)
+
+        fipagent = agent_model.Agent(
+                binary='foo-agent',
+                host='host',
+                agent_type='L3 agent',
+                topic='foo_topic',
+                configurations='{"agent_mode": "dvr"}')
+        self.mixin._get_agent_by_type_and_host = mock.Mock(
+            return_value=fipagent)
+        fport = self.mixin.create_fip_agent_gw_port_if_not_exists(
+                                                self.ctx,
+                                                'network_id',
+                                                'host')
+        self.assertIsNotNone(fport)
 
     def test_create_floatingip_agent_gw_port_with_non_dvr_router(self):
         floatingip = {
