@@ -15,6 +15,7 @@
 
 import copy
 
+from neutron_lib.api.definitions import extraroute as xroute_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.utils import helpers
@@ -23,7 +24,6 @@ from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.db import extraroute_db
-from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.extensions import test_l3
@@ -36,7 +36,7 @@ _get_path = test_base._get_path
 class ExtraRouteTestExtensionManager(object):
 
     def get_resources(self):
-        l3.L3().update_attributes_map(extraroute.EXTENDED_ATTRIBUTES_2_0)
+        l3.L3().update_attributes_map(xroute_apidef.RESOURCE_ATTRIBUTE_MAP)
         return l3.L3.get_resources()
 
     def get_actions(self):
@@ -49,14 +49,15 @@ class ExtraRouteTestExtensionManager(object):
 # This plugin class is for tests with plugin that integrates L3.
 class TestExtraRouteIntPlugin(test_l3.TestL3NatIntPlugin,
                               extraroute_db.ExtraRoute_db_mixin):
-    supported_extension_aliases = ["external-net", "router", "extraroute"]
+    supported_extension_aliases = ["external-net", "router",
+                                   xroute_apidef.ALIAS]
 
 
 # A fake l3 service plugin class with extra route capability for
 # plugins that delegate away L3 routing functionality
 class TestExtraRouteL3NatServicePlugin(test_l3.TestL3NatServicePlugin,
                                        extraroute_db.ExtraRoute_db_mixin):
-    supported_extension_aliases = ["router", "extraroute"]
+    supported_extension_aliases = ["router", xroute_apidef.ALIAS]
 
 
 class ExtraRouteDBTestCaseBase(object):

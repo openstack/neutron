@@ -13,61 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api import converters
+from neutron_lib.api.definitions import extraroute as apidef
 from neutron_lib.api import extensions
-from neutron_lib import constants
-from neutron_lib import exceptions as nexception
-
-from neutron._i18n import _
 
 
-# Extra Routes Exceptions
-class InvalidRoutes(nexception.InvalidInput):
-    message = _("Invalid format for routes: %(routes)s, %(reason)s")
-
-
-class RouterInterfaceInUseByRoute(nexception.InUse):
-    message = _("Router interface for subnet %(subnet_id)s on router "
-                "%(router_id)s cannot be deleted, as it is required "
-                "by one or more routes.")
-
-
-class RoutesExhausted(nexception.BadRequest):
-    message = _("Unable to complete operation for %(router_id)s. "
-                "The number of routes exceeds the maximum %(quota)s.")
-
-# Attribute Map
-EXTENDED_ATTRIBUTES_2_0 = {
-    'routers': {
-        'routes': {'allow_post': False, 'allow_put': True,
-                   'validate': {'type:hostroutes': None},
-                   'convert_to': converters.convert_none_to_empty_list,
-                   'is_visible': True,
-                   'default': constants.ATTR_NOT_SPECIFIED},
-    }
-}
-
-
-class Extraroute(extensions.ExtensionDescriptor):
-
-    @classmethod
-    def get_name(cls):
-        return "Neutron Extra Route"
-
-    @classmethod
-    def get_alias(cls):
-        return "extraroute"
-
-    @classmethod
-    def get_description(cls):
-        return "Extra routes configuration for L3 router"
-
-    @classmethod
-    def get_updated(cls):
-        return "2013-02-01T10:00:00-00:00"
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+class Extraroute(extensions.APIExtensionDescriptor):
+    api_definition = apidef

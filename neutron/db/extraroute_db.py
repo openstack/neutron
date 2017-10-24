@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -24,7 +25,6 @@ from neutron.conf.db import extraroute_db
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db import models_v2
-from neutron.extensions import extraroute
 from neutron.extensions import l3
 from neutron.objects import router as l3_obj
 
@@ -68,19 +68,19 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         # so we need to check
         # nexthop belongs to one of cidrs of the router ports
         if not netaddr.all_matching_cidrs(nexthop, cidrs):
-            raise extraroute.InvalidRoutes(
+            raise xroute_exc.InvalidRoutes(
                 routes=routes,
                 reason=_('the nexthop is not connected with router'))
         #Note(nati) nexthop should not be same as fixed_ips
         if nexthop in ips:
-            raise extraroute.InvalidRoutes(
+            raise xroute_exc.InvalidRoutes(
                 routes=routes,
                 reason=_('the nexthop is used by router'))
 
     def _validate_routes(self, context,
                          router_id, routes):
         if len(routes) > cfg.CONF.max_routes:
-            raise extraroute.RoutesExhausted(
+            raise xroute_exc.RoutesExhausted(
                 router_id=router_id,
                 quota=cfg.CONF.max_routes)
 
@@ -139,7 +139,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         extra_routes = self._get_extra_routes_by_router_id(context, router_id)
         for route in extra_routes:
             if netaddr.all_matching_cidrs(route['nexthop'], [subnet_cidr]):
-                raise extraroute.RouterInterfaceInUseByRoute(
+                raise xroute_exc.RouterInterfaceInUseByRoute(
                     router_id=router_id, subnet_id=subnet_id)
 
 
