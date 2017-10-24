@@ -19,6 +19,7 @@ import copy
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -52,7 +53,6 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
-from neutron.extensions import dns
 from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.services.revisions import revision_plugin
@@ -3981,7 +3981,7 @@ class L3TestExtensionManagerWithDNS(L3TestExtensionManager):
         attributes.RESOURCE_ATTRIBUTE_MAP.update(
             l3.RESOURCE_ATTRIBUTE_MAP)
         attributes.RESOURCE_ATTRIBUTE_MAP[l3.FLOATINGIPS].update(
-            dns.EXTENDED_ATTRIBUTES_2_0[l3.FLOATINGIPS])
+            dns_apidef.RESOURCE_ATTRIBUTE_MAP[l3.FLOATINGIPS])
         return l3.L3.get_resources()
 
 

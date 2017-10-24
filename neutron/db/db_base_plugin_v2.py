@@ -75,9 +75,6 @@ LOG = logging.getLogger(__name__)
 # IP allocations being cleaned up by cascade.
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP]
 
-DNS_DOMAIN_DEFAULT = 'openstacklocal.'
-FQDN_MAX_LEN = 255
-
 
 def _check_subnet_not_used(context, subnet_id):
     try:

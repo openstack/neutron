@@ -17,6 +17,7 @@ import math
 import netaddr
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 
@@ -362,10 +363,10 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         num_labels = int(
-            math.floor(dns.FQDN_MAX_LEN / dns.DNS_LABEL_MAX_LEN))
+            math.floor(db_const.FQDN_FIELD_SIZE / constants.DNS_LABEL_MAX_LEN))
         filler_len = int(
-            math.floor(dns.FQDN_MAX_LEN % dns.DNS_LABEL_MAX_LEN))
-        dns_name = (('a' * (dns.DNS_LABEL_MAX_LEN - 1) + '.') *
+            math.floor(db_const.FQDN_FIELD_SIZE % constants.DNS_LABEL_MAX_LEN))
+        dns_name = (('a' * (constants.DNS_LABEL_MAX_LEN - 1) + '.') *
                     num_labels + 'a' * filler_len)
         res = self._test_create_port_with_multiple_ipv4_and_ipv6_subnets(
             dns_name=dns_name)
@@ -436,15 +437,15 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_api_extension_validation_with_bad_dns_names(self):
         num_labels = int(
-            math.floor(dns.FQDN_MAX_LEN / dns.DNS_LABEL_MAX_LEN))
+            math.floor(db_const.FQDN_FIELD_SIZE / constants.DNS_LABEL_MAX_LEN))
         filler_len = int(
-            math.floor(dns.FQDN_MAX_LEN % dns.DNS_LABEL_MAX_LEN))
+            math.floor(db_const.FQDN_FIELD_SIZE % constants.DNS_LABEL_MAX_LEN))
         dns_names = [555, '\f\n\r', '.', '-vm01', '_vm01', 'vm01-',
                     '-vm01.test1', 'vm01.-test1', 'vm01._test1',
                     'vm01.test1-', 'vm01.te$t1', 'vm0#1.test1.',
-                    'vm01.123.', '-' + 'a' * dns.DNS_LABEL_MAX_LEN,
-                    'a' * (dns.DNS_LABEL_MAX_LEN + 1),
-                    ('a' * (dns.DNS_LABEL_MAX_LEN - 1) + '.') *
+                    'vm01.123.', '-' + 'a' * constants.DNS_LABEL_MAX_LEN,
+                    'a' * (constants.DNS_LABEL_MAX_LEN + 1),
+                    ('a' * (constants.DNS_LABEL_MAX_LEN - 1) + '.') *
                     num_labels + 'a' * (filler_len + 1)]
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
@@ -463,25 +464,26 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
             error_message = res.json['NeutronError']['message']
             is_expected_message = (
                 'cannot be converted to lowercase string' in error_message or
-                'not a valid PQDN or FQDN. Reason:' in error_message)
+                'not a valid PQDN or FQDN. Reason:' in error_message or
+                'must be string type' in error_message)
             self.assertTrue(is_expected_message)
 
     def test_api_extension_validation_with_good_dns_names(self):
         cfg.CONF.set_override('dns_domain', 'example.com')
         higher_labels_len = len('example.com.')
         num_labels = int(
-            math.floor((dns.FQDN_MAX_LEN - higher_labels_len) /
-                       dns.DNS_LABEL_MAX_LEN))
+            math.floor((db_const.FQDN_FIELD_SIZE - higher_labels_len) /
+                       constants.DNS_LABEL_MAX_LEN))
         filler_len = int(
-            math.floor((dns.FQDN_MAX_LEN - higher_labels_len) %
-                       dns.DNS_LABEL_MAX_LEN))
+            math.floor((db_const.FQDN_FIELD_SIZE - higher_labels_len) %
+                       constants.DNS_LABEL_MAX_LEN))
         dns_names = ['', 'www.1000.com', 'vM01', 'vm01.example.com.',
                      '8vm01', 'vm-01.example.com.', 'vm01.test',
                      'vm01.test.example.com.', 'vm01.test-100',
                      'vm01.test-100.example.com.',
-                     'a' * dns.DNS_LABEL_MAX_LEN,
-                     ('a' * dns.DNS_LABEL_MAX_LEN) + '.example.com.',
-                     ('a' * (dns.DNS_LABEL_MAX_LEN - 1) + '.') *
+                     'a' * constants.DNS_LABEL_MAX_LEN,
+                     ('a' * constants.DNS_LABEL_MAX_LEN) + '.example.com.',
+                     ('a' * (constants.DNS_LABEL_MAX_LEN - 1) + '.') *
                      num_labels + 'a' * (filler_len - 1)]
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)

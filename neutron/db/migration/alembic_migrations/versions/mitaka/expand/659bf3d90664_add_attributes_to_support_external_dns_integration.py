@@ -26,9 +26,8 @@ revision = '659bf3d90664'
 down_revision = 'c3a73f615e4'
 
 from alembic import op
+from neutron_lib.db import constants
 import sqlalchemy as sa
-
-from neutron.extensions import dns
 
 
 def upgrade():
@@ -37,7 +36,8 @@ def upgrade():
                               sa.String(length=36),
                               nullable=False,
                               index=True),
-                    sa.Column('dns_domain', sa.String(length=dns.FQDN_MAX_LEN),
+                    sa.Column('dns_domain', sa.String(
+                        length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.ForeignKeyConstraint(['network_id'],
                                             ['networks.id'],
@@ -49,15 +49,17 @@ def upgrade():
                               sa.String(length=36),
                               nullable=False,
                               index=True),
-                    sa.Column('dns_name', sa.String(length=dns.FQDN_MAX_LEN),
+                    sa.Column('dns_name', sa.String(
+                        length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
-                    sa.Column('dns_domain', sa.String(length=dns.FQDN_MAX_LEN),
+                    sa.Column('dns_domain', sa.String(
+                        length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.Column('published_dns_name',
-                              sa.String(length=dns.FQDN_MAX_LEN),
+                              sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.Column('published_dns_domain',
-                              sa.String(length=dns.FQDN_MAX_LEN),
+                              sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.ForeignKeyConstraint(['floatingip_id'],
                                             ['floatingips.id'],
@@ -70,16 +72,16 @@ def upgrade():
                               nullable=False,
                               index=True),
                     sa.Column('current_dns_name',
-                              sa.String(length=dns.FQDN_MAX_LEN),
+                              sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.Column('current_dns_domain',
-                              sa.String(length=dns.FQDN_MAX_LEN),
+                              sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.Column('previous_dns_name',
-                              sa.String(length=dns.FQDN_MAX_LEN),
+                              sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.Column('previous_dns_domain',
-                              sa.String(length=dns.FQDN_MAX_LEN),
+                              sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.ForeignKeyConstraint(['port_id'],
                                             ['ports.id'],

@@ -17,6 +17,7 @@ from keystoneauth1 import loading
 from keystoneauth1 import session
 import mock
 import netaddr
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib import context
@@ -25,7 +26,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
 
-from neutron.extensions import dns
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2.extensions import dns_integration
 from neutron.services.externaldns.drivers.designate import driver
@@ -75,9 +75,9 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                 pnet.SEGMENTATION_ID: '2016',
             }
         if dns_domain:
-            net_kwargs[dns.DNSDOMAIN] = DNSDOMAIN
+            net_kwargs[dns_apidef.DNSDOMAIN] = DNSDOMAIN
             net_kwargs['arg_list'] = \
-                net_kwargs.get('arg_list', ()) + (dns.DNSDOMAIN,)
+                net_kwargs.get('arg_list', ()) + (dns_apidef.DNSDOMAIN,)
         res = self._create_network(self.fmt, 'test_network', True,
                                    **net_kwargs)
         network = self.deserialize(self.fmt, res)
@@ -92,13 +92,13 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         port_kwargs = {}
         if dns_name:
             port_kwargs = {
-                'arg_list': (dns.DNSNAME,),
-                dns.DNSNAME: DNSNAME
+                'arg_list': (dns_apidef.DNSNAME,),
+                dns_apidef.DNSNAME: DNSNAME
             }
         if dns_domain_port:
-            port_kwargs[dns.DNSDOMAIN] = PORTDNSDOMAIN
+            port_kwargs[dns_apidef.DNSDOMAIN] = PORTDNSDOMAIN
             port_kwargs['arg_list'] = (port_kwargs.get('arg_list', ()) +
-                (dns.DNSDOMAIN,))
+                (dns_apidef.DNSDOMAIN,))
         res = self._create_port('json', network['network']['id'],
                                 **port_kwargs)
         self.assertEqual(201, res.status_int)
@@ -138,7 +138,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         if new_dns_name is not None:
             body['dns_name'] = new_dns_name
         if new_dns_domain is not None:
-            body[dns.DNSDOMAIN] = new_dns_domain
+            body[dns_apidef.DNSDOMAIN] = new_dns_domain
         body.update(kwargs)
         data = {'port': body}
         req = self.new_update_request('ports', data, port['id'])
@@ -156,9 +156,9 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                          dns_domain_port=False, current_dns_domain=DNSDOMAIN,
                          previous_dns_domain=DNSDOMAIN):
         if dns_name:
-            self.assertEqual(current_dns_name, port[dns.DNSNAME])
+            self.assertEqual(current_dns_name, port[dns_apidef.DNSNAME])
         if dns_domain_port:
-            self.assertTrue(port[dns.DNSDOMAIN])
+            self.assertTrue(port[dns_apidef.DNSDOMAIN])
         is_there_dns_domain = dns_domain or dns_domain_port
         if dns_name and is_there_dns_domain and provider_net and dns_driver:
             self.assertEqual(current_dns_name, dns_data_db['current_dns_name'])
@@ -239,7 +239,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
                 len(expected_delete))
         else:
             if not dns_name:
-                self.assertEqual('', port[dns.DNSNAME])
+                self.assertEqual('', port[dns_apidef.DNSNAME])
             if not (dns_name or dns_domain_port):
                 self.assertIsNone(dns_data_db)
             self.assertFalse(mock_client.recordsets.create.call_args_list)
@@ -494,7 +494,7 @@ class DNSIntegrationTestCaseDefaultDomain(DNSIntegrationTestCase):
                          dns_domain=True, ptr_zones=True, delete_records=False,
                          provider_net=True, dns_driver=True, original_ips=None,
                          current_dns_name=DNSNAME, previous_dns_name=''):
-        self.assertEqual('', port[dns.DNSNAME])
+        self.assertEqual('', port[dns_apidef.DNSNAME])
         fqdn_set = self._generate_dns_assignment(port)
         port_fqdn_set = set([each['fqdn'] for each in port['dns_assignment']])
         self.assertEqual(fqdn_set, port_fqdn_set)
@@ -568,8 +568,8 @@ class DNSDomainPortsTestCase(DNSIntegrationTestCase):
                                                        dns_name=False)
         self._verify_port_dns(port, dns_data_db, dns_name=False,
             dns_domain=False, dns_domain_port=True)
-        self.assertEqual(PORTDNSDOMAIN, dns_data_db[dns.DNSDOMAIN])
-        self.assertEqual(PORTDNSDOMAIN, port[dns.DNSDOMAIN])
+        self.assertEqual(PORTDNSDOMAIN, dns_data_db[dns_apidef.DNSDOMAIN])
+        self.assertEqual(PORTDNSDOMAIN, port[dns_apidef.DNSDOMAIN])
 
     def test_update_port_replace_port_dns_domain(self, *mocks):
         port, dns_data_db = self._create_port_for_test(
@@ -639,10 +639,10 @@ class DNSDomainPortsTestCase(DNSIntegrationTestCase):
         self.assertFalse(dns_data_db['current_dns_domain'])
         self.assertEqual(DNSNAME, dns_data_db['previous_dns_name'])
         self.assertEqual(PORTDNSDOMAIN, dns_data_db['previous_dns_domain'])
-        self.assertEqual(DNSNAME, dns_data_db[dns.DNSNAME])
-        self.assertFalse(dns_data_db[dns.DNSDOMAIN])
-        self.assertEqual(DNSNAME, port[dns.DNSNAME])
-        self.assertFalse(port[dns.DNSDOMAIN])
+        self.assertEqual(DNSNAME, dns_data_db[dns_apidef.DNSNAME])
+        self.assertFalse(dns_data_db[dns_apidef.DNSDOMAIN])
+        self.assertEqual(DNSNAME, port[dns_apidef.DNSNAME])
+        self.assertFalse(port[dns_apidef.DNSDOMAIN])
         self.assertFalse(mock_client.recordsets.create.call_args_list)
         self.assertFalse(mock_admin_client.recordsets.create.call_args_list)
         self.assertEqual(2, mock_client.recordsets.delete.call_count)
@@ -667,10 +667,10 @@ class DNSDomainPortsTestCase(DNSIntegrationTestCase):
             self.assertFalse(dns_data_db['current_dns_domain'])
             self.assertFalse(dns_data_db['previous_dns_name'])
             self.assertFalse(dns_data_db['previous_dns_domain'])
-            self.assertEqual(dns_name, dns_data_db[dns.DNSNAME])
-            self.assertEqual(dns_domain, dns_data_db[dns.DNSDOMAIN])
-        self.assertEqual(dns_name, port[dns.DNSNAME])
-        self.assertEqual(dns_domain, port[dns.DNSDOMAIN])
+            self.assertEqual(dns_name, dns_data_db[dns_apidef.DNSNAME])
+            self.assertEqual(dns_domain, dns_data_db[dns_apidef.DNSDOMAIN])
+        self.assertEqual(dns_name, port[dns_apidef.DNSNAME])
+        self.assertEqual(dns_domain, port[dns_apidef.DNSDOMAIN])
         self.assertFalse(mock_client.recordsets.create.call_args_list)
         self.assertFalse(
             mock_admin_client.recordsets.create.call_args_list)

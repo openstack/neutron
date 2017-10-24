@@ -13,15 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
-from neutron.extensions import dns
 from neutron.extensions import l3
 from neutron.objects import floatingip as fip_obj
 from neutron.objects import network
@@ -61,7 +62,7 @@ class DNSDbMixin(object):
         except ImportError:
             LOG.exception("ImportError exception occurred while loading "
                           "the external DNS service driver")
-            raise dns.ExternalDNSDriverNotFound(
+            raise dns_exc.ExternalDNSDriverNotFound(
                 driver=cfg.CONF.external_dns_driver)
 
     @staticmethod
@@ -77,13 +78,13 @@ class DNSDbMixin(object):
     def _process_dns_floatingip_create_precommit(self, context,
                                                  floatingip_data, req_data):
         # expects to be called within a plugin's session
-        dns_domain = req_data.get(dns.DNSDOMAIN)
+        dns_domain = req_data.get(dns_apidef.DNSDOMAIN)
         if not validators.is_attr_set(dns_domain):
             return
         if not self.dns_driver:
             return
 
-        dns_name = req_data[dns.DNSNAME]
+        dns_name = req_data[dns_apidef.DNSNAME]
         self._validate_floatingip_dns(dns_name, dns_domain)
 
         current_dns_name, current_dns_domain = (
@@ -93,8 +94,8 @@ class DNSDbMixin(object):
         if current_dns_name and current_dns_domain:
             fip_obj.FloatingIPDNS(context,
                 floatingip_id=floatingip_data['id'],
-                dns_name=req_data[dns.DNSNAME],
-                dns_domain=req_data[dns.DNSDOMAIN],
+                dns_name=req_data[dns_apidef.DNSNAME],
+                dns_domain=req_data[dns_apidef.DNSDOMAIN],
                 published_dns_name=current_dns_name,
                 published_dns_domain=current_dns_domain).create()
             dns_actions_data = DNSActionsData(
@@ -118,7 +119,7 @@ class DNSDbMixin(object):
                                                  floatingip_data):
         # expects to be called within a plugin's session
         if not utils.is_extension_supported(self._core_plugin,
-                                            dns.Dns.get_alias()):
+                                            dns_apidef.ALIAS):
             return
         if not self.dns_driver:
             return
@@ -175,7 +176,7 @@ class DNSDbMixin(object):
 
     def _process_dns_floatingip_delete(self, context, floatingip_data):
         if not utils.is_extension_supported(self._core_plugin,
-                                            dns.Dns.get_alias()):
+                                            dns_apidef.ALIAS):
             return
         dns_data_db = fip_obj.FloatingIPDNS.get_object(context,
                 floatingip_id=floatingip_data['id'])
@@ -209,7 +210,7 @@ class DNSDbMixin(object):
         try:
             self.dns_driver.delete_record_set(context, dns_domain, dns_name,
                                               records)
-        except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
+        except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
             LOG.exception("Error deleting Floating IP data from external "
                           "DNS service. Name: '%(name)s'. Domain: "
                           "'%(domain)s'. IP addresses '%(ips)s'. DNS "
@@ -222,9 +223,9 @@ class DNSDbMixin(object):
     def _get_requested_state_for_external_dns_service_create(self, context,
                                                              floatingip_data,
                                                              req_data):
-        fip_dns_name = req_data[dns.DNSNAME]
+        fip_dns_name = req_data[dns_apidef.DNSNAME]
         if fip_dns_name:
-            return fip_dns_name, req_data[dns.DNSDOMAIN]
+            return fip_dns_name, req_data[dns_apidef.DNSDOMAIN]
         if floatingip_data['port_id']:
             return self._get_internal_port_dns_data(context, floatingip_data)
         return None, None
@@ -240,7 +241,7 @@ class DNSDbMixin(object):
         try:
             self.dns_driver.create_record_set(context, dns_domain, dns_name,
                                               records)
-        except (dns.DNSDomainNotFound, dns.DuplicateRecordSet) as e:
+        except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
             LOG.exception("Error publishing floating IP data in external "
                           "DNS service. Name: '%(name)s'. Domain: "
                           "'%(domain)s'. DNS service driver message "

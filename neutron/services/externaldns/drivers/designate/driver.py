@@ -21,10 +21,10 @@ from keystoneauth1.identity.generic import password
 from keystoneauth1 import loading
 from keystoneauth1 import token_endpoint
 from neutron_lib import constants
+from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
 
 from neutron.conf.services import extdns_designate_driver
-from neutron.extensions import dns
 from neutron.services.externaldns import driver
 
 IPV4_PTR_ZONE_PREFIX_MIN_SIZE = 8
@@ -71,7 +71,7 @@ class Designate(driver.ExternalDNSService):
         if (ipv4_ptr_zone_size < IPV4_PTR_ZONE_PREFIX_MIN_SIZE or
             ipv4_ptr_zone_size > IPV4_PTR_ZONE_PREFIX_MAX_SIZE or
             (ipv4_ptr_zone_size % 8) != 0):
-            raise dns.InvalidPTRZoneConfiguration(
+            raise dns_exc.InvalidPTRZoneConfiguration(
                 parameter='ipv4_ptr_zone_size', number='8',
                 maximum=str(IPV4_PTR_ZONE_PREFIX_MAX_SIZE),
                 minimum=str(IPV4_PTR_ZONE_PREFIX_MIN_SIZE))
@@ -79,7 +79,7 @@ class Designate(driver.ExternalDNSService):
         if (ipv6_ptr_zone_size < IPV6_PTR_ZONE_PREFIX_MIN_SIZE or
             ipv6_ptr_zone_size > IPV6_PTR_ZONE_PREFIX_MAX_SIZE or
             (ipv6_ptr_zone_size % 4) != 0):
-            raise dns.InvalidPTRZoneConfiguration(
+            raise dns_exc.InvalidPTRZoneConfiguration(
                 parameter='ipv6_ptr_zone_size', number='4',
                 maximum=str(IPV6_PTR_ZONE_PREFIX_MAX_SIZE),
                 minimum=str(IPV6_PTR_ZONE_PREFIX_MIN_SIZE))
@@ -93,9 +93,9 @@ class Designate(driver.ExternalDNSService):
             if v6:
                 designate.recordsets.create(dns_domain, dns_name, 'AAAA', v6)
         except d_exc.NotFound:
-            raise dns.DNSDomainNotFound(dns_domain=dns_domain)
+            raise dns_exc.DNSDomainNotFound(dns_domain=dns_domain)
         except d_exc.Conflict:
-            raise dns.DuplicateRecordSet(dns_name=dns_name)
+            raise dns_exc.DuplicateRecordSet(dns_name=dns_name)
 
         if not CONF.designate.allow_reverse_dns_lookup:
             return
@@ -165,9 +165,9 @@ class Designate(driver.ExternalDNSService):
             recordsets = designate_client.recordsets.list(
                 dns_domain, criterion={"name": "%s" % name})
         except d_exc.NotFound:
-            raise dns.DNSDomainNotFound(dns_domain=dns_domain)
+            raise dns_exc.DNSDomainNotFound(dns_domain=dns_domain)
         ids = [rec['id'] for rec in recordsets]
         ips = [str(ip) for rec in recordsets for ip in rec['records']]
         if set(ips) != set(records):
-            raise dns.DuplicateRecordSet(dns_name=name)
+            raise dns_exc.DuplicateRecordSet(dns_name=name)
         return ids

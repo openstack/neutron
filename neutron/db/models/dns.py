@@ -10,13 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
-from neutron.extensions import dns
 
 
 class NetworkDNSDomain(model_base.BASEV2):
@@ -85,7 +85,7 @@ class PortDNS(model_base.BASEV2):
     previous_dns_domain = sa.Column(sa.String(255),
                                     nullable=False)
     dns_name = sa.Column(sa.String(255), nullable=False)
-    dns_domain = sa.Column(sa.String(dns.FQDN_MAX_LEN),
+    dns_domain = sa.Column(sa.String(constants.FQDN_FIELD_SIZE),
                            nullable=False,
                            server_default='')
     # Add a relationship to the Port model in order to instruct

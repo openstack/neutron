@@ -21,14 +21,15 @@ down_revision = 'b67e765a3524'
 depends_on = ('a963b38d82f4',)
 
 from alembic import op
-from neutron.extensions import dns
+from neutron_lib.db import constants
 import sqlalchemy as sa
 
 
 ports = sa.Table(
     'ports', sa.MetaData(),
     sa.Column('id', sa.String(length=36), nullable=False),
-    sa.Column('dns_name', sa.String(length=dns.FQDN_MAX_LEN), nullable=True))
+    sa.Column('dns_name', sa.String(length=constants.FQDN_FIELD_SIZE),
+              nullable=True))
 
 
 portdnses = sa.Table('portdnses', sa.MetaData(),

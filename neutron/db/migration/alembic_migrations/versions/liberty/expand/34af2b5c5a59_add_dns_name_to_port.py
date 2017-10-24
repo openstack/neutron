@@ -22,11 +22,10 @@ Create Date: 2015-08-23 00:22:47.618593
 """
 
 from alembic import op
+from neutron_lib.db import constants
 import sqlalchemy as sa
 
 from neutron.db import migration
-from neutron.extensions import dns
-
 
 # revision identifiers, used by Alembic.
 revision = '34af2b5c5a59'
@@ -39,5 +38,5 @@ neutron_milestone = [migration.LIBERTY]
 def upgrade():
     op.add_column('ports',
                   sa.Column('dns_name',
-                            sa.String(length=dns.FQDN_MAX_LEN),
+                            sa.String(length=constants.FQDN_FIELD_SIZE),
                             nullable=True))
