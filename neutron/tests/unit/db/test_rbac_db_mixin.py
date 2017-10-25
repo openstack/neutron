@@ -27,13 +27,13 @@ from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
         self.context = context.get_admin_context()
-        super(NetworkRbacTestcase, self).setUp()
+        super(NetworkRbacTestcase, self).setUp(plugin='ml2')
 
-    def _make_networkrbac(self, network, target):
+    def _make_networkrbac(self, network, target, action='access_as_shared'):
         policy = {'rbac_policy': {'tenant_id': network['network']['tenant_id'],
                                   'object_id': network['network']['id'],
                                   'object_type': 'network',
-                                  'action': 'access_as_shared',
+                                  'action': action,
                                   'target_tenant': target}}
         return policy
 
@@ -52,6 +52,40 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
 
         port = self.plugin.create_port(self.context, test_port)
         return netrbac, port
+
+    def _assert_external_net_state(self, net_id, is_external):
+        req = self.new_show_request('networks', net_id)
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(is_external, res['network']['router:external'])
+
+    def test_create_network_rbac_external(self):
+        with self.network() as ext_net:
+            net_id = ext_net['network']['id']
+            self._assert_external_net_state(net_id, is_external=False)
+            policy = self._make_networkrbac(ext_net,
+                                            '*',
+                                            'access_as_external')
+            self.plugin.create_rbac_policy(self.context, policy)
+            self._assert_external_net_state(net_id, is_external=True)
+
+    def test_update_network_rbac_external_valid(self):
+        orig_target = 'test-tenant-2'
+        new_target = 'test-tenant-3'
+
+        with self.network() as ext_net:
+            policy = self._make_networkrbac(ext_net,
+                                            orig_target,
+                                            'access_as_external')
+            netrbac = self.plugin.create_rbac_policy(self.context, policy)
+            update_policy = {'rbac_policy': {'target_tenant': new_target}}
+
+            netrbac2 = self.plugin.update_rbac_policy(self.context,
+                                                      netrbac['id'],
+                                                      update_policy)
+
+            policy['rbac_policy']['target_tenant'] = new_target
+            for k, v in policy['rbac_policy'].items():
+                self.assertEqual(netrbac2[k], v)
 
     def test_update_networkrbac_valid(self):
         orig_target = 'test-tenant-2'
