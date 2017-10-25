@@ -13,8 +13,6 @@
 #    under the License.
 #
 
-import itertools
-
 import eventlet
 import netaddr
 from neutron_lib.callbacks import events
@@ -441,7 +439,9 @@ class L3NATAgent(ha.AgentMixin,
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']
         for ri in self.router_info.values():
-            ports = itertools.chain(ri.internal_ports, [ri.ex_gw_port])
+            ports = list(ri.internal_ports)
+            if ri.ex_gw_port:
+                ports.append(ri.ex_gw_port)
             port_belongs = lambda p: p['network_id'] == network_id
             if any(port_belongs(p) for p in ports):
                 update = queue.RouterUpdate(
