@@ -13,10 +13,10 @@
 #    under the License.
 
 from neutron_lib.api.definitions import data_plane_status as dps_lib
+from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
 
 from neutron.db import data_plane_status_db as dps_db
-from neutron.plugins.ml2 import driver_api as api
 
 LOG = logging.getLogger(__name__)
 

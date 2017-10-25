@@ -15,12 +15,12 @@
 
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
+from neutron_lib.plugins.ml2 import api
 from neutron_lib.utils import net
 from oslo_log import log as logging
 
 from neutron.db import common_db_mixin
 from neutron.db import portsecurity_db_common as ps_db_common
-from neutron.plugins.ml2 import driver_api as api
 
 LOG = logging.getLogger(__name__)
 

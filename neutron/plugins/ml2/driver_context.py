@@ -15,13 +15,12 @@
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
-from neutron_lib.plugins.ml2 import api as ml2_api
+from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 from oslo_serialization import jsonutils
 import sqlalchemy
 
 from neutron.db import segments_db
-from neutron.plugins.ml2 import driver_api as api
 
 LOG = log.getLogger(__name__)
 
@@ -200,16 +199,16 @@ class PortContext(MechanismDriverContext, api.PortContext):
     def binding_levels(self):
         if self._binding_levels:
             return [{
-                ml2_api.BOUND_DRIVER: level.driver,
-                ml2_api.BOUND_SEGMENT: self._expand_segment(level.segment_id)
+                api.BOUND_DRIVER: level.driver,
+                api.BOUND_SEGMENT: self._expand_segment(level.segment_id)
             } for level in self._binding_levels]
 
     @property
     def original_binding_levels(self):
         if self._original_binding_levels:
             return [{
-                ml2_api.BOUND_DRIVER: level.driver,
-                ml2_api.BOUND_SEGMENT: self._expand_segment(level.segment_id)
+                api.BOUND_DRIVER: level.driver,
+                api.BOUND_SEGMENT: self._expand_segment(level.segment_id)
             } for level in self._original_binding_levels]
 
     @property

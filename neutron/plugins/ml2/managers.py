@@ -19,7 +19,7 @@ from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib import exceptions as exc
-from neutron_lib.plugins.ml2 import api as ml2_api
+from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
@@ -32,7 +32,6 @@ from neutron.db import segments_db
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.extensions import vlantransparent
 from neutron.plugins.ml2.common import exceptions as ml2_exc
-from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
 
 LOG = log.getLogger(__name__)
@@ -95,9 +94,9 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                              for attr in provider.ATTRIBUTES)
 
         if validators.is_attr_set(network_type):
-            segment = {ml2_api.NETWORK_TYPE: network_type,
-                       ml2_api.PHYSICAL_NETWORK: physical_network,
-                       ml2_api.SEGMENTATION_ID: segmentation_id}
+            segment = {api.NETWORK_TYPE: network_type,
+                       api.PHYSICAL_NETWORK: physical_network,
+                       api.SEGMENTATION_ID: segmentation_id}
             self.validate_provider_segment(segment)
             return segment
 
@@ -169,17 +168,17 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 network[attr] = None
         elif len(segments) > 1:
             network[mpnet.SEGMENTS] = [
-                {provider.NETWORK_TYPE: segment[ml2_api.NETWORK_TYPE],
-                 provider.PHYSICAL_NETWORK: segment[ml2_api.PHYSICAL_NETWORK],
-                 provider.SEGMENTATION_ID: segment[ml2_api.SEGMENTATION_ID]}
+                {provider.NETWORK_TYPE: segment[api.NETWORK_TYPE],
+                 provider.PHYSICAL_NETWORK: segment[api.PHYSICAL_NETWORK],
+                 provider.SEGMENTATION_ID: segment[api.SEGMENTATION_ID]}
                 for segment in segments]
         else:
             segment = segments[0]
-            network[provider.NETWORK_TYPE] = segment[ml2_api.NETWORK_TYPE]
+            network[provider.NETWORK_TYPE] = segment[api.NETWORK_TYPE]
             network[provider.PHYSICAL_NETWORK] = segment[
-                ml2_api.PHYSICAL_NETWORK]
+                api.PHYSICAL_NETWORK]
             network[provider.SEGMENTATION_ID] = segment[
-                ml2_api.SEGMENTATION_ID]
+                api.SEGMENTATION_ID]
 
     def initialize(self):
         for network_type, driver in self.drivers.items():
@@ -213,16 +212,16 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def reserve_network_segment(self, context, segment_data):
         """Call type drivers to reserve a network segment."""
         # Validate the data of segment
-        if not validators.is_attr_set(segment_data[ml2_api.NETWORK_TYPE]):
+        if not validators.is_attr_set(segment_data[api.NETWORK_TYPE]):
             msg = _("network_type required")
             raise exc.InvalidInput(error_message=msg)
 
-        net_type = self._get_attribute(segment_data, ml2_api.NETWORK_TYPE)
-        phys_net = self._get_attribute(segment_data, ml2_api.PHYSICAL_NETWORK)
-        seg_id = self._get_attribute(segment_data, ml2_api.SEGMENTATION_ID)
-        segment = {ml2_api.NETWORK_TYPE: net_type,
-                   ml2_api.PHYSICAL_NETWORK: phys_net,
-                   ml2_api.SEGMENTATION_ID: seg_id}
+        net_type = self._get_attribute(segment_data, api.NETWORK_TYPE)
+        phys_net = self._get_attribute(segment_data, api.PHYSICAL_NETWORK)
+        seg_id = self._get_attribute(segment_data, api.SEGMENTATION_ID)
+        segment = {api.NETWORK_TYPE: net_type,
+                   api.PHYSICAL_NETWORK: phys_net,
+                   api.SEGMENTATION_ID: seg_id}
 
         self.validate_provider_segment(segment)
 
@@ -231,7 +230,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             return self.reserve_provider_segment(context, segment)
 
     def is_partial_segment(self, segment):
-        network_type = segment[ml2_api.NETWORK_TYPE]
+        network_type = segment[api.NETWORK_TYPE]
         driver = self.drivers.get(network_type)
         if driver:
             return driver.obj.is_partial_segment(segment)
@@ -240,7 +239,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             raise exc.InvalidInput(error_message=msg)
 
     def validate_provider_segment(self, segment):
-        network_type = segment[ml2_api.NETWORK_TYPE]
+        network_type = segment[api.NETWORK_TYPE]
         driver = self.drivers.get(network_type)
         if driver:
             driver.obj.validate_provider_segment(segment)
@@ -249,7 +248,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             raise exc.InvalidInput(error_message=msg)
 
     def reserve_provider_segment(self, context, segment):
-        network_type = segment.get(ml2_api.NETWORK_TYPE)
+        network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
         if isinstance(driver.obj, api.TypeDriver):
             return driver.obj.reserve_provider_segment(context.session,
@@ -287,7 +286,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             self.release_network_segment(context, segment)
 
     def release_network_segment(self, context, segment):
-        network_type = segment.get(ml2_api.NETWORK_TYPE)
+        network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
         if driver:
             if isinstance(driver.obj, api.TypeDriver):
@@ -301,13 +300,13 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def allocate_dynamic_segment(self, context, network_id, segment):
         """Allocate a dynamic segment using a partial or full segment dict."""
         dynamic_segment = segments_db.get_dynamic_segment(
-            context, network_id, segment.get(ml2_api.PHYSICAL_NETWORK),
-            segment.get(ml2_api.SEGMENTATION_ID))
+            context, network_id, segment.get(api.PHYSICAL_NETWORK),
+            segment.get(api.SEGMENTATION_ID))
 
         if dynamic_segment:
             return dynamic_segment
 
-        driver = self.drivers.get(segment.get(ml2_api.NETWORK_TYPE))
+        driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
         if isinstance(driver.obj, api.TypeDriver):
             dynamic_segment = driver.obj.reserve_provider_segment(
                 context.session, segment)
@@ -322,7 +321,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         """Delete a dynamic segment."""
         segment = segments_db.get_segment_by_id(context, segment_id)
         if segment:
-            driver = self.drivers.get(segment.get(ml2_api.NETWORK_TYPE))
+            driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
             if driver:
                 if isinstance(driver.obj, api.TypeDriver):
                     driver.obj.release_segment(context.session, segment)
@@ -852,7 +851,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         # level to one of the segments we are currently trying to
         # bind. Note that it is OK for the same driver to bind at
         # multiple levels using different segments.
-        segment_ids_to_bind = {s[ml2_api.SEGMENTATION_ID]
+        segment_ids_to_bind = {s[api.SEGMENTATION_ID]
                                for s in segments_to_bind}
         for level in binding_levels:
             if (level.driver == driver and
