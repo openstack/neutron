@@ -18,70 +18,27 @@ import abc
 from neutron_lib.api import converters
 from neutron_lib.api import extensions
 from neutron_lib.db import constants as db_const
-from neutron_lib import exceptions as nexception
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants
 import six
 
-from neutron._i18n import _
 from neutron.api.v2 import resource_helper
 from neutron.conf import quota
 
 
-# L3 Exceptions
-class RouterNotFound(nexception.NotFound):
-    message = _("Router %(router_id)s could not be found")
-
-
-class RouterInUse(nexception.InUse):
-    message = _("Router %(router_id)s %(reason)s")
-
-    def __init__(self, **kwargs):
-        if 'reason' not in kwargs:
-            kwargs['reason'] = "still has ports"
-        super(RouterInUse, self).__init__(**kwargs)
-
-
-class RouterInterfaceNotFound(nexception.NotFound):
-    message = _("Router %(router_id)s does not have "
-                "an interface with id %(port_id)s")
-
-
-class RouterInterfaceNotFoundForSubnet(nexception.NotFound):
-    message = _("Router %(router_id)s has no interface "
-                "on subnet %(subnet_id)s")
-
-
-class RouterInterfaceInUseByFloatingIP(nexception.InUse):
-    message = _("Router interface for subnet %(subnet_id)s on router "
-                "%(router_id)s cannot be deleted, as it is required "
-                "by one or more floating IPs.")
-
-
-class FloatingIPNotFound(nexception.NotFound):
-    message = _("Floating IP %(floatingip_id)s could not be found")
-
-
-class ExternalGatewayForFloatingIPNotFound(nexception.NotFound):
-    message = _("External network %(external_network_id)s is not reachable "
-                "from subnet %(subnet_id)s.  Therefore, cannot associate "
-                "Port %(port_id)s with a Floating IP.")
-
-
-class FloatingIPPortAlreadyAssociated(nexception.InUse):
-    message = _("Cannot associate floating IP %(floating_ip_address)s "
-                "(%(fip_id)s) with port %(port_id)s "
-                "using fixed IP %(fixed_ip)s, as that fixed IP already "
-                "has a floating IP on external network %(net_id)s.")
-
-
-class RouterExternalGatewayInUseByFloatingIp(nexception.InUse):
-    message = _("Gateway cannot be updated for router %(router_id)s, since a "
-                "gateway to external network %(net_id)s is required by one or "
-                "more floating IPs.")
-
-
-class RouterInterfaceAttachmentConflict(nexception.Conflict):
-    message = _("Error %(reason)s while attempting the operation.")
+# TODO(boden): remove these shims on l3 api def consumption
+RouterNotFound = l3_exc.RouterNotFound
+RouterInUse = l3_exc.RouterInUse
+RouterInterfaceNotFound = l3_exc.RouterInterfaceNotFound
+RouterInterfaceNotFoundForSubnet = l3_exc.RouterInterfaceNotFoundForSubnet
+RouterInterfaceInUseByFloatingIP = l3_exc.RouterInterfaceInUseByFloatingIP
+FloatingIPNotFound = l3_exc.FloatingIPNotFound
+ExternalGatewayForFloatingIPNotFound = (
+    l3_exc.ExternalGatewayForFloatingIPNotFound)
+FloatingIPPortAlreadyAssociated = l3_exc.FloatingIPPortAlreadyAssociated
+RouterExternalGatewayInUseByFloatingIp = (
+    l3_exc.RouterExternalGatewayInUseByFloatingIp)
+RouterInterfaceAttachmentConflict = l3_exc.RouterInterfaceAttachmentConflict
 
 
 ROUTER = 'router'
