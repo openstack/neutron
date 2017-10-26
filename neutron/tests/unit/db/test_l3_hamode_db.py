@@ -24,6 +24,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
 from neutron_lib.objects import exceptions
 from neutron_lib.plugins import constants as plugin_constants
@@ -43,7 +44,6 @@ from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3ha as l3ha_model
-from neutron.extensions import l3
 from neutron.objects import l3_hamode
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
@@ -279,7 +279,7 @@ class L3HATestCase(L3HATestFramework):
     def test_ha_router_delete_with_distributed(self):
         router = self._create_router(ha=True, distributed=True)
         self.plugin.delete_router(self.admin_ctx, router['id'])
-        self.assertRaises(l3.RouterNotFound, self.plugin._get_router,
+        self.assertRaises(l3_exc.RouterNotFound, self.plugin._get_router,
                           self.admin_ctx, router['id'])
 
     def test_migration_from_ha(self):
@@ -1064,7 +1064,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         self.plugin.add_router_interface(self.admin_ctx,
                                          router['id'],
                                          interface_info)
-        self.assertRaises(l3.RouterInUse, self.plugin.delete_router,
+        self.assertRaises(l3_exc.RouterInUse, self.plugin.delete_router,
                           self.admin_ctx, router['id'])
         bindings = self.plugin.get_ha_router_port_bindings(
             self.admin_ctx, [router['id']])

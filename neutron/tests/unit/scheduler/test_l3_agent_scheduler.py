@@ -21,6 +21,7 @@ import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context as n_context
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -37,7 +38,6 @@ from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
-from neutron.extensions import l3
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
 from neutron.objects import agent as agent_obj
@@ -1399,7 +1399,8 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         with mock.patch.object(self.plugin.router_scheduler, 'bind_router'):
             with mock.patch.object(
                     self.plugin, 'add_ha_port',
-                    side_effect=l3.RouterNotFound(router_id='foo_router')),\
+                    side_effect=l3_exc.RouterNotFound(
+                        router_id='foo_router')),\
                     mock.patch.object(
                         self.plugin, 'safe_delete_ha_network') as sd_ha_net:
                 self.plugin.router_scheduler.create_ha_port_and_bind(

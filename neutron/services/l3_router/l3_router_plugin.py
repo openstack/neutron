@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.services import base as service_base
@@ -36,7 +37,6 @@ from neutron.db import l3_gwmode_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
 from neutron.db.models import l3 as l3_models
-from neutron.extensions import l3
 from neutron.quota import resource_registry
 from neutron import service
 from neutron.services.l3_router.service_providers import driver_controller
@@ -153,6 +153,6 @@ class L3RouterPlugin(service_base.ServicePluginBase,
             initial_status=n_const.FLOATINGIP_STATUS_DOWN)
 
     @staticmethod
-    @resource_extend.extends([l3.ROUTERS])
+    @resource_extend.extends([l3_apidef.ROUTERS])
     def add_flavor_id(router_res, router_db):
         router_res['flavor_id'] = router_db['flavor_id']

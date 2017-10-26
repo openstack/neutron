@@ -14,11 +14,9 @@
 #    under the License.
 #
 
-import copy
-
 import mock
 import netaddr
-from neutron_lib.api.definitions import l3_ext_gw_mode as l3gwm_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants
 from neutron_lib import context as nctx
 from neutron_lib.plugins import directory
@@ -58,10 +56,6 @@ FAKE_ROUTER_PORT_MAC = 'bb:bb:bb:bb:bb:bb'
 class TestExtensionManager(object):
 
     def get_resources(self):
-        # Simulate extension of L3 attribute map
-        for key in l3.RESOURCE_ATTRIBUTE_MAP.keys():
-            l3.RESOURCE_ATTRIBUTE_MAP[key].update(
-                l3gwm_apidef.RESOURCE_ATTRIBUTE_MAP.get(key, {}))
         return l3.L3.get_resources()
 
     def get_actions(self):
@@ -303,14 +297,14 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
     def test_make_router_dict_no_ext_gw(self):
         self._reset_ext_gw()
         router_dict = self.target_object._make_router_dict(self.router)
-        self.assertIsNone(router_dict[l3.EXTERNAL_GW_INFO])
+        self.assertIsNone(router_dict[l3_apidef.EXTERNAL_GW_INFO])
 
     def test_make_router_dict_with_ext_gw(self):
         router_dict = self.target_object._make_router_dict(self.router)
         self.assertEqual({'network_id': self.ext_net_id,
                           'enable_snat': True,
                           'external_fixed_ips': []},
-                         router_dict[l3.EXTERNAL_GW_INFO])
+                         router_dict[l3_apidef.EXTERNAL_GW_INFO])
 
     def test_make_router_dict_with_ext_gw_snat_disabled(self):
         self.router.enable_snat = False
@@ -318,7 +312,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.assertEqual({'network_id': self.ext_net_id,
                           'enable_snat': False,
                           'external_fixed_ips': []},
-                         router_dict[l3.EXTERNAL_GW_INFO])
+                         router_dict[l3_apidef.EXTERNAL_GW_INFO])
 
     def test_build_routers_list_no_ext_gw(self):
         self._reset_ext_gw()
@@ -368,8 +362,6 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                            test_l3.L3NatTestCaseMixin):
 
     def setUp(self, plugin=None, svc_plugins=None, ext_mgr=None):
-        # Store l3 resource attribute map as it will be updated
-        self._l3_attribute_map_bk = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
         plugin = plugin or (
             'neutron.tests.unit.extensions.test_l3_ext_gw_mode.'
             'TestDbIntPlugin')
@@ -379,10 +371,6 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         super(ExtGwModeIntTestCase, self).setUp(plugin=plugin,
                                                 ext_mgr=ext_mgr,
                                                 service_plugins=svc_plugins)
-        self.addCleanup(self.restore_l3_attribute_map)
-
-    def restore_l3_attribute_map(self):
-        l3.RESOURCE_ATTRIBUTE_MAP = self._l3_attribute_map_bk
 
     def _set_router_external_gateway(self, router_id, network_id,
                                      snat_enabled=None,
@@ -531,9 +519,9 @@ class ExtGwModeSepTestCase(ExtGwModeIntTestCase):
     def setUp(self, plugin=None):
         # Store l3 resource attribute map as it will be updated
         self._l3_attribute_map_bk = {}
-        for item in l3.RESOURCE_ATTRIBUTE_MAP:
+        for item in l3_apidef.RESOURCE_ATTRIBUTE_MAP:
             self._l3_attribute_map_bk[item] = (
-                l3.RESOURCE_ATTRIBUTE_MAP[item].copy())
+                l3_apidef.RESOURCE_ATTRIBUTE_MAP[item].copy())
         plugin = plugin or (
             'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin')
         # the L3 service plugin
@@ -544,4 +532,3 @@ class ExtGwModeSepTestCase(ExtGwModeIntTestCase):
         cfg.CONF.set_default('allow_overlapping_ips', True)
         super(ExtGwModeSepTestCase, self).setUp(plugin=plugin,
                                                 svc_plugins=svc_plugins)
-        self.addCleanup(self.restore_l3_attribute_map)

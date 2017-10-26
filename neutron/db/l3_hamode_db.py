@@ -25,6 +25,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
 from neutron_lib.objects import exceptions as obj_base
 from oslo_config import cfg
@@ -47,7 +48,6 @@ from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
 from neutron.db.models import l3ha as l3ha_model
-from neutron.extensions import l3
 from neutron.objects import base
 from neutron.objects import l3_hamode
 from neutron.objects import router as l3_obj
@@ -258,7 +258,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                         'Failed to create HA router agent PortBinding, '
                         'Router %s has already been removed '
                         'by concurrent operation', router_id)
-                    raise l3.RouterNotFound(router_id=router_id)
+                    raise l3_exc.RouterNotFound(router_id=router_id)
 
     def add_ha_port(self, context, router_id, network_id, tenant_id):
         # NOTE(kevinbenton): we have to block any ongoing transactions because

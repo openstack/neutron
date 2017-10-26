@@ -12,11 +12,11 @@
 # under the License.
 #
 
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
-from neutron.extensions import l3
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import policy as policy_object
 
@@ -26,7 +26,7 @@ class FloatingQoSDbMixin(object):
     """Mixin class to enable floating IP's QoS extra attributes."""
 
     @staticmethod
-    @resource_extend.extends([l3.FLOATINGIPS])
+    @resource_extend.extends([l3_apidef.FLOATINGIPS])
     def _extend_extra_fip_dict(fip_res, fip_db):
         if fip_db.get('qos_policy_binding'):
             fip_res[qos_consts.QOS_POLICY_ID] = (

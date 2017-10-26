@@ -19,8 +19,8 @@ import copy
 
 import mock
 import netaddr
-from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -29,6 +29,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -623,7 +624,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.extension_called = True
 
         resource_extend.register_funcs(
-            l3.ROUTERS, [_extend_router_dict_test_attr])
+            l3_apidef.ROUTERS, [_extend_router_dict_test_attr])
         self.assertFalse(self.extension_called)
         with self.router():
             self.assertTrue(self.extension_called)
@@ -897,7 +898,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 plugin = directory.get_plugin(plugin_constants.L3)
                 mock.patch.object(
                     plugin, 'update_router',
-                    side_effect=l3.RouterNotFound(router_id='1')).start()
+                    side_effect=l3_exc.RouterNotFound(router_id='1')).start()
                 # ensure the router disappearing doesn't interfere with subnet
                 # creation
                 self._create_subnet(self.fmt, net_id=n['network']['id'],
@@ -2985,7 +2986,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         if first_router_id:
             return first_router_id
 
-        raise l3.ExternalGatewayForFloatingIPNotFound(
+        raise l3_exc.ExternalGatewayForFloatingIPNotFound(
             subnet_id=internal_subnet['id'],
             external_network_id=external_network_id,
             port_id=internal_port['id'])
@@ -3646,7 +3647,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
     def test_router_create_event_exception_preserved(self):
         # this exception should be propagated out of the callback and
         # converted into its API equivalent of 404
-        e404 = mock.Mock(side_effect=l3.RouterNotFound(router_id='1'))
+        e404 = mock.Mock(side_effect=l3_exc.RouterNotFound(router_id='1'))
         registry.subscribe(e404, resources.ROUTER, events.PRECOMMIT_CREATE)
         res = self._create_router(self.fmt, 'tenid')
         self.assertEqual(exc.HTTPNotFound.code, res.status_int)
@@ -3668,7 +3669,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
     def test_router_update_event_exception_preserved(self):
         # this exception should be propagated out of the callback and
         # converted into its API equivalent of 404
-        e404 = mock.Mock(side_effect=l3.RouterNotFound(router_id='1'))
+        e404 = mock.Mock(side_effect=l3_exc.RouterNotFound(router_id='1'))
         registry.subscribe(e404, resources.ROUTER, events.PRECOMMIT_UPDATE)
         with self.router(name='a') as r:
             self._update('routers', r['router']['id'],
@@ -3689,7 +3690,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
     def test_router_delete_event_exception_preserved(self):
         # this exception should be propagated out of the callback and
         # converted into its API equivalent of 409
-        e409 = mock.Mock(side_effect=l3.RouterInUse(router_id='1'))
+        e409 = mock.Mock(side_effect=l3_exc.RouterInUse(router_id='1'))
         registry.subscribe(e409, resources.ROUTER, events.PRECOMMIT_DELETE)
         with self.router() as r:
             self._delete('routers', r['router']['id'],
@@ -3997,7 +3998,6 @@ class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase,
 class L3TestExtensionManagerWithDNS(L3TestExtensionManager):
 
     def get_resources(self):
-        l3.L3().update_attributes_map(dns_apidef.RESOURCE_ATTRIBUTE_MAP)
         return l3.L3.get_resources()
 
 
@@ -4017,8 +4017,6 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
     _extension_drivers = ['dns']
 
     def setUp(self):
-        self._l3_resource_backup = copy.deepcopy(l3.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self._restore)
         ext_mgr = L3TestExtensionManagerWithDNS()
         plugin = 'neutron.plugins.ml2.plugin.Ml2Plugin'
         cfg.CONF.set_override('extension_drivers',
@@ -4029,9 +4027,6 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         cfg.CONF.set_override('external_dns_driver', 'designate')
         self.mock_client.reset_mock()
         self.mock_admin_client.reset_mock()
-
-    def _restore(self):
-        l3.RESOURCE_ATTRIBUTE_MAP = self._l3_resource_backup
 
     def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, set_context=False, tenant_id=None,

@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -24,7 +25,6 @@ from neutron.common import utils
 from neutron.conf.db import extraroute_db
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
-from neutron.extensions import l3
 from neutron.objects import router as l3_obj
 
 
@@ -38,7 +38,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to support extra route configuration on router."""
 
     @staticmethod
-    @resource_extend.extends([l3.ROUTERS])
+    @resource_extend.extends([l3_apidef.ROUTERS])
     def _extend_router_dict_extraroute(router_res, router_db):
         router_res['routes'] = (ExtraRoute_dbonly_mixin.
                                 _make_extra_route_list(

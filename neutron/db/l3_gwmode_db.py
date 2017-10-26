@@ -13,6 +13,7 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import l3 as l3_apidef
 from oslo_config import cfg
 import sqlalchemy as sa
 from sqlalchemy import sql
@@ -21,13 +22,10 @@ from neutron.conf.db import l3_gwmode_db
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
-from neutron.extensions import l3
 
 
 l3_gwmode_db.register_db_l3_gwmode_opts()
 
-
-EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 
 # Modify the Router Data Model adding the enable_snat attribute
 setattr(l3_models.Router, 'enable_snat',
@@ -40,11 +38,11 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to add configurable gateway modes."""
 
     @staticmethod
-    @resource_extend.extends([l3.ROUTERS])
+    @resource_extend.extends([l3_apidef.ROUTERS])
     def _extend_router_dict_gw_mode(router_res, router_db):
         if router_db.gw_port_id:
             nw_id = router_db.gw_port['network_id']
-            router_res[EXTERNAL_GW_INFO] = {
+            router_res[l3_apidef.EXTERNAL_GW_INFO] = {
                 'network_id': nw_id,
                 'enable_snat': router_db.enable_snat,
                 'external_fixed_ips': [
@@ -84,7 +82,8 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             if gw_port_id and gw_ports.get(gw_port_id):
                 rtr['gw_port'] = gw_ports[gw_port_id]
                 # Add enable_snat key
-                rtr['enable_snat'] = rtr[EXTERNAL_GW_INFO]['enable_snat']
+                rtr['enable_snat'] = rtr[
+                    l3_apidef.EXTERNAL_GW_INFO]['enable_snat']
         return routers
 
 

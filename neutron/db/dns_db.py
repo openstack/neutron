@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import dns as dns_exc
@@ -23,7 +24,6 @@ from oslo_log import log as logging
 from neutron._i18n import _
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
-from neutron.extensions import l3
 from neutron.objects import floatingip as fip_obj
 from neutron.objects import network
 from neutron.objects import ports as port_obj
@@ -66,7 +66,7 @@ class DNSDbMixin(object):
                 driver=cfg.CONF.external_dns_driver)
 
     @staticmethod
-    @resource_extend.extends([l3.FLOATINGIPS])
+    @resource_extend.extends([l3_apidef.FLOATINGIPS])
     def _extend_floatingip_dict_dns(floatingip_res, floatingip_db):
         floatingip_res['dns_domain'] = ''
         floatingip_res['dns_name'] = ''
