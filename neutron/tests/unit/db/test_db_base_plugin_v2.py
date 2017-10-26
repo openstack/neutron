@@ -6652,6 +6652,7 @@ class DbOperationBoundMixin(object):
 
     def setUp(self, *args, **kwargs):
         super(DbOperationBoundMixin, self).setUp(*args, **kwargs)
+        self.useFixture(tools.AttributeMapMemento())
         self._recorded_statements = []
 
         def _event_incrementer(conn, clauseelement, *args, **kwargs):

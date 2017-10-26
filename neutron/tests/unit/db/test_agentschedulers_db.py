@@ -30,18 +30,15 @@ from neutron.api import extensions
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.api.v2 import attributes
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
-from neutron.extensions import agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.tests.common import helpers
 from neutron.tests import fake_notifier
-from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.extensions import test_agent
@@ -231,7 +228,6 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
                  'TestL3NatAgentSchedulingServicePlugin')
 
     def setUp(self):
-        self.useFixture(tools.AttributeMapMemento())
         if self.l3_plugin:
             service_plugins = {
                 'l3_plugin_name': self.l3_plugin,
@@ -253,12 +249,6 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            agent.RESOURCE_ATTRIBUTE_MAP)
         self.l3plugin = directory.get_plugin(plugin_constants.L3)
         self.l3_notify_p = mock.patch(
             'neutron.extensions.l3agentscheduler.notify')
@@ -1293,7 +1283,6 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                    AgentSchedulerTestMixIn,
                                    test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
-        self.useFixture(tools.AttributeMapMemento())
         super(OvsDhcpAgentNotifierTestCase, self).setUp('ml2')
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
@@ -1306,12 +1295,6 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            agent.RESOURCE_ATTRIBUTE_MAP)
         fake_notifier.reset()
 
     def test_network_add_to_dhcp_agent_notification(self):
@@ -1463,8 +1446,6 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         self.dhcp_notifier_cls = self.dhcp_notifier_cls_p.start()
         self.dhcp_notifier_cls.return_value = self.dhcp_notifier
 
-        self.useFixture(tools.AttributeMapMemento())
-
         if self.l3_plugin:
             service_plugins = {
                 'l3_plugin_name': self.l3_plugin,
@@ -1478,12 +1459,6 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.adminContext = context.get_admin_context()
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            agent.RESOURCE_ATTRIBUTE_MAP)
         fake_notifier.reset()
 
     def test_router_add_to_l3_agent_notification(self):

@@ -23,12 +23,10 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
-from neutron.api.v2 import attributes
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import agent
 from neutron.tests.common import helpers
-from neutron.tests import tools
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -46,12 +44,6 @@ LBAAS_HOSTB = 'hostb'
 class AgentTestExtensionManager(object):
 
     def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            agent.RESOURCE_ATTRIBUTE_MAP)
         return agent.Agent.get_resources()
 
     def get_actions(self):
@@ -134,7 +126,6 @@ class AgentDBTestCase(AgentDBTestMixIn,
         plugin = 'neutron.tests.unit.extensions.test_agent.TestAgentPlugin'
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
-        self.useFixture(tools.AttributeMapMemento())
         ext_mgr = AgentTestExtensionManager()
         super(AgentDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
         self.adminContext = context.get_admin_context()

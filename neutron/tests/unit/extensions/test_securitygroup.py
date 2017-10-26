@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import contextlib
+import copy
 
 import mock
 from neutron_lib.api import validators
@@ -26,7 +27,6 @@ import oslo_db.exception as exc
 import testtools
 import webob.exc
 
-from neutron.api.v2 import attributes as attr
 from neutron.common import exceptions as n_exc
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
@@ -55,12 +55,6 @@ class SecurityGroupTestExtensionManager(object):
                 ext_sg.RESOURCE_ATTRIBUTE_MAP[ext_sg.SECURITYGROUPRULES])
             sg_rule_attr_desc = ext_res[ext_sg.SECURITYGROUPRULES]
             existing_sg_rule_attr_map.update(sg_rule_attr_desc)
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attr.RESOURCE_ATTRIBUTE_MAP.update(
-            ext_sg.RESOURCE_ATTRIBUTE_MAP)
         return ext_sg.Securitygroup.get_resources()
 
     def get_actions(self):
@@ -247,10 +241,15 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
 class SecurityGroupDBTestCase(SecurityGroupsTestCase):
     def setUp(self, plugin=None, ext_mgr=None):
+        self._backup = copy.deepcopy(ext_sg.RESOURCE_ATTRIBUTE_MAP)
+        self.addCleanup(self._restore)
         plugin = plugin or DB_PLUGIN_KLASS
         ext_mgr = ext_mgr or SecurityGroupTestExtensionManager()
         super(SecurityGroupDBTestCase,
               self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+
+    def _restore(self):
+        ext_sg.RESOURCE_ATTRIBUTE_MAP = self._backup
 
 
 class TestSecurityGroups(SecurityGroupDBTestCase):

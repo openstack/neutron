@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib import context
@@ -38,6 +40,8 @@ class PortSecurityTestCase(
     test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=None):
+        self._backup = copy.deepcopy(ext_sg.RESOURCE_ATTRIBUTE_MAP)
+        self.addCleanup(self._restore)
         ext_mgr = (
             test_securitygroup.SecurityGroupTestExtensionManager())
         super(PortSecurityTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
@@ -46,6 +50,9 @@ class PortSecurityTestCase(
         plugin_obj = directory.get_plugin()
         self._skip_security_group = ('security-group' not in
                                      plugin_obj.supported_extension_aliases)
+
+    def _restore(self):
+        ext_sg.RESOURCE_ATTRIBUTE_MAP = self._backup
 
 
 class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,

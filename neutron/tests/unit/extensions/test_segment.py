@@ -31,7 +31,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
-from neutron.api.v2 import attributes
 from neutron.common import exceptions as neutron_exc
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import agents_db
@@ -62,12 +61,6 @@ HTTP_NOT_FOUND = 404
 class SegmentTestExtensionManager(object):
 
     def get_resources(self):
-        # Add the resources to the global attribute map
-        # This is done here as the setup process won't
-        # initialize the main API router which extends
-        # the global attribute map
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(
-            ext_segment.RESOURCE_ATTRIBUTE_MAP)
         return ext_segment.Segment.get_resources()
 
     def get_actions(self):
