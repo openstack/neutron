@@ -17,6 +17,7 @@ import itertools
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import exceptions as lib_exc
 from six import add_metaclass
 from six import with_metaclass
@@ -299,7 +300,7 @@ class RbacNeutronMetaclass(type):
         for e in (events.BEFORE_CREATE, events.BEFORE_UPDATE,
                   events.BEFORE_DELETE):
             registry.subscribe(class_instance.validate_rbac_policy_change,
-                               rbac_db_mixin.RBAC_POLICY, e)
+                               resources.RBAC_POLICY, e)
 
     @staticmethod
     def validate_existing_attrs(cls_name, dct):

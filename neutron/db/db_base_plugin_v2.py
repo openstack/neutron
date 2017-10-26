@@ -168,9 +168,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             db_api.sqla_listen(models_v2.Port.status, 'set',
                                self.nova_notifier.record_port_status_changed)
 
-    @registry.receives(rbac_mixin.RBAC_POLICY, [events.BEFORE_CREATE,
-                                                events.BEFORE_UPDATE,
-                                                events.BEFORE_DELETE])
+    @registry.receives(resources.RBAC_POLICY, [events.BEFORE_CREATE,
+                                               events.BEFORE_UPDATE,
+                                               events.BEFORE_DELETE])
     @db_api.retry_if_session_inactive()
     def validate_network_rbac_policy_change(self, resource, event, trigger,
                                             context, object_type, policy,

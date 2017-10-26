@@ -16,6 +16,7 @@
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions as c_exc
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
 from sqlalchemy.orm import exc
@@ -26,9 +27,6 @@ from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import rbac_db_models as models
 from neutron.extensions import rbac as ext_rbac
-
-# resource name using in callbacks
-RBAC_POLICY = 'rbac-policy'
 
 
 class RbacPluginMixin(common_db_mixin.CommonDbMixin):
@@ -41,7 +39,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
     def create_rbac_policy(self, context, rbac_policy):
         e = rbac_policy['rbac_policy']
         try:
-            registry.notify(RBAC_POLICY, events.BEFORE_CREATE, self,
+            registry.notify(resources.RBAC_POLICY, events.BEFORE_CREATE, self,
                             context=context, object_type=e['object_type'],
                             policy=e)
         except c_exc.CallbackFailure as e:
@@ -71,7 +69,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         entry = self._get_rbac_policy(context, id)
         object_type = entry['object_type']
         try:
-            registry.notify(RBAC_POLICY, events.BEFORE_UPDATE, self,
+            registry.notify(resources.RBAC_POLICY, events.BEFORE_UPDATE, self,
                             context=context, policy=entry,
                             object_type=object_type, policy_update=pol)
         except c_exc.CallbackFailure as ex:
@@ -86,7 +84,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         entry = self._get_rbac_policy(context, id)
         object_type = entry['object_type']
         try:
-            registry.notify(RBAC_POLICY, events.BEFORE_DELETE, self,
+            registry.notify(resources.RBAC_POLICY, events.BEFORE_DELETE, self,
                             context=context, object_type=object_type,
                             policy=entry)
         except c_exc.CallbackFailure as ex:
@@ -94,7 +92,7 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
                                            details=ex)
         with context.session.begin(subtransactions=True):
             context.session.delete(entry)
-        registry.notify(RBAC_POLICY, events.AFTER_DELETE, self,
+        registry.notify(resources.RBAC_POLICY, events.AFTER_DELETE, self,
                         context=context, object_type=object_type,
                         policy=entry)
         self.object_type_cache.pop(id, None)
