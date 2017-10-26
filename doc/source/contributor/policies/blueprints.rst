@@ -151,8 +151,16 @@ The workflow for the life an RFE in Launchpad is as follows:
 * In either case (a spec being required or not), once the discussion has
   happened and there is positive consensus on the RFE, the report is 'approved',
   and its tag will move from 'rfe' to 'rfe-approved'.
-* At this point, the RFE needs resources, and if none are identified for
-  some time the report will be marked incomplete.
+* An RFE can be occasionaly marked as 'rfe-postponed' if the team identifies
+  a dependency between the proposed RFE and other pending tasks that prevent
+  the RFE from being worked on immediately.
+* Once an RFE is approved, it needs volunteers. Approved RFEs that do not have an
+  assignee but sound relatively simple or limited in scope (e.g. the addition of
+  a new API with no ramification in the plugin backends), should be promoted
+  during team meetings or the ML so that volunteers can pick them up and get
+  started with neutron development. The team will regularly scan 'rfe-approved'
+  or 'rfe-postponed' RFEs to see what their latest status is and mark them
+  incomplete if no assignees can be found, or they are no longer relevant.
 * As for setting the milestone (both for RFE bugs or blueprints), the current
   milestone is always chosen, assuming that work will start as soon as the feature
   is approved. Work that fails to complete by the defined milestone will roll
