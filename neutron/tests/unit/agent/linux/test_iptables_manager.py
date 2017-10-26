@@ -16,6 +16,7 @@
 import os
 import sys
 
+import fixtures
 import mock
 from oslo_config import cfg
 import testtools
@@ -368,14 +369,29 @@ MANGLE_RESTORE_DUMP = _generate_mangle_restore_dump(IPTABLES_ARG)
 RAW_RESTORE_DUMP = _generate_raw_restore_dump(IPTABLES_ARG)
 
 
+class IptablesFixture(fixtures.Fixture):
+    def _setUp(self):
+        # We MUST save and restore use_table_lock because it is a class
+        # attribute and could change state in some tests, which can cause
+        # the other iptables_manager test cases to randomly fail due to
+        # race conditions.
+        self.use_table_lock = iptables_manager.IptablesManager.use_table_lock
+        iptables_manager.IptablesManager.use_table_lock = False
+        self.addCleanup(self._reset)
+
+    def _reset(self):
+        iptables_manager.IptablesManager.use_table_lock = self.use_table_lock
+
+
 class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(IptablesManagerStateFulTestCase, self).setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         cfg.CONF.set_override('report_interval', 30, 'AGENT')
+        self.execute = mock.patch.object(linux_utils, "execute").start()
         self.iptables = iptables_manager.IptablesManager()
-        self.execute = mock.patch.object(self.iptables, "execute").start()
+        self.useFixture(IptablesFixture())
 
     def test_binary_name(self):
         expected = os.path.basename(sys.argv[0])[:16]
@@ -1068,6 +1084,42 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             'following set of iptables rules:\n%s'),
             '\n'.join(logged)
         )
+
+    def test_iptables_use_table_lock(self):
+        # Under normal operation, if we do call iptables-restore with a -w
+        # and it succeeds, the next call will only use -w.
+        PE_error = linux_utils.ProcessExecutionError(
+                       "", iptables_manager.XTABLES_RESOURCE_PROBLEM_CODE)
+        self.execute.side_effect = [FILTER_DUMP, PE_error, None,
+                                    FILTER_DUMP, None,
+                                    FILTER_DUMP, None]
+        self.iptables._apply_synchronized()
+        self.assertEqual(3, self.execute.call_count)
+        self.execute.assert_has_calls(
+            [mock.call(['iptables-save'], run_as_root=True),
+             mock.call(['iptables-restore', '-n'],
+                       process_input=mock.ANY, run_as_root=True,
+                       log_fail_as_error=False),
+             mock.call(['iptables-restore', '-n', '-w', '10'],
+                       process_input=mock.ANY, run_as_root=True)])
+
+        self.execute.reset_mock()
+        self.iptables._apply_synchronized()
+        self.assertEqual(2, self.execute.call_count)
+        self.execute.assert_has_calls(
+            [mock.call(['iptables-save'], run_as_root=True),
+             mock.call(['iptables-restore', '-n', '-w', '10'],
+                       process_input=mock.ANY, run_as_root=True)])
+
+        # Another instance of the class should behave similarly now
+        self.execute.reset_mock()
+        iptm = iptables_manager.IptablesManager()
+        iptm._apply_synchronized()
+        self.assertEqual(2, self.execute.call_count)
+        self.execute.assert_has_calls(
+            [mock.call(['iptables-save'], run_as_root=True),
+             mock.call(['iptables-restore', '-n', '-w', '10'],
+                       process_input=mock.ANY, run_as_root=True)])
 
     def test_get_traffic_counters_chain_notexists(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
