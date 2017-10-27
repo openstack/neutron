@@ -669,7 +669,7 @@ class OVSBridge(BaseOVS):
         self._set_egress_bw_limit_for_port(
             port_name, 0, 0)
 
-    def _find_qos(self, port_name):
+    def find_qos(self, port_name):
         qos = self.ovsdb.db_find(
             'QoS',
             ('external_ids', '=', {'id': port_name}),
@@ -677,7 +677,7 @@ class OVSBridge(BaseOVS):
         if qos:
             return qos[0]
 
-    def _find_queue(self, port_name, queue_type):
+    def find_queue(self, port_name, queue_type):
         queues = self.ovsdb.db_find(
             'Queue',
             ('external_ids', '=', {'id': port_name,
@@ -723,8 +723,8 @@ class OVSBridge(BaseOVS):
             'max-rate': max_bw_in_bits,
             'burst': max_burst_in_bits,
         }
-        qos = self._find_qos(port_name)
-        queue = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
+        qos = self.find_qos(port_name)
+        queue = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
         qos_uuid = qos['_uuid'] if qos else None
         queue_uuid = queue['_uuid'] if queue else None
         with self.ovsdb.transaction(check_error=True) as txn:
@@ -743,7 +743,7 @@ class OVSBridge(BaseOVS):
     def get_ingress_bw_limit_for_port(self, port_name):
         max_kbps = None
         max_burst_kbit = None
-        res = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
+        res = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
         if res:
             other_config = res['other_config']
             max_bw_in_bits = other_config.get('max-rate')
@@ -755,15 +755,12 @@ class OVSBridge(BaseOVS):
         return max_kbps, max_burst_kbit
 
     def delete_ingress_bw_limit_for_port(self, port_name):
-        if not self.port_exists(port_name):
-            return
-        self._delete_ingress_bw_limit_for_port(port_name)
-
-    def _delete_ingress_bw_limit_for_port(self, port_name):
-        qos = self._find_qos(port_name)
-        queue = self._find_queue(port_name, QOS_DEFAULT_QUEUE)
+        qos = self.find_qos(port_name)
+        queue = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
+        does_port_exist = self.port_exists(port_name)
         with self.ovsdb.transaction(check_error=True) as txn:
-            txn.add(self.ovsdb.db_clear("Port", port_name, 'qos'))
+            if does_port_exist:
+                txn.add(self.ovsdb.db_clear("Port", port_name, 'qos'))
             if qos:
                 txn.add(self.ovsdb.db_destroy('QoS', qos['_uuid']))
             if queue:

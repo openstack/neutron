@@ -55,29 +55,39 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
                       "vif_port was not found. It seems that port is already "
                       "deleted", port_id)
             return
+        self.ports[port['port_id']][(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                                     rule.direction)] = port
         if rule.direction == constants.INGRESS_DIRECTION:
             self._update_ingress_bandwidth_limit(vif_port, rule)
         else:
             self._update_egress_bandwidth_limit(vif_port, rule)
 
     def delete_bandwidth_limit(self, port):
-        vif_port = port.get('vif_port')
-        if not vif_port:
-            port_id = port.get('port_id')
-            LOG.debug("delete_bandwidth_limit was received for port %s but "
-                      "vif_port was not found. It seems that port is already "
-                      "deleted", port_id)
+        port_id = port.get('port_id')
+        port = self.ports[port_id].pop((qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                                        constants.EGRESS_DIRECTION),
+                                       None)
+        if not port:
+            LOG.debug("delete_bandwidth_limit was received "
+                      "for port %s but port was not found. "
+                      "It seems that bandwidth_limit is already deleted",
+                      port_id)
             return
+        vif_port = port.get('vif_port')
         self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)
 
     def delete_bandwidth_limit_ingress(self, port):
-        vif_port = port.get('vif_port')
-        if not vif_port:
-            port_id = port.get('port_id')
+        port_id = port.get('port_id')
+        port = self.ports[port_id].pop((qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                                        constants.INGRESS_DIRECTION),
+                                       None)
+        if not port:
             LOG.debug("delete_bandwidth_limit_ingress was received "
-                      "for port %s but vif_port was not found. "
-                      "It seems that port is already deleted", port_id)
+                      "for port %s but port was not found. "
+                      "It seems that bandwidth_limit is already deleted",
+                      port_id)
             return
+        vif_port = port.get('vif_port')
         self.br_int.delete_ingress_bw_limit_for_port(vif_port.port_name)
 
     def create_dscp_marking(self, port, rule):
