@@ -1620,6 +1620,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 LOG.debug("Device %s not defined on plugin", detail['device'])
         return failed_devices
 
+    def treat_devices_skipped(self, devices):
+        LOG.info("Ports %s skipped, changing status to down", devices)
+        devices_down = self.plugin_rpc.update_device_list(self.context,
+                                                          [],
+                                                          devices,
+                                                          self.agent_id,
+                                                          self.conf.host)
+        failed_devices = set(devices_down.get('failed_devices_down'))
+        if failed_devices:
+            LOG.debug("Port down failed for %s", failed_devices)
+
     def process_network_ports(self, port_info, ovs_restarted):
         failed_devices = {'added': set(), 'removed': set()}
         # TODO(salv-orlando): consider a solution for ensuring notifications
@@ -1671,6 +1682,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_info['removed'])
             LOG.debug("process_network_ports - iteration:%(iter_num)d - "
                       "treat_devices_removed completed in %(elapsed).3f",
+                      {'iter_num': self.iter_num,
+                       'elapsed': time.time() - start})
+        if skipped_devices:
+            start = time.time()
+            self.treat_devices_skipped(skipped_devices)
+            LOG.debug("process_network_ports - iteration:%(iter_num)d - "
+                      "treat_devices_skipped completed in %(elapsed).3f",
                       {'iter_num': self.iter_num,
                        'elapsed': time.time() - start})
         return failed_devices

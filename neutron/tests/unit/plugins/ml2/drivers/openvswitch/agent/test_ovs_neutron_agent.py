@@ -991,7 +991,11 @@ class TestOvsNeutronAgent(object):
                                   "treat_devices_removed",
                                   return_value=(
                                       failed_devices[
-                                          'removed'])) as device_removed:
+                                          'removed'])) as device_removed,\
+                mock.patch.object(self.agent,
+                                  "treat_devices_skipped",
+                                  return_value=(
+                                      skipped_devices)) as device_skipped:
             self.assertEqual(
                 failed_devices,
                 self.agent.process_network_ports(port_info, False))
@@ -1005,6 +1009,8 @@ class TestOvsNeutronAgent(object):
                     devices_added_updated, False)
             if port_info.get('removed', set()):
                 device_removed.assert_called_once_with(port_info['removed'])
+            if skipped_devices:
+                device_skipped.assert_called_once_with(set(skipped_devices))
 
     def test_process_network_ports(self):
         self._test_process_network_ports(
