@@ -243,15 +243,13 @@ the already created policy. In the next example, we will assign the
 
    $ openstack port set --qos-policy bw-limiter \
        88101e57-76fa-4d12-b0e0-4fc7634b874a
-   Updated port: 88101e57-76fa-4d12-b0e0-4fc7634b874a
 
 In order to detach a port from the QoS policy, simply update again the
 port configuration.
 
 .. code-block:: console
 
-   $ openstack port unset --no-qos-policy 88101e57-76fa-4d12-b0e0-4fc7634b874a
-   Updated port: 88101e57-76fa-4d12-b0e0-4fc7634b874a
+   $ openstack port unset --qos-policy 88101e57-76fa-4d12-b0e0-4fc7634b874a
 
 
 Ports can be created with a policy attached to them too.
@@ -310,7 +308,6 @@ network, or initially create the network attached to the policy.
 .. code-block:: console
 
     $ openstack network set --qos-policy bw-limiter private
-    Updated network: private
 
 .. note::
 
@@ -394,7 +391,6 @@ attached port.
 
     $ openstack network qos rule set --max-kbps 2000 --max-burst-kbps 200 \
         --ingress bw-limiter 92ceb52f-170f-49d0-9528-976e2fee2d6f
-    Updated bandwidth_limit_rule: 92ceb52f-170f-49d0-9528-976e2fee2d6f
 
     $ openstack network qos rule show \
         bw-limiter 92ceb52f-170f-49d0-9528-976e2fee2d6f
@@ -448,7 +444,6 @@ with the neutron client:
 
     $ openstack network qos rule set --dscp-mark 22 \
         dscp-marking 115e4f70-8034-4176-8fe9-2c47f8878a7d
-    Updated dscp_rule: 115e4f70-8034-4176-8fe9-2c47f8878a7d
 
     $ openstack network qos rule list dscp-marking
 
@@ -470,7 +465,6 @@ with the neutron client:
 
     $ openstack network qos rule delete \
         dscp-marking 115e4f70-8034-4176-8fe9-2c47f8878a7d
-      Deleted dscp_rule: 115e4f70-8034-4176-8fe9-2c47f8878a7d
 
 You can also include minimum bandwidth rules in your policy:
 
