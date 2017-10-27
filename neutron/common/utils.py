@@ -227,6 +227,15 @@ def ip_to_cidr(ip, prefix=None):
     return str(net)
 
 
+def cidr_to_ip(ip_cidr):
+    """Strip the cidr notation from an ip cidr or ip
+
+    :param ip_cidr: An ipv4 or ipv6 address, with or without cidr notation
+    """
+    net = netaddr.IPNetwork(ip_cidr)
+    return str(net.ip)
+
+
 def fixed_ip_cidrs(fixed_ips):
     """Create a list of a port's fixed IPs in cidr notation.
 
