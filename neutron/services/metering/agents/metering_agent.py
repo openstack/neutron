@@ -277,7 +277,6 @@ class MeteringAgentWithStateReport(MeteringAgent):
             LOG.warning("Neutron server does not support state report. "
                         "State report for this agent will be disabled.")
             self.heartbeat.stop()
-            return
         except Exception:
             LOG.exception("Failed reporting state!")
 
