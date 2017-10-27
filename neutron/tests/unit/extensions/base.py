@@ -36,7 +36,9 @@ CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 class ExtensionTestCase(testlib_api.WebTestCase):
 
+    # TODO(boden): phase out resource_attribute_map
     def _setUpExtension(self, plugin, service_type,
+                        resource_attribute_map,
                         extension_class,
                         resource_prefix, plural_mappings=None,
                         translate_resource_name=False,
