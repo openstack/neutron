@@ -36,6 +36,7 @@ Device = collections.namedtuple('Device',
 WRONG_IP = '0.0.0.0'
 TEST_IP = '240.0.0.1'
 TEST_IP_NEIGH = '240.0.0.2'
+TEST_IP_SECONDARY = '240.0.0.3'
 
 
 class IpLibTestFramework(functional_base.BaseSudoTestCase):
@@ -131,10 +132,23 @@ class IpLibTestCase(IpLibTestFramework):
         self.assertIsNone(ip_wrapper.get_device_by_ip(ip=None))
 
     def test_ipwrapper_get_device_by_ip(self):
-        attr = self.generate_device_details()
+        # We need to pass both IP and cidr values to get_device_by_ip()
+        # to make sure it filters correctly.
+        test_ip = "%s/24" % TEST_IP
+        test_ip_secondary = "%s/24" % TEST_IP_SECONDARY
+        attr = self.generate_device_details(
+            ip_cidrs=[test_ip, test_ip_secondary]
+        )
         self.manage_device(attr)
         ip_wrapper = ip_lib.IPWrapper(namespace=attr.namespace)
         self.assertEqual(attr.name, ip_wrapper.get_device_by_ip(TEST_IP).name)
+        self.assertEqual(attr.name,
+                         ip_wrapper.get_device_by_ip(TEST_IP_SECONDARY).name)
+        self.assertIsNone(ip_wrapper.get_device_by_ip(TEST_IP_NEIGH))
+        # this is in the same subnet, so will match if we pass as cidr
+        test_ip_neigh = "%s/24" % TEST_IP_NEIGH
+        self.assertEqual(attr.name,
+                         ip_wrapper.get_device_by_ip(test_ip_neigh).name)
         self.assertIsNone(ip_wrapper.get_device_by_ip(WRONG_IP))
 
     def test_device_exists_with_ips_and_mac(self):
