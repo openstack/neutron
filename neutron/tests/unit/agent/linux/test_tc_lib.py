@@ -14,9 +14,9 @@
 #    under the License.
 
 import mock
+from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.agent.linux import tc_lib
-from neutron.services.qos import qos_consts
 from neutron.tests import base
 
 DEVICE_NAME = "tap_device"

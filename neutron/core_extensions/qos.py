@@ -15,12 +15,12 @@
 
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
 from neutron.core_extensions import base
 from neutron.db import api as db_api
 from neutron.objects.qos import policy as policy_object
-from neutron.services.qos import qos_consts
 
 
 class QosCoreResourceExtension(base.CoreResourceExtension):

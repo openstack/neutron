@@ -16,10 +16,10 @@
 import re
 
 from neutron_lib import exceptions
+from neutron_lib.services.qos import constants as qos_consts
 
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
-from neutron.services.qos import qos_consts
 
 
 INGRESS_QDISC_ID = "ffff:"

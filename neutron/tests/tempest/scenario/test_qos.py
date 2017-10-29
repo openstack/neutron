@@ -16,13 +16,13 @@ import errno
 import socket
 import time
 
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 from tempest.common import utils as tutils
 from tempest.lib import decorators
 from tempest.lib import exceptions
 
 from neutron.common import utils
-from neutron.services.qos import qos_consts
 from neutron.tests.tempest.api import base as base_api
 from neutron.tests.tempest.common import ssh
 from neutron.tests.tempest import config

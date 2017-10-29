@@ -17,9 +17,9 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import base
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
-from neutron.services.qos import qos_consts
 
 LOG = logging.getLogger(__name__)
 

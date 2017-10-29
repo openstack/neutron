@@ -31,6 +31,7 @@ from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_db import exception as os_db_exception
 from oslo_log import helpers as log_helpers
@@ -89,7 +90,6 @@ from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import ovo_rpc
 from neutron.plugins.ml2 import rpc
 from neutron.quota import resource_registry
-from neutron.services.qos import qos_consts
 from neutron.services.segments import plugin as segments_plugin
 
 LOG = log.getLogger(__name__)
