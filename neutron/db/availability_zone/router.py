@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -20,7 +21,6 @@ from neutron_lib.plugins import directory
 from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_attrs_db
-from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import l3
 
 
@@ -42,8 +42,8 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _process_az_request(self, resource, event, trigger, context,
                             router, router_db, **kwargs):
-        if az_ext.AZ_HINTS in router:
+        if az_def.AZ_HINTS in router:
             self.validate_availability_zones(context, 'router',
-                                             router[az_ext.AZ_HINTS])
-            self.set_extra_attr_value(context, router_db, az_ext.AZ_HINTS,
-                                      router[az_ext.AZ_HINTS])
+                                             router[az_def.AZ_HINTS])
+            self.set_extra_attr_value(context, router_db, az_def.AZ_HINTS,
+                                      router[az_def.AZ_HINTS])

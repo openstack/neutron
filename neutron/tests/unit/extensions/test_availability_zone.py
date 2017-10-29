@@ -13,7 +13,9 @@
 
 import copy
 
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import context
+from neutron_lib.exceptions import availability_zone as az_exc
 
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -26,7 +28,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 class AZExtensionManager(object):
 
     def get_resources(self):
-        agent.Agent().update_attributes_map(az_ext.EXTENDED_ATTRIBUTES_2_0)
+        agent.Agent().update_attributes_map(az_def.RESOURCE_ATTRIBUTE_MAP)
         return (az_ext.Availability_zone.get_resources() +
                 agent.Agent.get_resources())
 
@@ -94,7 +96,7 @@ class TestAZAgentCase(AZTestCommon):
                                                 ['nova1', 'nova2'])
         self.plugin.validate_availability_zones(ctx, 'router',
                                                 ['nova2', 'nova3'])
-        self.assertRaises(az_ext.AvailabilityZoneNotFound,
+        self.assertRaises(az_exc.AvailabilityZoneNotFound,
                           self.plugin.validate_availability_zones,
                           ctx, 'router', ['nova1'])
 

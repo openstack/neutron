@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.validators import availability_zone as az_validator
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
@@ -23,7 +25,6 @@ from neutron.db import models_v2
 from neutron.db.network_dhcp_agent_binding import models as ndab_models
 from neutron.db.port_security import models as ps_models
 from neutron.db import rbac_db_models
-from neutron.extensions import availability_zone as az_ext
 from neutron.objects import agent as agent_obj
 from neutron.objects import base
 from neutron.objects import common_types
@@ -263,17 +264,19 @@ class Network(rbac_db.NeutronRbacObject):
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         result = super(Network, cls).modify_fields_from_db(db_obj)
-        if az_ext.AZ_HINTS in result:
-            result[az_ext.AZ_HINTS] = (
-                az_ext.convert_az_string_to_list(result[az_ext.AZ_HINTS]))
+        if az_def.AZ_HINTS in result:
+            result[az_def.AZ_HINTS] = (
+                az_validator.convert_az_string_to_list(
+                    result[az_def.AZ_HINTS]))
         return result
 
     @classmethod
     def modify_fields_to_db(cls, fields):
         result = super(Network, cls).modify_fields_to_db(fields)
-        if az_ext.AZ_HINTS in result:
-            result[az_ext.AZ_HINTS] = (
-                az_ext.convert_az_list_to_string(result[az_ext.AZ_HINTS]))
+        if az_def.AZ_HINTS in result:
+            result[az_def.AZ_HINTS] = (
+                az_validator.convert_az_list_to_string(
+                    result[az_def.AZ_HINTS]))
         return result
 
     def from_db_object(self, *objs):

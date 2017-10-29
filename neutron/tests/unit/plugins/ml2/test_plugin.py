@@ -17,10 +17,7 @@ import functools
 
 import fixtures
 import mock
-from oslo_config import cfg
-import testtools
-import webob
-
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
@@ -33,8 +30,11 @@ from neutron_lib import exceptions as exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api as driver_api
+from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
+import testtools
+import webob
 
 from neutron._i18n import _
 from neutron.common import utils
@@ -43,7 +43,6 @@ from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
 from neutron.db import segments_db
-from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import external_net
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
@@ -480,7 +479,7 @@ class TestMl2NetworksWithAvailabilityZone(TestMl2NetworksV2):
     def test_create_network_availability_zone(self):
         az_hints = ['az1', 'az2']
         data = {'network': {'name': 'net1',
-                            az_ext.AZ_HINTS: az_hints,
+                            az_def.AZ_HINTS: az_hints,
                             'tenant_id': 'tenant_one'}}
         with mock.patch.object(agents_db.AgentAvailabilityZoneMixin,
                                'validate_availability_zones'):
@@ -488,7 +487,7 @@ class TestMl2NetworksWithAvailabilityZone(TestMl2NetworksV2):
             res = network_req.get_response(self.api)
             self.assertEqual(201, res.status_int)
             network = self.deserialize(self.fmt, res)['network']
-            self.assertEqual(az_hints, network[az_ext.AZ_HINTS])
+            self.assertEqual(az_hints, network[az_def.AZ_HINTS])
 
 
 class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,

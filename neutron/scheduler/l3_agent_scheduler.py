@@ -19,6 +19,7 @@ import functools
 import itertools
 import random
 
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as lib_const
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -30,7 +31,6 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3agent as rb_model
-from neutron.extensions import availability_zone as az_ext
 from neutron.extensions import l3
 from neutron.objects import l3agent as rb_obj
 
@@ -374,7 +374,7 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
        according to router's az_hints.
     """
     def _get_az_hints(self, router):
-        return (router.get(az_ext.AZ_HINTS) or
+        return (router.get(az_def.AZ_HINTS) or
                 cfg.CONF.default_availability_zones)
 
     def _get_routers_can_schedule(self, plugin, context, routers, l3_agent):
