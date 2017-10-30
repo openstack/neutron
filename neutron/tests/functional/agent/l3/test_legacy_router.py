@@ -32,7 +32,7 @@ from neutron.tests.functional.agent.l3 import framework
 
 class L3AgentTestCase(framework.L3AgentTestFramework):
 
-    def test_agent_notifications_for_router_events(self):
+    def _test_agent_notifications_for_router_events(self, enable_ha=False):
         """Test notifications for router create, update, and delete.
 
         Make sure that when the agent sends notifications of router events
@@ -53,10 +53,14 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         registry.subscribe(event_handler,
                            resources.ROUTER, events.AFTER_DELETE)
 
-        router_info = self.generate_router_info(enable_ha=False)
+        router_info = self.generate_router_info(enable_ha=enable_ha)
         router = self.manage_router(self.agent, router_info)
-        self.agent._process_updated_router(router.router)
-        self._delete_router(self.agent, router.router_id)
+        with mock.patch.object(self.agent,
+                               'check_ha_state_for_router') as check:
+            self.agent._process_updated_router(router.router)
+            self._delete_router(self.agent, router.router_id)
+            if enable_ha:
+                check.assert_called_once_with(router.router_id, None)
 
         expected_calls = [
             mock.call('router', 'before_create', self.agent, router=router),
@@ -66,6 +70,12 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
             mock.call('router', 'before_delete', self.agent, router=router),
             mock.call('router', 'after_delete', self.agent, router=router)]
         event_handler.assert_has_calls(expected_calls)
+
+    def test_agent_notifications_for_router_events(self):
+        self._test_agent_notifications_for_router_events()
+
+    def test_agent_notifications_for_router_events_ha(self):
+        self._test_agent_notifications_for_router_events(enable_ha=True)
 
     def test_legacy_router_update_floatingip_statuses(self):
         self._test_update_floatingip_statuses(
