@@ -126,6 +126,7 @@ class TagSubnetPoolTestJSON(TagTestJSON):
     resource = 'subnetpools'
 
     @classmethod
+    @utils.requires_ext(extension="subnet_allocation", service="network")
     def _create_resource(cls):
         subnetpool = cls.create_subnetpool('subnetpool', default_prefixlen=24,
                                            prefixes=['10.0.0.0/8'])
@@ -142,13 +143,13 @@ class TagRouterTestJSON(TagTestJSON):
     resource = 'routers'
 
     @classmethod
+    @utils.requires_ext(extension="router", service="network")
     def _create_resource(cls):
         router = cls.create_router(router_name='test')
         return router['id']
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('b898ff92-dc33-4232-8ab9-2c6158c80d28')
-    @utils.requires_ext(extension="router", service="network")
     @utils.requires_ext(extension="tag-ext", service="network")
     def test_router_tags(self):
         self._test_tag_operations()
@@ -158,13 +159,13 @@ class TagSecGroupTestJSON(TagTestJSON):
     resource = 'security-groups'
 
     @classmethod
+    @utils.requires_ext(extension="security-group", service="network")
     def _create_resource(cls):
         sec_group = cls.create_security_group(name='test')
         return sec_group['id']
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('0f1a78eb-c5be-42cf-919d-2ce3621a51c2')
-    @utils.requires_ext(extension="security-group", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_security_group_tags(self):
         self._test_tag_operations()
@@ -174,6 +175,7 @@ class TagFloatingIpTestJSON(TagTestJSON):
     resource = 'floatingips'
 
     @classmethod
+    @utils.requires_ext(extension="router", service="network")
     def _create_resource(cls):
         cls.ext_net_id = config.CONF.network.public_network_id
         floatingip = cls.create_floatingip(cls.ext_net_id)
@@ -181,7 +183,6 @@ class TagFloatingIpTestJSON(TagTestJSON):
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('53f6c2bf-e272-4e9e-b9a9-b165eb7be807')
-    @utils.requires_ext(extension="router", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_floatingip_tags(self):
         self._test_tag_operations()
@@ -191,13 +192,13 @@ class TagQosPolicyTestJSON(TagTestJSON):
     resource = 'policies'
 
     @classmethod
+    @utils.requires_ext(extension="qos", service="network")
     def _create_resource(cls):
         qos_policy = cls.create_qos_policy(name='test-policy', shared=True)
         return qos_policy['id']
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('e9bac15e-c8bc-4317-8295-4bf1d8d522b8')
-    @utils.requires_ext(extension="qos", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_qos_policy_tags(self):
         self._test_tag_operations()
@@ -207,6 +208,7 @@ class TagTrunkTestJSON(TagTestJSON):
     resource = 'trunks'
 
     @classmethod
+    @utils.requires_ext(extension="trunk", service="network")
     def _create_resource(cls):
         network = cls.create_network()
         parent_port = cls.create_port(network)
@@ -220,7 +222,6 @@ class TagTrunkTestJSON(TagTestJSON):
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('4c63708b-c4c3-407c-8101-7a9593882f5f')
-    @utils.requires_ext(extension="trunk", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_trunk_tags(self):
         self._test_tag_operations()
@@ -359,6 +360,7 @@ class TagFilterSubnetpoolTestJSON(TagFilterTestJSON):
     resource = 'subnetpools'
 
     @classmethod
+    @utils.requires_ext(extension="subnet_allocation", service="network")
     def _create_resource(cls):
         res = cls.create_subnetpool('subnetpool', default_prefixlen=24,
                                     prefixes=['10.0.0.0/8'])
@@ -379,6 +381,7 @@ class TagFilterRouterTestJSON(TagFilterTestJSON):
     resource = 'routers'
 
     @classmethod
+    @utils.requires_ext(extension="router", service="network")
     def _create_resource(cls):
         res = cls.create_router(router_name='test')
         return res['id']
@@ -398,6 +401,7 @@ class TagFilterSecGroupTestJSON(TagFilterTestJSON):
     resource = 'security-groups'
 
     @classmethod
+    @utils.requires_ext(extension="security-group", service="network")
     def _create_resource(cls):
         sec_group = cls.create_security_group(name='test')
         return sec_group['id']
@@ -409,7 +413,6 @@ class TagFilterSecGroupTestJSON(TagFilterTestJSON):
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('d4d1d681-0116-4800-9725-16cb88f8171a')
-    @utils.requires_ext(extension="security-group", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_filter_security_group_tags(self):
         self._test_filter_tags()
@@ -419,6 +422,7 @@ class TagFilterFloatingIpTestJSON(TagFilterTestJSON):
     resource = 'floatingips'
 
     @classmethod
+    @utils.requires_ext(extension="router", service="network")
     def _create_resource(cls):
         cls.ext_net_id = config.CONF.network.public_network_id
         floatingip = cls.create_floatingip(cls.ext_net_id)
@@ -430,7 +434,6 @@ class TagFilterFloatingIpTestJSON(TagFilterTestJSON):
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('01f00afc-dbec-432a-bfee-2a1f0510e7a8')
-    @utils.requires_ext(extension="router", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_filter_floatingip_tags(self):
         self._test_filter_tags()
@@ -440,6 +443,7 @@ class TagFilterQosPolicyTestJSON(TagFilterTestJSON):
     resource = 'policies'
 
     @classmethod
+    @utils.requires_ext(extension="qos", service="network")
     def _create_resource(cls):
         qos_policy = cls.create_qos_policy(name='test-policy', shared=True)
         return qos_policy['id']
@@ -450,7 +454,6 @@ class TagFilterQosPolicyTestJSON(TagFilterTestJSON):
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('c2f9a6ae-2529-4cb9-a44b-b16f8ba27832')
-    @utils.requires_ext(extension="qos", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_filter_qos_policy_tags(self):
         self._test_filter_tags()
@@ -460,6 +463,7 @@ class TagFilterTrunkTestJSON(TagFilterTestJSON):
     resource = 'trunks'
 
     @classmethod
+    @utils.requires_ext(extension="trunk", service="network")
     def _create_resource(cls):
         network = cls.create_network()
         parent_port = cls.create_port(network)
@@ -478,7 +482,6 @@ class TagFilterTrunkTestJSON(TagFilterTestJSON):
 
     @decorators.attr(type='smoke')
     @decorators.idempotent_id('3fb3ca3a-8e3a-4565-ba73-16413d445e25')
-    @utils.requires_ext(extension="trunk", service="network")
     @utils.requires_ext(extension="standard-attr-tag", service="network")
     def test_filter_trunk_tags(self):
         self._test_filter_tags()
