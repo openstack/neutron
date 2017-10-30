@@ -26,6 +26,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
+from neutron_lib import fixture
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
@@ -116,7 +117,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         extensions.PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it
         # loading extensions
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
         self._tenant_id = TEST_TENANT_ID
 
         if not plugin:
@@ -6652,7 +6653,7 @@ class DbOperationBoundMixin(object):
 
     def setUp(self, *args, **kwargs):
         super(DbOperationBoundMixin, self).setUp(*args, **kwargs)
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
         self._recorded_statements = []
 
         def _event_incrementer(conn, clauseelement, *args, **kwargs):

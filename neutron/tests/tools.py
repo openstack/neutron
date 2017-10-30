@@ -24,49 +24,14 @@ import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
-from neutron_lib import fixture
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_utils import netutils
 from oslo_utils import timeutils
 import unittest2
 
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron.services.logapi.common import constants as log_const
-
-
-class AttributeMapMemento(fixture.APIDefinitionFixture):
-    """Create a copy of the resource attribute map so it can be restored during
-    test cleanup.
-
-    There are a few reasons why this is not included in a class derived
-    from BaseTestCase:
-
-        - Test cases may need more control about when the backup is
-        made, especially if they are not direct descendants of
-        BaseTestCase.
-
-        - Inheritance is a bit of overkill for this facility and it's a
-        stretch to rationalize the "is a" criteria.
-    """
-
-    def _setUp(self):
-        self.backup_global_resources = False
-        super(AttributeMapMemento, self)._setUp()
-        # Shallow copy is not a proper choice for keeping a backup copy as
-        # the RESOURCE_ATTRIBUTE_MAP map is modified in place through the
-        # 0th level keys. Ideally deepcopy() would be used but this seems
-        # to result in test failures. A compromise is to copy one level
-        # deeper than a shallow copy.
-        self.contents_backup = {}
-        for res, attrs in attributes.RESOURCE_ATTRIBUTE_MAP.items():
-            self.contents_backup[res] = attrs.copy()
-        self.addCleanup(self.restore)
-
-    def restore(self):
-        super(AttributeMapMemento, self)._restore()
-        attributes.RESOURCE_ATTRIBUTE_MAP = self.contents_backup
 
 
 class WarningsFixture(fixtures.Fixture):

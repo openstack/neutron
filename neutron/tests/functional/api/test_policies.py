@@ -16,12 +16,12 @@
 import os.path
 
 from neutron_lib import context
+from neutron_lib import fixture
 
 from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron import policy
 from neutron.tests import base
-from neutron.tests import tools
 
 TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,7 +39,7 @@ class APIPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
         super(APIPolicyTestCase, self).setUp()
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
         self.extension_path = os.path.abspath(os.path.join(
             TEST_PATH, "../../../extensions"))
         self.addCleanup(policy.reset)

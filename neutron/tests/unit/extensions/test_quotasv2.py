@@ -18,6 +18,7 @@ import sys
 import mock
 from neutron_lib import context
 from neutron_lib.db import constants
+from neutron_lib import fixture
 from oslo_config import cfg
 import testtools
 from webob import exc
@@ -32,7 +33,6 @@ from neutron.db.quota import driver
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron.tests import base
-from neutron.tests import tools
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit import testlib_api
 
@@ -49,7 +49,7 @@ class QuotaExtensionTestCase(testlib_api.WebTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
 
         # Create the default configurations
         self.config_parse()

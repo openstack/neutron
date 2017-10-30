@@ -288,7 +288,7 @@ class BaseTestCase(DietTestCase):
         super(BaseTestCase, self).setUp()
 
         self.useFixture(lockutils.ExternalLockFixture())
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
 
         cfg.CONF.set_override('state_path', self.get_default_temp_dir().path)
 
