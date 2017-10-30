@@ -15,10 +15,12 @@
 
 import mock
 from neutron_lib import constants
+from oslo_utils import excutils
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
+from neutron.common import exceptions
 from neutron.conf.agent import common as config
 from neutron.tests import base
 
@@ -457,6 +459,32 @@ class TestOVSInterfaceDriver(TestBase):
 
             self.ip.assert_has_calls(expected)
 
+    def test_plug_new(self):
+        with mock.patch('neutron.agent.ovsdb.impl_idl._connection'):
+            bridge = 'br-int'
+            namespace = '01234567-1234-1234-99'
+            with mock.patch.object(ovs_lib.OVSBridge,
+                                   'delete_port') as delete_port:
+                with mock.patch.object(ovs_lib.OVSBridge, 'replace_port'):
+                    ovs = interface.OVSInterfaceDriver(self.conf)
+                    reraise = mock.patch.object(
+                        excutils, 'save_and_reraise_exception')
+                    reraise.start()
+                    proEr = exceptions.ProcessExecutionError('', 2)
+                    processExecutionError = mock.Mock(side_effect=proEr)
+                    ip = self.ip.return_value
+                    ip.ensure_namespace.side_effect = processExecutionError
+                    ovs.plug_new(
+                        '01234567-1234-1234-99',
+                        'port-1234',
+                        'tap0',
+                        'aa:bb:cc:dd:ee:ff',
+                        bridge=bridge,
+                        namespace=namespace,
+                        prefix='veth',
+                        mtu=9000)
+                    delete_port.assert_called_once_with('tap0')
+
     def test_unplug(self, bridge=None):
         if not bridge:
             bridge = 'br-int'
@@ -532,6 +560,12 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
             self.ip.assert_has_calls(expected)
             root_dev.assert_has_calls([mock.call.link.set_up()])
             ns_dev.assert_has_calls([mock.call.link.set_up()])
+
+    def test_plug_new(self, bridge=None, namespace=None):
+        # The purpose of test_plug_new in parent class(TestOVSInterfaceDriver)
+        # is to test exception(exceptions.ProcessExecutionError), method here
+        # would not go through that code, So just pass
+        pass
 
     def test_unplug(self, bridge=None):
         if not bridge:
