@@ -164,6 +164,10 @@ class HaRouter(router.RouterInfo):
         self.keepalived_manager.spawn()
 
     def disable_keepalived(self):
+        if not self.keepalived_manager:
+            LOG.debug('Error while disabling keepalived for %s - no manager',
+                      self.router_id)
+            return
         self.keepalived_manager.disable()
         conf_dir = self.keepalived_manager.get_conf_dir()
         shutil.rmtree(conf_dir)
@@ -193,6 +197,10 @@ class HaRouter(router.RouterInfo):
                             preserve_ips=[self._get_primary_vip()])
 
     def ha_network_removed(self):
+        if not self.ha_port:
+            LOG.debug('Error while removing HA network for %s - no port',
+                      self.router_id)
+            return
         self.driver.unplug(self.get_ha_device_name(),
                            namespace=self.ha_namespace,
                            prefix=HA_DEV_PREFIX)
@@ -363,6 +371,10 @@ class HaRouter(router.RouterInfo):
             self.router_id, IP_MONITOR_PROCESS_SERVICE, pm)
 
     def destroy_state_change_monitor(self, process_monitor):
+        if not self.ha_port:
+            LOG.debug('Error while destroying state change monitor for %s - '
+                      'no port', self.router_id)
+            return
         pm = self._get_state_change_monitor_process_manager()
         process_monitor.unregister(
             self.router_id, IP_MONITOR_PROCESS_SERVICE)

@@ -33,7 +33,7 @@ class RouterUpdate(object):
     and process a request to update a router.
     """
     def __init__(self, router_id, priority,
-                 action=None, router=None, timestamp=None):
+                 action=None, router=None, timestamp=None, tries=5):
         self.priority = priority
         self.timestamp = timestamp
         if not timestamp:
@@ -41,6 +41,7 @@ class RouterUpdate(object):
         self.id = router_id
         self.action = action
         self.router = router
+        self.tries = tries
 
     def __lt__(self, other):
         """Implements priority among updates
@@ -56,6 +57,9 @@ class RouterUpdate(object):
         if self.timestamp != other.timestamp:
             return self.timestamp < other.timestamp
         return self.id < other.id
+
+    def hit_retry_limit(self):
+        return self.tries < 0
 
 
 class ExclusiveRouterProcessor(object):
@@ -143,6 +147,7 @@ class RouterProcessingQueue(object):
         self._queue = Queue.PriorityQueue()
 
     def add(self, update):
+        update.tries -= 1
         self._queue.put(update)
 
     def each_update_to_next_router(self):
