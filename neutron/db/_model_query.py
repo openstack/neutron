@@ -191,6 +191,11 @@ def apply_filters(query, model, filters, context=None):
                     # do multiple equals matches
                     query = query.filter(
                         or_(*[column == v for v in value]))
+                elif None in value:
+                    # in_() operator does not support NULL element so we have
+                    # to do multiple equals matches
+                    query = query.filter(
+                        or_(*[column == v for v in value]))
                 elif isinstance(value, obj_utils.StringMatchingFilterObj):
                     if value.is_contains:
                         query = query.filter(
