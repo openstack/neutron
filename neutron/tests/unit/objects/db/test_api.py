@@ -86,13 +86,13 @@ class CRUDScenarioTestCase(testlib_api.SqlTestCase):
         self.model = models_v2.Network
         self.ctxt = context.get_admin_context()
 
-    def test_get_object_with_none_value_in_filters(self):
+    def test_get_object_with_None_value_in_filters(self):
         obj = api.create_object(self.ctxt, self.model, {'name': 'foo'})
         new_obj = api.get_object(
             self.ctxt, self.model, name='foo', status=None)
         self.assertEqual(obj, new_obj)
 
-    def test_get_objects_with_none_value_in_filters(self):
+    def test_get_objects_with_None_value_in_filters(self):
         obj = api.create_object(self.ctxt, self.model, {'name': 'foo'})
         new_objs = api.get_objects(
             self.ctxt, self.model, name='foo', status=None)
