@@ -14,13 +14,13 @@
 # ByungYeol Woo <wby1089@gmail.com>, 2017. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: neutron 10.0.4.dev12\n"
+"Project-Id-Version: neutron 10.0.5.dev10\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2017-09-06 01:52+0000\n"
+"POT-Creation-Date: 2017-10-24 06:31+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2017-09-05 11:00+0000\n"
+"PO-Revision-Date: 2017-10-21 03:14+0000\n"
 "Last-Translator: ByungYeol Woo <wby1089@gmail.com>\n"
 "Language: ko-KR\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
@@ -471,6 +471,12 @@ msgid "Cannot find %(table)s with %(col)s=%(match)s"
 msgstr "%(col)s=%(match)s인 %(table)s을(를) 찾을 수 없음"
 
 #, python-format
+msgid ""
+"Cannot get tag for port %(port_name)s from its other_config: %(other_config)s"
+msgstr ""
+"Cannot get tag for port %(port_name)s from its other_config: %(other_config)s"
+
+#, python-format
 msgid "Cannot handle subnet of type %(subnet_type)s"
 msgstr "%(subnet_type)s 유형의 서브넷을 처리할 수 없음"
 
@@ -709,6 +715,13 @@ msgid ""
 msgstr ""
 "VXLAN/GRE/Geneve 기초를 위한 DVR 배치를 수행하려면 에이전트 측과 서버 측 모두"
 "에서 L2-pop을 사용으로 설정해야 합니다. "
+
+msgid ""
+"DVR: Gateway update route in FIP namespace failed, retry should be attempted "
+"on next call"
+msgstr ""
+"DVR: FIP 게이트웨이가 네임스페이스에서 경로를 업데이트하는 데 실패하였고, 다"
+"음 번에 재시도가 시도되어야 합니다."
 
 msgid ""
 "Database engine for which script will be generated when using offline "
@@ -1099,6 +1112,14 @@ msgstr ""
 
 #, python-format
 msgid ""
+"Failed sending gratuitous ARP to %(addr)s on %(iface)s in namespace %(ns)s: "
+"%(err)s"
+msgstr ""
+"네임스페이스 %(ns)s의 %(iface)s에 있는 %(addr)s로 GARP 보내기가 실패함: "
+"%(err)s"
+
+#, python-format
+msgid ""
 "Failed to allocate a VRID in the network %(network_id)s for the router "
 "%(router_id)s after %(max_tries)s tries."
 msgstr ""
@@ -1299,6 +1320,10 @@ msgstr "IP 할당은 subnet_id 또는 ip_address가 필요함"
 
 msgid "IP allocation requires subnets for network"
 msgstr "IP 할당은 네트워크의 서브넷을 필요로 합니다."
+
+#, python-format
+msgid "IPTables Rules did not converge. Diff: %s"
+msgstr "IPTables 규칙이 모아지지 않았습니다. Diff: %s"
 
 #, python-format
 msgid ""
@@ -2121,6 +2146,10 @@ msgstr "%(port)s 포트가 %(bridge)s에 없습니다!"
 #, python-format
 msgid "Port %(port_id)s is already acquired by another DHCP agent"
 msgstr "다른 DHCP 에이전트에가 이미 포트 %(port_id)s을(를) 확보했습니다."
+
+#, python-format
+msgid "Port %(port_id)s is not managed by this agent."
+msgstr "포트 %(port_id)s는 이 에이전트가 관리하지 않습니다."
 
 #, python-format
 msgid "Port %s does not exist"
@@ -3535,6 +3564,10 @@ msgstr ""
 
 msgid "subnetpool_id and use_default_subnetpool cannot both be specified"
 msgstr "subnetpool_id 및 use_default_subnetpool을 모두 지정할 수 없음"
+
+#, python-format
+msgid "sysctl value %s not present on this system."
+msgstr "이 시스템에서 sysctl 값 %s가 존재하지 않습니다."
 
 msgid "the nexthop is not connected with router"
 msgstr "nexthop이 라우터와 연결되지 않음"
