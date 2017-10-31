@@ -224,6 +224,10 @@ class TestMeteringOperations(base.BaseTestCase):
                               'last_update': 2})
         self._test_add_metering_info(expected_info, 2)
 
+    def test_metering_agent_host_value(self):
+        expected_host = 'my agent'
+        self.assertEqual(expected_host, self.agent.host)
+
 
 class TestMeteringDriver(base.BaseTestCase):
     def setUp(self):
