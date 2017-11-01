@@ -29,11 +29,20 @@ of this guide but can be found in the
 Supported QoS rule types
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Any plug-in or ml2 mechanism driver can claim support for some QoS rule types
-by providing a plug-in/driver class property called
-``supported_qos_rule_types`` that returns a list of strings that correspond
-to `QoS rule types
-<https://git.openstack.org/cgit/openstack/neutron/tree/neutron/services/qos/qos_consts.py>`_.
+QoS supported rule types are now available as ``VALID_RULE_TYPES`` in `QoS rule types
+<https://git.openstack.org/cgit/openstack/neutron-lib/tree/neutron_lib/services/qos/constants.py>`_:
+
+* bandwidth_limit: Bandwidth limitations on networks or ports.
+
+* dscp_marking: Marking network traffic with a DSCP value.
+
+* minimum_bandwidth: Minimum bandwidth constraints on certain types of traffic.
+
+
+Any QoS driver can claim support for some QoS rule types
+by providing a driver property called
+``supported_rules``, the QoS driver manager will recalculate rule types
+dynamically that the QoS driver supports.
 
 The following table shows the Networking back ends, QoS supported rules, and
 traffic directions (from the VM point of view).
