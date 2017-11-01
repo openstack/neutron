@@ -27,6 +27,11 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
 
     required_extensions = ['security-group']
 
+    @classmethod
+    def resource_setup(cls):
+        super(NegativeSecGroupTest, cls).resource_setup()
+        cls.network = cls.create_network()
+
     @decorators.attr(type='negative')
     @decorators.idempotent_id('594edfa8-9a5b-438e-9344-49aece337d49')
     def test_create_security_group_with_too_long_name(self):
@@ -66,6 +71,20 @@ class NegativeSecGroupTest(base.BaseSecGroupTest):
         self.assertRaises(lib_exc.BadRequest,
                           self.client.update_security_group,
                           sg['id'], name=True)
+
+    @decorators.attr(type='negative')
+    @decorators.idempotent_id('3200b1a8-d73b-48e9-b03f-e891a4abe2d3')
+    def test_delete_in_use_sec_group(self):
+        sgroup = self.os_primary.network_client.create_security_group(
+            name='sgroup')
+        self.security_groups.append(sgroup['security_group'])
+        port = self.client.create_port(
+            network_id=self.network['id'],
+            security_groups=[sgroup['security_group']['id']])
+        self.ports.append(port['port'])
+        self.assertRaises(lib_exc.Conflict,
+                          self.os_primary.network_client.delete_security_group,
+                          security_group_id=sgroup['security_group']['id'])
 
 
 class NegativeSecGroupIPv6Test(NegativeSecGroupTest):
