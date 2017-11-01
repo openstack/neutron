@@ -28,6 +28,7 @@ setuptools*.egg/
 !/.pylintrc
 !/.stestr.conf
 !/.testr.conf
+!/.zuul.yaml
 
 # Files created by releasenotes build
 releasenotes/build
