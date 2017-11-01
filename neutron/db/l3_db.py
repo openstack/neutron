@@ -17,6 +17,7 @@ import itertools
 import random
 
 import netaddr
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -48,7 +49,6 @@ from neutron.db import common_db_mixin
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
-from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
@@ -305,7 +305,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             return
 
         nets = self._core_plugin.get_networks(
-            context, {external_net.EXTERNAL: [True]})
+            context, {extnet_apidef.EXTERNAL: [True]})
         # nothing to do if there is only one external network
         if len(nets) <= 1:
             return

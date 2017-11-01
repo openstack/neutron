@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -24,7 +25,6 @@ from webob import exc
 
 from neutron.db import external_net_db
 from neutron.db import models_v2
-from neutron.extensions import external_net
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -53,7 +53,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         # a double underscore
         new_args = dict(zip(map(lambda x: x.replace('__', ':'), kwargs),
                             kwargs.values()))
-        arg_list = new_args.pop('arg_list', ()) + (external_net.EXTERNAL,)
+        arg_list = new_args.pop('arg_list', ()) + (extnet_apidef.EXTERNAL,)
         return super(ExtNetDBTestCase, self)._create_network(
             fmt, name, admin_state_up, arg_list=arg_list, **new_args)
 
@@ -64,7 +64,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
 
     def test_list_nets_external(self):
         with self.network() as n1:
@@ -75,12 +75,12 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
                 body = self._list('networks',
                                   query_params="%s=True" %
-                                               external_net.EXTERNAL)
+                                               extnet_apidef.EXTERNAL)
                 self.assertEqual(1, len(body['networks']))
 
                 body = self._list('networks',
                                   query_params="%s=False" %
-                                               external_net.EXTERNAL)
+                                               extnet_apidef.EXTERNAL)
                 self.assertEqual(1, len(body['networks']))
 
     def test_list_nets_external_pagination(self):
@@ -182,7 +182,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def test_create_external_network_admin_succeeds(self):
         with self.network(router__external=True) as ext_net:
-            self.assertTrue(ext_net['network'][external_net.EXTERNAL])
+            self.assertTrue(ext_net['network'][extnet_apidef.EXTERNAL])
 
     def test_delete_network_check_disassociated_floatingips(self):
         l3_mock = mock.Mock()

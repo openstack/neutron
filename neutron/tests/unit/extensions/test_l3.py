@@ -20,6 +20,7 @@ import copy
 import mock
 import netaddr
 from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -52,7 +53,6 @@ from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
-from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
@@ -431,7 +431,7 @@ class L3NatTestCaseMixin(object):
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
-                     {'network': {external_net.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}})
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, set_context=False,
@@ -2054,7 +2054,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     r['router']['id'],
                     s1['subnet']['network_id'])
                 self._update('networks', s1['subnet']['network_id'],
-                             {'network': {external_net.EXTERNAL: False}},
+                             {'network': {extnet_apidef.EXTERNAL: False}},
                              expected_code=exc.HTTPConflict.code)
 
     def test_network_update_external(self):
@@ -2067,7 +2067,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         r['router']['id'],
                         s1['subnet']['network_id'])
                     self._update('networks', testnet['network']['id'],
-                                 {'network': {external_net.EXTERNAL: False}})
+                                 {'network': {extnet_apidef.EXTERNAL: False}})
 
     def test_floatingip_crd_ops(self):
         with self.floatingip_with_assoc() as fip:

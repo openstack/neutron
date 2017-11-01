@@ -14,6 +14,7 @@
 
 import mock
 
+from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib.callbacks import events
@@ -41,7 +42,6 @@ from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3ha as l3ha_model
-from neutron.extensions import external_net
 from neutron.extensions import l3
 from neutron.extensions import l3_ext_ha_mode
 from neutron.objects import l3_hamode
@@ -962,7 +962,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
                                'shared': False,
                                'admin_state_up': True,
                                'tenant_id': tenant_id,
-                               external_net.EXTERNAL: external}}
+                               extnet_apidef.EXTERNAL: external}}
         return plugin.create_network(ctx, network)['id']
 
     def _create_subnet(self, plugin, ctx, network_id, cidr='10.0.0.0/8',
