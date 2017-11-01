@@ -2517,6 +2517,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             ['iptables-restore', '-n'],
             process_input=self._regex(v4_filter + raw),
             run_as_root=True,
+            log_fail_as_error=False,
             return_value='')
         self._register_mock_call(
             ['ip6tables-save'],
@@ -2526,6 +2527,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             ['ip6tables-restore', '-n'],
             process_input=self._regex(v6_filter + raw),
             run_as_root=True,
+            log_fail_as_error=False,
             return_value='')
 
     def test_prepare_remove_port(self):

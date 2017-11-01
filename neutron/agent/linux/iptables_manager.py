@@ -472,8 +472,9 @@ class IptablesManager(object):
         if lock:
             args += ['-w', self.xlock_wait_time]
         try:
+            kwargs = {} if lock else {'log_fail_as_error': False}
             self.execute(args, process_input='\n'.join(commands),
-                         run_as_root=True)
+                         run_as_root=True, **kwargs)
         except RuntimeError as error:
             return error
 
