@@ -45,6 +45,7 @@ from neutron.objects import network as net_obj
 from neutron.objects import ports
 from neutron.objects.qos import policy as qos_policy
 from neutron.objects import rbac_db
+from neutron.objects import router
 from neutron.objects import securitygroup
 from neutron.objects import subnet
 from neutron.objects import utils as obj_utils
@@ -488,6 +489,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
         tools.get_random_port_binding_statuses,
     common_types.PortRangeField: tools.get_random_port,
     common_types.PortRangeWith0Field: lambda: tools.get_random_port(0),
+    common_types.RouterStatusEnumField: tools.get_random_router_status,
     common_types.SetOfUUIDsField: get_set_of_random_uuids,
     common_types.UUIDField: uuidutils.generate_uuid,
     common_types.VlanIdRangeField: tools.get_random_vlan,
@@ -1517,10 +1519,9 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         attrs = {
             'name': 'test_router',
         }
-        # TODO(sindhu): Replace with the router object once its ready
-        router = obj_db_api.create_object(
-            self.context, l3_model.Router, attrs)
-        return router['id']
+        self._router = router.Router(self.context, **attrs)
+        self._router.create()
+        return self._router['id']
 
     def _create_test_security_group_id(self):
         sg_fields = self.get_random_object_fields(securitygroup.SecurityGroup)

@@ -19,6 +19,14 @@ from neutron_lib import constants as lib_constants
 ROUTER_PORT_OWNERS = lib_constants.ROUTER_INTERFACE_OWNERS_SNAT + \
     (lib_constants.DEVICE_OWNER_ROUTER_GW,)
 
+ROUTER_STATUS_ACTIVE = 'ACTIVE'
+ROUTER_STATUS_ALLOCATING = 'ALLOCATING'
+ROUTER_STATUS_ERROR = 'ERROR'
+
+VALID_ROUTER_STATUS = (ROUTER_STATUS_ACTIVE,
+                       ROUTER_STATUS_ALLOCATING,
+                       ROUTER_STATUS_ERROR)
+
 HA_ROUTER_STATE_KEY = '_ha_state'
 METERING_LABEL_KEY = '_metering_labels'
 FLOATINGIP_AGENT_INTF_KEY = '_floatingip_agent_interfaces'
