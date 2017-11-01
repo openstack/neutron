@@ -22,10 +22,10 @@ from oslo_log import log as logging
 import oslo_messaging
 from sqlalchemy import or_
 
-from neutron._i18n import _
 from neutron.agent.common import utils as agent_utils
 from neutron.common import constants as l_consts
 from neutron.common import utils as n_utils
+from neutron.conf.db import l3_agentschedulers_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
@@ -40,20 +40,7 @@ from neutron.objects import router as l3_objs
 LOG = logging.getLogger(__name__)
 
 
-L3_AGENTS_SCHEDULER_OPTS = [
-    cfg.StrOpt('router_scheduler_driver',
-               default='neutron.scheduler.l3_agent_scheduler.'
-                       'LeastRoutersScheduler',
-               help=_('Driver to use for scheduling '
-                      'router to a default L3 agent')),
-    cfg.BoolOpt('router_auto_schedule', default=True,
-                help=_('Allow auto scheduling of routers to L3 agent.')),
-    cfg.BoolOpt('allow_automatic_l3agent_failover', default=False,
-                help=_('Automatically reschedule routers from offline L3 '
-                       'agents to online L3 agents.')),
-]
-
-cfg.CONF.register_opts(L3_AGENTS_SCHEDULER_OPTS)
+l3_agentschedulers_db.register_db_l3agentschedulers_opts()
 
 
 class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,

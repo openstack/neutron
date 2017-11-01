@@ -20,6 +20,7 @@ from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.common import utils
+from neutron.conf.db import extraroute_db
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db import models_v2
@@ -30,13 +31,7 @@ from neutron.objects import router as l3_obj
 
 LOG = logging.getLogger(__name__)
 
-extra_route_opts = [
-    #TODO(nati): use quota framework when it support quota for attributes
-    cfg.IntOpt('max_routes', default=30,
-               help=_("Maximum number of routes per router")),
-]
-
-cfg.CONF.register_opts(extra_route_opts)
+extraroute_db.register_db_extraroute_opts()
 
 
 @resource_extend.has_resource_extenders

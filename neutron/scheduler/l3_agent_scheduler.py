@@ -28,8 +28,8 @@ from oslo_log import versionutils
 import six
 
 from neutron.common import utils
+from neutron.conf.db import l3_hamode_db
 from neutron.db import api as db_api
-from neutron.db import l3_hamode_db
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3
 from neutron.objects import l3agent as rb_obj

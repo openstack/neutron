@@ -19,10 +19,30 @@ AGENT_OPTS = [
                help=_("Seconds to regard the agent is down; should be at "
                       "least twice report_interval, to be sure the "
                       "agent is down for good.")),
+    cfg.StrOpt('dhcp_load_type', default='networks',
+               choices=['networks', 'subnets', 'ports'],
+               help=_('Representing the resource type whose load is being '
+                      'reported by the agent. This can be "networks", '
+                      '"subnets" or "ports". '
+                      'When specified (Default is networks), the server will '
+                      'extract particular load sent as part of its agent '
+                      'configuration object from the agent report state, '
+                      'which is the number of resources being consumed, at '
+                      'every report_interval.'
+                      'dhcp_load_type can be used in combination with '
+                      'network_scheduler_driver = '
+                      'neutron.scheduler.dhcp_agent_scheduler.WeightScheduler '
+                      'When the network_scheduler_driver is WeightScheduler, '
+                      'dhcp_load_type can be configured to represent the '
+                      'choice for the resource being balanced. '
+                      'Example: dhcp_load_type=networks')),
+    cfg.BoolOpt('enable_new_agents', default=True,
+                help=_("Agent starts with admin_state_up=False when "
+                       "enable_new_agents=False. In the case, user's "
+                       "resources will not be scheduled automatically to the "
+                       "agent until admin changes admin_state_up to True.")),
 ]
 
 
-def register_agent_opts(cfg=cfg.CONF):
-    # NOTE(tonytan4ever): will centralize all agent config options from
-    # another patch. see https://review.openstack.org/#/c/344877
-    cfg.register_opts(AGENT_OPTS)
+def register_db_agents_opts(conf=cfg.CONF):
+    conf.register_opts(AGENT_OPTS)

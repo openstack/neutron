@@ -22,6 +22,8 @@ import neutron.agent.securitygroups_rpc
 import neutron.common.cache_utils
 import neutron.conf.agent.agent_extensions_manager
 import neutron.conf.agent.common
+import neutron.conf.agent.database.agents_db
+import neutron.conf.agent.database.agentschedulers_db
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
@@ -32,6 +34,12 @@ import neutron.conf.agent.ovsdb_api
 import neutron.conf.agent.xenapi_conf
 import neutron.conf.cache_utils
 import neutron.conf.common
+import neutron.conf.db.dvr_mac_db
+import neutron.conf.db.extraroute_db
+import neutron.conf.db.l3_agentschedulers_db
+import neutron.conf.db.l3_dvr_db
+import neutron.conf.db.l3_gwmode_db
+import neutron.conf.db.l3_hamode_db
 import neutron.conf.extensions.allowedaddresspairs
 import neutron.conf.plugins.ml2.config
 import neutron.conf.plugins.ml2.drivers.agent
@@ -46,14 +54,6 @@ import neutron.conf.service
 import neutron.conf.services.logging
 import neutron.conf.services.metering_agent
 import neutron.conf.wsgi
-import neutron.db.agents_db
-import neutron.db.agentschedulers_db
-import neutron.db.dvr_mac_db
-import neutron.db.extraroute_db
-import neutron.db.l3_agentschedulers_db
-import neutron.db.l3_dvr_db
-import neutron.db.l3_gwmode_db
-import neutron.db.l3_hamode_db
 import neutron.db.migration.cli
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
@@ -111,14 +111,15 @@ def list_db_opts():
     return [
         ('DEFAULT',
          itertools.chain(
-             neutron.db.agents_db.AGENT_OPTS,
-             neutron.db.extraroute_db.extra_route_opts,
-             neutron.db.l3_gwmode_db.OPTS,
-             neutron.db.agentschedulers_db.AGENTS_SCHEDULER_OPTS,
-             neutron.db.dvr_mac_db.dvr_mac_address_opts,
-             neutron.db.l3_dvr_db.router_distributed_opts,
-             neutron.db.l3_agentschedulers_db.L3_AGENTS_SCHEDULER_OPTS,
-             neutron.db.l3_hamode_db.L3_HA_OPTS)
+             neutron.conf.agent.database.agents_db.AGENT_OPTS,
+             neutron.conf.db.extraroute_db.EXTRA_ROUTE_OPTS,
+             neutron.conf.db.l3_gwmode_db.L3GWMODE_OPTS,
+             neutron.conf.agent.database.agentschedulers_db
+                    .AGENTS_SCHEDULER_OPTS,
+             neutron.conf.db.dvr_mac_db.DVR_MAC_ADDRESS_OPTS,
+             neutron.conf.db.l3_dvr_db.ROUTER_DISTRIBUTED_OPTS,
+             neutron.conf.db.l3_agentschedulers_db.L3_AGENTS_SCHEDULER_OPTS,
+             neutron.conf.db.l3_hamode_db.L3_HA_OPTS)
          ),
         ('database',
          neutron.db.migration.cli.get_engine_config())

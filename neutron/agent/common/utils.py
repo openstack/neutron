@@ -32,7 +32,7 @@ else:
 
 LOG = logging.getLogger(__name__)
 config.register_root_helper(cfg.CONF)
-agents_db.register_agent_opts()
+agents_db.register_db_agents_opts()
 
 INTERFACE_NAMESPACE = 'neutron.interface_drivers'
 

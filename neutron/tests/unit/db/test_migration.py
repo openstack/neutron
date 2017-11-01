@@ -31,6 +31,7 @@ import pkg_resources
 import sqlalchemy as sa
 from testtools import matchers
 
+from neutron.conf.db import migration_cli
 from neutron.db import migration
 from neutron.db.migration import autogen
 from neutron.db.migration import cli
@@ -63,12 +64,12 @@ class MigrationEntrypointsMemento(fixtures.Fixture):
 
     def _setUp(self):
         self.ep_backup = {}
-        for proj, ep in cli.migration_entrypoints.items():
+        for proj, ep in migration_cli.migration_entrypoints.items():
             self.ep_backup[proj] = copy.copy(ep)
         self.addCleanup(self.restore)
 
     def restore(self):
-        cli.migration_entrypoints = self.ep_backup
+        migration_cli.migration_entrypoints = self.ep_backup
 
 
 class TestDbMigration(base.BaseTestCase):
@@ -137,7 +138,7 @@ class TestCli(base.BaseTestCase):
         self.projects = ('neutron', 'networking-foo', 'neutron-fwaas')
         ini = os.path.join(os.path.dirname(cli.__file__), 'alembic.ini')
         self.useFixture(MigrationEntrypointsMemento())
-        cli.migration_entrypoints = {}
+        migration_cli.migration_entrypoints = {}
         for project in self.projects:
             config = alembic_config.Config(ini)
             config.set_main_option('neutron_project', project)
@@ -149,7 +150,7 @@ class TestCli(base.BaseTestCase):
             entrypoint = pkg_resources.EntryPoint(project,
                                                   module_name,
                                                   attrs=attrs)
-            cli.migration_entrypoints[project] = entrypoint
+            migration_cli.migration_entrypoints[project] = entrypoint
 
     def _main_test_helper(self, argv, func_name, exp_kwargs=[{}]):
         with mock.patch.object(sys, 'argv', argv),\

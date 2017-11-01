@@ -22,7 +22,7 @@ from neutron._i18n import _
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
-from neutron.db import l3_hamode_db
+from neutron.conf.db import l3_hamode_db
 
 
 LOG = logging.getLogger(__name__)

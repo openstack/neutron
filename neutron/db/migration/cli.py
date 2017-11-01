@@ -25,10 +25,10 @@ from alembic import util as alembic_util
 from oslo_config import cfg
 from oslo_utils import fileutils
 from oslo_utils import importutils
-import pkg_resources
 import six
 
 from neutron._i18n import _
+from neutron.conf.db import migration_cli
 from neutron.db import migration
 from neutron.db.migration.connection import DBConnection
 
@@ -52,46 +52,10 @@ EXPAND_BRANCH = 'expand'
 CONTRACT_BRANCH = 'contract'
 MIGRATION_BRANCHES = (EXPAND_BRANCH, CONTRACT_BRANCH)
 
-MIGRATION_ENTRYPOINTS = 'neutron.db.alembic_migrations'
-migration_entrypoints = {
-    entrypoint.name: entrypoint
-    for entrypoint in pkg_resources.iter_entry_points(MIGRATION_ENTRYPOINTS)
-}
-
-
 neutron_alembic_ini = os.path.join(os.path.dirname(__file__), 'alembic.ini')
 
-
-INSTALLED_SUBPROJECTS = [project_ for project_ in migration_entrypoints]
-
-_core_opts = [
-    cfg.StrOpt('subproject',
-               choices=INSTALLED_SUBPROJECTS,
-               help=(_("The subproject to execute the command against. "
-                       "Can be one of: '%s'.")
-                     % "', '".join(INSTALLED_SUBPROJECTS))),
-    cfg.BoolOpt('split_branches',
-                default=True,
-                deprecated_for_removal=True,
-                help=_("DEPRECATED. Alembic environments integrating with "
-                       "Neutron must implement split (contract and expand) "
-                       "branches file structure."))
-]
-
-_db_opts = [
-    cfg.StrOpt('connection',
-               default='',
-               secret=True,
-               help=_('URL to database')),
-    cfg.StrOpt('engine',
-               default='',
-               help=_('Database engine for which script will be generated '
-                      'when using offline migration.')),
-]
-
 CONF = cfg.ConfigOpts()
-CONF.register_cli_opts(_core_opts)
-CONF.register_cli_opts(_db_opts, 'database')
+migration_cli.register_db_cli_opts(CONF)
 
 
 def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
@@ -114,9 +78,9 @@ def do_alembic_command(config, cmd, revision=None, desc=None, **kwargs):
 
 
 def _get_alembic_entrypoint(project):
-    if project not in migration_entrypoints:
+    if project not in migration_cli.migration_entrypoints:
         alembic_util.err(_('Sub-project %s not installed.') % project)
-    return migration_entrypoints[project]
+    return migration_cli.migration_entrypoints[project]
 
 
 def do_generic_show(config, cmd):
@@ -578,9 +542,9 @@ def _set_version_locations(config):
 
 def _get_installed_entrypoint(subproject):
     '''Get the entrypoint for the subproject, which must be installed.'''
-    if subproject not in migration_entrypoints:
+    if subproject not in migration_cli.migration_entrypoints:
         alembic_util.err(_('Package %s not installed') % subproject)
-    return migration_entrypoints[subproject]
+    return migration_cli.migration_entrypoints[subproject]
 
 
 def _get_subproject_script_location(subproject):
@@ -624,7 +588,7 @@ def get_alembic_configs():
         script_location = _get_subproject_script_location(CONF.subproject)
         script_locations[CONF.subproject] = script_location
     else:
-        for subproject in migration_entrypoints:
+        for subproject in migration_cli.migration_entrypoints:
             script_locations[subproject] = _get_subproject_script_location(
                 subproject)
 
@@ -673,7 +637,7 @@ def run_sanity_checks(config, revision):
 
 
 def get_engine_config():
-    return [obj for obj in _db_opts if obj.name == 'engine']
+    return [obj for obj in migration_cli.DB_OPTS if obj.name == 'engine']
 
 
 def main():

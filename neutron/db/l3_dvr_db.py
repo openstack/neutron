@@ -32,6 +32,7 @@ import six
 from neutron._i18n import _
 from neutron.common import constants as l3_const
 from neutron.common import utils as n_utils
+from neutron.conf.db import l3_dvr_db
 from neutron.db import api as db_api
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
@@ -47,17 +48,7 @@ from neutron.plugins.common import utils as p_utils
 
 
 LOG = logging.getLogger(__name__)
-router_distributed_opts = [
-    cfg.BoolOpt('router_distributed',
-                default=False,
-                help=_("System-wide flag to determine the type of router "
-                       "that tenants can create. Only admin can override.")),
-    cfg.BoolOpt('enable_dvr',
-                default=True,
-                help=_("Determine if setup is configured for DVR. If False, "
-                       "DVR API extension will be disabled.")),
-]
-cfg.CONF.register_opts(router_distributed_opts)
+l3_dvr_db.register_db_l3_dvr_opts()
 
 
 @registry.has_registry_receivers

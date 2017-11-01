@@ -29,8 +29,8 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from sqlalchemy import or_
 
-from neutron._i18n import _
 from neutron.common import utils
+from neutron.conf.db import dvr_mac_db
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.extensions import dvr as ext_dvr
@@ -40,20 +40,7 @@ from neutron.objects import router
 LOG = logging.getLogger(__name__)
 
 
-dvr_mac_address_opts = [
-    cfg.StrOpt('dvr_base_mac',
-               default="fa:16:3f:00:00:00",
-               help=_("The base mac address used for unique "
-                      "DVR instances by Neutron. The first 3 octets will "
-                      "remain unchanged. If the 4th octet is not 00, it will "
-                      "also be used. The others will be randomly generated. "
-                      "The 'dvr_base_mac' *must* be different from "
-                      "'base_mac' to avoid mixing them up with MAC's "
-                      "allocated for tenant ports. A 4 octet example would be "
-                      "dvr_base_mac = fa:16:3f:4f:00:00. The default is 3 "
-                      "octet")),
-]
-cfg.CONF.register_opts(dvr_mac_address_opts)
+dvr_mac_db.register_db_dvr_mac_opts()
 
 
 @registry.has_registry_receivers

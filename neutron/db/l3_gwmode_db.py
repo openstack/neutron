@@ -17,19 +17,16 @@ from oslo_config import cfg
 import sqlalchemy as sa
 from sqlalchemy import sql
 
-from neutron._i18n import _
+from neutron.conf.db import l3_gwmode_db
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
 
 
-OPTS = [
-    cfg.BoolOpt('enable_snat_by_default', default=True,
-                help=_('Define the default value of enable_snat if not '
-                       'provided in external_gateway_info.'))
-]
-cfg.CONF.register_opts(OPTS)
+l3_gwmode_db.register_db_l3_gwmode_opts()
+
+
 EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
 
 # Modify the Router Data Model adding the enable_snat attribute
