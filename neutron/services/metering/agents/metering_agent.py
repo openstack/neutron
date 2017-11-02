@@ -48,7 +48,7 @@ class MeteringPluginRpc(object):
         # aesthetics.  Because of multiple inheritances in MeteringAgent,
         # it's actually necessary to initialize parent classes of
         # manager.Manager correctly.
-        super(MeteringPluginRpc, self).__init__()
+        super(MeteringPluginRpc, self).__init__(host)
         target = oslo_messaging.Target(topic=topics.METERING_PLUGIN,
                                        version='1.0')
         self.client = n_rpc.get_client(target)
