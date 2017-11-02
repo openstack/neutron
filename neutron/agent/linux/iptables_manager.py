@@ -62,7 +62,6 @@ MAX_CHAIN_LEN_NOWRAP = 28
 # a failure during iptables-restore
 IPTABLES_ERROR_LINES_OF_CONTEXT = 5
 
-
 # RESOURCE_PROBLEM in include/xtables.h
 XTABLES_RESOURCE_PROBLEM_CODE = 4
 
@@ -298,6 +297,10 @@ class IptablesManager(object):
 
     """
 
+    # Flag to denote we've already tried and used -w successfully, so don't
+    # run iptables-restore without it.
+    use_table_lock = False
+
     def __init__(self, _execute=None, state_less=False, use_ipv6=False,
                  namespace=None, binary_name=binary_name):
         if _execute:
@@ -466,7 +469,7 @@ class IptablesManager(object):
         # give agent some time to report back to server
         return str(int(cfg.CONF.AGENT.report_interval / 3.0))
 
-    def _run_restore(self, args, commands, lock=False):
+    def _do_run_restore(self, args, commands, lock=False):
         args = args[:]
         if lock:
             args += ['-w', self.xlock_wait_time]
@@ -476,6 +479,25 @@ class IptablesManager(object):
                          run_as_root=True, **kwargs)
         except RuntimeError as error:
             return error
+
+    def _run_restore(self, args, commands):
+        # If we've already tried and used -w successfully, don't
+        # run iptables-restore without it.
+        if self.use_table_lock:
+            return self._do_run_restore(args, commands, lock=True)
+
+        err = self._do_run_restore(args, commands)
+        if (isinstance(err, linux_utils.ProcessExecutionError) and
+            err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
+            # maybe we run on a platform that includes iptables commit
+            # 999eaa241212d3952ddff39a99d0d55a74e3639e (for example, latest
+            # RHEL) and failed because of xlock acquired by another
+            # iptables process running in parallel. Try to use -w to
+            # acquire xlock.
+            err = self._do_run_restore(args, commands, lock=True)
+            if not err:
+                self.__class__.use_table_lock = True
+        return err
 
     def _log_restore_err(self, err, commands):
         try:
@@ -560,14 +582,6 @@ class IptablesManager(object):
                 args = ['ip', 'netns', 'exec', self.namespace] + args
 
             err = self._run_restore(args, commands)
-            if (isinstance(err, linux_utils.ProcessExecutionError) and
-                err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
-                # maybe we run on a platform that includes iptables commit
-                # 999eaa241212d3952ddff39a99d0d55a74e3639e (for example, latest
-                # RHEL) and failed because of xlock acquired by another
-                # iptables process running in parallel. Try to use -w to
-                # acquire xlock.
-                err = self._run_restore(args, commands, lock=True)
             if err:
                 self._log_restore_err(err, commands)
                 raise err
