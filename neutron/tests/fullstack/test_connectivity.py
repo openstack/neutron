@@ -39,7 +39,6 @@ LOG = logging.getLogger(__name__)
 class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 
     of_interface = None
-    ovsdb_interface = None
     arp_responder = False
     use_dhcp = True
 
@@ -53,7 +52,6 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
             environment.HostDescription(
                 l3_agent=self.l2_pop,
                 of_interface=self.of_interface,
-                ovsdb_interface=self.ovsdb_interface,
                 l2_agent_type=self.l2_agent_type,
                 dhcp_agent=self.use_dhcp,
             )
@@ -206,7 +204,6 @@ class TestConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
     use_dhcp = False
     network_type = 'vxlan'
     l2_pop = False
-    ovsdb_interface = 'native'
     of_interface = 'native'
 
     def test_connectivity(self):

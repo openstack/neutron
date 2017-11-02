@@ -169,7 +169,6 @@ class OVSConfigFixture(ConfigFixture):
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
                 'of_interface': host_desc.of_interface,
-                'ovsdb_interface': host_desc.ovsdb_interface,
             },
             'securitygroup': {
                 'firewall_driver': host_desc.firewall_driver,

@@ -40,13 +40,11 @@ class OVSVersionChecker(object):
 class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
 
     of_interface = None
-    ovsdb_interface = None
 
     def setUp(self):
         host_descriptions = [
             environment.HostDescription(
                 of_interface=self.of_interface,
-                ovsdb_interface=self.ovsdb_interface,
                 l2_agent_type=self.l2_agent_type,
                 firewall_driver=self.firewall_driver,
                 dhcp_agent=True) for _ in range(2)]
@@ -83,17 +81,14 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         ('ovs-hybrid', {
             'firewall_driver': 'iptables_hybrid',
             'of_interface': 'native',
-            'ovsdb_interface': 'native',
             'l2_agent_type': constants.AGENT_TYPE_OVS}),
-        ('ovs-openflow-cli_ovsdb-cli', {
+        ('ovs-openflow-cli', {
             'firewall_driver': 'openvswitch',
             'of_interface': 'ovs-ofctl',
-            'ovsdb_interface': 'vsctl',
             'l2_agent_type': constants.AGENT_TYPE_OVS}),
-        ('ovs-openflow-native_ovsdb-native', {
+        ('ovs-openflow-native', {
             'firewall_driver': 'openvswitch',
             'of_interface': 'native',
-            'ovsdb_interface': 'native',
             'l2_agent_type': constants.AGENT_TYPE_OVS}),
         ('linuxbridge-iptables', {
             'firewall_driver': 'iptables',
