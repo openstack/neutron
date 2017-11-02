@@ -125,8 +125,7 @@ Provider networks provide connectivity like project networks.
 But only administrative (privileged) users can manage those
 networks because they interface with the physical network infrastructure.
 More information about provider networks see
-:doc:`intro-os-networking` or the `OpenStack Administrator Guide
-<https://docs.openstack.org/admin-guide/networking-adv-features.html#provider-networks>`__.
+:doc:`intro-os-networking`.
 
 * Flat
 
@@ -167,9 +166,7 @@ Project networks provide connectivity to instances for a particular
 project. Regular (non-privileged) users can manage project networks
 within the allocation that an administrator or operator defines for
 them. More information about project and provider networks see
-:doc:`intro-os-networking`
-or the `OpenStack Administrator Guide
-<https://docs.openstack.org/admin-guide/networking-adv-features.html#provider-networks>`__.
+:doc:`intro-os-networking`.
 
 Project network configurations are made in the
 ``/etc/neutron/plugins/ml2/ml2_conf.ini`` configuration file on the neutron
