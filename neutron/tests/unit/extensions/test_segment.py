@@ -17,6 +17,7 @@ import copy
 from keystoneauth1 import exceptions as ks_exc
 import mock
 import netaddr
+from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -39,7 +40,6 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_db
 from neutron.db import segments_db
 from neutron.extensions import ip_allocation
-from neutron.extensions import l2_adjacency
 from neutron.extensions import segment as ext_segment
 from neutron.objects import network
 from neutron.services.segments import db
@@ -843,7 +843,7 @@ class SegmentAwareIpamTestCase(SegmentTestCase):
         request = self.new_show_request('networks', network_id)
         response = self.deserialize(self.fmt, request.get_response(self.api))
         self.assertEqual(is_adjacent,
-                         response['network'][l2_adjacency.L2_ADJACENCY])
+                         response['network'][l2adj_apidef.L2_ADJACENCY])
 
 
 class TestSegmentAwareIpam(SegmentAwareIpamTestCase):

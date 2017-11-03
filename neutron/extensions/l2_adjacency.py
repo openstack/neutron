@@ -13,20 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import l2_adjacency as apidef
 from neutron_lib.api import extensions
 
 
-L2_ADJACENCY = 'l2_adjacency'
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {
-        L2_ADJACENCY: {'allow_post': False,
-                       'allow_put': False,
-                       'is_visible': True}
-    }
-}
-
-
-class L2_adjacency(extensions.ExtensionDescriptor):
+class L2_adjacency(extensions.APIExtensionDescriptor):
     """Extension class supporting L2 Adjacency for Routed Networks
 
     The following class is used by neutron's extension framework
@@ -34,25 +25,4 @@ class L2_adjacency(extensions.ExtensionDescriptor):
     Routed Network, exposing the same to clients.
     No new resources have been defined by this extension.
     """
-
-    @classmethod
-    def get_name(cls):
-        return "L2 Adjacency"
-
-    @classmethod
-    def get_alias(cls):
-        return "l2_adjacency"
-
-    @classmethod
-    def get_description(cls):
-        return "Display L2 Adjacency for Neutron Networks."
-
-    @classmethod
-    def get_updated(cls):
-        return "2016-04-12T16:00:00-00:00"
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+    api_definition = apidef
