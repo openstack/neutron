@@ -34,6 +34,7 @@ from testtools import matchers
 
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_router as dvr_router
+from neutron.agent.l3 import dvr_router_base
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import link_local_allocator as lla
@@ -995,7 +996,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             else:
                 self.assertIn(r.rule, expected_rules)
 
-    def test_get_snat_port_for_internal_port(self):
+    @mock.patch.object(dvr_router_base.LOG, 'error')
+    def test_get_snat_port_for_internal_port(self, log_error):
         router = l3_test_common.prepare_router_data(num_internal_ports=4)
         self._set_ri_kwargs(mock.Mock(), router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
@@ -1015,8 +1017,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             res_ip = ri.get_snat_port_for_internal_port(internal_ports[0])
             self.assertNotEqual(test_port, res_ip)
             self.assertIsNone(res_ip)
+            self.assertTrue(log_error.called)
 
-    def test_get_snat_port_for_internal_port_ipv6_same_port(self):
+    @mock.patch.object(dvr_router_base.LOG, 'error')
+    def test_get_snat_port_for_internal_port_ipv6_same_port(self, log_error):
         router = l3_test_common.prepare_router_data(ip_version=4,
                                                     enable_snat=True,
                                                     num_internal_ports=1)
@@ -1047,6 +1051,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             test_port['fixed_ips'][1]['subnet_id'] = 1234
             res_ip = ri.get_snat_port_for_internal_port(test_port)
             self.assertIsNone(res_ip)
+            self.assertTrue(log_error.called)
 
     def test_process_cent_router(self):
         router = l3_test_common.prepare_router_data()
@@ -2057,6 +2062,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri = legacy_router.LegacyRouter(agent, router['id'], router,
                                         **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
+        ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
         with mock.patch.object(
             agent.plugin_rpc, 'update_floatingip_statuses'
         ) as mock_update_fip_status,\
@@ -2515,7 +2521,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._test_process_routers_update_rpc_timeout(ext_net_call=True,
                                                       ext_net_call_failed=True)
 
-    def _test_process_routers_update_router_deleted(self, error=False):
+    @mock.patch.object(pd, 'remove_router')
+    def _test_process_routers_update_router_deleted(self, remove_router,
+                                                    error=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._queue = mock.Mock()
         update = mock.Mock()
@@ -2534,18 +2542,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         if error:
             self.assertFalse(router_processor.fetched_and_processed.called)
             agent._resync_router.assert_called_with(update)
+            self.assertFalse(remove_router.called)
         else:
             router_info.delete.assert_called_once_with()
             self.assertFalse(agent.router_info)
             self.assertFalse(agent._resync_router.called)
             router_processor.fetched_and_processed.assert_called_once_with(
                 update.timestamp)
+            self.assertTrue(remove_router.called)
 
     def test_process_routers_update_router_deleted_success(self):
         self._test_process_routers_update_router_deleted()
 
     def test_process_routers_update_router_deleted_error(self):
-        self._test_process_routers_update_router_deleted(True)
+        self._test_process_routers_update_router_deleted(error=True)
 
     def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
         self.conf.set_override('external_network_bridge', 'br-ex')
