@@ -191,11 +191,6 @@ def apply_filters(query, model, filters, context=None):
                     # do multiple equals matches
                     query = query.filter(
                         or_(*[column == v for v in value]))
-                elif None in value:
-                    # in_() operator does not support NULL element so we have
-                    # to do multiple equals matches
-                    query = query.filter(
-                        or_(*[column == v for v in value]))
                 elif isinstance(value, obj_utils.StringMatchingFilterObj):
                     if value.is_contains:
                         query = query.filter(
@@ -206,6 +201,11 @@ def apply_filters(query, model, filters, context=None):
                     elif value.is_ends:
                         query = query.filter(
                             column.endswith(value.ends))
+                elif None in value:
+                    # in_() operator does not support NULL element so we have
+                    # to do multiple equals matches
+                    query = query.filter(
+                        or_(*[column == v for v in value]))
                 else:
                     query = query.filter(column.in_(value))
             elif key == 'shared' and hasattr(model, 'rbac_entries'):
