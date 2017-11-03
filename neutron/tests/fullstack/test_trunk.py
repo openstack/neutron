@@ -91,7 +91,7 @@ class TestTrunkPlugin(base.BaseFullStackTestCase):
         host_desc = [environment.HostDescription(
             l3_agent=False,
             l2_agent_type=constants.AGENT_TYPE_OVS)]
-        env_desc = environment.EnvironmentDescription()
+        env_desc = environment.EnvironmentDescription(service_plugins='trunk')
         env = environment.Environment(env_desc, host_desc)
         super(TestTrunkPlugin, self).setUp(env)
 
@@ -207,6 +207,14 @@ class TestTrunkPlugin(base.BaseFullStackTestCase):
         vm.add_vlan_interface(
             subport['mac_address'], ip_network, subport_network.tag)
 
+    # NOTE(slaweq): As is described in bug
+    # https://bugs.launchpad.net/neutron/+bug/1687709 when more than one
+    # different ovs-agent with enabled trunk driver is running at a time it
+    # might lead to race contitions between them.
+    # Because of that ovs_agent used for fullstack tests is monkeypatched and
+    # loads trunk driver only if trunk service plugin is enabled.
+    # That makes restriction that only a single set of tests with trunk-enabled
+    # services will run at the same time.
     def test_trunk_lifecycle(self):
         """Test life-cycle of a fake VM with trunk port.
 
