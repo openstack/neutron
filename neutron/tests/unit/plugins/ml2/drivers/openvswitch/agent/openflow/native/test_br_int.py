@@ -195,11 +195,17 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                       dst_mac=dst_mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.uninstall_flows(table_id=1,
+            call.uninstall_flows(
+                strict=True,
+                priority=4,
+                table_id=1,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
-            call.uninstall_flows(table_id=60,
+            call.uninstall_flows(
+                strict=True,
+                priority=4,
+                table_id=60,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
@@ -257,11 +263,17 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                       dst_mac=dst_mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.uninstall_flows(table_id=2,
+            call.uninstall_flows(
+                strict=True,
+                priority=4,
+                table_id=2,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
-            call.uninstall_flows(table_id=60,
+            call.uninstall_flows(
+                strict=True,
+                priority=4,
+                table_id=60,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
