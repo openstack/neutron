@@ -26,18 +26,17 @@ def convert_filters(**kwargs):
 
 
 class StringMatchingFilterObj(object):
-
     @property
     def is_contains(self):
-        return bool(getattr(self, "contains"))
+        return bool(getattr(self, "contains", False))
 
     @property
     def is_starts(self):
-        return bool(getattr(self, "starts"))
+        return bool(getattr(self, "starts", False))
 
     @property
     def is_ends(self):
-        return bool(getattr(self, "ends"))
+        return bool(getattr(self, "ends", False))
 
 
 class StringContains(StringMatchingFilterObj):
