@@ -161,3 +161,36 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
 
         # make sure ICMP connectivity works after update
         self.ping_ip_address(fips[0]['floating_ip_address'])
+
+    @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d664')
+    def test_ip_prefix(self):
+        # Add specific remote prefix to VMs and check connectivity
+
+        cidr = self.subnet['cidr']
+        ssh_secgrp = self.os_primary.network_client.create_security_group(
+            name='ssh_secgrp')
+        self.create_loginable_secgroup_rule(
+            secgroup_id=ssh_secgrp['security_group']['id'])
+
+        rule_list = [{'protocol': constants.PROTO_NUM_ICMP,
+                      'direction': constants.INGRESS_DIRECTION,
+                      'remote_ip_prefix': cidr}]
+        icmp_secgrp = self.os_primary.network_client.create_security_group(
+            name='icmp_secgrp_with_cidr')
+        self.create_secgroup_rules(
+            rule_list, secgroup_id=icmp_secgrp['security_group']['id'])
+        for sec_grp in (ssh_secgrp, icmp_secgrp):
+            self.security_groups.append(sec_grp['security_group'])
+        security_groups_list = [{'name': 'ssh_secgrp'},
+                                {'name': 'icmp_secgrp_with_cidr'}]
+        server_ssh_clients, fips, servers = self.create_vm_testing_sec_grp(
+            security_groups=security_groups_list)
+
+        # make sure ssh connectivity works
+        self.check_connectivity(fips[0]['floating_ip_address'],
+                                CONF.validation.image_ssh_user,
+                                self.keypair['private_key'])
+
+        # make sure ICMP connectivity works
+        self.check_remote_connectivity(server_ssh_clients[0], fips[1][
+            'fixed_ip_address'])
