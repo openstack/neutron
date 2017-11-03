@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import metering as metering_apidef
 from neutron_lib.db import constants as db_const
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
@@ -23,7 +24,7 @@ LONG_NAME_NG = 'x' * (db_const.NAME_FIELD_SIZE + 1)
 
 class MeteringNegativeTestJSON(base.BaseAdminNetworkTest):
 
-    required_extensions = ['metering']
+    required_extensions = [metering_apidef.ALIAS]
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('8b3f7c84-9d37-4771-8681-bfd2c07f3c2d')

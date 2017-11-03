@@ -13,6 +13,7 @@
 # under the License.
 
 import netaddr
+from neutron_lib.exceptions import metering as metering_exc
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
@@ -59,14 +60,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         metering_label = metering_objs.MeteringLabel.get_object(context,
                                                                 id=label_id)
         if not metering_label:
-            raise metering.MeteringLabelNotFound(label_id=label_id)
+            raise metering_exc.MeteringLabelNotFound(label_id=label_id)
         return metering_label
 
     def delete_metering_label(self, context, label_id):
         deleted = metering_objs.MeteringLabel.delete_objects(
             context, id=label_id)
         if not deleted:
-            raise metering.MeteringLabelNotFound(label_id=label_id)
+            raise metering_exc.MeteringLabelNotFound(label_id=label_id)
 
     def get_metering_label(self, context, label_id, fields=None):
         return self._make_metering_label_dict(
@@ -105,7 +106,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         metering_label_rule = metering_objs.MeteringLabelRule.get_object(
             context, id=rule_id)
         if not metering_label_rule:
-            raise metering.MeteringLabelRuleNotFound(rule_id=rule_id)
+            raise metering_exc.MeteringLabelRuleNotFound(rule_id=rule_id)
         return metering_label_rule
 
     def get_metering_label_rule(self, context, rule_id, fields=None):
@@ -126,7 +127,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         cidrs = [r['remote_ip_prefix'] for r in r_ips]
         new_cidr_ipset = netaddr.IPSet([remote_ip_prefix])
         if (netaddr.IPSet(cidrs) & new_cidr_ipset):
-            raise metering.MeteringLabelRuleOverlaps(
+            raise metering_exc.MeteringLabelRuleOverlaps(
                 remote_ip_prefix=remote_ip_prefix)
 
     def create_metering_label_rule(self, context, metering_label_rule):
@@ -147,7 +148,7 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                     remote_ip_prefix=netaddr.IPNetwork(ip_prefix))
                 rule.create()
         except db_exc.DBReferenceError:
-            raise metering.MeteringLabelNotFound(label_id=label_id)
+            raise metering_exc.MeteringLabelNotFound(label_id=label_id)
 
         return self._make_metering_label_rule_dict(rule)
 
