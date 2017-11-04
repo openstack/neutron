@@ -920,7 +920,7 @@ def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
     """
     try:
         device = IPDevice(device_name, namespace=namespace)
-        if mac != device.link.address:
+        if mac and mac != device.link.address:
             return False
         device_ip_cidrs = [ip['cidr'] for ip in device.addr.list()]
         for ip_cidr in ip_cidrs:
@@ -1079,10 +1079,20 @@ def _arping(ns_name, iface_name, address, count, log_exception):
     # *  https://patchwork.ozlabs.org/patch/760372/
     # ** https://github.com/iputils/iputils/pull/86
     first = True
+    # Since arping is used to send gratuitous ARP, a response is
+    # not expected. In some cases (no response) and with some
+    # platforms (>=Ubuntu 14.04), arping exit code can be 1.
+    extra_ok_codes = [1]
     for i in range(count):
         if not first:
             # hopefully enough for kernel to get out of locktime loop
             time.sleep(2)
+            # On the second (and subsequent) arping calls, we can get a
+            # "bind: Cannot assign requested address" error since
+            # the IP address might have been deleted concurrently.
+            # We will log an error below if this isn't the case, so
+            # no need to have execute() log one as well.
+            extra_ok_codes = [1, 2]
         first = False
 
         # some Linux kernels* don't honour REPLYs. Send both gratuitous REQUEST
@@ -1098,27 +1108,32 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                           '-w', 1.5, address]
             try:
                 ip_wrapper = IPWrapper(namespace=ns_name)
-                # Since arping is used to send gratuitous ARP, a response is
-                # not expected. In some cases (no response) and with some
-                # platforms (>=Ubuntu 14.04), arping exit code can be 1.
-                ip_wrapper.netns.execute(arping_cmd, extra_ok_codes=[1])
+                ip_wrapper.netns.execute(arping_cmd,
+                                         extra_ok_codes=extra_ok_codes)
             except Exception as exc:
                 # Since this is spawned in a thread and executed 2 seconds
-                # apart, the interface may have been deleted while we were
-                # sleeping. Downgrade message to a warning and return early.
-                exists = device_exists(iface_name, namespace=ns_name)
+                # apart, something may have been deleted while we were
+                # sleeping. Downgrade message to info and return early
+                # unless it was the first try.
+                exists = device_exists_with_ips_and_mac(iface_name,
+                                                        [address],
+                                                        mac=None,
+                                                        namespace=ns_name)
                 msg = _("Failed sending gratuitous ARP to %(addr)s on "
                         "%(iface)s in namespace %(ns)s: %(err)s")
                 logger_method = LOG.exception
-                if not (log_exception or exists):
-                    logger_method = LOG.warning
+                if not (log_exception and (first or exists)):
+                    logger_method = LOG.info
                 logger_method(msg, {'addr': address,
                                     'iface': iface_name,
                                     'ns': ns_name,
                                     'err': exc})
                 if not exists:
-                    LOG.warning("Interface %s might have been deleted "
-                                "concurrently", iface_name)
+                    LOG.info("Interface %(iface)s or address %(addr)s "
+                             "in namespace %(ns)s was deleted concurrently",
+                             {'iface': iface_name,
+                              'addr': address,
+                              'ns': ns_name})
                     return
 
 
