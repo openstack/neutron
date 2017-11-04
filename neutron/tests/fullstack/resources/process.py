@@ -205,7 +205,7 @@ class OVSAgentFixture(ServiceFixture):
             process_name=self.NEUTRON_OVS_AGENT,
             exec_name=spawn.find_executable(
                 'ovs_agent.py',
-                path=os.path.join(base.ROOTDIR, 'common', 'agents')),
+                path=os.path.join(fullstack_base.ROOTDIR, 'cmd')),
             config_filenames=config_filenames,
             kill_signal=signal.SIGTERM))
 
