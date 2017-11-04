@@ -16,6 +16,7 @@
 
 from keystoneauth1 import loading as ks_loading
 import netaddr
+from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
@@ -36,7 +37,6 @@ from neutron.db import api as db_api
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.extensions import ip_allocation
-from neutron.extensions import l2_adjacency
 from neutron.extensions import segment
 from neutron.notifiers import batch_notifier
 from neutron.services.segments import db
@@ -57,7 +57,8 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     _instance = None
 
-    supported_extension_aliases = ["segment", "ip_allocation", "l2_adjacency"]
+    supported_extension_aliases = ["segment", "ip_allocation",
+                                   l2adj_apidef.ALIAS]
 
     def __init__(self):
         self.nova_updater = NovaSegmentNotifier()
@@ -72,7 +73,7 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         #                    it's a thing.
         is_adjacent = (not network_db.subnets
                        or not network_db.subnets[0].segment_id)
-        network_res[l2_adjacency.L2_ADJACENCY] = is_adjacent
+        network_res[l2adj_apidef.L2_ADJACENCY] = is_adjacent
 
     @staticmethod
     @resource_extend.extends([subnet_def.COLLECTION_NAME])
