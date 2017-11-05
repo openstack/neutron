@@ -214,7 +214,7 @@ following these suggestions:
   new "official" tags_, please reach out to the PTL. If you would like
   a fix to be backported, please add a backport-potential tag.
   This does not mean you are gonna get the backport, as the stable team needs
-  to follow the `stable branch policy <https://wiki.openstack.org/wiki/StableBranch#Stable_branch_policy>`_
+  to follow the `stable branch policy <http://docs.openstack.org/project-team-guide/stable-branches.html>`_
   for merging fixes to stable branches.
 * Attachments: consider attaching logs, truncated log snippets are rarely
   useful. Be proactive, and consider attaching redacted configuration files
