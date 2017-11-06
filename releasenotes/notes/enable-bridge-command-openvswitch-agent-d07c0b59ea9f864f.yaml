@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The Openvswitch agent has an extension called ``fdb`` that uses
+    the Linux ``bridge`` command.
+    The ``bridge`` command has been added to the
+    rootwrap openvswitch-plugin.filters file.
+    For more information, see bug:
+    `1730407 <https://bugs.launchpad.net/neutron/+bug/1730407>`_
