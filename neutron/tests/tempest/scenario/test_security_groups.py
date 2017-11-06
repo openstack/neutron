@@ -15,6 +15,7 @@
 from neutron_lib import constants
 
 from tempest.common import waiters
+from tempest.lib.common.utils import data_utils
 from tempest.lib import decorators
 
 from neutron.tests.tempest.common import ssh
@@ -111,18 +112,20 @@ class NetworkDefaultSecGroupTest(base.BaseTempestTestCase):
     @decorators.idempotent_id('3d73ec1a-2ec6-45a9-b0f8-04a283d9d964')
     def test_two_sec_groups(self):
         # add 2 sec groups to VM and test rules of both are working
+        ssh_secgrp_name = data_utils.rand_name('ssh_secgrp')
+        icmp_secgrp_name = data_utils.rand_name('icmp_secgrp')
         ssh_secgrp = self.os_primary.network_client.create_security_group(
-            name='ssh_secgrp')
+            name=ssh_secgrp_name)
         self.create_loginable_secgroup_rule(
             secgroup_id=ssh_secgrp['security_group']['id'])
         icmp_secgrp = self.os_primary.network_client.create_security_group(
-            name='icmp_secgrp')
+            name=icmp_secgrp_name)
         self.create_pingable_secgroup_rule(
             secgroup_id=icmp_secgrp['security_group']['id'])
         for sec_grp in (ssh_secgrp, icmp_secgrp):
             self.security_groups.append(sec_grp['security_group'])
-        security_groups_list = [{'name': 'ssh_secgrp'},
-                                {'name': 'icmp_secgrp'}]
+        security_groups_list = [{'name': ssh_secgrp_name},
+                                {'name': icmp_secgrp_name}]
         server_ssh_clients, fips, servers = self.create_vm_testing_sec_grp(
             num_servers=1, security_groups=security_groups_list)
         # make sure ssh connectivity works
