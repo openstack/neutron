@@ -39,6 +39,9 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-dns neutron-dns; then
                 configure_dns_extension
                 post_config_dns_extension
+                if is_service_enabled designate; then
+                    configure_dns_integration
+                fi
             fi
             if is_service_enabled neutron-segments; then
                 configure_segments_extension
