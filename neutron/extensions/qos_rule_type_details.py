@@ -13,9 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.api import extensions as api_extensions
-
-from neutron.extensions import qos
 
 
 # The name of the extension.
@@ -29,14 +28,14 @@ DESCRIPTION = ("Expose details about QoS rule types supported by loaded "
                "backend drivers")
 
 # The list of required extensions.
-REQUIRED_EXTENSIONS = [qos.ALIAS]
+REQUIRED_EXTENSIONS = [qos_apidef.ALIAS]
 
 # The list of optional extensions.
 OPTIONAL_EXTENSIONS = None
 
 # The resource attribute map for the extension.
 RESOURCE_ATTRIBUTE_MAP = {
-    qos.RULE_TYPES: {
+    qos_apidef.RULE_TYPES: {
         'drivers': {'allow_post': False, 'allow_put': False,
                     'is_visible': True}
     }

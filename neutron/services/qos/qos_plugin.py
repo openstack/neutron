@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
@@ -39,7 +40,7 @@ class QoSPlugin(qos.QoSPluginBase):
     service parameters over ports and networks.
 
     """
-    supported_extension_aliases = ['qos',
+    supported_extension_aliases = [qos_apidef.ALIAS,
                                    'qos-bw-limit-direction',
                                    'qos-default',
                                    'qos-rule-type-details']

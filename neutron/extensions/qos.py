@@ -17,14 +17,11 @@ import abc
 import itertools
 import re
 
-from neutron_lib.api import converters
+from neutron_lib.api.definitions import qos as apidef
 from neutron_lib.api import extensions as api_extensions
-from neutron_lib import constants as common_constants
-from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
-from neutron_lib.services.qos import constants as qos_consts
 import six
 
 from neutron.api import extensions
@@ -33,126 +30,10 @@ from neutron.api.v2 import resource_helper
 from neutron.objects.qos import rule as rule_object
 
 
-ALIAS = "qos"
-QOS_PREFIX = "/qos"
-COLLECTION_NAME = 'policies'
-
-# Attribute Map
-QOS_RULE_COMMON_FIELDS = {
-    'id': {'allow_post': False, 'allow_put': False,
-           'validate': {'type:uuid': None},
-           'is_visible': True,
-           'primary_key': True},
-    'tenant_id': {'allow_post': True, 'allow_put': False,
-                  'required_by_policy': True,
-                  'is_visible': True},
-}
-
-RULE_TYPES = "rule_types"
-
-RESOURCE_ATTRIBUTE_MAP = {
-    COLLECTION_NAME: {
-        'id': {'allow_post': False, 'allow_put': False,
-               'validate': {'type:uuid': None},
-               'is_visible': True, 'primary_key': True},
-        'name': {'allow_post': True, 'allow_put': True,
-                 'is_visible': True, 'default': '',
-                 'validate': {'type:string': db_const.NAME_FIELD_SIZE}},
-        'shared': {'allow_post': True, 'allow_put': True,
-                   'is_visible': True, 'default': False,
-                   'convert_to': converters.convert_to_boolean},
-        'tenant_id': {'allow_post': True, 'allow_put': False,
-                      'required_by_policy': True,
-                      'validate': {
-                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
-                      'is_visible': True},
-        'rules': {'allow_post': False, 'allow_put': False, 'is_visible': True},
-    },
-    RULE_TYPES: {
-        'type': {'allow_post': False, 'allow_put': False,
-                 'is_visible': True}
-    }
-}
-
-BANDWIDTH_LIMIT_RULES = "bandwidth_limit_rules"
-
-SUB_RESOURCE_ATTRIBUTE_MAP = {
-    BANDWIDTH_LIMIT_RULES: {
-        'parent': {'collection_name': 'policies',
-                   'member_name': 'policy'},
-        'parameters': dict(QOS_RULE_COMMON_FIELDS,
-                           **{'max_kbps': {
-                                  'allow_post': True, 'allow_put': True,
-                                  'is_visible': True, 'default': None,
-                                  'validate': {'type:range': [0,
-                                      db_const.DB_INTEGER_MAX_VALUE]}},
-                              'max_burst_kbps': {
-                                  'allow_post': True, 'allow_put': True,
-                                  'is_visible': True, 'default': 0,
-                                  'validate': {'type:range': [0,
-                                  db_const.DB_INTEGER_MAX_VALUE]}}}),
-    },
-    'dscp_marking_rules': {
-        'parent': {'collection_name': 'policies',
-                   'member_name': 'policy'},
-        'parameters': dict(QOS_RULE_COMMON_FIELDS,
-                           **{'dscp_mark': {
-                                  'allow_post': True, 'allow_put': True,
-                                  'convert_to': converters.convert_to_int,
-                                  'is_visible': True, 'default': None,
-                                  'validate': {'type:values': common_constants.
-                                              VALID_DSCP_MARKS}}})
-    },
-    'minimum_bandwidth_rules': {
-        'parent': {'collection_name': 'policies',
-                   'member_name': 'policy'},
-        'parameters': dict(QOS_RULE_COMMON_FIELDS,
-                           **{'min_kbps': {
-                                  'allow_post': True, 'allow_put': True,
-                                  'is_visible': True,
-                                  'validate': {'type:range': [0,
-                                  db_const.DB_INTEGER_MAX_VALUE]}},
-                              'direction': {
-                                  'allow_post': True, 'allow_put': True,
-                                  'is_visible': True, 'default': 'egress',
-                                  'validate': {'type:values':
-                                        [common_constants.EGRESS_DIRECTION]}}})
-    }
-}
-
-EXTENDED_ATTRIBUTES_2_0 = {
-    'ports': {qos_consts.QOS_POLICY_ID: {
-                                    'allow_post': True,
-                                    'allow_put': True,
-                                    'is_visible': True,
-                                    'default': None,
-                                    'validate': {'type:uuid_or_none': None}}},
-    'networks': {qos_consts.QOS_POLICY_ID: {
-                                    'allow_post': True,
-                                    'allow_put': True,
-                                    'is_visible': True,
-                                    'default': None,
-                                    'validate': {'type:uuid_or_none': None}}}}
-
-
-class Qos(api_extensions.ExtensionDescriptor):
+class Qos(api_extensions.APIExtensionDescriptor):
     """Quality of Service API extension."""
 
-    @classmethod
-    def get_name(cls):
-        return "Quality of Service"
-
-    @classmethod
-    def get_alias(cls):
-        return "qos"
-
-    @classmethod
-    def get_description(cls):
-        return "The Quality of Service extension."
-
-    @classmethod
-    def get_updated(cls):
-        return "2015-06-08T10:00:00-00:00"
+    api_definition = apidef
 
     @classmethod
     def get_plugin_interface(cls):
@@ -163,21 +44,23 @@ class Qos(api_extensions.ExtensionDescriptor):
         """Returns Ext Resources."""
         special_mappings = {'policies': 'policy'}
         plural_mappings = resource_helper.build_plural_mappings(
-            special_mappings, itertools.chain(RESOURCE_ATTRIBUTE_MAP,
-                                           SUB_RESOURCE_ATTRIBUTE_MAP))
+            special_mappings, itertools.chain(
+                apidef.RESOURCE_ATTRIBUTE_MAP,
+                apidef.SUB_RESOURCE_ATTRIBUTE_MAP))
 
         resources = resource_helper.build_resource_info(
                 plural_mappings,
-                RESOURCE_ATTRIBUTE_MAP,
+                apidef.RESOURCE_ATTRIBUTE_MAP,
                 constants.QOS,
                 translate_name=True,
                 allow_bulk=True)
 
         plugin = directory.get_plugin(constants.QOS)
-        for collection_name in SUB_RESOURCE_ATTRIBUTE_MAP:
+        for collection_name in apidef.SUB_RESOURCE_ATTRIBUTE_MAP:
             resource_name = collection_name[:-1]
-            parent = SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get('parent')
-            params = SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
+            parent = apidef.SUB_RESOURCE_ATTRIBUTE_MAP[
+                collection_name].get('parent')
+            params = apidef.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
                 'parameters')
 
             controller = base.create_resource(collection_name, resource_name,
@@ -190,23 +73,25 @@ class Qos(api_extensions.ExtensionDescriptor):
             resource = extensions.ResourceExtension(
                 collection_name,
                 controller, parent,
-                path_prefix=QOS_PREFIX,
+                path_prefix=apidef.API_PREFIX,
                 attr_map=params)
             resources.append(resource)
 
         return resources
 
     def update_attributes_map(self, attributes, extension_attrs_map=None):
+        # TODO(boden): remove with I8ae11633962a48de6e8559b85447b8c8c753d705
         super(Qos, self).update_attributes_map(
             attributes,
-            extension_attrs_map=dict(list(RESOURCE_ATTRIBUTE_MAP.items()) +
-                                     list(SUB_RESOURCE_ATTRIBUTE_MAP.items())))
+            extension_attrs_map=dict(
+                list(apidef.RESOURCE_ATTRIBUTE_MAP.items()) +
+                list(apidef.SUB_RESOURCE_ATTRIBUTE_MAP.items())))
 
     def get_extended_resources(self, version):
+        # TODO(boden): remove with I8ae11633962a48de6e8559b85447b8c8c753d705
         if version == "2.0":
-            return dict(list(EXTENDED_ATTRIBUTES_2_0.items()) +
-                        list(RESOURCE_ATTRIBUTE_MAP.items()) +
-                        list(SUB_RESOURCE_ATTRIBUTE_MAP.items()))
+            return dict(list(apidef.RESOURCE_ATTRIBUTE_MAP.items()) +
+                        list(apidef.SUB_RESOURCE_ATTRIBUTE_MAP.items()))
         else:
             return {}
 
@@ -214,7 +99,7 @@ class Qos(api_extensions.ExtensionDescriptor):
 @six.add_metaclass(abc.ABCMeta)
 class QoSPluginBase(service_base.ServicePluginBase):
 
-    path_prefix = QOS_PREFIX
+    path_prefix = apidef.API_PREFIX
 
     # The rule object type to use for each incoming rule-related request.
     rule_objects = {'bandwidth_limit': rule_object.QosBandwidthLimitRule,
