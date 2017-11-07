@@ -800,6 +800,10 @@ VPNAAS
 Backport/RC potential
 +++++++++++++++++++++
 
-* `All Liberty bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=liberty-backport-potential>`_
-* `All Kilo bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=kilo-backport-potential>`_
-* `All Juno bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=juno-backport-potential>`_
+List of all ``Backport/RC potential`` bugs for stable releases can be found on
+launchpad. Pointer to Launchpad's page with list of such bugs for any stable
+release can be built by using link:
+
+https://bugs.launchpad.net/neutron/+bugs?field.tag={STABLE_BRANCH}-backport-potential
+
+where ``STABLE_BRANCH`` is always name of one of the 3 latest releases.
