@@ -109,7 +109,7 @@ class VifPort(object):
 class BaseOVS(object):
 
     def __init__(self):
-        self.vsctl_timeout = cfg.CONF.ovs_vsctl_timeout
+        self.vsctl_timeout = cfg.CONF.OVS.ovsdb_timeout
         self.ovsdb = ovsdb_api.from_config(self)
 
     def add_manager(self, connection_uri, timeout=_SENTINEL):
@@ -117,10 +117,10 @@ class BaseOVS(object):
 
         :param connection_uri: Manager target string
         :param timeout: The Manager probe_interval timeout value
-                        (defaults to ovs_vsctl_timeout)
+                        (defaults to ovsdb_timeout)
         """
         if timeout is _SENTINEL:
-            timeout = cfg.CONF.ovs_vsctl_timeout
+            timeout = cfg.CONF.OVS.ovsdb_timeout
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.add_manager(connection_uri))
             if timeout:
