@@ -504,7 +504,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self.prepare_port_filter(port)
             return
         old_of_port = self.get_ofport(port)
-        of_port = self.get_or_create_ofport(port)
+        try:
+            of_port = self.get_or_create_ofport(port)
+        except exceptions.OVSFWPortNotFound as not_found_error:
+            LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
+                     {'port_id': port['device'],
+                      'err': not_found_error})
+            return
         # TODO(jlibosva): Handle firewall blink
         self.delete_all_port_flows(old_of_port)
         self.initialize_port_flows(of_port)
