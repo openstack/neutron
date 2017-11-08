@@ -13,58 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api import converters
+from neutron_lib.api.definitions import l3_ext_gw_mode as apidef
 from neutron_lib.api import extensions
 
-from neutron.extensions import l3
 
+class L3_ext_gw_mode(extensions.APIExtensionDescriptor):
 
-EXTENDED_ATTRIBUTES_2_0 = {
-    'routers': {l3.EXTERNAL_GW_INFO:
-                {'allow_post': True,
-                 'allow_put': True,
-                 'is_visible': True,
-                 'default': None,
-                 'enforce_policy': True,
-                 'validate':
-                 {'type:dict_or_nodata':
-                  {'network_id': {'type:uuid': None, 'required': True},
-                   'enable_snat': {'type:boolean': None, 'required': False,
-                                   'convert_to':
-                                       converters.convert_to_boolean},
-                   'external_fixed_ips': {
-                       'convert_list_to': converters.convert_kvp_list_to_dict,
-                       'type:fixed_ips': None,
-                       'default': None,
-                       'required': False}
-                   }
-                  }}}}
-
-
-class L3_ext_gw_mode(extensions.ExtensionDescriptor):
-
-    @classmethod
-    def get_name(cls):
-        return "Neutron L3 Configurable external gateway mode"
-
-    @classmethod
-    def get_alias(cls):
-        return "ext-gw-mode"
-
-    @classmethod
-    def get_description(cls):
-        return ("Extension of the router abstraction for specifying whether "
-                "SNAT should occur on the external gateway")
-
-    @classmethod
-    def get_updated(cls):
-        return "2013-03-28T10:00:00-00:00"
-
-    def get_required_extensions(self):
-        return ["router"]
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return dict(EXTENDED_ATTRIBUTES_2_0.items())
-        else:
-            return {}
+    api_definition = apidef

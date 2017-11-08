@@ -18,6 +18,7 @@ import copy
 
 import mock
 import netaddr
+from neutron_lib.api.definitions import l3_ext_gw_mode as l3gwm_apidef
 from neutron_lib import constants
 from neutron_lib import context as nctx
 from neutron_lib.plugins import directory
@@ -34,7 +35,6 @@ from neutron.db import l3_db
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
 from neutron.extensions import l3
-from neutron.extensions import l3_ext_gw_mode
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
@@ -60,7 +60,7 @@ class TestExtensionManager(object):
         # Simulate extension of L3 attribute map
         for key in l3.RESOURCE_ATTRIBUTE_MAP.keys():
             l3.RESOURCE_ATTRIBUTE_MAP[key].update(
-                l3_ext_gw_mode.EXTENDED_ATTRIBUTES_2_0.get(key, {}))
+                l3gwm_apidef.RESOURCE_ATTRIBUTE_MAP.get(key, {}))
         return l3.L3.get_resources()
 
     def get_actions(self):
