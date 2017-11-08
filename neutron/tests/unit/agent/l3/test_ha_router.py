@@ -88,6 +88,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_destroy_state_change_monitor_ok(self):
         ri = self._create_router(mock.MagicMock())
+        # need a port for destroy_state_change_monitor() to call PM code
+        ri.ha_port = {'id': _uuid()}
         with mock.patch.object(ri,
                                '_get_state_change_monitor_process_manager')\
                 as m_get_state:
@@ -100,6 +102,8 @@ class TestBasicRouterOperations(base.BaseTestCase):
 
     def test_destroy_state_change_monitor_force(self):
         ri = self._create_router(mock.MagicMock())
+        # need a port for destroy_state_change_monitor() to call PM code
+        ri.ha_port = {'id': _uuid()}
         with mock.patch.object(ri,
                                '_get_state_change_monitor_process_manager')\
                 as m_get_state:
