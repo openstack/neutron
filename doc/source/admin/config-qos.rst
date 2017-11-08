@@ -199,26 +199,21 @@ First, create a QoS policy and its bandwidth limit rule:
 .. code-block:: console
 
    $ openstack network qos policy create bw-limiter
-
-   Created a new policy:
    +-------------------+--------------------------------------+
    | Field             | Value                                |
    +-------------------+--------------------------------------+
    | description       |                                      |
    | id                | 5df855e9-a833-49a3-9c82-c0839a5f103f |
    | is_default        | False                                |
-   | name              | qos1                                 |
+   | name              | bw-limiter                           |
    | project_id        | 4db7c1ed114a4a7fb0f077148155c500     |
-   | revision_number   | 1                                    |
    | rules             | []                                   |
    | shared            | False                                |
-   | tags              | []                                   |
    +-------------------+--------------------------------------+
+
 
    $ openstack network qos rule create --type bandwidth-limit --max-kbps 3000 \
        --max-burst-kbits 300 --egress bw-limiter
-
-   Created a new bandwidth_limit_rule:
    +----------------+--------------------------------------+
    | Field          | Value                                |
    +----------------+--------------------------------------+
@@ -226,7 +221,10 @@ First, create a QoS policy and its bandwidth limit rule:
    | id             | 92ceb52f-170f-49d0-9528-976e2fee2d6f |
    | max_burst_kbps | 300                                  |
    | max_kbps       | 3000                                 |
+   | name           | None                                 |
+   | project_id     |                                      |
    +----------------+--------------------------------------+
+
 
 .. note::
 
@@ -243,7 +241,6 @@ the already created policy. In the next example, we will assign the
 .. code-block:: console
 
    $ openstack port list
-
    +--------------------------------------+-----------------------------------+
    | ID                                   | Fixed IP Addresses                |
    +--------------------------------------+-----------------------------------+
@@ -268,8 +265,6 @@ Ports can be created with a policy attached to them too.
 .. code-block:: console
 
    $ openstack port create --qos-policy bw-limiter --network private port1
-
-   Created a new port:
    +-----------------------+--------------------------------------------------+
    | Field                 | Value                                            |
    +-----------------------+--------------------------------------------------+
@@ -281,6 +276,7 @@ Ports can be created with a policy attached to them too.
    | binding_vif_type      | unbound                                          |
    | binding_vnic_type     | normal                                           |
    | created_at            | 2017-05-15T08:43:00Z                             |
+   | data_plane_status     | None                                             |
    | description           |                                                  |
    | device_id             |                                                  |
    | device_owner          |                                                  |
@@ -303,6 +299,7 @@ Ports can be created with a policy attached to them too.
    | status                | DOWN                                             |
    | subnet_id             | None                                             |
    | tags                  | []                                               |
+   | trunk_details         | None                                             |
    | updated_at            | 2017-05-15T08:43:00Z                             |
    +-----------------------+--------------------------------------------------+
 
@@ -347,39 +344,30 @@ be used.
 .. code-block:: console
 
     $ openstack network qos policy create --default bw-limiter
-
-    Created a new policy:
     +-------------------+--------------------------------------+
     | Field             | Value                                |
     +-------------------+--------------------------------------+
     | description       |                                      |
     | id                | 5df855e9-a833-49a3-9c82-c0839a5f103f |
     | is_default        | True                                 |
-    | name              | qos1                                 |
+    | name              | bw-limiter                           |
     | project_id        | 4db7c1ed114a4a7fb0f077148155c500     |
-    | revision_number   | 1                                    |
     | rules             | []                                   |
     | shared            | False                                |
-    | tags              | []                                   |
     +-------------------+--------------------------------------+
 
     $ openstack network qos policy set --no-default bw-limiter
-
-    Created a new policy:
     +-------------------+--------------------------------------+
     | Field             | Value                                |
     +-------------------+--------------------------------------+
     | description       |                                      |
     | id                | 5df855e9-a833-49a3-9c82-c0839a5f103f |
     | is_default        | False                                |
-    | name              | qos1                                 |
+    | name              | bw-limiter                           |
     | project_id        | 4db7c1ed114a4a7fb0f077148155c500     |
-    | revision_number   | 1                                    |
     | rules             | []                                   |
     | shared            | False                                |
-    | tags              | []                                   |
     +-------------------+--------------------------------------+
-
 
 
 Administrator enforcement
@@ -400,12 +388,11 @@ attached port.
 
 .. code-block:: console
 
-    $ openstack network qos rule set --max-kbps 2000 --max-burst-kbps 200 \
+    $ openstack network qos rule set --max-kbps 2000 --max-burst-kbits 200 \
         --ingress bw-limiter 92ceb52f-170f-49d0-9528-976e2fee2d6f
 
     $ openstack network qos rule show \
         bw-limiter 92ceb52f-170f-49d0-9528-976e2fee2d6f
-
     +----------------+--------------------------------------+
     | Field          | Value                                |
     +----------------+--------------------------------------+
@@ -413,6 +400,8 @@ attached port.
     | id             | 92ceb52f-170f-49d0-9528-976e2fee2d6f |
     | max_burst_kbps | 200                                  |
     | max_kbps       | 2000                                 |
+    | name           | None                                 |
+    | project_id     |                                      |
     +----------------+--------------------------------------+
 
 Just like with bandwidth limiting, create a policy for DSCP marking rule:
@@ -420,7 +409,6 @@ Just like with bandwidth limiting, create a policy for DSCP marking rule:
 .. code-block:: console
 
     $ openstack network qos policy create dscp-marking
-
     +-------------------+--------------------------------------+
     | Field             | Value                                |
     +-------------------+--------------------------------------+
@@ -429,10 +417,8 @@ Just like with bandwidth limiting, create a policy for DSCP marking rule:
     | is_default        | False                                |
     | name              | dscp-marking                         |
     | project_id        | 4db7c1ed114a4a7fb0f077148155c500     |
-    | revision_number   | 1                                    |
     | rules             | []                                   |
     | shared            | False                                |
-    | tags              | []                                   |
     +-------------------+--------------------------------------+
 
 You can create, update, list, delete, and show DSCP markings
@@ -442,13 +428,13 @@ with the neutron client:
 
     $ openstack network qos rule create --type dscp-marking --dscp-mark 26 \
         dscp-marking
-
-    Created a new dscp marking rule
     +----------------+--------------------------------------+
     | Field          | Value                                |
     +----------------+--------------------------------------+
-    | id             | 115e4f70-8034-4176-8fe9-2c47f8878a7d |
     | dscp_mark      | 26                                   |
+    | id             | 115e4f70-8034-4176-8fe9-2c47f8878a7d |
+    | name           | None                                 |
+    | project_id     |                                      |
     +----------------+--------------------------------------+
 
 .. code-block:: console
@@ -457,7 +443,6 @@ with the neutron client:
         dscp-marking 115e4f70-8034-4176-8fe9-2c47f8878a7d
 
     $ openstack network qos rule list dscp-marking
-
     +--------------------------------------+----------------------------------+
     | ID                                   | DSCP Mark                        |
     +--------------------------------------+----------------------------------+
@@ -466,12 +451,13 @@ with the neutron client:
 
     $ openstack network qos rule show \
         dscp-marking 115e4f70-8034-4176-8fe9-2c47f8878a7d
-
     +----------------+--------------------------------------+
     | Field          | Value                                |
     +----------------+--------------------------------------+
-    | id             | 115e4f70-8034-4176-8fe9-2c47f8878a7d |
     | dscp_mark      | 22                                   |
+    | id             | 115e4f70-8034-4176-8fe9-2c47f8878a7d |
+    | name           | None                                 |
+    | project_id     |                                      |
     +----------------+--------------------------------------+
 
     $ openstack network qos rule delete \
@@ -493,7 +479,6 @@ You can also include minimum bandwidth rules in your policy:
     | revision_number   | 1                                    |
     | rules             | []                                   |
     | shared            | False                                |
-    | tags              | []                                   |
     +-------------------+--------------------------------------+
 
     $ openstack network qos rule create \
@@ -548,5 +533,4 @@ It is also possible to combine several rules in one policy:
     |                   |   u'id': u'da858b32-44bc-43c9-b92b-cf6e2fa836ab',                 |
     |                   |   u'qos_policy_id': u'8491547e-add1-4c6c-a50e-42121237256c'}]     |
     | shared            | False                                                             |
-    | tags              | []                                                                |
     +-------------------+-------------------------------------------------------------------+
