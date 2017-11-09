@@ -25,6 +25,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
 from neutron_lib.objects import exceptions as obj_base
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -47,7 +48,6 @@ from neutron.db import l3_dvr_db
 from neutron.db.l3_dvr_db import is_distributed_router
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
-from neutron.extensions import l3_ext_ha_mode as l3_ha
 from neutron.objects import base
 from neutron.objects import l3_hamode
 from neutron.objects import router as l3_obj
@@ -73,9 +73,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         try:
             net = netaddr.IPNetwork(self.ha_cidr)
         except netaddr.AddrFormatError:
-            raise l3_ha.HANetworkCIDRNotValid(cidr=self.ha_cidr)
+            raise l3ha_exc.HANetworkCIDRNotValid(cidr=self.ha_cidr)
         if ('/' not in self.ha_cidr or net.network != net.ip):
-            raise l3_ha.HANetworkCIDRNotValid(cidr=self.ha_cidr)
+            raise l3ha_exc.HANetworkCIDRNotValid(cidr=self.ha_cidr)
 
         self._check_num_agents_per_router()
 
@@ -83,7 +83,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         max_agents = cfg.CONF.max_l3_agents_per_router
 
         if max_agents != UNLIMITED_AGENTS_PER_ROUTER and max_agents < 1:
-            raise l3_ha.HAMaximumAgentsNumberNotValid(max_agents=max_agents)
+            raise l3ha_exc.HAMaximumAgentsNumberNotValid(max_agents=max_agents)
 
     def __new__(cls, *args, **kwargs):
         inst = super(L3_HA_NAT_db_mixin, cls).__new__(cls, *args, **kwargs)
@@ -128,7 +128,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     available_vr_ids = VR_ID_RANGE - allocated_vr_ids
 
                     if not available_vr_ids:
-                        raise l3_ha.NoVRIDAvailable(router_id=router_id)
+                        raise l3ha_exc.NoVRIDAvailable(router_id=router_id)
 
                     allocation = l3_hamode.L3HARouterVRIdAllocation(
                         context, network_id=network_id,
@@ -149,7 +149,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                          {'count': count, 'network': network_id,
                           'router': router_id})
 
-        raise l3_ha.MaxVRIDAllocationTriesReached(
+        raise l3ha_exc.MaxVRIDAllocationTriesReached(
             network_id=network_id, router_id=router_id,
             max_tries=MAX_ALLOCATION_TRIES)
 
@@ -371,7 +371,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if not ha_net:
             # net was deleted, throw a retry to start over to create another
             raise db_exc.RetryRequest(
-                    l3_ha.HANetworkConcurrentDeletion(
+                l3ha_exc.HANetworkConcurrentDeletion(
                         tenant_id=router['tenant_id']))
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE])
@@ -385,7 +385,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             self._notify_router_updated(context, router_id)
         except Exception as e:
             with excutils.save_and_reraise_exception() as ctx:
-                if isinstance(e, l3_ha.NoVRIDAvailable):
+                if isinstance(e, l3ha_exc.NoVRIDAvailable):
                     ctx.reraise = False
                     LOG.warning("No more VRIDs for router: %s", e)
                 else:
