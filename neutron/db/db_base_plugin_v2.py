@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
@@ -53,7 +54,6 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import standardattrdescription_db as stattr_db
-from neutron.extensions import ip_allocation as ipa
 from neutron.extensions import l3
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
@@ -1266,13 +1266,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             try:
                 self.ipam.allocate_ips_for_port_and_store(
                     context, port, port_id)
-                db_port['ip_allocation'] = ipa.IP_ALLOCATION_IMMEDIATE
+                db_port['ip_allocation'] = (ipalloc_apidef.
+                                            IP_ALLOCATION_IMMEDIATE)
             except ipam_exc.DeferIpam:
-                db_port['ip_allocation'] = ipa.IP_ALLOCATION_DEFERRED
+                db_port['ip_allocation'] = (ipalloc_apidef.
+                                            IP_ALLOCATION_DEFERRED)
             fixed_ips = p['fixed_ips']
             if validators.is_attr_set(fixed_ips) and not fixed_ips:
                 # [] was passed explicitly as fixed_ips. An unaddressed port.
-                db_port['ip_allocation'] = ipa.IP_ALLOCATION_NONE
+                db_port['ip_allocation'] = ipalloc_apidef.IP_ALLOCATION_NONE
 
         return db_port
 

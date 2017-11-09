@@ -16,6 +16,7 @@
 
 from keystoneauth1 import loading as ks_loading
 import netaddr
+from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.api.definitions import port as port_def
@@ -36,7 +37,6 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
-from neutron.extensions import ip_allocation
 from neutron.extensions import segment
 from neutron.notifiers import batch_notifier
 from neutron.services.segments import db
@@ -86,10 +86,10 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         if not directory.get_plugin('segments'):
             return
 
-        value = ip_allocation.IP_ALLOCATION_IMMEDIATE
+        value = ipalloc_apidef.IP_ALLOCATION_IMMEDIATE
         if port_db.get('ip_allocation'):
             value = port_db.get('ip_allocation')
-        port_res[ip_allocation.IP_ALLOCATION] = value
+        port_res[ipalloc_apidef.IP_ALLOCATION] = value
 
     @classmethod
     def get_instance(cls):
