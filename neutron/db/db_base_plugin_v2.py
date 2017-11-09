@@ -140,6 +140,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     __native_pagination_support = True
     __native_sorting_support = True
 
+    def has_native_datastore(self):
+        return True
+
     def __new__(cls, *args, **kwargs):
         model_query.register_hook(
             models_v2.Port,
