@@ -410,3 +410,10 @@ class NeutronPluginBaseV2(base_services.WorkerBase):
         """
         return (self.__class__.start_rpc_state_reports_listener !=
                 NeutronPluginBaseV2.start_rpc_state_reports_listener)
+
+    def has_native_datastore(self):
+        """Return True if the plugin uses Neutron's native datastore.
+
+        .. note:: plugins like ML2 should override this method and return True.
+        """
+        return False
