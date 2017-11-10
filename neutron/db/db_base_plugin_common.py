@@ -35,6 +35,7 @@ from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
+from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
@@ -132,25 +133,50 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                'tenant_id': subnet['tenant_id'],
                'network_id': subnet['network_id'],
                'ip_version': subnet['ip_version'],
-               'cidr': subnet['cidr'],
-               'subnetpool_id': subnet.get('subnetpool_id'),
-               'allocation_pools': [{'start': pool['first_ip'],
-                                     'end': pool['last_ip']}
-                                    for pool in subnet['allocation_pools']],
-               'gateway_ip': subnet['gateway_ip'],
+               'subnetpool_id': subnet['subnetpool_id'],
                'enable_dhcp': subnet['enable_dhcp'],
                'ipv6_ra_mode': subnet['ipv6_ra_mode'],
                'ipv6_address_mode': subnet['ipv6_address_mode'],
-               'dns_nameservers': [dns['address']
-                                   for dns in subnet['dns_nameservers']],
-               'host_routes': [{'destination': route['destination'],
-                                'nexthop': route['nexthop']}
-                               for route in subnet['routes']],
                }
-        # The shared attribute for a subnet is the same as its parent network
-        res['shared'] = self._is_network_shared(context, subnet.rbac_entries)
-        # Call auxiliary extend functions, if any
-        resource_extend.apply_funcs(subnet_def.COLLECTION_NAME, res, subnet)
+        res['gateway_ip'] = str(
+                subnet['gateway_ip']) if subnet['gateway_ip'] else None
+        # TODO(korzen) this method can get subnet as DB object or Subnet OVO,
+        # so temporary workaround will be to fill in the fields in separate
+        # ways. After converting all code pieces to use Subnet OVO, the latter
+        # 'else' can be deleted
+        if isinstance(subnet, subnet_obj.Subnet):
+            res['cidr'] = str(subnet.cidr)
+            res['allocation_pools'] = [{'start': str(pool.start),
+                                       'end': str(pool.end)}
+                                       for pool in subnet.allocation_pools]
+            res['host_routes'] = [{'destination': str(route.destination),
+                                   'nexthop': str(route.nexthop)}
+                                 for route in subnet.host_routes]
+            res['dns_nameservers'] = [str(dns.address)
+                                      for dns in subnet.dns_nameservers]
+            res['shared'] = subnet.shared
+            # Call auxiliary extend functions, if any
+            resource_extend.apply_funcs(subnet_def.COLLECTION_NAME,
+                                        res, subnet.db_obj)
+        else:
+            res['cidr'] = subnet['cidr']
+            res['allocation_pools'] = [{'start': pool['first_ip'],
+                                       'end': pool['last_ip']}
+                                       for pool in subnet['allocation_pools']]
+            res['host_routes'] = [{'destination': route['destination'],
+                                   'nexthop': route['nexthop']}
+                                  for route in subnet['routes']]
+            res['dns_nameservers'] = [dns['address']
+                                      for dns in subnet['dns_nameservers']]
+
+            # The shared attribute for a subnet is the same
+            # as its parent network
+            res['shared'] = self._is_network_shared(context,
+                                                    subnet.rbac_entries)
+            # Call auxiliary extend functions, if any
+            resource_extend.apply_funcs(subnet_def.COLLECTION_NAME,
+                                        res, subnet)
+
         return db_utils.resource_fields(res, fields)
 
     def _make_subnetpool_dict(self, subnetpool, fields=None):
@@ -200,9 +226,17 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return network
 
     def _get_subnet(self, context, id):
+        # TODO(slaweq): remove this method when all will be switched to use OVO
+        # objects only
         try:
             subnet = model_query.get_by_id(context, models_v2.Subnet, id)
         except exc.NoResultFound:
+            raise n_exc.SubnetNotFound(subnet_id=id)
+        return subnet
+
+    def _get_subnet_object(self, context, id):
+        subnet = subnet_obj.Subnet.get_object(context, id=id)
+        if not subnet:
             raise n_exc.SubnetNotFound(subnet_id=id)
         return subnet
 
@@ -231,34 +265,21 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
 
     @db_api.context_manager.reader
     def _get_subnets_by_network(self, context, network_id):
-        subnet_qry = context.session.query(models_v2.Subnet)
-        return subnet_qry.filter_by(network_id=network_id).all()
+        return subnet_obj.Subnet.get_objects(context, network_id=network_id)
 
     @db_api.context_manager.reader
     def _get_subnets_by_subnetpool(self, context, subnetpool_id):
-        subnet_qry = context.session.query(models_v2.Subnet)
-        return subnet_qry.filter_by(subnetpool_id=subnetpool_id).all()
-
-    @db_api.context_manager.reader
-    def _get_all_subnets(self, context):
-        # NOTE(salvatore-orlando): This query might end up putting
-        # a lot of stress on the db. Consider adding a cache layer
-        return context.session.query(models_v2.Subnet).all()
+        return subnet_obj.Subnet.get_objects(context,
+                                             subnetpool_id=subnetpool_id)
 
     def _get_subnets(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None,
                      page_reverse=False):
-        marker_obj = db_utils.get_marker_obj(self, context, 'subnet',
-                                             limit, marker)
-        make_subnet_dict = functools.partial(self._make_subnet_dict,
-                                             context=context)
-        return model_query.get_collection(context, models_v2.Subnet,
-                                          make_subnet_dict,
-                                          filters=filters, fields=fields,
-                                          sorts=sorts,
-                                          limit=limit,
-                                          marker_obj=marker_obj,
-                                          page_reverse=page_reverse)
+        pager = base_obj.Pager(sorts, limit, page_reverse, marker)
+        filters = filters or {}
+        return subnet_obj.Subnet.get_objects(context, _pager=pager,
+                                             validate_filters=False,
+                                             **filters)
 
     def _make_network_dict(self, network, fields=None,
                            process_extensions=True, context=None):

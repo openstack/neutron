@@ -1099,8 +1099,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @registry.receives(resources.SUBNET, [events.PRECOMMIT_DELETE])
     def _subnet_delete_precommit_handler(self, rtype, event, trigger,
                                          context, subnet_id, **kwargs):
-        record = self._get_subnet(context, subnet_id)
-        subnet = self._make_subnet_dict(record, context=context)
+        subnet_obj = self._get_subnet_object(context, subnet_id)
+        subnet = self._make_subnet_dict(subnet_obj, context=context)
         network = self.get_network(context, subnet['network_id'])
         mech_context = driver_context.SubnetContext(self, context,
                                                     subnet, network)

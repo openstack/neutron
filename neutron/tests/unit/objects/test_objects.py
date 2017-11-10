@@ -91,7 +91,7 @@ object_data = {
     'SecurityGroupRule': '1.0-e9b8dace9d48b936c62ad40fe1f339d5',
     'SegmentHostMapping': '1.0-521597cf82ead26217c3bd10738f00f0',
     'ServiceProfile': '1.0-9beafc9e7d081b8258f3c5cb66ac5eed',
-    'Subnet': '1.0-9c19023a61b42d29fbf3766df380e5b7',
+    'Subnet': '1.0-927155c1fdd5a615cbcb981dda97bce4',
     'SubnetPool': '1.0-a0e03895d1a6e7b9d4ab7b0ca13c3867',
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',
     'SubnetServiceType': '1.0-05ae4cdb2a9026a697b143926a1add8c',

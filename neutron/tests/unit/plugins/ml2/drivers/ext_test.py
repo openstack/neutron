@@ -25,6 +25,7 @@ from sqlalchemy import orm
 
 from neutron.api import extensions
 from neutron.db import models_v2
+from neutron.objects import subnet as subnet_obj
 from neutron.plugins.ml2 import driver_api
 from neutron.tests.unit.plugins.ml2 import extensions as test_extensions
 
@@ -59,13 +60,20 @@ class TestExtensionDriver(TestExtensionDriverBase):
         assert(isinstance(result, dict))
         assert(result['id'] is not None)
 
-    def _check_extend(self, session, result, db_entry,
-                      expected_db_entry_class):
+    def _check_extend(self, session, result, entry,
+                      expected_db_entry_class, expected_obj_entry_class=None):
+        # TODO(slaweq): After converting all code to use Subnet OVO,
+        # expected_db_entry_class can be removed as only OVO object
+        # should be expected here
         assert(isinstance(session, oslo_db.sqlalchemy.session.Session))
         assert(isinstance(result, dict))
         assert(result['id'] is not None)
-        assert(isinstance(db_entry, expected_db_entry_class))
-        assert(db_entry.id == result['id'])
+        if expected_obj_entry_class:
+            assert(isinstance(entry, expected_db_entry_class) or
+                   isinstance(entry, expected_obj_entry_class))
+        else:
+            assert(isinstance(entry, expected_db_entry_class))
+        assert(entry.id == result['id'])
 
     def _store_change(self, result, data, field):
         if field in data and data[field] != constants.ATTR_NOT_SPECIFIED:
@@ -102,7 +110,10 @@ class TestExtensionDriver(TestExtensionDriverBase):
         result['subnet_extension'] = self.val_by_id[result['id']]
 
     def extend_subnet_dict(self, session, subnet_db, result):
-        self._check_extend(session, result, subnet_db, models_v2.Subnet)
+        self._check_extend(
+            session, result, subnet_db,
+            expected_db_entry_class=models_v2.Subnet,
+            expected_obj_entry_class=subnet_obj.Subnet)
         result['subnet_extension'] = self.val_by_id.get(result['id'])
 
     def process_create_port(self, plugin_context, data, result):
