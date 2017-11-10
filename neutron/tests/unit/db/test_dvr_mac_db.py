@@ -20,6 +20,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib import exceptions as lib_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
 
@@ -77,7 +78,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self._create_dvr_mac_entry('foo_host_1', non_unique_mac)
         with mock.patch.object(net, 'get_random_mac') as f:
             f.return_value = non_unique_mac
-            self.assertRaises(dvr.MacAddressGenerationFailure,
+            self.assertRaises(lib_exc.HostMacAddressGenerationFailure,
                               self.mixin._create_dvr_mac_address,
                               self.ctx, "foo_host_2")
 
