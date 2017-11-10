@@ -108,8 +108,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.scheduler.auto_schedule_routers(
                 self.l3_plugin,
                 self.adminContext,
-                host,
-                router_ids)
+                host)
 
         hosting_after = self.l3_plugin.get_l3_agents_hosting_routers(
             self.adminContext, router_ids)
@@ -525,7 +524,7 @@ class L3AZAutoScheduleTestCaseBase(L3AZSchedulerBaseTest):
                                       admin_state_up=True)
 
         scheduler.auto_schedule_routers(self.l3_plugin, self.adminContext,
-                                        activate_agent['host'], None)
+                                        activate_agent['host'])
 
         scheduled_agents = self.l3_plugin.get_l3_agents_hosting_routers(
             self.adminContext, [router['id']])
@@ -782,8 +781,7 @@ class L3DVRSchedulerTestCase(L3DVRSchedulerBaseTest):
 
         for host in self.hosts:
             self.scheduler.auto_schedule_routers(
-                self.l3_plugin, self.adminContext,
-                host, [self.router_to_schedule['id']])
+                self.l3_plugin, self.adminContext, host)
 
         hosting_after = self.l3_plugin.get_l3_agents_hosting_routers(
             self.adminContext, [self.router_to_schedule['id']])

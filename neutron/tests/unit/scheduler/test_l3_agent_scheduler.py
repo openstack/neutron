@@ -725,9 +725,7 @@ class L3AgentChanceSchedulerTestCase(L3SchedulerTestCaseMixin,
 
                 self._set_l3_agent_admin_state(self.adminContext,
                                                self.agent_id1, True)
-                self.plugin.auto_schedule_routers(self.adminContext,
-                                                  'host_1',
-                                                  [r1['router']['id']])
+                self.plugin.auto_schedule_routers(self.adminContext, 'host_1')
 
                 agents = self.plugin.get_l3_agents_hosting_routers(
                     self.adminContext, [r1['router']['id']],
@@ -1716,10 +1714,8 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
                           '_notify_router_updated').start()
 
         router = self._create_ha_router()
-        self.plugin.auto_schedule_routers(
-            self.adminContext, self.agent1.host, None)
-        self.plugin.auto_schedule_routers(
-            self.adminContext, self.agent2.host, None)
+        self.plugin.auto_schedule_routers(self.adminContext, self.agent1.host)
+        self.plugin.auto_schedule_routers(self.adminContext, self.agent2.host)
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [router['id']])
         self.assertEqual(2, len(agents))
@@ -1736,7 +1732,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
         router = self._create_ha_router()
 
         self.plugin.auto_schedule_routers(
-            self.adminContext, handle_internal_only_routers_agent.host, [])
+            self.adminContext, handle_internal_only_routers_agent.host)
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [router['id']],
             admin_state_up=True)
@@ -1749,8 +1745,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
             HOST_DVR, constants.L3_AGENT_MODE_DVR)
         router = self._create_ha_router()
 
-        self.plugin.auto_schedule_routers(self.adminContext, dvr_agent.host,
-                                          [])
+        self.plugin.auto_schedule_routers(self.adminContext, dvr_agent.host)
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [router['id']],
             admin_state_up=True)
@@ -1770,10 +1765,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
 
         agent = helpers.register_l3_agent(host='host_3')
         self.agent_id3 = agent.id
-        routers_to_auto_schedule = [router['id']] if specific_router else []
-        self.plugin.auto_schedule_routers(self.adminContext,
-                                          'host_3',
-                                          routers_to_auto_schedule)
+        self.plugin.auto_schedule_routers(self.adminContext, 'host_3')
 
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [router['id']],
@@ -1781,9 +1773,7 @@ class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
         self.assertEqual(3, len(agents))
 
         # Simulate agent restart to make sure we don't try to re-bind
-        self.plugin.auto_schedule_routers(self.adminContext,
-                                          'host_3',
-                                          routers_to_auto_schedule)
+        self.plugin.auto_schedule_routers(self.adminContext, 'host_3')
 
 
 class L3HALeastRoutersSchedulerTestCase(L3HATestCaseMixin):
@@ -1977,8 +1967,7 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
 
     def test_az_scheduler_auto_schedule(self):
         r1 = self._create_ha_router(ha=False, az_hints=['az1'])
-        self.plugin.auto_schedule_routers(self.adminContext,
-                                          'az1-host2', None)
+        self.plugin.auto_schedule_routers(self.adminContext, 'az1-host2')
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [r1['id']])
         self.assertEqual(1, len(agents))
@@ -1986,8 +1975,7 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
 
     def test_az_scheduler_auto_schedule_no_match(self):
         r1 = self._create_ha_router(ha=False, az_hints=['az1'])
-        self.plugin.auto_schedule_routers(self.adminContext,
-                                          'az2-host1', None)
+        self.plugin.auto_schedule_routers(self.adminContext, 'az2-host1')
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [r1['id']])
         self.assertEqual(0, len(agents))
@@ -2064,8 +2052,7 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         self.assertEqual(set(['az1-host1', 'az3-host1']), hosts)
         self._set_l3_agent_admin_state(self.adminContext, self.agent6['id'],
                                        state=True)
-        self.plugin.auto_schedule_routers(self.adminContext,
-                                          'az3-host2', None)
+        self.plugin.auto_schedule_routers(self.adminContext, 'az3-host2')
         agents = self.plugin.get_l3_agents_hosting_routers(
             self.adminContext, [r1['id']])
         self.assertEqual(3, len(agents))

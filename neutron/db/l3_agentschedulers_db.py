@@ -445,10 +445,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             candidates.append(l3_agent)
         return candidates
 
-    def auto_schedule_routers(self, context, host, router_ids=None):
+    def auto_schedule_routers(self, context, host):
         if self.router_scheduler:
-            self.router_scheduler.auto_schedule_routers(
-                self, context, host, router_ids)
+            self.router_scheduler.auto_schedule_routers(self, context, host)
 
     def schedule_router(self, context, router, candidates=None):
         if self.router_scheduler:

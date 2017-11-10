@@ -24,7 +24,6 @@ from neutron_lib import constants as lib_const
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-from oslo_log import versionutils
 import six
 
 from neutron.common import utils
@@ -74,7 +73,7 @@ class L3Scheduler(object):
 
         return [r for r in routers if r['id'] not in ids_to_discard]
 
-    def auto_schedule_routers(self, plugin, context, host, router_ids=None):
+    def auto_schedule_routers(self, plugin, context, host):
         """Schedule under-scheduled routers to L3 Agents.
 
         An under-scheduled router is a router that is either completely
@@ -87,16 +86,7 @@ class L3Scheduler(object):
                      all agents (not necessarily from the requesting host). If
                      specified, under-scheduled routers are scheduled only to
                      the agent on 'host'.
-        :param router_ids: currently unused and deprecated.
-                           kept for backward compatibility.
         """
-        if router_ids is not None:
-            versionutils.report_deprecated_feature(
-                LOG,
-                'Passing router_ids has no effect on L3 agent '
-                'scheduling. This is deprecated and will be '
-                'removed in the Queens release.')
-
         l3_agent = plugin.get_enabled_agent_on_host(
             context, lib_const.AGENT_TYPE_L3, host)
         if not l3_agent:
