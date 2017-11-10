@@ -44,13 +44,6 @@ class ConfFixture(config_fixture.Config):
                     nova_client_cert='nova_cert',
                     nova_client_priv_key='nova_priv_key')
         cache.register_oslo_configs(self.conf)
-        self.config(cache_url='')
-
-
-class CacheConfFixture(ConfFixture):
-    def setUp(self):
-        super(CacheConfFixture, self).setUp()
-        self.config(cache_url='memory://?default_ttl=5')
 
 
 class NewCacheConfFixture(ConfFixture):
@@ -421,31 +414,10 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         )
 
 
-class TestMetadataProxyHandlerCache(TestMetadataProxyHandlerBase,
-                                    _TestMetadataProxyHandlerCacheMixin):
-    fake_conf = cfg.CONF
-    fake_conf_fixture = CacheConfFixture(fake_conf)
-
-
 class TestMetadataProxyHandlerNewCache(TestMetadataProxyHandlerBase,
                                        _TestMetadataProxyHandlerCacheMixin):
     fake_conf = cfg.CONF
     fake_conf_fixture = NewCacheConfFixture(fake_conf)
-
-
-class TestMetadataProxyHandlerNoCache(TestMetadataProxyHandlerCache):
-    fake_conf = cfg.CONF
-    fake_conf_fixture = ConfFixture(fake_conf)
-
-    def test_get_router_networks_twice(self):
-        self._test_get_router_networks_twice_helper()
-        self.assertEqual(
-            2, self.handler.plugin_rpc.get_ports.call_count)
-
-    def test_get_ports_for_remote_address_cache_hit(self):
-        self._get_ports_for_remote_address_cache_hit_helper()
-        self.assertEqual(
-            2, self.handler.plugin_rpc.get_ports.call_count)
 
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):
