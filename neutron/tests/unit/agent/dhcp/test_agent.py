@@ -1001,7 +1001,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_called_once_with('restart',
                                                  new_state)
 
-    def test_subnet_update_end_delete_payload(self):
+    def test_subnet_delete_end_no_network_id(self):
         prev_state = dhcp.NetModel(dict(id=fake_network.id,
                                    tenant_id=fake_network.tenant_id,
                                    admin_state_up=True,
@@ -1019,6 +1019,28 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             mock.call.get_network_by_subnet_id(
                 'bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb'),
             mock.call.get_network_by_id('12345678-1234-5678-1234567890ab'),
+            mock.call.put(fake_network)])
+        self.call_driver.assert_called_once_with('restart',
+                                                 fake_network)
+
+    def test_subnet_update_end_delete_payload(self):
+        prev_state = dhcp.NetModel(dict(id=fake_network.id,
+                                   tenant_id=fake_network.tenant_id,
+                                   admin_state_up=True,
+                                   subnets=[fake_subnet1, fake_subnet3],
+                                   ports=[fake_port1]))
+
+        payload = dict(subnet_id=fake_subnet1.id, network_id=fake_network.id)
+        self.cache.get_network_by_subnet_id.return_value = prev_state
+        self.cache.get_network_by_id.return_value = prev_state
+        self.plugin.get_network_info.return_value = fake_network
+
+        self.dhcp.subnet_delete_end(None, payload)
+
+        self.cache.assert_has_calls([
+            mock.call.get_network_by_subnet_id(
+                'bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+            mock.call.get_network_by_id(FAKE_NETWORK_UUID),
             mock.call.put(fake_network)])
         self.call_driver.assert_called_once_with('restart',
                                                  fake_network)
@@ -1101,7 +1123,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.call_driver.assert_has_calls(
             [mock.call.call_driver('reload_allocations', fake_network)])
 
-    def test_port_delete_end(self):
+    def test_port_delete_end_no_network_id(self):
         payload = dict(port_id=fake_port2.id)
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = fake_port2
@@ -1109,15 +1131,29 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.dhcp.port_delete_end(None, payload)
         self.cache.assert_has_calls(
             [mock.call.get_port_by_id(fake_port2.id),
-             mock.call.deleted_ports.add(fake_port2.id),
              mock.call.get_port_by_id(fake_port2.id),
+             mock.call.deleted_ports.add(fake_port2.id),
+             mock.call.get_network_by_id(fake_network.id),
+             mock.call.remove_port(fake_port2)])
+        self.call_driver.assert_has_calls(
+            [mock.call.call_driver('reload_allocations', fake_network)])
+
+    def test_port_delete_end(self):
+        payload = dict(port_id=fake_port2.id, network_id=fake_network.id)
+        self.cache.get_network_by_id.return_value = fake_network
+        self.cache.get_port_by_id.return_value = fake_port2
+
+        self.dhcp.port_delete_end(None, payload)
+        self.cache.assert_has_calls(
+            [mock.call.get_port_by_id(fake_port2.id),
+             mock.call.deleted_ports.add(fake_port2.id),
              mock.call.get_network_by_id(fake_network.id),
              mock.call.remove_port(fake_port2)])
         self.call_driver.assert_has_calls(
             [mock.call.call_driver('reload_allocations', fake_network)])
 
     def test_port_delete_end_unknown_port(self):
-        payload = dict(port_id='unknown')
+        payload = dict(port_id='unknown', network_id='unknown')
         self.cache.get_port_by_id.return_value = None
 
         self.dhcp.port_delete_end(None, payload)
@@ -1132,7 +1168,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         port['device_id'] = device_id
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = port
-        self.dhcp.port_delete_end(None, {'port_id': port.id})
+        self.dhcp.port_delete_end(None, {'port_id': port.id,
+                                         'network_id': fake_network.id})
         self.call_driver.assert_has_calls(
             [mock.call.call_driver('disable', fake_network)])
 
