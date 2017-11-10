@@ -1083,6 +1083,7 @@ def _arping(ns_name, iface_name, address, count, log_exception):
     # not expected. In some cases (no response) and with some
     # platforms (>=Ubuntu 14.04), arping exit code can be 1.
     extra_ok_codes = [1]
+    ip_wrapper = IPWrapper(namespace=ns_name)
     for i in range(count):
         if not first:
             # hopefully enough for kernel to get out of locktime loop
@@ -1107,7 +1108,6 @@ def _arping(ns_name, iface_name, address, count, log_exception):
                           # removed while running
                           '-w', 1.5, address]
             try:
-                ip_wrapper = IPWrapper(namespace=ns_name)
                 ip_wrapper.netns.execute(arping_cmd,
                                          extra_ok_codes=extra_ok_codes)
             except Exception as exc:
