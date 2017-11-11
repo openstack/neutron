@@ -15,12 +15,10 @@
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
-from neutron_lib.plugins.ml2 import api as mech_api
-
-from neutron.plugins.ml2 import driver_api as api
+from neutron_lib.plugins.ml2 import api
 
 
-class TestMechanismDriver(mech_api.MechanismDriver):
+class TestMechanismDriver(api.MechanismDriver):
     """Test mechanism driver for testing mechanism driver api."""
 
     def initialize(self):
@@ -94,7 +92,7 @@ class TestMechanismDriver(mech_api.MechanismDriver):
         if context.vif_type in (portbindings.VIF_TYPE_UNBOUND,
                                 portbindings.VIF_TYPE_BINDING_FAILED):
             if (context.segments_to_bind and
-                context.segments_to_bind[0][mech_api.NETWORK_TYPE] == 'vlan'):
+                context.segments_to_bind[0][api.NETWORK_TYPE] == 'vlan'):
                 # Partially bound.
                 self._check_bound(context.binding_levels,
                                   context.top_bound_segment,
@@ -173,13 +171,13 @@ class TestMechanismDriver(mech_api.MechanismDriver):
         top_level = levels[0]
         assert(isinstance(top_level, dict))
         assert(isinstance(top_segment, dict))
-        assert(top_segment == top_level[mech_api.BOUND_SEGMENT])
-        assert('test' == top_level[mech_api.BOUND_DRIVER])
+        assert(top_segment == top_level[api.BOUND_SEGMENT])
+        assert('test' == top_level[api.BOUND_DRIVER])
         bottom_level = levels[-1]
         assert(isinstance(bottom_level, dict))
         assert(isinstance(bottom_segment, dict))
-        assert(bottom_segment == bottom_level[mech_api.BOUND_SEGMENT])
-        assert('test' == bottom_level[mech_api.BOUND_DRIVER])
+        assert(bottom_segment == bottom_level[api.BOUND_SEGMENT])
+        assert('test' == bottom_level[api.BOUND_DRIVER])
 
     def create_port_precommit(self, context):
         self._check_port_context(context, False)
@@ -209,7 +207,7 @@ class TestMechanismDriver(mech_api.MechanismDriver):
 
         host = context.host
         segment = context.segments_to_bind[0]
-        segment_id = segment[mech_api.ID]
+        segment_id = segment[api.ID]
         if host == "host-ovs-no_filter":
             context.set_binding(segment_id, portbindings.VIF_TYPE_OVS,
                                 {portbindings.CAP_PORT_FILTER: False})
@@ -224,11 +222,11 @@ class TestMechanismDriver(mech_api.MechanismDriver):
                                 status=const.PORT_STATUS_ACTIVE)
             self.bound_ports.add((context.current['id'], host))
         elif host == "host-hierarchical":
-            segment_type = segment[mech_api.NETWORK_TYPE]
+            segment_type = segment[api.NETWORK_TYPE]
             if segment_type == 'local':
                 next_segment = context.allocate_dynamic_segment(
-                    {mech_api.NETWORK_TYPE: 'vlan',
-                     mech_api.PHYSICAL_NETWORK: 'physnet1'}
+                    {api.NETWORK_TYPE: 'vlan',
+                     api.PHYSICAL_NETWORK: 'physnet1'}
                 )
                 context.continue_binding(segment_id, [next_segment])
             elif segment_type == 'vlan':

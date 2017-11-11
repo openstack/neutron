@@ -16,6 +16,7 @@
 import random
 
 from neutron_lib import context as neutron_ctx
+from neutron_lib.plugins.ml2 import api
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -25,7 +26,6 @@ from neutron.common import exceptions as exc
 from neutron.db import api as db_api
 from neutron.objects import base as base_obj
 from neutron.plugins.common import utils as p_utils
-from neutron.plugins.ml2 import driver_api as api
 
 
 LOG = log.getLogger(__name__)

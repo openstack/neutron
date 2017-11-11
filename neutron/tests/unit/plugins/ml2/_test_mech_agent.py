@@ -14,9 +14,8 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
-from neutron_lib.plugins.ml2 import api as mech_api
+from neutron_lib.plugins.ml2 import api
 
-from neutron.plugins.ml2 import driver_api as api
 from neutron.tests import base
 
 NETWORK_ID = "fake_network"
@@ -80,8 +79,8 @@ class FakePortContext(api.PortContext):
     def binding_levels(self):
         if self._bound_segment:
             return [{
-                mech_api.BOUND_DRIVER: 'fake_driver',
-                mech_api.BOUND_SEGMENT: self._expand_segment(
+                api.BOUND_DRIVER: 'fake_driver',
+                api.BOUND_SEGMENT: self._expand_segment(
                     self._bound_segment)
             }]
 
@@ -107,7 +106,7 @@ class FakePortContext(api.PortContext):
 
     def _expand_segment(self, segment_id):
         for segment in self._network_context.network_segments:
-            if segment[mech_api.ID] == self._bound_segment_id:
+            if segment[api.ID] == self._bound_segment_id:
                 return segment
 
     @property
@@ -176,7 +175,7 @@ class AgentMechanismBaseTestCase(base.BaseTestCase):
         self.assertIsNone(context._bound_vif_details)
 
     def _check_bound(self, context, segment):
-        self.assertEqual(context._bound_segment_id, segment[mech_api.ID])
+        self.assertEqual(context._bound_segment_id, segment[api.ID])
         self.assertEqual(context._bound_vif_type, self.VIF_TYPE)
         vif_details = context._bound_vif_details
         self.assertIsNotNone(vif_details)
@@ -194,9 +193,9 @@ class AgentMechanismBaseTestCase(base.BaseTestCase):
 
 
 class AgentMechanismGenericTestCase(AgentMechanismBaseTestCase):
-    UNKNOWN_TYPE_SEGMENTS = [{mech_api.ID: 'unknown_segment_id',
-                              mech_api.NETWORK_TYPE: 'no_such_type',
-                              mech_api.NETWORK_ID: 'fake_network_id'}]
+    UNKNOWN_TYPE_SEGMENTS = [{api.ID: 'unknown_segment_id',
+                              api.NETWORK_TYPE: 'no_such_type',
+                              api.NETWORK_ID: 'fake_network_id'}]
 
     def test_unknown_type(self):
         context = FakePortContext(self.AGENT_TYPE,
@@ -208,12 +207,12 @@ class AgentMechanismGenericTestCase(AgentMechanismBaseTestCase):
 
 
 class AgentMechanismLocalTestCase(AgentMechanismBaseTestCase):
-    LOCAL_SEGMENTS = [{mech_api.ID: 'unknown_segment_id',
-                       mech_api.NETWORK_TYPE: 'no_such_type',
-                       mech_api.NETWORK_ID: 'fake_network_id'},
-                      {mech_api.ID: 'local_segment_id',
-                       mech_api.NETWORK_TYPE: 'local',
-                       mech_api.NETWORK_ID: 'fake_network_id'}]
+    LOCAL_SEGMENTS = [{api.ID: 'unknown_segment_id',
+                       api.NETWORK_TYPE: 'no_such_type',
+                       api.NETWORK_ID: 'fake_network_id'},
+                      {api.ID: 'local_segment_id',
+                       api.NETWORK_TYPE: 'local',
+                       api.NETWORK_ID: 'fake_network_id'}]
 
     def test_type_local(self):
         context = FakePortContext(self.AGENT_TYPE,
@@ -233,13 +232,13 @@ class AgentMechanismLocalTestCase(AgentMechanismBaseTestCase):
 
 
 class AgentMechanismFlatTestCase(AgentMechanismBaseTestCase):
-    FLAT_SEGMENTS = [{mech_api.ID: 'unknown_segment_id',
-                      mech_api.NETWORK_TYPE: 'no_such_type',
-                      mech_api.NETWORK_ID: 'fake_network_id'},
-                     {mech_api.ID: 'flat_segment_id',
-                      mech_api.NETWORK_TYPE: 'flat',
-                      mech_api.PHYSICAL_NETWORK: 'fake_physical_network',
-                      mech_api.NETWORK_ID: 'fake_network_id'}]
+    FLAT_SEGMENTS = [{api.ID: 'unknown_segment_id',
+                      api.NETWORK_TYPE: 'no_such_type',
+                      api.NETWORK_ID: 'fake_network_id'},
+                     {api.ID: 'flat_segment_id',
+                      api.NETWORK_TYPE: 'flat',
+                      api.PHYSICAL_NETWORK: 'fake_physical_network',
+                      api.NETWORK_ID: 'fake_network_id'}]
 
     def test_type_flat(self):
         context = FakePortContext(self.AGENT_TYPE,
@@ -259,14 +258,14 @@ class AgentMechanismFlatTestCase(AgentMechanismBaseTestCase):
 
 
 class AgentMechanismVlanTestCase(AgentMechanismBaseTestCase):
-    VLAN_SEGMENTS = [{mech_api.ID: 'unknown_segment_id',
-                      mech_api.NETWORK_TYPE: 'no_such_type',
-                      mech_api.NETWORK_ID: 'fake_network_id'},
-                     {mech_api.ID: 'vlan_segment_id',
-                      mech_api.NETWORK_TYPE: 'vlan',
-                      mech_api.PHYSICAL_NETWORK: 'fake_physical_network',
-                      mech_api.SEGMENTATION_ID: 1234,
-                      mech_api.NETWORK_ID: 'fake_network_id'}]
+    VLAN_SEGMENTS = [{api.ID: 'unknown_segment_id',
+                      api.NETWORK_TYPE: 'no_such_type',
+                      api.NETWORK_ID: 'fake_network_id'},
+                     {api.ID: 'vlan_segment_id',
+                      api.NETWORK_TYPE: 'vlan',
+                      api.PHYSICAL_NETWORK: 'fake_physical_network',
+                      api.SEGMENTATION_ID: 1234,
+                      api.NETWORK_ID: 'fake_network_id'}]
 
     def test_type_vlan(self):
         context = FakePortContext(self.AGENT_TYPE,
@@ -286,13 +285,13 @@ class AgentMechanismVlanTestCase(AgentMechanismBaseTestCase):
 
 
 class AgentMechanismGreTestCase(AgentMechanismBaseTestCase):
-    GRE_SEGMENTS = [{mech_api.ID: 'unknown_segment_id',
-                     mech_api.NETWORK_TYPE: 'no_such_type',
-                     mech_api.NETWORK_ID: 'fake_network_id'},
-                    {mech_api.ID: 'gre_segment_id',
-                     mech_api.NETWORK_TYPE: 'gre',
-                     mech_api.SEGMENTATION_ID: 1234,
-                     mech_api.NETWORK_ID: 'fake_network_id'}]
+    GRE_SEGMENTS = [{api.ID: 'unknown_segment_id',
+                     api.NETWORK_TYPE: 'no_such_type',
+                     api.NETWORK_ID: 'fake_network_id'},
+                    {api.ID: 'gre_segment_id',
+                     api.NETWORK_TYPE: 'gre',
+                     api.SEGMENTATION_ID: 1234,
+                     api.NETWORK_ID: 'fake_network_id'}]
 
     def test_type_gre(self):
         context = FakePortContext(self.AGENT_TYPE,

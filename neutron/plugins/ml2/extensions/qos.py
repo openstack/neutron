@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
 
 from neutron.core_extensions import base as base_core
 from neutron.core_extensions import qos as qos_core
-from neutron.plugins.ml2 import driver_api as api
 
 LOG = logging.getLogger(__name__)
 

@@ -21,6 +21,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_const
 from neutron_lib.exceptions import dns as dns_exc
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -28,7 +29,6 @@ from neutron.db import segments_db
 from neutron.objects import network as net_obj
 from neutron.objects import ports as port_obj
 from neutron.plugins.common import utils as plugin_utils
-from neutron.plugins.ml2 import driver_api as api
 from neutron.services.externaldns import driver
 
 LOG = logging.getLogger(__name__)

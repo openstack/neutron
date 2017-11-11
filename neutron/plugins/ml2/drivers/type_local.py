@@ -19,12 +19,11 @@ from neutron_lib.plugins.ml2 import api
 from oslo_log import log
 
 from neutron._i18n import _
-from neutron.plugins.ml2 import driver_api
 
 LOG = log.getLogger(__name__)
 
 
-class LocalTypeDriver(driver_api.ML2TypeDriver):
+class LocalTypeDriver(api.ML2TypeDriver):
     """Manage state for local networks with ML2.
 
     The LocalTypeDriver implements the 'local' network_type. Local
