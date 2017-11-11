@@ -630,12 +630,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                tenant_id=None,
                service_types=None,
                set_context=False):
-
-        cidr = netaddr.IPNetwork(cidr) if cidr else None
-        if (gateway_ip is not None and
-                gateway_ip != constants.ATTR_NOT_SPECIFIED):
-            gateway_ip = netaddr.IPAddress(gateway_ip)
-
         with optional_ctx(network, self.network,
                           set_context=set_context,
                           tenant_id=tenant_id) as network_to_use:
