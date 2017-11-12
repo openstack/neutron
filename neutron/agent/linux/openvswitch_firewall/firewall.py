@@ -479,8 +479,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._initialize_egress_no_port_security(port['device'])
             return
         old_of_port = self.get_ofport(port)
-        # Make sure delete old allow_address_pair MACs because
-        # allow_address_pair MACs will be updated in
+        # Make sure delete old allowed_address_pair MACs because
+        # allowed_address_pair MACs will be updated in
         # self.get_or_create_ofport(port)
         if old_of_port:
             LOG.error("Initializing port %s that was already "
