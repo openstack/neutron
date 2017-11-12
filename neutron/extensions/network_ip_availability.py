@@ -13,70 +13,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from neutron_lib.api.definitions import network_ip_availability as apidef
 from neutron_lib.api import extensions as api_extensions
 
 import neutron.api.extensions as extensions
 import neutron.api.v2.base as base
 import neutron.services.network_ip_availability.plugin as plugin
 
-RESOURCE_NAME = "network_ip_availability"
-RESOURCE_PLURAL = "network_ip_availabilities"
-COLLECTION_NAME = RESOURCE_PLURAL.replace('_', '-')
-EXT_ALIAS = RESOURCE_NAME.replace('_', '-')
 
-RESOURCE_ATTRIBUTE_MAP = {
-    RESOURCE_PLURAL: {
-        'network_id': {'allow_post': False, 'allow_put': False,
-                       'is_visible': True},
-        'network_name': {'allow_post': False, 'allow_put': False,
-                         'is_visible': True},
-        'tenant_id': {'allow_post': False, 'allow_put': False,
-                      'is_visible': True},
-        'total_ips': {'allow_post': False, 'allow_put': False,
-                      'is_visible': True},
-        'used_ips': {'allow_post': False, 'allow_put': False,
-                     'is_visible': True},
-        'subnet_ip_availability': {'allow_post': False, 'allow_put': False,
-                                   'is_visible': True},
-        # TODO(wwriverrat) Make composite attribute for subnet_ip_availability
-    }
-}
-
-
-class Network_ip_availability(api_extensions.ExtensionDescriptor):
+class Network_ip_availability(api_extensions.APIExtensionDescriptor):
     """Extension class supporting network ip availability information."""
-
-    @classmethod
-    def get_name(cls):
-        return "Network IP Availability"
-
-    @classmethod
-    def get_alias(cls):
-        return EXT_ALIAS
-
-    @classmethod
-    def get_description(cls):
-        return "Provides IP availability data for each network and subnet."
-
-    @classmethod
-    def get_updated(cls):
-        return "2015-09-24T00:00:00-00:00"
+    api_definition = apidef
 
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for service type management."""
-        resource_attributes = RESOURCE_ATTRIBUTE_MAP[RESOURCE_PLURAL]
+        resource_attributes = apidef.RESOURCE_ATTRIBUTE_MAP[
+            apidef.RESOURCE_PLURAL]
         controller = base.create_resource(
-            RESOURCE_PLURAL,
-            RESOURCE_NAME,
+            apidef.RESOURCE_PLURAL,
+            apidef.RESOURCE_NAME,
             plugin.NetworkIPAvailabilityPlugin.get_instance(),
             resource_attributes)
-        return [extensions.ResourceExtension(COLLECTION_NAME,
+        return [extensions.ResourceExtension(apidef.COLLECTION_NAME,
                                              controller,
                                              attr_map=resource_attributes)]
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return RESOURCE_ATTRIBUTE_MAP
-        else:
-            return {}
