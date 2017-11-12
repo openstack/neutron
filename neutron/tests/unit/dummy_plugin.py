@@ -22,6 +22,7 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.db import servicetype_db
 from neutron.extensions import servicetype
+from neutron import neutron_plugin_base_v2
 
 
 RESOURCE_NAME = "dummy"
@@ -129,3 +130,54 @@ class DummyServicePlugin(service_base.ServicePluginBase):
                                                             svc_type_id)
         except KeyError:
             raise exceptions.NotFound()
+
+
+class DummyCorePluginWithoutDatastore(
+        neutron_plugin_base_v2.NeutronPluginBaseV2):
+    def create_subnet(self, context, subnet):
+        pass
+
+    def update_subnet(self, context, id, subnet):
+        pass
+
+    def get_subnet(self, context, id, fields=None):
+        pass
+
+    def get_subnets(self, context, filters=None, fields=None,
+                    sorts=None, limit=None, marker=None, page_reverse=False):
+        pass
+
+    def delete_subnet(self, context, id):
+        pass
+
+    def create_network(self, context, network):
+        pass
+
+    def update_network(self, context, id, network):
+        pass
+
+    def get_network(self, context, id, fields=None):
+        pass
+
+    def get_networks(self, context, filters=None, fields=None,
+                     sorts=None, limit=None, marker=None, page_reverse=False):
+        pass
+
+    def delete_network(self, context, id):
+        pass
+
+    def create_port(self, context, port):
+        pass
+
+    def update_port(self, context, id, port):
+        pass
+
+    def get_port(self, context, id, fields=None):
+        pass
+
+    def get_ports(self, context, filters=None, fields=None,
+                  sorts=None, limit=None, marker=None, page_reverse=False):
+        pass
+
+    def delete_port(self, context, id):
+        pass
