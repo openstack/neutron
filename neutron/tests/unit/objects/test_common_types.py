@@ -13,7 +13,6 @@
 
 import abc
 import itertools
-import random
 
 from neutron_lib import constants as const
 from neutron_lib.db import constants as db_const
@@ -226,27 +225,10 @@ class IpProtocolEnumFieldTest(test_base.BaseTestCase, TestField):
             (val, val)
             for val in itertools.chain(
                 const.IP_PROTOCOL_MAP.keys(),
-                [str(v) for v in const.IP_PROTOCOL_MAP.values()]
+                [str(v) for v in range(256)]
             )
         ]
         self.coerce_bad_values = ['test', 'Udp', 256]
-        try:
-            # pick a random protocol number that is not in the map of supported
-            # protocols
-            self.coerce_bad_values.append(
-                str(
-                    random.choice(
-                        list(
-                            set(range(256)) -
-                            set(const.IP_PROTOCOL_MAP.values())
-                        )
-                    )
-                )
-            )
-        except IndexError:
-            # stay paranoid and guard against the impossible future when all
-            # protocols are in the map
-            pass
         self.to_primitive_values = self.coerce_good_values
         self.from_primitive_values = self.coerce_good_values
 
