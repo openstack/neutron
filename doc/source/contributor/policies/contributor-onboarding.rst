@@ -17,9 +17,11 @@ can actually run the code. Devstack is the usual convenient environment to setup
 an environment. See `devstack.org <http://devstack.org/>`_ or `NeutronDevstack <https://wiki.openstack.org/wiki/NeutronDevstack#Basic_Setup>`_
 for more information on using Neutron with devstack.
 
-Helping with documentation can also be a useful first step for a newcomer. `Here <https://bugs.launchpad.net/openstack-manuals/+bugs?field.tag=neutron>`_
-is a list of documentation bugs that are tagged with 'neutron'; bug reports are created
-here for neutron reviews with a 'DocImpact' in the commit message.
+Helping with documentation can also be a useful first step for a newcomer.
+Here is a list of tagged documentation and API reference bugs:
+
+* `Documentation bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=doc>`_
+* `Api-ref bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=api-ref>`_
 
 IRC Information and Etiquette
 -----------------------------

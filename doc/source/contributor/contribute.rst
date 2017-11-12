@@ -274,6 +274,13 @@ uses them. For more details see `devstack-vm-gate-wrap.sh
 <https://git.openstack.org/cgit/openstack-infra/devstack-gate/tree/devstack-vm-gate-wrap.sh>`_.
 
 
+Documentation
+-------------
+
+For a layout of the how the documentation directory is structured see the
+`effective neutron guide <effective_neutron.html>`_
+
+
 Project Initial Setup
 ---------------------
 
