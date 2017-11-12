@@ -65,6 +65,9 @@ IPTABLES_ERROR_LINES_OF_CONTEXT = 5
 # RESOURCE_PROBLEM in include/xtables.h
 XTABLES_RESOURCE_PROBLEM_CODE = 4
 
+# xlock wait interval, in microseconds
+XLOCK_WAIT_INTERVAL = 200000
+
 
 def comment_rule(rule, comment):
     if not cfg.CONF.AGENT.comment_iptables_rules or not comment:
@@ -472,7 +475,7 @@ class IptablesManager(object):
     def _do_run_restore(self, args, commands, lock=False):
         args = args[:]
         if lock:
-            args += ['-w', self.xlock_wait_time]
+            args += ['-w', self.xlock_wait_time, '-W', XLOCK_WAIT_INTERVAL]
         try:
             kwargs = {} if lock else {'log_fail_as_error': False}
             self.execute(args, process_input='\n'.join(commands),
