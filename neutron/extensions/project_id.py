@@ -11,44 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api.definitions import project_id as apidef
 from neutron_lib.api import extensions as api_extensions
 
 from neutron.api import extensions
 
 
-_ALIAS = 'project-id'
-
-
-class Project_id(api_extensions.ExtensionDescriptor):
+class Project_id(api_extensions.APIExtensionDescriptor):
     """Extension that indicates that project_id is enabled.
 
     This extension indicates that the Keystone V3 'project_id' field
     is supported in the API.
     """
 
+    api_definition = apidef
+
     extensions.register_custom_supported_check(
-        _ALIAS, lambda: True, plugin_agnostic=True
+        apidef.ALIAS, lambda: True, plugin_agnostic=True
     )
-
-    @classmethod
-    def get_name(cls):
-        return "project_id field enabled"
-
-    @classmethod
-    def get_alias(cls):
-        return _ALIAS
-
-    @classmethod
-    def get_description(cls):
-        return "Extension that indicates that project_id field is enabled."
-
-    @classmethod
-    def get_updated(cls):
-        return "2016-09-09T09:09:09-09:09"
-
-    @classmethod
-    def get_resources(cls):
-        return []
-
-    def get_extended_resources(self, version):
-        return {}
