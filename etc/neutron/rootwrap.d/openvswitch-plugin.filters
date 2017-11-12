@@ -22,5 +22,5 @@ ip: IpFilter, ip, root
 find: RegExpFilter, find, root, find, /sys/class/net, -maxdepth, 1, -type, l, -printf, %.*
 ip_exec: IpNetnsExecFilter, ip, root
 
-# needed for FDB extention
+# needed for FDB extension
 bridge: CommandFilter, bridge, root
