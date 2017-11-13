@@ -24,6 +24,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
 from neutron_lib.objects import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -43,7 +44,6 @@ from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.db.models import l3ha as l3ha_model
 from neutron.extensions import l3
-from neutron.extensions import l3_ext_ha_mode
 from neutron.objects import l3_hamode
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
@@ -126,19 +126,19 @@ class L3HATestCase(L3HATestFramework):
     def test_verify_configuration_l3_ha_net_cidr_is_not_a_cidr(self):
         cfg.CONF.set_override('l3_ha_net_cidr', 'not a cidr')
         self.assertRaises(
-            l3_ext_ha_mode.HANetworkCIDRNotValid,
+            l3ha_exc.HANetworkCIDRNotValid,
             self.plugin._verify_configuration)
 
     def test_verify_configuration_l3_ha_net_cidr_is_not_a_subnet(self):
         cfg.CONF.set_override('l3_ha_net_cidr', '10.0.0.1/8')
         self.assertRaises(
-            l3_ext_ha_mode.HANetworkCIDRNotValid,
+            l3ha_exc.HANetworkCIDRNotValid,
             self.plugin._verify_configuration)
 
     def test_verify_configuration_max_l3_agents_below_0(self):
         cfg.CONF.set_override('max_l3_agents_per_router', -5)
         self.assertRaises(
-            l3_ext_ha_mode.HAMaximumAgentsNumberNotValid,
+            l3ha_exc.HAMaximumAgentsNumberNotValid,
             self.plugin._check_num_agents_per_router)
 
     def test_verify_configuration_max_l3_agents_unlimited(self):
