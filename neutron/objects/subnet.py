@@ -176,9 +176,7 @@ class Subnet(base.NeutronDbObject):
         'name': obj_fields.StringField(nullable=True),
         'network_id': common_types.UUIDField(),
         'segment_id': common_types.UUIDField(nullable=True),
-        # NOTE: subnetpool_id can be 'prefix_delegation' string
-        # when the IPv6 Prefix Delegation is enabled
-        'subnetpool_id': obj_fields.StringField(nullable=True),
+        'subnetpool_id': common_types.UUIDField(nullable=True),
         'ip_version': common_types.IPVersionEnumField(),
         'cidr': common_types.IPNetworkField(),
         'gateway_ip': obj_fields.IPAddressField(nullable=True),

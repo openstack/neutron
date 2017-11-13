@@ -61,7 +61,6 @@ from neutron.ipam import subnet_alloc
 from neutron import neutron_plugin_base_v2
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
-from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
 
 
@@ -270,7 +269,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             context, models_v2.Port).filter(models_v2.Port.network_id == id)
         ports = ports.filter(not_(models_v2.Port.device_owner.startswith(
             constants.DEVICE_OWNER_NETWORK_PREFIX)))
-        subnets = subnet_obj.Subnet.get_objects(context, network_id=id)
+        subnets = model_query.query_with_hooks(
+            context, models_v2.Subnet).filter(
+                models_v2.Subnet.network_id == id)
         tenant_ids = set([port['tenant_id'] for port in ports] +
                          [subnet['tenant_id'] for subnet in subnets])
         # raise if multiple tenants found or if the only tenant found
@@ -447,7 +448,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # retry reference errors so we can check the port type and
             # cleanup if a network-owned port snuck in without failing
             for subnet in subnets:
-                self._delete_subnet(context, subnet)
+                self.delete_subnet(context, subnet['id'])
             with db_api.context_manager.writer.using(context):
                 network_db = self._get_network(context, id)
                 network = self._make_network_dict(network_db, context=context)
@@ -569,13 +570,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     ipal = models_v2.IPAllocation
                     alloc_qry = context.session.query(ipal)
                     alloc_qry = alloc_qry.join("port", "routerport")
-                    gateway_ip = str(cur_subnet['gateway_ip'])
                     allocated = alloc_qry.filter(
-                        ipal.ip_address == gateway_ip,
+                        ipal.ip_address == cur_subnet['gateway_ip'],
                         ipal.subnet_id == cur_subnet['id']).first()
                 if allocated and allocated['port_id']:
                     raise n_exc.GatewayIpInUse(
-                        ip_address=gateway_ip,
+                        ip_address=cur_subnet['gateway_ip'],
                         port_id=allocated['port_id'])
 
         if validators.is_attr_set(s.get('dns_nameservers')):
@@ -822,22 +822,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         """
         s = subnet['subnet']
         new_cidr = s.get('cidr')
-        subnet_obj = self._get_subnet_object(context, id)
-        orig = self._make_subnet_dict(subnet_obj, fields=None, context=context)
+        db_subnet = self._get_subnet(context, id)
+        orig = self._make_subnet_dict(db_subnet, fields=None, context=context)
         # Fill 'ip_version' and 'allocation_pools' fields with the current
         # value since _validate_subnet() expects subnet spec has 'ip_version'
         # and 'allocation_pools' fields.
-        s['ip_version'] = subnet_obj.ip_version
-        # TODO(slaweq): convert cidr to str will not be necessary when we
-        # will switch to use subnet OVO in ipam module
-        s['cidr'] = str(subnet_obj.cidr)
-        s['id'] = subnet_obj.id
-        s['project_id'] = subnet_obj.project_id
-        s['tenant_id'] = subnet_obj.project_id
-        s['subnetpool_id'] = subnet_obj.subnetpool_id
-        self._validate_subnet(context, s, cur_subnet=subnet_obj)
-        db_pools = [netaddr.IPRange(p.start, p.end)
-                    for p in subnet_obj.allocation_pools]
+        s['ip_version'] = db_subnet.ip_version
+        s['cidr'] = db_subnet.cidr
+        s['id'] = db_subnet.id
+        s['tenant_id'] = db_subnet.tenant_id
+        s['subnetpool_id'] = db_subnet.subnetpool_id
+        self._validate_subnet(context, s, cur_subnet=db_subnet)
+        db_pools = [netaddr.IPRange(p['first_ip'], p['last_ip'])
+                    for p in db_subnet.allocation_pools]
 
         if new_cidr and ipv6_utils.is_ipv6_pd_enabled(s):
             # This is an ipv6 prefix delegation-enabled subnet being given an
@@ -856,10 +853,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             s['allocation_pools'] = range_pools
 
         # If either gateway_ip or allocation_pools were specified
-        subnet_gateway = (subnet_obj.gateway_ip
-                          if subnet_obj.gateway_ip else None)
-        gateway_ip = s.get('gateway_ip', subnet_gateway)
-        gateway_ip_changed = gateway_ip != subnet_gateway
+        gateway_ip = s.get('gateway_ip', db_subnet.gateway_ip)
+        gateway_ip_changed = gateway_ip != db_subnet.gateway_ip
         if gateway_ip_changed or s.get('allocation_pools') is not None:
             pools = range_pools if range_pools is not None else db_pools
             if gateway_ip:
@@ -873,6 +868,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with db_api.context_manager.writer.using(context):
             subnet, changes = self.ipam.update_db_subnet(context, id, s,
                                                          db_pools)
+        # we expire here since ipam may have made changes to relationships
+        # that will be stale on any subsequent lookups while the subnet
+        # object is in the session otherwise.
+        # Check if subnet attached to session before expire.
+        if subnet in context.session:
+            context.session.expire(subnet)
+
         return self._make_subnet_dict(subnet, context=context), orig
 
     @property
@@ -976,7 +978,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # Do not allow a subnet to be deleted if a router is attached to it
         self._subnet_check_ip_allocations_internal_router_ports(
                 context, id)
-        subnet = self._get_subnet_object(context, id)
+        subnet = self._get_subnet(context, id)
         is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
         if not is_auto_addr_subnet:
             # we only automatically remove IP addresses from user ports if
@@ -994,47 +996,41 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         LOG.debug("Deleting subnet %s", id)
         # Make sure the subnet isn't used by other resources
         _check_subnet_not_used(context, id)
-        subnet = self._get_subnet_object(context, id)
         self._remove_subnet_ip_allocations_from_ports(context, id)
-        self._delete_subnet(context, subnet)
-
-    def _delete_subnet(self, context, subnet):
+        # retry integrity errors to catch ip allocation races
         with db_api.exc_to_retry(sql_exc.IntegrityError), \
                 db_api.context_manager.writer.using(context):
+            subnet_db = self._get_subnet(context, id)
+            subnet = self._make_subnet_dict(subnet_db, context=context)
             registry.notify(resources.SUBNET, events.PRECOMMIT_DELETE,
-                            self, context=context, subnet_id=subnet.id)
-            subnet.delete()
+                            self, context=context, subnet_id=id)
+            context.session.delete(subnet_db)
             # Delete related ipam subnet manually,
             # since there is no FK relationship
-            self.ipam.delete_subnet(context, subnet.id)
+            self.ipam.delete_subnet(context, id)
         registry.notify(resources.SUBNET, events.AFTER_DELETE,
-                        self, context=context, subnet=subnet.to_dict())
+                        self, context=context, subnet=subnet)
 
     @db_api.retry_if_session_inactive()
     def get_subnet(self, context, id, fields=None):
-        subnet_obj = self._get_subnet(context, id)
-        return self._make_subnet_dict(subnet_obj, fields, context=context)
+        subnet = self._get_subnet(context, id)
+        return self._make_subnet_dict(subnet, fields, context=context)
 
     @db_api.retry_if_session_inactive()
     def get_subnets(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
-        subnet_objs = self._get_subnets(context, filters, fields, sorts, limit,
-                                        marker, page_reverse)
-        return [
-            self._make_subnet_dict(subnet_object, fields, context)
-            for subnet_object in subnet_objs
-        ]
+        return self._get_subnets(context, filters, fields, sorts, limit,
+                                 marker, page_reverse)
 
     @db_api.retry_if_session_inactive()
     def get_subnets_count(self, context, filters=None):
-        filters = filters or {}
-        return subnet_obj.Subnet.count(context, validate_filters=False,
-                                       **filters)
+        return model_query.get_collection_count(context, models_v2.Subnet,
+                                                filters=filters)
 
     @db_api.retry_if_session_inactive()
     def get_subnets_by_network(self, context, network_id):
-        return [self._make_subnet_dict(subnet_obj) for subnet_obj in
+        return [self._make_subnet_dict(subnet_db) for subnet_db in
                 self._get_subnets_by_network(context, network_id)]
 
     def _validate_address_scope_id(self, context, address_scope_id,
@@ -1204,7 +1200,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def delete_subnetpool(self, context, id):
         with db_api.context_manager.writer.using(context):
             subnetpool = self._get_subnetpool(context, id=id)
-            if subnet_obj.Subnet.objects_exist(context, subnetpool_id=id):
+            subnets = self._get_subnets_by_subnetpool(context, id)
+            if subnets:
                 reason = _("Subnet pool has existing allocations")
                 raise n_exc.SubnetPoolDeleteError(reason=reason)
             subnetpool.delete()
