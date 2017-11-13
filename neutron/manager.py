@@ -179,7 +179,11 @@ class NeutronManager(object):
 
     def _get_default_service_plugins(self):
         """Get default service plugins to be loaded."""
-        return constants.DEFAULT_SERVICE_PLUGINS.keys()
+        core_plugin = directory.get_plugin()
+        if core_plugin.has_native_datastore():
+            return constants.DEFAULT_SERVICE_PLUGINS.keys()
+        else:
+            return []
 
     def _load_service_plugins(self):
         """Loads service plugins.
