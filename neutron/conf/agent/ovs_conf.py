@@ -17,17 +17,18 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 
-# Default timeout for ovs-vsctl command
-DEFAULT_OVS_VSCTL_TIMEOUT = 10
+# Default timeout for ovsdb commands
+DEFAULT_OVSDB_TIMEOUT = 10
 
 OPTS = [
-    cfg.IntOpt('ovs_vsctl_timeout',
-               default=DEFAULT_OVS_VSCTL_TIMEOUT,
-               help=_('Timeout in seconds for ovs-vsctl commands. '
-                      'If the timeout expires, ovs commands will fail with '
+    cfg.IntOpt('ovsdb_timeout',
+               default=DEFAULT_OVSDB_TIMEOUT,
+               deprecated_name='ovs_vsctl_timeout', deprecated_group='DEFAULT',
+               help=_('Timeout in seconds for ovsdb commands. '
+                      'If the timeout expires, ovsdb commands will fail with '
                       'ALARMCLOCK error.')),
 ]
 
 
 def register_ovs_agent_opts(cfg=cfg.CONF):
-    cfg.register_opts(OPTS)
+    cfg.register_opts(OPTS, 'OVS')

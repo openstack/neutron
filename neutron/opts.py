@@ -148,11 +148,14 @@ def list_base_agent_opts():
         ('DEFAULT',
          itertools.chain(
              neutron.conf.agent.common.INTERFACE_OPTS,
-             neutron.conf.agent.common.INTERFACE_DRIVER_OPTS,
-             neutron.conf.agent.ovs_conf.OPTS)
+             neutron.conf.agent.common.INTERFACE_DRIVER_OPTS)
          ),
         ('agent', neutron.conf.agent.common.AGENT_STATE_OPTS),
-        ('ovs', neutron.conf.agent.ovsdb_api.API_OPTS),
+        ('ovs',
+         itertools.chain(
+             neutron.conf.agent.ovsdb_api.API_OPTS,
+             neutron.conf.agent.ovs_conf.OPTS)
+         ),
     ]
 
 

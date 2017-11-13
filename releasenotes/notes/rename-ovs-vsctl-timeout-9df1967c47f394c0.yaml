@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    The ``ovs_vsctl_timeout`` option is renamed into ``ovsdb_timeout`` to
+    reflect that it's not specific to ``vsctl`` implementation of
+    ``ovsdb_interface``. It is also moved under ``[OVS]`` section.
