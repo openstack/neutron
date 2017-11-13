@@ -110,7 +110,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
         except exceptions.NeutronDbObjectDuplicateEntry:
             LOG.error("MAC generation error after %s attempts",
                       db_api.MAX_RETRIES)
-        raise ext_dvr.MacAddressGenerationFailure(host=host)
+        raise n_exc.HostMacAddressGenerationFailure(host=host)
 
     @db_api.context_manager.reader
     def get_dvr_mac_address_list(self, context):
