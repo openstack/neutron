@@ -461,6 +461,12 @@ class L3NATAgent(ha.AgentMixin,
         self.l3_ext_manager.add_router(self.context, router)
 
     def _process_updated_router(self, router):
+        is_dvr_only_agent = (
+            self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR)
+        # For HA routers check that DB state matches actual state
+        if router.get('ha') and not is_dvr_only_agent:
+            self.check_ha_state_for_router(
+                router['id'], router.get(l3_constants.HA_ROUTER_STATE_KEY))
         ri = self.router_info[router['id']]
         ri.router = router
         registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
@@ -471,6 +477,16 @@ class L3NATAgent(ha.AgentMixin,
 
     def _resync_router(self, router_update,
                        priority=queue.PRIORITY_SYNC_ROUTERS_TASK):
+        # Don't keep trying to resync if it's failing
+        if router_update.hit_retry_limit():
+            LOG.warning(_LW("Hit retry limit with router update for %(id)s, "
+                            "action %(action)s"),
+                        {'id': router_update.id,
+                         'action': router_update.action})
+            if router_update.action != queue.DELETE_ROUTER:
+                LOG.debug("Deleting router %s", router_update.id)
+                self._safe_router_removed(router_update.id)
+            return
         router_update.timestamp = timeutils.utcnow()
         router_update.priority = priority
         router_update.router = None  # Force the agent to resync the router
@@ -569,8 +585,6 @@ class L3NATAgent(ha.AgentMixin,
         chunk = []
         is_snat_agent = (self.conf.agent_mode ==
                          lib_const.L3_AGENT_MODE_DVR_SNAT)
-        is_dvr_only_agent = (self.conf.agent_mode ==
-                             lib_const.L3_AGENT_MODE_DVR)
         try:
             router_ids = self.plugin_rpc.get_router_ids(context)
             # fetch routers by chunks to reduce the load on server and to
@@ -590,10 +604,6 @@ class L3NATAgent(ha.AgentMixin,
                             ns_manager.keep_ext_net(ext_net_id)
                         elif is_snat_agent and not r.get('ha'):
                             ns_manager.ensure_snat_cleanup(r['id'])
-                    # For HA routers check that DB state matches actual state
-                    if r.get('ha') and not is_dvr_only_agent:
-                        self.check_ha_state_for_router(
-                            r['id'], r.get(l3_constants.HA_ROUTER_STATE_KEY))
                     update = queue.RouterUpdate(
                         r['id'],
                         queue.PRIORITY_SYNC_ROUTERS_TASK,
