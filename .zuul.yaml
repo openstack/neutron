@@ -54,6 +54,3 @@
         - neutron-tempest-plugin-dvr-multinode-scenario
         - neutron-tempest-plugin-scenario-linuxbridge
         - neutron-tempest-plugin-api
-    gate:
-      jobs:
-        - neutron-tempest-plugin-api
