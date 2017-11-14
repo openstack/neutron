@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib import fixture
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -42,7 +43,6 @@ from neutron import quota
 from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests import fake_notifier
-from neutron.tests import tools
 from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import testlib_api
 
@@ -1123,7 +1123,7 @@ class SubresourceTest(base.BaseTestCase):
         plugin = 'neutron.tests.unit.api.v2.test_base.TestSubresourcePlugin'
         extensions.PluginAwareExtensionManager._instance = None
 
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
 
         self.config_parse()
         self.setup_coreplugin(plugin, load_plugins=False)
@@ -1454,7 +1454,7 @@ class ExtensionTestCase(base.BaseTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
 
         # Create the default configurations
         self.config_parse()

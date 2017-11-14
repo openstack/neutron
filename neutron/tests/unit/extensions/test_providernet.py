@@ -16,6 +16,7 @@
 import mock
 from neutron_lib.api.definitions import provider_net
 from neutron_lib import context
+from neutron_lib import fixture
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -27,7 +28,6 @@ from neutron.api import extensions
 from neutron.api.v2 import router
 from neutron.extensions import providernet as pnet
 from neutron import quota
-from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit import testlib_api
@@ -59,7 +59,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
 
         # Update the plugin and extensions path
         self.setup_coreplugin(plugin, load_plugins=False)

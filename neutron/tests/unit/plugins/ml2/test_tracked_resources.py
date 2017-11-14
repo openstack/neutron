@@ -12,10 +12,10 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib import fixture
 from oslo_utils import uuidutils
 
 from neutron.db.quota import api as quota_db_api
-from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
@@ -162,7 +162,7 @@ class TestL3ResourcesEventHandler(BaseTestEventHandler,
 
     def setUp(self):
         super(TestL3ResourcesEventHandler, self).setUp()
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
         ext_mgr = test_l3.L3TestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 

@@ -22,10 +22,10 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context
+from neutron_lib import fixture
 from neutron_lib.plugins import directory
 
 from neutron.extensions import securitygroup as ext_sg
-from neutron.tests import tools
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.extensions import test_securitygroup as test_sg
@@ -41,7 +41,7 @@ class Ml2SecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
         notifier_cls = notifier_p.start()
         self.notifier = mock.Mock()
         notifier_cls.return_value = self.notifier
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
         super(Ml2SecurityGroupsTestCase, self).setUp('ml2')
 
 

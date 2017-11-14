@@ -17,6 +17,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import fixture
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
@@ -25,7 +26,6 @@ import webtest
 from neutron.api import extensions
 from neutron import manager
 from neutron import quota
-from neutron.tests import tools
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit import testlib_api
@@ -54,7 +54,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
-        self.useFixture(tools.AttributeMapMemento())
+        self.useFixture(fixture.APIDefinitionFixture())
 
         # Create the default configurations
         self.config_parse()
