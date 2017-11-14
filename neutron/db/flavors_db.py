@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.exceptions import flavors as flav_exc
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
@@ -19,7 +20,6 @@ from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import servicetype_db as sdb
-from neutron.extensions import flavors as ext_flavors
 from neutron.objects import base as base_obj
 from neutron.objects import flavor as obj_flavor
 
@@ -34,14 +34,14 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
     def _get_flavor(self, context, flavor_id):
         flavor = obj_flavor.Flavor.get_object(context, id=flavor_id)
         if not flavor:
-            raise ext_flavors.FlavorNotFound(flavor_id=flavor_id)
+            raise flav_exc.FlavorNotFound(flavor_id=flavor_id)
         return flavor
 
     def _get_service_profile(self, context, sp_id):
         service_profile = obj_flavor.ServiceProfile.get_object(
             context, id=sp_id)
         if not service_profile:
-            raise ext_flavors.ServiceProfileNotFound(sp_id=sp_id)
+            raise flav_exc.ServiceProfileNotFound(sp_id=sp_id)
         return service_profile
 
     @staticmethod
@@ -80,7 +80,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         """Ensures no current bindings to flavors exist."""
         if obj_flavor.FlavorServiceProfileBinding.objects_exist(
                 context, service_profile_id=sp_id):
-            raise ext_flavors.ServiceProfileInUse(sp_id=sp_id)
+            raise flav_exc.ServiceProfileInUse(sp_id=sp_id)
 
     def _validate_driver(self, context, driver):
         """Confirms a non-empty driver is a valid provider."""
@@ -90,7 +90,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
             filters={'driver': driver})
 
         if not providers:
-            raise ext_flavors.ServiceProfileDriverNotFound(driver=driver)
+            raise flav_exc.ServiceProfileDriverNotFound(driver=driver)
 
     def create_flavor(self, context, flavor):
         fl = flavor['flavor']
@@ -122,7 +122,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
                 self._ensure_flavor_not_in_use(context, flavor_id)
                 self._get_flavor(context, flavor_id).delete()
         except db_exc.DBReferenceError:
-            raise ext_flavors.FlavorInUse(flavor_id=flavor_id)
+            raise flav_exc.FlavorInUse(flavor_id=flavor_id)
 
     def get_flavors(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None, page_reverse=False):
@@ -139,7 +139,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         with db_api.context_manager.writer.using(context):
             if obj_flavor.FlavorServiceProfileBinding.objects_exist(
                     context, service_profile_id=sp['id'], flavor_id=flavor_id):
-                raise ext_flavors.FlavorServiceProfileBindingExists(
+                raise flav_exc.FlavorServiceProfileBindingExists(
                     sp_id=sp['id'], fl_id=flavor_id)
             obj_flavor.FlavorServiceProfileBinding(
                 context, service_profile_id=sp['id'],
@@ -152,7 +152,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         if (obj_flavor.FlavorServiceProfileBinding.delete_objects(
                 context, service_profile_id=service_profile_id,
                 flavor_id=flavor_id) == 0):
-            raise ext_flavors.FlavorServiceProfileBindingNotFound(
+            raise flav_exc.FlavorServiceProfileBindingNotFound(
                 sp_id=service_profile_id, fl_id=flavor_id)
 
     @staticmethod
@@ -161,7 +161,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         if not obj_flavor.FlavorServiceProfileBinding.objects_exist(
                 context, service_profile_id=service_profile_id,
                 flavor_id=flavor_id):
-            raise ext_flavors.FlavorServiceProfileBindingNotFound(
+            raise flav_exc.FlavorServiceProfileBindingNotFound(
                 sp_id=service_profile_id, fl_id=flavor_id)
         res = {'service_profile_id': service_profile_id,
                'flavor_id': flavor_id}
@@ -174,7 +174,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
             self._validate_driver(context, sp['driver'])
         else:
             if not sp['metainfo']:
-                raise ext_flavors.ServiceProfileEmpty()
+                raise flav_exc.ServiceProfileEmpty()
 
         obj = obj_flavor.ServiceProfile(
             context, description=sp['description'], driver=sp['driver'],
@@ -225,14 +225,14 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
         objs = obj_flavor.FlavorServiceProfileBinding.get_objects(context,
             flavor_id=flavor_id)
         if not objs:
-            raise ext_flavors.FlavorServiceProfileBindingNotFound(
+            raise flav_exc.FlavorServiceProfileBindingNotFound(
                 sp_id='', fl_id=flavor_id)
         # Get the service profile from the first binding
         # TODO(jwarendt) Should become a scheduling framework instead
         sp_obj = self._get_service_profile(context, objs[0].service_profile_id)
 
         if not sp_obj.enabled:
-            raise ext_flavors.ServiceProfileDisabled()
+            raise flav_exc.ServiceProfileDisabled()
 
         LOG.debug("Found driver %s.", sp_obj.driver)
 
@@ -242,7 +242,7 @@ class FlavorsDbMixin(common_db_mixin.CommonDbMixin):
             filters={'driver': sp_obj.driver})
 
         if not providers:
-            raise ext_flavors.ServiceProfileDriverNotFound(
+            raise flav_exc.ServiceProfileDriverNotFound(
                 driver=sp_obj.driver)
 
         LOG.debug("Found providers %s.", providers)
