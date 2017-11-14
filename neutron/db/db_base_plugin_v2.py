@@ -40,7 +40,6 @@ from sqlalchemy import not_
 
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils
@@ -777,7 +776,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     subnetpool_id = None
                     self._validate_subnet(context, s)
                 else:
-                    prefix = n_const.PROVISIONAL_IPV6_PD_PREFIX
+                    prefix = constants.PROVISIONAL_IPV6_PD_PREFIX
                     subnet['subnet']['cidr'] = prefix
                     self._validate_subnet_for_pd(s)
         else:

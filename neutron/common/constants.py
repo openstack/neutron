@@ -109,10 +109,6 @@ IPTABLES_PROTOCOL_MAP = {lib_constants.PROTO_NAME_DCCP: 'dccp',
                          lib_constants.PROTO_NAME_TCP: 'tcp',
                          lib_constants.PROTO_NAME_UDP: 'udp'}
 
-# TODO(boden): consume with I9642ed9b513a43c5558f9611f43227299707284a
-# Special provisional prefix for IPv6 Prefix Delegation
-PROVISIONAL_IPV6_PD_PREFIX = '::/64'
-
 # Timeout in seconds for getting an IPv6 LLA
 LLA_TASK_TIMEOUT = 40
 

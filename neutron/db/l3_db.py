@@ -37,7 +37,6 @@ from sqlalchemy.orm import exc
 
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
-from neutron.common import constants as n_const
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
 from neutron.common import utils
@@ -609,7 +608,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         # Ignore temporary Prefix Delegation CIDRs
         new_subnets = [s for s in new_subnets
-                       if s['cidr'] != n_const.PROVISIONAL_IPV6_PD_PREFIX]
+                       if s['cidr'] != constants.PROVISIONAL_IPV6_PD_PREFIX]
         id_filter = {'id': router_subnets}
         subnets = self._core_plugin.get_subnets(context.elevated(),
                                                 filters=id_filter)

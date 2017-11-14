@@ -2945,7 +2945,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 requestor_id, ri, False))
             for subnet in intf['subnets']:
                 expected_pd_update[subnet['id']] = (
-                    n_const.PROVISIONAL_IPV6_PD_PREFIX)
+                    lib_constants.PROVISIONAL_IPV6_PD_PREFIX)
 
         # Implement the prefix update notifier
         # Keep track of the updated prefix
@@ -2980,7 +2980,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 requestor_id, ri, False))
             for subnet in intf['subnets']:
                 expected_pd_update += [{subnet['id']:
-                    n_const.PROVISIONAL_IPV6_PD_PREFIX}]
+                    lib_constants.PROVISIONAL_IPV6_PD_PREFIX}]
 
         # Implement the prefix update notifier
         # Keep track of the updated prefix

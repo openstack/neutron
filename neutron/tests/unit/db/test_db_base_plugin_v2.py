@@ -43,7 +43,6 @@ import neutron
 from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import router
-from neutron.common import constants as n_const
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import test_lib
@@ -3755,7 +3754,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_ipv6_pd_gw_values(self):
-        cidr = n_const.PROVISIONAL_IPV6_PD_PREFIX
+        cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         # Gateway is last IP in IPv6 DHCPv6 Stateless subnet
         gateway = '::ffff:ffff:ffff:ffff'
         allocation_pools = [{'start': '::1',
@@ -3899,7 +3898,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_with_v6_pd_allocation_pool(self):
         gateway_ip = '::1'
-        cidr = n_const.PROVISIONAL_IPV6_PD_PREFIX
+        cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         allocation_pools = [{'start': '::2',
                              'end': '::ffff:ffff:ffff:fffe'}]
         self._test_create_subnet(gateway_ip=gateway_ip,
@@ -4108,7 +4107,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         new_subnet = {'ip_version': 6,
-                      'cidr': n_const.PROVISIONAL_IPV6_PD_PREFIX,
+                      'cidr': constants.PROVISIONAL_IPV6_PD_PREFIX,
                       'enable_dhcp': True,
                       'ipv6_address_mode': None,
                       'ipv6_ra_mode': None}

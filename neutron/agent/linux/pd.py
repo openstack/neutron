@@ -97,7 +97,7 @@ class PrefixDelegation(object):
             return
         self._delete_pd(router, pd_info)
         if self._is_pd_master_router(router):
-            prefix_update[subnet_id] = l3_constants.PROVISIONAL_IPV6_PD_PREFIX
+            prefix_update[subnet_id] = n_const.PROVISIONAL_IPV6_PD_PREFIX
             LOG.debug("Update server with prefixes: %s", prefix_update)
             self.notifier(self.context, prefix_update)
         del router['subnets'][subnet_id]
@@ -152,7 +152,7 @@ class PrefixDelegation(object):
                 pd_info.driver.disable(self.pmon, router['ns_name'])
                 pd_info.prefix = None
                 pd_info.client_started = False
-                prefix = l3_constants.PROVISIONAL_IPV6_PD_PREFIX
+                prefix = n_const.PROVISIONAL_IPV6_PD_PREFIX
                 prefix_update[subnet_id] = prefix
         if prefix_update:
             LOG.debug("Update server with prefixes: %s", prefix_update)
@@ -310,7 +310,7 @@ class PrefixDelegation(object):
                                 router_id, subnet_id, pd_info.ri_ifname)
                         prefix = None
                         if (pd_info.prefix !=
-                                l3_constants.PROVISIONAL_IPV6_PD_PREFIX):
+                                n_const.PROVISIONAL_IPV6_PD_PREFIX):
                             prefix = pd_info.prefix
 
                         pd_info.driver.enable(self.pmon, router['ns_name'],
@@ -397,8 +397,8 @@ class PDInfo(object):
     """
     def __init__(self, pd_info=None, ri_ifname=None, mac=None):
         if pd_info is None:
-            self.prefix = l3_constants.PROVISIONAL_IPV6_PD_PREFIX
-            self.old_prefix = l3_constants.PROVISIONAL_IPV6_PD_PREFIX
+            self.prefix = n_const.PROVISIONAL_IPV6_PD_PREFIX
+            self.old_prefix = n_const.PROVISIONAL_IPV6_PD_PREFIX
             self.ri_ifname = ri_ifname
             self.mac = mac
             self.bind_lla = None
