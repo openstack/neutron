@@ -30,7 +30,6 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron._i18n import _
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
@@ -239,7 +238,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             subnet_list = self._get_all_subnets(context)
         for subnet in subnet_list:
             if ((netaddr.IPSet([subnet.cidr]) & new_subnet_ipset) and
-                subnet.cidr != constants.PROVISIONAL_IPV6_PD_PREFIX):
+                subnet.cidr != const.PROVISIONAL_IPV6_PD_PREFIX):
                 # don't give out details of the overlapping subnet
                 err_msg = ("Requested subnet with cidr: %(cidr)s for "
                            "network: %(network_id)s overlaps with another "

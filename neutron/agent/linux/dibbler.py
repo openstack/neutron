@@ -17,6 +17,7 @@ import os
 import shutil
 
 import jinja2
+from neutron_lib import constants as lib_const
 from neutron_lib.utils import file as file_utils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -26,7 +27,6 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import pd
 from neutron.agent.linux import pd_driver
 from neutron.agent.linux import utils
-from neutron.common import constants
 
 LOG = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ class PDDibbler(pd_driver.PDDriverBase):
     def get_prefix(self):
         prefix = utils.get_value_from_file(self.prefix_path)
         if not prefix:
-            prefix = constants.PROVISIONAL_IPV6_PD_PREFIX
+            prefix = lib_const.PROVISIONAL_IPV6_PD_PREFIX
         return prefix
 
     @staticmethod

@@ -26,7 +26,6 @@ from oslo_utils import netutils
 from oslo_utils import uuidutils
 import webob.exc
 
-from neutron.common import constants as n_const
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
@@ -343,7 +342,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def test_test_fixed_ips_for_port_pd_gateway(self):
         context = mock.Mock()
         pluggable_backend = ipam_pluggable_backend.IpamPluggableBackend()
-        with self.subnet(cidr=n_const.PROVISIONAL_IPV6_PD_PREFIX,
+        with self.subnet(cidr=constants.PROVISIONAL_IPV6_PD_PREFIX,
                          ip_version=6) as subnet:
             subnet = subnet['subnet']
             fixed_ips = [{'subnet_id': subnet['id'],
@@ -378,7 +377,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
     def test_create_ipv6_pd_subnet_over_ipam(self, pool_mock):
         mocks = self._prepare_mocks_with_pool_mock(pool_mock)
         cfg.CONF.set_override('ipv6_pd_enabled', True)
-        cidr = n_const.PROVISIONAL_IPV6_PD_PREFIX
+        cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         allocation_pools = [netaddr.IPRange('::2', '::ffff:ffff:ffff:ffff')]
         with self.subnet(cidr=None, ip_version=6,
                          subnetpool_id=constants.IPV6_PD_POOL_ID,

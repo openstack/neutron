@@ -45,7 +45,7 @@ class PDDriverBase(object):
     def get_prefix(self):
         """Get the current assigned prefix for this PDDriver from the PD agent.
         If no prefix is currently assigned, return
-        constants.PROVISIONAL_IPV6_PD_PREFIX
+        neutron_lib.constants.PROVISIONAL_IPV6_PD_PREFIX
         """
 
     @staticmethod
