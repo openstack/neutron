@@ -12,6 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.api.definitions import metering as metering_apidef
+
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
@@ -22,7 +24,7 @@ from neutron import service
 
 class MeteringPlugin(metering_db.MeteringDbMixin):
     """Implementation of the Neutron Metering Service Plugin."""
-    supported_extension_aliases = ["metering"]
+    supported_extension_aliases = [metering_apidef.ALIAS]
     path_prefix = "/metering"
 
     def __init__(self):
