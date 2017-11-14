@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
@@ -79,7 +80,6 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
-from neutron.extensions import netmtu_writable as mtu_ext
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
 from neutron.plugins.common import utils as p_utils
@@ -878,7 +878,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             context.session.expire(db_network)
 
             if (
-                mtu_ext.MTU in net_data or
+                mtuw_apidef.MTU in net_data or
                 # NOTE(ihrachys) mtu may be null for existing networks,
                 # calculate and update it as needed; the conditional can be
                 # removed in Queens when we populate all mtu attributes and
