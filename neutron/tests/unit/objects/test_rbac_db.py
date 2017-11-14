@@ -16,12 +16,12 @@ from neutron_lib.callbacks import events
 from neutron_lib import context as n_context
 from neutron_lib.db import model_base
 from neutron_lib import exceptions as n_exc
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 
 from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
+from neutron.objects import base
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import rbac_db
@@ -41,7 +41,7 @@ class FakeRbacModel(rbac_db_models.RBACColumns, model_base.BASEV2):
         return (rbac_db_models.ACCESS_SHARED,)
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronDbObject(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

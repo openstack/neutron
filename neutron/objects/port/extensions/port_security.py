@@ -10,13 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 
 from neutron.db.port_security import models
+from neutron.objects import base
 from neutron.objects.extensions import port_security as base_ps
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class PortSecurity(base_ps._PortSecurity):
     # Version 1.0: Initial version
     VERSION = "1.0"

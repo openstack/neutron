@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models.plugins.ml2 import vxlanallocation as vxlan_model
@@ -21,7 +20,7 @@ from neutron.objects import common_types
 from neutron.objects.plugins.ml2 import base as ml2_base
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class VxlanAllocation(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -36,7 +35,7 @@ class VxlanAllocation(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class VxlanEndpoint(ml2_base.EndpointBase):
     # Version 1.0: Initial version
     VERSION = '1.0'

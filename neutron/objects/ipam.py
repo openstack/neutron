@@ -14,7 +14,6 @@
 #    under the License.
 
 import netaddr
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.ipam.drivers.neutrondb_ipam import db_models
@@ -22,7 +21,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class IpamAllocationPool(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -59,7 +58,7 @@ class IpamAllocationPool(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class IpamAllocation(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -89,7 +88,7 @@ class IpamAllocation(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class IpamSubnet(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

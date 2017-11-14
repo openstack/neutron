@@ -10,7 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
@@ -24,7 +23,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class RouterL3AgentBinding(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

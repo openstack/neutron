@@ -14,7 +14,6 @@ import netaddr
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
 
@@ -29,7 +28,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class RouterRoute(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -65,7 +64,7 @@ class RouterRoute(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class RouterExtraAttributes(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -124,7 +123,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
         return [(router, agent_count) for router, agent_count in query]
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class RouterPort(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -155,7 +154,7 @@ class RouterPort(base.NeutronDbObject):
         return [r[0] for r in query]
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class DVRMacAddress(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -186,7 +185,7 @@ class DVRMacAddress(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class FloatingIP(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

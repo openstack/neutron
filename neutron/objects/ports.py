@@ -15,7 +15,6 @@
 import netaddr
 from neutron_lib import constants
 from oslo_utils import versionutils
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
@@ -61,7 +60,7 @@ class PortBindingBase(base.NeutronDbObject):
         return fields
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class PortBinding(PortBindingBase):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -82,7 +81,7 @@ class PortBinding(PortBindingBase):
     primary_keys = ['port_id', 'host']
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class DistributedPortBinding(PortBindingBase):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -106,7 +105,7 @@ class DistributedPortBinding(PortBindingBase):
     primary_keys = ['host', 'port_id']
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class PortBindingLevel(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -143,7 +142,7 @@ class PortBindingLevel(base.NeutronDbObject):
             context, _pager, validate_filters, **kwargs)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class IPAllocation(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -205,7 +204,7 @@ class IPAllocation(base.NeutronDbObject):
             return True
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class PortDNS(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Add dns_domain attribute
@@ -235,7 +234,7 @@ class PortDNS(base.NeutronDbObject):
             primitive.pop('dns_domain', None)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Port(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Add data_plane_status field

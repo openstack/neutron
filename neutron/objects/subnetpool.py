@@ -14,7 +14,6 @@
 #    under the License.
 
 import netaddr
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import api as db_api
@@ -23,7 +22,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class SubnetPool(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -86,7 +85,7 @@ class SubnetPool(base.NeutronDbObject):
                 self._attach_prefixes(fields['prefixes'])
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class SubnetPoolPrefix(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

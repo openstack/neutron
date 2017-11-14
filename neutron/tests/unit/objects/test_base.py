@@ -15,6 +15,7 @@ import copy
 import itertools
 import random
 
+import fixtures
 import mock
 import netaddr
 from neutron_lib import constants
@@ -28,7 +29,6 @@ from oslo_utils import uuidutils
 from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
-from oslo_versionedobjects import fixture
 import testtools
 
 from neutron.db import _model_query as model_query
@@ -67,7 +67,7 @@ class ObjectFieldsModel(dict):
     pass
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeSmallNeutronObject(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -89,7 +89,7 @@ class FakeSmallNeutronObject(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeSmallNeutronObjectWithMultipleParents(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -109,7 +109,7 @@ class FakeSmallNeutronObjectWithMultipleParents(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeParent(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -128,7 +128,7 @@ class FakeParent(base.NeutronDbObject):
     synthetic_fields = ['children']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeWeirdKeySmallNeutronObject(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -148,7 +148,30 @@ class FakeWeirdKeySmallNeutronObject(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+class NeutronObjectRegistryFixture(fixtures.Fixture):
+    """Use a NeutronObjectRegistry as a temp registry pattern fixture.
+
+    It is fixture similar to
+    oslo_versionedobjects.fixture.VersionedObjectRegistryFixture
+    but it uses Neutron's base registry class
+    """
+
+    def setUp(self):
+        super(NeutronObjectRegistryFixture, self).setUp()
+        self._base_test_obj_backup = copy.deepcopy(
+            base.NeutronObjectRegistry._registry._obj_classes)
+        self.addCleanup(self._restore_obj_registry)
+
+    @staticmethod
+    def register(cls_name):
+        base.NeutronObjectRegistry.register(cls_name)
+
+    def _restore_obj_registry(self):
+        base.NeutronObjectRegistry._registry._obj_classes = \
+            self._base_test_obj_backup
+
+
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronDbObject(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -169,7 +192,7 @@ class FakeNeutronDbObject(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectNonStandardPrimaryKey(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -189,7 +212,7 @@ class FakeNeutronObjectNonStandardPrimaryKey(base.NeutronDbObject):
     synthetic_fields = ['obj_field', 'field2']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectCompositePrimaryKey(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -208,7 +231,7 @@ class FakeNeutronObjectCompositePrimaryKey(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectUniqueKey(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -230,7 +253,7 @@ class FakeNeutronObjectUniqueKey(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectRenamedField(base.NeutronDbObject):
     """
     Testing renaming the parameter from DB to NeutronDbObject
@@ -256,7 +279,7 @@ class FakeNeutronObjectRenamedField(base.NeutronDbObject):
     fields_need_translation = {'field_ovo': 'field_db'}
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -274,7 +297,7 @@ class FakeNeutronObjectCompositePrimaryKeyWithId(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectMultipleForeignKeys(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -291,7 +314,7 @@ class FakeNeutronObjectMultipleForeignKeys(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -307,7 +330,7 @@ class FakeNeutronObjectSyntheticField(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectSyntheticField2(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -322,7 +345,7 @@ class FakeNeutronObjectSyntheticField2(base.NeutronDbObject):
     synthetic_fields = ['obj_field']
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -336,7 +359,7 @@ class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObject(base.NeutronObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -363,7 +386,7 @@ class FakeNeutronObject(base.NeutronObject):
         ]
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectDictOfMiscValues(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -376,7 +399,7 @@ class FakeNeutronObjectDictOfMiscValues(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObjectListOfDictOfMiscValues(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -543,7 +566,7 @@ class _BaseObjectTestCase(object):
         self.valid_field_filter = {valid_field:
                                    self.obj_fields[-1][valid_field]}
         self.obj_registry = self.useFixture(
-            fixture.VersionedObjectRegistryFixture())
+            NeutronObjectRegistryFixture())
         self.obj_registry.register(FakeSmallNeutronObject)
         self.obj_registry.register(FakeWeirdKeySmallNeutronObject)
         self.obj_registry.register(FakeNeutronObjectMultipleForeignKeys)
@@ -649,7 +672,7 @@ class _BaseObjectTestCase(object):
     def _get_ovo_object_class(self, objclass, field):
         try:
             name = objclass.fields[field].objname
-            return obj_base.VersionedObjectRegistry.obj_classes().get(name)[0]
+            return base.NeutronObjectRegistry.obj_classes().get(name)[0]
         except TypeError:
             # NOTE(korzen) some synthetic fields are not handled by
             # this method, for example the ones that have subclasses, see
@@ -1230,7 +1253,7 @@ class UniqueKeysTestCase(test_base.BaseTestCase):
             get_unique_keys.return_value = [['field1'],
                                             ['field2', 'db_field3']]
 
-            @obj_base.VersionedObjectRegistry.register_if(False)
+            @base.NeutronObjectRegistry.register_if(False)
             class UniqueKeysTestObject(base.NeutronDbObject):
                 # Version 1.0: Initial version
                 VERSION = '1.0'
@@ -1932,7 +1955,7 @@ class UniqueObjectBase(test_base.BaseTestCase):
     def setUp(self):
         super(UniqueObjectBase, self).setUp()
         obj_registry = self.useFixture(
-            fixture.VersionedObjectRegistryFixture())
+            NeutronObjectRegistryFixture())
         self.db_model = FakeModel
 
         class RegisteredObject(base.NeutronDbObject):
