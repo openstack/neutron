@@ -12,44 +12,11 @@
 # under the License.
 #
 
+from neutron_lib.api.definitions import l3_flavors as apidef
 from neutron_lib.api import extensions
-from neutron_lib import constants
 
 
-EXTENDED_ATTRIBUTES_2_0 = {
-    'routers': {
-        'flavor_id': {'allow_post': True, 'allow_put': False,
-                      'default': constants.ATTR_NOT_SPECIFIED,
-                      'is_visible': True, 'enforce_policy': True}
-
-    }
-}
-
-
-class L3_flavors(extensions.ExtensionDescriptor):
+class L3_flavors(extensions.APIExtensionDescriptor):
     """Extension class supporting flavors for routers."""
 
-    @classmethod
-    def get_name(cls):
-        return "Router Flavor Extension"
-
-    @classmethod
-    def get_alias(cls):
-        return 'l3-flavors'
-
-    @classmethod
-    def get_description(cls):
-        return "Flavor support for routers."
-
-    @classmethod
-    def get_updated(cls):
-        return "2016-05-17T00:00:00-00:00"
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
-
-    def get_required_extensions(self):
-        return ["router", "flavors"]
+    api_definition = apidef
