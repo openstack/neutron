@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.services.qos import constants as qos_consts
 from tempest.common import utils
 from tempest.lib.common.utils import data_utils
@@ -29,7 +30,7 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 class QosTestJSON(base.BaseAdminNetworkTest):
 
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @staticmethod
     def _get_driver_details(rule_type_details, driver_name):
@@ -389,7 +390,7 @@ class QosTestJSON(base.BaseAdminNetworkTest):
 class QosBandwidthLimitRuleTestJSON(base.BaseAdminNetworkTest):
 
     direction = None
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @classmethod
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
@@ -587,7 +588,7 @@ class RbacSharedQosPoliciesTest(base.BaseAdminNetworkTest):
 
     force_tenant_isolation = True
     credentials = ['primary', 'alt', 'admin']
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @classmethod
     def resource_setup(cls):
@@ -841,7 +842,7 @@ class QosDscpMarkingRuleTestJSON(base.BaseAdminNetworkTest):
     VALID_DSCP_MARK1 = 56
     VALID_DSCP_MARK2 = 48
 
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @classmethod
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_DSCP_MARKING)
@@ -975,7 +976,7 @@ class QosMinimumBandwidthRuleTestJSON(base.BaseAdminNetworkTest):
     DIRECTION_INGRESS = "ingress"
     RULE_NAME = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH + "_rule"
     RULES_NAME = RULE_NAME + "s"
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @classmethod
     @base.require_qos_rule_type(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH)
@@ -1137,7 +1138,7 @@ class QosSearchCriteriaTest(base.BaseSearchCriteriaTest,
     list_kwargs = {'description': 'search-criteria-test'}
     list_as_admin = True
 
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @classmethod
     def resource_setup(cls):

@@ -14,9 +14,8 @@
 #    under the License.
 
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.api import extensions
-
-from neutron.extensions import qos
 
 
 # The alias of the extension.
@@ -32,14 +31,14 @@ DESCRIPTION = 'Expose the QoS default policy per project'
 TIMESTAMP = '2017-041-06T10:00:00-00:00'
 
 # The list of required extensions.
-REQUIRED_EXTENSIONS = [qos.ALIAS]
+REQUIRED_EXTENSIONS = [qos_apidef.ALIAS]
 
 # The list of optional extensions.
 OPTIONAL_EXTENSIONS = None
 
 # The resource attribute map for the extension.
 RESOURCE_ATTRIBUTE_MAP = {
-    qos.COLLECTION_NAME: {
+    qos_apidef.POLICIES: {
         'is_default': {'allow_post': True,
                        'allow_put': True,
                        'default': False,

@@ -13,10 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import constants as common_constants
-
-from neutron.extensions import qos
 
 
 # The name of the extension.
@@ -30,17 +29,17 @@ DESCRIPTION = ("Allow to configure QoS bandwidth limit rule with specific "
                "direction: ingress or egress")
 
 # The list of required extensions.
-REQUIRED_EXTENSIONS = [qos.ALIAS]
+REQUIRED_EXTENSIONS = [qos_apidef.ALIAS]
 
 # The list of optional extensions.
 OPTIONAL_EXTENSIONS = None
 
 # The resource attribute map for the extension.
 SUB_RESOURCE_ATTRIBUTE_MAP = {
-    qos.BANDWIDTH_LIMIT_RULES: {
+    qos_apidef.BANDWIDTH_LIMIT_RULES: {
         'parameters': dict(
-            qos.SUB_RESOURCE_ATTRIBUTE_MAP[
-                qos.BANDWIDTH_LIMIT_RULES]['parameters'],
+            qos_apidef.SUB_RESOURCE_ATTRIBUTE_MAP[
+                qos_apidef.BANDWIDTH_LIMIT_RULES]['parameters'],
             **{'direction': {
                 'allow_post': True,
                 'allow_put': True,

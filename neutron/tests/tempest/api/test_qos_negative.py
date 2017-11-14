@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.db import constants as db_const
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
@@ -23,7 +24,7 @@ LONG_TENANT_ID_NG = 'z' * (db_const.PROJECT_ID_FIELD_SIZE + 1)
 
 class QosNegativeTestJSON(base.BaseAdminNetworkTest):
 
-    required_extensions = ['qos']
+    required_extensions = [qos_apidef.ALIAS]
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('b9dce555-d3b3-11e5-950a-54ee757c77da')
