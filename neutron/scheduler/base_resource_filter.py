@@ -28,7 +28,6 @@ class BaseResourceFilter(object):
     def bind(self, context, agents, resource_id):
         """Bind the resource to the agents."""
         with context.session.begin(subtransactions=True):
-            res = {}
             for agent in agents:
                 # Load is being incremented here to reflect latest agent load
                 # even within the agent report interval. This will be very
@@ -39,5 +38,5 @@ class BaseResourceFilter(object):
                 # problem because "+ 1" here does not meant to predict
                 # precisely what the load of the agent will be. The value will
                 # be corrected by the agent on the next report interval.
-                res['load'] = agent.load + 1
-                agent.update(res)
+                agent.load += 1
+                agent.update()

@@ -116,7 +116,7 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
         plugin = mock.Mock()
         plugin.get_subnets.return_value = [{"network_id": self.network_id,
                                             "enable_dhcp": True}]
-        plugin.get_agents_db.return_value = dead_agent + alive_agent
+        plugin.get_agent_objects.return_value = dead_agent + alive_agent
         plugin.filter_hosts_with_network_access.side_effect = (
             lambda context, network_id, hosts: hosts)
         if active_hosts_only:
