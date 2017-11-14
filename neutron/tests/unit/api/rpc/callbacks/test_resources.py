@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_versionedobjects import base as obj_base
+
 from neutron.api.rpc.callbacks import resources
 from neutron.objects.qos import policy
 from neutron.tests import base
@@ -52,3 +54,23 @@ class GetResourceClsTestCase(base.BaseTestCase):
 
     def test_unknown_type(self):
         self.assertIsNone(resources.get_resource_cls('unknown-resource-type'))
+
+
+class RegisterResourceClass(base.BaseTestCase):
+
+    def test_register_resource_class(self):
+        class DummyOVO(obj_base.VersionedObject):
+            pass
+
+        self.assertFalse(
+            resources.is_valid_resource_type('DummyOVO'))
+        resources.register_resource_class(DummyOVO)
+        self.assertTrue(
+            resources.is_valid_resource_type('DummyOVO'))
+
+    def test_register_bogus_resource_class(self):
+        class DummyOVO(object):
+            pass
+
+        self.assertRaises(ValueError,
+                          resources.register_resource_class, DummyOVO)

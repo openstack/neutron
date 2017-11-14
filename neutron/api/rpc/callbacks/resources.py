@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron._i18n import _
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import network
 from neutron.objects import ports
@@ -59,6 +60,17 @@ def get_resource_type(resource_cls):
         return None
 
     return resource_cls.obj_name()
+
+
+def register_resource_class(resource_cls):
+    resource_type = get_resource_type(resource_cls)
+    if not resource_type:
+        msg = _("cannot find resource type for %s class") % resource_cls
+        raise ValueError(msg)
+    if resource_type not in _TYPE_TO_CLS_MAP:
+        _TYPE_TO_CLS_MAP[resource_type] = resource_cls
+    if resource_type not in LOCAL_RESOURCE_VERSIONS:
+        LOCAL_RESOURCE_VERSIONS[resource_type] = resource_cls.VERSION
 
 
 def is_valid_resource_type(resource_type):
