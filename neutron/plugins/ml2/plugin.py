@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import network as net_def
@@ -29,6 +30,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import allowedaddresspairs as addr_exc
 from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -77,7 +79,6 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
-from neutron.extensions import allowedaddresspairs as addr_pair
 from neutron.extensions import netmtu_writable as mtu_ext
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
@@ -1131,10 +1132,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # allowed address pair checks
         if self._check_update_has_allowed_address_pairs(port):
             if not port_security:
-                raise addr_pair.AddressPairAndPortSecurityRequired()
+                raise addr_exc.AddressPairAndPortSecurityRequired()
         else:
             # remove ATTR_NOT_SPECIFIED
-            attrs[addr_pair.ADDRESS_PAIRS] = []
+            attrs[addr_apidef.ADDRESS_PAIRS] = []
 
         if port_security:
             self._ensure_default_security_group_on_port(context, port)
@@ -1186,10 +1187,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                       network, binding, None)
             self._process_port_binding(mech_context, attrs)
 
-            result[addr_pair.ADDRESS_PAIRS] = (
+            result[addr_apidef.ADDRESS_PAIRS] = (
                 self._process_create_allowed_address_pairs(
                     context, result,
-                    attrs.get(addr_pair.ADDRESS_PAIRS)))
+                    attrs.get(addr_apidef.ADDRESS_PAIRS)))
             self._process_port_create_extra_dhcp_opts(context, result,
                                                       dhcp_opts)
             kwargs = {'context': context, 'port': result}
@@ -1249,17 +1250,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # check the address-pairs
         if self._check_update_has_allowed_address_pairs(port):
             #  has address pairs in request
-            raise addr_pair.AddressPairAndPortSecurityRequired()
+            raise addr_exc.AddressPairAndPortSecurityRequired()
         elif (not
          self._check_update_deletes_allowed_address_pairs(port)):
             # not a request for deleting the address-pairs
-            updated_port[addr_pair.ADDRESS_PAIRS] = (
+            updated_port[addr_apidef.ADDRESS_PAIRS] = (
                     self.get_allowed_address_pairs(context, id))
 
             # check if address pairs has been in db, if address pairs could
             # be put in extension driver, we can refine here.
-            if updated_port[addr_pair.ADDRESS_PAIRS]:
-                raise addr_pair.AddressPairAndPortSecurityRequired()
+            if updated_port[addr_apidef.ADDRESS_PAIRS]:
+                raise addr_exc.AddressPairAndPortSecurityRequired()
 
         # checks if security groups were updated adding/modifying
         # security groups, port security is set
@@ -1316,7 +1317,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     updated_port[qos_consts.QOS_POLICY_ID]):
                 need_port_update_notify = True
 
-            if addr_pair.ADDRESS_PAIRS in attrs:
+            if addr_apidef.ADDRESS_PAIRS in attrs:
                 need_port_update_notify |= (
                     self.update_address_pairs_on_port(context, id, port,
                                                       original_port,
