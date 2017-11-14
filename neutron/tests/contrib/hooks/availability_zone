@@ -1,0 +1,14 @@
+[[test-config|$TEMPEST_CONFIG]]
+
+[neutron_plugin_options]
+agent_availability_zone = nova
+
+[[post-config|/$NEUTRON_L3_CONF]]
+
+[agent]
+availability_zone = nova
+
+[[post-config|/$NEUTRON_DHCP_CONF]]
+
+[agent]
+availability_zone = nova

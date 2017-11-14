@@ -34,6 +34,10 @@ NeutronPluginOptions = [
                 default=False,
                 help='Image that supports features that cirros does not, like'
                      ' Ubuntu or CentOS supporting advanced features'),
+    cfg.StrOpt('agent_availability_zone',
+               help='The availability zone for all agents in the deployment. '
+                    'Configure this only when the single value is used by '
+                    'all agents in the deployment.'),
 ]
 
 # TODO(amuller): Redo configuration options registration as part of the planned
