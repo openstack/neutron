@@ -714,6 +714,12 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         subnet_factory = mock.Mock()
         context = self.admin_context
 
+        if 'cidr' in subnet:
+            subnet['cidr'] = netaddr.IPNetwork(subnet['cidr'])
+        if 'cidr' in expected_subnet:
+            expected_subnet['cidr'] = netaddr.IPNetwork(
+                expected_subnet['cidr'])
+
         mocks = self._prepare_mocks_with_pool_mock(
             pool_mock, subnet_factory=subnet_factory)
 
@@ -731,7 +737,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         old_pools = [{'start': '192.1.1.2', 'end': '192.1.1.254'}]
         context = self.admin_context
         subnet = {'id': uuidutils.generate_uuid(),
-                  'ip_version': '4',
+                  'ip_version': constants.IP_VERSION_4,
                   'cidr': '192.1.1.0/24',
                   'ipv6_address_mode': None,
                   'ipv6_ra_mode': None}
@@ -750,7 +756,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         old_pools = [{'start': '192.1.1.2', 'end': '192.1.1.254'}]
         context = self.admin_context
         subnet = {'id': uuidutils.generate_uuid(),
-                  'ip_version': '4',
+                  'ip_version': constants.IP_VERSION_4,
                   'cidr': '192.1.1.0/24',
                   'ipv6_address_mode': None,
                   'ipv6_ra_mode': None}

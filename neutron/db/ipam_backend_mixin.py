@@ -235,7 +235,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if cfg.CONF.allow_overlapping_ips:
             subnet_list = network.subnets
         else:
-            subnet_list = self._get_all_subnets(context)
+            subnet_list = self._get_subnets(context)
         for subnet in subnet_list:
             if ((netaddr.IPSet([subnet.cidr]) & new_subnet_ipset) and
                 subnet.cidr != const.PROVISIONAL_IPV6_PD_PREFIX):
