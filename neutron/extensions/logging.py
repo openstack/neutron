@@ -16,77 +16,19 @@
 import abc
 import itertools
 
-from neutron_lib.api import converters
+from neutron_lib.api.definitions import logging as apidef
 from neutron_lib.api import extensions as api_extensions
-from neutron_lib.db import constants as db_const
 from neutron_lib.services import base as service_base
 import six
 
 from neutron.api.v2 import resource_helper
 from neutron.plugins.common import constants
-from neutron.services.logapi.common import constants as log_const
 
 
-LOG_PREFIX = "/log"
-# Attribute Map
-RESOURCE_ATTRIBUTE_MAP = {
-    'logs': {
-        'id': {'allow_post': False, 'allow_put': False,
-               'validate': {'type:uuid': None},
-               'is_visible': True,
-               'primary_key': True},
-        'project_id': {'allow_post': True, 'allow_put': False,
-                       'required_by_policy': True,
-                       'validate': {
-                           'type:string':
-                               db_const.PROJECT_ID_FIELD_SIZE},
-                       'is_visible': True},
-        'name': {'allow_post': True, 'allow_put': True,
-                 'validate': {'type:string': db_const.NAME_FIELD_SIZE},
-                 'default': '', 'is_visible': True},
-        'resource_type': {'allow_post': True, 'allow_put': False,
-                          'required_by_policy': True,
-                          'validate':
-                          {'type:string': db_const.RESOURCE_TYPE_FIELD_SIZE},
-                          'is_visible': True},
-        'resource_id': {'allow_post': True, 'allow_put': False,
-                        'validate': {'type:uuid_or_none': None},
-                        'default': None, 'is_visible': True},
-        'event': {'allow_post': True, 'allow_put': False,
-                  'validate': {'type:values': log_const.LOG_EVENTS},
-                  'default': log_const.ALL_EVENT, 'is_visible': True},
-        'target_id': {'allow_post': True, 'allow_put': False,
-                      'validate': {'type:uuid_or_none': None},
-                      'default': None, 'is_visible': True},
-        'enabled': {'allow_post': True, 'allow_put': True,
-                    'is_visible': True, 'default': True,
-                    'convert_to': converters.convert_to_boolean},
-    },
-
-    'loggable_resources': {
-        'type': {'allow_post': False, 'allow_put': False,
-                 'is_visible': True}},
-}
-
-
-class Logging(api_extensions.ExtensionDescriptor):
+class Logging(api_extensions.APIExtensionDescriptor):
     """Neutron logging api extension."""
 
-    @classmethod
-    def get_name(cls):
-        return "Logging API Extension"
-
-    @classmethod
-    def get_alias(cls):
-        return "logging"
-
-    @classmethod
-    def get_description(cls):
-        return "Provides a logging API for resources such as security group"
-
-    @classmethod
-    def get_updated(cls):
-        return "2017-01-01T10:00:00-00:00"
+    api_definition = apidef
 
     @classmethod
     def get_plugin_interface(cls):
@@ -96,32 +38,22 @@ class Logging(api_extensions.ExtensionDescriptor):
     def get_resources(cls):
         """Returns Ext Resources."""
         plural_mappings = resource_helper.build_plural_mappings(
-            {}, itertools.chain(RESOURCE_ATTRIBUTE_MAP))
+            {}, itertools.chain(apidef.RESOURCE_ATTRIBUTE_MAP))
 
         resources = resource_helper.build_resource_info(
                                                 plural_mappings,
-                                                RESOURCE_ATTRIBUTE_MAP,
+                                                apidef.RESOURCE_ATTRIBUTE_MAP,
                                                 constants.LOG_API,
                                                 translate_name=True,
                                                 allow_bulk=True)
 
         return resources
 
-    def update_attributes_map(self, attributes, extension_attrs_map=None):
-        super(Logging, self).update_attributes_map(
-            attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return dict(list(RESOURCE_ATTRIBUTE_MAP.items()))
-        else:
-            return {}
-
 
 @six.add_metaclass(abc.ABCMeta)
 class LoggingPluginBase(service_base.ServicePluginBase):
 
-    path_prefix = LOG_PREFIX
+    path_prefix = apidef.API_PREFIX
 
     def get_plugin_description(self):
         return "Logging API Service Plugin"
