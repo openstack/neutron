@@ -14,49 +14,15 @@
 
 import abc
 
-from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import network_availability_zone as apidef
 from neutron_lib.api import extensions
 import six
 
 
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {
-        az_def.COLLECTION_NAME: {'allow_post': False, 'allow_put': False,
-                                 'is_visible': True},
-        az_def.AZ_HINTS: {
-            'allow_post': True, 'allow_put': False, 'is_visible': True,
-            'validate': {'type:availability_zone_hint_list': None},
-            'default': []}},
-}
-
-
-class Network_availability_zone(extensions.ExtensionDescriptor):
+class Network_availability_zone(extensions.APIExtensionDescriptor):
     """Network availability zone extension."""
 
-    @classmethod
-    def get_name(cls):
-        return "Network Availability Zone"
-
-    @classmethod
-    def get_alias(cls):
-        return "network_availability_zone"
-
-    @classmethod
-    def get_description(cls):
-        return "Availability zone support for network."
-
-    @classmethod
-    def get_updated(cls):
-        return "2015-01-01T10:00:00-00:00"
-
-    def get_required_extensions(self):
-        return ["availability_zone"]
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+    api_definition = apidef
 
 
 @six.add_metaclass(abc.ABCMeta)
