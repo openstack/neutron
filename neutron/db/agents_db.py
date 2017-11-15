@@ -18,11 +18,13 @@ import datetime
 from eventlet import greenthread
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import agent as agent_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -122,7 +124,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
     def _get_agent(self, context, id):
         agent = agent_obj.Agent.get_object(context, id=id)
         if not agent:
-            raise ext_agent.AgentNotFound(id=id)
+            raise agent_exc.AgentNotFound(id=id)
         return agent
 
     @db_api.retry_if_session_inactive()
@@ -186,8 +188,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         return load
 
     def _make_agent_dict(self, agent, fields=None):
-        attr = ext_agent.RESOURCE_ATTRIBUTE_MAP.get(
-            ext_agent.RESOURCE_NAME + 's')
+        attr = agent_apidef.RESOURCE_ATTRIBUTE_MAP.get(
+            agent_apidef.COLLECTION_NAME)
         res = dict((k, agent[k]) for k in attr
                    if k not in ['alive', 'configurations'])
         res['alive'] = not utils.is_agent_down(
@@ -266,10 +268,10 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                                  agent_type=agent_type,
                                                  host=host)
         if not agent_objs:
-            raise ext_agent.AgentNotFoundByTypeHost(agent_type=agent_type,
+            raise agent_exc.AgentNotFoundByTypeHost(agent_type=agent_type,
                                                     host=host)
         if len(agent_objs) > 1:
-            raise ext_agent.MultipleAgentFoundByTypeHost(
+            raise agent_exc.MultipleAgentFoundByTypeHost(
                 agent_type=agent_type, host=host)
         return agent_objs[0]
 
@@ -343,7 +345,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 agent.update_fields(res)
                 agent.update()
                 event_type = events.AFTER_UPDATE
-            except ext_agent.AgentNotFoundByTypeHost:
+            except agent_exc.AgentNotFoundByTypeHost:
                 greenthread.sleep(0)
                 res['created_at'] = current_time
                 res['started_at'] = current_time

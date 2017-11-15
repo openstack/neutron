@@ -11,8 +11,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
-
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import context
 from neutron_lib.exceptions import availability_zone as az_exc
@@ -55,15 +53,10 @@ class AZTestCommon(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
 class TestAZAgentCase(AZTestCommon):
     def setUp(self):
-        self._agent_backup = copy.deepcopy(agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self._restore)
         plugin = ('neutron.tests.unit.extensions.'
                   'test_availability_zone.AZTestPlugin')
         ext_mgr = AZExtensionManager()
         super(TestAZAgentCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
-
-    def _restore(self):
-        agent.RESOURCE_ATTRIBUTE_MAP = self._agent_backup
 
     def test_list_availability_zones(self):
         self._register_azs()
@@ -103,13 +96,8 @@ class TestAZAgentCase(AZTestCommon):
 
 class TestAZNetworkCase(AZTestCommon):
     def setUp(self):
-        self._agent_backup = copy.deepcopy(agent.RESOURCE_ATTRIBUTE_MAP)
-        self.addCleanup(self._restore)
         ext_mgr = AZExtensionManager()
         super(TestAZNetworkCase, self).setUp(plugin='ml2', ext_mgr=ext_mgr)
-
-    def _restore(self):
-        agent.RESOURCE_ATTRIBUTE_MAP = self._agent_backup
 
     def test_availability_zones_in_create_response(self):
         with self.network() as net:

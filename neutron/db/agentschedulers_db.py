@@ -19,6 +19,7 @@ import time
 
 from neutron_lib import constants
 from neutron_lib import context as ncontext
+from neutron_lib.exceptions import agent as agent_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -30,7 +31,6 @@ from neutron.common import utils
 from neutron.conf.agent.database import agentschedulers_db
 from neutron.db import agents_db
 from neutron.db.availability_zone import network as network_az
-from neutron.extensions import agent as ext_agent
 from neutron.extensions import dhcpagentscheduler
 from neutron.objects import network
 from neutron import worker as neutron_worker
@@ -432,7 +432,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         try:
             agent = self._get_agent_by_type_and_host(
                 context, constants.AGENT_TYPE_DHCP, host)
-        except ext_agent.AgentNotFoundByTypeHost:
+        except agent_exc.AgentNotFoundByTypeHost:
             LOG.debug("DHCP Agent not found on host %s", host)
             return []
 
