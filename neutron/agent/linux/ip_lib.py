@@ -1054,8 +1054,12 @@ def ensure_device_is_ready(device_name, namespace=None):
     dev = IPDevice(device_name, namespace=namespace)
     dev.set_log_fail_as_error(False)
     try:
-        # Ensure the device is up, even if it is already up. If the device
-        # doesn't exist, a RuntimeError will be raised.
+        # Ensure the device has a MAC address and is up, even if it is already
+        # up. If the device doesn't exist, a RuntimeError will be raised.
+        if not dev.link.address:
+            LOG.error("Device %s cannot be used as it has no MAC "
+                      "address", device_name)
+            return False
         dev.link.set_up()
     except RuntimeError:
         return False
