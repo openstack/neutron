@@ -345,7 +345,16 @@ class ExtensionManager(object):
                     continue
                 extended_attrs = ext.get_extended_resources(version)
                 for res, resource_attrs in extended_attrs.items():
-                    attr_map.setdefault(res, {}).update(resource_attrs)
+                    res_to_update = attr_map.setdefault(res, {})
+                    if self._is_sub_resource(res_to_update):
+                        # in the case of an existing sub-resource, we need to
+                        # update the parameters content rather than overwrite
+                        # it, and also keep the description of the parent
+                        # resource unmodified
+                        res_to_update['parameters'].update(
+                            resource_attrs['parameters'])
+                    else:
+                        res_to_update.update(resource_attrs)
                 processed_exts[ext_name] = ext
                 del exts_to_process[ext_name]
             if len(processed_exts) == processed_ext_count:
@@ -368,6 +377,12 @@ class ExtensionManager(object):
         # Extending extensions' attributes map.
         for ext in processed_exts.values():
             ext.update_attributes_map(attr_map)
+
+    def _is_sub_resource(self, resource):
+        return ('parent' in resource and
+                isinstance(resource['parent'], dict) and
+                'member_name' in resource['parent'] and
+                'parameters' in resource)
 
     def _check_faulty_extensions(self, faulty_extensions):
         """Raise for non-default faulty extensions.
