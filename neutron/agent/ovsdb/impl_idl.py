@@ -105,12 +105,9 @@ class Transaction(api.Transaction):
                         txn.abort()
                         if not self.check_error:
                             ctx.reraise = False
-            seqno = self.api.idl.change_seqno
             status = txn.commit_block()
             if status == txn.TRY_AGAIN:
                 LOG.debug("OVSDB transaction returned TRY_AGAIN, retrying")
-                idlutils.wait_for_change(self.api.idl, self.time_remaining(),
-                                         seqno)
                 continue
             elif status == txn.ERROR:
                 msg = _("OVSDB Error: %s") % txn.get_error()
