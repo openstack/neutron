@@ -431,9 +431,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):
+        self._ensure_network_not_in_use(context, id)
         registry.notify(resources.NETWORK, events.BEFORE_DELETE, self,
                         context=context, network_id=id)
-        self._ensure_network_not_in_use(context, id)
         with db_api.context_manager.reader.using(context):
             auto_delete_port_ids = [p.id for p in context.session.query(
                 models_v2.Port.id).filter_by(network_id=id).filter(
