@@ -11,6 +11,7 @@
       - openstack/tempest
     irrelevant-files:
       - ^(test-|)requirements.txt$
+      - ^releasenotes/.*$
       - ^setup.cfg$
     voting: false
 
@@ -27,6 +28,7 @@
       - openstack/tempest
     irrelevant-files:
       - ^(test-|)requirements.txt$
+      - ^releasenotes/.*$
       - ^setup.cfg$
     voting: false
 
@@ -44,6 +46,7 @@
       - openstack/tempest
     irrelevant-files:
       - ^(test-|)requirements.txt$
+      - ^releasenotes/.*$
       - ^setup.cfg$
     voting: false
 
