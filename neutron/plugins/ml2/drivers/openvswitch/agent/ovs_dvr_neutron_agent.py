@@ -421,8 +421,9 @@ class OVSDVRNeutronAgent(object):
         # TODO(vivek) remove the IPv6 related flows once SNAT is not
         # used for IPv6 DVR.
         if ip_version == 4:
-            br.install_dvr_process_ipv4(
-                vlan_tag=lvm.vlan, gateway_ip=subnet_info['gateway_ip'])
+            if subnet_info['gateway_ip']:
+                br.install_dvr_process_ipv4(
+                    vlan_tag=lvm.vlan, gateway_ip=subnet_info['gateway_ip'])
         else:
             br.install_dvr_process_ipv6(
                 vlan_tag=lvm.vlan, gateway_mac=subnet_info['gateway_mac'])
@@ -616,8 +617,10 @@ class OVSDVRNeutronAgent(object):
             if network_type in constants.TUNNEL_NETWORK_TYPES:
                 br = self.tun_br
             if ip_version == 4:
-                br.delete_dvr_process_ipv4(
-                    vlan_tag=lvm.vlan, gateway_ip=subnet_info['gateway_ip'])
+                if subnet_info['gateway_ip']:
+                    br.delete_dvr_process_ipv4(
+                        vlan_tag=lvm.vlan,
+                        gateway_ip=subnet_info['gateway_ip'])
             else:
                 br.delete_dvr_process_ipv6(
                     vlan_tag=lvm.vlan, gateway_mac=subnet_info['gateway_mac'])
