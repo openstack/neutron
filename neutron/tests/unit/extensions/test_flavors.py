@@ -19,6 +19,7 @@ import fixtures
 import mock
 from neutron_lib import context
 from neutron_lib.db import constants as db_const
+from neutron_lib.exceptions import flavors as flav_exc
 from neutron_lib.plugins import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -53,7 +54,7 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         super(FlavorExtensionTestCase, self).setUp()
         self._setUpExtension(
             'neutron.services.flavors.flavors_plugin.FlavorsPlugin',
-            constants.FLAVORS, flavors.RESOURCE_ATTRIBUTE_MAP,
+            constants.FLAVORS, {},
             flavors.Flavors, '', supported_extension_aliases='flavors')
 
     def test_create_flavor(self):
@@ -538,7 +539,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                  'driver': "Broken",
                  'enabled': True,
                  'metainfo': '{"data": "value"}'}}
-        self.assertRaises(flavors.ServiceProfileDriverNotFound,
+        self.assertRaises(flav_exc.ServiceProfileDriverNotFound,
                           self.plugin.create_service_profile,
                           self.ctx,
                           data)
@@ -549,7 +550,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                  'driver': '',
                  'enabled': True,
                  'metainfo': ''}}
-        self.assertRaises(flavors.ServiceProfileEmpty,
+        self.assertRaises(flav_exc.ServiceProfileEmpty,
                           self.plugin.create_service_profile,
                           self.ctx,
                           data)
@@ -616,7 +617,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.ctx,
             {'service_profile': {'id': sp['id']}},
             fl['id'])
-        self.assertRaises(flavors.FlavorServiceProfileBindingExists,
+        self.assertRaises(flav_exc.FlavorServiceProfileBindingExists,
                           self.plugin.create_flavor_service_profile,
                           self.ctx,
                           {'service_profile': {'id': sp['id']}},
@@ -636,7 +637,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             flavor_obj.FlavorServiceProfileBinding.objects_exist(self.ctx))
 
         self.assertRaises(
-            flavors.FlavorServiceProfileBindingNotFound,
+            flav_exc.FlavorServiceProfileBindingNotFound,
             self.plugin.delete_flavor_service_profile,
             self.ctx, sp['id'], fl['id'])
 
@@ -648,7 +649,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             {'service_profile': {'id': sp['id']}},
             fl['id'])
         self.assertRaises(
-            flavors.ServiceProfileInUse,
+            flav_exc.ServiceProfileInUse,
             self.plugin.delete_service_profile,
             self.ctx,
             sp['id'])
@@ -659,7 +660,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.ctx.session.begin():
             self.ctx.session.add(l3_models.Router(flavor_id=fl['id']))
         self.assertRaises(
-            flavors.FlavorInUse,
+            flav_exc.FlavorInUse,
             self.plugin.delete_flavor,
             self.ctx,
             fl['id'])
@@ -667,7 +668,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def test_get_flavor_next_provider_no_binding(self):
         fl, data = self._create_flavor()
         self.assertRaises(
-            flavors.FlavorServiceProfileBindingNotFound,
+            flav_exc.FlavorServiceProfileBindingNotFound,
             self.plugin.get_flavor_next_provider,
             self.ctx,
             fl['id'])
@@ -686,7 +687,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             {'service_profile': {'id': sp['id']}},
             fl['id'])
         self.assertRaises(
-            flavors.ServiceProfileDisabled,
+            flav_exc.ServiceProfileDisabled,
             self.plugin.get_flavor_next_provider,
             self.ctx,
             fl['id'])
@@ -705,7 +706,7 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             {'service_profile': {'id': sp['id']}},
             fl['id'])
         self.assertRaises(
-            flavors.ServiceProfileDriverNotFound,
+            flav_exc.ServiceProfileDriverNotFound,
             self.plugin.get_flavor_next_provider,
             self.ctx,
             fl['id'])
