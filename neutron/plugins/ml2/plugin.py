@@ -46,6 +46,7 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 from oslo_utils import uuidutils
 import sqlalchemy
+from sqlalchemy import or_
 from sqlalchemy.orm import exc as sa_exc
 
 from neutron._i18n import _
@@ -153,7 +154,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "availability_zone",
                                     "network_availability_zone",
                                     "default-subnetpools",
-                                    "subnet-service-types"]
+                                    "subnet-service-types",
+                                    "ip-substring-filtering"]
 
     @property
     def supported_extension_aliases(self):
@@ -1848,6 +1850,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if port:
                 return port.id
         return device
+
+    def _get_ports_query(self, context, filters=None, *args, **kwargs):
+        filters = filters or {}
+        fixed_ips = filters.get('fixed_ips', {})
+        ip_addresses_s = fixed_ips.get('ip_address_substr')
+        query = super(Ml2Plugin, self)._get_ports_query(context, filters,
+                                                        *args, **kwargs)
+        if ip_addresses_s:
+            substr_filter = or_(*[models_v2.Port.fixed_ips.any(
+                models_v2.IPAllocation.ip_address.like('%%%s%%' % ip))
+                for ip in ip_addresses_s])
+            query = query.filter(substr_filter)
+        return query
 
     def filter_hosts_with_network_access(
             self, context, network_id, candidate_hosts):
