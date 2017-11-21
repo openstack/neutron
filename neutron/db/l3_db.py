@@ -1282,13 +1282,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'device_owner': DEVICE_OWNER_FLOATINGIP,
                 'status': constants.PORT_STATUS_NOTAPPLICABLE,
                 'name': ''}
-        if fip.get('floating_ip_address'):
-            port['fixed_ips'] = [
-                {'ip_address': fip['floating_ip_address']}]
 
-        if fip.get('subnet_id'):
-            port['fixed_ips'] = [
-                {'subnet_id': fip['subnet_id']}]
+        # Both subnet_id and floating_ip_address are accepted, if
+        # floating_ip_address is not in the subnet,
+        # InvalidIpForSubnet exception will be raised.
+        fixed_ip = {}
+        if fip['subnet_id']:
+            fixed_ip['subnet_id'] = fip['subnet_id']
+        if fip['floating_ip_address']:
+            fixed_ip['ip_address'] = fip['floating_ip_address']
+        if fixed_ip:
+            port['fixed_ips'] = [fixed_ip]
 
         # 'status' in port dict could not be updated by default, use
         # check_allow_post to stop the verification of system
