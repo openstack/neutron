@@ -31,7 +31,6 @@ import time
 import uuid
 import weakref
 
-from debtcollector import removals
 import eventlet
 from eventlet.green import subprocess
 import netaddr
@@ -41,7 +40,6 @@ from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
-from oslo_utils import fileutils
 import six
 
 import neutron
@@ -103,13 +101,6 @@ def throttler(threshold=DEFAULT_THROTTLER_VALUE):
                 return f(*args, **kwargs)
         return wrapper
     return decorator
-
-
-@removals.remove(
-    message="Use ensure_tree(path, 0o755) from oslo_utils.fileutils")
-def ensure_dir(dir_path):
-    """Ensure a directory with 755 permissions mode."""
-    fileutils.ensure_tree(dir_path, mode=0o755)
 
 
 def _subprocess_setup():
