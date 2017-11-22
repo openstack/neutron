@@ -2272,6 +2272,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_process_routers_update_router_deleted_error(self):
         self._test_process_routers_update_router_deleted(True)
 
+    def test_process_ha_dvr_router_if_compatible_no_ha_interface(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = 'dvr_snat'
+        router = {'id': _uuid(),
+                  'distributed': True, 'ha': True,
+                  'external_gateway_info': {}, 'routes': [],
+                  'admin_state_up': True}
+
+        agent._process_router_if_compatible(router)
+        self.assertIn(router['id'], agent.router_info)
+
     def test_process_router_if_compatible_with_no_ext_net_in_conf(self):
         self.conf.set_override('external_network_bridge', 'br-ex')
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
