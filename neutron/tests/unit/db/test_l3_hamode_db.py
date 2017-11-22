@@ -419,6 +419,19 @@ class L3HATestCase(L3HATestFramework):
         self.assertEqual(1, len(subnets))
         self.assertEqual(cfg.CONF.l3_ha_net_cidr, subnets[0]['cidr'])
 
+    def test_l3_agent_routers_query_interface_includes_dvrsnat(self):
+        router = self._create_router(distributed=True)
+        routers = self.plugin.get_ha_sync_data_for_host(self.admin_ctx,
+                                                        'a-dvr_snat-host',
+                                                        self.agent2)
+        self.assertEqual(1, len(routers))
+        router = routers[0]
+
+        self.assertTrue(router.get('ha'))
+
+        interface = router.get(constants.HA_INTERFACE_KEY)
+        self.assertIsNone(interface)
+
     def test_unique_ha_network_per_tenant(self):
         tenant1 = _uuid()
         tenant2 = _uuid()
@@ -778,8 +791,7 @@ class L3HATestCase(L3HATestFramework):
         orig_func = self.plugin._process_sync_ha_data
 
         def process_sync_ha_data(context, routers, host, agent_mode):
-            return orig_func(context, routers, host,
-                             agent_mode=constants.L3_AGENT_MODE_DVR)
+            return orig_func(context, routers, host, is_any_dvr_agent=True)
 
         with mock.patch.object(self.plugin, '_process_sync_ha_data',
                                side_effect=process_sync_ha_data):

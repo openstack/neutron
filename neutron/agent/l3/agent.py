@@ -322,7 +322,13 @@ class L3NATAgent(ha.AgentMixin,
             kwargs['host'] = self.host
 
         if router.get('distributed') and router.get('ha'):
-            if self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT:
+            # if the router does not contain information about the HA interface
+            # this means that this DVR+HA router needs to host only the edge
+            # side of it, typically because it's landing on a node that needs
+            # to provision a router namespace because of a DVR service port
+            # (e.g. DHCP).
+            if (self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT
+                    and router.get(lib_const.HA_INTERFACE_KEY) is not None):
                 kwargs['state_change_callback'] = self.enqueue_state_change
                 return dvr_edge_ha_router.DvrEdgeHaRouter(*args, **kwargs)
 
