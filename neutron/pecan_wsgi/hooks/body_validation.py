@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_log import log
 from oslo_serialization import jsonutils
 from pecan import hooks
 import webob.exc
@@ -21,8 +20,6 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api.v2 import base as v2_base
 from neutron.pecan_wsgi.hooks import utils
-
-LOG = log.getLogger(__name__)
 
 
 class BodyValidationHook(hooks.PecanHook):

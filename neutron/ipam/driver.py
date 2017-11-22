@@ -13,13 +13,10 @@
 import abc
 
 from oslo_config import cfg
-from oslo_log import log
 import six
 
 from neutron.ipam import requests as ipam_req
 from neutron import manager
-
-LOG = log.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -18,14 +18,12 @@
 import sys
 
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_utils import importutils
 
 from neutron.common import config as common_config
 from neutron.common import profiler
 
 
-LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
 
