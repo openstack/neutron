@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
@@ -21,7 +20,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class MeteringLabelRule(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -57,7 +56,7 @@ class MeteringLabelRule(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class MeteringLabel(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

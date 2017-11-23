@@ -13,7 +13,6 @@
 #    under the License.
 
 from neutron_lib import constants as const
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
 
@@ -27,7 +26,7 @@ from neutron.objects import common_types
 from neutron.objects import utils as obj_utils
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Agent(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

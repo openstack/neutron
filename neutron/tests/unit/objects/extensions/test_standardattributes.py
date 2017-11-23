@@ -13,7 +13,6 @@
 #    under the License.
 
 from neutron_lib.db import model_base
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 
@@ -33,7 +32,7 @@ class FakeDbModelWithStandardAttributes(
     tag_support = False
 
 
-@obj_base.VersionedObjectRegistry.register_if(False)
+@objects_base.NeutronObjectRegistry.register_if(False)
 class FakeObjectWithStandardAttributes(objects_base.NeutronDbObject):
     VERSION = '1.0'
     db_model = FakeDbModelWithStandardAttributes

@@ -10,14 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import provisioning_block as pb_model
 from neutron.objects import base
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class ProvisioningBlock(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

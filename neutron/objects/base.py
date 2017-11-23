@@ -20,8 +20,11 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
+from oslo_log import log as logging
 from oslo_serialization import jsonutils
+from oslo_utils import versionutils
 from oslo_versionedobjects import base as obj_base
+from oslo_versionedobjects import exception as obj_exception
 from oslo_versionedobjects import fields as obj_fields
 import six
 
@@ -30,6 +33,9 @@ from neutron.db import api as db_api
 from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.extensions import standardattributes
+
+
+LOG = logging.getLogger(__name__)
 
 _NO_DB_MODEL = object()
 
@@ -43,7 +49,7 @@ def get_updatable_fields(cls, fields):
 
 
 def get_object_class_by_model(model):
-    for obj_class in obj_base.VersionedObjectRegistry.obj_classes().values():
+    for obj_class in NeutronObjectRegistry.obj_classes().values():
         obj_class = obj_class[0]
         if getattr(obj_class, 'db_model', _NO_DB_MODEL) is model:
             return obj_class
@@ -91,6 +97,34 @@ class Pager(object):
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
+
+
+class NeutronObjectRegistry(obj_base.VersionedObjectRegistry):
+
+    _registry = None
+
+    def __new__(cls, *args, **kwargs):
+        # TODO(slaweq): this should be moved back to oslo.versionedobjects
+        # lib as soon as bug https://bugs.launchpad.net/neutron/+bug/1731948
+        # will be fixed and OVO's registry class will support defining custom
+        # registries for objects.
+
+        # NOTE(slaweq): it is overridden method
+        # oslo_versionedobjects.base.VersionedObjectRegistry.__new__
+        # We need to overwrite it to use separate registry for Neutron's
+        # objects.
+        # This is necessary to avoid clash in naming objects between Neutron
+        # and e.g. os-vif (for example Route or Subnet objects are used in
+        # both)
+        if not NeutronObjectRegistry._registry:
+            NeutronObjectRegistry._registry = object.__new__(
+                NeutronObjectRegistry, *args, **kwargs)
+            NeutronObjectRegistry._registry._obj_classes = \
+                collections.defaultdict(list)
+        self = object.__new__(cls, *args, **kwargs)
+        self._obj_classes = (
+            NeutronObjectRegistry._registry._obj_classes)
+        return self
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -142,6 +176,45 @@ class NeutronObject(obj_base.VersionedObject,
     def is_object_field(cls, field):
         return (isinstance(cls.fields[field], obj_fields.ListOfObjectsField) or
                 isinstance(cls.fields[field], obj_fields.ObjectField))
+
+    @classmethod
+    def obj_class_from_name(cls, objname, objver):
+        """Returns a class from the registry based on a name and version."""
+        # NOTE(slaweq): it is override method
+        # oslo_versionedobjects.base.VersionedObject.obj_class_from_name
+        # We need to override it to use Neutron's objects registry class
+        # (NeutronObjectRegistry) instead of original VersionedObjectRegistry
+        # class from oslo_versionedobjects
+        # This is necessary to avoid clash in naming objects between Neutron
+        # and e.g. os-vif (for example Route or Subnet objects are used in
+        # both)
+        if objname not in NeutronObjectRegistry.obj_classes():
+            LOG.error('Unable to instantiate unregistered object type '
+                      '%(objtype)s', dict(objtype=objname))
+            raise obj_exception.UnsupportedObjectError(objtype=objname)
+
+        # NOTE(comstud): If there's not an exact match, return the highest
+        # compatible version. The objects stored in the class are sorted
+        # such that highest version is first, so only set compatible_match
+        # once below.
+        compatible_match = None
+
+        for objclass in NeutronObjectRegistry.obj_classes()[objname]:
+            if objclass.VERSION == objver:
+                return objclass
+            if (not compatible_match and
+                    versionutils.is_compatible(objver, objclass.VERSION)):
+                compatible_match = objclass
+
+        if compatible_match:
+            return compatible_match
+
+        # As mentioned above, latest version is always first in the list.
+        latest_ver = (
+            NeutronObjectRegistry.obj_classes()[objname][0].VERSION)
+        raise obj_exception.IncompatibleObjectVersion(objname=objname,
+                                                      objver=objver,
+                                                      supported=latest_ver)
 
     @classmethod
     def clean_obj_from_primitive(cls, primitive, context=None):
@@ -586,7 +659,7 @@ class NeutronDbObject(NeutronObject):
         # subclasses=True
         for field in self.synthetic_fields:
             try:
-                objclasses = obj_base.VersionedObjectRegistry.obj_classes(
+                objclasses = NeutronObjectRegistry.obj_classes(
                 ).get(self.fields[field].objname)
             except AttributeError:
                 # NOTE(rossella_s) this is probably because this field is not

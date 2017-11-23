@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import address_scope as models
@@ -20,7 +19,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class AddressScope(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

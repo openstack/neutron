@@ -11,14 +11,13 @@
 #    under the License.
 
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models.plugins.ml2 import flatallocation
 from neutron.objects import base
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class FlatAllocation(base.NeutronDbObject):
     # Version 1.0: Initial Version
     VERSION = '1.0'

@@ -20,7 +20,6 @@ from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_consts
 from neutron_lib.utils import helpers
 from oslo_utils import versionutils
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import six
@@ -100,7 +99,7 @@ class QosRule(base.NeutronDbObject):
                                    and is_network_policy_only))
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class QosBandwidthLimitRule(QosRule):
 
     db_model = qos_db_model.QosBandwidthLimitRule
@@ -124,7 +123,7 @@ class QosBandwidthLimitRule(QosRule):
                     objtype="QosBandwidthLimitRule")
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class QosDscpMarkingRule(QosRule):
 
     db_model = qos_db_model.QosDscpMarkingRule
@@ -143,7 +142,7 @@ class QosDscpMarkingRule(QosRule):
                                  objname="QosDscpMarkingRule")
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class QosMinimumBandwidthRule(QosRule):
 
     db_model = qos_db_model.QosMinimumBandwidthRule

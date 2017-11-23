@@ -12,7 +12,6 @@
 
 import netaddr
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
@@ -24,7 +23,7 @@ from neutron.objects import common_types
 from neutron.objects import rbac_db
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class DNSNameServer(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -56,7 +55,7 @@ class DNSNameServer(base.NeutronDbObject):
                                                      **kwargs)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Route(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -95,7 +94,7 @@ class Route(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class IPAllocationPool(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -139,7 +138,7 @@ class IPAllocationPool(base.NeutronDbObject):
         return result
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class SubnetServiceType(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -163,7 +162,7 @@ class SubnetServiceType(base.NeutronDbObject):
 #   - added 'shared' to synthetic_fields
 #   - registered extra_filter_name for 'shared' attribute
 #   - added loading shared attribute based on network 'rbac_entries'
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Subnet(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

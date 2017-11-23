@@ -18,7 +18,6 @@ import itertools
 from neutron_lib import constants as n_const
 from oslo_db import exception as db_exc
 from oslo_utils import versionutils
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
@@ -35,7 +34,7 @@ from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac_db
 
 
-@obj_base.VersionedObjectRegistry.register
+@base_db.NeutronObjectRegistry.register
 class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     # Version 1.1: QosDscpMarkingRule introduced
@@ -346,7 +345,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             primitive.pop('is_default', None)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base_db.NeutronObjectRegistry.register
 class QosPolicyDefault(base_db.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

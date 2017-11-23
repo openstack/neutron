@@ -15,7 +15,6 @@ from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 from oslo_utils import versionutils
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
@@ -32,7 +31,7 @@ class RuleTypeField(obj_fields.BaseEnumField):
         super(RuleTypeField, self).__init__(**kwargs)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class QosRuleType(base.NeutronObject):
     # Version 1.0: Initial version
     # Version 1.1: Added QosDscpMarkingRule
@@ -79,7 +78,7 @@ class QosRuleType(base.NeutronObject):
             primitive.pop('drivers', None)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class QosRuleTypeDriver(base.NeutronObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

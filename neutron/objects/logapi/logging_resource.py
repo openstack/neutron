@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import loggingapi as log_db
@@ -23,7 +22,7 @@ from neutron.objects.logapi import event_types
 from neutron.services.logapi.common import constants as log_const
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Log(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

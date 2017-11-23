@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import flavor as models
@@ -21,7 +20,7 @@ from neutron.objects import base
 from neutron.objects import common_types
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class FlavorServiceProfileBinding(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -36,7 +35,7 @@ class FlavorServiceProfileBinding(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class ServiceProfile(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -66,7 +65,7 @@ class ServiceProfile(base.NeutronDbObject):
         self.obj_reset_changes(['flavor_ids'])
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Flavor(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

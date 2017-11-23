@@ -15,10 +15,10 @@
 import os
 import pprint
 
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fixture
 
 from neutron import objects
+from neutron.objects import base
 from neutron.tests import base as test_base
 
 
@@ -114,7 +114,7 @@ class TestObjectVersions(test_base.BaseTestCase):
 
     def test_versions(self):
         checker = fixture.ObjectVersionChecker(
-            obj_base.VersionedObjectRegistry.obj_classes())
+            base.NeutronObjectRegistry.obj_classes())
         fingerprints = checker.get_hashes()
 
         if os.getenv('GENERATE_HASHES'):

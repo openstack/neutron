@@ -14,7 +14,6 @@
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
-from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db import api as db_api
@@ -33,7 +32,7 @@ from neutron.objects.qos import binding
 from neutron.objects import rbac_db
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class NetworkDhcpAgentBinding(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -57,7 +56,7 @@ class NetworkDhcpAgentBinding(base.NeutronDbObject):
         return cls.get_objects(context, dhcp_agent_id=dhcp_agent_ids)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class NetworkSegment(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -145,7 +144,7 @@ class NetworkSegment(base.NeutronDbObject):
                                                       **kwargs)
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class NetworkPortSecurity(base_ps._PortSecurity):
     # Version 1.0: Initial version
     VERSION = "1.0"
@@ -155,7 +154,7 @@ class NetworkPortSecurity(base_ps._PortSecurity):
     fields_need_translation = {'id': 'network_id'}
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class ExternalNetwork(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -172,7 +171,7 @@ class ExternalNetwork(base.NeutronDbObject):
     }
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class Network(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -306,7 +305,7 @@ class Network(rbac_db.NeutronRbacObject):
         return set()
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class SegmentHostMapping(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -321,7 +320,7 @@ class SegmentHostMapping(base.NeutronDbObject):
     primary_keys = ['segment_id', 'host']
 
 
-@obj_base.VersionedObjectRegistry.register
+@base.NeutronObjectRegistry.register
 class NetworkDNSDomain(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

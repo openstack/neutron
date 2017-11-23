@@ -17,7 +17,6 @@ import mock
 from neutron_lib import context
 from oslo_utils import uuidutils
 from oslo_versionedobjects import fields as obj_fields
-from oslo_versionedobjects import fixture
 import testtools
 
 from neutron.api.rpc.callbacks import resources
@@ -27,6 +26,7 @@ from neutron.common import topics
 from neutron.objects import base as objects_base
 from neutron.objects import common_types
 from neutron.tests import base
+from neutron.tests.unit.objects import test_base as objects_test_base
 
 
 TEST_EVENT = 'test_event'
@@ -76,7 +76,7 @@ class ResourcesRpcBaseTestCase(base.BaseTestCase):
         super(ResourcesRpcBaseTestCase, self).setUp()
 
         self.obj_registry = self.useFixture(
-            fixture.VersionedObjectRegistryFixture())
+            objects_test_base.NeutronObjectRegistryFixture())
 
         self.context = context.get_admin_context()
         mock.patch.object(resources_rpc.resources,
