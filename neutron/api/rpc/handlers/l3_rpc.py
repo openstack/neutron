@@ -21,6 +21,7 @@ from oslo_log import log as logging
 import oslo_messaging
 import six
 
+from neutron._i18n import _LI
 from neutron.common import constants as n_const
 from neutron.common import utils
 from neutron import context as neutron_context
@@ -82,19 +83,7 @@ class L3RpcCallback(object):
 
         This will autoschedule unhosted routers to l3 agent on <host> and then
         return all ids of routers scheduled to it.
-        This will also update HA network port status to down for all HA routers
-        hosted on <host>. This is needed to avoid l3 agent spawning keepalived
-        when l2 agent not yet wired the port. This can happen after a system
-        reboot that has wiped out flows, etc and the L2 agent hasn't started up
-        yet. The port will still be ACTIVE in the data model and the L3 agent
-        will use that info to mistakenly think that L2 network is ready.
-        By forcing into DOWN, we will require the L2 agent to essentially ack
-        that the port is indeed ACTIVE by reacting to the port update and
-        calling update_device_up.
         """
-        if utils.is_extension_supported(
-            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
-            self._update_ha_network_port_status(context, host)
         if utils.is_extension_supported(
                 self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
@@ -237,7 +226,31 @@ class L3RpcCallback(object):
         return net_id
 
     def get_service_plugin_list(self, context, **kwargs):
-        return directory.get_plugins().keys()
+        """Returns list of activated services.
+
+        This will also update HA network port status to down for all HA routers
+        hosted on <host>. This is needed to avoid l3 agent spawning keepalived
+        when l2 agent not yet wired the port. This can happen after a system
+        reboot that has wiped out flows, etc and the L2 agent hasn't started up
+        yet. The port will still be ACTIVE in the data model and the L3 agent
+        will use that info to mistakenly think that L2 network is ready.
+        By forcing into DOWN, we will require the L2 agent to essentially ack
+        that the port is indeed ACTIVE by reacting to the port update and
+        calling update_device_up.
+        """
+        host = kwargs.get('host')
+        # "_update_ha_network_port_status()" will result more RPC calls between
+        # L2 agents and server(as l2 agent will try to wire the ports). These
+        # resulting RPC calls shouldn't block(or delay processing of)
+        # get_plugins() and thus current RPC execution. So get_plugins() is
+        # called before _update_ha_network_port_status()
+        plugins = directory.get_plugins().keys()
+        if host and utils.is_extension_supported(
+            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
+            LOG.info(_LI("Host %s requested to set all its HA network "
+                         "ports status to DOWN."), host)
+            self._update_ha_network_port_status(context, host)
+        return plugins
 
     @db_api.retry_db_errors
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
