@@ -19,6 +19,7 @@ from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
@@ -29,7 +30,6 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource
 from neutron.common import rpc as n_rpc
-from neutron.extensions import agent
 from neutron import policy
 from neutron import wsgi
 
@@ -149,7 +149,7 @@ class L3agentscheduler(api_extensions.ExtensionDescriptor):
         return {}
 
 
-class InvalidL3Agent(agent.AgentNotFound):
+class InvalidL3Agent(agent_exc.AgentNotFound):
     message = _("Agent %(id)s is not a L3 Agent or has been disabled")
 
 
