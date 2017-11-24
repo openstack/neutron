@@ -20,14 +20,6 @@ separate worker processes that build load balancers within virtual machines on
 hypervisors that are managed by the Compute service. You do not need an agent
 for Octavia.
 
-.. note::
-
-   LBaaS v1 was removed in the Newton release. These links provide more
-   details about how LBaaS v1 works and how to configure it:
-
-   * `Load-Balancer-as-a-Service (LBaaS) overview <https://docs.openstack.org/admin-guide/networking-introduction.html#load-balancer-as-a-service-lbaas-overview>`__
-   * `Basic Load-Balancer-as-a-Service operations <https://docs.openstack.org/admin-guide/networking-adv-features.html#basic-load-balancer-as-a-service-operations>`__
-
 .. warning::
 
    Currently, no migration path exists between v1 and v2 load balancers. If you
