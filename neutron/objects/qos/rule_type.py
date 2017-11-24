@@ -13,14 +13,11 @@
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
-from oslo_log import log as logging
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
 from neutron.objects import common_types
-
-LOG = logging.getLogger(__name__)
 
 
 class RuleTypeField(obj_fields.BaseEnumField):
