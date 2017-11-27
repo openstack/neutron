@@ -130,10 +130,13 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         QosMocked.assert_called_once_with(self.ctxt, **policy_details)
 
+    @mock.patch.object(policy_object.QosPolicy, "get_object")
     @mock.patch(
         'neutron.objects.rbac_db.RbacNeutronDbObjectMixin'
         '.create_rbac_policy')
     def test_update_policy(self, *mocks):
+        mock_qos_policy_get = mocks[1]
+        mock_qos_policy_get.return_value = self.policy
         fields = base_object.get_updatable_fields(
             policy_object.QosPolicy, self.policy_data['policy'])
         self.qos_plugin.update_policy(
@@ -441,7 +444,13 @@ class TestQosPlugin(base.BaseQosTestCase):
             method = getattr(self.qos_plugin, "%s_policy" % action)
             method(*arguments)
 
-            policy_mock_call = getattr(mock.call.QosPolicy(), action)()
+            # NOTE(slaweq): in case of update existing qos_policy_object
+            # is taken with get_object() method so mocked call is different
+            if action == "update":
+                policy_mock_call = getattr(
+                    mock.call.QosPolicy.get_object(), action)()
+            else:
+                policy_mock_call = getattr(mock.call.QosPolicy(), action)()
             notify_mock_call = getattr(mock.call.notification_driver,
                                        '%s_policy' % action)(self.ctxt,
                                                              mock.ANY)
