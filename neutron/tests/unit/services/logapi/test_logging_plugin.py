@@ -15,6 +15,7 @@
 
 import mock
 from neutron_lib import context
+from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -23,7 +24,6 @@ from neutron import manager
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import ports
 from neutron.objects import securitygroup as sg_object
-from neutron.plugins.common import constants
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.tests.unit.services.logapi import base
 
@@ -51,7 +51,7 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             ["neutron.services.logapi.logging_plugin.LoggingPlugin"])
 
         manager.init()
-        self.log_plugin = directory.get_plugin(constants.LOG_API)
+        self.log_plugin = directory.get_plugin(plugin_const.LOG_API)
         self.log_plugin.driver_manager = mock.Mock()
         log_types = mock.PropertyMock(return_value=SUPPORTED_LOGGING_TYPES)
         self.log_plugin.driver_manager.supported_logging_types = \

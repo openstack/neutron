@@ -16,13 +16,13 @@
 import mock
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
+from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron.objects import ports
 from neutron.objects import securitygroup as sg_object
-from neutron.plugins.common import constants
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 from neutron.tests import base
@@ -129,7 +129,7 @@ class TestLogDriversLoggingTypeValidations(drv_mgr.TestLogDriversManagerBase):
             def __init__(self):
                 self.driver_manager = driver_manager
 
-        directory.add_plugin(constants.LOG_API, FakeLoggingPlugin())
+        directory.add_plugin(plugin_const.LOG_API, FakeLoggingPlugin())
 
         self.assertEqual(
             expected_result,
