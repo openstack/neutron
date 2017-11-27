@@ -316,13 +316,30 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         pool_2=r_range,
                         subnet_cidr=subnet_cidr)
 
-    def _validate_segment(self, context, network_id, segment_id):
+    def _validate_segment(self, context, network_id, segment_id, action=None):
         query = context.session.query(models_v2.Subnet.segment_id)
         query = query.filter(models_v2.Subnet.network_id == network_id)
         associated_segments = set(row.segment_id for row in query)
         if None in associated_segments and len(associated_segments) > 1:
             raise segment_exc.SubnetsNotAllAssociatedWithSegments(
                 network_id=network_id)
+
+        if action == 'update':
+            # Check the current state of segments and subnets on the network
+            # before allowing migration from non-routed to routed network.
+            if query.count() > 1:
+                raise segment_exc.SubnetsNotAllAssociatedWithSegments(
+                    network_id=network_id)
+            if (None not in associated_segments and
+                    segment_id not in associated_segments):
+                raise segment_exc.SubnetSegmentAssociationChangeNotAllowed()
+
+            query = context.session.query(segment_model.NetworkSegment.id)
+            query = query.filter(
+                segment_model.NetworkSegment.network_id == network_id)
+            if query.count() > 1:
+                raise segment_exc.NoUpdateSubnetWhenMultipleSegmentsOnNetwork(
+                    network_id=network_id)
 
         if segment_id:
             segment = network_obj.NetworkSegment.get_object(context,

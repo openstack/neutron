@@ -59,7 +59,8 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
     supported_extension_aliases = ["segment", "ip_allocation",
                                    l2adj_apidef.ALIAS,
-                                   "standard-attr-segment"]
+                                   "standard-attr-segment",
+                                   "subnet-segmentid-writable"]
 
     __native_pagination_support = True
     __native_sorting_support = True
@@ -173,12 +174,7 @@ class NovaSegmentNotifier(object):
                           'update routed networks IPv4 inventories')
                 return
 
-    @registry.receives(resources.SUBNET, [events.AFTER_CREATE])
-    def _notify_subnet_created(self, resource, event, trigger, context,
-                               subnet, **kwargs):
-        segment_id = subnet.get('segment_id')
-        if not segment_id or subnet['ip_version'] != constants.IP_VERSION_4:
-            return
+    def _notify_subnet(self, context, subnet, segment_id):
         total, reserved = self._calculate_inventory_total_and_reserved(subnet)
         if total:
             segment_host_mappings = net_obj.SegmentHostMapping.get_objects(
@@ -187,6 +183,14 @@ class NovaSegmentNotifier(object):
                 self._create_or_update_nova_inventory, segment_id, total=total,
                 reserved=reserved,
                 segment_host_mappings=segment_host_mappings))
+
+    @registry.receives(resources.SUBNET, [events.AFTER_CREATE])
+    def _notify_subnet_created(self, resource, event, trigger, context,
+                               subnet, **kwargs):
+        segment_id = subnet.get('segment_id')
+        if not segment_id or subnet['ip_version'] != constants.IP_VERSION_4:
+            return
+        self._notify_subnet(context, subnet, segment_id)
 
     def _create_or_update_nova_inventory(self, event):
         try:
@@ -261,7 +265,12 @@ class NovaSegmentNotifier(object):
     def _notify_subnet_updated(self, resource, event, trigger, context,
                                subnet, original_subnet, **kwargs):
         segment_id = subnet.get('segment_id')
+        original_segment_id = original_subnet.get('segment_id')
         if not segment_id or subnet['ip_version'] != constants.IP_VERSION_4:
+            return
+        if original_segment_id != segment_id:
+            # Migration to routed network, treat as create
+            self._notify_subnet(context, subnet, segment_id)
             return
         filters = {'segment_id': [segment_id],
                    'ip_version': [constants.IP_VERSION_4]}
