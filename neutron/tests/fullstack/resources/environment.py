@@ -334,7 +334,10 @@ class Environment(fixtures.Fixture):
         self.hosts = []
 
     def wait_until_env_is_up(self):
-        common_utils.wait_until_true(self._processes_are_ready)
+        common_utils.wait_until_true(
+            self._processes_are_ready,
+            timeout=180,
+            sleep=10)
 
     def _processes_are_ready(self):
         try:
