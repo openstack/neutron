@@ -54,10 +54,11 @@ INTERFACE_OPTS = [
                help=_('Name of Open vSwitch bridge to use')),
     cfg.BoolOpt('ovs_use_veth',
                 default=False,
-                help=_('Uses veth for an OVS interface or not. '
-                       'Support kernels with limited namespace support '
-                       '(e.g. RHEL 6.5) so long as ovs_use_veth is set to '
-                       'True.')),
+                help=_("Uses veth for an OVS interface or not. "
+                       "Support kernels with limited namespace support "
+                       "(e.g. RHEL 6.5) and rate limiting on router's gateway "
+                       "port so long as ovs_use_veth is set to "
+                       "True.")),
 ]
 
 
