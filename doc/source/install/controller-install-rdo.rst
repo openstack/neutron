@@ -230,6 +230,13 @@ such as credentials to instances.
 Configure the Compute service to use the Networking service
 -----------------------------------------------------------
 
+.. note::
+
+      The Nova compute service must be installed to complete this step.
+      For more details see the compute install guide found under the
+      `Installation Guides` section of the
+      `docs website <https://docs.openstack.org>`_.
+
 * Edit the ``/etc/nova/nova.conf`` file and perform the following actions:
 
   * In the ``[neutron]`` section, configure access parameters, enable the
