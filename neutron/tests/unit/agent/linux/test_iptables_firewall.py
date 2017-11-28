@@ -277,6 +277,18 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_ipv4_ingress_tcp_port_by_num(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': '6',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p tcp -m tcp --dport 10 -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_ingress_tcp_mport(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
@@ -363,6 +375,66 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             'ifake_dev',
             '-s %s -p udp -m udp -m multiport --dports 10:100 '
             '-j RETURN' % prefix, comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_dccp_port(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'dccp',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p dccp -m dccp --dport 10 -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_sctp_port(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'sctp',
+                'port_range_min': 10,
+                'port_range_max': 10}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p sctp -m sctp --dport 10 -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_protocol_blank(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': ''}
+        ingress = mock.call.add_rule('ifake_dev', '-j RETURN', comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_protocol_zero(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': '0'}
+        ingress = mock.call.add_rule('ifake_dev', '-j RETURN', comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_protocol_encap(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': 'encap'}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p encap -j RETURN',
+                                     comment=None)
+        egress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv4_ingress_protocol_encap_by_num(self):
+        rule = {'ethertype': 'IPv4',
+                'direction': 'ingress',
+                'protocol': '98'}
+        ingress = mock.call.add_rule('ifake_dev',
+                                     '-p encap -j RETURN',
+                                     comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 

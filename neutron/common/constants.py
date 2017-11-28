@@ -56,64 +56,79 @@ IP_PROTOCOL_NUM_TO_NAME_MAP = {
 
 # When using iptables-save we specify '-p {proto}',
 # but sometimes those values are not identical.  This is a map
-# of known protocol names or numbers that require a name change.
-# This legacy mapping can go away once neutron-lib is updated.
-IPTABLES_PROTOCOL_LEGACY_NUM_MAP = {3: 'ggp',
-                                    4: 'ipencap',
-                                    5: 'st',
-                                    9: 'igp',
-                                    12: 'pup',
-                                    20: 'hmp',
-                                    22: 'xns-idp',
-                                    27: 'rdp',
-                                    29: 'iso-tp4',
-                                    36: 'xtp',
-                                    37: 'ddp',
-                                    38: 'idpr-cmtp',
-                                    45: 'idrp',
-                                    57: 'skip',
-                                    73: 'rspf',
-                                    81: 'vmtp',
-                                    88: 'eigrp',
-                                    93: 'ax.25',
-                                    94: 'ipip',
-                                    97: 'etherip',
-                                    98: 'encap',
-                                    103: 'pim',
-                                    108: 'ipcomp',
-                                    115: 'lt2p',
-                                    124: 'isis',
-                                    133: 'fc',
-                                    135: 'mobility-header',
-                                    137: 'mpls-in-ip',
-                                    138: 'manet',
-                                    139: 'hip',
-                                    140: 'shim6',
-                                    141: 'wesp',
-                                    142: 'rohc'}
-
-# - protocol 0 uses no -p argument
+# of known protocol numbers that require a name to be used and
+# protocol names that require a different name to be used,
+# because that is how iptables-save will display them.
+#
+# This is how the list was created, so there is a possibility
+# it will need to be updated in the future:
+#
+# $ for num in {0..255}; do iptables -A INPUT -p $num; done
+# $ iptables-save
+#
+# These cases are special, and were found by inspection:
 # - 'ipv6-encap' uses 'ipv6'
 # - 'icmpv6' uses 'ipv6-icmp'
-# - 'pgm' uses number 113 instead of its name
-IPTABLES_PROTOCOL_NAME_MAP = {0: None,
-                              lib_constants.PROTO_NAME_IPV6_ENCAP:
-                                  'ipv6',
+# - 'pgm' uses '113' instead of its name
+# - protocol '0' uses no -p argument
+IPTABLES_PROTOCOL_NAME_MAP = {lib_constants.PROTO_NAME_IPV6_ENCAP: 'ipv6',
                               lib_constants.PROTO_NAME_IPV6_ICMP_LEGACY:
                                   'ipv6-icmp',
-                              lib_constants.PROTO_NAME_PGM: '113'}
-IPTABLES_PROTOCOL_NAME_MAP.update(IPTABLES_PROTOCOL_LEGACY_NUM_MAP)
-
-# When using iptables-save we specify '-p {proto} -m {module}',
-# but sometimes those values are not identical.  This is a map
-# of known protocols that require a '-m {module}', along with
-# the module name that should be used.
-IPTABLES_PROTOCOL_MAP = {lib_constants.PROTO_NAME_DCCP: 'dccp',
-                         lib_constants.PROTO_NAME_ICMP: 'icmp',
-                         lib_constants.PROTO_NAME_IPV6_ICMP: 'icmp6',
-                         lib_constants.PROTO_NAME_SCTP: 'sctp',
-                         lib_constants.PROTO_NAME_TCP: 'tcp',
-                         lib_constants.PROTO_NAME_UDP: 'udp'}
+                              lib_constants.PROTO_NAME_PGM: '113',
+                              '0': None,
+                              '1': 'icmp',
+                              '2': 'igmp',
+                              '3': 'ggp',
+                              '4': 'ipencap',
+                              '5': 'st',
+                              '6': 'tcp',
+                              '8': 'egp',
+                              '9': 'igp',
+                              '12': 'pup',
+                              '17': 'udp',
+                              '20': 'hmp',
+                              '22': 'xns-idp',
+                              '27': 'rdp',
+                              '29': 'iso-tp4',
+                              '33': 'dccp',
+                              '36': 'xtp',
+                              '37': 'ddp',
+                              '38': 'idpr-cmtp',
+                              '41': 'ipv6',
+                              '43': 'ipv6-route',
+                              '44': 'ipv6-frag',
+                              '45': 'idrp',
+                              '46': 'rsvp',
+                              '47': 'gre',
+                              '50': 'esp',
+                              '51': 'ah',
+                              '57': 'skip',
+                              '58': 'ipv6-icmp',
+                              '59': 'ipv6-nonxt',
+                              '60': 'ipv6-opts',
+                              '73': 'rspf',
+                              '81': 'vmtp',
+                              '88': 'eigrp',
+                              '89': 'ospf',
+                              '93': 'ax.25',
+                              '94': 'ipip',
+                              '97': 'etherip',
+                              '98': 'encap',
+                              '103': 'pim',
+                              '108': 'ipcomp',
+                              '112': 'vrrp',
+                              '115': 'l2tp',
+                              '124': 'isis',
+                              '132': 'sctp',
+                              '133': 'fc',
+                              '135': 'mobility-header',
+                              '136': 'udplite',
+                              '137': 'mpls-in-ip',
+                              '138': 'manet',
+                              '139': 'hip',
+                              '140': 'shim6',
+                              '141': 'wesp',
+                              '142': 'rohc'}
 
 # Special provisional prefix for IPv6 Prefix Delegation
 PROVISIONAL_IPV6_PD_PREFIX = '::/64'
