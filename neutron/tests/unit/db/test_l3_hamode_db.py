@@ -1337,7 +1337,10 @@ class L3HAUserTestCase(L3HATestFramework):
 
     def test_update_router(self):
         router = self._create_router(ctx=self.user_ctx)
-        self._update_router(router['id'], ctx=self.user_ctx)
+        with mock.patch.object(registry, 'publish') as mock_cb:
+            self._update_router(router['id'], ctx=self.user_ctx)
+            mock_cb.assert_called_with('router', events.PRECOMMIT_UPDATE,
+                                       self.plugin, payload=mock.ANY)
 
     def test_delete_router(self):
         router = self._create_router(ctx=self.user_ctx)

@@ -14,6 +14,8 @@
 #    under the License.
 
 import mock
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import context
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
@@ -64,9 +66,12 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
         update_request = {
             'router': router,
         }
-        with mock.patch.object(self._plugin, '_validate_routes'):
-            updated_router = self._plugin.update_router(ctx, router_id,
-                                                        update_request)
+        with mock.patch.object(registry, "publish") as mock_cb:
+            with mock.patch.object(self._plugin, '_validate_routes'):
+                updated_router = self._plugin.update_router(ctx, router_id,
+                                                            update_request)
+            mock_cb.assert_called_with('router', events.PRECOMMIT_UPDATE,
+                                       self._plugin, payload=mock.ANY)
         self.assertItemsEqual(updated_router['routes'], routes)
         got_router = self._plugin.get_router(ctx, router_id)
         self.assertItemsEqual(got_router['routes'], routes)

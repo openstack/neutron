@@ -13,8 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -51,7 +56,17 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             with context.session.begin(subtransactions=True):
                 # check if route exists and have permission to access
                 router_db = self._get_router(context, id)
-                self._update_extra_routes(context, router_db, r['routes'])
+                old_router = self._make_router_dict(router_db)
+                routes_added, routes_removed = self._update_extra_routes(
+                    context, router_db, r['routes'])
+                router_data = copy.deepcopy(r)
+                router_data['routes_added'] = routes_added
+                router_data['routes_removed'] = routes_removed
+                registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE,
+                                 self, payload=events.DBEventPayload(
+                                     context, request_body=router_data,
+                                     states=(old_router,), resource_id=id,
+                                     desired_state=router_db))
             # NOTE(yamamoto): expire to ensure the following update_router
             # see the effects of the above _update_extra_routes.
             context.session.expire(router_db, attribute_names=['route_list'])
@@ -112,6 +127,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 router_id=router['id'],
                 destination=route['destination'],
                 nexthop=route['nexthop']).delete()
+        return added, removed
 
     @staticmethod
     def _make_extra_route_list(extra_routes):

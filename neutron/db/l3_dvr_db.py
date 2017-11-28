@@ -19,6 +19,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
+from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
@@ -68,7 +69,8 @@ class DVRResourceOperationHandler(object):
     def l3plugin(self):
         return directory.get_plugin(plugin_constants.L3)
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _set_distributed_flag(self, resource, event, trigger, context,
                               router, router_db, **kwargs):
         """Event handler to set distributed flag on creation."""
@@ -106,7 +108,8 @@ class DVRResourceOperationHandler(object):
             raise l3_exc.RouterInUse(router_id=router_db['id'], reason=e)
         return True
 
-    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _handle_distributed_migration(self, resource, event,
                                       trigger, payload=None):
         """Event handler for router update migration to distributed."""
@@ -148,7 +151,8 @@ class DVRResourceOperationHandler(object):
             payload.context, payload.desired_state,
             'distributed', migrating_to_distributed)
 
-    @registry.receives(resources.ROUTER, [events.AFTER_UPDATE])
+    @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _delete_snat_interfaces_after_change(self, resource, event, trigger,
                                              context, router_id, router,
                                              request_attrs, router_db,
@@ -161,7 +165,8 @@ class DVRResourceOperationHandler(object):
                     context.elevated(), router_db)
 
     @registry.receives(resources.ROUTER,
-                       [events.AFTER_CREATE, events.AFTER_UPDATE])
+                       [events.AFTER_CREATE, events.AFTER_UPDATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _create_snat_interfaces_after_change(self, resource, event, trigger,
                                              context, router_id, router,
                                              request_attrs, router_db,

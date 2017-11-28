@@ -14,6 +14,7 @@
 
 import mock
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
@@ -74,7 +75,8 @@ class TestDriverController(testlib_api.SqlTestCase):
         self.assertFalse(self.dc.drivers['dvr'].owns_router(self.ctx, r2))
         self.assertFalse(self.dc.drivers['dvr'].owns_router(self.ctx, None))
 
-    def test__set_router_provider_flavor_specified(self):
+    @mock.patch('neutron_lib.callbacks.registry.notify')
+    def test__set_router_provider_flavor_specified(self, mock_cb):
         self._return_provider_for_flavor('dvrha')
         router_db = mock.Mock()
         flavor_id = uuidutils.generate_uuid()
@@ -82,6 +84,10 @@ class TestDriverController(testlib_api.SqlTestCase):
         router = dict(id=router_id, flavor_id=flavor_id)
         self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
                                      self.ctx, router, router_db)
+        mock_cb.assert_called_with('router_controller',
+            events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
+            context=self.ctx, router=mock.ANY, router_db=mock.ANY,
+            old_driver=mock.ANY, new_driver=mock.ANY)
         self.assertEqual(flavor_id, router_db.flavor_id)
         self.assertEqual(self.dc.drivers['dvrha'],
                          self.dc.get_provider_for_router(self.ctx,
@@ -89,21 +95,24 @@ class TestDriverController(testlib_api.SqlTestCase):
 
     def test__update_router_provider_invalid(self):
         test_dc = driver_controller.DriverController(self.fake_l3)
-        with mock.patch.object(test_dc, "get_provider_for_router"):
-            with mock.patch.object(
-                driver_controller,
-                "_ensure_driver_supports_request") as _ensure:
-                _ensure.side_effect = lib_exc.InvalidInput(
-                    error_message='message')
-                self.assertRaises(
-                    lib_exc.InvalidInput,
-                    test_dc._update_router_provider,
-                    None, None, None,
-                    payload=events.DBEventPayload(
-                        None, request_body={'name': 'testname'},
-                        states=({'flavor_id': 'old_fid'},)))
+        with mock.patch.object(registry, "publish") as mock_cb:
+            with mock.patch.object(test_dc, "get_provider_for_router"):
+                with mock.patch.object(
+                    driver_controller,
+                    "_ensure_driver_supports_request") as _ensure:
+                    _ensure.side_effect = lib_exc.InvalidInput(
+                        error_message='message')
+                    self.assertRaises(
+                        lib_exc.InvalidInput,
+                        test_dc._update_router_provider,
+                        None, None, None,
+                        payload=events.DBEventPayload(
+                            None, request_body={'name': 'testname'},
+                            states=({'flavor_id': 'old_fid'},)))
+                    mock_cb.assert_not_called()
 
-    def test__set_router_provider_attr_lookups(self):
+    @mock.patch('neutron_lib.callbacks.registry.notify')
+    def test__set_router_provider_attr_lookups(self, mock_cb):
         # ensure correct drivers are looked up based on attrs
         router_id1 = uuidutils.generate_uuid()
         router_id2 = uuidutils.generate_uuid()
@@ -135,26 +144,43 @@ class TestDriverController(testlib_api.SqlTestCase):
         for driver, body in cases:
             self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
                                          self.ctx, body, mock.Mock())
+            mock_cb.assert_called_with('router_controller',
+                events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
+                context=self.ctx, router=mock.ANY, router_db=mock.ANY,
+                old_driver=mock.ANY, new_driver=mock.ANY)
             self.assertEqual(self.dc.drivers[driver],
                              self.dc.get_provider_for_router(self.ctx,
                                                              body['id']),
                              'Expecting %s for body %s' % (driver, body))
 
-    def test__clear_router_provider(self):
+    @mock.patch('neutron_lib.callbacks.registry.notify')
+    def test__clear_router_provider(self, mock_cb):
         # ensure correct drivers are looked up based on attrs
         router_id1 = uuidutils.generate_uuid()
         body = dict(id=router_id1, distributed=True, ha=True)
         self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
                                      self.ctx, body, mock.Mock())
+        mock_cb.assert_called_with('router_controller',
+            events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
+            context=self.ctx, router=mock.ANY, router_db=mock.ANY,
+            old_driver=mock.ANY, new_driver=mock.ANY)
         self.assertEqual(self.dc.drivers['dvrha'],
                          self.dc.get_provider_for_router(self.ctx,
                                                          body['id']))
         self.dc._clear_router_provider('router', 'PRECOMMIT_DELETE', self,
                                        self.ctx, body['id'])
+        mock_cb.assert_called_with('router_controller',
+            events.PRECOMMIT_DELETE_ASSOCIATIONS, mock.ANY,
+            context=self.ctx, router_id=mock.ANY, old_driver=mock.ANY,
+            new_driver=mock.ANY)
         with testtools.ExpectedException(ValueError):
             # if association was cleared, get_router will be called
             self.fake_l3.get_router.side_effect = ValueError
             self.dc.get_provider_for_router(self.ctx, body['id'])
+            mock_cb.assert_called_with('router_controller',
+                events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY, context=self.ctx,
+                router_id=body['id'], router=mock.ANY, old_driver=mock.ANY,
+                new_driver=mock.ANY)
 
     def test__flavor_plugin(self):
         directory.add_plugin(p_cons.FLAVORS, mock.Mock())
