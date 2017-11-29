@@ -27,6 +27,7 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.conf.services import logging as log_cfg
 from neutron import manager
+from neutron.services.logapi.rpc import agent as agent_rpc
 
 log_cfg.register_log_driver_opts()
 
@@ -85,10 +86,10 @@ class LoggingExtension(agent_extension.AgentExtension):
     def initialize(self, connection, driver_type):
         """Initialize agent extension."""
 
-        self.resource_rpc = None
         int_br = self.agent_api.request_int_br()
         self.log_driver = manager.NeutronManager.load_class_for_provider(
             LOGGING_DRIVERS_NAMESPACE, driver_type)(int_br)
+        self.resource_rpc = agent_rpc.LoggingApiStub()
         self._register_rpc_consumers(connection)
         self.log_driver.initialize(self.resource_rpc)
 

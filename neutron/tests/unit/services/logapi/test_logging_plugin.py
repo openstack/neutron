@@ -58,7 +58,7 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             mock.patch('neutron.services.logapi.drivers.manager.'
                        'LoggingServiceDriverManager.supported_logging_types',
                        new_callable=log_types).start()
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('admin', 'fake_tenant')
         mock.patch.object(self.ctxt.session, 'refresh').start()
         mock.patch.object(self.ctxt.session, 'expunge').start()
 
@@ -111,6 +111,13 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                             context=self.ctxt, **log['log'])
                         self.assertTrue(new_log.create.called)
 
+                        calls = [
+                            mock.call.call('create_log_precommit',
+                                           self.ctxt, new_log),
+                            mock.call.call('create_log', self.ctxt, new_log)
+                        ]
+                        self.log_plugin.driver_manager.assert_has_calls(calls)
+
     def test_create_log_without_sg_resource(self):
         log = {'log': {'resource_type': 'security_group',
                        'enabled': True,
@@ -129,6 +136,13 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                         context=self.ctxt, **log['log'])
                     self.assertTrue(new_log.create.called)
 
+                    calls = [
+                        mock.call.call('create_log_precommit',
+                                       self.ctxt, new_log),
+                        mock.call.call('create_log', self.ctxt, new_log)
+                    ]
+                    self.log_plugin.driver_manager.assert_has_calls(calls)
+
     def test_create_log_without_parent_resource(self):
         log = {'log': {'resource_type': 'security_group',
                        'enabled': True,
@@ -144,6 +158,12 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                                                       **log['log'])
                 self.assertTrue(new_log.create.called)
 
+                calls = [
+                    mock.call.call('create_log_precommit', self.ctxt, new_log),
+                    mock.call.call('create_log', self.ctxt, new_log)
+                ]
+                self.log_plugin.driver_manager.assert_has_calls(calls)
+
     def test_create_log_without_target(self):
         log = {'log': {'resource_type': 'security_group',
                        'enabled': True, }}
@@ -156,6 +176,12 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             init_log_mock.assert_called_once_with(context=self.ctxt,
                                                   **log['log'])
             self.assertTrue(new_log.create.called)
+
+            calls = [
+                mock.call.call('create_log_precommit', self.ctxt, new_log),
+                mock.call.call('create_log', self.ctxt, new_log)
+            ]
+            self.log_plugin.driver_manager.assert_has_calls(calls)
 
     def test_create_log_nonexistent_sg_resource(self):
         log = {'log': {'resource_type': 'security_group',
@@ -212,6 +238,7 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             init_log_mock.assert_called_once_with(
                 context=self.ctxt, **log_data['log'])
             self.assertTrue(new_log.create.called)
+        self.log_plugin.driver_manager.call.assert_not_called()
 
     def test_create_log_with_unsupported_logging_type(self):
         log = {'log': {'resource_type': 'fake_type',
@@ -254,6 +281,12 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                                                           reset_changes=True)
             self.assertTrue(new_log.update.called)
 
+            calls = [
+                mock.call.call('update_log_precommit', self.ctxt, new_log),
+                mock.call.call('update_log', self.ctxt, new_log)
+            ]
+            self.log_plugin.driver_manager.assert_has_calls(calls)
+
     def test_update_log_none_enabled(self):
         log_data = {'log': {}}
         new_log = mock.Mock()
@@ -267,6 +300,7 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             new_log.update_fields.assert_called_once_with(log_data['log'],
                                                           reset_changes=True)
             self.assertTrue(new_log.update.called)
+        self.log_plugin.driver_manager.call.assert_not_called()
 
     def test_delete_log(self):
         delete_log = mock.Mock()
@@ -277,6 +311,12 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             delete_log_mock.assert_called_once_with(self.ctxt,
                                                     id=delete_log.id)
             self.assertTrue(delete_log.delete.called)
+
+            calls = [
+                mock.call.call('delete_log_precommit', self.ctxt, delete_log),
+                mock.call.call('delete_log', self.ctxt, delete_log)
+            ]
+            self.log_plugin.driver_manager.assert_has_calls(calls)
 
     def test_delete_nonexistent_log(self):
         with mock.patch.object(log_object.Log, 'get_object',

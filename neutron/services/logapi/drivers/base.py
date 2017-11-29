@@ -77,3 +77,75 @@ class DriverBase(object):
                       {'log_type': log_type,
                        'driver_name': self.name})
         return supported
+
+    def create_log(self, context, log_obj):
+        """Create a log_obj invocation.
+
+        This method can be implemented by the specific driver subclass
+        to update the backend where necessary with a specific log object.
+
+        :param context: current running context information
+        :param log_obj: a log objects being created
+
+        """
+
+    def create_log_precommit(self, context, log_obj):
+        """Create a log_obj precommit.
+
+        This method can be implemented by the specific driver subclass
+        to handle the precommit event of a log_object that is being created.
+
+        :param context: current running context information
+        :param log_obj: a log object being created
+        """
+
+    def update_log(self, context, log_obj):
+        """Update a log_obj invocation.
+
+        This method can be implemented by the specific driver subclass
+        to update the backend where necessary with a specific log object.
+
+        :param context: current running context information
+        :param log_obj: a log object being updated
+
+        """
+
+    def update_log_precommit(self, context, log_obj):
+        """Update a log_obj precommit.
+
+        This method can be implemented by the specific driver subclass
+        to handle update precommit event of a log_object that is being updated.
+
+        :param context: current running context information
+        :param log_obj: a log_object being updated.
+        """
+
+    def delete_log(self, context, log_obj):
+        """Delete a log_obj invocation.
+
+        This method can be implemented by the specific driver subclass
+        to delete the backend where necessary with a specific log object.
+
+        :param context: current running context information
+        :param log_obj: a log_object being deleted
+
+        """
+
+    def delete_log_precommit(self, context, log_obj):
+        """Delete a log_obj precommit.
+
+        This method can be implemented by the specific driver subclass
+        to handle delete precommit event of a log_object that is being deleted.
+
+        :param context: current running context information
+        :param log_obj: a log_object being deleted
+        """
+
+    def resource_update(self, context, log_objs):
+        """Tell the agent when resources related to log_objects are
+        being updated
+
+        :param context: current running context information
+        :param log_objs: a list of log_objects, whose related resources are
+                         being updated.
+        """

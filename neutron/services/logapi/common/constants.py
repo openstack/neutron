@@ -21,3 +21,32 @@ LOGGING_PLUGIN = 'logging-plugin'
 
 # supported logging types
 SECURITY_GROUP = 'security_group'
+
+RPC_NAMESPACE_LOGGING = 'logging-plugin'
+
+# String literal for identifying log resource
+LOGGING = 'log'
+
+# Method names for Logging Driver
+PRECOMMIT_POSTFIX = '_precommit'
+CREATE_LOG = 'create_log'
+CREATE_LOG_PRECOMMIT = CREATE_LOG + PRECOMMIT_POSTFIX
+UPDATE_LOG = 'update_log'
+UPDATE_LOG_PRECOMMIT = UPDATE_LOG + PRECOMMIT_POSTFIX
+DELETE_LOG = 'delete_log'
+DELETE_LOG_PRECOMMIT = DELETE_LOG + PRECOMMIT_POSTFIX
+# Tell to agent when resources related log_objects update
+RESOURCE_UPDATE = 'resource_update'
+
+LOG_CALL_METHODS = (
+    CREATE_LOG,
+    CREATE_LOG_PRECOMMIT,
+    UPDATE_LOG,
+    UPDATE_LOG_PRECOMMIT,
+    DELETE_LOG,
+    DELETE_LOG_PRECOMMIT,
+    RESOURCE_UPDATE
+)
+
+DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
+                       'egress': 'dest_ip_prefix'}
