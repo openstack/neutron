@@ -274,9 +274,12 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         # TODO(Carl) Can we eliminate the need to make this RPC while
         # processing a router.
         subnet_ports = self.agent.get_ports_by_subnet(subnet_id)
+        ignored_device_owners = (
+            lib_constants.ROUTER_INTERFACE_OWNERS +
+            tuple(common_utils.get_dvr_allowed_address_pair_device_owners()))
 
         for p in subnet_ports:
-            if p['device_owner'] not in lib_constants.ROUTER_INTERFACE_OWNERS:
+            if p['device_owner'] not in ignored_device_owners:
                 for fixed_ip in p['fixed_ips']:
                     self._update_arp_entry(fixed_ip['ip_address'],
                                            p['mac_address'],
