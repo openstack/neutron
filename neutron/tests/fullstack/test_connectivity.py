@@ -190,6 +190,7 @@ class TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
                              'l2_pop': True})
     ]
 
+    @tests_base.unstable_test("bug 1728948")
     def test_connectivity(self):
         self._test_connectivity()
 
@@ -208,6 +209,7 @@ class TestConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
     l2_pop = False
     of_interface = 'native'
 
+    @tests_base.unstable_test("bug 1728948")
     def test_connectivity(self):
         self._test_connectivity()
 
