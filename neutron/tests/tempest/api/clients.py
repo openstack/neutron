@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.lib.services.compute import availability_zone_client
+from tempest.lib.services.compute import hypervisor_client
 from tempest.lib.services.compute import keypairs_client
 from tempest.lib.services.compute import servers_client
 from tempest.lib.services.identity.v2 import tenants_client
@@ -73,6 +75,10 @@ class Manager(manager.Manager):
                 .enable_instance_password,
             **params)
         self.keypairs_client = keypairs_client.KeyPairsClient(
+            self.auth_provider, **params)
+        self.hv_client = hypervisor_client.HypervisorClient(
+            self.auth_provider, **params)
+        self.az_client = availability_zone_client.AvailabilityZoneClient(
             self.auth_provider, **params)
 
     def _set_identity_clients(self):
