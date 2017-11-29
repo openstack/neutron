@@ -1,0 +1,4 @@
+---
+features:
+  - Implementation of floating IP QoS. A new parameter ``qos_policy_id``
+    was added to floating IP related API.

@@ -1443,17 +1443,19 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         ext_net.create()
         return ext_net.network_id
 
-    def _create_test_fip_id(self):
+    def _create_test_fip_id(self, fip_id=None):
         fake_fip = '172.23.3.0'
         ext_net_id = self._create_external_network_id()
         # TODO(manjeets) replace this with fip ovo
         # once it is implemented
+        values = {'floating_ip_address': fake_fip,
+                  'floating_network_id': ext_net_id,
+                  'floating_port_id': self._create_test_port_id(
+                      network_id=ext_net_id)}
+        if fip_id:
+            values['id'] = fip_id
         return obj_db_api.create_object(
-            self.context, l3_model.FloatingIP,
-            {'floating_ip_address': fake_fip,
-             'floating_network_id': ext_net_id,
-             'floating_port_id': self._create_test_port_id(
-                 network_id=ext_net_id)}).id
+            self.context, l3_model.FloatingIP, values).id
 
     def _create_test_subnet_id(self, network_id=None):
         if not network_id:

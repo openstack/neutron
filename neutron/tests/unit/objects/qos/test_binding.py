@@ -49,3 +49,22 @@ class QosPolicyNetworkBindingDbObjectTestCase(test_base.BaseDbObjectTestCase,
         for db_obj in self.db_objs:
             self._create_test_qos_policy(id=db_obj['policy_id'])
             self._create_test_network(network_id=db_obj['network_id'])
+
+
+class QosPolicyFloatingIPBindingObjectTestCase(
+        test_base.BaseObjectIfaceTestCase):
+
+    _test_class = binding.QosPolicyFloatingIPBinding
+
+
+class QosPolicyFloatingIPBindingDbObjectTestCase(
+        test_base.BaseDbObjectTestCase,
+        testlib_api.SqlTestCase):
+
+    _test_class = binding.QosPolicyFloatingIPBinding
+
+    def setUp(self):
+        super(QosPolicyFloatingIPBindingDbObjectTestCase, self).setUp()
+        for db_obj in self.db_objs:
+            self._create_test_qos_policy(id=db_obj['policy_id'])
+            self._create_test_fip_id(fip_id=db_obj['fip_id'])

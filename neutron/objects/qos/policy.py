@@ -23,6 +23,7 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import exceptions
 from neutron.db import api as db_api
+from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_db_model
 from neutron.db.rbac_db_models import QosPolicyRBAC
@@ -43,7 +44,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.4: Changed tenant_id to project_id
     # Version 1.5: Direction for bandwidth limit rule added
     # Version 1.6: Added "is_default" field
-    VERSION = '1.6'
+    # Version 1.7: Added floating IP bindings
+    VERSION = '1.7'
 
     # required by RbacNeutronMetaclass
     rbac_db_model = QosPolicyRBAC
@@ -51,6 +53,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     port_binding_model = qos_db_model.QosPortPolicyBinding
     network_binding_model = qos_db_model.QosNetworkPolicyBinding
+    fip_binding_model = qos_db_model.QosFIPPolicyBinding
 
     fields = {
         'id': common_types.UUIDField(),
@@ -68,7 +71,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     extra_filter_names = {'is_default'}
 
     binding_models = {'port': binding.QosPolicyPortBinding,
-                      'network': binding.QosPolicyNetworkBinding}
+                      'network': binding.QosPolicyNetworkBinding,
+                      'fip': binding.QosPolicyFloatingIPBinding}
 
     def obj_load_attr(self, attrname):
         if attrname == 'rules':
@@ -164,6 +168,11 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         return cls._get_object_policy(context, cls.port_binding_model,
                                       port_id=port_id)
 
+    @classmethod
+    def get_fip_policy(cls, context, fip_id):
+        return cls._get_object_policy(context, cls.fip_binding_model,
+                                      fip_id=fip_id)
+
     # TODO(QoS): Consider extending base to trigger registered methods for us
     def create(self):
         with db_api.autonested_transaction(self.obj_context.session):
@@ -218,6 +227,16 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                                  port_id=port_id,
                                                  db_error=e)
 
+    def attach_floatingip(self, fip_id):
+        fip_binding_obj = binding.QosPolicyFloatingIPBinding(
+            self.obj_context, policy_id=self.id, fip_id=fip_id)
+        try:
+            fip_binding_obj.create()
+        except db_exc.DBReferenceError as e:
+            raise exceptions.FloatingIPQosBindingError(policy_id=self.id,
+                                                       fip_id=fip_id,
+                                                       db_error=e)
+
     def detach_network(self, network_id):
         deleted = binding.QosPolicyNetworkBinding.delete_objects(
             self.obj_context, network_id=network_id)
@@ -231,6 +250,13 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         if not deleted:
             raise exceptions.PortQosBindingNotFound(port_id=port_id,
                                                     policy_id=self.id)
+
+    def detach_floatingip(self, fip_id):
+        deleted = binding.QosPolicyFloatingIPBinding.delete_objects(
+            self.obj_context, fip_id=fip_id)
+        if not deleted:
+            raise exceptions.FloatingIPQosBindingNotFound(fip_id=fip_id,
+                                                          policy_id=self.id)
 
     def set_default(self):
         if not self.get_default():
@@ -268,6 +294,13 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                 self.obj_context, policy_id=self.id)
         ]
 
+    def get_bound_floatingips(self):
+        return [
+            fb.fip_id
+            for fb in binding.QosPolicyFloatingIPBinding.get_objects(
+                self.obj_context, policy_id=self.id)
+        ]
+
     @classmethod
     def _get_bound_tenant_ids(cls, session, binding_db, bound_db,
                               binding_db_id_column, policy_id):
@@ -286,6 +319,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         qosnet = qos_db_model.QosNetworkPolicyBinding
         port = models_v2.Port
         qosport = qos_db_model.QosPortPolicyBinding
+        fip = l3.FloatingIP
+        qosfip = qos_db_model.QosFIPPolicyBinding
         bound_tenants = []
         with db_api.autonested_transaction(context.session):
             bound_tenants.extend(cls._get_bound_tenant_ids(
@@ -293,6 +328,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             bound_tenants.extend(
                 cls._get_bound_tenant_ids(context.session, qosport, port,
                                           qosport.port_id, policy_id))
+            bound_tenants.extend(
+                cls._get_bound_tenant_ids(context.session, qosfip, fip,
+                                          qosfip.fip_id, policy_id))
         return set(bound_tenants)
 
     def obj_make_compatible(self, primitive, target_version):
