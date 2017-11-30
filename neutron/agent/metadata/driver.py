@@ -185,16 +185,6 @@ class MetadataDriver(object):
                  '-j DROP' % port)]
 
     @classmethod
-    def metadata_mangle_rules(cls, mark):
-        return [('PREROUTING', '-d 169.254.169.254/32 '
-                 '-i %(interface_name)s '
-                 '-p tcp -m tcp --dport 80 '
-                 '-j MARK --set-xmark %(value)s/%(mask)s' %
-                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
-                  'value': mark,
-                  'mask': constants.ROUTER_MARK_MASK})]
-
-    @classmethod
     def metadata_nat_rules(cls, port):
         return [('PREROUTING', '-d 169.254.169.254/32 '
                  '-i %(interface_name)s '
@@ -302,8 +292,6 @@ def after_router_added(resource, event, l3_agent, **kwargs):
     for c, r in proxy.metadata_filter_rules(proxy.metadata_port,
                                            proxy.metadata_access_mark):
         router.iptables_manager.ipv4['filter'].add_rule(c, r)
-    for c, r in proxy.metadata_mangle_rules(proxy.metadata_access_mark):
-        router.iptables_manager.ipv4['mangle'].add_rule(c, r)
     for c, r in proxy.metadata_nat_rules(proxy.metadata_port):
         router.iptables_manager.ipv4['nat'].add_rule(c, r)
     for c, r in proxy.metadata_checksum_rules(proxy.metadata_port):
