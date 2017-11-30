@@ -186,6 +186,25 @@ class DVRMacAddress(base.NeutronDbObject):
 
 
 @base.NeutronObjectRegistry.register
+class Router(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = l3.Router
+
+    fields = {
+        'id': common_types.UUIDField(),
+        'project_id': obj_fields.StringField(nullable=True),
+        'name': obj_fields.StringField(nullable=True),
+        'status': common_types.RouterStatusEnumField(nullable=True),
+        'admin_state_up': obj_fields.BooleanField(nullable=True),
+        'gw_port_id': common_types.UUIDField(nullable=True),
+        'enable_snat': obj_fields.BooleanField(default=True),
+        'flavor_id': common_types.UUIDField(nullable=True),
+    }
+
+
+@base.NeutronObjectRegistry.register
 class FloatingIP(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'

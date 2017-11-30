@@ -50,6 +50,23 @@ class RouterExtraAttrsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
             {'router_id': lambda: self._create_test_router_id()})
 
 
+class RouterIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
+
+    _test_class = router.Router
+
+
+class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
+                             testlib_api.SqlTestCase):
+
+    _test_class = router.Router
+
+    def setUp(self):
+        super(RouterDbObjectTestCase, self).setUp()
+        self.update_obj_fields(
+            {'gw_port_id': lambda: self._create_test_port_id(),
+             'flavor_id': lambda: self._create_test_flavor_id()})
+
+
 class RouterPortIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
     _test_class = router.RouterPort

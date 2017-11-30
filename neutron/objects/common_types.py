@@ -309,3 +309,7 @@ class UUIDField(obj_fields.AutoTypedField):
 
 class FloatingIPStatusEnumField(obj_fields.AutoTypedField):
     AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_FLOATINGIP_STATUS)
+
+
+class RouterStatusEnumField(obj_fields.AutoTypedField):
+    AUTO_TYPE = obj_fields.Enum(valid_values=constants.VALID_ROUTER_STATUS)
