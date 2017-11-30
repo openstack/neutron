@@ -76,6 +76,7 @@ class RouterInfo(object):
         self.routes = []
         self.agent_conf = agent_conf
         self.driver = interface_driver
+        self.process_monitor = None
         # radvd is a neutron.agent.linux.ra.DaemonMonitor
         self.radvd = None
 

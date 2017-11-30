@@ -34,6 +34,7 @@ from testtools import matchers
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_snat_ns
+from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import namespace_manager
@@ -3504,3 +3505,22 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri._create_dvr_gateway(ex_gw_port, interface_name)
             self._verify_address_scopes_iptables_rule(
                 ri.snat_iptables_manager)
+
+    @mock.patch.object(l3router.RouterInfo, 'delete')
+    @mock.patch.object(ha_router.HaRouter, 'destroy_state_change_monitor')
+    def test_delete_ha_router_initialize_fails(self, mock_dscm, mock_delete):
+        router = l3_test_common.prepare_router_data(enable_ha=True)
+        router[lib_constants.HA_INTERFACE_KEY] = None
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        # an early failure of an HA router initiailization shouldn't try
+        # and cleanup a state change monitor process that was never spawned.
+        # Cannot use self.assertRaises(Exception, ...) as that causes an H202
+        # pep8 failure.
+        try:
+            agent._router_added(router['id'], router)
+            raise Exception("agent._router_added() should have raised an "
+                            "exception")
+        except Exception:
+            pass
+        self.assertTrue(mock_delete.called)
+        self.assertFalse(mock_dscm.called)
