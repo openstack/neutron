@@ -18,6 +18,7 @@ from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions as n_exc
 from neutron.conf.agent import common as config
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.tests import base
 
 
@@ -29,6 +30,7 @@ class TestRouterInfo(base.BaseTestCase):
         super(TestRouterInfo, self).setUp()
 
         conf = config.setup_conf()
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
 
         self.ip_cls_p = mock.patch('neutron.agent.linux.ip_lib.IPWrapper')
         ip_cls = self.ip_cls_p.start()
