@@ -429,7 +429,8 @@ class HaRouter(router.RouterInfo):
                                prefix=router.EXTERNAL_DEV_PREFIX)
 
     def delete(self):
-        self.destroy_state_change_monitor(self.process_monitor)
+        if self.process_monitor:
+            self.destroy_state_change_monitor(self.process_monitor)
         self.disable_keepalived()
         self.ha_network_removed()
         super(HaRouter, self).delete()
