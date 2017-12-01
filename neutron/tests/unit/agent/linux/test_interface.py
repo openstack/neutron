@@ -254,6 +254,35 @@ class TestABCDriver(TestBase):
              mock.call().addr.delete(cidr),
              mock.call().addr.add(cidr)])
 
+    def test_l3_init_with_duplicated_ipv6_lla(self):
+        device_name = 'tap0'
+        cidr = 'fe80::a8bb:ccff:fedd:eeff/64'
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        addresses = [dict(scope='link',
+                          dynamic=False,
+                          cidr=cidr)]
+        self.ip_dev().addr.list = mock.Mock(return_value=addresses)
+        bc = BaseChild(self.conf)
+        bc.init_l3(device_name, [cidr], namespace=ns)
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().addr.list()])
+        # The above assert won't verify there were no extra calls right
+        # after list()
+        self.assertFalse(self.ip_dev().addr.add.called)
+
+    def test_l3_init_with_not_present_ipv6_lla(self):
+        device_name = 'tap0'
+        cidr = 'fe80::a8bb:ccff:fedd:eeff/64'
+        ns = '12345678-1234-5678-90ab-ba0987654321'
+        self.ip_dev().addr.list = mock.Mock(return_value=[])
+        bc = BaseChild(self.conf)
+        bc.init_l3(device_name, [cidr], namespace=ns)
+        self.ip_dev.assert_has_calls(
+            [mock.call(device_name, namespace=ns),
+             mock.call().addr.list(),
+             mock.call().addr.add(cidr)])
+
     def test_add_ipv6_addr(self):
         device_name = 'tap0'
         cidr = '2001:db8::/64'
