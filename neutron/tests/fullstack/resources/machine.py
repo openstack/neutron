@@ -198,7 +198,11 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             {'port': {pbs.HOST_ID: ''}}
         )
         # All associated vlan interfaces are deleted too
-        self.bridge.delete_port(self.port.name)
+        # If VM is connected to Linuxbridge it hasn't got "delete_port" method
+        # and it is not necessary to delete tap port connected to this bridge.
+        # It is veth pair and will be removed together with VM namespace
+        if hasattr(self.bridge, "delete_port"):
+            self.bridge.delete_port(self.port.name)
 
         ip_lib.delete_network_namespace(self.namespace)
 
