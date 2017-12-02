@@ -41,6 +41,10 @@ Service side design
   base extension + API controller definition. Note that rules are subattributes
   of policies and hence embedded into their URIs.
 
+* neutron.extensions.qos_fip:
+  base extension + API controller definition. Adds qos_policy_id to floating
+  IP, enabling users to set/update the binding QoS policy of a floating IP.
+
 * neutron.services.qos.qos_plugin:
   QoSPlugin, service plugin that implements 'qos' extension, receiving and
   handling API calls to create/modify policies and rules.
@@ -113,7 +117,7 @@ Database models
 ~~~~~~~~~~~~~~~
 
 QoS design defines the following two conceptual resources to apply QoS rules
-for a port or a network:
+for a port, a network or a floating IP:
 
 * QoS policy
 * QoS rule (type specific)
@@ -138,8 +142,8 @@ unset, no change to existing networks will be made.
 From database point of view, following objects are defined in schema:
 
 * QosPolicy: directly maps to the conceptual policy resource.
-* QosNetworkPolicyBinding, QosPortPolicyBinding: defines attachment between a
-  Neutron resource and a QoS policy.
+* QosNetworkPolicyBinding, QosPortPolicyBinding, QosFIPPolicyBinding:
+  define attachment between a Neutron resource and a QoS policy.
 * QosPolicyDefault: defines a default QoS policy per project.
 * QosBandwidthLimitRule: defines the rule to limit the maximum egress
   bandwidth.
@@ -180,12 +184,12 @@ Those are defined in:
 
 For QosPolicy neutron object, the following public methods were implemented:
 
-* get_network_policy/get_port_policy: returns a policy object that is attached
-  to the corresponding Neutron resource.
-* attach_network/attach_port: attach a policy to the corresponding Neutron
-  resource.
-* detach_network/detach_port: detach a policy from the corresponding Neutron
-  resource.
+* get_network_policy/get_port_policy/get_fip_policy: returns a policy object
+  that is attached to the corresponding Neutron resource.
+* attach_network/attach_port/attach_floatingip: attach a policy to the
+  corresponding Neutron resource.
+* detach_network/detach_port/detach_floatingip: detach a policy from the
+  corresponding Neutron resource.
 
 In addition to the fields that belong to QoS policy database object itself,
 synthetic fields were added to the object that represent lists of rules that
@@ -239,13 +243,20 @@ The flow of updates is as follows:
   policy (with all the rules included) from the server. After that, the QoS
   extension applies the rules by calling into QoS driver that corresponds to
   the agent.
+* For floating IPs, a ``fip_qos`` L3 agent extension was implemented. This
+  extension receives and processes router updates. For each update, it goes
+  over each floating IP associated to the router. If a floating IP has a QoS
+  policy associated to it, the extension uses ResourcesPullRpcApi to fetch
+  the policy details from the Neutron server. If the policy includes
+  ``bandwidth_limit`` rules, the extension applies them to the appropriate
+  router device by directly calling the l3_tc_lib.
 * on existing QoS policy update (it includes any policy or its rules change),
   server pushes the new policy object state through ResourcesPushRpcApi
   interface. The interface fans out the serialized (dehydrated) object to any
   agent that is listening for QoS policy updates. If an agent have seen the
-  policy before (it is attached to one of the ports it maintains), then it goes
-  with applying the updates to the port. Otherwise, the agent silently ignores
-  the update.
+  policy before (it is attached to one of the ports/floating IPs it maintains),
+  then it goes with applying the updates to the port/floating IP. Otherwise,
+  the agent silently ignores the update.
 
 
 Agent side design
@@ -261,6 +272,14 @@ Reference agents implement QoS functionality using an `L2 agent extension
   its own driver. The driver handles low level interaction with the underlying
   networking technology, while the QoS extension handles operations that are
   common to all agents.
+
+For L3 agent:
+
+* neutron.agent.l3.extensions.fip_qos
+  defines QoS L3 agent extension. It implements the L3 agent side of floating
+  IP rate limit. For all routers, if floating IP has QoS ``bandwidth_limit``
+  rules, the corresponding TC filters will be added to the appropriate router
+  device, depending on the router type.
 
 
 Agent backends
@@ -399,6 +418,10 @@ neutron.services.qos.drivers.openvswitch.driver register method for an example.
  will just act as an interface to bypass the received QoS API request and help with
  database persistence for the API operations.
 
+.. note::
+ L3 agent ``fip_qos`` extension does not have a driver implementation,
+ it directly uses the ``l3_tc_lib`` for all types of routers.
+
 Configuration
 -------------
 
@@ -407,11 +430,16 @@ To enable the service, the following steps should be followed:
 On server side:
 
 * enable qos service in service_plugins;
-* for ml2, add 'qos' to extension_drivers in [ml2] section.
+* for ml2, add 'qos' to extension_drivers in [ml2] section;
+* for L3 floating IP QoS, add 'qos' and 'router' to service_plugins.
 
 On agent side (OVS):
 
 * add 'qos' to extensions in [agent] section.
+
+On L3 agent side:
+
+* For for floating IPs QoS support, add 'fip_qos' to extensions in [agent] section.
 
 
 Testing strategy
@@ -453,6 +481,16 @@ Additions to ovs_lib to set bandwidth limits on ports are covered in:
 New functional tests for tc_lib to set bandwidth limits on ports are in:
 
 * neutron.tests.functional.agent.linux.test_tc_lib
+
+
+New functional tests for test_l3_tc_lib to set TC filters on router floating
+IP related device are covered in:
+
+* neutron.tests.functional.agent.linux.test_l3_tc_lib
+
+New functional tests for L3 agent floating IP rate limit:
+
+* neutron.tests.functional.agent.l3.extensions.test_fip_qos_extension
 
 
 API tests

@@ -32,7 +32,7 @@ Supported QoS rule types
 QoS supported rule types are now available as ``VALID_RULE_TYPES`` in `QoS rule types
 <https://git.openstack.org/cgit/openstack/neutron-lib/tree/neutron_lib/services/qos/constants.py>`_:
 
-* bandwidth_limit: Bandwidth limitations on networks or ports.
+* bandwidth_limit: Bandwidth limitations on networks, ports or floating IPs.
 
 * dscp_marking: Marking network traffic with a DSCP value.
 
@@ -102,6 +102,14 @@ On the controller nodes:
    section in ``/etc/neutron/neutron.conf`` (``message_queue`` is the
    default).
 
+#. Optionally, in order to enable the floating IP QoS extension ``qos-fip``,
+   set the ``service_plugins`` option in ``/etc/neutron/neutron.conf`` to
+   include both ``router`` and ``qos``. For example:
+
+   .. code-block:: none
+
+      service_plugins = router, qos
+
 #. In ``/etc/neutron/plugins/ml2/ml2_conf.ini``, add ``qos`` to
    ``extension_drivers`` in the ``[ml2]`` section. For example:
 
@@ -135,6 +143,16 @@ On the network and compute nodes:
 
       [agent]
       extensions = qos
+
+#. Optionally, in order to enable QoS for floating IPs, set the ``extensions``
+   option in the ``[agent]`` section of ``/etc/neutron/l3_agent.ini`` to
+   include ``fip_qos``. If ``dvr`` is enabled, this has to be done for all the
+   L3 agents. For example:
+
+   .. code-block:: ini
+
+      [agent]
+      extensions = fip_qos
 
 #. As rate limit doesn't work on Open vSwitch's ``internal`` ports,
    optionally, as a workaround, to make QoS bandwidth limit work on
@@ -340,6 +358,119 @@ network, or initially create the network attached to the policy.
    achieved bandwidth limit will be lower than expected. If the configured burst
    value is too high, too few packets could be limited and achieved bandwidth
    limit would be higher than expected.
+
+The created policy can be associated with an existing floating IP.
+In order to do this, user extracts the floating IP id to be associated to
+the already created policy. In the next example, we will assign the
+``bw-limiter`` policy to the floating IP address ``172.16.100.18``.
+
+.. code-block:: console
+
+   $ openstack floating ip list
+   +--------------------------------------+---------------------+------------------+------+-----+
+   | ID                                   | Floating IP Address | Fixed IP Address | Port | ... |
+   +--------------------------------------+---------------------+------------------+------+-----+
+   | 1163d127-6df3-44bb-b69c-c0e916303eb3 | 172.16.100.9        | None             | None | ... |
+   | d0ed7491-3eb7-4c4f-a0f0-df04f10a067c | 172.16.100.18       | None             | None | ... |
+   | f5a9ed48-2e9f-411c-8787-2b6ecd640090 | 172.16.100.2        | None             | None | ... |
+   +--------------------------------------+---------------------+------------------+------+-----+
+
+.. code-block:: console
+
+   $ openstack floating ip set --qos-policy bw-limiter d0ed7491-3eb7-4c4f-a0f0-df04f10a067c
+
+In order to detach a floating IP from the QoS policy, simply update the
+floating IP configuration.
+
+.. code-block:: console
+
+   $ openstack floating ip set --no-qos-policy d0ed7491-3eb7-4c4f-a0f0-df04f10a067c
+
+Or use the ``unset`` action.
+
+.. code-block:: console
+
+   $ openstack floating ip unset --qos-policy d0ed7491-3eb7-4c4f-a0f0-df04f10a067c
+
+Floating IPs can be created with a policy attached to them too.
+
+.. code-block:: console
+
+   $ openstack floating ip create --qos-policy bw-limiter public
+   +---------------------+--------------------------------------+
+   | Field               | Value                                |
+   +---------------------+--------------------------------------+
+   | created_at          | 2017-12-06T02:12:09Z                 |
+   | description         |                                      |
+   | fixed_ip_address    | None                                 |
+   | floating_ip_address | 172.16.100.12                        |
+   | floating_network_id | 4065eb05-cccb-4048-988c-e8c5480a746f |
+   | id                  | 6a0efeef-462b-4312-b4ad-627cde8a20e6 |
+   | name                | 172.16.100.12                        |
+   | port_id             | None                                 |
+   | project_id          | 916e39e8be52433ba040da3a3a6d0847     |
+   | qos_policy_id       | 5df855e9-a833-49a3-9c82-c0839a5f103f |
+   | revision_number     | 1                                    |
+   | router_id           | None                                 |
+   | status              | DOWN                                 |
+   | updated_at          | 2017-12-06T02:12:09Z                 |
+   +---------------------+--------------------------------------+
+
+The QoS bandwidth limit rules attached to a floating IP will become
+active when you associate the latter with a port. For example, to associate
+the previously created floating IP ``172.16.100.12`` to the instance port with
+fixed IP ``192.168.222.5``:
+
+.. code-block:: console
+
+   $ openstack port show a7f25e73-4288-4a16-93b9-b71e6fd00862
+   +-----------------------+--------------------------------------------------+
+   | Field                 | Value                                            |
+   +-----------------------+--------------------------------------------------+
+   | admin_state_up        | UP                                               |
+   |            ...        |                      ...                         |
+   | device_id             | 69c03d70-53e8-4030-9c02-675c47f0b06b             |
+   | device_owner          | compute:nova                                     |
+   | dns_assignment        | None                                             |
+   | dns_name              | None                                             |
+   | extra_dhcp_opts       |                                                  |
+   | fixed_ips             | ip_address='192.168.222.5', subnet_id='...'      |
+   | id                    | a7f25e73-4288-4a16-93b9-b71e6fd00862             |
+   | ip_address            | None                                             |
+   | mac_address           | fa:16:3e:b5:1a:cc                                |
+   | name                  |                                                  |
+   | network_id            | ea602456-3ea8-4989-8981-add6182b4ceb             |
+   | option_name           | None                                             |
+   | option_value          | None                                             |
+   | port_security_enabled | False                                            |
+   | project_id            | 916e39e8be52433ba040da3a3a6d0847                 |
+   | qos_policy_id         | None                                             |
+   | revision_number       | 6                                                |
+   | security_group_ids    | 77436c73-3a29-42a7-b544-d47f4ea96d54             |
+   | status                | ACTIVE                                           |
+   | subnet_id             | None                                             |
+   | tags                  |                                                  |
+   | trunk_details         | None                                             |
+   | updated_at            | 2017-12-05T15:48:54Z                             |
+   +-----------------------+--------------------------------------------------+
+
+.. code-block:: console
+
+   $ openstack floating ip set --port a7f25e73-4288-4a16-93b9-b71e6fd00862 \
+       0eeb1f8a-de96-4cd9-a0f6-3f535c409558
+
+.. note::
+
+   For now, the L3 agent floating IP QoS extension only uses
+   ``bandwidth_limit`` rules. Other rule types (like DSCP marking) will be
+   silently ignored for floating IPs. A QoS policy that does not contain any
+   ``bandwidth_limit`` rules will have no effect when attached to a
+   floating IP.
+
+   If floating IP is bound to a port, and both have binding QoS bandwidth
+   rules, the L3 agent floating IP QoS extension ignores the behavior of
+   the port QoS, and installs the rules on the appropriate device in the
+   router namespace.
 
 Each project can have at most one default QoS policy, although it is not
 mandatory. If a default QoS policy is defined, all new networks created within
