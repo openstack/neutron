@@ -293,7 +293,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
         self.driver = mock.Mock()
         self.manager = ovsfw.ConjIPFlowManager(self.driver)
         self.vlan_tag = 100
-        self.conj_id = 10
+        self.conj_id = 16
 
     def test_update_flows_for_vlan(self):
         remote_group = self.driver.sg_port_map.get_sg.return_value
@@ -303,14 +303,22 @@ class TestConjIPFlowManager(base.BaseTestCase):
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
             self.manager.add(self.vlan_tag, 'sg', 'remote_id',
-                             firewall.INGRESS_DIRECTION, constants.IPv4)
+                             firewall.INGRESS_DIRECTION, constants.IPv4, 0)
+            self.manager.add(self.vlan_tag, 'sg', 'remote_id',
+                             firewall.INGRESS_DIRECTION, constants.IPv4, 3)
             self.manager.update_flows_for_vlan(self.vlan_tag)
         self.assertEqual(self.driver._add_flow.call_args_list,
-            [mock.call(actions='conjunction(10,1/2)', ct_state='+est-rel-rpl',
+            [mock.call(actions='conjunction(16,1/2)', ct_state='+est-rel-rpl',
                        dl_type=2048, nw_src='10.22.3.4/32', priority=70,
                        reg_net=self.vlan_tag, table=82),
-             mock.call(actions='conjunction(11,1/2)', ct_state='+new-est',
+             mock.call(actions='conjunction(17,1/2)', ct_state='+new-est',
                        dl_type=2048, nw_src='10.22.3.4/32', priority=70,
+                       reg_net=self.vlan_tag, table=82),
+             mock.call(actions='conjunction(22,1/2)', ct_state='+est-rel-rpl',
+                       dl_type=2048, nw_src='10.22.3.4/32', priority=73,
+                       reg_net=self.vlan_tag, table=82),
+             mock.call(actions='conjunction(23,1/2)', ct_state='+new-est',
+                       dl_type=2048, nw_src='10.22.3.4/32', priority=73,
                        reg_net=self.vlan_tag, table=82)])
 
     def test_sg_removed(self):
@@ -321,7 +329,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
             get_id_mock.return_value = self.conj_id
             delete_sg_mock.return_value = [('remote_id', self.conj_id)]
             self.manager.add(self.vlan_tag, 'sg', 'remote_id',
-                         firewall.INGRESS_DIRECTION, constants.IPv4)
+                firewall.INGRESS_DIRECTION, constants.IPv4, 0)
             self.manager.flow_state[self.vlan_tag][(
                 firewall.INGRESS_DIRECTION, constants.IPv4)] = {
                     '10.22.3.4': [self.conj_id]}
@@ -508,7 +516,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             'output:{:d}'.format(self.port_ofport),
             dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,
-            priority=70,
+            priority=77,
             reg5=self.port_ofport,
             ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
             table=ovs_consts.RULES_INGRESS_TABLE,
@@ -553,16 +561,16 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
             dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_UDP,
-            priority=70,
+            priority=77,
             ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
             reg5=self.port_ofport,
             table=ovs_consts.RULES_EGRESS_TABLE),
                         mock.call(
-            actions='conjunction({:d},2/2)'.format(conj_id),
+            actions='conjunction({:d},2/2)'.format(conj_id + 6),
             ct_state=ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY,
             dl_type=mock.ANY,
             nw_proto=6,
-            priority=70, reg5=self.port_ofport,
+            priority=73, reg5=self.port_ofport,
             table=ovs_consts.RULES_EGRESS_TABLE)]
         self.mock_bridge.br.add_flow.assert_has_calls(
             filter_rules, any_order=True)
