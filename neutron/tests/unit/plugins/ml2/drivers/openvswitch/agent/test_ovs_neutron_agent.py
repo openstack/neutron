@@ -968,6 +968,35 @@ class TestOvsNeutronAgent(object):
             self.agent.treat_devices_removed([port_id])
             delete.assert_called_with(mock.ANY, {'port_id': port_id})
 
+    def test_treat_vif_port_shut_down_port(self):
+        details = mock.MagicMock()
+        vif_port = type('vif_port', (object,), {
+            "vif_id": "12",
+            "iface-id": "407a79e0-e0be-4b7d-92a6-513b2161011b",
+            "vif_mac": "fa:16:3e:68:46:7b",
+            "port_name": "qr-407a79e0-e0",
+            "ofport": -1,
+            "bridge_name": "br-int"})
+        with mock.patch.object(
+                self.agent.plugin_rpc, 'update_device_down'
+        ) as update_device_down, mock.patch.object(
+            self.agent, "port_dead"
+        ) as port_dead:
+            port_needs_binding = self.agent.treat_vif_port(
+                vif_port, details['port_id'],
+                details['network_id'],
+                details['network_type'],
+                details['physical_network'],
+                details['segmentation_id'],
+                False,
+                details['fixed_ips'],
+                details['device_owner'], False)
+        self.assertFalse(port_needs_binding)
+        port_dead.assert_called_once_with(vif_port)
+        update_device_down.assert_called_once_with(
+            self.agent.context, details['port_id'], self.agent.agent_id,
+            self.agent.conf.host)
+
     def test_bind_port_with_missing_network(self):
         vif_port = mock.Mock()
         vif_port.name.return_value = 'port'

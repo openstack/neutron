@@ -123,6 +123,9 @@ class ClientFixture(fixtures.Fixture):
             spec['security_groups'] = security_groups
         return self._create_resource('port', spec)
 
+    def update_port(self, port_id, **kwargs):
+        return self._update_resource('port', port_id, kwargs)
+
     def create_floatingip(self, tenant_id, floating_network_id,
                           fixed_ip_address, port_id):
         spec = {
