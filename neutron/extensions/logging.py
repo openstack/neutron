@@ -18,11 +18,11 @@ import itertools
 
 from neutron_lib.api.definitions import logging as apidef
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.services import base as service_base
 import six
 
 from neutron.api.v2 import resource_helper
-from neutron.plugins.common import constants
 
 
 class Logging(api_extensions.APIExtensionDescriptor):
@@ -43,7 +43,7 @@ class Logging(api_extensions.APIExtensionDescriptor):
         resources = resource_helper.build_resource_info(
                                                 plural_mappings,
                                                 apidef.RESOURCE_ATTRIBUTE_MAP,
-                                                constants.LOG_API,
+                                                plugin_const.LOG_API,
                                                 translate_name=True,
                                                 allow_bulk=True)
 
@@ -60,7 +60,7 @@ class LoggingPluginBase(service_base.ServicePluginBase):
 
     @classmethod
     def get_plugin_type(cls):
-        return constants.LOG_API
+        return plugin_const.LOG_API
 
     @abc.abstractmethod
     def get_logs(self, context, filters=None, fields=None, sorts=None,

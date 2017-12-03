@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
@@ -22,7 +23,6 @@ from neutron.db import _utils as db_utils
 from neutron.db.models import securitygroup as sg_db
 from neutron.objects import ports
 from neutron.objects import securitygroup as sg_object
-from neutron.plugins.common import constants
 from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 
@@ -91,7 +91,7 @@ def validate_log_type_for_port(log_type, port):
 
     """
 
-    log_plugin = directory.get_plugin(alias=constants.LOG_API)
+    log_plugin = directory.get_plugin(alias=plugin_const.LOG_API)
     drivers = log_plugin.driver_manager.drivers
     for driver in drivers:
         vif_type = port.binding.vif_type

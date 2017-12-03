@@ -17,9 +17,6 @@ from neutron_lib import constants
 from neutron_lib.plugins import constants as p_const
 
 
-# TODO(boden): consume once I208c976c3e7e43e27e1907ed196af8efccd73f22 releases
-LOG_API = "LOGGING"
-
 # Maps extension alias to service type that
 # can be implemented by the core plugin.
 EXT_TO_SERVICE_MAPPING = {
