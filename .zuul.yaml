@@ -1,0 +1,291 @@
+- project:
+    name: openstack/neutron
+    check:
+      jobs:
+        - neutron-functional
+        - neutron-fullstack
+        - neutron-rally-neutron
+        - neutron-tempest-dvr
+        - neutron-tempest-linuxbridge
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
+        - neutron-tempest-multinode-full
+        - neutron-tempest-dvr-ha-multinode-full
+        - neutron-tempest-ovsfw
+        - neutron-tempest-full
+        - neutron-grenade
+    gate:
+      jobs:
+        - neutron-functional
+        - neutron-tempest-dvr
+        - neutron-tempest-linuxbridge
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
+        - neutron-tempest-full
+        - neutron-grenade
+
+- job:
+    name: neutron-functional
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-functional/run.yaml
+    post-run: playbooks/legacy/neutron-functional/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+
+- job:
+    name: neutron-fullstack
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-fullstack/run.yaml
+    post-run: playbooks/legacy/neutron-fullstack/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+    voting: false
+
+- job:
+    name: neutron-rally-neutron
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-rally-neutron/run.yaml
+    post-run: playbooks/legacy/neutron-rally-neutron/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/aodh
+      - openstack/ceilometer
+      - openstack/diskimage-builder
+      - openstack/ironic
+      - openstack/magnum
+      - openstack/networking-bgpvpn
+      - openstack/neutron
+      - openstack/neutron-fwaas
+      - openstack/neutron-lbaas
+      - openstack/neutron-vpnaas
+      - openstack/octavia
+      - openstack/panko
+      - openstack/python-magnumclient
+      - openstack/python-senlinclient
+      - openstack/python-watcherclient
+      - openstack/python-zaqarclient
+      - openstack/rally
+      - openstack/senlin
+      - openstack/tripleo-image-elements
+      - openstack/watcher
+      - openstack/zaqar-ui
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^tools/.*$
+      - ^tox.ini$
+
+- job:
+    name: neutron-tempest-dvr
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-tempest-dvr/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-dvr/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+
+- job:
+    name: neutron-tempest-linuxbridge
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-tempest-linuxbridge/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-linuxbridge/post.yaml
+    timeout: 8400
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+
+- job:
+    name: neutron-grenade-multinode
+    parent: legacy-dsvm-base-multinode
+    run: playbooks/legacy/neutron-grenade-multinode/run.yaml
+    post-run: playbooks/legacy/neutron-grenade-multinode/post.yaml
+    timeout: 10800
+    required-projects:
+      - openstack-dev/grenade
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    nodeset: legacy-ubuntu-xenial-2-node
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+
+- job:
+    name: neutron-grenade-dvr-multinode
+    parent: legacy-dsvm-base-multinode
+    run: playbooks/legacy/neutron-grenade-dvr-multinode/run.yaml
+    post-run: playbooks/legacy/neutron-grenade-dvr-multinode/post.yaml
+    timeout: 7500
+    required-projects:
+      - openstack-dev/grenade
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    nodeset: legacy-ubuntu-xenial-2-node
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+
+- job:
+    name: neutron-tempest-multinode-full
+    parent: legacy-dsvm-base-multinode
+    run: playbooks/legacy/neutron-tempest-multinode-full/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-multinode-full/post.yaml
+    timeout: 10800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    nodeset: legacy-ubuntu-xenial-2-node
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+    voting: false
+
+- job:
+    name: neutron-tempest-dvr-ha-multinode-full
+    parent: legacy-dsvm-base-multinode
+    run: playbooks/legacy/neutron-tempest-dvr-ha-multinode-full/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-dvr-ha-multinode-full/post.yaml
+    timeout: 10800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    nodeset: legacy-ubuntu-xenial-3-node
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+    voting: false
+
+- job:
+    name: neutron-tempest-ovsfw
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-tempest-ovsfw/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-ovsfw/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+    voting: false
+
+- job:
+    name: neutron-tempest-full
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-tempest-full/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-full/post.yaml
+    timeout: 10800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+
+- job:
+    name: neutron-grenade
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-grenade/run.yaml
+    post-run: playbooks/legacy/neutron-grenade/post.yaml
+    timeout: 10800
+    required-projects:
+      - openstack-dev/grenade
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
