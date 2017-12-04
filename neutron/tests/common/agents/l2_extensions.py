@@ -15,10 +15,13 @@
 
 import re
 
+from oslo_log import log as logging
+
 from neutron.agent.linux import async_process
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
 
+LOG = logging.getLogger(__name__)
 
 IPv4_ADDR_REGEX = r"(\d{1,3}\.){3}\d{1,3}"
 
@@ -116,6 +119,10 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
                "(?P<dst_ip>%(ip_addr_regex)s): ICMP .*$" % {
                    'ip_addr_regex': IPv4_ADDR_REGEX})
     for line in tcpdump_async.iter_stdout():
+        # TODO(slaweq): Debug logging added to help troubleshooting bug
+        # https://bugs.launchpad.net/neutron/+bug/1733649
+        # once it will be closed this log can be removed
+        LOG.debug("Tcpdump output line: %s", line)
         m = re.match(pattern, line)
         if m and (m.group("src_ip") == sender_vm.ip and
             m.group("dst_ip") == receiver_vm.ip):
