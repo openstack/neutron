@@ -1309,6 +1309,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
 
+            registry.notify(resources.FLOATING_IP, events.PRECOMMIT_CREATE,
+                            self, context=context, floatingip=fip,
+                            floatingip_id=fip_id,
+                            floatingip_db=floatingip_db)
+
         self._core_plugin.update_port(context.elevated(), external_port['id'],
                                       {'port': {'device_id': fip_id}})
         registry.notify(resources.FLOATING_IP,
