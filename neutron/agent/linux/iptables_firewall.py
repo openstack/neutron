@@ -108,6 +108,33 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             else:
                 self._update_remote_security_group_members(sec_group_ids)
 
+    def process_trusted_ports(self, port_ids):
+        """Process ports that are trusted and shouldn't be filtered."""
+        for port in port_ids:
+            self._add_trusted_port_rules(port)
+
+    def remove_trusted_ports(self, port_ids):
+        for port in port_ids:
+            self._remove_trusted_port_rules(port)
+
+    def _add_trusted_port_rules(self, port):
+        device = self._get_device_name(port)
+        jump_rule = [
+            '-m physdev --%s %s --physdev-is-bridged -j ACCEPT' % (
+                self.IPTABLES_DIRECTION[constants.INGRESS_DIRECTION],
+                device)]
+        self._add_rules_to_chain_v4v6(
+            'FORWARD', jump_rule, jump_rule, comment=ic.TRUSTED_ACCEPT)
+
+    def _remove_trusted_port_rules(self, port):
+        device = self._get_device_name(port)
+
+        jump_rule = [
+            '-m physdev --%s %s --physdev-is-bridged -j ACCEPT' % (
+                self.IPTABLES_DIRECTION[constants.INGRESS_DIRECTION],
+                device)]
+        self._remove_rule_from_chain_v4v6('FORWARD', jump_rule, jump_rule)
+
     def update_security_group_rules(self, sg_id, sg_rules):
         LOG.debug("Update rules of security group (%s)", sg_id)
         self.sg_rules[sg_id] = sg_rules
@@ -266,6 +293,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                                   comment=comment)
 
     def _get_device_name(self, port):
+        if not isinstance(port, dict):
+            return port
         return port['device']
 
     def _update_port_sec_rules(self, port, direction, add=False):
@@ -871,4 +900,6 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
         return ('qvb' + port['device'])[:n_const.LINUX_DEV_LEN]
 
     def _get_device_name(self, port):
-        return get_hybrid_port_name(port['device'])
+        device_name = super(
+            OVSHybridIptablesFirewallDriver, self)._get_device_name(port)
+        return get_hybrid_port_name(device_name)
