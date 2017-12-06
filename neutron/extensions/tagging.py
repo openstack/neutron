@@ -71,7 +71,7 @@ def validate_tag(tag):
 
 
 def validate_tags(body):
-    if 'tags' not in body:
+    if not isinstance(body, dict) or 'tags' not in body:
         raise exceptions.InvalidInput(error_message=_("Invalid tags body"))
     msg = validators.validate_list_of_unique_strings(body['tags'], MAX_TAG_LEN)
     if msg:
