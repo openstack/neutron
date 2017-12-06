@@ -58,16 +58,18 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
             constants.SNAT_INT_DEV_PREFIX)
 
     def add_centralized_floatingip(self, fip, fip_cidr):
-        if self.is_router_master():
-            interface_name = self.get_snat_external_device_interface_name(
+        interface_name = self.get_snat_external_device_interface_name(
                 self.get_ex_gw_port())
-            self._add_vip(fip_cidr, interface_name)
+        self._add_vip(fip_cidr, interface_name)
+        if self.is_router_master():
             return super(DvrEdgeHaRouter, self).add_centralized_floatingip(
                 fip, fip_cidr)
+        else:
+            return constants.FLOATINGIP_STATUS_ACTIVE
 
     def remove_centralized_floatingip(self, fip_cidr):
+        self._remove_vip(fip_cidr)
         if self.is_router_master():
-            self._remove_vip(fip_cidr)
             super(DvrEdgeHaRouter, self).remove_centralized_floatingip(
                 fip_cidr)
 
