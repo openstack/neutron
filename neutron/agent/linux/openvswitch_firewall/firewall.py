@@ -387,6 +387,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self.sg_to_delete = set()
         self._deferred = False
         self._drop_all_unmatched_flows()
+        self._initialize_third_party_tables()
         self.conj_ip_manager = ConjIPFlowManager(self)
 
         self.iptables_helper = iptables.Helper(self.int_br.br)
@@ -437,6 +438,16 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def _drop_all_unmatched_flows(self):
         for table in ovs_consts.OVS_FIREWALL_TABLES:
             self.int_br.br.add_flow(table=table, priority=0, actions='drop')
+
+    def _initialize_third_party_tables(self):
+        self.int_br.br.add_flow(
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE,
+            priority=1,
+            actions='normal')
+        for table in (ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE,
+                      ovs_consts.DROPPED_TRAFFIC_TABLE):
+            self.int_br.br.add_flow(
+                table=table, priority=0, actions='drop')
 
     def get_ovs_port(self, port_id):
         ovs_port = self.int_br.br.get_vif_port_by_id(port_id)
@@ -641,7 +652,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='normal'
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
             )
 
     def _initialize_egress_no_port_security(self, port_id):
@@ -675,7 +687,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=80,
             reg_port=ovs_port.ofport,
-            actions='normal'
+            actions='resubmit(,%d)' % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
+
         )
 
     def _remove_egress_no_port_security(self, port_id):
@@ -710,7 +724,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_src=mac_addr,
                 dl_type=constants.ETHERTYPE_ARP,
                 arp_spa=ip_addr,
-                actions='normal'
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
             )
             self._add_flow(
                 table=ovs_consts.BASE_EGRESS_TABLE,
@@ -773,7 +788,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
-                actions='drop'
+                actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
             )
 
         # Drop Router Advertisements from instances
@@ -785,7 +800,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             dl_type=constants.ETHERTYPE_IPV6,
             nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
             icmp_type=lib_const.ICMPV6_TYPE_RA,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
         # Drop all remaining not tracked egress connections
@@ -795,7 +810,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
             in_port=port.ofport,
             reg_port=port.ofport,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
         # Fill in accept_or_ingress table by checking that traffic is ingress
@@ -818,14 +833,17 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=ethertype,
                 reg_port=port.ofport,
                 ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
-                actions='ct(commit,zone=NXM_NX_REG{:d}[0..15]),normal'.format(
-                    ovsfw_consts.REG_NET)
+                actions='ct(commit,zone=NXM_NX_REG{:d}[0..15]),'
+                        'resubmit(,{:d})'.format(
+                            ovsfw_consts.REG_NET,
+                            ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
             )
         self._add_flow(
             table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
             priority=80,
             reg_port=port.ofport,
-            actions='normal'
+            actions='resubmit(,%d)' % (
+                ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
         )
 
     def _initialize_tracked_egress(self, port):
@@ -834,7 +852,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.RULES_EGRESS_TABLE,
             priority=50,
             ct_state=ovsfw_consts.OF_STATE_INVALID,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
         # Drop traffic for removed sg rules
         self._add_flow(
@@ -842,7 +860,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=50,
             reg_port=port.ofport,
             ct_mark=ovsfw_consts.CT_MARK_INVALID,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
         for state in (
@@ -856,14 +874,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 reg_port=port.ofport,
                 ct_zone=port.vlan_tag,
-                actions='normal'
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
             )
         self._add_flow(
             table=ovs_consts.RULES_EGRESS_TABLE,
             priority=40,
             reg_port=port.ofport,
             ct_state=ovsfw_consts.OF_STATE_NOT_ESTABLISHED,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
         for ethertype in [constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6]:
             self._add_flow(
@@ -887,7 +906,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=constants.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='output:{:d}'.format(port.ofport),
+                actions='output:{:d},resubmit(,{:d})'.format(
+                    port.ofport,
+                    ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
             )
 
     def _initialize_ingress(self, port):
@@ -897,7 +918,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=100,
             dl_type=constants.ETHERTYPE_ARP,
             reg_port=port.ofport,
-            actions='output:{:d}'.format(port.ofport),
+            actions='output:{:d},resubmit(,{:d})'.format(
+                port.ofport,
+                ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
         )
         self._initialize_ingress_ipv6_icmp(port)
 
@@ -913,7 +936,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
-                actions='output:{:d}'.format(port.ofport),
+                actions='output:{:d},resubmit(,{:d})'.format(
+                    port.ofport,
+                    ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
             )
 
         # Track untracked
@@ -942,7 +967,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.RULES_INGRESS_TABLE,
             priority=50,
             ct_state=ovsfw_consts.OF_STATE_INVALID,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
         # Drop traffic for removed sg rules
         self._add_flow(
@@ -950,7 +975,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=50,
             reg_port=port.ofport,
             ct_mark=ovsfw_consts.CT_MARK_INVALID,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
         # Allow established and related connections
@@ -963,14 +988,16 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=state,
                 ct_mark=ovsfw_consts.CT_MARK_NORMAL,
                 ct_zone=port.vlan_tag,
-                actions='output:{:d}'.format(port.ofport)
+                actions='output:{:d},resubmit(,{:d})'.format(
+                    port.ofport,
+                    ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE)
             )
         self._add_flow(
             table=ovs_consts.RULES_INGRESS_TABLE,
             priority=40,
             reg_port=port.ofport,
             ct_state=ovsfw_consts.OF_STATE_NOT_ESTABLISHED,
-            actions='drop'
+            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
         for ethertype in [constants.ETHERTYPE_IP, constants.ETHERTYPE_IPV6]:
             self._add_flow(
