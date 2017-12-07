@@ -223,13 +223,13 @@ First, create a QoS policy and its bandwidth limit rule:
 
 
    $ openstack network qos rule create --type bandwidth-limit --max-kbps 3000 \
-       --max-burst-kbits 300 --egress bw-limiter
+       --max-burst-kbits 2400 --egress bw-limiter
    +----------------+--------------------------------------+
    | Field          | Value                                |
    +----------------+--------------------------------------+
    | direction      | egress                               |
    | id             | 92ceb52f-170f-49d0-9528-976e2fee2d6f |
-   | max_burst_kbps | 300                                  |
+   | max_burst_kbps | 2400                                 |
    | max_kbps       | 3000                                 |
    | name           | None                                 |
    | project_id     |                                      |
@@ -398,7 +398,7 @@ attached port.
 
 .. code-block:: console
 
-    $ openstack network qos rule set --max-kbps 2000 --max-burst-kbits 200 \
+    $ openstack network qos rule set --max-kbps 2000 --max-burst-kbits 1600 \
         --ingress bw-limiter 92ceb52f-170f-49d0-9528-976e2fee2d6f
 
     $ openstack network qos rule show \
@@ -408,7 +408,7 @@ attached port.
     +----------------+--------------------------------------+
     | direction      | ingress                              |
     | id             | 92ceb52f-170f-49d0-9528-976e2fee2d6f |
-    | max_burst_kbps | 200                                  |
+    | max_burst_kbps | 1600                                 |
     | max_kbps       | 2000                                 |
     | name           | None                                 |
     | project_id     |                                      |
