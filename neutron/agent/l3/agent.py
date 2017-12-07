@@ -136,10 +136,10 @@ class L3PluginApi(object):
         return cctxt.call(context, 'get_agent_gateway_port',
                           network_id=fip_net, host=self.host)
 
-    def get_service_plugin_list(self, context):
+    def get_service_plugin_list(self, context, host=None):
         """Make a call to get the list of activated services."""
         cctxt = self.client.prepare(version='1.3')
-        return cctxt.call(context, 'get_service_plugin_list')
+        return cctxt.call(context, 'get_service_plugin_list', host=host)
 
     def update_ha_routers_states(self, context, states):
         """Update HA routers states."""
@@ -207,7 +207,8 @@ class L3NATAgent(ha.AgentMixin,
         while True:
             try:
                 self.neutron_service_plugins = (
-                    self.plugin_rpc.get_service_plugin_list(self.context))
+                    self.plugin_rpc.get_service_plugin_list(self.context,
+                                                            host=host))
             except oslo_messaging.RemoteError as e:
                 with excutils.save_and_reraise_exception() as ctx:
                     ctx.reraise = False
