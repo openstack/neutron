@@ -3591,6 +3591,21 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
     def test_floatingips_op_agent(self):
         self._test_notify_op_agent(self._test_floatingips_op_agent)
 
+    def test_floatingips_create_precommit_event(self):
+        fake_method = mock.Mock()
+        try:
+            registry.subscribe(fake_method, resources.FLOATING_IP,
+                               events.PRECOMMIT_CREATE)
+            with self.floatingip_with_assoc() as f:
+                fake_method.assert_called_once_with(
+                    resources.FLOATING_IP, events.PRECOMMIT_CREATE, mock.ANY,
+                    context=mock.ANY, floatingip=mock.ANY,
+                    floatingip_id=f['floatingip']['id'],
+                    floatingip_db=mock.ANY)
+        finally:
+            registry.unsubscribe(fake_method, resources.FLOATING_IP,
+                                 events.PRECOMMIT_CREATE)
+
     def test_router_create_precommit_event(self):
         nset = lambda *a, **k: setattr(k['router_db'], 'name', 'hello')
         registry.subscribe(nset, resources.ROUTER, events.PRECOMMIT_CREATE)
