@@ -18,12 +18,13 @@ import mock
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 import six
 
 from neutron.db import db_base_plugin_v2
-from neutron.db import models_v2
 from neutron.extensions import timestamp
 from neutron import manager
+from neutron.objects import network as net_obj
 from neutron.objects import tag as tag_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -242,10 +243,9 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
 
     def _save_network(self, network_id):
         ctx = context.get_admin_context()
-        with ctx.session.begin(subtransactions=True):
-            ctx.session.add(models_v2.Network(id=network_id))
-        network = ctx.session.query(models_v2.Network).one()
-        return network.standard_attr_id
+        obj = net_obj.Network(ctx, id=network_id)
+        obj.create()
+        return obj.standard_attr_id
 
     # Use tag as non StandardAttribute object
     def _save_tag(self, tags, standard_attr_id):
@@ -255,7 +255,7 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
                         tag=tag).create()
 
     def test_update_timpestamp(self):
-        network_id = "foo_network_id"
+        network_id = uuidutils.generate_uuid()
         tags = ["red", "blue"]
         with mock.patch('oslo_utils.timeutils.utcnow') as timenow:
             timenow.return_value = datetime.datetime(2016, 3, 11, 0, 0)
