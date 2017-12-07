@@ -13,6 +13,7 @@
 #    under the License.
 import collections
 
+import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -37,11 +38,11 @@ from neutron.db import api as db_api
 from neutron.db import l3_attrs_db
 from neutron.db import l3_db
 from neutron.db.models import allowed_address_pair as aap_models
-from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import agent as ag_obj
+from neutron.objects import base as base_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.common import utils as p_utils
@@ -959,11 +960,11 @@ class _DVRAgentInterfaceMixin(object):
             (port_dict['status'] == const.PORT_STATUS_ACTIVE))
         if not port_valid_state:
             return
-        query = context.session.query(l3_models.FloatingIP).filter(
-            l3_models.FloatingIP.fixed_ip_address == port_addr_pair_ip)
-        fip = query.first()
+        fips = l3_obj.FloatingIP.get_objects(
+            context, _pager=base_obj.Pager(limit=1),
+            fixed_ip_address=netaddr.IPAddress(port_addr_pair_ip))
         return self._core_plugin.get_port(
-            context, fip.fixed_port_id) if fip else None
+            context, fips[0].fixed_port_id) if fips else None
 
 
 class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
