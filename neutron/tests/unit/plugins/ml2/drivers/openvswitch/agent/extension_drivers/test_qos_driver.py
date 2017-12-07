@@ -55,7 +55,6 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             self.qos_driver.br_int.delete_egress_bw_limit_for_port)
         self.delete_ingress = (
             self.qos_driver.br_int.delete_ingress_bw_limit_for_port)
-        self.qos_driver.br_int.create_egress_bw_limit_for_port = mock.Mock()
         self.create_egress = (
             self.qos_driver.br_int.create_egress_bw_limit_for_port)
         self.update_ingress = (
@@ -102,6 +101,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
         class FakeVifPort(object):
             port_name = self.port_name
+            ofport = 111
 
         return {'vif_port': FakeVifPort(),
                 'qos_policy_id': policy_id,
@@ -142,19 +142,28 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.create_egress.assert_not_called()
         self.update_ingress.assert_not_called()
 
-    def _test_delete_rules(self, policy):
+    def _test_delete_rules(self, qos_policy):
+        self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
+            return_value=(self.rules[1].max_kbps,
+                          self.rules[1].max_burst_kbps))
+        self.qos_driver.create(self.port, qos_policy)
+        self.qos_driver.delete(self.port, qos_policy)
+        self.delete_egress.assert_called_once_with(self.port_name)
+        self.delete_ingress.assert_called_once_with(self.port_name)
+
+    def _test_delete_rules_no_policy(self):
         self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
             return_value=(self.rules[1].max_kbps,
                           self.rules[1].max_burst_kbps))
         self.qos_driver.delete(self.port)
-        self.delete_egress.assert_called_once_with(self.port_name)
-        self.delete_ingress.assert_called_once_with(self.port_name)
+        self.delete_egress.assert_not_called()
+        self.delete_ingress.assert_not_called()
 
     def test_delete_rules(self):
         self._test_delete_rules(self.qos_policy)
 
     def test_delete_rules_no_policy(self):
-        self._test_delete_rules(None)
+        self._test_delete_rules_no_policy()
 
     def test_delete_rules_no_vif_port(self):
         port = copy.copy(self.port)
