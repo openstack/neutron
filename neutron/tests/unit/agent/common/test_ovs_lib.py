@@ -782,26 +782,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             port_exists_mock.assert_called_once_with("test_port")
             set_egress_mock.assert_not_called()
 
-    def test_delete_ingress_bw_limit_for_port(self):
-        with mock.patch.object(
-            self.br, "_delete_ingress_bw_limit_for_port"
-        ) as delete_ingress_mock, mock.patch.object(
-            self.br, "port_exists", return_value=True
-        ) as port_exists_mock:
-            self.br.delete_ingress_bw_limit_for_port("test_port")
-            port_exists_mock.assert_called_once_with("test_port")
-            delete_ingress_mock.assert_called_once_with("test_port")
-
-    def test_delete_ingress_bw_limit_for_port_port_not_exists(self):
-        with mock.patch.object(
-            self.br, "_delete_ingress_bw_limit_for_port"
-        ) as delete_ingress_mock, mock.patch.object(
-            self.br, "port_exists", return_value=False
-        ) as port_exists_mock:
-            self.br.delete_ingress_bw_limit_for_port("test_port")
-            port_exists_mock.assert_called_once_with("test_port")
-            delete_ingress_mock.assert_not_called()
-
     def test_get_vifs_by_ids(self):
         db_list_res = [
             {'name': 'qvo1', 'ofport': 1,
