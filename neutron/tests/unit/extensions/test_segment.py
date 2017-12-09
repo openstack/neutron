@@ -356,6 +356,18 @@ class TestSegment(SegmentTestCase):
             self._update('segments', segment['segment']['id'], segment,
                          expected_code=webob.exc.HTTPClientError.code)
 
+    def test_segment_notification_on_delete_network(self):
+        with mock.patch.object(db, '_delete_segments_for_network') as dsn:
+            db.subscribe()
+            with self.network() as network:
+                network = network['network']
+                self._delete('networks', network['id'])
+        dsn.assert_called_with(resources.NETWORK,
+                               events.PRECOMMIT_DELETE,
+                               mock.ANY,
+                               context=mock.ANY,
+                               network_id=mock.ANY)
+
 
 class TestSegmentML2(SegmentTestCase):
     def setUp(self):

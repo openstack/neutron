@@ -314,6 +314,6 @@ def subscribe():
                        resources.SEGMENT, events.PRECOMMIT_CREATE)
     registry.subscribe(_delete_segments_for_network,
                        resources.NETWORK,
-                       events.BEFORE_DELETE)
+                       events.PRECOMMIT_DELETE)
 
 subscribe()
