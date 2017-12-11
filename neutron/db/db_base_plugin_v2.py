@@ -1019,7 +1019,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     @db_api.retry_if_session_inactive()
     def get_subnet(self, context, id, fields=None):
-        subnet_obj = self._get_subnet(context, id)
+        subnet_obj = self._get_subnet_object(context, id)
         return self._make_subnet_dict(subnet_obj, fields, context=context)
 
     @db_api.retry_if_session_inactive()
