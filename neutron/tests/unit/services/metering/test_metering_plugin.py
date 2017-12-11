@@ -23,9 +23,9 @@ from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db.metering import metering_rpc
-from neutron.db.models import agent as agent_model
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
+from neutron.objects import agent as agent_obj
 from neutron.tests.common import helpers
 from neutron.tests import tools
 from neutron.tests.unit.db.metering import test_metering_db
@@ -394,8 +394,8 @@ class TestMeteringPluginL3AgentScheduler(
                      'id': second_uuid}]
 
         # bind each router to a specific agent
-        agent1 = agent_model.Agent(host='agent1')
-        agent2 = agent_model.Agent(host='agent2')
+        agent1 = agent_obj.Agent(mock.ANY, host='agent1')
+        agent2 = agent_obj.Agent(mock.ANY, host='agent2')
 
         agents = {self.uuid: agent1,
                   second_uuid: agent2}
