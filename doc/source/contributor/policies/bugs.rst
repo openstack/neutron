@@ -429,6 +429,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe-approved_                 | Approved feature enhancements           | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
+| rfe-postponed_                | Postponed feature enhancements          | Drivers Team         |
++-------------------------------+-----------------------------------------+----------------------+
 | sg-fw_                        | A bug affecting security groups         | Brian Haley          |
 +-------------------------------+-----------------------------------------+----------------------+
 | sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough   | Moshe Levi           |
@@ -737,6 +739,14 @@ RFE-Approved
 
 * `RFE-Approved - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-approved>`_
 * `RFE-Approved - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=rfe-approved>`_
+
+.. _rfe-postponed:
+
+RFE-Postponed
++++++++++++++
+
+* `RFE-Postponed - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-postponed>`_
+* `RFE-Postponed - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=rfe-postponed>`_
 
 .. _sriov-pci-pt:
 
