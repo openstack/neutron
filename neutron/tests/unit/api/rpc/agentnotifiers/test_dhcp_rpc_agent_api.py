@@ -21,11 +21,12 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins import directory
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.common import utils
 from neutron.db.agentschedulers_db import cfg
-from neutron.db.models import agent as agent_model
+from neutron.objects import agent as agent_obj
 from neutron.tests import base
 
 
@@ -58,7 +59,8 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.assertEqual(expected_warnings, self.mock_log.warning.call_count)
 
     def test__schedule_network(self):
-        agent = agent_model.Agent()
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid(),
+                                host='host')
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_net_id'}
@@ -67,7 +69,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                      expected_casts=1, expected_warnings=0)
 
     def test__schedule_network_no_existing_agents(self):
-        agent = agent_model.Agent()
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_net_id'}
@@ -94,20 +96,20 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.assertEqual(expected_errors, self.mock_log.error.call_count)
 
     def test__get_enabled_agents(self):
-        agent1 = agent_model.Agent()
+        agent1 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent1.admin_state_up = True
         agent1.heartbeat_timestamp = timeutils.utcnow()
-        agent2 = agent_model.Agent()
+        agent2 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent2.admin_state_up = False
         agent2.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_network_id'}
         self._test__get_enabled_agents(network, agents=[agent1])
 
     def test__get_enabled_agents_with_inactive_ones(self):
-        agent1 = agent_model.Agent()
+        agent1 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent1.admin_state_up = True
         agent1.heartbeat_timestamp = timeutils.utcnow()
-        agent2 = agent_model.Agent()
+        agent2 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent2.admin_state_up = True
         # This is effectively an inactive agent
         agent2.heartbeat_timestamp = datetime.datetime(2000, 1, 1, 0, 0)
@@ -118,7 +120,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
 
     def test__get_enabled_agents_with_notification_required(self):
         network = {'id': 'foo_network_id', 'subnets': ['foo_subnet_id']}
-        agent = agent_model.Agent()
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent.admin_state_up = False
         agent.heartbeat_timestamp = timeutils.utcnow()
         self._test__get_enabled_agents(network, [agent], port_count=20,
@@ -127,10 +129,10 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
     def test__get_enabled_agents_with_admin_state_down(self):
         cfg.CONF.set_override(
             'enable_services_on_agents_with_admin_state_down', True)
-        agent1 = agent_model.Agent()
+        agent1 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent1.admin_state_up = True
         agent1.heartbeat_timestamp = timeutils.utcnow()
-        agent2 = agent_model.Agent()
+        agent2 = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent2.admin_state_up = False
         agent2.heartbeat_timestamp = timeutils.utcnow()
         network = {'id': 'foo_network_id'}
@@ -146,7 +148,8 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self, function, expected_scheduling=0, expected_casts=0):
         with mock.patch.object(self.notifier, '_schedule_network') as f:
             with mock.patch.object(self.notifier, '_get_enabled_agents') as g:
-                agent = agent_model.Agent()
+                agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid(),
+                                        host='host', topic='topic')
                 agent.admin_state_up = True
                 agent.heartbeat_timestamp = timeutils.utcnow()
                 g.return_value = [agent]
