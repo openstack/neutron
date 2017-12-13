@@ -161,8 +161,13 @@ class TestTagApiBase(test_securitygroup.SecurityGroupsTestCase,
                         subresource='tags', sub_id=tag)
         return req.get_response(self.ext_api)
 
-    def _put_tags(self, tags):
-        body = {'tags': tags}
+    def _put_tags(self, tags=None, body=None):
+        if tags:
+            body = {'tags': tags}
+        elif body:
+            body = body
+        else:
+            body = {}
         req = self._req('PUT', self.collection, data=body, id=self.resource_id,
                         subresource='tags')
         return req.get_response(self.ext_api)
@@ -272,6 +277,14 @@ class TestResourceTagApi(TestTagApiBase):
         tags = self._get_resource_tags()
         self._assertEqualTags(['red', 'green'], tags)
         self._test_notification_report(expect_notify)
+
+    def test_put_invalid_tags(self):
+        res = self._put_tags()
+        self.assertEqual(400, res.status_int)
+        res = self._put_tags(body=7)
+        self.assertEqual(400, res.status_int)
+        res = self._put_tags(body={'invalid': True})
+        self.assertEqual(400, res.status_int)
 
     def test_put_tags_replace(self):
         res = self._put_tags(['red', 'green'])
