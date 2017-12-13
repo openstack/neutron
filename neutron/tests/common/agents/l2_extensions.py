@@ -127,6 +127,11 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
         if m and (m.group("src_ip") == sender_vm.ip and
             m.group("dst_ip") == receiver_vm.ip):
             return
+    # TODO(slaweq): Debug logging added to help troubleshooting bug
+    # https://bugs.launchpad.net/neutron/+bug/1733649
+    # once it will be closed this log can be removed
+    for line in tcpdump_async.iter_stderr():
+        LOG.debug("Tcpdump error output line: %s", line)
     raise TcpdumpException(
         "No packets marked with DSCP = %(dscp_mark)s received from %(src)s "
         "to %(dst)s" % {'dscp_mark': dscp_mark,
