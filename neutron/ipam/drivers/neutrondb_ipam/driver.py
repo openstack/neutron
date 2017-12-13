@@ -97,20 +97,20 @@ class NeutronDbSubnet(ipam_base.Subnet):
         for pool in ipam_subnet.allocation_pools:
             pools.append(netaddr.IPRange(pool['first_ip'], pool['last_ip']))
 
-        neutron_subnet = cls._fetch_subnet(ctx, neutron_subnet_id)
+        neutron_subnet_obj = cls._fetch_subnet(ctx, neutron_subnet_id)
 
         return cls(ipam_subnet['id'],
                    ctx,
-                   cidr=neutron_subnet['cidr'],
+                   cidr=neutron_subnet_obj.cidr,
                    allocation_pools=pools,
-                   gateway_ip=neutron_subnet['gateway_ip'],
-                   tenant_id=neutron_subnet['tenant_id'],
+                   gateway_ip=neutron_subnet_obj.gateway_ip,
+                   tenant_id=neutron_subnet_obj.tenant_id,
                    subnet_id=neutron_subnet_id)
 
     @classmethod
     def _fetch_subnet(cls, context, id):
         plugin = directory.get_plugin()
-        return plugin._get_subnet(context, id)
+        return plugin._get_subnet_object(context, id)
 
     def __init__(self, internal_id, ctx, cidr=None,
                  allocation_pools=None, gateway_ip=None, tenant_id=None,
