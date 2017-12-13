@@ -132,7 +132,7 @@ Neutron logical router setup
         +--------------------------------------+------+-------------------+---------------------------------------------------------------------------------+--------+
 
 
-See the `Networking Guide <http://docs.openstack.org/networking-guide/deploy-ovs-selfservice.html#create-initial-networks/>`_
+See the `Networking Guide <../../admin/deploy-ovs-selfservice.html#create-initial-networks>`_
 for more detail on the creation of networks, subnets, and routers.
 
 Neutron Routers are realized in OpenVSwitch
@@ -202,16 +202,14 @@ Neutron Routers are realized in OpenVSwitch
 Finding the router in ip/ipconfig
 ---------------------------------
 
-* http://docs.openstack.org/admin-guide/networking.html
+The neutron-l3-agent uses the Linux IP stack and iptables to perform L3 forwarding and NAT.
+In order to support multiple routers with potentially overlapping IP addresses, neutron-l3-agent
+defaults to using Linux network namespaces to provide isolated forwarding contexts. As a result,
+the IP addresses of routers will not be visible simply by running "ip addr list" or "ifconfig" on
+the node. Similarly, you will not be able to directly ping fixed IPs.
 
-        The neutron-l3-agent uses the Linux IP stack and iptables to perform L3 forwarding and NAT.
-        In order to support multiple routers with potentially overlapping IP addresses, neutron-l3-agent
-        defaults to using Linux network namespaces to provide isolated forwarding contexts. As a result,
-        the IP addresses of routers will not be visible simply by running "ip addr list" or "ifconfig" on
-        the node. Similarly, you will not be able to directly ping fixed IPs.
-
-        To do either of these things, you must run the command within a particular router's network
-        namespace. The namespace will have the name "qrouter-<UUID of the router>.
+To do either of these things, you must run the command within a particular router's network
+namespace. The namespace will have the name "qrouter-<UUID of the router>.
 
 .. image:: images/under-the-hood-scenario-1-ovs-netns.png
 
@@ -244,7 +242,7 @@ For example::
 Provider Networking
 -------------------
 
-Neutron can also be configured to create `provider networks <http://docs.openstack.org/admin-guide/networking_adv-features.html#provider-networks>`_
+Neutron can also be configured to create `provider networks <../../admin/archives/adv-features.html#provider-networks>`_.
 
 .. include:: l3_agent_extensions.rst
 
@@ -252,6 +250,6 @@ Further Reading
 ---------------
 
 * `Packet Pushers - Neutron Network Implementation on Linux <http://packetpushers.net/openstack-quantum-network-implementation-in-linux/>`_
-* `OpenStack Administrator Guide <http://docs.openstack.org/admin-guide/networking.html>`_
+* `OpenStack Networking Guide <../../admin/index.html>`_
 * `Neutron - Layer 3 API extension <https://developer.openstack.org/api-ref/networking/v2/index.html#layer-3-networking>`_
 * `Darragh O'Reilly -  The Quantum L3 router and floating IPs <http://techbackground.blogspot.com/2013/05/the-quantum-l3-router-and-floating-ips.html>`_

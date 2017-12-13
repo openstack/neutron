@@ -51,8 +51,7 @@ topology creation. To perform this task, proceed with the following steps:
 #. Set up a default external network
 
    Setting up an external network is described in
-   `OpenStack Administrator Guide
-   <https://docs.openstack.org/admin-guide/networking-adv-features.html>`_.
+   `OpenStack Networking Guide <./archives/adv-features.html>`_.
    Assuming the external network to be used for the auto-allocation feature
    is named ``public``, make it the ``default`` external network
    with the following command:
