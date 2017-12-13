@@ -511,7 +511,7 @@ class NeutronDbObject(NeutronObject):
         all_keys = itertools.chain([cls.primary_keys], cls.unique_keys)
         if not any(lookup_keys.issuperset(keys) for keys in all_keys):
             missing_keys = set(cls.primary_keys).difference(lookup_keys)
-            raise o_exc.NeutronPrimaryKeyMissing(object_class=cls.__name__,
+            raise o_exc.NeutronPrimaryKeyMissing(object_class=cls,
                                                  missing_keys=missing_keys)
 
         with context.session.begin(subtransactions=True):
