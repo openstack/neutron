@@ -24,7 +24,6 @@ from neutron.common import utils
 from neutron.conf.db import extraroute_db
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_db
-from neutron.db import models_v2
 from neutron.extensions import l3
 from neutron.objects import router as l3_obj
 
@@ -58,10 +57,6 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             context.session.expire(router_db, attribute_names=['route_list'])
         return super(ExtraRoute_dbonly_mixin, self).update_router(
             context, id, router)
-
-    def _get_subnets_by_cidr(self, context, cidr):
-        query_subnets = context.session.query(models_v2.Subnet)
-        return query_subnets.filter_by(cidr=cidr).all()
 
     def _validate_routes_nexthop(self, cidrs, ips, routes, nexthop):
         #Note(nati): Nexthop should be connected,
