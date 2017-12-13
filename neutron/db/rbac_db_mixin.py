@@ -94,6 +94,9 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
                                            details=ex)
         with context.session.begin(subtransactions=True):
             context.session.delete(entry)
+        registry.notify(RBAC_POLICY, events.AFTER_DELETE, self,
+                        context=context, object_type=object_type,
+                        policy=entry)
         self.object_type_cache.pop(id, None)
 
     def _get_rbac_policy(self, context, id):
