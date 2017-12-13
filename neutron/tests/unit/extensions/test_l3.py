@@ -435,7 +435,7 @@ class L3NatTestCaseMixin(object):
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, set_context=False,
-                           floating_ip=None, subnet_id=False,
+                           floating_ip=None, subnet_id=None,
                            tenant_id=None, **kwargs):
         tenant_id = tenant_id or self._tenant_id
         data = {'floatingip': {'floating_network_id': network_id,
@@ -2668,6 +2668,37 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     subnet_id=public_sub['subnet']['id'],
                     set_context=True)
         self.assertEqual(exc.HTTPCreated.code, res.status_int)
+
+    def test_create_floatingip_with_subnet_id_and_fip_address(self):
+        with self.network() as ext_net:
+            self._set_net_external(ext_net['network']['id'])
+            with self.subnet(ext_net, cidr='10.10.10.0/24') as ext_subnet:
+                with self.router():
+                    res = self._create_floatingip(
+                        self.fmt,
+                        ext_net['network']['id'],
+                        subnet_id=ext_subnet['subnet']['id'],
+                        floating_ip='10.10.10.100')
+                    fip = self.deserialize(self.fmt, res)
+        self.assertEqual(exc.HTTPCreated.code, res.status_int)
+        self.assertEqual('10.10.10.100',
+                         fip['floatingip']['floating_ip_address'])
+
+    def test_create_floatingip_with_subnet_and_invalid_fip_address(self):
+        with self.network() as ext_net:
+            self._set_net_external(ext_net['network']['id'])
+            with self.subnet(ext_net, cidr='10.10.10.0/24') as ext_subnet:
+                with self.router():
+                    res = self._create_floatingip(
+                        self.fmt,
+                        ext_net['network']['id'],
+                        subnet_id=ext_subnet['subnet']['id'],
+                        floating_ip='20.20.20.200')
+                    data = self.deserialize(self.fmt, res)
+        self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
+        msg = str(n_exc.InvalidIpForSubnet(ip_address='20.20.20.200'))
+        self.assertEqual('InvalidIpForSubnet', data['NeutronError']['type'])
+        self.assertEqual(msg, data['NeutronError']['message'])
 
     def test_create_floatingip_with_multisubnet_id(self):
         with self.network() as network:
