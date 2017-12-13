@@ -497,6 +497,17 @@ class TestDvrRouterOperations(base.BaseTestCase):
                        'device_owner': lib_constants.DEVICE_OWNER_DHCP,
                        'fixed_ips': [{'ip_address': '1.2.3.4',
                                       'prefixlen': 24,
+                                      'subnet_id': subnet_id}]},
+                      {'mac_address': '11:22:33:44:55:66',
+                       'device_owner': lib_constants.DEVICE_OWNER_LOADBALANCER,
+                       'fixed_ips': [{'ip_address': '1.2.3.5',
+                                      'prefixlen': 24,
+                                      'subnet_id': subnet_id}]},
+                      {'mac_address': '22:33:44:55:66:77',
+                       'device_owner':
+                           lib_constants.DEVICE_OWNER_LOADBALANCERV2,
+                       'fixed_ips': [{'ip_address': '1.2.3.6',
+                                      'prefixlen': 24,
                                       'subnet_id': subnet_id}]}]
 
         self.plugin_api.get_ports_by_subnet.return_value = test_ports
