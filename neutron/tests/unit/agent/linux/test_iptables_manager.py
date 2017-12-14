@@ -383,15 +383,44 @@ class IptablesFixture(fixtures.Fixture):
         iptables_manager.IptablesManager.use_table_lock = self.use_table_lock
 
 
-class IptablesManagerStateFulTestCase(base.BaseTestCase):
-
+class IptablesManagerBaseTestCase(base.BaseTestCase):
     def setUp(self):
-        super(IptablesManagerStateFulTestCase, self).setUp()
+        super(IptablesManagerBaseTestCase, self).setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         cfg.CONF.set_override('report_interval', 30, 'AGENT')
         self.execute = mock.patch.object(linux_utils, "execute").start()
-        self.iptables = iptables_manager.IptablesManager()
         self.useFixture(IptablesFixture())
+
+    def _extend_with_ip6tables_filter_end(self, expected_calls, filter_dump):
+        expected_calls.extend([
+            (mock.call(['ip6tables-save'],
+                      run_as_root=True),
+             ''),
+            (mock.call(['ip6tables-restore', '-n'],
+                      process_input=filter_dump,
+                      run_as_root=True, log_fail_as_error=False),
+             None)])
+
+    def _extend_with_ip6tables_filter(self, expected_calls, filter_dump):
+        expected_calls.insert(2, (
+            mock.call(['ip6tables-save'],
+                      run_as_root=True),
+            ''))
+        expected_calls.insert(3, (
+            mock.call(['ip6tables-restore', '-n'],
+                      process_input=filter_dump,
+                      run_as_root=True, log_fail_as_error=False),
+            None))
+        self._extend_with_ip6tables_filter_end(expected_calls, filter_dump)
+
+
+class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
+    use_ipv6 = False
+
+    def setUp(self):
+        super(IptablesManagerStateFulTestCase, self).setUp()
+        self.iptables = iptables_manager.IptablesManager(
+            use_ipv6=self.use_ipv6)
 
     def test_binary_name(self):
         expected = os.path.basename(sys.argv[0])[:16]
@@ -413,155 +442,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             with self.iptables.defer_apply():
                 pass
 
-    def _extend_with_ip6tables_filter(self, expected_calls, filter_dump):
-        expected_calls.insert(2, (
-            mock.call(['ip6tables-save'],
-                      run_as_root=True),
-            ''))
-        expected_calls.insert(3, (
-            mock.call(['ip6tables-restore', '-n'],
-                      process_input=filter_dump,
-                      run_as_root=True, log_fail_as_error=False),
-            None))
-        expected_calls.extend([
-            (mock.call(['ip6tables-save'],
-                      run_as_root=True),
-             ''),
-            (mock.call(['ip6tables-restore', '-n'],
-                      process_input=filter_dump,
-                      run_as_root=True, log_fail_as_error=False),
-             None)])
-
-    def _test_add_and_remove_chain_custom_binary_name_helper(self, use_ipv6):
-        bn = ("xbcdef" * 5)
-
-        self.iptables = iptables_manager.IptablesManager(
-            binary_name=bn,
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
-        iptables_args = {'bn': bn[:16], 'filter_rules': ''}
-
-        filter_dump = FILTER_WITH_RULES_TEMPLATE % iptables_args
-
-        filter_dump_ipv6 = FILTER_TEMPLATE % iptables_args
-
-        filter_dump_mod = filter_dump
-
-        nat_dump = NAT_TEMPLATE % iptables_args
-
-        raw_dump = _generate_raw_dump(iptables_args)
-        mangle_dump = _generate_mangle_dump(iptables_args)
-
-        expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
-             ''),
-            (mock.call(['iptables-restore', '-n'],
-                       process_input=(filter_dump_mod + mangle_dump +
-                                      nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
-             None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
-             ''),
-            (mock.call(['iptables-restore', '-n'],
-                       process_input=(filter_dump + mangle_dump +
-                                      nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
-             None),
-        ]
-        if use_ipv6:
-            mangle_dump_v6 = _generate_mangle_dump_v6(iptables_args)
-            self._extend_with_ip6tables_filter(
-                expected_calls_and_values,
-                filter_dump_ipv6 + mangle_dump_v6 + raw_dump)
-
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.iptables.ipv4['filter'].add_chain('filter')
-        self.iptables.apply()
-
-        self.iptables.ipv4['filter'].empty_chain('filter')
-        self.iptables.apply()
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_add_and_remove_chain_custom_binary_name(self):
-        self._test_add_and_remove_chain_custom_binary_name_helper(False)
-
-    def test_add_and_remove_chain_custom_binary_name_with_ipv6(self):
-        self._test_add_and_remove_chain_custom_binary_name_helper(True)
-
-    def _test_empty_chain_custom_binary_name_helper(self, use_ipv6):
-        bn = ("xbcdef" * 5)[:16]
-
-        self.iptables = iptables_manager.IptablesManager(
-            binary_name=bn,
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
-        iptables_args = {'bn': bn}
-
-        filter_dump = FILTER_TEMPLATE % iptables_args
-
-        filter_rules = ('-I %(bn)s-filter 1 -s 0/0 -d 192.168.0.2\n'
-                        % iptables_args)
-        iptables_args['filter_rules'] = filter_rules
-        filter_dump_mod = FILTER_WITH_RULES_TEMPLATE % iptables_args
-
-        nat_dump = NAT_TEMPLATE % iptables_args
-
-        raw_dump = _generate_raw_dump(iptables_args)
-        mangle_dump = _generate_mangle_dump(iptables_args)
-
-        expected_calls_and_values = [
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
-             ''),
-            (mock.call(['iptables-restore', '-n'],
-                       process_input=(filter_dump_mod + mangle_dump +
-                                      nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
-             None),
-            (mock.call(['iptables-save'],
-                       run_as_root=True),
-             ''),
-            (mock.call(['iptables-restore', '-n'],
-                       process_input=(filter_dump + mangle_dump +
-                                      nat_dump + raw_dump),
-                       run_as_root=True, log_fail_as_error=False),
-             None),
-        ]
-        if use_ipv6:
-            mangle_dump_v6 = _generate_mangle_dump_v6(iptables_args)
-            self._extend_with_ip6tables_filter(
-                expected_calls_and_values,
-                filter_dump + mangle_dump_v6 + raw_dump)
-
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.iptables.ipv4['filter'].add_chain('filter')
-        self.iptables.ipv4['filter'].add_rule('filter',
-                                              '-s 0/0 -d 192.168.0.2')
-        self.iptables.apply()
-
-        self.iptables.ipv4['filter'].remove_chain('filter')
-        self.iptables.apply()
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_empty_chain_custom_binary_name(self):
-        self._test_empty_chain_custom_binary_name_helper(False)
-
-    def test_empty_chain_custom_binary_name_with_ipv6(self):
-        self._test_empty_chain_custom_binary_name_helper(True)
-
-    def _test_add_and_remove_chain_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
+    def test_add_and_remove_chain(self):
         filter_dump_mod = FILTER_WITH_RULES_TEMPLATE % IPTABLES_ARG
 
         expected_calls_and_values = [
@@ -582,7 +463,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True, log_fail_as_error=False),
              None),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             self._extend_with_ip6tables_filter(
                 expected_calls_and_values,
                 FILTER_DUMP + MANGLE_DUMP_V6 + RAW_DUMP)
@@ -597,17 +478,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def test_add_and_remove_chain(self):
-        self._test_add_and_remove_chain_helper(False)
-
-    def test_add_and_remove_chain_with_ipv6(self):
-        self._test_add_and_remove_chain_helper(True)
-
-    def _test_add_filter_rule_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
+    def test_add_filter_rule(self):
         iptables_args = {}
         iptables_args.update(IPTABLES_ARG)
         filter_rules = ('-I %(bn)s-INPUT 1 -s 0/0 -d 192.168.0.2 -j '
@@ -636,7 +507,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True, log_fail_as_error=False),
              None),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             self._extend_with_ip6tables_filter(
                 expected_calls_and_values,
                 FILTER_DUMP + MANGLE_DUMP_V6 + raw_dump)
@@ -661,17 +532,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def test_add_filter_rule(self):
-        self._test_add_filter_rule_helper(False)
-
-    def test_add_filter_rule_with_ipv6(self):
-        self._test_add_filter_rule_helper(True)
-
-    def _test_rule_with_wrap_target_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
+    def test_rule_with_wrap_target(self):
         name = '0123456789' * 5
         wrap = "%s-%s" % (iptables_manager.binary_name,
                           iptables_manager.get_chain_name(name))
@@ -722,7 +583,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True, log_fail_as_error=False),
              None),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             self._extend_with_ip6tables_filter(
                 expected_calls_and_values,
                 FILTER_DUMP + MANGLE_DUMP_V6 + raw_dump)
@@ -744,17 +605,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def test_rule_with_wrap_target(self):
-        self._test_rule_with_wrap_target_helper(False)
-
-    def test_rule_with_wrap_target_with_ipv6(self):
-        self._test_rule_with_wrap_target_helper(True)
-
-    def _test_add_mangle_rule_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
+    def test_add_mangle_rule(self):
         mangle_dump_mod = (
             '# Generated by iptables_manager\n'
             '*mangle\n'
@@ -798,7 +649,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True, log_fail_as_error=False),
              None),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             self._extend_with_ip6tables_filter(
                 expected_calls_and_values,
                 FILTER_DUMP + MANGLE_DUMP_V6 + RAW_DUMP)
@@ -821,17 +672,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def test_add_mangle_rule(self):
-        self._test_add_mangle_rule_helper(False)
-
-    def test_add_mangle_rule_with_ipv6(self):
-        self._test_add_mangle_rule_helper(True)
-
-    def _test_add_nat_rule_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
+    def test_add_nat_rule(self):
         nat_dump = NAT_TEMPLATE % IPTABLES_ARG
 
         nat_dump_mod = ('# Generated by iptables_manager\n'
@@ -879,7 +720,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True, log_fail_as_error=False),
              None),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             self._extend_with_ip6tables_filter(
                 expected_calls_and_values,
                 FILTER_DUMP + MANGLE_DUMP_V6 + raw_dump)
@@ -908,17 +749,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def test_add_nat_rule(self):
-        self._test_add_nat_rule_helper(False)
-
-    def test_add_nat_rule_with_ipv6(self):
-        self._test_add_nat_rule_helper(True)
-
-    def _test_add_raw_rule_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
+    def test_add_raw_rule(self):
         raw_dump_mod = ('# Generated by iptables_manager\n'
                         '*raw\n'
                         ':OUTPUT - [0:0]\n'
@@ -951,7 +782,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True, log_fail_as_error=False),
              None),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             self._extend_with_ip6tables_filter(
                 expected_calls_and_values,
                 FILTER_DUMP + MANGLE_DUMP_V6 + RAW_DUMP)
@@ -972,26 +803,31 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
-    def test_add_raw_rule(self):
-        self._test_add_raw_rule_helper(False)
-
-    def test_add_raw_rule_with_ipv6(self):
-        self._test_add_raw_rule_helper(True)
-
     def test_add_rule_to_a_nonexistent_chain(self):
-        self.assertRaises(LookupError, self.iptables.ipv4['filter'].add_rule,
-                          'nonexistent', '-j DROP')
+        if self.use_ipv6:
+            add_rule = self.iptables.ipv6['filter'].add_rule
+        else:
+            add_rule = self.iptables.ipv4['filter'].add_rule
+        self.assertRaises(LookupError, add_rule, 'nonexistent', '-j DROP')
 
     def test_remove_nonexistent_chain(self):
+        if self.use_ipv6:
+            remove_chain = self.iptables.ipv6['filter'].remove_chain
+        else:
+            remove_chain = self.iptables.ipv4['filter'].remove_chain
         with mock.patch.object(iptables_manager, "LOG") as log:
-            self.iptables.ipv4['filter'].remove_chain('nonexistent')
+            remove_chain('nonexistent')
         log.debug.assert_called_once_with(
             'Attempted to remove chain %s which does not exist',
             'nonexistent')
 
     def test_remove_nonexistent_rule(self):
+        if self.use_ipv6:
+            remove_rule = self.iptables.ipv6['filter'].remove_rule
+        else:
+            remove_rule = self.iptables.ipv4['filter'].remove_rule
         with mock.patch.object(iptables_manager, "LOG") as log:
-            self.iptables.ipv4['filter'].remove_rule('nonexistent', '-j DROP')
+            remove_rule('nonexistent', '-j DROP')
         log.warning.assert_called_once_with(
             'Tried to remove rule that was not there: '
             '%(chain)r %(rule)r %(wrap)r %(top)r',
@@ -1091,39 +927,69 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         # and it succeeds, the next call will only use -w.
         PE_error = linux_utils.ProcessExecutionError(
                        "", iptables_manager.XTABLES_RESOURCE_PROBLEM_CODE)
-        self.execute.side_effect = [FILTER_DUMP, PE_error, None,
-                                    FILTER_DUMP, None,
-                                    FILTER_DUMP, None]
-        self.iptables._apply_synchronized()
-        self.assertEqual(3, self.execute.call_count)
-        self.execute.assert_has_calls(
-            [mock.call(['iptables-save'], run_as_root=True),
-             mock.call(['iptables-restore', '-n'],
+
+        num_calls = 3
+        expected_calls_and_values = [
+            (mock.call(['iptables-save'], run_as_root=True),
+             FILTER_DUMP),
+            (mock.call(['iptables-restore', '-n'],
                        process_input=mock.ANY, run_as_root=True,
                        log_fail_as_error=False),
-             mock.call(['iptables-restore', '-n', '-w', '10',
+             PE_error),
+            (mock.call(['iptables-restore', '-n', '-w', '10',
                         '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                       process_input=mock.ANY, run_as_root=True)])
+                       process_input=mock.ANY, run_as_root=True),
+             None),
+        ]
+        if self.use_ipv6:
+            num_calls += 2
+            expected_calls_and_values.append(
+                (mock.call(['ip6tables-save'], run_as_root=True),
+                 FILTER_DUMP))
+            expected_calls_and_values.append(
+                (mock.call(['ip6tables-restore', '-n', '-w', '10',
+                            '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
+                           process_input=mock.ANY, run_as_root=True),
+                 None))
+
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        self.iptables._apply_synchronized()
+        self.assertEqual(num_calls, self.execute.call_count)
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
         self.execute.reset_mock()
-        self.iptables._apply_synchronized()
-        self.assertEqual(2, self.execute.call_count)
-        self.execute.assert_has_calls(
-            [mock.call(['iptables-save'], run_as_root=True),
-             mock.call(['iptables-restore', '-n', '-w', '10',
+        num_calls = 2
+        expected_calls_and_values = [
+            (mock.call(['iptables-save'], run_as_root=True),
+             FILTER_DUMP),
+            (mock.call(['iptables-restore', '-n', '-w', '10',
                         '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                       process_input=mock.ANY, run_as_root=True)])
+                       process_input=mock.ANY, run_as_root=True),
+             None),
+        ]
+        if self.use_ipv6:
+            num_calls += 2
+            expected_calls_and_values.append(
+                (mock.call(['ip6tables-save'], run_as_root=True),
+                 FILTER_DUMP))
+            expected_calls_and_values.append(
+                (mock.call(['ip6tables-restore', '-n', '-w', '10',
+                            '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
+                           process_input=mock.ANY, run_as_root=True),
+                 None))
+
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        self.iptables._apply_synchronized()
+        self.assertEqual(num_calls, self.execute.call_count)
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
         # Another instance of the class should behave similarly now
         self.execute.reset_mock()
-        iptm = iptables_manager.IptablesManager()
+        iptm = iptables_manager.IptablesManager(use_ipv6=self.use_ipv6)
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
         iptm._apply_synchronized()
-        self.assertEqual(2, self.execute.call_count)
-        self.execute.assert_has_calls(
-            [mock.call(['iptables-save'], run_as_root=True),
-             mock.call(['iptables-restore', '-n', '-w', '10',
-                        '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
-                       process_input=mock.ANY, run_as_root=True)])
+        self.assertEqual(num_calls, self.execute.call_count)
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_get_traffic_counters_chain_notexists(self):
         with mock.patch.object(iptables_manager, "LOG") as log:
@@ -1134,10 +1000,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
             'Attempted to get traffic counters of chain %s which '
             'does not exist', 'chain1')
 
-    def _test_get_traffic_counters_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
+    def test_get_traffic_counters(self):
         exp_packets = 800
         exp_bytes = 131802
 
@@ -1159,7 +1022,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True),
              ''),
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
                            '-n', '-v', '-x', '-w', '10'], run_as_root=True),
@@ -1185,16 +1048,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         tools.verify_mock_calls(self.execute, expected_calls_and_values,
                                 any_order=True)
 
-    def test_get_traffic_counters(self):
-        self._test_get_traffic_counters_helper(False)
-
-    def test_get_traffic_counters_with_ipv6(self):
-        self._test_get_traffic_counters_helper(True)
-
-    def _test_get_traffic_counters_with_zero_helper(self, use_ipv6):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=use_ipv6)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
+    def test_get_traffic_counters_and_zero(self):
         exp_packets = 800
         exp_bytes = 131802
 
@@ -1216,7 +1070,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
                        run_as_root=True),
              '')
         ]
-        if use_ipv6:
+        if self.use_ipv6:
             expected_calls_and_values.append(
                 (mock.call(['ip6tables', '-t', 'raw', '-L', 'OUTPUT',
                             '-n', '-v', '-x', '-w', '10', '-Z'],
@@ -1244,17 +1098,7 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         tools.verify_mock_calls(self.execute, expected_calls_and_values,
                                 any_order=True)
 
-    def test_get_traffic_counters_with_zero(self):
-        self._test_get_traffic_counters_with_zero_helper(False)
-
-    def test_get_traffic_counters_with_zero_with_ipv6(self):
-        self._test_get_traffic_counters_with_zero_helper(True)
-
     def test_add_blank_rule(self):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=False)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
         iptables_args = {}
         iptables_args.update(IPTABLES_ARG)
         filter_rules = ('-A %(bn)s-test-filter\n' % iptables_args)
@@ -1267,6 +1111,15 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
              (filter_dump_mod + MANGLE_RESTORE_DUMP +
               NAT_RESTORE_DUMP + RAW_RESTORE_DUMP)),
         ]
+        if self.use_ipv6:
+            expected_calls_and_values.append(
+                (mock.call(['ip6tables-save'], run_as_root=True),
+                 FILTER_DUMP))
+            expected_calls_and_values.append(
+                (mock.call(['ip6tables-restore', '-n'],
+                           process_input=mock.ANY, run_as_root=True,
+                           log_fail_as_error=False),
+                 None))
 
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
@@ -1278,10 +1131,6 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def test_add_rule_exchanged_interface_and_ip(self):
-        self.iptables = iptables_manager.IptablesManager(
-            use_ipv6=False)
-        self.execute = mock.patch.object(self.iptables, "execute").start()
-
         iptables_args = {}
         iptables_args.update(IPTABLES_ARG)
         filter_rules = ('-A %(bn)s-test-filter -d 192.168.0.2 -i tap-xxx '
@@ -1310,6 +1159,11 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
              None),
         ]
 
+        if self.use_ipv6:
+            self._extend_with_ip6tables_filter_end(
+                expected_calls_and_values,
+                FILTER_DUMP + MANGLE_DUMP_V6 + RAW_DUMP)
+
         tools.setup_mock_calls(self.execute, expected_calls_and_values)
 
         self.iptables.ipv4['filter'].add_chain('test-filter')
@@ -1320,6 +1174,144 @@ class IptablesManagerStateFulTestCase(base.BaseTestCase):
         self.iptables.apply()
 
         tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
+
+class IptablesManagerStateFulTestCaseIPv6(IptablesManagerStateFulTestCase):
+    use_ipv6 = True
+
+
+class IptablesManagerStateFulTestCaseCustomBinaryName(
+        IptablesManagerBaseTestCase):
+    use_ipv6 = False
+    bn = ("xbcdef" * 5)
+
+    def setUp(self):
+        super(IptablesManagerStateFulTestCaseCustomBinaryName, self).setUp()
+        self.iptables = iptables_manager.IptablesManager(
+            binary_name=self.bn,
+            use_ipv6=self.use_ipv6)
+
+    def test_add_and_remove_chain_custom_binary_name(self):
+        iptables_args = {'bn': self.bn[:16], 'filter_rules': ''}
+
+        filter_dump = FILTER_WITH_RULES_TEMPLATE % iptables_args
+
+        filter_dump_ipv6 = FILTER_TEMPLATE % iptables_args
+
+        filter_dump_mod = filter_dump
+
+        nat_dump = NAT_TEMPLATE % iptables_args
+
+        raw_dump = _generate_raw_dump(iptables_args)
+        mangle_dump = _generate_mangle_dump(iptables_args)
+
+        expected_calls_and_values = [
+            (mock.call(['iptables-save'],
+                       run_as_root=True),
+             ''),
+            (mock.call(['iptables-restore', '-n'],
+                       process_input=(filter_dump_mod + mangle_dump +
+                                      nat_dump + raw_dump),
+                       run_as_root=True, log_fail_as_error=False),
+             None),
+            (mock.call(['iptables-save'],
+                       run_as_root=True),
+             ''),
+            (mock.call(['iptables-restore', '-n'],
+                       process_input=(filter_dump + mangle_dump +
+                                      nat_dump + raw_dump),
+                       run_as_root=True, log_fail_as_error=False),
+             None),
+        ]
+        if self.use_ipv6:
+            mangle_dump_v6 = _generate_mangle_dump_v6(iptables_args)
+            self._extend_with_ip6tables_filter(
+                expected_calls_and_values,
+                filter_dump_ipv6 + mangle_dump_v6 + raw_dump)
+
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        self.iptables.ipv4['filter'].add_chain('filter')
+        self.iptables.apply()
+
+        self.iptables.ipv4['filter'].empty_chain('filter')
+        self.iptables.apply()
+
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
+
+class IptablesManagerStateFulTestCaseCustomBinaryNameIPv6(
+        IptablesManagerStateFulTestCaseCustomBinaryName):
+    use_ipv6 = True
+
+
+class IptablesManagerStateFulTestCaseEmptyCustomBinaryName(
+        IptablesManagerBaseTestCase):
+    use_ipv6 = False
+    bn = ("xbcdef" * 5)[:16]
+
+    def setUp(self):
+        super(IptablesManagerStateFulTestCaseEmptyCustomBinaryName,
+              self).setUp()
+        self.iptables = iptables_manager.IptablesManager(
+            binary_name=self.bn,
+            use_ipv6=self.use_ipv6)
+
+    def test_empty_chain_custom_binary_name(self):
+        iptables_args = {'bn': self.bn}
+
+        filter_dump = FILTER_TEMPLATE % iptables_args
+
+        filter_rules = ('-I %(bn)s-filter 1 -s 0/0 -d 192.168.0.2\n'
+                        % iptables_args)
+        iptables_args['filter_rules'] = filter_rules
+        filter_dump_mod = FILTER_WITH_RULES_TEMPLATE % iptables_args
+
+        nat_dump = NAT_TEMPLATE % iptables_args
+
+        raw_dump = _generate_raw_dump(iptables_args)
+        mangle_dump = _generate_mangle_dump(iptables_args)
+
+        expected_calls_and_values = [
+            (mock.call(['iptables-save'],
+                       run_as_root=True),
+             ''),
+            (mock.call(['iptables-restore', '-n'],
+                       process_input=(filter_dump_mod + mangle_dump +
+                                      nat_dump + raw_dump),
+                       run_as_root=True, log_fail_as_error=False),
+             None),
+            (mock.call(['iptables-save'],
+                       run_as_root=True),
+             ''),
+            (mock.call(['iptables-restore', '-n'],
+                       process_input=(filter_dump + mangle_dump +
+                                      nat_dump + raw_dump),
+                       run_as_root=True, log_fail_as_error=False),
+             None),
+        ]
+        if self.use_ipv6:
+            mangle_dump_v6 = _generate_mangle_dump_v6(iptables_args)
+            self._extend_with_ip6tables_filter(
+                expected_calls_and_values,
+                filter_dump + mangle_dump_v6 + raw_dump)
+
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+
+        self.iptables.ipv4['filter'].add_chain('filter')
+        self.iptables.ipv4['filter'].add_rule('filter',
+                                              '-s 0/0 -d 192.168.0.2')
+        self.iptables.apply()
+
+        self.iptables.ipv4['filter'].remove_chain('filter')
+        self.iptables.apply()
+
+        tools.verify_mock_calls(self.execute, expected_calls_and_values)
+
+
+class IptablesManagerStateFulTestCaseEmptyCustomBinaryNameIPv6(
+        IptablesManagerStateFulTestCaseEmptyCustomBinaryName):
+    use_ipv6 = True
 
 
 class IptablesManagerStateLessTestCase(base.BaseTestCase):
