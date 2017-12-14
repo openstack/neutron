@@ -67,7 +67,7 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
 
     def test__set_bridge_name_notify(self):
 
-        def fake_callback(resource, event, trigger, **kwargs):
+        def fake_callback(resource, event, trigger, payload=None):
             trigger('fake-br-name')
 
         registry.subscribe(fake_callback, a_const.OVS_BRIDGE_NAME,
