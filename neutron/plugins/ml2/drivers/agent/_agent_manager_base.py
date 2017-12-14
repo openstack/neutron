@@ -158,6 +158,13 @@ class CommonAgentManagerBase(object):
         """
 
     @abc.abstractmethod
+    def get_agent_api(self, **kwargs):
+        """Get L2 extensions drivers API interface class.
+
+        :return: instance of the class containing Agent Extension API
+        """
+
+    @abc.abstractmethod
     def get_rpc_consumers(self):
         """Get a list of topics for which an RPC consumer should be created
 

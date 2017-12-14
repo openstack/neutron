@@ -20,6 +20,7 @@ from oslo_log import log
 from neutron.agent.l2.extensions import qos_linux as qos
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import tc_lib
+from neutron.common import ipv6_utils
 from neutron.services.qos.drivers.linuxbridge import driver
 
 LOG = log.getLogger(__name__)
@@ -39,10 +40,26 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
     IPTABLES_DIRECTION_PREFIX = {const.INGRESS_DIRECTION: "i",
                                  const.EGRESS_DIRECTION: "o"}
 
+    def __init__(self):
+        super(QosLinuxbridgeAgentDriver, self).__init__()
+        self.iptables_manager = None
+        self.agent_api = None
+        self.tbf_latency = cfg.CONF.QOS.tbf_latency
+
+    def consume_api(self, agent_api):
+        self.agent_api = agent_api
+
     def initialize(self):
         LOG.info("Initializing Linux bridge QoS extension")
-        self.iptables_manager = iptables_manager.IptablesManager(use_ipv6=True)
-        self.tbf_latency = cfg.CONF.QOS.tbf_latency
+        if self.agent_api:
+            self.iptables_manager = self.agent_api.get_iptables_manager()
+        if not self.iptables_manager:
+            # If agent_api can't provide iptables_manager, it can be
+            # created here for extension needs
+            self.iptables_manager = iptables_manager.IptablesManager(
+                state_less=True,
+                use_ipv6=ipv6_utils.is_enabled_and_bind_by_default())
+        self.iptables_manager.initialize_mangle_table()
 
     def _dscp_chain_name(self, direction, device):
         return iptables_manager.get_chain_name(

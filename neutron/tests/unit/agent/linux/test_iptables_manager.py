@@ -1334,3 +1334,15 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
 
     def test_mangle_not_found(self):
         self.assertNotIn('mangle', self.iptables.ipv4)
+
+    def test_initialize_mangle_table(self):
+        iptables = iptables_manager.IptablesManager(state_less=True)
+        iptables.initialize_mangle_table()
+        self.assertIn('mangle', iptables.ipv4)
+        self.assertNotIn('nat', iptables.ipv4)
+
+    def test_initialize_nat_table(self):
+        iptables = iptables_manager.IptablesManager(state_less=True)
+        iptables.initialize_nat_table()
+        self.assertIn('nat', iptables.ipv4)
+        self.assertNotIn('mangle', iptables.ipv4)
