@@ -98,10 +98,12 @@ class NotifierHook(hooks.PecanHook):
 
         notifier_method = '%s.%s.end' % (resource_name, action)
         notifier_action = utils.get_controller(state).plugin_handlers[action]
-        registry.notify(resource_name, events.BEFORE_RESPONSE, self,
-                        context=neutron_context, data=result,
-                        method_name=notifier_method, action=notifier_action,
-                        collection=collection_name, original=original)
+        registry.publish(resource_name, events.BEFORE_RESPONSE, self,
+                         payload=events.APIEventPayload(
+                             neutron_context, notifier_method, notifier_action,
+                             request_body=state.request.body,
+                             states=(original, result,),
+                             collection_name=collection_name))
 
         if action == 'delete':
             resource_id = state.request.context.get('resource_id')

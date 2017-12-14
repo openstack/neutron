@@ -1349,7 +1349,7 @@ class RegistryNotificationTest(APIv2TestBase):
         instance.get_networks.return_value = initial_input
         instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
-        with mock.patch.object(registry, 'notify') as notify:
+        with mock.patch.object(registry, 'publish') as notify:
             if opname == 'create':
                 res = self.api.post_json(
                     _get_path('networks'),

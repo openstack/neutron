@@ -261,19 +261,18 @@ class DhcpAgentNotifyAPI(object):
                 return False
         return True
 
-    def _send_dhcp_notification(self, resource, event, trigger, context=None,
-                                data=None, method_name=None, collection=None,
-                                action='', **kwargs):
-        action = action.split('_')[0]
+    def _send_dhcp_notification(self, resource, event, trigger, payload=None):
+        action = payload.action.split('_')[0]
         if (resource in self.uses_native_notifications and
                 self.uses_native_notifications[resource][action]):
             return
-        if collection and collection in data:
-            for body in data[collection]:
+        data = payload.latest_state
+        if payload.collection_name and payload.collection_name in data:
+            for body in data[payload.collection_name]:
                 item = {resource: body}
-                self.notify(context, item, method_name)
+                self.notify(payload.context, item, payload.method_name)
         else:
-            self.notify(context, data, method_name)
+            self.notify(payload.context, data, payload.method_name)
 
     def notify(self, context, data, method_name):
         # data is {'key' : 'value'} with only one key

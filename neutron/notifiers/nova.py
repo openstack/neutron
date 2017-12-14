@@ -96,10 +96,9 @@ class Notifier(object):
 
     @registry.receives(resources.PORT, [events.BEFORE_RESPONSE])
     @registry.receives(resources.FLOATING_IP, [events.BEFORE_RESPONSE])
-    def _send_nova_notification(self, resource, event, trigger,
-                                action=None, original=None, data=None,
-                                **kwargs):
-        self.send_network_change(action, original, data)
+    def _send_nova_notification(self, resource, event, trigger, payload=None):
+        self.send_network_change(payload.action, payload.states[0],
+                                 payload.latest_state)
 
     def send_network_change(self, action, original_obj,
                             returned_obj):

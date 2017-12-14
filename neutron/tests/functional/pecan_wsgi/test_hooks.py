@@ -424,7 +424,7 @@ class TestCallbackRegistryNotifier(test_functional.PecanFunctionalTest):
     def setUp(self):
         super(TestCallbackRegistryNotifier, self).setUp()
         patcher = mock.patch('neutron.pecan_wsgi.hooks.notifier.registry')
-        self.mock_notifier = patcher.start().notify
+        self.mock_notifier = patcher.start().publish
 
     def _create(self, bulk=False):
         if bulk:
@@ -439,19 +439,26 @@ class TestCallbackRegistryNotifier(test_functional.PecanFunctionalTest):
     def test_create(self):
         self._create()
         self.mock_notifier.assert_called_once_with(
-            'network', events.BEFORE_RESPONSE, mock.ANY, context=mock.ANY,
-            data=mock.ANY, method_name='network.create.end',
-            action='create_network', collection='networks', original={})
-        actual = self.mock_notifier.call_args[1]['data']
+            'network', events.BEFORE_RESPONSE, mock.ANY, payload=mock.ANY)
+
+        payload = self.mock_notifier.call_args[1]['payload']
+        self.assertEqual('network.create.end', payload.method_name)
+        self.assertEqual('create_network', payload.action)
+        self.assertEqual('networks', payload.collection_name)
+
+        actual = payload.latest_state
         self.assertEqual('meh-1', actual['network']['name'])
 
     def test_create_bulk(self):
         self._create(bulk=True)
         self.mock_notifier.assert_called_once_with(
-            'network', events.BEFORE_RESPONSE, mock.ANY, context=mock.ANY,
-            data=mock.ANY, method_name='network.create.end',
-            action='create_network', collection='networks', original={})
-        actual = self.mock_notifier.call_args[1]['data']
+            'network', events.BEFORE_RESPONSE, mock.ANY, payload=mock.ANY)
+
+        payload = self.mock_notifier.call_args[1]['payload']
+        self.assertEqual('network.create.end', payload.method_name)
+        self.assertEqual('create_network', payload.action)
+        self.assertEqual('networks', payload.collection_name)
+        actual = payload.latest_state
         self.assertEqual(2, len(actual['networks']))
         self.assertEqual('meh-1', actual['networks'][0]['name'])
         self.assertEqual('meh-2', actual['networks'][1]['name'])
@@ -463,12 +470,16 @@ class TestCallbackRegistryNotifier(test_functional.PecanFunctionalTest):
                           params={'network': {'name': 'new-meh'}},
                           headers={'X-Project-Id': 'tenid'})
         self.mock_notifier.assert_called_once_with(
-            'network', events.BEFORE_RESPONSE, mock.ANY, context=mock.ANY,
-            data=mock.ANY, method_name='network.update.end',
-            action='update_network', collection='networks', original=mock.ANY)
-        actual_new = self.mock_notifier.call_args[1]['data']
+            'network', events.BEFORE_RESPONSE, mock.ANY, payload=mock.ANY)
+
+        payload = self.mock_notifier.call_args[1]['payload']
+        self.assertEqual('network.update.end', payload.method_name)
+        self.assertEqual('update_network', payload.action)
+        self.assertEqual('networks', payload.collection_name)
+
+        actual_new = payload.latest_state
         self.assertEqual('new-meh', actual_new['network']['name'])
-        actual_original = self.mock_notifier.call_args[1]['original']
+        actual_original = payload.states[0]
         self.assertEqual(network_id, actual_original['id'])
 
     def test_delete(self):
@@ -478,8 +489,12 @@ class TestCallbackRegistryNotifier(test_functional.PecanFunctionalTest):
             '/v2.0/networks/%s.json' % network_id,
             headers={'X-Project-Id': 'tenid'})
         self.mock_notifier.assert_called_once_with(
-            'network', events.BEFORE_RESPONSE, mock.ANY, context=mock.ANY,
-            data=mock.ANY, method_name='network.delete.end',
-            action='delete_network', collection='networks', original={})
-        actual = self.mock_notifier.call_args[1]['data']
+            'network', events.BEFORE_RESPONSE, mock.ANY, payload=mock.ANY)
+
+        payload = self.mock_notifier.call_args[1]['payload']
+        self.assertEqual('network.delete.end', payload.method_name)
+        self.assertEqual('delete_network', payload.action)
+        self.assertEqual('networks', payload.collection_name)
+
+        actual = payload.latest_state
         self.assertEqual(network_id, actual['network']['id'])
