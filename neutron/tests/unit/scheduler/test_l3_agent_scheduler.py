@@ -37,7 +37,6 @@ from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
-from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
@@ -470,13 +469,11 @@ class L3SchedulerTestBaseMixin(object):
 
     def _test_schedule_bind_router(self, agent, router):
         ctx = self.adminContext
-        session = ctx.session
-        db = rb_model.RouterL3AgentBinding
         scheduler = l3_agent_scheduler.ChanceScheduler()
 
         rid = router['router']['id']
         scheduler.bind_router(self.plugin, ctx, rid, agent.id)
-        results = (session.query(db).filter_by(router_id=rid).all())
+        results = rb_obj.RouterL3AgentBinding.get_objects(ctx, router_id=rid)
         self.assertGreater(len(results), 0)
         self.assertIn(agent.id, [bind.l3_agent_id for bind in results])
 
@@ -1326,14 +1323,12 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
     @staticmethod
     def get_router_l3_agent_binding(context, router_id, l3_agent_id=None,
                                     binding_index=None):
-        model = rb_model.RouterL3AgentBinding
-        query = context.session.query(model)
-        query = query.filter(model.router_id == router_id)
+        args = {'router_id': router_id}
         if l3_agent_id:
-            query = query.filter(model.l3_agent_id == l3_agent_id)
+            args['l3_agent_id'] = l3_agent_id
         if binding_index:
-            query = query.filter(model.binding_index == binding_index)
-        return query
+            args['binding_index'] = binding_index
+        return rb_obj.RouterL3AgentBinding.get_objects(context, **args)
 
     def _create_ha_router(self, ha=True, tenant_id='tenant1', az_hints=None):
         self.adminContext.tenant_id = tenant_id
@@ -1469,12 +1464,11 @@ class VacantBindingIndexTestCase(L3HATestCaseMixin):
         router = self._create_ha_router()
 
         if self.binding_index:
-            binding = self.get_router_l3_agent_binding(
+            bindings = self.get_router_l3_agent_binding(
                 self.adminContext, router['id'],
                 binding_index=self.binding_index)
-            self.assertEqual(1, binding.count())
-            with self.adminContext.session.begin():
-                self.adminContext.session.delete(binding.first())
+            self.assertEqual(1, len(bindings))
+            bindings[0].delete()
 
         vacant_binding_index = self.plugin.get_vacant_binding_index(
                 self.adminContext, router['id'], self.is_manual_scheduling)
@@ -1663,7 +1657,7 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         router = self._create_ha_router()
 
         bindings = self.get_router_l3_agent_binding(self.adminContext,
-                                                    router['id']).all()
+                                                    router['id'])
         binding_indices = [binding.binding_index for binding in bindings]
         self.assertEqual(list(range(1, cfg.CONF.max_l3_agents_per_router + 1)),
                          binding_indices)
@@ -1689,7 +1683,7 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         # once.
         bindings = self.get_router_l3_agent_binding(
             self.adminContext, router['id'], l3_agent_id=agents[0]['id'])
-        self.assertEqual(1, bindings.count())
+        self.assertEqual(1, len(bindings))
 
 
 class L3HAChanceSchedulerTestCase(L3HATestCaseMixin):
