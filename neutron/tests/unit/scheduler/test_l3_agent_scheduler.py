@@ -37,11 +37,11 @@ from neutron.db import l3_dvr_ha_scheduler_db
 from neutron.db import l3_dvrscheduler_db
 from neutron.db import l3_hamode_db
 from neutron.db import l3_hascheduler_db
-from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3
 from neutron.extensions import l3agentscheduler as l3agent
 from neutron import manager
+from neutron.objects import agent as agent_obj
 from neutron.objects import l3_hamode
 from neutron.objects import l3agent as rb_obj
 from neutron.scheduler import l3_agent_scheduler
@@ -150,7 +150,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def test__bind_routers_centralized(self):
         routers = [{'id': 'foo_router'}]
-        agent = agent_model.Agent(id='foo_agent')
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         with mock.patch.object(self.scheduler, 'bind_router') as mock_bind:
             self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
         mock_bind.assert_called_once_with(mock.ANY, mock.ANY,
@@ -158,7 +158,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
 
     def _test__bind_routers_ha(self, has_binding):
         routers = [{'id': 'foo_router', 'ha': True, 'tenant_id': '42'}]
-        agent = agent_model.Agent(id='foo_agent')
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         with mock.patch.object(self.scheduler,
                                '_router_has_binding',
                                return_value=has_binding) as mock_has_binding,\
@@ -166,7 +166,7 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
                                   'create_ha_port_and_bind') as mock_bind:
             self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
             mock_has_binding.assert_called_once_with(mock.ANY, 'foo_router',
-                                                     'foo_agent')
+                                                     agent.id)
             self.assertEqual(not has_binding, mock_bind.called)
 
     def test__bind_routers_ha_has_binding(self):
@@ -412,7 +412,7 @@ class L3SchedulerTestBaseMixin(object):
 
     def _prepare_schedule_dvr_tests(self):
         scheduler = l3_agent_scheduler.ChanceScheduler()
-        agent = agent_model.Agent()
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         plugin = mock.Mock()
@@ -1273,7 +1273,7 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
             self.assertEqual(0, len(sub_ids))
 
     def _prepare_schedule_snat_tests(self):
-        agent = agent_model.Agent()
+        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
         agent.admin_state_up = True
         agent.heartbeat_timestamp = timeutils.utcnow()
         router = {
@@ -1373,9 +1373,8 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         # should create only one network:router_ha_interface port on a router
         # when binding to same agent. So we need only one agent for testing
         # (preferably with dvr_snat mode).
-        for agent in self.adminContext.session.query(
-            agent_model.Agent).all():
-            agent.admin_state_up = False
+        agent_obj.Agent.update_objects(
+            self.adminContext, {'admin_state_up': False})
         l3_dvr_snat_agent = helpers.register_l3_agent(
             'fake_l3_host_dvr_snat', constants.L3_AGENT_MODE_DVR_SNAT)
         router = self._create_ha_router(tenant_id='foo_tenant')
