@@ -328,31 +328,66 @@ class IptablesManager(object):
             tables['filter'].add_rule('neutron-filter-top', '-j $local',
                                       wrap=False)
 
+        self.ipv4.update({'raw': IptablesTable(binary_name=self.wrap_name)})
+        self.ipv6.update({'raw': IptablesTable(binary_name=self.wrap_name)})
+
         # Wrap the built-in chains
         builtin_chains = {4: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']},
                           6: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']}}
+        builtin_chains[4].update({'raw': ['PREROUTING', 'OUTPUT']})
+        builtin_chains[6].update({'raw': ['PREROUTING', 'OUTPUT']})
+        self._configure_builtin_chains(builtin_chains)
 
         if not state_less:
-            self.ipv4.update(
-                {'mangle': IptablesTable(binary_name=self.wrap_name)})
-            builtin_chains[4].update(
-                {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
-                            'POSTROUTING']})
-            self.ipv6.update(
-                {'mangle': IptablesTable(binary_name=self.wrap_name)})
-            builtin_chains[6].update(
-                {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
-                            'POSTROUTING']})
-            self.ipv4.update(
-                {'nat': IptablesTable(binary_name=self.wrap_name)})
-            builtin_chains[4].update({'nat': ['PREROUTING',
-                                      'OUTPUT', 'POSTROUTING']})
+            self.initialize_mangle_table()
+            self.initialize_nat_table()
 
-        self.ipv4.update({'raw': IptablesTable(binary_name=self.wrap_name)})
-        builtin_chains[4].update({'raw': ['PREROUTING', 'OUTPUT']})
-        self.ipv6.update({'raw': IptablesTable(binary_name=self.wrap_name)})
-        builtin_chains[6].update({'raw': ['PREROUTING', 'OUTPUT']})
+    def initialize_mangle_table(self):
+        self.ipv4.update(
+            {'mangle': IptablesTable(binary_name=self.wrap_name)})
+        self.ipv6.update(
+            {'mangle': IptablesTable(binary_name=self.wrap_name)})
 
+        builtin_chains = {
+            4: {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
+                           'POSTROUTING']},
+            6: {'mangle': ['PREROUTING', 'INPUT', 'FORWARD', 'OUTPUT',
+                           'POSTROUTING']}}
+        self._configure_builtin_chains(builtin_chains)
+
+        # Add a mark chain to mangle PREROUTING chain. It is used to
+        # identify ingress packets from a certain interface.
+        self.ipv4['mangle'].add_chain('mark')
+        self.ipv4['mangle'].add_rule('PREROUTING', '-j $mark')
+
+    def initialize_nat_table(self):
+        self.ipv4.update(
+            {'nat': IptablesTable(binary_name=self.wrap_name)})
+
+        builtin_chains = {
+            4: {'nat': ['PREROUTING', 'OUTPUT', 'POSTROUTING']}}
+        self._configure_builtin_chains(builtin_chains)
+
+        # Add a neutron-postrouting-bottom chain. It's intended to be
+        # shared among the various neutron components. We set it as the
+        # last chain of POSTROUTING chain.
+        self.ipv4['nat'].add_chain('neutron-postrouting-bottom', wrap=False)
+        self.ipv4['nat'].add_rule(
+            'POSTROUTING', '-j neutron-postrouting-bottom', wrap=False)
+
+        # We add a snat chain to the shared neutron-postrouting-bottom
+        # chain so that it's applied last.
+        self.ipv4['nat'].add_chain('snat')
+        self.ipv4['nat'].add_rule('neutron-postrouting-bottom',
+                                  '-j $snat', wrap=False,
+                                  comment=ic.SNAT_OUT)
+
+        # And then we add a float-snat chain and jump to first thing in
+        # the snat chain.
+        self.ipv4['nat'].add_chain('float-snat')
+        self.ipv4['nat'].add_rule('snat', '-j $float-snat')
+
+    def _configure_builtin_chains(self, builtin_chains):
         for ip_version in builtin_chains:
             if ip_version == 4:
                 tables = self.ipv4
@@ -364,33 +399,6 @@ class IptablesManager(object):
                     tables[table].add_chain(chain)
                     tables[table].add_rule(chain, '-j $%s' %
                                            (chain), wrap=False)
-
-        if not state_less:
-            # Add a neutron-postrouting-bottom chain. It's intended to be
-            # shared among the various neutron components. We set it as the
-            # last chain of POSTROUTING chain.
-            self.ipv4['nat'].add_chain('neutron-postrouting-bottom',
-                                       wrap=False)
-            self.ipv4['nat'].add_rule('POSTROUTING',
-                                      '-j neutron-postrouting-bottom',
-                                      wrap=False)
-
-            # We add a snat chain to the shared neutron-postrouting-bottom
-            # chain so that it's applied last.
-            self.ipv4['nat'].add_chain('snat')
-            self.ipv4['nat'].add_rule('neutron-postrouting-bottom',
-                                      '-j $snat', wrap=False,
-                                      comment=ic.SNAT_OUT)
-
-            # And then we add a float-snat chain and jump to first thing in
-            # the snat chain.
-            self.ipv4['nat'].add_chain('float-snat')
-            self.ipv4['nat'].add_rule('snat', '-j $float-snat')
-
-            # Add a mark chain to mangle PREROUTING chain. It is used to
-            # identify ingress packets from a certain interface.
-            self.ipv4['mangle'].add_chain('mark')
-            self.ipv4['mangle'].add_rule('PREROUTING', '-j $mark')
 
     def get_tables(self, ip_version):
         return {4: self.ipv4, 6: self.ipv6}[ip_version]

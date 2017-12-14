@@ -73,6 +73,43 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
     def _dscp_rule_tag(self, device):
         return "dscp-%s" % device
 
+    def test_initialize_iptables_manager_passed_through_api(self):
+        iptables_manager = mock.Mock()
+        qos_drv = qos_driver.QosLinuxbridgeAgentDriver()
+        with mock.patch.object(
+            qos_drv, "agent_api"
+        ) as agent_api, mock.patch(
+            "neutron.agent.linux.iptables_manager.IptablesManager"
+        ) as IptablesManager:
+            agent_api.get_iptables_manager.return_value = (
+                iptables_manager)
+            qos_drv.initialize()
+            self.assertEqual(iptables_manager, qos_drv.iptables_manager)
+            self.assertNotEqual(IptablesManager(), qos_drv.iptables_manager)
+            iptables_manager.initialize_mangle_table.assert_called_once_with()
+
+    def test_initialize_iptables_manager_not_passed_through_api(self):
+        qos_drv = qos_driver.QosLinuxbridgeAgentDriver()
+        with mock.patch.object(
+            qos_drv, "agent_api"
+        ) as agent_api, mock.patch(
+            "neutron.agent.linux.iptables_manager.IptablesManager"
+        ) as IptablesManager:
+            agent_api.get_iptables_manager.return_value = None
+            qos_drv.initialize()
+            self.assertEqual(IptablesManager(), qos_drv.iptables_manager)
+            IptablesManager().initialize_mangle_table.assert_called_once_with()
+
+    def test_initialize_iptables_manager_no_agent_api(self):
+        qos_drv = qos_driver.QosLinuxbridgeAgentDriver()
+        with mock.patch(
+            "neutron.agent.linux.iptables_manager.IptablesManager"
+        ) as IptablesManager:
+            qos_driver.agent_api = None
+            qos_drv.initialize()
+            self.assertEqual(IptablesManager(), qos_drv.iptables_manager)
+            IptablesManager().initialize_mangle_table.assert_called_once_with()
+
     def test_create_bandwidth_limit(self):
         with mock.patch.object(
             tc_lib.TcCommand, "set_filters_bw_limit"
