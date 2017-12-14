@@ -41,3 +41,14 @@ hardened bridge objects with cookie values allocated for calling extensions::
 Bridge objects returned by those methods already have new default cookie values
 allocated for extension flows. All flow management methods (add_flow, mod_flow,
 ...) enforce those allocated cookies.
+
+Linuxbridge agent API
+~~~~~~~~~~~~~~~~~~~~~~
+
+* neutron.plugins.ml2.drivers.linuxbridge.agent.linuxbridge_agent_extension_api
+
+The Linux bridge agent extension API object includes a method that returns an
+instance of the IptablesManager class, which is used by the L2 agent to manage
+security group rules::
+
+#. get_iptables_manager
