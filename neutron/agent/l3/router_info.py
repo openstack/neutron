@@ -1112,14 +1112,14 @@ class RouterInfo(object):
 
         :param agent: Passes the agent in order to send RPC messages.
         """
-        LOG.debug("process router delete")
+        LOG.debug("Process delete, router %s", self.router['id'])
         if self.router_namespace.exists():
             self._process_internal_ports()
             self.agent.pd.sync_router(self.router['id'])
             self._process_external_on_delete()
         else:
             LOG.warning("Can't gracefully delete the router %s: "
-                        "no router namespace found.", self.router['id'])
+                        "no router namespace found", self.router['id'])
 
     @common_utils.exception_logger()
     def process(self):
@@ -1130,7 +1130,7 @@ class RouterInfo(object):
 
         :param agent: Passes the agent in order to send RPC messages.
         """
-        LOG.debug("process router updates")
+        LOG.debug("Process updates, router %s", self.router['id'])
         self._process_internal_ports()
         self.agent.pd.sync_router(self.router['id'])
         self.process_external()
