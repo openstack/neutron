@@ -36,9 +36,9 @@ Neutron Request for Feature Enhancements
 ----------------------------------------
 
 In Liberty the team introduced the concept of feature requests. Feature
-requests are tracked as Launchpad bugs, tagged with the new 'rfe' tag, and
-allow for the submission and review of these feature requests before code
-is submitted.
+requests are tracked as Launchpad bugs, by tagging them with a set of tags
+starting with `rfe`, enabling the submission and review of feature requests
+before code is submitted.
 This allows the team to verify the validity of a feature request before the
 process of submitting a neutron-spec is undertaken, or code is written.  It
 also allows the community to express interest in a feature by subscribing to
@@ -57,14 +57,15 @@ current cycle against existing project priorities and available resources.
 The workflow for the life an RFE in Launchpad is as follows:
 
 * The bug is submitted and will by default land in the "New" state.
-* As soon as a member of the neutron-drivers team acknowledges the bug, it will
-  be moved into the "Confirmed" state. No assignee, or milestone is set at this
-  time. The importance will be set to 'Wishlist' to signal the fact that the
-  report is indeed a feature or enhancement and there is no severity associated
-  to it.
-* A member of the neutron-drivers team moves the bug from "Confirmed"
-  to "Triaged" when he/she thinks it's ready to be discussed in the drivers
-  meeting.  The bug will be in the "Triaged" state while the discussion is
+  Anyone can make a bug an RFE by adding the `rfe` tag.
+* As soon as a member of the neutron-drivers team acknowledges the bug,
+  the `rfe` tag will be replaced with the `rfe-confirmed` tag. No assignee, or
+  milestone is set at this time. The importance will be set to 'Wishlist' to
+  signal the fact that the report is indeed a feature or enhancement and there
+  is no severity associated to it.
+* A member of the neutron-drivers team replaces the `rfe-confirmed` tag with
+  the `rfe-triaged` tag when he/she thinks it's ready to be discussed in the
+  drivers meeting.  The bug will be in this state while the discussion is
   ongoing.
 * The neutron-drivers team will evaluate the RFE and may advise the submitter
   to file a spec in neutron-specs to elaborate on the feature request, in case
@@ -153,7 +154,7 @@ The workflow for the life an RFE in Launchpad is as follows:
 
 * In either case (a spec being required or not), once the discussion has
   happened and there is positive consensus on the RFE, the report is 'approved',
-  and its tag will move from 'rfe' to 'rfe-approved'.
+  and its tag will move from `rfe-triaged` to `rfe-approved`.
 * An RFE can be occasionaly marked as 'rfe-postponed' if the team identifies
   a dependency between the proposed RFE and other pending tasks that prevent
   the RFE from being worked on immediately.
@@ -161,8 +162,8 @@ The workflow for the life an RFE in Launchpad is as follows:
   assignee but sound relatively simple or limited in scope (e.g. the addition of
   a new API with no ramification in the plugin backends), should be promoted
   during team meetings or the ML so that volunteers can pick them up and get
-  started with neutron development. The team will regularly scan 'rfe-approved'
-  or 'rfe-postponed' RFEs to see what their latest status is and mark them
+  started with neutron development. The team will regularly scan `rfe-approved`
+  or `rfe-postponed` RFEs to see what their latest status is and mark them
   incomplete if no assignees can be found, or they are no longer relevant.
 * As for setting the milestone (both for RFE bugs or blueprints), the current
   milestone is always chosen, assuming that work will start as soon as the feature
@@ -199,8 +200,8 @@ The drivers team will be discussing the following bug reports during their IRC m
 
 * `New RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=NEW&field.tag=rfe>`_
 * `Incomplete RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INCOMPLETE&field.tag=rfe>`_
-* `Confirmed RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=CONFIRMED&field.tag=rfe>`_
-* `Triaged RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=TRIAGED&field.tag=rfe>`_
+* `Confirmed RFE's <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-confirmed>`_
+* `Triaged RFE's <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-triaged>`_
 
 
 RFE Submission Guidelines
