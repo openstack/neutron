@@ -301,3 +301,16 @@ class ClientFixture(fixtures.Fixture):
         spec.update(kwargs)
 
         return self._create_resource(resource_type, spec)
+
+    def create_network_log(self, tenant_id, resource_type,
+                           enabled=True, **kwargs):
+
+        spec = {'project_id': tenant_id,
+                'resource_type': resource_type,
+                'enabled': enabled}
+        spec.update(kwargs)
+
+        net_log = self.client.create_network_log({'log': spec})
+        self.addCleanup(
+            _safe_method(self.client.delete_network_log), net_log['log']['id'])
+        return net_log

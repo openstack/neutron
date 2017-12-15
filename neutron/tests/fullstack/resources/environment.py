@@ -39,10 +39,11 @@ class EnvironmentDescription(object):
                  service_plugins='router', arp_responder=False,
                  agent_down_time=75, router_scheduler=None,
                  global_mtu=common_const.DEFAULT_NETWORK_MTU,
-                 debug_iptables=False):
+                 debug_iptables=False, log=False):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
+        self.log = log
         self.network_range = None
         self.mech_drivers = mech_drivers
         self.arp_responder = arp_responder
@@ -53,6 +54,8 @@ class EnvironmentDescription(object):
         self.debug_iptables = debug_iptables
         if self.qos:
             self.service_plugins += ',qos'
+        if self.log:
+            self.service_plugins += ',log'
 
     @property
     def tunneling_enabled(self):
@@ -134,7 +137,7 @@ class Host(fixtures.Fixture):
     def setup_host_with_ovs_agent(self):
         agent_cfg_fixture = config.OVSConfigFixture(
             self.env_desc, self.host_desc, self.neutron_config.temp_dir,
-            self.local_ip)
+            self.local_ip, test_name=self.test_name)
         self.useFixture(agent_cfg_fixture)
 
         if self.env_desc.tunneling_enabled:
