@@ -256,14 +256,29 @@ class NeutronObject(obj_base.VersionedObject,
         raise NotImplementedError()
 
     @classmethod
-    def update_objects(cls, context, values, validate_filters=True, **kwargs):
-        objs = cls.get_objects(
-            context, validate_filters=validate_filters, **kwargs)
-        for obj in objs:
+    def _update_objects(cls, objects, values):
+        if not isinstance(objects, collections.Sequence):
+            objects = (objects, )
+
+        for obj in objects:
             for k, v in values.items():
                 setattr(obj, k, v)
             obj.update()
-        return len(objs)
+        return len(objects)
+
+    @classmethod
+    def update_object(cls, context, values, validate_filters=True, **kwargs):
+        obj = cls.get_object(
+            context, validate_filters=validate_filters, **kwargs)
+        if obj:
+            cls._update_objects(obj, values)
+            return obj
+
+    @classmethod
+    def update_objects(cls, context, values, validate_filters=True, **kwargs):
+        objs = cls.get_objects(
+            context, validate_filters=validate_filters, **kwargs)
+        return cls._update_objects(objs, values)
 
     @classmethod
     def delete_objects(cls, context, validate_filters=True, **kwargs):
@@ -544,6 +559,35 @@ class NeutronDbObject(NeutronObject):
                 **cls.modify_fields_to_db(kwargs)
             )
             return [cls._load_object(context, db_obj) for db_obj in db_objs]
+
+    @classmethod
+    def update_object(cls, context, values, validate_filters=True, **kwargs):
+        """
+        Update an object that match filtering criteria from DB.
+
+        :param context:
+        :param values: multiple keys to update in matching objects
+        :param validate_filters: Raises an error in case of passing an unknown
+                                 filter
+        :param kwargs: multiple keys defined by key=value pairs
+        :return: The updated version of the object
+        """
+        if validate_filters:
+            cls.validate_filters(**kwargs)
+
+        # if we have standard attributes, we will need to fetch records to
+        # update revision numbers
+        db_obj = None
+        if cls.has_standard_attributes():
+            return super(NeutronDbObject, cls).update_object(
+                context, values, validate_filters=False, **kwargs)
+        else:
+            with db_api.autonested_transaction(context.session):
+                db_obj = obj_db_api.update_object(
+                    context, cls.db_model,
+                    cls.modify_fields_to_db(values),
+                    **cls.modify_fields_to_db(kwargs))
+                return cls._load_object(context, db_obj)
 
     @classmethod
     def update_objects(cls, context, values, validate_filters=True, **kwargs):

@@ -1861,6 +1861,29 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self.assertTrue(self._test_class.objects_exist(
             self.context, validate_filters=False, fake_filter='xxx'))
 
+    def test_update_object(self):
+        fields_to_update = self.get_updatable_fields(
+            self.obj_fields[1])
+        if not fields_to_update:
+            self.skipTest('No updatable fields found in test '
+                          'class %r' % self._test_class)
+        for fields in self.obj_fields:
+            self._make_object(fields).create()
+
+        obj = self._test_class.get_objects(
+            self.context, **self.valid_field_filter)
+        for k, v in self.valid_field_filter.items():
+            self.assertEqual(v, obj[0][k])
+
+        new_values = self._get_random_update_fields()
+        keys = self.objs[0]._get_composite_keys()
+        updated_obj = self._test_class.update_object(
+            self.context, new_values, **keys)
+
+        # Check the correctness of the updated object
+        for k, v in new_values.items():
+            self.assertEqual(v, updated_obj[k])
+
     def test_update_objects(self):
         fields_to_update = self.get_updatable_fields(
             self.obj_fields[1])
