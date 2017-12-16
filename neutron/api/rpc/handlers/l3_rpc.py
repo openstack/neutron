@@ -101,8 +101,7 @@ class L3RpcCallback(object):
         if utils.is_extension_supported(
                 self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
-                self.l3plugin.auto_schedule_routers(context, host,
-                                                    router_ids=None)
+                self.l3plugin.auto_schedule_routers(context, host)
         return self.l3plugin.list_router_ids_on_host(context, host)
 
     @db_api.retry_db_errors
