@@ -28,8 +28,6 @@ from neutron.tests.unit.extensions import test_l3
 class FloatingIPQoSTestExtensionManager(object):
 
     def get_resources(self):
-        l3.RESOURCE_ATTRIBUTE_MAP['floatingips'].update(
-            qos_fip.EXTENDED_ATTRIBUTES_2_0['floatingips'])
         return l3.L3.get_resources()
 
     def get_actions(self):

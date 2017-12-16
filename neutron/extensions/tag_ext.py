@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
@@ -20,7 +21,6 @@ from neutron_lib.plugins import directory
 
 from neutron.api import extensions
 from neutron.api.v2 import resource as api_resource
-from neutron.extensions import l3
 from neutron.extensions import tagging
 
 
@@ -32,7 +32,7 @@ TAG_SUPPORTED_RESOURCES = {
     subnet_def.COLLECTION_NAME: subnet_def.RESOURCE_NAME,
     port_def.COLLECTION_NAME: port_def.RESOURCE_NAME,
     subnetpool_def.COLLECTION_NAME: subnetpool_def.RESOURCE_NAME,
-    l3.ROUTERS: l3.ROUTER,
+    l3_apidef.ROUTERS: l3_apidef.ROUTER,
 }
 
 

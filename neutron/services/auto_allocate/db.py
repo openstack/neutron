@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -30,7 +31,6 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
-from neutron.extensions import l3
 from neutron.objects import auto_allocate as auto_allocate_obj
 from neutron.objects import base as base_obj
 from neutron.objects import network as net_obj
@@ -297,7 +297,8 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
         """Uplink tenant subnet(s) to external network."""
         router_args = {
             'name': 'auto_allocated_router',
-            l3.EXTERNAL_GW_INFO: {'network_id': default_external_network},
+            l3_apidef.EXTERNAL_GW_INFO: {
+                'network_id': default_external_network},
             'tenant_id': tenant_id,
             'admin_state_up': True
         }

@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 import sqlalchemy as sa
@@ -18,7 +19,6 @@ from sqlalchemy import orm
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.db import standard_attr
-from neutron.extensions import l3
 
 
 class RouterPort(model_base.BASEV2):
@@ -62,8 +62,8 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
     l3_agents = orm.relationship(
         'Agent', lazy='subquery', viewonly=True,
         secondary=rb_model.RouterL3AgentBinding.__table__)
-    api_collections = [l3.ROUTERS]
-    collection_resource_map = {l3.ROUTERS: l3.ROUTER}
+    api_collections = [l3_apidef.ROUTERS]
+    collection_resource_map = {l3_apidef.ROUTERS: l3_apidef.ROUTER}
     tag_support = True
 
 
@@ -104,8 +104,8 @@ class FloatingIP(standard_attr.HasStandardAttributes, model_base.BASEV2,
             name=('uniq_floatingips0floatingnetworkid'
                  '0fixedportid0fixedipaddress')),
         model_base.BASEV2.__table_args__,)
-    api_collections = [l3.FLOATINGIPS]
-    collection_resource_map = {l3.FLOATINGIPS: l3.FLOATINGIP}
+    api_collections = [l3_apidef.FLOATINGIPS]
+    collection_resource_map = {l3_apidef.FLOATINGIPS: l3_apidef.FLOATINGIP}
     tag_support = True
 
 

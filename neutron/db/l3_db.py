@@ -17,6 +17,7 @@ import random
 
 import netaddr
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -25,6 +26,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as base_services
@@ -61,7 +63,7 @@ DEVICE_OWNER_HA_REPLICATED_INT = constants.DEVICE_OWNER_HA_REPLICATED_INT
 DEVICE_OWNER_ROUTER_INTF = constants.DEVICE_OWNER_ROUTER_INTF
 DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
 DEVICE_OWNER_FLOATINGIP = constants.DEVICE_OWNER_FLOATINGIP
-EXTERNAL_GW_INFO = l3.EXTERNAL_GW_INFO
+EXTERNAL_GW_INFO = l3_apidef.EXTERNAL_GW_INFO
 
 # Maps API field to DB column
 # API parameter name and Database column names may differ.
@@ -182,7 +184,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             router = model_query.get_by_id(
                 context, l3_models.Router, router_id)
         except exc.NoResultFound:
-            raise l3.RouterNotFound(router_id=router_id)
+            raise l3_exc.RouterNotFound(router_id=router_id)
         return router
 
     def _make_router_dict(self, router, fields=None, process_extensions=True):
@@ -203,7 +205,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # class inheriting from CommonDbMixin, which is true for all existing
         # plugins.
         if process_extensions:
-            resource_extend.apply_funcs(l3.ROUTERS, res, router)
+            resource_extend.apply_funcs(l3_apidef.ROUTERS, res, router)
         return db_utils.resource_fields(res, fields)
 
     def _create_router_db(self, context, router, tenant_id):
@@ -427,7 +429,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         old_network_id = router.gw_port['network_id']
 
         if self.router_gw_port_has_floating_ips(admin_ctx, router_id):
-            raise l3.RouterExternalGatewayInUseByFloatingIp(
+            raise l3_exc.RouterExternalGatewayInUseByFloatingIp(
                 router_id=router_id, net_id=router.gw_port['network_id'])
         gw_ips = [x['ip_address'] for x in router.gw_port['fixed_ips']]
         gw_port_id = router.gw_port['id']
@@ -459,7 +461,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 # NOTE(armax): preserve old check's behavior
                 if len(e.errors) == 1:
                     raise e.errors[0].error
-                raise l3.RouterInUse(router_id=router.id, reason=e)
+                raise l3_exc.RouterInUse(router_id=router.id, reason=e)
 
     def _create_gw_port(self, context, router_id, router, new_network_id,
                         ext_ips):
@@ -544,7 +546,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         device_owner = self._get_device_owner(context, router)
         if any(rp.port_type == device_owner
                for rp in router.attached_ports):
-            raise l3.RouterInUse(router_id=router_id)
+            raise l3_exc.RouterInUse(router_id=router_id)
         return router
 
     @db_api.retry_if_session_inactive()
@@ -750,7 +752,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # raise the underlying exception
             reason = (_('cannot perform router interface attachment '
                         'due to %(reason)s') % {'reason': e})
-            raise l3.RouterInterfaceAttachmentConflict(reason=reason)
+            raise l3_exc.RouterInterfaceAttachmentConflict(reason=reason)
 
     def _add_interface_by_port(self, context, router, port_id, owner):
         # Update owner before actual process in order to avoid the
@@ -922,11 +924,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # NOTE(armax): preserve old check's behavior
             if len(e.errors) == 1:
                 raise e.errors[0].error
-            raise l3.RouterInUse(router_id=router_id, reason=e)
+            raise l3_exc.RouterInUse(router_id=router_id, reason=e)
         fip_objs = l3_obj.FloatingIP.get_objects(context, router_id=router_id)
         for fip_obj in fip_objs:
             if fip_obj.fixed_ip_address in subnet_cidr:
-                raise l3.RouterInterfaceInUseByFloatingIP(
+                raise l3_exc.RouterInterfaceInUseByFloatingIP(
                     router_id=router_id, subnet_id=subnet_id)
 
     def _remove_interface_by_port(self, context, router_id,
@@ -941,11 +943,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             try:
                 port = self._core_plugin.get_port(context, obj.port_id)
             except n_exc.PortNotFound:
-                raise l3.RouterInterfaceNotFound(router_id=router_id,
-                                                 port_id=port_id)
+                raise l3_exc.RouterInterfaceNotFound(
+                    router_id=router_id, port_id=port_id)
         else:
-            raise l3.RouterInterfaceNotFound(router_id=router_id,
-                                             port_id=port_id)
+            raise l3_exc.RouterInterfaceNotFound(
+                router_id=router_id, port_id=port_id)
         port_subnet_ids = [fixed_ip['subnet_id']
                            for fixed_ip in port['fixed_ips']]
         if subnet_id and subnet_id not in port_subnet_ids:
@@ -991,8 +993,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     return (p, [subnet])
         except exc.NoResultFound:
             pass
-        raise l3.RouterInterfaceNotFoundForSubnet(router_id=router_id,
-                                                  subnet_id=subnet_id)
+        raise l3_exc.RouterInterfaceNotFoundForSubnet(
+            router_id=router_id, subnet_id=subnet_id)
 
     @db_api.retry_if_session_inactive()
     def remove_router_interface(self, context, router_id, interface_info):
@@ -1041,7 +1043,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _get_floatingip(self, context, id):
         floatingip = l3_obj.FloatingIP.get_object(context, id=id)
         if not floatingip:
-            raise l3.FloatingIPNotFound(floatingip_id=id)
+            raise l3_exc.FloatingIPNotFound(floatingip_id=id)
         return floatingip
 
     def _make_floatingip_dict(self, floatingip, fields=None,
@@ -1064,7 +1066,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # TODO(lujinluo): Change floatingip.db_obj to floatingip once all
         # codes are migrated to use Floating IP OVO object.
         if process_extensions:
-            resource_extend.apply_funcs(l3.FLOATINGIPS, res, floatingip.db_obj)
+            resource_extend.apply_funcs(
+                l3_apidef.FLOATINGIPS, res, floatingip.db_obj)
         return db_utils.resource_fields(res, fields)
 
     def _get_router_for_floatingip(self, context, internal_port,
@@ -1116,7 +1119,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if first_router_id:
             return first_router_id
 
-        raise l3.ExternalGatewayForFloatingIPNotFound(
+        raise l3_exc.ExternalGatewayForFloatingIPNotFound(
             subnet_id=internal_subnet['id'],
             external_network_id=external_network_id,
             port_id=internal_port['id'])
@@ -1211,7 +1214,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if fip_exists:
                 floating_ip_address = (str(floatingip_obj.floating_ip_address)
                     if floatingip_obj.floating_ip_address else None)
-                raise l3.FloatingIPPortAlreadyAssociated(
+                raise l3_exc.FloatingIPPortAlreadyAssociated(
                     port_id=fip['port_id'],
                     fip_id=floatingip_obj.id,
                     floating_ip_address=floating_ip_address,
@@ -1355,7 +1358,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                            dns_data)
         # TODO(lujinluo): Change floatingip_db to floatingip_obj once all
         # codes are migrated to use Floating IP OVO object.
-        resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
+        resource_extend.apply_funcs(l3_apidef.FLOATINGIPS, floatingip_dict,
                                     floatingip_db)
         return floatingip_dict
 
@@ -1398,7 +1401,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                            dns_data)
         # TODO(lujinluo): Change floatingip_db to floatingip_obj once all
         # codes are migrated to use Floating IP OVO object.
-        resource_extend.apply_funcs(l3.FLOATINGIPS, floatingip_dict,
+        resource_extend.apply_funcs(l3_apidef.FLOATINGIPS, floatingip_dict,
                                     floatingip_db)
         return old_floatingip, floatingip_dict
 
@@ -1477,7 +1480,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         try:
             self.get_router(context.elevated(), router_id)
             return True
-        except l3.RouterNotFound:
+        except l3_exc.RouterNotFound:
             return False
 
     def prevent_l3_port_deletion(self, context, port_id):

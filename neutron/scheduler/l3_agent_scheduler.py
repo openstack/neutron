@@ -21,6 +21,7 @@ import random
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as lib_const
+from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -30,7 +31,6 @@ from neutron.common import utils
 from neutron.conf.db import l3_hamode_db
 from neutron.db import api as db_api
 from neutron.db.models import l3agent as rb_model
-from neutron.extensions import l3
 from neutron.objects import l3agent as rb_obj
 
 
@@ -297,7 +297,7 @@ class L3Scheduler(object):
             # and RouterPort tables
             plugin._core_plugin.delete_port(context, port_id,
                                             l3_port_check=False)
-        except l3.RouterNotFound:
+        except l3_exc.RouterNotFound:
             LOG.debug('Router %s has already been removed '
                       'by concurrent operation', router_id)
             # we try to clear the HA network here in case the port we created

@@ -27,6 +27,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as ctx
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -53,7 +54,6 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models as rbac_db
 from neutron.db import standardattrdescription_db as stattr_db
-from neutron.extensions import l3
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import subnet_alloc
@@ -651,7 +651,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             for id in router_ids:
                 try:
                     self._update_router_gw_port(context, id, network, subnet)
-                except l3.RouterNotFound:
+                except l3_exc.RouterNotFound:
                     LOG.debug("Router %(id)s was concurrently deleted while "
                               "updating GW port for subnet %(s)s",
                               {'id': id, 's': subnet})
@@ -1422,7 +1422,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     try:
                         ctx_admin = context.elevated()
                         router = self.get_router(ctx_admin, device_id)
-                    except l3.RouterNotFound:
+                    except l3_exc.RouterNotFound:
                         return
                 else:
                     l3plugin = directory.get_plugin(plugin_constants.L3)
@@ -1431,7 +1431,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             ctx_admin = context.elevated()
                             router = l3plugin.get_router(ctx_admin,
                                                          device_id)
-                        except l3.RouterNotFound:
+                        except l3_exc.RouterNotFound:
                             return
                     else:
                         # raise as extension doesn't support L3 anyways.

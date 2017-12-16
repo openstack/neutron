@@ -14,6 +14,7 @@
 
 import mock
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -25,7 +26,6 @@ from neutron_lib import context
 from neutron.api.rpc.handlers import l3_rpc
 from neutron.common import constants as n_const
 from neutron.common import topics
-from neutron.extensions import l3
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 
@@ -160,7 +160,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 gw_info = {'network_id': ext_net['network']['id']}
                 self.l3_plugin.update_router(
                     self.context, router['id'],
-                    {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
+                    {'router': {l3_apidef.EXTERNAL_GW_INFO: gw_info}})
 
                 snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
                     self.context, [router['id']])

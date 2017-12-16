@@ -14,11 +14,11 @@
 
 import mock
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.common import topics
-from neutron.extensions import l3
 from neutron.tests.common import helpers
 from neutron.tests.functional.services.l3_router import \
     test_l3_dvr_router_plugin
@@ -235,7 +235,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             gw_info = {'network_id': ext_net['network']['id']}
             self.l3_plugin.update_router(
                 self.context, router['id'],
-                {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
+                {'router': {l3_apidef.EXTERNAL_GW_INFO: gw_info}})
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -266,7 +266,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
             gw_info = {'network_id': ext_net['network']['id']}
             self.l3_plugin.update_router(
                 self.context, router['id'],
-                {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
+                {'router': {l3_apidef.EXTERNAL_GW_INFO: gw_info}})
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -312,12 +312,12 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
         gw_info = {'network_id': ext_net['network']['id']}
         self.l3_plugin.update_router(
             self.context, router['id'],
-            {'router': {l3.EXTERNAL_GW_INFO: gw_info}})
+            {'router': {l3_apidef.EXTERNAL_GW_INFO: gw_info}})
 
     def _clear_external_gateway(self, router):
         self.l3_plugin.update_router(
             self.context, router['id'],
-            {'router': {l3.EXTERNAL_GW_INFO: {}}})
+            {'router': {l3_apidef.EXTERNAL_GW_INFO: {}}})
 
     def _remove_interface_from_router(self, router, subnet):
         self.l3_plugin.remove_router_interface(
