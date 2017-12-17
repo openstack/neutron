@@ -39,18 +39,18 @@ class TestMetadataDriverRules(base.BaseTestCase):
 
     def test_metadata_nat_rules(self):
         rules = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
-                 '-p tcp -m tcp --dport 80 -j REDIRECT --to-ports 8775')
+                 '-p tcp -m tcp --dport 80 -j REDIRECT --to-ports 9697')
         self.assertEqual(
             [rules],
-            metadata_driver.MetadataDriver.metadata_nat_rules(8775))
+            metadata_driver.MetadataDriver.metadata_nat_rules(9697))
 
     def test_metadata_filter_rules(self):
         rules = [('INPUT', '-m mark --mark 0x1/%s -j ACCEPT' %
                   constants.ROUTER_MARK_MASK),
-                 ('INPUT', '-p tcp -m tcp --dport 8775 -j DROP')]
+                 ('INPUT', '-p tcp -m tcp --dport 9697 -j DROP')]
         self.assertEqual(
             rules,
-            metadata_driver.MetadataDriver.metadata_filter_rules(8775, '0x1'))
+            metadata_driver.MetadataDriver.metadata_filter_rules(9697, '0x1'))
 
     def test_metadata_mangle_rules(self):
         rule = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
@@ -60,6 +60,13 @@ class TestMetadataDriverRules(base.BaseTestCase):
         self.assertEqual(
             [rule],
             metadata_driver.MetadataDriver.metadata_mangle_rules('0x1'))
+
+    def test_metadata_checksum_rules(self):
+        rules = ('POSTROUTING', '-o qr-+ -p tcp -m tcp --sport 9697 '
+                 '-j CHECKSUM --checksum-fill')
+        self.assertEqual(
+            [rules],
+            metadata_driver.MetadataDriver.metadata_checksum_rules(9697))
 
 
 class TestMetadataDriverProcess(base.BaseTestCase):
