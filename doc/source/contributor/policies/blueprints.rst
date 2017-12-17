@@ -62,7 +62,10 @@ The workflow for the life an RFE in Launchpad is as follows:
   time. The importance will be set to 'Wishlist' to signal the fact that the
   report is indeed a feature or enhancement and there is no severity associated
   to it.
-* The bug goes into the "Triaged" state while the discussion is ongoing.
+* A member of the neutron-drivers team moves the bug from "Confirmed"
+  to "Triaged" when he/she thinks it's ready to be discussed in the drivers
+  meeting.  The bug will be in the "Triaged" state while the discussion is
+  ongoing.
 * The neutron-drivers team will evaluate the RFE and may advise the submitter
   to file a spec in neutron-specs to elaborate on the feature request, in case
   the RFE requires extra scrutiny, more design discussion, etc.
