@@ -92,19 +92,19 @@ class DriverController(object):
         self._stm.del_resource_associations(context, [router_id])
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
-    def _update_router_provider(self, resource, event, trigger, context,
-                                router_id, router, old_router, router_db,
-                                **kwargs):
+    def _update_router_provider(self, resource, event, trigger, payload=None):
         """Handle transition between providers.
 
         The provider can currently be changed only by the caller updating
         'ha' and/or 'distributed' attributes. If we allow updates of flavor_id
         directly in the future those requests will also land here.
         """
-        drv = self.get_provider_for_router(context, router_id)
+        drv = self.get_provider_for_router(payload.context,
+                                           payload.resource_id)
         new_drv = None
-        if _flavor_specified(router):
-            if router['flavor_id'] != old_router['flavor_id']:
+        if _flavor_specified(payload.request_body):
+            if (payload.request_body['flavor_id'] !=
+                    payload.states[0]['flavor_id']):
                 # TODO(kevinbenton): this is currently disallowed by the API
                 # so we shouldn't hit it but this is a placeholder to add
                 # support later.
@@ -113,7 +113,7 @@ class DriverController(object):
         # the following is to support updating the 'ha' and 'distributed'
         # attributes via the API.
         try:
-            _ensure_driver_supports_request(drv, router)
+            _ensure_driver_supports_request(drv, payload.request_body)
         except lib_exc.InvalidInput:
             # the current driver does not support this request, we need to
             # migrate to a new provider. populate the distributed and ha
@@ -123,25 +123,29 @@ class DriverController(object):
             # we bail because changing the provider without changing
             # the flavor will make things inconsistent. We can probably
             # update the flavor automatically in the future.
-            if old_router['flavor_id']:
+            if payload.states[0]['flavor_id']:
                 raise lib_exc.InvalidInput(error_message=_(
                     "Changing the 'ha' and 'distributed' attributes on a "
                     "router associated with a flavor is not supported"))
-            if 'distributed' not in router:
-                router['distributed'] = old_router['distributed']
-            if 'ha' not in router:
-                router['ha'] = old_router['distributed']
-            new_drv = self._attrs_to_driver(router)
+            if 'distributed' not in payload.request_body:
+                payload.request_body['distributed'] = (payload.states[0]
+                                                       ['distributed'])
+            if 'ha' not in payload.request_body:
+                payload.request_body['ha'] = payload.states[0]['distributed']
+            new_drv = self._attrs_to_driver(payload.request_body)
         if new_drv:
             LOG.debug("Router %(id)s migrating from %(old)s provider to "
-                      "%(new)s provider.", {'id': router_id, 'old': drv,
+                      "%(new)s provider.", {'id': payload.resource_id,
+                                            'old': drv,
                                             'new': new_drv})
-            _ensure_driver_supports_request(new_drv, router)
+            _ensure_driver_supports_request(new_drv, payload.request_body)
             # TODO(kevinbenton): notify old driver explicitly of driver change
-            with context.session.begin(subtransactions=True):
-                self._stm.del_resource_associations(context, [router_id])
+            with payload.context.session.begin(subtransactions=True):
+                self._stm.del_resource_associations(
+                    payload.context, [payload.resource_id])
                 self._stm.add_resource_association(
-                    context, plugin_constants.L3, new_drv.name, router_id)
+                    payload.context, plugin_constants.L3,
+                    new_drv.name, payload.resource_id)
 
     def get_provider_for_router(self, context, router_id):
         """Return the provider driver handle for a router id."""
