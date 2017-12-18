@@ -1290,9 +1290,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # floating_ip_address is not in the subnet,
         # InvalidIpForSubnet exception will be raised.
         fixed_ip = {}
-        if fip['subnet_id']:
+        if validators.is_attr_set(fip.get('subnet_id')):
             fixed_ip['subnet_id'] = fip['subnet_id']
-        if fip['floating_ip_address']:
+        if validators.is_attr_set(fip.get('floating_ip_address')):
             fixed_ip['ip_address'] = fip['floating_ip_address']
         if fixed_ip:
             port['fixed_ips'] = [fixed_ip]
