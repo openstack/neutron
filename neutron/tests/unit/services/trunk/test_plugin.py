@@ -136,7 +136,23 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         self._test_trunk_update_notify(events.AFTER_UPDATE)
 
     def test_trunk_update_notify_precommit_update(self):
-        self._test_trunk_update_notify(events.PRECOMMIT_UPDATE)
+        # TODO(boden): refactor back into _test_trunk_update_notify
+        # once all code uses neutron-lib payloads
+        with self.port() as parent_port:
+            callback = register_mock_callback(
+                constants.TRUNK, events.PRECOMMIT_UPDATE)
+            trunk = self._create_test_trunk(parent_port)
+            orig_trunk_obj = self._get_trunk_obj(trunk['id'])
+            trunk_req = {'trunk': {'name': 'foo'}}
+            self.trunk_plugin.update_trunk(self.context, trunk['id'],
+                                           trunk_req)
+            trunk_obj = self._get_trunk_obj(trunk['id'])
+            callback.assert_called_once_with(
+                constants.TRUNK, events.PRECOMMIT_UPDATE,
+                self.trunk_plugin, payload=mock.ANY)
+            call_payload = callback.call_args[1]['payload']
+            self.assertEqual(orig_trunk_obj, call_payload.states[0])
+            self.assertEqual(trunk_obj, call_payload.desired_state)
 
     def _test_trunk_delete_notify(self, event):
         with self.port() as parent_port:

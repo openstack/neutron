@@ -98,28 +98,27 @@ class QoSPlugin(qos.QoSPluginBase):
         self.validate_policy_for_port(policy, port)
 
     def _validate_update_port_callback(self, resource, event, trigger,
-                                       **kwargs):
-        context = kwargs['context']
-        original_policy_id = kwargs['original_port'].get(
+                                       payload=None):
+        context = payload.context
+        original_policy_id = payload.states[0].get(
             qos_consts.QOS_POLICY_ID)
-        policy_id = kwargs['port'].get(qos_consts.QOS_POLICY_ID)
+        policy_id = payload.desired_state.get(qos_consts.QOS_POLICY_ID)
 
         if policy_id is None or policy_id == original_policy_id:
             return
 
         updated_port = ports_object.Port.get_object(
-            context, id=kwargs['port']['id'])
-
+            context, id=payload.desired_state['id'])
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
 
         self.validate_policy_for_port(policy, updated_port)
 
     def _validate_update_network_callback(self, resource, event, trigger,
-                                          **kwargs):
-        context = kwargs['context']
-        original_network = kwargs['original_network']
-        updated_network = kwargs['network']
+                                          payload=None):
+        context = payload.context
+        original_network = payload.states[0]
+        updated_network = payload.desired_state
 
         original_policy_id = original_network.get(qos_consts.QOS_POLICY_ID)
         policy_id = updated_network.get(qos_consts.QOS_POLICY_ID)

@@ -397,20 +397,18 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                     {'status': constants.ERROR})['status']
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
-    def _validate_migration(self, resource, event, trigger, context,
-                            router_id, router, router_db, old_router,
-                            **kwargs):
+    def _validate_migration(self, resource, event, trigger, payload=None):
         """Event handler on precommit update to validate migration."""
 
-        original_ha_state = old_router['ha']
-        requested_ha_state = router.get('ha')
+        original_ha_state = payload.states[0]['ha']
+        requested_ha_state = payload.request_body.get('ha')
 
         ha_changed = (requested_ha_state is not None and
                       requested_ha_state != original_ha_state)
         if not ha_changed:
             return
 
-        if router_db.admin_state_up:
+        if payload.desired_state.admin_state_up:
             msg = _('Cannot change HA attribute of active routers. Please '
                     'set router admin_state_up to False prior to upgrade')
             raise n_exc.BadRequest(resource='router', msg=msg)
@@ -418,29 +416,32 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if requested_ha_state:
             # This will throw HANotEnoughAvailableAgents if there aren't
             # enough l3 agents to handle this router.
-            self.get_number_of_agents_for_scheduling(context)
+            self.get_number_of_agents_for_scheduling(payload.context)
         else:
 
-            ha_network = self.get_ha_network(context,
-                                             router_db.tenant_id)
+            ha_network = self.get_ha_network(payload.context,
+                                             payload.desired_state.tenant_id)
             self._delete_vr_id_allocation(
-                context, ha_network, router_db.extra_attributes.ha_vr_id)
-            router_db.extra_attributes.ha_vr_id = None
-        if router.get('distributed') or old_router['distributed']:
-            self.set_extra_attr_value(context, router_db,
+                payload.context, ha_network,
+                payload.desired_state.extra_attributes.ha_vr_id)
+            payload.desired_state.extra_attributes.ha_vr_id = None
+        if (payload.request_body.get('distributed') or
+                payload.states[0]['distributed']):
+            self.set_extra_attr_value(payload.context, payload.desired_state,
                                       'ha', requested_ha_state)
             return
         if requested_ha_state:
             self._migrate_router_ports(
-                context, router_db,
+                payload.context, payload.desired_state,
                 old_owner=constants.DEVICE_OWNER_ROUTER_INTF,
                 new_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT)
         else:
             self._migrate_router_ports(
-                context, router_db,
+                payload.context, payload.desired_state,
                 old_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
                 new_owner=constants.DEVICE_OWNER_ROUTER_INTF)
-        self.set_extra_attr_value(context, router_db, 'ha', requested_ha_state)
+        self.set_extra_attr_value(
+            payload.context, payload.desired_state, 'ha', requested_ha_state)
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE])
     def _reconfigure_ha_resources(self, resource, event, trigger, context,

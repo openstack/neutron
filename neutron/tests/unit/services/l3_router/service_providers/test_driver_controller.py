@@ -13,6 +13,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.callbacks import events
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
@@ -97,9 +98,10 @@ class TestDriverController(testlib_api.SqlTestCase):
                 self.assertRaises(
                     lib_exc.InvalidInput,
                     test_dc._update_router_provider,
-                    None, None, None, None,
-                    None, {'name': 'testname'},
-                    {'flavor_id': 'old_fid'}, None)
+                    None, None, None,
+                    payload=events.DBEventPayload(
+                        None, request_body={'name': 'testname'},
+                        states=({'flavor_id': 'old_fid'},)))
 
     def test__set_router_provider_attr_lookups(self):
         # ensure correct drivers are looked up based on attrs

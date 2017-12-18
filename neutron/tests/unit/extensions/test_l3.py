@@ -3675,9 +3675,12 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
         self.assertFalse(body['routers'])
 
     def test_router_update_precommit_event(self):
-        nset = lambda *a, **k: setattr(k['router_db'], 'name',
-                                       k['old_router']['name'] + '_ha!')
-        registry.subscribe(nset, resources.ROUTER, events.PRECOMMIT_UPDATE)
+
+        def _nset(r, v, s, payload=None):
+            setattr(payload.desired_state, 'name',
+                    payload.states[0]['name'] + '_ha!')
+
+        registry.subscribe(_nset, resources.ROUTER, events.PRECOMMIT_UPDATE)
         with self.router(name='original') as r:
             update = self._update('routers', r['router']['id'],
                                   {'router': {'name': 'hi'}})

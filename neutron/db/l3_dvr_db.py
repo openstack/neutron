@@ -106,42 +106,46 @@ class DVRResourceOperationHandler(object):
         return True
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
-    def _handle_distributed_migration(self, resource, event, trigger, context,
-                                      router_id, router, router_db, old_router,
-                                      **kwargs):
+    def _handle_distributed_migration(self, resource, event,
+                                      trigger, payload=None):
         """Event handler for router update migration to distributed."""
-        if not self._validate_router_migration(context, router_db, router):
+        if not self._validate_router_migration(
+                payload.context, payload.desired_state,
+                payload.request_body):
             return
 
         migrating_to_distributed = (
-            not router_db.extra_attributes.distributed and
-            router.get('distributed') is True)
+            not payload.desired_state.extra_attributes.distributed and
+            payload.request_body.get('distributed') is True)
 
         if migrating_to_distributed:
-            if old_router['ha']:
+            if payload.states[0]['ha']:
                 old_owner = const.DEVICE_OWNER_HA_REPLICATED_INT
             else:
                 old_owner = const.DEVICE_OWNER_ROUTER_INTF
             self.l3plugin._migrate_router_ports(
-                context, router_db,
+                payload.context, payload.desired_state,
                 old_owner=old_owner,
                 new_owner=const.DEVICE_OWNER_DVR_INTERFACE)
         else:
-            if router.get('ha'):
+            if payload.request_body.get('ha'):
                 new_owner = const.DEVICE_OWNER_HA_REPLICATED_INT
             else:
                 new_owner = const.DEVICE_OWNER_ROUTER_INTF
             self.l3plugin._migrate_router_ports(
-                context, router_db,
+                payload.context, payload.desired_state,
                 old_owner=const.DEVICE_OWNER_DVR_INTERFACE,
                 new_owner=new_owner)
 
         cur_agents = self.l3plugin.list_l3_agents_hosting_router(
-            context, router_db['id'])['agents']
+            payload.context, payload.resource_id)['agents']
         for agent in cur_agents:
-            self.l3plugin._unbind_router(context, router_db['id'], agent['id'])
+            self.l3plugin._unbind_router(
+                payload.context, payload.resource_id,
+                agent['id'])
         self.l3plugin.set_extra_attr_value(
-            context, router_db, 'distributed', migrating_to_distributed)
+            payload.context, payload.desired_state,
+            'distributed', migrating_to_distributed)
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE])
     def _delete_snat_interfaces_after_change(self, resource, event, trigger,

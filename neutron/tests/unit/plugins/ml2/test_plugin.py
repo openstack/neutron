@@ -245,8 +245,10 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.deserialize(self.fmt, req.get_response(self.api))
             precommit_update.assert_called_once_with(
                 resources.NETWORK, events.PRECOMMIT_UPDATE, mock.ANY,
-                context=mock.ANY, network=mock.ANY, original_network=mock.ANY,
-                request=mock.ANY)
+                payload=mock.ANY)
+            self.assertEqual(
+                'updated',
+                precommit_update.call_args[1]['payload'].desired_state['name'])
 
     def test_network_after_update_callback(self):
         after_update = mock.Mock()

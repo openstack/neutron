@@ -899,11 +899,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(
                 context, updated_network)
 
-            kwargs = {'context': context, 'network': updated_network,
-                      'original_network': original_network,
-                      'request': net_data}
-            registry.notify(
-                resources.NETWORK, events.PRECOMMIT_UPDATE, self, **kwargs)
+            registry.publish(resources.NETWORK, events.PRECOMMIT_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context, request_body=net_data,
+                                 states=(original_network,),
+                                 resource_id=id,
+                                 desired_state=updated_network))
 
             # TODO(QoS): Move out to the extension framework somehow.
             need_network_update_notify |= (
@@ -1347,13 +1348,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             need_port_update_notify |= self._process_port_binding(
                 mech_context, attrs)
 
-            kwargs = {
-                'context': context,
-                'port': updated_port,
-                'original_port': original_port,
-            }
-            registry.notify(
-                resources.PORT, events.PRECOMMIT_UPDATE, self, **kwargs)
+            registry.publish(
+                resources.PORT, events.PRECOMMIT_UPDATE, self,
+                payload=events.DBEventPayload(
+                    context, request_body=attrs, states=(original_port,),
+                    resource_id=id, desired_state=updated_port))
 
             # For DVR router interface ports we need to retrieve the
             # DVRPortbinding context instead of the normal port context.
