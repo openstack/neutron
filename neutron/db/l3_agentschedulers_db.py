@@ -26,7 +26,6 @@ from neutron.common import constants as l_consts
 from neutron.common import utils as n_utils
 from neutron.conf.db import l3_agentschedulers_db
 from neutron.db import agentschedulers_db
-from neutron.db.models import agent as agent_model
 from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
@@ -379,7 +378,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         config_filters = []
         if filters:
             for key, value in filters.items():
-                column = getattr(agent_model.Agent, key, None)
+                column = ag_obj.Agent.fields.get(key, None)
                 if column:
                     if not value:
                         return []
