@@ -474,9 +474,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     # Do the insertion of each IP allocation entry within
                     # the context of a nested transaction, so that the entry
                     # is rolled back independently of other entries whenever
-                    # the corresponding port has been deleted.
-                    with db_api.context_manager.writer.using(context):
-                        allocated.create()
+                    # the corresponding port has been deleted; since OVO
+                    # already opens a nested transaction, we don't need to do
+                    # it explicitly here.
+                    allocated.create()
                     updated_ports.append(port['id'])
                 except db_exc.DBReferenceError:
                     LOG.debug("Port %s was deleted while updating it with an "
