@@ -89,8 +89,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     _fip_qos = None
 
-    def __new__(cls):
-        inst = super(L3_NAT_dbonly_mixin, cls).__new__(cls)
+    def __new__(cls, *args, **kwargs):
+        inst = super(L3_NAT_dbonly_mixin, cls).__new__(cls, *args, **kwargs)
         inst._start_janitor()
         return inst
 
