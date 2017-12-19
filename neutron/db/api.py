@@ -17,7 +17,6 @@ import contextlib
 import copy
 import weakref
 
-from debtcollector import removals
 from neutron_lib.db import api
 from neutron_lib import exceptions
 from neutron_lib.objects import exceptions as obj_exc
@@ -184,18 +183,6 @@ def exc_to_retry(etypes):
             if _is_nested_instance(e, etypes):
                 ctx.reraise = False
                 raise db_exc.RetryRequest(e)
-
-
-#TODO(akamyshnikova): when all places in the code, which use sessions/
-# connections will be updated, this won't be needed
-@removals.remove(version='Ocata', removal_version='Pike',
-                 message="Usage of legacy facade is deprecated. Use "
-                         "get_reader_session or get_writer_session instead.")
-def get_session(autocommit=True, expire_on_commit=False, use_slave=False):
-    """Helper method to grab session."""
-    return context_manager.get_legacy_facade().get_session(
-        autocommit=autocommit, expire_on_commit=expire_on_commit,
-        use_slave=use_slave)
 
 
 def get_reader_session():
