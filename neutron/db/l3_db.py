@@ -1143,6 +1143,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
         internal_subnet_id = None
+        if not utils.is_fip_serviced(internal_port.get('device_owner')):
+            msg = _('Port %(id)s is unable to be assigned a floating IP')
+            raise n_exc.BadRequest(resource='floatingip', msg=msg)
         if fip.get('fixed_ip_address'):
             internal_ip_address = fip['fixed_ip_address']
             if netaddr.IPAddress(internal_ip_address).version != 4:

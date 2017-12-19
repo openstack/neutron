@@ -494,6 +494,24 @@ class TestDvrServices(base.BaseTestCase):
         self._test_is_dvr_serviced(constants.DEVICE_OWNER_COMPUTE_PREFIX, True)
 
 
+class TestFipServices(base.BaseTestCase):
+
+    def _test_is_fip_serviced(self, device_owner, expected):
+        self.assertEqual(expected, utils.is_fip_serviced(device_owner))
+
+    def test_is_fip_serviced_with_lb_port(self):
+        self._test_is_fip_serviced(constants.DEVICE_OWNER_LOADBALANCER, True)
+
+    def test_is_fip_serviced_with_lbv2_port(self):
+        self._test_is_fip_serviced(constants.DEVICE_OWNER_LOADBALANCERV2, True)
+
+    def test_is_fip_serviced_with_dhcp_port(self):
+        self._test_is_fip_serviced(constants.DEVICE_OWNER_DHCP, False)
+
+    def test_is_fip_serviced_with_vm_port(self):
+        self._test_is_fip_serviced(constants.DEVICE_OWNER_COMPUTE_PREFIX, True)
+
+
 class TestIpToCidr(base.BaseTestCase):
     def test_ip_to_cidr_ipv4_default(self):
         self.assertEqual('15.1.2.3/32', utils.ip_to_cidr('15.1.2.3'))

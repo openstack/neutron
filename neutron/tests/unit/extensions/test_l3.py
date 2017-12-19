@@ -3456,6 +3456,16 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._delete('routers', router['router']['id'],
                          exc.HTTPForbidden.code)
 
+    def test_associate_to_dhcp_port_fails(self):
+        with self.subnet(cidr="10.0.0.0/24", ip_version=4) as sub:
+            with self.port(subnet=sub,
+                           device_owner=lib_constants.DEVICE_OWNER_DHCP) as p:
+                res = self._create_floatingip(
+                     self.fmt,
+                     sub['subnet']['network_id'],
+                     port_id=p['port']['id'])
+                self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 

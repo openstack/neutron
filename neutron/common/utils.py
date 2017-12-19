@@ -204,6 +204,15 @@ def is_dvr_serviced(device_owner):
             device_owner in get_other_dvr_serviced_device_owners())
 
 
+def is_fip_serviced(device_owner):
+    """Check if the port can be assigned a floating IP
+
+    Helper function to check the device owner of a
+    port can be assigned a floating IP.
+    """
+    return device_owner != n_const.DEVICE_OWNER_DHCP
+
+
 def ip_to_cidr(ip, prefix=None):
     """Convert an ip with no prefix to cidr notation
 
