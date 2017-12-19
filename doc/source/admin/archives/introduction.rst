@@ -195,7 +195,7 @@ Virtual-Private-Network-as-a-Service (VPNaaS)
 The VPNaaS extension enables OpenStack projects to extend private networks
 across the internet.
 
-VPNaas is a service. It is a parent object that associates a VPN
+VPNaaS is a service. It is a parent object that associates a VPN
 with a specific subnet and router. Only one VPN service object can be
 created for each router and each subnet. However, each VPN service object
 can have any number of IP security connections.
