@@ -17,11 +17,13 @@ import mock
 import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
 from neutron.db import portbindings_db
+from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -50,26 +52,37 @@ class TestIpamBackendMixin(base.BaseTestCase):
         return results
 
     def _mock_slaac_subnet_on(self):
-        slaac_subnet = {'ipv6_address_mode': constants.IPV6_SLAAC,
-                        'ipv6_ra_mode': constants.IPV6_SLAAC}
-        self.mixin._get_subnet = mock.Mock(return_value=slaac_subnet)
+        slaac_subnet_obj = subnet_obj.Subnet(
+            self.ctx,
+            ipv6_address_mode=constants.IPV6_SLAAC,
+            ipv6_ra_mode=constants.IPV6_SLAAC)
+        self.mixin._get_subnet_object = mock.Mock(
+            return_value=slaac_subnet_obj)
 
     def _mock_slaac_subnet_off(self):
-        non_slaac_subnet = {'ipv6_address_mode': None,
-                            'ipv6_ra_mode': None}
-        self.mixin._get_subnet = mock.Mock(return_value=non_slaac_subnet)
+        non_slaac_subnet_obj = subnet_obj.Subnet(
+            self.ctx,
+            ipv6_address_mode=None,
+            ipv6_ra_mode=None)
+        self.mixin._get_subnet_object = mock.Mock(
+            return_value=non_slaac_subnet_obj)
 
     def _mock_slaac_for_subnet_ids(self, subnet_ids):
         """Mock incoming subnets as autoaddressed."""
-        def _get_subnet(context, subnet_id):
+        def _get_subnet_object(context, subnet_id):
             if subnet_id in subnet_ids:
-                return {'ipv6_address_mode': constants.IPV6_SLAAC,
-                        'ipv6_ra_mode': constants.IPV6_SLAAC}
+                return subnet_obj.Subnet(
+                    self.ctx,
+                    ipv6_address_mode=constants.IPV6_SLAAC,
+                    ipv6_ra_mode=constants.IPV6_SLAAC)
             else:
-                return {'ipv6_address_mode': None,
-                        'ipv6_ra_mode': None}
+                return subnet_obj.Subnet(
+                    self.ctx,
+                    ipv6_address_mode=None,
+                    ipv6_ra_mode=None)
 
-        self.mixin._get_subnet = mock.Mock(side_effect=_get_subnet)
+        self.mixin._get_subnet_object = mock.Mock(
+            side_effect=_get_subnet_object)
 
     def _test_get_changed_ips_for_port(self, expected, original_ips,
                                        new_ips, owner):
@@ -136,10 +149,13 @@ class TestIpamBackendMixin(base.BaseTestCase):
         original_ips = self._prepare_ips(original)
 
         # mock to test auto address part
-        pd_subnet = {'subnetpool_id': constants.IPV6_PD_POOL_ID,
-                     'ipv6_address_mode': constants.IPV6_SLAAC,
-                     'ipv6_ra_mode': constants.IPV6_SLAAC}
-        self.mixin._get_subnet = mock.Mock(return_value=pd_subnet)
+        pd_subnet_obj = subnet_obj.Subnet(
+            self.ctx,
+            id=uuidutils.generate_uuid(),
+            subnetpool_id=constants.IPV6_PD_POOL_ID,
+            ipv6_address_mode=constants.IPV6_SLAAC,
+            ipv6_ra_mode=constants.IPV6_SLAAC)
+        self.mixin._get_subnet_object = mock.Mock(return_value=pd_subnet_obj)
 
         # make a copy of original_ips
         # since it is changed by _get_changed_ips_for_port
@@ -252,36 +268,36 @@ class TestIpamBackendMixin(base.BaseTestCase):
 
     def test__is_ip_required_by_subnet_for_router_port(self):
         # Owner -> router:
-        # _get_subnet should not be called,
+        # _get_subnet_object should not be called,
         # expected True
         self._mock_slaac_subnet_off()
 
         result = self.mixin._is_ip_required_by_subnet(self.ctx, 'id',
                                                       self.owner_router)
         self.assertTrue(result)
-        self.assertFalse(self.mixin._get_subnet.called)
+        self.assertFalse(self.mixin._get_subnet_object.called)
 
     def test__is_ip_required_by_subnet_for_non_router_port(self):
         # Owner -> not router:
-        # _get_subnet should be called,
+        # _get_subnet_object should be called,
         # expected True, because subnet is not slaac
         self._mock_slaac_subnet_off()
 
         result = self.mixin._is_ip_required_by_subnet(self.ctx, 'id',
                                                       self.owner_non_router)
         self.assertTrue(result)
-        self.assertTrue(self.mixin._get_subnet.called)
+        self.assertTrue(self.mixin._get_subnet_object.called)
 
     def test__is_ip_required_by_subnet_for_non_router_port_and_slaac(self):
         # Owner -> not router:
-        # _get_subnet should be called,
+        # _get_subnet_object should be called,
         # expected False, because subnet is slaac
         self._mock_slaac_subnet_on()
 
         result = self.mixin._is_ip_required_by_subnet(self.ctx, 'id',
                                                       self.owner_non_router)
         self.assertFalse(result)
-        self.assertTrue(self.mixin._get_subnet.called)
+        self.assertTrue(self.mixin._get_subnet_object.called)
 
 
 class TestPlugin(db_base_plugin_v2.NeutronDbPluginV2,

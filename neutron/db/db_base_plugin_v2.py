@@ -835,9 +835,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # value since _validate_subnet() expects subnet spec has 'ip_version'
         # and 'allocation_pools' fields.
         s['ip_version'] = subnet_obj.ip_version
-        # TODO(slaweq): convert cidr to str will not be necessary when we
-        # will switch to use subnet OVO in ipam module
-        s['cidr'] = str(subnet_obj.cidr)
+        s['cidr'] = subnet_obj.cidr
         s['id'] = subnet_obj.id
         s['project_id'] = subnet_obj.project_id
         s['tenant_id'] = subnet_obj.project_id
@@ -849,10 +847,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if new_cidr and ipv6_utils.is_ipv6_pd_enabled(s):
             # This is an ipv6 prefix delegation-enabled subnet being given an
             # updated cidr by the process_prefix_update RPC
-            s['cidr'] = new_cidr
-            net = netaddr.IPNetwork(s['cidr'], s['ip_version'])
+            s['cidr'] = netaddr.IPNetwork(new_cidr, s['ip_version'])
             # Update gateway_ip and allocation pools based on new cidr
-            s['gateway_ip'] = utils.get_first_host_ip(net, s['ip_version'])
+            s['gateway_ip'] = utils.get_first_host_ip(
+                s['cidr'], s['ip_version'])
             s['allocation_pools'] = self._update_allocation_pools(s)
 
         range_pools = None
