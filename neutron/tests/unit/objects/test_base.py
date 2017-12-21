@@ -750,9 +750,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                                  self._test_class.unique_keys)))
         obj_keys = self.generate_object_keys(self._test_class,
                                              non_unique_fields)
-        self.assertRaises(o_exc.NeutronPrimaryKeyMissing,
-                          self._test_class.get_object,
-                          self.context, **obj_keys)
+        exception = self.assertRaises(o_exc.NeutronPrimaryKeyMissing,
+                                      self._test_class.get_object,
+                                      self.context, **obj_keys)
+        self.assertIn(self._test_class.__name__, str(exception))
 
     def test_get_object_unique_key(self):
         if not self._test_class.unique_keys:
