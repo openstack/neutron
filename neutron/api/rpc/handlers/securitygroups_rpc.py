@@ -14,14 +14,14 @@
 
 import collections
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
 from neutron.common import topics

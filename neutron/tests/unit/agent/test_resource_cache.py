@@ -13,12 +13,12 @@
 #    under the License.
 
 import mock
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import context
 
 from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import events as events_rpc
-from neutron.callbacks import events
-from neutron.callbacks import registry
 from neutron.tests import base
 
 
