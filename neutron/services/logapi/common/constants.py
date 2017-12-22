@@ -22,6 +22,9 @@ LOGGING_PLUGIN = 'logging-plugin'
 # supported logging types
 SECURITY_GROUP = 'security_group'
 
+# target resource types
+PORT = 'port'
+
 RPC_NAMESPACE_LOGGING = 'logging-plugin'
 
 # Define for rpc_method_key

@@ -19,78 +19,39 @@ from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
-from sqlalchemy.orm import exc as orm_exc
 
 from neutron.objects import ports
-from neutron.objects import securitygroup as sg_object
-from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 from neutron.tests import base
 from neutron.tests.unit.services.logapi.drivers import (
     test_manager as drv_mgr)
 
 
-class TestRequestValidations(base.BaseTestCase):
-    """Test validation for a request"""
+class TestRegisterValidateMethods(base.BaseTestCase):
 
-    def test_validate_request_resource_sg_not_exists(self):
-        log_data = {'resource_type': 'security_group',
-                    'resource_id': 'fake_sg_id'}
-        with mock.patch.object(sg_object.SecurityGroup, 'count',
-                               return_value=0):
-            self.assertRaises(log_exc.ResourceNotFound,
-                              validators.validate_request,
-                              mock.ANY,
-                              log_data)
+    def setUp(self):
+        self.validator_mgr = validators.ResourceValidateRequest.get_instance()
+        super(TestRegisterValidateMethods, self).setUp()
 
-    def test_validate_request_target_resource_port_not_exists(self):
-        log_data = {'resource_type': 'security_group',
-                    'target_id': 'fake_port_id'}
-        with mock.patch.object(ports.Port, 'get_object', return_value=None):
-            self.assertRaises(log_exc.TargetResourceNotFound,
-                              validators.validate_request,
-                              mock.ANY,
-                              log_data)
+    def test_register_validate_method(self):
+        self.validator_mgr.validate_methods.clear()
+        resource_type = 'fake_resource'
 
-    def test_validate_request_log_type_not_supported_on_port(self):
-        log_data = {'resource_type': 'security_group',
-                    'target_id': 'fake_port_id'}
-        with mock.patch.object(ports.Port, 'get_object',
-                               return_value=mock.ANY):
-            with mock.patch.object(validators, 'validate_log_type_for_port',
-                                   return_value=False):
-                self.assertRaises(log_exc.LoggingTypeNotSupported,
-                                  validators.validate_request,
-                                  mock.ANY,
-                                  log_data)
+        @validators.ResourceValidateRequest.register(resource_type)
+        def fake_method():
+            pass
 
-    def test_validate_request_invalid_resource_constraint(self):
-        log_data = {'resource_type': 'security_group',
-                    'resource_id': 'fake_sg_id',
-                    'target_id': 'fake_port_id'}
+        self.assertEqual({'fake_resource': fake_method},
+                         self.validator_mgr.validate_methods_map)
 
-        class FakeFiltered(object):
-            def one(self):
-                raise orm_exc.NoResultFound
+    def test_get_validated_method(self):
 
-        class FakeSGPortBinding(object):
-            def filter_by(self, security_group_id, port_id):
-                return FakeFiltered()
+        @validators.ResourceValidateRequest.register('fake_resource')
+        def fake_method():
+            pass
 
-        with mock.patch.object(
-                sg_object.SecurityGroup, 'count', return_value=1):
-            with mock.patch.object(
-                    ports.Port, 'get_object', return_value=mock.ANY):
-                with mock.patch.object(validators,
-                                       'validate_log_type_for_port',
-                                       return_value=True):
-                    with mock.patch('neutron.db._utils.model_query',
-                                    return_value=FakeSGPortBinding()):
-                        self.assertRaises(
-                            log_exc.InvalidResourceConstraint,
-                            validators.validate_request,
-                            mock.ANY,
-                            log_data)
+        actual = self.validator_mgr.get_validated_method('fake_resource')
+        self.assertEqual(fake_method, actual)
 
 
 class TestLogDriversLoggingTypeValidations(drv_mgr.TestLogDriversManagerBase):

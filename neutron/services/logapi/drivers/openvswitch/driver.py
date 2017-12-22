@@ -16,6 +16,7 @@
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
 from oslo_log import log as logging
+from oslo_utils import importutils
 
 from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.drivers import base
@@ -55,4 +56,8 @@ def register():
                  server_rpc.get_sg_log_info_for_log_resources}
             ]
             DRIVER.register_rpc_methods(log_const.SECURITY_GROUP, rpc_methods)
+    # Trigger decorator
+    importutils.import_module(
+        'neutron.services.logapi.common.sg_validate'
+    )
     LOG.debug('Open vSwitch logging driver registered')

@@ -19,13 +19,7 @@ from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils
 from oslo_log import log as logging
-from sqlalchemy.orm import exc as orm_exc
 
-from neutron.db import _utils as db_utils
-from neutron.db.models import securitygroup as sg_db
-from neutron.objects import ports
-from neutron.objects import securitygroup as sg_object
-from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.common import exceptions as log_exc
 
 LOG = logging.getLogger(__name__)
@@ -34,30 +28,6 @@ SKIPPED_VIF_TYPES = [
     portbindings.VIF_TYPE_UNBOUND,
     portbindings.VIF_TYPE_BINDING_FAILED,
 ]
-
-
-def _check_port_bound_sg(context, sg_id, port_id):
-    try:
-        db_utils.model_query(context, sg_db.SecurityGroupPortBinding)\
-            .filter_by(security_group_id=sg_id, port_id=port_id).one()
-    except orm_exc.NoResultFound:
-        raise log_exc.InvalidResourceConstraint(resource='security_group',
-                                                resource_id=sg_id,
-                                                target_resource='port',
-                                                target_id=port_id)
-
-
-def _check_secgroup_exists(context, sg_id):
-    number_of_matching = sg_object.SecurityGroup.count(context, id=sg_id)
-    if number_of_matching < 1:
-        raise log_exc.ResourceNotFound(resource_id=sg_id)
-
-
-def _get_port(context, port_id):
-    port = ports.Port.get_object(context, id=port_id)
-    if not port:
-        raise log_exc.TargetResourceNotFound(target_id=port_id)
-    return port
 
 
 def _validate_vnic_type(driver, vnic_type, port_id):
@@ -113,30 +83,56 @@ def validate_log_type_for_port(log_type, port):
     return False
 
 
-def validate_request(context, log_data):
-    """Validate a log request
+class ResourceValidateRequest(object):
 
-    This method validates log request is satisfied or not. A ResourceNotFound
-    will be raised if resource_id in log_data not exists or a
-    TargetResourceNotFound will be raised if target_id in log_data not exists.
-    This method will also raise a LoggingTypeNotSupported, if there is no
-    log_driver supporting for resource_type in log_data.
+    _instance = None
 
-    In addition, if log_data specify both resource_id and target_id. A
-    InvalidResourceConstraint will be raised if there is no constraint
-    between resource_id and target_id.
+    def __init__(self):
+        self.validate_methods = {}
 
-    """
-    resource_id = log_data.get('resource_id')
-    target_id = log_data.get('target_id')
-    resource_type = log_data.get('resource_type')
-    if resource_type == log_const.SECURITY_GROUP:
-        if resource_id:
-            _check_secgroup_exists(context, resource_id)
-        if target_id:
-            port = _get_port(context, target_id)
-            if not validate_log_type_for_port(resource_type, port):
-                raise log_exc.LoggingTypeNotSupported(log_type=resource_type,
-                                                      port_id=target_id)
-        if resource_id and target_id:
-            _check_port_bound_sg(context, resource_id, target_id)
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @property
+    def validate_methods_map(self):
+        return self.validate_methods
+
+    def validate_request(self, context, log_data):
+        """
+        This method will get validated method according to resource_type. An
+        InvalidLogResourceType exception will be raised if there is no logging
+        driver that supports resource_type as logging resource. In addition,
+        a ValidatedMethodNotFound exception will be raised if a validate method
+        was not registered for resource_type.
+        """
+
+        resource_type = log_data.get('resource_type')
+        log_plugin = directory.get_plugin(alias=plugin_const.LOG_API)
+        supported_logging_types = log_plugin.supported_logging_types
+
+        if resource_type in supported_logging_types:
+            method = self.get_validated_method(resource_type)
+            method(context, log_data)
+        else:
+            raise log_exc.InvalidLogResourceType(resource_type=resource_type)
+
+    def get_validated_method(self, resource_type):
+        """Get the validated method for resource_type"""
+
+        method = self.validate_methods[resource_type]
+        if not method:
+            raise log_exc.ValidatedMethodNotFound(resource_type=resource_type)
+        return method
+
+    @classmethod
+    def register(cls, resource_type):
+        """This is intended to be used as a decorator to register a validated
+        method for resource_type.
+        """
+        def func_wrap(func):
+            cls.get_instance().validate_methods[resource_type] = func
+            return func
+        return func_wrap
