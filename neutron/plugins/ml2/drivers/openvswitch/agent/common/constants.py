@@ -71,6 +71,11 @@ OVS_FIREWALL_TABLES = (
     RULES_INGRESS_TABLE,
 )
 
+# Tables for parties interacting with ovs firewall
+ACCEPTED_EGRESS_TRAFFIC_TABLE = 91
+ACCEPTED_INGRESS_TRAFFIC_TABLE = 92
+DROPPED_TRAFFIC_TABLE = 93
+
 ## Tunnel bridge (tun_br)
 
 # Various tables for tunneling flows

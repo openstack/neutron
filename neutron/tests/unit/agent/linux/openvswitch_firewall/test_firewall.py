@@ -513,7 +513,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             table=ovs_consts.TRANSIENT_TABLE)
         filter_rule = mock.call(
             actions='ct(commit,zone=NXM_NX_REG6[0..15]),'
-            'output:{:d}'.format(self.port_ofport),
+            'output:{:d},resubmit(,{:d})'.format(
+                self.port_ofport,
+                ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
             dl_type="0x{:04x}".format(n_const.ETHERTYPE_IP),
             nw_proto=constants.PROTO_NUM_TCP,
             priority=77,
