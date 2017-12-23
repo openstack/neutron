@@ -89,7 +89,7 @@ def serve_wsgi(cls):
             LOG.exception('Unrecoverable error: please check log '
                           'for details.')
 
-    registry.notify(resources.PROCESS, events.BEFORE_SPAWN, service)
+    registry.publish(resources.PROCESS, events.BEFORE_SPAWN, service)
     return service
 
 
@@ -262,7 +262,7 @@ def _start_workers(workers):
 def start_all_workers():
     workers = _get_rpc_workers() + _get_plugins_workers()
     launcher = _start_workers(workers)
-    registry.notify(resources.PROCESS, events.AFTER_SPAWN, None)
+    registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
 
 

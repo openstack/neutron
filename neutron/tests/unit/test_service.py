@@ -69,4 +69,4 @@ class TestRunWsgiApp(base.BaseTestCase):
         registry.subscribe(callback, resources.PROCESS, events.AFTER_SPAWN)
         service.start_all_workers()
         callback.assert_called_once_with(
-            resources.PROCESS, events.AFTER_SPAWN, mock.ANY)
+            resources.PROCESS, events.AFTER_SPAWN, mock.ANY, payload=None)
