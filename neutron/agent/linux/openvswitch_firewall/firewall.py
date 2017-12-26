@@ -207,7 +207,7 @@ class SGPortMap(object):
 
 
 class ConjIdMap(object):
-    """Handle conjuction ID allocations and deallocations."""
+    """Handle conjunction ID allocations and deallocations."""
 
     def __init__(self):
         self.id_map = collections.defaultdict(self._conj_id_factory)

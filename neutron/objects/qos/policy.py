@@ -313,7 +313,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     def get_bound_tenant_ids(cls, context, policy_id):
         """Implements RbacNeutronObject.get_bound_tenant_ids.
 
-        :returns: set -- a set of tenants' ids dependant on QosPolicy.
+        :returns: set -- a set of tenants' ids dependent on QosPolicy.
         """
         net = models_v2.Network
         qosnet = qos_db_model.QosNetworkPolicyBinding

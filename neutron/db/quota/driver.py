@@ -82,7 +82,7 @@ class DbQuotaDriver(object):
         the detailed quotas (limit, used, reserved).
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
-        :return dict: mapping resource name in dict to its correponding limit
+        :return dict: mapping resource name in dict to its corresponding limit
             used and reserved. Reserved currently returns default value of 0
         """
         res_reserve_info = quota_api.get_reservations_for_resources(
