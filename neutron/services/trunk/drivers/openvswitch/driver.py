@@ -68,8 +68,9 @@ def register():
     LOG.debug('Open vSwitch trunk driver registered')
 
 
-def vif_details_bridge_name_handler(resource, event, set_br_name, **kwargs):
+def vif_details_bridge_name_handler(resource, event, set_br_name,
+                                    payload=None):
     """If port is a trunk port, generate a bridge_name for its vif_details."""
-    port = kwargs['port']
+    port = payload.metadata['port']
     if 'trunk_details' in port:
         set_br_name(utils.gen_trunk_br_name(port['trunk_details']['trunk_id']))

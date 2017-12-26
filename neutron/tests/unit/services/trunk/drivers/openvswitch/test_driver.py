@@ -60,7 +60,14 @@ class OVSDriverTestCase(base.BaseTestCase):
         driver.register()
         mock_gen_br_name.return_value = 'fake-trunk-br-name'
         test_trigger = mock.Mock()
-        registry.notify(agent_consts.OVS_BRIDGE_NAME, events.BEFORE_READ,
-                        test_trigger, **{'port': {'trunk_details':
-                                                  {'trunk_id': 'foo'}}})
+        registry.publish(agent_consts.OVS_BRIDGE_NAME, events.BEFORE_READ,
+                         test_trigger,
+                         payload=events.EventPayload(
+                             None, metadata={
+                                 'port': {
+                                     'trunk_details': {
+                                         'trunk_id': 'foo'
+                                     }
+                                 }
+                             }))
         test_trigger.assert_called_once_with('fake-trunk-br-name')

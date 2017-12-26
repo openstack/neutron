@@ -121,9 +121,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         def set_bridge_name_inner(bridge_name):
             vif_details[portbindings.VIF_DETAILS_BRIDGE_NAME] = bridge_name
 
-        registry.notify(
-            a_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
-            set_bridge_name_inner, port=port)
+        registry.publish(a_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
+            set_bridge_name_inner, payload=events.EventPayload(
+                None, metadata={'port': port}))
 
     def _pre_get_vif_details(self, agent, context):
         a_config = agent['configurations']
