@@ -14,6 +14,7 @@
 #    under the License.
 
 import re
+import signal
 
 from neutron.agent.linux import async_process
 from neutron.agent.linux import iptables_manager
@@ -97,7 +98,7 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
     tcpdump_async.start()
     sender_vm.block_until_ping(receiver_vm.ip)
     try:
-        tcpdump_async.stop()
+        tcpdump_async.stop(kill_signal=signal.SIGINT)
     except async_process.AsyncProcessException:
         # If it was already stopped than we don't care about it
         pass
