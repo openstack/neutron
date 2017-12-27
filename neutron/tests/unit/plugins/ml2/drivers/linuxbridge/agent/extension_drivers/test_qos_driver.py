@@ -73,7 +73,7 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
                 "-j $qos-o%s") % (device, device[3:])
 
     def _dscp_rule(self, dscp_mark_value):
-        return "-j DSCP --set-dscp %s" % dscp_mark_value
+        return "-j DSCP --set-dscp %s" % format(dscp_mark_value, '#04x')
 
     def _dscp_rule_tag(self, device):
         return "dscp-%s" % device

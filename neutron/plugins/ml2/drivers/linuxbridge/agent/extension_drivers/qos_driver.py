@@ -139,7 +139,8 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
     def _set_dscp_mark_rule(self, port, dscp_value):
         chain_name = self._dscp_chain_name(
             const.EGRESS_DIRECTION, port['device'])
-        rule = "-j DSCP --set-dscp %s" % dscp_value
+        # iptables rules use hexadecimal values with --set-dscp
+        rule = "-j DSCP --set-dscp %s" % format(dscp_value, '#04x')
         self.iptables_manager.ipv4['mangle'].add_rule(
             chain_name, rule, tag=self._dscp_rule_tag(port['device']))
         self.iptables_manager.ipv6['mangle'].add_rule(
