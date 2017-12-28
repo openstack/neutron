@@ -854,8 +854,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         segment_ids_to_bind = {s[api.SEGMENTATION_ID]
                                for s in segments_to_bind}
         for level in binding_levels:
-            if (level.driver == driver and
-                level.segment_id in segment_ids_to_bind):
+            if (level.driver == driver.name and
+                    level.segment_id in segment_ids_to_bind):
+                LOG.debug("segment %(segment)s is already bound "
+                          "by driver %(driver)s",
+                          {"segment": level.segment_id,
+                           "driver": level.driver})
                 return False
         return True
 
