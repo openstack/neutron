@@ -21,6 +21,7 @@ import testtools
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks as pb
+from neutron.objects import network as net_obj
 from neutron.tests.unit import testlib_api
 
 CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
@@ -38,11 +39,11 @@ class TestStatusBarriers(testlib_api.SqlTestCase):
                            pb.PROVISIONING_COMPLETE)
 
     def _make_net(self):
-        with db_api.context_manager.writer.using(self.ctx):
-            net = models_v2.Network(name='net_net', status='ACTIVE',
-                                    tenant_id='1', admin_state_up=True)
-            self.ctx.session.add(net)
-        return net
+        network_obj = net_obj.Network(self.ctx, name='net_net',
+                                      status='ACTIVE', project_id='1',
+                                      admin_state_up=True)
+        network_obj.create()
+        return network_obj
 
     def _make_port(self):
         net = self._make_net()
