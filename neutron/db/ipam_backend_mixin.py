@@ -24,7 +24,6 @@ from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import exc as orm_exc
@@ -508,13 +507,20 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         service_types = subnet_args.pop('service_types', [])
 
-        subnet = models_v2.Subnet(**subnet_args)
         segment_id = subnet_args.get('segment_id')
-        try:
-            context.session.add(subnet)
-            context.session.flush()
-        except db_exc.DBReferenceError:
-            raise segment_exc.SegmentNotFound(segment_id=segment_id)
+        if segment_id:
+            # TODO(slaweq): integrate check if segment exists in
+            # self._validate_segment() method
+            segment = network_obj.NetworkSegment.get_object(context,
+                                                            id=segment_id)
+            if not segment:
+                raise segment_exc.SegmentNotFound(segment_id=segment_id)
+
+        subnet = subnet_obj.Subnet(context, **subnet_args)
+        subnet.create()
+        # TODO(slaweq): when check is segment exists will be integrated in
+        # self._validate_segment() method, it should be moved to be done before
+        # subnet object is created
         self._validate_segment(context, network['id'], segment_id)
 
         # NOTE(changzhi) Store DNS nameservers with order into DB one
@@ -546,7 +552,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         self.save_allocation_pools(context, subnet,
                                    subnet_request.allocation_pools)
 
-        return subnet
+        return subnet_obj.Subnet.get_object(context, id=subnet.id)
 
     def _classify_subnets(self, context, subnets):
         """Split into v4, v6 stateless and v6 stateful subnets"""

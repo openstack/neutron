@@ -17,6 +17,7 @@ import functools
 
 import fixtures
 import mock
+import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import portbindings
@@ -2588,9 +2589,9 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
         with mock.patch(driver) as driver_mock:
             request = mock.Mock()
             request.subnet_id = uuidutils.generate_uuid()
-            request.subnet_cidr = cidr
+            request.subnet_cidr = netaddr.IPNetwork(cidr)
             request.allocation_pools = []
-            request.gateway_ip = gateway_ip
+            request.gateway_ip = netaddr.IPAddress(gateway_ip)
             request.tenant_id = uuidutils.generate_uuid()
 
             ipam_subnet = mock.Mock()
