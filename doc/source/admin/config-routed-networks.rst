@@ -419,6 +419,13 @@ segment contains one IPv4 subnet and one IPv6 subnet.
       As of the writing of this guide, there is not placement API CLI client,
       so the :command:`curl` command is used for this example.
 
+   .. note::
+
+      Service points URLs differ depending on your OpenStack deployment. You
+      can discover the Placement service URL by executing the
+      :command:`openstack endpoint list | grep placement` command. This
+      command has to be executed as admin.
+
 #. Verify that host aggregates were created for each segment in the Compute
    service (for the sake of brevity, only one of the segments is shown in this
    example).
