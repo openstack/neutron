@@ -1,0 +1,175 @@
+- hosts: all
+  name: Autoconverted job legacy-rally-dsvm-neutron-neutron from old job gate-rally-dsvm-neutron-neutron-ubuntu-xenial
+  tasks:
+
+    - name: Ensure legacy workspace directory
+      file:
+        path: '{{ ansible_user_dir }}/workspace'
+        state: directory
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          cat > clonemap.yaml << EOF
+          clonemap:
+            - name: openstack-infra/devstack-gate
+              dest: devstack-gate
+          EOF
+          /usr/zuul-env/bin/zuul-cloner -m clonemap.yaml --cache-dir /opt/git \
+              git://git.openstack.org \
+              openstack-infra/devstack-gate
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          if [ $ZUUL_PROJECT == "openstack/rally" ] && [ $ZUUL_BRANCH != "master" ]; then
+              export DEVSTACK_GATE_FEATURE_MATRIX="/opt/stack/new/rally/devstack/features.yaml"
+          fi
+
+          export PROJECTS="openstack/rally $PROJECTS"
+
+          export DEVSTACK_GATE_NEUTRON=1
+          export DEVSTACK_GATE_HORIZON=1
+          export DEVSTACK_GATE_NEUTRON_EXTENSIONS=0
+          export DEVSTACK_GATE_IRONIC=0
+          export DEVSTACK_GATE_ZAQAR=0
+          export DEVSTACK_GATE_SENLIN=0
+          export DEVSTACK_GATE_WATCHER=0
+          export DEVSTACK_GATE_MAGNUM=0
+          export DEVSTACK_GATE_HEAT=0
+          export DEVSTACK_GATE_SWIFT=1
+          export DEVSTACK_GATE_TELEMETRY=0
+          export DEVSTACK_GATE_TEMPEST_LARGE_OPS=0
+          export DEVSTACK_GATE_EXERCISES=0
+          export DEVSTACK_GATE_PREPOPULATE_USERS=0
+
+          export DEVSTACK_GATE_USE_PYTHON3=False
+          export USE_KEYSTONE_V2API=0
+          export RALLY_SCENARIO=$ZUUL_SHORT_PROJECT_NAME-neutron
+
+          if [ $USE_KEYSTONE_V2API -eq 1 ]; then
+              export IDENTITY_API_VERSION=2.0
+          else
+              export IDENTITY_API_VERSION=3
+          fi
+
+          DEVSTACK_LOCAL_CONFIG="enable_plugin rally git://git.openstack.org/openstack/rally"
+          DEVSTACK_LOCAL_CONFIG+=$'\n'"CINDER_ENABLE_V1_API=True"
+          DEVSTACK_LOCAL_CONFIG+=$'\n'"IDENTITY_API_VERSION=$IDENTITY_API_VERSION"
+
+          ENABLED_SERVICES=key,horizon,
+          ENABLED_SERVICES+=cinder,c-api,c-vol,c-sch,c-bak,
+          ENABLED_SERVICES+=g-api,g-reg,
+          ENABLED_SERVICES+=n-api,n-crt,n-cpu,n-sch,n-cond,
+          ENABLED_SERVICES+=q-qos,
+
+          if [ $DEVSTACK_GATE_SWIFT -eq 1 ];
+          then
+              ENABLED_SERVICES+=s-proxy,s-account,s-container,s-object,
+          else
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-account"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-container"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-object"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"disable_service s-proxy"
+          fi
+
+          if [ $DEVSTACK_GATE_HEAT -ne 0 ]; then
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat https://git.openstack.org/openstack/heat"
+          fi
+
+          export PROJECTS="openstack/neutron $PROJECTS"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron git://git.openstack.org/openstack/neutron"
+          if [ $DEVSTACK_GATE_NEUTRON_EXTENSIONS -ne 0 ]; then
+              export PROJECTS="openstack/neutron-lbaas $PROJECTS"
+              export PROJECTS="openstack/octavia $PROJECTS"
+              export PROJECTS="openstack/neutron-fwaas $PROJECTS"
+              export PROJECTS="openstack/diskimage-builder $PROJECTS"
+              export PROJECTS="openstack/tripleo-image-elements $PROJECTS"
+              export PROJECTS="openstack/neutron-vpnaas $PROJECTS"
+              export PROJECTS="openstack/networking-bgpvpn $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-lbaas git://git.openstack.org/openstack/neutron-lbaas"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin octavia https://git.openstack.org/openstack/octavia"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-fwaas https://git.openstack.org/openstack/neutron-fwaas"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin neutron-vpnaas https://git.openstack.org/openstack/neutron-vpnaas"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin networking-bgpvpn https://git.openstack.org/openstack/networking-bgpvpn.git"
+              export ENABLED_SERVICES+=q-lbaasv2,octavia,o-cw,o-hk,o-hm,o-api,q-fwaas,q-svc,q-agt,q-dhcp,q-l3,q-meta,
+          fi
+          if [ $DEVSTACK_GATE_IRONIC -ne 0 ]; then
+              export PROJECTS="openstack/ironic $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin ironic git://git.openstack.org/openstack/ironic"
+          fi
+          if [ $DEVSTACK_GATE_ZAQAR -ne 0 ]; then
+              export PROJECTS="openstack/python-zaqarclient $PROJECTS"
+              export PROJECTS="openstack/zaqar-ui $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin zaqar git://git.openstack.org/openstack/zaqar"
+          fi
+          if [ $DEVSTACK_GATE_SENLIN -ne 0 ]; then
+              export PROJECTS="openstack/senlin $PROJECTS"
+              export PROJECTS="openstack/python-senlinclient $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin senlin git://git.openstack.org/openstack/senlin"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_service sl-api sl-eng"
+          fi
+          if [ $DEVSTACK_GATE_WATCHER -ne 0 ]; then
+              export PROJECTS="openstack/watcher $PROJECTS"
+              export PROJECTS="openstack/python-watcherclient $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin watcher git://git.openstack.org/openstack/watcher"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_service watcher-api watcher-decision-engine watcher-applier"
+          fi
+          if [ $DEVSTACK_GATE_MAGNUM -ne 0 ]||[ $RALLY_SCENARIO = "magnum" ]; then
+              export PROJECTS="openstack/magnum $PROJECTS"
+              export PROJECTS="openstack/python-magnumclient $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin magnum https://git.openstack.org/openstack/magnum"
+          fi
+          if [ $DEVSTACK_GATE_TELEMETRY -ne 0 ]; then
+              export PROJECTS="openstack/panko $PROJECTS"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin panko git://git.openstack.org/openstack/panko"
+              export ENABLED_SERVICES+=panko-api,
+              export PROJECTS="openstack/ceilometer $PROJECTS"
+              export PROJECTS="openstack/aodh $PROJECTS"
+              export PROJECTS="openstack/gnocchi $PROJECTS"
+
+              export CEILOMETER_NOTIFICATION_TOPICS=notifications,profiler
+
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin ceilometer git://git.openstack.org/openstack/ceilometer"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin aodh git://git.openstack.org/openstack/aodh"
+              export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin gnocchi git://git.openstack.org/openstack/gnocchi"
+              export ENABLED_SERVICES+=ceilometer-acompute,ceilometer-acentral,ceilometer-api,
+              export ENABLED_SERVICES+=ceilometer-anotification,ceilometer-collector,
+              export ENABLED_SERVICES+=aodh-api,aodh-evaluator,aodh-notifier,
+          fi
+          export ENABLED_SERVICES
+          export DEVSTACK_LOCAL_CONFIG
+
+          if [[ "$ZUUL_PROJECT" = "openstack/neutron" ]]; then
+              function gate_hook {
+                  bash -xe $BASE/new/neutron/neutron/tests/contrib/gate_hook.sh rally $ZUUL_SHORT_PROJECT_NAME-neutron
+              }
+              export -f gate_hook
+          fi
+
+          function post_test_hook {
+              $BASE/new/rally/tests/ci/rally-gate.sh
+          }
+          export -f post_test_hook
+
+          if [[ "$DEVSTACK_GATE_USE_PYTHON3" = "True" ]]; then
+              # Switch off glance->swift communication as swift fails under py3.x
+              function pre_test_hook {
+                  local localconf=$BASE/new/devstack/local.conf
+                  echo "[[post-config|\$GLANCE_API_CONF]]" >> $localconf
+                  echo "[glance_store]" >> $localconf
+                  echo "default_store=file" >> $localconf
+              }
+              export -f pre_test_hook
+          fi
+
+          cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
+          ./safe-devstack-vm-gate-wrap.sh
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
