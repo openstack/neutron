@@ -32,7 +32,6 @@ import neutron.conf.agent.metadata.config as meta_conf
 import neutron.conf.agent.ovs_conf
 import neutron.conf.agent.ovsdb_api
 import neutron.conf.agent.xenapi_conf
-import neutron.conf.cache_utils
 import neutron.conf.common
 import neutron.conf.db.dvr_mac_db
 import neutron.conf.db.extraroute_db
@@ -227,8 +226,7 @@ def list_metadata_agent_opts():
          itertools.chain(
              meta_conf.SHARED_OPTS,
              meta_conf.METADATA_PROXY_HANDLER_OPTS,
-             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS,
-             neutron.conf.cache_utils.cache_opts)
+             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS)
          ),
         ('agent', neutron.conf.agent.common.AGENT_STATE_OPTS)
     ]

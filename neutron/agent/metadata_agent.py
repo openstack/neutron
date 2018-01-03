@@ -32,7 +32,6 @@ def main():
     meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
     meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
     cache.register_oslo_configs(cfg.CONF)
-    cfg.CONF.set_default(name='cache_url', default='memory://?default_ttl=5')
     agent_conf.register_agent_state_opts_helper(cfg.CONF)
     config.init(sys.argv[1:])
     config.setup_logging()

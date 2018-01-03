@@ -31,7 +31,6 @@ class TestOsloCache(base.BaseTestCase):
         self.memory_conf = cfg.ConfigOpts()
         memory_conf_fixture = CacheConfFixture(self.memory_conf)
         self.useFixture(memory_conf_fixture)
-        memory_conf_fixture.config(cache_url='memory://?default_ttl=5')
 
         self.dict_conf = cfg.ConfigOpts()
         dict_conf_fixture = CacheConfFixture(self.dict_conf)
@@ -53,24 +52,14 @@ class TestOsloCache(base.BaseTestCase):
         self._test_get_cache_region_helper(self.dict_conf)
         self._test_get_cache_region_helper(self.null_cache_conf)
 
-    def test_get_cache_region_for_legacy(self):
-        region = cache._get_cache_region_for_legacy("memory://?default_ttl=10")
-        self.assertIsNotNone(region)
-        self.assertEqual(10, region.expiration_time)
-
-    @mock.patch('neutron.common.cache_utils._get_cache_region_for_legacy')
     @mock.patch('neutron.common.cache_utils._get_cache_region')
-    def test_get_cache(self, mock_get_cache_region,
-                       mock_get_cache_region_for_legacy):
+    def test_get_cache(self, mock_get_cache_region):
         self.assertIsNotNone(cache.get_cache(self.memory_conf))
         self.assertIsNotNone(cache.get_cache(self.dict_conf))
         self.assertIsNotNone(cache.get_cache(self.null_cache_conf))
         mock_get_cache_region.assert_has_calls(
             [mock.call(self.dict_conf),
              mock.call(self.null_cache_conf)]
-        )
-        mock_get_cache_region_for_legacy.assert_has_calls(
-            [mock.call('memory://?default_ttl=5')]
         )
 
 

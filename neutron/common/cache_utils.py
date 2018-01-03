@@ -18,28 +18,20 @@ from oslo_cache import core as cache
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import reflection
-from six.moves.urllib import parse
 
 from neutron._i18n import _
-from neutron.conf import cache_utils as cache_utils_config
 
 
 LOG = logging.getLogger(__name__)
 
 
 def register_oslo_configs(conf):
-    cache_utils_config.register_cache_opts(conf)
     cache.configure(conf)
 
 
 def get_cache(conf):
     """Used to get cache client"""
-    # cache_url is still used, we just respect it. Memory backend is the only
-    # backend supported before and default_ttl is the only options of Memory
-    # backend. We use dict backend of oslo.cache for this.
-    if conf.cache_url:
-        return _get_cache_region_for_legacy(conf.cache_url)
-    elif conf.cache.enabled:
+    if conf.cache.enabled:
         return _get_cache_region(conf)
     else:
         return False
@@ -62,27 +54,6 @@ def _get_memory_cache_region(expiration_time=5):
     for k, v in cache_conf_dict.items():
         conf.set_override(k, v, group='cache')
     return _get_cache_region(conf)
-
-
-def _get_cache_region_for_legacy(url):
-    parsed = parse.urlparse(url)
-    backend = parsed.scheme
-
-    if backend == 'memory':
-        query = parsed.query
-        # NOTE(flaper87): We need the following hack
-        # for python versions < 2.7.5. Previous versions
-        # of python parsed query params just for 'known'
-        # schemes. This was changed in this patch:
-        # http://hg.python.org/cpython/rev/79e6ff3d9afd
-        if not query and '?' in parsed.path:
-            query = parsed.path.split('?', 1)[-1]
-        parameters = parse.parse_qs(query)
-        return _get_memory_cache_region(
-            expiration_time=int(parameters.get('default_ttl', [0])[0]))
-    else:
-        raise RuntimeError(_('Old style configuration can use only memory '
-                             '(dict) backend'))
 
 
 class cache_method_results(object):
