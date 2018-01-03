@@ -308,16 +308,15 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
         return False
 
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
-        gateway_ip = str(detail.gateway_ip) if detail.gateway_ip else None
-        args = {'tenant_id': detail.tenant_id,
+        args = {'project_id': detail.tenant_id,
                 'id': detail.subnet_id,
                 'name': subnet['name'],
                 'network_id': subnet['network_id'],
                 'ip_version': subnet['ip_version'],
-                'cidr': str(detail.subnet_cidr),
+                'cidr': detail.subnet_cidr,
                 'subnetpool_id': subnetpool_id,
                 'enable_dhcp': subnet['enable_dhcp'],
-                'gateway_ip': gateway_ip,
+                'gateway_ip': detail.gateway_ip,
                 'description': subnet.get('description')}
         if subnet['ip_version'] == 6 and subnet['enable_dhcp']:
             if validators.is_attr_set(subnet['ipv6_ra_mode']):
