@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import constants as api_const
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import network as net_def
 from neutron_lib.callbacks import events
@@ -38,7 +39,6 @@ from neutron.plugins.common import utils as p_utils
 from neutron.services.auto_allocate import exceptions
 
 LOG = logging.getLogger(__name__)
-IS_DEFAULT = 'is_default'
 CHECK_REQUIREMENTS = 'dry-run'
 
 
@@ -46,7 +46,7 @@ CHECK_REQUIREMENTS = 'dry-run'
 def _ensure_external_network_default_value_callback(
     resource, event, trigger, context, request, network, **kwargs):
     """Ensure the is_default db field matches the create/update request."""
-    is_default = request.get(IS_DEFAULT)
+    is_default = request.get(api_const.IS_DEFAULT)
     if is_default is None:
         return
     if is_default:
@@ -60,9 +60,9 @@ def _ensure_external_network_default_value_callback(
                     net_id=objs[0].network_id)
 
     orig = kwargs.get('original_network')
-    if orig and orig.get(IS_DEFAULT) == is_default:
+    if orig and orig.get(api_const.IS_DEFAULT) == is_default:
         return
-    network[IS_DEFAULT] = is_default
+    network[api_const.IS_DEFAULT] = is_default
     # Reflect the status of the is_default on the create/update request
     obj = net_obj.ExternalNetwork.get_object(context,
                                              network_id=network['id'])
@@ -112,7 +112,7 @@ class AutoAllocatedTopologyMixin(common_db_mixin.CommonDbMixin):
     def _extend_external_network_default(net_res, net_db):
         """Add is_default field to 'show' response."""
         if net_db.external is not None:
-            net_res[IS_DEFAULT] = net_db.external.is_default
+            net_res[api_const.IS_DEFAULT] = net_db.external.is_default
         return net_res
 
     def get_auto_allocated_topology(self, context, tenant_id, fields=None):
