@@ -936,10 +936,20 @@ class TestIpAddrCommand(TestIPCmdBase):
                               'global'))
 
     def test_get_devices_with_ip(self):
+        # This can only verify that get_devices_with_ip() returns a dict
+        # with the correct entry, it doesn't actually test that it only
+        # returns items filtered by the arguments since it isn't calling
+        # /sbin/ip at all.
         self.parent._run.return_value = ADDR_SAMPLE3
-        devices = self.addr_cmd.get_devices_with_ip('172.16.77.240/24')
+        devices = self.addr_cmd.get_devices_with_ip(to='172.16.77.240/24')
         self.assertEqual(1, len(devices))
-        self.assertEqual('eth0', devices[0]['name'])
+        expected = {'cidr': '172.16.77.240/24',
+                    'dadfailed': False,
+                    'dynamic': False,
+                    'name': 'eth0',
+                    'scope': 'global',
+                    'tentative': False}
+        self.assertEqual(expected, devices[0])
 
 
 class TestIpRouteCommand(TestIPCmdBase):
