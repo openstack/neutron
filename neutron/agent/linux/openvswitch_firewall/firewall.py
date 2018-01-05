@@ -516,8 +516,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self._initialize_egress_no_port_security(port['device'])
             return
         elif not self.is_port_managed(port):
-            self._remove_egress_no_port_security(port['device'])
-            self.prepare_port_filter(port)
+            try:
+                self._remove_egress_no_port_security(port['device'])
+            except exceptions.OVSFWPortNotHandled as e:
+                LOG.debug(e)
+            else:
+                self.prepare_port_filter(port)
             return
         old_of_port = self.get_ofport(port)
         try:
@@ -585,7 +589,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def remove_trusted_ports(self, port_ids):
         for port_id in port_ids:
-            self._remove_egress_no_port_security(port_id)
+            try:
+                self._remove_egress_no_port_security(port_id)
+            except exceptions.OVSFWPortNotHandled as e:
+                LOG.debug(e)
 
     def filter_defer_apply_on(self):
         self._deferred = True
@@ -696,8 +703,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         try:
             ofport = self.sg_port_map.unfiltered[port_id]
         except KeyError:
-            LOG.debug("Port %s is not handled by the firewall.", port_id)
-            return
+            raise exceptions.OVSFWPortNotHandled(port_id=port_id)
+
         self._delete_flows(
             table=ovs_consts.TRANSIENT_TABLE,
             in_port=ofport
