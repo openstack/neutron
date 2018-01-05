@@ -143,6 +143,9 @@ class MacvtapManager(amb.CommonAgentManagerBase):
     def get_rpc_callbacks(self, context, agent, sg_agent):
         return MacvtapRPCCallBack(context, agent, sg_agent)
 
+    def get_agent_api(self, **kwargs):
+        pass
+
     def get_rpc_consumers(self):
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],

@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    L2 agents based on ``ML2`` ``_common_agent`` have now the L2 extension API
+    available. This API can be used by L2 extension drivers to request
+    resources from the L2 agent.
+    It is used, for example, to pass an instance of the ``IptablesManager``
+    to the ``Linuxbridge`` L2 agent ``QoS extension driver``.
+fixes:
+  - |
+    Fixes bug 1736674, security group rules are now properly applied
+    by ``Linuxbridge L2 agent`` with ``QoS extension driver`` enabled.

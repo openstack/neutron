@@ -380,6 +380,10 @@ tc. Details about how it is calculated can be found in
 `here <http://unix.stackexchange.com/a/100797>`_. This solution is similar to Open
 vSwitch implementation.
 
+The Linux bridge DSCP marking implementation relies on the
+linuxbridge_extension_api to request access to the IptablesManager class
+and to manage chains in the ``mangle`` table in iptables.
+
 QoS driver design
 -----------------
 
