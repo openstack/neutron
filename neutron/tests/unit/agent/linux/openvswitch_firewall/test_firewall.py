@@ -17,7 +17,6 @@ from neutron_lib import constants
 import testtools
 
 from neutron.agent.common import ovs_lib
-from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
@@ -253,15 +252,15 @@ class TestConjIdMap(base.BaseTestCase):
 
     def test_get_conj_id(self):
         allocated = []
-        for direction in [firewall.EGRESS_DIRECTION,
-                          firewall.INGRESS_DIRECTION]:
+        for direction in [constants.EGRESS_DIRECTION,
+                          constants.INGRESS_DIRECTION]:
             id_ = self.conj_id_map.get_conj_id(
                 'sg', 'remote', direction, constants.IPv4)
             allocated.append(id_)
         self.assertEqual(len(set(allocated)), 2)
         self.assertEqual(len(self.conj_id_map.id_map), 2)
         self.assertEqual(self.conj_id_map.get_conj_id(
-            'sg', 'remote', firewall.EGRESS_DIRECTION, constants.IPv4),
+            'sg', 'remote', constants.EGRESS_DIRECTION, constants.IPv4),
                          allocated[0])
 
     def test_get_conj_id_invalid(self):
@@ -276,7 +275,7 @@ class TestConjIdMap(base.BaseTestCase):
         for sg_id, remote_sg_id in test_data:
             ids.append(self.conj_id_map.get_conj_id(
                 sg_id, remote_sg_id,
-                firewall.INGRESS_DIRECTION, constants.IPv6))
+                constants.INGRESS_DIRECTION, constants.IPv6))
 
         result = self.conj_id_map.delete_sg('sg1')
         self.assertIn(('sg1', ids[0]), result)
@@ -284,7 +283,7 @@ class TestConjIdMap(base.BaseTestCase):
         self.assertFalse(self.conj_id_map.id_map)
 
         reallocated = self.conj_id_map.get_conj_id(
-            'sg-foo', 'sg-foo', firewall.INGRESS_DIRECTION,
+            'sg-foo', 'sg-foo', constants.INGRESS_DIRECTION,
             constants.IPv6)
         self.assertIn(reallocated, ids)
 
@@ -305,9 +304,9 @@ class TestConjIPFlowManager(base.BaseTestCase):
                                'get_conj_id') as get_conj_id_mock:
             get_conj_id_mock.return_value = self.conj_id
             self.manager.add(self.vlan_tag, 'sg', 'remote_id',
-                             firewall.INGRESS_DIRECTION, constants.IPv4, 0)
+                             constants.INGRESS_DIRECTION, constants.IPv4, 0)
             self.manager.add(self.vlan_tag, 'sg', 'remote_id',
-                             firewall.INGRESS_DIRECTION, constants.IPv4, 3)
+                             constants.INGRESS_DIRECTION, constants.IPv4, 3)
             self.manager.update_flows_for_vlan(self.vlan_tag)
         self.assertEqual(self.driver._add_flow.call_args_list,
             [mock.call(actions='conjunction(16,1/2)', ct_state='+est-rel-rpl',
@@ -331,15 +330,15 @@ class TestConjIPFlowManager(base.BaseTestCase):
             get_id_mock.return_value = self.conj_id
             delete_sg_mock.return_value = [('remote_id', self.conj_id)]
             self.manager.add(self.vlan_tag, 'sg', 'remote_id',
-                firewall.INGRESS_DIRECTION, constants.IPv4, 0)
+                             constants.INGRESS_DIRECTION, constants.IPv4, 0)
             self.manager.flow_state[self.vlan_tag][(
-                firewall.INGRESS_DIRECTION, constants.IPv4)] = {
+                constants.INGRESS_DIRECTION, constants.IPv4)] = {
                     '10.22.3.4': [self.conj_id]}
 
             self.manager.sg_removed('sg')
         self.driver._add_flow.assert_not_called()
         self.driver.delete_flows_for_ip_addresses.assert_called_once_with(
-            {'10.22.3.4'}, firewall.INGRESS_DIRECTION, constants.IPv4,
+            {'10.22.3.4'}, constants.INGRESS_DIRECTION, constants.IPv4,
             self.vlan_tag)
 
 
@@ -366,18 +365,18 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         security_group_rules = [
             {'ethertype': constants.IPv4,
              'protocol': constants.PROTO_NAME_TCP,
-             'direction': firewall.INGRESS_DIRECTION,
+             'direction': constants.INGRESS_DIRECTION,
              'port_range_min': 123,
              'port_range_max': 123}]
         self.firewall.update_security_group_rules(1, security_group_rules)
         security_group_rules = [
             {'ethertype': constants.IPv4,
              'protocol': constants.PROTO_NAME_UDP,
-             'direction': firewall.EGRESS_DIRECTION},
+             'direction': constants.EGRESS_DIRECTION},
             {'ethertype': constants.IPv6,
              'protocol': constants.PROTO_NAME_TCP,
              'remote_group_id': 2,
-             'direction': firewall.EGRESS_DIRECTION}]
+             'direction': constants.EGRESS_DIRECTION}]
         self.firewall.update_security_group_rules(2, security_group_rules)
 
     @property
@@ -559,7 +558,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.firewall.update_port_filter(port_dict)
         self.assertTrue(self.mock_bridge.br.delete_flows.called)
         conj_id = self.firewall.conj_ip_manager.conj_id_map.get_conj_id(
-            2, 2, firewall.EGRESS_DIRECTION, constants.IPv6)
+            2, 2, constants.EGRESS_DIRECTION, constants.IPv6)
         filter_rules = [mock.call(
             actions='resubmit(,{:d})'.format(
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
@@ -626,10 +625,10 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         """Just make sure it doesn't crash"""
         new_rules = [
             {'ethertype': constants.IPv4,
-             'direction': firewall.INGRESS_DIRECTION,
+             'direction': constants.INGRESS_DIRECTION,
              'protocol': constants.PROTO_NAME_ICMP},
             {'ethertype': constants.IPv4,
-             'direction': firewall.EGRESS_DIRECTION,
+             'direction': constants.EGRESS_DIRECTION,
              'remote_group_id': 2}]
         self.firewall.update_security_group_rules(1, new_rules)
 

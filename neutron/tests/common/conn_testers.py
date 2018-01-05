@@ -19,7 +19,6 @@ import netaddr
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.agent import firewall
 from neutron.common import constants as n_consts
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
@@ -46,8 +45,8 @@ class ConnectionTesterException(Exception):
 def _validate_direction(f):
     @functools.wraps(f)
     def wrap(self, direction, *args, **kwargs):
-        if direction not in (firewall.INGRESS_DIRECTION,
-                             firewall.EGRESS_DIRECTION):
+        if direction not in (constants.INGRESS_DIRECTION,
+                             constants.EGRESS_DIRECTION):
             raise ConnectionTesterException('Unknown direction %s' % direction)
         return f(self, direction, *args, **kwargs)
     return wrap
@@ -84,8 +83,8 @@ class ConnectionTester(fixtures.Fixture):
     TCP = net_helpers.NetcatTester.TCP
     ICMP = constants.PROTO_NAME_ICMP
     ARP = n_consts.ETHERTYPE_NAME_ARP
-    INGRESS = firewall.INGRESS_DIRECTION
-    EGRESS = firewall.EGRESS_DIRECTION
+    INGRESS = constants.INGRESS_DIRECTION
+    EGRESS = constants.EGRESS_DIRECTION
 
     def __init__(self, ip_cidr):
         self.ip_cidr = ip_cidr

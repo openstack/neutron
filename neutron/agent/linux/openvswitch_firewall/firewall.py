@@ -236,8 +236,8 @@ class ConjIdMap(object):
         as there are 4 priority levels (see rules.flow_priority_offset)
         and 2 conjunction IDs are needed per priority.
         """
-        if direction not in [firewall.EGRESS_DIRECTION,
-                             firewall.INGRESS_DIRECTION]:
+        if direction not in [lib_const.EGRESS_DIRECTION,
+                             lib_const.INGRESS_DIRECTION]:
             raise ValueError("Invalid direction '%s'" % direction)
         if ethertype not in [lib_const.IPv4, lib_const.IPv6]:
             raise ValueError("Invalid ethertype '%s'" % ethertype)

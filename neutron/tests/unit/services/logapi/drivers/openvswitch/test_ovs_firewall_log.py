@@ -19,7 +19,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.common import ovs_lib
-from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import constants as n_const
 from neutron.objects.logapi import logging_resource as log_object
@@ -47,18 +46,18 @@ FakeSGLogInfo = [
                        'security_group_rules': [
                            {'ethertype': constants.IPv4,
                             'protocol': constants.PROTO_NAME_TCP,
-                            'direction': firewall.INGRESS_DIRECTION,
+                            'direction': constants.INGRESS_DIRECTION,
                             'port_range_min': 123,
                             'port_range_max': 123,
                             'security_group_id': SG_ID},
                            {'ethertype': constants.IPv4,
                             'protocol': constants.PROTO_NAME_UDP,
-                            'direction': firewall.EGRESS_DIRECTION,
+                            'direction': constants.EGRESS_DIRECTION,
                             'security_group_id': SG_ID},
                            {'ethertype': constants.IPv6,
                             'protocol': constants.PROTO_NAME_TCP,
                             'remote_group_id': REMOTE_SG_ID,
-                            'direction': firewall.EGRESS_DIRECTION,
+                            'direction': constants.EGRESS_DIRECTION,
                             'security_group_id': SG_ID}
                        ]}],
         'event': 'ALL',
@@ -172,7 +171,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
         accept_cookie = self.log_driver._get_cookie(PORT_ID, 'ACCEPT')
         drop_cookie = self.log_driver._get_cookie(PORT_ID, 'DROP')
         conj_id = self.log_driver.conj_id_map.get_conj_id(
-            SG_ID, REMOTE_SG_ID, firewall.EGRESS_DIRECTION, constants.IPv6)
+            SG_ID, REMOTE_SG_ID, constants.EGRESS_DIRECTION, constants.IPv6)
         add_rules = [
             # log ingress tcp port=123
             mock.call(
@@ -262,7 +261,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                                        {'ethertype': constants.IPv4,
                                         'protocol': constants.PROTO_NAME_TCP,
                                         'direction':
-                                            firewall.INGRESS_DIRECTION,
+                                            constants.INGRESS_DIRECTION,
                                         'port_range_min': 123,
                                         'port_range_max': 123,
                                         'security_group_id': 456}]}],
