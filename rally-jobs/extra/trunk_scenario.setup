@@ -1,1 +1,1 @@
-enable_service q-trunk
+enable_service neutron-trunk

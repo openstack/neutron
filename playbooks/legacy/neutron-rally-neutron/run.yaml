@@ -66,7 +66,7 @@
           ENABLED_SERVICES+=cinder,c-api,c-vol,c-sch,c-bak,
           ENABLED_SERVICES+=g-api,g-reg,
           ENABLED_SERVICES+=n-api,n-crt,n-cpu,n-sch,n-cond,
-          ENABLED_SERVICES+=q-qos,
+          ENABLED_SERVICES+=neutron-qos,
 
           if [ $DEVSTACK_GATE_SWIFT -eq 1 ];
           then
