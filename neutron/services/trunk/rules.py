@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
@@ -167,40 +169,63 @@ class SubPortsValidator(object):
 
         if trunk_validation:
             trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
-            self._prepare_subports(context)
-            return [self._validate(context, s, trunk_port_mtu)
+            subport_mtus = self._prepare_subports(context)
+            return [self._validate(context, s, trunk_port_mtu, subport_mtus)
                     for s in self.subports]
         else:
             return self.subports
 
     def _prepare_subports(self, context):
-        """Update subports segmentation details if INHERIT is requested."""
-        port_ids = {
-            s['port_id']: i
-            for i, s in enumerate(self.subports)
-            if s.get('segmentation_type') == constants.INHERIT
-        }
+        """Utility method to parse subports in the request
+
+        The objective of this method is two-fold:
+
+            * Update subports segmentation details if INHERIT is requested;
+            * Return the MTU for each of the subport in the request.
+
+        This method does two things rather than one to allow us to hit the DB
+        once, and thus minimize the number of lookups required to learn about
+        the segmentation type and the MTU of the networks on which subports
+        are plugged.
+        """
+        InheritIndex = (
+            collections.namedtuple("InheritIndex", "index has_inherit"))
+        port_ids = {}
+        any_has_inherit = False
+        for i, s in enumerate(self.subports):
+            has_inherit = s.get('segmentation_type') == constants.INHERIT
+            any_has_inherit |= has_inherit
+            port_ids[s['port_id']] = (
+                InheritIndex(index=i, has_inherit=has_inherit))
+
         core_plugin = directory.get_plugin()
-        if not port_ids:
-            return
-        elif not n_utils.is_extension_supported(core_plugin, provider.ALIAS):
+        if (any_has_inherit and
+                not n_utils.is_extension_supported(core_plugin,
+                                                   provider.ALIAS)):
             msg = _("Cannot accept segmentation type %s") % constants.INHERIT
             raise n_exc.InvalidInput(error_message=msg)
 
         ports = core_plugin.get_ports(context, filters={'id': port_ids})
-        # this assumes a user does not try to trunk the same network
-        # more than once.
-        network_port_map = {
-            x['network_id']: {'port_id': x['id']}
-            for x in ports
-        }
+        network_port_map = collections.defaultdict(list)
+        for p in ports:
+            network_port_map[p['network_id']].append({'port_id': p['id']})
         networks = core_plugin.get_networks(
             context.elevated(), filters={'id': network_port_map})
+
+        subport_mtus = {}
         for net in networks:
-            port = network_port_map[net['id']]
-            port.update({'segmentation_id': net[provider.SEGMENTATION_ID],
+            for port in network_port_map[net['id']]:
+                if port_ids[port['port_id']].has_inherit:
+                    port.update(
+                        {'segmentation_id': net[provider.SEGMENTATION_ID],
                          'segmentation_type': net[provider.NETWORK_TYPE]})
-            self.subports[port_ids[port['port_id']]] = port
+                    self.subports[port_ids[port['port_id']].index] = port
+                # To speed up the request, record the network MTU for each
+                # subport to avoid hitting the DB more than necessary. Do
+                # that only if the extension is available.
+                if n_utils.is_extension_supported(core_plugin, 'net-mtu'):
+                    subport_mtus[port['port_id']] = net[api.MTU]
+        return subport_mtus
 
     def _get_port_mtu(self, context, port_id):
         """
@@ -228,16 +253,19 @@ class SubPortsValidator(object):
         if subport['port_id'] == self.trunk_port_id:
             raise trunk_exc.ParentPortInUse(port_id=subport['port_id'])
 
-    def _raise_subport_invalid_mtu(self, context, subport, trunk_port_mtu):
+    def _raise_subport_invalid_mtu(
+        self, context, subport, trunk_port_mtu, subport_mtus):
         # Check MTU sanity - subport MTU must not exceed trunk MTU.
         # If for whatever reason trunk_port_mtu is not available,
         # the MTU sanity check cannot be enforced.
         if trunk_port_mtu:
-            port_mtu = self._get_port_mtu(context, subport['port_id'])
-            if port_mtu and port_mtu > trunk_port_mtu:
+            # missing MTUs for subports is not an error condition: the
+            # subport UUID may be invalid or non existent.
+            subport_mtu = subport_mtus.get(subport['port_id'])
+            if subport_mtu and subport_mtu > trunk_port_mtu:
                 raise trunk_exc.SubPortMtuGreaterThanTrunkPortMtu(
                     port_id=subport['port_id'],
-                    port_mtu=port_mtu,
+                    port_mtu=subport_mtu,
                     trunk_id=self.trunk_port_id,
                     trunk_mtu=trunk_port_mtu
                 )
@@ -273,10 +301,11 @@ class SubPortsValidator(object):
         trunk_validator = TrunkPortValidator(subport['port_id'])
         trunk_validator.validate(context, parent_port=False)
 
-    def _validate(self, context, subport, trunk_port_mtu):
+    def _validate(self, context, subport, trunk_port_mtu, subport_mtus):
         self._raise_subport_is_parent_port(context, subport)
 
-        self._raise_subport_invalid_mtu(context, subport, trunk_port_mtu)
+        self._raise_subport_invalid_mtu(
+            context, subport, trunk_port_mtu, subport_mtus)
 
         segmentation_type, segmentation_id = (
             self._raise_if_segmentation_details_missing(subport))

@@ -170,13 +170,16 @@ class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_validate_subport_mtu_set_trunks_net_exception(self):
         self._test_validate_subport_trunk_mtu(1500, 'exc')
 
-    def test_validate_subport_mtu_net_exception_trunks_set(self):
-        self._test_validate_subport_trunk_mtu('exc', 1500)
-
     def _test_validate_subport_trunk_mtu(
             self, subport_net_mtu, trunk_net_mtu):
         plugin = directory.get_plugin()
         orig_get_network = plugin.get_network
+        orig_get_networks = plugin.get_networks
+
+        def get_networks_adjust_mtu(*args, **kwargs):
+            res = orig_get_networks(*args, **kwargs)
+            res[0][api.MTU] = subport_net_mtu
+            return res
 
         def get_network_adjust_mtu(*args, **kwargs):
             res = orig_get_network(*args, **kwargs)
@@ -185,8 +188,6 @@ class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
                     raise n_exc.NetworkNotFound(net_id='net-id')
                 res[api.MTU] = trunk_net_mtu
             elif res['name'] == 'net_subport':
-                if subport_net_mtu == 'exc':
-                    raise n_exc.NetworkNotFound(net_id='net-id')
                 res[api.MTU] = subport_net_mtu
             return res
 
@@ -197,7 +198,9 @@ class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
             self.subnet(network=subport_net) as subport_subnet,\
             self.port(subnet=subport_subnet) as subport,\
             mock.patch.object(plugin, "get_network",
-                              side_effect=get_network_adjust_mtu):
+                              side_effect=get_network_adjust_mtu),\
+            mock.patch.object(plugin, "get_networks",
+                              side_effect=get_networks_adjust_mtu):
             trunk = {'port_id': trunk_port['port']['id'],
                      'tenant_id': 'test_tenant',
                      'sub_ports': [{'port_id': subport['port']['id'],
