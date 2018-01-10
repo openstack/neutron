@@ -12,7 +12,6 @@
         - neutron-tempest-multinode-full
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-ovsfw
-        - neutron-tempest-full
         - neutron-grenade
     gate:
       jobs:
@@ -21,7 +20,6 @@
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - neutron-tempest-full
         - neutron-grenade
 
 - job:
@@ -247,27 +245,6 @@
       - ^tools/.*$
       - ^tox.ini$
     voting: false
-
-- job:
-    name: neutron-tempest-full
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-full/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-full/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
 
 - job:
     name: neutron-grenade
