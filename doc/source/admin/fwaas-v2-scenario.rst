@@ -27,13 +27,13 @@ Enable FWaaS v2
 
 #. Configure the FWaaS plugin for the L3 agent.
 
-   In the ``AGENT`` section of ``l3_agent.ini``, make sure the FWaaS extension
-   is loaded:
+   In the ``AGENT`` section of ``l3_agent.ini``, make sure the FWaaS v2
+   extension is loaded:
 
    .. code-block:: ini
 
       [AGENT]
-      extensions = fwaas
+      extensions = fwaas_v2
 
 #. Create the required tables in the database:
 
