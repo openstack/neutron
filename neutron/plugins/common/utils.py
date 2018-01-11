@@ -33,7 +33,6 @@ from oslo_utils import excutils
 import webob.exc
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 from neutron.common import exceptions as n_exc
 
 
@@ -153,7 +152,7 @@ def in_pending_status(status):
 
 
 def _fixup_res_dict(context, attr_name, res_dict, check_allow_post=True):
-    attr_info = attributes.RESOURCE_ATTRIBUTE_MAP[attr_name]
+    attr_info = lib_attrs.RESOURCES[attr_name]
     attr_ops = lib_attrs.AttributeInfo(attr_info)
     try:
         attr_ops.populate_project_id(context, res_dict, True)

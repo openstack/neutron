@@ -16,6 +16,8 @@
 import collections
 import re
 
+from neutron_lib.api import attributes
+from neutron_lib.api.definitions import network as net_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
@@ -28,7 +30,6 @@ from oslo_utils import excutils
 import six
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 from neutron.common import cache_utils as cache
 from neutron.common import constants as const
 
@@ -38,6 +39,11 @@ LOG = logging.getLogger(__name__)
 _ENFORCER = None
 ADMIN_CTX_POLICY = 'context_is_admin'
 ADVSVC_CTX_POLICY = 'context_is_advsvc'
+
+# Identify the attribute used by a resource to reference another resource
+_RESOURCE_FOREIGN_KEYS = {
+    net_apidef.COLLECTION_NAME: 'network_id'
+}
 
 
 def reset():
@@ -160,7 +166,7 @@ def _build_match_rule(action, target, pluralized):
         action, pluralized)
     if enforce_attr_based_check:
         # assigning to variable with short name for improving readability
-        res_map = attributes.RESOURCE_ATTRIBUTE_MAP
+        res_map = attributes.RESOURCES
         if resource in res_map:
             for attribute_name in res_map[resource]:
                 if _is_attribute_explicitly_set(attribute_name,
@@ -264,7 +270,7 @@ class OwnerCheck(policy.Check):
                 raise exceptions.PolicyCheckError(
                     policy="%s:%s" % (self.kind, self.match),
                     reason=err_reason)
-            parent_foreign_key = attributes.RESOURCE_FOREIGN_KEYS.get(
+            parent_foreign_key = _RESOURCE_FOREIGN_KEYS.get(
                 "%ss" % parent_res, None)
             if not parent_foreign_key:
                 err_reason = (_("Unable to verify match:%(match)s as the "
@@ -296,7 +302,7 @@ class FieldCheck(policy.Check):
 
         # Value might need conversion - we need help from the attribute map
         try:
-            attr = attributes.RESOURCE_ATTRIBUTE_MAP[resource][field]
+            attr = attributes.RESOURCES[resource][field]
             conv_func = attr['convert_to']
         except KeyError:
             conv_func = lambda x: x

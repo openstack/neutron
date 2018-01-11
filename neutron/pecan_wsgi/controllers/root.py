@@ -14,13 +14,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import port as port_def
+from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from oslo_config import cfg
 from oslo_log import log
 import pecan
 from pecan import request
 import six.moves.urllib.parse as urlparse
 
-from neutron.api.v2 import attributes
 from neutron.api.views import versions as versions_view
 from neutron import manager
 from neutron.pecan_wsgi.controllers import extensions as ext_ctrl
@@ -31,6 +34,11 @@ CONF = cfg.CONF
 
 LOG = log.getLogger(__name__)
 _VERSION_INFO = {}
+_CORE_RESOURCES = {net_def.RESOURCE_NAME: net_def.COLLECTION_NAME,
+                   subnet_def.RESOURCE_NAME: subnet_def.COLLECTION_NAME,
+                   subnetpool_def.RESOURCE_NAME:
+                       subnetpool_def.COLLECTION_NAME,
+                   port_def.RESOURCE_NAME: port_def.COLLECTION_NAME}
 
 
 def _load_version_info(version_info):
@@ -88,7 +96,7 @@ class V2Controller(object):
             pecan.abort(404)
 
         layout = []
-        for name, collection in attributes.CORE_RESOURCES.items():
+        for name, collection in _CORE_RESOURCES.items():
             href = urlparse.urljoin(pecan.request.path_url, collection)
             resource = {'name': name,
                         'collection': collection,

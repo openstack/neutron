@@ -13,10 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import attributes
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
 from neutron.pecan_wsgi.controllers import resource as res_ctrl
@@ -38,7 +38,7 @@ RESOURCES = {'network': 'networks',
 def initialize_all():
     manager.init()
     ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
-    ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
+    ext_mgr.extend_resources("2.0", attributes.RESOURCES)
     # At this stage we have a fully populated resource attribute map;
     # build Pecan controllers and routes for all core resources
     plugin = directory.get_plugin()

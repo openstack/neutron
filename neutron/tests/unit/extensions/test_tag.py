@@ -10,12 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import attributes
 from neutron_lib import context
 from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.common import config
 import neutron.extensions
 from neutron.objects.qos import policy
@@ -87,7 +87,7 @@ class TestTagApiBase(test_securitygroup.SecurityGroupsTestCase,
             extensions_path, {'router': l3_plugin, 'TAG': plugin,
                               'sec': sec_plugin}
         )
-        ext_mgr.extend_resources("2.0", attributes.RESOURCE_ATTRIBUTE_MAP)
+        ext_mgr.extend_resources("2.0", attributes.RESOURCES)
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
