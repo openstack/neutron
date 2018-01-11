@@ -154,12 +154,6 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.br.db_get_val('Bridge', self.br.br_name, 'fail_mode'),
             fail_mode)
 
-    def test_set_protocols(self):
-        self.br.set_protocols('OpenFlow10')
-        self.assertEqual(
-            self.br.db_get_val('Bridge', self.br.br_name, 'protocols'),
-            "OpenFlow10")
-
     def test_add_protocols_start_with_one(self):
         self.br.set_db_attribute('Bridge', self.br.br_name, 'protocols',
                                  ['OpenFlow10'],
