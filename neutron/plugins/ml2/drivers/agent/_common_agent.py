@@ -173,8 +173,9 @@ class CommonAgentLoop(service.Service):
         ext_manager.register_opts(cfg.CONF)
         self.ext_manager = (
             ext_manager.L2AgentExtensionsManager(cfg.CONF))
+        agent_api = self.mgr.get_agent_api(sg_agent=self.sg_agent)
         self.ext_manager.initialize(
-            connection, self.mgr.get_extension_driver_type())
+            connection, self.mgr.get_extension_driver_type(), agent_api)
 
     def _clean_network_ports(self, device):
         for netid, ports_list in self.network_ports.items():
