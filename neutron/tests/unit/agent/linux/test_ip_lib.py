@@ -1343,6 +1343,12 @@ class TestDeviceExists(base.BaseTestCase):
             ip_lib_mock.link.set_up.side_effect = RuntimeError
             self.assertFalse(ip_lib.ensure_device_is_ready("eth0"))
 
+    def test_ensure_device_is_ready_no_link_address(self):
+        with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
+            # Use lo, it has no MAC address
+            _execute.return_value = LINK_SAMPLE[0]
+            self.assertFalse(ip_lib.ensure_device_is_ready("lo"))
+
 
 class TestGetRoutingTable(base.BaseTestCase):
     ip_db_interfaces = {
