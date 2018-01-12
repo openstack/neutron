@@ -1507,6 +1507,7 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 # The port disappeared and cannot be processed
                 LOG.info(_LI("Port %s was not found on the integration bridge "
                              "and will therefore not be processed"), device)
+                self.ext_manager.delete_port(self.context, {'port_id': device})
                 skipped_devices.append(device)
                 continue
 
