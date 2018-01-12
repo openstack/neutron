@@ -39,27 +39,24 @@ TRANSPORT = None
 NOTIFICATION_TRANSPORT = None
 NOTIFIER = None
 
-ALLOWED_EXMODS = [
+_DFT_EXMODS = [
     exceptions.__name__,
     lib_exceptions.__name__,
 ]
-EXTRA_EXMODS = []
 
 
-# NOTE(salv-orlando): I am afraid this is a global variable. While not ideal,
-# they're however widely used throughout the code base. It should be set to
-# true if the RPC server is not running in the current process space. This
-# will prevent get_connection from creating connections to the AMQP server
-RPC_DISABLED = False
-
-
-def init(conf):
+def init(conf, rpc_ext_mods=None):
     global TRANSPORT, NOTIFICATION_TRANSPORT, NOTIFIER
-    exmods = get_allowed_exmods()
-    TRANSPORT = oslo_messaging.get_rpc_transport(conf,
-                                                 allowed_remote_exmods=exmods)
+
+    if rpc_ext_mods is None:
+        rpc_ext_mods = _DFT_EXMODS
+    else:
+        rpc_ext_mods = list(set(rpc_ext_mods + _DFT_EXMODS))
+
+    TRANSPORT = oslo_messaging.get_rpc_transport(
+        conf, allowed_remote_exmods=rpc_ext_mods)
     NOTIFICATION_TRANSPORT = oslo_messaging.get_notification_transport(
-        conf, allowed_remote_exmods=exmods)
+        conf, allowed_remote_exmods=rpc_ext_mods)
     serializer = RequestContextSerializer()
     NOTIFIER = oslo_messaging.Notifier(NOTIFICATION_TRANSPORT,
                                        serializer=serializer)
@@ -74,18 +71,6 @@ def cleanup():
     NOTIFICATION_TRANSPORT.cleanup()
     _BackingOffContextWrapper.reset_timeouts()
     TRANSPORT = NOTIFICATION_TRANSPORT = NOTIFIER = None
-
-
-def add_extra_exmods(*args):
-    EXTRA_EXMODS.extend(args)
-
-
-def clear_extra_exmods():
-    del EXTRA_EXMODS[:]
-
-
-def get_allowed_exmods():
-    return ALLOWED_EXMODS + EXTRA_EXMODS
 
 
 def _get_default_method_timeout():
@@ -338,25 +323,5 @@ class Connection(object):
             server.wait()
 
 
-class VoidConnection(object):
-
-    def create_consumer(self, topic, endpoints, fanout=False):
-        pass
-
-    def consume_in_threads(self):
-        pass
-
-    def close(self):
-        pass
-
-
-# functions
-def create_connection():
-    # NOTE(salv-orlando): This is a clever interpretation of the factory design
-    # patter aimed at preventing plugins from initializing RPC servers upon
-    # initialization when they are running in the REST over HTTP API server.
-    # The educated reader will perfectly be able that this a fairly dirty hack
-    # to avoid having to change the initialization process of every plugin.
-    if RPC_DISABLED:
-        return VoidConnection()
-    return Connection()
+# TODO(boden): remove create_connection
+create_connection = Connection

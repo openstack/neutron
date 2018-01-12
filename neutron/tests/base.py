@@ -384,9 +384,6 @@ class BaseTestCase(DietTestCase):
         self.messaging_conf.response_timeout = 0
         self.useFixture(self.messaging_conf)
 
-        self.addCleanup(n_rpc.clear_extra_exmods)
-        n_rpc.add_extra_exmods('neutron.test')
-
         self.addCleanup(n_rpc.cleanup)
         n_rpc.init(CONF)
 
