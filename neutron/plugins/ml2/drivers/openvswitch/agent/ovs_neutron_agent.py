@@ -1433,6 +1433,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                          "putting on the dead VLAN", vif_port.vif_id)
 
                 self.port_dead(vif_port)
+                self.plugin_rpc.update_device_down(
+                    self.context, port_id, self.agent_id,
+                    self.conf.host)
                 port_needs_binding = False
         else:
             LOG.debug("No VIF port for port %s defined on agent.", port_id)
