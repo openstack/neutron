@@ -656,9 +656,9 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                             {'network_id': ext_net_id}}})
             with self.subnet(
                 network=net_int, cidr='20.0.0.0/24') as subnet_v4,\
-                self.subnet(
-                    network=net_int, cidr='fe80::/64',
-                    gateway_ip='fe80::1', ip_version=6) as subnet_v6:
+                self.subnet(network=net_int, cidr='fe80::/64',
+                            gateway_ip='fe80::1', ip_version=const.IP_VERSION_6
+                            ) as subnet_v6:
                 self.mixin.add_router_interface(self.ctx, router['id'],
                     {'subnet_id': subnet_v4['subnet']['id']})
                 self.mixin.add_router_interface(self.ctx, router['id'],
@@ -692,7 +692,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.mixin._core_plugin.update_port = update_port
 
         with self.subnet(network=net, cidr='fe81::/64',
-                         gateway_ip='fe81::1', ip_version=6) as subnet2_v6:
+                         gateway_ip='fe81::1', ip_version=const.IP_VERSION_6
+                         ) as subnet2_v6:
             self.mixin.add_router_interface(self.ctx, router['id'],
                 {'subnet_id': subnet2_v6['subnet']['id']})
             if fail_revert:

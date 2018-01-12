@@ -331,7 +331,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
         subnet = self.plugin.create_subnet(
             self.ctx,
             {'subnet': {'name': 'name',
-                        'ip_version': 4,
+                        'ip_version': constants.IP_VERSION_4,
                         'network_id': network_id,
                         'cidr': cidr,
                         'gateway_ip': constants.ATTR_NOT_SPECIFIED,

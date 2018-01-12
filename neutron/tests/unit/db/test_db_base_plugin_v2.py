@@ -334,7 +334,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_subnet(self, fmt, net_id, cidr,
                        expected_res_status=None, **kwargs):
         data = {'subnet': {'network_id': net_id,
-                           'ip_version': 4,
+                           'ip_version': constants.IP_VERSION_4,
                            'tenant_id': self._tenant_id}}
         if cidr:
             data['subnet']['cidr'] = cidr
@@ -363,7 +363,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return subnet_res
 
     def _create_subnet_bulk(self, fmt, number, net_id, name,
-                            ip_version=4, **kwargs):
+                            ip_version=constants.IP_VERSION_4, **kwargs):
         base_data = {'subnet': {'network_id': net_id,
                                 'ip_version': ip_version,
                                 'tenant_id': self._tenant_id}}
@@ -462,9 +462,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return self.deserialize(fmt, res)
 
     def _make_subnet(self, fmt, network, gateway, cidr, subnetpool_id=None,
-                     allocation_pools=None, ip_version=4, enable_dhcp=True,
-                     dns_nameservers=None, host_routes=None, shared=None,
-                     ipv6_ra_mode=None, ipv6_address_mode=None,
+                     allocation_pools=None, ip_version=constants.IP_VERSION_4,
+                     enable_dhcp=True, dns_nameservers=None, host_routes=None,
+                     shared=None, ipv6_ra_mode=None, ipv6_address_mode=None,
                      tenant_id=None, set_context=False, segment_id=None):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
@@ -500,7 +500,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             cfg.CONF.set_override('ipv6_pd_enabled', True)
         return (self._make_subnet(self.fmt, network, gateway=gateway,
                                   subnetpool_id=subnetpool_id,
-                                  cidr=cidr, ip_version=6,
+                                  cidr=cidr, ip_version=constants.IP_VERSION_6,
                                   ipv6_ra_mode=ra_addr_mode,
                                   ipv6_address_mode=ra_addr_mode))
 
@@ -629,7 +629,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                subnetpool_id=None,
                segment_id=None,
                fmt=None,
-               ip_version=4,
+               ip_version=constants.IP_VERSION_4,
                allocation_pools=None,
                enable_dhcp=True,
                dns_nameservers=None,
@@ -1459,7 +1459,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         with self.subnet(network=n,
                          gateway_ip='fe80::1',
                          cidr='2607:f0d0:1002:51::/64',
-                         ip_version=6,
+                         ip_version=constants.IP_VERSION_6,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             self.assertTrue(
                 ipv6_utils.is_auto_address_subnet(subnet['subnet']))
@@ -1729,7 +1729,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_update_port_invalid_fixed_ip_address_v6_slaac(self):
         with self.subnet(
             cidr='2607:f0d0:1002:51::/64',
-            ip_version=6,
+            ip_version=constants.IP_VERSION_6,
             ipv6_address_mode=constants.IPV6_SLAAC,
             gateway_ip=constants.ATTR_NOT_SPECIFIED) as subnet:
             with self.port(subnet=subnet) as port:
@@ -1857,7 +1857,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                            admin_state_up=True)
                 network2 = self.deserialize(self.fmt, res)
                 subnet2 = self._make_subnet(self.fmt, network2, "1.1.1.1",
-                                            "1.1.1.0/24", ip_version=4)
+                                            "1.1.1.0/24",
+                                            ip_version=constants.IP_VERSION_4)
                 net_id = port['port']['network_id']
                 # Request a IP from specific subnet
                 kwargs = {"fixed_ips": [{'subnet_id':
@@ -1875,7 +1876,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                       tenant_id=tenant_id,
                                       net_id=net_id,
                                       cidr='10.0.0.225/28',
-                                      ip_version=4,
+                                      ip_version=constants.IP_VERSION_4,
                                       gateway_ip=constants.ATTR_NOT_SPECIFIED)
             self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
@@ -1889,7 +1890,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     tenant_id=tenant_id,
                     net_id=net_id,
                     cidr='2607:f0d0:1002:51::/124',
-                    ip_version=6,
+                    ip_version=constants.IP_VERSION_6,
                     gateway_ip=constants.ATTR_NOT_SPECIFIED)
                 subnet2 = self.deserialize(self.fmt, res)
                 kwargs = {"fixed_ips":
@@ -1997,7 +1998,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                        admin_state_up=True)
             network2 = self.deserialize(self.fmt, res)
             self._make_subnet(self.fmt, network2, "1.1.1.1",
-                              "1.1.1.0/24", ip_version=4)
+                              "1.1.1.0/24", ip_version=constants.IP_VERSION_4)
             res = self._create_port(self.fmt, net_id=network2['network']['id'])
             port = self.deserialize(self.fmt, res)
 
@@ -2011,7 +2012,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_requested_invalid_fixed_ip_address_v6_slaac(self):
         with self.subnet(gateway_ip='fe80::1',
                          cidr='2607:f0d0:1002:51::/64',
-                         ip_version=6,
+                         ip_version=constants.IP_VERSION_6,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': '2607:f0d0:1002:51::5'}]}
@@ -2023,7 +2024,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_requested_fixed_ip_address_v6_slaac_router_iface(self):
         with self.subnet(gateway_ip='fe80::1',
                          cidr='fe80::/64',
-                         ip_version=6,
+                         ip_version=constants.IP_VERSION_6,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             kwargs = {"fixed_ips": [{'subnet_id': subnet['subnet']['id'],
                                      'ip_address': 'fe80::1'}]}
@@ -2039,7 +2040,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_requested_subnet_id_v6_slaac(self):
         with self.subnet(gateway_ip='fe80::1',
                          cidr='2607:f0d0:1002:51::/64',
-                         ip_version=6,
+                         ip_version=constants.IP_VERSION_6,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             with self.port(subnet,
                            fixed_ips=[{'subnet_id':
@@ -2057,7 +2058,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.subnet(
                         network,
                         cidr='2607:f0d0:1002:51::/64',
-                        ip_version=6,
+                        ip_version=constants.IP_VERSION_6,
                         gateway_ip='fe80::1',
                         ipv6_address_mode=constants.IPV6_SLAAC) as subnet2:
                 with self.port(
@@ -2086,7 +2087,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             with self.subnet(network) as subnet_v4,\
                     self.subnet(network,
                                 cidr='2607:f0d0:1002:51::/64',
-                                ip_version=6,
+                                ip_version=constants.IP_VERSION_6,
                                 gateway_ip='fe80::1',
                                 ipv6_address_mode=constants.IPV6_SLAAC):
                 subnet_ip_net = netaddr.IPNetwork(subnet_v4['subnet']['cidr'])
@@ -2152,17 +2153,21 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         network = self.deserialize(self.fmt, res)
         sub_dicts = [
             {'gateway': '10.0.0.1', 'cidr': '10.0.0.0/24',
-             'ip_version': 4, 'ra_addr_mode': None},
+             'ip_version': constants.IP_VERSION_4, 'ra_addr_mode': None},
             {'gateway': '10.0.1.1', 'cidr': '10.0.1.0/24',
-             'ip_version': 4, 'ra_addr_mode': None},
+             'ip_version': constants.IP_VERSION_4, 'ra_addr_mode': None},
             {'gateway': 'fe80::1', 'cidr': 'fe80::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.IPV6_SLAAC},
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.IPV6_SLAAC},
             {'gateway': 'fe81::1', 'cidr': 'fe81::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.IPV6_SLAAC},
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.IPV6_SLAAC},
             {'gateway': 'fe82::1', 'cidr': 'fe82::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.DHCPV6_STATEFUL},
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.DHCPV6_STATEFUL},
             {'gateway': 'fe83::1', 'cidr': 'fe83::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.DHCPV6_STATEFUL}]
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.DHCPV6_STATEFUL}]
         subnets = {}
         for sub_dict in sub_dicts:
             subnet = self._make_subnet(
@@ -2212,7 +2217,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         network = self.deserialize(self.fmt, res)
         # Create a port using an IPv4 subnet and an IPv6 SLAAC subnet
         self._make_subnet(self.fmt, network, gateway='10.0.0.1',
-                          cidr='10.0.0.0/24', ip_version=4)
+                          cidr='10.0.0.0/24',
+                          ip_version=constants.IP_VERSION_4)
         subnet_v6 = self._make_v6_subnet(network, constants.IPV6_SLAAC)
         res = self._create_port(self.fmt, net_id=network['network']['id'])
         port = self.deserialize(self.fmt, res)
@@ -2236,7 +2242,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         network = self.deserialize(self.fmt, res)
         # Create a port using an IPv4 subnet and an IPv6 SLAAC subnet
         subnet_v4 = self._make_subnet(self.fmt, network, gateway='10.0.0.1',
-                                      cidr='10.0.0.0/24', ip_version=4)
+                                      cidr='10.0.0.0/24',
+                                      ip_version=constants.IP_VERSION_4)
         subnet_v6 = self._make_v6_subnet(network, constants.IPV6_SLAAC)
         res = self._create_port(self.fmt, net_id=network['network']['id'])
         port = self.deserialize(self.fmt, res)
@@ -2274,7 +2281,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         network = self.deserialize(self.fmt, res)
         # Create a port using an IPv4 subnet and an IPv6 SLAAC subnet
         subnet_v4 = self._make_subnet(self.fmt, network, gateway='10.0.0.1',
-                                      cidr='10.0.0.0/24', ip_version=4)
+                                      cidr='10.0.0.0/24',
+                                      ip_version=constants.IP_VERSION_4)
         subnet_v6 = self._make_v6_subnet(network, constants.IPV6_SLAAC)
         res = self._create_port(self.fmt, net_id=network['network']['id'])
         port = self.deserialize(self.fmt, res)
@@ -2301,12 +2309,12 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         v6_subnet_1 = self._make_subnet(self.fmt, network,
                                         gateway='2001:100::1',
                                         cidr='2001:100::0/64',
-                                        ip_version=6,
+                                        ip_version=constants.IP_VERSION_6,
                                         ipv6_ra_mode=constants.IPV6_SLAAC)
         v6_subnet_2 = self._make_subnet(self.fmt, network,
                                         gateway='2001:200::1',
                                         cidr='2001:200::0/64',
-                                        ip_version=6,
+                                        ip_version=constants.IP_VERSION_6,
                                         ipv6_ra_mode=constants.IPV6_SLAAC)
         port = self._make_port(self.fmt, network['network']['id'])
         port_mac = port['port']['mac_address']
@@ -3112,7 +3120,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def _test_create_subnet(self, network=None, expected=None, **kwargs):
         keys = kwargs.copy()
         keys.setdefault('cidr', '10.0.0.0/24')
-        keys.setdefault('ip_version', 4)
+        keys.setdefault('ip_version', constants.IP_VERSION_4)
         keys.setdefault('enable_dhcp', True)
         with self.subnet(network=network, **keys) as subnet:
             # verify the response has each key with the correct value
@@ -3128,7 +3136,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         cidr = '10.0.0.0/24'
         subnet = self._test_create_subnet(gateway_ip=gateway_ip,
                                           cidr=cidr)
-        self.assertEqual(4, subnet['subnet']['ip_version'])
+        self.assertEqual(constants.IP_VERSION_4,
+                         subnet['subnet']['ip_version'])
         self.assertIn('name', subnet['subnet'])
 
     def test_create_subnet_with_network_different_tenant(self):
@@ -3138,7 +3147,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                   is_admin=False)
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '10.0.2.0/24',
-                    'ip_version': '4',
+                    'ip_version': constants.IP_VERSION_4,
                     'gateway_ip': '10.0.2.1'}}
             req = self.new_create_request('subnets', data,
                                           self.fmt, context=ctx)
@@ -3189,7 +3198,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '10.0.2.0',
-                    'ip_version': '4',
+                    'ip_version': constants.IP_VERSION_4,
                     'tenant_id': network['network']['tenant_id'],
                     'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
@@ -3208,7 +3217,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  min_prefixlen='25',
                                  is_default=True):
                 data = {'subnet': {'network_id': network['network']['id'],
-                        'cidr': '10.0.0.0/24', 'ip_version': '4',
+                        'cidr': '10.0.0.0/24',
+                        'ip_version': constants.IP_VERSION_4,
                         'tenant_id': tenant_id}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
@@ -3227,7 +3237,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  min_prefixlen='25',
                                  is_default=True):
                 data = {'subnet': {'network_id': network['network']['id'],
-                        'ip_version': '4',
+                        'ip_version': constants.IP_VERSION_4,
                         'tenant_id': tenant_id}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
@@ -3247,7 +3257,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             tenant_id = network['network']['tenant_id']
             cfg.CONF.set_override('ipv6_pd_enabled', False)
             data = {'subnet': {'network_id': network['network']['id'],
-                    'ip_version': '6',
+                    'ip_version': constants.IP_VERSION_6,
                     'tenant_id': tenant_id}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3257,7 +3267,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': constants.IPv4_ANY,
-                    'ip_version': '4',
+                    'ip_version': constants.IP_VERSION_4,
                     'tenant_id': network['network']['tenant_id'],
                     'gateway_ip': '0.0.0.1'}}
             subnet_req = self.new_create_request('subnets', data)
@@ -3268,7 +3278,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': 'fe80::',
-                    'ip_version': '6',
+                    'ip_version': constants.IP_VERSION_6,
                     'tenant_id': network['network']['tenant_id'],
                     'gateway_ip': 'fe80::1'}}
             subnet_req = self.new_create_request('subnets', data)
@@ -3279,7 +3289,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '2014::/65',
-                    'ip_version': '6',
+                    'ip_version': constants.IP_VERSION_6,
                     'tenant_id': network['network']['tenant_id'],
                     'gateway_ip': 'fe80::1',
                     'ipv6_address_mode': 'slaac'}}
@@ -3392,7 +3402,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4)
+                                   cidr, ip_version=constants.IP_VERSION_4)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
@@ -3405,7 +3415,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4)
+                                   cidr, ip_version=constants.IP_VERSION_4)
         self._create_port(self.fmt,
                           network['network']['id'],
                           device_owner=constants.DEVICE_OWNER_DHCP)
@@ -3418,9 +3428,11 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet1 = self._make_subnet(self.fmt, network, '10.0.0.1',
-                                    '10.0.0.0/24', ip_version=4)
+                                    '10.0.0.0/24',
+                                    ip_version=constants.IP_VERSION_4)
         subnet2 = self._make_subnet(self.fmt, network, '10.0.1.1',
-                                    '10.0.1.0/24', ip_version=4)
+                                    '10.0.1.0/24',
+                                    ip_version=constants.IP_VERSION_4)
         res = self._create_port(self.fmt,
                                 network['network']['id'],
                                 device_owner=constants.DEVICE_OWNER_DHCP,
@@ -3478,7 +3490,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway='fe80::1',
-                                   cidr='fe80::/64', ip_version=6,
+                                   cidr='fe80::/64',
+                                   ip_version=constants.IP_VERSION_6,
                                    ipv6_ra_mode=constants.IPV6_SLAAC,
                                    ipv6_address_mode=constants.IPV6_SLAAC)
         kwargs = {}
@@ -3544,7 +3557,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip, cidr,
-                                   ip_version=4)
+                                   ip_version=constants.IP_VERSION_4)
         req = self.new_delete_request('networks', network['network']['id'])
         res = req.get_response(self.api)
         self.assertEqual(webob.exc.HTTPNoContent.code, res.status_int)
@@ -3558,7 +3571,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 network['network']['id'],
                                 '10.0.2.0/24',
                                 webob.exc.HTTPNotFound.code,
-                                ip_version=4,
+                                ip_version=constants.IP_VERSION_4,
                                 tenant_id='bad_tenant_id',
                                 gateway_ip='10.0.2.1',
                                 device_owner='fake_owner',
@@ -3570,7 +3583,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 network['network']['id'],
                                 '10.0.2.0/24',
                                 webob.exc.HTTPCreated.code,
-                                ip_version=4,
+                                ip_version=constants.IP_VERSION_4,
                                 tenant_id='bad_tenant_id',
                                 gateway_ip='10.0.2.1',
                                 device_owner='fake_owner',
@@ -3647,7 +3660,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             # Check invalid UUID
             data = {'subnet': {'network_id': None,
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
@@ -3659,7 +3672,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             # Check invalid boolean
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': '4',
+                               'ip_version': constants.IP_VERSION_4,
                                'enable_dhcp': None,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': '10.0.2.1'}}
@@ -3685,7 +3698,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             for pool in allocation_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
                                    'cidr': '10.0.2.0/24',
-                                   'ip_version': '4',
+                                   'ip_version': constants.IP_VERSION_4,
                                    'tenant_id': tenant_id,
                                    'gateway_ip': '10.0.2.1',
                                    'allocation_pools': pool}}
@@ -3704,7 +3717,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             for nameservers in nameserver_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
                                    'cidr': '10.0.2.0/24',
-                                   'ip_version': '4',
+                                   'ip_version': constants.IP_VERSION_4,
                                    'tenant_id': tenant_id,
                                    'gateway_ip': '10.0.2.1',
                                    'dns_nameservers': nameservers}}
@@ -3726,7 +3739,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             for hostroutes in hostroute_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
                                    'cidr': '10.0.2.0/24',
-                                   'ip_version': '4',
+                                   'ip_version': constants.IP_VERSION_4,
                                    'tenant_id': tenant_id,
                                    'gateway_ip': '10.0.2.1',
                                    'host_routes': hostroutes}}
@@ -3779,7 +3792,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
         self._test_create_subnet(expected=expected, gateway_ip=gateway,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                                  ipv6_address_mode=constants.DHCPV6_STATEFUL)
         # Gateway is first IP in IPv6 DHCPv6 stateful subnet
@@ -3790,14 +3803,14 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
         self._test_create_subnet(expected=expected, gateway_ip=gateway,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                                  ipv6_address_mode=constants.DHCPV6_STATEFUL)
         # If gateway_ip is not specified, allocate first IP from the subnet
         expected = {'gateway_ip': gateway,
                     'cidr': cidr}
         self._test_create_subnet(expected=expected,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.IPV6_SLAAC,
                                  ipv6_address_mode=constants.IPV6_SLAAC)
 
@@ -3812,7 +3825,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
         self._test_create_subnet(expected=expected, gateway_ip=gateway,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.DHCPV6_STATELESS,
                                  ipv6_address_mode=constants.DHCPV6_STATELESS)
         # Gateway is first IP in IPv6 DHCPv6 Stateless subnet
@@ -3823,14 +3836,14 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
         self._test_create_subnet(expected=expected, gateway_ip=gateway,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.DHCPV6_STATELESS,
                                  ipv6_address_mode=constants.DHCPV6_STATELESS)
         # If gateway_ip is not specified, allocate first IP from the subnet
         expected = {'gateway_ip': gateway,
                     'cidr': cidr}
         self._test_create_subnet(expected=expected,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.IPV6_SLAAC,
                                  ipv6_address_mode=constants.IPV6_SLAAC)
 
@@ -3901,7 +3914,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             net_id = network['network']['id']
             data = {'subnet': {'network_id': net_id,
                                'cidr': '10.0.0.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'gateway_ip': '10.0.0.1',
                                'tenant_id': network['network']['tenant_id'],
                                'allocation_pools': [{'start': '10.0.0.100',
@@ -3941,7 +3954,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         allocation_pools = [{'start': 'fe80::2',
                              'end': 'fe80::ffff:fffa:ffff'}]
         self._test_create_subnet(gateway_ip=gateway_ip,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  allocation_pools=allocation_pools)
 
     @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
@@ -3951,7 +3964,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         allocation_pools = [{'start': '::2',
                              'end': '::ffff:ffff:ffff:fffe'}]
         self._test_create_subnet(gateway_ip=gateway_ip,
-                                 cidr=cidr, ip_version=6,
+                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  allocation_pools=allocation_pools)
 
     def test_create_subnet_with_large_allocation_pool(self):
@@ -4059,7 +4072,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 6,
+                               'ip_version': constants.IP_VERSION_6,
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -4069,7 +4082,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': 'fe80::0/80',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -4079,7 +4092,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'gateway_ip': 'fe80::1',
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
@@ -4090,7 +4103,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': 'fe80::0/80',
-                               'ip_version': 6,
+                               'ip_version': constants.IP_VERSION_6,
                                'gateway_ip': '192.168.0.1',
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
@@ -4101,7 +4114,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': 'fe80::0/80',
-                               'ip_version': 6,
+                               'ip_version': constants.IP_VERSION_6,
                                'dns_nameservers': ['192.168.0.1'],
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
@@ -4114,7 +4127,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'host_routes': host_routes,
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
@@ -4127,7 +4140,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'host_routes': host_routes,
                                'tenant_id': network['network']['tenant_id']}}
             subnet_req = self.new_create_request('subnets', data)
@@ -4138,7 +4151,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                          expect_success=True, **modes):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        new_subnet = {'ip_version': 6,
+        new_subnet = {'ip_version': constants.IP_VERSION_6,
                       'cidr': 'fe80::/64',
                       'enable_dhcp': True,
                       'ipv6_address_mode': None,
@@ -4155,7 +4168,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                          expect_success=True, **modes):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
-        new_subnet = {'ip_version': 6,
+        new_subnet = {'ip_version': constants.IP_VERSION_6,
                       'cidr': constants.PROVISIONAL_IPV6_PD_PREFIX,
                       'enable_dhcp': True,
                       'ipv6_address_mode': None,
@@ -4256,7 +4269,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         cidr = '2001::/64'
 
         self._test_create_subnet(
-            gateway_ip=gateway_ip, cidr=cidr, ip_version=6,
+            gateway_ip=gateway_ip, cidr=cidr,
+            ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode=constants.IPV6_SLAAC,
             ipv6_address_mode=constants.IPV6_SLAAC)
 
@@ -4267,7 +4281,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 webob.exc.HTTPClientError) as ctx_manager:
             for mode in constants.IPV6_MODES:
                 self._test_create_subnet(gateway_ip=gateway_ip,
-                                         cidr=cidr, ip_version=6,
+                                         cidr=cidr,
+                                         ip_version=constants.IP_VERSION_6,
                                          enable_dhcp=False,
                                          ipv6_ra_mode=mode,
                                          ipv6_address_mode=mode)
@@ -4280,7 +4295,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with testlib_api.ExpectedException(
             webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
-                                     cidr=cidr, ip_version=6,
+                                     cidr=cidr,
+                                     ip_version=constants.IP_VERSION_6,
                                      ipv6_ra_mode='foo',
                                      ipv6_address_mode='slaac')
         self.assertEqual(webob.exc.HTTPClientError.code,
@@ -4292,7 +4308,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with testlib_api.ExpectedException(
             webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(gateway_ip=gateway_ip,
-                                     cidr=cidr, ip_version=6,
+                                     cidr=cidr,
+                                     ip_version=constants.IP_VERSION_6,
                                      ipv6_ra_mode='slaac',
                                      ipv6_address_mode='baz')
         self.assertEqual(webob.exc.HTTPClientError.code,
@@ -4302,7 +4319,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         cidr = '10.0.2.0/24'
         with testlib_api.ExpectedException(
             webob.exc.HTTPClientError) as ctx_manager:
-            self._test_create_subnet(cidr=cidr, ip_version=4,
+            self._test_create_subnet(cidr=cidr,
+                                     ip_version=constants.IP_VERSION_4,
                                      ipv6_ra_mode=constants.DHCPV6_STATEFUL)
         self.assertEqual(webob.exc.HTTPClientError.code,
                          ctx_manager.exception.code)
@@ -4312,7 +4330,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with testlib_api.ExpectedException(
             webob.exc.HTTPClientError) as ctx_manager:
             self._test_create_subnet(
-                cidr=cidr, ip_version=4,
+                cidr=cidr, ip_version=constants.IP_VERSION_4,
                 ipv6_address_mode=constants.DHCPV6_STATEFUL)
         self.assertEqual(webob.exc.HTTPClientError.code,
                          ctx_manager.exception.code)
@@ -4338,7 +4356,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 mock.patch.object(orm.Session, 'add',
                                   side_effect=db_ref_err_for_ipalloc,
                                   autospec=True).start()
-                v6_subnet = {'ip_version': 6,
+                v6_subnet = {'ip_version': constants.IP_VERSION_6,
                              'cidr': 'fe80::/64',
                              'gateway_ip': 'fe80::1',
                              'tenant_id': v4_subnet['subnet']['tenant_id']}
@@ -4356,10 +4374,11 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                         ipam_driver.NeutronDbSubnet, '_verify_ip',
                         side_effect=ipam_exc.IpAddressAlreadyAllocated(
                             subnet_id=mock.ANY, ip=mock.ANY)).start()
-                v6_subnet = self._make_subnet(self.fmt, network, 'fe80::1',
-                                              'fe80::/64', ip_version=6,
-                                              ipv6_ra_mode=addr_mode,
-                                              ipv6_address_mode=addr_mode)
+                v6_subnet = self._make_subnet(
+                    self.fmt, network, 'fe80::1', 'fe80::/64',
+                    ip_version=constants.IP_VERSION_6,
+                    ipv6_ra_mode=addr_mode,
+                    ipv6_address_mode=addr_mode)
             if (insert_db_reference_error or insert_address_allocated or
                     device_owner == constants.DEVICE_OWNER_ROUTER_SNAT or
                     device_owner in constants.ROUTER_INTERFACE_OWNERS):
@@ -4459,7 +4478,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'dns_nameservers': ['192.168.0.1'],
                                'host_routes': host_routes,
                                'tenant_id': network['network']['tenant_id']}}
@@ -4502,7 +4521,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 # Create port on second network
                 network2 = self._make_network(self.fmt, 'net2', True)
                 self._make_subnet(self.fmt, network2, "1.1.1.1",
-                                  "1.1.1.0/24", ip_version=4)
+                                  "1.1.1.0/24",
+                                  ip_version=constants.IP_VERSION_4)
                 self._make_port(self.fmt, net_id=network2['network']['id'])
 
                 subnet = self._make_v6_subnet(
@@ -4621,7 +4641,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_update_subnet_inconsistent_ipv6_gatewayv4(self):
         with self.network() as network:
             with self.subnet(network=network,
-                             ip_version=6, cidr='fe80::/48') as subnet:
+                             ip_version=constants.IP_VERSION_6,
+                             cidr='fe80::/48') as subnet:
                 data = {'subnet': {'gateway_ip': '10.1.1.1'}}
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
@@ -4645,7 +4666,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                         'nexthop': '10.0.2.20'}]
         with self.network() as network:
             with self.subnet(network=network,
-                             ip_version=6, cidr='fe80::/48') as subnet:
+                             ip_version=constants.IP_VERSION_6,
+                             cidr='fe80::/48') as subnet:
                 data = {'subnet': {'host_routes': host_routes}}
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
@@ -4658,7 +4680,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                         'nexthop': 'fe80::1'}]
         with self.network() as network:
             with self.subnet(network=network,
-                             ip_version=6, cidr='fe80::/48') as subnet:
+                             ip_version=constants.IP_VERSION_6,
+                             cidr='fe80::/48') as subnet:
                 data = {'subnet': {'host_routes': host_routes}}
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
@@ -4680,7 +4703,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  res.status_int)
 
     def test_update_subnet_ipv6_attributes_fails(self):
-        with self.subnet(ip_version=6, cidr='fe80::/64',
+        with self.subnet(ip_version=constants.IP_VERSION_6, cidr='fe80::/64',
                          ipv6_ra_mode=constants.IPV6_SLAAC,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             data = {'subnet': {'ipv6_ra_mode': constants.DHCPV6_STATEFUL,
@@ -4692,7 +4715,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                              res.status_int)
 
     def test_update_subnet_ipv6_ra_mode_fails(self):
-        with self.subnet(ip_version=6, cidr='fe80::/64',
+        with self.subnet(ip_version=constants.IP_VERSION_6, cidr='fe80::/64',
                          ipv6_ra_mode=constants.IPV6_SLAAC) as subnet:
             data = {'subnet': {'ipv6_ra_mode': constants.DHCPV6_STATEFUL}}
             req = self.new_update_request('subnets', data,
@@ -4702,7 +4725,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                              res.status_int)
 
     def test_update_subnet_ipv6_address_mode_fails(self):
-        with self.subnet(ip_version=6, cidr='fe80::/64',
+        with self.subnet(ip_version=constants.IP_VERSION_6, cidr='fe80::/64',
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             data = {'subnet': {'ipv6_address_mode': constants.DHCPV6_STATEFUL}}
             req = self.new_update_request('subnets', data,
@@ -4712,7 +4735,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                              res.status_int)
 
     def test_update_subnet_ipv6_cannot_disable_dhcp(self):
-        with self.subnet(ip_version=6, cidr='fe80::/64',
+        with self.subnet(ip_version=constants.IP_VERSION_6, cidr='fe80::/64',
                          ipv6_ra_mode=constants.IPV6_SLAAC,
                          ipv6_address_mode=constants.IPV6_SLAAC) as subnet:
             data = {'subnet': {'enable_dhcp': False}}
@@ -5057,10 +5080,11 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 gateway_ip='10.0.1.1',
                                 cidr='10.0.1.0/24') as v2:
                 subnets = (v1, v2)
-                query_params = 'ip_version=4&ip_version=6'
+                query_params = 'ip_version=%s&ip_version=%s' % (
+                    constants.IP_VERSION_4, constants.IP_VERSION_6)
                 self._test_list_resources('subnet', subnets,
                                           query_params=query_params)
-                query_params = 'ip_version=6'
+                query_params = 'ip_version=%s' % constants.IP_VERSION_6
                 self._test_list_resources('subnet', [],
                                           query_params=query_params)
 
@@ -5150,7 +5174,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': 'invalid',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': '10.0.2.1'}}
 
@@ -5162,7 +5186,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             subnet = {'network_id': network['network']['id'],
                       'cidr': subnet_cidr,
-                      'ip_version': 4,
+                      'ip_version': constants.IP_VERSION_4,
                       'enable_dhcp': True,
                       'tenant_id': network['network']['tenant_id']}
             plugin = directory.get_plugin()
@@ -5182,7 +5206,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': 'ipaddress'}}
 
@@ -5194,7 +5218,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             data = {'subnet': {'network_id': 'invalid-uuid',
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': '10.0.0.1'}}
 
@@ -5229,7 +5253,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             dns_list = ['1.1.1.1', '2.2.2.2', '3.3.3.3']
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': '10.0.0.1',
                                'dns_nameservers': dns_list}}
@@ -5276,7 +5300,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id'],
                                'gateway_ip': '10.0.0.1',
                                'host_routes': host_routes}}
@@ -5415,7 +5439,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4,
+                                   cidr, ip_version=constants.IP_VERSION_4,
                                    dns_nameservers=dns_nameservers)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
@@ -5431,7 +5455,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4,
+                                   cidr, ip_version=constants.IP_VERSION_4,
                                    host_routes=host_routes)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
         res = req.get_response(self.api)
@@ -5448,7 +5472,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         subnet = self._make_subnet(self.fmt, network, gateway_ip,
-                                   cidr, ip_version=4,
+                                   cidr, ip_version=constants.IP_VERSION_4,
                                    dns_nameservers=dns_nameservers,
                                    host_routes=host_routes)
         req = self.new_delete_request('subnets', subnet['subnet']['id'])
@@ -5488,7 +5512,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             subnet = {'network_id': network['network']['id'],
                       'cidr': '10.0.2.0/24',
-                      'ip_version': 4,
+                      'ip_version': constants.IP_VERSION_4,
                       'tenant_id': network['network']['tenant_id'],
                       'gateway_ip': '10.0.2.1',
                       'dns_nameservers': ['8.8.8.8'],
@@ -5968,7 +5992,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'prefixlen': 32,
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             result = req.get_response(self.api)
@@ -5985,7 +6009,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'prefixlen': 24,
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -6008,7 +6032,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             # Request any subnet allocation using default prefix
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -6028,7 +6052,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
                                'prefixlen': 26,
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
@@ -6045,7 +6069,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
                                'prefixlen': 24,
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
@@ -6062,7 +6086,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -6082,7 +6106,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '192.168.1.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
@@ -6099,7 +6123,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.10.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             # Allocate the subnet
@@ -6121,7 +6145,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.0.0/20',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
@@ -6139,7 +6163,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
                                'gateway_ip': '10.10.1.254',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
@@ -6159,7 +6183,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
                                'gateway_ip': '10.10.1.1',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'allocation_pools': pools,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
@@ -6182,7 +6206,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'prefixlen': '24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'allocation_pools': pools,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
@@ -6201,7 +6225,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.0.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
@@ -6217,7 +6241,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.0.0/24',
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             req.get_response(self.api)
@@ -6237,7 +6261,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             # Request a specific subnet allocation
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'prefixlen': 21,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
@@ -6258,7 +6282,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             # Request a specific subnet allocation
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
-                               'ip_version': 4,
+                               'ip_version': constants.IP_VERSION_4,
                                'tenant_id': network['network']['tenant_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
@@ -6512,7 +6536,8 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
 
     def _make_subnet(self, ctx, network_id):
         with db_api.context_manager.writer.using(ctx):
-            subnet = models_v2.Subnet(name="subsub", ip_version=4,
+            subnet = models_v2.Subnet(name="subsub",
+                                      ip_version=constants.IP_VERSION_4,
                                       tenant_id='dbcheck',
                                       cidr='turn_down_for_what',
                                       network_id=network_id)
@@ -6531,9 +6556,9 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_subnetpool(self, ctx):
         with db_api.context_manager.writer.using(ctx):
             subnetpool = models_v2.SubnetPool(
-                ip_version=4, default_prefixlen=4, min_prefixlen=4,
-                max_prefixlen=4, shared=False, default_quota=4,
-                address_scope_id='f', tenant_id='dbcheck',
+                ip_version=constants.IP_VERSION_4, default_prefixlen=4,
+                min_prefixlen=4, max_prefixlen=4, shared=False,
+                default_quota=4, address_scope_id='f', tenant_id='dbcheck',
                 is_default=False
             )
             ctx.session.add(subnetpool)
@@ -6551,7 +6576,8 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
 
     def _make_subnet(self, ctx, network_id):
         with db_api.context_manager.writer.using(ctx):
-            subnet = models_v2.Subnet(name="subsub", ip_version=4,
+            subnet = models_v2.Subnet(name="subsub",
+                                      ip_version=constants.IP_VERSION_4,
                                       project_id='dbcheck',
                                       cidr='turn_down_for_what',
                                       network_id=network_id)
@@ -6570,9 +6596,9 @@ class DbModelProjectTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_subnetpool(self, ctx):
         with db_api.context_manager.writer.using(ctx):
             subnetpool = models_v2.SubnetPool(
-                ip_version=4, default_prefixlen=4, min_prefixlen=4,
-                max_prefixlen=4, shared=False, default_quota=4,
-                address_scope_id='f', project_id='dbcheck',
+                ip_version=constants.IP_VERSION_4, default_prefixlen=4,
+                min_prefixlen=4, max_prefixlen=4, shared=False,
+                default_quota=4, address_scope_id='f', project_id='dbcheck',
                 is_default=False
             )
             ctx.session.add(subnetpool)
@@ -6632,7 +6658,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
     def test__validate_network_subnetpools(self):
         network = models_v2.Network()
         network.subnets = [models_v2.Subnet(subnetpool_id='test_id',
-                                            ip_version=4)]
+                                            ip_version=constants.IP_VERSION_4)]
         new_subnetpool_id = None
         self.assertRaises(n_exc.NetworkSubnetPoolAffinityError,
                           self.plugin.ipam._validate_network_subnetpools,

@@ -11,6 +11,7 @@
 #    under the License.
 
 import mock
+from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -242,7 +243,7 @@ class DBExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
             data = {'subnet':
                     {'network_id': network['network']['id'],
                      'cidr': '10.1.0.0/24',
-                     'ip_version': '4',
+                     'ip_version': constants.IP_VERSION_4,
                      'tenant_id': self._tenant_id,
                      'subnet_extension': 'abc'}}
             req = self.new_create_request('subnets', data, self.fmt)

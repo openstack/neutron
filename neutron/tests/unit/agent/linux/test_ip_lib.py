@@ -18,6 +18,7 @@ import socket
 
 import mock
 import netaddr
+from neutron_lib import constants
 from neutron_lib import exceptions
 import pyroute2
 from pyroute2.netlink.rtnl import ifinfmsg
@@ -969,7 +970,7 @@ class TestIpRouteCommand(TestIPCmdBase):
         self.parent.name = 'eth0'
         self.command = 'route'
         self.route_cmd = ip_lib.IpRouteCommand(self.parent)
-        self.ip_version = 4
+        self.ip_version = constants.IP_VERSION_4
         self.table = 14
         self.metric = 100
         self.cidr = '192.168.45.100/24'
@@ -1159,7 +1160,7 @@ class TestIpRouteCommand(TestIPCmdBase):
 class TestIPv6IpRouteCommand(TestIpRouteCommand):
     def setUp(self):
         super(TestIPv6IpRouteCommand, self).setUp()
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = '2001:db8::/64'
         self.ip = '2001:db8::100'
         self.gateway = '2001:db8::1'

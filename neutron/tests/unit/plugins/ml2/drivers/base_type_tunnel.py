@@ -359,7 +359,8 @@ class TunnelRpcCallbackTestMixin(object):
         self._test_tunnel_sync(kwargs)
 
     def test_tunnel_sync_called_with_host_passed_ipv6(self):
-        cfg.CONF.set_override('overlay_ip_version', 6, group='ml2')
+        cfg.CONF.set_override('overlay_ip_version', p_const.IP_VERSION_6,
+                              group='ml2')
         kwargs = {'tunnel_ip': TUNNEL_IPV6_ONE, 'tunnel_type': self.TYPE,
                   'host': HOST_ONE}
         self._test_tunnel_sync(kwargs)
@@ -402,13 +403,15 @@ class TunnelRpcCallbackTestMixin(object):
         self._test_tunnel_sync_raises(kwargs)
 
     def test_tunnel_sync_called_with_tunnel_overlay_mismatch(self):
-        cfg.CONF.set_override('overlay_ip_version', 6, group='ml2')
+        cfg.CONF.set_override('overlay_ip_version', p_const.IP_VERSION_6,
+                              group='ml2')
         kwargs = {'tunnel_ip': TUNNEL_IP_ONE, 'tunnel_type': self.TYPE,
                   'host': HOST_ONE}
         self._test_tunnel_sync_raises(kwargs)
 
     def test_tunnel_sync_called_with_tunnel_overlay_mismatch_ipv6(self):
-        cfg.CONF.set_override('overlay_ip_version', 4, group='ml2')
+        cfg.CONF.set_override('overlay_ip_version', p_const.IP_VERSION_4,
+                              group='ml2')
         kwargs = {'tunnel_ip': TUNNEL_IPV6_ONE, 'tunnel_type': self.TYPE,
                   'host': HOST_ONE}
         self._test_tunnel_sync_raises(kwargs)

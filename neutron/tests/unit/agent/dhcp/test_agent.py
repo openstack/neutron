@@ -56,7 +56,8 @@ fake_subnet1 = dhcp.DictModel(dict(id='bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
                               cidr='172.9.9.0/24', enable_dhcp=True, name='',
                               tenant_id=FAKE_TENANT_ID,
                               gateway_ip='172.9.9.1', host_routes=[],
-                              dns_nameservers=[], ip_version=4,
+                              dns_nameservers=[],
+                              ip_version=const.IP_VERSION_4,
                               ipv6_ra_mode=None, ipv6_address_mode=None,
                               allocation_pools=fake_subnet1_allocation_pools))
 
@@ -66,26 +67,29 @@ fake_subnet2 = dhcp.DictModel(dict(id='dddddddd-dddd-dddd-dddddddddddd',
                               network_id=FAKE_NETWORK_UUID,
                               cidr='172.9.8.0/24', enable_dhcp=False, name='',
                               tenant_id=FAKE_TENANT_ID, gateway_ip='172.9.8.1',
-                              host_routes=[], dns_nameservers=[], ip_version=4,
+                              host_routes=[], dns_nameservers=[],
+                              ip_version=const.IP_VERSION_4,
                               allocation_pools=fake_subnet2_allocation_pools))
 
 fake_subnet3 = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                               network_id=FAKE_NETWORK_UUID,
                               cidr='192.168.1.1/24', enable_dhcp=True,
-                              ip_version=4))
+                              ip_version=const.IP_VERSION_4))
 
 fake_ipv6_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                               network_id=FAKE_NETWORK_UUID,
                               cidr='2001:0db8::0/64', enable_dhcp=True,
                               tenant_id=FAKE_TENANT_ID,
-                              gateway_ip='2001:0db8::1', ip_version=6,
+                              gateway_ip='2001:0db8::1',
+                              ip_version=const.IP_VERSION_6,
                               ipv6_ra_mode='slaac', ipv6_address_mode=None))
 
 fake_meta_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                                   network_id=FAKE_NETWORK_UUID,
                                   cidr='169.254.169.252/30',
                                   gateway_ip='169.254.169.253',
-                                  enable_dhcp=True, ip_version=4))
+                                  enable_dhcp=True,
+                                  ip_version=const.IP_VERSION_4))
 
 fake_fixed_ip1 = dhcp.DictModel(dict(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.9'))
@@ -946,7 +950,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def test_subnet_create_restarts_with_dhcp_disabled(self):
         payload = dict(subnet=dhcp.DictModel(
               dict(network_id=fake_network.id, enable_dhcp=False,
-                   cidr='99.99.99.0/24', ip_version=4)))
+                   cidr='99.99.99.0/24', ip_version=const.IP_VERSION_4)))
         self.cache.get_network_by_id.return_value = fake_network
         new_net = copy.deepcopy(fake_network)
         new_net.subnets.append(payload['subnet'])
@@ -1389,7 +1393,7 @@ class FakePort2(object):
 class FakeV4Subnet(object):
     def __init__(self):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-        self.ip_version = 4
+        self.ip_version = const.IP_VERSION_4
         self.cidr = '192.168.0.0/24'
         self.gateway_ip = '192.168.0.1'
         self.enable_dhcp = True
@@ -1398,7 +1402,7 @@ class FakeV4Subnet(object):
 class FakeV6Subnet(object):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-        self.ip_version = 6
+        self.ip_version = const.IP_VERSION_6
         self.cidr = '2001:db8:0:1::/64'
         self.gateway_ip = '2001:db8:0:1::1'
         self.enable_dhcp = True
@@ -1419,7 +1423,7 @@ class FakeV6SubnetOutsideGateway(FakeV6Subnet):
 class FakeV4SubnetNoGateway(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-        self.ip_version = 4
+        self.ip_version = const.IP_VERSION_4
         self.cidr = '192.168.1.0/24'
         self.gateway_ip = None
         self.enable_dhcp = True
@@ -1428,7 +1432,7 @@ class FakeV4SubnetNoGateway(object):
 class FakeV6SubnetNoGateway(object):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-        self.ip_version = 6
+        self.ip_version = const.IP_VERSION_6
         self.cidr = '2001:db8:1:0::/64'
         self.gateway_ip = None
         self.enable_dhcp = True

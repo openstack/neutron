@@ -883,7 +883,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_update_gateway_add_multiple_prefixes_ipv6(self):
         with self.network() as n:
             with self.subnet(network=n) as s1, \
-                self.subnet(network=n, ip_version=6, cidr='2001:db8::/32') \
+                self.subnet(network=n, ip_version=lib_constants.IP_VERSION_6,
+                            cidr='2001:db8::/32') \
                 as s2, (self.router()) as r:
                 self._set_net_external(n['network']['id'])
                 res1 = self._add_external_gateway_to_router(
@@ -924,7 +925,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 # ensure the router disappearing doesn't interfere with subnet
                 # creation
                 self._create_subnet(self.fmt, net_id=n['network']['id'],
-                                    ip_version=6, cidr='2001:db8::/32',
+                                    ip_version=lib_constants.IP_VERSION_6,
+                                    cidr='2001:db8::/32',
                                     expected_res_status=(exc.HTTPCreated.code))
 
     def test_router_update_gateway_upon_subnet_create_ipv6(self):
@@ -938,7 +940,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 fip1 = (res1['router']['external_gateway_info']
                         ['external_fixed_ips'][0])
                 sres = self._create_subnet(self.fmt, net_id=n['network']['id'],
-                                         ip_version=6, cidr='2001:db8::/32',
+                                         ip_version=lib_constants.IP_VERSION_6,
+                                         cidr='2001:db8::/32',
                                          expected_res_status=(
                                              exc.HTTPCreated.code))
                 s2 = self.deserialize(self.fmt, sres)
@@ -962,7 +965,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         """
         with self.router() as r, self.network() as n:
             with self.subnet(cidr='10.0.0.0/24', network=n) as s1, (
-                    self.subnet(ip_version=6, cidr='2001:db8::/64',
+                    self.subnet(ip_version=lib_constants.IP_VERSION_6,
+                        cidr='2001:db8::/64',
                         network=n)) as s2:
                 self._set_net_external(n['network']['id'])
                 self._add_external_gateway_to_router(
@@ -987,7 +991,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 s3 = self.deserialize(self.fmt,
                         self._create_subnet(self.fmt,
                             net_id=n['network']['id'],
-                            ip_version=6, cidr='2001:db8:1::/64',
+                            ip_version=lib_constants.IP_VERSION_6,
+                            cidr='2001:db8:1::/64',
                             ipv6_ra_mode=lib_constants.IPV6_SLAAC,
                             ipv6_address_mode=lib_constants.IPV6_SLAAC))
                 res3 = self._show('routers', r['router']['id'])
@@ -1111,7 +1116,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             fake_notifier.reset()
             with self.router() as r, self.network() as n:
                 with self.subnet(network=n, cidr='fd00::1/64',
-                                 gateway_ip='fd00::1', ip_version=6,
+                                 gateway_ip='fd00::1',
+                                 ip_version=lib_constants.IP_VERSION_6,
                                  ipv6_ra_mode=uc['ra_mode'],
                                  ipv6_address_mode=uc['address_mode']) as s:
                     self._test_router_add_interface_subnet(r, s, uc['msg'])
@@ -1148,9 +1154,11 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         to a router places them all on the same router interface.
         """
         with self.router() as r, self.network() as n:
-            with (self.subnet(network=n, cidr='fd00::1/64', ip_version=6)
+            with (self.subnet(network=n, cidr='fd00::1/64',
+                              ip_version=lib_constants.IP_VERSION_6)
                   ) as s1, self.subnet(network=n, cidr='fd01::1/64',
-                                       ip_version=6) as s2:
+                                       ip_version=lib_constants.IP_VERSION_6
+                                       ) as s2:
                     body = self._router_interface_action('add',
                                                          r['router']['id'],
                                                          s1['subnet']['id'],
@@ -1180,9 +1188,11 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         to a router places them on different router interfaces.
         """
         with self.router() as r, self.network() as n1, self.network() as n2:
-            with (self.subnet(network=n1, cidr='fd00::1/64', ip_version=6)
+            with (self.subnet(network=n1, cidr='fd00::1/64',
+                              ip_version=lib_constants.IP_VERSION_6)
                   ) as s1, self.subnet(network=n2, cidr='fd01::1/64',
-                                       ip_version=6) as s2:
+                                       ip_version=lib_constants.IP_VERSION_6
+                                       ) as s2:
                     body = self._router_interface_action('add',
                                                          r['router']['id'],
                                                          s1['subnet']['id'],
@@ -1219,7 +1229,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         for uc in use_cases:
             with self.router() as r, self.network() as n:
                 with self.subnet(network=n, cidr='fd00::1/64',
-                                 gateway_ip='fd00::1', ip_version=6,
+                                 gateway_ip='fd00::1',
+                                 ip_version=lib_constants.IP_VERSION_6,
                                  ipv6_ra_mode=uc['ra_mode'],
                                  ipv6_address_mode=uc['address_mode']) as s:
                     exp_code = exc.HTTPBadRequest.code
@@ -1232,7 +1243,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_add_interface_ipv6_subnet_without_gateway_ip(self):
         with self.router() as r:
-            with self.subnet(ip_version=6, cidr='fe80::/64',
+            with self.subnet(ip_version=lib_constants.IP_VERSION_6,
+                             cidr='fe80::/64',
                              gateway_ip=None) as s:
                 error_code = exc.HTTPBadRequest.code
                 self._router_interface_action('add',
@@ -1287,9 +1299,11 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with self.network(shared=True) as n:
                 with self.subnet(network=n) as s1, (
                      self.subnet(network=n, cidr='fd00::/64',
-                                 ip_version=6)) as s2, (
+                                 ip_version=lib_constants.IP_VERSION_6)
+                                 ) as s2, (
                      self.subnet(network=n, cidr='fd01::/64',
-                                 ip_version=6)) as s3:
+                                 ip_version=lib_constants.IP_VERSION_6)
+                                 ) as s3:
                     fixed_ips = [{'subnet_id': s1['subnet']['id']},
                                  {'subnet_id': s2['subnet']['id']},
                                  {'subnet_id': s3['subnet']['id']}]
@@ -1473,9 +1487,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         """
         with self.network() as n, self.router() as r:
             with self.subnet(network=n, cidr='fd00::/64',
-                             ip_version=6) as s1, (
+                             ip_version=lib_constants.IP_VERSION_6) as s1, (
                  self.subnet(network=n, cidr='fd01::/64',
-                             ip_version=6)) as s2:
+                             ip_version=lib_constants.IP_VERSION_6)) as s2:
                 orig_update_port = self.plugin.update_port
                 with self.port(subnet=s1) as p, (
                         mock.patch.object(self.plugin,
@@ -1504,9 +1518,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         """
         with self.network() as n, self.router() as r:
             with self.subnet(network=n, cidr='fd00::/64',
-                             ip_version=6) as s1, (
+                             ip_version=lib_constants.IP_VERSION_6) as s1, (
                  self.subnet(network=n, cidr='fd01::/64',
-                             ip_version=6)) as s2:
+                             ip_version=lib_constants.IP_VERSION_6)) as s2:
                 fixed_ips = [{'subnet_id': s1['subnet']['id']},
                              {'subnet_id': s2['subnet']['id']}]
                 with self.port(subnet=s1, fixed_ips=fixed_ips) as p:
@@ -1724,17 +1738,17 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     cidr='10.0.1.0/24', network=n)) as s2, (
                  self.subnet(
                     cidr='2001:db8::/64', network=n,
-                    ip_version=6,
+                    ip_version=lib_constants.IP_VERSION_6,
                     ipv6_ra_mode=lib_constants.IPV6_SLAAC,
                     ipv6_address_mode=lib_constants.IPV6_SLAAC)) as s3, (
                  self.subnet(
                     cidr='2001:db8:1::/64', network=n,
-                    ip_version=6,
+                    ip_version=lib_constants.IP_VERSION_6,
                     ipv6_ra_mode=lib_constants.DHCPV6_STATEFUL,
                     ipv6_address_mode=lib_constants.DHCPV6_STATEFUL)) as s4, (
                  self.subnet(
                     cidr='2001:db8:2::/64', network=n,
-                    ip_version=6,
+                    ip_version=lib_constants.IP_VERSION_6,
                     ipv6_ra_mode=lib_constants.DHCPV6_STATELESS,
                     ipv6_address_mode=lib_constants.DHCPV6_STATELESS)) as s5:
                 self._set_net_external(n['network']['id'])
@@ -2053,9 +2067,11 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         removes the interface when it is the last subnet on the interface.
         """
         with self.router() as r, self.network() as n:
-            with (self.subnet(network=n, cidr='fd00::1/64', ip_version=6)
+            with (self.subnet(network=n, cidr='fd00::1/64',
+                              ip_version=lib_constants.IP_VERSION_6)
                   ) as s1, self.subnet(network=n, cidr='fd01::1/64',
-                                       ip_version=6) as s2:
+                                       ip_version=lib_constants.IP_VERSION_6
+                                       ) as s2:
                 body = self._router_interface_action('add', r['router']['id'],
                                                      s1['subnet']['id'],
                                                      None)
@@ -3118,7 +3134,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def _ipv6_subnet(self, mode):
         return self.subnet(cidr='fd00::1/64', gateway_ip='fd00::1',
-                           ip_version=6,
+                           ip_version=lib_constants.IP_VERSION_6,
                            ipv6_ra_mode=mode,
                            ipv6_address_mode=mode)
 
@@ -3222,7 +3238,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         self.assertEqual(router_req['router']['id'], result['id'])
 
     def test_create_floatingip_ipv6_only_network_returns_400(self):
-        with self.subnet(cidr="2001:db8::/48", ip_version=6) as public_sub:
+        with self.subnet(cidr="2001:db8::/48",
+                         ip_version=lib_constants.IP_VERSION_6) as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             res = self._create_floatingip(
                 self.fmt,
@@ -3231,8 +3248,10 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_create_floatingip_ipv6_and_ipv4_network_creates_ipv4(self):
         with self.network() as n,\
-                self.subnet(cidr="2001:db8::/48", ip_version=6, network=n),\
-                self.subnet(cidr="192.168.1.0/24", ip_version=4, network=n):
+                self.subnet(cidr="2001:db8::/48",
+                            ip_version=lib_constants.IP_VERSION_6, network=n),\
+                self.subnet(cidr="192.168.1.0/24",
+                            ip_version=lib_constants.IP_VERSION_4, network=n):
             self._set_net_external(n['network']['id'])
             fip = self._make_floatingip(self.fmt, n['network']['id'])
             fip_set = netaddr.IPSet(netaddr.IPNetwork("192.168.1.0/24"))
@@ -3243,7 +3262,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.subnet() as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             with self.subnet(cidr="2001:db8::/48",
-                             ip_version=6) as private_sub:
+                             ip_version=lib_constants.IP_VERSION_6
+                             ) as private_sub:
                 with self.port(subnet=private_sub) as private_port:
                     res = self._create_floatingip(
                         self.fmt,
@@ -3254,7 +3274,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_create_floatingip_with_assoc_to_ipv4_and_ipv6_port(self):
         with self.network() as n,\
                 self.subnet(cidr='10.0.0.0/24', network=n) as s4,\
-                self.subnet(cidr='2001:db8::/64', ip_version=6, network=n),\
+                self.subnet(cidr='2001:db8::/64',
+                            ip_version=lib_constants.IP_VERSION_6, network=n),\
                 self.port(subnet=s4) as p:
             self.assertEqual(2, len(p['port']['fixed_ips']))
             ipv4_address = next(i['ip_address'] for i in
@@ -3437,7 +3458,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     'network_id': network['network']['id'],
                     'subnetpool_id': subnetpool_id,
                     'prefixlen': 24,
-                    'ip_version': 4,
+                    'ip_version': lib_constants.IP_VERSION_4,
                     'tenant_id': tenant_id}}
             req = self.new_create_request('subnets', data)
             subnet = self.deserialize(self.fmt, req.get_response(self.api))
@@ -3534,7 +3555,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                          exc.HTTPForbidden.code)
 
     def test_associate_to_dhcp_port_fails(self):
-        with self.subnet(cidr="10.0.0.0/24", ip_version=4) as sub:
+        with self.subnet(cidr="10.0.0.0/24",
+                         ip_version=lib_constants.IP_VERSION_4) as sub:
             with self.port(subnet=sub,
                            device_owner=lib_constants.DEVICE_OWNER_DHCP) as p:
                 res = self._create_floatingip(

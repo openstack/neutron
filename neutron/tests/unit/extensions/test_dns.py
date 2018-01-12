@@ -384,17 +384,21 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         network = self.deserialize(self.fmt, res)
         sub_dicts = [
             {'gateway': '10.0.0.1', 'cidr': '10.0.0.0/24',
-             'ip_version': 4, 'ra_addr_mode': None},
+             'ip_version': constants.IP_VERSION_4, 'ra_addr_mode': None},
             {'gateway': '10.0.1.1', 'cidr': '10.0.1.0/24',
-             'ip_version': 4, 'ra_addr_mode': None},
+             'ip_version': constants.IP_VERSION_4, 'ra_addr_mode': None},
             {'gateway': 'fe80::1', 'cidr': 'fe80::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.IPV6_SLAAC},
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.IPV6_SLAAC},
             {'gateway': 'fe81::1', 'cidr': 'fe81::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.IPV6_SLAAC},
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.IPV6_SLAAC},
             {'gateway': 'fe82::1', 'cidr': 'fe82::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.DHCPV6_STATEFUL},
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.DHCPV6_STATEFUL},
             {'gateway': 'fe83::1', 'cidr': 'fe83::/64',
-             'ip_version': 6, 'ra_addr_mode': constants.DHCPV6_STATEFUL}]
+             'ip_version': constants.IP_VERSION_6,
+             'ra_addr_mode': constants.DHCPV6_STATEFUL}]
         subnets = {}
         for sub_dict in sub_dicts:
             subnet = self._make_subnet(
@@ -451,7 +455,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         sub_dict = {'gateway': '10.0.0.1', 'cidr': '10.0.0.0/24',
-                    'ip_version': 4, 'ra_addr_mode': None}
+                    'ip_version': constants.IP_VERSION_4, 'ra_addr_mode': None}
         self._make_subnet(self.fmt, network, gateway=sub_dict['gateway'],
                           cidr=sub_dict['cidr'],
                           ip_version=sub_dict['ip_version'],
@@ -489,7 +493,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
         sub_dict = {'gateway': '10.0.0.1', 'cidr': '10.0.0.0/24',
-                    'ip_version': 4, 'ra_addr_mode': None}
+                    'ip_version': constants.IP_VERSION_4, 'ra_addr_mode': None}
         self._make_subnet(self.fmt, network, gateway=sub_dict['gateway'],
                           cidr=sub_dict['cidr'],
                           ip_version=sub_dict['ip_version'],

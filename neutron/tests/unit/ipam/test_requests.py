@@ -320,7 +320,7 @@ class TestAddressRequestFactory(base.BaseTestCase):
 class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
 
     def _build_subnet_dict(self, id=None, cidr='192.168.1.0/24',
-                           prefixlen=8, ip_version=4):
+                           prefixlen=8, ip_version=constants.IP_VERSION_4):
         subnet = {'cidr': cidr,
                   'prefixlen': prefixlen,
                   'ip_version': ip_version,
@@ -347,7 +347,8 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
                 ipam_req.SpecificSubnetRequest)
 
     def test_any_address_request_is_loaded_for_ipv4(self):
-        subnet, subnetpool = self._build_subnet_dict(cidr=None, ip_version=4)
+        subnet, subnetpool = self._build_subnet_dict(
+            cidr=None, ip_version=constants.IP_VERSION_4)
         self.assertIsInstance(
             ipam_req.SubnetRequestFactory.get_request(None,
                                                       subnet,
@@ -355,7 +356,8 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
             ipam_req.AnySubnetRequest)
 
     def test_any_address_request_is_loaded_for_ipv6(self):
-        subnet, subnetpool = self._build_subnet_dict(cidr=None, ip_version=6)
+        subnet, subnetpool = self._build_subnet_dict(
+            cidr=None, ip_version=constants.IP_VERSION_6)
         self.assertIsInstance(
             ipam_req.SubnetRequestFactory.get_request(None,
                                                       subnet,

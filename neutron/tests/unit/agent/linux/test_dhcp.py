@@ -53,7 +53,7 @@ class FakeDNSAssignment(object):
 
 class DhcpOpt(object):
     def __init__(self, **kwargs):
-        self.__dict__.update(ip_version=4)
+        self.__dict__.update(ip_version=constants.IP_VERSION_4)
         self.__dict__.update(kwargs)
 
     def __str__(self):
@@ -188,10 +188,10 @@ class FakePort6(object):
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name=edo_ext.DHCP_OPT_CLIENT_ID,
                     opt_value='test6',
-                    ip_version=4),
+                    ip_version=constants.IP_VERSION_4),
             DhcpOpt(opt_name='dns-server',
                     opt_value='123.123.123.45',
-                    ip_version=4)]
+                    ip_version=constants.IP_VERSION_4)]
 
 
 class FakeV6Port(object):
@@ -224,7 +224,7 @@ class FakeV6PortExtraOpt(object):
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name='dns-server',
                     opt_value='ffea:3ba5:a17a:4ba3::100',
-                    ip_version=6)]
+                    ip_version=constants.IP_VERSION_6)]
 
 
 class FakeDualPortWithV6ExtraOpt(object):
@@ -245,7 +245,7 @@ class FakeDualPortWithV6ExtraOpt(object):
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name='dns-server',
                     opt_value='ffea:3ba5:a17a:4ba3::100',
-                    ip_version=6)]
+                    ip_version=constants.IP_VERSION_6)]
 
 
 class FakeDualPort(object):
@@ -391,7 +391,7 @@ class FakeV6HostRoute(object):
 class FakeV4Subnet(Dictable):
     def __init__(self):
         self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-        self.ip_version = 4
+        self.ip_version = constants.IP_VERSION_4
         self.cidr = '192.168.0.0/24'
         self.gateway_ip = '192.168.0.1'
         self.enable_dhcp = True
@@ -522,7 +522,7 @@ class FakeV4MultipleAgentsWithDnsProvided(FakeNetworkBase):
 class FakeV6Subnet(object):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = 'fdca:3ba5:a17a:4ba3::/64'
         self.gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
@@ -535,7 +535,7 @@ class FakeV6Subnet(object):
 class FakeV4SubnetNoDHCP(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-        self.ip_version = 4
+        self.ip_version = constants.IP_VERSION_4
         self.cidr = '192.168.1.0/24'
         self.gateway_ip = '192.168.1.1'
         self.enable_dhcp = False
@@ -546,7 +546,7 @@ class FakeV4SubnetNoDHCP(object):
 class FakeV6SubnetDHCPStateful(Dictable):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = 'fdca:3ba5:a17a:4ba3::/64'
         self.gateway_ip = 'fdca:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
@@ -559,7 +559,7 @@ class FakeV6SubnetDHCPStateful(Dictable):
 class FakeV6SubnetSlaac(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = 'ffda:3ba5:a17a:4ba3::/64'
         self.gateway_ip = 'ffda:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
@@ -571,7 +571,7 @@ class FakeV6SubnetSlaac(object):
 class FakeV6SubnetStateless(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = 'ffea:3ba5:a17a:4ba3::/64'
         self.gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
@@ -584,7 +584,7 @@ class FakeV6SubnetStateless(object):
 class FakeV6SubnetStatelessNoDnsProvided(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = 'ffea:3ba5:a17a:4ba3::/64'
         self.gateway_ip = 'ffea:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
@@ -597,7 +597,7 @@ class FakeV6SubnetStatelessNoDnsProvided(object):
 class FakeV6SubnetStatelessBadPrefixLength(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-        self.ip_version = 6
+        self.ip_version = constants.IP_VERSION_6
         self.cidr = 'ffeb:3ba5:a17a:4ba3::/56'
         self.gateway_ip = 'ffeb:3ba5:a17a:4ba3::1'
         self.enable_dhcp = True
@@ -909,9 +909,9 @@ class FakeV6NetworkPxePort(FakeNetworkBase):
         self.namespace = 'qdhcp-ns'
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tftp-server', opt_value='2001:192:168::1',
-                    ip_version=6),
+                    ip_version=constants.IP_VERSION_6),
             DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0',
-                    ip_version=6)]
+                    ip_version=constants.IP_VERSION_6)]
 
 
 class FakeV6NetworkPxePortWrongOptVersion(FakeNetworkBase):
@@ -922,9 +922,9 @@ class FakeV6NetworkPxePortWrongOptVersion(FakeNetworkBase):
         self.namespace = 'qdhcp-ns'
         self.ports[0].extra_dhcp_opts = [
             DhcpOpt(opt_name='tftp-server', opt_value='192.168.0.7',
-                    ip_version=4),
+                    ip_version=constants.IP_VERSION_4),
             DhcpOpt(opt_name='bootfile-name', opt_value='pxelinux.0',
-                    ip_version=6)]
+                    ip_version=constants.IP_VERSION_6)]
 
 
 class FakeDualStackNetworkSingleDHCP(FakeNetworkBase):
@@ -1257,9 +1257,9 @@ class TestDnsmasq(TestBase):
             prefix6 = '--dhcp-range=set:tag%d,%s,%s,%s%s'
         possible_leases = 0
         for i, s in enumerate(network.subnets):
-            if (s.ip_version != 6 or
+            if (s.ip_version != constants.IP_VERSION_6 or
                     s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
-                if s.ip_version == 4:
+                if s.ip_version == constants.IP_VERSION_4:
                     expected.extend([prefix % (
                         i, s.cidr.split('/')[0],
                         netaddr.IPNetwork(s.cidr).netmask, lease_duration,

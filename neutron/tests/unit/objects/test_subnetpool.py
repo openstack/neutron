@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.objects import subnetpool
@@ -25,7 +26,7 @@ class SubnetPoolTestMixin(object):
         obj = subnetpool.SubnetPool(
             self.context,
             id=uuidutils.generate_uuid(),
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             default_prefixlen=24,
             min_prefixlen=0,
             max_prefixlen=32,

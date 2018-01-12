@@ -182,7 +182,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.int_sub = subnet_obj.Subnet(self.context,
             id=self.int_sub_id,
             project_id=self.tenant_id,
-            ip_version=4,
+            ip_version=constants.IP_VERSION_4,
             cidr=utils.AuthenticIPNetwork('3.3.3.0/24'),
             gateway_ip=netaddr.IPAddress('3.3.3.1'),
             network_id=self.int_net_id)

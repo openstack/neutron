@@ -990,9 +990,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     @mock.patch.object(dvr_router_base.LOG, 'error')
     def test_get_snat_port_for_internal_port_ipv6_same_port(self, log_error):
-        router = l3_test_common.prepare_router_data(ip_version=4,
-                                                    enable_snat=True,
-                                                    num_internal_ports=1)
+        router = l3_test_common.prepare_router_data(
+            ip_version=lib_constants.IP_VERSION_4, enable_snat=True,
+            num_internal_ports=1)
         ri = dvr_router.DvrEdgeRouter(mock.sentinel.agent,
                                       HOSTNAME,
                                       router['id'],
@@ -1000,8 +1000,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                       **self.ri_kwargs)
 
         # Add two additional IPv6 prefixes on the same interface
-        l3_test_common.router_append_interface(router, count=2, ip_version=6,
-                                               same_port=True)
+        l3_test_common.router_append_interface(
+            router, count=2, ip_version=lib_constants.IP_VERSION_6,
+            same_port=True)
         internal_ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
         with mock.patch.object(ri, 'get_snat_interfaces') as get_interfaces:
             get_interfaces.return_value = internal_ports
@@ -1613,8 +1614,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_process_ipv6_only_or_dual_stack_gw(self, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = l3_test_common.prepare_router_data(ip_version=6,
-                                                    dual_stack=dual_stack)
+        router = l3_test_common.prepare_router_data(
+            ip_version=lib_constants.IP_VERSION_6, dual_stack=dual_stack)
         # Get NAT rules without the gw_port
         gw_port = router['gw_port']
         router['gw_port'] = None
@@ -1668,9 +1669,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.process()
         orig_nat_rules = ri.iptables_manager.ipv4['nat'].rules[:]
         # Add an IPv6 interface and reprocess
-        l3_test_common.router_append_interface(router, count=1,
-                                               ip_version=6, ra_mode=ra_mode,
-                                               addr_mode=addr_mode)
+        l3_test_common.router_append_interface(
+            router, count=1, ip_version=lib_constants.IP_VERSION_6,
+            ra_mode=ra_mode, addr_mode=addr_mode)
         # Reassign the router object to RouterInfo
         self._process_router_instance_for_agent(agent, ri, router)
         # IPv4 NAT rules should not be changed by adding an IPv6 interface
@@ -1703,7 +1704,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         l3_test_common.router_append_subnet(
             router,
             count=len(ipv6_subnet_modes),
-            ip_version=6,
+            ip_version=lib_constants.IP_VERSION_6,
             ipv6_subnet_modes=ipv6_subnet_modes,
             dns_nameservers=dns_nameservers,
             network_mtu=network_mtu)
@@ -1775,7 +1776,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Add the first subnet on a new interface
         l3_test_common.router_append_subnet(
             router, count=1,
-            ip_version=6, ipv6_subnet_modes=[
+            ip_version=lib_constants.IP_VERSION_6, ipv6_subnet_modes=[
                 {'ra_mode': lib_constants.IPV6_SLAAC,
                  'address_mode': lib_constants.IPV6_SLAAC}])
         self._process_router_instance_for_agent(agent, ri, router)
@@ -1793,7 +1794,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         interface_id = router[lib_constants.INTERFACE_KEY][1]['id']
         l3_test_common.router_append_subnet(
             router, count=1,
-            ip_version=6,
+            ip_version=lib_constants.IP_VERSION_6,
             ipv6_subnet_modes=[
                 {'ra_mode': lib_constants.IPV6_SLAAC,
                  'address_mode': lib_constants.IPV6_SLAAC}],
@@ -1816,8 +1817,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         # Process with NAT
         ri.process()
         # Add an IPv4 and IPv6 interface and reprocess
-        l3_test_common.router_append_interface(router, count=1, ip_version=4)
-        l3_test_common.router_append_interface(router, count=1, ip_version=6)
+        l3_test_common.router_append_interface(
+            router, count=1, ip_version=lib_constants.IP_VERSION_4)
+        l3_test_common.router_append_interface(
+            router, count=1, ip_version=lib_constants.IP_VERSION_6)
         # Reassign the router object to RouterInfo
         self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_enabled(ri)
@@ -1844,7 +1847,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         ri.external_gateway_added = mock.Mock()
         self._process_router_instance_for_agent(agent, ri, router)
         # Add an IPv6 interface and reprocess
-        l3_test_common.router_append_interface(router, count=1, ip_version=6)
+        l3_test_common.router_append_interface(
+            router, count=1, ip_version=lib_constants.IP_VERSION_6)
         self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_enabled(ri)
         # Reset the calls so we can check for disable radvd
@@ -1863,7 +1867,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._process_router_instance_for_agent(agent, ri, router)
         # Add an IPv6 interface with two subnets and reprocess
         l3_test_common.router_append_subnet(
-            router, count=2, ip_version=6,
+            router, count=2, ip_version=lib_constants.IP_VERSION_6,
             ipv6_subnet_modes=([{'ra_mode': lib_constants.IPV6_SLAAC,
                                  'address_mode': lib_constants.IPV6_SLAAC}] *
                                2))
@@ -2795,7 +2799,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     @mock.patch('os.geteuid', return_value='490')
     @mock.patch('pwd.getpwuid', return_value=FakeUser('neutron'))
     def test_spawn_radvd(self, geteuid, getpwuid):
-        router = l3_test_common.prepare_router_data(ip_version=6)
+        router = l3_test_common.prepare_router_data(
+            ip_version=lib_constants.IP_VERSION_6)
 
         conffile = '/fake/radvd.conf'
         pidfile = '/fake/radvd.pid'

@@ -997,7 +997,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
     def _create_subnet(self, plugin, ctx, network_id, cidr='10.0.0.0/8',
                        name='subnet', tenant_id='tenant1'):
         subnet = {'subnet': {'name': name,
-                  'ip_version': 4,
+                  'ip_version': constants.IP_VERSION_4,
                   'network_id': network_id,
                   'cidr': cidr,
                   'gateway_ip': constants.ATTR_NOT_SPECIFIED,

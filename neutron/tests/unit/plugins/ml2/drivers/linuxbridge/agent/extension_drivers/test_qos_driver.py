@@ -253,8 +253,10 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
             iptables_manager.ipv4['mangle'].assert_has_calls(expected_calls)
             iptables_manager.ipv6['mangle'].assert_has_calls(expected_calls)
             iptables_manager.get_chain.assert_has_calls([
-                mock.call("mangle", dscp_chain_name, ip_version=4),
-                mock.call("mangle", dscp_chain_name, ip_version=6)
+                mock.call("mangle", dscp_chain_name,
+                          ip_version=constants.IP_VERSION_4),
+                mock.call("mangle", dscp_chain_name,
+                          ip_version=constants.IP_VERSION_6)
             ])
 
     def test_delete_dscp_marking_chain_not_empty(self):
@@ -274,8 +276,10 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
             iptables_manager.ipv4['mangle'].assert_has_calls(expected_calls)
             iptables_manager.ipv6['mangle'].assert_has_calls(expected_calls)
             iptables_manager.get_chain.assert_has_calls([
-                mock.call("mangle", dscp_chain_name, ip_version=4),
-                mock.call("mangle", dscp_chain_name, ip_version=6)
+                mock.call("mangle", dscp_chain_name,
+                          ip_version=constants.IP_VERSION_4),
+                mock.call("mangle", dscp_chain_name,
+                          ip_version=constants.IP_VERSION_6)
             ])
             iptables_manager.ipv4['mangle'].remove_chain.assert_not_called()
             iptables_manager.ipv4['mangle'].remove_rule.assert_not_called()

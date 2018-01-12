@@ -569,9 +569,11 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
                                              segmentation_id=201)['segment']
 
         with self.subnet(network=network, segment_id=None,
-                         ip_version='4', cidr='10.0.0.0/24') as subnet1, \
+                         ip_version=constants.IP_VERSION_4,
+                         cidr='10.0.0.0/24') as subnet1, \
                 self.subnet(network=network, segment_id=None,
-                            ip_version='4', cidr='10.0.1.0/24') as subnet2:
+                            ip_version=constants.IP_VERSION_4,
+                            cidr='10.0.1.0/24') as subnet2:
             subnet1 = subnet1['subnet']
             subnet2 = subnet2['subnet']
 
@@ -1081,7 +1083,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         """Binding information is provided, subnets not on segments"""
         with self.network() as network:
             with self.subnet(network=network,
-                             ip_version=6,
+                             ip_version=constants.IP_VERSION_6,
                              cidr='2001:db8:0:0::/64') as subnet:
                 segment = self._test_create_segment(
                     network_id=network['network']['id'],
@@ -2224,7 +2226,7 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
     def _test_create_subnet(self, network, segment, cidr=None,
                             enable_dhcp=True):
         cidr = cidr or '10.0.0.0/24'
-        ip_version = 4
+        ip_version = constants.IP_VERSION_4
         with self.subnet(network={'network': network},
                          segment_id=segment['id'],
                          ip_version=ip_version,

@@ -296,7 +296,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             ipdict = dict(cidr='1.1.1.1/24',
                           broadcast='1.1.1.255',
                           scope='global',
-                          ip_version=4,
+                          ip_version=constants.IP_VERSION_4,
                           dynamic=False)
             list_fn.return_value = ipdict
             ret = self.lbm.get_interface_details("eth0", 4)
@@ -477,7 +477,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         ipdict = dict(cidr='1.1.1.1/24',
                       broadcast='1.1.1.255',
                       scope='global',
-                      ip_version=4,
+                      ip_version=constants.IP_VERSION_4,
                       dynamic=False)
         with mock.patch.object(ip_lib.IpAddrCommand, 'add') as add_fn,\
                 mock.patch.object(ip_lib.IpAddrCommand, 'delete') as del_fn,\

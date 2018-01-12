@@ -270,11 +270,11 @@ class TestCidrIsHost(base.BaseTestCase):
 class TestIpVersionFromInt(base.BaseTestCase):
     def test_ip_version_from_int_ipv4(self):
         self.assertEqual(constants.IPv4,
-                         utils.ip_version_from_int(4))
+                         utils.ip_version_from_int(constants.IP_VERSION_4))
 
     def test_ip_version_from_int_ipv6(self):
         self.assertEqual(constants.IPv6,
-                         utils.ip_version_from_int(6))
+                         utils.ip_version_from_int(constants.IP_VERSION_6))
 
     def test_ip_version_from_int_illegal_int(self):
         self.assertRaises(ValueError,

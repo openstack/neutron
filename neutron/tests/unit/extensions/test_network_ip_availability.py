@@ -198,7 +198,7 @@ class TestNetworkIPAvailabilityAPI(
         with self.network() as net:
             with self.subnet(network=net):
                 # Get IPv4
-                params = 'ip_version=4'
+                params = 'ip_version=%s' % constants.IP_VERSION_4
                 request = self.new_list_request(API_RESOURCE, params=params)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
@@ -208,7 +208,7 @@ class TestNetworkIPAvailabilityAPI(
                                                    net, 0)
 
                 # Get IPv6 should return empty array
-                params = 'ip_version=6'
+                params = 'ip_version=%s' % constants.IP_VERSION_6
                 request = self.new_list_request(API_RESOURCE, params=params)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
@@ -218,10 +218,10 @@ class TestNetworkIPAvailabilityAPI(
         with self.network() as net:
             with self.subnet(
                     network=net, cidr='2607:f0d0:1002:51::/64',
-                    ip_version=6,
+                    ip_version=constants.IP_VERSION_6,
                     ipv6_address_mode=constants.DHCPV6_STATELESS):
                 # Get IPv6
-                params = 'ip_version=6'
+                params = 'ip_version=%s' % constants.IP_VERSION_6
                 request = self.new_list_request(API_RESOURCE, params=params)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
@@ -230,7 +230,7 @@ class TestNetworkIPAvailabilityAPI(
                         response[IP_AVAILS_KEY], net, 0, 18446744073709551614)
 
                 # Get IPv4 should return empty array
-                params = 'ip_version=4'
+                params = 'ip_version=%s' % constants.IP_VERSION_4
                 request = self.new_list_request(API_RESOURCE, params=params)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
@@ -240,7 +240,7 @@ class TestNetworkIPAvailabilityAPI(
         with self.network() as net:
             with self.subnet(
                     network=net, cidr='2607:f0d0:1002:51::/64',
-                    ip_version=6,
+                    ip_version=constants.IP_VERSION_6,
                     ipv6_address_mode=constants.DHCPV6_STATELESS) as subnet:
                 request = self.new_list_request(API_RESOURCE)
                 # Consume 3 ports
@@ -350,10 +350,10 @@ class TestNetworkIPAvailabilityAPI(
                 self.network(name='net-v4-1') as net_v4_1, \
                 self.network(name='net-v4-2') as net_v4_2:
             with self.subnet(network=net_v6_1, cidr='2607:f0d0:1002:51::/64',
-                             ip_version=6) as s61, \
+                             ip_version=constants.IP_VERSION_6) as s61, \
                     self.subnet(network=net_v6_2,
                                 cidr='2607:f0d0:1003:52::/64',
-                                ip_version=6) as s62, \
+                                ip_version=constants.IP_VERSION_6) as s62, \
                     self.subnet(network=net_v4_1, cidr='10.0.0.0/24') as s41, \
                     self.subnet(network=net_v4_2, cidr='10.0.1.0/24') as s42:
                 with self.port(subnet=s61),\
@@ -376,7 +376,8 @@ class TestNetworkIPAvailabilityAPI(
                             avails_list, net_v4_2, 2, 253)
 
                     # Query by IP versions. Ensure subnet versions match
-                    for ip_ver in [4, 6]:
+                    for ip_ver in [constants.IP_VERSION_4,
+                                   constants.IP_VERSION_6]:
                         params = 'ip_version=%i' % ip_ver
                         request = self.new_list_request(API_RESOURCE,
                                                         params=params)
