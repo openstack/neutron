@@ -34,6 +34,8 @@ CT_MARK_INVALID = '0x1'
 
 REG_PORT = 5
 REG_NET = 6
+# for logging remote group rule
+REG_REMOTE_GROUP = 7
 
 PROTOCOLS_WITH_PORTS = (constants.PROTO_NAME_SCTP,
                         constants.PROTO_NAME_TCP,

@@ -44,6 +44,9 @@ class OVSBridgeCookieMixin(object):
         self._reserved_cookies.add(uuid_stamp)
         return uuid_stamp
 
+    def unset_cookie(self, cookie):
+        self._reserved_cookies.discard(cookie)
+
     def set_agent_uuid_stamp(self, val):
         self._reserved_cookies.add(val)
         if self._default_cookie in self._reserved_cookies:

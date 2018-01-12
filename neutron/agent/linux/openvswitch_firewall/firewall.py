@@ -55,6 +55,8 @@ def create_reg_numbers(flow_params):
     """Replace reg_(port|net) values with defined register numbers"""
     _replace_register(flow_params, ovsfw_consts.REG_PORT, 'reg_port')
     _replace_register(flow_params, ovsfw_consts.REG_NET, 'reg_net')
+    _replace_register(
+        flow_params, ovsfw_consts.REG_REMOTE_GROUP, 'reg_remote_group')
 
 
 def get_tag_from_other_config(bridge, port_name):
@@ -208,6 +210,11 @@ class SGPortMap(object):
 
 class ConjIdMap(object):
     """Handle conjunction ID allocations and deallocations."""
+
+    def __new__(cls):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(ConjIdMap, cls).__new__(cls)
+        return cls._instance
 
     def __init__(self):
         self.id_map = collections.defaultdict(self._conj_id_factory)
@@ -1057,10 +1064,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                         flows, 2, conj_ids):
                     self._add_flow(**flow)
 
-            # Install actions=accept flows.
+            # Install accept flows and store conj_id to reg7 for future process
             for conj_id in all_conj_ids:
                 for flow in rules.create_conj_flows(
                         port, conj_id, direction, ethertype):
+                    flow['actions'] = "set_field:{:d}->reg{:d},{:s}".format(
+                        flow['conj_id'],
+                        ovsfw_consts.REG_REMOTE_GROUP,
+                        flow['actions']
+                    )
                     self._add_flow(**flow)
 
     def add_flows_from_rules(self, port):

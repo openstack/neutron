@@ -47,3 +47,7 @@ class InvalidResourceConstraint(n_exc.InvalidInput):
 class LogapiDriverException(n_exc.NeutronException):
     """A log api driver Exception"""
     message = _("Driver exception: %(exception_msg)s")
+
+
+class CookieNotFound(n_exc.NotFound):
+    message = _("Cookie %(cookie_id)s could not be found.")
