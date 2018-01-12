@@ -788,3 +788,22 @@ class TestDvrRouterOperations(base.BaseTestCase):
         device.exists = mock.Mock(return_value=False)
         with mock.patch.object(ip_lib, 'IPDevice', return_value=device):
             self.assertFalse(ri.get_router_cidrs(device))
+
+    @mock.patch.object(router_info.RouterInfo, '_add_snat_rules')
+    @mock.patch.object(dvr_router.DvrLocalRouter, '_handle_router_snat_rules')
+    def test_handle_snat_rule_for_centralized_fip(
+            self, _add_snat_rules, _handle_router_snat_rules):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
+        self.mock_driver.unplug.reset_mock()
+
+        router = l3_test_common.prepare_router_data(enable_floating_ip=True)
+        router['gw_port_host'] = HOSTNAME
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_edge_rtr.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
+        ri.snat_iptables_manager = mock.MagicMock()
+        ipv4_nat = ri.snat_iptables_manager.ipv4['nat']
+        interface_name, ex_gw_port = l3_test_common.prepare_ext_gw_test(self,
+                                                                        ri)
+        ri._handle_router_snat_rules(ex_gw_port, interface_name)
+        ipv4_nat.add_rule.assert_called_once_with('snat', '-j $float-snat')
