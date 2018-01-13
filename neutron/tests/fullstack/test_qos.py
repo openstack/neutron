@@ -219,6 +219,7 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
                 lambda: vm.bridge.get_ingress_bw_limit_for_port(
                     vm.port.name) == (limit, burst))
 
+    @tests_base.unstable_test("bug 1737892")
     def test_bw_limit_qos_port_removed(self):
         """Test if rate limit config is properly removed when whole port is
         removed.
