@@ -49,7 +49,7 @@ class LoggingExtensionBaseTestCase(base.BaseTestCase):
     def setUp(self):
         super(LoggingExtensionBaseTestCase, self).setUp()
         conn_patcher = mock.patch(
-            'neutron.agent.ovsdb.native.connection.Connection.start')
+            'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
         self.agent_ext = log_ext.LoggingExtension()
         self.context = context.get_admin_context()
