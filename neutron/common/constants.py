@@ -56,6 +56,56 @@ VALID_DSCP_MARKS = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
 IP_PROTOCOL_NUM_TO_NAME_MAP = {
     str(v): k for k, v in lib_constants.IP_PROTOCOL_MAP.items()}
 
+# When using iptables-save we specify '-p {proto}',
+# but sometimes those values are not identical.  This is a map
+# of known protocol names or numbers that require a name change.
+# This legacy mapping can go away once neutron-lib is updated.
+IPTABLES_PROTOCOL_LEGACY_NUM_MAP = {3: 'ggp',
+                                    4: 'ipencap',
+                                    5: 'st',
+                                    9: 'igp',
+                                    12: 'pup',
+                                    20: 'hmp',
+                                    22: 'xns-idp',
+                                    27: 'rdp',
+                                    29: 'iso-tp4',
+                                    36: 'xtp',
+                                    37: 'ddp',
+                                    38: 'idpr-cmtp',
+                                    45: 'idrp',
+                                    57: 'skip',
+                                    73: 'rspf',
+                                    81: 'vmtp',
+                                    88: 'eigrp',
+                                    93: 'ax.25',
+                                    94: 'ipip',
+                                    97: 'etherip',
+                                    98: 'encap',
+                                    103: 'pim',
+                                    108: 'ipcomp',
+                                    115: 'lt2p',
+                                    124: 'isis',
+                                    133: 'fc',
+                                    135: 'mobility-header',
+                                    137: 'mpls-in-ip',
+                                    138: 'manet',
+                                    139: 'hip',
+                                    140: 'shim6',
+                                    141: 'wesp',
+                                    142: 'rohc'}
+
+# - protocol 0 uses no -p argument
+# - 'ipv6-encap' uses 'ipv6'
+# - 'icmpv6' uses 'ipv6-icmp'
+# - 'pgm' uses number 113 instead of its name
+IPTABLES_PROTOCOL_NAME_MAP = {0: None,
+                              lib_constants.PROTO_NAME_IPV6_ENCAP:
+                                  'ipv6',
+                              lib_constants.PROTO_NAME_IPV6_ICMP_LEGACY:
+                                  'ipv6-icmp',
+                              lib_constants.PROTO_NAME_PGM: '113'}
+IPTABLES_PROTOCOL_NAME_MAP.update(IPTABLES_PROTOCOL_LEGACY_NUM_MAP)
+
 # When using iptables-save we specify '-p {proto} -m {module}',
 # but sometimes those values are not identical.  This is a map
 # of known protocols that require a '-m {module}', along with
