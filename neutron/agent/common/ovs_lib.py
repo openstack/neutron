@@ -20,7 +20,6 @@ import random
 import time
 import uuid
 
-from debtcollector import removals
 from neutron_lib import constants as p_const
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -245,16 +244,6 @@ class OVSBridge(BaseOVS):
 
     def set_standalone_mode(self):
         self._set_bridge_fail_mode(FAILMODE_STANDALONE)
-
-    @removals.remove(
-        message=("Consider using add_protocols instead, or if replacing "
-                 "the whole set of supported protocols is the desired "
-                 "behavior, using set_db_attribute"),
-        version="Ocata",
-        removal_version="Queens")
-    def set_protocols(self, protocols):
-        self.set_db_attribute('Bridge', self.br_name, 'protocols', protocols,
-                              check_error=True)
 
     def add_protocols(self, *protocols):
         self.ovsdb.db_add('Bridge', self.br_name,
