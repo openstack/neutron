@@ -96,6 +96,7 @@ case $VENV in
     fi
     load_conf_hook quotas
     load_rc_hook dns
+    load_rc_hook log
     load_rc_hook qos
     load_rc_hook segments
     load_rc_hook trunk

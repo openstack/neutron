@@ -1,0 +1,6 @@
+enable_service neutron-log
+
+[[post-config|/$NEUTRON_CORE_PLUGIN_CONF]]
+
+[network_log]
+local_output_log_base = /tmp/test_log.log
