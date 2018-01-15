@@ -355,7 +355,8 @@ class FipNamespace(namespaces.Namespace):
                     ipd.route.delete_gateway(current_gateway.get('gateway'))
 
     def _add_cidr_to_device(self, device, ip_cidr):
-        if not device.addr.list(to=ip_cidr):
+        to = common_utils.cidr_to_ip(ip_cidr)
+        if not device.addr.list(to=to):
             device.addr.add(ip_cidr, add_broadcast=False)
 
     def delete_rtr_2_fip_link(self, ri):

@@ -368,7 +368,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             for ip in ips:
                 # If bridge ip address already exists, then don't add
                 # otherwise will report error
-                if not dst_device.addr.list(to=ip['cidr']):
+                to = utils.cidr_to_ip(ip['cidr'])
+                if not dst_device.addr.list(to=to):
                     dst_device.addr.add(cidr=ip['cidr'])
 
         if gateway:

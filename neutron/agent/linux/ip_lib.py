@@ -601,8 +601,13 @@ class IpAddrCommand(IpDeviceCommandBase):
                             filters=None, ip_version=None):
         """Get a list of all the devices with an IP attached in the namespace.
 
-        @param name: if it's not None, only a device with that matching name
+        :param name: if it's not None, only a device with that matching name
                      will be returned.
+        :param scope: address scope, for example, global, link, or host
+        :param to: IP address or cidr to match. If cidr then it will match
+                   any IP within the specified subnet
+        :param filters: list of any other filters supported by /sbin/ip
+        :param ip_version: 4 or 6
         """
         options = [ip_version] if ip_version else []
 
