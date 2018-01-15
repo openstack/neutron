@@ -96,7 +96,6 @@ case $VENV in
     fi
     load_conf_hook quotas
     load_rc_hook dns
-    load_rc_hook log
     load_rc_hook qos
     load_rc_hook segments
     load_rc_hook trunk
@@ -114,6 +113,7 @@ case $VENV in
     fi
     if [[ "$VENV" =~ "ovs" ]]; then
         load_conf_hook ovsfw
+        load_rc_hook log  # bug 1743463
     fi
     if [[ "$VENV" != "dsvm-scenario-linuxbridge" ]]; then
         load_conf_hook tunnel_types
