@@ -18,10 +18,10 @@ import uuid
 
 import mock
 from neutron_lib import constants as const
+from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.ovsdb.native import idlutils
 from neutron.common import utils
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import net_helpers
