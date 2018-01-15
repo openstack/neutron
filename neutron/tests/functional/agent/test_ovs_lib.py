@@ -212,6 +212,17 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         }
         self._test_add_tunnel_port(attrs)
 
+    def test_add_tunnel_port_custom_port(self):
+        port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
+        self.br.add_tunnel_port(
+            port_name,
+            self.get_test_net_address(1),
+            self.get_test_net_address(2),
+            tunnel_type=const.TYPE_VXLAN,
+            vxlan_udp_port=12345)
+        options = self.ovs.db_get_val('Interface', port_name, 'options')
+        self.assertEqual("12345", options['dst_port'])
+
     def test_add_patch_port(self):
         local = utils.get_rand_device_name(net_helpers.PORT_PREFIX)
         peer = 'remotepeer'

@@ -467,7 +467,7 @@ class OVSBridge(BaseOVS):
             vxlan_udp_port != p_const.VXLAN_UDP_PORT
         )
         if vxlan_uses_custom_udp_port:
-            options['dst_port'] = vxlan_udp_port
+            options['dst_port'] = str(vxlan_udp_port)
         options['df_default'] = str(dont_fragment).lower()
         options['remote_ip'] = remote_ip
         options['local_ip'] = local_ip
