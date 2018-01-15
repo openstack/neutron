@@ -221,7 +221,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
                                         port_id=trunk['port_id'],
                                         status=constants.DOWN_STATUS,
                                         sub_ports=sub_ports)
-        with db_api.context_manager.writer.using(context):
+        with db_api.autonested_transaction(context.session):
             trunk_obj.create()
             payload = callbacks.TrunkPayload(context, trunk_obj.id,
                                              current_trunk=trunk_obj)
@@ -236,7 +236,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     def update_trunk(self, context, trunk_id, trunk):
         """Update information for the specified trunk."""
         trunk_data = trunk['trunk']
-        with db_api.context_manager.writer.using(context):
+        with db_api.autonested_transaction(context.session):
             trunk_obj = self._get_trunk(context, trunk_id)
             original_trunk = copy.deepcopy(trunk_obj)
             # NOTE(status_police): a trunk status should not change during an
@@ -256,7 +256,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
 
     def delete_trunk(self, context, trunk_id):
         """Delete the specified trunk."""
-        with db_api.context_manager.writer.using(context):
+        with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
             rules.trunk_can_be_managed(context, trunk)
             trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
@@ -278,7 +278,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     @db_base_plugin_common.convert_result_to_dict
     def add_subports(self, context, trunk_id, subports):
         """Add one or more subports to trunk."""
-        with db_api.context_manager.writer.using(context):
+        with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
 
             # Check for basic validation since the request body here is not
@@ -332,7 +332,7 @@ class TrunkPlugin(service_base.ServicePluginBase,
     def remove_subports(self, context, trunk_id, subports):
         """Remove one or more subports from trunk."""
         subports = subports['sub_ports']
-        with db_api.context_manager.writer.using(context):
+        with db_api.autonested_transaction(context.session):
             trunk = self._get_trunk(context, trunk_id)
             original_trunk = copy.deepcopy(trunk)
             rules.trunk_can_be_managed(context, trunk)
