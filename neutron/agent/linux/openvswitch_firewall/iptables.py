@@ -27,7 +27,7 @@ def get_iptables_driver_instance():
     class HybridIptablesHelper(
             iptables_firewall.OVSHybridIptablesFirewallDriver):
         """Don't remove conntrack when removing iptables rules."""
-        def _remove_conntrack_entries_from_port_deleted(port):
+        def _remove_conntrack_entries_from_port_deleted(self, port):
             pass
 
     return HybridIptablesHelper()

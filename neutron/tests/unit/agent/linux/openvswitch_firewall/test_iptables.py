@@ -100,3 +100,15 @@ class TestHelper(base.BaseTestCase):
         self.helper.hybrid_ports = {'qvoanother'}
         self.helper.cleanup_port({'device': 'port'})
         self.assertFalse(self.helper.iptables_driver.remove_port_filter.called)
+
+
+class TestHybridIptablesHelper(base.BaseTestCase):
+
+    def test_overloaded_remove_conntrack(self):
+        with mock.patch.object(iptables_firewall.IptablesFirewallDriver,
+                '_remove_conntrack_entries_from_port_deleted') as rcefpd, \
+             mock.patch("neutron.agent.linux.ip_conntrack.IpConntrackManager"
+                        "._populate_initial_zone_map"):
+            firewall = iptables.get_iptables_driver_instance()
+            firewall._remove_conntrack_entries_from_port_deleted(None)
+            rcefpd.assert_not_called()
