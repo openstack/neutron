@@ -1574,6 +1574,8 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         ns_to_delete = {'host': 'myhost', 'agent_id': 'vm_l3_agent',
                         'router_id': 'my_router'}
         router_ids = set()
+        call_count_total = 3
+
         if floating_ip:
             router_ids.add(ns_to_delete['router_id'])
 
@@ -1584,12 +1586,17 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                   return_value=router_ids):
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
-            self.assertEqual(2, notify.call_count)
+            self.assertEqual(call_count_total, notify.call_count)
             # needed for a full match in the assertion below
             port['port']['extra_dhcp_opts'] = []
             expected = [mock.call(resources.PORT, events.BEFORE_DELETE,
                                   mock.ANY, context=self.context,
                                   port_id=port['port']['id'], port_check=True),
+                        mock.call(resources.PORT, events.PRECOMMIT_DELETE,
+                                  mock.ANY, network=mock.ANY, bind=mock.ANY,
+                                  port=port['port'], port_db=mock.ANY,
+                                  context=self.context, levels=mock.ANY,
+                                  id=mock.ANY, bindings=mock.ANY),
                         mock.call(resources.PORT, events.AFTER_DELETE,
                                   mock.ANY, context=self.context,
                                   port=port['port'],
