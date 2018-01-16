@@ -14,6 +14,7 @@
 
 import mock
 
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
 from neutron_lib.callbacks import events
@@ -1117,6 +1118,32 @@ class L3HAModeDbTestCase(L3HATestFramework):
 
         for port in self._get_router_port_bindings(router['id']):
             self.assertEqual(self.agent2['host'], port[portbindings.HOST_ID])
+
+    def test_update_router_port_bindings_updates_host_only(self):
+        ext_net = self._create_network(self.core_plugin, self.admin_ctx,
+                                       external=True)
+        network_id = self._create_network(self.core_plugin, self.admin_ctx)
+        subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
+                                     network_id)
+        interface_info = {'subnet_id': subnet['id']}
+
+        router = self._create_router()
+        self.plugin._update_router_gw_info(self.admin_ctx, router['id'],
+                                           {'network_id': ext_net})
+        iface = self.plugin.add_router_interface(self.admin_ctx,
+                                                 router['id'],
+                                                 interface_info)
+        with mock.patch.object(
+                self.plugin._core_plugin, 'update_port') as update_port_mock:
+            self.plugin._update_router_port_bindings(
+                self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+            port_payload = {
+                port_def.RESOURCE_NAME: {
+                    portbindings.HOST_ID: self.agent1['host']
+                }
+            }
+            update_port_mock.assert_called_with(
+                mock.ANY, iface['port_id'], port_payload)
 
     def test_update_all_ha_network_port_statuses(self):
         router = self._create_router(ha=True)
