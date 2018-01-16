@@ -62,6 +62,26 @@ class LoggingApiNotificationTestCase(base.BaseTestCase):
                                        events.DELETED)
 
 
+class TestRegisterValidateRPCMethods(base.BaseTestCase):
+
+    def test_register_rpc_methods_method(self):
+        resource_type = 'security_group'
+        method = [{'fake_key1': 'fake_method1'},
+                  {'fake_key2': 'fake_method2'}]
+        expected = {resource_type: method}
+        server_rpc.RPC_RESOURCES_METHOD_MAP.clear()
+        server_rpc.register_rpc_methods(resource_type, method)
+        self.assertEqual(expected, server_rpc.RPC_RESOURCES_METHOD_MAP)
+
+    def test_get_rpc_method(self):
+        resource_type = 'security_group'
+        method = [{'fake_key1': 'fake_method1'},
+                  {'fake_key2': 'fake_method2'}]
+        server_rpc.RPC_RESOURCES_METHOD_MAP = {resource_type: method}
+        actual = server_rpc.get_rpc_method('security_group', 'fake_key1')
+        self.assertEqual('fake_method1', actual)
+
+
 class LoggingApiSkeletonTestCase(base.BaseTestCase):
 
     @mock.patch("neutron.common.rpc.get_server")
@@ -76,18 +96,33 @@ class LoggingApiSkeletonTestCase(base.BaseTestCase):
     @mock.patch("neutron.services.logapi.common.db_api."
                 "get_sg_log_info_for_port")
     def test_get_sg_log_info_for_port(self, mock_callback):
-        test_obj = server_rpc.LoggingApiSkeleton()
-        m_context = mock.Mock()
-        port_id = '123'
-        test_obj.get_sg_log_info_for_port(m_context, port_id=port_id)
-        mock_callback.assert_called_with(m_context, port_id)
+        with mock.patch.object(
+                server_rpc,
+                'get_rpc_method',
+                return_value=server_rpc.get_sg_log_info_for_port
+        ):
+            test_obj = server_rpc.LoggingApiSkeleton()
+            m_context = mock.Mock()
+            port_id = '123'
+            test_obj.get_sg_log_info_for_port(
+                m_context,
+                resource_type=log_const.SECURITY_GROUP,
+                port_id=port_id)
+            mock_callback.assert_called_with(m_context, port_id)
 
     @mock.patch("neutron.services.logapi.common.db_api."
                 "get_sg_log_info_for_log_resources")
     def test_get_sg_log_info_for_log_resources(self, mock_callback):
-        test_obj = server_rpc.LoggingApiSkeleton()
-        m_context = mock.Mock()
-        log_resources = [mock.Mock()]
-        test_obj.get_sg_log_info_for_log_resources(m_context,
-                                                   log_resources=log_resources)
-        mock_callback.assert_called_with(m_context, log_resources)
+        with mock.patch.object(
+                server_rpc,
+                'get_rpc_method',
+                return_value=server_rpc.get_sg_log_info_for_log_resources
+        ):
+            test_obj = server_rpc.LoggingApiSkeleton()
+            m_context = mock.Mock()
+            log_resources = [mock.Mock()]
+            test_obj.get_sg_log_info_for_log_resources(
+                m_context,
+                resource_type=log_const.SECURITY_GROUP,
+                log_resources=log_resources)
+            mock_callback.assert_called_with(m_context, log_resources)

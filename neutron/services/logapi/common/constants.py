@@ -24,6 +24,9 @@ SECURITY_GROUP = 'security_group'
 
 RPC_NAMESPACE_LOGGING = 'logging-plugin'
 
+# Define for rpc_method_key
+LOG_RESOURCE = 'log_resource'
+
 # String literal for identifying log resource
 LOGGING = 'log'
 

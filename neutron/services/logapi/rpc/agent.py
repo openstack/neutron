@@ -32,14 +32,18 @@ class LoggingApiStub(object):
         self.rpc_client = n_rpc.get_client(target)
 
     @log_helpers.log_method_call
-    def get_sg_log_info_for_port(self, context, port_id):
+    def get_sg_log_info_for_port(self, context, resource_type, port_id):
         """Return list of sg_log info for a port"""
         cctxt = self.rpc_client.prepare()
-        return cctxt.call(context, 'get_sg_log_info_for_port', port_id=port_id)
+        return cctxt.call(context, 'get_sg_log_info_for_port',
+                          resource_type=resource_type,
+                          port_id=port_id)
 
     @log_helpers.log_method_call
-    def get_sg_log_info_for_log_resources(self, context, log_resources):
+    def get_sg_log_info_for_log_resources(self, context,
+                                          resource_type, log_resources):
         """Return list of sg_log info for list of log_resources"""
         cctxt = self.rpc_client.prepare()
         return cctxt.call(context, 'get_sg_log_info_for_log_resources',
+                          resource_type=resource_type,
                           log_resources=log_resources)

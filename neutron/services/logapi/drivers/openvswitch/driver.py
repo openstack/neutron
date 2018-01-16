@@ -14,9 +14,12 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.callbacks import resources
 from oslo_log import log as logging
 
+from neutron.services.logapi.common import constants as log_const
 from neutron.services.logapi.drivers import base
+from neutron.services.logapi.rpc import server as server_rpc
 
 LOG = logging.getLogger(__name__)
 
@@ -43,4 +46,13 @@ def register():
     global DRIVER
     if not DRIVER:
         DRIVER = OVSDriver.create()
+
+        # Register RPC methods
+        if DRIVER.requires_rpc:
+            rpc_methods = [
+                {resources.PORT: server_rpc.get_sg_log_info_for_port},
+                {log_const.LOG_RESOURCE:
+                 server_rpc.get_sg_log_info_for_log_resources}
+            ]
+            DRIVER.register_rpc_methods(log_const.SECURITY_GROUP, rpc_methods)
     LOG.debug('Open vSwitch logging driver registered')
