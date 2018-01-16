@@ -707,6 +707,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if port_range_min is None:
             return args
 
+        protocol = n_const.IPTABLES_PROTOCOL_NAME_MAP.get(protocol, protocol)
         if protocol in ['icmp', 'ipv6-icmp']:
             protocol_type = 'icmpv6' if protocol == 'ipv6-icmp' else 'icmp'
             # Note(xuhanp): port_range_min/port_range_max represent
