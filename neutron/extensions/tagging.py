@@ -33,24 +33,8 @@ TAG = 'tag'
 TAGS = TAG + 's'
 MAX_TAG_LEN = 60
 TAG_PLUGIN_TYPE = 'TAG'
-# Not support resources supported by tag, tag-ext
-EXCEPTION_RESOURCES = ['networks', 'subnets', 'ports', 'subnetpools',
-                       'routers']
 
-
-# TODO(hichihara): This method is removed after tag, tag-ext extensions
-# have been removed.
-def get_tagging_supported_resources():
-    # Removes some resources supported by tag, tag-ext
-    parent_map = standard_attr.get_tag_resource_parent_map()
-    remove_resources = [res for res in parent_map
-                        if res in EXCEPTION_RESOURCES]
-    for resource in remove_resources:
-        del parent_map[resource]
-    return parent_map
-
-
-TAG_SUPPORTED_RESOURCES = get_tagging_supported_resources()
+TAG_SUPPORTED_RESOURCES = standard_attr.get_tag_resource_parent_map()
 TAG_ATTRIBUTE_MAP = {
     TAGS: {'allow_post': False, 'allow_put': False, 'is_visible': True}
 }
@@ -187,9 +171,7 @@ class Tagging(api_extensions.ExtensionDescriptor):
         return "2017-01-01T00:00:00-00:00"
 
     def get_required_extensions(self):
-        # This is needed so that depending project easily moves from old
-        # extensions although this extension self can run without them.
-        return ['tag', 'tag-ext']
+        return []
 
     @classmethod
     def get_resources(cls):

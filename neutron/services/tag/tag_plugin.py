@@ -37,7 +37,7 @@ resource_model_map = standard_attr.get_standard_attr_resource_model_map()
 class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
     """Implementation of the Neutron Tag Service Plugin."""
 
-    supported_extension_aliases = ['tag', 'tag-ext', 'standard-attr-tag']
+    supported_extension_aliases = ['standard-attr-tag']
 
     def __new__(cls, *args, **kwargs):
         inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
