@@ -15,19 +15,10 @@
 import collections
 import uuid
 
-from debtcollector import moves
 from oslo_config import cfg
 from oslo_utils import importutils
-from ovsdbapp import api
-from ovsdbapp import exceptions
 
 from neutron.conf.agent import ovsdb_api
-
-API = moves.moved_class(api.API, 'API', __name__)
-Command = moves.moved_class(api.Command, 'Command', __name__)
-Transaction = moves.moved_class(api.Transaction, 'Transaction', __name__)
-TimeoutException = moves.moved_class(exceptions.TimeoutException,
-                                     'TimeoutException', __name__)
 
 
 ovsdb_api.register_ovsdb_api_opts()
