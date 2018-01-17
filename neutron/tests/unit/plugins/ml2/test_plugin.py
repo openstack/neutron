@@ -44,6 +44,7 @@ from neutron.db import agents_db
 from neutron.db import api as db_api
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
+from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
@@ -1277,6 +1278,45 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
                                       query_params=query_params)
             self._delete('ports', port1['port']['id'])
             self._delete('ports', port2['port']['id'])
+
+    def test_list_ports_filtered_by_security_groups(self):
+        # for this test we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        ctx = context.get_admin_context()
+        with self.port() as port1, self.port() as port2:
+            query_params = "security_groups=%s" % (
+                           port1['port']['security_groups'][0])
+            ports_data = self._list('ports', query_params=query_params)
+            self.assertEqual(set([port1['port']['id'], port2['port']['id']]),
+                             set([port['id'] for port in ports_data['ports']]))
+            self.assertEqual(2, len(ports_data['ports']))
+            query_params = "security_groups=%s&id=%s" % (
+                           port1['port']['security_groups'][0],
+                           port1['port']['id'])
+            ports_data = self._list('ports', query_params=query_params)
+            self.assertEqual(port1['port']['id'], ports_data['ports'][0]['id'])
+            self.assertEqual(1, len(ports_data['ports']))
+            temp_sg = {'security_group': {'tenant_id': 'some_tenant',
+                                          'name': '', 'description': 's'}}
+            sg_dbMixin = sg_db.SecurityGroupDbMixin()
+            sg = sg_dbMixin.create_security_group(ctx, temp_sg)
+            sg_dbMixin._delete_port_security_group_bindings(
+                ctx, port2['port']['id'])
+            sg_dbMixin._create_port_security_group_binding(
+                ctx, port2['port']['id'], sg['id'])
+            port2['port']['security_groups'][0] = sg['id']
+            query_params = "security_groups=%s&id=%s" % (
+                           port1['port']['security_groups'][0],
+                           port1['port']['id'])
+            ports_data = self._list('ports', query_params=query_params)
+            self.assertEqual(port1['port']['id'], ports_data['ports'][0]['id'])
+            self.assertEqual(1, len(ports_data['ports']))
+            query_params = "security_groups=%s&id=%s" % (
+                           (port2['port']['security_groups'][0],
+                            port2['port']['id']))
+            ports_data = self._list('ports', query_params=query_params)
+            self.assertEqual(port2['port']['id'], ports_data['ports'][0]['id'])
+            self.assertEqual(1, len(ports_data['ports']))
 
 
 class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
