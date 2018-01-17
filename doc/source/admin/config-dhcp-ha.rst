@@ -30,7 +30,6 @@ scalability and HA.
       | agent                                                       | agent                     |
       | Subnet Allocation                                           | subnet_allocation         |
       | L3 Agent Scheduler                                          | l3_agent_scheduler        |
-      | Tag support                                                 | tag                       |
       | Neutron external network                                    | external-net              |
       | Neutron Service Flavors                                     | flavors                   |
       | Network MTU                                                 | net-mtu                   |
@@ -45,7 +44,6 @@ scalability and HA.
       | Resource timestamps                                         | standard-attr-timestamp   |
       | Neutron Service Type Management                             | service-type              |
       | Router Flavor Extension                                     | l3-flavors                |
-      | Tag support for resources: subnet, subnetpool, port, router | tag-ext                   |
       | Neutron Extra DHCP opts                                     | extra_dhcp_opt            |
       | Resource revision numbers                                   | standard-attr-revisions   |
       | Pagination support                                          | pagination                |
