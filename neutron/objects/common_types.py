@@ -180,7 +180,7 @@ class IpProtocolEnum(obj_fields.Enum):
             valid_values=list(
                 itertools.chain(
                     lib_constants.IP_PROTOCOL_MAP.keys(),
-                    [str(v) for v in lib_constants.IP_PROTOCOL_MAP.values()]
+                    [str(v) for v in range(256)]
                 )
             ),
             **kwargs)
