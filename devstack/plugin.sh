@@ -18,16 +18,16 @@ fi
 if [[ "$1" == "stack" ]]; then
     case "$2" in
         install)
-            if is_service_enabled q-flavors; then
+            if is_service_enabled q-flavors neutron-flavors; then
                 configure_flavors
             fi
-            if is_service_enabled q-qos; then
+            if is_service_enabled q-qos neutron-qos; then
                 configure_qos
             fi
-            if is_service_enabled q-trunk; then
+            if is_service_enabled q-trunk neutron-trunk; then
                 configure_trunk_extension
             fi
-            if is_service_enabled q-dns; then
+            if is_service_enabled q-dns neutron-dns; then
                 configure_dns_extension
             fi
             if [[ "$Q_AGENT" == "openvswitch" ]] && \
@@ -38,17 +38,17 @@ if [[ "$1" == "stack" ]]; then
             fi
             ;;
         post-config)
-            if is_service_enabled q-dns; then
+            if is_service_enabled q-dns neutron-dns; then
                 post_config_dns_extension
             fi
-            if is_service_enabled q-agt; then
+            if is_service_enabled q-agt neutron-agent; then
                 configure_l2_agent
             fi
             #Note: sriov agent should run with OVS or linux bridge agent
             #because they are the mechanisms that bind the DHCP and router ports.
             #Currently devstack lacks the option to run two agents on the same node.
-            #Therefore we create new service, q-sriov-agt, and the q-agt should be OVS
-            #or linux bridge.
+            #Therefore we create new service, q-sriov-agt, and the
+            # q-agt/neutron-agent should be OVS or linux bridge.
             if is_service_enabled q-sriov-agt; then
                 configure_$Q_PLUGIN
                 configure_l2_agent
