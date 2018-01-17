@@ -1217,6 +1217,67 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         # make sure that the grenade went off during the commit
         self.assertTrue(listener.except_raised)
 
+    def test_list_ports_filtered_by_fixed_ip_substring(self):
+        # for this test we need to enable overlapping ips
+        cfg.CONF.set_default('allow_overlapping_ips', True)
+        with self.port() as port1, self.port():
+            fixed_ips = port1['port']['fixed_ips'][0]
+            query_params = """
+fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s
+""".strip() % (fixed_ips['ip_address'][:-1],
+               fixed_ips['subnet_id'])
+            self._test_list_resources('port', [port1],
+                                      query_params=query_params)
+            query_params = """
+fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s
+""".strip() % (fixed_ips['ip_address'][1:],
+               fixed_ips['subnet_id'])
+            self._test_list_resources('port', [port1],
+                                      query_params=query_params)
+            query_params = """
+fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s
+""".strip() % ('192.168.',
+               fixed_ips['subnet_id'])
+            self._test_list_resources('port', [],
+                                      query_params=query_params)
+
+    def test_list_ports_filtered_by_fixed_ip_substring_dual_stack(self):
+        with self.subnet() as subnet:
+            # Get a IPv4 and IPv6 address
+            tenant_id = subnet['subnet']['tenant_id']
+            net_id = subnet['subnet']['network_id']
+            res = self._create_subnet(
+                self.fmt,
+                tenant_id=tenant_id,
+                net_id=net_id,
+                cidr='2607:f0d0:1002:51::/124',
+                ip_version=6,
+                gateway_ip=constants.ATTR_NOT_SPECIFIED)
+            subnet2 = self.deserialize(self.fmt, res)
+            kwargs = {"fixed_ips":
+                      [{'subnet_id': subnet['subnet']['id']},
+                       {'subnet_id': subnet2['subnet']['id']}]}
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port1 = self.deserialize(self.fmt, res)
+            res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+            port2 = self.deserialize(self.fmt, res)
+            fixed_ips = port1['port']['fixed_ips']
+            self.assertEqual(2, len(fixed_ips))
+            query_params = """
+fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
+""".strip() % (fixed_ips[0]['ip_address'][:-1],
+               fixed_ips[1]['ip_address'])
+            self._test_list_resources('port', [port1],
+                                      query_params=query_params)
+            query_params = """
+fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
+""".strip() % ('192.168.',
+               fixed_ips[1]['ip_address'])
+            self._test_list_resources('port', [],
+                                      query_params=query_params)
+            self._delete('ports', port1['port']['id'])
+            self._delete('ports', port2['port']['id'])
+
 
 class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
 
