@@ -113,10 +113,10 @@ case $VENV in
     fi
     if [[ "$VENV" =~ "ovs" ]]; then
         load_conf_hook ovsfw
-        load_rc_hook log  # bug 1743463
     fi
     if [[ "$VENV" != "dsvm-scenario-linuxbridge" ]]; then
         load_conf_hook tunnel_types
+        load_rc_hook log  # bug 1743463
     fi
     if [[ "$VENV" =~ "dsvm-scenario-linuxbridge" ]]; then
         # linuxbridge doesn't support gre
