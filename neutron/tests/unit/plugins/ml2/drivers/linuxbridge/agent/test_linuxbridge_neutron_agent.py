@@ -392,7 +392,6 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                 srcport=(0, 0),
                                                 dstport=None,
                                                 ttl=None,
-                                                tos=None,
                                                 dev=self.lbm.local_int)
                 dv6_fn.assert_called_once_with()
                 cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
@@ -403,13 +402,33 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                 srcport=(0, 0),
                                                 dstport=None,
                                                 ttl=None,
-                                                tos=None,
                                                 dev=self.lbm.local_int,
                                                 proxy=expected_proxy)
 
     def test_ensure_vxlan_arp_responder_enabled(self):
         cfg.CONF.set_override('arp_responder', True, 'VXLAN')
         self.test_ensure_vxlan(expected_proxy=True)
+
+    def test_ensure_vxlan_dscp_inherit_set(self):
+        cfg.CONF.set_override('dscp_inherit', 'True', 'AGENT')
+        seg_id = "12345678"
+        self.lbm.local_int = 'eth0'
+        self.lbm.vxlan_mode = lconst.VXLAN_MCAST
+        with mock.patch.object(ip_lib, 'device_exists', return_value=False):
+            vxlan_dev = FakeIpDevice()
+            with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
+                    mock.patch.object(self.lbm.ip, 'add_vxlan',
+                            return_value=vxlan_dev) as add_vxlan_fn:
+                self.assertEqual("vxlan-" + seg_id,
+                                 self.lbm.ensure_vxlan(seg_id))
+                add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                group="224.0.0.1",
+                                                srcport=(0, 0),
+                                                dstport=None,
+                                                ttl=None,
+                                                tos='inherit',
+                                                dev=self.lbm.local_int)
+                dv6_fn.assert_called_once_with()
 
     def test__update_interface_ip_details(self):
         gwdict = dict(gateway='1.1.1.1',

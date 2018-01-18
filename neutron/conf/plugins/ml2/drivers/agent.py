@@ -26,6 +26,14 @@ agent_opts = [
                help=_("Set new timeout in seconds for new rpc calls after "
                       "agent receives SIGTERM. If value is set to 0, rpc "
                       "timeout won't be changed")),
+    cfg.IntOpt('dscp', min=0, max=63,
+               help=_("The DSCP value to use for outer headers during tunnel "
+                      "encapsulation.")),
+    cfg.BoolOpt('dscp_inherit', default=False,
+                help=_("If set to True, the DSCP value of tunnel "
+                       "interfaces is overwritten and set to inherit. "
+                       "The DSCP value of the inner header is then "
+                       "copied to the outer header.")),
 ]
 
 

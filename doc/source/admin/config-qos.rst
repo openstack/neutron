@@ -151,6 +151,36 @@ On the network and compute nodes:
    QoS currently works with ml2 only (SR-IOV, Open vSwitch, and linuxbridge
    are drivers enabled for QoS).
 
+DSCP marking on outer header for overlay networks
+-------------------------------------------------
+
+When using overlay networks (e.g., VxLAN), the DSCP marking rule only
+applies to the inner header, and during encapsulation, the DSCP mark is
+not automatically copied to the outer header.
+
+#. In order to set the DSCP value of the outer header, modify the ``dscp``
+   configuration option in ``/etc/neutron/plugins/ml2/<agent_name>_agent.ini``
+   where ``<agent_name>`` is the name of the agent being used
+   (e.g., ``openvswitch``):
+
+   .. code-block:: ini
+
+      [agent]
+      dscp = 8
+
+#. In order to copy the DSCP field of the inner header to the outer header,
+   change the ``dscp_inherit`` configuration option to true in
+   ``/etc/neutron/plugins/ml2/<agent_name>_agent.ini`` where ``<agent_name>``
+   is the name of the agent being used (e.g., ``openvswitch``):
+
+   .. code-block:: ini
+
+      [agent]
+      dscp_inherit = true
+
+   If the ``dscp_inherit`` option is set to true, the previous ``dscp`` option
+   is overwritten.
+
 Trusted projects policy.json configuration
 ------------------------------------------
 

@@ -96,9 +96,6 @@ ovs_opts = [
 ]
 
 agent_opts = [
-    cfg.IntOpt('polling_interval', default=2,
-               help=_("The number of seconds the agent will wait between "
-                      "polling for local device changes.")),
     cfg.BoolOpt('minimize_polling',
                 default=True,
                 help=_("Minimize polling by monitoring ovsdb for interface "
@@ -128,10 +125,6 @@ agent_opts = [
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.BoolOpt('enable_distributed_routing', default=False,
                 help=_("Make the l2 agent run in DVR mode.")),
-    cfg.IntOpt('quitting_rpc_timeout', default=10,
-               help=_("Set new timeout in seconds for new rpc calls after "
-                      "agent receives SIGTERM. If value is set to 0, rpc "
-                      "timeout won't be changed")),
     cfg.BoolOpt('drop_flows_on_start', default=False,
                 help=_("Reset flow table on start. Setting this to True will "
                        "cause brief traffic interruption.")),

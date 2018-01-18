@@ -15,7 +15,9 @@
 from oslo_config import cfg
 
 from neutron.conf.agent import common as config
+from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 
+agent.register_agent_opts()
 ovs_conf.register_ovs_agent_opts()
 config.register_agent_state_opts_helper(cfg.CONF)

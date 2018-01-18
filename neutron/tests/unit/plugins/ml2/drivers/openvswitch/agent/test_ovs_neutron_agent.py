@@ -1694,7 +1694,7 @@ class TestOvsNeutronAgent(object):
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', remote_ip, self.agent.local_ip, n_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment,
-                self.agent.tunnel_csum)
+                self.agent.tunnel_csum, self.agent.tos)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': n_const.TYPE_GRE, 'ip': remote_ip})
@@ -1739,7 +1739,7 @@ class TestOvsNeutronAgent(object):
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', remote_ip, self.agent.local_ip, n_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment,
-                self.agent.tunnel_csum)
+                self.agent.tunnel_csum, self.agent.tos)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': n_const.TYPE_GRE, 'ip': remote_ip})
@@ -1760,7 +1760,27 @@ class TestOvsNeutronAgent(object):
             add_tunnel_port_fn.assert_called_once_with(
                 'gre-1', remote_ip, self.agent.local_ip, n_const.TYPE_GRE,
                 self.agent.vxlan_udp_port, self.agent.dont_fragment,
-                self.agent.tunnel_csum)
+                self.agent.tunnel_csum, self.agent.tos)
+            log_error_fn.assert_called_once_with(
+                _("Failed to set-up %(type)s tunnel port to %(ip)s"),
+                {'type': n_const.TYPE_GRE, 'ip': remote_ip})
+            self.assertEqual(0, ofport)
+
+    def test_setup_tunnel_port_error_negative_tos_inherit(self):
+        remote_ip = '1.2.3.4'
+        with mock.patch.object(
+            self.agent.tun_br,
+            'add_tunnel_port',
+            return_value=ovs_lib.INVALID_OFPORT) as add_tunnel_port_fn,\
+                mock.patch.object(self.mod_agent.LOG, 'error') as log_error_fn:
+            self.agent.tos = 'inherit'
+            self.agent.local_ip = '2.3.4.5'
+            ofport = self.agent._setup_tunnel_port(
+                self.agent.tun_br, 'gre-1', remote_ip, n_const.TYPE_GRE)
+            add_tunnel_port_fn.assert_called_once_with(
+                'gre-1', remote_ip, self.agent.local_ip, n_const.TYPE_GRE,
+                self.agent.vxlan_udp_port, self.agent.dont_fragment,
+                self.agent.tunnel_csum, self.agent.tos)
             log_error_fn.assert_called_once_with(
                 _("Failed to set-up %(type)s tunnel port to %(ip)s"),
                 {'type': n_const.TYPE_GRE, 'ip': remote_ip})

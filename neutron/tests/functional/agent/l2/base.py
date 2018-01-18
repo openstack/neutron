@@ -30,6 +30,7 @@ from neutron.agent.linux import polling
 from neutron.common import utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf import common as common_config
+from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
@@ -69,6 +70,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
     def _get_config_opts(self):
         config = cfg.ConfigOpts()
         config.register_opts(common_config.core_opts)
+        agent.register_agent_opts(config)
         ovs_conf.register_ovs_agent_opts(config)
         agent_config.register_interface_opts(config)
         agent_config.register_interface_driver_opts_helper(config)

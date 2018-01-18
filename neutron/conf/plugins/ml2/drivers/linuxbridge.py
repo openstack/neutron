@@ -30,7 +30,11 @@ vxlan_opts = [
     cfg.IntOpt('ttl',
                help=_("TTL for vxlan interface protocol packets.")),
     cfg.IntOpt('tos',
-               help=_("TOS for vxlan interface protocol packets.")),
+               deprecated_for_removal=True,
+               help=_("TOS for vxlan interface protocol packets. This option "
+                      "is deprecated in favor of the dscp option in the AGENT "
+                      "section and will be removed in a future release. "
+                      "To convert the TOS value to DSCP, divide by 4.")),
     cfg.StrOpt('vxlan_group', default=DEFAULT_VXLAN_GROUP,
                help=_("Multicast group(s) for vxlan interface. A range of "
                       "group addresses may be specified by using CIDR "
