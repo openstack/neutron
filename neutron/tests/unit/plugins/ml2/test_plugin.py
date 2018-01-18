@@ -47,6 +47,7 @@ from neutron.db import provisioning_blocks
 from neutron.db import segments_db
 from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
+from neutron.objects import ports as obj_port
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db as ml2_db
@@ -1691,9 +1692,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         # create a port and delete it so we have an expired mechanism context
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(self.context,
-                                       port['port']['id']).port_binding
-            binding['host'] = 'test'
+            binding = obj_port.PortBinding.get_object(
+                self.context, port_id=port['port']['id'], host='')
+            binding.host = 'test'
+            binding.update()
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
@@ -1712,10 +1714,11 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def _create_port_and_bound_context(self, port_vif_type, bound_vif_type):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
-            binding['host'] = 'fake_host'
+            binding = obj_port.PortBinding.get_object(
+                self.context, port_id=port['port']['id'], host='')
+            binding.host = 'fake_host'
             binding['vif_type'] = port_vif_type
+            binding.update()
             # Generates port context to be used before the bind.
             port_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
@@ -1827,10 +1830,10 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_update_port_binding_host_id_none(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
-            with self.context.session.begin(subtransactions=True):
-                binding.host = 'test'
+            binding = obj_port.PortBinding.get_object(
+                self.context, port_id=port['port']['id'], host='')
+            binding.host = 'test'
+            binding.update()
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
@@ -1841,15 +1844,18 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self.assertEqual('test', binding.host)
             with self.context.session.begin(subtransactions=True):
                 plugin._process_port_binding(mech_context, attrs)
+            updated_binding = obj_port.PortBinding.get_objects(self.context,
+                port_id=port['port']['id']).pop()
             self.assertTrue(update_mock.mock_calls)
-            self.assertEqual('', binding.host)
+            self.assertEqual('', updated_binding.host)
 
     def test_update_port_binding_host_id_not_changed(self):
         with self.port() as port:
             plugin = directory.get_plugin()
-            binding = plugin._get_port(
-                self.context, port['port']['id']).port_binding
-            binding['host'] = 'test'
+            binding = obj_port.PortBinding.get_object(
+                self.context, port_id=port['port']['id'], host='')
+            binding.host = 'test'
+            binding.update()
             mech_context = driver_context.PortContext(
                 plugin, self.context, port['port'],
                 plugin.get_network(self.context, port['port']['network_id']),
@@ -1862,30 +1868,34 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self.assertEqual('test', binding.host)
 
     def test_process_distributed_port_binding_update_router_id(self):
-        host_id = 'host'
-        binding = models.DistributedPortBinding(
-                            port_id='port_id',
-                            host=host_id,
-                            router_id='old_router_id',
-                            vif_type=portbindings.VIF_TYPE_OVS,
-                            vnic_type=portbindings.VNIC_NORMAL,
-                            status=constants.PORT_STATUS_DOWN)
-        plugin = directory.get_plugin()
-        mock_network = {'id': 'net_id'}
-        mock_port = {'id': 'port_id'}
-        ctxt = context.get_admin_context()
-        new_router_id = 'new_router'
-        attrs = {'device_id': new_router_id, portbindings.HOST_ID: host_id}
-        with mock.patch.object(plugin, '_update_port_dict_binding'):
-            with mock.patch.object(segments_db, 'get_network_segments',
-                                   return_value=[]):
-                mech_context = driver_context.PortContext(
-                    self, ctxt, mock_port, mock_network, binding, None)
-                plugin._process_distributed_port_binding(mech_context,
-                                                         ctxt, attrs)
-                self.assertEqual(new_router_id,
-                                 mech_context._binding.router_id)
-                self.assertEqual(host_id, mech_context._binding.host)
+        with self.port() as port:
+            host_id = 'host'
+            ctxt = context.get_admin_context()
+            binding_obj = obj_port.DistributedPortBinding(
+                ctxt,
+                port_id=port['port']['id'],
+                host=host_id,
+                profile={},
+                router_id='old_router_id',
+                vif_type=portbindings.VIF_TYPE_OVS,
+                vnic_type=portbindings.VNIC_NORMAL,
+                status=constants.PORT_STATUS_DOWN)
+            binding_obj.create()
+            plugin = directory.get_plugin()
+            mock_network = {'id': 'net_id'}
+            mock_port = {'id': 'port_id'}
+            new_router_id = 'new_router'
+            attrs = {'device_id': new_router_id, portbindings.HOST_ID: host_id}
+            with mock.patch.object(plugin, '_update_port_dict_binding'):
+                with mock.patch.object(segments_db, 'get_network_segments',
+                                       return_value=[]):
+                    mech_context = driver_context.PortContext(
+                        self, ctxt, mock_port, mock_network, binding_obj, None)
+                    plugin._process_distributed_port_binding(mech_context,
+                                                             ctxt, attrs)
+                    self.assertEqual(new_router_id,
+                                     mech_context._binding.router_id)
+                    self.assertEqual(host_id, mech_context._binding.host)
 
     def test_update_distributed_port_binding_on_concurrent_port_delete(self):
         plugin = directory.get_plugin()
@@ -1916,9 +1926,20 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test__bind_port_original_port_set(self):
         plugin = directory.get_plugin()
         plugin.mechanism_manager = mock.Mock()
-        mock_port = {'id': 'port_id'}
+        mock_port = {'id': uuidutils.generate_uuid()}
         context = mock.Mock()
+        binding_obj = obj_port.DistributedPortBinding(
+            mock.MagicMock(),
+            port_id=mock_port['id'],
+            host='vm_host',
+            profile={},
+            router_id='old_router_id',
+            vif_type='',
+            vnic_type=portbindings.VNIC_NORMAL,
+            status=constants.PORT_STATUS_DOWN)
+        binding_obj.create()
         context.network.current = {'id': 'net_id'}
+        context._binding = binding_obj
         context.original = mock_port
         with mock.patch.object(plugin, '_update_port_dict_binding'), \
             mock.patch.object(segments_db, 'get_network_segments',
@@ -2594,13 +2615,15 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
     def test_update_distributed_router_interface_port(self):
         """Test validate distributed router interface update succeeds."""
         host_id = 'host'
-        binding = models.DistributedPortBinding(
-                            port_id='port_id',
-                            host=host_id,
-                            router_id='old_router_id',
-                            vif_type=portbindings.VIF_TYPE_OVS,
-                            vnic_type=portbindings.VNIC_NORMAL,
-                            status=constants.PORT_STATUS_DOWN)
+        binding_obj = obj_port.DistributedPortBinding(
+            mock.MagicMock(),
+            port_id=uuidutils.generate_uuid(),
+            host=host_id,
+            router_id='old_router_id',
+            vif_type=portbindings.VIF_TYPE_OVS,
+            vnic_type=portbindings.VNIC_NORMAL,
+            status=constants.PORT_STATUS_DOWN)
+        binding_obj.create()
         with mock.patch.object(
             mech_test.TestMechanismDriver,
             'update_port_postcommit',
@@ -2610,7 +2633,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                     'update_port_precommit') as port_pre,\
                 mock.patch.object(
                     ml2_db, 'get_distributed_port_bindings') as dist_bindings:
-                dist_bindings.return_value = [binding]
+                dist_bindings.return_value = [binding_obj]
                 port_pre.return_value = True
                 with self.network() as network:
                     with self.subnet(network=network) as subnet:
@@ -2833,9 +2856,10 @@ class TestML2Segments(Ml2PluginV2TestCase):
             # add writer here to make sure that the following operations are
             # performed in the same session
             with db_api.context_manager.writer.using(self.context):
-                binding = plugin._get_port(
-                    self.context, port['port']['id']).port_binding
-                binding['host'] = 'host-ovs-no_filter'
+                binding = obj_port.PortBinding.get_object(
+                    self.context, port_id=port['port']['id'], host='')
+                binding.host = 'host-ovs-no_filter'
+                binding.update()
                 mech_context = driver_context.PortContext(
                     plugin, self.context, port['port'],
                     plugin.get_network(self.context,

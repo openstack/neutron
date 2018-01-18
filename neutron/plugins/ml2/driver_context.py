@@ -17,7 +17,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
-from oslo_serialization import jsonutils
 import sqlalchemy
 
 from neutron.db import segments_db
@@ -124,9 +123,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         else:
             self._network_context = NetworkContext(
                 plugin, plugin_context, network) if network else None
-        # NOTE(kevinbenton): InstanceSnapshot can go away once we are working
-        # with OVO objects instead of native SQLA objects.
-        self._binding = InstanceSnapshot(binding)
+        self._binding = binding
         self._binding_levels = [InstanceSnapshot(l)
                                 for l in (binding_levels or [])]
         self._segments_to_bind = None
@@ -295,7 +292,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         # TODO(rkukura) Verify binding allowed, segment in network
         self._new_bound_segment = segment_id
         self._binding.vif_type = vif_type
-        self._binding.vif_details = jsonutils.dumps(vif_details)
+        self._binding.vif_details = vif_details
         self._new_port_status = status
 
     def continue_binding(self, segment_id, next_segments_to_bind):
