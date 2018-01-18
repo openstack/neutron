@@ -20,6 +20,7 @@ import mock
 import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import multiprovidernet as mpnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
@@ -46,7 +47,6 @@ from neutron.db import models_v2
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
-from neutron.extensions import multiprovidernet as mpnet
 from neutron.objects import base as base_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import exceptions as ml2_exc
@@ -192,7 +192,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                       ]
         # multiprovider networks
         self.mp_nets = [{'name': 'net4',
-                         mpnet.SEGMENTS:
+                         mpnet_apidef.SEGMENTS:
                              [{pnet.NETWORK_TYPE: 'vlan',
                                pnet.PHYSICAL_NETWORK: 'physnet2',
                                pnet.SEGMENTATION_ID: 1},
@@ -306,13 +306,13 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             # verify
             network = self.deserialize(self.fmt,
                                        req.get_response(self.api))['network']
-            if mpnet.SEGMENTS not in net:
+            if mpnet_apidef.SEGMENTS not in net:
                 for k, v in net.items():
                     self.assertEqual(net[k], network[k])
-                    self.assertNotIn(mpnet.SEGMENTS, network)
+                    self.assertNotIn(mpnet_apidef.SEGMENTS, network)
             else:
-                segments = network[mpnet.SEGMENTS]
-                expected_segments = net[mpnet.SEGMENTS]
+                segments = network[mpnet_apidef.SEGMENTS]
+                expected_segments = net[mpnet_apidef.SEGMENTS]
                 self.assertEqual(len(expected_segments), len(segments))
                 for expected, actual in zip(expected_segments, segments):
                     self.assertEqual(expected, actual)
@@ -349,11 +349,12 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         networks = self._lookup_network_by_segmentation_id(lookup_vlan_id, 2)
 
         # get the mpnet
-        networks = [n for n in networks['networks'] if mpnet.SEGMENTS in n]
+        networks = [n for n in networks['networks']
+                    if mpnet_apidef.SEGMENTS in n]
         network = networks.pop()
         # verify attributes of the looked up item
-        segments = network[mpnet.SEGMENTS]
-        expected_segments = self.mp_nets[0][mpnet.SEGMENTS]
+        segments = network[mpnet_apidef.SEGMENTS]
+        expected_segments = self.mp_nets[0][mpnet_apidef.SEGMENTS]
         self.assertEqual(len(expected_segments), len(segments))
         for expected, actual in zip(expected_segments, segments):
             self.assertEqual(expected, actual)
@@ -401,7 +402,7 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
         # External network will not have a segmentation id.
         self.assertIsNone(network['network'][pnet.SEGMENTATION_ID])
         # External network will not have multiple segments.
-        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
 
     def test_external_network_type_vlan(self):
         cfg.CONF.set_default('external_network_type',
@@ -417,12 +418,12 @@ class TestExternalNetwork(Ml2PluginV2TestCase):
         # External network will have a segmentation id.
         self.assertIsNotNone(network['network'][pnet.SEGMENTATION_ID])
         # External network will not have multiple segments.
-        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
 
 
 class TestMl2NetworksWithVlanTransparencyBase(TestMl2NetworksV2):
     data = {'network': {'name': 'net1',
-                        mpnet.SEGMENTS:
+                        mpnet_apidef.SEGMENTS:
                         [{pnet.NETWORK_TYPE: 'vlan',
                           pnet.PHYSICAL_NETWORK: 'physnet1'}],
                         'tenant_id': 'tenant_one',
@@ -1553,7 +1554,7 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
         net = {
             'name': 'net1',
-            mpnet.SEGMENTS: [
+            mpnet_apidef.SEGMENTS: [
                 {
                     'network_type': 'driver1',
                     'physical_network': 'physnet1'
@@ -1569,7 +1570,7 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
         net = {
             'name': 'net1',
-            mpnet.SEGMENTS: [
+            mpnet_apidef.SEGMENTS: [
                 {
                     'network_type': 'driver1',
                     'physical_network': 'physnet1'
@@ -1611,7 +1612,7 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
         net = {
             'name': 'net1',
-            mpnet.SEGMENTS: [
+            mpnet_apidef.SEGMENTS: [
                 {
                     'network_type': 'driver1',
                     'physical_network': 'physnet1'
@@ -2118,11 +2119,11 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('vlan', network['network'][pnet.NETWORK_TYPE])
         self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
         self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
-        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
 
     def test_create_network_single_multiprovider(self):
         data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
+                            mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1}],
@@ -2132,7 +2133,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('vlan', network['network'][pnet.NETWORK_TYPE])
         self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
         self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
-        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
 
         # Tests get_network()
         net_req = self.new_show_request('networks', network['network']['id'])
@@ -2140,11 +2141,11 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual('vlan', network['network'][pnet.NETWORK_TYPE])
         self.assertEqual('physnet1', network['network'][pnet.PHYSICAL_NETWORK])
         self.assertEqual(1, network['network'][pnet.SEGMENTATION_ID])
-        self.assertNotIn(mpnet.SEGMENTS, network['network'])
+        self.assertNotIn(mpnet_apidef.SEGMENTS, network['network'])
 
     def test_create_network_multiprovider(self):
         data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
+                            mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1},
@@ -2155,9 +2156,9 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         network_req = self.new_create_request('networks', data)
         network = self.deserialize(self.fmt,
                                    network_req.get_response(self.api))
-        segments = network['network'][mpnet.SEGMENTS]
+        segments = network['network'][mpnet_apidef.SEGMENTS]
         for segment_index, segment in enumerate(data['network']
-                                                [mpnet.SEGMENTS]):
+                                                [mpnet_apidef.SEGMENTS]):
             for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                           pnet.SEGMENTATION_ID]:
                 self.assertEqual(segment.get(field),
@@ -2166,9 +2167,9 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         # Tests get_network()
         net_req = self.new_show_request('networks', network['network']['id'])
         network = self.deserialize(self.fmt, net_req.get_response(self.api))
-        segments = network['network'][mpnet.SEGMENTS]
+        segments = network['network'][mpnet_apidef.SEGMENTS]
         for segment_index, segment in enumerate(data['network']
-                                                [mpnet.SEGMENTS]):
+                                                [mpnet_apidef.SEGMENTS]):
             for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                           pnet.SEGMENTATION_ID]:
                 self.assertEqual(segment.get(field),
@@ -2176,7 +2177,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def test_create_network_with_provider_and_multiprovider_fail(self):
         data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
+                            mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1}],
@@ -2191,7 +2192,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def test_create_network_duplicate_full_segments(self):
         data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
+                            mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1},
@@ -2205,7 +2206,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def test_create_network_duplicate_partial_segments(self):
         data = {'network': {'name': 'net1',
-                            mpnet.SEGMENTS:
+                            mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1'},
                              {pnet.NETWORK_TYPE: 'vlan',
@@ -2380,7 +2381,7 @@ class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
         net = self.driver.create_network(
             self.context,
             {'network': {'name': 'net1',
-                         mpnet.SEGMENTS: [
+                         mpnet_apidef.SEGMENTS: [
                              {pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1},
@@ -2880,7 +2881,8 @@ class TestML2Segments(Ml2PluginV2TestCase):
                 mock.ANY, event, segments_plugin.Plugin(), self.context, seg1)
             # Make sure the mechanism manager can get the right amount of
             # segments of network
-            self.assertEqual(3, len(self.net_context.current[mpnet.SEGMENTS]))
+            self.assertEqual(
+                3, len(self.net_context.current[mpnet_apidef.SEGMENTS]))
 
     def test_reserve_segment_nofity_mechanism_manager(self):
         self._test_nofity_mechanism_manager(events.PRECOMMIT_CREATE)
