@@ -46,7 +46,6 @@ METADATA_PROXY_HANDLER_OPTS = [
                       "file for ssl")),
     cfg.HostAddressOpt('nova_metadata_host',
                        default='127.0.0.1',
-                       deprecated_name='nova_metadata_ip',
                        help=_("IP address or DNS name of Nova metadata "
                               "server.")),
     cfg.PortOpt('nova_metadata_port',
