@@ -222,3 +222,7 @@ FLOATING_IP_HOST_NEEDS_BINDING = "FLOATING_IP_HOST_NEEDS_BINDING"
 # Possible types of values (e.g. in QoS rule types)
 VALUES_TYPE_CHOICES = "choices"
 VALUES_TYPE_RANGE = "range"
+
+# Units base
+SI_BASE = 1000
+IEC_BASE = 1024

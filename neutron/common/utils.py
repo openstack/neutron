@@ -801,3 +801,12 @@ def resolve_ref(ref):
     if isinstance(ref, weakref.ref):
         ref = ref()
     return ref
+
+
+def bytes_to_bits(value):
+    return value * 8
+
+
+def bits_to_kilobits(value, base):
+    #NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result
+    return int((value + (base - 1)) / base)
