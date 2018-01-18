@@ -204,7 +204,11 @@ class Router(base.NeutronDbObject):
         'gw_port_id': common_types.UUIDField(nullable=True),
         'enable_snat': obj_fields.BooleanField(default=True),
         'flavor_id': common_types.UUIDField(nullable=True),
+        'extra_attributes': obj_fields.ObjectField(
+            'RouterExtraAttributes', nullable=True),
     }
+
+    synthetic_fields = ['extra_attributes']
 
 
 @base.NeutronObjectRegistry.register

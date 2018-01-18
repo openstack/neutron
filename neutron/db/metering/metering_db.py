@@ -19,16 +19,15 @@ from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import constants
-from neutron.db import _model_query as model_query
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_dvr_db
-from neutron.db.models import l3 as l3_models
 from neutron.db.models import metering as metering_models
 from neutron.extensions import metering
 from neutron.objects import base as base_obj
 from neutron.objects import metering as metering_objs
+from neutron.objects import router as l3_obj
 
 
 class MeteringDbMixin(metering.MeteringPluginBase,
@@ -181,15 +180,13 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         return res
 
     def _process_sync_metering_data(self, context, labels):
-        all_routers = None
+        routers = None
 
         routers_dict = {}
         for label in labels:
             if label.shared:
-                if not all_routers:
-                    all_routers = model_query.get_collection_query(
-                        context, l3_models.Router)
-                routers = all_routers
+                if not routers:
+                    routers = l3_obj.Router.get_objects(context)
             else:
                 routers = label.routers
 
@@ -214,10 +211,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
             metering_models.MeteringLabel).get(
                 rule['metering_label_id'])
 
-        # TODO(electrocucaracha) This depends on the Router OVO implementation
         if label.shared:
-            routers = model_query.get_collection_query(
-                context, l3_models.Router)
+            routers = l3_obj.Router.get_objects(context)
         else:
             routers = label.routers
 
