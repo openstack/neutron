@@ -427,6 +427,10 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
+| rfe-confirmed_                | Confirmed feature enhancements          | Drivers Team         |
++-------------------------------+-----------------------------------------+----------------------+
+| rfe-triaged_                  | Triaged feature enhancements            | Drivers Team         |
++-------------------------------+-----------------------------------------+----------------------+
 | rfe-approved_                 | Approved feature enhancements           | Drivers Team         |
 +-------------------------------+-----------------------------------------+----------------------+
 | rfe-postponed_                | Postponed feature enhancements          | Drivers Team         |
@@ -731,6 +735,20 @@ RFE
 
 * `RFE - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe>`_
 * `RFE - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=rfe>`_
+
+.. _rfe-confirmed:
+
+RFE-Confirmed
++++++++++++++
+
+* `RFE-Confirmed - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-confirmed>`_
+
+.. _rfe-triaged:
+
+RFE-Triaged
++++++++++++
+
+* `RFE-Triaged - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=rfe-triaged>`_
 
 .. _rfe-approved:
 
