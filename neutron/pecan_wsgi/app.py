@@ -27,7 +27,7 @@ def versions_factory(global_config, **local_config):
 def v2_factory(global_config, **local_config):
     # Processing Order:
     #   As request enters lower priority called before higher.
-    #   Reponse from controller is passed from higher priority to lower.
+    #   Response from controller is passed from higher priority to lower.
     app_hooks = [
         hooks.UserFilterHook(),  # priority 90
         hooks.ContextHook(),  # priority 95
