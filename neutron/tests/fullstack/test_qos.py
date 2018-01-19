@@ -360,6 +360,21 @@ class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
         l2_extensions.wait_for_dscp_marked_packet(
             sender, receiver, DSCP_MARK)
 
+    def test_dscp_marking_clean_port_removed(self):
+        """Test if DSCP marking OpenFlow/iptables rules are removed when
+        whole port is removed.
+        """
+
+        # Create port with qos policy attached
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(self._add_dscp_rule, DSCP_MARK)])
+
+        self._wait_for_dscp_marking_rule_applied(vm, DSCP_MARK)
+
+        # Delete port with qos policy attached
+        vm.destroy()
+        self._wait_for_dscp_marking_rule_removed(vm)
+
 
 class TestDscpMarkingQoSOvs(_TestDscpMarkingQoS, base.BaseFullStackTestCase):
     scenarios = fullstack_utils.get_ovs_interface_scenarios()
