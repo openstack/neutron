@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import dvr as dvr_exc
 from neutron_lib.objects import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
@@ -81,7 +82,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
     def _get_dvr_mac_address_by_host(self, context, host):
         dvr_obj = router.DVRMacAddress.get_object(context, host=host)
         if not dvr_obj:
-            raise ext_dvr.DVRMacAddressNotFound(host=host)
+            raise dvr_exc.DVRMacAddressNotFound(host=host)
         return self._make_dvr_mac_address_dict(dvr_obj)
 
     @utils.transaction_guard
@@ -126,7 +127,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
 
         try:
             return self._get_dvr_mac_address_by_host(context, host)
-        except ext_dvr.DVRMacAddressNotFound:
+        except dvr_exc.DVRMacAddressNotFound:
             return self._create_dvr_mac_address(context, host)
 
     def _make_dvr_mac_address_dict(self, dvr_mac_entry, fields=None):

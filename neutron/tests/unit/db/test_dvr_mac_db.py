@@ -21,11 +21,11 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.exceptions import dvr as dvr_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net
 
 from neutron.db import dvr_mac_db
-from neutron.extensions import dvr
 from neutron.objects import router
 from neutron.tests import tools
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -57,7 +57,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(entry.to_dict(), result)
 
     def test__get_dvr_mac_address_by_host_not_found(self):
-        self.assertRaises(dvr.DVRMacAddressNotFound,
+        self.assertRaises(dvr_exc.DVRMacAddressNotFound,
                           self.mixin._get_dvr_mac_address_by_host,
                           self.ctx, 'foo_host')
 
