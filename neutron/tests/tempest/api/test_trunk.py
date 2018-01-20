@@ -54,8 +54,20 @@ class TrunkTestJSONBase(base.BaseAdminNetworkTest):
         trunks_cleanup(cls.client, cls.trunks)
         super(TrunkTestJSONBase, cls).resource_cleanup()
 
-    def _create_trunk_with_network_and_parent(self, subports, **kwargs):
-        network = self.create_network()
+    @classmethod
+    def is_type_driver_enabled(cls, type_driver):
+        return (type_driver in
+                config.CONF.neutron_plugin_options.available_type_drivers)
+
+    def _create_trunk_with_network_and_parent(
+            self, subports, parent_network_type=None, **kwargs):
+        client = None
+        network_kwargs = {}
+        if parent_network_type:
+            client = self.admin_client
+            network_kwargs = {"provider:network_type": parent_network_type,
+                              "tenant_id": self.client.tenant_id}
+        network = self.create_network(client=client, **network_kwargs)
         parent_port = self.create_port(network)
         trunk = self.client.create_trunk(parent_port['id'], subports, **kwargs)
         self.trunks.append(trunk['trunk'])
@@ -266,9 +278,7 @@ class TrunkTestMtusJSONBase(TrunkTestJSONBase):
     @classmethod
     def skip_checks(cls):
         super(TrunkTestMtusJSONBase, cls).skip_checks()
-        if any(t
-               not in config.CONF.neutron_plugin_options.available_type_drivers
-               for t in ['gre', 'vxlan']):
+        if not all(cls.is_type_driver_enabled(t) for t in ['gre', 'vxlan']):
             msg = "Either vxlan or gre type driver not enabled."
             raise cls.skipException(msg)
 

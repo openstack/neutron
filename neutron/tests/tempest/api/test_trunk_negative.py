@@ -13,6 +13,7 @@
 #    under the License.
 
 from oslo_utils import uuidutils
+from tempest.common import utils
 from tempest.lib import decorators
 from tempest.lib import exceptions as lib_exc
 import testtools
@@ -103,8 +104,14 @@ class TrunkTestJSON(test_trunk.TrunkTestJSONBase):
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('40aed9be-e976-47d0-dada-bde2c7e74e57')
+    @utils.requires_ext(extension="provider", service="network")
     def test_create_subport_invalid_inherit_network_segmentation_type(self):
-        trunk = self._create_trunk_with_network_and_parent([])
+        if not self.is_type_driver_enabled('vxlan'):
+            msg = "Vxlan type driver must be enabled for this test."
+            raise self.skipException(msg)
+
+        trunk = self._create_trunk_with_network_and_parent(
+            subports=[], parent_network_type='vxlan')
         subport_network = self.create_network()
         parent_port = self.create_port(subport_network)
         self.assertRaises(lib_exc.BadRequest, self.client.add_subports,
