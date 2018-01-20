@@ -74,7 +74,10 @@ def main():
     conf = setup_conf()
     conf()
     config.setup_logging()
+    do_main(conf)
 
+
+def do_main(conf):
     configuration_bridges = set([conf.ovs_integration_bridge,
                                  conf.external_network_bridge])
     ovs = ovs_lib.BaseOVS()
@@ -86,17 +89,25 @@ def main():
     else:
         bridges = available_configuration_bridges
 
-    # Collect existing ports created by Neutron on configuration bridges.
-    # After deleting ports from OVS bridges, we cannot determine which
-    # ports were created by Neutron, so port information is collected now.
-    ports = collect_neutron_ports(available_configuration_bridges)
+    try:
+        # The ovs_cleanup method not added to the deprecated vsctl backend
+        for bridge in bridges:
+            LOG.info(_LI("Cleaning bridge: %s"), bridge)
+            ovs.ovsdb.ovs_cleanup(bridge,
+                                  conf.ovs_all_ports).execute(check_error=True)
+    except AttributeError:
 
-    for bridge in bridges:
-        LOG.info(_LI("Cleaning bridge: %s"), bridge)
-        ovs = ovs_lib.OVSBridge(bridge)
-        ovs.delete_ports(all_ports=conf.ovs_all_ports)
+        # Collect existing ports created by Neutron on configuration bridges.
+        # After deleting ports from OVS bridges, we cannot determine which
+        # ports were created by Neutron, so port information is collected now.
+        ports = collect_neutron_ports(available_configuration_bridges)
 
-    # Remove remaining ports created by Neutron (usually veth pair)
-    delete_neutron_ports(ports)
+        for bridge in bridges:
+            LOG.info(_LI("Cleaning bridge: %s"), bridge)
+            ovs = ovs_lib.OVSBridge(bridge)
+            ovs.delete_ports(all_ports=conf.ovs_all_ports)
+
+        # Remove remaining ports created by Neutron (usually veth pair)
+        delete_neutron_ports(ports)
 
     LOG.info(_LI("OVS cleanup completed successfully"))
