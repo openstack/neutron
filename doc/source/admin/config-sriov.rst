@@ -360,7 +360,7 @@ normal instances. The use cases of the FDB population extension are:
 
 For additional information describing the problem, refer to:
 `Virtual switching technologies and Linux bridge.
-<http://events.linuxfoundation.org/sites/events/files/slides/LinuxConJapan2014_makita_0.pdf>`_
+<https://events.static.linuxfound.org/sites/events/files/slides/LinuxConJapan2014_makita_0.pdf>`_
 
 #. Edit the ``ovs_agent.ini`` or ``linuxbridge_agent.ini`` file on each compute
    node. For example:
