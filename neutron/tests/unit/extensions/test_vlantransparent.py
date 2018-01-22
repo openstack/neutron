@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from oslo_config import cfg
 from webob import exc as web_exc
 
@@ -35,7 +36,7 @@ class VlanTransparentExtensionManager(object):
         return []
 
     def get_extended_resources(self, version):
-        return vlt.Vlantransparent().get_extended_resources(version)
+        return vlt.Vlantransparent.get_extended_resources(version)
 
 
 class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
@@ -50,7 +51,7 @@ class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                             self).create_network(context, network)
             # Update the vlan_transparent in the database
             n = network['network']
-            vlan_transparent = vlt.get_vlan_transparent(n)
+            vlan_transparent = vlan_apidef.get_vlan_transparent(n)
             network = self._get_network(context, new_net['id'])
             n['vlan_transparent'] = vlan_transparent
             network.update(n)
@@ -80,7 +81,7 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(net['network']['name'],
                              res['network']['name'])
-            self.assertTrue(res['network'][vlt.VLANTRANSPARENT])
+            self.assertTrue(res['network'][vlan_apidef.VLANTRANSPARENT])
 
     def test_network_create_with_bad_vlan_transparent_attr(self):
         vlantrans = {'vlan_transparent': "abc"}
@@ -94,10 +95,10 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
     def test_network_update_with_vlan_transparent_exception(self):
         with self.network(name='net1') as net:
             self._update('networks', net['network']['id'],
-                         {'network': {vlt.VLANTRANSPARENT: False}},
+                         {'network': {vlan_apidef.VLANTRANSPARENT: False}},
                          web_exc.HTTPBadRequest.code)
             req = self.new_show_request('networks', net['network']['id'])
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(net['network']['name'],
                              res['network']['name'])
-            self.assertFalse(res['network'][vlt.VLANTRANSPARENT])
+            self.assertFalse(res['network'][vlan_apidef.VLANTRANSPARENT])

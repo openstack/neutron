@@ -13,9 +13,9 @@
 #    under the License.
 
 from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 
 from neutron.db import _resource_extend as resource_extend
-from neutron.extensions import vlantransparent
 
 
 @resource_extend.has_resource_extenders
@@ -25,6 +25,6 @@ class Vlantransparent_db_mixin(object):
     @staticmethod
     @resource_extend.extends([net_def.COLLECTION_NAME])
     def _extend_network_dict_vlan_transparent(network_res, network_db):
-        network_res[vlantransparent.VLANTRANSPARENT] = (
+        network_res[vlan_apidef.VLANTRANSPARENT] = (
             network_db.vlan_transparent)
         return network_res

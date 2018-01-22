@@ -23,6 +23,7 @@ from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib.api import validators
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib.callbacks import events
@@ -164,7 +165,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             aliases = self._supported_extension_aliases[:]
             aliases += self.extension_manager.extension_aliases()
             sg_rpc.disable_security_group_extension_by_config(aliases)
-            vlantransparent.disable_extension_by_config(aliases)
+            vlantransparent._disable_extension_by_config(aliases)
             self._aliases = aliases
         return self._aliases
 
@@ -811,7 +812,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             # Update the transparent vlan if configured
             if utils.is_extension_supported(self, 'vlan-transparent'):
-                vlt = vlantransparent.get_vlan_transparent(net_data)
+                vlt = vlan_apidef.get_vlan_transparent(net_data)
                 net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
 
