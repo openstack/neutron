@@ -42,15 +42,9 @@ _connection = None
 def api_factory(context):
     global _connection
     if _connection is None:
-        try:
-            _connection = connection.Connection(
-                idl=n_connection.idl_factory(),
-                timeout=cfg.CONF.OVS.ovsdb_timeout)
-        except TypeError:
-            #pylint: disable=unexpected-keyword-arg,no-value-for-parameter
-            _connection = connection.Connection(
-                idl_factory=n_connection.idl_factory,  # noqa
-                timeout=cfg.CONF.OVS.ovsdb_timeout)
+        _connection = connection.Connection(
+            idl=n_connection.idl_factory(),
+            timeout=cfg.CONF.OVS.ovsdb_timeout)
     return NeutronOvsdbIdl(_connection)
 
 
