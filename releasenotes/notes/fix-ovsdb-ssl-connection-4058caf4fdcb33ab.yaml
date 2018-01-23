@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Neutron agents now support SSL connections to OVSDB server.
+    To enable an SSL based connection, use an ``ssl`` prefixed URI for the
+    ``ovsdb_connection`` setting.  When using SSL it is also required to set
+    new ``ovs`` group options which include ``ssl_key_file``, ``ssl_cert_file``, and
+    ``ssl_ca_cert_file``.
