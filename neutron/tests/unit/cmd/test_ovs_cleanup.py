@@ -26,29 +26,6 @@ from neutron.tests import base
 
 class TestOVSCleanup(base.BaseTestCase):
 
-    @mock.patch('neutron.agent.ovsdb.impl_idl._connection')
-    @mock.patch('neutron.common.config.setup_logging')
-    @mock.patch('neutron.cmd.ovs_cleanup.setup_conf')
-    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS.get_bridges')
-    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
-    @mock.patch.object(util, 'collect_neutron_ports')
-    @mock.patch.object(util, 'delete_neutron_ports')
-    def test_main(self, mock_delete, mock_collect, mock_ovs,
-                  mock_get_bridges, mock_conf, mock_logging, mock_conn):
-        bridges = ['br-int', 'br-ex']
-        ports = ['p1', 'p2', 'p3']
-        conf = mock.Mock()
-        conf.ovs_all_ports = False
-        conf.ovs_integration_bridge = 'br-int'
-        conf.external_network_bridge = 'br-ex'
-        mock_conf.return_value = conf
-        mock_get_bridges.return_value = bridges
-        mock_collect.return_value = ports
-
-        util.main()
-        mock_collect.assert_called_once_with(set(bridges))
-        mock_delete.assert_called_once_with(ports)
-
     def test_collect_neutron_ports(self):
         port1 = ovs_lib.VifPort('tap1234', 1, uuidutils.generate_uuid(),
                                 '11:22:33:44:55:66', 'br')
