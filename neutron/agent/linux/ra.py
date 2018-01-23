@@ -123,7 +123,9 @@ class DaemonMonitor(object):
                 max_rtr_adv_interval=self._agent_conf.max_rtr_adv_interval,
                 network_mtu=int(network_mtu)))
 
-        file_utils.replace_file(radvd_conf, buf.getvalue())
+        contents = buf.getvalue()
+        LOG.debug("radvd config = %s", contents)
+        file_utils.replace_file(radvd_conf, contents)
         return radvd_conf
 
     def _get_radvd_process_manager(self, callback=None):
