@@ -19,10 +19,11 @@ from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron.objects import ports as obj_port
 from neutron.plugins.ml2 import driver_context
+from neutron.plugins.ml2 import models as ml2_models
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 
 
@@ -110,8 +111,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         ctx = context.get_admin_context()
         with self.port(name='name') as port:
             # emulating concurrent binding deletion
-            obj_port.PortBinding.delete_objects(
-                ctx, port_id=port['port']['id'])
+            with ctx.session.begin():
+                for item in (ctx.session.query(ml2_models.PortBinding).
+                             filter_by(port_id=port['port']['id'])):
+                    ctx.session.delete(item)
             self.assertIsNone(
                 self.plugin.get_bound_port_context(ctx, port['port']['id']))
 
@@ -188,9 +191,13 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             attrs['binding:host_id'] = 'host2'
             updated_port = attrs.copy()
             network = {'id': attrs['network_id']}
-            binding = obj_port.PortBinding.get_object(
-                ctx, port_id=original_port['id'],
-                host=original_port['binding:host_id'])
+            binding = ml2_models.PortBinding(
+                port_id=original_port['id'],
+                host=original_port['binding:host_id'],
+                vnic_type=original_port['binding:vnic_type'],
+                profile=jsonutils.dumps(original_port['binding:profile']),
+                vif_type=original_port['binding:vif_type'],
+                vif_details=original_port['binding:vif_details'])
             levels = []
             mech_context = driver_context.PortContext(
                 plugin, ctx, updated_port, network, binding, levels,

@@ -83,7 +83,6 @@ from neutron.db import subnet_service_type_db_models as service_type_db
 from neutron.db import vlantransparent_db
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
-from neutron.objects import ports as obj_port
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db
@@ -317,6 +316,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port = mech_context.current
         port_id = port['id']
         changes = False
+
         host = const.ATTR_NOT_SPECIFIED
         if attrs and portbindings.HOST_ID in attrs:
             host = attrs.get(portbindings.HOST_ID) or ''
@@ -340,9 +340,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if profile not in (None, const.ATTR_NOT_SPECIFIED,
                            self._get_profile(binding)):
-            binding.profile = profile
-            if (len(jsonutils.dumps(binding.profile)) >
-                    models.BINDING_PROFILE_LEN):
+            binding.profile = jsonutils.dumps(profile)
+            if len(binding.profile) > models.BINDING_PROFILE_LEN:
                 msg = _("binding:profile value too large")
                 raise exc.InvalidInput(error_message=msg)
             changes = True
@@ -350,8 +349,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # Unbind the port if needed.
         if changes:
             binding.vif_type = portbindings.VIF_TYPE_UNBOUND
-            binding.vif_details = None
-            binding.update()
+            binding.vif_details = ''
             db.clear_binding_levels(plugin_context, port_id, original_host)
             mech_context._clear_binding_levels()
             port['status'] = const.PORT_STATUS_DOWN
@@ -361,14 +359,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
             binding.vif_type = portbindings.VIF_TYPE_UNBOUND
-            binding.vif_details = None
+            binding.vif_details = ''
             db.clear_binding_levels(plugin_context, port_id, original_host)
             mech_context._clear_binding_levels()
             binding.host = ''
-            binding.update()
 
         self._update_port_dict_binding(port, binding)
-        binding.update()
+        binding.persist_state_to_session(plugin_context.session)
         return changes
 
     @db_api.retry_db_errors
@@ -440,15 +437,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         # transaction.
         port = orig_context.current
         orig_binding = orig_context._binding
-        profile = orig_binding.profile or {}
-        new_binding = obj_port.PortBinding(
-            orig_context._plugin_context,
-            port_id=orig_binding.port_id,
+        new_binding = models.PortBinding(
             host=orig_binding.host,
             vnic_type=orig_binding.vnic_type,
-            profile=profile,
+            profile=orig_binding.profile,
             vif_type=portbindings.VIF_TYPE_UNBOUND,
-            vif_details=None
+            vif_details=''
         )
         self._update_port_dict_binding(port, new_binding)
         new_context = driver_context.PortContext(
@@ -485,13 +479,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # mechanism driver update_port_*commit() calls.
             try:
                 port_db = self._get_port(plugin_context, port_id)
-                plugin_context.session.refresh(port_db)
-                # TODO(korzen) replace get_objects with port_obj.binding when
-                # Port OVO is integrated in _get_port
-                bindings = obj_port.PortBinding.get_objects(
-                    plugin_context, port_id=port_db.id,
-                    status=const.ACTIVE)
-                cur_binding = bindings.pop() if bindings else None
+                cur_binding = port_db.port_binding
             except exc.PortNotFound:
                 port_db, cur_binding = None, None
             if not port_db or not cur_binding:
@@ -558,10 +546,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                         cur_binding.host)
                 db.set_binding_levels(plugin_context,
                                       bind_context._binding_levels)
-                cur_context._binding = cur_binding
+                # refresh context with a snapshot of updated state
+                cur_context._binding = driver_context.InstanceSnapshot(
+                    cur_binding)
                 cur_context._binding_levels = bind_context._binding_levels
-                cur_binding.update()
-                plugin_context.session.refresh(port_db)
 
                 # Update PortContext's port dictionary to reflect the
                 # updated binding state.
@@ -612,10 +600,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _get_vif_details(self, binding):
         if binding.vif_details:
             try:
-                # TODO(lujinluo): remove isinstance check once we switch to
-                # objects for all operations.
-                if isinstance(binding.vif_details, dict):
-                    return binding.vif_details
                 return jsonutils.loads(binding.vif_details)
             except Exception:
                 LOG.error("Serialized vif_details DB value '%(value)s' "
@@ -627,10 +611,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _get_profile(self, binding):
         if binding.profile:
             try:
-                # TODO(lujinluo): remove isinstance check once we switch to
-                # objects for all operations.
-                if isinstance(binding.profile, dict):
-                    return binding.profile
                 return jsonutils.loads(binding.profile)
             except Exception:
                 LOG.error("Serialized profile DB value '%(value)s' for "
@@ -1314,12 +1294,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         original_port=original_port)
         with db_api.context_manager.writer.using(context):
             port_db = self._get_port(context, id)
-            context.session.refresh(port_db)
-            # TODO(korzen) replace _get_objects with port_obj.binding when
-            # Port OVO is integrated in _get_port
-            bindings = obj_port.PortBinding.get_objects(
-                context, port_id=port_db.id)
-            binding = bindings.pop() if bindings else None
+            binding = port_db.port_binding
             if not binding:
                 raise exc.PortNotFound(port_id=id)
             mac_address_updated = self._check_mac_update_allowed(
@@ -1458,21 +1433,19 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         binding = mech_context._binding
         port = mech_context.current
         port_id = port['id']
-        clear_host = None
 
         if binding.vif_type != portbindings.VIF_TYPE_UNBOUND:
-            binding.vif_details = None
+            binding.vif_details = ''
             binding.vif_type = portbindings.VIF_TYPE_UNBOUND
             if binding.host:
                 db.clear_binding_levels(plugin_context, port_id, binding.host)
-            clear_host = ''
+            binding.host = ''
 
         self._update_port_dict_binding(port, binding)
-        new_host = attrs and attrs.get(portbindings.HOST_ID) or clear_host
+        binding.host = attrs and attrs.get(portbindings.HOST_ID)
         binding.router_id = attrs and attrs.get('device_id')
-        if new_host:
-            binding.host = new_host
-        binding.update()
+        # merge into session to reflect changes
+        binding.persist_state_to_session(plugin_context.session)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
@@ -1543,11 +1516,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.context_manager.writer.using(context):
             try:
                 port_db = self._get_port(context, id)
-                # TODO(korzen) replace get_objects with port_obj.binding when
-                # Port OVO is integrated in _get_port
-                bindings = obj_port.PortBinding.get_objects(
-                    context, port_id=port_db.id)
-                binding = bindings.pop() if bindings else None
+                binding = port_db.port_binding
             except exc.PortNotFound:
                 LOG.debug("The port '%s' was deleted", id)
                 return
@@ -1791,7 +1760,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     return
                 if binding.status != status:
                     binding.status = status
-                    binding.update()
                     updated = True
 
         if (updated and
