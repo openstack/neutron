@@ -23,7 +23,6 @@ from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin as base_db
 from neutron.db import l3_dvr_db
-from neutron.db.models import metering as metering_models
 from neutron.extensions import metering
 from neutron.objects import base as base_obj
 from neutron.objects import metering as metering_objs
@@ -188,7 +187,9 @@ class MeteringDbMixin(metering.MeteringPluginBase,
                 if not routers:
                     routers = l3_obj.Router.get_objects(context)
             else:
-                routers = label.routers
+                filters = {
+                    'id': [router.id for router in label.db_obj.routers]}
+                routers = l3_obj.Router.get_objects(context, **filters)
 
             for router in routers:
                 if not router['admin_state_up']:
@@ -207,14 +208,14 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         return list(routers_dict.values())
 
     def get_sync_data_for_rule(self, context, rule):
-        label = context.session.query(
-            metering_models.MeteringLabel).get(
-                rule['metering_label_id'])
+        label = metering_objs.MeteringLabel.get_object(
+            context, id=rule['metering_label_id'])
 
         if label.shared:
             routers = l3_obj.Router.get_objects(context)
         else:
-            routers = label.routers
+            filters = {'id': [router.id for router in label.db_obj.routers]}
+            routers = l3_obj.Router.get_objects(context, **filters)
 
         routers_dict = {}
         for router in routers:
@@ -227,10 +228,8 @@ class MeteringDbMixin(metering.MeteringPluginBase,
         return list(routers_dict.values())
 
     def get_sync_data_metering(self, context, label_id=None):
-        labels = context.session.query(metering_models.MeteringLabel)
-
-        if label_id:
-            labels = labels.filter(
-                metering_models.MeteringLabel.id == label_id)
+        filters = {'id': [label_id]} if label_id else {}
+        labels = metering_objs.MeteringLabel.get_objects(
+            context, **filters)
 
         return self._process_sync_metering_data(context, labels)
