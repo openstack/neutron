@@ -1,5 +1,4 @@
 - project:
-    name: openstack/neutron
     check:
       jobs:
         - neutron-functional
