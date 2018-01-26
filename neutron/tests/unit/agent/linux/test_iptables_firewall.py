@@ -54,14 +54,14 @@ RAW_TABLE_OUTPUT = """
 :neutron-openvswi-PREROUTING - [0:0]
 -A PREROUTING -j neutron-openvswi-PREROUTING
  -A OUTPUT -j neutron-openvswi-OUTPUT
--A neutron-openvswi-PREROUTING -m physdev --physdev-in qvbe804433b-61 -j CT --zone 1
--A neutron-openvswi-PREROUTING -m physdev --physdev-in tape804433b-61 -j CT --zone 1
--A neutron-openvswi-PREROUTING -m physdev --physdev-in qvb95c24827-02 -j CT --zone 2
--A neutron-openvswi-PREROUTING -m physdev --physdev-in tap95c24827-02 -j CT --zone 2
--A neutron-openvswi-PREROUTING -m physdev --physdev-in qvb61634509-31 -j CT --zone 2
--A neutron-openvswi-PREROUTING -m physdev --physdev-in tap61634509-31 -j CT --zone 2
--A neutron-openvswi-PREROUTING -m physdev --physdev-in qvb8f46cf18-12 -j CT --zone 9
--A neutron-openvswi-PREROUTING -m physdev --physdev-in tap8f46cf18-12 -j CT --zone 9
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in qvbe804433b-61 -j CT --zone 4097
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in tape804433b-61 -j CT --zone 4097
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in qvb95c24827-02 -j CT --zone 4098
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in tap95c24827-02 -j CT --zone 4098
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in qvb61634509-31 -j CT --zone 4098
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in tap61634509-31 -j CT --zone 4098
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in qvb8f46cf18-12 -j CT --zone 4105
+-A neutron-openvswi-PREROUTING -m physdev --physdev-in tap8f46cf18-12 -j CT --zone 4105
 COMMIT
 # Completed on Fri Jul 31 16:13:28 2015
 """  # noqa
@@ -97,15 +97,14 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         # don't mess with sysctl knobs in unit tests
         self.firewall._enabled_netfilter_for_bridges = True
         # initial data has 1, 2, and 9 in use, see RAW_TABLE_OUTPUT above.
-        self._dev_zone_map = {'61634509-31': 2, '8f46cf18-12': 9,
-                              '95c24827-02': 2, 'e804433b-61': 1}
+        self._dev_zone_map = {'61634509-31': 4098, '8f46cf18-12': 4105,
+                              '95c24827-02': 4098, 'e804433b-61': 4097}
         get_rules_for_table_func = lambda x: RAW_TABLE_OUTPUT.split('\n')
         filtered_ports = {port_id: self._fake_port()
                           for port_id in self._dev_zone_map}
         self.firewall.ipconntrack = ip_conntrack.IpConntrackManager(
               get_rules_for_table_func, filtered_ports=filtered_ports,
               unfiltered_ports=dict())
-        self.firewall.ipconntrack._device_zone_map = self._dev_zone_map
 
     def _fake_port(self):
         return {'device': 'tapfake_dev',
@@ -2192,45 +2191,47 @@ class OVSHybridIptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                    self.firewall.ipconntrack._device_zone_map)
 
     def test__generate_device_zone(self):
-        # initial data has 1, 2, and 9 in use.
+        # initial data has 4097, 4098, and 4105 in use.
         # we fill from top up first.
-        self.assertEqual(10,
+        self.assertEqual(4106,
                    self.firewall.ipconntrack._generate_device_zone('test'))
 
         # once it's maxed out, it scans for gaps
         self.firewall.ipconntrack._device_zone_map['someport'] = (
             ip_conntrack.MAX_CONNTRACK_ZONES)
-        for i in range(3, 9):
+        for i in range(4099, 4105):
             self.assertEqual(i,
                    self.firewall.ipconntrack._generate_device_zone(i))
 
-        # 9 and 10 are taken so next should be 11
-        self.assertEqual(11,
+        # 4105 and 4106 are taken so next should be 4107
+        self.assertEqual(4107,
                    self.firewall.ipconntrack._generate_device_zone('p11'))
 
-        # take out zone 1 and make sure it's selected
+        # take out zone 4097 and make sure it's selected
         self.firewall.ipconntrack._device_zone_map.pop('e804433b-61')
-        self.assertEqual(1,
+        self.assertEqual(4097,
                    self.firewall.ipconntrack._generate_device_zone('p1'))
 
         # fill it up and then make sure an extra throws an error
-        for i in range(1, 65536):
+        for i in range(ip_conntrack.ZONE_START,
+            ip_conntrack.MAX_CONNTRACK_ZONES):
             self.firewall.ipconntrack._device_zone_map['dev-%s' % i] = i
         with testtools.ExpectedException(n_exc.CTZoneExhaustedError):
             self.firewall.ipconntrack._find_open_zone()
 
-        # with it full, try again, this should trigger a cleanup and return 1
-        self.assertEqual(1,
+        # with it full, try again, this should trigger a cleanup
+        # and return 4097
+        self.assertEqual(ip_conntrack.ZONE_START,
                    self.firewall.ipconntrack._generate_device_zone('p12'))
-        self.assertEqual({'p12': 1},
+        self.assertEqual({'p12': ip_conntrack.ZONE_START},
                    self.firewall.ipconntrack._device_zone_map)
 
     def test_get_device_zone(self):
         dev = {'device': 'tap1234', 'network_id': '12345678901234567'}
-        # initial data has 1, 2, and 9 in use.
-        self.assertEqual(10, self.firewall.ipconntrack.get_device_zone(dev))
+        # initial data has 4097, 4098, and 4105 in use.
+        self.assertEqual(4106, self.firewall.ipconntrack.get_device_zone(dev))
         # should have been truncated to 11 chars
-        self._dev_zone_map.update({'12345678901': 10})
+        self._dev_zone_map.update({'12345678901': 4106})
         self.assertEqual(self._dev_zone_map,
                self.firewall.ipconntrack._device_zone_map)
 
