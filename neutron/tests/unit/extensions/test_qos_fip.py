@@ -141,6 +141,124 @@ class FloatingIPQoSDBTestCaseBase(object):
             self.assertEqual(policy_obj.id,
                              body['floatingip'][qos_consts.QOS_POLICY_ID])
 
+    def _update_fip_with_port_or_qos_and_verify(
+            self, fip_id, port_id=None, qos_policy_id=None):
+        update_body = {'floatingip': {
+            'port_id': port_id,
+            qos_consts.QOS_POLICY_ID: qos_policy_id}}
+        body = self._update('floatingips', fip_id, update_body)
+        body = self._show('floatingips', body['floatingip']['id'])
+        self.assertEqual(port_id,
+                         body['floatingip']['port_id'])
+        self.assertEqual(qos_policy_id,
+                         body['floatingip'].get(qos_consts.QOS_POLICY_ID))
+
+    def test_floatingip_update_with_port_and_qos(self):
+        ctx = context.get_admin_context()
+        policy_obj = policy.QosPolicy(ctx,
+                                      id=uuidutils.generate_uuid(),
+                                      project_id='tenant', name='pol4',
+                                      rules=[])
+        policy_obj.create()
+        with self.network() as ext_net:
+            network_id = ext_net['network']['id']
+            self._set_net_external(network_id)
+            with self.subnet(
+                ext_net, cidr='10.10.10.0/24'
+            ), self.router() as router, self.subnet(
+                cidr='11.0.0.0/24') as private_subnet, self.port(
+                    private_subnet) as port:
+                self._add_external_gateway_to_router(
+                    router['router']['id'],
+                    network_id)
+                self._router_interface_action(
+                    'add', router['router']['id'],
+                    private_subnet['subnet']['id'],
+                    None)
+                fip = self._make_floatingip(
+                    self.fmt,
+                    network_id)
+                self.assertIsNone(fip['floatingip'].get('port_id'))
+                self.assertIsNone(
+                    fip['floatingip'].get(qos_consts.QOS_POLICY_ID))
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'],
+                    port['port']['id'],
+                    policy_obj.id)
+
+    def test_floatingip_update_with_port_and_qos_scenarios(self):
+        ctx = context.get_admin_context()
+        policy_obj_1 = policy.QosPolicy(ctx,
+                                        id=uuidutils.generate_uuid(),
+                                        project_id='tenant', name='pol2',
+                                        rules=[])
+        policy_obj_1.create()
+        policy_obj_2 = policy.QosPolicy(ctx,
+                                        id=uuidutils.generate_uuid(),
+                                        project_id='tenant', name='pol3',
+                                        rules=[])
+        policy_obj_2.create()
+        with self.network() as ext_net:
+            network_id = ext_net['network']['id']
+            self._set_net_external(network_id)
+            with self.subnet(
+                ext_net, cidr='10.10.10.0/24'
+            ), self.router() as router, self.subnet(
+                cidr='11.0.0.0/24') as private_subnet, self.port(
+                    private_subnet) as port_1, self.port(
+                        private_subnet) as port_2:
+                self._add_external_gateway_to_router(
+                    router['router']['id'],
+                    network_id)
+                self._router_interface_action(
+                    'add', router['router']['id'],
+                    private_subnet['subnet']['id'],
+                    None)
+                fip = self._make_floatingip(self.fmt, network_id)
+                self.assertIsNone(fip['floatingip'].get('port_id'))
+                self.assertIsNone(
+                    fip['floatingip'].get(qos_consts.QOS_POLICY_ID))
+
+                # update from: {port_id: null, qos_policy_id: null}
+                #        to  : {port_id: port_id_1, qos_policy_id: null}
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'],
+                    port_1['port']['id'],
+                    None)
+
+                # update from: {port_id: port_id_1, qos_policy_id: null}
+                #        to  : {port_id: port_id_1, qos_policy_id: policy_1}
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'],
+                    port_1['port']['id'],
+                    policy_obj_1.id)
+
+                # update from: {port_id: port_id_1, qos_policy_id: policy_1}
+                #        to  : {port_id: port_id_2, qos_policy_id: policy_2}
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'],
+                    port_2['port']['id'],
+                    policy_obj_2.id)
+
+                # update from: {port_id: port_id_2, qos_policy_id: policy_2}
+                #        to  : {port_id: port_id_1, qos_policy_id: null}
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'],
+                    port_1['port']['id'],
+                    None)
+
+                # update from: {port_id: port_id_1, qos_policy_id: null}
+                #        to  : {port_id: null, qos_policy_id: policy_1}
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'],
+                    None,
+                    policy_obj_1.id)
+
+                # update from: {port_id: null, qos_policy_id: policy_1}
+                #        to  : {port_id: null, qos_policy_id: null}
+                self._update_fip_with_port_or_qos_and_verify(
+                    fip['floatingip']['id'])
+
     def test_floatingip_remove_qos_policy_id(self):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
