@@ -435,6 +435,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         with warnings.catch_warnings(record=True) as warning_list:
             with db_api.context_manager.writer.using(self.ctx):
                 self.ctx.session.delete(port)
-            self.assertEqual([], warning_list)
+            self.assertEqual(
+                [], warning_list,
+                'Warnings: %s' % ';'.join([str(w) for w in warning_list]))
         bindings = ml2_db.get_distributed_port_bindings(self.ctx, port_id)
         self.assertEqual(0, len(bindings))
