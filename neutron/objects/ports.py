@@ -384,6 +384,20 @@ class Port(base.NeutronDbObject):
             {'port_id': self.id, 'security_group_id': sg_id}
         )
 
+    @classmethod
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    security_group_ids=None, **kwargs):
+        if security_group_ids:
+            ports_with_sg = cls.get_ports_ids_by_security_groups(
+                context, security_group_ids)
+            port_ids = kwargs.get("id", [])
+            if port_ids:
+                kwargs['id'] = list(set(port_ids) & set(ports_with_sg))
+            else:
+                kwargs['id'] = ports_with_sg
+        return super(Port, cls).get_objects(context, _pager, validate_filters,
+                                            **kwargs)
+
     # TODO(rossella_s): get rid of it once we switch the db model to using
     # custom types.
     @classmethod
@@ -444,3 +458,11 @@ class Port(base.NeutronDbObject):
             models_v2.Port.network_id == subnet['network_id']
         )
         return [cls._load_object(context, db_obj) for db_obj in ports.all()]
+
+    @classmethod
+    def get_ports_ids_by_security_groups(cls, context, security_group_ids):
+        query = context.session.query(sg_models.SecurityGroupPortBinding)
+        query = query.filter(
+            sg_models.SecurityGroupPortBinding.security_group_id.in_(
+                security_group_ids))
+        return [port_binding['port_id'] for port_binding in query.all()]

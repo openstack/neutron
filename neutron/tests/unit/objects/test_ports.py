@@ -225,34 +225,48 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
              'fixed_ips': {'subnet_id': subnet_id, 'network_id': network_id}})
 
     def test_security_group_ids(self):
-        sg1_id = self._create_test_security_group_id()
-        sg2_id = self._create_test_security_group_id()
-        groups = {sg1_id, sg2_id}
-        obj = self._make_object(self.obj_fields[0])
-        obj.security_group_ids = groups
-        obj.create()
+        groups = []
+        objs = []
+        for i in range(2):
+            groups.append(self._create_test_security_group_id())
+            objs.append(self._make_object(self.obj_fields[i]))
+            objs[i].security_group_ids = {groups[i]}
+            objs[i].create()
 
-        obj = ports.Port.get_object(self.context, id=obj.id)
-        self.assertEqual(groups, obj.security_group_ids)
-        self.assertEqual([obj],
+        self.assertEqual([objs[0]],
                          ports.Port.get_objects(
-                             self.context, security_group_ids=(sg1_id, )))
-        self.assertEqual([obj],
+                             self.context, security_group_ids=(groups[0], )))
+        self.assertEqual([objs[1]],
                          ports.Port.get_objects(
-                             self.context, security_group_ids=(sg2_id, )))
+                             self.context, security_group_ids=(groups[1], )))
 
         sg3_id = self._create_test_security_group_id()
-        obj.security_group_ids = {sg3_id}
-        obj.update()
+        objs[0].security_group_ids = {sg3_id}
+        objs[0].update()
 
-        obj = ports.Port.get_object(self.context, id=obj.id)
-        self.assertEqual({sg3_id}, obj.security_group_ids)
+        objs[0] = ports.Port.get_object(self.context, id=objs[0].id)
+        self.assertEqual({sg3_id}, objs[0].security_group_ids)
 
-        obj.security_group_ids = set()
-        obj.update()
+        objs[0].security_group_ids = set()
+        objs[0].update()
 
-        obj = ports.Port.get_object(self.context, id=obj.id)
-        self.assertFalse(obj.security_group_ids)
+        objs[0] = ports.Port.get_object(self.context, id=objs[0].id)
+        self.assertFalse(objs[0].security_group_ids)
+
+    def test_security_group_ids_and_port_id(self):
+        objs = []
+        group = self._create_test_security_group_id()
+        for i in range(2):
+            objs.append(self._make_object(self.obj_fields[i]))
+            objs[i].security_group_ids = {group}
+            objs[i].create()
+
+        for i in range(2):
+            self.assertEqual(
+                [objs[i]],
+                ports.Port.get_objects(
+                    self.context, id=(objs[i].id, ),
+                    security_group_ids=(group, )))
 
     def test__attach_security_group(self):
         obj = self._make_object(self.obj_fields[0])
