@@ -80,7 +80,7 @@ class RemoteResourceCache(object):
                 # been updated already and pushed to us in another thread.
                 LOG.debug("Ignoring stale update for %s: %s", rtype, resource)
                 continue
-            self._type_cache(rtype)[resource.id] = resource
+            self.record_resource_update(context, rtype, resource)
         LOG.debug("%s resources returned for queries %s", len(resources),
                   query_ids)
         self._satisfied_server_queries.update(query_ids)
