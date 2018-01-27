@@ -550,6 +550,21 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         ingress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
+    def test_filter_ipv4_egress_icmp_type_code_protocol_num(self):
+        prefix = FAKE_PREFIX['IPv4']
+        rule = {'ethertype': 'IPv4',
+                'direction': 'egress',
+                'protocol': '1',
+                'port_range_min': 8,
+                'port_range_max': 0,
+                'dest_ip_prefix': prefix}
+        egress = mock.call.add_rule(
+            'ofake_dev',
+            '-d %s -p icmp -m icmp --icmp-type 8/0 -j RETURN' % prefix,
+            comment=None)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
     def test_filter_ipv4_egress_tcp_port(self):
         rule = {'ethertype': 'IPv4',
                 'direction': 'egress',
@@ -924,6 +939,36 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         rule = {'ethertype': 'IPv6',
                 'direction': 'egress',
                 'protocol': 'icmp',
+                'port_range_min': 8,
+                'port_range_max': 0,
+                'dest_ip_prefix': prefix}
+        egress = mock.call.add_rule(
+            'ofake_dev',
+            '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
+            comment=None)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv6_egress_icmp_type_code_protocol_num(self):
+        prefix = FAKE_PREFIX['IPv6']
+        rule = {'ethertype': 'IPv6',
+                'direction': 'egress',
+                'protocol': '58',
+                'port_range_min': 8,
+                'port_range_max': 0,
+                'dest_ip_prefix': prefix}
+        egress = mock.call.add_rule(
+            'ofake_dev',
+            '-d %s -p ipv6-icmp -m icmp6 --icmpv6-type 8/0 -j RETURN' % prefix,
+            comment=None)
+        ingress = None
+        self._test_prepare_port_filter(rule, ingress, egress)
+
+    def test_filter_ipv6_egress_icmp_type_code_protocol_legacy_name(self):
+        prefix = FAKE_PREFIX['IPv6']
+        rule = {'ethertype': 'IPv6',
+                'direction': 'egress',
+                'protocol': 'icmpv6',
                 'port_range_min': 8,
                 'port_range_max': 0,
                 'dest_ip_prefix': prefix}
