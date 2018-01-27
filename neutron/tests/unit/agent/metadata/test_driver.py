@@ -161,6 +161,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'haproxy',
                 '-f', cfg_file]
 
+            log_tag = ("haproxy-" + metadata_driver.METADATA_SERVICE_NAME +
+                       "-" + router_id)
             cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
                 'user': self.EUNAME,
                 'group': self.EGNAME,
@@ -169,7 +171,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'res_type': 'Router',
                 'res_id': router_id,
                 'pidfile': self.PIDFILE,
-                'log_level': 'debug'}
+                'log_level': 'debug',
+                'log_tag': log_tag}
 
             mock_open.assert_has_calls([
                 mock.call(cfg_file, 'w'),
@@ -184,7 +187,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
-            config = metadata_driver.HaproxyConfigurator(mock.ANY, mock.ANY,
+            config = metadata_driver.HaproxyConfigurator(_uuid(), mock.ANY,
                                                          mock.ANY, mock.ANY,
                                                          self.EUNAME,
                                                          self.EGNAME,
@@ -196,7 +199,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         with mock.patch('grp.getgrnam', side_effect=KeyError),\
                 mock.patch('pwd.getpwnam',
                            return_value=test_utils.FakeUser(self.EUNAME)):
-            config = metadata_driver.HaproxyConfigurator(mock.ANY, mock.ANY,
+            config = metadata_driver.HaproxyConfigurator(_uuid(), mock.ANY,
                                                          mock.ANY, mock.ANY,
                                                          self.EUNAME,
                                                          self.EGNAME,
