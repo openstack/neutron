@@ -22,6 +22,11 @@
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
+    periodic:
+      jobs:
+        - neutron-functional
+        - neutron-tempest-postgres-full
+        - neutron-tempest-with-ryu-master
 
 - job:
     name: neutron-functional
@@ -267,3 +272,25 @@
       - ^setup.cfg$
       - ^tools/.*$
       - ^tox.ini$
+
+- job:
+    name: neutron-tempest-postgres-full
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-tempest-postgres-full/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-postgres-full/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
+
+- job:
+    name: neutron-tempest-with-ryu-master
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-tempest-with-ryu-master/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-with-ryu-master/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+      - openstack/tempest
