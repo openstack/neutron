@@ -1210,7 +1210,6 @@ class TestDnsmasq(TestBase):
             'dnsmasq',
             '--no-hosts',
             no_resolv,
-            '--strict-order',
             '--except-interface=lo',
             '--pid-file=%s' % expected_pid_file,
             '--dhcp-hostsfile=/dhcp/%s/host' % network.id,
