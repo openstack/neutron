@@ -328,7 +328,6 @@ class Dnsmasq(DhcpLocalProcess):
             'dnsmasq',
             '--no-hosts',
             _no_resolv,
-            '--strict-order',
             '--except-interface=lo',
             '--pid-file=%s' % pid_file,
             '--dhcp-hostsfile=%s' % self.get_conf_file_name('host'),
