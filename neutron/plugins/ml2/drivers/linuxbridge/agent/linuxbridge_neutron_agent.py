@@ -39,6 +39,7 @@ from neutron.common import config as common_config
 from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler
 from neutron.common import topics
+from neutron.common import utils
 from neutron.plugins.common import constants as p_const
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
@@ -335,7 +336,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             for ip in ips:
                 # If bridge ip address already exists, then don't add
                 # otherwise will report error
-                if not dst_device.addr.list(to=ip['cidr']):
+                to = utils.cidr_to_ip(ip['cidr'])
+                if not dst_device.addr.list(to=to):
                     dst_device.addr.add(cidr=ip['cidr'])
 
         if gateway:
