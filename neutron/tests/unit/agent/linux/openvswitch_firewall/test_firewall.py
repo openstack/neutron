@@ -586,7 +586,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         with mock.patch.object(
                 self.firewall, 'prepare_port_filter') as prepare_mock:
             self.firewall.update_port_filter(port_dict)
-        self.assertTrue(prepare_mock.called)
+        self.assertFalse(prepare_mock.called)
 
     def test_update_port_filter_port_security_disabled(self):
         port_dict = {'device': 'port-id',
@@ -683,10 +683,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         calls = self.mock_bridge.br.delete_flows.call_args_list
         self.assertIn(expected_call, calls)
 
-    def test__remove_egress_no_port_security_no_tag(self):
-        self.mock_bridge.br.db_get_val.return_value = {}
-        self.firewall._remove_egress_no_port_security('port_id')
-        self.assertFalse(self.mock_bridge.br.delete_flows.called)
+    def test__remove_egress_no_port_security_non_existing_port(self):
+        with testtools.ExpectedException(exceptions.OVSFWPortNotHandled):
+            self.firewall._remove_egress_no_port_security('foo')
 
     def test_process_trusted_ports_caches_port_id(self):
         self.firewall.process_trusted_ports(['port_id'])

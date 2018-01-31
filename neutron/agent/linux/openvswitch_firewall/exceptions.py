@@ -26,3 +26,7 @@ class OVSFWTagNotFound(exceptions.NeutronException):
     message = _(
         "Cannot get tag for port %(port_name)s from its other_config: "
         "%(other_config)s")
+
+
+class OVSFWPortNotHandled(exceptions.NeutronException):
+    message = ("Port %(port_id)s is not handled by the firewall.")
