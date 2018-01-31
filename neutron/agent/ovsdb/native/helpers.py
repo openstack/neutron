@@ -14,14 +14,9 @@
 
 import functools
 
-from debtcollector import moves
 from ovsdbapp.schema.open_vswitch import helpers
 
 from neutron.agent.common import utils
-
-_connection_to_manager_uri = moves.moved_function(
-    helpers._connection_to_manager_uri,
-    '_connection_to_manager_uri', __name__)
 
 enable_connection_uri = functools.partial(
     helpers.enable_connection_uri, execute=utils.execute, run_as_root=True,
