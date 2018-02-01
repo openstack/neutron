@@ -137,6 +137,26 @@ class QosBandwidthLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
             exception.IncompatibleObjectVersion,
             rule_obj.obj_to_primitive, '1.2')
 
+    def test_duplicate_rules(self):
+        policy_id = uuidutils.generate_uuid()
+        ingress_rule_1 = rule.QosBandwidthLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kbps=1000, max_burst=500,
+            direction=constants.INGRESS_DIRECTION)
+        ingress_rule_2 = rule.QosBandwidthLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kbps=2000, max_burst=500,
+            direction=constants.INGRESS_DIRECTION)
+        egress_rule = rule.QosBandwidthLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kbps=1000, max_burst=500,
+            direction=constants.EGRESS_DIRECTION)
+        dscp_rule = rule.QosDscpMarkingRule(
+            self.context, qos_policy_id=policy_id, dscp_mark=16)
+        self.assertTrue(ingress_rule_1.duplicates(ingress_rule_2))
+        self.assertFalse(ingress_rule_1.duplicates(egress_rule))
+        self.assertFalse(ingress_rule_1.duplicates(dscp_rule))
+
 
 class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                             testlib_api.SqlTestCase):
@@ -165,6 +185,19 @@ class QosDscpMarkingRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         self.assertRaises(exception.IncompatibleObjectVersion,
                      dscp_rule.obj_to_primitive, '1.0')
 
+    def test_duplicate_rules(self):
+        policy_id = uuidutils.generate_uuid()
+        dscp_rule_1 = rule.QosDscpMarkingRule(
+            self.context, qos_policy_id=policy_id, dscp_mark=16)
+        dscp_rule_2 = rule.QosDscpMarkingRule(
+            self.context, qos_policy_id=policy_id, dscp_mark=32)
+        bw_limit_rule = rule.QosBandwidthLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kbps=1000, max_burst=500,
+            direction=constants.EGRESS_DIRECTION)
+        self.assertTrue(dscp_rule_1.duplicates(dscp_rule_2))
+        self.assertFalse(dscp_rule_1.duplicates(bw_limit_rule))
+
 
 class QosDscpMarkingRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                          testlib_api.SqlTestCase):
@@ -192,6 +225,23 @@ class QosMinimumBandwidthRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
         for version in ['1.0', '1.1']:
             self.assertRaises(exception.IncompatibleObjectVersion,
                               min_bw_rule.obj_to_primitive, version)
+
+    def test_duplicate_rules(self):
+        policy_id = uuidutils.generate_uuid()
+        ingress_rule_1 = rule.QosMinimumBandwidthRule(
+            self.context, qos_policy_id=policy_id,
+            min_kbps=1000, direction=constants.INGRESS_DIRECTION)
+        ingress_rule_2 = rule.QosMinimumBandwidthRule(
+            self.context, qos_policy_id=policy_id,
+            min_kbps=2000, direction=constants.INGRESS_DIRECTION)
+        egress_rule = rule.QosMinimumBandwidthRule(
+            self.context, qos_policy_id=policy_id,
+            min_kbps=1000, direction=constants.EGRESS_DIRECTION)
+        dscp_rule = rule.QosDscpMarkingRule(
+            self.context, qos_policy_id=policy_id, dscp_mark=16)
+        self.assertTrue(ingress_rule_1.duplicates(ingress_rule_2))
+        self.assertFalse(ingress_rule_1.duplicates(egress_rule))
+        self.assertFalse(ingress_rule_1.duplicates(dscp_rule))
 
 
 class QosMinimumBandwidthRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,

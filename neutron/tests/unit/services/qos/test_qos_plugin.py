@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 import mock
 from neutron_lib import context
 from neutron_lib import exceptions as lib_exc
@@ -412,7 +414,9 @@ class TestQosPlugin(base.BaseQosTestCase):
     @mock.patch.object(rule_object.QosBandwidthLimitRule, 'create')
     def test_create_policy_rule(self, mock_qos_rule_create,
                                 mock_qos_policy_get):
-        mock_qos_policy_get.return_value = self.policy
+        _policy = copy.copy(self.policy)
+        setattr(_policy, "rules", [])
+        mock_qos_policy_get.return_value = _policy
         mock_manager = mock.Mock()
         mock_manager.attach_mock(mock_qos_rule_create, 'create')
         mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
@@ -475,6 +479,23 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.assertRaises(n_exc.QoSRuleParameterConflict,
                 self.qos_plugin.create_policy_minimum_bandwidth_rule,
                 self.ctxt, self.policy.id, self.rule_data)
+            mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
+
+    def test_create_policy_rule_duplicates(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.rule])
+        new_rule_data = {
+            'bandwidth_limit_rule': {
+                'max_kbps': 5000,
+                'direction': self.rule.direction
+            }
+        }
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy) as mock_qos_get_obj:
+            self.assertRaises(
+                n_exc.QoSRulesConflict,
+                self.qos_plugin.create_policy_bandwidth_limit_rule,
+                self.ctxt, _policy.id, new_rule_data)
             mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
 
     @mock.patch.object(rule_object.QosBandwidthLimitRule, 'update')
