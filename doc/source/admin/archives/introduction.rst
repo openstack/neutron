@@ -108,6 +108,12 @@ Set these options to configure SSL:
 Load-Balancer-as-a-Service (LBaaS) overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. warning::
+   Neutron-lbaas is deprecated as of Queens. Load-Balancer-as-a-Service
+   (LBaaS v2) is now provided by the `Octavia project
+   <https://docs.openstack.org/octavia/latest/>`_. Please see the FAQ:
+   https://wiki.openstack.org/wiki/Neutron/LBaaS/Deprecation
+
 Load-Balancer-as-a-Service (LBaaS) enables Networking to distribute
 incoming requests evenly among designated instances. This distribution
 ensures that the workload is shared predictably among instances and

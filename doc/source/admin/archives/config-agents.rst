@@ -351,6 +351,12 @@ The Neutron Metering agent resides beside neutron-l3-agent.
 Configure Load-Balancer-as-a-Service (LBaaS v2)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. warning::
+   Neutron-lbaas is deprecated as of Queens. Load-Balancer-as-a-Service
+   (LBaaS v2) is now provided by the `Octavia project
+   <https://docs.openstack.org/octavia/latest/>`_. Please see the FAQ:
+   https://wiki.openstack.org/wiki/Neutron/LBaaS/Deprecation
+
 For the back end, use either ``Octavia`` or ``HAProxy``.
 This example uses Octavia.
 

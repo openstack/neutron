@@ -398,60 +398,6 @@ basic security group operations:
 
           $ openstack port set --no-security-group PORT_ID
 
-Basic Load-Balancer-as-a-Service operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-
-   The Load-Balancer-as-a-Service (LBaaS) API provisions and configures
-   load balancers. The reference implementation is based on the HAProxy
-   software load balancer.
-
-This list shows example neutron commands that enable you to complete
-basic LBaaS operations:
-
--  Creates a load balancer pool by using specific provider.
-
-   ``--provider`` is an optional argument. If not used, the pool is
-   created with default provider for LBaaS service. You should configure
-   the default provider in the ``[service_providers]`` section of the
-   ``neutron.conf`` file. If no default provider is specified for LBaaS,
-   the ``--provider`` parameter is required for pool creation.
-
-   .. code-block:: console
-
-      $ neutron lb-pool-create --lb-method ROUND_ROBIN --name mypool \
-        --protocol HTTP --subnet-id SUBNET_UUID --provider PROVIDER_NAME
-
--  Associates two web servers with pool.
-
-   .. code-block:: console
-
-      $ neutron lb-member-create --address  WEBSERVER1_IP --protocol-port 80 mypool
-      $ neutron lb-member-create --address  WEBSERVER2_IP --protocol-port 80 mypool
-
--  Creates a health monitor that checks to make sure our instances are
-   still running on the specified protocol-port.
-
-   .. code-block:: console
-
-      $ neutron lb-healthmonitor-create --delay 3 --type HTTP --max-retries 3 \
-        --timeout 3
-
--  Associates a health monitor with pool.
-
-   .. code-block:: console
-
-      $ neutron lb-healthmonitor-associate  HEALTHMONITOR_UUID mypool
-
--  Creates a virtual IP (VIP) address that, when accessed through the
-   load balancer, directs the requests to one of the pool members.
-
-   .. code-block:: console
-
-      $ neutron lb-vip-create --name myvip --protocol-port 80 --protocol \
-        HTTP --subnet-id SUBNET_UUID mypool
-
 Plug-in specific extensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

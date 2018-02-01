@@ -399,12 +399,6 @@ configuration. Either or both the ``peer_address`` and the
 addressing modes and router modes described above should not impact
 support.
 
-
-LBaaS
------
-
-TODO
-
 FWaaS
 -----
 
