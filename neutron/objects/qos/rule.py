@@ -68,6 +68,25 @@ class QosRule(base.NeutronDbObject):
     # should be redefined in subclasses
     rule_type = None
 
+    duplicates_compare_fields = ()
+
+    def duplicates(self, other_rule):
+        """Returns True if rules have got same values in fields defined in
+        'duplicates_compare_fields' list.
+
+        In case when subclass don't have defined any field in
+        duplicates_compare_fields, only rule types are compared.
+        """
+
+        if self.rule_type != other_rule.rule_type:
+            return False
+
+        if self.duplicates_compare_fields:
+            for field in self.duplicates_compare_fields:
+                if getattr(self, field) != getattr(other_rule, field):
+                    return False
+        return True
+
     def to_dict(self):
         dict_ = super(QosRule, self).to_dict()
         dict_['type'] = self.rule_type
@@ -113,6 +132,8 @@ class QosBandwidthLimitRule(QosRule):
             default=n_const.EGRESS_DIRECTION)
     }
 
+    duplicates_compare_fields = ['direction']
+
     rule_type = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
 
     def obj_make_compatible(self, primitive, target_version):
@@ -153,6 +174,8 @@ class QosMinimumBandwidthRule(QosRule):
         'min_kbps': obj_fields.IntegerField(nullable=True),
         'direction': common_types.FlowDirectionEnumField(),
     }
+
+    duplicates_compare_fields = ['direction']
 
     rule_type = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
 

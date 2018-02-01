@@ -45,3 +45,24 @@ def check_bandwidth_rule_conflict(policy, rule_data):
                         policy_id=policy["id"],
                         existing_rule=rule.rule_type,
                         existing_value=rule.max_kbps)
+
+
+def check_rules_conflict(policy, rule_obj):
+    """Implementation of the QoS Policy rules conflicts.
+
+    This function checks if the new rule to be associated with policy
+    doesn't have any duplicate rule already in policy.
+    Raises an exception if conflict is identified.
+    """
+
+    for rule in policy.rules:
+        # NOTE(slaweq): we don't want to raise exception when compared rules
+        # have got same id as it means that it is probably exactly the same
+        # rule so there is no conflict
+        if rule.id == getattr(rule_obj, "id", None):
+            continue
+        if rule.duplicates(rule_obj):
+            raise n_exc.QoSRulesConflict(
+                new_rule_type=rule_obj.rule_type,
+                rule_id=rule.id,
+                policy_id=policy.id)
