@@ -23,7 +23,6 @@ import testscenarios
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import tc_lib
 from neutron.common import utils
-from neutron.tests import base as tests_base
 from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -333,7 +332,6 @@ class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
             body={'port': {'qos_policy_id': None}})
         self._wait_for_dscp_marking_rule_removed(vm)
 
-    @tests_base.unstable_test("bug 1733649")
     def test_dscp_marking_packets(self):
         # Create port (vm) which will be used to received and test packets
         receiver_port = self.safe_client.create_port(
