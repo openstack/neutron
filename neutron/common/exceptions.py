@@ -194,6 +194,12 @@ class QoSRuleParameterConflict(e.Conflict):
                 "%(existing_value)s.")
 
 
+class QoSRulesConflict(e.Conflict):
+    message = _("Rule %(new_rule_type)s conflicts with "
+                "rule %(rule_id)s which already exists in "
+                "QoS Policy %(policy_id)s.")
+
+
 class ExtensionsNotFound(e.NotFound):
     message = _("Extensions not found: %(extensions)s.")
 
