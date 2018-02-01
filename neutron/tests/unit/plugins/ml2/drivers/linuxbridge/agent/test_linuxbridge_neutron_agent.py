@@ -51,6 +51,9 @@ class FakeIpLinkCommand(object):
     def set_up(self):
         pass
 
+    def set_mtu(self, mtu):
+        pass
+
 
 class FakeIpDevice(object):
     def __init__(self):
@@ -80,21 +83,21 @@ class TestLinuxBridge(base.BaseTestCase):
 
     def test_ensure_physical_in_bridge_invalid(self):
         result = self.linux_bridge.ensure_physical_in_bridge(
-            'network_id', constants.TYPE_VLAN, 'physnetx', 7)
+            'network_id', constants.TYPE_VLAN, 'physnetx', 7, 1450)
         self.assertFalse(result)
 
     def test_ensure_physical_in_bridge_flat(self):
         with mock.patch.object(self.linux_bridge,
                                'ensure_flat_bridge') as flat_bridge_func:
             self.linux_bridge.ensure_physical_in_bridge(
-                'network_id', constants.TYPE_FLAT, 'physnet1', None)
+                'network_id', constants.TYPE_FLAT, 'physnet1', None, 1450)
         self.assertTrue(flat_bridge_func.called)
 
     def test_ensure_physical_in_bridge_vlan(self):
         with mock.patch.object(self.linux_bridge,
                                'ensure_vlan_bridge') as vlan_bridge_func:
             self.linux_bridge.ensure_physical_in_bridge(
-                'network_id', constants.TYPE_VLAN, 'physnet1', 7)
+                'network_id', constants.TYPE_VLAN, 'physnet1', 7, 1450)
         self.assertTrue(vlan_bridge_func.called)
 
     def test_ensure_physical_in_bridge_vxlan(self):
@@ -102,7 +105,7 @@ class TestLinuxBridge(base.BaseTestCase):
         with mock.patch.object(self.linux_bridge,
                                'ensure_vxlan_bridge') as vxlan_bridge_func:
             self.linux_bridge.ensure_physical_in_bridge(
-                'network_id', 'vxlan', 'physnet1', 7)
+                'network_id', 'vxlan', 'physnet1', 7, 1450)
         self.assertTrue(vxlan_bridge_func.called)
 
 
@@ -383,9 +386,10 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             de_fn.return_value = False
             vxlan_dev = FakeIpDevice()
             with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
+                    mock.patch.object(vxlan_dev.link, 'set_mtu') as set_mtu_fn,\
                     mock.patch.object(self.lbm.ip, 'add_vxlan',
                             return_value=vxlan_dev) as add_vxlan_fn:
-                retval = self.lbm.ensure_vxlan(seg_id)
+                retval = self.lbm.ensure_vxlan(seg_id, mtu=1450)
                 self.assertEqual("vxlan-" + seg_id, retval)
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
                                                 group="224.0.0.1",
@@ -394,6 +398,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                                 ttl=None,
                                                 dev=self.lbm.local_int)
                 dv6_fn.assert_called_once_with()
+                set_mtu_fn.assert_called_once_with(1450)
                 cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
                 self.assertEqual("vxlan-" + seg_id,
                                  self.lbm.ensure_vxlan(seg_id))
@@ -517,18 +522,18 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_ensure_physical_in_bridge(self):
         self.assertFalse(
             self.lbm.ensure_physical_in_bridge("123", constants.TYPE_VLAN,
-                                               "phys", "1")
+                                               "phys", "1", 1450)
         )
         with mock.patch.object(self.lbm, "ensure_flat_bridge") as flbr_fn:
             self.assertTrue(
                 self.lbm.ensure_physical_in_bridge("123", constants.TYPE_FLAT,
-                                                   "physnet1", None)
+                                                   "physnet1", None, 1450)
             )
             self.assertTrue(flbr_fn.called)
         with mock.patch.object(self.lbm, "ensure_vlan_bridge") as vlbr_fn:
             self.assertTrue(
                 self.lbm.ensure_physical_in_bridge("123", constants.TYPE_VLAN,
-                                                   "physnet1", "1")
+                                                   "physnet1", "1", 1450)
             )
             self.assertTrue(vlbr_fn.called)
 
@@ -536,14 +541,14 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             self.lbm.vxlan_mode = lconst.VXLAN_MCAST
             self.assertTrue(
                 self.lbm.ensure_physical_in_bridge("123", constants.TYPE_VXLAN,
-                                                   "physnet1", "1")
+                                                   "physnet1", "1", 1450)
             )
             self.assertTrue(vlbr_fn.called)
 
     def test_ensure_physical_in_bridge_with_existed_brq(self):
         with mock.patch.object(linuxbridge_neutron_agent.LOG, 'error') as log:
                 self.lbm.ensure_physical_in_bridge("123", constants.TYPE_FLAT,
-                                                   "physnet9", "1")
+                                                   "physnet9", "1", 1450)
                 self.assertEqual(1, log.call_count)
 
     @mock.patch.object(ip_lib, "device_exists", return_value=False)
