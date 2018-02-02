@@ -1524,6 +1524,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             network = self.get_network(context, port['network_id'])
             bound_mech_contexts = []
+            kwargs = {
+                'context': context,
+                'id': id,
+                'network': network,
+                'port': port,
+                'port_db': port_db,
+                'bindings': binding,
+            }
             device_owner = port['device_owner']
             if device_owner == const.DEVICE_OWNER_DVR_INTERFACE:
                 bindings = db.get_distributed_port_bindings(context,
@@ -1531,6 +1539,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 for bind in bindings:
                     levels = db.get_binding_levels(context, id,
                                                    bind.host)
+                    kwargs['bind'] = bind
+                    kwargs['levels'] = levels
+                    registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
+                                    self, **kwargs)
                     mech_context = driver_context.PortContext(
                         self, context, port, network, bind, levels)
                     self.mechanism_manager.delete_port_precommit(mech_context)
@@ -1538,6 +1550,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             else:
                 levels = db.get_binding_levels(context, id,
                                                binding.host)
+                kwargs['bind'] = None
+                kwargs['levels'] = levels
+                registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
+                                self, **kwargs)
                 mech_context = driver_context.PortContext(
                     self, context, port, network, binding, levels)
                 self.mechanism_manager.delete_port_precommit(mech_context)

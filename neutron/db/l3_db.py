@@ -173,6 +173,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         "deleting.", port_id)
             self._core_plugin.delete_port(
                 context, port_id, l3_port_check=False)
+            registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
+                            self, **fips[0])
 
     def _get_dead_floating_port_candidates(self, context):
         filters = {'device_id': ['PENDING'],
@@ -1392,6 +1394,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floatingip_obj = l3_obj.FloatingIP.get_object(
                 context, id=floatingip_obj.id)
             floatingip_db = floatingip_obj.db_obj
+            registry.notify(resources.FLOATING_IP,
+                            events.PRECOMMIT_UPDATE,
+                            self,
+                            floatingip=floatingip,
+                            floatingip_db=floatingip_db,
+                            old_floatingip=old_floatingip,
+                            **assoc_result)
 
         registry.notify(resources.FLOATING_IP,
                         events.AFTER_UPDATE,
@@ -1425,6 +1434,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return l3_obj.FloatingIP.update_object(
             context, {'status': status}, id=floatingip_id)
 
+    @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
+    def _precommit_delete_port_callback(
+            self, resource, event, trigger, **kwargs):
+        if (kwargs['port']['device_owner'] ==
+                constants.DEVICE_OWNER_FLOATINGIP):
+            registry.notify(resources.FLOATING_IP, events.PRECOMMIT_DELETE,
+                            self, **kwargs)
+
     def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)
         floatingip_dict = self._make_floatingip_dict(floatingip)
@@ -1437,6 +1454,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         self._core_plugin.delete_port(context.elevated(),
                                       floatingip.floating_port_id,
                                       l3_port_check=False)
+        registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
+                        self, **floatingip_dict)
         return floatingip_dict
 
     @db_api.retry_if_session_inactive()
@@ -1547,12 +1566,34 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floating_ip_objs = l3_obj.FloatingIP.get_objects(
                 context, fixed_port_id=port_id)
             router_ids = {fip.router_id for fip in floating_ip_objs}
+            old_fips = {fip.id: fip.to_dict() for fip in floating_ip_objs}
             values = {'fixed_port_id': None,
                       'fixed_ip_address': None,
                       'router_id': None}
             l3_obj.FloatingIP.update_objects(
                 context, values, fixed_port_id=port_id)
-            return router_ids
+            for fip in floating_ip_objs:
+                registry.notify(resources.FLOATING_IP, events.PRECOMMIT_UPDATE,
+                                self,
+                                floatingip={l3_apidef.FLOATINGIP: values},
+                                floatingip_db=fip,
+                                old_floatingip=old_fips[fip.id],
+                                router_ids=router_ids)
+
+        for fip in floating_ip_objs:
+            assoc_result = {
+                'fixed_ip_address': None,
+                'fixed_port_id': None,
+                'router_id': None,
+                'floating_ip_address': fip.floating_ip_address,
+                'floating_network_id': fip.floating_network_id,
+                'floating_ip_id': fip.id,
+                'context': context,
+                'router_ids': router_ids,
+            }
+            registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
+                            **assoc_result)
+        return router_ids
 
     def _get_floatingips_by_port_id(self, context, port_id):
         """Helper function to retrieve the fips associated with a port_id."""
