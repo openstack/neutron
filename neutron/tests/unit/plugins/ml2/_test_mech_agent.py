@@ -52,6 +52,7 @@ class FakePortContext(api.PortContext):
         self._bound_vif_type = None
         self._bound_vif_details = None
         self._original = original
+        self._binding_levels = []
 
     @property
     def current(self):
@@ -75,14 +76,24 @@ class FakePortContext(api.PortContext):
     def network(self):
         return self._network_context
 
+    def _prepare_to_bind(self, segments_to_bind):
+        self._segments_to_bind = segments_to_bind
+        self._new_bound_segment = None
+        self._next_segments_to_bind = None
+
+    def _push_binding_level(self, binding_level):
+        self._binding_levels.append(binding_level)
+
+    def _pop_binding_level(self):
+        return self._binding_levels.pop()
+
     @property
     def binding_levels(self):
-        if self._bound_segment:
+        if self._binding_levels:
             return [{
-                api.BOUND_DRIVER: 'fake_driver',
-                api.BOUND_SEGMENT: self._expand_segment(
-                    self._bound_segment)
-            }]
+                api.BOUND_DRIVER: level.driver,
+                api.BOUND_SEGMENT: self._expand_segment(level.segment_id)
+            } for level in self._binding_levels]
 
     @property
     def original_binding_levels(self):
@@ -90,7 +101,8 @@ class FakePortContext(api.PortContext):
 
     @property
     def top_bound_segment(self):
-        return self._expand_segment(self._bound_segment)
+        if self._binding_levels:
+            return self._expand_segment(self._binding_levels[0].segment_id)
 
     @property
     def original_top_bound_segment(self):
@@ -98,7 +110,8 @@ class FakePortContext(api.PortContext):
 
     @property
     def bottom_bound_segment(self):
-        return self._expand_segment(self._bound_segment)
+        if self._binding_levels:
+            return self._expand_segment(self._binding_levels[-1].segment_id)
 
     @property
     def original_bottom_bound_segment(self):

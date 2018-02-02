@@ -23,24 +23,50 @@ from oslo_db import exception as db_exc
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import managers
 from neutron.tests import base
+from neutron.tests.unit.plugins.ml2._test_mech_agent import FakePortContext
+from neutron.tests.unit.plugins.ml2.drivers import mech_fake_agent
 from neutron.tests.unit.plugins.ml2.drivers import mechanism_test
 
 
 class TestManagers(base.BaseTestCase):
+    def setUp(self):
+        super(TestManagers, self).setUp()
+        self.segment_id = 49
+        self.segments_to_bind = [{api.ID: "id1",
+                             'network_type': 'vlan',
+                             'physical_network': 'public',
+                             api.SEGMENTATION_ID: self.segment_id}]
+        self.context = FakePortContext(None,
+                                  None,
+                                       self.segments_to_bind)
+        self.context._binding = mock.Mock()
+        self.context._binding_levels = []
+        self.context._new_bound_segment = self.segment_id
+        self.context._next_segments_to_bind = None
 
     def test__check_driver_to_bind(self):
+        cfg.CONF.set_override('mechanism_drivers', ['fake_agent'],
+                              group='ml2')
         manager = managers.MechanismManager()
-        bindinglevel = mock.Mock()
-        bindinglevel.driver = 'fake_driver'
-        bindinglevel.segment_id = 'fake_seg_id'
-        binding_levels = [bindinglevel]
-        segments_to_bind = [{api.SEGMENTATION_ID: 'fake_seg_id'}]
-        self.assertFalse(manager._check_driver_to_bind(
-            'fake_driver', segments_to_bind, binding_levels))
 
-        bindinglevel.segment_id = 'fake_seg_id1'
-        self.assertTrue(manager._check_driver_to_bind(
-            'fake_driver', segments_to_bind, binding_levels))
+        with mock.patch.object(mech_fake_agent.FakeAgentMechanismDriver,
+                               'bind_port') as bind_port:
+            manager._bind_port_level(self.context, 0, self.segments_to_bind)
+        self.assertEqual(1, bind_port.call_count)
+
+    def test__check_driver_to_bind2(self):
+        cfg.CONF.set_override('mechanism_drivers', ['fake_agent'],
+                              group='ml2')
+        manager = managers.MechanismManager()
+        self.context._binding_levels = [mock.Mock(port_id="port_id",
+                                             level=0,
+                                             driver='fake_agent',
+                                             segment_id=self.segment_id)]
+
+        with mock.patch.object(mech_fake_agent.FakeAgentMechanismDriver,
+                               'bind_port') as bind_port:
+            manager._bind_port_level(self.context, 0, self.segments_to_bind)
+        self.assertEqual(0, bind_port.call_count)
 
     @mock.patch.object(managers.LOG, 'critical')
     @mock.patch.object(managers.MechanismManager, '_driver_not_loaded')
