@@ -295,3 +295,33 @@ class NeutronOvsdbIdl(OvsdbIdl):
     def __init__(self, context):
         vlog.use_oslo_logger()
         super(NeutronOvsdbIdl, self).__init__(context)
+
+    def ovs_cleanup(self, bridges, all_ports=False):
+        return OvsCleanup(self, bridges, all_ports)
+
+
+class OvsCleanup(cmd.BaseCommand):
+    def __init__(self, api, bridge, all_ports=False):
+        super(OvsCleanup, self).__init__(api)
+        self.bridge = bridge
+        self.all_ports = all_ports
+
+    def run_idl(self, txn):
+        br = idlutils.row_by_value(self.api.idl, 'Bridge', 'name', self.bridge)
+        for port in br.ports:
+            if not any(self.is_deletable_port(iface)
+                       for iface in port.interfaces):
+                continue
+            br.delvalue('ports', port)
+            for iface in port.interfaces:
+                iface.delete()
+            port.delete()
+
+    def is_deletable_port(self, port):
+        # Deletable defined as "looks like vif port and not set to skip delete"
+        if self.all_ports:
+            return True
+        if not all(field in port.external_ids
+                   for field in ('iface-id', 'attached-mac')):
+            return False
+        return True
