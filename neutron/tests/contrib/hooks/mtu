@@ -3,7 +3,7 @@
 [neutron_plugin_options]
 available_type_drivers=flat,geneve,vlan,gre,local,vxlan
 
-[[post-config|/$Q_PLUGIN_CONF_FILE]]
+[[post-config|/$NEUTRON_CORE_PLUGIN_CONF]]
 
 [ml2]
 type_drivers=flat,geneve,vlan,gre,local,vxlan

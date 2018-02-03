@@ -1,4 +1,4 @@
-SRIOV_AGENT_CONF="${Q_PLUGIN_CONF_PATH}/sriov_agent.ini"
+SRIOV_AGENT_CONF="${NEUTRON_CORE_PLUGIN_CONF_PATH}/sriov_agent.ini"
 SRIOV_AGENT_BINARY="${NEUTRON_BIN_DIR}/neutron-sriov-nic-agent"
 
 function configure_l2_agent_sriovnicswitch {
