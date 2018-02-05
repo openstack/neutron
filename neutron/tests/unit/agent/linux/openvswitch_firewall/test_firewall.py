@@ -17,6 +17,7 @@ from neutron_lib import constants
 import testtools
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.common import utils
 from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
@@ -24,6 +25,8 @@ from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.common import constants as n_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
+from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.ovs_ofctl \
+    import ovs_bridge
 from neutron.tests import base
 
 TESTING_VLAN_TAG = 1
@@ -716,3 +719,49 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     def test_remove_trusted_ports_not_managed_port(self):
         """Check that exception is not propagated outside."""
         self.firewall.remove_trusted_ports(['port_id'])
+
+
+class TestCookieContext(base.BaseTestCase):
+    def setUp(self):
+        super(TestCookieContext, self).setUp()
+        # Don't attempt to connect to ovsdb
+        mock.patch('neutron.agent.ovsdb.api.from_config').start()
+        # Don't trigger iptables -> ovsfw migration
+        mock.patch(
+            'neutron.agent.linux.openvswitch_firewall.iptables.Helper').start()
+
+        self.execute = mock.patch.object(
+            utils, "execute", spec=utils.execute).start()
+        bridge = ovs_bridge.OVSAgentBridge('foo')
+        mock.patch.object(
+            ovsfw.OVSFirewallDriver, 'initialize_bridge',
+            return_value=bridge.deferred(
+                full_ordered=True, use_bundle=True)).start()
+
+        self.firewall = ovsfw.OVSFirewallDriver(bridge)
+        # Remove calls from firewall initialization
+        self.execute.reset_mock()
+
+    def test_cookie_is_different_in_context(self):
+        default_cookie = self.firewall.int_br.br.default_cookie
+        with self.firewall.update_cookie_context():
+            self.firewall._add_flow(actions='drop')
+            update_cookie = self.firewall._update_cookie
+        self.firewall._add_flow(actions='drop')
+        expected_calls = [
+            mock.call(
+                mock.ANY,
+                process_input='hard_timeout=0,idle_timeout=0,priority=1,'
+                              'cookie=%d,actions=drop' % cookie,
+                run_as_root=mock.ANY,
+            ) for cookie in (update_cookie, default_cookie)
+        ]
+
+        self.execute.assert_has_calls(expected_calls)
+
+    def test_context_cookie_is_not_left_as_used(self):
+        with self.firewall.update_cookie_context():
+            update_cookie = self.firewall._update_cookie
+        self.assertNotIn(
+            update_cookie,
+            self.firewall.int_br.br._reserved_cookies)

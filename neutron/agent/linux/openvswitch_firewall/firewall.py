@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import contextlib
 import copy
 
 import netaddr
@@ -391,6 +392,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         """
         self.int_br = self.initialize_bridge(integration_bridge)
+        self._update_cookie = None
         self.sg_port_map = SGPortMap()
         self.sg_to_delete = set()
         self._deferred = False
@@ -400,6 +402,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         self.iptables_helper = iptables.Helper(self.int_br.br)
         self.iptables_helper.load_driver_if_needed()
+
+    @contextlib.contextmanager
+    def update_cookie_context(self):
+        try:
+            self._update_cookie = self.int_br.br.request_cookie()
+            yield
+        finally:
+            self.int_br.br.unset_cookie(self._update_cookie)
+            self._update_cookie = None
 
     def security_group_updated(self, action_type, sec_group_ids,
                                device_ids=None):
@@ -418,6 +429,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         create_reg_numbers(kwargs)
         if isinstance(dl_type, int):
             kwargs['dl_type'] = "0x{:04x}".format(dl_type)
+        if self._update_cookie:
+            kwargs['cookie'] = self._update_cookie
         if self._deferred:
             self.int_br.add_flow(**kwargs)
         else:
@@ -499,7 +512,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         if not firewall.port_sec_enabled(port):
             self._initialize_egress_no_port_security(port['device'])
             return
-        self._set_port_filters(port, old_port_expected=False)
+
+        old_of_port = self.get_ofport(port)
+        of_port = self.get_or_create_ofport(port)
+        if old_of_port:
+            LOG.info("Initializing port %s that was already initialized.",
+                     port['device'])
+            self._update_flows_for_port(of_port, old_of_port)
+        else:
+            self._set_port_filters(of_port)
 
     def update_port_filter(self, port):
         """Update rules for given port
@@ -521,26 +542,31 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 self.prepare_port_filter(port)
                 return
         try:
-            self._set_port_filters(port, old_port_expected=True)
+            # Make sure delete old allowed_address_pair MACs because
+            # allowed_address_pair MACs will be updated in
+            # self.get_or_create_ofport(port)
+            old_of_port = self.get_ofport(port)
+            of_port = self.get_or_create_ofport(port)
+            if old_of_port:
+                self._update_flows_for_port(of_port, old_of_port)
+            else:
+                self._set_port_filters(of_port)
+
         except exceptions.OVSFWPortNotFound as not_found_error:
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
                      {'port_id': port['device'],
                       'err': not_found_error})
 
-    def _set_port_filters(self, port, old_port_expected):
-        old_of_port = self.get_ofport(port)
-        # Make sure delete old allowed_address_pair MACs because
-        # allowed_address_pair MACs will be updated in
-        # self.get_or_create_ofport(port)
-        if old_of_port:
-            if not old_port_expected:
-                LOG.info("Initializing port %s that was already "
-                         "initialized.", port['device'])
-            self.delete_all_port_flows(old_of_port)
-        # TODO(jlibosva): Handle firewall blink
-        of_port = self.get_or_create_ofport(port)
+    def _set_port_filters(self, of_port):
         self.initialize_port_flows(of_port)
         self.add_flows_from_rules(of_port)
+
+    def _update_flows_for_port(self, of_port, old_of_port):
+        with self.update_cookie_context():
+            self._set_port_filters(of_port)
+        self.delete_all_port_flows(old_of_port)
+        # Rewrite update cookie with default cookie
+        self._set_port_filters(of_port)
 
     def remove_port_filter(self, port):
         """Remove port from firewall
