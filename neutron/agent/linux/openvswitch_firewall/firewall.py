@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import copy
 
 import netaddr
 from neutron_lib import constants as lib_const
@@ -91,7 +92,7 @@ class SecurityGroup(object):
         """
         self.raw_rules = []
         self.remote_rules = []
-        for rule in rules:
+        for rule in copy.deepcopy(rules):
             protocol = rule.get('protocol')
             if protocol is not None:
                 if protocol.isdigit():
