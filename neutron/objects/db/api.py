@@ -21,19 +21,20 @@ from neutron.objects import utils as obj_utils
 
 
 # Common database operation implementations
-def _get_filter_query(context, model, **kwargs):
-    with context.session.begin(subtransactions=True):
+def _get_filter_query(obj_cls, context, **kwargs):
+    with obj_cls.db_context_reader(context):
         filters = _kwargs_to_filters(**kwargs)
-        query = model_query.get_collection_query(context, model, filters)
+        query = model_query.get_collection_query(
+            context, obj_cls.db_model, filters)
         return query
 
 
-def get_object(context, model, **kwargs):
-    return _get_filter_query(context, model, **kwargs).first()
+def get_object(obj_cls, context, **kwargs):
+    return _get_filter_query(obj_cls, context, **kwargs).first()
 
 
-def count(context, model, **kwargs):
-    return _get_filter_query(context, model, **kwargs).count()
+def count(obj_cls, context, **kwargs):
+    return _get_filter_query(obj_cls, context, **kwargs).count()
 
 
 def _kwargs_to_filters(**kwargs):
@@ -42,77 +43,80 @@ def _kwargs_to_filters(**kwargs):
             for k, v in kwargs.items()}
 
 
-def get_objects(context, model, _pager=None, **kwargs):
-    with context.session.begin(subtransactions=True):
+def get_objects(obj_cls, context, _pager=None, **kwargs):
+    with obj_cls.db_context_reader(context):
         filters = _kwargs_to_filters(**kwargs)
         return model_query.get_collection(
-            context, model,
+            context, obj_cls.db_model,
             dict_func=None,  # return all the data
             filters=filters,
-            **(_pager.to_kwargs(context, model) if _pager else {}))
+            **(_pager.to_kwargs(context, obj_cls) if _pager else {}))
 
 
-def create_object(context, model, values, populate_id=True):
-    with context.session.begin(subtransactions=True):
-        if populate_id and 'id' not in values and hasattr(model, 'id'):
+def create_object(obj_cls, context, values, populate_id=True):
+    with obj_cls.db_context_writer(context):
+        if (populate_id and
+                'id' not in values and
+                hasattr(obj_cls.db_model, 'id')):
             values['id'] = uuidutils.generate_uuid()
-        db_obj = model(**values)
+        db_obj = obj_cls.db_model(**values)
         context.session.add(db_obj)
     return db_obj
 
 
-def _safe_get_object(context, model, **kwargs):
-    db_obj = get_object(context, model, **kwargs)
+def _safe_get_object(obj_cls, context, **kwargs):
+    db_obj = get_object(obj_cls, context, **kwargs)
 
     if db_obj is None:
         key = ", ".join(['%s=%s' % (key, value) for (key, value)
                          in kwargs.items()])
-        raise n_exc.ObjectNotFound(id="%s(%s)" % (model.__name__, key))
+        raise n_exc.ObjectNotFound(
+            id="%s(%s)" % (obj_cls.db_model.__name__, key))
     return db_obj
 
 
-def update_object(context, model, values, **kwargs):
-    with context.session.begin(subtransactions=True):
-        db_obj = _safe_get_object(context, model, **kwargs)
+def update_object(obj_cls, context, values, **kwargs):
+    with obj_cls.db_context_writer(context):
+        db_obj = _safe_get_object(obj_cls, context, **kwargs)
         db_obj.update(values)
         db_obj.save(session=context.session)
     return db_obj
 
 
-def delete_object(context, model, **kwargs):
-    with context.session.begin(subtransactions=True):
-        db_obj = _safe_get_object(context, model, **kwargs)
+def delete_object(obj_cls, context, **kwargs):
+    with obj_cls.db_context_writer(context):
+        db_obj = _safe_get_object(obj_cls, context, **kwargs)
         context.session.delete(db_obj)
 
 
-def update_objects(context, model, values, **kwargs):
+def update_objects(obj_cls, context, values, **kwargs):
     '''Update matching objects, if any. Return number of updated objects.
 
     This function does not raise exceptions if nothing matches.
 
-    :param model: SQL model
+    :param obj_cls: Object class
     :param values: values to update in matching objects
     :param kwargs: multiple filters defined by key=value pairs
     :return: Number of entries updated
     '''
-    with context.session.begin(subtransactions=True):
+    with obj_cls.db_context_writer(context):
         if not values:
-            return count(context, model, **kwargs)
-        q = _get_filter_query(context, model, **kwargs)
+            return count(obj_cls, context, **kwargs)
+        q = _get_filter_query(obj_cls, context, **kwargs)
         return q.update(values, synchronize_session=False)
 
 
-def delete_objects(context, model, **kwargs):
+def delete_objects(obj_cls, context, **kwargs):
     '''Delete matching objects, if any. Return number of deleted objects.
 
     This function does not raise exceptions if nothing matches.
 
-    :param model: SQL model
+    :param obj_cls: Object class
     :param kwargs: multiple filters defined by key=value pairs
     :return: Number of entries deleted
     '''
-    with context.session.begin(subtransactions=True):
-        db_objs = get_objects(context, model, **kwargs)
+    with obj_cls.db_context_writer(context):
+        db_objs = get_objects(obj_cls, context, **kwargs)
         for db_obj in db_objs:
             context.session.delete(db_obj)
         return len(db_objs)

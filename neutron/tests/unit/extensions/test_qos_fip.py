@@ -18,6 +18,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common import exceptions as n_exception
+from neutron.conf.db import extraroute_db
 from neutron.db import l3_fip_qos
 from neutron.extensions import l3
 from neutron.extensions import qos_fip
@@ -211,9 +212,12 @@ class FloatingIPQoSDBIntTestCase(test_l3.L3BaseForIntTests,
             plugin = ('neutron.tests.unit.extensions.test_qos_fip.'
                       'TestFloatingIPQoSIntPlugin')
         service_plugins = {'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
+
+        extraroute_db.register_db_extraroute_opts()
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
+
         ext_mgr = FloatingIPQoSTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(
             plugin=plugin,
@@ -236,9 +240,11 @@ class FloatingIPQoSDBSepTestCase(test_l3.L3BaseForSepTests,
         service_plugins = {'l3_plugin_name': l3_plugin,
                            'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
 
+        extraroute_db.register_db_extraroute_opts()
         # for these tests we need to enable overlapping ips
         cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
+
         ext_mgr = FloatingIPQoSTestExtensionManager()
         super(test_l3.L3BaseForSepTests, self).setUp(
             plugin=plugin,

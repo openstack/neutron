@@ -16,7 +16,6 @@
 import netaddr
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.db import api as db_api
 from neutron.db import models_v2 as models
 from neutron.objects import base
 from neutron.objects import common_types
@@ -70,7 +69,7 @@ class SubnetPool(base.NeutronDbObject):
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def create(self):
         fields = self.obj_get_changes()
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             prefixes = self.prefixes
             super(SubnetPool, self).create()
             if 'prefixes' in fields:
@@ -79,7 +78,7 @@ class SubnetPool(base.NeutronDbObject):
     # TODO(ihrachys): Consider extending base to trigger registered methods
     def update(self):
         fields = self.obj_get_changes()
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             super(SubnetPool, self).update()
             if 'prefixes' in fields:
                 self._attach_prefixes(fields['prefixes'])

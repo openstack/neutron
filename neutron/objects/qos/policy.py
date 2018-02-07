@@ -22,17 +22,30 @@ from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import exceptions
-from neutron.db import api as db_api
 from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_db_model
-from neutron.db.rbac_db_models import QosPolicyRBAC
+from neutron.db import rbac_db_models
 from neutron.objects import base as base_db
 from neutron.objects import common_types
 from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import binding
 from neutron.objects.qos import rule as rule_obj_impl
 from neutron.objects import rbac_db
+
+
+@base_db.NeutronObjectRegistry.register
+class QosPolicyRBAC(base_db.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = rbac_db_models.QosPolicyRBAC
+
+    fields = {
+        'object_id': obj_fields.StringField(),
+        'target_tenant': obj_fields.StringField(),
+        'action': obj_fields.StringField(),
+    }
 
 
 @base_db.NeutronObjectRegistry.register
@@ -48,12 +61,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     VERSION = '1.7'
 
     # required by RbacNeutronMetaclass
-    rbac_db_model = QosPolicyRBAC
+    rbac_db_cls = QosPolicyRBAC
     db_model = qos_db_model.QosPolicy
-
-    port_binding_model = qos_db_model.QosPortPolicyBinding
-    network_binding_model = qos_db_model.QosNetworkPolicyBinding
-    fip_binding_model = qos_db_model.QosFIPPolicyBinding
 
     fields = {
         'id': common_types.UUIDField(),
@@ -82,7 +91,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         return super(QosPolicy, self).obj_load_attr(attrname)
 
     def _reload_rules(self):
-        rules = rule_obj_impl.get_rules(self.obj_context, self.id)
+        rules = rule_obj_impl.get_rules(self, self.obj_context, self.id)
         setattr(self, 'rules', rules)
         self.obj_reset_changes(['rules'])
 
@@ -121,7 +130,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         # We want to get the policy regardless of its tenant id. We'll make
         # sure the tenant has permission to access the policy later on.
         admin_context = context.elevated()
-        with db_api.autonested_transaction(admin_context.session):
+        with cls.db_context_reader(admin_context):
             policy_obj = super(QosPolicy, cls).get_object(admin_context,
                                                           **kwargs)
             if (not policy_obj or
@@ -138,7 +147,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         # We want to get the policy regardless of its tenant id. We'll make
         # sure the tenant has permission to access the policy later on.
         admin_context = context.elevated()
-        with db_api.autonested_transaction(admin_context.session):
+        with cls.db_context_reader(admin_context):
             objs = super(QosPolicy, cls).get_objects(admin_context, _pager,
                                                      validate_filters,
                                                      **kwargs)
@@ -152,37 +161,38 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             return result
 
     @classmethod
-    def _get_object_policy(cls, context, model, **kwargs):
-        with db_api.autonested_transaction(context.session):
-            binding_db_obj = obj_db_api.get_object(context, model, **kwargs)
+    def _get_object_policy(cls, context, binding_cls, **kwargs):
+        with cls.db_context_reader(context):
+            binding_db_obj = obj_db_api.get_object(binding_cls, context,
+                                                   **kwargs)
             if binding_db_obj:
                 return cls.get_object(context, id=binding_db_obj['policy_id'])
 
     @classmethod
     def get_network_policy(cls, context, network_id):
-        return cls._get_object_policy(context, cls.network_binding_model,
+        return cls._get_object_policy(context, binding.QosPolicyNetworkBinding,
                                       network_id=network_id)
 
     @classmethod
     def get_port_policy(cls, context, port_id):
-        return cls._get_object_policy(context, cls.port_binding_model,
+        return cls._get_object_policy(context, binding.QosPolicyPortBinding,
                                       port_id=port_id)
 
     @classmethod
     def get_fip_policy(cls, context, fip_id):
-        return cls._get_object_policy(context, cls.fip_binding_model,
-                                      fip_id=fip_id)
+        return cls._get_object_policy(
+            context, binding.QosPolicyFloatingIPBinding, fip_id=fip_id)
 
     # TODO(QoS): Consider extending base to trigger registered methods for us
     def create(self):
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             super(QosPolicy, self).create()
             if self.is_default:
                 self.set_default()
             self.obj_load_attr('rules')
 
     def update(self):
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             if 'is_default' in self.obj_what_changed():
                 if self.is_default:
                     self.set_default()
@@ -191,7 +201,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             super(QosPolicy, self).update()
 
     def delete(self):
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             for object_type, obj_class in self.binding_models.items():
                 pager = base_db.Pager(limit=1)
                 binding_obj = obj_class.get_objects(self.obj_context,
@@ -322,7 +332,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         fip = l3.FloatingIP
         qosfip = qos_db_model.QosFIPPolicyBinding
         bound_tenants = []
-        with db_api.autonested_transaction(context.session):
+        with cls.db_context_reader(context):
             bound_tenants.extend(cls._get_bound_tenant_ids(
                 context.session, qosnet, net, qosnet.network_id, policy_id))
             bound_tenants.extend(

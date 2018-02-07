@@ -24,6 +24,16 @@ from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
+class SecurityGroupPortBindingIfaceObjTestCase(
+        obj_test_base.BaseObjectIfaceTestCase):
+    _test_class = ports.SecurityGroupPortBinding
+
+
+class SecurityGroupPortBindingDbObjectTestCase(
+        obj_test_base.BaseDbObjectTestCase):
+    _test_class = ports.SecurityGroupPortBinding
+
+
 class BasePortBindingDbObjectTestCase(obj_test_base._BaseObjectTestCase,
                                       testlib_api.SqlTestCase):
     def setUp(self):

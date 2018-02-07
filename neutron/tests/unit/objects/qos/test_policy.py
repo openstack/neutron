@@ -18,9 +18,10 @@ from oslo_versionedobjects import exception
 import testtools
 
 from neutron.common import exceptions as n_exc
-from neutron.db import models_v2
 from neutron.objects.db import api as db_api
 from neutron.objects import network as net_obj
+from neutron.objects import ports as port_obj
+from neutron.objects.qos import binding
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.tests.unit.objects import test_base
@@ -32,6 +33,9 @@ RULE_OBJ_CLS = {
     qos_consts.RULE_TYPE_DSCP_MARKING: rule.QosDscpMarkingRule,
     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: rule.QosMinimumBandwidthRule,
 }
+
+
+# TODO(ihrachys): add tests for QosPolicyRBAC
 
 
 class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
@@ -57,8 +61,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
 
         self.model_map.update({
             self._test_class.db_model: self.db_objs,
-            self._test_class.port_binding_model: [],
-            self._test_class.network_binding_model: [],
+            binding.QosPolicyPortBinding.db_model: [],
+            binding.QosPolicyNetworkBinding.db_model: [],
             rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules,
             rule.QosDscpMarkingRule.db_model: self.db_qos_dscp_rules,
             rule.QosMinimumBandwidthRule.db_model:
@@ -73,7 +77,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             objs = self._test_class.get_objects(self.context)
         context_mock.assert_called_once_with()
         self.get_objects_mock.assert_any_call(
-            admin_context, self._test_class.db_model, _pager=None)
+            self._test_class, admin_context, _pager=None)
         self.assertItemsEqual(
             [test_base.get_obj_persistent_fields(obj) for obj in self.objs],
             [test_base.get_obj_persistent_fields(obj) for obj in objs])
@@ -95,7 +99,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                     **self.valid_field_filter)
                 context_mock.assert_called_once_with()
             get_objects_mock.assert_any_call(
-                admin_context, self._test_class.db_model, _pager=None,
+                self._test_class, admin_context, _pager=None,
                 **self.valid_field_filter)
         self._check_equal(self.objs[0], objs[0])
 
@@ -110,7 +114,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             self._check_equal(self.objs[0], obj)
             context_mock.assert_called_once_with()
             get_object_mock.assert_called_once_with(
-                admin_context, self._test_class.db_model, id='fake_id')
+                self._test_class, admin_context, id='fake_id')
 
     def test_to_dict_makes_primitive_field_value(self):
         # is_shared_with_tenant requires DB
@@ -237,7 +241,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     def test_attach_and_get_multiple_policy_ports(self):
 
         port1_id = self._port['id']
-        port2 = db_api.create_object(self.context, models_v2.Port,
+        port2 = db_api.create_object(port_obj.Port, self.context,
                                      {'tenant_id': 'fake_tenant_id',
                                      'name': 'test-port2',
                                      'network_id': self._network_id,

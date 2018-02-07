@@ -42,11 +42,24 @@ class FakeRbacModel(rbac_db_models.RBACColumns, model_base.BASEV2):
 
 
 @base.NeutronObjectRegistry.register_if(False)
+class FakeNeutronRbacObject(base.NeutronDbObject):
+    VERSION = '1.0'
+
+    db_model = FakeRbacModel
+
+    fields = {
+        'object_id': obj_fields.StringField(),
+        'target_tenant': obj_fields.StringField(),
+        'action': obj_fields.StringField(),
+    }
+
+
+@base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronDbObject(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
 
-    rbac_db_model = FakeRbacModel
+    rbac_db_cls = FakeNeutronRbacObject
     db_model = FakeDbModel
 
     fields = {
@@ -72,7 +85,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         super(RbacNeutronDbObjectTestCase, self).setUp()
         FakeNeutronDbObject.update_post = mock.Mock()
 
-    @mock.patch.object(_test_class, 'rbac_db_model')
+    @mock.patch.object(_test_class.rbac_db_cls, 'db_model')
     def test_get_tenants_with_shared_access_to_db_obj_return_tenant_ids(
             self, *mocks):
         ctx = mock.Mock()
@@ -138,7 +151,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         context = mock.Mock(is_admin=True, tenant_id='db_obj_owner_id')
         self._rbac_policy_generate_change_events(
             resource=None, trigger='dummy_trigger', context=context,
-            object_type=self._test_class.rbac_db_model.object_type,
+            object_type=self._test_class.rbac_db_cls.db_model.object_type,
             policy={'object_id': 'fake_object_id'},
             event_list=(events.BEFORE_CREATE, events.BEFORE_UPDATE))
 
@@ -154,7 +167,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
             n_exc.InvalidInput,
             self._rbac_policy_generate_change_events,
             resource=mock.Mock(), trigger='dummy_trigger', context=context,
-            object_type=self._test_class.rbac_db_model.object_type,
+            object_type=self._test_class.rbac_db_cls.db_model.object_type,
             policy={'object_id': 'fake_object_id'},
             event_list=(events.BEFORE_CREATE, events.BEFORE_UPDATE))
         self.assertFalse(mock_validate_update.called)
@@ -165,7 +178,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         self._test_class.validate_rbac_policy_delete(
             resource=mock.Mock(), event=events.BEFORE_DELETE,
             trigger='dummy_trigger', context=n_context.get_admin_context(),
-            object_type=self._test_class.rbac_db_model.object_type,
+            object_type=self._test_class.rbac_db_cls.db_model.object_type,
             policy=policy)
         mock_validate_delete.assert_not_called()
 
@@ -205,7 +218,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
                 event=events.BEFORE_DELETE,
                 trigger='dummy_trigger',
                 context=context,
-                object_type=self._test_class.rbac_db_model.object_type,
+                object_type=self._test_class.rbac_db_cls.db_model.object_type,
                 policy=policy)
 
     def test_validate_rbac_policy_delete_not_bound_tenant_success(self):
@@ -247,7 +260,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
                 event=events.BEFORE_DELETE,
                 trigger='dummy_trigger',
                 context=context,
-                object_type=self._test_class.rbac_db_model.object_type,
+                object_type=self._test_class.rbac_db_cls.db_model.object_type,
                 policy=policy)
 
     @mock.patch.object(_test_class, 'attach_rbac')
@@ -257,10 +270,10 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
     def test_update_shared_avoid_duplicate_update(
             self, mock_validate_delete, get_object_mock, attach_rbac_mock):
         obj_id = 'fake_obj_id'
-        self._test_class(mock.Mock()).update_shared(is_shared_new=True,
-                                                    obj_id=obj_id)
+        obj = self._test_class(mock.Mock())
+        obj.update_shared(is_shared_new=True, obj_id=obj_id)
         get_object_mock.assert_called_with(
-            mock.ANY, self._test_class.rbac_db_model, object_id=obj_id,
+            obj.rbac_db_cls, mock.ANY, object_id=obj_id,
             target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
         self.assertFalse(mock_validate_delete.called)
         self.assertFalse(attach_rbac_mock.called)
@@ -275,7 +288,7 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         test_neutron_obj = self._test_class(mock.Mock())
         test_neutron_obj.update_shared(is_shared_new=True, obj_id=obj_id)
         get_object_mock.assert_called_with(
-            mock.ANY, self._test_class.rbac_db_model, object_id=obj_id,
+            test_neutron_obj.rbac_db_cls, mock.ANY, object_id=obj_id,
             target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
 
         attach_rbac_mock.assert_called_with(
@@ -292,10 +305,10 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
     def test_update_shared_remove_wildcard_sharing(
             self, mock_validate_delete, get_object_mock, attach_rbac_mock):
         obj_id = 'fake_obj_id'
-        self._test_class(mock.Mock()).update_shared(is_shared_new=False,
-                                                    obj_id=obj_id)
+        obj = self._test_class(mock.Mock())
+        obj.update_shared(is_shared_new=False, obj_id=obj_id)
         get_object_mock.assert_called_with(
-            mock.ANY, self._test_class.rbac_db_model, object_id=obj_id,
+            obj.rbac_db_cls, mock.ANY, object_id=obj_id,
             target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
 
         self.assertFalse(attach_rbac_mock.attach_rbac.called)
@@ -313,4 +326,4 @@ class RbacNeutronDbObjectTestCase(test_base.BaseObjectIfaceTestCase,
         self.assertEqual(rbac_pol['target_tenant'], target_tenant)
         self.assertEqual(rbac_pol['action'], rbac_db_models.ACCESS_SHARED)
         self.assertEqual(rbac_pol['object_type'],
-                         self._test_class.rbac_db_model.object_type)
+                         self._test_class.rbac_db_cls.db_model.object_type)

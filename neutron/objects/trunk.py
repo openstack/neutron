@@ -19,7 +19,6 @@ from oslo_db import exception as o_db_exc
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
-from neutron.db import api as db_api
 from neutron.objects import base
 from neutron.objects import common_types
 from neutron.services.trunk import exceptions as t_exc
@@ -52,7 +51,7 @@ class SubPort(base.NeutronDbObject):
         return _dict
 
     def create(self):
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             try:
                 super(SubPort, self).create()
             except o_db_exc.DBReferenceError as ex:
@@ -104,7 +103,7 @@ class Trunk(base.NeutronDbObject):
     synthetic_fields = ['sub_ports']
 
     def create(self):
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             sub_ports = []
             if self.obj_attr_is_set('sub_ports'):
                 sub_ports = self.sub_ports

@@ -81,7 +81,7 @@ class Pager(object):
         self.page_reverse = page_reverse
         self.marker = marker
 
-    def to_kwargs(self, context, model):
+    def to_kwargs(self, context, obj_cls):
         res = {
             attr: getattr(self, attr)
             for attr in ('sorts', 'limit', 'page_reverse')
@@ -89,7 +89,7 @@ class Pager(object):
         }
         if self.marker and self.limit:
             res['marker_obj'] = obj_db_api.get_object(
-                context, model, id=self.marker)
+                obj_cls, context, id=self.marker)
         return res
 
     def __str__(self):
@@ -310,16 +310,16 @@ def _detach_db_obj(func):
     @functools.wraps(func)
     def decorator(self, *args, **kwargs):
         synthetic_changed = bool(self._get_changed_synthetic_fields())
-        res = func(self, *args, **kwargs)
-        # some relationship based fields may be changed since we
-        # captured the model, let's refresh it for the latest database
-        # state
-        if synthetic_changed:
-            # TODO(ihrachys) consider refreshing just changed attributes
-            self.obj_context.session.refresh(self.db_obj)
-        # detach the model so that consequent fetches don't reuse it
-        self.obj_context.session.expunge(self.db_obj)
-        return res
+        with self.db_context_writer(self.obj_context):
+            res = func(self, *args, **kwargs)
+            # some relationship based fields may be changed since we captured
+            # the model, let's refresh it for the latest database state
+            if synthetic_changed:
+                # TODO(ihrachys) consider refreshing just changed attributes
+                self.obj_context.session.refresh(self.db_obj)
+            # detach the model so that consequent fetches don't reuse it
+            self.obj_context.session.expunge(self.db_obj)
+            return res
     return decorator
 
 
@@ -389,6 +389,12 @@ class NeutronDbObject(NeutronObject):
 
     # should be overridden for all persistent objects
     db_model = None
+
+    # should be overridden for all rbac aware objects
+    rbac_db_cls = None
+
+    # whether to use new engine facade for the object
+    new_facade = False
 
     primary_keys = ['id']
 
@@ -513,6 +519,20 @@ class NeutronDbObject(NeutronObject):
             self[attrname] = None
 
     @classmethod
+    def db_context_writer(cls, context):
+        """Return read-write session activation decorator."""
+        if cls.new_facade:
+            return db_api.context_manager.writer.using(context)
+        return db_api.autonested_transaction(context.session)
+
+    @classmethod
+    def db_context_reader(cls, context):
+        """Return read-only session activation decorator."""
+        if cls.new_facade:
+            return db_api.context_manager.reader.using(context)
+        return db_api.autonested_transaction(context.session)
+
+    @classmethod
     def get_object(cls, context, **kwargs):
         """
         Return the first result of given context or None if the result doesn't
@@ -529,11 +549,9 @@ class NeutronDbObject(NeutronObject):
             raise o_exc.NeutronPrimaryKeyMissing(object_class=cls,
                                                  missing_keys=missing_keys)
 
-        with context.session.begin(subtransactions=True):
+        with cls.db_context_reader(context):
             db_obj = obj_db_api.get_object(
-                context, cls.db_model,
-                **cls.modify_fields_to_db(kwargs)
-            )
+                cls, context, **cls.modify_fields_to_db(kwargs))
             if db_obj:
                 return cls._load_object(context, db_obj)
 
@@ -553,11 +571,9 @@ class NeutronDbObject(NeutronObject):
         """
         if validate_filters:
             cls.validate_filters(**kwargs)
-        with context.session.begin(subtransactions=True):
+        with cls.db_context_reader(context):
             db_objs = obj_db_api.get_objects(
-                context, cls.db_model, _pager=_pager,
-                **cls.modify_fields_to_db(kwargs)
-            )
+                cls, context, _pager=_pager, **cls.modify_fields_to_db(kwargs))
             return [cls._load_object(context, db_obj) for db_obj in db_objs]
 
     @classmethod
@@ -582,9 +598,9 @@ class NeutronDbObject(NeutronObject):
             return super(NeutronDbObject, cls).update_object(
                 context, values, validate_filters=False, **kwargs)
         else:
-            with db_api.autonested_transaction(context.session):
+            with cls.db_context_writer(context):
                 db_obj = obj_db_api.update_object(
-                    context, cls.db_model,
+                    cls, context,
                     cls.modify_fields_to_db(values),
                     **cls.modify_fields_to_db(kwargs))
                 return cls._load_object(context, db_obj)
@@ -604,15 +620,14 @@ class NeutronDbObject(NeutronObject):
         if validate_filters:
             cls.validate_filters(**kwargs)
 
-        # if we have standard attributes, we will need to fetch records to
-        # update revision numbers
-        if cls.has_standard_attributes():
-            return super(NeutronDbObject, cls).update_objects(
-                context, values, validate_filters=False, **kwargs)
-
-        with db_api.autonested_transaction(context.session):
+        with cls.db_context_writer(context):
+            # if we have standard attributes, we will need to fetch records to
+            # update revision numbers
+            if cls.has_standard_attributes():
+                return super(NeutronDbObject, cls).update_objects(
+                    context, values, validate_filters=False, **kwargs)
             return obj_db_api.update_objects(
-                context, cls.db_model,
+                cls, context,
                 cls.modify_fields_to_db(values),
                 **cls.modify_fields_to_db(kwargs))
 
@@ -629,9 +644,9 @@ class NeutronDbObject(NeutronObject):
         """
         if validate_filters:
             cls.validate_filters(**kwargs)
-        with context.session.begin(subtransactions=True):
+        with cls.db_context_writer(context):
             return obj_db_api.delete_objects(
-                context, cls.db_model, **cls.modify_fields_to_db(kwargs))
+                cls, context, **cls.modify_fields_to_db(kwargs))
 
     @classmethod
     def is_accessible(cls, context, db_obj):
@@ -748,11 +763,10 @@ class NeutronDbObject(NeutronObject):
 
     def create(self):
         fields = self._get_changed_persistent_fields()
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             try:
                 db_obj = obj_db_api.create_object(
-                    self.obj_context, self.db_model,
-                    self.modify_fields_to_db(fields))
+                    self, self.obj_context, self.modify_fields_to_db(fields))
             except obj_exc.DBDuplicateEntry as db_exc:
                 raise o_exc.NeutronDbObjectDuplicateEntry(
                     object_class=self.__class__, db_exception=db_exc)
@@ -786,16 +800,16 @@ class NeutronDbObject(NeutronObject):
         updates = self._get_changed_persistent_fields()
         updates = self._validate_changed_fields(updates)
 
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             db_obj = obj_db_api.update_object(
-                self.obj_context, self.db_model,
+                self, self.obj_context,
                 self.modify_fields_to_db(updates),
                 **self.modify_fields_to_db(
                     self._get_composite_keys()))
             self.from_db_object(db_obj)
 
     def delete(self):
-        obj_db_api.delete_object(self.obj_context, self.db_model,
+        obj_db_api.delete_object(self, self.obj_context,
                                  **self.modify_fields_to_db(
                                      self._get_composite_keys()))
         self._captured_db_model = None
@@ -814,7 +828,7 @@ class NeutronDbObject(NeutronObject):
         if validate_filters:
             cls.validate_filters(**kwargs)
         return obj_db_api.count(
-            context, cls.db_model, **cls.modify_fields_to_db(kwargs)
+            cls, context, **cls.modify_fields_to_db(kwargs)
         )
 
     @classmethod
@@ -832,5 +846,5 @@ class NeutronDbObject(NeutronObject):
             cls.validate_filters(**kwargs)
         # Succeed if at least a single object matches; no need to fetch more
         return bool(obj_db_api.get_object(
-            context, cls.db_model, **cls.modify_fields_to_db(kwargs))
+            cls, context, **cls.modify_fields_to_db(kwargs))
         )

@@ -89,7 +89,7 @@ class Agent(base.NeutronDbObject):
     @classmethod
     def get_l3_agent_with_min_routers(cls, context, agent_ids):
         """Return l3 agent with the least number of routers."""
-        with context.session.begin(subtransactions=True):
+        with cls.db_context_reader(context):
             query = context.session.query(
                 agent_model.Agent,
                 func.count(
@@ -105,7 +105,7 @@ class Agent(base.NeutronDbObject):
 
     @classmethod
     def get_l3_agents_ordered_by_num_routers(cls, context, agent_ids):
-        with context.session.begin(subtransactions=True):
+        with cls.db_context_reader(context):
             query = (context.session.query(agent_model.Agent, func.count(
                 rb_model.RouterL3AgentBinding.router_id)
                 .label('count')).

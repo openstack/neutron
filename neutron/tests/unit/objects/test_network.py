@@ -20,6 +20,8 @@ from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
 
+# TODO(ihrachys): add tests for NetworkRBAC
+
 class NetworkDhcpAgentBindingObjectIfaceTestCase(
     obj_test_base.BaseObjectIfaceTestCase):
 

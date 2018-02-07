@@ -16,7 +16,6 @@ from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
 from sqlalchemy import sql
 
-from neutron.db import api as db_api
 from neutron.db.quota import models
 from neutron.objects import base
 from neutron.objects import common_types
@@ -60,7 +59,7 @@ class Reservation(base.NeutronDbObject):
 
     def create(self):
         deltas = self.resource_deltas
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             super(Reservation, self).create()
             if deltas:
                 for delta in deltas:

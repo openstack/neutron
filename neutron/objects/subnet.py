@@ -17,9 +17,9 @@ from oslo_versionedobjects import fields as obj_fields
 from neutron.common import utils
 from neutron.db.models import subnet_service_type
 from neutron.db import models_v2
-from neutron.db import rbac_db_models
 from neutron.objects import base
 from neutron.objects import common_types
+from neutron.objects import network
 from neutron.objects import rbac_db
 
 
@@ -228,7 +228,7 @@ class Subnet(base.NeutronDbObject):
             # create), it should be rare case to load 'shared' by that method
             shared = (rbac_db.RbacNeutronDbObjectMixin.
                       get_shared_with_tenant(self.obj_context.elevated(),
-                                             rbac_db_models.NetworkRBAC,
+                                             network.NetworkRBAC,
                                              self.network_id,
                                              self.project_id))
         setattr(self, 'shared', shared)

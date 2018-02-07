@@ -24,7 +24,6 @@ from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 import six
 
-from neutron.db import api as db_api
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
 from neutron.objects import common_types
@@ -32,9 +31,9 @@ from neutron.objects import common_types
 DSCP_MARK = 'dscp_mark'
 
 
-def get_rules(context, qos_policy_id):
+def get_rules(obj_cls, context, qos_policy_id):
     all_rules = []
-    with db_api.autonested_transaction(context.session):
+    with obj_cls.db_context_reader(context):
         for rule_type in qos_consts.VALID_RULE_TYPES:
             rule_cls_name = 'Qos%sRule' % helpers.camelize(rule_type)
             rule_cls = getattr(sys.modules[__name__], rule_cls_name)

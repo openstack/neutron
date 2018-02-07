@@ -18,7 +18,6 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
-from neutron.db import api as db_api
 from neutron.db.models import dns as dns_models
 from neutron.db.models import l3
 from neutron.db.models import securitygroup as sg_models
@@ -235,6 +234,22 @@ class PortDNS(base.NeutronDbObject):
 
 
 @base.NeutronObjectRegistry.register
+class SecurityGroupPortBinding(base.NeutronDbObject):
+
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = sg_models.SecurityGroupPortBinding
+
+    fields = {
+        'port_id': common_types.UUIDField(),
+        'security_group_id': common_types.UUIDField(),
+    }
+
+    primary_keys = ['port_id', 'security_group_id']
+
+
+@base.NeutronObjectRegistry.register
 class Port(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Add data_plane_status field
@@ -318,7 +333,7 @@ class Port(base.NeutronDbObject):
 
     def create(self):
         fields = self.obj_get_changes()
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             sg_ids = self.security_group_ids
             if sg_ids is None:
                 sg_ids = set()
@@ -331,7 +346,7 @@ class Port(base.NeutronDbObject):
 
     def update(self):
         fields = self.obj_get_changes()
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             super(Port, self).update()
             if 'security_group_ids' in fields:
                 self._attach_security_groups(fields['security_group_ids'])
@@ -353,9 +368,7 @@ class Port(base.NeutronDbObject):
         # TODO(ihrachys): consider introducing an (internal) object for the
         # binding to decouple database operations a bit more
         obj_db_api.delete_objects(
-            self.obj_context, sg_models.SecurityGroupPortBinding,
-            port_id=self.id,
-        )
+            SecurityGroupPortBinding, self.obj_context, port_id=self.id)
         if sg_ids:
             for sg_id in sg_ids:
                 self._attach_security_group(sg_id)
@@ -364,7 +377,7 @@ class Port(base.NeutronDbObject):
 
     def _attach_security_group(self, sg_id):
         obj_db_api.create_object(
-            self.obj_context, sg_models.SecurityGroupPortBinding,
+            SecurityGroupPortBinding, self.obj_context,
             {'port_id': self.id, 'security_group_id': sg_id}
         )
 

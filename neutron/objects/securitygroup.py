@@ -13,7 +13,6 @@
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.common import utils
-from neutron.db import api as db_api
 from neutron.db.models import securitygroup as sg_models
 from neutron.objects import base
 from neutron.objects import common_types
@@ -47,7 +46,7 @@ class SecurityGroup(base.NeutronDbObject):
     def create(self):
         # save is_default before super() resets it to False
         is_default = self.is_default
-        with db_api.autonested_transaction(self.obj_context.session):
+        with self.db_context_writer(self.obj_context):
             super(SecurityGroup, self).create()
             if is_default:
                 default_group = DefaultSecurityGroup(

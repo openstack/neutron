@@ -25,7 +25,6 @@ from sqlalchemy import and_
 from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.db import _utils as db_utils
-from neutron.db import api as db_api
 from neutron.db import rbac_db_mixin
 from neutron.db import rbac_db_models as models
 from neutron.extensions import rbac as ext_rbac
@@ -37,7 +36,7 @@ from neutron.objects.db import api as obj_db_api
 class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                                base.NeutronDbObject):
 
-    rbac_db_model = None
+    rbac_db_cls = None
 
     @classmethod
     @abc.abstractmethod
@@ -65,9 +64,10 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         return False
 
     @staticmethod
-    def get_shared_with_tenant(context, rbac_db_model, obj_id, tenant_id):
+    def get_shared_with_tenant(context, rbac_db_cls, obj_id, tenant_id):
         # NOTE(korzen) This method enables to query within already started
         # session
+        rbac_db_model = rbac_db_cls.db_model
         return (db_utils.model_query(context, rbac_db_model).filter(
                 and_(rbac_db_model.object_id == obj_id,
                      rbac_db_model.action == models.ACCESS_SHARED,
@@ -77,9 +77,8 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
     @classmethod
     def is_shared_with_tenant(cls, context, obj_id, tenant_id):
         ctx = context.elevated()
-        rbac_db_model = cls.rbac_db_model
-        with ctx.session.begin(subtransactions=True):
-            return cls.get_shared_with_tenant(ctx, rbac_db_model,
+        with cls.db_context_reader(ctx):
+            return cls.get_shared_with_tenant(ctx, cls.rbac_db_cls,
                                               obj_id, tenant_id)
 
     @classmethod
@@ -91,23 +90,24 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     @classmethod
     def _get_db_obj_rbac_entries(cls, context, rbac_obj_id, rbac_action):
-        rbac_db_model = cls.rbac_db_model
+        rbac_db_model = cls.rbac_db_cls.db_model
         return db_utils.model_query(context, rbac_db_model).filter(
             and_(rbac_db_model.object_id == rbac_obj_id,
                  rbac_db_model.action == rbac_action))
 
     @classmethod
     def _get_tenants_with_shared_access_to_db_obj(cls, context, obj_id):
+        rbac_db_model = cls.rbac_db_cls.db_model
         return set(itertools.chain.from_iterable(context.session.query(
-            cls.rbac_db_model.target_tenant).filter(
-            and_(cls.rbac_db_model.object_id == obj_id,
-                 cls.rbac_db_model.action == models.ACCESS_SHARED,
-                 cls.rbac_db_model.target_tenant != '*'))))
+            rbac_db_model.target_tenant).filter(
+            and_(rbac_db_model.object_id == obj_id,
+                 rbac_db_model.action == models.ACCESS_SHARED,
+                 rbac_db_model.target_tenant != '*'))))
 
     @classmethod
     def _validate_rbac_policy_delete(cls, context, obj_id, target_tenant):
         ctx_admin = context.elevated()
-        rb_model = cls.rbac_db_model
+        rb_model = cls.rbac_db_cls.db_model
         bound_tenant_ids = cls.get_bound_tenant_ids(ctx_admin, obj_id)
         db_obj_sharing_entries = cls._get_db_obj_rbac_entries(
             ctx_admin, obj_id, models.ACCESS_SHARED)
@@ -146,7 +146,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             return
         target_tenant = policy['target_tenant']
         db_obj = obj_db_api.get_object(
-            context.elevated(), cls.db_model, id=policy['object_id'])
+            cls, context.elevated(), id=policy['object_id'])
         if db_obj.tenant_id == target_tenant:
             return
         cls._validate_rbac_policy_delete(context=context,
@@ -181,10 +181,10 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         # NeutronDbPluginV2.validate_network_rbac_policy_change(), those pieces
         # should be synced and contain the same bugs, until Network RBAC logic
         # (hopefully) melded with this one.
-        if object_type != cls.rbac_db_model.object_type:
+        if object_type != cls.rbac_db_cls.db_model.object_type:
             return
         db_obj = obj_db_api.get_object(
-            context.elevated(), cls.db_model, id=policy['object_id'])
+            cls, context.elevated(), id=policy['object_id'])
         if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
             if (not context.is_admin and
                     db_obj['tenant_id'] != context.tenant_id):
@@ -198,7 +198,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                                        object_type, policy, **kwargs)
 
     def attach_rbac(self, obj_id, tenant_id, target_tenant='*'):
-        obj_type = self.rbac_db_model.object_type
+        obj_type = self.rbac_db_cls.db_model.object_type
         rbac_policy = {'rbac_policy': {'object_id': obj_id,
                                        'target_tenant': target_tenant,
                                        'tenant_id': tenant_id,
@@ -208,7 +208,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     def update_shared(self, is_shared_new, obj_id):
         admin_context = self.obj_context.elevated()
-        shared_prev = obj_db_api.get_object(admin_context, self.rbac_db_model,
+        shared_prev = obj_db_api.get_object(self.rbac_db_cls, admin_context,
                                             object_id=obj_id,
                                             target_tenant='*',
                                             action=models.ACCESS_SHARED)
@@ -233,7 +233,7 @@ def _update_post(self, obj_changes):
 
 
 def _update_hook(self, update_orig):
-    with db_api.autonested_transaction(self.obj_context.session):
+    with self.db_context_writer(self.obj_context):
         # NOTE(slaweq): copy of object changes is required to pass it later to
         # _update_post method because update() will reset all those changes
         obj_changes = self.obj_get_changes()
@@ -247,7 +247,7 @@ def _create_post(self):
 
 
 def _create_hook(self, orig_create):
-    with db_api.autonested_transaction(self.obj_context.session):
+    with self.db_context_writer(self.obj_context):
         orig_create(self)
         _create_post(self)
 
@@ -305,8 +305,8 @@ class RbacNeutronMetaclass(type):
     def validate_existing_attrs(cls_name, dct):
         if 'shared' not in dct['fields']:
             raise KeyError(_('No shared key in %s fields') % cls_name)
-        if 'rbac_db_model' not in dct:
-            raise AttributeError(_('rbac_db_model not found in %s') % cls_name)
+        if 'rbac_db_cls' not in dct:
+            raise AttributeError(_('rbac_db_cls not found in %s') % cls_name)
 
     @staticmethod
     def get_replaced_method(orig_method, new_method):

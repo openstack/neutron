@@ -17,6 +17,7 @@ from oslo_utils import uuidutils
 from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base
 from neutron.objects.db import api as obj_db_api
+from neutron.objects import network as net_obj
 from neutron.objects import rbac_db
 from neutron.objects import subnet
 from neutron.tests.unit.objects import test_base as obj_test_base
@@ -175,8 +176,7 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             'target_tenant': '*',
             'action': rbac_db_models.ACCESS_SHARED
         }
-        obj_db_api.create_object(self.context, rbac_db_models.NetworkRBAC,
-                                 attrs)
+        obj_db_api.create_object(net_obj.NetworkRBAC, self.context, attrs)
 
     def test_get_subnet_shared_true(self):
         network = self._create_test_network()

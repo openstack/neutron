@@ -32,7 +32,6 @@ from oslo_versionedobjects import fields as obj_fields
 import testtools
 
 from neutron.db import _model_query as model_query
-from neutron.db import standard_attr
 from neutron import objects
 from neutron.objects import agent
 from neutron.objects import base
@@ -46,6 +45,7 @@ from neutron.objects.qos import policy as qos_policy
 from neutron.objects import rbac_db
 from neutron.objects import router
 from neutron.objects import securitygroup
+from neutron.objects import stdattrs
 from neutron.objects import subnet
 from neutron.objects import utils as obj_utils
 from neutron.tests import base as test_base
@@ -54,6 +54,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'
+SQLALCHEMY_CLOSE = 'sqlalchemy.engine.Connection.close'
 OBJECTS_BASE_OBJ_FROM_PRIMITIVE = ('oslo_versionedobjects.base.'
                                    'VersionedObject.obj_from_primitive')
 TIMESTAMP_FIELDS = ['created_at', 'updated_at', 'revision_number']
@@ -663,8 +664,8 @@ class _BaseObjectTestCase(object):
     def _is_test_class(cls, obj):
         return isinstance(obj, cls._test_class)
 
-    def fake_get_objects(self, context, model, **kwargs):
-        return self.model_map[model]
+    def fake_get_objects(self, obj_cls, context, **kwargs):
+        return self.model_map[obj_cls.db_model]
 
     def _get_object_synthetic_fields(self, objclass):
         return [field for field in objclass.synthetic_fields
@@ -705,13 +706,14 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         # NOTE(ihrachys): for matters of basic object behaviour validation,
         # mock out rbac code accessing database. There are separate tests that
         # cover RBAC, per object type.
-        if getattr(self._test_class, 'rbac_db_model', None):
-            mock.patch.object(
-                rbac_db.RbacNeutronDbObjectMixin,
-                'is_shared_with_tenant', return_value=False).start()
-            mock.patch.object(
-                rbac_db.RbacNeutronDbObjectMixin,
-                'get_shared_with_tenant').start()
+        if self._test_class.rbac_db_cls is not None:
+            if getattr(self._test_class.rbac_db_cls, 'db_model', None):
+                mock.patch.object(
+                    rbac_db.RbacNeutronDbObjectMixin,
+                    'is_shared_with_tenant', return_value=False).start()
+                mock.patch.object(
+                    rbac_db.RbacNeutronDbObjectMixin,
+                    'get_shared_with_tenant').start()
 
     def fake_get_object(self, context, model, **kwargs):
         objs = self.model_map[model]
@@ -719,8 +721,8 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             return None
         return [obj for obj in objs if obj['id'] == kwargs['id']][0]
 
-    def fake_get_objects(self, context, model, **kwargs):
-        return self.model_map[model]
+    def fake_get_objects(self, obj_cls, context, **kwargs):
+        return self.model_map[obj_cls.db_model]
 
     # TODO(ihrachys) document the intent of all common test cases in docstrings
     def test_get_object(self):
@@ -734,7 +736,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 self.assertTrue(self._is_test_class(obj))
                 self._check_equal(self.objs[0], obj)
                 get_object_mock.assert_called_once_with(
-                    self.context, self._test_class.db_model,
+                    self._test_class, self.context,
                     **self._test_class.modify_fields_to_db(obj_keys))
 
     def test_get_object_missing_object(self):
@@ -773,7 +775,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     self.assertTrue(self._is_test_class(obj))
                     self._check_equal(self.objs[0], obj)
                     get_object_mock.assert_called_once_with(
-                        mock.ANY, self._test_class.db_model,
+                        self._test_class, mock.ANY,
                         **self._test_class.modify_fields_to_db(obj_keys))
 
     def _get_synthetic_fields_get_objects_calls(self, db_objs):
@@ -790,7 +792,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     }
                     mock_calls.append(
                         mock.call(
-                            self.context, obj_class.db_model,
+                            obj_class, self.context,
                             _pager=self.pager_map[obj_class.obj_name()],
                             **filter_kwargs))
         return mock_calls
@@ -805,7 +807,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 [get_obj_persistent_fields(obj) for obj in self.objs],
                 [get_obj_persistent_fields(obj) for obj in objs])
         get_objects_mock.assert_any_call(
-            self.context, self._test_class.db_model,
+            self._test_class, self.context,
             _pager=self.pager_map[self._test_class.obj_name()]
         )
 
@@ -952,7 +954,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         ) as delete_objects_mock:
             self.assertEqual(0, self._test_class.delete_objects(self.context))
         delete_objects_mock.assert_any_call(
-            self.context, self._test_class.db_model)
+            self._test_class, self.context)
 
     def test_delete_objects_valid_fields(self):
         '''Test that a valid filter does not raise an error.'''
@@ -1012,7 +1014,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 obj.create()
                 self._check_equal(self.objs[0], obj)
                 create_mock.assert_called_once_with(
-                    self.context, self._test_class.db_model,
+                    obj, self.context,
                     self._test_class.modify_fields_to_db(
                         get_obj_persistent_fields(self.objs[0])))
 
@@ -1126,7 +1128,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                     update_mock.return_value[key] = value
                 obj.update()
                 update_mock.assert_called_once_with(
-                    self.context, self._test_class.db_model,
+                    obj, self.context,
                     self._test_class.modify_fields_to_db(fields_to_update),
                     **fixed_keys)
 
@@ -1172,7 +1174,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         obj.delete()
         self._check_equal(self.objs[0], obj)
         delete_mock.assert_called_once_with(
-            self.context, self._test_class.db_model,
+            obj, self.context,
             **self._test_class.modify_fields_to_db(obj._get_composite_keys()))
 
     @mock.patch(OBJECTS_BASE_OBJ_FROM_PRIMITIVE)
@@ -1229,7 +1231,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             pager = base.Pager()
             self._test_class.get_objects(self.context, _pager=pager)
             get_objects.assert_called_once_with(
-                mock.ANY, self._test_class.db_model, _pager=pager)
+                self._test_class, mock.ANY, _pager=pager)
 
 
 class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
@@ -1545,9 +1547,8 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             'revision_number': tools.get_random_integer()
         }
         return obj_db_api.create_object(
-            self.context,
-            standard_attr.StandardAttribute, attrs,
-            populate_id=False)['id']
+            stdattrs.StandardAttribute,
+            self.context, attrs, populate_id=False)['id']
 
     def _create_test_flavor_id(self):
         attrs = self.get_random_object_fields(obj_cls=flavor.Flavor)
@@ -1673,19 +1674,27 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             obj.delete()
         self.assertEqual(1, mock_commit.call_count)
 
-    @mock.patch(SQLALCHEMY_COMMIT)
-    def test_get_objects_single_transaction(self, mock_commit):
-        self._test_class.get_objects(self.context)
-        self.assertEqual(1, mock_commit.call_count)
+    def _get_ro_txn_exit_func_name(self):
+        # for old engine facade, we didn't have distinction between r/o and r/w
+        # transactions and so we always call commit even for getters when the
+        # old facade is used
+        return (
+            SQLALCHEMY_CLOSE
+            if self._test_class.new_facade else SQLALCHEMY_COMMIT)
 
-    @mock.patch(SQLALCHEMY_COMMIT)
-    def test_get_object_single_transaction(self, mock_commit):
+    def test_get_objects_single_transaction(self):
+        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
+            self._test_class.get_objects(self.context)
+        self.assertEqual(1, mock_exit.call_count)
+
+    def test_get_object_single_transaction(self):
         obj = self._make_object(self.obj_fields[0])
         obj.create()
 
-        obj = self._test_class.get_object(self.context,
-                                          **obj._get_composite_keys())
-        self.assertEqual(2, mock_commit.call_count)
+        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
+            obj = self._test_class.get_object(self.context,
+                                              **obj._get_composite_keys())
+        self.assertEqual(1, mock_exit.call_count)
 
     def test_get_objects_supports_extra_filtername(self):
         self.filtered_args = None
