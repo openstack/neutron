@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -24,7 +25,6 @@ import oslo_messaging
 
 from neutron.common import rpc as n_rpc
 from neutron.common import topics
-from neutron.common import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ class DhcpAgentNotifyAPI(object):
     def _notify_agents(self, context, method, payload, network_id):
         """Notify all the agents that are hosting the network."""
         # fanout is required as we do not know who is "listening"
-        no_agents = not utils.is_extension_supported(
+        no_agents = not extensions.is_extension_supported(
             self.plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS)
         fanout_required = method == 'network_delete_end' or no_agents
 

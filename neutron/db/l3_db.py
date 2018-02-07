@@ -18,6 +18,7 @@ import random
 import netaddr
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
@@ -108,17 +109,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _is_dns_integration_supported(self):
         if self._dns_integration is None:
             self._dns_integration = (
-                utils.is_extension_supported(self._core_plugin,
-                    'dns-integration') or
-                utils.is_extension_supported(self._core_plugin,
-                    'dns-domain-ports'))
+                extensions.is_extension_supported(
+                    self._core_plugin, 'dns-integration') or
+                extensions.is_extension_supported(
+                    self._core_plugin, 'dns-domain-ports'))
         return self._dns_integration
 
     @property
     def _is_fip_qos_supported(self):
         if self._fip_qos is None:
             # Check L3 service plugin
-            self._fip_qos = utils.is_extension_supported(
+            self._fip_qos = extensions.is_extension_supported(
                 self, qos_fip.FIP_QOS_ALIAS)
         return self._fip_qos
 
@@ -327,7 +328,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # first get plugin supporting l3 agent scheduling
         # (either l3 service plugin or core_plugin)
         l3_plugin = directory.get_plugin(plugin_constants.L3)
-        if (not utils.is_extension_supported(
+        if (not extensions.is_extension_supported(
                 l3_plugin,
                 constants.L3_AGENT_SCHEDULER_EXT_ALIAS) or
             l3_plugin.router_scheduler is None):

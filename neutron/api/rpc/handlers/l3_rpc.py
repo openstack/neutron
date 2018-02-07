@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api import extensions
 from neutron_lib import constants
 from neutron_lib import context as neutron_context
 from neutron_lib import exceptions
@@ -25,7 +26,6 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron.db import api as db_api
 
 
@@ -74,7 +74,7 @@ class L3RpcCallback(object):
         that the port is indeed ACTIVE by reacting to the port update and
         calling update_device_up.
         """
-        if not utils.is_extension_supported(
+        if not extensions.is_extension_supported(
             self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             return
         device_filter = {
@@ -98,7 +98,7 @@ class L3RpcCallback(object):
         This will autoschedule unhosted routers to l3 agent on <host> and then
         return all ids of routers scheduled to it.
         """
-        if utils.is_extension_supported(
+        if extensions.is_extension_supported(
                 self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.router_auto_schedule:
                 self.l3plugin.auto_schedule_routers(context, host)
@@ -116,14 +116,14 @@ class L3RpcCallback(object):
         router_ids = kwargs.get('router_ids')
         host = kwargs.get('host')
         context = neutron_context.get_admin_context()
-        if utils.is_extension_supported(
+        if extensions.is_extension_supported(
             self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             routers = (
                 self.l3plugin.list_active_sync_routers_on_active_l3_agent(
                     context, host, router_ids))
         else:
             routers = self.l3plugin.get_sync_data(context, router_ids)
-        if utils.is_extension_supported(
+        if extensions.is_extension_supported(
             self.plugin, constants.PORT_BINDING_EXT_ALIAS):
             self._ensure_host_set_on_ports(context, host, routers)
         return routers

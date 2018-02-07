@@ -15,6 +15,7 @@
 
 from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import dns as dns_exc
@@ -22,7 +23,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.objects import floatingip as fip_obj
 from neutron.objects import network
@@ -118,8 +118,8 @@ class DNSDbMixin(object):
     def _process_dns_floatingip_update_precommit(self, context,
                                                  floatingip_data):
         # expects to be called within a plugin's session
-        if not utils.is_extension_supported(self._core_plugin,
-                                            dns_apidef.ALIAS):
+        if not extensions.is_extension_supported(
+                self._core_plugin, dns_apidef.ALIAS):
             return
         if not self.dns_driver:
             return
@@ -175,11 +175,11 @@ class DNSDbMixin(object):
                 [floatingip_data['floating_ip_address']])
 
     def _process_dns_floatingip_delete(self, context, floatingip_data):
-        if not utils.is_extension_supported(self._core_plugin,
-                                            dns_apidef.ALIAS):
+        if not extensions.is_extension_supported(
+                self._core_plugin, dns_apidef.ALIAS):
             return
-        dns_data_db = fip_obj.FloatingIPDNS.get_object(context,
-                floatingip_id=floatingip_data['id'])
+        dns_data_db = fip_obj.FloatingIPDNS.get_object(
+            context, floatingip_id=floatingip_data['id'])
         if dns_data_db:
             self._delete_floatingip_from_external_dns_service(
                 context, dns_data_db['published_dns_domain'],

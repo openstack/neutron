@@ -121,11 +121,6 @@ def get_first_host_ip(net, ip_version):
     return str(netaddr.IPAddress(net.first + 1, ip_version))
 
 
-def is_extension_supported(plugin, ext_alias):
-    return ext_alias in getattr(
-        plugin, "supported_extension_aliases", [])
-
-
 def log_opt_values(log):
     cfg.CONF.log_opt_values(log, logging.DEBUG)
 

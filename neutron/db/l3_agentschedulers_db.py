@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import extensions
 from neutron_lib import constants
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -22,7 +23,6 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.agent.common import utils as agent_utils
-from neutron.common import utils as n_utils
 from neutron.conf.db import l3_agentschedulers_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import l3agent as rb_model
@@ -274,8 +274,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
                                                router_ids):
-        if n_utils.is_extension_supported(self,
-                                          constants.L3_HA_MODE_EXT_ALIAS):
+        if extensions.is_extension_supported(
+                self, constants.L3_HA_MODE_EXT_ALIAS):
             return self.get_ha_sync_data_for_host(context, host, agent,
                                                   router_ids=router_ids,
                                                   active=True)

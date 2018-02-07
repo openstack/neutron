@@ -12,13 +12,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from neutron_lib.api import extensions
 from neutron_lib import constants as consts
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.common import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class MeteringRpcCallbacks(object):
 
         metering_data = self.meter_plugin.get_sync_data_metering(context)
         host = kwargs.get('host')
-        if not utils.is_extension_supported(
+        if not extensions.is_extension_supported(
             l3_plugin, consts.L3_AGENT_SCHEDULER_EXT_ALIAS) or not host:
             return metering_data
         else:
