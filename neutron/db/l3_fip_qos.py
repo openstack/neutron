@@ -17,7 +17,6 @@ from neutron_lib.services.qos import constants as qos_consts
 
 from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
-from neutron.objects.db import api as obj_db_api
 from neutron.objects.qos import policy as policy_object
 
 
@@ -44,8 +43,6 @@ class FloatingQoSDbMixin(object):
     def _create_fip_qos_db(self, context, fip_id, policy_id):
         policy = self._get_policy_obj(context, policy_id)
         policy.attach_floatingip(fip_id)
-        binding_db_obj = obj_db_api.get_object(policy, context, fip_id=fip_id)
-        return binding_db_obj
 
     def _delete_fip_qos_db(self, context, fip_id, policy_id):
         policy = self._get_policy_obj(context, policy_id)
