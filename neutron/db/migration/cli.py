@@ -38,7 +38,7 @@ HEADS_FILENAME = 'HEADS'
 CONTRACT_HEAD_FILENAME = 'CONTRACT_HEAD'
 EXPAND_HEAD_FILENAME = 'EXPAND_HEAD'
 
-CURRENT_RELEASE = migration.QUEENS
+CURRENT_RELEASE = migration.ROCKY
 RELEASES = (
     migration.LIBERTY,
     migration.MITAKA,
@@ -46,6 +46,7 @@ RELEASES = (
     migration.OCATA,
     migration.PIKE,
     migration.QUEENS,
+    migration.ROCKY,
 )
 
 EXPAND_BRANCH = 'expand'
