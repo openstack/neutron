@@ -35,7 +35,22 @@ API_OPTS = [
                       'Will be used by ovsdb-client when monitoring and '
                       'used for the all ovsdb commands when native '
                       'ovsdb_interface is enabled'
-                      ))
+                      )),
+    cfg.StrOpt('ssl_key_file',
+               help=_('The SSL private key file to use when interacting with '
+                      'OVSDB. Required when using an "ssl:" prefixed '
+                      'ovsdb_connection'
+                      )),
+    cfg.StrOpt('ssl_cert_file',
+               help=_('The SSL certificate file to use when interacting '
+                      'with OVSDB. Required when using an "ssl:" prefixed '
+                      'ovsdb_connection'
+                      )),
+    cfg.StrOpt('ssl_ca_cert_file',
+               help=_('The Certificate Authority (CA) certificate to use '
+                      'when interacting with OVSDB.  Required when using an '
+                      '"ssl:" prefixed ovsdb_connection'
+                      )),
 ]
 
 
