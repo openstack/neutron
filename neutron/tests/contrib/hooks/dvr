@@ -1,0 +1,9 @@
+[[test-config|$TEMPEST_CONFIG]]
+
+[neutron_plugin_options]
+l3_agent_mode = dvr_snat
+
+[[post-config|/$NEUTRON_L3_CONF]]
+
+[DEFAULT]
+agent_mode = dvr_snat
