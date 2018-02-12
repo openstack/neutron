@@ -69,7 +69,8 @@ class IpAddressGenerationFailureAllSubnets(IpAddressGenerationFailure):
 
 
 class IpAddressGenerationFailureNoMatchingSubnet(IpAddressGenerationFailure):
-    message = _("No valid service subnet for the given device owner.")
+    message = _("No valid service subnet for the given device owner, "
+                "network %(network_id)s, service type %(service_type)s.")
 
 
 class IPAllocationFailed(exceptions.NeutronException):
