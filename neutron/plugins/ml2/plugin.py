@@ -155,7 +155,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "network_availability_zone",
                                     "default-subnetpools",
                                     "subnet-service-types",
-                                    "ip-substring-filtering"]
+                                    "ip-substring-filtering",
+                                    "port-security-groups-filtering"]
 
     @property
     def supported_extension_aliases(self):
@@ -1869,6 +1870,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _get_ports_query(self, context, filters=None, *args, **kwargs):
         filters = filters or {}
+        security_groups = filters.pop("security_groups", None)
+        if security_groups:
+            port_bindings = self._get_port_security_group_bindings(
+                context, filters={'security_group_id':
+                                  security_groups})
+            if 'id' in filters:
+                filters['id'] = [entry['port_id'] for
+                                 entry in port_bindings
+                                 if entry['port_id'] in filters['id']]
+            else:
+                filters['id'] = [entry['port_id'] for entry in port_bindings]
         fixed_ips = filters.get('fixed_ips', {})
         ip_addresses_s = fixed_ips.get('ip_address_substr')
         query = super(Ml2Plugin, self)._get_ports_query(context, filters,
