@@ -583,10 +583,20 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         port_dict = {'device': 'port-id',
                      'security_groups': [1]}
         self._prepare_security_group()
+
         with mock.patch.object(
-                self.firewall, 'prepare_port_filter') as prepare_mock:
+            self.firewall, 'prepare_port_filter'
+        ) as prepare_mock, mock.patch.object(
+            self.firewall, 'initialize_port_flows'
+        ) as initialize_port_flows_mock, mock.patch.object(
+            self.firewall, 'add_flows_from_rules'
+        ) as add_flows_from_rules_mock:
             self.firewall.update_port_filter(port_dict)
+
         self.assertFalse(prepare_mock.called)
+        self.assertFalse(self.mock_bridge.br.delete_flows.called)
+        self.assertTrue(initialize_port_flows_mock.called)
+        self.assertTrue(add_flows_from_rules_mock.called)
 
     def test_update_port_filter_port_security_disabled(self):
         port_dict = {'device': 'port-id',
