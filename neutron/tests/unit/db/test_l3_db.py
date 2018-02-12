@@ -85,6 +85,22 @@ class TestL3_NAT_dbonly_mixin(base.BaseTestCase):
                 'address_scope_id': mock.sentinel.address_scope_id,
                 'network_id': mock.sentinel.network_id}]}, subnets)
 
+    def test__get_mtus_by_network_list(self):
+        """Basic test that the query get_networks is correctly"""
+        network = {'id': mock.sentinel.network_id,
+                   'name': mock.sentinel.name,
+                   'mtu': mock.sentinel.mtu}
+        with mock.patch.object(directory, 'get_plugin') as get_p:
+            get_p().get_networks.return_value = [network]
+            result = self.db._get_mtus_by_network_list(
+                mock.sentinel.context, [mock.sentinel.network_id])
+            get_p().get_networks.assert_called_once_with(
+                mock.sentinel.context,
+                filters={'id': [mock.sentinel.network_id]},
+                fields=['id', 'mtu'])
+            self.assertEqual({mock.sentinel.network_id: mock.sentinel.mtu},
+                             result)
+
     def test__populate_ports_for_subnets_none(self):
         """Basic test that the method runs correctly with no ports"""
         ports = []
