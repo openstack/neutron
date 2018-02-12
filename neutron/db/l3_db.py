@@ -1649,7 +1649,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _get_mtus_by_network_list(self, context, network_ids):
         if not network_ids:
             return {}
-        filters = {'network_id': network_ids}
+        filters = {'id': network_ids}
         fields = ['id', 'mtu']
         networks = self._core_plugin.get_networks(context, filters=filters,
                                                   fields=fields)
