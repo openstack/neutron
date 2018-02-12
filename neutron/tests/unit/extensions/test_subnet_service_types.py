@@ -12,6 +12,8 @@
 
 import webob.exc
 
+from neutron_lib.api.definitions import portbindings
+
 from neutron.db import db_base_plugin_v2
 from neutron.db import subnet_service_type_db_models
 from neutron.extensions import subnet_service_types
@@ -40,7 +42,7 @@ class SubnetServiceTypesExtensionTestPlugin(
     """Test plugin to mixin the subnet service_types extension.
     """
 
-    supported_extension_aliases = ["subnet-service-types"]
+    supported_extension_aliases = ["subnet-service-types", "binding"]
 
 
 class SubnetServiceTypesExtensionTestCase(
@@ -320,6 +322,29 @@ class SubnetServiceTypesExtensionTestCase(
         ip_address = port['fixed_ips'][0]['ip_address']
         data = {'port': {'fixed_ips': [{'subnet_id': service_subnet['id'],
                                         'ip_address': ip_address}]}}
+        # self._update will fail with a MismatchError if the update cannot be
+        # applied
+        port = self._update('ports', port['id'], data)
+
+    def test_update_port_host_binding(self):
+        with self.network() as network:
+            pass
+        service_type = 'compute:foo'
+        # Create a subnet with a service_type
+        self._create_service_subnet([service_type],
+                                    cidr=self.CIDRS[1],
+                                    network=network)
+        # Create a port with a matching device owner
+        network = network['network']
+        port = self._create_port(self.fmt,
+                                 net_id=network['id'],
+                                 tenant_id=network['tenant_id'],
+                                 device_owner=service_type,
+                                 arg_list=(portbindings.HOST_ID,),
+                                 **{portbindings.HOST_ID: 'fakehost'})
+        port = self.deserialize('json', port)['port']
+        # Update the port's host binding.
+        data = {'port': {portbindings.HOST_ID: 'fakehost2'}}
         # self._update will fail with a MismatchError if the update cannot be
         # applied
         port = self._update('ports', port['id'], data)
