@@ -118,19 +118,9 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
 
     pattern = r"(?P<packets_count>^\d+) packets received by filter"
     for line in tcpdump_async.iter_stderr():
-        # TODO(slaweq): Debug logging added to help troubleshooting bug
-        # https://bugs.launchpad.net/neutron/+bug/1733649
-        # once it will be closed this log can be removed
-        LOG.debug("Tcpdump error output line: %s", line)
         m = re.match(pattern, line)
         if m and int(m.group("packets_count")) != 0:
             return
-
-    # TODO(slaweq): Debug logging added to help troubleshooting bug
-    # https://bugs.launchpad.net/neutron/+bug/1733649
-    # once it will be closed this log can be removed
-    for line in tcpdump_async.iter_stdout():
-        LOG.debug("Tcpdump output line: %s", line)
 
     raise TcpdumpException(
         "No packets marked with DSCP = %(dscp_mark)s received from %(src)s "
