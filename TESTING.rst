@@ -321,9 +321,10 @@ present in current Ubuntu Xenial 16.04 kernel. Kernel was fixed with this
 `commit <https://github.com/torvalds/linux/commit/bbec7802c6948c8626b71a4fe31283cb4691c358>`_
 and backported with this
 `openvswitch commit <https://github.com/openvswitch/ovs/commit/b1c74f35273122db4ce2728a70fd34b98f525434>`_.
-Due to kernel compatibility, Ubuntu Trusty (Mitaka release) uses openvswitch
-version 2.5.1. Ubuntu Xenial jobs use 2.6.1. Both versions contain fixes for
-local VXLAN tunneling.
+
+Currently we compile openvswitch userland and kernel module from source for
+the ovsfw tempest job on the gate. This is to avoid ovs-vswitchd core dumps.
+See the gate_hook.sh comments for details.
 
 API Tests
 ~~~~~~~~~
