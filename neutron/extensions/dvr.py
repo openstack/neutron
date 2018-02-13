@@ -16,16 +16,7 @@ import abc
 
 from neutron_lib.api.definitions import dvr as apidef
 from neutron_lib.api import extensions
-from neutron_lib import exceptions
 import six
-
-from neutron._i18n import _
-
-
-# TODO(boden): consume with I88e1aa2acf22389f69cb7d5704c80a5eb72a9bbe
-class DVRMacAddressNotFound(exceptions.NotFound):
-    message = _("Distributed Virtual Router Mac Address for "
-                "host %(host)s does not exist.")
 
 
 class Dvr(extensions.APIExtensionDescriptor):
