@@ -29,6 +29,11 @@ import sqlalchemy as sa
 
 from neutron_lib.db import constants as db_const
 
+from neutron.db import migration
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.QUEENS]
+
 
 def upgrade():
     op.create_table(
