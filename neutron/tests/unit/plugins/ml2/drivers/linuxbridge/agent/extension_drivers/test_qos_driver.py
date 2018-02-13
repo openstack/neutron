@@ -242,9 +242,6 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
                 self._dscp_rule_tag(self.port['device'])),
             mock.call.remove_chain(
                 dscp_chain_name),
-            mock.call.remove_rule(
-                "POSTROUTING",
-                self._dscp_postrouting_rule(self.port['device']))
         ]
         with mock.patch.object(
             self.qos_driver, "iptables_manager") as iptables_manager:

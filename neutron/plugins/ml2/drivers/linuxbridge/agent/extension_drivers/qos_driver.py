@@ -142,16 +142,12 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
     def _delete_outgoing_qos_chain_for_port(self, port):
         chain_name = self._dscp_chain_name(
             const.EGRESS_DIRECTION, port['device'])
-        chain_rule = self._dscp_rule(
-            const.EGRESS_DIRECTION, port['device'])
+        # Iptables chain removal "cascades", and will remove rules in
+        # other chains that jump to it, like those added above.
         if self._qos_chain_is_empty(port, 4):
             self.iptables_manager.ipv4['mangle'].remove_chain(chain_name)
-            self.iptables_manager.ipv4['mangle'].remove_rule('POSTROUTING',
-                                                             chain_rule)
         if self._qos_chain_is_empty(port, 6):
             self.iptables_manager.ipv6['mangle'].remove_chain(chain_name)
-            self.iptables_manager.ipv6['mangle'].remove_rule('POSTROUTING',
-                                                             chain_rule)
 
     def _set_dscp_mark_rule(self, port, dscp_value):
         chain_name = self._dscp_chain_name(
