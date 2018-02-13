@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import debtcollector
-
 from neutron.api.rpc.callbacks import resource_manager
 
 
@@ -19,19 +17,6 @@ from neutron.api.rpc.callbacks import resource_manager
 #           safe for eventlet, but not for normal threading.
 def _get_manager():
     return resource_manager.ConsumerResourceCallbacksManager()
-
-
-@debtcollector.removals.remove(
-    message="This will be removed in the future. Please register callbacks "
-            "using the 'register' method in this model and adjust the "
-            "callback to accept the context and resource type as arguments.",
-    version="Ocata"
-)
-def subscribe(callback, resource_type):
-    # temporary hack to differentiate between callback types until the
-    # 'subscribe' method is removed
-    callback.__dict__['_ACCEPTS_CONTEXT'] = False
-    _get_manager().register(callback, resource_type)
 
 
 def register(callback, resource_type):
