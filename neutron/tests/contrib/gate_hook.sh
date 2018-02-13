@@ -89,6 +89,19 @@ case $VENV in
     ;;
 
 "api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
+    if [[ "$VENV" =~ "full-ovsfw" ]]; then
+        source $DEVSTACK_PATH/functions
+        source $NEUTRON_PATH/devstack/lib/ovs
+        # In the above case, this is done in configure_for_func_testing.sh
+        DEST=${GATE_DEST:-$DEST}
+        # The OVS_BRANCH variable is used by git checkout. In the case below,
+        # we use v2.8 branch that contains a fix for ovs-vswtichd crash.
+        # NOTE(toshii): Replace with a release tag when one is available.
+        # See commit 3a23430b573e8ab (on the ovs repo).
+        OVS_BRANCH="064f8465022856654648b4b8fa11898024316e11"
+        compile_ovs True /usr /var
+    fi
+
     # TODO(ihrachys) consider feeding result of ext-list into tempest.conf
     load_rc_hook api_all_extensions
     if [ "${FLAVOR}" = "dvrskip" ]; then
