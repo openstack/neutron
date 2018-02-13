@@ -53,7 +53,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         response = self.request.get_response(self.middleware)
         self.assertEqual('200 OK', response.status)
         self.assertEqual('testtenantid', self.context.tenant_id)
-        self.assertEqual('testtenantid', self.context.tenant)
+        self.assertEqual('testtenantid', self.context.project_id)
 
     def test_roles_no_admin(self):
         self.request.headers['X_PROJECT_ID'] = 'testtenantid'

@@ -6676,7 +6676,7 @@ class DbOperationBoundMixin(object):
 
     def get_api_kwargs(self):
         context_ = self._get_context()
-        return {'set_context': True, 'tenant_id': context_.tenant}
+        return {'set_context': True, 'tenant_id': context_.project_id}
 
     def _list_and_record_queries(self, resource, query_params=None):
         kwargs = {'neutron_context': self._get_context()}
