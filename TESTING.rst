@@ -59,8 +59,8 @@ that broad categorization, here are a few more characteristic:
   such as an agent using no mocks.
 * Integration tests - Run against a running cloud, often target the API level,
   but also 'scenarios' or 'user stories'. You may find such tests under
-  tests/tempest/api, tests/tempest/scenario, tests/fullstack, and in the
-  Tempest and Rally projects.
+  tests/fullstack, and in the Tempest, Rally and
+  neutron-tempest-plugin(neutron_tempest_plugin/api|scenario) projects.
 
 Tests in the Neutron tree are typically organized by the testing infrastructure
 used, and not by the scope of the test. For example, many tests under the
@@ -329,7 +329,8 @@ See the gate_hook.sh comments for details.
 API Tests
 ~~~~~~~~~
 
-API tests (neutron/tests/tempest/api/) are intended to ensure the function
+API tests (neutron-tempest-plugin/neutron_tempest_plugin/api/) are
+intended to ensure the function
 and stability of the Neutron API. As much as possible, changes to
 this path should not be made at the same time as changes to the code
 to limit the potential for introducing backwards-incompatible changes,
@@ -343,10 +344,10 @@ be made about implementation. Only the contract defined by Neutron's REST API
 should be validated, and all interaction with the daemon should be via
 a REST client.
 
-The neutron/tests/tempest/api directory was copied from the Tempest project around
-the Kilo timeframe. At the time, there was an overlap of tests between the Tempest
-and Neutron repositories. This overlap was then eliminated by carving out a subset
-of resources that belong to Tempest, with the rest in Neutron.
+The neutron-tempest-plugin/neutron_tempest_plugin directory was copied from the
+Tempest project around the Kilo timeframe. At the time, there was an overlap of tests
+between the Tempest and Neutron repositories. This overlap was then eliminated by carving
+out a subset of resources that belong to Tempest, with the rest in Neutron.
 
 API tests that belong to Tempest deal with a subset of Neutron's resources:
 
@@ -371,7 +372,7 @@ Scenario tests should be similarly split up between Tempest and Neutron
 according to the API they're targeting.
 
 To create an API test, the testing class must at least inherit from
-neutron.tests.tempest.api.base.BaseNetworkTest base class. As some of tests
+neutron_tempest_plugin.api.base.BaseNetworkTest base class. As some of tests
 may require certain extensions to be enabled, the base class provides
 ``required_extensions`` class attribute which can be used by subclasses to
 define a list of required extensions for particular test class.
@@ -379,8 +380,8 @@ define a list of required extensions for particular test class.
 Scenario Tests
 ~~~~~~~~~~~~~~
 
-Scenario tests (neutron/tests/tempest/scenario), like API tests, use the
-Tempest test infrastructure and have the same requirements. Guidelines for
+Scenario tests (neutron-tempest-plugin/neutron_tempest_plugin/scenario), like API tests,
+use the Tempest test infrastructure and have the same requirements. Guidelines for
 writing a good scenario test may be found at the Tempest developer guide:
 https://docs.openstack.org/tempest/latest/field_guide/scenario.html
 
