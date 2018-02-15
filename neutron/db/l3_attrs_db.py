@@ -54,13 +54,16 @@ class ExtraAttributesMixin(object):
             router_db['extra_attributes'] = new
 
     def set_extra_attr_value(self, context, router_db, key, value):
+        if not context.session.is_active:
+            raise RuntimeError(_("set_extra_attr_value cannot be called "
+                                 "out of a transaction."))
+
         # set a single value explicitly
-        with context.session.begin(subtransactions=True):
-            if key in get_attr_info():
-                info = get_attr_info()[key]
-                to_db = info.get('transform_to_db', lambda x: x)
-                self._ensure_extra_attr_model(context, router_db)
-                router_db['extra_attributes'].update({key: to_db(value)})
-                return
-            raise RuntimeError(_("Tried to set a key '%s' that doesn't exist "
-                                 "in the extra attributes table.") % key)
+        if key in get_attr_info():
+            info = get_attr_info()[key]
+            to_db = info.get('transform_to_db', lambda x: x)
+            self._ensure_extra_attr_model(context, router_db)
+            router_db['extra_attributes'].update({key: to_db(value)})
+            return
+        raise RuntimeError(_("Tried to set a key '%s' that doesn't exist "
+                             "in the extra attributes table.") % key)

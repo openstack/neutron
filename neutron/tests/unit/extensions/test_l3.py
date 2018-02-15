@@ -577,8 +577,9 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
 
     def test_set_extra_attr_key_bad(self):
         with testtools.ExpectedException(RuntimeError):
-            self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                            'bad', 'value')
+            with self.ctx.session.begin():
+                self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                                'bad', 'value')
 
     def test__extend_extra_router_dict_defaults(self):
         rdict = {}
@@ -586,19 +587,22 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
         self.assertEqual(self._get_default_api_values(), rdict)
 
     def test_set_attrs_and_extend(self):
-        self.mixin.set_extra_attr_value(self.ctx, self.router, 'ha_vr_id', 99)
-        self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                        'availability_zone_hints',
-                                        ['x', 'y', 'z'])
+        with self.ctx.session.begin():
+            self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                            'ha_vr_id', 99)
+            self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                            'availability_zone_hints',
+                                            ['x', 'y', 'z'])
         expected = self._get_default_api_values()
         expected.update({'ha_vr_id': 99,
                          'availability_zone_hints': ['x', 'y', 'z']})
         rdict = {}
         self.mixin._extend_extra_router_dict(rdict, self.router)
         self.assertEqual(expected, rdict)
-        self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                        'availability_zone_hints',
-                                        ['z', 'y', 'z'])
+        with self.ctx.session.begin():
+            self.mixin.set_extra_attr_value(self.ctx, self.router,
+                                            'availability_zone_hints',
+                                            ['z', 'y', 'z'])
         expected['availability_zone_hints'] = ['z', 'y', 'z']
         self.mixin._extend_extra_router_dict(rdict, self.router)
         self.assertEqual(expected, rdict)
