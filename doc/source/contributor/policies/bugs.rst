@@ -1,7 +1,7 @@
 Neutron Bugs
 ============
 
-Neutron (client, core, FwaaS, LBaaS, VPNaaS) maintains all of its bugs in the following
+Neutron (client, core, FwaaS, VPNaaS) maintains all of its bugs in the following
 Launchpad projects:
 
 * `Launchpad Neutron <https://bugs.launchpad.net/neutron>`_
@@ -603,14 +603,6 @@ L3 IPAM DHCP
 
 * `L3 IPAM DHCP - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=l3-ipam-dhcp>`_
 * `L3 IPAM DHCP - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=l3-ipam-dhcp>`_
-
-.. _lbaas:
-
-LBAAS
-+++++
-
-* `LBaaS - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=lbaas>`_
-* `LBaaS - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=lbaas>`_
 
 .. _lib:
 

@@ -26,5 +26,4 @@ Here is a list of tagged documentation and API reference bugs:
 IRC Information and Etiquette
 -----------------------------
 
-The main IRC channel for Neutron is #openstack-neutron. We also utilize #openstack-lbaas
-for LBaaS specific discussions. The weekly meeting is documented in the `list of meetings <https://wiki.openstack.org/wiki/Meetings#OpenStack_Networking_.28Neutron.29>`_ wiki page.
+The main IRC channel for Neutron is #openstack-neutron.

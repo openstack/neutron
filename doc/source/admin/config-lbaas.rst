@@ -4,6 +4,12 @@
 Load Balancer as a Service (LBaaS)
 ==================================
 
+.. warning::
+   Neutron-lbaas is deprecated as of Queens. Load-Balancer-as-a-Service
+   (LBaaS v2) is now provided by the `Octavia project
+   <https://docs.openstack.org/octavia/latest/>`_. Please see the FAQ:
+   https://wiki.openstack.org/wiki/Neutron/LBaaS/Deprecation
+
 The Networking service offers a load balancer feature called "LBaaS v2"
 through the ``neutron-lbaas`` service plug-in.
 

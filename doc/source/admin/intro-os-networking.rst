@@ -368,7 +368,8 @@ LBaaS
 
 The Load-Balancer-as-a-Service (LBaaS) API provisions and configures
 load balancers. The reference implementation is based on the HAProxy
-software load balancer.
+software load balancer. See the `Octavia project
+<https://docs.openstack.org/octavia/latest/>`_ for more information.
 
 FWaaS
 ^^^^^
