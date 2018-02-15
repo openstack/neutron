@@ -462,3 +462,9 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                           {'port_range_min': 1000,
                            'port_range_max': 1,
                            'protocol': constants.PROTO_NAME_UDPLITE})
+        self.assertRaises(
+            securitygroup.SecurityGroupInvalidProtocolForPortRange,
+            self.mixin._validate_port_range,
+            {'port_range_min': 100,
+             'port_range_max': 200,
+             'protocol': '111'})
