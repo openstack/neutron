@@ -40,6 +40,11 @@ class SecurityGroupInvalidPortRange(nexception.InvalidInput):
                 "<= port_range_max")
 
 
+class SecurityGroupInvalidProtocolForPortRange(nexception.InvalidInput):
+    message = _("Invalid protocol %(protocol)s for port range, only "
+                "supported for TCP, UDP, UDPLITE, SCTP and DCCP.")
+
+
 class SecurityGroupInvalidPortValue(nexception.InvalidInput):
     message = _("Invalid value for port %(port)s")
 
