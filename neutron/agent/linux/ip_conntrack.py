@@ -13,9 +13,11 @@
 
 import re
 
+import eventlet
 import netaddr
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
+from six.moves import queue as Queue
 
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants as n_const
@@ -25,6 +27,33 @@ LOG = logging.getLogger(__name__)
 CONTRACK_MGRS = {}
 MAX_CONNTRACK_ZONES = 65535
 ZONE_START = 4097
+
+
+class IpConntrackUpdate(object):
+    """Encapsulates a conntrack update
+
+    An instance of this object carries the information necessary to
+    process a request to update the conntrack table.
+    """
+    def __init__(self, device_info_list, rule, remote_ips):
+        self.device_info_list = device_info_list
+        self.rule = rule
+        self.remote_ips = remote_ips
+
+
+class IpConntrackProcessingQueue(object):
+    """Manager of the queue of conntrack updates to process."""
+    def __init__(self):
+        self._queue = Queue.Queue()
+
+    def add(self, update):
+        self._queue.put(update)
+
+    def updates(self):
+        """Grabs the next conntrack update from the queue and processes."""
+        while not self._queue.empty():
+            update = self._queue.get()
+            yield update
 
 
 @lockutils.synchronized('conntrack')
@@ -53,6 +82,32 @@ class IpConntrackManager(object):
         self.unfiltered_ports = unfiltered_ports
         self.zone_per_port = zone_per_port  # zone per port vs per network
         self._populate_initial_zone_map()
+        self._queue = IpConntrackProcessingQueue()
+        self.start_process_queue()
+
+    def start_process_queue(self):
+        eventlet.spawn_n(self._process_queue_loop)
+
+    def _process_queue_loop(self):
+        LOG.debug("Starting ipconntrack _process_queue_loop()")
+        pool = eventlet.GreenPool(size=8)
+        while True:
+            pool.spawn_n(self._process_queue)
+
+    def _process_queue(self):
+        for update in self._queue.updates():
+            if update.remote_ips:
+                for remote_ip in update.remote_ips:
+                    self._delete_conntrack_state(
+                        update.device_info_list, update.rule, remote_ip)
+            else:
+                self._delete_conntrack_state(update.device_info_list,
+                                             update.rule)
+
+    def _process(self, device_info_list, rule, remote_ips=None):
+        # queue the update to allow the caller to resume its work
+        update = IpConntrackUpdate(device_info_list, rule, remote_ips)
+        self._queue.add(update)
 
     @staticmethod
     def _generate_conntrack_cmd_by_rule(rule, namespace):
@@ -110,19 +165,14 @@ class IpConntrackManager(object):
                 LOG.exception("Failed execute conntrack command %s", cmd)
 
     def delete_conntrack_state_by_rule(self, device_info_list, rule):
-        self._delete_conntrack_state(device_info_list, rule)
+        self._process(device_info_list, rule)
 
     def delete_conntrack_state_by_remote_ips(self, device_info_list,
                                              ethertype, remote_ips):
         for direction in ['ingress', 'egress']:
             rule = {'ethertype': str(ethertype).lower(),
                     'direction': direction}
-            if remote_ips:
-                for remote_ip in remote_ips:
-                    self._delete_conntrack_state(
-                        device_info_list, rule, remote_ip)
-            else:
-                self._delete_conntrack_state(device_info_list, rule)
+            self._process(device_info_list, rule, remote_ips)
 
     def _populate_initial_zone_map(self):
         """Setup the map between devices and zones based on current rules."""
