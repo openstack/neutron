@@ -158,7 +158,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     "default-subnetpools",
                                     "subnet-service-types",
                                     "ip-substring-filtering",
-                                    "port-security-groups-filtering"]
+                                    "port-security-groups-filtering",
+                                    "empty-string-filtering"]
 
     @property
     def supported_extension_aliases(self):

@@ -75,12 +75,14 @@ def get_filters_from_dict(data, attr_info, skips=None):
     becomes:
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
+    is_empty_string_supported = is_empty_string_filtering_supported()
     skips = skips or []
     res = {}
     for key, values in data.items():
         if key in skips or hasattr(model_base.BASEV2, key):
             continue
-        values = [v for v in values if v]
+        values = [v for v in values
+                  if v or (v == "" and is_empty_string_supported)]
         key_attr_info = attr_info.get(key, {})
         if 'convert_list_to' in key_attr_info:
             values = key_attr_info['convert_list_to'](values)
@@ -90,6 +92,11 @@ def get_filters_from_dict(data, attr_info, skips=None):
         if values:
             res[key] = values
     return res
+
+
+def is_empty_string_filtering_supported():
+    return 'empty-string-filtering' in (extensions.PluginAwareExtensionManager.
+                                        get_instance().extensions)
 
 
 def get_previous_link(request, items, id_key):
