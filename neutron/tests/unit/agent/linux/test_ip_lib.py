@@ -842,37 +842,57 @@ class TestIpAddrCommand(TestIPCmdBase):
         self.command = 'addr'
         self.addr_cmd = ip_lib.IpAddrCommand(self.parent)
 
-    def test_add_address(self):
+    @mock.patch.object(priv_lib, 'add_ip_address')
+    def test_add_address(self, add):
         self.addr_cmd.add('192.168.45.100/24')
-        self._assert_sudo([4],
-                          ('add', '192.168.45.100/24',
-                           'scope', 'global',
-                           'dev', 'tap0',
-                           'brd', '192.168.45.255'))
+        add.assert_called_once_with(
+            4,
+            '192.168.45.100',
+            24,
+            self.parent.name,
+            self.addr_cmd._parent.namespace,
+            'global',
+            '192.168.45.255')
 
-    def test_add_address_scoped(self):
+    @mock.patch.object(priv_lib, 'add_ip_address')
+    def test_add_address_scoped(self, add):
         self.addr_cmd.add('192.168.45.100/24', scope='link')
-        self._assert_sudo([4],
-                          ('add', '192.168.45.100/24',
-                           'scope', 'link',
-                           'dev', 'tap0',
-                           'brd', '192.168.45.255'))
+        add.assert_called_once_with(
+            4,
+            '192.168.45.100',
+            24,
+            self.parent.name,
+            self.addr_cmd._parent.namespace,
+            'link',
+            '192.168.45.255')
 
-    def test_add_address_no_broadcast(self):
+    @mock.patch.object(priv_lib, 'add_ip_address')
+    def test_add_address_no_broadcast(self, add):
         self.addr_cmd.add('192.168.45.100/24', add_broadcast=False)
-        self._assert_sudo([4],
-                          ('add', '192.168.45.100/24',
-                           'scope', 'global',
-                           'dev', 'tap0'))
+        add.assert_called_once_with(
+            4,
+            '192.168.45.100',
+            24,
+            self.parent.name,
+            self.addr_cmd._parent.namespace,
+            'global',
+            None)
 
-    def test_del_address(self):
+    @mock.patch.object(priv_lib, 'delete_ip_address')
+    def test_del_address(self, delete):
         self.addr_cmd.delete('192.168.45.100/24')
-        self._assert_sudo([4],
-                          ('del', '192.168.45.100/24', 'dev', 'tap0'))
+        delete.assert_called_once_with(
+            4,
+            '192.168.45.100',
+            24,
+            self.parent.name,
+            self.addr_cmd._parent.namespace)
 
-    def test_flush(self):
+    @mock.patch.object(priv_lib, 'flush_ip_addresses')
+    def test_flush(self, flush):
         self.addr_cmd.flush(6)
-        self._assert_sudo([6], ('flush', 'tap0'))
+        flush.assert_called_once_with(
+            6, self.parent.name, self.addr_cmd._parent.namespace)
 
     def test_list(self):
         expected = [
@@ -1666,7 +1686,7 @@ class TestIpNeighCommand(TestIPCmdBase):
             family=2,
             ifindex=1)
 
-    @mock.patch.object(priv_lib, '_run_iproute')
+    @mock.patch.object(priv_lib, '_run_iproute_neigh')
     def test_delete_entry_not_exist(self, mock_run_iproute):
         # trying to delete a non-existent entry shouldn't raise an error
         mock_run_iproute.side_effect = NetlinkError(errno.ENOENT, None)

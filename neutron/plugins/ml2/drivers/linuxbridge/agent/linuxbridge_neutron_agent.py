@@ -39,6 +39,7 @@ from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler
 from neutron.common import topics
 from neutron.common import utils
+from neutron.conf.agent import common as agent_config
 from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
@@ -1004,6 +1005,7 @@ def main():
     common_config.init(sys.argv[1:])
 
     common_config.setup_logging()
+    agent_config.setup_privsep()
     try:
         interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
