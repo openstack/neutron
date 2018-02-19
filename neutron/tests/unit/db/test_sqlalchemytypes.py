@@ -16,9 +16,11 @@ import netaddr
 from neutron_lib import context
 from neutron_lib.utils import net
 from oslo_db import exception
-from oslo_db.tests.sqlalchemy import base as test_base
+from oslo_db.sqlalchemy import enginefacade
+from oslo_db.sqlalchemy import test_fixtures
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
+from oslotest import base as test_base
 import six
 import sqlalchemy as sa
 
@@ -27,9 +29,11 @@ from neutron.tests import tools
 
 
 @six.add_metaclass(abc.ABCMeta)
-class SqlAlchemyTypesBaseTestCase(test_base.DbTestCase):
+class SqlAlchemyTypesBaseTestCase(test_fixtures.OpportunisticDBTestMixin,
+                                  test_base.BaseTestCase):
     def setUp(self):
         super(SqlAlchemyTypesBaseTestCase, self).setUp()
+        self.engine = enginefacade.writer.get_engine()
         meta = sa.MetaData(bind=self.engine)
         self.test_table = self._get_test_table(meta)
         self.test_table.create()
