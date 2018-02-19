@@ -131,7 +131,8 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     def _start_async_dhclient(self):
         cmd = ["dhclient", '--no-pid', '-d', self.port.name]
         self.dhclient_async = async_process.AsyncProcess(
-            cmd, run_as_root=True, namespace=self.namespace)
+            cmd, run_as_root=True, respawn_interval=5,
+            namespace=self.namespace)
         self.dhclient_async.start()
 
     def _stop_async_dhclient(self):
