@@ -257,7 +257,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if not interface:
             LOG.error("Failed creating vxlan interface for "
                       "%(segmentation_id)s",
-                      {segmentation_id: segmentation_id})
+                      {'segmentation_id': segmentation_id})
             return
         bridge_name = self.get_bridge_name(network_id)
         self.ensure_bridge(bridge_name, interface, update_interface=False)
