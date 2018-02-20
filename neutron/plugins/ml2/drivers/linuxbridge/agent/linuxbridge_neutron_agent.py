@@ -346,6 +346,21 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                 args['proxy'] = cfg.CONF.VXLAN.arp_responder
 
             try:
+                if mtu:
+                    phys_dev_mtu = ip_lib.get_device_mtu(self.local_int)
+                    max_mtu = phys_dev_mtu - constants.VXLAN_ENCAP_OVERHEAD
+                    if mtu > max_mtu:
+                        LOG.error("Provided MTU value %(mtu)s for VNI "
+                                  "%(segmentation_id)s is too high. "
+                                  "According to physical device %(dev)s "
+                                  "MTU=%(phys_mtu)s maximum available "
+                                  "MTU is %(max_mtu)s",
+                                  {'mtu': mtu,
+                                   'segmentation_id': segmentation_id,
+                                   'dev': self.local_int,
+                                   'phys_mtu': phys_dev_mtu,
+                                   'max_mtu': max_mtu})
+                        return None
                 int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
                                               **args)
                 if mtu:
