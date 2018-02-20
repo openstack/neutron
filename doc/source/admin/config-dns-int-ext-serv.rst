@@ -35,7 +35,7 @@ Once this is done, the user has to take the following steps and restart
    * ``url``: the OpenStack DNS service public endpoint URL. Note that
      this must always be the versioned endpoint currently.
    * ``auth_type``: the authorization plugin to use.
-     Usually this should be ``password``, see 
+     Usually this should be ``password``, see
      https://docs.openstack.org/keystoneauth/latest/authentication-plugins.html
      for other options.
    * ``auth_url``: the Identity service authorization endpoint url.
