@@ -11,40 +11,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api.definitions import sorting as apidef
 from neutron_lib.api import extensions as api_extensions
 
 from neutron.api import extensions
 
 
-_ALIAS = 'sorting'
-
-
-class Sorting(api_extensions.ExtensionDescriptor):
+class Sorting(api_extensions.APIExtensionDescriptor):
     """Fake extension that indicates that sorting is enabled."""
 
     extensions.register_custom_supported_check(
-        _ALIAS, lambda: True, plugin_agnostic=True
+        apidef.ALIAS, lambda: True, plugin_agnostic=True
     )
 
-    @classmethod
-    def get_name(cls):
-        return "Sorting support"
-
-    @classmethod
-    def get_alias(cls):
-        return _ALIAS
-
-    @classmethod
-    def get_description(cls):
-        return "Extension that indicates that sorting is enabled."
-
-    @classmethod
-    def get_updated(cls):
-        return "2016-06-12T00:00:00-00:00"
-
-    @classmethod
-    def get_resources(cls):
-        return []
-
-    def get_extended_resources(self, version):
-        return {}
+    api_definition = apidef
