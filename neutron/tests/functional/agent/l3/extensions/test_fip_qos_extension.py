@@ -19,7 +19,6 @@ from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3.extensions import fip_qos
-from neutron.common import constants as n_const
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
 from neutron.objects.qos import policy
@@ -207,7 +206,7 @@ class TestL3AgentFipQosExtensionDVR(
         self._test_dvr_fip_qos(enable_ha=True)
 
     def _test_agent_mode_dvr_no_external(self, enable_ha=False):
-        self.agent.conf.agent_mode = n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL
+        self.agent.conf.agent_mode = constants.L3_AGENT_MODE_DVR_NO_EXTERNAL
         router_info = self.generate_dvr_router_info(
             enable_ha=enable_ha,
             enable_floating_ip=True, enable_centralized_fip=True,

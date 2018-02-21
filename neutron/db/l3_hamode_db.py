@@ -628,7 +628,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         dvr_agent_mode = (
             agent_mode in [constants.L3_AGENT_MODE_DVR_SNAT,
                            constants.L3_AGENT_MODE_DVR,
-                           n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL])
+                           constants.L3_AGENT_MODE_DVR_NO_EXTERNAL])
         if (dvr_agent_mode and n_utils.is_extension_supported(
                 self, constants.L3_DISTRIBUTED_EXT_ALIAS)):
             # DVR has to be handled differently

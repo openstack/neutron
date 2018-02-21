@@ -28,7 +28,6 @@ from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
 
 LOG = logging.getLogger(__name__)
@@ -306,7 +305,7 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
         is_distributed_router = router_info.router.get('distributed')
         agent_mode = router_info.agent_conf.agent_mode
         if is_distributed_router and agent_mode == (
-                n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL):
+                constants.L3_AGENT_MODE_DVR_NO_EXTERNAL):
             # condition 3: dvr local router and dvr_no_external agent
             return
         device = self._get_rate_limit_ip_device(router_info)
