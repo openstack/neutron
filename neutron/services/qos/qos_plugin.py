@@ -93,7 +93,8 @@ class QoSPlugin(qos.QoSPluginBase):
         if policy_id is None:
             return
 
-        policy = policy_object.QosPolicy.get_object(context, id=policy_id)
+        policy = policy_object.QosPolicy.get_object(
+            context.elevated(), id=policy_id)
         self.validate_policy_for_port(policy, port)
 
     def _validate_update_port_callback(self, resource, event, trigger,
@@ -108,7 +109,9 @@ class QoSPlugin(qos.QoSPluginBase):
 
         updated_port = ports_object.Port.get_object(
             context, id=kwargs['port']['id'])
-        policy = policy_object.QosPolicy.get_object(context, id=policy_id)
+
+        policy = policy_object.QosPolicy.get_object(
+            context.elevated(), id=policy_id)
 
         self.validate_policy_for_port(policy, updated_port)
 
@@ -124,7 +127,8 @@ class QoSPlugin(qos.QoSPluginBase):
         if policy_id is None or policy_id == original_policy_id:
             return
 
-        policy = policy_object.QosPolicy.get_object(context, id=policy_id)
+        policy = policy_object.QosPolicy.get_object(
+            context.elevated(), id=policy_id)
         ports = ports_object.Port.get_objects(
                 context, network_id=updated_network['id'])
         # Filter only this ports which don't have overwritten policy
