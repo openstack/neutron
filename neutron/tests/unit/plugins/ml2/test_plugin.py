@@ -677,7 +677,7 @@ class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
         net = self.driver.create_network(
             context.get_admin_context(),
             {'network': {'name': 'net1',
-                         'tenant_id': context_.tenant,
+                         'tenant_id': context_.project_id,
                          'admin_state_up': True,
                          'shared': True}})
         # create port that belongs to another tenant
