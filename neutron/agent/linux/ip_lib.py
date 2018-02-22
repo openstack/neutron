@@ -945,6 +945,11 @@ def get_device_mac(device_name, namespace=None):
     return IPDevice(device_name, namespace=namespace).link.address
 
 
+def get_device_mtu(device_name, namespace=None):
+    """Return the MTU value of the device."""
+    return IPDevice(device_name, namespace=namespace).link.mtu
+
+
 NetworkNamespaceNotFound = privileged.NetworkNamespaceNotFound
 NetworkInterfaceNotFound = privileged.NetworkInterfaceNotFound
 
