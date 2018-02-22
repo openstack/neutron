@@ -6,20 +6,14 @@
         - neutron-rally-neutron
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
         - neutron-tempest-multinode-full
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-ovsfw
-        - neutron-grenade
     gate:
       jobs:
         - neutron-functional
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
-        - neutron-grenade
 
 - job:
     name: neutron-functional
@@ -134,50 +128,6 @@
       - ^tox.ini$
 
 - job:
-    name: neutron-grenade-multinode
-    parent: legacy-dsvm-base-multinode
-    run: playbooks/legacy/neutron-grenade-multinode/run.yaml
-    post-run: playbooks/legacy/neutron-grenade-multinode/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    nodeset: legacy-ubuntu-xenial-2-node
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
-
-- job:
-    name: neutron-grenade-dvr-multinode
-    parent: legacy-dsvm-base-multinode
-    run: playbooks/legacy/neutron-grenade-dvr-multinode/run.yaml
-    post-run: playbooks/legacy/neutron-grenade-dvr-multinode/post.yaml
-    timeout: 7500
-    required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    nodeset: legacy-ubuntu-xenial-2-node
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
-
-- job:
     name: neutron-tempest-multinode-full
     parent: legacy-dsvm-base-multinode
     run: playbooks/legacy/neutron-tempest-multinode-full/run.yaml
@@ -244,24 +194,3 @@
       - ^tools/.*$
       - ^tox.ini$
     voting: false
-
-- job:
-    name: neutron-grenade
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-grenade/run.yaml
-    post-run: playbooks/legacy/neutron-grenade/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack-dev/grenade
-      - openstack-infra/devstack-gate
-      - openstack/neutron
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
