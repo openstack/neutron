@@ -12,9 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import ip_substring_port_filtering as apidef
 from neutron_lib.api import extensions
-
-from neutron.extensions import ip_substring_port_filtering_lib as apidef
 
 
 class Ip_substring_port_filtering(extensions.APIExtensionDescriptor):
