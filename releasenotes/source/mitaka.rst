@@ -3,4 +3,4 @@
 ===================================
 
 .. release-notes::
-   :branch: origin/stable/mitaka
+   :branch: stable/mitaka

@@ -3,5 +3,5 @@
 ===================================
 
 .. release-notes::
-   :branch: origin/stable/newton
+   :branch: stable/newton
    :earliest-version: 9.0.0
