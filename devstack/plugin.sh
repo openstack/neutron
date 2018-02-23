@@ -4,6 +4,7 @@ source $LIBDIR/dns
 source $LIBDIR/flavors
 source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
+source $LIBDIR/l3_agent
 source $LIBDIR/ml2
 source $LIBDIR/qos
 source $LIBDIR/ovs
@@ -62,6 +63,12 @@ if [[ "$1" == "stack" ]]; then
                 configure_$NEUTRON_CORE_PLUGIN
                 configure_l2_agent
                 configure_l2_agent_sriovnicswitch
+            fi
+            if is_service_enabled q-l3 neutron-l3; then
+                if is_service_enabled q-qos neutron-qos; then
+                    configure_l3_agent_extension_fip_qos
+                fi
+                configure_l3_agent
             fi
             if [ $NEUTRON_CORE_PLUGIN = ml2 ]; then
                 configure_ml2_extension_drivers
