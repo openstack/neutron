@@ -491,7 +491,7 @@ class L3NATAgent(ha.AgentMixin,
     def _process_updated_router(self, router):
         is_dvr_only_agent = (self.conf.agent_mode in
                              [lib_const.L3_AGENT_MODE_DVR,
-                              l3_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL])
+                              lib_const.L3_AGENT_MODE_DVR_NO_EXTERNAL])
         # For HA routers check that DB state matches actual state
         if router.get('ha') and not is_dvr_only_agent:
             self.check_ha_state_for_router(

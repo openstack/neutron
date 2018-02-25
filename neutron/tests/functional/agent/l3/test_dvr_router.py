@@ -469,7 +469,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
                 floating_ip['host'] = agent.conf.host
 
         if snat_bound_fip:
-            floating_ip[n_const.DVR_SNAT_BOUND] = True
+            floating_ip[lib_constants.DVR_SNAT_BOUND] = True
         if enable_floating_ip and enable_centralized_fip:
             # For centralizing the fip, we are emulating the legacy
             # router behavior were the fip dict does not contain any
@@ -1056,7 +1056,8 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def test_floating_ip_not_deployed_on_dvr_no_external_agent(self):
         """Test to check floating ips not configured for dvr_no_external."""
-        self.agent.conf.agent_mode = n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL
+        self.agent.conf.agent_mode = (
+            lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)
         router_info = self.generate_dvr_router_info(
             enable_floating_ip=True, enable_centralized_fip=True)
         router1 = self.manage_router(self.agent, router_info)
