@@ -11,3 +11,4 @@ Miscellaneous
    fwaas-v1-scenario
    misc-libvirt
    neutron_linuxbridge
+   vpnaas-scenario
