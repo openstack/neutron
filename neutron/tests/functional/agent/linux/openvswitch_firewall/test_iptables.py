@@ -16,7 +16,6 @@
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.agent import firewall
 from neutron.agent.linux import iptables_firewall
 import neutron.agent.linux.openvswitch_firewall.firewall as ovs_fw_mod
 import neutron.agent.linux.openvswitch_firewall.iptables as iptables_helper
@@ -85,10 +84,10 @@ class TestHelper(base.BaseSudoTestCase):
 
     def test_migration(self):
         sg_rules = [{'ethertype': constants.IPv4,
-                     'direction': firewall.INGRESS_DIRECTION,
+                     'direction': constants.INGRESS_DIRECTION,
                      'protocol': constants.PROTO_NAME_ICMP},
                     {'ethertype': constants.IPv4,
-                     'direction': firewall.EGRESS_DIRECTION}]
+                     'direction': constants.EGRESS_DIRECTION}]
         port, desc = self._prepare_port_and_description(sg_rules)
         ovs_firewall = ovs_fw_mod.OVSFirewallDriver(self.bridge)
         # Check that iptables driver was set and replace it with the one that

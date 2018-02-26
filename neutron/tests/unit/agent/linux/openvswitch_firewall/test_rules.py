@@ -15,7 +15,6 @@
 import mock
 from neutron_lib import constants
 
-from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.agent.linux.openvswitch_firewall import rules
@@ -74,7 +73,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def test_create_flows_from_rule_and_port_no_ip_ipv4(self):
         rule = {
             'ethertype': constants.IPv4,
-            'direction': firewall.INGRESS_DIRECTION,
+            'direction': constants.INGRESS_DIRECTION,
         }
         expected_template = {
             'priority': 74,
@@ -87,7 +86,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def test_create_flows_from_rule_and_port_src_and_dst_ipv4(self):
         rule = {
             'ethertype': constants.IPv4,
-            'direction': firewall.INGRESS_DIRECTION,
+            'direction': constants.INGRESS_DIRECTION,
             'source_ip_prefix': '192.168.0.0/24',
             'dest_ip_prefix': '10.0.0.1/32',
         }
@@ -104,7 +103,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def test_create_flows_from_rule_and_port_src_and_dst_with_zero_ipv4(self):
         rule = {
             'ethertype': constants.IPv4,
-            'direction': firewall.INGRESS_DIRECTION,
+            'direction': constants.INGRESS_DIRECTION,
             'source_ip_prefix': '192.168.0.0/24',
             'dest_ip_prefix': '0.0.0.0/0',
         }
@@ -120,7 +119,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def test_create_flows_from_rule_and_port_no_ip_ipv6(self):
         rule = {
             'ethertype': constants.IPv6,
-            'direction': firewall.INGRESS_DIRECTION,
+            'direction': constants.INGRESS_DIRECTION,
         }
         expected_template = {
             'priority': 74,
@@ -133,7 +132,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def test_create_flows_from_rule_and_port_src_and_dst_ipv6(self):
         rule = {
             'ethertype': constants.IPv6,
-            'direction': firewall.INGRESS_DIRECTION,
+            'direction': constants.INGRESS_DIRECTION,
             'source_ip_prefix': '2001:db8:bbbb::1/64',
             'dest_ip_prefix': '2001:db8:aaaa::1/64',
         }
@@ -150,7 +149,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
     def test_create_flows_from_rule_and_port_src_and_dst_with_zero_ipv6(self):
         rule = {
             'ethertype': constants.IPv6,
-            'direction': firewall.INGRESS_DIRECTION,
+            'direction': constants.INGRESS_DIRECTION,
             'source_ip_prefix': '2001:db8:bbbb::1/64',
             'dest_ip_prefix': '::/0',
         }
@@ -191,7 +190,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'nw_proto': constants.PROTO_NUM_TCP,
         }]
         self._test_create_protocol_flows_helper(
-            firewall.INGRESS_DIRECTION, rule, expected_flows)
+            constants.INGRESS_DIRECTION, rule, expected_flows)
 
     def test_create_protocol_flows_egress(self):
         rule = {'protocol': constants.PROTO_NUM_TCP}
@@ -202,7 +201,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'nw_proto': constants.PROTO_NUM_TCP,
         }]
         self._test_create_protocol_flows_helper(
-            firewall.EGRESS_DIRECTION, rule, expected_flows)
+            constants.EGRESS_DIRECTION, rule, expected_flows)
 
     def test_create_protocol_flows_no_protocol(self):
         rule = {}
@@ -212,7 +211,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
                 ovs_consts.ACCEPT_OR_INGRESS_TABLE),
         }]
         self._test_create_protocol_flows_helper(
-            firewall.EGRESS_DIRECTION, rule, expected_flows)
+            constants.EGRESS_DIRECTION, rule, expected_flows)
 
     def test_create_protocol_flows_icmp6(self):
         rule = {'ethertype': constants.IPv6,
@@ -224,7 +223,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'nw_proto': constants.PROTO_NUM_IPV6_ICMP,
         }]
         self._test_create_protocol_flows_helper(
-            firewall.EGRESS_DIRECTION, rule, expected_flows)
+            constants.EGRESS_DIRECTION, rule, expected_flows)
 
     def test_create_protocol_flows_port_range(self):
         rule = {'ethertype': constants.IPv4,
@@ -239,7 +238,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'tcp_dst': '0x0016/0xfffe'
         }]
         self._test_create_protocol_flows_helper(
-            firewall.EGRESS_DIRECTION, rule, expected_flows)
+            constants.EGRESS_DIRECTION, rule, expected_flows)
 
     def test_create_protocol_flows_icmp(self):
         rule = {'ethertype': constants.IPv4,
@@ -253,7 +252,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'icmp_type': 0
         }]
         self._test_create_protocol_flows_helper(
-            firewall.EGRESS_DIRECTION, rule, expected_flows)
+            constants.EGRESS_DIRECTION, rule, expected_flows)
 
     def test_create_protocol_flows_ipv6_icmp(self):
         rule = {'ethertype': constants.IPv6,
@@ -269,7 +268,7 @@ class TestCreateProtocolFlows(base.BaseTestCase):
             'icmp_code': 0,
         }]
         self._test_create_protocol_flows_helper(
-            firewall.EGRESS_DIRECTION, rule, expected_flows)
+            constants.EGRESS_DIRECTION, rule, expected_flows)
 
 
 class TestCreatePortRangeFlows(base.BaseTestCase):
@@ -352,7 +351,7 @@ class TestCreateFlowsForIpAddress(base.BaseTestCase):
 
         conj_ids = [12, 20]
         flows = rules.create_flows_for_ip_address(
-            '192.168.0.1', firewall.EGRESS_DIRECTION, constants.IPv4,
+            '192.168.0.1', constants.EGRESS_DIRECTION, constants.IPv4,
             0x123, conj_ids)
 
         self.assertEqual(2, len(flows))
@@ -386,7 +385,7 @@ class TestCreateConjFlows(base.BaseTestCase):
         }
 
         flows = rules.create_conj_flows(port, conj_id,
-                                        firewall.INGRESS_DIRECTION,
+                                        constants.INGRESS_DIRECTION,
                                         constants.IPv6)
 
         self.assertEqual(ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY,

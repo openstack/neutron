@@ -22,7 +22,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import testscenarios
 
-from neutron.agent import firewall
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
     ovs_agent_extension_api as ovs_ext_api)
@@ -128,18 +127,18 @@ class TestLoggingExtension(LoggingExtensionTestFramework):
 
     def test_log_lifecycle(self):
         sg_rules = [{'ethertype': constants.IPv4,
-                     'direction': firewall.INGRESS_DIRECTION,
+                     'direction': constants.INGRESS_DIRECTION,
                      'protocol': constants.PROTO_NAME_ICMP,
                      'security_group_id': self.FAKE_SECURITY_GROUP_ID},
                     {'ethertype': constants.IPv4,
-                     'direction': firewall.EGRESS_DIRECTION,
+                     'direction': constants.EGRESS_DIRECTION,
                      'security_group_id': self.FAKE_SECURITY_GROUP_ID},
                     {'ethertype': constants.IPv6,
                      'protocol': constants.PROTO_NAME_TCP,
                      'port_range_min': 22,
                      'port_range_max': 22,
                      'remote_group_id': 2,
-                     'direction': firewall.EGRESS_DIRECTION,
+                     'direction': constants.EGRESS_DIRECTION,
                      'security_group_id': self.FAKE_SECURITY_GROUP_ID},
                     ]
         self.firewall.update_security_group_rules(

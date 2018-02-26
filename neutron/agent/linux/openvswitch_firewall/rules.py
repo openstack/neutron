@@ -18,7 +18,6 @@ import collections
 import netaddr
 from neutron_lib import constants as n_consts
 
-from neutron.agent import firewall
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
@@ -29,10 +28,10 @@ CT_STATES = [
     ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED]
 
 FLOW_FIELD_FOR_IPVER_AND_DIRECTION = {
-    (n_consts.IP_VERSION_4, firewall.EGRESS_DIRECTION): 'nw_dst',
-    (n_consts.IP_VERSION_6, firewall.EGRESS_DIRECTION): 'ipv6_dst',
-    (n_consts.IP_VERSION_4, firewall.INGRESS_DIRECTION): 'nw_src',
-    (n_consts.IP_VERSION_6, firewall.INGRESS_DIRECTION): 'ipv6_src',
+    (n_consts.IP_VERSION_4, n_consts.EGRESS_DIRECTION): 'nw_dst',
+    (n_consts.IP_VERSION_6, n_consts.EGRESS_DIRECTION): 'ipv6_dst',
+    (n_consts.IP_VERSION_4, n_consts.INGRESS_DIRECTION): 'nw_src',
+    (n_consts.IP_VERSION_6, n_consts.INGRESS_DIRECTION): 'ipv6_src',
 }
 
 FORBIDDEN_PREFIXES = (n_consts.IPv4_ANY, n_consts.IPv6_ANY)
@@ -185,12 +184,12 @@ def create_flows_from_rule_and_port(rule, port, conjunction=False):
 
     if is_valid_prefix(dst_ip_prefix):
         flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
-            utils.get_ip_version(dst_ip_prefix), firewall.EGRESS_DIRECTION)]
+            utils.get_ip_version(dst_ip_prefix), n_consts.EGRESS_DIRECTION)]
         ] = dst_ip_prefix
 
     if is_valid_prefix(src_ip_prefix):
         flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
-            utils.get_ip_version(src_ip_prefix), firewall.INGRESS_DIRECTION)]
+            utils.get_ip_version(src_ip_prefix), n_consts.INGRESS_DIRECTION)]
         ] = src_ip_prefix
 
     flows = create_protocol_flows(direction, flow_template, port, rule)
@@ -200,12 +199,12 @@ def create_flows_from_rule_and_port(rule, port, conjunction=False):
 
 def populate_flow_common(direction, flow_template, port):
     """Initialize common flow fields."""
-    if direction == firewall.INGRESS_DIRECTION:
+    if direction == n_consts.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
         flow_template['actions'] = "output:{:d},resubmit(,{:d})".format(
             port.ofport,
             ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE)
-    elif direction == firewall.EGRESS_DIRECTION:
+    elif direction == n_consts.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
         # Traffic can be both ingress and egress, check that no ingress rules
         # should be applied
@@ -309,9 +308,9 @@ def create_flows_for_ip_address(ip_address, direction, ethertype,
 
     ip_ver = utils.get_ip_version(ip_prefix)
 
-    if direction == firewall.EGRESS_DIRECTION:
+    if direction == n_consts.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
-    elif direction == firewall.INGRESS_DIRECTION:
+    elif direction == n_consts.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
 
     flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
