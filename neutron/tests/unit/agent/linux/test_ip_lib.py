@@ -20,6 +20,7 @@ import mock
 import netaddr
 from neutron_lib import exceptions
 import pyroute2
+from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
 import testtools
@@ -36,53 +37,6 @@ NETNS_SAMPLE = [
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     'cccccccc-cccc-cccc-cccc-cccccccccccc']
 
-LINK_SAMPLE = [
-    '1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN \\'
-    'link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00 promiscuity 0',
-    '2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP '
-    'qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff'
-    '\    alias openvswitch',
-    '3: br-int: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN '
-    '\    link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff promiscuity 0',
-    '4: gw-ddc717df-49: <BROADCAST,MULTICAST> mtu 1500 qdisc noop '
-    'state DOWN \    link/ether fe:dc:ba:fe:dc:ba brd ff:ff:ff:ff:ff:ff '
-    'promiscuity 0',
-    '5: foo:foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state '
-    'UP qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff '
-    'promiscuity 0',
-    '6: foo@foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state '
-    'UP qlen 1000\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff '
-    'promiscuity 0',
-    '7: foo:foo@foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
-    'state UP qlen 1000'
-    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0',
-    '8: foo@foo:foo: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
-    'state UP qlen 1000'
-    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0',
-    '9: bar.9@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc '
-    ' noqueue master brq0b24798c-07 state UP mode DEFAULT'
-    '\    link/ether ab:04:49:b6:ab:a0 brd ff:ff:ff:ff:ff:ff promiscuity 0'
-    '\    vlan protocol 802.1q id 9 <REORDER_HDR>',
-    '10: bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc '
-    ' noqueue master brq0b24798c-07 state UP mode DEFAULT'
-    '\    link/ether ab:04:49:b6:ab:a0 brd ff:ff:ff:ff:ff:ff promiscuity 0'
-    '\    vlan protocol 802.1Q id 10 <REORDER_HDR>',
-    '11: bar:bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
-    'state UP qlen 1000'
-    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
-    '\    vlan id 11 <REORDER_HDR>',
-    '12: bar@bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq '
-    'state UP qlen 1000'
-    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
-    '\    vlan id 12 <REORDER_HDR>',
-    '13: bar:bar@bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 '
-    'qdisc mq state UP qlen 1000'
-    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
-    '\    vlan protocol 802.1q id 13 <REORDER_HDR>',
-    '14: bar@bar:bar@eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 '
-    'qdisc mq state UP qlen 1000'
-    '\    link/ether cc:dd:ee:ff:ab:cd brd ff:ff:ff:ff:ff:ff promiscuity 0'
-    '\    vlan protocol 802.1Q id 14 <REORDER_HDR>']
 
 ADDR_SAMPLE = ("""
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP qlen 1000
@@ -784,85 +738,72 @@ class TestIpRuleCommand(TestIPCmdBase):
 class TestIpLinkCommand(TestIPCmdBase):
     def setUp(self):
         super(TestIpLinkCommand, self).setUp()
-        self.parent._run.return_value = LINK_SAMPLE[1]
         self.command = 'link'
         self.link_cmd = ip_lib.IpLinkCommand(self.parent)
 
-    def test_set_address(self):
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_address(self, set_link_attribute):
         self.link_cmd.set_address('aa:bb:cc:dd:ee:ff')
-        self._assert_sudo([], ('set', 'eth0', 'address', 'aa:bb:cc:dd:ee:ff'))
+        set_link_attribute.assert_called_once_with(
+            self.parent.name, self.parent.namespace,
+            address='aa:bb:cc:dd:ee:ff')
 
-    def test_set_allmulticast_on(self):
+    @mock.patch.object(priv_lib, 'set_link_flags')
+    def test_set_allmulticast_on(self, set_link_flags):
         self.link_cmd.set_allmulticast_on()
-        self._assert_sudo([], ('set', 'eth0', 'allmulticast', 'on'))
+        set_link_flags.assert_called_once_with(
+            self.parent.name, self.parent.namespace, ifinfmsg.IFF_ALLMULTI)
 
-    def test_set_mtu(self):
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_mtu(self, set_link_attribute):
         self.link_cmd.set_mtu(1500)
-        self._assert_sudo([], ('set', 'eth0', 'mtu', 1500))
+        set_link_attribute.assert_called_once_with(
+            self.parent.name, self.parent.namespace, mtu=1500)
 
-    def test_set_up(self):
-        observed = self.link_cmd.set_up()
-        self.assertEqual(self.parent._as_root.return_value, observed)
-        self._assert_sudo([], ('set', 'eth0', 'up'))
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_up(self, set_link_attribute):
+        self.link_cmd.set_up()
+        set_link_attribute.assert_called_once_with(
+            self.parent.name, self.parent.namespace, state='up')
 
-    def test_set_down(self):
-        observed = self.link_cmd.set_down()
-        self.assertEqual(self.parent._as_root.return_value, observed)
-        self._assert_sudo([], ('set', 'eth0', 'down'))
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_down(self, set_link_attribute):
+        self.link_cmd.set_down()
+        set_link_attribute.assert_called_once_with(
+            self.parent.name, self.parent.namespace, state='down')
 
-    def test_set_netns(self):
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_netns(self, set_link_attribute):
+        original_namespace = self.parent.namespace
         self.link_cmd.set_netns('foo')
-        self._assert_sudo([], ('set', 'eth0', 'netns', 'foo'))
+        set_link_attribute.assert_called_once_with(
+            'eth0', original_namespace, net_ns_fd='foo')
         self.assertEqual(self.parent.namespace, 'foo')
 
-    def test_set_name(self):
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_name(self, set_link_attribute):
+        original_name = self.parent.name
         self.link_cmd.set_name('tap1')
-        self._assert_sudo([], ('set', 'eth0', 'name', 'tap1'))
+        set_link_attribute.assert_called_once_with(
+            original_name, self.parent.namespace, ifname='tap1')
         self.assertEqual(self.parent.name, 'tap1')
 
-    def test_set_alias(self):
+    @mock.patch.object(priv_lib, 'set_link_attribute')
+    def test_set_alias(self, set_link_attribute):
         self.link_cmd.set_alias('openvswitch')
-        self._assert_sudo([], ('set', 'eth0', 'alias', 'openvswitch'))
+        set_link_attribute.assert_called_once_with(
+            self.parent.name, self.parent.namespace, ifalias='openvswitch')
 
-    def test_delete(self):
+    @mock.patch.object(priv_lib, 'delete_interface')
+    def test_delete(self, delete):
         self.link_cmd.delete()
-        self._assert_sudo([], ('delete', 'eth0'))
+        delete.assert_called_once_with(self.parent.name, self.parent.namespace)
 
-    def test_address_property(self):
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.address, 'cc:dd:ee:ff:ab:cd')
-
-    def test_mtu_property(self):
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.mtu, 1500)
-
-    def test_qdisc_property(self):
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.qdisc, 'mq')
-
-    def test_qlen_property(self):
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.qlen, 1000)
-
-    def test_alias_property(self):
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.alias, 'openvswitch')
-
-    def test_state_property(self):
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.state, 'UP')
-
-    def test_settings_property(self):
-        expected = {'mtu': 1500,
-                    'qlen': 1000,
-                    'state': 'UP',
-                    'qdisc': 'mq',
-                    'brd': 'ff:ff:ff:ff:ff:ff',
-                    'link/ether': 'cc:dd:ee:ff:ab:cd',
-                    'alias': 'openvswitch'}
-        self.parent._execute = mock.Mock(return_value=LINK_SAMPLE[1])
-        self.assertEqual(self.link_cmd.attributes, expected)
-        self._assert_call(['o'], ('show', 'eth0'))
+    @mock.patch.object(priv_lib, 'get_link_attributes')
+    def test_settings_property(self, get_link_attributes):
+        self.link_cmd.attributes
+        get_link_attributes.assert_called_once_with(
+            self.parent.name, self.parent.namespace)
 
 
 class TestIpAddrCommand(TestIPCmdBase):
@@ -1394,10 +1335,15 @@ class TestDeviceExists(base.BaseTestCase):
             self.assertFalse(ip_lib.ensure_device_is_ready("eth0"))
 
     def test_ensure_device_is_ready_no_link_address(self):
-        with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
-            # Use lo, it has no MAC address
-            _execute.return_value = LINK_SAMPLE[0]
+        with mock.patch.object(
+            priv_lib, 'get_link_attributes'
+        ) as get_link_attributes, mock.patch.object(
+            priv_lib, 'set_link_attribute'
+        ) as set_link_attribute:
+            get_link_attributes.return_value = {}
             self.assertFalse(ip_lib.ensure_device_is_ready("lo"))
+            get_link_attributes.assert_called_once_with("lo", None)
+            set_link_attribute.assert_not_called()
 
 
 class TestGetRoutingTable(base.BaseTestCase):

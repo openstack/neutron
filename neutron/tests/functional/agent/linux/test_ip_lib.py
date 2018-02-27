@@ -343,6 +343,14 @@ class IpLibTestCase(IpLibTestFramework):
 
         self.assertEqual(1450, device.link.mtu)
 
+    def test_set_link_allmulticast_on(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+
+        self.assertFalse(device.link.allmulticast)
+        device.link.set_allmulticast_on()
+        self.assertTrue(device.link.allmulticast)
+
     def test_set_link_netns(self):
         attr = self.generate_device_details()
         device = self.manage_device(attr)
