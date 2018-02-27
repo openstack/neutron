@@ -130,7 +130,8 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         ovs_consts.OPENFLOW14,
     ]
 
-    def __init__(self, integration_bridge):
+    def __init__(self, agent_api):
+        integration_bridge = agent_api.request_int_br()
         self.int_br = self.initialize_bridge(integration_bridge)
         self._deferred = False
         self.log_ports = collections.defaultdict(dict)

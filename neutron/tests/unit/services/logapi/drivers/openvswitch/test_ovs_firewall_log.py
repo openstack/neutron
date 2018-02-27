@@ -18,7 +18,6 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent.common import ovs_lib
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import constants as n_const
 from neutron.objects.logapi import logging_resource as log_object
@@ -104,9 +103,7 @@ class FakeOVSPort(object):
 class TestOVSFirewallLoggingDriver(base.BaseTestCase):
     def setUp(self):
         super(TestOVSFirewallLoggingDriver, self).setUp()
-        mock_bridge = mock.patch.object(
-            ovs_lib, 'OVSBridge', autospec=True).start()
-        self.log_driver = ovsfw_log.OVSFirewallLoggingDriver(mock_bridge)
+        self.log_driver = ovsfw_log.OVSFirewallLoggingDriver(mock.Mock())
         resource_rpc_mock = mock.patch.object(
             agent_rpc, 'LoggingApiStub', autospec=True).start()
         self.log_driver.start_logapp = mock.Mock()
