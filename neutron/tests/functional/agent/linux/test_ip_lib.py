@@ -298,6 +298,52 @@ class IpLibTestCase(IpLibTestFramework):
         device.link.delete()
         self._check_for_device_name(namespace.ip_wrapper, dev_name, False)
 
+    def test_set_link_mtu(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        device.link.set_mtu(1450)
+
+        self.assertEqual(1450, device.link.mtu)
+
+    def test_set_link_netns(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        original_namespace = device.namespace
+        original_ip_wrapper = ip_lib.IPWrapper(namespace=original_namespace)
+        new_namespace = self.useFixture(net_helpers.NamespaceFixture())
+
+        device.link.set_netns(new_namespace.name)
+
+        self.assertEqual(new_namespace.name, device.namespace)
+        self._check_for_device_name(
+            new_namespace.ip_wrapper, device.name, True)
+        self._check_for_device_name(
+            original_ip_wrapper, device.name, False)
+
+    def test_set_link_name(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        ip_wrapper = ip_lib.IPWrapper(namespace=device.namespace)
+        original_name = device.name
+        new_name = utils.get_rand_name()
+
+        # device has to be DOWN to rename it
+        device.link.set_down()
+        device.link.set_name(new_name)
+
+        self.assertEqual(new_name, device.name)
+        self._check_for_device_name(ip_wrapper, new_name, True)
+        self._check_for_device_name(ip_wrapper, original_name, False)
+
+    def test_set_link_alias(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        alias = utils.get_rand_name()
+
+        device.link.set_alias(alias)
+
+        self.assertEqual(alias, device.link.alias)
+
 
 class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
     def test_assigned_value(self):
