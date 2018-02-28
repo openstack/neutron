@@ -289,6 +289,42 @@ class IpLibTestCase(IpLibTestFramework):
         exist = any(d for d in ip.get_devices() if d.name == name)
         self.assertEqual(should_exist, exist)
 
+    def test_veth_exists(self):
+        namespace1 = self.useFixture(net_helpers.NamespaceFixture())
+        namespace2 = self.useFixture(net_helpers.NamespaceFixture())
+        dev_name1 = utils.get_rand_name()
+        dev_name2 = utils.get_rand_name()
+
+        device1, device2 = namespace1.ip_wrapper.add_veth(
+            dev_name1, dev_name2, namespace2.name)
+        self.addCleanup(self._safe_delete_device, device1)
+        self.addCleanup(self._safe_delete_device, device2)
+
+        self._check_for_device_name(namespace1.ip_wrapper, dev_name1, True)
+        self._check_for_device_name(namespace2.ip_wrapper, dev_name2, True)
+        self._check_for_device_name(namespace1.ip_wrapper, dev_name2, False)
+        self._check_for_device_name(namespace2.ip_wrapper, dev_name1, False)
+
+        # As it is veth pair, remove of device1 should be enough to remove
+        # both devices
+        device1.link.delete()
+        self._check_for_device_name(namespace1.ip_wrapper, dev_name1, False)
+        self._check_for_device_name(namespace2.ip_wrapper, dev_name2, False)
+
+    def test_macvtap_exists(self):
+        namespace = self.useFixture(net_helpers.NamespaceFixture())
+        src_dev_name = utils.get_rand_name()
+        src_dev = namespace.ip_wrapper.add_dummy(src_dev_name)
+        self.addCleanup(self._safe_delete_device, src_dev)
+
+        dev_name = utils.get_rand_name()
+        device = namespace.ip_wrapper.add_macvtap(dev_name, src_dev_name)
+        self.addCleanup(self._safe_delete_device, device)
+
+        self._check_for_device_name(namespace.ip_wrapper, dev_name, True)
+        device.link.delete()
+        self._check_for_device_name(namespace.ip_wrapper, dev_name, False)
+
     def test_dummy_exists(self):
         namespace = self.useFixture(net_helpers.NamespaceFixture())
         dev_name = utils.get_rand_name()
