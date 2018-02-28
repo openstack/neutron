@@ -16,6 +16,7 @@
 import eventlet
 import netaddr
 from neutron_lib.agent import constants as agent_consts
+from neutron_lib.agent import topics
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -54,7 +55,6 @@ from neutron.common import constants as l3_constants
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 from neutron.common import utils
 from neutron import manager
 

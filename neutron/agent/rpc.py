@@ -17,6 +17,7 @@ from datetime import datetime
 import itertools
 
 import netaddr
+from neutron_lib.agent import topics
 from neutron_lib.callbacks import events as callback_events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
@@ -28,7 +29,6 @@ from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 from neutron import objects
 
 LOG = logging.getLogger(__name__)

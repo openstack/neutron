@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.agent import topics
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
@@ -27,7 +28,6 @@ from sqlalchemy.orm import exc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 from neutron.db import l3_hamode_db
 from neutron.db import provisioning_blocks
 from neutron.plugins.ml2 import db as ml2_db
