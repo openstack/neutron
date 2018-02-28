@@ -167,10 +167,14 @@ class IPWrapper(SubProcessBase):
             return IPDevice(devices[0]['name'], namespace=self.namespace)
 
     def add_tuntap(self, name, mode='tap'):
-        self._as_root([], 'tuntap', ('add', name, 'mode', mode))
+        privileged.create_interface(
+            name, self.namespace, "tuntap", mode=mode)
         return IPDevice(name, namespace=self.namespace)
 
     def add_veth(self, name1, name2, namespace2=None):
+        # TODO(slaweq): switch to pyroute2 when issue
+        # https://github.com/svinota/pyroute2/issues/463
+        # will be closed
         args = ['add', name1, 'type', 'veth', 'peer', 'name', name2]
 
         if namespace2 is None:
@@ -185,18 +189,20 @@ class IPWrapper(SubProcessBase):
                 IPDevice(name2, namespace=namespace2))
 
     def add_macvtap(self, name, src_dev, mode='bridge'):
-        args = ['add', 'link', src_dev, 'name', name, 'type', 'macvtap',
-                'mode', mode]
-        self._as_root([], 'link', tuple(args))
+        privileged.create_interface(name,
+                                    self.namespace,
+                                    "macvtap",
+                                    physical_interface=src_dev,
+                                    mode=mode)
         return IPDevice(name, namespace=self.namespace)
 
     def del_veth(self, name):
         """Delete a virtual interface between two namespaces."""
-        self._as_root([], 'link', ('del', name))
+        privileged.delete_interface(name, self.namespace)
 
     def add_dummy(self, name):
         """Create a Linux dummy interface with the given name."""
-        self._as_root([], 'link', ('add', name, 'type', 'dummy'))
+        privileged.create_interface(name, self.namespace, "dummy")
         return IPDevice(name, namespace=self.namespace)
 
     def ensure_namespace(self, name):
@@ -224,35 +230,37 @@ class IPWrapper(SubProcessBase):
             device.link.set_netns(self.namespace)
 
     def add_vlan(self, name, physical_interface, vlan_id):
-        cmd = ['add', 'link', physical_interface, 'name', name,
-               'type', 'vlan', 'id', vlan_id]
-        self._as_root([], 'link', cmd)
+        privileged.create_interface(name,
+                                    self.namespace,
+                                    "vlan",
+                                    physical_interface=physical_interface,
+                                    vlan_id=vlan_id)
         return IPDevice(name, namespace=self.namespace)
 
     def add_vxlan(self, name, vni, group=None, dev=None, ttl=None, tos=None,
                   local=None, srcport=None, dstport=None, proxy=False):
-        cmd = ['add', name, 'type', 'vxlan', 'id', vni]
+        kwargs = {'vxlan_id': vni}
         if group:
-            cmd.extend(['group', group])
+            kwargs['vxlan_group'] = group
         if dev:
-            cmd.extend(['dev', dev])
+            kwargs['physical_interface'] = dev
         if ttl:
-            cmd.extend(['ttl', ttl])
+            kwargs['vxlan_ttl'] = ttl
         if tos:
-            cmd.extend(['tos', tos])
+            kwargs['vxlan_tos'] = tos
         if local:
-            cmd.extend(['local', local])
+            kwargs['vxlan_local'] = local
         if proxy:
-            cmd.append('proxy')
+            kwargs['vxlan_proxy'] = proxy
         # tuple: min,max
         if srcport:
             if len(srcport) == 2 and srcport[0] <= srcport[1]:
-                cmd.extend(['srcport', str(srcport[0]), str(srcport[1])])
+                kwargs['vxlan_port_range'] = (str(srcport[0]), str(srcport[1]))
             else:
                 raise n_exc.NetworkVxlanPortRangeError(vxlan_range=srcport)
         if dstport:
-            cmd.extend(['dstport', str(dstport)])
-        self._as_root([], 'link', cmd)
+            kwargs['vxlan_port'] = str(dstport)
+        privileged.create_interface(name, self.namespace, "vxlan", **kwargs)
         return (IPDevice(name, namespace=self.namespace))
 
     @removals.remove(version='Queens', removal_version='Rocky',

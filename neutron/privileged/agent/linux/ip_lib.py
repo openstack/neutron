@@ -13,6 +13,7 @@
 import errno
 import socket
 
+from neutron_lib import constants
 import pyroute2
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ndmsg
@@ -90,16 +91,33 @@ def _get_iproute(namespace):
         return pyroute2.IPRoute()
 
 
-def _run_iproute_neigh(command, device, namespace, **kwargs):
+def _get_link_id(device, namespace):
     try:
         with _get_iproute(namespace) as ip:
-            idx = ip.link_lookup(ifname=device)[0]
-            return ip.neigh(command, ifindex=idx, **kwargs)
+            return ip.link_lookup(ifname=device)[0]
     except IndexError:
         msg = _("Network interface %(device)s not found in namespace "
                 "%(namespace)s.") % {'device': device,
                                      'namespace': namespace}
         raise NetworkInterfaceNotFound(msg)
+
+
+def _run_iproute_link(command, device, namespace, **kwargs):
+    try:
+        with _get_iproute(namespace) as ip:
+            idx = _get_link_id(device, namespace)
+            return ip.link(command, index=idx, **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+def _run_iproute_neigh(command, device, namespace, **kwargs):
+    try:
+        with _get_iproute(namespace) as ip:
+            idx = _get_link_id(device, namespace)
+            return ip.neigh(command, ifindex=idx, **kwargs)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -109,13 +127,8 @@ def _run_iproute_neigh(command, device, namespace, **kwargs):
 def _run_iproute_addr(command, device, namespace, **kwargs):
     try:
         with _get_iproute(namespace) as ip:
-            idx = ip.link_lookup(ifname=device)[0]
+            idx = _get_link_id(device, namespace)
             return ip.addr(command, index=idx, **kwargs)
-    except IndexError:
-        msg = _("Network interface %(device)s not found in namespace "
-                "%(namespace)s.") % {'device': device,
-                                     'namespace': namespace}
-        raise NetworkInterfaceNotFound(msg)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -152,17 +165,33 @@ def flush_ip_addresses(ip_version, device, namespace):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
     try:
         with _get_iproute(namespace) as ip:
-            idx = ip.link_lookup(ifname=device)[0]
+            idx = _get_link_id(device, namespace)
             ip.flush_addr(index=idx, family=family)
-    except IndexError:
-        msg = _("Network interface %(device)s not found in namespace "
-                "%(namespace)s.") % {'device': device,
-                                     'namespace': namespace}
-        raise NetworkInterfaceNotFound(msg)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
         raise
+
+
+@privileged.default.entrypoint
+def create_interface(ifname, namespace, kind, **kwargs):
+    ifname = ifname[:constants.DEVICE_NAME_MAX_LEN]
+    try:
+        with _get_iproute(namespace) as ip:
+            physical_interface = kwargs.pop("physical_interface", None)
+            if physical_interface:
+                link_key = "vxlan_link" if kind == "vxlan" else "link"
+                kwargs[link_key] = _get_link_id(physical_interface, namespace)
+            return ip.link("add", ifname=ifname, kind=kind, **kwargs)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def delete_interface(ifname, namespace, **kwargs):
+    _run_iproute_link("del", ifname, namespace, **kwargs)
 
 
 @privileged.default.entrypoint

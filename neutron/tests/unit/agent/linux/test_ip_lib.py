@@ -341,11 +341,10 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertEqual(1, priv_listnetns.call_count)
         self.assertFalse(listnetns.called)
 
-    def test_add_tuntap(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_tuntap(self, create):
         ip_lib.IPWrapper().add_tuntap('tap0')
-        self.execute.assert_called_once_with([], 'tuntap',
-                                             ('add', 'tap0', 'mode', 'tap'),
-                                             run_as_root=True, namespace=None)
+        create.assert_called_once_with('tap0', None, 'tuntap', mode='tap')
 
     def test_add_veth(self):
         ip_lib.IPWrapper().add_veth('tap0', 'tap1')
@@ -354,19 +353,17 @@ class TestIpWrapper(base.BaseTestCase):
                                               'peer', 'name', 'tap1'),
                                              run_as_root=True, namespace=None)
 
-    def test_add_macvtap(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_macvtap(self, create):
         ip_lib.IPWrapper().add_macvtap('macvtap0', 'eth0', 'bridge')
-        self.execute.assert_called_once_with([], 'link',
-                                             ('add', 'link', 'eth0', 'name',
-                                              'macvtap0', 'type', 'macvtap',
-                                              'mode', 'bridge'),
-                                             run_as_root=True, namespace=None)
+        create.assert_called_once_with(
+            'macvtap0', None, 'macvtap', physical_interface='eth0',
+            mode='bridge')
 
-    def test_del_veth(self):
+    @mock.patch.object(priv_lib, 'delete_interface')
+    def test_del_veth(self, delete):
         ip_lib.IPWrapper().del_veth('fpr-1234')
-        self.execute.assert_called_once_with([], 'link',
-                                             ('del', 'fpr-1234'),
-                                             run_as_root=True, namespace=None)
+        delete.assert_called_once_with('fpr-1234', None)
 
     def test_add_veth_with_namespaces(self):
         ns2 = 'ns2'
@@ -379,12 +376,10 @@ class TestIpWrapper(base.BaseTestCase):
                                               'netns', ns2),
                                              run_as_root=True, namespace=None)
 
-    def test_add_dummy(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_dummy(self, create):
         ip_lib.IPWrapper().add_dummy('dummy0')
-        self.execute.assert_called_once_with([], 'link',
-                                             ('add', 'dummy0',
-                                              'type', 'dummy'),
-                                             run_as_root=True, namespace=None)
+        create.assert_called_once_with('dummy0', None, 'dummy')
 
     def test_get_device(self):
         dev = ip_lib.IPWrapper(namespace='ns').device('eth0')
@@ -477,17 +472,42 @@ class TestIpWrapper(base.BaseTestCase):
                 self.assertNotIn(mock.call().delete('ns'),
                                  ip_ns_cmd_cls.mock_calls)
 
-    def test_add_vlan(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_vlan(self, create):
         retval = ip_lib.IPWrapper().add_vlan('eth0.1', 'eth0', '1')
         self.assertIsInstance(retval, ip_lib.IPDevice)
         self.assertEqual(retval.name, 'eth0.1')
-        self.execute.assert_called_once_with([], 'link',
-                                             ['add', 'link', 'eth0',
-                                              'name', 'eth0.1',
-                                              'type', 'vlan', 'id', '1'],
-                                             run_as_root=True, namespace=None)
+        create.assert_called_once_with('eth0.1',
+                                       None,
+                                       'vlan',
+                                       physical_interface='eth0',
+                                       vlan_id='1')
 
-    def test_add_vxlan_valid_srcport_length(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_vxlan_valid_srcport_length(self, create):
+        self.call_params = {}
+
+        def fake_create_interface(ifname, namespace, kind, **kwargs):
+            self.call_params = dict(
+                ifname=ifname,
+                namespace=namespace,
+                kind=kind,
+                **kwargs)
+
+        create.side_effect = fake_create_interface
+        expected_call_params = {
+            'ifname': 'vxlan0',
+            'namespace': None,
+            'kind': 'vxlan',
+            'vxlan_id': 'vni0',
+            'vxlan_group': 'group0',
+            'physical_interface': 'dev0',
+            'vxlan_ttl': 'ttl0',
+            'vxlan_tos': 'tos0',
+            'vxlan_local': 'local0',
+            'vxlan_proxy': True,
+            'vxlan_port_range': ('1', '2')}
+
         retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
                                               group='group0',
                                               dev='dev0', ttl='ttl0',
@@ -496,14 +516,7 @@ class TestIpWrapper(base.BaseTestCase):
                                               srcport=(1, 2))
         self.assertIsInstance(retval, ip_lib.IPDevice)
         self.assertEqual(retval.name, 'vxlan0')
-        self.execute.assert_called_once_with([], 'link',
-                                             ['add', 'vxlan0', 'type',
-                                              'vxlan', 'id', 'vni0', 'group',
-                                              'group0', 'dev', 'dev0',
-                                              'ttl', 'ttl0', 'tos', 'tos0',
-                                              'local', 'local0', 'proxy',
-                                              'srcport', '1', '2'],
-                                             run_as_root=True, namespace=None)
+        self.assertDictEqual(expected_call_params, self.call_params)
 
     def test_add_vxlan_invalid_srcport_length(self):
         wrapper = ip_lib.IPWrapper()
@@ -521,7 +534,32 @@ class TestIpWrapper(base.BaseTestCase):
                           local='local0', proxy=True,
                           srcport=(2000, 1000))
 
-    def test_add_vxlan_dstport(self):
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_vxlan_dstport(self, create):
+        self.call_params = {}
+
+        def fake_create_interface(ifname, namespace, kind, **kwargs):
+            self.call_params = dict(
+                ifname=ifname,
+                namespace=namespace,
+                kind=kind,
+                **kwargs)
+
+        create.side_effect = fake_create_interface
+        expected_call_params = {
+            'ifname': 'vxlan0',
+            'namespace': None,
+            'kind': 'vxlan',
+            'vxlan_id': 'vni0',
+            'vxlan_group': 'group0',
+            'physical_interface': 'dev0',
+            'vxlan_ttl': 'ttl0',
+            'vxlan_tos': 'tos0',
+            'vxlan_local': 'local0',
+            'vxlan_proxy': True,
+            'vxlan_port_range': ('1', '2'),
+            'vxlan_port': '4789'}
+
         retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
                                               group='group0',
                                               dev='dev0', ttl='ttl0',
@@ -532,15 +570,7 @@ class TestIpWrapper(base.BaseTestCase):
 
         self.assertIsInstance(retval, ip_lib.IPDevice)
         self.assertEqual(retval.name, 'vxlan0')
-        self.execute.assert_called_once_with([], 'link',
-                                             ['add', 'vxlan0', 'type',
-                                              'vxlan', 'id', 'vni0', 'group',
-                                              'group0', 'dev', 'dev0',
-                                              'ttl', 'ttl0', 'tos', 'tos0',
-                                              'local', 'local0', 'proxy',
-                                              'srcport', '1', '2',
-                                              'dstport', '4789'],
-                                             run_as_root=True, namespace=None)
+        self.assertDictEqual(expected_call_params, self.call_params)
 
     def test_add_device_to_namespace(self):
         dev = mock.Mock()
