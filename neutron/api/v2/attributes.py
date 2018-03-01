@@ -20,9 +20,6 @@ from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 
 
-# Defining a constant to avoid repeating string literal in several modules
-SHARED = 'shared'
-
 # Define constants for base resource name
 CORE_RESOURCES = {net_def.RESOURCE_NAME: net_def.COLLECTION_NAME,
                   subnet_def.RESOURCE_NAME: subnet_def.COLLECTION_NAME,
