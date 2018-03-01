@@ -11,32 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.api.definitions import revisionifmatch as apidef
 from neutron_lib.api import extensions as api_extensions
 
 
-class Revisionifmatch(api_extensions.ExtensionDescriptor):
+class Revisionifmatch(api_extensions.APIExtensionDescriptor):
     """Indicate that If-Match constraints on revision_number are supported."""
 
-    @classmethod
-    def get_name(cls):
-        return "If-Match constraints based on revision_number"
-
-    @classmethod
-    def get_alias(cls):
-        return 'revision-if-match'
-
-    @classmethod
-    def get_description(cls):
-        return ("Extension indicating that If-Match based on revision_number "
-                "is supported.")
-
-    @classmethod
-    def get_updated(cls):
-        return "2016-12-11T00:00:00-00:00"
-
-    @classmethod
-    def get_resources(cls):
-        return []
-
-    def get_extended_resources(self, version):
-        return {}
+    api_definition = apidef
