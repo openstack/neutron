@@ -17,7 +17,6 @@ import eventlet
 import netaddr
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
-from six.moves import queue as Queue
 
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import constants as n_const
@@ -44,7 +43,7 @@ class IpConntrackUpdate(object):
 class IpConntrackProcessingQueue(object):
     """Manager of the queue of conntrack updates to process."""
     def __init__(self):
-        self._queue = Queue.Queue()
+        self._queue = eventlet.queue.LightQueue()
 
     def add(self, update):
         self._queue.put(update)
@@ -52,8 +51,15 @@ class IpConntrackProcessingQueue(object):
     def updates(self):
         """Grabs the next conntrack update from the queue and processes."""
         while not self._queue.empty():
-            update = self._queue.get()
-            yield update
+            try:
+                update = self._queue.get()
+                yield update
+            except IndexError:
+                # queue was empty, another worker stole our entry
+                continue
+            except Exception as e:
+                LOG.error("Failed to yield ip_conntrack process queue "
+                          "entry: %s", e)
 
 
 @lockutils.synchronized('conntrack')
@@ -83,9 +89,11 @@ class IpConntrackManager(object):
         self.zone_per_port = zone_per_port  # zone per port vs per network
         self._populate_initial_zone_map()
         self._queue = IpConntrackProcessingQueue()
-        self.start_process_queue()
+        # Don't start the queue processing thread here, do later when
+        # the first entry is added to the queue.
+        self._process_queue_started = False
 
-    def start_process_queue(self):
+    def _start_process_queue(self):
         eventlet.spawn_n(self._process_queue_loop)
 
     def _process_queue_loop(self):
@@ -105,6 +113,9 @@ class IpConntrackManager(object):
                                              update.rule)
 
     def _process(self, device_info_list, rule, remote_ips=None):
+        if not self._process_queue_started:
+            self._process_queue_started = True
+            self._start_process_queue()
         # queue the update to allow the caller to resume its work
         update = IpConntrackUpdate(device_info_list, rule, remote_ips)
         self._queue.add(update)
