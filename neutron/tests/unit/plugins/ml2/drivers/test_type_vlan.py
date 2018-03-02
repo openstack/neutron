@@ -18,12 +18,12 @@ from neutron_lib import constants as p_const
 from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
+from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from testtools import matchers
 
 from neutron.db import api as db_api
 from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
-from neutron.plugins.common import utils as plugin_utils
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 

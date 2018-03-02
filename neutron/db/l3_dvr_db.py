@@ -26,6 +26,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from oslo_log import helpers as log_helper
 from oslo_log import log as logging
@@ -212,7 +213,7 @@ class DVRResourceOperationHandler(object):
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
 
-        with p_utils.delete_port_on_error(
+        with plugin_utils.delete_port_on_error(
             self.l3plugin._core_plugin, context.elevated(), snat_port['id']):
             l3_obj.RouterPort(
                 context,

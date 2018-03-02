@@ -30,6 +30,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.services import base as base_services
 from oslo_log import log as logging
 from oslo_utils import uuidutils
@@ -381,8 +382,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if not gw_port['fixed_ips']:
             LOG.debug('No IPs available for external network %s',
                       network_id)
-        with p_utils.delete_port_on_error(self._core_plugin,
-                                          context.elevated(), gw_port['id']):
+        with plugin_utils.delete_port_on_error(
+                self._core_plugin, context.elevated(), gw_port['id']):
             with context.session.begin(subtransactions=True):
                 router.gw_port = self._core_plugin._get_port(
                     context.elevated(), gw_port['id'])
@@ -849,7 +850,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port = self._check_router_port(context, port_id, '')
             revert_value = {'device_id': '',
                             'device_owner': port['device_owner']}
-            with p_utils.update_port_on_error(
+            with plugin_utils.update_port_on_error(
                     self._core_plugin, context, port_id, revert_value):
                 port, subnets = self._add_interface_by_port(
                     context, router, port_id, device_owner)
@@ -863,10 +864,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                             'device_owner': port['device_owner']}
 
         if cleanup_port:
-            mgr = p_utils.delete_port_on_error(
+            mgr = plugin_utils.delete_port_on_error(
                 self._core_plugin, context, port['id'])
         else:
-            mgr = p_utils.update_port_on_error(
+            mgr = plugin_utils.update_port_on_error(
                 self._core_plugin, context, port['id'], revert_value)
 
         if new_router_intf:
@@ -1311,9 +1312,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                             {'port': port},
                                             check_allow_post=False)
 
-        with p_utils.delete_port_on_error(self._core_plugin,
-                                          context.elevated(),
-                                          external_port['id']),\
+        with plugin_utils.delete_port_on_error(
+                self._core_plugin, context.elevated(),
+                external_port['id']),\
                 context.session.begin(subtransactions=True):
             # Ensure IPv4 addresses are allocated on external port
             external_ipv4_ips = self._port_ipv4_fixed_ips(external_port)
