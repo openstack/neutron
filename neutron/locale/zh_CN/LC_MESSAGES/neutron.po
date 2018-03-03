@@ -17,16 +17,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-02-10 09:08+0000\n"
+"POT-Creation-Date: 2018-03-02 16:32+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2016-04-12 05:55+0000\n"
 "Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
-"Language: zh-CN\n"
+"Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.9.6\n"
+"X-Generator: Zanata 4.3.3\n"
 "Language-Team: Chinese (China)\n"
 
 #, python-format
@@ -274,9 +274,6 @@ msgstr "此节点的可用区域"
 
 msgid "Available commands"
 msgstr "可用的命令"
-
-msgid "Backend does not support VLAN Transparency."
-msgstr "后端不支持 VLAN 透明。"
 
 #, python-format
 msgid "Base MAC: %s"
@@ -635,11 +632,6 @@ msgstr "physical_device_mappings 中缺少设备名称 %(dev_name)s"
 
 msgid "Device not found"
 msgstr "找不到设备"
-
-#, python-format
-msgid ""
-"Distributed Virtual Router Mac Address for host %(host)s does not exist."
-msgstr "主机 %(host)s 的分布式虚拟路由器 MAC 地址不存在。"
 
 msgid "Domain to use for building the hostnames"
 msgstr "要用于构建主机名的域"

@@ -10,16 +10,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2018-02-10 09:08+0000\n"
+"POT-Creation-Date: 2018-03-02 16:32+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2017-03-28 07:43+0000\n"
 "Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
-"Language: pt-BR\n"
+"Language: pt_BR\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.0\n"
-"X-Generator: Zanata 3.9.6\n"
+"X-Generator: Zanata 4.3.3\n"
 "Language-Team: Portuguese (Brazil)\n"
 
 #, python-format
@@ -288,9 +288,6 @@ msgstr "Zona de disponibilidade deste nó"
 
 msgid "Available commands"
 msgstr "Comandos disponíveis"
-
-msgid "Backend does not support VLAN Transparency."
-msgstr "O backend não suporta a Transparência da VLAN."
 
 #, python-format
 msgid "Base MAC: %s"
@@ -697,13 +694,6 @@ msgstr ""
 
 msgid "Device not found"
 msgstr "Dispositivo não localizado."
-
-#, python-format
-msgid ""
-"Distributed Virtual Router Mac Address for host %(host)s does not exist."
-msgstr ""
-"O endereço Mac do Roteador Virtual Distribuído para o host %(host)s não "
-"existe."
 
 msgid "Domain to use for building the hostnames"
 msgstr "Domínio a ser usado para construir os nomes dos hosts"
