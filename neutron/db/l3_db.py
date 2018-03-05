@@ -1391,6 +1391,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                    floatingip_obj,
                                                    fip,
                                                    old_floatingip)
+            # Expunge it to ensure the following get_object doesn't  use the
+            # instance. Such as update fip qos above bumps the revision of the
+            # floatingIp. It would add floatingIp object to the session.
+            context.session.expunge(model_query.get_by_id(
+                context, l3_models.FloatingIP, floatingip_obj.id))
             floatingip_obj = l3_obj.FloatingIP.get_object(
                 context, id=floatingip_obj.id)
             floatingip_db = floatingip_obj.db_obj

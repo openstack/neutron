@@ -23,6 +23,7 @@ from neutron.db import l3_fip_qos
 from neutron.extensions import l3
 from neutron.extensions import qos_fip
 from neutron.objects.qos import policy
+from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.extensions import test_l3
 
 
@@ -118,6 +119,11 @@ class FloatingIPQoSDBTestCaseBase(object):
                 {'floatingip': {qos_consts.QOS_POLICY_ID: policy_obj_2.id}})
             self.assertEqual(policy_obj_2.id,
                              body['floatingip'][qos_consts.QOS_POLICY_ID])
+            updated_revision_number = body['floatingip'].get('revision_number')
+            fip_revision_number = fip['floatingip'].get('revision_number')
+            if updated_revision_number and fip_revision_number:
+                self.assertGreater(updated_revision_number,
+                                   fip_revision_number)
 
     def test_floatingip_adding_qos_policy_id_by_update(self):
         ctx = context.get_admin_context()
@@ -142,7 +148,8 @@ class FloatingIPQoSDBTestCaseBase(object):
                              body['floatingip'][qos_consts.QOS_POLICY_ID])
 
     def _update_fip_with_port_or_qos_and_verify(
-            self, fip_id, port_id=None, qos_policy_id=None):
+            self, fip_id, port_id=None, qos_policy_id=None,
+            revision_number=None):
         update_body = {'floatingip': {
             'port_id': port_id,
             qos_consts.QOS_POLICY_ID: qos_policy_id}}
@@ -152,6 +159,10 @@ class FloatingIPQoSDBTestCaseBase(object):
                          body['floatingip']['port_id'])
         self.assertEqual(qos_policy_id,
                          body['floatingip'].get(qos_consts.QOS_POLICY_ID))
+        updated_revision_number = body['floatingip'].get('revision_number')
+        if updated_revision_number and revision_number:
+            self.assertGreater(updated_revision_number,
+                               revision_number)
 
     def test_floatingip_update_with_port_and_qos(self):
         ctx = context.get_admin_context()
@@ -184,7 +195,8 @@ class FloatingIPQoSDBTestCaseBase(object):
                 self._update_fip_with_port_or_qos_and_verify(
                     fip['floatingip']['id'],
                     port['port']['id'],
-                    policy_obj.id)
+                    policy_obj.id,
+                    revision_number=fip['floatingip'].get('revision_number'))
 
     def test_floatingip_update_with_port_and_qos_scenarios(self):
         ctx = context.get_admin_context()
@@ -224,7 +236,8 @@ class FloatingIPQoSDBTestCaseBase(object):
                 self._update_fip_with_port_or_qos_and_verify(
                     fip['floatingip']['id'],
                     port_1['port']['id'],
-                    None)
+                    None,
+                    revision_number=fip['floatingip'].get('revision_number'))
 
                 # update from: {port_id: port_id_1, qos_policy_id: null}
                 #        to  : {port_id: port_id_1, qos_policy_id: policy_1}
@@ -325,11 +338,13 @@ class FloatingIPQoSDBIntTestCase(test_l3.L3BaseForIntTests,
                                  test_l3.L3NatTestCaseMixin,
                                  FloatingIPQoSDBTestCaseBase):
 
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, service_plugins=None):
         if not plugin:
             plugin = ('neutron.tests.unit.extensions.test_qos_fip.'
                       'TestFloatingIPQoSIntPlugin')
-        service_plugins = {'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
+        if not service_plugins:
+            service_plugins = {'qos': 'neutron.services.qos.qos_plugin.'
+                                      'QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
         # for these tests we need to enable overlapping ips
@@ -349,14 +364,16 @@ class FloatingIPQoSDBSepTestCase(test_l3.L3BaseForSepTests,
                                  test_l3.L3NatTestCaseMixin,
                                  FloatingIPQoSDBTestCaseBase):
 
-    def setUp(self):
+    def setUp(self, service_plugins=None):
         # the plugin without L3 support
         plugin = 'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin'
         # the L3 service plugin
-        l3_plugin = ('neutron.tests.unit.extensions.test_qos_fip.'
-                     'TestFloatingIPQoSL3NatServicePlugin')
-        service_plugins = {'l3_plugin_name': l3_plugin,
-                           'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
+        if not service_plugins:
+            l3_plugin = ('neutron.tests.unit.extensions.test_qos_fip.'
+                         'TestFloatingIPQoSL3NatServicePlugin')
+            service_plugins = {'l3_plugin_name': l3_plugin,
+                               'qos': 'neutron.services.qos.qos_plugin.'
+                                      'QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
         # for these tests we need to enable overlapping ips
@@ -370,3 +387,26 @@ class FloatingIPQoSDBSepTestCase(test_l3.L3BaseForSepTests,
             service_plugins=service_plugins)
 
         self.setup_notification_driver()
+
+
+class FloatingIPQoSDBWithRevisionIntTestCase(FloatingIPQoSDBIntTestCase):
+
+    def setUp(self, plugin=None):
+        service_plugins = {'qos': 'neutron.services.qos.qos_plugin.QoSPlugin',
+                           'revision_plugin_name': 'revisions'}
+        super(FloatingIPQoSDBWithRevisionIntTestCase, self).setUp(
+            service_plugins=service_plugins)
+        revision_plugin.RevisionPlugin()
+
+
+class FloatingIPQoSDBWithRevisionSepTestCase(FloatingIPQoSDBSepTestCase):
+
+    def setUp(self):
+        l3_plugin = ('neutron.tests.unit.extensions.test_qos_fip.'
+                     'TestFloatingIPQoSL3NatServicePlugin')
+        service_plugins = {'l3_plugin_name': l3_plugin,
+                           'qos': 'neutron.services.qos.qos_plugin.QoSPlugin',
+                           'revision_plugin_name': 'revisions'}
+        super(FloatingIPQoSDBWithRevisionSepTestCase, self).setUp(
+            service_plugins=service_plugins)
+        revision_plugin.RevisionPlugin()
