@@ -101,7 +101,7 @@ function _install_rpc_backend {
 
     RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
     RABBIT_HOST=${RABBIT_HOST:-$SERVICE_HOST}
-    RABBIT_PASSWORD=${RABBIT_HOST:-secretrabbit}
+    RABBIT_PASSWORD=${RABBIT_PASSWORD:-secretrabbit}
 
     source $DEVSTACK_PATH/lib/rpc_backend
 
