@@ -969,6 +969,16 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                         self.context, self.l3_agent['host'], [router['id']]))
                 floatingips = router_info[0][constants.FLOATINGIP_KEY]
                 self.assertTrue(floatingips[0][n_const.DVR_SNAT_BOUND])
+                # Test case to make sure when an agent in this case
+                # dvr_no_external restarts and does a full sync, we need
+                # to make sure that the returned router_info has
+                # DVR_SNAT_BOUND flag enabled, otherwise the floating IP
+                # state would error out.
+                router_sync_info = (
+                    self.l3_plugin.list_active_sync_routers_on_active_l3_agent(
+                        self.context, HOST1, [router['id']]))
+                floatingips = router_sync_info[0][constants.FLOATINGIP_KEY]
+                self.assertTrue(floatingips[0][n_const.DVR_SNAT_BOUND])
 
     def test_allowed_addr_pairs_delayed_fip_and_update_arp_entry(self):
         HOST1 = 'host1'
