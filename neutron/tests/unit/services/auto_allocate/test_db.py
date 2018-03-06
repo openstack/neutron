@@ -14,6 +14,7 @@
 import mock
 import testtools
 
+from neutron_lib.api.definitions import constants as api_const
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from oslo_db import exception as db_exc
@@ -37,6 +38,131 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         self.mixin = db.AutoAllocatedTopologyMixin()
         self.mixin._l3_plugin = mock.Mock()
         self.mixin._core_plugin = mock.Mock()
+
+    def test_ensure_external_network_default_value(self):
+        network_id = uuidutils.generate_uuid()
+        kwargs = {
+            "context": self.ctx,
+            "request": {
+                "id": network_id,
+                api_const.IS_DEFAULT: True
+            },
+            "network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: False
+            },
+            "original_network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: False
+            }
+        }
+        network_mock = mock.MagicMock(network_id=network_id, is_default=False)
+        with mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_objects',
+            return_value=[network_mock]
+        ) as get_external_nets, mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_object',
+            return_value=network_mock
+        ) as get_external_net:
+            db._ensure_external_network_default_value_callback(
+                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+            get_external_nets.assert_called_once_with(
+                self.ctx, _pager=mock.ANY, is_default=True)
+            get_external_net.assert_called_once_with(
+                self.ctx, network_id=network_id)
+            network_mock.update.assert_called_once_with()
+
+    def test_ensure_external_network_default_value_no_default(self):
+        network_id = uuidutils.generate_uuid()
+        kwargs = {
+            "context": self.ctx,
+            "request": {
+                "id": network_id,
+                api_const.IS_DEFAULT: None
+            },
+            "network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: False
+            },
+        }
+        network_mock = mock.MagicMock(network_id=network_id, is_default=False)
+        with mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_objects',
+            return_value=[network_mock]
+        ) as get_external_nets, mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_object',
+            return_value=network_mock
+        ) as get_external_net:
+            db._ensure_external_network_default_value_callback(
+                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+            get_external_nets.assert_not_called()
+            get_external_net.assert_not_called()
+            network_mock.update.assert_not_called()
+
+    def test_ensure_external_network_default_value_default_not_changed(self):
+        network_id = uuidutils.generate_uuid()
+        kwargs = {
+            "context": self.ctx,
+            "request": {
+                "id": network_id,
+                api_const.IS_DEFAULT: True
+            },
+            "network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: True
+            },
+            "original_network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: True
+            }
+        }
+        network_mock = mock.MagicMock(network_id=network_id, is_default=True)
+        with mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_objects',
+            return_value=[network_mock]
+        ) as get_external_nets, mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_object',
+            return_value=network_mock
+        ) as get_external_net:
+            db._ensure_external_network_default_value_callback(
+                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+            get_external_nets.assert_called_once_with(
+                self.ctx, _pager=mock.ANY, is_default=True)
+            get_external_net.assert_not_called()
+            network_mock.update.assert_not_called()
+
+    def test_ensure_external_network_default_value_default_existed(self):
+        network_id = uuidutils.generate_uuid()
+        kwargs = {
+            "context": self.ctx,
+            "request": {
+                "id": network_id,
+                api_const.IS_DEFAULT: True
+            },
+            "network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: False
+            },
+            "original_network": {
+                "id": network_id,
+                api_const.IS_DEFAULT: False
+            }
+        }
+        network_mock = mock.MagicMock(network_id='fake_id', is_default=False)
+        with mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_objects',
+            return_value=[network_mock]
+        ) as get_external_nets, mock.patch(
+            'neutron.objects.network.ExternalNetwork.get_object',
+            return_value=network_mock
+        ) as get_external_net:
+            self.assertRaises(exceptions.DefaultExternalNetworkExists,
+                db._ensure_external_network_default_value_callback,
+                "NETWORK", "precommit_update", "test_plugin", **kwargs)
+            get_external_nets.assert_called_once_with(
+                self.ctx, _pager=mock.ANY, is_default=True)
+            get_external_net.assert_not_called()
+            network_mock.update.assert_not_called()
 
     def test__provision_external_connectivity_expected_cleanup(self):
         """Test that the right resources are cleaned up."""
