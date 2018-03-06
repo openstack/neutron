@@ -16,13 +16,11 @@
 
 import functools
 
-from debtcollector import moves
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.agent import firewall
-from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.conf.agent import securitygroups_rpc as sc_cfg
 
 
@@ -254,26 +252,3 @@ class SecurityGroupAgentRpc(object):
                 LOG.debug("Refreshing firewall for %d devices",
                           len(updated_devices))
                 self.refresh_firewall(updated_devices)
-
-
-# TODO(armax): For bw compat with external dependencies; to be dropped in P.
-# NOTE(dasm): Should be already removed, but didn't have  DeprecationWarning.
-SG_RPC_VERSION = moves.moved_function(
-    securitygroups_rpc.SecurityGroupAgentRpcApiMixin.SG_RPC_VERSION,
-    'SG_RPC_VERSION', __name__, version='Liberty', removal_version='Pike'
-)
-SecurityGroupServerRpcApi = moves.moved_class(
-    securitygroups_rpc.SecurityGroupServerRpcApi,
-    'SecurityGroupServerRpcApi', old_module_name=__name__, version='Liberty',
-    removal_version='Pike'
-)
-SecurityGroupAgentRpcApiMixin = moves.moved_class(
-    securitygroups_rpc.SecurityGroupAgentRpcApiMixin,
-    'SecurityGroupAgentRpcApiMixin', old_module_name=__name__,
-    version='Liberty', removal_version='Pike'
-)
-SecurityGroupAgentRpcCallbackMixin = moves.moved_class(
-    securitygroups_rpc.SecurityGroupAgentRpcCallbackMixin,
-    'SecurityGroupAgentRpcCallbackMixin', old_module_name=__name__,
-    version='Liberty', removal_version='Pike'
-)
