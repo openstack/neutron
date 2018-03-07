@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib import constants
 from neutron_lib.plugins import constants as p_const
 
 
@@ -25,7 +24,7 @@ EXT_TO_SERVICE_MAPPING = {
     'fwaas': p_const.FIREWALL,
     'vpnaas': p_const.VPN,
     'metering': p_const.METERING,
-    'router': constants.L3,
+    'router': p_const.L3,
     'qos': p_const.QOS,
 }
 
