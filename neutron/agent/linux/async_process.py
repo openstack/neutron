@@ -192,8 +192,10 @@ class AsyncProcess(object):
 
     def _handle_process_error(self):
         """Kill the async process and respawn if necessary."""
-        LOG.debug('Halting async process [%s] in response to an error.',
-                  self.cmd)
+        stdout = list(self.iter_stdout())
+        stderr = list(self.iter_stderr())
+        LOG.debug('Halting async process [%s] in response to an error. stdout:'
+                  ' [%s] - stderr: [%s]', self.cmd, stdout, stderr)
         self._kill(signal.SIGKILL)
         if self.respawn_interval is not None and self.respawn_interval >= 0:
             eventlet.sleep(self.respawn_interval)
