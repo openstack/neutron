@@ -55,8 +55,10 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
 
     def generate_device_details(self, name=None, ip_cidrs=None,
                                 mac_address=None, namespace=None):
+        if ip_cidrs is None:
+            ip_cidrs = ["%s/24" % TEST_IP]
         return Device(name or utils.get_rand_name(),
-                      ip_cidrs or ["%s/24" % TEST_IP],
+                      ip_cidrs,
                       mac_address or
                       net.get_random_mac('fa:16:3e:00:00:00'.split(':')),
                       namespace or utils.get_rand_name())
@@ -379,6 +381,56 @@ class IpLibTestCase(IpLibTestFramework):
         device.link.set_alias(alias)
 
         self.assertEqual(alias, device.link.alias)
+
+    def _add_and_check_ips(self, device, ip_addresses):
+        for cidr, scope in ip_addresses:
+            device.addr.add(str(cidr), scope)
+
+        device_ips_info = [
+            (ip_info['cidr'], ip_info['scope']) for
+            ip_info in device.addr.list()]
+        self.assertItemsEqual(ip_addresses, device_ips_info)
+
+    def _flush_ips(self, device, ip_version):
+        device.addr.flush(ip_version)
+        for ip_address in device.addr.list():
+            cidr = netaddr.IPNetwork(ip_address['cidr'])
+            self.assertNotEqual(ip_version, cidr.version)
+
+    def test_add_ip_address(self):
+        ip_addresses = [
+            ("10.10.10.10/30", "global"),
+            ("11.11.11.11/28", "link"),
+            ("2801::1/120", "global"),
+            ("fe80::/64", "link")]
+        attr = self.generate_device_details(ip_cidrs=[])
+        device = self.manage_device(attr)
+        self._add_and_check_ips(device, ip_addresses)
+
+    def test_delete_ip_address(self):
+        attr = self.generate_device_details()
+        cidr = attr.ip_cidrs[0]
+        device = self.manage_device(attr)
+
+        device_cidrs = [ip_info['cidr'] for ip_info in device.addr.list()]
+        self.assertIn(cidr, device_cidrs)
+
+        device.addr.delete(cidr)
+        device_cidrs = [ip_info['cidr'] for ip_info in device.addr.list()]
+        self.assertNotIn(cidr, device_cidrs)
+
+    def test_flush_ip_addresses(self):
+        ip_addresses = [
+            ("10.10.10.10/30", "global"),
+            ("11.11.11.11/28", "link"),
+            ("2801::1/120", "global"),
+            ("fe80::/64", "link")]
+        attr = self.generate_device_details(ip_cidrs=[])
+        device = self.manage_device(attr)
+
+        self._add_and_check_ips(device, ip_addresses)
+        self._flush_ips(device, constants.IP_VERSION_4)
+        self._flush_ips(device, constants.IP_VERSION_6)
 
 
 class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
