@@ -521,7 +521,49 @@ class TestDvrRouterOperations(base.BaseTestCase):
             ri._set_subnet_arp_info(subnet_id)
         self.assertEqual(1, parp.call_count)
         self.mock_ip_dev.neigh.add.assert_called_once_with(
-            '1.2.3.4', '00:11:22:33:44:55')
+            '1.2.3.4', '00:11:22:33:44:55', nud_state='permanent')
+
+        # Test negative case
+        router['distributed'] = False
+        ri._set_subnet_arp_info(subnet_id)
+        self.mock_ip_dev.neigh.add.never_called()
+
+    def test__set_subnet_arp_info_with_allowed_address_pair_port(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
+        self._set_ri_kwargs(agent, router['id'], router)
+        ri = dvr_router.DvrLocalRouter(HOSTNAME, **self.ri_kwargs)
+        ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
+        subnet_id = l3_test_common.get_subnet_id(ports[0])
+        test_ports = [{'mac_address': '00:11:22:33:44:55',
+                       'device_owner': '',
+                       'fixed_ips': [{'ip_address': '1.2.3.4',
+                                      'prefixlen': 24,
+                                      'subnet_id': subnet_id}]},
+                      {'mac_address': '11:22:33:44:55:66',
+                       'device_owner': lib_constants.DEVICE_OWNER_LOADBALANCER,
+                       'fixed_ips': [{'ip_address': '1.2.3.5',
+                                      'prefixlen': 24,
+                                      'subnet_id': subnet_id}]},
+                      {'mac_address': '22:33:44:55:66:77',
+                       'device_owner':
+                           lib_constants.DEVICE_OWNER_LOADBALANCERV2,
+                       'fixed_ips': [{'ip_address': '1.2.3.6',
+                                      'prefixlen': 24,
+                                      'subnet_id': subnet_id}]}]
+
+        self.plugin_api.get_ports_by_subnet.return_value = test_ports
+
+        # Test basic case
+        ports[0]['subnets'] = [{'id': subnet_id,
+                                'cidr': '1.2.3.0/24'}]
+        with mock.patch.object(ri,
+                               '_process_arp_cache_for_internal_port') as parp:
+            ri._set_subnet_arp_info(subnet_id)
+        self.assertEqual(1, parp.call_count)
+        self.mock_ip_dev.neigh.add.assert_called_once_with(
+            '1.2.3.4', '00:11:22:33:44:55', nud_state='reachable')
 
         # Test negative case
         router['distributed'] = False
@@ -536,14 +578,33 @@ class TestDvrRouterOperations(base.BaseTestCase):
             router[lib_constants.INTERFACE_KEY][0])
         arp_table = {'ip_address': '1.7.23.11',
                      'mac_address': '00:11:22:33:44:55',
-                     'subnet_id': subnet_id}
+                     'subnet_id': subnet_id,
+                     'nud_state': 'permanent'}
 
         payload = {'arp_table': arp_table, 'router_id': router['id']}
         agent._router_added(router['id'], router)
         agent.add_arp_entry(None, payload)
         agent.router_deleted(None, router['id'])
         self.mock_ip_dev.neigh.add.assert_called_once_with(
-            '1.7.23.11', '00:11:22:33:44:55')
+            '1.7.23.11', '00:11:22:33:44:55', nud_state='permanent')
+
+    def test_add_arp_entry_with_nud_state_reachable(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        router['distributed'] = True
+        subnet_id = l3_test_common.get_subnet_id(
+            router[lib_constants.INTERFACE_KEY][0])
+        arp_table = {'ip_address': '1.7.23.11',
+                     'mac_address': '00:11:22:33:44:55',
+                     'subnet_id': subnet_id,
+                     'nud_state': 'reachable'}
+
+        payload = {'arp_table': arp_table, 'router_id': router['id']}
+        agent._router_added(router['id'], router)
+        agent.add_arp_entry(None, payload)
+        agent.router_deleted(None, router['id'])
+        self.mock_ip_dev.neigh.add.assert_called_once_with(
+            '1.7.23.11', '00:11:22:33:44:55', nud_state='reachable')
 
     def test_add_arp_entry_no_routerinfo(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
