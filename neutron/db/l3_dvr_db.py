@@ -726,27 +726,46 @@ class _DVRAgentInterfaceMixin(object):
                 # All unbound ports with floatingip irrespective of
                 # the device owner should be included as valid ports
                 # and updated.
-                port_host = port[portbindings.HOST_ID]
-                if (port_host == host or port_in_migration or
+                if (port_in_migration or
                     self._is_unbound_port(port)):
                     port_dict.update({port['id']: port})
-                if port_host and port_host != host:
-                    # Consider the ports where the portbinding host and
-                    # request host does not match.
+                    continue
+                port_host = port[portbindings.HOST_ID]
+                if port_host:
                     l3_agent_on_host = self.get_l3_agents(
                         context,
                         filters={'host': [port_host]})
+                    l3_agent_mode = ''
                     if len(l3_agent_on_host):
                         l3_agent_mode = self._get_agent_mode(
                             l3_agent_on_host[0])
-                        # If the agent requesting is dvr_snat but
-                        # the portbinding host resides in dvr_no_external
-                        # agent then include the port.
-                        requesting_agent_mode = self._get_agent_mode(agent)
+                    requesting_agent_mode = self._get_agent_mode(agent)
+                    # Consider the ports where the portbinding host and
+                    # request host match.
+                    if port_host == host:
+                        # Check for agent type before adding the port_dict.
+                        # For VMs that are hosted on the dvr_no_external
+                        # agent and if the request is coming from the same
+                        # agent on re-syncs then we need to add the appropriate
+                        # port['agent'] before updating the dict.
                         if (l3_agent_mode == (
                             l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
                             requesting_agent_mode == (
-                            const.L3_AGENT_MODE_DVR_SNAT)):
+                                l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
+                            port['agent'] = (
+                                l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL)
+
+                        port_dict.update({port['id']: port})
+                    # Consider the ports where the portbinding host and
+                    # request host does not match.
+                    else:
+                        # If the agent requesting is dvr_snat but
+                        # the portbinding host resides in dvr_no_external
+                        # agent then include the port.
+                        if (l3_agent_mode == (
+                            l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
+                            requesting_agent_mode == (
+                                const.L3_AGENT_MODE_DVR_SNAT)):
                             port['agent'] = (
                                 l3_const.L3_AGENT_MODE_DVR_NO_EXTERNAL)
                             port_dict.update({port['id']: port})
