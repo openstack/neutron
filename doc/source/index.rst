@@ -85,3 +85,11 @@ API Extensions
 --------------
 
 Go to https://developer.openstack.org/api-ref/network/ for information about the OpenStack Network API and its extensions.
+
+Search
+------
+
+* :ref:`Neutron document search <search>`: Search the contents of this
+  document.
+* `OpenStack wide search <https://docs.openstack.org>`_: Search the wider
+  set of OpenStack documentation, including forums.
