@@ -210,6 +210,23 @@ class Router(base.NeutronDbObject):
 
     synthetic_fields = ['extra_attributes']
 
+    fields_no_update = ['project_id']
+
+    @classmethod
+    def check_routers_not_owned_by_projects(cls, context, gw_ports, projects):
+        """This method is to check whether routers that aren't owned by
+        existing projects or not
+        """
+
+        # TODO(hungpv) We may want to implement NOT semantic in get_object(s)
+        query = context.session.query(l3.Router).filter(
+            l3.Router.gw_port_id.in_(gw_ports))
+
+        query = query.filter(
+            ~l3.Router.project_id.in_(projects))
+
+        return bool(query.count())
+
 
 @base.NeutronObjectRegistry.register
 class FloatingIP(base.NeutronDbObject):

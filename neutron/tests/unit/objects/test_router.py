@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
 
 from neutron.objects import router
 from neutron.tests.unit.objects import test_base as obj_test_base
@@ -65,6 +66,63 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.update_obj_fields(
             {'gw_port_id': lambda: self._create_test_port_id(),
              'flavor_id': lambda: self._create_test_flavor_id()})
+
+    def _create_router(self, router_id, gw_port_id, project_id):
+        r = router.Router(self.context,
+                          id=router_id,
+                          gw_port_id=gw_port_id,
+                          project_id=project_id)
+        r.create()
+
+    def test_check_routers_not_owned_by_projects(self):
+        for obj in self.obj_fields:
+            self._create_router(router_id=obj['id'],
+                                gw_port_id=obj['gw_port_id'],
+                                project_id=obj['project_id'])
+        obj = self.obj_fields[0]
+
+        gw_port = obj['gw_port_id']
+        project = obj['project_id']
+        new_project = project
+
+        gw_port_no_match = uuidutils.generate_uuid()
+        project_no_match = uuidutils.generate_uuid()
+        new_project_no_match = uuidutils.generate_uuid()
+
+        # Check router match with gw_port BUT no projects
+        router_exist = router.Router.check_routers_not_owned_by_projects(
+            self.context,
+            [gw_port],
+            [project_no_match, new_project_no_match])
+        self.assertTrue(router_exist)
+
+        # Check router doesn't match with gw_port
+        router_exist = router.Router.check_routers_not_owned_by_projects(
+            self.context,
+            [gw_port_no_match],
+            [project])
+        self.assertFalse(router_exist)
+
+        # Check router match with gw_port AND project
+        router_exist = router.Router.check_routers_not_owned_by_projects(
+            self.context,
+            [gw_port],
+            [project, new_project_no_match])
+        self.assertFalse(router_exist)
+
+        # Check router match with gw_port AND new project
+        router_exist = router.Router.check_routers_not_owned_by_projects(
+            self.context,
+            [gw_port],
+            [project_no_match, new_project])
+        self.assertFalse(router_exist)
+
+        # Check router match with gw_port AND project AND new project
+        router_exist = router.Router.check_routers_not_owned_by_projects(
+            self.context,
+            [gw_port],
+            [project, new_project])
+        self.assertFalse(router_exist)
 
 
 class RouterPortIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):

@@ -30,11 +30,11 @@ from neutron._i18n import _
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
-from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import rbac_db_models as rbac_db
 from neutron.extensions import rbac as rbac_ext
 from neutron.objects import network as net_obj
+from neutron.objects import router as l3_obj
 
 
 DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
@@ -194,21 +194,22 @@ class External_net_db_mixin(object):
         if (object_type != 'network' or
                 policy['action'] != 'access_as_external'):
             return
-        new_tenant = None
+        new_project = None
         if event == events.BEFORE_UPDATE:
-            new_tenant = kwargs['policy_update']['target_tenant']
-            if new_tenant == policy['target_tenant']:
+            new_project = kwargs['policy_update']['target_tenant']
+            if new_project == policy['target_tenant']:
                 # nothing to validate if the tenant didn't change
                 return
-        ports = context.session.query(models_v2.Port.id).filter_by(
+        gw_ports = context.session.query(models_v2.Port.id).filter_by(
             device_owner=DEVICE_OWNER_ROUTER_GW,
             network_id=policy['object_id'])
-        router = context.session.query(l3_models.Router).filter(
-            l3_models.Router.gw_port_id.in_(ports))
+        gw_ports = [gw_port[0] for gw_port in gw_ports]
         rbac = rbac_db.NetworkRBAC
         if policy['target_tenant'] != '*':
-            router = router.filter(
-                l3_models.Router.tenant_id == policy['target_tenant'])
+            filters = {
+                'gw_port_id': gw_ports,
+                'project_id': policy['target_tenant']
+            }
             # if there is a wildcard entry we can safely proceed without the
             # router lookup because they will have access either way
             if context.session.query(rbac_db.NetworkRBAC).filter(
@@ -216,6 +217,7 @@ class External_net_db_mixin(object):
                     rbac.action == 'access_as_external',
                     rbac.target_tenant == '*').count():
                 return
+            router_exist = l3_obj.Router.objects_exist(context, **filters)
         else:
             # deleting the wildcard is okay as long as the tenants with
             # attached routers have their own entries and the network is
@@ -226,19 +228,19 @@ class External_net_db_mixin(object):
                         "everyone.")
                 raise rbac_ext.RbacPolicyInUse(object_id=policy['object_id'],
                                                details=msg)
-            tenants_with_entries = (
+            projects_with_entries = (
                 context.session.query(rbac.target_tenant).
                 filter(rbac.object_id == policy['object_id'],
                        rbac.action == 'access_as_external',
                        rbac.target_tenant != '*'))
-            router = router.filter(
-                ~l3_models.Router.tenant_id.in_(tenants_with_entries))
-            if new_tenant:
-                # if this is an update we also need to ignore any router
-                # interfaces that belong to the new target.
-                router = router.filter(
-                    l3_models.Router.tenant_id != new_tenant)
-        if router.count():
+            projects_with_entries = [projects_with_entry[0]
+                                     for projects_with_entry
+                                     in projects_with_entries]
+            if new_project:
+                projects_with_entries.append(new_project)
+            router_exist = l3_obj.Router.check_routers_not_owned_by_projects(
+                context, gw_ports, projects_with_entries)
+        if router_exist:
             msg = _("There are routers attached to this network that "
                     "depend on this policy for access.")
             raise rbac_ext.RbacPolicyInUse(object_id=policy['object_id'],
