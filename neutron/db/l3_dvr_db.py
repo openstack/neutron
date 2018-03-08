@@ -1086,12 +1086,14 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
 
 def is_distributed_router(router):
     """Return True if router to be handled is distributed."""
-    try:
-        # See if router is a DB object first
-        requested_router_type = router.extra_attributes.distributed
-    except AttributeError:
-        # if not, try to see if it is a request body
+    # See if router is a request body
+    if isinstance(router, dict):
         requested_router_type = router.get('distributed')
+    # If not, see if router DB or OVO object contains Extra Attributes
+    elif router.extra_attributes:
+        requested_router_type = router.extra_attributes.distributed
+    else:
+        requested_router_type = None
     if validators.is_attr_set(requested_router_type):
         return requested_router_type
     return cfg.CONF.router_distributed
