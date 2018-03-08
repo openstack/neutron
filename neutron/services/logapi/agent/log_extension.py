@@ -86,9 +86,8 @@ class LoggingExtension(agent_extension.AgentExtension):
     def initialize(self, connection, driver_type):
         """Initialize agent extension."""
 
-        int_br = self.agent_api.request_int_br()
         self.log_driver = manager.NeutronManager.load_class_for_provider(
-            LOGGING_DRIVERS_NAMESPACE, driver_type)(int_br)
+            LOGGING_DRIVERS_NAMESPACE, driver_type)(self.agent_api)
         self.resource_rpc = agent_rpc.LoggingApiStub()
         self._register_rpc_consumers(connection)
         self.log_driver.initialize(self.resource_rpc)

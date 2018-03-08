@@ -62,12 +62,13 @@ class LoggingExtensionTestFramework(test_firewall.BaseFirewallTestCase):
         self.log_driver = self.initialize_ovs_fw_log()
 
     def initialize_ovs_fw_log(self):
-        int_br = ovs_ext_api.OVSCookieBridge(ovs_bridge.OVSAgentBridge(
-            self.tester.bridge.br_name))
         mock.patch('ryu.base.app_manager.AppManager.get_instance').start()
         mock.patch(
             'neutron.agent.ovsdb.impl_vsctl.OvsdbVsctl.transaction').start()
-        log_driver = ovs_fw_log.OVSFirewallLoggingDriver(int_br)
+        agent_api = ovs_ext_api.OVSAgentExtensionAPI(
+            ovs_bridge.OVSAgentBridge(self.tester.bridge.br_name),
+            ovs_bridge.OVSAgentBridge('br-tun'))
+        log_driver = ovs_fw_log.OVSFirewallLoggingDriver(agent_api)
         log_driver.initialize(self.resource_rpc)
         return log_driver
 
