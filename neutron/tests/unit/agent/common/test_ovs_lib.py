@@ -1054,9 +1054,9 @@ class TestDeferredOVSBridge(base.BaseTestCase):
 
     def test_apply_on_exit(self):
         expected_calls = [
-            mock.call('add', [self.add_flow_dict1]),
-            mock.call('mod', [self.mod_flow_dict1]),
-            mock.call('del', [self.del_flow_dict1]),
+            mock.call('add', [self.add_flow_dict1], False),
+            mock.call('mod', [self.mod_flow_dict1], False),
+            mock.call('del', [self.del_flow_dict1], False),
         ]
 
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
@@ -1080,9 +1080,9 @@ class TestDeferredOVSBridge(base.BaseTestCase):
 
     def test_apply(self):
         expected_calls = [
-            mock.call('add', [self.add_flow_dict1]),
-            mock.call('mod', [self.mod_flow_dict1]),
-            mock.call('del', [self.del_flow_dict1]),
+            mock.call('add', [self.add_flow_dict1], False),
+            mock.call('mod', [self.mod_flow_dict1], False),
+            mock.call('del', [self.del_flow_dict1], False),
         ]
 
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
@@ -1096,9 +1096,12 @@ class TestDeferredOVSBridge(base.BaseTestCase):
 
     def test_apply_order(self):
         expected_calls = [
-            mock.call('del', [self.del_flow_dict1, self.del_flow_dict2]),
-            mock.call('mod', [self.mod_flow_dict1, self.mod_flow_dict2]),
-            mock.call('add', [self.add_flow_dict1, self.add_flow_dict2]),
+            mock.call(
+                'del', [self.del_flow_dict1, self.del_flow_dict2], False),
+            mock.call(
+                'mod', [self.mod_flow_dict1, self.mod_flow_dict2], False),
+            mock.call(
+                'add', [self.add_flow_dict1, self.add_flow_dict2], False),
         ]
 
         order = 'del', 'mod', 'add'
@@ -1113,11 +1116,12 @@ class TestDeferredOVSBridge(base.BaseTestCase):
 
     def test_apply_full_ordered(self):
         expected_calls = [
-            mock.call('add', [self.add_flow_dict1]),
-            mock.call('mod', [self.mod_flow_dict1]),
-            mock.call('del', [self.del_flow_dict1, self.del_flow_dict2]),
-            mock.call('add', [self.add_flow_dict2]),
-            mock.call('mod', [self.mod_flow_dict2]),
+            mock.call('add', [self.add_flow_dict1], False),
+            mock.call('mod', [self.mod_flow_dict1], False),
+            mock.call(
+                'del', [self.del_flow_dict1, self.del_flow_dict2], False),
+            mock.call('add', [self.add_flow_dict2], False),
+            mock.call('mod', [self.mod_flow_dict2], False),
         ]
 
         with ovs_lib.DeferredOVSBridge(self.br,
@@ -1160,3 +1164,12 @@ class TestDeferredOVSBridge(base.BaseTestCase):
                 deferred_br.add_flow(actions='drop')
                 deferred_br.mod_flow(actions='drop')
             f.assert_has_calls(expected_calls)
+
+    @vsctl_only
+    def test_add_flow_with_bundle(self):
+        br = ovs_lib.OVSBridge("foo")
+        deferred = br.deferred(use_bundle=True)
+        with mock.patch.object(utils, "execute", spec=utils.execute) as mexec:
+            deferred.add_flow(in_port=1, actions='drop')
+            deferred.apply_flows()
+        self.assertIn('--bundle', mexec.call_args[0][0])
