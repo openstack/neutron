@@ -192,6 +192,15 @@ information from conntrack. It says every port has its own conntrack zone
 defined by value in ``register 6``. It's there to avoid accepting established
 traffic that belongs to different port with same conntrack parameters.
 
+The very first rule in ``table 71`` is a rule removing conntrack information
+for a use-case where Neutron logical port is placed directly to the hypervisor.
+In such case kernel does conntrack lookup before packet reaches Open vSwitch
+bridge. Tracked packets are sent back for processing by the same table after
+conntrack information is cleared.
+
+::
+ table=71, priority=110,ct_state=+trk actions=ct_clear,resubmit(,71)
+
 Rules below allow ICMPv6 traffic for multicast listeners, neighbour
 solicitation and neighbour advertisement.
 
@@ -236,14 +245,14 @@ combinations. All other packets are dropped.
 
 ::
 
- table=71, priority=65,ct_state=-trk,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,nw_src=192.168.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
- table=71, priority=65,ct_state=-trk,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:8c:84:13,nw_src=10.0.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
- table=71, priority=65,ct_state=-trk,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,nw_src=192.168.0.2 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
- table=71, priority=65,ct_state=-trk,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:8c:84:14,nw_src=10.1.0.0/24 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
- table=71, priority=65,ct_state=-trk,ipv6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,ipv6_src=fe80::f816:3eff:fea4:2210 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
- table=71, priority=65,ct_state=-trk,ipv6,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,ipv6_src=fe80::f816:3eff:fe24:57c7 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
- table=71, priority=10,ct_state=-trk,reg5=0x1,in_port=1 actions=resubmit(,93)
- table=71, priority=10,ct_state=-trk,reg5=0x2,in_port=2 actions=resubmit(,93)
+ table=71, priority=65,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,nw_src=192.168.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ip,reg5=0x1,in_port=1,dl_src=fa:16:3e:8c:84:13,nw_src=10.0.0.1 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,nw_src=192.168.0.2 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ip,reg5=0x2,in_port=2,dl_src=fa:16:3e:8c:84:14,nw_src=10.1.0.0/24 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ipv6,reg5=0x1,in_port=1,dl_src=fa:16:3e:a4:22:10,ipv6_src=fe80::f816:3eff:fea4:2210 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=65,ipv6,reg5=0x2,in_port=2,dl_src=fa:16:3e:24:57:c7,ipv6_src=fe80::f816:3eff:fe24:57c7 actions=ct(table=72,zone=NXM_NX_REG6[0..15])
+ table=71, priority=10,reg5=0x1,in_port=1 actions=resubmit(,93)
+ table=71, priority=10,reg5=0x2,in_port=2 actions=resubmit(,93)
  table=71, priority=0 actions=drop
 
 
