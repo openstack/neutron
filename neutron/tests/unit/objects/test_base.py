@@ -695,6 +695,22 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         mock.patch.object(self.context.session, 'refresh').start()
         mock.patch.object(self.context.session, 'expunge').start()
 
+        # don't validate expunge in tests that don't touch database and use
+        # new reader engine facade
+        self.reader_facade_mock = mock.patch.object(
+            self._test_class, 'db_context_reader').start()
+        mock.patch.object(self.reader_facade_mock.return_value.session,
+                          'expunge').start()
+
+        # don't validate refresh and expunge in tests that don't touch database
+        # and use new writer engine facade
+        self.writer_facade_mock = mock.patch.object(
+            self._test_class, 'db_context_writer').start()
+        mock.patch.object(self.writer_facade_mock.return_value.session,
+                          'expunge').start()
+        mock.patch.object(self.writer_facade_mock.return_value.session,
+                          'refresh').start()
+
         self.get_objects_mock = mock.patch.object(
             obj_db_api, 'get_objects',
             side_effect=self.fake_get_objects).start()
