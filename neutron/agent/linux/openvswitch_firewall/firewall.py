@@ -394,6 +394,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self.sg_to_delete = set()
         self._deferred = False
         self._drop_all_unmatched_flows()
+        self._initialize_common_flows()
         self._initialize_third_party_tables()
         self.conj_ip_manager = ConjIPFlowManager(self)
 
@@ -445,6 +446,16 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def _drop_all_unmatched_flows(self):
         for table in ovs_consts.OVS_FIREWALL_TABLES:
             self.int_br.br.add_flow(table=table, priority=0, actions='drop')
+
+    def _initialize_common_flows(self):
+        # Remove conntrack information from tracked packets
+        self._add_flow(
+            table=ovs_consts.BASE_EGRESS_TABLE,
+            priority=110,
+            ct_state=ovsfw_consts.OF_STATE_TRACKED,
+            actions='ct_clear,'
+                    'resubmit(,%d)' % ovs_consts.BASE_EGRESS_TABLE,
+        )
 
     def _initialize_third_party_tables(self):
         self.int_br.br.add_flow(
@@ -743,7 +754,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 table=ovs_consts.BASE_EGRESS_TABLE,
                 priority=65,
                 reg_port=port.ofport,
-                ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
                 dl_type=constants.ETHERTYPE_IP,
                 in_port=port.ofport,
                 dl_src=mac_addr,
@@ -762,7 +772,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 priority=65,
                 reg_port=port.ofport,
                 in_port=port.ofport,
-                ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
                 dl_type=constants.ETHERTYPE_IPV6,
                 dl_src=mac_addr,
                 ipv6_src=ip_addr,
@@ -815,14 +824,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
-        # Drop all remaining not tracked egress connections
+        # Drop all remaining egress connections
         self._add_flow(
             table=ovs_consts.BASE_EGRESS_TABLE,
             priority=10,
-            ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
             in_port=port.ofport,
             reg_port=port.ofport,
-            actions='resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
+            actions='ct_clear,'
+                    'resubmit(,%d)' % ovs_consts.DROPPED_TRAFFIC_TABLE
         )
 
         # Fill in accept_or_ingress table by checking that traffic is ingress
