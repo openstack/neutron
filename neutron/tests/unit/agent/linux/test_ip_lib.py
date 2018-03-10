@@ -875,27 +875,41 @@ class TestIpAddrCommand(TestIPCmdBase):
         self._assert_sudo([6], ('flush', 'tap0'))
 
     def test_list(self):
-        expected = [
+        expected_brd = [
+            dict(name='eth0', scope='global', tentative=False, dadfailed=False,
+                 dynamic=False, cidr='172.16.77.240/24',
+                 broadcast='172.16.77.255')]
+        expected_no_brd = [
+            dict(name='eth0', scope='global', tentative=False, dadfailed=False,
+                 dynamic=False, cidr='172.16.77.240/24', broadcast=None)]
+        expected_ipv6 = [
             dict(name='eth0', scope='global', dadfailed=False, tentative=False,
-                 dynamic=False, cidr='172.16.77.240/24'),
-            dict(name='eth0', scope='global', dadfailed=False, tentative=False,
-                 dynamic=True, cidr='2001:470:9:1224:5595:dd51:6ba2:e788/64'),
+                 dynamic=True, cidr='2001:470:9:1224:5595:dd51:6ba2:e788/64',
+                 broadcast=None),
             dict(name='eth0', scope='link', dadfailed=False, tentative=True,
-                 dynamic=False, cidr='fe80::3023:39ff:febc:22ae/64'),
+                 dynamic=False, cidr='fe80::3023:39ff:febc:22ae/64',
+                 broadcast=None),
             dict(name='eth0', scope='link', dadfailed=True, tentative=True,
-                 dynamic=False, cidr='fe80::3023:39ff:febc:22af/64'),
+                 dynamic=False, cidr='fe80::3023:39ff:febc:22af/64',
+                 broadcast=None),
             dict(name='eth0', scope='global', dadfailed=False, tentative=False,
-                 dynamic=True, cidr='2001:470:9:1224:fd91:272:581e:3a32/64'),
+                 dynamic=True, cidr='2001:470:9:1224:fd91:272:581e:3a32/64',
+                 broadcast=None),
             dict(name='eth0', scope='global', dadfailed=False, tentative=False,
-                 dynamic=True, cidr='2001:470:9:1224:4508:b885:5fb:740b/64'),
+                 dynamic=True, cidr='2001:470:9:1224:4508:b885:5fb:740b/64',
+                 broadcast=None),
             dict(name='eth0', scope='global', dadfailed=False, tentative=False,
-                 dynamic=True, cidr='2001:470:9:1224:dfcc:aaff:feb9:76ce/64'),
+                 dynamic=True, cidr='2001:470:9:1224:dfcc:aaff:feb9:76ce/64',
+                 broadcast=None),
             dict(name='eth0', scope='link', dadfailed=False, tentative=False,
-                 dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64')]
+                 dynamic=False, cidr='fe80::dfcc:aaff:feb9:76ce/64',
+                 broadcast=None)]
 
-        test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
+        cases = [
+            (ADDR_SAMPLE, expected_brd + expected_ipv6),
+            (ADDR_SAMPLE2, expected_no_brd + expected_ipv6)]
 
-        for test_case in test_cases:
+        for test_case, expected in cases:
             self.parent._run = mock.Mock(return_value=test_case)
             self.assertEqual(expected, self.addr_cmd.list())
             self._assert_call([], ('show', 'tap0'))
@@ -921,17 +935,24 @@ class TestIpAddrCommand(TestIPCmdBase):
                                                    wait_time=1)
 
     def test_list_filtered(self):
-        expected = [
+        expected_brd = [
             dict(name='eth0', scope='global', tentative=False, dadfailed=False,
-                 dynamic=False, cidr='172.16.77.240/24')]
+                 dynamic=False, cidr='172.16.77.240/24',
+                 broadcast='172.16.77.255')]
+        expected_no_brd = [
+            dict(name='eth0', scope='global', tentative=False, dadfailed=False,
+                 dynamic=False, cidr='172.16.77.240/24', broadcast=None)]
 
-        test_cases = [ADDR_SAMPLE, ADDR_SAMPLE2]
+        cases = [
+            (ADDR_SAMPLE, expected_brd), (ADDR_SAMPLE2, expected_no_brd)]
 
-        for test_case in test_cases:
+        for test_case, expected in cases:
             output = '\n'.join(test_case.split('\n')[0:4])
             self.parent._run.return_value = output
-            self.assertEqual(self.addr_cmd.list('global',
-                             filters=['permanent']), expected)
+            self.assertEqual(
+                expected,
+                self.addr_cmd.list(
+                    'global', filters=['permanent']))
             self._assert_call([], ('show', 'tap0', 'permanent', 'scope',
                               'global'))
 
@@ -944,6 +965,7 @@ class TestIpAddrCommand(TestIPCmdBase):
         devices = self.addr_cmd.get_devices_with_ip(to='172.16.77.240/24')
         self.assertEqual(1, len(devices))
         expected = {'cidr': '172.16.77.240/24',
+                    'broadcast': '172.16.77.255',
                     'dadfailed': False,
                     'dynamic': False,
                     'name': 'eth0',

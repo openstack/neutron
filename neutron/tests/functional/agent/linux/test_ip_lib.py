@@ -383,11 +383,21 @@ class IpLibTestCase(IpLibTestFramework):
         self.assertEqual(alias, device.link.alias)
 
     def _add_and_check_ips(self, device, ip_addresses):
-        for cidr, scope in ip_addresses:
-            device.addr.add(str(cidr), scope)
+        for cidr, scope, expected_broadcast in ip_addresses:
+            # For IPv4 address add_broadcast flag will be set to True only
+            # if expected_broadcast is given.
+            # For IPv6 add_broadcast flag can be set to True always but
+            # broadcast address will not be set, so expected_broadcast for
+            # IPv6 should be always given as None.
+            add_broadcast = True
+            if cidr.version == constants.IP_VERSION_4:
+                add_broadcast = bool(expected_broadcast)
+            device.addr.add(str(cidr), scope, add_broadcast)
 
         device_ips_info = [
-            (ip_info['cidr'], ip_info['scope']) for
+            (netaddr.IPNetwork(ip_info['cidr']),
+             ip_info['scope'],
+             ip_info['broadcast']) for
             ip_info in device.addr.list()]
         self.assertItemsEqual(ip_addresses, device_ips_info)
 
@@ -399,10 +409,10 @@ class IpLibTestCase(IpLibTestFramework):
 
     def test_add_ip_address(self):
         ip_addresses = [
-            ("10.10.10.10/30", "global"),
-            ("11.11.11.11/28", "link"),
-            ("2801::1/120", "global"),
-            ("fe80::/64", "link")]
+            (netaddr.IPNetwork("10.10.10.10/30"), "global", '10.10.10.11'),
+            (netaddr.IPNetwork("11.11.11.11/28"), "link", None),
+            (netaddr.IPNetwork("2801::1/120"), "global", None),
+            (netaddr.IPNetwork("fe80::/64"), "link", None)]
         attr = self.generate_device_details(ip_cidrs=[])
         device = self.manage_device(attr)
         self._add_and_check_ips(device, ip_addresses)
@@ -421,10 +431,10 @@ class IpLibTestCase(IpLibTestFramework):
 
     def test_flush_ip_addresses(self):
         ip_addresses = [
-            ("10.10.10.10/30", "global"),
-            ("11.11.11.11/28", "link"),
-            ("2801::1/120", "global"),
-            ("fe80::/64", "link")]
+            (netaddr.IPNetwork("10.10.10.10/30"), "global", '10.10.10.11'),
+            (netaddr.IPNetwork("11.11.11.11/28"), "link", None),
+            (netaddr.IPNetwork("2801::1/120"), "global", None),
+            (netaddr.IPNetwork("fe80::/64"), "link", None)]
         attr = self.generate_device_details(ip_cidrs=[])
         device = self.manage_device(attr)
 
