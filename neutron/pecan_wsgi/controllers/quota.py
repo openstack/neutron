@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import attributes
 from neutron_lib.api import converters
 from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as n_exc
@@ -22,7 +23,6 @@ import pecan
 from pecan import request
 
 from neutron._i18n import _
-from neutron.api.v2 import attributes
 from neutron.pecan_wsgi.controllers import utils
 from neutron.quota import resource_registry
 
@@ -83,7 +83,7 @@ class QuotaController(utils.NeutronPecanController):
             "%ss" % RESOURCE_NAME, RESOURCE_NAME)
 
         # Ensure limits for all registered resources are returned
-        attr_dict = attributes.RESOURCE_ATTRIBUTE_MAP[self.collection]
+        attr_dict = attributes.RESOURCES[self.collection]
         for quota_resource in resource_registry.get_all_resources().keys():
             attr_dict[quota_resource] = {
                 'allow_post': False,

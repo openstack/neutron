@@ -16,6 +16,7 @@
 """Test of Policy Engine For Neutron"""
 
 import mock
+from neutron_lib.api import attributes
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
@@ -29,7 +30,6 @@ from oslo_serialization import jsonutils
 from oslo_utils import importutils
 
 import neutron
-from neutron.api.v2 import attributes
 from neutron.common import constants as n_const
 from neutron import policy
 from neutron.tests import base
@@ -207,7 +207,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def setUp(self):
         super(NeutronPolicyTestCase, self).setUp()
         # Add Fake resources to RESOURCE_ATTRIBUTE_MAP
-        attributes.RESOURCE_ATTRIBUTE_MAP.update(FAKE_RESOURCES)
+        attributes.RESOURCES.update(FAKE_RESOURCES)
         self._set_rules()
 
         self.patcher = mock.patch.object(neutron.policy,

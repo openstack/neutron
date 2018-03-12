@@ -195,8 +195,8 @@ The check, performed in the ``__call__`` method, works as follows:
     ``network`` resource;
   * if no parent resource or target field could be identified raise a
     ``PolicyCheckError`` exception;
-  * Retrieve a 'parent foreign key' from the ``RESOURCE_FOREIGN_KEYS`` data
-    structure in ``neutron.api.v2.attributes``. This foreign key is simply the
+  * Retrieve a 'parent foreign key' from the ``_RESOURCE_FOREIGN_KEYS`` data
+    structure in ``neutron.policy``. This foreign key is simply the
     attribute acting as a primary key in the parent resource. A
     ``PolicyCheckError`` exception will be raised if such 'parent foreign key'
     cannot be retrieved;
@@ -288,7 +288,7 @@ Notes
    imply a round-trip to the backend. This class of checks, when involving
    retrieving attributes for 'parent' resources should be used very sparingly.
  * In order for ``OwnerCheck`` rules to work, parent resources should have an
-   entry in ``neutron.api.v2.attributes.RESOURCE_FOREIGN_KEYS``; moreover the
+   entry in ``neutron.policy._RESOURCE_FOREIGN_KEYS``; moreover the
    resource must be managed by the 'core' plugin (ie: the one defined in the
    core_plugin configuration variable)
 

@@ -17,6 +17,7 @@ from collections import defaultdict
 import copy
 import functools
 
+from neutron_lib.api import attributes
 from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -25,7 +26,6 @@ from pecan import request
 
 from neutron._i18n import _
 from neutron.api import api_common
-from neutron.api.v2 import attributes as api_attributes
 from neutron.db import api as db_api
 from neutron import manager
 from neutron_lib import exceptions
@@ -210,7 +210,7 @@ class NeutronPecanController(object):
     @property
     def resource_info(self):
         if not self._resource_info:
-            self._resource_info = api_attributes.get_collection_info(
+            self._resource_info = attributes.RESOURCES.get(
                 self.collection)
         return self._resource_info
 
