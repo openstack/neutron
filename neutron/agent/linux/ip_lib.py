@@ -576,22 +576,15 @@ class IpAddrCommand(IpDeviceCommandBase):
     COMMAND = 'addr'
 
     def add(self, cidr, scope='global', add_broadcast=True):
-        net = netaddr.IPNetwork(cidr)
-        args = ['add', cidr,
-                'scope', scope,
-                'dev', self.name]
-        if add_broadcast and net.version == 4:
-            args += ['brd', str(net[-1])]
-        self._as_root([net.version], tuple(args))
+        add_ip_address(self.name, self._parent.namespace, cidr, scope,
+                       add_broadcast)
 
     def delete(self, cidr):
-        ip_version = common_utils.get_ip_version(cidr)
-        self._as_root([ip_version],
-                      ('del', cidr,
-                       'dev', self.name))
+        delete_ip_address(self.name, self._parent.namespace, cidr)
 
     def flush(self, ip_version):
-        self._as_root([ip_version], ('flush', self.name))
+        flush_ip_addresses(
+            self.name, self._parent.namespace, ip_version)
 
     def get_devices_with_ip(self, name=None, scope=None, to=None,
                             filters=None, ip_version=None):
@@ -952,6 +945,30 @@ def get_device_mtu(device_name, namespace=None):
 
 NetworkNamespaceNotFound = privileged.NetworkNamespaceNotFound
 NetworkInterfaceNotFound = privileged.NetworkInterfaceNotFound
+
+
+def add_ip_address(device, namespace, cidr, scope='global',
+                   add_broadcast=True):
+    net = netaddr.IPNetwork(cidr)
+    broadcast = None
+    if add_broadcast and net.version == 4:
+        # NOTE(slaweq): in case if cidr is /32 net.broadcast is None so
+        # same IP address as cidr should be set as broadcast
+        broadcast = str(net.broadcast or net.ip)
+    privileged.add_ip_address(
+        net.version, str(net.ip), net.prefixlen,
+        device, namespace, scope, broadcast)
+
+
+def delete_ip_address(device, namespace, cidr):
+    net = netaddr.IPNetwork(cidr)
+    privileged.delete_ip_address(
+        net.version, str(net.ip), net.prefixlen, device, namespace)
+
+
+def flush_ip_addresses(device, namespace, ip_version):
+    privileged.flush_ip_addresses(
+        ip_version, device, namespace)
 
 
 def get_routing_table(ip_version, namespace=None):

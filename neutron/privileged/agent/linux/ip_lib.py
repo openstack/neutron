@@ -29,7 +29,11 @@ _IP_VERSION_FAMILY_MAP = {4: socket.AF_INET, 6: socket.AF_INET6}
 def _get_scope_name(scope):
     """Return the name of the scope (given as a number), or the scope number
     if the name is unknown.
+
+    For backward compatibility (with "ip" tool) "global" scope is converted to
+    "universe" before converting to number
     """
+    scope = 'universe' if scope == 'global' else scope
     return rtnl.rt_scope.get(scope, scope)
 
 
@@ -86,11 +90,70 @@ def _get_iproute(namespace):
         return pyroute2.IPRoute()
 
 
-def _run_iproute(command, device, namespace, **kwargs):
+def _run_iproute_neigh(command, device, namespace, **kwargs):
     try:
         with _get_iproute(namespace) as ip:
             idx = ip.link_lookup(ifname=device)[0]
             return ip.neigh(command, ifindex=idx, **kwargs)
+    except IndexError:
+        msg = _("Network interface %(device)s not found in namespace "
+                "%(namespace)s.") % {'device': device,
+                                     'namespace': namespace}
+        raise NetworkInterfaceNotFound(msg)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+def _run_iproute_addr(command, device, namespace, **kwargs):
+    try:
+        with _get_iproute(namespace) as ip:
+            idx = ip.link_lookup(ifname=device)[0]
+            return ip.addr(command, index=idx, **kwargs)
+    except IndexError:
+        msg = _("Network interface %(device)s not found in namespace "
+                "%(namespace)s.") % {'device': device,
+                                     'namespace': namespace}
+        raise NetworkInterfaceNotFound(msg)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
+
+
+@privileged.default.entrypoint
+def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
+                   broadcast=None):
+    family = _IP_VERSION_FAMILY_MAP[ip_version]
+    _run_iproute_addr('add',
+                      device,
+                      namespace,
+                      address=ip,
+                      mask=prefixlen,
+                      family=family,
+                      broadcast=broadcast,
+                      scope=_get_scope_name(scope))
+
+
+@privileged.default.entrypoint
+def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
+    family = _IP_VERSION_FAMILY_MAP[ip_version]
+    _run_iproute_addr("delete",
+                      device,
+                      namespace,
+                      address=ip,
+                      mask=prefixlen,
+                      family=family)
+
+
+@privileged.default.entrypoint
+def flush_ip_addresses(ip_version, device, namespace):
+    family = _IP_VERSION_FAMILY_MAP[ip_version]
+    try:
+        with _get_iproute(namespace) as ip:
+            idx = ip.link_lookup(ifname=device)[0]
+            ip.flush_addr(index=idx, family=family)
     except IndexError:
         msg = _("Network interface %(device)s not found in namespace "
                 "%(namespace)s.") % {'device': device,
@@ -113,14 +176,14 @@ def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
     :param namespace: The name of the namespace in which to add the entry
     """
     family = _IP_VERSION_FAMILY_MAP[ip_version]
-    _run_iproute('replace',
-                 device,
-                 namespace,
-                 dst=ip_address,
-                 lladdr=mac_address,
-                 family=family,
-                 state=ndmsg.states['permanent'],
-                 **kwargs)
+    _run_iproute_neigh('replace',
+                       device,
+                       namespace,
+                       dst=ip_address,
+                       lladdr=mac_address,
+                       family=family,
+                       state=ndmsg.states['permanent'],
+                       **kwargs)
 
 
 @privileged.default.entrypoint
@@ -135,13 +198,13 @@ def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
     """
     family = _IP_VERSION_FAMILY_MAP[ip_version]
     try:
-        _run_iproute('delete',
-                     device,
-                     namespace,
-                     dst=ip_address,
-                     lladdr=mac_address,
-                     family=family,
-                     **kwargs)
+        _run_iproute_neigh('delete',
+                           device,
+                           namespace,
+                           dst=ip_address,
+                           lladdr=mac_address,
+                           family=family,
+                           **kwargs)
     except NetlinkError as e:
         # trying to delete a non-existent entry shouldn't raise an error
         if e.code == errno.ENOENT:
@@ -164,11 +227,11 @@ def dump_neigh_entries(ip_version, device, namespace, **kwargs):
     """
     family = _IP_VERSION_FAMILY_MAP[ip_version]
     entries = []
-    dump = _run_iproute('dump',
-                        device,
-                        namespace,
-                        family=family,
-                        **kwargs)
+    dump = _run_iproute_neigh('dump',
+                              device,
+                              namespace,
+                              family=family,
+                              **kwargs)
 
     for entry in dump:
         attrs = dict(entry['attrs'])
