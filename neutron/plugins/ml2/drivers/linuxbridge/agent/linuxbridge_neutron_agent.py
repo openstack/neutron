@@ -32,6 +32,7 @@ from oslo_utils import excutils
 from six import moves
 
 from neutron._i18n import _LE, _LI, _LW
+from neutron.agent.common import config as agent_config
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
@@ -943,6 +944,7 @@ def main():
     common_config.init(sys.argv[1:])
 
     common_config.setup_logging()
+    agent_config.setup_privsep()
     try:
         interface_mappings = helpers.parse_mappings(
             cfg.CONF.LINUX_BRIDGE.physical_interface_mappings)
