@@ -625,10 +625,12 @@ class IpAddrCommand(IpDeviceCommandBase):
                 continue
 
             parts = line.split(" ")
+            broadcast = None
             if parts[0] == 'inet6':
                 scope = parts[3]
             else:
                 if parts[2] == 'brd':
+                    broadcast = parts[3]
                     scope = parts[5]
                 else:
                     scope = parts[3]
@@ -636,6 +638,7 @@ class IpAddrCommand(IpDeviceCommandBase):
             retval.append(dict(name=device_name,
                                cidr=parts[1],
                                scope=scope,
+                               broadcast=broadcast,
                                dynamic=('dynamic' == parts[-1]),
                                tentative=('tentative' in line),
                                dadfailed=('dadfailed' == parts[-1])))
