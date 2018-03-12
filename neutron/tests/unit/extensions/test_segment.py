@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import segment as seg_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
@@ -40,6 +41,7 @@ from neutron.db import agentschedulers_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_db
 from neutron.db import segments_db
+from neutron.db import standard_attr
 from neutron.extensions import segment as ext_segment
 from neutron.objects import network
 from neutron.services.segments import db
@@ -77,6 +79,13 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.patch_notifier = mock.patch(
             'neutron.notifiers.batch_notifier.BatchNotifier._notify')
         self.patch_notifier.start()
+
+        # NOTE(boden): mock behavior of standardattrdescription to not
+        # overwrite description of segment API
+        mock.patch.object(standard_attr,
+                          'get_standard_attr_resource_model_map',
+                          return_value={}).start()
+
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
         service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
@@ -1470,7 +1479,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         # Need notifier here
         self.patch_notifier.stop()
         self._mock_keystone_auth()
-        self.segments_plugin = directory.get_plugin(ext_segment.SEGMENTS)
+        self.segments_plugin = directory.get_plugin(
+            seg_apidef.COLLECTION_NAME)
 
         nova_updater = self.segments_plugin.nova_updater
         nova_updater.p_client = mock.MagicMock()
