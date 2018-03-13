@@ -18,6 +18,7 @@ import itertools
 import operator
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api import extensions
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions
@@ -80,7 +81,7 @@ class DhcpRpcCallback(object):
         """Retrieve and return a list of the active networks."""
         host = kwargs.get('host')
         plugin = directory.get_plugin()
-        if utils.is_extension_supported(
+        if extensions.is_extension_supported(
             plugin, constants.DHCP_AGENT_SCHEDULER_EXT_ALIAS):
             if cfg.CONF.network_auto_schedule:
                 plugin.auto_schedule_networks(context, host)

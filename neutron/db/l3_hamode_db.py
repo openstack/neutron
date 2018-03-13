@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -629,7 +630,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             agent_mode in [constants.L3_AGENT_MODE_DVR_SNAT,
                            constants.L3_AGENT_MODE_DVR,
                            constants.L3_AGENT_MODE_DVR_NO_EXTERNAL])
-        if (dvr_agent_mode and n_utils.is_extension_supported(
+        if (dvr_agent_mode and extensions.is_extension_supported(
                 self, constants.L3_DISTRIBUTED_EXT_ALIAS)):
             # DVR has to be handled differently
             sync_data = self._get_dvr_sync_data(context, host, agent,

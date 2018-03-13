@@ -17,13 +17,13 @@ import collections
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 
 from neutron._i18n import _
-from neutron.common import utils as n_utils
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import constants
 from neutron.services.trunk import exceptions as trunk_exc
@@ -200,8 +200,8 @@ class SubPortsValidator(object):
 
         core_plugin = directory.get_plugin()
         if (any_has_inherit and
-                not n_utils.is_extension_supported(core_plugin,
-                                                   provider.ALIAS)):
+                not extensions.is_extension_supported(
+                    core_plugin, provider.ALIAS)):
             msg = _("Cannot accept segmentation type %s") % constants.INHERIT
             raise n_exc.InvalidInput(error_message=msg)
 
@@ -223,7 +223,7 @@ class SubPortsValidator(object):
                 # To speed up the request, record the network MTU for each
                 # subport to avoid hitting the DB more than necessary. Do
                 # that only if the extension is available.
-                if n_utils.is_extension_supported(core_plugin, 'net-mtu'):
+                if extensions.is_extension_supported(core_plugin, 'net-mtu'):
                     subport_mtus[port['port_id']] = net[api.MTU]
         return subport_mtus
 
@@ -235,7 +235,7 @@ class SubPortsValidator(object):
         """
         core_plugin = directory.get_plugin()
 
-        if not n_utils.is_extension_supported(core_plugin, 'net-mtu'):
+        if not extensions.is_extension_supported(core_plugin, 'net-mtu'):
             return
 
         try:

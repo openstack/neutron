@@ -16,6 +16,7 @@
 import datetime
 
 import mock
+from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -24,7 +25,6 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
-from neutron.common import utils
 from neutron.db.agentschedulers_db import cfg
 from neutron.objects import agent as agent_obj
 from neutron.tests import base
@@ -37,7 +37,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         self.notifier = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI(plugin=mock.Mock()))
 
-        mock_util_p = mock.patch.object(utils, 'is_extension_supported')
+        mock_util_p = mock.patch.object(extensions, 'is_extension_supported')
         mock_log_p = mock.patch.object(dhcp_rpc_agent_api, 'LOG')
         mock_fanout_p = mock.patch.object(self.notifier, '_fanout_message')
         mock_cast_p = mock.patch.object(self.notifier, '_cast_message')

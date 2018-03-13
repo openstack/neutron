@@ -13,13 +13,13 @@
 
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
-from neutron.common import utils
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import l3_attrs_db
 
@@ -33,8 +33,8 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
     @resource_extend.extends([l3_apidef.ROUTERS])
     def _add_az_to_response(router_res, router_db):
         l3_plugin = directory.get_plugin(constants.L3)
-        if not utils.is_extension_supported(l3_plugin,
-                                            'router_availability_zone'):
+        if not extensions.is_extension_supported(
+                l3_plugin, 'router_availability_zone'):
             return
         router_res['availability_zones'] = (
             l3_plugin.get_router_availability_zones(router_db))

@@ -24,6 +24,7 @@ from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
+from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib.callbacks import events
@@ -811,7 +812,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(context, result)
 
             # Update the transparent vlan if configured
-            if utils.is_extension_supported(self, 'vlan-transparent'):
+            if extensions.is_extension_supported(self, 'vlan-transparent'):
                 vlt = vlan_apidef.get_vlan_transparent(net_data)
                 net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
@@ -1272,7 +1273,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
         elif (not
           self._check_update_deletes_security_groups(port)):
-            if not utils.is_extension_supported(self, 'security-group'):
+            if not extensions.is_extension_supported(self, 'security-group'):
                 return
             # Update did not have security groups passed in. Check
             # that port does not have any security groups already on it.
