@@ -79,14 +79,17 @@ function _init {
     # Allow the gate to override values set by stackrc.
     DEST=${GATE_DEST:-$DEST}
     STACK_USER=${GATE_STACK_USER:-$STACK_USER}
-}
 
+    GetDistro
+    source $DEVSTACK_PATH/tools/fixup_stuff.sh
+    fixup_uca
+}
 
 function _install_base_deps {
     echo_summary "Installing base dependencies"
 
     INSTALL_TESTONLY_PACKAGES=True
-    PACKAGES=$(get_packages general,neutron,q-agt,q-l3)
+    PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
     # Do not install 'python-' prefixed packages other than
     # python-dev*.  Neutron's functional testing relies on deployment
     # to a tox env so there is no point in installing python
