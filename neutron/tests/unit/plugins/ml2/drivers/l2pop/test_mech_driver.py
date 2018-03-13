@@ -15,6 +15,7 @@
 
 import mock
 
+from neutron_lib.agent import topics
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
@@ -27,7 +28,6 @@ from oslo_serialization import jsonutils
 import testtools
 
 from neutron.common import constants as n_const
-from neutron.common import topics
 from neutron.db import agents_db
 from neutron.db import common_db_mixin
 from neutron.db import l3_agentschedulers_db

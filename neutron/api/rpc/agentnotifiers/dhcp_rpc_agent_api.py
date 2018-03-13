@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib.agent import topics
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -24,7 +25,6 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 
 
 LOG = logging.getLogger(__name__)

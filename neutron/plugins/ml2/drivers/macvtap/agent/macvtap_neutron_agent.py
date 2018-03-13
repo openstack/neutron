@@ -17,6 +17,7 @@
 import os
 import sys
 
+from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -27,7 +28,6 @@ from oslo_service import service
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import topics
 from neutron.conf.plugins.ml2.drivers import macvtap as config
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca

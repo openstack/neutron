@@ -14,6 +14,7 @@
 #    under the License.
 
 from eventlet import greenthread
+from neutron_lib.agent import topics
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
@@ -61,7 +62,6 @@ from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 from neutron.common import utils
 from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend

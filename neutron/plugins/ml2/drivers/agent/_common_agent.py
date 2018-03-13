@@ -20,6 +20,7 @@ import sys
 import time
 
 from neutron_lib.agent import constants as agent_consts
+from neutron_lib.agent import topics
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as local_resources
@@ -38,7 +39,6 @@ from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
-from neutron.common import topics
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa

@@ -15,11 +15,11 @@
 
 import collections
 
+from neutron_lib.agent import topics
 from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 
 
 LOG = logging.getLogger(__name__)

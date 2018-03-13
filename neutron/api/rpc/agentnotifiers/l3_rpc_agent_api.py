@@ -15,6 +15,7 @@
 
 import random
 
+from neutron_lib.agent import topics
 from neutron_lib.api import extensions
 from neutron_lib import constants
 from neutron_lib.plugins import constants as plugin_constants
@@ -24,7 +25,6 @@ import oslo_messaging
 
 from neutron.api.rpc.agentnotifiers import utils as ag_utils
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 
 
 LOG = logging.getLogger(__name__)

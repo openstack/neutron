@@ -15,6 +15,7 @@
 
 import collections
 
+from neutron_lib.agent import topics
 from neutron_lib import exceptions
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -28,7 +29,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.callbacks import version_manager
 from neutron.common import constants
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 from neutron.objects import base as obj_base
 
 LOG = logging.getLogger(__name__)

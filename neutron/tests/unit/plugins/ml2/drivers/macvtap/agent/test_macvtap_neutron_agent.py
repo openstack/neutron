@@ -18,13 +18,13 @@ import os
 import sys
 
 import mock
+from neutron_lib.agent import topics
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_service import service
 
 from neutron.agent.linux import ip_lib
 from neutron.common import config as common_config
-from neutron.common import topics
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.macvtap.agent import macvtap_neutron_agent
 from neutron.plugins.ml2.drivers.macvtap import macvtap_common

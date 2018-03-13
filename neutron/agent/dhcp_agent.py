@@ -16,11 +16,11 @@
 
 import sys
 
+from neutron_lib.agent import topics
 from oslo_config import cfg
 from oslo_service import service
 
 from neutron.common import config as common_config
-from neutron.common import topics
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf.agent.metadata import config as meta_conf

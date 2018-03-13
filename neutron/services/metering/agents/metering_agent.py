@@ -14,6 +14,7 @@
 
 import sys
 
+from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.utils import runtime
@@ -30,7 +31,6 @@ from neutron.agent import rpc as agent_rpc
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
 from neutron.common import rpc as n_rpc
-from neutron.common import topics
 from neutron.conf.agent import common as config
 from neutron.conf.services import metering_agent
 from neutron import manager
