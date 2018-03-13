@@ -36,16 +36,12 @@ class RPCFixture(fixtures.Fixture):
         self.trans = copy.copy(rpc.TRANSPORT)
         self.noti_trans = copy.copy(rpc.NOTIFICATION_TRANSPORT)
         self.noti = copy.copy(rpc.NOTIFIER)
-        self.all_mods = copy.copy(rpc.ALLOWED_EXMODS)
-        self.ext_mods = copy.copy(rpc.EXTRA_EXMODS)
         self.addCleanup(self._reset_everything)
 
     def _reset_everything(self):
         rpc.TRANSPORT = self.trans
         rpc.NOTIFICATION_TRANSPORT = self.noti_trans
         rpc.NOTIFIER = self.noti
-        rpc.ALLOWED_EXMODS = self.all_mods
-        rpc.EXTRA_EXMODS = self.ext_mods
 
 
 class TestRPC(base.DietTestCase):
@@ -53,31 +49,29 @@ class TestRPC(base.DietTestCase):
         super(TestRPC, self).setUp()
         self.useFixture(RPCFixture())
 
-    @mock.patch.object(rpc, 'get_allowed_exmods')
     @mock.patch.object(rpc, 'RequestContextSerializer')
     @mock.patch.object(messaging, 'get_rpc_transport')
     @mock.patch.object(messaging, 'get_notification_transport')
     @mock.patch.object(messaging, 'Notifier')
-    def test_init(self, mock_not, mock_noti_trans, mock_trans, mock_ser,
-                  mock_exmods):
+    def test_init(self, mock_not, mock_noti_trans, mock_trans, mock_ser):
         notifier = mock.Mock()
         transport = mock.Mock()
         noti_transport = mock.Mock()
         serializer = mock.Mock()
         conf = mock.Mock()
 
-        mock_exmods.return_value = ['foo']
         mock_trans.return_value = transport
         mock_noti_trans.return_value = noti_transport
         mock_ser.return_value = serializer
         mock_not.return_value = notifier
 
-        rpc.init(conf)
+        rpc.init(conf, rpc_ext_mods=['foo'])
 
-        mock_exmods.assert_called_once_with()
-        mock_trans.assert_called_once_with(conf, allowed_remote_exmods=['foo'])
-        mock_noti_trans.assert_called_once_with(conf,
-                                                allowed_remote_exmods=['foo'])
+        expected_mods = list(set(['foo'] + rpc._DFT_EXMODS))
+        mock_trans.assert_called_once_with(
+            conf, allowed_remote_exmods=expected_mods)
+        mock_noti_trans.assert_called_once_with(
+            conf, allowed_remote_exmods=expected_mods)
         mock_not.assert_called_once_with(noti_transport,
                                          serializer=serializer)
         self.assertIsNotNone(rpc.TRANSPORT)
@@ -115,28 +109,6 @@ class TestRPC(base.DietTestCase):
         self.assertIsNone(rpc.TRANSPORT)
         self.assertIsNone(rpc.NOTIFICATION_TRANSPORT)
         self.assertIsNone(rpc.NOTIFIER)
-
-    def test_add_extra_exmods(self):
-        rpc.EXTRA_EXMODS = []
-
-        rpc.add_extra_exmods('foo', 'bar')
-
-        self.assertEqual(['foo', 'bar'], rpc.EXTRA_EXMODS)
-
-    def test_clear_extra_exmods(self):
-        rpc.EXTRA_EXMODS = ['foo', 'bar']
-
-        rpc.clear_extra_exmods()
-
-        self.assertEqual(0, len(rpc.EXTRA_EXMODS))
-
-    def test_get_allowed_exmods(self):
-        rpc.ALLOWED_EXMODS = ['foo']
-        rpc.EXTRA_EXMODS = ['bar']
-
-        exmods = rpc.get_allowed_exmods()
-
-        self.assertEqual(['foo', 'bar'], exmods)
 
     @mock.patch.object(rpc, 'RequestContextSerializer')
     @mock.patch.object(rpc, 'BackingOffClient')
