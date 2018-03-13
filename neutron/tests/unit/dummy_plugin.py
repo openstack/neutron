@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import servicetype as svctype_apidef
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
@@ -21,7 +22,6 @@ from oslo_utils import uuidutils
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.db import servicetype_db
-from neutron.extensions import servicetype
 from neutron import neutron_plugin_base_v2
 
 
@@ -87,7 +87,7 @@ class DummyServicePlugin(service_base.ServicePluginBase):
         or VPN will adopt a similar solution.
     """
 
-    supported_extension_aliases = [RESOURCE_NAME, servicetype.EXT_ALIAS]
+    supported_extension_aliases = [RESOURCE_NAME, svctype_apidef.ALIAS]
     path_prefix = "/dummy_svc"
     agent_notifiers = {RESOURCE_NAME: 'dummy_agent_notifier'}
 

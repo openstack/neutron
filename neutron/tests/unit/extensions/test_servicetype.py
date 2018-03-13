@@ -14,6 +14,7 @@
 #    under the License.
 
 import mock
+from neutron_lib.api.definitions import servicetype as svctype_apidef
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants
@@ -197,7 +198,7 @@ class ServiceTypeExtensionTestCaseBase(testlib_api.WebTestCase):
         ext_mgr = TestServiceTypeExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
-        self.resource_name = servicetype.RESOURCE_NAME.replace('-', '_')
+        self.resource_name = svctype_apidef.RESOURCE_NAME.replace('-', '_')
         super(ServiceTypeExtensionTestCaseBase, self).setUp()
 
 
