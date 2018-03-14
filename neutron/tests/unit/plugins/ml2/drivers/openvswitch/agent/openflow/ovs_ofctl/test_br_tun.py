@@ -66,7 +66,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                       'output:%s' % patch_int_ofport},
                      {'priority': 0, 'table': 20, 'actions': 'resubmit(,22)'}
                      ]
-        expected = [call.do_action_flows('add', flow_args),
+        expected = [call.do_action_flows('add', flow_args, False),
                     call.add_flow(priority=0, table=22, actions='drop')]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -103,7 +103,7 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                      {'priority': 0, 'table': 20, 'actions': 'resubmit(,22)'},
                      {'priority': 0, 'table': 21, 'actions': 'resubmit(,22)'}
                      ]
-        expected = [call.do_action_flows('add', flow_args),
+        expected = [call.do_action_flows('add', flow_args, False),
                     call.add_flow(priority=0, table=22, actions='drop')]
         self.assertEqual(expected, self.mock.mock_calls)
 
