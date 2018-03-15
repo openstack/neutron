@@ -42,7 +42,9 @@ _CORE_RESOURCES = {net_def.RESOURCE_NAME: net_def.COLLECTION_NAME,
 
 
 def _load_version_info(version_info):
-    assert version_info['id'] not in _VERSION_INFO
+    if version_info['id'] in _VERSION_INFO:
+        raise AssertionError("ID %s must not be in "
+                             "VERSION_INFO" % version_info['id'])
     _VERSION_INFO[version_info['id']] = version_info
 
 

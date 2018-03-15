@@ -64,9 +64,12 @@ def init(conf, rpc_ext_mods=None):
 
 def cleanup():
     global TRANSPORT, NOTIFICATION_TRANSPORT, NOTIFIER
-    assert TRANSPORT is not None
-    assert NOTIFICATION_TRANSPORT is not None
-    assert NOTIFIER is not None
+    if TRANSPORT is None:
+        raise AssertionError("'TRANSPORT' must not be None")
+    if NOTIFICATION_TRANSPORT is None:
+        raise AssertionError("'NOTIFICATION_TRANSPORT' must not be None")
+    if NOTIFIER is None:
+        raise AssertionError("'NOTIFIER' must not be None")
     TRANSPORT.cleanup()
     NOTIFICATION_TRANSPORT.cleanup()
     _BackingOffContextWrapper.reset_timeouts()
@@ -192,7 +195,8 @@ class BackingOffClient(oslo_messaging.RPCClient):
 
 
 def get_client(target, version_cap=None, serializer=None):
-    assert TRANSPORT is not None
+    if TRANSPORT is None:
+        raise AssertionError("'TRANSPORT' must not be None")
     serializer = RequestContextSerializer(serializer)
     return BackingOffClient(TRANSPORT,
                             target,
@@ -201,7 +205,8 @@ def get_client(target, version_cap=None, serializer=None):
 
 
 def get_server(target, endpoints, serializer=None):
-    assert TRANSPORT is not None
+    if TRANSPORT is None:
+        raise AssertionError("'TRANSPORT' must not be None")
     serializer = RequestContextSerializer(serializer)
     access_policy = dispatcher.DefaultRPCAccessPolicy
     return oslo_messaging.get_rpc_server(TRANSPORT, target, endpoints,
@@ -210,7 +215,8 @@ def get_server(target, endpoints, serializer=None):
 
 
 def get_notifier(service=None, host=None, publisher_id=None):
-    assert NOTIFIER is not None
+    if NOTIFIER is None:
+        raise AssertionError("'NOTIFIER' must not be None")
     if not publisher_id:
         publisher_id = "%s.%s" % (service, host or cfg.CONF.host)
     return NOTIFIER.prepare(publisher_id=publisher_id)

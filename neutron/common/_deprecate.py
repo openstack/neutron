@@ -157,7 +157,9 @@ def _moved_global(old_name, new_module=None, new_name=None):
     :type new_name: str
 
     """
-    assert new_module or new_name  # One or both must be new
+    if not (new_module or new_name):
+        raise AssertionError("'new_module' and 'new_name' "
+                             "must not be both None")
     if isinstance(new_module, _MovedGlobals):
         # The new module has been shimmed, get the original
         new_module = new_module._mg__old_ref
