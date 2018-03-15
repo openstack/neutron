@@ -19,6 +19,7 @@ import itertools
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from oslo_db import exception as obj_exc
+from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -505,17 +506,26 @@ class NeutronDbObject(NeutronObject):
         if is_attr_nullable:
             self[attrname] = None
 
+    # TODO(ihrachys) remove once we switch plugin code to enginefacade
+    @staticmethod
+    def _use_db_facade(context):
+        try:
+            enginefacade._transaction_ctx_for_context(context)
+        except obj_exc.NoEngineContextEstablished:
+            return False
+        return True
+
     @classmethod
     def db_context_writer(cls, context):
         """Return read-write session activation decorator."""
-        if cls.new_facade:
+        if cls.new_facade or cls._use_db_facade(context):
             return db_api.context_manager.writer.using(context)
         return db_api.autonested_transaction(context.session)
 
     @classmethod
     def db_context_reader(cls, context):
         """Return read-only session activation decorator."""
-        if cls.new_facade:
+        if cls.new_facade or cls._use_db_facade(context):
             return db_api.context_manager.reader.using(context)
         return db_api.autonested_transaction(context.session)
 

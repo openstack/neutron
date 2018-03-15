@@ -32,6 +32,7 @@ from oslo_versionedobjects import fields as obj_fields
 import testtools
 
 from neutron.db import _model_query as model_query
+from neutron.db import api as db_api
 from neutron import objects
 from neutron.objects import agent
 from neutron.objects import base
@@ -1699,16 +1700,23 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         self.assertEqual(1, mock_commit.call_count)
 
     def _get_ro_txn_exit_func_name(self):
-        # for old engine facade, we didn't have distinction between r/o and r/w
-        # transactions and so we always call commit even for getters when the
-        # old facade is used
+        # with no engine facade, we didn't have distinction between r/o and
+        # r/w transactions and so we always call commit even for getters when
+        # no facade is used
         return (
             SQLALCHEMY_CLOSE
-            if self._test_class.new_facade else SQLALCHEMY_COMMIT)
+            if self._test_class._use_db_facade else SQLALCHEMY_COMMIT)
 
     def test_get_objects_single_transaction(self):
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            self._test_class.get_objects(self.context)
+            with db_api.autonested_transaction(self.context.session):
+                self._test_class.get_objects(self.context)
+        self.assertEqual(1, mock_exit.call_count)
+
+    def test_get_objects_single_transaction_enginefacade(self):
+        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
+            with db_api.context_manager.reader.using(self.context):
+                self._test_class.get_objects(self.context)
         self.assertEqual(1, mock_exit.call_count)
 
     def test_get_object_single_transaction(self):
@@ -1716,8 +1724,19 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj.create()
 
         with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            obj = self._test_class.get_object(self.context,
-                                              **obj._get_composite_keys())
+            with db_api.autonested_transaction(self.context.session):
+                obj = self._test_class.get_object(self.context,
+                                                  **obj._get_composite_keys())
+        self.assertEqual(1, mock_exit.call_count)
+
+    def test_get_object_single_transaction_enginefacade(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+
+        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
+            with db_api.context_manager.reader.using(self.context):
+                obj = self._test_class.get_object(self.context,
+                                                  **obj._get_composite_keys())
         self.assertEqual(1, mock_exit.call_count)
 
     def test_get_objects_supports_extra_filtername(self):
