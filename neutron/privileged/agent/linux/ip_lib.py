@@ -195,6 +195,19 @@ def delete_interface(ifname, namespace, **kwargs):
 
 
 @privileged.default.entrypoint
+def interface_exists(ifname, namespace):
+    try:
+        idx = _get_link_id(ifname, namespace)
+        return bool(idx)
+    except NetworkInterfaceNotFound:
+        return False
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            return False
+        raise
+
+
+@privileged.default.entrypoint
 def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
                     **kwargs):
     """Add a neighbour entry.

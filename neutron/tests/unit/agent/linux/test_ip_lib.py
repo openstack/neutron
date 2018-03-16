@@ -1383,28 +1383,6 @@ class TestIpNetnsCommand(TestIPCmdBase):
 
 
 class TestDeviceExists(base.BaseTestCase):
-    def test_device_exists(self):
-        with mock.patch('neutron.agent.common.utils.execute') as execute:
-            execute.return_value = LINK_SAMPLE[1]
-            self.assertTrue(ip_lib.device_exists('eth0'))
-            execute.assert_called_once_with(
-                ['ip', '-o', 'link', 'show', 'eth0'],
-                run_as_root=False, log_fail_as_error=False)
-
-    def test_device_exists_reset_fail(self):
-        device = ip_lib.IPDevice('eth0')
-        device.set_log_fail_as_error(True)
-        with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
-            _execute.return_value = LINK_SAMPLE[1]
-            self.assertTrue(device.exists())
-            self.assertTrue(device.get_log_fail_as_error())
-
-    def test_device_does_not_exist(self):
-        with mock.patch.object(ip_lib.IPDevice, '_execute') as _execute:
-            _execute.return_value = ''
-            _execute.side_effect = RuntimeError
-            self.assertFalse(ip_lib.device_exists('eth0'))
-
     def test_ensure_device_is_ready(self):
         ip_lib_mock = mock.Mock()
         with mock.patch.object(ip_lib, 'IPDevice', return_value=ip_lib_mock):
