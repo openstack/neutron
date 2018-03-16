@@ -23,6 +23,54 @@ from neutron.tests import base
 
 class IpLibTestCase(base.BaseTestCase):
 
+    def _test_run_iproute_link(self, namespace=None):
+        ip_obj = "NetNS" if namespace else "IPRoute"
+        with mock.patch.object(pyroute2, ip_obj) as ip_mock_cls:
+            ip_mock = ip_mock_cls()
+            ip_mock.__enter__().link_lookup.return_value = [2]
+            priv_lib._run_iproute_link("test_cmd", "eth0", namespace,
+                                       test_param="test_value")
+            ip_mock.assert_has_calls([
+                mock.call.__enter__().link_lookup(ifname="eth0"),
+                mock.call.__exit__(None, None, None),
+                mock.call.__enter__().link("test_cmd", index=2,
+                                           test_param="test_value")])
+
+    def test_run_iproute_link_no_namespace(self):
+        self._test_run_iproute_link()
+
+    def test_run_iproute_link_in_namespace(self):
+        self._test_run_iproute_link(namespace="testns")
+
+    def test_run_iproute_link_interface_not_exists(self):
+        with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
+            ip_mock = iproute_mock()
+            ip_mock.__enter__().link_lookup.return_value = []
+            self.assertRaises(
+                priv_lib.NetworkInterfaceNotFound,
+                priv_lib._run_iproute_link,
+                "test_cmd", "eth0", None, test_param="test_value")
+
+    def test_run_iproute_link_namespace_not_exists(self):
+        with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
+            iproute_mock.side_effect = OSError(
+                errno.ENOENT, "Test no netns exception")
+            self.assertRaises(
+                priv_lib.NetworkNamespaceNotFound,
+                priv_lib._run_iproute_link,
+                "test_cmd", "eth0", None, test_param="test_value")
+
+    def test_run_iproute_link_error(self):
+        with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
+            iproute_mock.side_effect = OSError(
+                errno.EINVAL, "Test invalid argument exception")
+            try:
+                priv_lib._run_iproute_link(
+                    "test_cmd", "eth0", None, test_param="test_value")
+                self.fail("OSError exception not raised")
+            except OSError as e:
+                self.assertEqual(errno.EINVAL, e.errno)
+
     def _test_run_iproute_neigh(self, namespace=None):
         ip_obj = "NetNS" if namespace else "IPRoute"
         with mock.patch.object(pyroute2, ip_obj) as ip_mock_cls:
@@ -32,6 +80,7 @@ class IpLibTestCase(base.BaseTestCase):
                                         test_param="test_value")
             ip_mock.assert_has_calls([
                 mock.call.__enter__().link_lookup(ifname="eth0"),
+                mock.call.__exit__(None, None, None),
                 mock.call.__enter__().neigh("test_cmd", ifindex=2,
                                             test_param="test_value")])
 
@@ -79,6 +128,7 @@ class IpLibTestCase(base.BaseTestCase):
                                        test_param="test_value")
             ip_mock.assert_has_calls([
                 mock.call.__enter__().link_lookup(ifname="eth0"),
+                mock.call.__exit__(None, None, None),
                 mock.call.__enter__().addr("test_cmd", index=2,
                                            test_param="test_value")])
 
