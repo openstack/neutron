@@ -420,21 +420,10 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
         return updated
 
-    def _bridge_exists_and_ensure_up(self, bridge_name):
-        """Check if the bridge exists and make sure it is up."""
-        br = ip_lib.IPDevice(bridge_name)
-        br.set_log_fail_as_error(False)
-        try:
-            # If the device doesn't exist this will throw a RuntimeError
-            br.link.set_up()
-        except RuntimeError:
-            return False
-        return True
-
     def ensure_bridge(self, bridge_name, interface=None,
                       update_interface=True):
         """Create a bridge unless it already exists."""
-        # _bridge_exists_and_ensure_up instead of device_exists is used here
+        # ensure_device_is_ready instead of device_exists is used here
         # because there are cases where the bridge exists but it's not UP,
         # for example:
         # 1) A greenthread was executing this function and had not yet executed
@@ -442,7 +431,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         # thread running the same function
         # 2) The Nova VIF driver was running concurrently and had just created
         #    the bridge, but had not yet put it UP
-        if not self._bridge_exists_and_ensure_up(bridge_name):
+        if not ip_lib.ensure_device_is_ready(bridge_name):
             LOG.debug("Starting bridge %(bridge_name)s for subinterface "
                       "%(interface)s",
                       {'bridge_name': bridge_name, 'interface': interface})
