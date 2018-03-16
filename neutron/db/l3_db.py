@@ -265,10 +265,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             old_router = self._make_router_dict(router_db)
             if data:
                 router_db.update(data)
-            registry.notify(resources.ROUTER, events.PRECOMMIT_UPDATE,
-                            self, context=context, router_id=router_id,
-                            router=data, router_db=router_db,
-                            old_router=old_router)
+            registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context, request_body=data,
+                                 states=(old_router,), resource_id=router_id,
+                                 desired_state=router_db))
             return router_db
 
     @db_api.retry_if_session_inactive()

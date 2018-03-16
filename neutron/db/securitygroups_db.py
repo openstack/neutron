@@ -56,7 +56,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         # from being processed. This is a hook point for backend's validation;
         # we raise to propagate the reason for the failure.
         try:
-            registry.notify(res, event, self, **kwargs)
+            if 'payload' in kwargs:
+                # TODO(boden): remove shim once all callbacks use payloads
+                registry.publish(res, event, self, payload=kwargs['payload'])
+            else:
+                registry.notify(res, event, self, **kwargs)
         except exceptions.CallbackFailure as e:
             if exc_cls:
                 reason = (_('cannot perform %(event)s due to %(reason)s') %
@@ -261,8 +265,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             self._registry_notify(
                     resources.SECURITY_GROUP,
                     events.PRECOMMIT_UPDATE,
-                    exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
-
+                    exc_cls=ext_sg.SecurityGroupConflict,
+                    payload=events.DBEventPayload(
+                        context, request_body=s,
+                        states=(kwargs['original_security_group'],),
+                        resource_id=id, desired_state=sg_dict))
         registry.notify(resources.SECURITY_GROUP, events.AFTER_UPDATE, self,
                         **kwargs)
         return sg_dict

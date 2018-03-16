@@ -14,6 +14,7 @@
 # limitations under the License.
 
 
+# TODO(boden): remove this once moved over to neutron-lib payloads
 class TrunkPayload(object):
     """Payload for trunk-related callback registry notifications."""
 
