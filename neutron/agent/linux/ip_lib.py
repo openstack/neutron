@@ -576,15 +576,14 @@ class IpAddrCommand(IpDeviceCommandBase):
     COMMAND = 'addr'
 
     def add(self, cidr, scope='global', add_broadcast=True):
-        add_ip_address(self.name, self._parent.namespace, cidr, scope,
+        add_ip_address(cidr, self.name, self._parent.namespace, scope,
                        add_broadcast)
 
     def delete(self, cidr):
-        delete_ip_address(self.name, self._parent.namespace, cidr)
+        delete_ip_address(cidr, self.name, self._parent.namespace)
 
     def flush(self, ip_version):
-        flush_ip_addresses(
-            self.name, self._parent.namespace, ip_version)
+        flush_ip_addresses(ip_version, self.name, self._parent.namespace)
 
     def get_devices_with_ip(self, name=None, scope=None, to=None,
                             filters=None, ip_version=None):
@@ -950,8 +949,16 @@ NetworkNamespaceNotFound = privileged.NetworkNamespaceNotFound
 NetworkInterfaceNotFound = privileged.NetworkInterfaceNotFound
 
 
-def add_ip_address(device, namespace, cidr, scope='global',
+def add_ip_address(cidr, device, namespace=None, scope='global',
                    add_broadcast=True):
+    """Add an IP address.
+
+    :param cidr: IP address to add, in CIDR notation
+    :param device: Device name to use in adding address
+    :param namespace: The name of the namespace in which to add the address
+    :param scope: scope of address being added
+    :param add_broadcast: should broadcast address be added
+    """
     net = netaddr.IPNetwork(cidr)
     broadcast = None
     if add_broadcast and net.version == 4:
@@ -963,15 +970,26 @@ def add_ip_address(device, namespace, cidr, scope='global',
         device, namespace, scope, broadcast)
 
 
-def delete_ip_address(device, namespace, cidr):
+def delete_ip_address(cidr, device, namespace=None):
+    """Delete an IP address.
+
+    :param cidr: IP address to delete, in CIDR notation
+    :param device: Device name to use in deleting address
+    :param namespace: The name of the namespace in which to delete the address
+    """
     net = netaddr.IPNetwork(cidr)
     privileged.delete_ip_address(
         net.version, str(net.ip), net.prefixlen, device, namespace)
 
 
-def flush_ip_addresses(device, namespace, ip_version):
-    privileged.flush_ip_addresses(
-        ip_version, device, namespace)
+def flush_ip_addresses(ip_version, device, namespace=None):
+    """Flush all IP addresses.
+
+    :param ip_version: IP version of addresses to flush
+    :param device: Device name to use in flushing addresses
+    :param namespace: The name of the namespace in which to flush the addresses
+    """
+    privileged.flush_ip_addresses(ip_version, device, namespace)
 
 
 def get_routing_table(ip_version, namespace=None):
