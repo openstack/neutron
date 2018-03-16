@@ -140,6 +140,9 @@ case $VENV in
     if [[ "$FLAVOR" = "dvrskip" ]]; then
         load_conf_hook disable_dvr
     fi
+    if [[ "$VENV" =~ "dsvm-scenario-ovs" ]]; then
+        load_conf_hook dvr
+    fi
     ;;
 
 "rally")

@@ -38,6 +38,10 @@ NeutronPluginOptions = [
                help='The availability zone for all agents in the deployment. '
                     'Configure this only when the single value is used by '
                     'all agents in the deployment.'),
+    cfg.StrOpt('l3_agent_mode',
+               help='The agent mode for L3 agents in the deployment. '
+                    'Configure this only when the single value is used by '
+                    'all agents in the deployment.'),
 ]
 
 # TODO(amuller): Redo configuration options registration as part of the planned
