@@ -29,6 +29,7 @@ import testscenarios
 
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import openvswitch_firewall
+from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.cmd.sanity import checks
 from neutron.common import constants as n_const
 from neutron.conf.agent import securitygroups_rpc as security_config
@@ -627,6 +628,31 @@ class FirewallTestCase(BaseFirewallTestCase):
                                          vm_sg_rules)
 
         self.tester.assert_net_unreachable(self.tester.EGRESS, '1.2.3.4')
+
+    @skip_if_firewall('iptables')
+    def test_tracked_connection(self):
+        # put an openflow rule to perform a CT lookup and hence packet will
+        # carry conntrack information
+        self.tester.bridge.add_flow(
+            table=0,
+            priority=200,
+            dl_type="0x0800",
+            ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
+            actions="ct(table=0)"
+        )
+
+        # update the sg_group to make ping pass
+        sg_rules = [{'ethertype': constants.IPv4,
+                     'direction': constants.INGRESS_DIRECTION,
+                     'protocol': constants.PROTO_NAME_ICMP},
+                    {'ethertype': constants.IPv4,
+                     'direction': constants.EGRESS_DIRECTION}]
+
+        self.tester.assert_no_connection(protocol=self.tester.ICMP,
+                                         direction=self.tester.INGRESS)
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
+        self.tester.assert_connection(protocol=self.tester.ICMP,
+                                      direction=self.tester.INGRESS)
 
 
 class FirewallTestCaseIPv6(BaseFirewallTestCase):
