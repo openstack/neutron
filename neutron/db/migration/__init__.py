@@ -112,7 +112,7 @@ def rename_table_if_exists(old_table_name, new_table_name):
         op.rename_table(old_table_name, new_table_name)
 
 
-def alter_enum_add_value(table, column, enum, nullable):
+def alter_enum_add_value(table, column, enum, nullable, server_default=None):
     '''If we need to expand Enum values for some column - for PostgreSQL this
     can be done with ALTER TYPE function. For MySQL, it can be done with
     ordinary alembic alter_column function.
@@ -121,6 +121,7 @@ def alter_enum_add_value(table, column, enum, nullable):
     :param column: column name
     :param enum: sqlalchemy Enum with updated values
     :param nullable: existing nullable for column.
+    :param server_default: existing or new server_default for the column
     '''
 
     bind = op.get_bind()
@@ -129,25 +130,34 @@ def alter_enum_add_value(table, column, enum, nullable):
         values = {'name': enum.name,
                   'values': ", ".join("'" + i + "'" for i in enum.enums),
                   'column': column,
-                  'table': table}
+                  'table': table,
+                  'server_default': server_default}
+        if server_default is not None:
+            op.execute("ALTER TABLE %(table)s ALTER COLUMN %(column)s"
+                       " DROP DEFAULT" % values)
         op.execute("ALTER TYPE %(name)s rename to old_%(name)s" % values)
         op.execute("CREATE TYPE %(name)s AS enum (%(values)s)" % values)
         op.execute("ALTER TABLE %(table)s ALTER COLUMN %(column)s TYPE "
                    "%(name)s USING %(column)s::text::%(name)s " % values)
+        if server_default is not None:
+            op.execute("ALTER TABLE %(table)s ALTER COLUMN %(column)s"
+                       " SET DEFAULT '%(server_default)s'" % values)
         op.execute("DROP TYPE old_%(name)s" % values)
     else:
         op.alter_column(table, column, type_=enum,
-                        existing_nullable=nullable)
+                        existing_nullable=nullable,
+                        server_default=server_default)
 
 
-def alter_enum(table, column, enum_type, nullable, do_drop=True,
+def alter_enum(table, column, enum_type, nullable,
+               server_default=None, do_drop=True,
                do_rename=True, do_create=True):
     """Alter a enum type column.
-
     Set the do_xx parameters only when the modified enum type
     is used by multiple columns. Else don't provide these
     parameters.
 
+    :param server_default: existing or new server_default for the column
     :param do_drop: set to False when modified column is
     not the last one use this enum
     :param do_rename: set to False when modified column is
@@ -167,7 +177,8 @@ def alter_enum(table, column, enum_type, nullable, do_drop=True,
             enum_type.create(bind, checkfirst=False)
         op.execute("ALTER TABLE %(table)s RENAME COLUMN %(column)s TO "
                    "old_%(column)s" % values)
-        op.add_column(table, sa.Column(column, enum_type, nullable=nullable))
+        op.add_column(table, sa.Column(column, enum_type, nullable=nullable,
+                                       server_default=server_default))
         op.execute("UPDATE %(table)s SET %(column)s = "  # nosec
                    "old_%(column)s::text::%(name)s" % values)
         op.execute("ALTER TABLE %(table)s DROP COLUMN old_%(column)s" % values)
@@ -175,7 +186,8 @@ def alter_enum(table, column, enum_type, nullable, do_drop=True,
             op.execute("DROP TYPE old_%(name)s" % values)
     else:
         op.alter_column(table, column, type_=enum_type,
-                        existing_nullable=nullable)
+                        existing_nullable=nullable,
+                        server_default=server_default)
 
 
 def create_table_if_not_exist_psql(table_name, values):
