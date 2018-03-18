@@ -67,6 +67,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         # list of port which has security group
         self.filtered_ports = {}
         self.unfiltered_ports = {}
+        self.trusted_ports = []
         self.ipconntrack = ip_conntrack.get_conntrack(
             self.iptables.get_rules_for_table, self.filtered_ports,
             self.unfiltered_ports, namespace=namespace,
@@ -111,11 +112,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def process_trusted_ports(self, port_ids):
         """Process ports that are trusted and shouldn't be filtered."""
         for port in port_ids:
-            self._add_trusted_port_rules(port)
+            if port not in self.trusted_ports:
+                self._add_trusted_port_rules(port)
+                self.trusted_ports.append(port)
 
     def remove_trusted_ports(self, port_ids):
         for port in port_ids:
-            self._remove_trusted_port_rules(port)
+            if port in self.trusted_ports:
+                self._remove_trusted_port_rules(port)
+                self.trusted_ports.remove(port)
 
     def _add_trusted_port_rules(self, port):
         device = self._get_device_name(port)
