@@ -222,5 +222,5 @@ def main():
                                constants.AGENT_TYPE_MACVTAP,
                                MACVTAP_AGENT_BINARY)
     LOG.info("Agent initialized successfully, now running... ")
-    launcher = service.launch(cfg.CONF, agent)
+    launcher = service.launch(cfg.CONF, agent, restart_method='mutate')
     launcher.wait()
