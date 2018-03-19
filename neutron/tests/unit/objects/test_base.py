@@ -91,6 +91,30 @@ class FakeSmallNeutronObject(base.NeutronDbObject):
 
 
 @base.NeutronObjectRegistry.register_if(False)
+class FakeSmallNeutronObjectNewEngineFacade(base.NeutronDbObject):
+    # Version 1.0: Initial version
+    VERSION = '1.0'
+
+    db_model = ObjectFieldsModel
+
+    new_facade = True
+
+    primary_keys = ['field1']
+
+    foreign_keys = {
+        'FakeNeutronObjectCompositePrimaryKeyWithId': {'field1': 'id'},
+        'FakeNeutronDbObject': {'field2': 'id'},
+        'FakeNeutronObjectUniqueKey': {'field3': 'id'},
+    }
+
+    fields = {
+        'field1': common_types.UUIDField(),
+        'field2': common_types.UUIDField(),
+        'field3': common_types.UUIDField(),
+    }
+
+
+@base.NeutronObjectRegistry.register_if(False)
 class FakeSmallNeutronObjectWithMultipleParents(base.NeutronDbObject):
     # Version 1.0: Initial version
     VERSION = '1.0'
@@ -1253,6 +1277,11 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 class BaseDbObjectNonStandardPrimaryKeyTestCase(BaseObjectIfaceTestCase):
 
     _test_class = FakeNeutronObjectNonStandardPrimaryKey
+
+
+class BaseDbObjectNewEngineFacade(BaseObjectIfaceTestCase):
+
+    _test_class = FakeSmallNeutronObjectNewEngineFacade
 
 
 class BaseDbObjectCompositePrimaryKeyTestCase(BaseObjectIfaceTestCase):
