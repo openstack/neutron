@@ -152,12 +152,21 @@ def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
 @privileged.default.entrypoint
 def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
-    _run_iproute_addr("delete",
-                      device,
-                      namespace,
-                      address=ip,
-                      mask=prefixlen,
-                      family=family)
+    try:
+        _run_iproute_addr("delete",
+                          device,
+                          namespace,
+                          address=ip,
+                          mask=prefixlen,
+                          family=family)
+    except NetlinkError as e:
+        # when trying to delete a non-existent IP address, pyroute2 raises
+        # NetlinkError with code EADDRNOTAVAIL (99, 'Cannot assign requested
+        # address')
+        # this shouldn't raise an error
+        if e.code == errno.EADDRNOTAVAIL:
+            return
+        raise
 
 
 @privileged.default.entrypoint

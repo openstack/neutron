@@ -429,6 +429,10 @@ class IpLibTestCase(IpLibTestFramework):
         device_cidrs = [ip_info['cidr'] for ip_info in device.addr.list()]
         self.assertNotIn(cidr, device_cidrs)
 
+        # Try to delete not existing IP address, it should be just fine and
+        # finish without any error raised
+        device.addr.delete(cidr)
+
     def test_flush_ip_addresses(self):
         ip_addresses = [
             (netaddr.IPNetwork("10.10.10.10/30"), "global", '10.10.10.11'),
