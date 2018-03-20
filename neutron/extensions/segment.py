@@ -14,119 +14,33 @@
 
 import abc
 
-from neutron_lib.api import converters
-from neutron_lib.api.definitions import provider_net as providernet
-from neutron_lib.api.definitions import subnet as subnet_def
+from neutron_lib.api.definitions import segment as apidef
 from neutron_lib.api import extensions as api_extensions
-from neutron_lib import constants
-from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 import six
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 
-SEGMENT = 'segment'
-SEGMENTS = '%ss' % SEGMENT
-SEGMENT_ID = 'segment_id'
 
-NETWORK_TYPE = 'network_type'
-PHYSICAL_NETWORK = 'physical_network'
-SEGMENTATION_ID = 'segmentation_id'
-NAME_LEN = db_const.NAME_FIELD_SIZE
-DESC_LEN = db_const.DESCRIPTION_FIELD_SIZE
-
-# Attribute Map
-RESOURCE_ATTRIBUTE_MAP = {
-    SEGMENTS: {
-        'id': {'allow_post': False,
-               'allow_put': False,
-               'validate': {'type:uuid': None},
-               'is_visible': True,
-               'primary_key': True},
-        'tenant_id': {'allow_post': True,
-                      'allow_put': False,
-                      'validate': {'type:string':
-                                   db_const.PROJECT_ID_FIELD_SIZE},
-                      'is_visible': False},
-        'network_id': {'allow_post': True,
-                       'allow_put': False,
-                       'validate': {'type:uuid': None},
-                       'is_visible': True},
-        PHYSICAL_NETWORK: {'allow_post': True,
-                           'allow_put': False,
-                           'default': constants.ATTR_NOT_SPECIFIED,
-                           'validate': {'type:string':
-                                        providernet.PHYSICAL_NETWORK_MAX_LEN},
-                           'is_visible': True},
-        NETWORK_TYPE: {'allow_post': True,
-                       'allow_put': False,
-                       'validate': {'type:string':
-                                    providernet.NETWORK_TYPE_MAX_LEN},
-                       'is_visible': True},
-        SEGMENTATION_ID: {'allow_post': True,
-                          'allow_put': False,
-                          'default': constants.ATTR_NOT_SPECIFIED,
-                          'convert_to': converters.convert_to_int,
-                          'is_visible': True},
-        'name': {'allow_post': True,
-                 'allow_put': True,
-                 'default': constants.ATTR_NOT_SPECIFIED,
-                 'validate': {'type:string_or_none': NAME_LEN},
-                 'is_visible': True},
-        'description': {'allow_post': True,
-                        'allow_put': True,
-                        'default': constants.ATTR_NOT_SPECIFIED,
-                        'validate': {'type:string_or_none': DESC_LEN},
-                        'is_visible': True},
-    },
-    subnet_def.COLLECTION_NAME: {
-        SEGMENT_ID: {'allow_post': True,
-                     'allow_put': False,
-                     'default': None,
-                     'validate': {'type:uuid_or_none': None},
-                     'is_visible': True, },
-    },
-}
-
-
-class Segment(api_extensions.ExtensionDescriptor):
+class Segment(api_extensions.APIExtensionDescriptor):
     """Extension class supporting Segments."""
 
-    @classmethod
-    def get_name(cls):
-        return "Segment"
-
-    @classmethod
-    def get_alias(cls):
-        return "segment"
-
-    @classmethod
-    def get_description(cls):
-        return "Segments extension."
-
-    @classmethod
-    def get_updated(cls):
-        return "2016-02-24T17:00:00-00:00"
+    api_definition = apidef
 
     @classmethod
     def get_resources(cls):
         """Returns Extended Resource for service type management."""
-        resource_attributes = RESOURCE_ATTRIBUTE_MAP[SEGMENTS]
+        resource_attributes = apidef.RESOURCE_ATTRIBUTE_MAP[
+            apidef.COLLECTION_NAME]
         controller = base.create_resource(
-            SEGMENTS,
-            SEGMENT,
-            directory.get_plugin(SEGMENTS),
+            apidef.COLLECTION_NAME,
+            apidef.RESOURCE_NAME,
+            directory.get_plugin(apidef.COLLECTION_NAME),
             resource_attributes)
-        return [extensions.ResourceExtension(SEGMENTS,
+        return [extensions.ResourceExtension(apidef.COLLECTION_NAME,
                                              controller,
                                              attr_map=resource_attributes)]
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return RESOURCE_ATTRIBUTE_MAP
-        else:
-            return {}
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -229,4 +143,4 @@ class SegmentPluginBase(object):
 
     @classmethod
     def get_plugin_type(cls):
-        return SEGMENTS
+        return apidef.COLLECTION_NAME

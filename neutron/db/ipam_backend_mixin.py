@@ -20,6 +20,7 @@ import itertools
 import netaddr
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import segment as seg_apidef
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import exceptions as exc
@@ -39,7 +40,6 @@ from neutron.db import db_base_plugin_common
 from neutron.db.models import segment as segment_model
 from neutron.db.models import subnet_service_type as sst_model
 from neutron.db import models_v2
-from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
 from neutron.ipam import utils as ipam_utils
 from neutron.objects import network as network_obj
@@ -732,8 +732,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
         args = super(IpamBackendMixin, self)._make_subnet_args(
             detail, subnet, subnetpool_id)
-        if validators.is_attr_set(subnet.get(segment.SEGMENT_ID)):
-            args['segment_id'] = subnet[segment.SEGMENT_ID]
+        if validators.is_attr_set(subnet.get(seg_apidef.SEGMENT_ID)):
+            args['segment_id'] = subnet[seg_apidef.SEGMENT_ID]
         if validators.is_attr_set(subnet.get('service_types')):
             args['service_types'] = subnet['service_types']
         return args
