@@ -218,13 +218,14 @@ def add_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
     :param namespace: The name of the namespace in which to add the entry
     """
     family = _IP_VERSION_FAMILY_MAP[ip_version]
+    state = kwargs.get('nud_state', 'permanent')
     _run_iproute_neigh('replace',
                        device,
                        namespace,
                        dst=ip_address,
                        lladdr=mac_address,
                        family=family,
-                       state=ndmsg.states['permanent'],
+                       state=ndmsg.states[state],
                        **kwargs)
 
 

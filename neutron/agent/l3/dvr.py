@@ -53,8 +53,8 @@ class AgentMixin(object):
         ip = arp_table['ip_address']
         mac = arp_table['mac_address']
         subnet_id = arp_table['subnet_id']
-
-        ri._update_arp_entry(ip, mac, subnet_id, action)
+        nud_state = arp_table.get('nud_state')
+        ri._update_arp_entry(ip, mac, subnet_id, action, nud_state=nud_state)
 
     def add_arp_entry(self, context, payload):
         """Add arp entry into router namespace.  Called from RPC."""
