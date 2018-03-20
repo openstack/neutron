@@ -16,7 +16,7 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron.common import config
+from neutron.conf.agent import common as config
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
     import linuxbridge_neutron_agent
 
@@ -69,4 +69,5 @@ def main():
     """
     cfg.CONF(sys.argv[1:])
     config.setup_logging()
+    config.setup_privsep()
     remove_empty_bridges()

@@ -20,6 +20,7 @@ from neutron_lib import constants
 from neutron.agent.linux import ip_lib
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent
+from neutron.tests import base as tests_base
 from neutron.tests.common import config_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
@@ -35,6 +36,16 @@ class LinuxbridgeCleanupTest(base.BaseSudoTestCase):
                     prefix=lb_agent.BRIDGE_NAME_PREFIX))).fixture
 
         config = callback(br_fixture)
+        # NOTE(slaweq): use of oslo.privsep inside neutron-linuxbridge-cleanup
+        # script requires rootwrap helper to be configured in this script's
+        # config
+        config.update({
+            'AGENT': {
+                'root_helper': tests_base.get_rootwrap_cmd(),
+                'root_helper_daemon': tests_base.get_rootwrap_daemon_cmd()
+            }
+        })
+
         config.update({'VXLAN': {'enable_vxlan': 'False'}})
 
         temp_dir = self.useFixture(fixtures.TempDir()).path

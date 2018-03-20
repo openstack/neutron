@@ -294,15 +294,7 @@ class IPDevice(SubProcessBase):
 
     def exists(self):
         """Return True if the device exists in the namespace."""
-        # we must save and restore this before returning
-        orig_log_fail_as_error = self.get_log_fail_as_error()
-        self.set_log_fail_as_error(False)
-        try:
-            return bool(self.link.address)
-        except RuntimeError:
-            return False
-        finally:
-            self.set_log_fail_as_error(orig_log_fail_as_error)
+        return privileged.interface_exists(self.name, self.namespace)
 
     def delete_addr_and_conntrack_state(self, cidr):
         """Delete an address along with its conntrack state
