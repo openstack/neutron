@@ -3140,9 +3140,9 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_dvr_mac_address_list',
                                   return_value=[{'host': 'cn1',
-                                  'mac_address': 'aa:bb:cc:dd:ee:ff'},
+                                  'mac_address': 'aa-bb-cc-dd-ee-ff'},
                                   {'host': 'cn2',
-                                  'mac_address': '11:22:33:44:55:66'}]):
+                                  'mac_address': '11-22-33-44-55-66'}]):
             self.agent.dvr_agent.setup_dvr_flows_on_integ_br()
             self.assertTrue(self.agent.dvr_agent.in_distributed_mode())
             physical_networks = list(
@@ -3168,7 +3168,7 @@ class TestOvsDvrNeutronAgent(object):
         with mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                'get_dvr_mac_address_by_host',
                                return_value={'host': 'cn1',
-                                  'mac_address': 'aa:22:33:44:55:66'}):
+                                  'mac_address': 'aa-22-33-44-55-66'}):
             self.agent.dvr_agent.get_dvr_mac_address()
             self.assertEqual('aa:22:33:44:55:66',
                              self.agent.dvr_agent.dvr_mac_address)
@@ -3189,7 +3189,7 @@ class TestOvsDvrNeutronAgent(object):
                 self.assertFalse(self.agent.dvr_agent.in_distributed_mode())
 
     def test_get_dvr_mac_address_retried(self):
-        valid_entry = {'host': 'cn1', 'mac_address': 'aa:22:33:44:55:66'}
+        valid_entry = {'host': 'cn1', 'mac_address': 'aa-22-33-44-55-66'}
         raise_timeout = oslo_messaging.MessagingTimeout()
         # Raise a timeout the first 2 times it calls get_dvr_mac_address()
         self._setup_for_dvr_test()

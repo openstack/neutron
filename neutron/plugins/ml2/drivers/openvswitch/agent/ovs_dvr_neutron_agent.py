@@ -15,6 +15,7 @@
 
 import sys
 
+import netaddr
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -198,7 +199,9 @@ class OVSDVRNeutronAgent(object):
                 LOG.debug("L2 Agent DVR: Received response for "
                           "get_dvr_mac_address_by_host() from "
                           "plugin: %r", details)
-                self.dvr_mac_address = details['mac_address']
+                self.dvr_mac_address = (
+                    netaddr.EUI(details['mac_address'],
+                    dialect=netaddr.mac_unix_expanded))
                 return
 
     def setup_dvr_flows_on_integ_br(self):
@@ -307,9 +310,11 @@ class OVSDVRNeutronAgent(object):
         dvr_macs = self.plugin_rpc.get_dvr_mac_address_list(self.context)
         LOG.debug("L2 Agent DVR: Received these MACs: %r", dvr_macs)
         for mac in dvr_macs:
-            if mac['mac_address'] == self.dvr_mac_address:
+            c_mac = netaddr.EUI(mac['mac_address'],
+                                dialect=netaddr.mac_unix_expanded)
+            if c_mac == self.dvr_mac_address:
                 continue
-            self._add_dvr_mac(mac['mac_address'])
+            self._add_dvr_mac(c_mac)
 
     def dvr_mac_address_update(self, dvr_macs):
         if not self.dvr_mac_address:
@@ -319,9 +324,11 @@ class OVSDVRNeutronAgent(object):
 
         dvr_host_macs = set()
         for entry in dvr_macs:
-            if entry['mac_address'] == self.dvr_mac_address:
+            e_mac = netaddr.EUI(entry['mac_address'],
+                                dialect=netaddr.mac_unix_expanded)
+            if e_mac == self.dvr_mac_address:
                 continue
-            dvr_host_macs.add(entry['mac_address'])
+            dvr_host_macs.add(e_mac)
 
         if dvr_host_macs == self.registered_dvr_macs:
             LOG.debug("DVR Mac address already up to date")
