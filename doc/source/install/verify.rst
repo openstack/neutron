@@ -40,8 +40,6 @@ Verify operation
       |                           |                           | subnets from a subnet pool |
       | DHCP Agent Scheduler      | dhcp_agent_scheduler      | Schedule networks among    |
       |                           |                           | dhcp agents                |
-      | Tag support               | tag                       | Enables to set tag on      |
-      |                           |                           | resources.                 |
       | Neutron external network  | external-net              | Adds external network      |
       |                           |                           | attribute to network       |
       |                           |                           | resource.                  |
@@ -73,7 +71,6 @@ Verify operation
       | Neutron Service Type      | service-type              | API for retrieving service |
       | Management                |                           | providers for Neutron      |
       |                           |                           | advanced services          |
-      | Tag support for           | tag-ext                   | Extends tag support to     |
       | resources: subnet,        |                           | more L2 and L3 resources.  |
       | subnetpool, port, router  |                           |                            |
       | Neutron Extra DHCP opts   | extra_dhcp_opt            | Extra options              |
