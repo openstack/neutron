@@ -256,6 +256,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 LOG.debug("Port %s had new provisioning blocks added so it "
                           "will not transition to active.", port_id)
                 return
+        if not port.admin_state_up:
+            LOG.debug("Port %s is administratively disabled so it will "
+                      "not transition to active.", port_id)
+            return
         self.update_port_status(context, port_id, const.PORT_STATUS_ACTIVE)
 
     @log_helpers.log_method_call
