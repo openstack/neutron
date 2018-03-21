@@ -323,7 +323,7 @@ class OpportunisticDBTestMixin(object):
         if not hasattr(self, 'db'):
             msg = "backend '%s' unavailable" % self.DRIVER
             if self.SKIP_ON_UNAVAILABLE_DB:
-                self.skip(msg)
+                self.skipTest(msg)
             else:
                 self.fail(msg)
 
