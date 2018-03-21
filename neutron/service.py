@@ -269,9 +269,10 @@ def start_all_workers():
 
 def start_rpc_workers():
     rpc_workers = _get_rpc_workers()
-
     LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
-    return _start_workers(rpc_workers)
+    launcher = _start_workers(rpc_workers)
+    registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
+    return launcher
 
 
 def start_plugins_workers():

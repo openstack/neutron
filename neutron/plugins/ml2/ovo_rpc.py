@@ -13,7 +13,9 @@
 
 import traceback
 
-import eventlet
+import futurist
+from futurist import waiters
+
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -38,7 +40,12 @@ class _ObjectChangeHandler(object):
         self._obj_class = object_class
         self._resource_push_api = resource_push_api
         self._resources_to_push = {}
-        self._worker_pool = eventlet.GreenPool()
+
+        # NOTE(annp): uWSGI seems not happy with eventlet.GreenPool.
+        # So switching to ThreadPool
+        self._worker_pool = futurist.ThreadPoolExecutor()
+        self.fts = []
+
         self._semantic_warned = False
         for event in (events.AFTER_CREATE, events.AFTER_UPDATE,
                       events.AFTER_DELETE):
@@ -46,7 +53,9 @@ class _ObjectChangeHandler(object):
 
     def wait(self):
         """Waits for all outstanding events to be dispatched."""
-        self._worker_pool.waitall()
+        done, not_done = waiters.wait_for_all(self.fts)
+        if not not_done:
+            del self.fts[:]
 
     def _is_session_semantic_violated(self, context, resource, event):
         """Return True and print an ugly error on transaction violation.
@@ -82,7 +91,7 @@ class _ObjectChangeHandler(object):
         # to the server-side event that triggered it
         self._resources_to_push[resource_id] = context.to_dict()
         # spawn worker so we don't block main AFTER_UPDATE thread
-        self._worker_pool.spawn(self.dispatch_events)
+        self.fts.append(self._worker_pool.submit(self.dispatch_events))
 
     @lockutils.synchronized('event-dispatch')
     def dispatch_events(self):

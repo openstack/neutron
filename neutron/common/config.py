@@ -28,6 +28,7 @@ from oslo_middleware import cors
 from oslo_service import wsgi
 
 from neutron._i18n import _
+from neutron.common import rpc as n_rpc
 from neutron.conf import common as common_config
 from neutron import policy
 from neutron import version
@@ -72,14 +73,12 @@ common_config.register_placement_opts()
 logging.register_options(cfg.CONF)
 
 
-def init(args, **kwargs):
+def init(args, default_config_files=None, **kwargs):
     cfg.CONF(args=args, project='neutron',
              version='%%(prog)s %s' % version.version_info.release_string(),
+             default_config_files=default_config_files,
              **kwargs)
 
-    # FIXME(ihrachys): if import is put in global, circular import
-    # failure occurs
-    from neutron.common import rpc as n_rpc
     n_rpc.init(cfg.CONF)
 
     # Validate that the base_mac is of the correct format
@@ -119,6 +118,10 @@ def load_paste_app(app_name):
     :param app_name: Name of the application to load
     """
     loader = wsgi.Loader(cfg.CONF)
+
+    # Log the values of registered opts
+    if cfg.CONF.debug:
+        cfg.CONF.log_opt_values(LOG, logging.DEBUG)
     app = loader.load_app(app_name)
     return app
 
