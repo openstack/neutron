@@ -691,6 +691,19 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.assertIsNone(plugin._port_provisioned('port', 'evt', 'trigger',
                                                    self.context, port_id))
 
+    def test__port_provisioned_port_admin_state_down(self):
+        plugin = directory.get_plugin()
+        ups = mock.patch.object(plugin, 'update_port_status').start()
+        port_id = 'fake_port_id'
+        binding = mock.Mock(vif_type=portbindings.VIF_TYPE_OVS)
+        port = mock.Mock(
+            id=port_id, admin_state_up=False, port_binding=binding)
+        with mock.patch('neutron.plugins.ml2.plugin.db.get_port',
+                        return_value=port):
+            plugin._port_provisioned('port', 'evt', 'trigger',
+                                     self.context, port_id)
+        self.assertFalse(ups.called)
+
     def test_create_router_port_and_fail_create_postcommit(self):
 
         with mock.patch.object(managers.MechanismManager,
