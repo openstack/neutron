@@ -9,9 +9,6 @@ fixtures>=3.0.0 # Apache-2.0/BSD
 flake8-import-order==0.12 # LGPLv3
 mock>=2.0.0 # BSD
 python-subunit>=1.0.0 # Apache-2.0/BSD
-sphinx!=1.6.6,>=1.6.2 # BSD
-openstackdocstheme>=1.18.1 # Apache-2.0
-oslosphinx>=4.7.0 # Apache-2.0
 testtools>=2.2.0 # MIT
 testresources>=2.0.0 # Apache-2.0/BSD
 testscenarios>=0.4 # Apache-2.0/BSD
@@ -20,7 +17,6 @@ oslotest>=3.2.0 # Apache-2.0
 os-testr>=1.0.0 # Apache-2.0
 ddt>=1.0.1 # MIT
 pylint==1.4.5 # GPLv2
-reno>=2.5.0 # Apache-2.0
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.7.6 # MIT License
 bashate>=0.5.1 # Apache-2.0
