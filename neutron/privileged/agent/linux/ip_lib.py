@@ -50,6 +50,19 @@ class NetworkInterfaceNotFound(RuntimeError):
     pass
 
 
+class IpAddressAlreadyExists(RuntimeError):
+    message = _("IP address %(ip)s already configured on %(device)s.")
+
+    def __init__(self, message=None, ip=None, device=None):
+        # NOTE(slaweq): 'message' can be passed as an optional argument
+        # because of how privsep daemon works. If exception is raised in
+        # function called by privsep daemon, it will then try to reraise it
+        # and will call it always with passing only message from originally
+        # raised exception.
+        message = message or self.message % {'ip': ip, 'device': device}
+        super(IpAddressAlreadyExists, self).__init__(message)
+
+
 @privileged.default.entrypoint
 def get_routing_table(ip_version, namespace=None):
     """Return a list of dictionaries, each representing a route.
@@ -139,14 +152,19 @@ def _run_iproute_addr(command, device, namespace, **kwargs):
 def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
                    broadcast=None):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
-    _run_iproute_addr('add',
-                      device,
-                      namespace,
-                      address=ip,
-                      mask=prefixlen,
-                      family=family,
-                      broadcast=broadcast,
-                      scope=_get_scope_name(scope))
+    try:
+        _run_iproute_addr('add',
+                          device,
+                          namespace,
+                          address=ip,
+                          mask=prefixlen,
+                          family=family,
+                          broadcast=broadcast,
+                          scope=_get_scope_name(scope))
+    except NetlinkError as e:
+        if e.code == errno.EEXIST:
+            raise IpAddressAlreadyExists(ip=ip, device=device)
+        raise
 
 
 @privileged.default.entrypoint
