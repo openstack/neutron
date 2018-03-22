@@ -14,6 +14,7 @@
         - neutron-tempest-dvr-ha-multinode-full
         - neutron-tempest-ovsfw
         - neutron-grenade
+        - openstack-tox-lower-constraints
     gate:
       jobs:
         - neutron-functional
@@ -22,6 +23,7 @@
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
+        - openstack-tox-lower-constraints
     periodic:
       jobs:
         - neutron-functional
