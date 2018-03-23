@@ -559,7 +559,6 @@ class FirewallTestCase(BaseFirewallTestCase):
         self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, list())
         self.tester.assert_no_established_connection(**connection)
 
-    @skip_if_firewall('openvswitch')
     def test_preventing_firewall_blink(self):
         direction = self.tester.INGRESS
         sg_rules = [{'ethertype': 'IPv4', 'direction': 'ingress',
