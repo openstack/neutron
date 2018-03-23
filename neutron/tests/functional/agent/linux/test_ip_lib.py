@@ -201,6 +201,60 @@ class IpLibTestCase(IpLibTestFramework):
 
         device.link.delete()
 
+    def test_gateway_lifecycle(self):
+        attr = self.generate_device_details(
+            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
+        )
+        metric = 1000
+        device = self.manage_device(attr)
+        gateways = {
+            constants.IP_VERSION_4: attr.ip_cidrs[0].split('/')[0],
+            constants.IP_VERSION_6: "fd00::ff"
+        }
+        expected_gateways = {
+            constants.IP_VERSION_4: {
+                'metric': metric,
+                'gateway': gateways[constants.IP_VERSION_4]},
+            constants.IP_VERSION_6: {
+                'metric': metric,
+                'gateway': gateways[constants.IP_VERSION_6]}}
+
+        for ip_version, gateway_ip in gateways.items():
+            device.route.add_gateway(gateway_ip, metric)
+
+            self.assertEqual(
+                expected_gateways[ip_version],
+                device.route.get_gateway(ip_version=ip_version))
+
+            device.route.delete_gateway(gateway_ip)
+            self.assertIsNone(
+                device.route.get_gateway(ip_version=ip_version))
+
+    def test_gateway_flush(self):
+        attr = self.generate_device_details(
+            ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
+        )
+        device = self.manage_device(attr)
+
+        gateways = {
+            constants.IP_VERSION_4: attr.ip_cidrs[0].split('/')[0],
+            constants.IP_VERSION_6: "fd00::ff"
+        }
+        for ip_version, gateway_ip in gateways.items():
+            # Ensure that there is no gateway configured
+            self.assertIsNone(
+                device.route.get_gateway(ip_version=ip_version))
+
+            # Now lets add gateway
+            device.route.add_gateway(gateway_ip, table="main")
+            self.assertIsNotNone(
+                device.route.get_gateway(ip_version=ip_version))
+
+            # Flush gateway and check that there is no any gateway configured
+            device.route.flush(ip_version, table="main")
+            self.assertIsNone(
+                device.route.get_gateway(ip_version=ip_version))
+
     def test_get_routing_table(self):
         attr = self.generate_device_details(
             ip_cidrs=["%s/24" % TEST_IP, "fd00::1/64"]
