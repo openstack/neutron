@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api.definitions import segment as seg_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -30,6 +29,7 @@ from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import segments_db as db
+from neutron.extensions import segment as extension
 from neutron import manager
 from neutron.objects import base as base_obj
 from neutron.objects import network
@@ -74,11 +74,11 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
     def _create_segment_db(self, context, segment_id, segment):
         with db_api.context_manager.writer.using(context):
             network_id = segment['network_id']
-            physical_network = segment[seg_apidef.PHYSICAL_NETWORK]
+            physical_network = segment[extension.PHYSICAL_NETWORK]
             if physical_network == constants.ATTR_NOT_SPECIFIED:
                 physical_network = None
-            network_type = segment[seg_apidef.NETWORK_TYPE]
-            segmentation_id = segment[seg_apidef.SEGMENTATION_ID]
+            network_type = segment[extension.NETWORK_TYPE]
+            segmentation_id = segment[extension.SEGMENTATION_ID]
             if segmentation_id == constants.ATTR_NOT_SPECIFIED:
                 segmentation_id = None
             name = segment['name']
