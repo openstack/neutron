@@ -91,6 +91,89 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
 
 
 class IpLibTestCase(IpLibTestFramework):
+
+    def test_rules_lifecycle(self):
+        PRIORITY = 32768
+        TABLE = 16
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+
+        test_cases = {
+            constants.IP_VERSION_4: [
+                {
+                    'ip': '1.1.1.1',
+                    'to': '8.8.8.0/24'
+                },
+                {
+                    'ip': '1.1.1.1',
+                    'iif': device.name,
+                    'to': '7.7.7.0/24'
+                }
+            ],
+            constants.IP_VERSION_6: [
+                {
+                    'ip': 'abcd::1',
+                    'to': '1234::/64'
+                },
+                {
+                    'ip': 'abcd::1',
+                    'iif': device.name,
+                    'to': '4567::/64'
+                }
+            ]
+        }
+        expected_rules = {
+            constants.IP_VERSION_4: [
+                {
+                    'from': '1.1.1.1',
+                    'to': '8.8.8.0/24',
+                    'priority': str(PRIORITY),
+                    'table': str(TABLE),
+                    'type': 'unicast'
+                }, {
+                    'from': '0.0.0.0/0',
+                    'to': '7.7.7.0/24',
+                    'iif': device.name,
+                    'priority': str(PRIORITY),
+                    'table': str(TABLE),
+                    'type': 'unicast'
+                }
+            ],
+            constants.IP_VERSION_6: [
+                {
+                    'from': 'abcd::1',
+                    'to': '1234::/64',
+                    'priority': str(PRIORITY),
+                    'table': str(TABLE),
+                    'type': 'unicast'
+                },
+                {
+                    'from': '::/0',
+                    'to': '4567::/64',
+                    'iif': device.name,
+                    'priority': str(PRIORITY),
+                    'table': str(TABLE),
+                    'type': 'unicast',
+                }
+            ]
+        }
+
+        ip_rule = ip_lib.IPRule(namespace=device.namespace)
+        for ip_version, test_case in test_cases.items():
+            for rule in test_case:
+                ip_rule.rule.add(table=TABLE, priority=PRIORITY, **rule)
+
+            rules = ip_rule.rule.list_rules(ip_version)
+            for expected_rule in expected_rules[ip_version]:
+                self.assertIn(expected_rule, rules)
+
+            for rule in test_case:
+                ip_rule.rule.delete(table=TABLE, priority=PRIORITY, **rule)
+
+            rules = ip_rule.rule.list_rules(ip_version)
+            for expected_rule in expected_rules[ip_version]:
+                self.assertNotIn(expected_rule, rules)
+
     def test_device_exists(self):
         attr = self.generate_device_details()
 
