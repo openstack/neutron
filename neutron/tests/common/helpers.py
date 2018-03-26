@@ -236,8 +236,8 @@ def skip_if_ovs_older_than(ovs_version):
             current_ovs_version = version.StrictVersion(
                 ovs.config['ovs_version'])
             if current_ovs_version < version.StrictVersion(ovs_version):
-                test.skip("This test requires OVS version %s or higher." %
-                          ovs_version)
+                test.skipTest("This test requires OVS version %s or higher." %
+                              ovs_version)
             return f(test)
         return check_ovs_and_skip
     return skip_if_bad_ovs
