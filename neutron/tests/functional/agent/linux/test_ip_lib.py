@@ -417,6 +417,12 @@ class IpLibTestCase(IpLibTestFramework):
         device = self.manage_device(attr)
         self._add_and_check_ips(device, ip_addresses)
 
+        # Now let's check if adding already existing IP address will raise
+        # RuntimeError
+        ip_address = ip_addresses[0]
+        self.assertRaises(RuntimeError,
+                          device.addr.add, str(ip_address[0]), ip_address[1])
+
     def test_delete_ip_address(self):
         attr = self.generate_device_details()
         cidr = attr.ip_cidrs[0]
