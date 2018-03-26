@@ -159,6 +159,7 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
 
         for vm in vms:
             vm.block_until_boot()
+            vm.block_until_dhcp_config_done()
 
         # 0. check that traffic is allowed when port security is disabled
         self.assert_connection(
