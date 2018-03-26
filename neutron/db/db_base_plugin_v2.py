@@ -413,6 +413,17 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     context.session.add(entry)
                 elif not update_shared and entry:
                     network.rbac_entries.remove(entry)
+
+                # TODO(ihrachys) Below can be removed when we make sqlalchemy
+                # event listeners in neutron/db/api.py to refresh expired
+                # attributes.
+                #
+                # First trigger expiration of rbac_entries.
+                context.session.flush()
+                # Then fetch state for _make_network_dict use outside session
+                # context.
+                getattr(network, 'rbac_entries')
+
             # The filter call removes attributes from the body received from
             # the API that are logically tied to network resources but are
             # stored in other database tables handled by extensions
@@ -798,6 +809,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                                             network,
                                                             subnet['subnet'],
                                                             subnetpool_id)
+            # TODO(ihrachys): make sqlalchemy refresh expired relationships
+            getattr(network, 'subnets')
         result = self._make_subnet_dict(subnet, context=context)
         return result, network, ipam_subnet
 

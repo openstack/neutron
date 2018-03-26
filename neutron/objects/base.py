@@ -305,21 +305,11 @@ class NeutronObject(obj_base.VersionedObject,
                 context, validate_filters=validate_filters, **kwargs))
 
 
-def _detach_db_obj(func):
-    """Decorator to detach db_obj from the session."""
+def _guarantee_rw_subtransaction(func):
     @functools.wraps(func)
     def decorator(self, *args, **kwargs):
-        synthetic_changed = bool(self._get_changed_synthetic_fields())
         with self.db_context_writer(self.obj_context):
-            res = func(self, *args, **kwargs)
-            # some relationship based fields may be changed since we captured
-            # the model, let's refresh it for the latest database state
-            if synthetic_changed:
-                # TODO(ihrachys) consider refreshing just changed attributes
-                self.obj_context.session.refresh(self.db_obj)
-            # detach the model so that consequent fetches don't reuse it
-            self.obj_context.session.expunge(self.db_obj)
-            return res
+            return func(self, *args, **kwargs)
     return decorator
 
 
@@ -361,9 +351,8 @@ class DeclarativeObject(abc.ABCMeta):
                                       for key in model_unique_key]
                     if obj_field_names.issuperset(obj_unique_key):
                         cls.unique_keys.append(obj_unique_key)
-            # detach db_obj right after object is loaded from the model
-            cls.create = _detach_db_obj(cls.create)
-            cls.update = _detach_db_obj(cls.update)
+            cls.create = _guarantee_rw_subtransaction(cls.create)
+            cls.update = _guarantee_rw_subtransaction(cls.update)
 
         if (hasattr(cls, 'has_standard_attributes') and
                 cls.has_standard_attributes()):
@@ -500,8 +489,6 @@ class NeutronDbObject(NeutronObject):
     def _load_object(cls, context, db_obj):
         obj = cls(context)
         obj.from_db_object(db_obj)
-        # detach the model so that consequent fetches don't reuse it
-        context.session.expunge(obj.db_obj)
         return obj
 
     def obj_load_attr(self, attrname):
@@ -685,14 +672,6 @@ class NeutronDbObject(NeutronObject):
     def _get_changed_persistent_fields(self):
         fields = self.obj_get_changes()
         for field in self.synthetic_fields:
-            if field in fields:
-                del fields[field]
-        return fields
-
-    def _get_changed_synthetic_fields(self):
-        fields = self.obj_get_changes()
-        fields = get_updatable_fields(self, fields)
-        for field in self._get_changed_persistent_fields():
             if field in fields:
                 del fields[field]
         return fields
