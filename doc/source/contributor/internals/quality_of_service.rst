@@ -498,4 +498,4 @@ API tests
 
 API tests for basic CRUD operations for ports, networks, policies, and rules were added in:
 
-* neutron.tests.tempest.api.test_qos
+* neutron-tempest-plugin.api.test_qos
