@@ -21,12 +21,6 @@ from neutron._i18n import _
 DEFAULT_DEVICE_MAPPINGS = []
 DEFAULT_EXCLUDE_DEVICES = []
 
-agent_opts = [
-    cfg.IntOpt('polling_interval', default=2,
-               help=_("The number of seconds the agent will wait between "
-                      "polling for local device changes.")),
-]
-
 sriov_nic_opts = [
     cfg.ListOpt('physical_device_mappings',
                 default=DEFAULT_DEVICE_MAPPINGS,
@@ -53,5 +47,4 @@ sriov_nic_opts = [
 
 
 def register_agent_sriov_nic_opts(cfg=cfg.CONF):
-    cfg.register_opts(agent_opts, 'AGENT')
     cfg.register_opts(sriov_nic_opts, 'SRIOV_NIC')
