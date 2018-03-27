@@ -440,6 +440,7 @@ class DhcpAgent(manager.Manager):
             self.cache.put_port(updated_port)
             self.call_driver(driver_action, network)
             self.dhcp_ready_ports.add(updated_port.id)
+            self.update_isolated_metadata_proxy(network)
 
     def _is_port_on_this_agent(self, port):
         thishost = utils.get_dhcp_agent_device_id(
@@ -470,6 +471,7 @@ class DhcpAgent(manager.Manager):
                 self.schedule_resync("Agent port was deleted", port.network_id)
             else:
                 self.call_driver('reload_allocations', network)
+                self.update_isolated_metadata_proxy(network)
 
     def update_isolated_metadata_proxy(self, network):
         """Spawn or kill metadata proxy.
