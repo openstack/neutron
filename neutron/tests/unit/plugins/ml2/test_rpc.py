@@ -317,7 +317,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 class RpcApiTestCase(base.BaseTestCase):
 
     def _test_rpc_api(self, rpcapi, topic, method, rpc_method, **kwargs):
-        ctxt = oslo_context.RequestContext(user='fake_user',
+        ctxt = oslo_context.RequestContext(user_id='fake_user',
                                            tenant='fake_project')
         expected_retval = 'foo' if rpc_method == 'call' else None
         expected_version = kwargs.pop('version', None)
