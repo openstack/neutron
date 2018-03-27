@@ -70,6 +70,7 @@ COMMIT
 class BaseIptablesFirewallTestCase(base.BaseTestCase):
     def setUp(self):
         super(BaseIptablesFirewallTestCase, self).setUp()
+        mock.patch('eventlet.spawn_n').start()
         security_config.register_securitygroups_opts()
         agent_config.register_root_helper(cfg.CONF)
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
@@ -1309,6 +1310,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             if not ct_zone:
                 self.assertFalse(self.utils_exec.called)
                 return
+            # process conntrack updates in the queue
+            self.firewall.ipconntrack._process_queue()
             cmd = ['conntrack', '-D']
             if protocol:
                 cmd.extend(['-p', protocol])
@@ -1397,6 +1400,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             if not ct_zone:
                 self.assertFalse(self.utils_exec.called)
                 return
+            # process conntrack updates in the queue
+            self.firewall.ipconntrack._process_queue()
             calls = self._get_expected_conntrack_calls(
                 [('ipv4', '10.0.0.1'), ('ipv6', 'fe80::1')], ct_zone)
             self.utils_exec.assert_has_calls(calls)
@@ -1460,6 +1465,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             ips = {"ipv4": ['10.0.0.1', '10.0.0.2'],
                    "ipv6": ['fe80::1', 'fe80::2']}
             calls = []
+            # process conntrack updates in the queue
+            self.firewall.ipconntrack._process_queue()
             for direction in ['ingress', 'egress']:
                 direction = '-d' if direction == 'ingress' else '-s'
                 remote_ip_direction = '-s' if direction == '-d' else '-d'
@@ -1704,6 +1711,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         if not ct_zone:
             self.assertFalse(self.utils_exec.called)
             return
+        # process conntrack updates in the queue
+        self.firewall.ipconntrack._process_queue()
         calls = self._get_expected_conntrack_calls(
             [('ipv4', '10.0.0.1'), ('ipv6', 'fe80::1')], ct_zone)
         self.utils_exec.assert_has_calls(calls)

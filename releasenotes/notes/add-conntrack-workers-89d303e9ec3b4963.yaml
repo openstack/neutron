@@ -1,0 +1,13 @@
+---
+prelude: >
+    In order to reduce the time spent processing security group updates in
+    the L2 agent, conntrack deletion is now performed in a set of worker
+    threads instead of the main agent thread, so it can return to processing
+    other events quickly.
+upgrade:
+  - |
+    On an upgrade, conntrack entries will now be cleaned-up in a worker
+    thread, instead of in the calling thread.
+fixes:
+  - |
+    Fixes bug `1745468 <https://bugs.launchpad.net/neutron/+bug/1745468>`_.
