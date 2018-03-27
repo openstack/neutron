@@ -12,15 +12,13 @@
 
 import mock
 
-from neutron.api import versions
+from neutron import pecan_wsgi
 from neutron.tests import base
 
 
-@mock.patch('neutron.api.versions.Versions.__init__', return_value=None)
 @mock.patch('neutron.pecan_wsgi.app.versions_factory')
-class TestVersions(base.BaseTestCase):
+class TestVersionsFactory(base.BaseTestCase):
 
-    def test_pecan_factory(self, pecan_mock, legacy_mock):
-        versions.Versions.factory({})
+    def test_versions_factory(self, pecan_mock):
+        pecan_wsgi.app.versions_factory({})
         pecan_mock.assert_called_once_with({})
-        legacy_mock.assert_not_called()
