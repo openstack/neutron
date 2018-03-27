@@ -1504,6 +1504,19 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                 reserved += 1
         return total, reserved
 
+    def test__create_nova_inventory_no_microversion(self):
+        network, segment = self._create_test_network_and_segment()
+        segment_id = segment['segment']['id']
+        aggregate = mock.Mock(spec=["id"])
+        aggregate.id = 1
+        self.mock_n_client.aggregates.create.return_value = aggregate
+        with mock.patch.object(seg_plugin.LOG, 'exception') as log:
+            self.assertRaises(
+                AttributeError,
+                self.segments_plugin.nova_updater._create_nova_inventory,
+                segment_id, 63, 2, [])
+            self.assertTrue(log.called)
+
     def _assert_inventory_creation(self, segment_id, aggregate, subnet):
         self.batch_notifier._notify()
         self.mock_p_client.get_inventory.assert_called_with(

@@ -30,6 +30,7 @@ from novaclient import client as nova_client
 from novaclient import exceptions as nova_exc
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.common import exceptions as n_exc
@@ -213,13 +214,25 @@ class NovaSegmentNotifier(object):
         LOG.error('Failed to update Nova IPv4 inventory for routed '
                   'network segment: %s', event.segment_id)
 
+    def _get_nova_aggregate_uuid(self, aggregate):
+        try:
+            return aggregate.uuid
+        except AttributeError:
+            with excutils.save_and_reraise_exception():
+                LOG.exception("uuid was not returned as part of the aggregate "
+                              "object which indicates that the Nova API "
+                              "backend does not support microversions. Ensure "
+                              "that the compute endpoint in the service "
+                              "catalog points to the v2.1 API.")
+
     def _create_nova_inventory(self, segment_id, total, reserved,
                                segment_host_mappings):
         name = SEGMENT_NAME_STUB % segment_id
         resource_provider = {'name': name, 'uuid': segment_id}
         self.p_client.create_resource_provider(resource_provider)
         aggregate = self.n_client.aggregates.create(name, None)
-        self.p_client.associate_aggregates(segment_id, [aggregate.uuid])
+        aggregate_uuid = self._get_nova_aggregate_uuid(aggregate)
+        self.p_client.associate_aggregates(segment_id, [aggregate_uuid])
         for mapping in segment_host_mappings:
             self.n_client.aggregates.add_host(aggregate.id, mapping['host'])
         ipv4_inventory = {'total': total, 'reserved': reserved,
@@ -299,7 +312,8 @@ class NovaSegmentNotifier(object):
             segment_id)['aggregates'][0]
         aggregates = self.n_client.aggregates.list()
         for aggregate in aggregates:
-            if aggregate.uuid == aggregate_uuid:
+            nc_aggregate_uuid = self._get_nova_aggregate_uuid(aggregate)
+            if nc_aggregate_uuid == aggregate_uuid:
                 return aggregate.id
 
     def _delete_nova_inventory(self, event):
