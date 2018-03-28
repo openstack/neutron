@@ -239,7 +239,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 arp_delete.add(arp_entry)
         self._pending_arp_set -= arp_delete
 
-    def _update_arp_entry(self, ip, mac, subnet_id, operation):
+    def _update_arp_entry(
+        self, ip, mac, subnet_id, operation, nud_state='permanent'):
         """Add or delete arp entry into router namespace for the subnet."""
         port = self._get_internal_port(subnet_id)
         # update arp entry only if the subnet is attached to the router
@@ -252,7 +253,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             device = ip_lib.IPDevice(interface_name, namespace=self.ns_name)
             if device.exists():
                 if operation == 'add':
-                    device.neigh.add(ip, mac)
+                    device.neigh.add(ip, mac, nud_state=nud_state)
                 elif operation == 'delete':
                     device.neigh.delete(ip, mac)
                 return True
@@ -279,12 +280,14 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             tuple(common_utils.get_dvr_allowed_address_pair_device_owners()))
 
         for p in subnet_ports:
+            nud_state = 'permanent' if p.get('device_owner') else 'reachable'
             if p['device_owner'] not in ignored_device_owners:
                 for fixed_ip in p['fixed_ips']:
                     self._update_arp_entry(fixed_ip['ip_address'],
                                            p['mac_address'],
                                            subnet_id,
-                                           'add')
+                                           'add',
+                                           nud_state=nud_state)
         self._process_arp_cache_for_internal_port(subnet_id)
 
     @staticmethod
