@@ -18,6 +18,7 @@
     gate:
       jobs:
         - neutron-functional
+        - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
