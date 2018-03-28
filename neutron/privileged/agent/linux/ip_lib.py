@@ -16,6 +16,7 @@ import socket
 from neutron_lib import constants
 import pyroute2
 from pyroute2.netlink import rtnl
+from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
 from pyroute2 import netns
@@ -115,7 +116,7 @@ def _get_link_id(device, namespace):
         raise NetworkInterfaceNotFound(msg)
 
 
-def _run_iproute_link(command, device, namespace, **kwargs):
+def _run_iproute_link(command, device, namespace=None, **kwargs):
     try:
         with _get_iproute(namespace) as ip:
             idx = _get_link_id(device, namespace)
@@ -232,6 +233,33 @@ def interface_exists(ifname, namespace):
         if e.errno == errno.ENOENT:
             return False
         raise
+
+
+@privileged.default.entrypoint
+def set_link_flags(device, namespace, flags):
+    link = _run_iproute_link("get", device, namespace)[0]
+    new_flags = flags | link['flags']
+    return _run_iproute_link("set", device, namespace, flags=new_flags)
+
+
+@privileged.default.entrypoint
+def set_link_attribute(device, namespace, **attributes):
+    return _run_iproute_link("set", device, namespace, **attributes)
+
+
+@privileged.default.entrypoint
+def get_link_attributes(device, namespace):
+    link = _run_iproute_link("get", device, namespace)[0]
+    return {
+        'mtu': link.get_attr('IFLA_MTU'),
+        'qlen': link.get_attr('IFLA_TXQLEN'),
+        'state': link.get_attr('IFLA_OPERSTATE'),
+        'qdisc': link.get_attr('IFLA_QDISC'),
+        'brd': link.get_attr('IFLA_BROADCAST'),
+        'link/ether': link.get_attr('IFLA_ADDRESS'),
+        'alias': link.get_attr('IFLA_IFALIAS'),
+        'allmulticast': bool(link['flags'] & ifinfmsg.IFF_ALLMULTI)
+    }
 
 
 @privileged.default.entrypoint

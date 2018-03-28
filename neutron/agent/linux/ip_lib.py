@@ -25,6 +25,7 @@ from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
+from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2 import netns
 import six
 
@@ -503,33 +504,41 @@ class IpLinkCommand(IpDeviceCommandBase):
     COMMAND = 'link'
 
     def set_address(self, mac_address):
-        self._as_root([], ('set', self.name, 'address', mac_address))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, address=mac_address)
 
     def set_allmulticast_on(self):
-        self._as_root([], ('set', self.name, 'allmulticast', 'on'))
+        privileged.set_link_flags(
+            self.name, self._parent.namespace, ifinfmsg.IFF_ALLMULTI)
 
     def set_mtu(self, mtu_size):
-        self._as_root([], ('set', self.name, 'mtu', mtu_size))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, mtu=mtu_size)
 
     def set_up(self):
-        return self._as_root([], ('set', self.name, 'up'))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, state='up')
 
     def set_down(self):
-        return self._as_root([], ('set', self.name, 'down'))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, state='down')
 
     def set_netns(self, namespace):
-        self._as_root([], ('set', self.name, 'netns', namespace))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, net_ns_fd=namespace)
         self._parent.namespace = namespace
 
     def set_name(self, name):
-        self._as_root([], ('set', self.name, 'name', name))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, ifname=name)
         self._parent.name = name
 
     def set_alias(self, alias_name):
-        self._as_root([], ('set', self.name, 'alias', alias_name))
+        privileged.set_link_attribute(
+            self.name, self._parent.namespace, ifalias=alias_name)
 
     def delete(self):
-        self._as_root([], ('delete', self.name))
+        privileged.delete_interface(self.name, self._parent.namespace)
 
     @property
     def address(self):
@@ -538,6 +547,10 @@ class IpLinkCommand(IpDeviceCommandBase):
     @property
     def state(self):
         return self.attributes.get('state')
+
+    @property
+    def allmulticast(self):
+        return self.attributes.get('allmulticast')
 
     @property
     def mtu(self):
@@ -557,19 +570,8 @@ class IpLinkCommand(IpDeviceCommandBase):
 
     @property
     def attributes(self):
-        return self._parse_line(self._run(['o'], ('show', self.name)))
-
-    def _parse_line(self, value):
-        if not value:
-            return {}
-
-        device_name, settings = value.replace("\\", '').split('>', 1)
-        tokens = settings.split()
-        keys = tokens[::2]
-        values = [int(v) if v.isdigit() else v for v in tokens[1::2]]
-
-        retval = dict(zip(keys, values))
-        return retval
+        return privileged.get_link_attributes(self.name,
+                                              self._parent.namespace)
 
 
 class IpAddrCommand(IpDeviceCommandBase):
@@ -1103,7 +1105,6 @@ def network_namespace_exists(namespace, **kwargs):
 
 def ensure_device_is_ready(device_name, namespace=None):
     dev = IPDevice(device_name, namespace=namespace)
-    dev.set_log_fail_as_error(False)
     try:
         # Ensure the device has a MAC address and is up, even if it is already
         # up. If the device doesn't exist, a RuntimeError will be raised.

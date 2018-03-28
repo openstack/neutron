@@ -37,10 +37,11 @@ class TestDvrSnatNs(base.BaseTestCase):
                                                  self.driver,
                                                  use_ipv6=False)
 
+    @mock.patch('neutron.privileged.agent.linux.ip_lib.set_link_attribute')
     @mock.patch.object(utils, 'execute')
     @mock.patch.object(ip_lib, 'create_network_namespace')
     @mock.patch.object(ip_lib, 'network_namespace_exists')
-    def test_create(self, exists, create, execute):
+    def test_create(self, exists, create, execute, set_link_attr):
         exists.return_value = False
         self.snat_ns.create()
 
