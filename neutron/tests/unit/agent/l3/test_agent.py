@@ -3508,6 +3508,15 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                             mock.call.add_chain('float-snat'),
                             mock.call.add_rule('PREROUTING', '-j $floatingip'),
                             mock.call.add_rule(
+                                'PREROUTING',
+                                '-d 169.254.169.254/32 -i %(interface_name)s '
+                                '-p tcp -m tcp --dport 80 '
+                                '-j MARK --set-xmark %(value)s/%(mask)s' %
+                                {'interface_name':
+                                 namespaces.INTERNAL_DEV_PREFIX + '+',
+                                 'value': self.conf.metadata_access_mark,
+                                 'mask': n_const.ROUTER_MARK_MASK}),
+                            mock.call.add_rule(
                                 'float-snat',
                                 '-m connmark --mark 0x0/0xffff0000 '
                                 '-j CONNMARK --save-mark '
@@ -3541,6 +3550,27 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri._create_dvr_gateway(ex_gw_port, interface_name)
             self._verify_address_scopes_iptables_rule(
                 ri.snat_iptables_manager)
+
+    def _verify_metadata_iptables_rule(self, mock_iptables_manager):
+        v4_mangle_calls = ([mock.call.add_rule(
+                                'PREROUTING',
+                                '-d 169.254.169.254/32 -i %(interface_name)s '
+                                '-p tcp -m tcp --dport 80 '
+                                '-j MARK --set-xmark %(value)s/%(mask)s' %
+                                {'interface_name':
+                                 namespaces.INTERNAL_DEV_PREFIX + '+',
+                                 'value': self.conf.metadata_access_mark,
+                                 'mask': n_const.ROUTER_MARK_MASK})])
+        mock_iptables_manager.ipv4['mangle'].assert_has_calls(v4_mangle_calls,
+                                                              any_order=True)
+
+    def test_initialize_metadata_iptables_rules(self):
+        id = _uuid()
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        with mock.patch('neutron.agent.linux.iptables_manager.'
+                        'IptablesManager'):
+            ri = l3router.RouterInfo(agent, id, {}, **self.ri_kwargs)
+            self._verify_metadata_iptables_rule(ri.iptables_manager)
 
     @mock.patch.object(l3router.RouterInfo, 'delete')
     @mock.patch.object(ha_router.HaRouter, 'destroy_state_change_monitor')

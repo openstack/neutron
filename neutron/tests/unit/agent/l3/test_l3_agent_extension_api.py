@@ -21,6 +21,8 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import l3_agent_extension_api as l3_agent_api
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
+from neutron.conf.agent import common as config
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.tests import base
 
 
@@ -29,9 +31,11 @@ class TestL3AgentExtensionApi(base.BaseTestCase):
     def _prepare_router_data(self, ports=None):
         self.router_id = uuidutils.generate_uuid()
         self.project_id = uuidutils.generate_uuid()
+        self.conf = config.setup_conf()
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, self.conf)
         ri_kwargs = {'router': {'id': self.router_id,
                                 'project_id': self.project_id},
-                     'agent_conf': mock.ANY,
+                     'agent_conf': self.conf,
                      'interface_driver': mock.ANY,
                      'use_ipv6': mock.ANY}
         ri = router_info.RouterInfo(mock.Mock(), self.router_id, **ri_kwargs)

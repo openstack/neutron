@@ -52,15 +52,6 @@ class TestMetadataDriverRules(base.BaseTestCase):
             rules,
             metadata_driver.MetadataDriver.metadata_filter_rules(9697, '0x1'))
 
-    def test_metadata_mangle_rules(self):
-        rule = ('PREROUTING', '-d 169.254.169.254/32 -i qr-+ '
-                '-p tcp -m tcp --dport 80 '
-                '-j MARK --set-xmark 0x1/%s' %
-                constants.ROUTER_MARK_MASK)
-        self.assertEqual(
-            [rule],
-            metadata_driver.MetadataDriver.metadata_mangle_rules('0x1'))
-
     def test_metadata_checksum_rules(self):
         rules = ('POSTROUTING', '-o qr-+ -p tcp -m tcp --sport 9697 '
                  '-j CHECKSUM --checksum-fill')
