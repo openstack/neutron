@@ -79,7 +79,7 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
         netns_cleanup.cleanup_network_namespaces(self.conf)
 
         self.get_namespaces_p.stop()
-        namespaces_now = ip_lib.IPWrapper.get_namespaces()
+        namespaces_now = ip_lib.list_network_namespaces()
         procs_after = self._get_num_spawned_procs()
         self.assertEqual(procs_after, 0)
         self.assertNotIn(l3_namespace, namespaces_now)
