@@ -18,6 +18,7 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.conf.agent import common as config
+from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers.mech_sriov import agent_common as \
      agent_common_config
 
@@ -54,5 +55,6 @@ def parse_exclude_devices(exclude_list):
     return exclude_mapping
 
 
+agent.register_agent_opts()
 agent_common_config.register_agent_sriov_nic_opts()
 config.register_agent_state_opts_helper(cfg.CONF)
