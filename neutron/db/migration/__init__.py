@@ -37,6 +37,7 @@ NEUTRON_MILESTONES = [
     NEWTON,
     OCATA,
     PIKE,
+    QUEENS,
     # Do not add the milestone until the end of the release
 ]
 
