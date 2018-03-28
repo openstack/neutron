@@ -1125,11 +1125,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.assertFalse(sg_device)
         self.assertTrue(qg_device)
 
-    def _mocked_dvr_ha_router(self, agent, enable_gw=True,
+    def _mocked_dvr_ha_router(self, agent, enable_ha=True, enable_gw=True,
                               enable_centralized_fip=False,
                               snat_bound_fip=False):
         r_info = self.generate_dvr_router_info(
-            enable_ha=True,
+            enable_ha=enable_ha,
             enable_snat=True,
             agent=agent,
             enable_gw=enable_gw,
@@ -1165,7 +1165,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def _create_dvr_ha_router(self, agent, enable_gw=True,
                               enable_centralized_fip=False,
-                              snat_bound_fip=False):
+                              snat_bound_fip=False, ha_interface=True):
         get_ns_name = mock.patch.object(namespaces.RouterNamespace,
                                         '_get_ns_name').start()
         get_snat_ns_name = mock.patch.object(dvr_snat_ns.SnatNamespace,
@@ -1173,7 +1173,11 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         (r_info,
          mocked_r_ns_name,
          mocked_r_snat_ns_name) = self._mocked_dvr_ha_router(
-             agent, enable_gw, enable_centralized_fip, snat_bound_fip)
+             agent, ha_interface, enable_gw, enable_centralized_fip,
+             snat_bound_fip)
+
+        if not ha_interface:
+            r_info['ha'] = True
 
         get_ns_name.return_value = mocked_r_ns_name
         get_snat_ns_name.return_value = mocked_r_snat_ns_name
@@ -1330,6 +1334,26 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def test_dvr_ha_router_failover_without_gw(self):
         self._test_dvr_ha_router_failover(enable_gw=False)
+
+    def test_dvr_non_ha_router_update(self):
+        self._setup_dvr_ha_agents()
+        self._setup_dvr_ha_bridges()
+
+        router1 = self._create_dvr_ha_router(self.agent)
+        router2 = self._create_dvr_ha_router(self.failover_agent,
+                                             ha_interface=False)
+
+        r1_chsfr = mock.patch.object(self.agent,
+                                     'check_ha_state_for_router').start()
+        r2_chsfr = mock.patch.object(self.failover_agent,
+                                     'check_ha_state_for_router').start()
+
+        utils.wait_until_true(lambda: router1.ha_state == 'master')
+
+        self.agent._process_updated_router(router1.router)
+        self.assertTrue(r1_chsfr.called)
+        self.failover_agent._process_updated_router(router2.router)
+        self.assertFalse(r2_chsfr.called)
 
     def _setup_dvr_router_static_routes(
         self, router_namespace=True, check_fpr_int_rule_delete=False):
