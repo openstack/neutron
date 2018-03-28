@@ -2132,7 +2132,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.catch_sigterm = False
         if self.catch_sighup:
             LOG.info("Agent caught SIGHUP, resetting.")
-            self.conf.reload_config_files()
+            self.conf.mutate_config_files()
             config.setup_logging()
             LOG.debug('Full set of CONF:')
             self.conf.log_opt_values(LOG, logging.DEBUG)

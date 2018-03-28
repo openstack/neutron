@@ -47,4 +47,4 @@ def main():
         topic=topics.DHCP_AGENT,
         report_interval=cfg.CONF.AGENT.report_interval,
         manager='neutron.agent.dhcp.agent.DhcpAgentWithStateReport')
-    service.launch(cfg.CONF, server).wait()
+    service.launch(cfg.CONF, server, restart_method='mutate').wait()

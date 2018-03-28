@@ -1034,5 +1034,5 @@ def main():
                                LB_AGENT_BINARY)
     setup_profiler.setup("neutron-linuxbridge-agent", cfg.CONF.host)
     LOG.info("Agent initialized successfully, now running... ")
-    launcher = service.launch(cfg.CONF, agent)
+    launcher = service.launch(cfg.CONF, agent, restart_method='mutate')
     launcher.wait()

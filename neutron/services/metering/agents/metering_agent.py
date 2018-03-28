@@ -296,4 +296,4 @@ def main():
         report_interval=cfg.CONF.AGENT.report_interval,
         manager='neutron.services.metering.agents.'
                 'metering_agent.MeteringAgentWithStateReport')
-    service.launch(cfg.CONF, server).wait()
+    service.launch(cfg.CONF, server, restart_method='mutate').wait()

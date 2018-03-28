@@ -200,7 +200,8 @@ class AllServicesNeutronWorker(neutron_worker.BaseWorker):
     def __init__(self, services, worker_process_count=1):
         super(AllServicesNeutronWorker, self).__init__(worker_process_count)
         self._services = services
-        self._launcher = common_service.Launcher(cfg.CONF)
+        self._launcher = common_service.Launcher(cfg.CONF,
+                                                 restart_method='mutate')
 
     def start(self):
         for srv in self._services:
@@ -226,7 +227,7 @@ def _start_workers(workers):
     try:
         if process_workers:
             worker_launcher = common_service.ProcessLauncher(
-                cfg.CONF, wait_interval=1.0
+                cfg.CONF, wait_interval=1.0, restart_method='mutate'
             )
 
             # add extra process worker and spawn there all workers with

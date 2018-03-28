@@ -192,8 +192,8 @@ class Server(object):
             # The API service runs in a number of child processes.
             # Minimize the cost of checking for child exit by extending the
             # wait interval past the default of 0.01s.
-            self._server = common_service.ProcessLauncher(cfg.CONF,
-                                                          wait_interval=1.0)
+            self._server = common_service.ProcessLauncher(
+                cfg.CONF, wait_interval=1.0, restart_method='mutate')
             self._server.launch_service(service,
                                         workers=service.worker_process_count)
 

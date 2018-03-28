@@ -51,4 +51,4 @@ def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):
         topic=topics.L3_AGENT,
         report_interval=cfg.CONF.AGENT.report_interval,
         manager=manager)
-    service.launch(cfg.CONF, server).wait()
+    service.launch(cfg.CONF, server, restart_method='mutate').wait()
