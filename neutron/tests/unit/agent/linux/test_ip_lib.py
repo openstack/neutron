@@ -689,7 +689,7 @@ class TestIpRuleCommand(TestIPCmdBase):
         ip_version = netaddr.IPNetwork(ip).version
         self.rule_cmd.delete(ip, table=table, priority=priority)
         self._assert_sudo([ip_version],
-                          ('del', 'priority', str(priority),
+                          ('del', 'from', ip, 'priority', str(priority),
                            'table', str(table), 'type', 'unicast'))
 
     def test__parse_line(self):
