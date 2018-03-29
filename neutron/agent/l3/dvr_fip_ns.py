@@ -394,9 +394,12 @@ class FipNamespace(namespaces.Namespace):
                     fg_device.route.flush(lib_constants.IP_VERSION_6,
                                           table=tbl_index)
                     # Remove the rule lookup
-                    # IP is ignored in delete, but we still require it
-                    # for getting the ip_version.
-                    fip_rt_rule.rule.delete(ip=fip_2_rtr.ip,
+                    # /0 addresses for IPv4 and IPv6 are used to pass
+                    # IP protocol version information based on a
+                    # link-local address IP version. Using any of those
+                    # is equivalent to using 'from all' for iproute2.
+                    rule_ip = lib_constants.IP_ANY[fip_2_rtr.ip.version]
+                    fip_rt_rule.rule.delete(ip=rule_ip,
                                             iif=fip_2_rtr_name,
                                             table=tbl_index,
                                             priority=tbl_index)

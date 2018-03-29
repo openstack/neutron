@@ -142,7 +142,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def _add_floating_ip_rule(self, floating_ip, fixed_ip):
         rule_pr = self.fip_ns.allocate_rule_priority(floating_ip)
-        self.floating_ips_dict[floating_ip] = rule_pr
+        self.floating_ips_dict[floating_ip] = (fixed_ip, rule_pr)
         ip_rule = ip_lib.IPRule(namespace=self.ns_name)
         ip_rule.rule.add(ip=fixed_ip,
                          table=dvr_fip_ns.FIP_RT_TBL,
@@ -150,9 +150,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def _remove_floating_ip_rule(self, floating_ip):
         if floating_ip in self.floating_ips_dict:
-            rule_pr = self.floating_ips_dict[floating_ip]
+            fixed_ip, rule_pr = self.floating_ips_dict[floating_ip]
             ip_rule = ip_lib.IPRule(namespace=self.ns_name)
-            ip_rule.rule.delete(ip=floating_ip,
+            ip_rule.rule.delete(ip=fixed_ip,
                                 table=dvr_fip_ns.FIP_RT_TBL,
                                 priority=rule_pr)
             self.fip_ns.deallocate_rule_priority(floating_ip)

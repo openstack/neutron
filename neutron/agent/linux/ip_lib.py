@@ -470,7 +470,7 @@ class IpRuleCommand(IpCommandBase):
     def add(self, ip, **kwargs):
         ip_version = common_utils.get_ip_version(ip)
 
-        # In case if we need to add in a rule based on incoming
+        # In case we need to add a rule based on an incoming
         # interface, pass the "any" IP address, for example, 0.0.0.0/0,
         # else pass the given IP.
         if kwargs.get('iif'):
@@ -486,8 +486,13 @@ class IpRuleCommand(IpCommandBase):
     def delete(self, ip, **kwargs):
         ip_version = common_utils.get_ip_version(ip)
 
-        # TODO(Carl) ip ignored in delete, okay in general?
-
+        # In case we need to delete a rule based on an incoming
+        # interface, pass the "any" IP address, for example, 0.0.0.0/0,
+        # else pass the given IP.
+        if kwargs.get('iif'):
+            kwargs.update({'from': constants.IP_ANY[ip_version]})
+        else:
+            kwargs.update({'from': ip})
         canonical_kwargs = self._make_canonical(ip_version, kwargs)
 
         args_tuple = self._make__flat_args_tuple('del', **canonical_kwargs)
