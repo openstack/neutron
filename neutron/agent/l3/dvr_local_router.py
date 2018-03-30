@@ -408,7 +408,12 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             self._set_subnet_arp_info(subnet['id'])
             if ex_gw_port:
                 # Check for address_scopes here if gateway exists.
-                if self._check_if_address_scopes_match(port, ex_gw_port):
+                address_scopes_match = self._check_if_address_scopes_match(
+                    port, ex_gw_port)
+                if (address_scopes_match and
+                    (self.agent_conf.agent_mode in
+                        [lib_constants.L3_AGENT_MODE_DVR,
+                         lib_constants.L3_AGENT_MODE_DVR_SNAT])):
                     self._add_interface_routing_rule_to_router_ns(port)
                     self._add_interface_route_to_fip_ns(port)
         self._snat_redirect_add_from_port(port)
@@ -417,9 +422,12 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         ex_gw_port = self.get_ex_gw_port()
         if not ex_gw_port:
             return
-        if self._check_if_address_scopes_match(port, ex_gw_port):
-            # If address scopes match there is no need to cleanup the
-            # snat redirect rules, hence return here.
+        address_scopes_match = self._check_if_address_scopes_match(
+            port, ex_gw_port)
+        if (address_scopes_match and
+            (self.agent_conf.agent_mode in
+                [lib_constants.L3_AGENT_MODE_DVR,
+                 lib_constants.L3_AGENT_MODE_DVR_SNAT])):
             return
         sn_port = self.get_snat_port_for_internal_port(port)
         if not sn_port:
@@ -438,7 +446,12 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
         # Delete DVR address_scope static route for the removed interface
         # Check for address_scopes here.
-        if self._check_if_address_scopes_match(port, self.ex_gw_port):
+        address_scopes_match = self._check_if_address_scopes_match(
+            port, self.ex_gw_port)
+        if (address_scopes_match and
+            (self.agent_conf.agent_mode in
+                [lib_constants.L3_AGENT_MODE_DVR,
+                 lib_constants.L3_AGENT_MODE_DVR_SNAT])):
             self._delete_interface_route_in_fip_ns(port)
             self._delete_interface_routing_rule_in_router_ns(port)
             # If address scopes match there is no need to cleanup the
@@ -472,20 +485,28 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def enable_snat_redirect_rules(self, ex_gw_port):
         for p in self.internal_ports:
-            if not self._check_if_address_scopes_match(p, ex_gw_port):
-                gateway = self.get_snat_port_for_internal_port(p)
-                if not gateway:
-                    continue
+            gateway = self.get_snat_port_for_internal_port(p)
+            if not gateway:
+                continue
+            address_scopes_match = self._check_if_address_scopes_match(
+                p, ex_gw_port)
+            if (not address_scopes_match or
+                (self.agent_conf.agent_mode ==
+                    lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
                 internal_dev = self.get_internal_device_name(p['id'])
                 self._snat_redirect_add(gateway, p, internal_dev)
 
     def disable_snat_redirect_rules(self, ex_gw_port):
         for p in self.internal_ports:
-            if not self._check_if_address_scopes_match(p, ex_gw_port):
-                gateway = self.get_snat_port_for_internal_port(
-                    p, self.snat_ports)
-                if not gateway:
-                    continue
+            gateway = self.get_snat_port_for_internal_port(
+                p, self.snat_ports)
+            if not gateway:
+                continue
+            address_scopes_match = self._check_if_address_scopes_match(
+                p, ex_gw_port)
+            if (not address_scopes_match or
+                (self.agent_conf.agent_mode ==
+                    lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
                 internal_dev = self.get_internal_device_name(p['id'])
                 self._snat_redirect_remove(gateway, p, internal_dev)
 
