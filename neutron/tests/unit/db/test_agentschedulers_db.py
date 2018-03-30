@@ -269,6 +269,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         agents = self._list_agents()
         self.assertEqual(4, len(agents['agents']))
 
+    def test_list_router_ids_on_host_no_l3_agent(self):
+        l3_rpc_cb = l3_rpc.L3RpcCallback()
+        self.assertEqual(
+            [],
+            l3_rpc_cb.get_router_ids(self.adminContext, host="fake host"))
+
     def test_network_scheduling_on_network_creation(self):
         self._register_agent_states()
         with self.network() as net:

@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -284,8 +285,11 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         return self.get_sync_data(context, router_ids=router_ids, active=True)
 
     def list_router_ids_on_host(self, context, host, router_ids=None):
-        agent = self._get_agent_by_type_and_host(
-            context, constants.AGENT_TYPE_L3, host)
+        try:
+            agent = self._get_agent_by_type_and_host(
+                context, constants.AGENT_TYPE_L3, host)
+        except agent_exc.AgentNotFoundByTypeHost:
+            return []
         if not agentschedulers_db.services_available(agent.admin_state_up):
             return []
         return self._get_router_ids_for_agent(context, agent, router_ids)
