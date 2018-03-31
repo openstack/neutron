@@ -5,7 +5,7 @@
       jobs:
         - neutron-functional
         - neutron-fullstack
-        - neutron-rally-neutron
+        - neutron-rally-task
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
@@ -82,6 +82,7 @@
       - ^neutron/locale/.*$
       - ^releasenotes/.*$
 
+
 - job:
     name: neutron-fullstack-python35
     parent: legacy-dsvm-base
@@ -99,34 +100,18 @@
     voting: false
 
 - job:
-    name: neutron-rally-neutron
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-rally-neutron/run.yaml
-    post-run: playbooks/legacy/neutron-rally-neutron/post.yaml
+    name: neutron-rally-task
+    parent: rally-task-neutron
     timeout: 7800
+    vars:
+      devstack_plugins:
+        rally-openstack: https://git.openstack.org/openstack/rally-openstack
+        neutron: https://git.openstack.org/openstack/neutron
+      devstack_services:
+        neutron-trunk: true
+      rally_task: rally-jobs/task-neutron.yaml
     required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/aodh
-      - openstack/ceilometer
-      - openstack/diskimage-builder
-      - openstack/ironic
-      - openstack/magnum
-      - openstack/networking-bgpvpn
-      - openstack/neutron
-      - openstack/neutron-fwaas
-      - openstack/neutron-lbaas
-      - openstack/neutron-vpnaas
-      - openstack/octavia
-      - openstack/panko
-      - openstack/python-magnumclient
-      - openstack/python-senlinclient
-      - openstack/python-watcherclient
-      - openstack/python-zaqarclient
-      - openstack/rally
-      - openstack/senlin
-      - openstack/tripleo-image-elements
-      - openstack/watcher
-      - openstack/zaqar-ui
+      - openstack/rally-openstack
     irrelevant-files:
       - ^.*\.rst$
       - ^doc/.*$
