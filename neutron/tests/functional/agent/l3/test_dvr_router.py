@@ -1546,9 +1546,6 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         self.agent.conf.agent_mode = 'dvr'
         router_info = self.generate_dvr_router_info(
             enable_snat=True, enable_gw=True, enable_floating_ip=True)
-        fip_agent_gw_port = router_info[n_const.FLOATINGIP_AGENT_INTF_KEY]
-        self.mock_plugin_api.get_agent_gateway_port.return_value = (
-            fip_agent_gw_port[0])
         router_info[lib_constants.FLOATINGIP_KEY] = []
         if address_scopes:
             address_scope1 = {
@@ -1566,6 +1563,12 @@ class TestDvrRouter(framework.L3AgentTestFramework):
             address_scope1)
         router_info[lib_constants.INTERFACE_KEY][1]['address_scopes'] = (
             address_scope2)
+        # should have the same address_scopes as gw_port
+        fip_agent_gw_ports = router_info[n_const.FLOATINGIP_AGENT_INTF_KEY]
+        fip_agent_gw_ports[0]['address_scopes'] = (
+            router_info['gw_port']['address_scopes'])
+        self.mock_plugin_api.get_agent_gateway_port.return_value = (
+            fip_agent_gw_ports[0])
         router1 = self.manage_router(self.agent, router_info)
         fip_ns_name = router1.fip_ns.get_name()
         self.assertTrue(self._namespace_exists(router1.ns_name))
@@ -1600,7 +1603,7 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         # Now remove the gateway and validate if the respective interface
         # routes in router namespace is deleted respectively.
         self. _assert_interface_rules_on_gateway_remove(
-            router1, self.agent, address_scopes, fip_agent_gw_port[0],
+            router1, self.agent, address_scopes, fip_agent_gw_ports[0],
             rfp_device, fpr_device)
 
     def test_dvr_fip_and_router_namespace_rules_with_address_scopes_match(
@@ -1668,6 +1671,10 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         if gw_address_scope:
             router_info['gw_port']['address_scopes'] = {
                 str(lib_constants.IP_VERSION_4): gw_address_scope}
+            fip_agent_gw_ports = router_info[
+                n_const.FLOATINGIP_AGENT_INTF_KEY]
+            fip_agent_gw_ports[0]['address_scopes'] = router_info['gw_port'][
+                'address_scopes']
         router_info[lib_constants.INTERFACE_KEY][0]['address_scopes'] = (
             address_scope1)
         router_info[lib_constants.INTERFACE_KEY][1]['address_scopes'] = (
