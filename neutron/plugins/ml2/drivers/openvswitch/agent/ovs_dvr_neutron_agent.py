@@ -427,16 +427,27 @@ class OVSDVRNeutronAgent(object):
             br = self.tun_br
         # TODO(vivek) remove the IPv6 related flows once SNAT is not
         # used for IPv6 DVR.
-        if ip_version == 4:
-            if subnet_info['gateway_ip']:
-                br.install_dvr_process_ipv4(
-                    vlan_tag=lvm.vlan, gateway_ip=subnet_info['gateway_ip'])
+        port_net_info = (
+            self.plugin_rpc.get_network_info_for_id(
+                self.context, subnet_info.get('network_id')))
+        net_shared_only = (
+            port_net_info[0]['shared'] and
+            not port_net_info[0]['router:external'])
+        if net_shared_only:
+            LOG.debug("Not applying DVR rules to tunnel bridge because %s "
+                      "is a shared network", subnet_info.get('network_id'))
         else:
-            br.install_dvr_process_ipv6(
-                vlan_tag=lvm.vlan, gateway_mac=subnet_info['gateway_mac'])
-        br.install_dvr_process(
-            vlan_tag=lvm.vlan, vif_mac=port.vif_mac,
-            dvr_mac_address=self.dvr_mac_address)
+            if ip_version == 4:
+                if subnet_info['gateway_ip']:
+                    br.install_dvr_process_ipv4(
+                        vlan_tag=lvm.vlan,
+                        gateway_ip=subnet_info['gateway_ip'])
+            else:
+                br.install_dvr_process_ipv6(
+                    vlan_tag=lvm.vlan, gateway_mac=subnet_info['gateway_mac'])
+            br.install_dvr_process(
+                vlan_tag=lvm.vlan, vif_mac=port.vif_mac,
+                dvr_mac_address=self.dvr_mac_address)
 
         # the dvr router interface is itself a port, so capture it
         # queue this subnet to that port. A subnet appears only once as
