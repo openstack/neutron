@@ -25,6 +25,7 @@ from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 
+from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
@@ -50,6 +51,7 @@ class SegmentDbMixin(common_db_mixin.CommonDbMixin):
                db.SEGMENTATION_ID: segment_obj[db.SEGMENTATION_ID],
                'hosts': segment_obj['hosts'],
                'segment_index': segment_obj['segment_index']}
+        resource_extend.apply_funcs('segments', res, segment_obj.db_obj)
         return db_utils.resource_fields(res, fields)
 
     def _get_segment(self, context, segment_id):

@@ -122,6 +122,10 @@ class Segment(api_extensions.ExtensionDescriptor):
                                              controller,
                                              attr_map=resource_attributes)]
 
+    def update_attributes_map(self, attributes):
+        super(Segment, self).update_attributes_map(
+            attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
+
     def get_extended_resources(self, version):
         if version == "2.0":
             return RESOURCE_ATTRIBUTE_MAP
