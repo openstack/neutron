@@ -13,76 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api import converters
-from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import multiprovidernet as apidef
 from neutron_lib.api import extensions
-from neutron_lib.api import validators
-from neutron_lib import constants
-from neutron_lib import exceptions as nexception
-import webob.exc
-
-from neutron._i18n import _
-
-SEGMENTS = 'segments'
 
 
-class SegmentsSetInConjunctionWithProviders(nexception.InvalidInput):
-    message = _("Segments and provider values cannot both be set.")
-
-
-class SegmentsContainDuplicateEntry(nexception.InvalidInput):
-    message = _("Duplicate segment entry in request.")
-
-
-def _convert_and_validate_segments(segments, valid_values=None):
-    for segment in segments:
-        segment.setdefault(pnet.NETWORK_TYPE, constants.ATTR_NOT_SPECIFIED)
-        segment.setdefault(pnet.PHYSICAL_NETWORK, constants.ATTR_NOT_SPECIFIED)
-        segmentation_id = segment.get(pnet.SEGMENTATION_ID)
-        if segmentation_id:
-            segment[pnet.SEGMENTATION_ID] = converters.convert_to_int(
-                segmentation_id)
-        else:
-            segment[pnet.SEGMENTATION_ID] = constants.ATTR_NOT_SPECIFIED
-        if len(segment.keys()) != 3:
-            msg = (_("Unrecognized attribute(s) '%s'") %
-                   ', '.join(set(segment.keys()) -
-                             set([pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
-                                  pnet.SEGMENTATION_ID])))
-            raise webob.exc.HTTPBadRequest(msg)
-
-
-def check_duplicate_segments(segments, is_partial_func=None):
-    """Helper function checking duplicate segments.
-
-    If is_partial_funcs is specified and not None, then
-    SegmentsContainDuplicateEntry is raised if two segments are identical and
-    non partially defined (is_partial_func(segment) == False).
-    Otherwise SegmentsContainDuplicateEntry is raised if two segment are
-    identical.
-    """
-    if is_partial_func is not None:
-        segments = [s for s in segments if not is_partial_func(s)]
-    fully_specifieds = [tuple(sorted(s.items())) for s in segments]
-    if len(set(fully_specifieds)) != len(fully_specifieds):
-        raise SegmentsContainDuplicateEntry()
-
-validators.add_validator('convert_segments',
-                         _convert_and_validate_segments)
-
-EXTENDED_ATTRIBUTES_2_0 = {
-    'networks': {
-        SEGMENTS: {'allow_post': True, 'allow_put': True,
-                   'validate': {'type:convert_segments': None},
-                   'convert_list_to': converters.convert_kvp_list_to_dict,
-                   'default': constants.ATTR_NOT_SPECIFIED,
-                   'enforce_policy': True,
-                   'is_visible': True},
-    }
-}
-
-
-class Multiprovidernet(extensions.ExtensionDescriptor):
+class Multiprovidernet(extensions.APIExtensionDescriptor):
     """Extension class supporting multiple provider networks.
 
     This class is used by neutron's extension framework to make
@@ -95,25 +30,4 @@ class Multiprovidernet(extensions.ExtensionDescriptor):
     'segments' attribute.
     """
 
-    @classmethod
-    def get_name(cls):
-        return "Multi Provider Network"
-
-    @classmethod
-    def get_alias(cls):
-        return "multi-provider"
-
-    @classmethod
-    def get_description(cls):
-        return ("Expose mapping of virtual networks to multiple physical "
-                "networks")
-
-    @classmethod
-    def get_updated(cls):
-        return "2013-06-27T10:00:00-00:00"
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+    api_definition = apidef
