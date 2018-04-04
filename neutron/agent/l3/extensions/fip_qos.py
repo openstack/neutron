@@ -159,12 +159,17 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
                     if not router_info:
                         continue
                     device = self._get_rate_limit_ip_device(router_info)
-                    if not device:
+                    dvr_fip_device = self._get_dvr_fip_device(router_info)
+                    if not device and not dvr_fip_device:
                         LOG.debug("Router %s does not have a floating IP "
                                   "related device, skipping.", router_id)
                         continue
                     rates = self.get_policy_rates(qos_policy)
-                    self.process_ip_rates(fip, device, rates)
+                    if device:
+                        self.process_ip_rates(fip, device, rates)
+                    if dvr_fip_device:
+                        self.process_ip_rates(
+                            fip, dvr_fip_device, rates, with_cache=False)
             self.fip_qos_map.update_policy(qos_policy)
 
     def _process_reset_fip(self, fip):
@@ -282,12 +287,30 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
                                     "burst": FIP_DEFAULT_BURST}
         return rates
 
-    def process_ip_rates(self, fip, device, rates):
+    def process_ip_rates(self, fip, device, rates, with_cache=True):
         for direction in constants.VALID_DIRECTIONS:
             rate = rates.get(direction)
-            self.process_ip_rate_limit(
-                fip, direction, device,
-                rate['rate'], rate['burst'])
+            if with_cache:
+                self.process_ip_rate_limit(
+                    fip, direction, device,
+                    rate['rate'], rate['burst'])
+            else:
+                tc_wrapper = self._get_tc_wrapper(device)
+                tc_wrapper.set_ip_rate_limit(direction, fip,
+                                             rate['rate'], rate['burst'])
+
+    def _get_dvr_fip_device(self, router_info):
+        is_distributed_router = router_info.router.get('distributed')
+        agent_mode = router_info.agent_conf.agent_mode
+        if is_distributed_router and agent_mode == (
+                constants.L3_AGENT_MODE_DVR_SNAT):
+            gw_port = router_info.get_ex_gw_port()
+            if gw_port and router_info.fip_ns:
+                rfp_dev_name = router_info.get_external_device_interface_name(
+                    gw_port)
+                if router_info.router_namespace.exists() and rfp_dev_name:
+                    return ip_lib.IPDevice(
+                        rfp_dev_name, namespace=router_info.ns_name)
 
     def process_floating_ip_addresses(self, context, router_info):
         # Loop all the router floating ips, the corresponding floating IP tc
@@ -303,15 +326,30 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
         #        the namespace is snat-x, and the device is qg-device.
         # 3. for dvr local router, if agent_mod is dvr_no_external, no
         #    floating IP rules will be configured.
+        # 4. for dvr router in snat node, we should process the floating
+        #    IP QoS again in qrouter-namespace to cover the mixed deployment
+        #    with nova-compute scenario.
         is_distributed_router = router_info.router.get('distributed')
         agent_mode = router_info.agent_conf.agent_mode
+        LOG.debug("Start processing floating IP QoS for "
+                  "router %(router_id)s, router "
+                  "distributed: %(distributed)s, "
+                  "agent mode: %(agent_mode)s",
+                  {"router_id": router_info.router_id,
+                   "distributed": is_distributed_router,
+                   "agent_mode": agent_mode})
         if is_distributed_router and agent_mode == (
                 n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL):
             # condition 3: dvr local router and dvr_no_external agent
             return
+
         device = self._get_rate_limit_ip_device(router_info)
-        if not device:
+        dvr_fip_device = self._get_dvr_fip_device(router_info)
+        if not device and not dvr_fip_device:
+            LOG.debug("No relevant QoS device found "
+                      "for router: %s", router_info.router_id)
             return
+
         floating_ips = router_info.get_floating_ips()
         current_fips = self.fip_qos_map.router_floating_ips.get(
             router_info.router_id, set())
@@ -322,12 +360,25 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
             rates = self.get_fip_qos_rates(context,
                                            fip_addr,
                                            fip.get(qos_consts.QOS_POLICY_ID))
-            self.process_ip_rates(fip_addr, device, rates)
+            if device:
+                self.process_ip_rates(fip_addr, device, rates)
+
+            if dvr_fip_device:
+                # NOTE(liuyulong): for scenario 4 (mixed dvr_snat and compute
+                # node), because floating IP qos rates may have been
+                # processed in dvr snat-namespace, so here the cache was
+                # already set. We just install the rules to the device in
+                # qrouter-namesapce.
+                self.process_ip_rates(
+                    fip_addr, dvr_fip_device, rates, with_cache=False)
 
         self.fip_qos_map.router_floating_ips[router_info.router_id] = new_fips
         fips_removed = current_fips - new_fips
         for fip in fips_removed:
-            self._remove_fip_rate_limit(device, fip)
+            if device:
+                self._remove_fip_rate_limit(device, fip)
+            if dvr_fip_device:
+                self._remove_fip_rate_limit(dvr_fip_device, fip)
             self._process_reset_fip(fip)
 
     def _get_router_info(self, router_id):
