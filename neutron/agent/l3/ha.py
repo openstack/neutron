@@ -30,7 +30,8 @@ KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG = 4096
 
 TRANSLATION_MAP = {'master': constants.HA_ROUTER_STATE_ACTIVE,
                    'backup': constants.HA_ROUTER_STATE_STANDBY,
-                   'fault': constants.HA_ROUTER_STATE_STANDBY}
+                   'fault': constants.HA_ROUTER_STATE_STANDBY,
+                   'unknown': constants.HA_ROUTER_STATE_UNKNOWN}
 
 
 class KeepalivedStateChangeHandler(object):
