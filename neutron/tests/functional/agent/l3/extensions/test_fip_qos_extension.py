@@ -19,6 +19,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3.extensions import fip_qos
+from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
 from neutron.common import utils as common_utils
 from neutron.objects.qos import policy
@@ -244,6 +245,36 @@ class TestL3AgentFipQosExtensionDVR(
 
     def test_ha_dvr_dvr_fip_snat_qos(self):
         self._test_dvr_fip_snat_bound_agent_mode_dvr_snat(enable_ha=True)
+
+    def _assert_dvr_snat_qrouter_ns_rule_is_set(self, device, ip, rule):
+        tc_wrapper = self.fip_qos_ext._get_tc_wrapper(device)
+
+        def get_filter_id():
+            try:
+                return tc_wrapper.get_filter_id_for_ip(rule.direction, ip)
+            except exceptions.FilterIDForIPNotFound:
+                pass
+
+        common_utils.wait_until_true(get_filter_id)
+
+    def test_dvr_snat_qos_rules_set_in_qrouter(self):
+        self.agent.conf.agent_mode = constants.L3_AGENT_MODE_DVR_SNAT
+        router_info = self.generate_dvr_router_info(
+            enable_snat=True,
+            enable_gw=True,
+            enable_floating_ip=True,
+            qos_policy_id=TEST_POLICY_ID1)
+        ri = self.manage_router(self.agent, router_info)
+
+        gw_port = ri.get_ex_gw_port()
+        rfp_dev_name = ri.get_external_device_interface_name(gw_port)
+        if ri.router_namespace.exists():
+            dvr_fip_device = ip_lib.IPDevice(
+                    rfp_dev_name, namespace=ri.ns_name)
+            self._assert_dvr_snat_qrouter_ns_rule_is_set(
+                dvr_fip_device, '19.4.4.2', self.test_bw_limit_rule_1)
+            self._assert_dvr_snat_qrouter_ns_rule_is_set(
+                dvr_fip_device, '19.4.4.2', self.test_bw_limit_rule_2)
 
 
 class LinuxBridgeL3AgentFipQosExtensionTestCase(TestL3AgentFipQosExtension):
