@@ -113,8 +113,9 @@ class ItemAllocator(object):
         return self.allocations[key]
 
     def release(self, key):
-        self.pool.add(self.allocations.pop(key))
-        self._write_allocations()
+        if self.lookup(key):
+            self.pool.add(self.allocations.pop(key))
+            self._write_allocations()
 
     def _write_allocations(self):
         current = ["%s,%s\n" % (k, v) for k, v in self.allocations.items()]
