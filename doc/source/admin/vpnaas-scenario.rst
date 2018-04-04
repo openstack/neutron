@@ -79,7 +79,7 @@ IPsec connections. The endpoint groups separate the "what gets connected" from
 the "how to connect" for a VPN service, and can be used for different flavors
 of VPN, in the future.
 
-Refer `Multiple Local Subnets <https://docs.openstack.org/neutron-vpnaas/latest/devref/multiple-local-subnets.html>`__ for more detail.
+Refer `Multiple Local Subnets <https://docs.openstack.org/neutron-vpnaas/latest/contributor/multiple-local-subnets.html>`__ for more detail.
 
 Create the IKE policy, IPsec policy, VPN service,
 local endpoint group and peer endpoint group.
