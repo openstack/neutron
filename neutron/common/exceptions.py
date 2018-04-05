@@ -65,24 +65,6 @@ class NetworkQosBindingError(e.NeutronException):
                 "could not be created: %(db_error)s.")
 
 
-class PlacementEndpointNotFound(e.NotFound):
-    message = _("Placement API endpoint not found")
-
-
-class PlacementResourceProviderNotFound(e.NotFound):
-    message = _("Placement resource provider not found %(resource_provider)s.")
-
-
-class PlacementInventoryNotFound(e.NotFound):
-    message = _("Placement inventory not found for resource provider "
-                "%(resource_provider)s, resource class %(resource_class)s.")
-
-
-class PlacementAggregateNotFound(e.NotFound):
-    message = _("Aggregate not found for resource provider "
-                "%(resource_provider)s.")
-
-
 class PolicyRemoveAuthorizationError(e.NotAuthorized):
     message = _("Failed to remove provided policy %(policy_id)s "
                 "because you are not authorized.")
@@ -118,12 +100,6 @@ class FlatNetworkInUse(e.InUse):
                 "Physical network %(physical_network)s is in use.")
 
 
-class TenantNetworksDisabled(e.ServiceUnavailable):
-    # NOTE(vvargaszte): May be removed in the future as it is not used in
-    # Neutron, only in the Neutron plugin of OpenContrail.
-    message = _("Tenant network creation is not enabled.")
-
-
 class NoNetworkFoundInMaximumAllowedAttempts(e.ServiceUnavailable):
     message = _("Unable to create the network. "
                 "No available network found in maximum allowed attempts.")
@@ -151,18 +127,9 @@ class OverlappingAllocationPools(e.Conflict):
                 "%(pool_1)s %(pool_2)s for subnet %(subnet_cidr)s.")
 
 
-class PlacementInventoryUpdateConflict(e.Conflict):
-    message = _("Placement inventory update conflict for resource provider "
-                "%(resource_provider)s, resource class %(resource_class)s.")
-
-
 class OutOfBoundsAllocationPool(e.BadRequest):
     message = _("The allocation pool %(pool)s spans "
                 "beyond the subnet cidr %(subnet_cidr)s.")
-
-
-class MacAddressGenerationFailure(e.ServiceUnavailable):
-    message = _("Unable to generate unique mac on network %(net_id)s.")
 
 
 class BridgeDoesNotExist(e.NeutronException):
@@ -212,20 +179,6 @@ class GatewayConflictWithAllocationPools(e.InUse):
 class GatewayIpInUse(e.InUse):
     message = _("Current gateway ip %(ip_address)s already in use "
                 "by port %(port_id)s. Unable to update.")
-
-
-class NetworkVlanRangeError(e.NeutronException):
-    message = _("Invalid network VLAN range: '%(vlan_range)s' - '%(error)s'.")
-
-    def __init__(self, **kwargs):
-        # Convert vlan_range tuple to 'start:end' format for display
-        if isinstance(kwargs['vlan_range'], tuple):
-            kwargs['vlan_range'] = "%d:%d" % kwargs['vlan_range']
-        super(NetworkVlanRangeError, self).__init__(**kwargs)
-
-
-class PhysicalNetworkNameError(e.NeutronException):
-    message = _("Empty physical network name.")
 
 
 class NetworkVxlanPortRangeError(e.NeutronException):

@@ -33,7 +33,6 @@ from oslo_utils import excutils
 import webob.exc
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 
 
 INTERFACE_HASH_LEN = 6
@@ -88,7 +87,7 @@ def verify_tunnel_range(tunnel_range, tunnel_type):
 
 def raise_invalid_tag(vlan_str, vlan_range):
     """Raise an exception for invalid tag."""
-    raise n_exc.NetworkVlanRangeError(
+    raise exceptions.NetworkVlanRangeError(
         vlan_range=vlan_range,
         error=_("%s is not a valid VLAN tag") % vlan_str)
 
@@ -99,7 +98,7 @@ def verify_vlan_range(vlan_range):
         if not is_valid_vlan_tag(vlan_tag):
             raise_invalid_tag(str(vlan_tag), vlan_range)
     if vlan_range[1] < vlan_range[0]:
-        raise n_exc.NetworkVlanRangeError(
+        raise exceptions.NetworkVlanRangeError(
             vlan_range=vlan_range,
             error=_("End of VLAN range is less than start of VLAN range"))
 
@@ -109,12 +108,12 @@ def parse_network_vlan_range(network_vlan_range):
     entry = network_vlan_range.strip()
     if ':' in entry:
         if entry.count(':') != 2:
-            raise n_exc.NetworkVlanRangeError(
+            raise exceptions.NetworkVlanRangeError(
                 vlan_range=entry,
                 error=_("Need exactly two values for VLAN range"))
         network, vlan_min, vlan_max = entry.split(':')
         if not network:
-            raise n_exc.PhysicalNetworkNameError()
+            raise exceptions.PhysicalNetworkNameError()
 
         try:
             vlan_min = int(vlan_min)

@@ -25,6 +25,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.exceptions import placement as placement_exc
 from neutron_lib.plugins import directory
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exc
@@ -33,7 +34,6 @@ from oslo_log import log
 from oslo_utils import excutils
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db.models import segment as segment_model
@@ -166,7 +166,7 @@ class NovaSegmentNotifier(object):
         for event in batched_events:
             try:
                 event.method(event)
-            except n_exc.PlacementEndpointNotFound:
+            except placement_exc.PlacementEndpointNotFound:
                 LOG.debug('Placement API was not found when trying to '
                           'update routed networks IPv4 inventories')
                 return
@@ -190,7 +190,7 @@ class NovaSegmentNotifier(object):
     def _create_or_update_nova_inventory(self, event):
         try:
             self._update_nova_inventory(event)
-        except n_exc.PlacementResourceProviderNotFound:
+        except placement_exc.PlacementResourceProviderNotFound:
             self._create_nova_inventory(event.segment_id, event.total,
                                         event.reserved,
                                         event.segment_host_mappings)
@@ -208,7 +208,7 @@ class NovaSegmentNotifier(object):
                                                ipv4_inventory,
                                                IPV4_RESOURCE_CLASS)
                 return
-            except n_exc.PlacementInventoryUpdateConflict:
+            except placement_exc.PlacementInventoryUpdateConflict:
                 LOG.debug('Re-trying to update Nova IPv4 inventory for '
                           'routed network segment: %s', event.segment_id)
         LOG.error('Failed to update Nova IPv4 inventory for routed '
@@ -340,7 +340,7 @@ class NovaSegmentNotifier(object):
         for segment_id in event.segment_ids:
             try:
                 aggregate_id = self._get_aggregate_id(segment_id)
-            except n_exc.PlacementAggregateNotFound:
+            except placement_exc.PlacementAggregateNotFound:
                 LOG.info('When adding host %(host)s, aggregate not found '
                          'for routed network segment %(segment_id)s',
                          {'host': event.host, 'segment_id': segment_id})
