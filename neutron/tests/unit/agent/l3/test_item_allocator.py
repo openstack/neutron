@@ -131,6 +131,9 @@ class TestItemAllocator(base.BaseTestCase):
             allocation = a.allocate('deadbeef')
             write.reset_mock()
             a.release('deadbeef')
+            # Just try to release the item again to see if it
+            # throws any error
+            a.release('deadbeef')
 
         self.assertNotIn('deadbeef', a.allocations)
         self.assertIn(allocation, a.pool)
