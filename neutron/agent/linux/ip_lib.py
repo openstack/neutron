@@ -17,7 +17,6 @@ import os
 import re
 import time
 
-from debtcollector import removals
 import eventlet
 import netaddr
 from neutron_lib import constants
@@ -263,14 +262,6 @@ class IPWrapper(SubProcessBase):
             kwargs['vxlan_port'] = str(dstport)
         privileged.create_interface(name, self.namespace, "vxlan", **kwargs)
         return (IPDevice(name, namespace=self.namespace))
-
-    @removals.remove(version='Queens', removal_version='Rocky',
-                     message="This will be removed in the future. Please use "
-                             "'neutron.agent.linux.ip_lib."
-                             "list_network_namespaces' instead.")
-    @classmethod
-    def get_namespaces(cls):
-        return list_network_namespaces()
 
 
 class IPDevice(SubProcessBase):
