@@ -427,12 +427,21 @@ class OVSDVRNeutronAgent(object):
             br = self.tun_br
         # TODO(vivek) remove the IPv6 related flows once SNAT is not
         # used for IPv6 DVR.
-        port_net_info = (
-            self.plugin_rpc.get_network_info_for_id(
-                self.context, subnet_info.get('network_id')))
-        net_shared_only = (
-            port_net_info[0]['shared'] and
-            not port_net_info[0]['router:external'])
+        port_net_info = None
+        net_shared_only = False
+        try:
+            port_net_info = (
+                self.plugin_rpc.get_network_info_for_id(
+                    self.context, subnet_info.get('network_id')))
+        except oslo_messaging.RemoteError as e:
+            LOG.error('L2 agent could not get network_info_for_id '
+                      'due to RPC error. It happens when the server '
+                      'does not support this RPC API. Detailed message: '
+                      '%s', e)
+        if port_net_info:
+            net_shared_only = (
+                port_net_info[0]['shared'] and
+                not port_net_info[0]['router:external'])
         if net_shared_only:
             LOG.debug("Not applying DVR rules to tunnel bridge because %s "
                       "is a shared network", subnet_info.get('network_id'))
