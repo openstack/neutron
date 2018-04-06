@@ -116,6 +116,15 @@ class L3RpcCallback(object):
         router_ids = kwargs.get('router_ids')
         host = kwargs.get('host')
         context = neutron_context.get_admin_context()
+        routers = self._routers_to_sync(context, router_ids, host)
+        if extensions.is_extension_supported(
+            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
+            self._ensure_host_set_on_ports(context, host, routers)
+            # refresh the data structure after ports are bound
+            routers = self._routers_to_sync(context, router_ids, host)
+        return routers
+
+    def _routers_to_sync(self, context, router_ids, host=None):
         if extensions.is_extension_supported(
             self.l3plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
             routers = (
@@ -123,9 +132,6 @@ class L3RpcCallback(object):
                     context, host, router_ids))
         else:
             routers = self.l3plugin.get_sync_data(context, router_ids)
-        if extensions.is_extension_supported(
-            self.plugin, constants.PORT_BINDING_EXT_ALIAS):
-            self._ensure_host_set_on_ports(context, host, routers)
         return routers
 
     def _ensure_host_set_on_ports(self, context, host, routers):
