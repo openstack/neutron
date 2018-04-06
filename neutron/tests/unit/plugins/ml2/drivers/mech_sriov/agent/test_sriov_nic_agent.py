@@ -221,6 +221,27 @@ class TestSriovAgent(base.BaseTestCase):
                                                                   'mac4']))
         agent.treat_devices_removed.assert_called_with(set(['mac1']))
 
+    def test_treat_devices_added_updated_sends_host(self):
+        agent = self.agent
+        host = 'host1'
+        cfg.CONF.set_override('host', host)
+        agent.plugin_rpc = mock.Mock()
+        MAC = 'aa:bb:cc:dd:ee:ff'
+        device_details = {'device': MAC,
+                          'port_id': 'port123',
+                          'network_id': 'net123',
+                          'admin_state_up': True,
+                          'network_type': 'vlan',
+                          'segmentation_id': 100,
+                          'profile': {'pci_slot': '1:2:3.0'},
+                          'physical_network': 'physnet1',
+                          'port_security_enabled': False}
+        agent.plugin_rpc.get_devices_details_list.return_value = (
+                [device_details])
+        agent.treat_devices_added_updated([[MAC]])
+        agent.plugin_rpc.get_devices_details_list.assert_called_once_with(
+            mock.ANY, set([MAC]), mock.ANY, host)
+
     def test_treat_devices_added_updated_and_removed(self):
         agent = self.agent
         MAC1 = 'aa:bb:cc:dd:ee:ff'

@@ -279,7 +279,7 @@ class SriovNicSwitchAgent(object):
         try:
             macs_list = set([device_info[0] for device_info in devices_info])
             devices_details_list = self.plugin_rpc.get_devices_details_list(
-                self.context, macs_list, self.agent_id)
+                self.context, macs_list, self.agent_id, self.conf.host)
         except Exception as e:
             LOG.debug("Unable to get port details for devices "
                       "with MAC addresses %(devices)s: %(e)s",
