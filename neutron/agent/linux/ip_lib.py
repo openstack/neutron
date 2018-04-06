@@ -667,6 +667,7 @@ class IpAddrCommand(IpDeviceCommandBase):
             if addr_info['dadfailed']:
                 raise AddressNotReady(
                     address=address, reason=_('Duplicate address detected'))
+            return False
         errmsg = _("Exceeded %s second limit waiting for "
                    "address to leave the tentative state.") % wait_time
         common_utils.wait_until_true(
@@ -702,9 +703,9 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         self._as_root([ip_version], tuple(args))
 
-    def _run_as_root_detect_device_not_found(self, *args, **kwargs):
+    def _run_as_root_detect_device_not_found(self, options, args):
         try:
-            return self._as_root(*args, **kwargs)
+            return self._as_root(options, tuple(args))
         except RuntimeError as rte:
             with excutils.save_and_reraise_exception() as ctx:
                 if "Cannot find device" in str(rte):
@@ -717,7 +718,7 @@ class IpRouteCommand(IpDeviceCommandBase):
                 'via', gateway]
         args += self._dev_args()
         args += self._table_args(table)
-        self._run_as_root_detect_device_not_found([ip_version], tuple(args))
+        self._run_as_root_detect_device_not_found([ip_version], args)
 
     def _parse_routes(self, ip_version, output, **kwargs):
         for line in output.splitlines():
@@ -806,7 +807,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         for k, v in kwargs.items():
             args += [k, v]
-        self._run_as_root_detect_device_not_found([ip_version], tuple(args))
+        self._run_as_root_detect_device_not_found([ip_version], args)
 
     def delete_route(self, cidr, via=None, table=None, **kwargs):
         ip_version = common_utils.get_ip_version(cidr)
@@ -817,7 +818,7 @@ class IpRouteCommand(IpDeviceCommandBase):
         args += self._table_args(table)
         for k, v in kwargs.items():
             args += [k, v]
-        self._run_as_root_detect_device_not_found([ip_version], tuple(args))
+        self._run_as_root_detect_device_not_found([ip_version], args)
 
 
 class IPRoute(SubProcessBase):
@@ -880,9 +881,8 @@ class IpNetnsCommand(IpCommandBase):
                 log_fail_as_error=True, extra_ok_codes=None,
                 run_as_root=False):
         ns_params = []
-        kwargs = {'run_as_root': run_as_root}
         if self._parent.namespace:
-            kwargs['run_as_root'] = True
+            run_as_root = True
             ns_params = ['ip', 'netns', 'exec', self._parent.namespace]
 
         env_params = []
@@ -892,7 +892,8 @@ class IpNetnsCommand(IpCommandBase):
         cmd = ns_params + env_params + list(cmds)
         return utils.execute(cmd, check_exit_code=check_exit_code,
                              extra_ok_codes=extra_ok_codes,
-                             log_fail_as_error=log_fail_as_error, **kwargs)
+                             log_fail_as_error=log_fail_as_error,
+                             run_as_root=run_as_root)
 
     def exists(self, name):
         return network_namespace_exists(name)
