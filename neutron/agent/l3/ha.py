@@ -93,11 +93,14 @@ class AgentMixin(object):
 
     def check_ha_state_for_router(self, router_id, current_state):
         ri = self._get_router_info(router_id)
-        if ri and current_state != TRANSLATION_MAP[ri.ha_state]:
+        if not ri:
+            return
+        ha_state = ri.ha_state
+        if current_state != TRANSLATION_MAP[ha_state]:
             LOG.debug("Updating server with state %(state)s for router "
                       "%(router_id)s", {'router_id': router_id,
-                                        'state': ri.ha_state})
-            self.state_change_notifier.queue_event((router_id, ri.ha_state))
+                                        'state': ha_state})
+            self.state_change_notifier.queue_event((router_id, ha_state))
 
     def _start_keepalived_notifications_server(self):
         state_change_server = (
