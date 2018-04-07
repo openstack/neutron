@@ -13,7 +13,6 @@
 #    under the License.
 
 import mock
-import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from oslo_config import cfg
@@ -361,7 +360,8 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri = self._create_router(router)
         ri.ex_gw_port = ri.router['gw_port']
         subnet_id = _uuid()
-        agent_gw_port = {'fixed_ips': [{'ip_address': '20.0.0.30',
+        fixed_ip = '20.0.0.30'
+        agent_gw_port = {'fixed_ips': [{'ip_address': fixed_ip,
                                         'prefixlen': 24,
                                         'subnet_id': subnet_id}],
                          'subnets': [{'id': subnet_id,
@@ -373,7 +373,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         fip_cidr = '11.22.33.44/24'
         ri.fip_ns = mock.Mock()
         ri.fip_ns.get_name.return_value = 'fip_ns_name'
-        ri.floating_ips_dict['11.22.33.44'] = FIP_PRI
+        ri.floating_ips_dict['11.22.33.44'] = (fixed_ip, FIP_PRI)
         ri.fip_2_rtr = '11.22.33.42'
         ri.rtr_2_fip = '11.22.33.40'
         ri.fip_ns.agent_gateway_port = agent_gw_port
@@ -382,7 +382,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri.fip_ns.local_subnets = mock.Mock()
         ri.floating_ip_removed_dist(fip_cidr)
         mIPRule().rule.delete.assert_called_with(
-            ip=str(netaddr.IPNetwork(fip_cidr).ip), table=16, priority=FIP_PRI)
+            ip=fixed_ip, table=16, priority=FIP_PRI)
         mIPDevice().route.delete_route.assert_called_with(fip_cidr, str(s.ip))
         ri.fip_ns.local_subnets.allocate.assert_not_called()
 
@@ -391,20 +391,21 @@ class TestDvrRouterOperations(base.BaseTestCase):
         router = mock.MagicMock()
         ri = self._create_router(router)
         floating_ip_address = '15.1.2.3'
+        fixed_ip = '192.168.0.1'
         fip = {'floating_ip_address': floating_ip_address,
-               'fixed_ip_address': '192.168.0.1'}
-        ri.floating_ips_dict['15.1.2.3'] = FIP_PRI
+               'fixed_ip_address': fixed_ip}
+        ri.floating_ips_dict['15.1.2.3'] = (fixed_ip, FIP_PRI)
         ri.fip_ns = mock.Mock()
         ri.fip_ns.allocate_rule_priority.return_value = FIP_PRI
         ri.floating_ip_moved_dist(fip)
 
         mIPRule().rule.delete.assert_called_once_with(
-            ip=floating_ip_address, table=16, priority=FIP_PRI)
+            ip=fixed_ip, table=16, priority=FIP_PRI)
         ri.fip_ns.deallocate_rule_priority.assert_called_once_with(
             floating_ip_address)
         ri.fip_ns.allocate_rule_priority.assert_called_once_with(
             floating_ip_address)
-        mIPRule().rule.add.assert_called_with(ip='192.168.0.1',
+        mIPRule().rule.add.assert_called_with(ip=fixed_ip,
                                               table=16,
                                               priority=FIP_PRI)
 
