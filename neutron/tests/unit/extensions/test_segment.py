@@ -34,6 +34,7 @@ from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.common import exceptions as neutron_exc
+from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
@@ -1459,6 +1460,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
 
     def setUp(self):
+        ml2_config.register_ml2_plugin_opts()
+        driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override('mechanism_drivers',
                               self._mechanism_drivers,
                               group='ml2')
