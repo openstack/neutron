@@ -547,20 +547,36 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         """
         with context.session.begin(subtransactions=True):
             bindings = self.get_ha_router_port_bindings(context, [router_id])
-            dead_agents = []
-            active = [binding for binding in bindings
-                      if binding.state == n_const.HA_ROUTER_STATE_ACTIVE]
-            # Check dead agents only if we have more then one active agent
-            if len(active) > 1:
-                dead_agents = [binding.agent for binding in active
-                               if not (binding.agent.is_active and
-                                       binding.agent.admin_state_up)]
-                for dead_agent in dead_agents:
-                    self.update_routers_states(
-                        context,
-                        {router_id: n_const.HA_ROUTER_STATE_STANDBY},
-                        dead_agent.host)
-        if dead_agents:
+            router_active_agents_dead = []
+            router_standby_agents_dead = []
+            # List agents where router is active and agent is dead
+            # and agents where router is standby and agent is dead
+            for binding in bindings:
+                if not (binding.agent.is_active
+                        and binding.agent.admin_state_up):
+                    if binding.state == n_const.HA_ROUTER_STATE_ACTIVE:
+                        router_active_agents_dead.append(binding.agent)
+                    elif binding.state == n_const.HA_ROUTER_STATE_STANDBY:
+                        router_standby_agents_dead.append(binding.agent)
+            if router_active_agents_dead:
+                # Just check if all l3_agents are down
+                # then assuming some communication issue
+                if (len(router_active_agents_dead) +
+                        len(router_standby_agents_dead) == len(bindings)):
+                    # Make router status as unknown because
+                    # agent communication may be issue but router
+                    # may still be active. We do not know the
+                    # exact status of router.
+                    state = n_const.HA_ROUTER_STATE_UNKNOWN
+                else:
+                    # Make router status as standby on all dead agents
+                    # as some other agents are alive , router can become
+                    # active on them after some time
+                    state = n_const.HA_ROUTER_STATE_STANDBY
+                for dead_agent in router_active_agents_dead:
+                    self.update_routers_states(context, {router_id: state},
+                                               dead_agent.host)
+        if router_active_agents_dead:
             return self.get_ha_router_port_bindings(context, [router_id])
         return bindings
 

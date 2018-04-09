@@ -1,0 +1,8 @@
+---
+features:
+  - Added new ``unknown`` state for HA routers. Sometimes l3 agents may not be
+    able to update health status to Neutron server due to communication issues.
+    During that time the server may not know whether HA routers hosted by that
+    agent are active or standby.
+fixes:
+  - Fixes bug `1682145 <https://launchpad.net/bugs/1682145>`_.
