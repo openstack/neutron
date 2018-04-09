@@ -25,6 +25,7 @@ import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import dvr_fip_ns
+from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
@@ -1515,19 +1516,20 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
     def _assert_interface_rules_on_gateway_remove(
         self, router, agent, address_scopes, agent_gw_port,
-        rfp_device, fpr_device):
+        rfp_device, fpr_device, no_external=False):
 
         router.router[n_const.SNAT_ROUTER_INTF_KEY] = []
         router.router['gw_port'] = ""
         router.router['gw_port_host'] = ""
         self.agent._process_updated_router(router.router)
         router_updated = self.agent.router_info[router.router['id']]
-        self.assertFalse(rfp_device.exists())
-        self.assertFalse(fpr_device.exists())
         self.assertTrue(self._namespace_exists(router_updated.ns_name))
-        self._assert_fip_namespace_deleted(
-            agent_gw_port, assert_ovs_interface=False)
-        if not address_scopes:
+        if not no_external:
+            self.assertFalse(rfp_device.exists())
+            self.assertFalse(fpr_device.exists())
+            self._assert_fip_namespace_deleted(
+                agent_gw_port, assert_ovs_interface=False)
+        if not address_scopes or no_external:
             ns_ipr = ip_lib.IPRule(namespace=router_updated.ns_name)
             ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
             ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
@@ -1614,6 +1616,56 @@ class TestDvrRouter(framework.L3AgentTestFramework):
     def test_dvr_fip_and_router_namespace_rules_with_address_scopes_mismatch(
         self):
         self._setup_dvr_router_for_fast_path_exit(address_scopes=False)
+
+    @mock.patch.object(dvr_local_router.DvrLocalRouter,
+                       '_add_interface_routing_rule_to_router_ns')
+    @mock.patch.object(dvr_local_router.DvrLocalRouter,
+                       '_add_interface_route_to_fip_ns')
+    def test_dvr_no_external_router_namespace_rules_with_address_scopes_match(
+        self, mock_add_interface_route_rule,
+        mock_add_fip_interface_route_rule):
+        """Test to validate the router namespace routes.
+
+        This test validates the router namespace routes
+        that are based on the address scopes.
+        If the address scopes of internal network and external network
+        matches, the traffic will be forwarded to SNAT namespace
+        for agents that don't have external connectivity or configured
+        as DVR_NO_EXTERNAL.
+        """
+        self.agent.conf.agent_mode = (
+            lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)
+        router_info = self.generate_dvr_router_info(
+            enable_snat=True, enable_gw=True, enable_floating_ip=True)
+        router_info[lib_constants.FLOATINGIP_KEY] = []
+        address_scope1 = {
+            str(lib_constants.IP_VERSION_4): 'scope1'}
+        address_scope2 = {
+            str(lib_constants.IP_VERSION_4): 'scope1'}
+        router_info['gw_port']['address_scopes'] = {
+            str(lib_constants.IP_VERSION_4): 'scope1'}
+        router_info[lib_constants.INTERFACE_KEY][0]['address_scopes'] = (
+            address_scope1)
+        router_info[lib_constants.INTERFACE_KEY][1]['address_scopes'] = (
+            address_scope2)
+        router1 = self.manage_router(self.agent, router_info)
+        self.assertTrue(self._namespace_exists(router1.ns_name))
+        self.assertFalse(mock_add_interface_route_rule.called)
+        self.assertFalse(mock_add_fip_interface_route_rule.called)
+        # Check if any snat redirect rules in the router namespace exist.
+        ns_ipr = ip_lib.IPRule(namespace=router1.ns_name)
+        ip4_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_4)
+        ip6_rules_list = ns_ipr.rule.list_rules(lib_constants.IP_VERSION_6)
+        # Just make sure the basic set of rules are there in the router
+        # namespace
+        self.assertEqual(5, len(ip4_rules_list))
+        self.assertEqual(2, len(ip6_rules_list))
+
+        # Now remove the gateway and validate if the respective interface
+        # routes in router namespace is deleted respectively.
+        self. _assert_interface_rules_on_gateway_remove(
+            router1, self.agent, True, mock.ANY,
+            mock.ANY, mock.ANY, True)
 
     def test_dvr_router_gateway_update_to_none(self):
         self.agent.conf.agent_mode = 'dvr_snat'
