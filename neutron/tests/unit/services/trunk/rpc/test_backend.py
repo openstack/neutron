@@ -20,6 +20,7 @@ from neutron.services.trunk import callbacks
 from neutron.services.trunk import constants as trunk_consts
 from neutron.services.trunk.rpc import backend
 from neutron.tests import base
+from neutron.tests import tools
 
 
 class ServerSideRpcBackendTest(base.BaseTestCase):
@@ -35,18 +36,26 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
     def test___init__(self,):
         test_obj = backend.ServerSideRpcBackend()
 
-        calls = [mock.call(test_obj.process_event,
-                           trunk_consts.TRUNK,
-                           events.AFTER_CREATE),
-                 mock.call(test_obj.process_event,
-                           trunk_consts.TRUNK,
-                           events.AFTER_DELETE),
-                 mock.call(test_obj.process_event,
-                           trunk_consts.SUBPORTS,
-                           events.AFTER_CREATE),
-                 mock.call(test_obj.process_event,
-                           trunk_consts.SUBPORTS,
-                           events.AFTER_DELETE)
+        calls = [mock.call(
+                    *tools.get_subscribe_args(
+                        test_obj.process_event,
+                        trunk_consts.TRUNK,
+                        events.AFTER_CREATE)),
+                 mock.call(
+                    *tools.get_subscribe_args(
+                        test_obj.process_event,
+                        trunk_consts.TRUNK,
+                        events.AFTER_DELETE)),
+                 mock.call(
+                    *tools.get_subscribe_args(
+                        test_obj.process_event,
+                        trunk_consts.SUBPORTS,
+                        events.AFTER_CREATE)),
+                 mock.call(
+                    *tools.get_subscribe_args(
+                        test_obj.process_event,
+                        trunk_consts.SUBPORTS,
+                        events.AFTER_DELETE))
                  ]
         self._mgr.subscribe.assert_has_calls(calls, any_order=True)
 
