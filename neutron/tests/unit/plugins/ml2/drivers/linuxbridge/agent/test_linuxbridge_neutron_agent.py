@@ -387,7 +387,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             de_fn.return_value = False
             vxlan_dev = FakeIpDevice()
             with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
-                    mock.patch.object(vxlan_dev.link, 'set_mtu') as set_mtu_fn,\
+                    mock.patch.object(vxlan_dev.link,
+                                      'set_mtu') as set_mtu_fn,\
                     mock.patch.object(ip_lib, 'get_device_mtu',
                             return_value=physical_mtu),\
                     mock.patch.object(self.lbm.ip, 'add_vxlan',
