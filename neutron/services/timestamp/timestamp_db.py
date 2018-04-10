@@ -47,8 +47,8 @@ def _change_since_result_filter_hook(query, filters):
     query = query.join(standard_attr.StandardAttribute,
                        target_model_class.standard_attr_id ==
                        standard_attr.StandardAttribute.id).filter(
-                       standard_attr.StandardAttribute.updated_at
-                       >= changed_since)
+                       standard_attr.StandardAttribute.updated_at >=
+                       changed_since)
     return query
 
 
@@ -57,8 +57,8 @@ def _update_timestamp(session, context, instances):
 
     while objs_list:
         obj = objs_list.pop()
-        if (isinstance(obj, standard_attr.HasStandardAttributes)
-            and obj.standard_attr_id):
+        if (isinstance(obj, standard_attr.HasStandardAttributes) and
+            obj.standard_attr_id):
             obj.updated_at = timeutils.utcnow()
 
 

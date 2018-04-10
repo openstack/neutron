@@ -445,8 +445,8 @@ class TunnelRpcCallbackMixin(object):
                 host_endpoint = driver.obj.get_endpoint_by_host(host)
                 ip_endpoint = driver.obj.get_endpoint_by_ip(tunnel_ip)
 
-                if (ip_endpoint and ip_endpoint.host is None
-                    and host_endpoint is None):
+                if (ip_endpoint and ip_endpoint.host is None and
+                        host_endpoint is None):
                     driver.obj.delete_endpoint(ip_endpoint.ip_address)
                 elif (ip_endpoint and ip_endpoint.host != host):
                     LOG.info(

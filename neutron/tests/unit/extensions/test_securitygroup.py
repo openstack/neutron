@@ -172,8 +172,8 @@ class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
         for r in res['security_group_rules']:
             if (r['direction'] == 'egress' and not r['port_range_max'] and
-                    not r['port_range_min'] and not r['protocol']
-                    and not r['remote_ip_prefix']):
+                    not r['port_range_min'] and not r['protocol'] and
+                    not r['remote_ip_prefix']):
                 self._delete('security-group-rules', r['id'])
 
     def _assert_sg_rule_has_kvs(self, security_group_rule, expected_kvs):

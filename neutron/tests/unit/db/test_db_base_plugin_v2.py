@@ -4318,9 +4318,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                               'fe80::/64', ip_version=6,
                                               ipv6_ra_mode=addr_mode,
                                               ipv6_address_mode=addr_mode)
-            if (insert_db_reference_error or insert_address_allocated
-                or device_owner == constants.DEVICE_OWNER_ROUTER_SNAT
-                or device_owner in constants.ROUTER_INTERFACE_OWNERS):
+            if (insert_db_reference_error or insert_address_allocated or
+                device_owner == constants.DEVICE_OWNER_ROUTER_SNAT or
+                device_owner in constants.ROUTER_INTERFACE_OWNERS):
                 # DVR SNAT, router interfaces and DHCP ports should not have
                 # been updated with addresses from the new auto-address subnet
                 self.assertEqual(1, len(port['port']['fixed_ips']))

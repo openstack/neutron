@@ -772,8 +772,8 @@ class RouterInfo(object):
     def _delete_stale_external_devices(self, interface_name):
         existing_devices = self._get_existing_devices()
         stale_devs = [dev for dev in existing_devices
-                      if dev.startswith(EXTERNAL_DEV_PREFIX)
-                      and dev != interface_name]
+                      if dev.startswith(EXTERNAL_DEV_PREFIX) and
+                      dev != interface_name]
         for stale_dev in stale_devs:
             LOG.debug('Deleting stale external router device: %s', stale_dev)
             self.agent.pd.remove_gw_interface(self.router['id'])
@@ -1053,8 +1053,8 @@ class RouterInfo(object):
             iptables = iptables_manager.get_tables(ip_version)
             iptables['mangle'].empty_chain('scope')
             iptables['filter'].empty_chain('scope')
-            dont_block_external = (ip_version == lib_constants.IP_VERSION_4
-                                   and self._snat_enabled and external_port)
+            dont_block_external = (ip_version == lib_constants.IP_VERSION_4 and
+                                   self._snat_enabled and external_port)
             for device_name, mark in scopemarks.items():
                 # Add address scope iptables rule
                 iptables['mangle'].add_rule(

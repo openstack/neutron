@@ -23,9 +23,9 @@ def check_subnet_ip(cidr, ip_address):
     net = netaddr.IPNetwork(cidr)
     # Check that the IP is valid on subnet. This cannot be the
     # network or the broadcast address (which exists only in IPv4)
-    return (ip != net.network
-            and (net.version == 6 or ip != net[-1])
-            and net.netmask & ip == net.network)
+    return (ip != net.network and
+            (net.version == 6 or ip != net[-1]) and
+            net.netmask & ip == net.network)
 
 
 def check_gateway_invalid_in_subnet(cidr, gateway):

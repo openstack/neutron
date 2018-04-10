@@ -115,8 +115,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
 
     def _is_this_snat_host(self):
-        return (self.agent_conf.agent_mode
-                == constants.L3_AGENT_MODE_DVR_SNAT)
+        return self.agent_conf.agent_mode == constants.L3_AGENT_MODE_DVR_SNAT
 
     def _dvr_internal_network_removed(self, port):
         super(DvrEdgeHaRouter, self)._dvr_internal_network_removed(port)

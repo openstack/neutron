@@ -280,8 +280,8 @@ class UnixDomainMetadataProxy(object):
         mode = self.conf.metadata_proxy_socket_mode
         if mode == config.DEDUCE_MODE:
             user = self.conf.metadata_proxy_user
-            if (not user or user == '0' or user == 'root'
-                    or agent_utils.is_effective_user(user)):
+            if (not user or user == '0' or user == 'root' or
+                    agent_utils.is_effective_user(user)):
                 # user is agent effective user or root => USER_MODE
                 mode = config.USER_MODE
             else:

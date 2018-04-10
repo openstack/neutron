@@ -50,9 +50,9 @@ class _PortRange(object):
 
     @property
     def can_merge(self):
-        return (self.prev_ref
-                and self.possible_mask_base == self.prev_ref.possible_mask_base
-                and self.mask == self.prev_ref.mask)
+        return (self.prev_ref and
+                self.possible_mask_base == self.prev_ref.possible_mask_base and
+                self.mask == self.prev_ref.mask)
 
     def shake(self):
         """Try to merge ranges created earlier.

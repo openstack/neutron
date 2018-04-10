@@ -351,8 +351,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if not local_vlan:
                 continue
             net_uuid = local_vlan_map.get('net_uuid')
-            if (net_uuid and net_uuid not in self._local_vlan_hints
-                and local_vlan != constants.DEAD_VLAN_TAG):
+            if (net_uuid and net_uuid not in self._local_vlan_hints and
+                    local_vlan != constants.DEAD_VLAN_TAG):
                 self.available_local_vlans.remove(local_vlan)
                 self._local_vlan_hints[local_vlan_map['net_uuid']] = \
                     local_vlan
@@ -1367,8 +1367,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         for lvm in self.vlan_manager:
             for port in lvm.vif_ports.values():
                 if (
-                    port.port_name in port_tags
-                    and port_tags[port.port_name] != lvm.vlan
+                    port.port_name in port_tags and
+                    port_tags[port.port_name] != lvm.vlan
                 ):
                     LOG.info(
                         "Port '%(port_name)s' has lost "
@@ -2029,8 +2029,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             devices_need_retry = (any(failed_devices.values()) or
                 any(failed_ancillary_devices.values()) or
                 ports_not_ready_yet)
-            if (self._agent_has_updates(polling_manager) or sync
-                    or devices_need_retry):
+            if (self._agent_has_updates(polling_manager) or sync or
+                    devices_need_retry):
                 try:
                     LOG.debug("Agent rpc_loop - iteration:%(iter_num)d - "
                               "starting polling. Elapsed:%(elapsed).3f",
@@ -2149,8 +2149,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             rpc_api.client.set_max_timeout(timeout)
 
     def _check_agent_configurations(self):
-        if (self.enable_distributed_routing and self.enable_tunneling
-            and not self.l2_pop):
+        if (self.enable_distributed_routing and self.enable_tunneling and
+            not self.l2_pop):
 
             raise ValueError(_("DVR deployments for VXLAN/GRE/Geneve "
                                "underlays require L2-pop to be enabled, "

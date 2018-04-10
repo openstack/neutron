@@ -63,9 +63,9 @@ class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):
         for opt in returned:
             name = opt['opt_name']
             for exp in expected:
-                if (name == exp['opt_name']
-                    and opt['ip_version'] == exp.get(
-                            'ip_version', 4)):
+                if (name == exp['opt_name'] and
+                    opt['ip_version'] == exp.get(
+                        'ip_version', 4)):
                     val = exp['opt_value']
                     break
             self.assertEqual(val, opt['opt_value'])

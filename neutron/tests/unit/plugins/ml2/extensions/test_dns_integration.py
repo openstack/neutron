@@ -170,11 +170,9 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
             else:
                 self.assertFalse(dns_data_db['current_dns_domain'])
             records_v4 = [ip['ip_address'] for ip in port['fixed_ips']
-                          if netaddr.IPAddress(ip['ip_address']).version
-                          == 4]
+                          if netaddr.IPAddress(ip['ip_address']).version == 4]
             records_v6 = [ip['ip_address'] for ip in port['fixed_ips']
-                          if netaddr.IPAddress(ip['ip_address']).version
-                          == 6]
+                          if netaddr.IPAddress(ip['ip_address']).version == 6]
             expected = []
             expected_delete = []
             if records_v4:
