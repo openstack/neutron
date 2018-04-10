@@ -113,32 +113,24 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         """Process ports that are trusted and shouldn't be filtered."""
         for port in port_ids:
             if port not in self.trusted_ports:
-                self._add_trusted_port_rules(port)
+                jump_rule = self._generate_trusted_port_rules(port)
+                self._add_rules_to_chain_v4v6(
+                    'FORWARD', jump_rule, jump_rule, comment=ic.TRUSTED_ACCEPT)
                 self.trusted_ports.append(port)
 
     def remove_trusted_ports(self, port_ids):
         for port in port_ids:
             if port in self.trusted_ports:
-                self._remove_trusted_port_rules(port)
+                jump_rule = self._generate_trusted_port_rules(port)
+                self._remove_rule_from_chain_v4v6(
+                    'FORWARD', jump_rule, jump_rule)
                 self.trusted_ports.remove(port)
 
-    def _add_trusted_port_rules(self, port):
-        device = self._get_device_name(port)
-        jump_rule = [
-            '-m physdev --%s %s --physdev-is-bridged -j ACCEPT' % (
-                self.IPTABLES_DIRECTION[constants.INGRESS_DIRECTION],
-                device)]
-        self._add_rules_to_chain_v4v6(
-            'FORWARD', jump_rule, jump_rule, comment=ic.TRUSTED_ACCEPT)
-
-    def _remove_trusted_port_rules(self, port):
-        device = self._get_device_name(port)
-
-        jump_rule = [
-            '-m physdev --%s %s --physdev-is-bridged -j ACCEPT' % (
-                self.IPTABLES_DIRECTION[constants.INGRESS_DIRECTION],
-                device)]
-        self._remove_rule_from_chain_v4v6('FORWARD', jump_rule, jump_rule)
+    def _generate_trusted_port_rules(self, port):
+        rt = '-m physdev --%%s %s --physdev-is-bridged -j ACCEPT' % (
+            self._get_device_name(port))
+        return [rt % (self.IPTABLES_DIRECTION[constants.INGRESS_DIRECTION]),
+                rt % (self.IPTABLES_DIRECTION[constants.EGRESS_DIRECTION])]
 
     def update_security_group_rules(self, sg_id, sg_rules):
         LOG.debug("Update rules of security group (%s)", sg_id)
@@ -288,14 +280,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         self.iptables.ipv6['filter'].remove_chain(chain_name)
 
     def _add_rules_to_chain_v4v6(self, chain_name, ipv4_rules, ipv6_rules,
-                                 comment=None):
+                                 top=False, comment=None):
         for rule in ipv4_rules:
             self.iptables.ipv4['filter'].add_rule(chain_name, rule,
-                                                  comment=comment)
+                                                  top=top, comment=comment)
 
         for rule in ipv6_rules:
             self.iptables.ipv6['filter'].add_rule(chain_name, rule,
-                                                  comment=comment)
+                                                  top=top, comment=comment)
 
     def _get_device_name(self, port):
         if not isinstance(port, dict):
@@ -338,8 +330,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                      '-j $%s' % (self.IPTABLES_DIRECTION[direction],
                                  device,
                                  SG_CHAIN)]
+        # Security group chain has to be applied before unfiltered
+        # or trusted ports
         self._add_rules_to_chain_v4v6('FORWARD', jump_rule, jump_rule,
-                                      comment=ic.VM_INT_SG)
+                                      top=True, comment=ic.VM_INT_SG)
 
         # jump to the chain based on the device
         jump_rule = ['-m physdev --%s %s --physdev-is-bridged '
