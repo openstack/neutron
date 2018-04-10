@@ -27,7 +27,7 @@ class TestTimeStamp(base.BaseAdminNetworkTest):
 
     required_extensions = ["standard-attr-timestamp"]
 
-    ## attributes for subnetpool
+    # attributes for subnetpool
     min_prefixlen = '28'
     max_prefixlen = '31'
     _ip_version = 4
