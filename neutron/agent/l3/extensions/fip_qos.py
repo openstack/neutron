@@ -172,7 +172,7 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
     def _register_rpc_consumers(self):
         registry.register(self._handle_notification, resources.QOS_POLICY)
 
-        self._connection = n_rpc.create_connection()
+        self._connection = n_rpc.Connection()
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]
         topic = resources_rpc.resource_type_versioned_topic(
             resources.QOS_POLICY)

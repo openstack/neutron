@@ -279,7 +279,7 @@ class Service(service.Service):
     def start(self):
         super(Service, self).start()
 
-        self.conn = create_connection()
+        self.conn = Connection()
         LOG.debug("Creating Consumer connection for Service %s",
                   self.topic)
 
@@ -327,7 +327,3 @@ class Connection(object):
             server.stop()
         for server in self.servers:
             server.wait()
-
-
-# TODO(boden): remove create_connection
-create_connection = Connection

@@ -141,7 +141,7 @@ class FipQosExtensionInitializeTestCase(QosExtensionBaseTestCase):
     @mock.patch.object(registry, 'register')
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
-        call_to_patch = 'neutron.common.rpc.create_connection'
+        call_to_patch = 'neutron.common.rpc.Connection'
         with mock.patch(call_to_patch,
                         return_value=self.connection) as create_connection:
             self.fip_qos_ext.initialize(

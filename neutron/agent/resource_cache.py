@@ -238,7 +238,7 @@ class RemoteResourceWatcher(object):
 
     def _init_rpc_listeners(self):
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]
-        self._connection = n_rpc.create_connection()
+        self._connection = n_rpc.Connection()
         for rtype in self.rcache.resource_types:
             registry_rpc.register(self.resource_change_handler, rtype)
             topic = resources_rpc.resource_type_versioned_topic(rtype)
