@@ -252,7 +252,6 @@
       - ^setup.cfg$
       - ^tools/.*$
       - ^tox.ini$
-    voting: false
 
 - job:
     name: neutron-grenade
