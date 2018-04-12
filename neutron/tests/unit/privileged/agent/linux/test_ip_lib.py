@@ -51,6 +51,17 @@ class IpLibTestCase(base.BaseTestCase):
                 priv_lib._run_iproute_link,
                 "test_cmd", "eth0", None, test_param="test_value")
 
+    def test_run_iproute_link_interface_removed_during_call(self):
+        with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
+            ip_mock = iproute_mock()
+            ip_mock.__enter__().link_lookup.return_value = [2]
+            ip_mock.__enter__().link.side_effect = pyroute2.NetlinkError(
+                code=errno.ENODEV)
+            self.assertRaises(
+                priv_lib.NetworkInterfaceNotFound,
+                priv_lib._run_iproute_link,
+                "test_cmd", "eth0", None, test_param="test_value")
+
     def test_run_iproute_link_namespace_not_exists(self):
         with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
             iproute_mock.side_effect = OSError(
@@ -99,6 +110,17 @@ class IpLibTestCase(base.BaseTestCase):
                 priv_lib._run_iproute_neigh,
                 "test_cmd", "eth0", None, test_param="test_value")
 
+    def test_run_iproute_neigh_interface_removed_during_call(self):
+        with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
+            ip_mock = iproute_mock()
+            ip_mock.__enter__().link_lookup.return_value = [2]
+            ip_mock.__enter__().neigh.side_effect = pyroute2.NetlinkError(
+                code=errno.ENODEV)
+            self.assertRaises(
+                priv_lib.NetworkInterfaceNotFound,
+                priv_lib._run_iproute_neigh,
+                "test_cmd", "eth0", None, test_param="test_value")
+
     def test_run_iproute_neigh_namespace_not_exists(self):
         with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
             iproute_mock.side_effect = OSError(
@@ -142,6 +164,17 @@ class IpLibTestCase(base.BaseTestCase):
         with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
             ip_mock = iproute_mock()
             ip_mock.__enter__().link_lookup.return_value = []
+            self.assertRaises(
+                priv_lib.NetworkInterfaceNotFound,
+                priv_lib._run_iproute_addr,
+                "test_cmd", "eth0", None, test_param="test_value")
+
+    def test_run_iproute_addr_interface_removed_during_call(self):
+        with mock.patch.object(pyroute2, "IPRoute") as iproute_mock:
+            ip_mock = iproute_mock()
+            ip_mock.__enter__().link_lookup.return_value = [2]
+            ip_mock.__enter__().addr.side_effect = pyroute2.NetlinkError(
+                code=errno.ENODEV)
             self.assertRaises(
                 priv_lib.NetworkInterfaceNotFound,
                 priv_lib._run_iproute_addr,

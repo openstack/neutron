@@ -48,7 +48,18 @@ class NetworkNamespaceNotFound(RuntimeError):
 
 
 class NetworkInterfaceNotFound(RuntimeError):
-    pass
+    message = _("Network interface %(device)s not found in namespace "
+                "%(namespace)s.")
+
+    def __init__(self, message=None, device=None, namespace=None):
+        # NOTE(slaweq): 'message' can be passed as an optional argument
+        # because of how privsep daemon works. If exception is raised in
+        # function called by privsep daemon, it will then try to reraise it
+        # and will call it always with passing only message from originally
+        # raised exception.
+        message = message or self.message % {
+                'device': device, 'namespace': namespace}
+        super(NetworkInterfaceNotFound, self).__init__(message)
 
 
 class IpAddressAlreadyExists(RuntimeError):
@@ -110,10 +121,7 @@ def _get_link_id(device, namespace):
         with _get_iproute(namespace) as ip:
             return ip.link_lookup(ifname=device)[0]
     except IndexError:
-        msg = _("Network interface %(device)s not found in namespace "
-                "%(namespace)s.") % {'device': device,
-                                     'namespace': namespace}
-        raise NetworkInterfaceNotFound(msg)
+        raise NetworkInterfaceNotFound(device=device, namespace=namespace)
 
 
 def _run_iproute_link(command, device, namespace=None, **kwargs):
@@ -121,6 +129,10 @@ def _run_iproute_link(command, device, namespace=None, **kwargs):
         with _get_iproute(namespace) as ip:
             idx = _get_link_id(device, namespace)
             return ip.link(command, index=idx, **kwargs)
+    except NetlinkError as e:
+        if e.code == errno.ENODEV:
+            raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -132,6 +144,10 @@ def _run_iproute_neigh(command, device, namespace, **kwargs):
         with _get_iproute(namespace) as ip:
             idx = _get_link_id(device, namespace)
             return ip.neigh(command, ifindex=idx, **kwargs)
+    except NetlinkError as e:
+        if e.code == errno.ENODEV:
+            raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -143,6 +159,10 @@ def _run_iproute_addr(command, device, namespace, **kwargs):
         with _get_iproute(namespace) as ip:
             idx = _get_link_id(device, namespace)
             return ip.addr(command, index=idx, **kwargs)
+    except NetlinkError as e:
+        if e.code == errno.ENODEV:
+            raise NetworkInterfaceNotFound(device=device, namespace=namespace)
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
