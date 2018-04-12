@@ -81,7 +81,7 @@ from neutron.db import provisioning_blocks
 from neutron.db.quota import driver  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
-from neutron.db import subnet_service_type_db_models as service_type_db
+from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
 from neutron.extensions import providernet as provider
 from neutron.extensions import vlantransparent
@@ -126,7 +126,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 vlantransparent_db.Vlantransparent_db_mixin,
                 extradhcpopt_db.ExtraDhcpOptMixin,
                 address_scope_db.AddressScopeDbMixin,
-                service_type_db.SubnetServiceTypeMixin):
+                subnet_service_type_mixin.SubnetServiceTypeMixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
