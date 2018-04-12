@@ -1916,18 +1916,26 @@ class TestDnsmasq(TestBase):
         mac1 = '00:00:80:aa:bb:cc'
         ip2 = '192.168.1.3'
         mac2 = '00:00:80:cc:bb:aa'
-        ip3 = '0001:0002:0003:004:0005:0006:0007:0008'
+        ip3 = '0001:0002:0003:0004:0005:0006:0007:0008'
         mac3 = '00:00:80:bb:aa:cc'
 
         old_leases = {(ip1, mac1, None), (ip2, mac2, None), (ip3, mac3, None)}
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
-            return_value={
-                '0001:0002:0003:004:0005:0006:0007:0008':
-                    {'iaid': 0xff,
-                     'client_id': 'client_id',
-                     'server_id': 'server_id'}}
-        )
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip1: {'iaid': mac1,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip3: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'}
+                          },
+                         {}])
 
         dnsmasq._output_hosts_file = mock.Mock()
         dnsmasq._release_lease = mock.Mock()
@@ -1936,12 +1944,16 @@ class TestDnsmasq(TestBase):
 
         dnsmasq._release_unused_leases()
 
-        dnsmasq._release_lease.assert_has_calls([mock.call(mac1, ip1, None),
-                                                 mock.call(mac2, ip2, None),
+        dnsmasq._release_lease.assert_has_calls([mock.call(mac1, ip1,
+                                                     constants.IP_VERSION_4,
+                                                     None, 'server_id', mac1),
+                                                 mock.call(mac2, ip2,
+                                                     constants.IP_VERSION_4,
+                                                     None, 'server_id', mac2),
                                                  mock.call(mac3, ip3,
-                                                           'client_id',
-                                                           'server_id',
-                                                           0xff),
+                                                     constants.IP_VERSION_6,
+                                                     'client_id', 'server_id',
+                                                     0xff),
                                                  ],
                                                 any_order=True)
 
@@ -1953,17 +1965,24 @@ class TestDnsmasq(TestBase):
         ip2 = '192.168.1.3'
         mac2 = '00:00:80:cc:bb:aa'
 
-        old_leases = set([(ip1, mac1, None), (ip2, mac2, None)])
+        old_leases = set([(ip1, mac1, 'client_id'), (ip2, mac2, None)])
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
-            return_value={'fdca:3ba5:a17a::1': {'iaid': 0xff,
-                                                'client_id': 'client_id',
-                                                'server_id': 'server_id'}
-                          })
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip1: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': None,
+                                'server_id': 'server_id'}
+                          },
+                         {}])
         ipw = mock.patch(
             'neutron.agent.linux.ip_lib.IpNetnsCommand.execute').start()
         dnsmasq._release_unused_leases()
-        # Verify that dhcp_release is called  both for ipv4 and ipv6 addresses.
+        # Verify that dhcp_release is called both for ipv4 and ipv6 addresses.
         self.assertEqual(2, ipw.call_count)
         ipw.assert_has_calls([mock.call(['dhcp_release6',
                                          '--iface', None, '--ip', ip1,
@@ -1982,7 +2001,7 @@ class TestDnsmasq(TestBase):
 
         old_leases = set([(ip1, mac1, None)])
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
+        dnsmasq._read_leases_file_leases = mock.Mock(
             return_value={'fdca:3ba5:a17a::1': {'iaid': 0xff,
                                                 'client_id': 'client_id',
                                                 'server_id': 'server_id'}
@@ -2004,7 +2023,7 @@ class TestDnsmasq(TestBase):
 
         old_leases = set([(ip1, mac1, None), (ip2, mac2, None)])
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
+        dnsmasq._read_leases_file_leases = mock.Mock(
             return_value={ip6: {'iaid': 0xff,
                                 'client_id': 'client_id',
                                 'server_id': 'server_id'}
@@ -2032,11 +2051,24 @@ class TestDnsmasq(TestBase):
 
         old_leases = set([(ip1, mac1, client_id1), (ip2, mac2, client_id2)])
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
-            return_value={ip6: {'iaid': 0xff,
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip1: {'iaid': mac1,
+                                'client_id': client_id1,
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': client_id2,
+                                'server_id': 'server_id'}
+                          },
+                         {ip6: {'iaid': 0xff,
                                 'client_id': 'client_id',
                                 'server_id': 'server_id'}
-                          })
+                          }])
         dnsmasq._output_hosts_file = mock.Mock()
         dnsmasq._release_lease = mock.Mock()
         dnsmasq.network.ports = []
@@ -2044,8 +2076,10 @@ class TestDnsmasq(TestBase):
         dnsmasq._release_unused_leases()
 
         dnsmasq._release_lease.assert_has_calls(
-            [mock.call(mac1, ip1, client_id1),
-             mock.call(mac2, ip2, client_id2)],
+            [mock.call(mac1, ip1, constants.IP_VERSION_4, client_id1,
+                       'server_id', mac1),
+             mock.call(mac2, ip2, constants.IP_VERSION_4, client_id2,
+                       'server_id', mac2)],
             any_order=True)
 
     def test_release_unused_leases_one_lease(self):
@@ -2059,11 +2093,21 @@ class TestDnsmasq(TestBase):
 
         old_leases = set([(ip1, mac1, None), (ip2, mac2, None)])
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
-            return_value={ip6: {'iaid': 0xff,
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': None,
+                                'server_id': 'server_id'}
+                          },
+                         {ip6: {'iaid': 0xff,
                                 'client_id': 'client_id',
                                 'server_id': 'server_id'}
-                          })
+                          }])
         dnsmasq._output_hosts_file = mock.Mock()
         dnsmasq._release_lease = mock.Mock()
         dnsmasq.network.ports = [FakePort1()]
@@ -2071,7 +2115,7 @@ class TestDnsmasq(TestBase):
         dnsmasq._release_unused_leases()
 
         dnsmasq._release_lease.assert_called_once_with(
-            mac2, ip2, None)
+            mac2, ip2, constants.IP_VERSION_4, None, 'server_id', mac2)
 
     def test_release_unused_leases_one_lease_with_client_id(self):
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
@@ -2087,18 +2131,138 @@ class TestDnsmasq(TestBase):
         old_leases = set([(ip1, mac1, client_id1), (ip2, mac2, client_id2)])
         dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
         dnsmasq._output_hosts_file = mock.Mock()
-        dnsmasq._read_v6_leases_file_leases = mock.Mock(
-            return_value={ip6: {'iaid': 0xff,
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip1: {'iaid': mac1,
+                                'client_id': client_id1,
+                                'server_id': 'server_id'}
+                          },
+                         {ip6: {'iaid': 0xff,
                                 'client_id': 'client_id',
                                 'server_id': 'server_id'}
-                          })
+                          }])
         dnsmasq._release_lease = mock.Mock()
         dnsmasq.network.ports = [FakePort5()]
 
         dnsmasq._release_unused_leases()
 
         dnsmasq._release_lease.assert_called_once_with(
-            mac1, ip1, client_id1)
+            mac1, ip1, constants.IP_VERSION_4, client_id1, 'server_id', mac1)
+
+    def test_release_unused_leases_one_lease_from_leases_file(self):
+        # leases file has a stale entry that is not in the host file
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+
+        ip1 = '192.168.0.2'
+        mac1 = '00:00:80:aa:bb:cc'
+        ip2 = '192.168.0.3'
+        mac2 = '00:00:80:cc:bb:aa'
+        ip6 = '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d'
+
+        old_leases = set([(ip1, mac1, None)])
+        dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
+        # Because the lease release code could fire multiple times, the
+        # second read of the lease file must not have the entries that
+        # would have been released.
+        dnsmasq._read_leases_file_leases = mock.Mock(
+            side_effect=[{ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'},
+                          ip2: {'iaid': mac2,
+                                'client_id': None,
+                                'server_id': 'server_id'}
+                          },
+                         {ip6: {'iaid': 0xff,
+                                'client_id': 'client_id',
+                                'server_id': 'server_id'}
+                          }])
+        dnsmasq._output_hosts_file = mock.Mock()
+        dnsmasq._release_lease = mock.Mock()
+        dnsmasq.network.ports = [FakePort1()]
+
+        dnsmasq._release_unused_leases()
+
+        dnsmasq._release_lease.assert_called_once_with(
+            mac2, ip2, constants.IP_VERSION_4, None, 'server_id', mac2)
+
+    @mock.patch.object(dhcp.LOG, 'warn')
+    def _test_release_unused_leases_one_lease_mult_times(self, mock_log_warn,
+                                                         removed):
+        # Simulate a dhcp_release failure where the lease remains in the
+        # lease file despite multiple dhcp_release calls
+        dnsmasq = self._get_dnsmasq(FakeDualNetwork())
+
+        ip1 = '192.168.0.2'
+        mac1 = '00:00:80:aa:bb:cc'
+        ip2 = '192.168.0.3'
+        mac2 = '00:00:80:cc:bb:aa'
+        ip6 = '2001:0db8:11a3:09d7:1f34:8a2e:07a0:765d'
+
+        old_leases = set([(ip1, mac1, None), (ip2, mac2, None)])
+        dnsmasq._read_hosts_file_leases = mock.Mock(return_value=old_leases)
+        # Because the lease release code could fire multiple times, the
+        # second and subsequent reads of the lease file must have the
+        # entries that were not released.
+        side_effect = [{ip6: {'iaid': 0xff,
+                              'client_id': 'client_id',
+                              'server_id': 'server_id'},
+                        ip2: {'iaid': mac2,
+                              'client_id': None,
+                              'server_id': 'server_id'}
+                        },
+                       {ip6: {'iaid': 0xff,
+                              'client_id': 'client_id',
+                              'server_id': 'server_id'},
+                        ip2: {'iaid': mac2,
+                              'client_id': None,
+                              'server_id': 'server_id'}
+                        },
+                       {ip6: {'iaid': 0xff,
+                              'client_id': 'client_id',
+                              'server_id': 'server_id'},
+                        ip2: {'iaid': mac2,
+                              'client_id': None,
+                              'server_id': 'server_id'}
+                        }]
+        # entry did/didn't go away after final dhcp_release try
+        if not removed:
+            side_effect.append(
+                     {ip6: {'iaid': 0xff,
+                            'client_id': 'client_id',
+                            'server_id': 'server_id'},
+                      ip2: {'iaid': mac2,
+                            'client_id': None,
+                            'server_id': 'server_id'}
+                      })
+        else:
+            side_effect.append({})
+
+        dnsmasq._read_leases_file_leases = mock.Mock(side_effect=side_effect)
+        dnsmasq._output_hosts_file = mock.Mock()
+        dnsmasq._release_lease = mock.Mock()
+        dnsmasq.network.ports = [FakePort1()]
+
+        dnsmasq._release_unused_leases()
+
+        self.assertEqual(dhcp.DHCP_RELEASE_TRIES,
+                         dnsmasq._release_lease.call_count)
+
+        self.assertEqual(dhcp.DHCP_RELEASE_TRIES + 1,
+                         dnsmasq._read_leases_file_leases.call_count)
+
+        if not removed:
+            self.assertTrue(mock_log_warn.called)
+
+    def test_release_unused_leases_one_lease_mult_times_not_removed(self):
+        self._test_release_unused_leases_one_lease_mult_times(False)
+
+    def test_release_unused_leases_one_lease_mult_times_removed(self):
+        self._test_release_unused_leases_one_lease_mult_times(True)
 
     def test_read_hosts_file_leases(self):
         filename = '/path/to/file'
@@ -2146,12 +2310,12 @@ class TestDnsmasq(TestBase):
                               ("fdca:3ba5:a17a::1", "00:00:80:aa:bb:cc",
                               'client2')]), leases)
 
-    def test_read_v6_leases_file_leases(self):
+    def _test_read_leases_file_leases(self, ip_version):
         filename = '/path/to/file'
         lines = [
-                "1472673289 aa:bb:cc:00:00:01 192.168.1.2 host-192-168-1-2 *",
-                "1472673289 aa:bb:cc:00:00:01 192.168.1.3 host-192-168-1-3 *",
-                "1472673289 aa:bb:cc:00:00:01 192.168.1.4 host-192-168-1-4 *",
+                "1472673289 aa:bb:cc:00:00:02 192.168.1.2 host-192-168-1-2 *",
+                "1472673289 aa:bb:cc:00:00:03 192.168.1.3 host-192-168-1-3 *",
+                "1472673289 aa:bb:cc:00:00:04 192.168.1.4 host-192-168-1-4 *",
                 "duid 00:01:00:01:02:03:04:05:06:07:08:09:0a:0b",
                 "1472597740 1044800001 [2001:DB8::a] host-2001-db8--a "
                 "00:04:4a:d0:d2:34:19:2b:49:08:84:e8:34:bd:0c:dc:b9:3b",
@@ -2165,14 +2329,13 @@ class TestDnsmasq(TestBase):
 
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
         with mock.patch('os.path.exists', return_value=True):
-            leases = dnsmasq._read_v6_leases_file_leases(filename)
+            leases = dnsmasq._read_leases_file_leases(filename, ip_version)
         server_id = '00:01:00:01:02:03:04:05:06:07:08:09:0a:0b'
         entry1 = {'iaid': '1044800001',
                   'client_id': '00:04:4a:d0:d2:34:19:2b:49:08:84:'
                                'e8:34:bd:0c:dc:b9:3b',
                   'server_id': server_id
                   }
-
         entry2 = {'iaid': '1044800002',
                   'client_id': '00:04:ce:96:53:3d:f2:c2:4c:4c:81:'
                                '7d:db:c9:8d:d2:74:22:3b:0a',
@@ -2183,13 +2346,46 @@ class TestDnsmasq(TestBase):
                                '7f:5c:33:31:37:5d:80:77:b4',
                   'server_id': server_id
                   }
-        expected = {'2001:DB8::a': entry1,
-                    '2001:DB8::b': entry2,
-                    '2001:DB8::c': entry3
-                    }
+        v6_expected = {'2001:DB8::a': entry1,
+                       '2001:DB8::b': entry2,
+                       '2001:DB8::c': entry3
+                       }
 
-        self.assertEqual(expected, leases)
+        entry4 = {'iaid': 'aa:bb:cc:00:00:02',
+                  'client_id': '*',
+                  'server_id': None
+                  }
+        entry5 = {'iaid': 'aa:bb:cc:00:00:03',
+                  'client_id': '*',
+                  'server_id': None
+                  }
+        entry6 = {'iaid': 'aa:bb:cc:00:00:04',
+                  'client_id': '*',
+                  'server_id': None
+                  }
+        v4_expected = {'192.168.1.2': entry4,
+                       '192.168.1.3': entry5,
+                       '192.168.1.4': entry6
+                       }
+
+        expected = {}
+        if not ip_version or ip_version == constants.IP_VERSION_6:
+            expected.update(v6_expected)
+
+        if not ip_version or ip_version == constants.IP_VERSION_4:
+            expected.update(v4_expected)
+
         mock_open.assert_called_once_with(filename)
+        self.assertEqual(expected, leases)
+
+    def test_read_v6_leases_file_leases(self):
+        self._test_read_leases_file_leases(constants.IP_VERSION_6)
+
+    def test_read_v4_leases_file_leases(self):
+        self._test_read_leases_file_leases(constants.IP_VERSION_4)
+
+    def test_read_all_leases_file_leases(self):
+        self._test_read_leases_file_leases(None)
 
     def test_make_subnet_interface_ip_map(self):
         with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as ip_dev:
