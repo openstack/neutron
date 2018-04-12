@@ -38,11 +38,11 @@ from neutron.services.logapi.common import constants as log_const
 # priority_group module was added for constants of priority.
 # test the existence of the module of priority_group to check if
 # callback priority is supported or not.
-CALLBACK_PRIORITY_SUPPORTED = True
+_CALLBACK_PRIORITY_SUPPORTED = True
 try:
     from neutron_lib.callbacks import priority_group  # noqa
 except ImportError as e:
-    CALLBACK_PRIORITY_SUPPORTED = False
+    _CALLBACK_PRIORITY_SUPPORTED = False
 
 
 class WarningsFixture(fixtures.Fixture):
@@ -150,7 +150,7 @@ def get_subscribe_args(*args):
     # NOTE(yamahata): from neutron-lib 1.9.1, callback priority was added.
     # old signature: (callback, resource, event)
     # new signature: (callback, resource, event, priority=PRIORITY_DEFAULT)
-    if len(args) == 3 and CALLBACK_PRIORITY_SUPPORTED:
+    if len(args) == 3 and _CALLBACK_PRIORITY_SUPPORTED:
         args = list(args)  # don't modify original list
         args.append(priority_group.PRIORITY_DEFAULT)
     return args
