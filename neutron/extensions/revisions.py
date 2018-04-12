@@ -13,7 +13,7 @@
 
 from neutron_lib.api import extensions
 
-from neutron.db import standard_attr
+from neutron.extensions import stdattrs_common
 
 
 REVISION = 'revision_number'
@@ -46,5 +46,4 @@ class Revisions(extensions.ExtensionDescriptor):
     def get_extended_resources(self, version):
         if version != "2.0":
             return {}
-        rs_map = standard_attr.get_standard_attr_resource_model_map()
-        return {resource: REVISION_BODY for resource in rs_map}
+        return stdattrs_common.stdattrs_extended_resources(REVISION_BODY)

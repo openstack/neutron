@@ -99,6 +99,22 @@ class HasStandardAttributes(object):
         raise NotImplementedError("%s must define api_collections" % cls)
 
     @classmethod
+    def get_api_sub_resources(cls):
+        """Define the API sub-resources this object will appear under.
+
+        This should return a list of API sub-resources that the object
+        will be exposed under.
+
+        This is used by the standard attr extensions to discover which
+        sub-resources need to be extended with the standard attr fields
+        (e.g. created_at/updated_at/etc).
+        """
+        try:
+            return cls.api_sub_resources
+        except AttributeError:
+            return []
+
+    @classmethod
     def get_collection_resource_map(cls):
         try:
             return cls.collection_resource_map
@@ -173,17 +189,26 @@ class HasStandardAttributes(object):
         self.standard_attr.bump_revision()
 
 
-def get_standard_attr_resource_model_map():
+def _resource_model_map_helper(rs_map, resource, subclass):
+    if resource in rs_map:
+        raise RuntimeError("Model %(sub)s tried to register for API resource "
+                           "%(res)s which conflicts with model %(other)s." %
+                           dict(sub=subclass,
+                                other=rs_map[resource],
+                                res=resource))
+    rs_map[resource] = subclass
+
+
+def get_standard_attr_resource_model_map(include_resources=True,
+                                         include_sub_resources=True):
     rs_map = {}
     for subclass in HasStandardAttributes.__subclasses__():
-        for resource in subclass.get_api_collections():
-            if resource in rs_map:
-                raise RuntimeError("Model %(sub)s tried to register for "
-                                   "API resource %(res)s which conflicts "
-                                   "with model %(other)s." %
-                                   dict(sub=subclass, other=rs_map[resource],
-                                        res=resource))
-            rs_map[resource] = subclass
+        if include_resources:
+            for resource in subclass.get_api_collections():
+                _resource_model_map_helper(rs_map, resource, subclass)
+        if include_sub_resources:
+            for sub_resource in subclass.get_api_sub_resources():
+                _resource_model_map_helper(rs_map, sub_resource, subclass)
     return rs_map
 
 
