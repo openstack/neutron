@@ -59,6 +59,11 @@ they provide their version of manuals.
 
       # neutron-db-manage --subproject neutron-vpnaas upgrade head
 
+   .. note::
+
+      In order to run the above command, you need to have `neutron-vpnaas <https://pypi.python.org/pypi/neutron-vpnaas>`__
+      package installed on controller node.
+
 #. Restart the ``neutron-server`` in controller node to apply the settings.
 
 #. Restart the ``neutron-l3-agent`` in network node to apply the settings.
