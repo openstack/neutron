@@ -42,10 +42,12 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         """
         while True:
             if self._cached_dpid is None:
-                dpid_str = self.get_datapath_id()
+                dpid = self.get_datapath_id()
                 LOG.info("Bridge %(br_name)s has datapath-ID %(dpid)s",
-                         {"br_name": self.br_name, "dpid": dpid_str})
-                self._cached_dpid = int(dpid_str, 16)
+                         {"br_name": self.br_name, "dpid": dpid})
+                if dpid is None:
+                    raise RuntimeError("Unknown datapath id.")
+                self._cached_dpid = int(dpid, 16)
             try:
                 dp = self._get_dp_by_dpid(self._cached_dpid)
                 return dp, dp.ofproto, dp.ofproto_parser
