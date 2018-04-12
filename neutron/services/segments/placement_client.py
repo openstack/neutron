@@ -17,10 +17,10 @@ import functools
 
 from keystoneauth1 import exceptions as ks_exc
 from keystoneauth1 import loading as ks_loading
+from neutron_lib.exceptions import placement as placement_exc
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.common import exceptions as n_exc
 
 PLACEMENT_API_WITH_AGGREGATES = 'placement 1.1'
 
@@ -31,7 +31,7 @@ def check_placement_api_available(f):
         try:
             return f(self, *a, **k)
         except ks_exc.EndpointNotFound:
-            raise n_exc.PlacementEndpointNotFound()
+            raise placement_exc.PlacementEndpointNotFound()
     return wrapper
 
 
@@ -107,8 +107,8 @@ class PlacementAPIClient(object):
         :param resource_class: Resource class name of the inventory to be
           returned
         :type resource_class: str
-        :raises n_exc.PlacementInventoryNotFound: For failure to find inventory
-          for a resource provider
+        :raises placement_exc.PlacementInventoryNotFound: For failure to
+          find inventory for a resource provider
         """
         url = '/resource_providers/%s/inventories/%s' % (
             resource_provider_uuid, resource_class)
@@ -116,10 +116,10 @@ class PlacementAPIClient(object):
             return self._get(url).json()
         except ks_exc.NotFound as e:
             if "No resource provider with uuid" in e.details:
-                raise n_exc.PlacementResourceProviderNotFound(
+                raise placement_exc.PlacementResourceProviderNotFound(
                     resource_provider=resource_provider_uuid)
             elif _("No inventory of class") in e.details:
-                raise n_exc.PlacementInventoryNotFound(
+                raise placement_exc.PlacementInventoryNotFound(
                     resource_provider=resource_provider_uuid,
                     resource_class=resource_class)
             else:
@@ -136,15 +136,15 @@ class PlacementAPIClient(object):
         :type inventory: dict
         :param resource_class: The resource class of the inventory to update
         :type resource_class: str
-        :raises n_exc.PlacementInventoryUpdateConflict: For failure to updste
-          inventory due to outdated resource_provider_generation
+        :raises placement_exc.PlacementInventoryUpdateConflict: For failure to
+          update inventory due to outdated resource_provider_generation
         """
         url = '/resource_providers/%s/inventories/%s' % (
             resource_provider_uuid, resource_class)
         try:
             self._put(url, inventory)
         except ks_exc.Conflict:
-            raise n_exc.PlacementInventoryUpdateConflict(
+            raise placement_exc.PlacementInventoryUpdateConflict(
                 resource_provider=resource_provider_uuid,
                 resource_class=resource_class)
 
@@ -175,5 +175,5 @@ class PlacementAPIClient(object):
                 url, headers={'openstack-api-version':
                               PLACEMENT_API_WITH_AGGREGATES}).json()
         except ks_exc.NotFound:
-            raise n_exc.PlacementAggregateNotFound(
+            raise placement_exc.PlacementAggregateNotFound(
                 resource_provider=resource_provider_uuid)
