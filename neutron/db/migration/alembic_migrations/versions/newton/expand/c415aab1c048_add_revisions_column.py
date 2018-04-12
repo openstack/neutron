@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add revisions table
 
 Revision ID: c415aab1c048
@@ -23,9 +26,6 @@ Create Date: 2016-04-11 03:16:24.742290
 # revision identifiers, used by Alembic.
 revision = 'c415aab1c048'
 down_revision = '30107ab6a3ee'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

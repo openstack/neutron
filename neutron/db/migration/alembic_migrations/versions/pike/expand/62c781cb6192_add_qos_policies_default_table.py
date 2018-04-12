@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add is default to qos policies
 
 Revision ID: 62c781cb6192
@@ -24,9 +27,6 @@ Create Date: 2017-02-07 13:28:35.894357
 # revision identifiers, used by Alembic.
 revision = '62c781cb6192'
 down_revision = '2b42d90729da'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

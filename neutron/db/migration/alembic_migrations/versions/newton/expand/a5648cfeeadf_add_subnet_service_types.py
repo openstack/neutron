@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add support for Subnet Service Types
 
 Revision ID: a5648cfeeadf
@@ -24,9 +27,6 @@ Create Date: 2016-03-15 18:00:00.190173
 # revision identifiers, used by Alembic.
 revision = 'a5648cfeeadf'
 down_revision = '030a959ceafa'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

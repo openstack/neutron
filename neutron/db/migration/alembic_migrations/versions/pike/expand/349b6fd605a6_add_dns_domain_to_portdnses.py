@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib.db import constants
+import sqlalchemy as sa
+
 """Add dns_domain to portdnses
 
 Revision ID: 349b6fd605a6
@@ -24,10 +28,6 @@ Create Date: 2017-04-15 00:22:47.618593
 # revision identifiers, used by Alembic.
 revision = '349b6fd605a6'
 down_revision = 'c8c222d42aa9'
-
-from alembic import op
-from neutron_lib.db import constants
-import sqlalchemy as sa
 
 
 def upgrade():

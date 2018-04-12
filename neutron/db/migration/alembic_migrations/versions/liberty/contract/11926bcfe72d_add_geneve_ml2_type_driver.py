@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add geneve ml2 type driver
 
 Revision ID: 11926bcfe72d
@@ -24,9 +27,6 @@ Create Date: 2015-08-27 19:56:16.356522
 # revision identifiers, used by Alembic.
 revision = '11926bcfe72d'
 down_revision = '2e5352a0ad4d'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def contract_creation_exceptions():

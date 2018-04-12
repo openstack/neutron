@@ -11,6 +11,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Remove mtu column from networks.
 
 Revision ID: b67e765a3524
@@ -22,8 +24,6 @@ Create Date: 2016-07-17 02:07:36.625196
 # revision identifiers, used by Alembic.
 revision = 'b67e765a3524'
 down_revision = '4bcd4df1f426'
-
-from alembic import op
 
 
 def upgrade():

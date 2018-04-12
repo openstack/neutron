@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add ip_version to AddressScope
 
 Revision ID: c3a73f615e4
@@ -23,9 +26,6 @@ Create Date: 2015-10-08 17:34:32.231256
 # revision identifiers, used by Alembic.
 revision = 'c3a73f615e4'
 down_revision = 'dce3ec7a25c9'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

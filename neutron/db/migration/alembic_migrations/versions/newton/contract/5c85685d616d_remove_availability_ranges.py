@@ -11,11 +11,11 @@
 #    under the License.
 #
 
-"""Remove availability ranges."""
-
 from alembic import op
 
 from neutron.db import migration
+
+"""Remove availability ranges."""
 
 
 revision = '5c85685d616d'

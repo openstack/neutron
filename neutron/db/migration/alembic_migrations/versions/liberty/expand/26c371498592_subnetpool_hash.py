@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """subnetpool hash
 
 Revision ID: 26c371498592
@@ -24,9 +27,6 @@ Create Date: 2015-06-02 21:18:19.942076
 # revision identifiers, used by Alembic.
 revision = '26c371498592'
 down_revision = '45f955889773'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

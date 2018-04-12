@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+from oslo_utils import uuidutils
+import sqlalchemy as sa
+
 """network_rbac_external
 
 Revision ID: 5ffceebfada
@@ -25,10 +29,6 @@ Create Date: 2015-06-14 13:12:04.012457
 revision = '5ffceebfada'
 down_revision = 'c6c112992c9'
 depends_on = ()
-
-from alembic import op
-from oslo_utils import uuidutils
-import sqlalchemy as sa
 
 
 # A simple model of the external network table with only the fields needed for

@@ -13,6 +13,12 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import constants
+import sqlalchemy as sa
+
+from neutron.db import migration
+
 """qos add direction to bw_limit_rule table
 
 Revision ID: 2b42d90729da
@@ -24,12 +30,6 @@ Create Date: 2017-04-03 20:56:00.169599
 # revision identifiers, used by Alembic.
 revision = '2b42d90729da'
 down_revision = '804a3c76314c'
-
-from alembic import op
-from neutron_lib import constants
-import sqlalchemy as sa
-
-from neutron.db import migration
 
 
 policies_table_name = "qos_policies"

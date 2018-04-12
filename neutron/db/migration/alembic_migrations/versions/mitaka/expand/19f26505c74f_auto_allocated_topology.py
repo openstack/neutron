@@ -14,6 +14,10 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy import sql
+
 """ Auto Allocated Topology - aka Get-Me-A-Network
 
 Revision ID: 19f26505c74f
@@ -21,10 +25,6 @@ Revises: 1df244e556f5
 Create Date: 2015-11-20 11:27:53.419742
 
 """
-
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import sql
 
 # revision identifiers, used by Alembic.
 revision = '19f26505c74f'

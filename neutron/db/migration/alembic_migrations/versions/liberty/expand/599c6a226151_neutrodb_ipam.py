@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """neutrodb_ipam
 
 Revision ID: 599c6a226151
@@ -24,9 +27,6 @@ Create Date: 2015-03-08 18:12:08.962378
 # revision identifiers, used by Alembic.
 revision = '599c6a226151'
 down_revision = '354db87e3225'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

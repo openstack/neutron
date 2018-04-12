@@ -13,6 +13,11 @@
 #    under the License.
 #
 
+from alembic import op
+from sqlalchemy.engine import reflection
+
+from neutron.db import migration
+
 """Add missing foreign keys
 
 Revision ID: 2e5352a0ad4d
@@ -24,11 +29,6 @@ Create Date: 2015-08-20 12:43:09.110427
 # revision identifiers, used by Alembic.
 revision = '2e5352a0ad4d'
 down_revision = '2a16083502f3'
-
-from alembic import op
-from sqlalchemy.engine import reflection
-
-from neutron.db import migration
 
 
 TABLE_NAME = 'flavorserviceprofilebindings'

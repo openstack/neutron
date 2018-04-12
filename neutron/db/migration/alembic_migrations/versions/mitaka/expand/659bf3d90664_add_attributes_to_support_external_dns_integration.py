@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib.db import constants
+import sqlalchemy as sa
+
 """Add tables and attributes to support external DNS integration
 
 Revision ID: 659bf3d90664
@@ -24,10 +28,6 @@ Create Date: 2015-09-11 00:22:47.618593
 # revision identifiers, used by Alembic.
 revision = '659bf3d90664'
 down_revision = 'c3a73f615e4'
-
-from alembic import op
-from neutron_lib.db import constants
-import sqlalchemy as sa
 
 
 def upgrade():

@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add segment_host_mapping table.
 
 Revision ID: 8fd3918ef6f4
@@ -24,9 +27,6 @@ Create Date: 2016-02-25 00:22:47.618593
 # revision identifiers, used by Alembic.
 revision = '8fd3918ef6f4'
 down_revision = 'c879c5e1ee90'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

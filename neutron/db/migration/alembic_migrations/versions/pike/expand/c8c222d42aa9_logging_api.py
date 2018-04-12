@@ -13,6 +13,11 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
+from neutron_lib.db import constants as db_const
+
 """logging api
 
 Revision ID: c8c222d42aa9
@@ -24,11 +29,6 @@ Create Date: 2017-05-30 11:51:08.173604
 # revision identifiers, used by Alembic.
 revision = 'c8c222d42aa9'
 down_revision = '62c781cb6192'
-
-from alembic import op
-import sqlalchemy as sa
-
-from neutron_lib.db import constants as db_const
 
 
 def upgrade():

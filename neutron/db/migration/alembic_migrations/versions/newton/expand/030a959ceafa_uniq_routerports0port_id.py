@@ -13,6 +13,12 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import exceptions
+import sqlalchemy as sa
+
+from neutron._i18n import _
+
 """uniq_routerports0port_id
 
 Revision ID: 030a959ceafa
@@ -24,12 +30,6 @@ Create Date: 2016-06-21 11:33:13.043879
 # revision identifiers, used by Alembic.
 revision = '030a959ceafa'
 down_revision = '3d0e74aa7d37'
-
-from alembic import op
-from neutron_lib import exceptions
-import sqlalchemy as sa
-
-from neutron._i18n import _
 
 routerports = sa.Table(
     'routerports', sa.MetaData(),

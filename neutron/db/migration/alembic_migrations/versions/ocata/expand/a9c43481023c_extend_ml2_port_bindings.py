@@ -13,6 +13,13 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import constants
+import sqlalchemy as sa
+from sqlalchemy.engine.reflection import Inspector as insp
+
+from neutron.db import migration
+
 """extend_pk_with_host_and_add_status_to_ml2_port_binding
 
 Revision ID: a9c43481023c
@@ -24,13 +31,6 @@ Create Date: 2016-11-22 11:48:43.479552
 # revision identifiers, used by Alembic.
 revision = 'a9c43481023c'
 down_revision = '929c968efe70'
-
-from alembic import op
-from neutron_lib import constants
-import sqlalchemy as sa
-from sqlalchemy.engine.reflection import Inspector as insp
-
-from neutron.db import migration
 
 MYSQL_ENGINE = 'mysql'
 ML2_PORT_BINDING = 'ml2_port_bindings'

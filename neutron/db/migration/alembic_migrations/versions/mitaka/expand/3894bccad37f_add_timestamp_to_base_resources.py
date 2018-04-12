@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add_timestamp_to_base_resources
 
 Revision ID: 3894bccad37f
@@ -24,9 +27,6 @@ Create Date: 2016-03-01 04:19:58.852612
 # revision identifiers, used by Alembic.
 revision = '3894bccad37f'
 down_revision = '2f9e956e7532'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

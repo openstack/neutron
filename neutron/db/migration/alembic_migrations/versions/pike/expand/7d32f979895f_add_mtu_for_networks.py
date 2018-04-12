@@ -11,6 +11,11 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
+from neutron.db import migration
+
 """add mtu for networks
 
 Revision ID: 7d32f979895f
@@ -18,12 +23,6 @@ Revises: c8c222d42aa9
 Create Date: 2017-07-13 19:25:29.204547
 
 """
-
-from alembic import op
-import sqlalchemy as sa
-
-from neutron.db import migration
-
 
 # revision identifiers, used by Alembic.
 revision = '7d32f979895f'

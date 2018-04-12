@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add Name and Description to the networksegments table """
 
 # revision identifiers, used by Alembic.
@@ -26,9 +29,6 @@ depends_on = ('89ab9a816d70',)
 # about the expand and contract scripts and how the depends_on works, please
 # refer <https://docs.openstack.org/neutron/latest/contributor/
 # alembic_migrations.html#expand-and-contract-scripts>
-
-from alembic import op
-import sqlalchemy as sa
 
 TBL = 'networksegments'
 

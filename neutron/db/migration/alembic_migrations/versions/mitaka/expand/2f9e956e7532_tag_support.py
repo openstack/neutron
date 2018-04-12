@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """tag support
 
 Revision ID: 2f9e956e7532
@@ -23,9 +26,6 @@ Create Date: 2016-01-21 08:11:49.604182
 # revision identifiers, used by Alembic.
 revision = '2f9e956e7532'
 down_revision = '31ed664953e6'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """provisioning_blocks.py
 
 Revision ID: 30107ab6a3ee
@@ -24,8 +27,6 @@ Create Date: 2016-04-15 05:59:59.000001
 # revision identifiers, used by Alembic.
 revision = '30107ab6a3ee'
 down_revision = 'd3435b514502'
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

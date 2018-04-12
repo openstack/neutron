@@ -13,6 +13,12 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib.db import constants
+import sqlalchemy as sa
+
+from neutron.db import migration
+
 """Add dns_name to Port
 
 Revision ID: 34af2b5c5a59
@@ -20,12 +26,6 @@ Revises: 9859ac9c136
 Create Date: 2015-08-23 00:22:47.618593
 
 """
-
-from alembic import op
-from neutron_lib.db import constants
-import sqlalchemy as sa
-
-from neutron.db import migration
 
 # revision identifiers, used by Alembic.
 revision = '34af2b5c5a59'

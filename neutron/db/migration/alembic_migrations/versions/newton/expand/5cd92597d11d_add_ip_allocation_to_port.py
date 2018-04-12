@@ -11,17 +11,17 @@
 #    under the License.
 #
 
-"""Add ip_allocation to port """
-
 from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
 
+"""Add ip_allocation to port """
 
 # revision identifiers, used by Alembic.
 revision = '5cd92597d11d'
 down_revision = '6b461a21bcfc'
+
 
 # milestone identifier, used by neutron-db-manage
 neutron_milestone = [migration.NEWTON]

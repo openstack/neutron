@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+from oslo_utils import uuidutils
+import sqlalchemy as sa
+
 """network_rbac
 
 Revision ID: 4ffceebfada
@@ -25,10 +29,6 @@ Create Date: 2015-06-14 13:12:04.012457
 revision = '4ffceebfada'
 down_revision = '30018084ec99'
 depends_on = ('8675309a5c4f',)
-
-from alembic import op
-from oslo_utils import uuidutils
-import sqlalchemy as sa
 
 
 # A simple model of the networks table with only the fields needed for

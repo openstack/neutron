@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Initial operations in support of address scopes
 
 """
@@ -20,9 +23,6 @@
 # revision identifiers, used by Alembic.
 revision = '52c5312f6baf'
 down_revision = '599c6a226151'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

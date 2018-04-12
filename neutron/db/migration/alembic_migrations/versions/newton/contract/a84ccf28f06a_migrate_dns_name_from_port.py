@@ -13,16 +13,16 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib.db import constants
+import sqlalchemy as sa
+
 """migrate dns name from port"""
 
 # revision identifiers, used by Alembic.
 revision = 'a84ccf28f06a'
 down_revision = 'b67e765a3524'
 depends_on = ('a963b38d82f4',)
-
-from alembic import op
-from neutron_lib.db import constants
-import sqlalchemy as sa
 
 
 ports = sa.Table(

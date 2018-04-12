@@ -13,6 +13,11 @@
 #    under the License.
 #
 
+from collections import defaultdict
+
+from alembic import op
+import sqlalchemy as sa
+
 """Add binding index to RouterL3AgentBinding
 
 Revision ID: 2e0d7a8a1586
@@ -24,11 +29,6 @@ Create Date: 2016-09-01 14:01:57.263289
 # revision identifiers, used by Alembic.
 revision = '2e0d7a8a1586'
 down_revision = '97c25b0d2353'
-
-from collections import defaultdict
-
-from alembic import op
-import sqlalchemy as sa
 
 
 ROUTER_L3_AGENT_BINDING = 'routerl3agentbindings'

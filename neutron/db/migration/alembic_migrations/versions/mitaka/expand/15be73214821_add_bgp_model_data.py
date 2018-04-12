@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add dynamic routing model data
 
 Revision ID: 15be73214821
@@ -23,9 +26,6 @@ Create Date: 2015-07-29 13:16:08.604175
 # revision identifiers, used by Alembic.
 revision = '15be73214821'
 down_revision = '19f26505c74f'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

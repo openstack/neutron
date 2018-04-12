@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """qos db changes
 
 Revision ID: 48153cb5f051
@@ -24,9 +27,6 @@ Create Date: 2015-06-24 17:03:34.965101
 # revision identifiers, used by Alembic.
 revision = '48153cb5f051'
 down_revision = '1b4c6e320f79'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

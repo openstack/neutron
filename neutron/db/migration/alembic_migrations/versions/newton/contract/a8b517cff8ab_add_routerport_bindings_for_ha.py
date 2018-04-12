@@ -10,6 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from alembic import op
+from neutron_lib import constants as lib_const
+import sqlalchemy as sa
+
+from neutron.common import constants
+
 """Add routerport bindings for L3 HA
 
 Revision ID: a8b517cff8ab
@@ -21,12 +27,6 @@ Create Date: 2016-07-18 14:31:45.725516
 # revision identifiers, used by Alembic.
 revision = 'a8b517cff8ab'
 down_revision = '7d9d8eeec6ad'
-
-from alembic import op
-from neutron_lib import constants as lib_const
-import sqlalchemy as sa
-
-from neutron.common import constants
 
 
 HA_AGENT_BINDINGS = 'ha_router_agent_port_bindings'

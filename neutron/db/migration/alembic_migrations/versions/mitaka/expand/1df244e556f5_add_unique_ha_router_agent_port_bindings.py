@@ -13,6 +13,12 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import exceptions
+import sqlalchemy as sa
+
+from neutron._i18n import _
+
 """add_unique_ha_router_agent_port_bindings
 
 Revision ID: 1df244e556f5
@@ -24,12 +30,6 @@ Create Date: 2015-10-02 18:06:01.696742
 # revision identifiers, used by Alembic.
 revision = '1df244e556f5'
 down_revision = '659bf3d90664'
-
-from alembic import op
-from neutron_lib import exceptions
-import sqlalchemy as sa
-
-from neutron._i18n import _
 
 
 UNIQUE_NAME = 'uniq_ha_router_agent_port_bindings0port_id0l3_agent_id'

@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+from neutron.db import migration
+
 """add_pk_version_table
 
 Revision ID: 929c968efe70
@@ -24,9 +26,6 @@ Create Date: 2017-01-12 07:17:33.677770
 # revision identifiers, used by Alembic.
 revision = '929c968efe70'
 down_revision = '5cd92597d11d'
-
-
-from neutron.db import migration
 
 
 def upgrade():

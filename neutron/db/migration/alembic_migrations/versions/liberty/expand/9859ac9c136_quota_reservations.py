@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """quota_reservations
 
 Revision ID: 9859ac9c136
@@ -24,9 +27,6 @@ Create Date: 2015-03-11 06:40:56.775075
 # revision identifiers, used by Alembic.
 revision = '9859ac9c136'
 down_revision = '48153cb5f051'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

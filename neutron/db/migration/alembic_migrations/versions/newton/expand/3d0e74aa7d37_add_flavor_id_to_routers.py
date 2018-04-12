@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add flavor_id to Router
 
 Revision ID: 3d0e74aa7d37
@@ -20,10 +23,6 @@ Revises: a963b38d82f4
 Create Date: 2016-05-05 00:22:47.618593
 
 """
-
-from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision = '3d0e74aa7d37'

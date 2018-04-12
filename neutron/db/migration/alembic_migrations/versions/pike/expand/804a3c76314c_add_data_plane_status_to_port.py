@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add data_plane_status to Port
 
 Revision ID: 804a3c76314c
@@ -24,9 +27,6 @@ Create Date: 2017-01-17 13:51:45.737987
 # revision identifiers, used by Alembic.
 revision = '804a3c76314c'
 down_revision = 'a9c43481023c'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

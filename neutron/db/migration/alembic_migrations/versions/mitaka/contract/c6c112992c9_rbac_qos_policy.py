@@ -13,6 +13,12 @@
 #    under the License.
 #
 
+from alembic import op
+from oslo_utils import uuidutils
+import sqlalchemy as sa
+
+from neutron.db import rbac_db_models
+
 """rbac_qos_policy
 
 Revision ID: c6c112992c9
@@ -20,12 +26,6 @@ Revises: 8a6d8bdae39
 Create Date: 2015-11-25 18:45:03.831359
 
 """
-
-from alembic import op
-from oslo_utils import uuidutils
-import sqlalchemy as sa
-
-from neutron.db import rbac_db_models
 
 # revision identifiers, used by Alembic.
 

@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """network_rbac
 
 Revision ID: 8675309a5c4f
@@ -24,9 +27,6 @@ Create Date: 2015-06-14 13:12:04.012457
 # revision identifiers, used by Alembic.
 revision = '8675309a5c4f'
 down_revision = '313373c0ffee'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

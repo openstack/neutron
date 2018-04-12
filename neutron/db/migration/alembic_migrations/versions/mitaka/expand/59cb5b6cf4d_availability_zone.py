@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add availability zone
 
 Revision ID: 59cb5b6cf4d
@@ -23,9 +26,6 @@ Create Date: 2015-01-20 14:38:47.156574
 # revision identifiers, used by Alembic.
 revision = '59cb5b6cf4d'
 down_revision = '34af2b5c5a59'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():
