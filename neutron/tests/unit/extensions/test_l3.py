@@ -92,11 +92,10 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
 
     def setUp(self):
         super(L3NatExtensionTestCase, self).setUp()
-        self._setUpExtension(
+        self.setup_extension(
             'neutron.services.l3_router.l3_router_plugin.L3RouterPlugin',
-            plugin_constants.L3, {},
-            l3.L3, '', allow_pagination=True, allow_sorting=True,
-            supported_extension_aliases=['router'],
+            plugin_constants.L3, l3.L3, '', allow_pagination=True,
+            allow_sorting=True, supported_extension_aliases=['router'],
             use_quota=True)
 
     def test_router_create(self):

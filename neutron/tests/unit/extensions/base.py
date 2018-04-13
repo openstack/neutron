@@ -36,16 +36,31 @@ CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 class ExtensionTestCase(testlib_api.WebTestCase):
 
-    # TODO(boden): phase out resource_attribute_map
+    # TODO(boden): remove once all consumers use _setup_extension
     def _setUpExtension(self, plugin, service_type,
-                        resource_attribute_map,
+                        _resource_attribute_map,
                         extension_class,
                         resource_prefix, plural_mappings=None,
                         translate_resource_name=False,
                         allow_pagination=False, allow_sorting=False,
                         supported_extension_aliases=None,
-                        use_quota=False,
-                        ):
+                        use_quota=False):
+        return self.setup_extension(
+            plugin, service_type,
+            extension_class,
+            resource_prefix, plural_mappings=None,
+            translate_resource_name=False,
+            allow_pagination=False, allow_sorting=False,
+            supported_extension_aliases=None,
+            use_quota=False)
+
+    def setup_extension(self, plugin, service_type,
+                        extension_class,
+                        resource_prefix, plural_mappings=None,
+                        translate_resource_name=False,
+                        allow_pagination=False, allow_sorting=False,
+                        supported_extension_aliases=None,
+                        use_quota=False):
 
         self._resource_prefix = resource_prefix
         self._plural_mappings = plural_mappings or {}
