@@ -1778,8 +1778,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_info.get('updated'))
 
     def check_ovs_status(self):
-        # Check for the canary flow
-        status = self.int_br.check_canary_table()
+        try:
+            # Check for the canary flow
+            status = self.int_br.check_canary_table()
+        except Exception:
+            LOG.exception("Failure while checking for the canary flow")
+            status = constants.OVS_DEAD
         if status == constants.OVS_RESTARTED:
             LOG.warning("OVS is restarted. OVSNeutronAgent will reset "
                         "bridges and recover ports.")

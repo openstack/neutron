@@ -3514,6 +3514,14 @@ class TestOvsDvrNeutronAgent(object):
                 pass
         self.assertTrue(all([x.called for x in reset_mocks]))
 
+    def test_rpc_loop_survives_error_in_check_canary_table(self):
+        with mock.patch.object(self.agent.int_br,
+                               'check_canary_table',
+                               side_effect=TypeError('borked')),\
+                mock.patch.object(self.agent, '_check_and_handle_signal',
+                                  side_effect=[True, False]):
+            self.agent.rpc_loop(polling_manager=mock.Mock())
+
     def _test_scan_ports_failure(self, scan_method_name):
         with mock.patch.object(self.agent,
                                'check_ovs_status',
