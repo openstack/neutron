@@ -117,7 +117,9 @@ class Segment(api_extensions.ExtensionDescriptor):
             SEGMENTS,
             SEGMENT,
             directory.get_plugin(SEGMENTS),
-            resource_attributes)
+            resource_attributes,
+            allow_pagination=True,
+            allow_sorting=True)
         return [extensions.ResourceExtension(SEGMENTS,
                                              controller,
                                              attr_map=resource_attributes)]
