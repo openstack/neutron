@@ -15,7 +15,7 @@ import webob.exc
 from neutron_lib.api.definitions import portbindings
 
 from neutron.db import db_base_plugin_v2
-from neutron.db import subnet_service_type_db_models
+from neutron.db import subnet_service_type_mixin
 from neutron.extensions import subnet_service_types
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
@@ -38,7 +38,7 @@ class SubnetServiceTypesExtensionManager(object):
 
 class SubnetServiceTypesExtensionTestPlugin(
         db_base_plugin_v2.NeutronDbPluginV2,
-        subnet_service_type_db_models.SubnetServiceTypeMixin):
+        subnet_service_type_mixin.SubnetServiceTypeMixin):
     """Test plugin to mixin the subnet service_types extension.
     """
 

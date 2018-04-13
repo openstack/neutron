@@ -13,9 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-# TODO(ihrachys): consider renaming the module since now it does not contain
-# any models at all
-
 from neutron_lib.api.definitions import subnet as subnet_def
 
 from neutron.db import _resource_extend as resource_extend
