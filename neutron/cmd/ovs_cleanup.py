@@ -26,6 +26,10 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 LOG = logging.getLogger(__name__)
 
+# Default ovsdb_timeout value for this script.
+# It allows to clean bridges with even thousands of ports.
+CLEANUP_OVSDB_TIMEOUT = 600
+
 
 def setup_conf():
     """Setup the cfg for the clean up utility.
@@ -39,6 +43,7 @@ def setup_conf():
     l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
     agent_config.register_interface_driver_opts_helper(conf)
     agent_config.register_interface_opts()
+    conf.set_default("ovsdb_timeout", CLEANUP_OVSDB_TIMEOUT, "OVS")
     return conf
 
 
