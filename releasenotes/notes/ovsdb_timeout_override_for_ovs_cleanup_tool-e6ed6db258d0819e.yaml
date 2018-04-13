@@ -1,0 +1,15 @@
+---
+fixes:
+  - |
+    Fixes bug `1763604 <https://bugs.launchpad.net/neutron/+bug/1763604>`_.
+    Override default value of ``ovsdb_timeout`` config option in
+    ``neutron-ovs-cleanup`` script.
+    The default value is 10 seconds, but that is not enough for the
+    ``neutron-ovs-cleanup`` script when there are many ports to remove from
+    a single bridge, for example, 5000. Because of that, we now override the
+    default value for the config option to be 600 seconds (10 minutes).
+issues:
+  - |
+    In the case when the number of ports to clean up in a single bridge is
+    larger than about 10000, it might require an increase in the
+    ``ovsdb_timeout`` config option to some value higher than 600 seconds.
