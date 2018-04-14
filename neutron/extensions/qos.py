@@ -79,22 +79,6 @@ class Qos(api_extensions.APIExtensionDescriptor):
 
         return resources
 
-    def update_attributes_map(self, attributes, extension_attrs_map=None):
-        # TODO(boden): remove with I8ae11633962a48de6e8559b85447b8c8c753d705
-        super(Qos, self).update_attributes_map(
-            attributes,
-            extension_attrs_map=dict(
-                list(apidef.RESOURCE_ATTRIBUTE_MAP.items()) +
-                list(apidef.SUB_RESOURCE_ATTRIBUTE_MAP.items())))
-
-    def get_extended_resources(self, version):
-        # TODO(boden): remove with I8ae11633962a48de6e8559b85447b8c8c753d705
-        if version == "2.0":
-            return dict(list(apidef.RESOURCE_ATTRIBUTE_MAP.items()) +
-                        list(apidef.SUB_RESOURCE_ATTRIBUTE_MAP.items()))
-        else:
-            return {}
-
 
 @six.add_metaclass(abc.ABCMeta)
 class QoSPluginBase(service_base.ServicePluginBase):
