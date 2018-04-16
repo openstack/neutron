@@ -123,7 +123,7 @@ requests==2.14.2
 requestsexceptions==1.2.0
 rfc3986==0.3.1
 Routes==2.3.1
-ryu==4.14
+ryu==4.24
 simplejson==3.5.1
 six==1.10.0
 smmap==0.9.0
