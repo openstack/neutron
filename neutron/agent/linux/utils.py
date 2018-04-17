@@ -390,9 +390,21 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
     def __init__(self, request, client_address, server):
         if not client_address:
             client_address = ('<local>', 0)
-        # base class is old-style, so super does not work properly
-        eventlet.wsgi.HttpProtocol.__init__(self, request, client_address,
-                                            server)
+
+        # NOTE(yamahata): from eventlet v0.22 HttpProtocol.__init__
+        # signature was changed by changeset of
+        # 7f53465578543156e7251e243c0636e087a8445f
+        # try the new signature first, and then fallback to the old
+        # signature for compatibility
+        try:
+            conn_state = [client_address, request, eventlet.wsgi.STATE_CLOSE]
+            # base class is old-style, so super does not work properly
+            eventlet.wsgi.HttpProtocol.__init__(self, conn_state, server)
+        except (AttributeError, TypeError):
+            # AttributeError: missing STATE_CLOSE
+            # TypeError: signature mismatch
+            eventlet.wsgi.HttpProtocol.__init__(
+                self, request, client_address, server)
 
 
 class UnixDomainWSGIServer(wsgi.Server):
