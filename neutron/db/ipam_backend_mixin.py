@@ -26,17 +26,14 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from oslo_config import cfg
 from oslo_log import log as logging
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import exc as orm_exc
 
 from neutron._i18n import _
 from neutron.common import exceptions as n_exc
 from neutron.common import ipv6_utils
 from neutron.common import utils as common_utils
-from neutron.db import _model_query as model_query
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_common
-from neutron.db.models import segment as segment_model
 from neutron.db import models_v2
 from neutron.extensions import segment
 from neutron.ipam import exceptions as ipam_exceptions
@@ -333,10 +330,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     segment_id not in associated_segments):
                 raise segment_exc.SubnetSegmentAssociationChangeNotAllowed()
 
-            query = context.session.query(segment_model.NetworkSegment.id)
-            query = query.filter(
-                segment_model.NetworkSegment.network_id == network_id)
-            if query.count() > 1:
+            if network_obj.NetworkSegment.count(
+                    context, network_id=network_id) > 1:
                 raise segment_exc.NoUpdateSubnetWhenMultipleSegmentsOnNetwork(
                     network_id=network_id)
 
@@ -602,58 +597,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 fixed_ip_list.append({'subnet_id': subnet['id']})
         return fixed_ip_list
 
-    def _query_subnets_on_network(self, context, network_id):
-        query = model_query.get_collection_query(context, models_v2.Subnet)
-        return query.filter(models_v2.Subnet.network_id == network_id)
-
-    @staticmethod
-    def _query_filter_by_segment_host_mapping(query, host):
-        """Excludes subnets on segments not reachable by the host
-
-        The query gets two kinds of subnets: those that are on segments that
-        the host can reach and those that are not on segments at all (assumed
-        reachable by all hosts). Hence, subnets on segments that the host
-        *cannot* reach are excluded.
-        """
-        Subnet = models_v2.Subnet
-        SegmentHostMapping = segment_model.SegmentHostMapping
-
-        # A host has been provided.  Consider these two scenarios
-        # 1. Not a routed network:  subnets are not on segments
-        # 2. Is a routed network:  only subnets on segments mapped to host
-        # The following join query returns results for either.  The two are
-        # guaranteed to be mutually exclusive when subnets are created.
-        query = query.add_entity(SegmentHostMapping)
-        query = query.outerjoin(
-            SegmentHostMapping,
-            and_(Subnet.segment_id == SegmentHostMapping.segment_id,
-                 SegmentHostMapping.host == host))
-
-        # Essentially "segment_id IS NULL XNOR host IS NULL"
-        query = query.filter(or_(and_(Subnet.segment_id.isnot(None),
-                                      SegmentHostMapping.host.isnot(None)),
-                                 and_(Subnet.segment_id.is_(None),
-                                      SegmentHostMapping.host.is_(None))))
-        return query
-
-    @staticmethod
-    def _query_exclude_subnets_on_segments(query):
-        """Excludes all subnets associated with segments
-
-        For the case where the host is not known, we don't consider any subnets
-        that are on segments. But, we still consider subnets that are not
-        associated with any segment (i.e. for non-routed networks).
-        """
-        return query.filter(models_v2.Subnet.segment_id.is_(None))
-
-    @staticmethod
-    def is_host_set(host):
-        """Utility to tell if the host is set in the port binding"""
-        # This seems redundant, but its not. Host is unset if its None, '',
-        # or ATTR_NOT_SPECIFIED due to differences in host binding
-        # implementations.
-        return host and validators.is_attr_set(host)
-
     def _ipam_get_subnets(self, context, network_id, host, service_type=None,
                           fixed_configured=False):
         """Return eligible subnets
@@ -661,8 +604,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         If no eligible subnets are found, determine why and potentially raise
         an appropriate error.
         """
-        subnets = self._find_candidate_subnets(context, network_id, host,
-                                               service_type, fixed_configured)
+        subnets = subnet_obj.Subnet.find_candidate_subnets(
+            context, network_id, host, service_type, fixed_configured)
         if subnets:
             subnet_dicts = [self._make_subnet_dict(subnet, context=context)
                             for subnet in subnets]
@@ -671,66 +614,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 subnet_dicts,
                 key=lambda subnet: not subnet.get('service_types'))
 
-        # Determine why we found no subnets to raise the right error
-        query = self._query_subnets_on_network(context, network_id)
-
-        if self.is_host_set(host):
-            # Empty because host isn't mapped to a segment with a subnet?
-            s_query = query.filter(models_v2.Subnet.segment_id.isnot(None))
-            if s_query.limit(1).count() != 0:
-                # It is a routed network but no subnets found for host
-                raise segment_exc.HostNotConnectedToAnySegment(
-                    host=host, network_id=network_id)
-
-        if not query.limit(1).count():
-            # Network has *no* subnets of any kind. This isn't an error.
+        if subnet_obj.Subnet.network_has_no_subnet(
+                context, network_id, host, service_type):
             return []
-
-        # Does filtering ineligible service subnets makes the list empty?
-        query = subnet_obj.SubnetServiceType.query_filter_service_subnets(
-            query, service_type)
-        if query.limit(1).count():
-            # No, must be a deferred IP port because there are matching
-            # subnets. Happens on routed networks when host isn't known.
-            raise ipam_exceptions.DeferIpam()
 
         raise ipam_exceptions.IpAddressGenerationFailureNoMatchingSubnet(
             network_id=network_id, service_type=service_type)
-
-    def _find_candidate_subnets(self, context, network_id, host, service_type,
-                                fixed_configured):
-        """Find canditate subnets for the network, host, and service_type"""
-        query = self._query_subnets_on_network(context, network_id)
-        query = subnet_obj.SubnetServiceType.query_filter_service_subnets(
-            query, service_type)
-
-        # Select candidate subnets and return them
-        if not self.is_host_set(host):
-            if fixed_configured:
-                # If fixed_ips in request and host is not known all subnets on
-                # the network are candidates. Host/Segment will be validated
-                # on port update with binding:host_id set. Allocation _cannot_
-                # be deferred as requested fixed_ips would then be lost.
-                return query.all()
-            # If the host isn't known, we can't allocate on a routed network.
-            # So, exclude any subnets attached to segments.
-            return self._query_exclude_subnets_on_segments(query).all()
-
-        # The host is known. Consider both routed and non-routed networks
-        results = self._query_filter_by_segment_host_mapping(query, host).all()
-
-        # For now, we're using a simplifying assumption that a host will only
-        # touch one segment in a given routed network.  Raise exception
-        # otherwise.  This restriction may be relaxed as use cases for multiple
-        # mappings are understood.
-        segment_ids = {subnet.segment_id
-                       for subnet, mapping in results
-                       if mapping}
-        if 1 < len(segment_ids):
-            raise segment_exc.HostConnectedToMultipleSegments(
-                host=host, network_id=network_id)
-
-        return [subnet for subnet, _mapping in results]
 
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
         args = super(IpamBackendMixin, self)._make_subnet_args(
