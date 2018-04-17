@@ -559,13 +559,8 @@ class _BaseObjectTestCase(object):
 
     _test_class = FakeNeutronDbObject
 
-    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-
     def setUp(self):
         super(_BaseObjectTestCase, self).setUp()
-        # TODO(ihrachys): revisit plugin setup once we decouple
-        # neutron.objects.db.api from core plugin instance
-        self.setup_coreplugin(self.CORE_PLUGIN)
         # make sure all objects are loaded and registered in the registry
         objects.register_objects()
         self.context = context.get_admin_context()

@@ -25,9 +25,6 @@ from neutron.tests import base as test_base
 from neutron.tests.unit import testlib_api
 
 
-PLUGIN_NAME = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-
-
 class FakeModel(object):
     def __init__(self, *args, **kwargs):
         pass
@@ -38,12 +35,6 @@ class FakeObj(base.NeutronDbObject):
 
 
 class GetObjectsTestCase(test_base.BaseTestCase):
-
-    def setUp(self):
-        super(GetObjectsTestCase, self).setUp()
-        # TODO(ihrachys): revisit plugin setup once we decouple
-        # objects.db.objects.api from core plugin instance
-        self.setup_coreplugin(PLUGIN_NAME)
 
     def test_get_objects_pass_marker_obj_when_limit_and_marker_passed(self):
         ctxt = context.get_admin_context()

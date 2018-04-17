@@ -148,8 +148,13 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     _test_class = subnet.Subnet
 
+    CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
+
     def setUp(self):
         super(SubnetDbObjectTestCase, self).setUp()
+        # set up plugin because some models used here require a plugin
+        # (specifically, rbac models and their get_valid_actions validators)
+        self.setup_coreplugin(self.CORE_PLUGIN)
         network_id = self._create_test_network_id()
         self.update_obj_fields(
             {'network_id': network_id,
