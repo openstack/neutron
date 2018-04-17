@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fix an issue that standard attributes, such as ``created_at``,
+    ``updated_at`` and ``revision_number``, are not rendered in the response
+    of segment resource.
