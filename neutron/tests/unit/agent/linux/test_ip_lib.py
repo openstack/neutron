@@ -512,7 +512,7 @@ class TestIpWrapper(base.BaseTestCase):
             'vxlan_local': 'local0',
             'vxlan_proxy': True,
             'vxlan_port_range': ('1', '2'),
-            'vxlan_port': '4789'}
+            'vxlan_port': 4789}
 
         retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
                                               group='group0',
