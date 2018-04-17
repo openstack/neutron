@@ -146,6 +146,46 @@ def verify_mock_calls(mocked_call, expected_calls_and_values,
     mocked_call.assert_has_calls(expected_calls, any_order=any_order)
 
 
+def _make_magic_method(method_mock):
+    # NOTE(yamahata): new environment needs to be created to keep actual
+    # method_mock for each callables.
+    def __call__(*args, **kwargs):
+        value_mock = method_mock._orig___call__(*args, **kwargs)
+        value_mock.__json__ = lambda: {}
+        return value_mock
+
+    def _get_child_mock(**kwargs):
+        value_mock = method_mock._orig__get_child_mock(**kwargs)
+        value_mock.__json__ = lambda: {}
+        return value_mock
+
+    return __call__, _get_child_mock
+
+
+def make_mock_plugin_json_encodable(plugin_instance_mock):
+    # NOTE(yamahata): Make return value of plugin method json encodable
+    # e.g. the return value of plugin_instance.create_network() needs
+    # to be json encodable
+    # plugin instance      -> method    -> return value
+    # Mock                    MagicMock    Mock
+    # plugin_instance_mock    method_mock  value_mock
+    #
+    # From v1.3 of pecan, pecan.jsonify uses json.Encoder unconditionally.
+    # pecan v1.2 uses simplejson.Encoder which accidentally encodes
+    # Mock as {} due to check of '_asdict' attributes.
+    # pecan.jsonify uses __json__ magic method for encoding when
+    # it's defined, so add __json__ method to return {}
+    for method_mock in plugin_instance_mock._mock_children.values():
+        if not callable(method_mock):
+            continue
+
+        method_mock._orig___call__ = method_mock.__call__
+        method_mock._orig__get_child_mock = method_mock._get_child_mock
+        __call__, _get_child_mock = _make_magic_method(method_mock)
+        method_mock.__call__ = __call__
+        method_mock._get_child_mock = _get_child_mock
+
+
 def get_subscribe_args(*args):
     # NOTE(yamahata): from neutron-lib 1.9.1, callback priority was added.
     # old signature: (callback, resource, event)

@@ -43,6 +43,7 @@ from neutron import quota
 from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests import fake_notifier
+from neutron.tests import tools
 from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import testlib_api
 
@@ -87,6 +88,7 @@ class APIv2TestBase(base.BaseTestCase):
         instance = self.plugin.return_value
         instance._NeutronPluginBaseV2__native_pagination_support = True
         instance._NeutronPluginBaseV2__native_sorting_support = True
+        tools.make_mock_plugin_json_encodable(instance)
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
