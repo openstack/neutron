@@ -85,7 +85,7 @@ and plug-in.
 
        [keystone_authtoken]
        # ...
-       auth_uri = http://controller:5000
+       www_authenticate_uri = http://controller:5000
        auth_url = http://controller:35357
        memcached_servers = controller:11211
        auth_type = password

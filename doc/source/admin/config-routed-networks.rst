@@ -169,7 +169,7 @@ Controller node
    .. code-block:: ini
 
       [placement]
-      auth_uri = http://192.0.2.72/identity
+      www_authenticate_uri = http://192.0.2.72/identity
       project_domain_name = Default
       project_name = service
       user_domain_name = Default

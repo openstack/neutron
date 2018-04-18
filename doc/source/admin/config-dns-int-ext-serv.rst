@@ -66,7 +66,7 @@ Once this is done, the user has to take the following steps and restart
      are validated.
    * ``cafile``: Path to a valid Certificate Authority (CA) certificate.
      Optional, the system CAs are used as default.
-   * ``auth_uri``: the unversioned public endpoint of the Identity service.
+   * ``www_authenticate_uri``: the unversioned public endpoint of the Identity service.
 
    The following is an example:
 
@@ -86,7 +86,7 @@ Once this is done, the user has to take the following steps and restart
       ipv6_ptr_zone_prefix_size = 116
       ptr_zone_email = admin@example.org
       cafile = /etc/ssl/certs/my_ca_cert
-      auth_uri = http://192.0.2.240:5000
+      www_authenticate_uri = http://192.0.2.240:5000
 
 
 Once the ``neutron-server`` has been configured and restarted, users will have
