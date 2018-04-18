@@ -76,14 +76,15 @@ class HaRouter(router.RouterInfo):
 
     @property
     def ha_state(self):
+        state = None
         ha_state_path = self.keepalived_manager.get_full_config_file_path(
             'state')
         try:
             with open(ha_state_path, 'r') as f:
-                return f.read()
+                state = f.read()
         except (OSError, IOError):
             LOG.debug('Error while reading HA state for %s', self.router_id)
-            return None
+        return state or 'unknown'
 
     @ha_state.setter
     def ha_state(self, new_state):

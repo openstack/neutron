@@ -20,6 +20,7 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
 from neutron.tests import base
+from neutron.tests import tools
 
 _uuid = uuidutils.generate_uuid
 
@@ -115,3 +116,28 @@ class TestBasicRouterOperations(base.BaseTestCase):
         calls = ["sig='str(%d)'" % signal.SIGTERM,
                  "sig='str(%d)'" % signal.SIGKILL]
         mock_pm.disable.has_calls(calls)
+
+    def _test_ha_state(self, read_return, expected):
+        ri = self._create_router(mock.MagicMock())
+        ri.keepalived_manager = mock.Mock()
+        ri.keepalived_manager.get_full_config_file_path.return_value = (
+            'ha_state')
+        self.mock_open = self.useFixture(
+            tools.OpenFixture('ha_state', read_return)).mock_open
+        self.assertEqual(expected, ri.ha_state)
+
+    def test_ha_state_master(self):
+        self._test_ha_state('master', 'master')
+
+    def test_ha_state_unknown(self):
+        # an empty state file should yield 'unknown'
+        self._test_ha_state('', 'unknown')
+
+    def test_ha_state_ioerror(self):
+        # an error reading the state file should yield 'unknown'
+        ri = self._create_router(mock.MagicMock())
+        ri.keepalived_manager = mock.Mock()
+        ri.keepalived_manager.get_full_config_file_path.return_value = (
+            'ha_state')
+        self.mock_open = IOError
+        self.assertEqual('unknown', ri.ha_state)
