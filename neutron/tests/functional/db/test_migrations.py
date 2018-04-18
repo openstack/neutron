@@ -153,8 +153,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
         return head_models.get_metadata()
 
     def include_object(self, object_, name, type_, reflected, compare_to):
-        if type_ == 'table' and (name == 'alembic_version'
-                                 or name in external.TABLES):
+        if type_ == 'table' and (name == 'alembic_version' or
+                                 name in external.TABLES):
                 return False
 
         return super(_TestModelsMigrations, self).include_object(
@@ -363,8 +363,9 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
             self.assertGreater(len(tables), 0,
                                "No tables found. Wrong schema?")
             res = [table for table in tables if
-                   insp.get_table_options(table)['mysql_engine'] != 'InnoDB'
-                   and table != 'alembic_version']
+                   insp.get_table_options(table)['mysql_engine'] !=
+                   'InnoDB' and
+                   table != 'alembic_version']
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
 

@@ -136,8 +136,8 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             has_ip = self._ip_on_port(ret_port)
             # checks if security groups were updated adding/modifying
             # security groups, port security is set and port has ip
-            if (has_security_groups and (not ret_port[psec.PORTSECURITY]
-                                         or not has_ip)):
+            if (has_security_groups and (not ret_port[psec.PORTSECURITY] or
+                                         not has_ip)):
                 raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
             # Port security/IP was updated off. Need to check that no security

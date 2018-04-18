@@ -827,8 +827,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
         is either [] or not is_attr_set, otherwise return False
         """
         if (ext_sg.SECURITYGROUPS in port['port'] and
-            not (validators.is_attr_set(port['port'][ext_sg.SECURITYGROUPS])
-                 and port['port'][ext_sg.SECURITYGROUPS] != [])):
+            not (validators.is_attr_set(
+                     port['port'][ext_sg.SECURITYGROUPS]) and
+                 port['port'][ext_sg.SECURITYGROUPS] != [])):
             return True
         return False
 

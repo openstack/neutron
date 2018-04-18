@@ -210,9 +210,9 @@ class SriovNicSwitchAgent(object):
         return device_info
 
     def _device_info_has_changes(self, device_info):
-        return (device_info.get('added')
-                or device_info.get('updated')
-                or device_info.get('removed'))
+        return (device_info.get('added') or
+                device_info.get('updated') or
+                device_info.get('removed'))
 
     def process_network_devices(self, device_info):
         resync_a = False
@@ -225,8 +225,8 @@ class SriovNicSwitchAgent(object):
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
         # work when a device is new and updated in the same polling iteration.
-        devices_added_updated = (set(device_info.get('added'))
-                                 | set(device_info.get('updated')))
+        devices_added_updated = (set(device_info.get('added')) |
+                                 set(device_info.get('updated')))
         if devices_added_updated:
             resync_a = self.treat_devices_added_updated(devices_added_updated)
 

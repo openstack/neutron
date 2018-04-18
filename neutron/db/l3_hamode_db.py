@@ -552,8 +552,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # List agents where router is active and agent is dead
             # and agents where router is standby and agent is dead
             for binding in bindings:
-                if not (binding.agent.is_active
-                        and binding.agent.admin_state_up):
+                if not (binding.agent.is_active and
+                        binding.agent.admin_state_up):
                     if binding.state == n_const.HA_ROUTER_STATE_ACTIVE:
                         router_active_agents_dead.append(binding.agent)
                     elif binding.state == n_const.HA_ROUTER_STATE_STANDBY:

@@ -76,8 +76,9 @@ class Notifier(object):
 
     def _is_compute_port(self, port):
         try:
-            if (port['device_id'] and uuidutils.is_uuid_like(port['device_id'])
-                    and port['device_owner'].startswith(
+            if (port['device_id'] and
+                    uuidutils.is_uuid_like(port['device_id']) and
+                    port['device_owner'].startswith(
                         constants.DEVICE_OWNER_COMPUTE_PREFIX)):
                 return True
         except (KeyError, AttributeError):
@@ -116,9 +117,9 @@ class Notifier(object):
         # port to a new instance port without disassociate it first, an
         # event should be sent for original instance, that will make nova
         # know original instance's info, and update database for it.
-        if (action == 'update_floatingip'
-                and returned_obj['floatingip'].get('port_id')
-                and original_obj.get('port_id')):
+        if (action == 'update_floatingip' and
+                returned_obj['floatingip'].get('port_id') and
+                original_obj.get('port_id')):
             disassociate_returned_obj = {'floatingip': {'port_id': None}}
             event = self.create_port_changed_event(action, original_obj,
                                                    disassociate_returned_obj)
@@ -194,9 +195,9 @@ class Notifier(object):
         # NO_VALUE/DOWN/BUILD -> ACTIVE/ERROR.
         elif (previous_port_status in [sql_attr.NO_VALUE,
                                        constants.PORT_STATUS_DOWN,
-                                       constants.PORT_STATUS_BUILD]
-              and current_port_status in [constants.PORT_STATUS_ACTIVE,
-                                          constants.PORT_STATUS_ERROR]):
+                                       constants.PORT_STATUS_BUILD] and
+              current_port_status in [constants.PORT_STATUS_ACTIVE,
+                                      constants.PORT_STATUS_ERROR]):
             event_name = VIF_PLUGGED
         # All the remaining state transitions are of no interest to nova
         else:

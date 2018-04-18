@@ -146,8 +146,8 @@ class TestNeutronServer(base.BaseTestCase):
         # Wait for temp file to be created and its size reaching the expected
         # value
         expected_size = len(expected_msg)
-        condition = lambda: (os.path.isfile(self.temp_file)
-                             and os.stat(self.temp_file).st_size ==
+        condition = lambda: (os.path.isfile(self.temp_file) and
+                             os.stat(self.temp_file).st_size ==
                              expected_size)
 
         utils.wait_until_true(

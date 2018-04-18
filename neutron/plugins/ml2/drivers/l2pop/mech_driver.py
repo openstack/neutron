@@ -166,9 +166,9 @@ class L2populationMechanismDriver(api.MechanismDriver):
                     agent_host)
                 self.L2populationAgentNotify.remove_fdb_entries(
                     self.rpc_ctx, fdb_entries)
-        elif (context.host != context.original_host
-              and context.original_status == const.PORT_STATUS_ACTIVE
-              and context.status == const.PORT_STATUS_DOWN):
+        elif (context.host != context.original_host and
+              context.original_status == const.PORT_STATUS_ACTIVE and
+              context.status == const.PORT_STATUS_DOWN):
             # The port has been migrated. Send notification about port
             # removal from old host.
             fdb_entries = self._get_agent_fdb(

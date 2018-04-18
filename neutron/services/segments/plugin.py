@@ -72,8 +72,8 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
 
         # TODO(carl_baldwin) Make this work with service subnets when
         #                    it's a thing.
-        is_adjacent = (not network_db.subnets
-                       or not network_db.subnets[0].segment_id)
+        is_adjacent = (not network_db.subnets or
+                       not network_db.subnets[0].segment_id)
         network_res[l2adj_apidef.L2_ADJACENCY] = is_adjacent
 
     @staticmethod

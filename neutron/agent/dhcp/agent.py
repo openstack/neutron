@@ -161,9 +161,9 @@ class DhcpAgent(manager.Manager):
                 # allocation pool or a port is  deleted to free up an IP, this
                 # will automatically be retried on the notification
                 self.schedule_resync(e, network.id)
-            if (isinstance(e, oslo_messaging.RemoteError)
-                and e.exc_type == 'NetworkNotFound'
-                or isinstance(e, exceptions.NetworkNotFound)):
+            if (isinstance(e, oslo_messaging.RemoteError) and
+                e.exc_type == 'NetworkNotFound' or
+                isinstance(e, exceptions.NetworkNotFound)):
                 LOG.debug("Network %s has been deleted.", network.id)
             else:
                 LOG.exception('Unable to %(action)s dhcp for %(net_id)s.',

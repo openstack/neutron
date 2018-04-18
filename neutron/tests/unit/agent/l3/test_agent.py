@@ -1864,8 +1864,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         l3_test_common.router_append_subnet(
             router, count=2, ip_version=6,
             ipv6_subnet_modes=([{'ra_mode': lib_constants.IPV6_SLAAC,
-                                 'address_mode': lib_constants.IPV6_SLAAC}]
-                               * 2))
+                                 'address_mode': lib_constants.IPV6_SLAAC}] *
+                               2))
         self._process_router_instance_for_agent(agent, ri, router)
         self._assert_ri_process_enabled(ri)
         # Reset mocks to check for modified radvd config

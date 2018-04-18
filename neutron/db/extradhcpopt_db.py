@@ -82,8 +82,8 @@ class ExtraDhcpOptMixin(object):
             with db_api.context_manager.writer.using(context):
                 for upd_rec in dopts:
                     for opt in opts:
-                        if (opt['opt_name'] == upd_rec['opt_name']
-                                and opt['ip_version'] == upd_rec.get(
+                        if (opt['opt_name'] == upd_rec['opt_name'] and
+                                opt['ip_version'] == upd_rec.get(
                                     'ip_version', 4)):
                             # to handle deleting of a opt from the port.
                             if upd_rec['opt_value'] is None:

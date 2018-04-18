@@ -765,10 +765,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         old_ips = old_port.get('fixed_ips')
         deferred_ip_allocation = (
             old_port.get('ip_allocation') ==
-            ipalloc_apidef.IP_ALLOCATION_DEFERRED
-            and host and not old_host
-            and not old_ips
-            and not fixed_ips_requested)
+            ipalloc_apidef.IP_ALLOCATION_DEFERRED and
+            host and not old_host and
+            not old_ips and
+            not fixed_ips_requested)
         if not deferred_ip_allocation:
             # Check that any existing IPs are valid on the new segment
             new_host_requested = host and host != old_host

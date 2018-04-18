@@ -202,8 +202,8 @@ class CommonAgentLoop(service.Service):
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
         # work when a device is new and updated in the same polling iteration.
-        devices_added_updated = (set(device_info.get('added'))
-                                 | set(device_info.get('updated')))
+        devices_added_updated = (set(device_info.get('added')) |
+                                 set(device_info.get('updated')))
         if devices_added_updated:
             resync_a = self.treat_devices_added_updated(devices_added_updated)
 
@@ -408,14 +408,15 @@ class CommonAgentLoop(service.Service):
 
             # Retry cleaning devices that may not have been cleaned properly.
             # And clean any that disappeared since the previous iteration.
-            device_info['removed'] = (previous['removed'] | previous['current']
-                                      - current_devices)
+            device_info['removed'] = (previous['removed'] |
+                                      previous['current'] -
+                                      current_devices)
 
             # Retry updating devices that may not have been updated properly.
             # And any that were updated since the previous iteration.
             # Only update devices that currently exist.
-            device_info['updated'] = (previous['updated'] | updated_devices
-                                      & current_devices)
+            device_info['updated'] = (previous['updated'] | updated_devices &
+                                      current_devices)
         else:
             device_info['added'] = current_devices - previous['current']
             device_info['removed'] = previous['current'] - current_devices
@@ -424,9 +425,9 @@ class CommonAgentLoop(service.Service):
         return device_info
 
     def _device_info_has_changes(self, device_info):
-        return (device_info.get('added')
-                or device_info.get('updated')
-                or device_info.get('removed'))
+        return (device_info.get('added') or
+                device_info.get('updated') or
+                device_info.get('removed'))
 
     def daemon_loop(self):
         LOG.info("%s Agent RPC Daemon Started!", self.agent_type)
@@ -447,8 +448,8 @@ class CommonAgentLoop(service.Service):
             device_info = self.scan_devices(previous=device_info, sync=sync)
             sync = False
 
-            if (self._device_info_has_changes(device_info)
-                or self.sg_agent.firewall_refresh_needed()):
+            if (self._device_info_has_changes(device_info) or
+                    self.sg_agent.firewall_refresh_needed()):
                 LOG.debug("Agent loop found changes! %s", device_info)
                 try:
                     sync = self.process_network_devices(device_info)

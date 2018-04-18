@@ -117,9 +117,9 @@ class TestNovaNotify(base.BaseTestCase):
 
         elif (previous_port_status in [sql_attr.NO_VALUE,
                                        n_const.PORT_STATUS_DOWN,
-                                       n_const.PORT_STATUS_BUILD]
-              and current_port_status in [n_const.PORT_STATUS_ACTIVE,
-                                          n_const.PORT_STATUS_ERROR]):
+                                       n_const.PORT_STATUS_BUILD] and
+              current_port_status in [n_const.PORT_STATUS_ACTIVE,
+                                      n_const.PORT_STATUS_ERROR]):
             event_name = nova.VIF_PLUGGED
 
         else:

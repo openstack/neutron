@@ -113,8 +113,9 @@ class QosRule(base.NeutronDbObject):
         #    - Is a port QoS policy (not a network QoS policy)
         #    - Is not an internal network device (e.g. router) and is a network
         #      QoS policy and there is no port QoS policy
-        return (is_port_policy or ((is_router_gw or not is_network_device_port)
-                                   and is_network_policy_only))
+        return (is_port_policy or
+                ((is_router_gw or not is_network_device_port) and
+                 is_network_policy_only))
 
 
 @base.NeutronObjectRegistry.register

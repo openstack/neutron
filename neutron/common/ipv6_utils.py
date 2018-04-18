@@ -52,8 +52,8 @@ def is_enabled_and_bind_by_default():
 def is_auto_address_subnet(subnet):
     """Check if subnet is an auto address subnet."""
     modes = [const.IPV6_SLAAC, const.DHCPV6_STATELESS]
-    return (subnet['ipv6_address_mode'] in modes
-            or subnet['ipv6_ra_mode'] in modes)
+    return (subnet['ipv6_address_mode'] in modes or
+            subnet['ipv6_ra_mode'] in modes)
 
 
 def is_eui64_address(ip_address):

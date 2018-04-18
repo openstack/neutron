@@ -1155,9 +1155,9 @@ class DeviceManager(object):
 
         for subnet in network.subnets:
             skip_subnet = (
-                subnet.ip_version != ip_version
-                or not subnet.enable_dhcp
-                or subnet.gateway_ip is None)
+                subnet.ip_version != ip_version or
+                not subnet.enable_dhcp or
+                subnet.gateway_ip is None)
 
             if skip_subnet:
                 continue

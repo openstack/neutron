@@ -696,8 +696,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
         test_iface = None
         for seg_id in moves.range(1, constants.MAX_VXLAN_VNI + 1):
-            if (ip_lib.device_exists(self.get_vxlan_device_name(seg_id))
-                    or ip_lib.vxlan_in_use(seg_id)):
+            if (ip_lib.device_exists(self.get_vxlan_device_name(seg_id)) or
+                    ip_lib.vxlan_in_use(seg_id)):
                 continue
             test_iface = self.ensure_vxlan(seg_id)
             break
