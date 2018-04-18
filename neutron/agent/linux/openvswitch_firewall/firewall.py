@@ -575,6 +575,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def _update_flows_for_port(self, of_port, old_of_port):
         with self.update_cookie_context():
             self._set_port_filters(of_port)
+        # Flush the flows caused by changes made to deferred bridge. The reason
+        # is that following delete_all_port_flows() call uses --strict
+        # parameter that cannot be combined with other non-strict rules, hence
+        # all parameters with --strict are applied right away. In order to
+        # avoid applying delete rules with --strict *before*
+        # _set_port_filters() we dump currently cached flows here.
+        self.int_br.apply_flows()
         self.delete_all_port_flows(old_of_port)
         # Rewrite update cookie with default cookie
         self._set_port_filters(of_port)
