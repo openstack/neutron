@@ -82,7 +82,8 @@ class OvsCleanup(command.BaseCommand):
 
 class NeutronOvsdbIdl(impl_idl.OvsdbIdl):
     def __init__(self, connection):
-        vlog.use_python_logger()
+        max_level = None if cfg.CONF.OVS.ovsdb_debug else vlog.INFO
+        vlog.use_python_logger(max_level=max_level)
         super(NeutronOvsdbIdl, self).__init__(connection)
 
     def ovs_cleanup(self, bridges, all_ports=False):
