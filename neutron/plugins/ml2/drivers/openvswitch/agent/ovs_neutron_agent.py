@@ -1954,6 +1954,35 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             ancillary_devices_not_to_retry)
         return new_failed_devices_retries_map
 
+    def _handle_ovs_restart(self, polling_manager):
+        self.setup_integration_br()
+        self.setup_physical_bridges(self.bridge_mappings)
+        if self.enable_tunneling:
+            self._reset_tunnel_ofports()
+            self.setup_tunnel_br()
+            self.setup_tunnel_br_flows()
+        if self.enable_distributed_routing:
+            self.dvr_agent.reset_ovs_parameters(self.int_br,
+                                         self.tun_br,
+                                         self.patch_int_ofport,
+                                         self.patch_tun_ofport)
+            self.dvr_agent.reset_dvr_parameters()
+            self.dvr_agent.setup_dvr_flows()
+        # notify that OVS has restarted
+        registry.notify(
+            callback_resources.AGENT,
+            callback_events.OVS_RESTARTED,
+            self)
+        # restart the polling manager so that it will signal as added
+        # all the current ports
+        # REVISIT (rossella_s) Define a method "reset" in
+        # BasePollingManager that will be implemented by AlwaysPoll as
+        # no action and by InterfacePollingMinimizer as start/stop
+        if isinstance(
+            polling_manager, polling.InterfacePollingMinimizer):
+            polling_manager.stop()
+            polling_manager.start()
+
     def rpc_loop(self, polling_manager=None):
         if not polling_manager:
             polling_manager = polling.get_polling_manager(
@@ -1983,34 +2012,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       self.iter_num)
             ovs_status = self.check_ovs_status()
             if ovs_status == constants.OVS_RESTARTED:
-                self.setup_integration_br()
-                self.setup_physical_bridges(self.bridge_mappings)
-                if self.enable_tunneling:
-                    self._reset_tunnel_ofports()
-                    self.setup_tunnel_br()
-                    self.setup_tunnel_br_flows()
-                    tunnel_sync = True
-                if self.enable_distributed_routing:
-                    self.dvr_agent.reset_ovs_parameters(self.int_br,
-                                                 self.tun_br,
-                                                 self.patch_int_ofport,
-                                                 self.patch_tun_ofport)
-                    self.dvr_agent.reset_dvr_parameters()
-                    self.dvr_agent.setup_dvr_flows()
-                # notify that OVS has restarted
-                registry.notify(
-                    callback_resources.AGENT,
-                    callback_events.OVS_RESTARTED,
-                    self)
-                # restart the polling manager so that it will signal as added
-                # all the current ports
-                # REVISIT (rossella_s) Define a method "reset" in
-                # BasePollingManager that will be implemented by AlwaysPoll as
-                # no action and by InterfacePollingMinimizer as start/stop
-                if isinstance(
-                    polling_manager, polling.InterfacePollingMinimizer):
-                    polling_manager.stop()
-                    polling_manager.start()
+                self._handle_ovs_restart(polling_manager)
+                tunnel_sync = self.enable_tunneling or tunnel_sync
             elif ovs_status == constants.OVS_DEAD:
                 # Agent doesn't apply any operations when ovs is dead, to
                 # prevent unexpected failure or crash. Sleep and continue
