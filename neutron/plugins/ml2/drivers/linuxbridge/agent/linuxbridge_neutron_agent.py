@@ -24,6 +24,7 @@ import sys
 import netaddr
 from neutron_lib.agent import topics
 from neutron_lib import constants
+from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -40,7 +41,6 @@ from neutron.common import exceptions
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils
 from neutron.conf.agent import common as agent_config
-from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
@@ -197,7 +197,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         #          prefix = mix_iHASHED.1111
         if (len(physical_interface) + len(vlan_postfix) >
             constants.DEVICE_NAME_MAX_LEN):
-            physical_interface = p_utils.get_interface_name(
+            physical_interface = plugin_utils.get_interface_name(
                 physical_interface, max_len=(constants.DEVICE_NAME_MAX_LEN -
                                              MAX_VLAN_POSTFIX_LEN))
         return "%s%s" % (physical_interface, vlan_postfix)

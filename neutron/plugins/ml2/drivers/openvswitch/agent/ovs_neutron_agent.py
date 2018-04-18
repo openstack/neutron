@@ -30,6 +30,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants as n_const
 from neutron_lib import context
+from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -55,7 +56,6 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config
 from neutron.common import utils as n_utils
 from neutron.conf.agent import xenapi_conf
-from neutron.plugins.common import utils as p_utils
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
@@ -1101,9 +1101,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.phys_brs[physical_network] = br
 
             # interconnect physical and integration bridges using veth/patches
-            int_if_name = p_utils.get_interface_name(
+            int_if_name = plugin_utils.get_interface_name(
                 bridge, prefix=constants.PEER_INTEGRATION_PREFIX)
-            phys_if_name = p_utils.get_interface_name(
+            phys_if_name = plugin_utils.get_interface_name(
                 bridge, prefix=constants.PEER_PHYSICAL_PREFIX)
             # Interface type of port for physical and integration bridges must
             # be same, so check only one of them.

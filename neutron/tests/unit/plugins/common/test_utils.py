@@ -17,10 +17,10 @@ import hashlib
 import mock
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins import utils
 import testtools
 
 from neutron.db import l3_db
-from neutron.plugins.common import utils
 from neutron.tests import base
 
 LONG_NAME1 = "A_REALLY_LONG_INTERFACE_NAME1"

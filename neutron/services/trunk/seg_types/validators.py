@@ -12,9 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron._i18n import _
+from neutron_lib.plugins import utils as plugin_utils
 
-from neutron.plugins.common import utils
+from neutron._i18n import _
 from neutron.services.trunk import constants as trunk_consts
 
 # Base map of segmentation types supported with their respective validator
@@ -23,7 +23,7 @@ from neutron.services.trunk import constants as trunk_consts
 # and respective validator, however this is a configuration that may be
 # supported only in single-driver deployments.
 _supported = {
-    trunk_consts.VLAN: utils.is_valid_vlan_tag,
+    trunk_consts.VLAN: plugin_utils.is_valid_vlan_tag,
 }
 
 
