@@ -609,6 +609,16 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.firewall.update_port_filter(port_dict)
         self.assertTrue(self.mock_bridge.br.delete_flows.called)
 
+    def test_update_port_filter_applies_added_flows(self):
+        """Check flows are applied right after _set_flows is called."""
+        port_dict = {'device': 'port-id',
+                     'security_groups': [1]}
+        self._prepare_security_group()
+        self.firewall.prepare_port_filter(port_dict)
+        with self.firewall.defer_apply():
+            self.firewall.update_port_filter(port_dict)
+        self.assertEqual(2, self.mock_bridge.apply_flows.call_count)
+
     def test_remove_port_filter(self):
         port_dict = {'device': 'port-id',
                      'security_groups': [1]}
