@@ -2684,6 +2684,38 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
+    def test_update_network_set_not_shared_other_tenant_access_via_rbac(self):
+        with self.network(shared=True) as network:
+            ctx = context.get_admin_context()
+            with db_api.context_manager.writer.using(ctx):
+                ctx.session.add(
+                    rbac_db_models.NetworkRBAC(
+                        object_id=network['network']['id'],
+                        action='access_as_shared',
+                        tenant_id=network['network']['tenant_id'],
+                        target_tenant='somebody_else')
+                )
+                ctx.session.add(
+                    rbac_db_models.NetworkRBAC(
+                        object_id=network['network']['id'],
+                        action='access_as_shared',
+                        tenant_id=network['network']['tenant_id'],
+                        target_tenant='one_more_somebody_else')
+                )
+            res1 = self._create_port(self.fmt,
+                                     network['network']['id'],
+                                     webob.exc.HTTPCreated.code,
+                                     tenant_id='somebody_else',
+                                     set_context=True)
+            data = {'network': {'shared': False}}
+            req = self.new_update_request('networks',
+                                          data,
+                                          network['network']['id'])
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+            self.assertFalse(res['network']['shared'])
+            port1 = self.deserialize(self.fmt, res1)
+            self._delete('ports', port1['port']['id'])
+
     def test_update_network_set_not_shared_multi_tenants_returns_409(self):
         with self.network(shared=True) as network:
             res1 = self._create_port(self.fmt,
