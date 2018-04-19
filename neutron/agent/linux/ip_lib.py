@@ -259,7 +259,7 @@ class IPWrapper(SubProcessBase):
             else:
                 raise n_exc.NetworkVxlanPortRangeError(vxlan_range=srcport)
         if dstport:
-            kwargs['vxlan_port'] = str(dstport)
+            kwargs['vxlan_port'] = dstport
         privileged.create_interface(name, self.namespace, "vxlan", **kwargs)
         return (IPDevice(name, namespace=self.namespace))
 
