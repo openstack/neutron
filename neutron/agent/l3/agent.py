@@ -394,8 +394,10 @@ class L3NATAgent(ha.AgentMixin,
             self.namespaces_manager.ensure_router_cleanup(router_id)
             return
 
-        registry.notify(resources.ROUTER, events.BEFORE_DELETE,
-                        self, router=ri)
+        registry.publish(resources.ROUTER, events.BEFORE_DELETE, self,
+                         payload=events.DBEventPayload(
+                             self.context, states=(ri,),
+                             resource_id=router_id))
 
         ri.delete()
         del self.router_info[router_id]
