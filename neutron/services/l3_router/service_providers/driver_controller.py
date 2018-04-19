@@ -207,7 +207,8 @@ class _LegacyPlusProviderConfiguration(
         # loads up ha, dvr, and single_node service providers automatically.
         # If an operator has setup explicit values that conflict with these,
         # the operator defined values will take priority.
-        super(_LegacyPlusProviderConfiguration, self).__init__()
+        super(_LegacyPlusProviderConfiguration, self).__init__(
+              svc_type=plugin_constants.L3)
         for name, driver in (('dvrha', 'dvrha.DvrHaDriver'),
                              ('dvr', 'dvr.DvrDriver'), ('ha', 'ha.HaDriver'),
                              ('single_node', 'single_node.SingleNodeDriver')):

@@ -554,7 +554,7 @@ your code::
     service_type_manager = servicetype_db.ServiceTypeManager.get_instance()
     service_type_manager.add_provider_configuration(
         YOUR_SERVICE_TYPE,
-        pconf.ProviderConfiguration(YOUR_SERVICE_MODULE))
+        pconf.ProviderConfiguration(YOUR_SERVICE_MODULE, YOUR_SERVICE_TYPE))
 
 This is typically required when you instantiate your service plugin class.
 

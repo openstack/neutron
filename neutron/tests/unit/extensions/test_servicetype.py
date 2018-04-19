@@ -54,8 +54,10 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
         st_db.ServiceTypeManager._instance = None
         self.manager = st_db.ServiceTypeManager.get_instance()
         for provider in service_providers:
+            service_type = provider.split(':')[0]
             self.manager.add_provider_configuration(
-                provider.split(':')[0], provconf.ProviderConfiguration())
+                service_type, provconf.ProviderConfiguration(
+                    svc_type=service_type))
 
     def test_service_provider_driver_not_unique(self):
         self._set_override([constants.LOADBALANCER + ':lbaas:driver'])
@@ -75,6 +77,9 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
              constants.FIREWALL +
              ':fwaas:driver_path2'])
         ctx = context.get_admin_context()
+        res = self.manager.get_service_providers(ctx)
+        self.assertEqual(2, len(res))
+
         res = self.manager.get_service_providers(
             ctx,
             filters=dict(service_type=[constants.LOADBALANCER])
@@ -235,8 +240,10 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         st_db.ServiceTypeManager._instance = None
         self.manager = st_db.ServiceTypeManager.get_instance()
         for provider in service_providers:
+            service_type = provider.split(':')[0]
             self.manager.add_provider_configuration(
-                provider.split(':')[0], provconf.ProviderConfiguration())
+                service_type, provconf.ProviderConfiguration(
+                    svc_type=service_type))
         super(ServiceTypeManagerExtTestCase, self).setUp()
 
     def _list_service_providers(self):
