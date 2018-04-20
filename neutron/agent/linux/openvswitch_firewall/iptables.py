@@ -33,6 +33,12 @@ def get_iptables_driver_instance():
     return HybridIptablesHelper()
 
 
+def is_bridge_cleaned(bridge):
+    other_config = bridge.db_get_val(
+        'Bridge', bridge.br_name, 'other_config')
+    return other_config.get(Helper.CLEANED_METADATA, '').lower() == 'true'
+
+
 class Helper(object):
     """Helper to avoid loading firewall driver.
 
@@ -83,9 +89,7 @@ class Helper(object):
 
     @property
     def has_not_been_cleaned(self):
-        other_config = self.int_br.db_get_val(
-            'Bridge', self.int_br.br_name, 'other_config')
-        return other_config.get(self.CLEANED_METADATA, '').lower() != 'true'
+        return not is_bridge_cleaned(self.int_br)
 
     def mark_as_cleaned(self):
         # TODO(jlibosva): Make it a single transaction

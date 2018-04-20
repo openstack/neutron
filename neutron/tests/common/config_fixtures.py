@@ -52,6 +52,9 @@ class ConfigFileFixture(fixtures.Fixture):
         self.temp_dir = temp_dir
 
     def _setUp(self):
+        self.write_config_to_configfile()
+
+    def write_config_to_configfile(self):
         config_parser = self.dict_to_config_parser(self.config)
         # Need to randomly generate a unique folder to put the file in
         self.filename = os.path.join(self.temp_dir, self.base_filename)
