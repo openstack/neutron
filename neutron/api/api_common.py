@@ -15,6 +15,7 @@
 
 import functools
 
+from neutron_lib.api import attributes
 from neutron_lib.db import model_base
 from neutron_lib import exceptions
 from oslo_config import cfg
@@ -75,6 +76,7 @@ def get_filters_from_dict(data, attr_info, skips=None):
     becomes:
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
+    attributes.populate_project_info(attr_info)
     is_empty_string_supported = is_empty_string_filtering_supported()
     skips = skips or []
     res = {}
@@ -189,6 +191,7 @@ def get_sorts(request, attr_info):
 
     Return as: [(key1, value1), (key2, value2)]
     """
+    attributes.populate_project_info(attr_info)
     sort_keys = list_args(request, "sort_key")
     sort_dirs = list_args(request, "sort_dir")
     if len(sort_keys) != len(sort_dirs):

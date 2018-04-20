@@ -66,7 +66,8 @@ class TestRootController(test_functional.PecanFunctionalTest):
         manager.NeutronManager.set_controller_for_resource(
             _SERVICE_PLUGIN_COLLECTION,
             FakeServicePluginController(_SERVICE_PLUGIN_COLLECTION,
-                                        _SERVICE_PLUGIN_RESOURCE))
+                                        _SERVICE_PLUGIN_RESOURCE,
+                                        resource_info={'foo': {}}))
 
     def _test_method_returns_code(self, method, code=200):
         api_method = getattr(self.app, method)
