@@ -200,7 +200,8 @@ OF_PROTOCOL_TO_VERSION = {
     constants.OPENFLOW11: 2,
     constants.OPENFLOW12: 3,
     constants.OPENFLOW13: 4,
-    constants.OPENFLOW14: 5
+    constants.OPENFLOW14: 5,
+    constants.OPENFLOW15: 6,
 }
 
 
