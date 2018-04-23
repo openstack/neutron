@@ -480,6 +480,10 @@ class IpLibTestCase(IpLibTestFramework):
 
         self.assertEqual(1450, device.link.mtu)
 
+        # Check if proper exception will be raised when wrong MTU value is
+        # provided
+        self.assertRaises(ip_lib.InvalidArgument, device.link.set_mtu, 1)
+
     def test_set_link_allmulticast_on(self):
         attr = self.generate_device_details()
         device = self.manage_device(attr)

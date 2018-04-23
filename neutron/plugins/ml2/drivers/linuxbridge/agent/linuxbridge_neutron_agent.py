@@ -347,25 +347,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                 args['proxy'] = cfg.CONF.VXLAN.arp_responder
 
             try:
-                if mtu:
-                    phys_dev_mtu = ip_lib.get_device_mtu(self.local_int)
-                    max_mtu = phys_dev_mtu - constants.VXLAN_ENCAP_OVERHEAD
-                    if mtu > max_mtu:
-                        LOG.error("Provided MTU value %(mtu)s for VNI "
-                                  "%(segmentation_id)s is too high. "
-                                  "According to physical device %(dev)s "
-                                  "MTU=%(phys_mtu)s maximum available "
-                                  "MTU is %(max_mtu)s",
-                                  {'mtu': mtu,
-                                   'segmentation_id': segmentation_id,
-                                   'dev': self.local_int,
-                                   'phys_mtu': phys_dev_mtu,
-                                   'max_mtu': max_mtu})
-                        return None
                 int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
                                               **args)
-                if mtu:
-                    int_vxlan.link.set_mtu(mtu)
             except RuntimeError:
                 with excutils.save_and_reraise_exception() as ctxt:
                     # perform this check after an attempt rather than before
@@ -376,6 +359,20 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                                   "VNI %s because it is in use by another "
                                   "interface.", segmentation_id)
                         return None
+            if mtu:
+                try:
+                    int_vxlan.link.set_mtu(mtu)
+                except ip_lib.InvalidArgument:
+                    phys_dev_mtu = ip_lib.get_device_mtu(self.local_int)
+                    LOG.error("Provided MTU value %(mtu)s for VNI "
+                              "%(segmentation_id)s is too high according "
+                              "to physical device %(dev)s MTU=%(phys_mtu)s.",
+                              {'mtu': mtu,
+                               'segmentation_id': segmentation_id,
+                               'dev': self.local_int,
+                               'phys_mtu': phys_dev_mtu})
+                    int_vxlan.link.delete()
+                    return None
             int_vxlan.disable_ipv6()
             int_vxlan.link.set_up()
             LOG.debug("Done creating vxlan interface %s", interface)

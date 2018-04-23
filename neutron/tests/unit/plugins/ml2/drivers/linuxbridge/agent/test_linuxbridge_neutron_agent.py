@@ -442,22 +442,33 @@ class TestLinuxBridgeManager(base.BaseTestCase):
     def test_ensure_vxlan_mtu_too_big(self):
         seg_id = "12345678"
         physical_mtu = 1500
-        # Any mtu value which will be higher than physical_mtu - 50 should
-        # be too big
+        # Any mtu value which will be higher than
+        # physical_mtu - VXLAN_ENCAP_OVERHEAD should raise NetlinkError
         mtu = 1490
         self.lbm.local_int = 'eth0'
         self.lbm.vxlan_mode = lconst.VXLAN_MCAST
         with mock.patch.object(ip_lib, 'device_exists', return_value=False):
-            vxlan_dev = FakeIpDevice()
+            vxlan_dev = mock.Mock()
             with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
                 mock.patch.object(self.lbm.ip, 'add_vxlan',
                     return_value=vxlan_dev) as add_vxlan_fn,\
+                mock.patch.object(
+                    vxlan_dev.link, 'set_mtu',
+                    side_effect=ip_lib.InvalidArgument(
+                        parameter="MTU", value=mtu)),\
                 mock.patch.object(ip_lib, 'get_device_mtu',
-                    return_value=physical_mtu):
+                    return_value=physical_mtu),\
+                mock.patch.object(vxlan_dev.link, 'delete') as delete_dev:
 
                 self.assertFalse(
                     self.lbm.ensure_vxlan(seg_id, mtu=mtu))
-                add_vxlan_fn.assert_not_called()
+                add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                group="224.0.0.1",
+                                                srcport=(0, 0),
+                                                dstport=None,
+                                                ttl=None,
+                                                dev=self.lbm.local_int)
+                delete_dev.assert_called_once_with()
                 dv6_fn.assert_not_called()
 
     def test__update_interface_ip_details(self):
