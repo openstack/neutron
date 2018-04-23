@@ -16,7 +16,6 @@ import os
 import shutil
 import tempfile
 
-import fixtures
 from neutron_lib import constants
 
 from neutron.common import utils
@@ -28,7 +27,7 @@ from neutron.tests.common import helpers as c_helpers
 PHYSICAL_NETWORK_NAME = "physnet1"
 
 
-class ConfigFixture(fixtures.Fixture):
+class ConfigFixture(config_fixtures.ConfigFileFixture):
     """A fixture that holds an actual Neutron configuration.
 
     Note that 'self.config' is intended to only be updated once, during
@@ -37,18 +36,10 @@ class ConfigFixture(fixtures.Fixture):
     is initializing a new instance of the class.
     """
     def __init__(self, env_desc, host_desc, temp_dir, base_filename):
-        super(ConfigFixture, self).__init__()
-        self.config = config_fixtures.ConfigDict()
+        super(ConfigFixture, self).__init__(
+            base_filename, config_fixtures.ConfigDict(), temp_dir)
         self.env_desc = env_desc
         self.host_desc = host_desc
-        self.temp_dir = temp_dir
-        self.base_filename = base_filename
-
-    def _setUp(self):
-        cfg_fixture = config_fixtures.ConfigFileFixture(
-            self.base_filename, self.config, self.temp_dir)
-        self.useFixture(cfg_fixture)
-        self.filename = cfg_fixture.filename
 
     def _generate_namespace_suffix(self):
         return utils.get_rand_name(prefix='test')
