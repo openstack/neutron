@@ -277,12 +277,9 @@ class DbBasePluginCommon(common_db_mixin.CommonDbMixin):
                      page_reverse=False):
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         filters = filters or {}
-        # TODO(ihrachys) remove explicit reader usage when subnet OVO switches
-        # to engine facade by default
-        with db_api.context_manager.reader.using(context):
-            return subnet_obj.Subnet.get_objects(context, _pager=pager,
-                                                 validate_filters=False,
-                                                 **filters)
+        return subnet_obj.Subnet.get_objects(context, _pager=pager,
+                                             validate_filters=False,
+                                             **filters)
 
     def _make_network_dict(self, network, fields=None,
                            process_extensions=True, context=None):
