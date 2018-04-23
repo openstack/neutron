@@ -90,14 +90,11 @@ class RbacPluginMixin(common_db_mixin.CommonDbMixin):
         except c_exc.CallbackFailure as ex:
             raise ext_rbac.RbacPolicyInUse(object_id=entry['object_id'],
                                            details=ex)
-        # make a dict copy because deleting the entry will nullify its
-        # object_id link to network
-        entry_dict = dict(entry)
         with context.session.begin(subtransactions=True):
             context.session.delete(entry)
         registry.notify(resources.RBAC_POLICY, events.AFTER_DELETE, self,
                         context=context, object_type=object_type,
-                        policy=entry_dict)
+                        policy=entry)
         self.object_type_cache.pop(id, None)
 
     def _get_rbac_policy(self, context, id):

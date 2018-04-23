@@ -121,6 +121,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             sg.obj_reset_changes(['rules'])
 
             # fetch sg from db to load the sg rules with sg model.
+            # NOTE(yamamoto): Adding rules above bumps the revision
+            # of the SG.  It would add SG object to the session.
+            # Expunge it to ensure the following get_object doesn't
+            # use the instance.
+            context.session.expunge(model_query.get_by_id(
+                context, sg_models.SecurityGroup, sg.id))
             sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)
             secgroup_dict = self._make_security_group_dict(sg)
             kwargs['security_group'] = secgroup_dict

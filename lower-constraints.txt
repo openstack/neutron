@@ -131,7 +131,7 @@ snowballstemmer==1.2.1
 Sphinx==1.6.5
 sphinxcontrib-websupport==1.0.1
 sqlalchemy-migrate==0.11.0
-SQLAlchemy==1.2.0
+SQLAlchemy==1.0.10
 sqlparse==0.2.2
 statsd==3.2.1
 stestr==1.0.0

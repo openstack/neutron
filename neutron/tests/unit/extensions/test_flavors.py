@@ -482,10 +482,6 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         flavor = {'flavor': {'name': 'Silver',
                              'enabled': False}}
         self.plugin.update_flavor(self.ctx, fl['id'], flavor)
-
-        # don't reuse cached models from previous plugin call
-        self.ctx.session.expire_all()
-
         res = flavor_obj.Flavor.get_object(self.ctx, id=fl['id'])
         self.assertEqual('Silver', res['name'])
         self.assertFalse(res['enabled'])
@@ -564,10 +560,6 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         data['service_profile']['metainfo'] = '{"data": "value1"}'
         sp = self.plugin.update_service_profile(self.ctx, sp['id'],
                                                 data)
-
-        # don't reuse cached models from previous plugin call
-        self.ctx.session.expire_all()
-
         res = flavor_obj.ServiceProfile.get_object(self.ctx, id=sp['id'])
         self.assertEqual(data['service_profile']['metainfo'], res['metainfo'])
 
@@ -598,9 +590,6 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.ctx)[0]
         self.assertEqual(fl['id'], binding['flavor_id'])
         self.assertEqual(sp['id'], binding['service_profile_id'])
-
-        # don't reuse cached models from previous plugin call
-        self.ctx.session.expire_all()
 
         res = self.plugin.get_flavor(self.ctx, fl['id'])
         self.assertEqual(1, len(res['service_profiles']))
