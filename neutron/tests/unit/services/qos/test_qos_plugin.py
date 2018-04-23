@@ -69,8 +69,6 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
         self.admin_ctxt = context.get_admin_context()
-        mock.patch.object(self.ctxt.session, 'refresh').start()
-        mock.patch.object(self.ctxt.session, 'expunge').start()
 
         self.policy_data = {
             'policy': {'id': uuidutils.generate_uuid(),
