@@ -708,27 +708,6 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         self.model_map = collections.defaultdict(list)
         self.model_map[self._test_class.db_model] = self.db_objs
         self.pager_map = collections.defaultdict(lambda: None)
-        # don't validate refresh and expunge in tests that don't touch database
-        # because otherwise it will fail due to db models not being injected
-        # into active session in the first place
-        mock.patch.object(self.context.session, 'refresh').start()
-        mock.patch.object(self.context.session, 'expunge').start()
-
-        # don't validate expunge in tests that don't touch database and use
-        # new reader engine facade
-        self.reader_facade_mock = mock.patch.object(
-            self._test_class, 'db_context_reader').start()
-        mock.patch.object(self.reader_facade_mock.return_value.session,
-                          'expunge').start()
-
-        # don't validate refresh and expunge in tests that don't touch database
-        # and use new writer engine facade
-        self.writer_facade_mock = mock.patch.object(
-            self._test_class, 'db_context_writer').start()
-        mock.patch.object(self.writer_facade_mock.return_value.session,
-                          'expunge').start()
-        mock.patch.object(self.writer_facade_mock.return_value.session,
-                          'refresh').start()
 
         self.get_objects_mock = mock.patch.object(
             obj_db_api, 'get_objects',
