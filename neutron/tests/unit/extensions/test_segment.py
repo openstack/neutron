@@ -348,6 +348,56 @@ class TestSegment(SegmentTestCase):
         res = self._list('segments')
         self.assertEqual(2, len(res['segments']))
 
+    def test_list_segments_with_sort(self):
+        with self.network() as network:
+            network = network['network']
+        s1 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net1',
+                                       segmentation_id=200)
+        s2 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net2',
+                                       segmentation_id=201)
+        self._test_list_with_sort('segment',
+                                  (s2, s1),
+                                  [('physical_network', 'desc')],
+                                  query_params='network_id=%s' % network['id'])
+
+    def test_list_segments_with_pagination(self):
+        with self.network() as network:
+            network = network['network']
+        s1 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net1',
+                                       segmentation_id=200)
+        s2 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net2',
+                                       segmentation_id=201)
+        s3 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net3',
+                                       segmentation_id=202)
+        self._test_list_with_pagination(
+            'segment',
+            (s1, s2, s3),
+            ('physical_network', 'asc'), 2, 2,
+            query_params='network_id=%s' % network['id'])
+
+    def test_list_segments_with_pagination_reverse(self):
+        with self.network() as network:
+            network = network['network']
+        s1 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net1',
+                                       segmentation_id=200)
+        s2 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net2',
+                                       segmentation_id=201)
+        s3 = self._test_create_segment(network_id=network['id'],
+                                       physical_network='phys_net3',
+                                       segmentation_id=202)
+        self._test_list_with_pagination_reverse(
+            'segment',
+            (s1, s2, s3),
+            ('physical_network', 'asc'), 2, 2,
+            query_params='network_id=%s' % network['id'])
+
     def test_update_segments(self):
         with self.network() as network:
             net = network['network']

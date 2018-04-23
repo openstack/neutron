@@ -61,6 +61,9 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
     supported_extension_aliases = ["segment", "ip_allocation",
                                    l2adj_apidef.ALIAS]
 
+    __native_pagination_support = True
+    __native_sorting_support = True
+
     def __init__(self):
         self.nova_updater = NovaSegmentNotifier()
 
