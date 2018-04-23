@@ -356,8 +356,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _get_br_device_name(self, port):
         return ('brq' + port['network_id'])[:n_const.LINUX_DEV_LEN]
 
-    def _get_jump_rules(self, port):
-        zone = self.ipconntrack.get_device_zone(port)
+    def _get_jump_rules(self, port, create=True):
+        zone = self.ipconntrack.get_device_zone(port, create=create)
+        if not zone:
+            return []
         br_dev = self._get_br_device_name(port)
         port_dev = self._get_device_name(port)
         # match by interface for bridge input
@@ -379,7 +381,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             self._add_raw_rule('PREROUTING', jump_rule)
 
     def _remove_conntrack_jump(self, port):
-        for jump_rule in self._get_jump_rules(port):
+        for jump_rule in self._get_jump_rules(port, create=False):
             self._remove_raw_rule('PREROUTING', jump_rule)
 
     def _add_raw_rule(self, chain, rule, comment=None):
