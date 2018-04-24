@@ -55,7 +55,7 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self._setUpExtension(
             'neutron.services.flavors.flavors_plugin.FlavorsPlugin',
             constants.FLAVORS, {},
-            flavors.Flavors, '', supported_extension_aliases='flavors')
+            flavors.Flavors, '', supported_extension_aliases=['flavors'])
 
     def test_create_flavor(self):
         tenant_id = uuidutils.generate_uuid()
