@@ -33,6 +33,7 @@ from oslo_service import service
 from oslo_utils import excutils
 from six import moves
 
+from neutron.agent import _topics as n_topics
 from neutron.agent.linux import bridge_lib
 from neutron.agent.linux import ip_lib
 from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
@@ -833,7 +834,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.DELETE],
                      [topics.NETWORK, topics.UPDATE],
-                     [topics.SECURITY_GROUP, topics.UPDATE]]
+                     [topics.SECURITY_GROUP, topics.UPDATE],
+                     [n_topics.PORT_BINDING, n_topics.DEACTIVATE]]
         if cfg.CONF.VXLAN.l2_population:
             consumers.append([topics.L2POPULATION, topics.UPDATE])
         return consumers
@@ -869,7 +871,8 @@ class LinuxBridgeRpcCallbacks(
     #   1.1 Support Security Group RPC
     #   1.3 Added param devices_to_update to security_groups_provider_updated
     #   1.4 Added support for network_update
-    target = oslo_messaging.Target(version='1.4')
+    #   1.5 Added binding_deactivate
+    target = oslo_messaging.Target(version='1.5')
 
     def network_delete(self, context, **kwargs):
         LOG.debug("network_delete received")
@@ -898,6 +901,18 @@ class LinuxBridgeRpcCallbacks(
         # processed in the same order as the relevant API requests.
         self.updated_devices.add(device_name)
         LOG.debug("port_update RPC received for port: %s", port_id)
+
+    def binding_deactivate(self, context, **kwargs):
+        if kwargs.get('host') != cfg.CONF.host:
+            return
+        interface_name = self.agent.mgr.get_tap_device_name(
+            kwargs.get('port_id'))
+        bridge_name = self.agent.mgr.get_bridge_name(kwargs.get('network_id'))
+        LOG.debug("Removing device %(interface_name)s from bridge "
+                  "%(bridge_name)s due to binding being de-activated",
+                  {'interface_name': interface_name,
+                   'bridge_name': bridge_name})
+        self.agent.mgr.remove_interface(bridge_name, interface_name)
 
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']
