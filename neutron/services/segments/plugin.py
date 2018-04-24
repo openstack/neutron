@@ -59,7 +59,8 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
     _instance = None
 
     supported_extension_aliases = ["segment", "ip_allocation",
-                                   l2adj_apidef.ALIAS]
+                                   l2adj_apidef.ALIAS,
+                                   "standard-attr-segment"]
 
     __native_pagination_support = True
     __native_sorting_support = True
