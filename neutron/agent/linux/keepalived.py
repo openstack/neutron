@@ -366,7 +366,7 @@ class KeepalivedManager(object):
 
     """
 
-    def __init__(self, resource_id, config, process_monitor, conf_path='/tmp',
+    def __init__(self, resource_id, config, process_monitor, conf_path,
                  namespace=None, throttle_restart_value=None):
         self.resource_id = resource_id
         self.config = config
