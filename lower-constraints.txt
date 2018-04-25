@@ -89,7 +89,7 @@ ovsdbapp==0.9.1
 Paste==2.0.2
 PasteDeploy==1.5.0
 pbr==2.0.0
-pecan==1.0.0
+pecan==1.1.1
 pep8==1.5.7
 pika-pool==0.1.3
 pika==0.10.0
