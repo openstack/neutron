@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import constants
+import sqlalchemy as sa
+
 """device_owner_ha_replicate_int
 
 Revision ID: 7bbb25278f53
@@ -24,10 +28,6 @@ Create Date: 2016-03-22 10:00:43.245503
 # revision identifiers, used by Alembic.
 revision = '7bbb25278f53'
 down_revision = '4ffceebfcdc'
-
-from alembic import op
-from neutron_lib import constants
-import sqlalchemy as sa
 
 
 ROUTER_ATTR_TABLE = 'router_extra_attributes'

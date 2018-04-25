@@ -13,17 +13,18 @@
 #    under the License.
 #
 
+from alembic import op
+from oslo_utils import uuidutils
+import sqlalchemy as sa
+
+from neutron.common import constants as const
+
 """migrate to pluggable ipam """
 
 # revision identifiers, used by Alembic.
 revision = '3b935b28e7a0'
 down_revision = 'a8b517cff8ab'
 
-from alembic import op
-from oslo_utils import uuidutils
-import sqlalchemy as sa
-
-from neutron.common import constants as const
 
 # A simple models for tables with only the fields needed for the migration.
 neutron_subnet = sa.Table('subnets', sa.MetaData(),

@@ -13,18 +13,6 @@
 #    under the License.
 #
 
-"""kilo_initial
-
-Revision ID: kilo
-Revises: None
-
-"""
-
-# revision identifiers, used by Alembic.
-revision = 'kilo'
-down_revision = None
-
-
 from neutron.db import migration
 from neutron.db.migration.alembic_migrations import agent_init_ops
 from neutron.db.migration.alembic_migrations import brocade_init_ops
@@ -47,6 +35,17 @@ from neutron.db.migration.alembic_migrations import portsec_init_ops
 from neutron.db.migration.alembic_migrations import secgroup_init_ops
 from neutron.db.migration.alembic_migrations import vmware_init_ops
 from neutron.db.migration.alembic_migrations import vpn_init_ops
+
+"""kilo_initial
+
+Revision ID: kilo
+Revises: None
+
+"""
+
+# revision identifiers, used by Alembic.
+revision = 'kilo'
+down_revision = None
 
 
 def upgrade():

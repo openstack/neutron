@@ -13,14 +13,14 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add segment_id to subnet """
 
 # revision identifiers, used by Alembic.
 revision = 'c879c5e1ee90'
 down_revision = '89ab9a816d70'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

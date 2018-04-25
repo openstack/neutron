@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """rename tenant to project
 
 Revision ID: 7d9d8eeec6ad
@@ -24,9 +27,6 @@ Create Date: 2016-06-29 19:42:17.862721
 revision = '7d9d8eeec6ad'
 down_revision = 'a84ccf28f06a'
 depends_on = ('5abc0278ca73',)
-
-from alembic import op
-import sqlalchemy as sa
 
 
 _INSPECTOR = None

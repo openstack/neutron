@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """DVR sheduling refactoring
 
 Revision ID: 2b4c2465d44b
@@ -24,9 +27,6 @@ Create Date: 2015-12-23 07:39:49.062767
 # revision identifiers, used by Alembic.
 revision = '2b4c2465d44b'
 down_revision = '8a6d8bdae39'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 ROUTER_ATTR_TABLE = 'router_extra_attributes'

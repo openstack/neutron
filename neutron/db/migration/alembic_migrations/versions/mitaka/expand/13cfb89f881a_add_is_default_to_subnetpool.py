@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy import sql
+
 """add is_default to subnetpool
 
 Revision ID: 13cfb89f881a
@@ -24,10 +28,6 @@ Create Date: 2015-09-30 15:58:31.170153
 # revision identifiers, used by Alembic.
 revision = '13cfb89f881a'
 down_revision = '59cb5b6cf4d'
-
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import sql
 
 
 def upgrade():

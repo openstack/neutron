@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Flavor framework
 
 Revision ID: 313373c0ffee
@@ -23,9 +26,6 @@ Create Date: 2014-07-17 03:00:00.00
 # revision identifiers, used by Alembic.
 revision = '313373c0ffee'
 down_revision = '52c5312f6baf'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

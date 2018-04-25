@@ -13,6 +13,12 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import exceptions
+import sqlalchemy as sa
+
+from neutron._i18n import _
+
 """uniq_floatingips0floating_network_id0fixed_port_id0fixed_ip_addr
 
 Revision ID: 6b461a21bcfc
@@ -24,12 +30,6 @@ Create Date: 2016-06-03 16:00:38.273324
 # revision identifiers, used by Alembic.
 revision = '6b461a21bcfc'
 down_revision = '67daae611b6e'
-
-from alembic import op
-from neutron_lib import exceptions
-import sqlalchemy as sa
-
-from neutron._i18n import _
 
 
 floatingips = sa.Table(

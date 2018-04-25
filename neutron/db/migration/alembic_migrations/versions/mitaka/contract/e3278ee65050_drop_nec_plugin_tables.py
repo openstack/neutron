@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Drop NEC plugin tables
 
 Revision ID: e3278ee65050
@@ -24,8 +26,6 @@ Create Date: 2016-02-15 18:50:56.870043
 # revision identifiers, used by Alembic.
 revision = 'e3278ee65050'
 down_revision = '2b4c2465d44b'
-
-from alembic import op
 
 
 def upgrade():

@@ -13,6 +13,11 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
+from neutron.db import migration
+
 """standard_desc
 
 Revision ID: 4ffceebfcdc
@@ -20,12 +25,6 @@ Revises: 5ffceebfada
 Create Date: 2016-02-10 23:12:04.012457
 
 """
-
-from alembic import op
-import sqlalchemy as sa
-
-from neutron.db import migration
-
 
 # revision identifiers, used by Alembic.
 revision = '4ffceebfcdc'

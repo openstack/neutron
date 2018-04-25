@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Add device_id index to Port
 
 Revision ID: d3435b514502
@@ -24,8 +26,6 @@ Create Date: 2016-04-25 22:13:16.676761
 # revision identifiers, used by Alembic.
 revision = 'd3435b514502'
 down_revision = '5abc0278ca73'
-
-from alembic import op
 
 
 def upgrade():

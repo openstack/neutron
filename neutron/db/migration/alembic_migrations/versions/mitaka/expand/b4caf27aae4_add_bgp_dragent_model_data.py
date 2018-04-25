@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add_bgp_dragent_model_data
 
 Revision ID: b4caf27aae4
@@ -24,9 +27,6 @@ Create Date: 2015-08-20 17:05:31.038704
 # revision identifiers, used by Alembic.
 revision = 'b4caf27aae4'
 down_revision = '15be73214821'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

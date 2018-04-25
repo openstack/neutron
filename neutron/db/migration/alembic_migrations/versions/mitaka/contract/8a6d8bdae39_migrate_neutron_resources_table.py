@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """standardattributes migration
 
 Revision ID: 8a6d8bdae39
@@ -24,9 +27,6 @@ Create Date: 2015-09-10 03:12:04.012457
 revision = '8a6d8bdae39'
 down_revision = '1b294093239c'
 depends_on = ('32e5974ada25',)
-
-from alembic import op
-import sqlalchemy as sa
 
 
 # basic model of the tables with required field for migration

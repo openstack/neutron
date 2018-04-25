@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """rbac_qos_policy
 
 Revision ID: 15e43b934f81
@@ -20,9 +23,6 @@ Revises: 1df244e556f5
 Create Date: 2015-11-25 18:45:03.819115
 
 """
-
-from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '15e43b934f81'

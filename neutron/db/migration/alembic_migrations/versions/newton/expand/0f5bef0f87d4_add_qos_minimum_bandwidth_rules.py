@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+from neutron_lib import constants
+import sqlalchemy as sa
+
 """add_qos_minimum_bandwidth_rules
 
 Revision ID: 0f5bef0f87d4
@@ -24,10 +28,6 @@ Create Date: 2016-07-29 14:33:37.243487
 # revision identifiers, used by Alembic.
 revision = '0f5bef0f87d4'
 down_revision = 'a5648cfeeadf'
-
-from alembic import op
-from neutron_lib import constants
-import sqlalchemy as sa
 
 
 def upgrade():

@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy import sql
+
 """quota_usage
 
 Revision ID: 45f955889773
@@ -24,10 +28,6 @@ Create Date: 2015-04-17 08:09:37.611546
 # revision identifiers, used by Alembic.
 revision = '45f955889773'
 down_revision = '8675309a5c4f'
-
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import sql
 
 
 def upgrade():

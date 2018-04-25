@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """address scope support in subnetpool
 
 Revision ID: 1b4c6e320f79
@@ -24,9 +27,6 @@ Create Date: 2015-07-03 09:48:39.491058
 # revision identifiers, used by Alembic.
 revision = '1b4c6e320f79'
 down_revision = '1c844d1677f7'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

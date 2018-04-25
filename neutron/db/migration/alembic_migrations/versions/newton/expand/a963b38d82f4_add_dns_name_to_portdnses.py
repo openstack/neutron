@@ -13,14 +13,14 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add dns name to portdnses"""
 
 # revision identifiers, used by Alembic.
 revision = 'a963b38d82f4'
 down_revision = 'c415aab1c048'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

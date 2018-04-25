@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Metaplugin removal
 
 Revision ID: 2a16083502f3
@@ -24,8 +26,6 @@ Create Date: 2015-06-16 09:11:10.488566
 # revision identifiers, used by Alembic.
 revision = '2a16083502f3'
 down_revision = '5498d17be016'
-
-from alembic import op
 
 
 def upgrade():

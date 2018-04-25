@@ -11,6 +11,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Drop embrane plugin table
 
 Revision ID: 1b294093239c
@@ -22,8 +24,6 @@ Create Date: 2015-10-09 14:07:59.968597
 # revision identifiers, used by Alembic.
 revision = '1b294093239c'
 down_revision = '4af11ca47297'
-
-from alembic import op
 
 
 def upgrade():

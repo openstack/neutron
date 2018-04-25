@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add resource_versions row to agent table
 
 Revision ID: 31ed664953e6
@@ -24,9 +27,6 @@ Create Date: 2016-01-15 13:41:30.016915
 # revision identifiers, used by Alembic.
 revision = '31ed664953e6'
 down_revision = '15e43b934f81'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

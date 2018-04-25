@@ -13,6 +13,10 @@
 #    under the License.
 #
 
+from alembic import op
+
+from neutron.db import migration
+
 """Drop cisco monolithic tables
 
 Revision ID: 4af11ca47297
@@ -20,11 +24,6 @@ Revises: 11926bcfe72d
 Create Date: 2015-08-13 08:01:19.709839
 
 """
-
-from alembic import op
-
-from neutron.db import migration
-
 
 # revision identifiers, used by Alembic.
 revision = '4af11ca47297'

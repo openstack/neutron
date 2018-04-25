@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Drop legacy OVS and LB plugin tables
 
 Revision ID: 5498d17be016
@@ -24,8 +26,6 @@ Create Date: 2015-06-25 14:08:30.984419
 # revision identifiers, used by Alembic.
 revision = '5498d17be016'
 down_revision = '4ffceebfada'
-
-from alembic import op
 
 
 def upgrade():

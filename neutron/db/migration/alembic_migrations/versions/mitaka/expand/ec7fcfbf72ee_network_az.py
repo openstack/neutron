@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add network availability zone
 
 Revision ID: ec7fcfbf72ee
@@ -23,9 +26,6 @@ Create Date: 2015-09-17 09:21:51.257579
 # revision identifiers, used by Alembic.
 revision = 'ec7fcfbf72ee'
 down_revision = '32e5974ada25'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

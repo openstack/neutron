@@ -13,6 +13,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add order to dnsnameservers
 
 Revision ID: 1c844d1677f7
@@ -24,9 +27,6 @@ Create Date: 2015-07-21 22:59:03.383850
 # revision identifiers, used by Alembic.
 revision = '1c844d1677f7'
 down_revision = '26c371498592'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

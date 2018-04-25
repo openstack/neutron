@@ -11,14 +11,14 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy import sql
+
 """Add support for VLAN trunking"""
 
 revision = '5abc0278ca73'
 down_revision = '45f8dd33480b'
-
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import sql
 
 
 def upgrade():

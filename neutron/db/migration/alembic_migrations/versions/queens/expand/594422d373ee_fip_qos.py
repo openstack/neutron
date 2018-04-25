@@ -12,6 +12,13 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
+from neutron_lib.db import constants as db_const
+
+from neutron.db import migration
+
 """fip qos
 
 Revision ID: 594422d373ee
@@ -23,13 +30,6 @@ Create Date: 2016-04-26 17:16:10.323756
 # revision identifiers, used by Alembic.
 revision = '594422d373ee'
 down_revision = '7d32f979895f'
-
-from alembic import op
-import sqlalchemy as sa
-
-from neutron_lib.db import constants as db_const
-
-from neutron.db import migration
 
 # milestone identifier, used by neutron-db-manage
 neutron_milestone = [migration.QUEENS]

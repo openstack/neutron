@@ -13,6 +13,8 @@
 #    under the License.
 #
 
+from alembic import op
+
 """Rename ml2_dvr_port_bindings
 
 Revision ID: 4bcd4df1f426
@@ -24,8 +26,6 @@ Create Date: 2016-06-02 14:06:04.112998
 # revision identifiers, used by Alembic.
 revision = '4bcd4df1f426'
 down_revision = '8fd3918ef6f4'
-
-from alembic import op
 
 
 OLD_REFERRED_TABLE_NAME = 'ml2_dvr_port_bindings'

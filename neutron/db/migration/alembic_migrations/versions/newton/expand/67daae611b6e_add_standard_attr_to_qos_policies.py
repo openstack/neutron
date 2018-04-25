@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """add standardattr to qos policies
 
 Revision ID: 67daae611b6e
@@ -22,9 +25,6 @@ Create Date: 2016-08-18 14:10:30.021015
 
 revision = '67daae611b6e'
 down_revision = '0f5bef0f87d4'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 TABLE = 'qos_policies'

@@ -11,6 +11,8 @@
 #    under the License.
 #
 
+from neutron.db.migration import cli
+
 """Initial no-op Liberty contract rule.
 
 Revision ID: 30018084ec99
@@ -18,9 +20,6 @@ Revises: None
 Create Date: 2015-06-22 00:00:00.000000
 
 """
-
-from neutron.db.migration import cli
-
 
 # revision identifiers, used by Alembic.
 revision = '30018084ec99'

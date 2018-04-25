@@ -10,6 +10,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from alembic import op
+from sqlalchemy.engine import reflection
+
 """Rename ml2_network_segments table
 
 Revision ID: 89ab9a816d70
@@ -21,9 +24,6 @@ Create Date: 2016-03-22 00:22:47.618593
 # revision identifiers, used by Alembic.
 revision = '89ab9a816d70'
 down_revision = '7bbb25278f53'
-
-from alembic import op
-from sqlalchemy.engine import reflection
 
 
 TABLE_NAME = 'ml2_port_binding_levels'

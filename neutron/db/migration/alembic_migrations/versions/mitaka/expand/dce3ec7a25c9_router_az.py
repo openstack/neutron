@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add router availability zone
 
 Revision ID: dce3ec7a25c9
@@ -23,9 +26,6 @@ Create Date: 2015-09-17 09:36:17.468901
 # revision identifiers, used by Alembic.
 revision = 'dce3ec7a25c9'
 down_revision = 'ec7fcfbf72ee'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

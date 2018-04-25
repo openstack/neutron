@@ -12,6 +12,9 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+
 """Add standard attribute table
 
 Revision ID: 32e5974ada25
@@ -23,9 +26,6 @@ Create Date: 2015-09-10 00:22:47.618593
 # revision identifiers, used by Alembic.
 revision = '32e5974ada25'
 down_revision = '13cfb89f881a'
-
-from alembic import op
-import sqlalchemy as sa
 
 
 TABLES = ('ports', 'networks', 'subnets', 'subnetpools', 'securitygroups',

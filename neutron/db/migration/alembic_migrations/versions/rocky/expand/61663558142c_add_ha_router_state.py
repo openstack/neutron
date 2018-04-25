@@ -12,6 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+
+import sqlalchemy as sa
+
+from neutron.common import constants
+from neutron.db import migration
+
 """Add unknown state to HA router
 
 Revision ID: 61663558142c
@@ -22,11 +28,6 @@ Create Date: 2017-05-18 14:31:45.725516
 
 revision = '61663558142c'
 down_revision = '594422d373ee'
-
-import sqlalchemy as sa
-
-from neutron.common import constants
-from neutron.db import migration
 
 
 ha_port_bindings_table_name = "ha_router_agent_port_bindings"
