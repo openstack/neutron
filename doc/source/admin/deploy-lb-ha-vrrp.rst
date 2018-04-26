@@ -96,6 +96,16 @@ Network node 2
       [securitygroup]
       firewall_driver = iptables
 
+   .. warning::
+
+      By default, Linux uses UDP port ``8472`` for VXLAN tunnel traffic. This
+      default value  doesn't follow the IANA standard, which assigned UDP port
+      ``4789`` for VXLAN communication. As a consequence, if this node is part
+      of a mixed deployment, where nodes with both OVS and Linux bridge must
+      communicate over VXLAN tunnels, it is recommended that a line containing
+      ``udp_dstport = 4789`` be added to the [vxlan] section of all the Linux
+      bridge agents. OVS follows the IANA standard.
+
    Replace ``PROVIDER_INTERFACE`` with the name of the underlying interface
    that handles provider networks. For example, ``eth1``.
 
