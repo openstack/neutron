@@ -397,6 +397,9 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
         with self.engine.connect() as conn:
             ha_router_agent_port_bindings.create(conn)
             self.addCleanup(self._drop_table, ha_router_agent_port_bindings)
+            # NOTE(haleyb): without this disabled, pylint complains
+            # about a missing 'dml' argument.
+            #pylint: disable=no-value-for-parameter
             conn.execute(ha_router_agent_port_bindings.insert(), [
                 {'port_id': '1234', 'router_id': '12345',
                  'l3_agent_id': '123'},
@@ -419,6 +422,9 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
         with self.engine.connect() as conn:
             routerports.create(conn)
             self.addCleanup(self._drop_table, routerports)
+            # NOTE(haleyb): without this disabled, pylint complains
+            # about a missing 'dml' argument.
+            #pylint: disable=no-value-for-parameter
             conn.execute(routerports.insert(), [
                 {'router_id': '1234', 'port_id': '12345',
                  'port_type': '123'},
@@ -441,6 +447,9 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
         with self.engine.connect() as conn:
             floatingips.create(conn)
             self.addCleanup(self._drop_table, floatingips)
+            # NOTE(haleyb): without this disabled, pylint complains
+            # about a missing 'dml' argument.
+            #pylint: disable=no-value-for-parameter
             conn.execute(floatingips.insert(), [
                 {'floating_network_id': '12345',
                  'fixed_port_id': '1234567',
@@ -465,6 +474,9 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
         with self.engine.connect() as conn:
             floatingips.create(conn)
             self.addCleanup(self._drop_table, floatingips)
+            # NOTE(haleyb): without this disabled, pylint complains
+            # about a missing 'dml' argument.
+            #pylint: disable=no-value-for-parameter
             conn.execute(floatingips.insert(), [
                 {'floating_network_id': '12345',
                  'fixed_port_id': '1234567',
