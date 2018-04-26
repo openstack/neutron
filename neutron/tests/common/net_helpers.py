@@ -352,7 +352,8 @@ class Pinger(object):
         r'.* Destination .* Unreachable')
     TIMEOUT = 15
 
-    def __init__(self, namespace, address, count=None, timeout=1):
+    def __init__(self, namespace, address, count=None, timeout=1,
+                 interval=None):
         self.proc = None
         self.namespace = namespace
         self.address = address
@@ -361,6 +362,7 @@ class Pinger(object):
         self.destination_unreachable = False
         self.sent = 0
         self.received = 0
+        self.interval = interval
 
     def _wait_for_death(self):
         is_dead = lambda: self.proc.poll() is not None
@@ -390,6 +392,8 @@ class Pinger(object):
         cmd = [ping_exec, self.address, '-W', str(self.timeout)]
         if self.count:
             cmd.extend(['-c', str(self.count)])
+        if self.interval:
+            cmd.extend(['-i', str(self.interval)])
         self.proc = RootHelperProcess(cmd, namespace=self.namespace)
 
     def stop(self):

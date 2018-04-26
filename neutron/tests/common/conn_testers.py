@@ -308,7 +308,8 @@ class ConnectionTester(fixtures.Fixture):
         except KeyError:
             src_namespace, dst_address = self._get_namespace_and_address(
                 direction)
-            pinger = net_helpers.Pinger(src_namespace, dst_address)
+            pinger = net_helpers.Pinger(
+                src_namespace, dst_address, interval=0.3)
             self._pingers[direction] = pinger
         return pinger
 
