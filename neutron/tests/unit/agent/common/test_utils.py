@@ -59,12 +59,6 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
         self.assertIsInstance(utils.load_interface_driver(self.conf),
                               interface.NullDriver)
 
-    def test_load_ivs_interface_driver_success(self):
-        self.conf.set_override('interface_driver',
-                               'ivs')
-        self.assertIsInstance(utils.load_interface_driver(self.conf),
-                              interface.IVSInterfaceDriver)
-
     def test_load_linuxbridge_interface_driver_success(self):
         self.conf.set_override('interface_driver',
                                'linuxbridge')

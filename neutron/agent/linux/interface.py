@@ -19,12 +19,10 @@ import time
 import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
-from oslo_log import versionutils
 import six
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.common import constants as n_const
 from neutron.common import exceptions
 
@@ -408,68 +406,6 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         else:
             ns_dev = ip_lib.IPWrapper(namespace=namespace).device(device_name)
         ns_dev.link.set_mtu(mtu)
-
-
-class IVSInterfaceDriver(LinuxInterfaceDriver):
-    """Driver for creating an internal interface on an IVS bridge."""
-
-    DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
-
-    def __init__(self, conf):
-        super(IVSInterfaceDriver, self).__init__(conf)
-        versionutils.report_deprecated_feature(
-            LOG, "IVS interface driver is deprecated in Queens and will be "
-                 "removed in Rocky.")
-        self.DEV_NAME_PREFIX = 'ns-'
-
-    def _get_tap_name(self, dev_name, prefix=None):
-        dev_name = dev_name.replace(prefix or self.DEV_NAME_PREFIX,
-                                    constants.TAP_DEVICE_PREFIX)
-        return dev_name
-
-    def _ivs_add_port(self, device_name, port_id, mac_address):
-        cmd = ['ivs-ctl', 'add-port', device_name]
-        utils.execute(cmd, run_as_root=True)
-
-    def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None, mtu=None):
-        """Plug in the interface."""
-        ip = ip_lib.IPWrapper()
-        tap_name = self._get_tap_name(device_name, prefix)
-
-        root_dev, ns_dev = ip.add_veth(tap_name, device_name)
-        root_dev.disable_ipv6()
-
-        self._ivs_add_port(tap_name, port_id, mac_address)
-
-        ns_dev = ip.device(device_name)
-        ns_dev.link.set_address(mac_address)
-
-        if mtu:
-            ns_dev.link.set_mtu(mtu)
-            root_dev.link.set_mtu(mtu)
-        else:
-            LOG.warning("No MTU configured for port %s", port_id)
-
-        if namespace:
-            namespace_obj = ip.ensure_namespace(namespace)
-            namespace_obj.add_device_to_namespace(ns_dev)
-
-        ns_dev.link.set_up()
-        root_dev.link.set_up()
-
-    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
-        """Unplug the interface."""
-        tap_name = self._get_tap_name(device_name, prefix)
-        try:
-            cmd = ['ivs-ctl', 'del-port', tap_name]
-            utils.execute(cmd, run_as_root=True)
-            device = ip_lib.IPDevice(device_name, namespace=namespace)
-            device.link.delete()
-            LOG.debug("Unplugged interface '%s'", device_name)
-        except RuntimeError:
-            LOG.error("Failed unplugging interface '%s'",
-                      device_name)
 
 
 class BridgeInterfaceDriver(LinuxInterfaceDriver):

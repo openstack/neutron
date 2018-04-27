@@ -1,0 +1,7 @@
+---
+other:
+  - The deprecated ``IVSInterfaceDriver`` class has been removed from
+    the code base.  This means neither the ``ivs`` nor the
+    ``neutron.agent.linux.interface.IVSInterfaceDriver`` can any longer
+    be used as a value for the ``interface_driver`` config option in
+    ``neutron.conf``.

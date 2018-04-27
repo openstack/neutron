@@ -19,7 +19,6 @@ from neutron_lib import constants
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils
 from neutron.conf.agent import common as config
 from neutron.tests import base
 
@@ -620,71 +619,3 @@ class TestBridgeInterfaceDriver(TestBase):
 
         self.ip_dev.assert_has_calls([mock.call('tap0', namespace=None),
                                       mock.call().link.delete()])
-
-
-class TestIVSInterfaceDriver(TestBase):
-
-    def test_get_device_name(self):
-        br = interface.IVSInterfaceDriver(self.conf)
-        device_name = br.get_device_name(FakePort())
-        self.assertEqual('ns-abcdef01-12', device_name)
-
-    def test_plug_with_prefix(self):
-        self._test_plug(devname='qr-0', prefix='qr-')
-
-    def _test_plug(self, devname=None, namespace=None, prefix=None):
-
-        if not devname:
-            devname = 'ns-0'
-
-        def device_exists(dev, namespace=None):
-            return dev == 'indigo'
-
-        ivs = interface.IVSInterfaceDriver(self.conf)
-        self.device_exists.side_effect = device_exists
-
-        root_dev = mock.Mock()
-        _ns_dev = mock.Mock()
-        ns_dev = mock.Mock()
-        self.ip().add_veth = mock.Mock(return_value=(root_dev, _ns_dev))
-        self.ip().device = mock.Mock(return_value=(ns_dev))
-        expected = [mock.call(), mock.call().add_veth('tap0', devname),
-                    mock.call().device(devname)]
-
-        ivsctl_cmd = ['ivs-ctl', 'add-port', 'tap0']
-
-        with mock.patch.object(utils, 'execute') as execute:
-            ivs.plug('01234567-1234-1234-99',
-                     'port-1234',
-                     devname,
-                     'aa:bb:cc:dd:ee:ff',
-                     namespace=namespace,
-                     prefix=prefix,
-                     mtu=9000)
-            execute.assert_called_once_with(ivsctl_cmd, run_as_root=True)
-
-        ns_dev.assert_has_calls(
-            [mock.call.link.set_address('aa:bb:cc:dd:ee:ff')])
-        ns_dev.assert_has_calls([mock.call.link.set_mtu(9000)])
-        root_dev.assert_has_calls([mock.call.link.set_mtu(9000)])
-        if namespace:
-            expected.extend(
-                [mock.call().ensure_namespace(namespace),
-                 mock.call().ensure_namespace().add_device_to_namespace(
-                     mock.ANY)])
-
-        self.ip.assert_has_calls(expected)
-        root_dev.assert_has_calls([mock.call.link.set_up()])
-        ns_dev.assert_has_calls([mock.call.link.set_up()])
-
-    def test_plug_namespace(self):
-        self._test_plug(namespace='mynamespace')
-
-    def test_unplug(self):
-        ivs = interface.IVSInterfaceDriver(self.conf)
-        ivsctl_cmd = ['ivs-ctl', 'del-port', 'tap0']
-        with mock.patch.object(utils, 'execute') as execute:
-            ivs.unplug('ns-0')
-            execute.assert_called_once_with(ivsctl_cmd, run_as_root=True)
-            self.ip_dev.assert_has_calls([mock.call('ns-0', namespace=None),
-                                          mock.call().link.delete()])
