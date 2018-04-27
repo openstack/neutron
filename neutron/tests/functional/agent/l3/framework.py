@@ -31,6 +31,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3_router_info
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
+from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import constants as n_const
@@ -44,13 +45,15 @@ from neutron.tests.functional import base
 
 _uuid = uuidutils.generate_uuid
 
+OVS_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
+
 
 def get_ovs_bridge(br_name):
     return ovs_lib.OVSBridge(br_name)
 
 
 class L3AgentTestFramework(base.BaseSudoTestCase):
-    INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
+    INTERFACE_DRIVER = OVS_INTERFACE_DRIVER
     NESTED_NAMESPACE_SEPARATOR = '@'
 
     def setUp(self):
@@ -318,7 +321,28 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def manage_router(self, agent, router):
         self.addCleanup(agent._safe_router_removed, router['id'])
-        agent._process_added_router(router)
+
+        # NOTE(mangelajo): Neutron functional for l3 don't rely on openvswitch
+        #                  agent tagging ports, and all ports remain untagged
+        #                  during test execution.
+        #                  Workaround related to lp#1767422 plugs new ports as
+        #                  dead vlan (4095) to avoid issues, we need to remove
+        #                  such tag during functional l3 testing.
+        original_plug_new = interface.OVSInterfaceDriver.plug_new
+
+        def new_ovs_plug(self, *args, **kwargs):
+            original_plug_new(self, *args, **kwargs)
+            bridge = (kwargs.get('bridge') or args[4] or
+                      self.conf.ovs_integration_bridge)
+            device_name = kwargs.get('device_name') or args[2]
+            ovsbr = ovs_lib.OVSBridge(bridge)
+            ovsbr.clear_db_attribute('Port', device_name, 'tag')
+
+        with mock.patch(OVS_INTERFACE_DRIVER + '.plug_new', autospec=True) as (
+                ovs_plug):
+            ovs_plug.side_effect = new_ovs_plug
+            agent._process_added_router(router)
+
         return agent.router_info[router['id']]
 
     def _delete_router(self, agent, router_id):

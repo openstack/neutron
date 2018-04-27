@@ -395,7 +395,13 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase):
         self._plug_ports(network, ports, self.agent, bridge=phys_br,
                          namespace=namespace)
 
-        if phys_segmentation_id and network_type == 'vlan':
+        if network_type == 'flat':
+            # NOTE(slaweq): for OVS implementations remove the DEAD VLAN tag
+            # on ports that belongs to flat network. DEAD VLAN tag is added
+            # to each newly created port. This is related to lp#1767422
+            for port in ports:
+                phys_br.clear_db_attribute("Port", port['vif_name'], "tag")
+        elif phys_segmentation_id and network_type == 'vlan':
             for port in ports:
                 phys_br.set_db_attribute(
                     "Port", port['vif_name'], "tag", phys_segmentation_id)
