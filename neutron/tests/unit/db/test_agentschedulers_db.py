@@ -16,6 +16,7 @@
 import datetime
 
 import mock
+from neutron_lib.api.definitions import dhcpagentscheduler as das_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -33,7 +34,6 @@ from neutron.api.rpc.handlers import l3_rpc
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
-from neutron.extensions import dhcpagentscheduler
 from neutron.extensions import l3agentscheduler
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
@@ -110,7 +110,7 @@ class AgentSchedulerTestMixIn(object):
                                             expected_code=exc.HTTPOk.code,
                                             admin_context=True):
         path = "/agents/%s/%s.%s" % (agent_id,
-                                     dhcpagentscheduler.DHCP_NETS,
+                                     das_apidef.DHCP_NETS,
                                      self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
@@ -128,7 +128,7 @@ class AgentSchedulerTestMixIn(object):
                                           expected_code=exc.HTTPOk.code,
                                           admin_context=True):
         path = "/networks/%s/%s.%s" % (network_id,
-                                       dhcpagentscheduler.DHCP_AGENTS,
+                                       das_apidef.DHCP_AGENTS,
                                        self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
@@ -149,7 +149,7 @@ class AgentSchedulerTestMixIn(object):
                                    expected_code=exc.HTTPCreated.code,
                                    admin_context=True):
         path = "/agents/%s/%s.%s" % (id,
-                                     dhcpagentscheduler.DHCP_NETS,
+                                     das_apidef.DHCP_NETS,
                                      self.fmt)
         req = self._path_create_request(path,
                                         {'network_id': network_id},
@@ -161,7 +161,7 @@ class AgentSchedulerTestMixIn(object):
                                         expected_code=exc.HTTPNoContent.code,
                                         admin_context=True):
         path = "/agents/%s/%s/%s.%s" % (id,
-                                        dhcpagentscheduler.DHCP_NETS,
+                                        das_apidef.DHCP_NETS,
                                         network_id,
                                         self.fmt)
         req = self._path_delete_request(path,

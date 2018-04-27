@@ -19,6 +19,7 @@ import random
 import mock
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.exceptions import dhcpagentscheduler as das_exc
 from oslo_config import cfg
 from oslo_utils import importutils
 from oslo_utils import uuidutils
@@ -26,7 +27,6 @@ import testscenarios
 
 from neutron.db import agentschedulers_db as sched_db
 from neutron.db import common_db_mixin
-from neutron.extensions import dhcpagentscheduler
 from neutron.objects import agent
 from neutron.objects import network as network_obj
 from neutron.scheduler import dhcp_agent_scheduler
@@ -456,7 +456,7 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
 
     def test_reschedule_network_from_down_agent_concurrent_removal(self):
         self._test_failed_rescheduling(
-            rn_side_effect=dhcpagentscheduler.NetworkNotHostedByDhcpAgent(
+            rn_side_effect=das_exc.NetworkNotHostedByDhcpAgent(
                 network_id='foo', agent_id='bar'))
 
     def _create_test_networks(self, num_net=0):
