@@ -38,9 +38,9 @@ class FakeFullstackMachinesList(list):
 
     def ping_all(self):
         # Generate an iterable of all unique pairs. For example:
-        # itertools.combinations(range(3), 2) results in:
-        # ((0, 1), (0, 2), (1, 2))
-        for vm_1, vm_2 in itertools.combinations(self, 2):
+        # itertools.permutations(range(3), 2) results in:
+        # ((0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1))
+        for vm_1, vm_2 in itertools.permutations(self, 2):
             vm_1.block_until_ping(vm_2.ip)
 
 
