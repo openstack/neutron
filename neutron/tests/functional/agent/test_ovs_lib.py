@@ -23,6 +23,8 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.agent.ovsdb.native import idlutils
 from neutron.common import utils
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
+    constants as agent_const)
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
@@ -88,6 +90,8 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual('test', self.br.db_get_val('Interface', port_name,
                                                     'external_ids')['test'])
+        self.assertEqual(agent_const.DEAD_VLAN_TAG,
+                         self.br.db_get_val('Port', port_name, 'tag'))
 
     def test_attribute_lifecycle(self):
         (port_name, ofport) = self.create_ovs_port()

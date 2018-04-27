@@ -275,6 +275,19 @@ class OVSBridge(BaseOVS):
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.add_port(self.br_name, port_name,
                                         may_exist=False))
+            # NOTE(mangelajo): Port is added to dead vlan (4095) by default
+            # until it's handled by the neutron-openvswitch-agent. Otherwise it
+            # becomes a trunk port on br-int (receiving traffic for all vlans),
+            # and also triggers issues on ovs-vswitchd related to the
+            # datapath flow revalidator thread, see lp#1767422
+            txn.add(self.ovsdb.db_set(
+                    'Port', port_name, ('tag', constants.DEAD_VLAN_TAG)))
+
+            # TODO(mangelajo): We could accept attr tuples for the Port too
+            # but, that could potentially break usage of this function in
+            # stable branches (where we need to backport).
+            # https://review.openstack.org/#/c/564825/4/neutron/agent/common/
+            # ovs_lib.py@289
             if interface_attr_tuples:
                 txn.add(self.ovsdb.db_set('Interface', port_name,
                                           *interface_attr_tuples))
