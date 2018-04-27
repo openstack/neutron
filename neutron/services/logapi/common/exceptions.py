@@ -57,3 +57,20 @@ class ValidatedMethodNotFound(n_exc.NeutronException):
     """A validated method not found Exception"""
     message = _('Validated method for %(resource_type)s log '
                 'could not be found.')
+
+
+class ResourceIdNotSpecified(n_exc.InvalidInput):
+    message = _('resource_id should be specified for %(resource_type)s.')
+
+
+class RouterNotEnabledSnat(n_exc.NeutronException):
+    message = _('SNAT is not enabled for router %(resource_id)s.')
+
+
+class EventsDisabled(n_exc.InvalidInput):
+    message = _('List of events %(events)s were disabled for'
+                '%(resource_type)s.')
+
+
+class RouterGatewayNotSet(n_exc.NeutronException):
+    message = _('Router gateway is not set for router %(resource_id)s.')
