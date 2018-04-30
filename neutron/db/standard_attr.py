@@ -121,7 +121,7 @@ class HasStandardAttributes(object):
 
     # NOTE(kevinbenton): we have to disable the following pylint check because
     # it thinks we are overriding this method in the __init__ method.
-    #pylint: disable=method-hidden
+    # pylint: disable=method-hidden
     @declarative.declared_attr
     def standard_attr(cls):
         return sa.orm.relationship(StandardAttribute,

@@ -112,10 +112,10 @@ class TcCommand(ip_lib.IPDevice):
         for line in cmd_result.split("\n"):
             m = filters_pattern.match(line.strip())
             if m:
-                #NOTE(slaweq): because tc is giving bw limit in SI units
+                # NOTE(slaweq): because tc is giving bw limit in SI units
                 # we need to calculate it as 1000bit = 1kbit:
                 bw_limit = convert_to_kilobits(m.group(1), constants.SI_BASE)
-                #NOTE(slaweq): because tc is giving burst limit in IEC units
+                # NOTE(slaweq): because tc is giving burst limit in IEC units
                 # we need to calculate it as 1024bit = 1kbit:
                 burst_limit = convert_to_kilobits(
                     m.group(2), constants.IEC_BASE)
@@ -133,10 +133,10 @@ class TcCommand(ip_lib.IPDevice):
         qdisc_name = m.group(1)
         if qdisc_name != "tbf":
             return None, None
-        #NOTE(slaweq): because tc is giving bw limit in SI units
+        # NOTE(slaweq): because tc is giving bw limit in SI units
         # we need to calculate it as 1000bit = 1kbit:
         bw_limit = convert_to_kilobits(m.group(2), constants.SI_BASE)
-        #NOTE(slaweq): because tc is giving burst limit in IEC units
+        # NOTE(slaweq): because tc is giving burst limit in IEC units
         # we need to calculate it as 1024bit = 1kbit:
         burst_limit = convert_to_kilobits(m.group(3), constants.IEC_BASE)
         return bw_limit, burst_limit
@@ -148,7 +148,7 @@ class TcCommand(ip_lib.IPDevice):
         means that it is fine to limit egress traffic from instance point of
         view.
         """
-        #because replace of tc filters is not working properly and it's adding
+        # because replace of tc filters is not working properly and it's adding
         # new filters each time instead of replacing existing one first old
         # ingress qdisc should be deleted and then added new one so update will
         # be called to do that:
@@ -172,7 +172,7 @@ class TcCommand(ip_lib.IPDevice):
         return self._replace_tbf_qdisc(bw_limit, burst_limit, latency_value)
 
     def delete_filters_bw_limit(self):
-        #NOTE(slaweq): For limit traffic egress from instance we need to use
+        # NOTE(slaweq): For limit traffic egress from instance we need to use
         # qdisc "ingress" because it is ingress traffic from interface POV:
         self._delete_qdisc("ingress")
 
@@ -220,7 +220,7 @@ class TcCommand(ip_lib.IPDevice):
             self.get_ingress_qdisc_burst_value(bw_limit, burst_limit),
             BURST_UNIT
         )
-        #NOTE(slaweq): it is made in exactly same way how openvswitch is doing
+        # NOTE(slaweq): it is made in exactly same way how openvswitch is doing
         # it when configuing ingress traffic limit on port. It can be found in
         # lib/netdev-linux.c#L4698 in openvswitch sources:
         cmd = [

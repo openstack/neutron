@@ -1929,7 +1929,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   None,
                                                   None,
                                                   exc.HTTPBadRequest.code)
-                    #remove properly to clean-up
+                    # remove properly to clean-up
                     self._router_interface_action('remove',
                                                   r['router']['id'],
                                                   None,
@@ -3532,7 +3532,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 self.assertIn(router1_id, device_list)
                 self.assertIn(router2_id, device_list)
 
-                #Verify if no router pass in, return empty list
+                # Verify if no router pass in, return empty list
                 ifaces = self.plugin._get_sync_interfaces(admin_ctx, None)
                 self.assertEqual(0, len(ifaces))
 

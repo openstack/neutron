@@ -1052,7 +1052,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
     def test_create_ports_bulk_emulated(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -1092,7 +1092,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
     def test_create_ports_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -2827,7 +2827,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_create_networks_bulk_emulated(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -2858,7 +2858,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             return real_has_attr(item, attr)
 
         orig = directory.get_plugin().create_network
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         with mock.patch('six.moves.builtins.hasattr',
                         new=fakehasattr):
             method_to_patch = _get_create_db_method('network')
@@ -3307,7 +3307,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnets_bulk_emulated(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -3324,7 +3324,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnets_bulk_emulated_plugin_failure(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -4767,12 +4767,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     data['subnet']['gateway_ip'] = '192.168.0.9'
                 req = self.new_update_request('subnets', data,
                                               subnet['subnet']['id'])
-                #check res code and contents
+                # check res code and contents
                 res = req.get_response(self.api)
                 self.assertEqual(200, res.status_code)
                 self._verify_updated_subnet_allocation_pools(res,
                                                              with_gateway_ip)
-                #GET subnet to verify DB updated correctly
+                # GET subnet to verify DB updated correctly
                 req = self.new_show_request('subnets', subnet['subnet']['id'],
                                             self.fmt)
                 res = req.get_response(self.api)
@@ -4785,7 +4785,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_update_subnet_allocation_pools_and_gateway_ip(self):
         self._test_update_subnet_allocation_pools(with_gateway_ip=True)
 
-    #updating alloc pool to something outside subnet.cidr
+    # updating alloc pool to something outside subnet.cidr
     def test_update_subnet_allocation_pools_invalid_pool_for_cidr(self):
         """Test update alloc pool to something outside subnet.cidr.
 
@@ -4805,7 +4805,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self.assertEqual(webob.exc.HTTPClientError.code,
                                  res.status_int)
 
-    #updating alloc pool on top of existing subnet.gateway_ip
+    # updating alloc pool on top of existing subnet.gateway_ip
     def test_update_subnet_allocation_pools_over_gateway_ip_returns_409(self):
         allocation_pools = [{'start': '10.0.0.2', 'end': '10.0.0.254'}]
         with self.network() as network:

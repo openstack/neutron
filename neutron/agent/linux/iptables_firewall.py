@@ -491,7 +491,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
 
     def _drop_dhcp_rule(self, ipv4_rules, ipv6_rules):
-        #Note(nati) Drop dhcp packet from VM
+        # Note(nati) Drop dhcp packet from VM
         ipv4_rules += [comment_rule('-p udp -m udp --sport 67 '
                                     '--dport 68 '
                                     '-j DROP', comment=ic.DHCP_SPOOF)]
@@ -593,8 +593,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         ethertype = sg_rule.get('ethertype')
         ipset_name = self.ipset.get_name(remote_gid, ethertype)
         if not self.ipset.set_name_exists(ipset_name):
-            #NOTE(mangelajo): ipsets for empty groups are not created
-            #                 thus we can't reference them.
+            # NOTE(mangelajo): ipsets for empty groups are not created
+            #                  thus we can't reference them.
             return None
         ipset_direction = IPSET_DIRECTION[sg_rule.get('direction')]
         args = self._generate_protocol_and_port_args(sg_rule)
@@ -703,7 +703,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _ip_prefix_arg(self, direction, ip_prefix):
-        #NOTE (nati) : source_group_id is converted to list of source_
+        # NOTE (nati) : source_group_id is converted to list of source_
         # ip_prefix in server side
         if ip_prefix:
             if '/' not in ip_prefix:

@@ -63,7 +63,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         ofports = [port.ofport for port in self.agent.int_br.get_vif_ports()
                    if port.port_name in portnames]
 
-        #wait until ports are marked dead, with drop flow
+        # wait until ports are marked dead, with drop flow
         utils.wait_until_true(
             lambda: num_ports_with_drop_flows(
                 ofports,
@@ -71,12 +71,12 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                     constants.LOCAL_SWITCHING
                 )) == len(ofports))
 
-        #delete the ports on bridge
+        # delete the ports on bridge
         for port in self.ports:
             self.agent.int_br.delete_port(port['vif_name'])
         self.wait_until_ports_state(self.ports, up=False)
 
-        #verify no stale drop flows
+        # verify no stale drop flows
         self.assertEqual(0,
             num_ports_with_drop_flows(
                 ofports,

@@ -554,7 +554,7 @@ class TestCommonAgentLoop(base.BaseTestCase):
         self.agent.network_ports[NETWORK_ID].append(
             port_2_data
         )
-        #check update port:
+        # check update port:
         self.agent._update_network_ports(
             NETWORK_2_ID, port_2_data['port_id'], port_2_data['device']
         )
@@ -573,13 +573,13 @@ class TestCommonAgentLoop(base.BaseTestCase):
         self.agent.network_ports[NETWORK_ID].append(
             port_2_data
         )
-        #check removing port from network when other ports are still there:
+        # check removing port from network when other ports are still there:
         cleaned_port_id = self.agent._clean_network_ports(DEVICE_1)
         self.assertIn(NETWORK_ID, self.agent.network_ports.keys())
         self.assertNotIn(port_1_data, self.agent.network_ports[NETWORK_ID])
         self.assertIn(port_2_data, self.agent.network_ports[NETWORK_ID])
         self.assertEqual(PORT_1, cleaned_port_id)
-        #and now remove last port from network:
+        # and now remove last port from network:
         cleaned_port_id = self.agent._clean_network_ports(
             port_2_data['device']
         )

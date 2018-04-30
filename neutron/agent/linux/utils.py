@@ -227,8 +227,8 @@ def kill_process(pid, signal, run_as_root=False):
 
 
 def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
-    #TODO(mangelajo): separate responsibilities here, ensure_conf_dir
-    #                 should be a separate function
+    # TODO(mangelajo): separate responsibilities here, ensure_conf_dir
+    #                  should be a separate function
     conf_dir = os.path.abspath(os.path.normpath(cfg_root))
     conf_base = os.path.join(conf_dir, uuid)
     if ensure_conf_dir:

@@ -147,7 +147,7 @@ class TestMeteringOperations(base.BaseTestCase):
             if len(fake_notifier.NOTIFICATIONS) > 1:
                 for n in fake_notifier.NOTIFICATIONS:
                     if n['event_type'] == 'l3.meter':
-                        #skip the first notification because the time is 0
+                        # skip the first notification because the time is 0
                         count += 1
                         if count > 1:
                             break

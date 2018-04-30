@@ -242,13 +242,13 @@ class Request(wsgi.Request):
             if _format in ['json']:
                 return 'application/{0}'.format(_format)
 
-        #Then look up content header
+        # Then look up content header
         type_from_header = self.get_content_type()
         if type_from_header:
             return type_from_header
         ctypes = ['application/json']
 
-        #Finally search in Accept-* headers
+        # Finally search in Accept-* headers
         bm = self.accept.best_match(ctypes)
         return bm or 'application/json'
 
@@ -629,7 +629,7 @@ class Resource(Application):
 
         controller_method = getattr(self.controller, action)
         try:
-            #NOTE(salvatore-orlando): the controller method must have
+            # NOTE(salvatore-orlando): the controller method must have
             # an argument whose name is 'request'
             return controller_method(request=request, **action_args)
         except TypeError:

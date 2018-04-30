@@ -255,9 +255,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.prevent_arp_spoofing = (
             not self.sg_agent.firewall.provides_arp_spoofing_protection)
 
-        #TODO(mangelajo): optimize resource_versions to only report
-        #                 versions about resources which are common,
-        #                 or which are used by specific extensions.
+        # TODO(mangelajo): optimize resource_versions to only report
+        #                  versions about resources which are common,
+        #                  or which are used by specific extensions.
         self.agent_state = {
             'binary': 'neutron-openvswitch-agent',
             'host': host,
@@ -1268,7 +1268,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 events['added'] = [e for e in events['added']
                                    if e['name'] != p]
 
-        #TODO(rossella_s): scanning the ancillary bridge won't be needed
+        # TODO(rossella_s): scanning the ancillary bridge won't be needed
         # anymore when https://review.openstack.org/#/c/203381 since the bridge
         # id stored in external_ids will be used to identify the bridge the
         # port belongs to

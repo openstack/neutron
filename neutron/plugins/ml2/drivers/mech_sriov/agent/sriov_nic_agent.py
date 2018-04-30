@@ -134,7 +134,7 @@ class SriovNicSwitchAgent(object):
         configurations = {'device_mappings': physical_devices_mappings,
                           'extensions': self.ext_manager.names()}
 
-        #TODO(mangelajo): optimize resource_versions (see ovs agent)
+        # TODO(mangelajo): optimize resource_versions (see ovs agent)
         self.agent_state = {
             'binary': 'neutron-sriov-nic-agent',
             'host': self.conf.host,

@@ -236,7 +236,7 @@ class CachedResourceConsumerTracker(object):
 _cached_version_tracker = None
 
 
-#NOTE(ajo): add locking if we ever stop using greenthreads
+# NOTE(ajo): add locking if we ever stop using greenthreads
 def _get_cached_tracker():
     global _cached_version_tracker
     if not _cached_version_tracker:

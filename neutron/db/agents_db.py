@@ -406,8 +406,8 @@ class AgentExtRpcCallback(object):
     def __init__(self, plugin=None):
         super(AgentExtRpcCallback, self).__init__()
         self.plugin = plugin
-        #TODO(ajo): fix the resources circular dependency issue by dynamically
-        #           registering object types in the RPC callbacks api
+        # TODO(ajo): fix the resources circular dependency issue by dynamically
+        #            registering object types in the RPC callbacks api
         resources_rpc = importutils.import_module(
             'neutron.api.rpc.handlers.resources_rpc')
         # Initialize RPC api directed to other neutron-servers
