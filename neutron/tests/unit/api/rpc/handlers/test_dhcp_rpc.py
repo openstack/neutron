@@ -41,7 +41,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         set_dirty_p = mock.patch('neutron.quota.resource_registry.'
                                  'set_resources_dirty')
         self.mock_set_dirty = set_dirty_p.start()
-        self.utils_p = mock.patch('neutron.plugins.common.utils.create_port')
+        self.utils_p = mock.patch('neutron_lib.plugins.utils.create_port')
         self.utils = self.utils_p.start()
         self.segment_plugin = mock.MagicMock()
         directory.add_plugin('segments', self.segment_plugin)

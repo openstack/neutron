@@ -55,7 +55,6 @@ from neutron.extensions import qos_fip
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
-from neutron.plugins.common import utils as p_utils
 from neutron import worker as neutron_worker
 
 LOG = logging.getLogger(__name__)
@@ -376,8 +375,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                      'device_owner': DEVICE_OWNER_ROUTER_GW,
                      'admin_state_up': True,
                      'name': ''}
-        gw_port = p_utils.create_port(self._core_plugin,
-                                      context.elevated(), {'port': port_data})
+        gw_port = plugin_utils.create_port(
+            self._core_plugin, context.elevated(), {'port': port_data})
 
         if not gw_port['fixed_ips']:
             LOG.debug('No IPs available for external network %s',
@@ -820,8 +819,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                      'device_id': router.id,
                      'device_owner': owner,
                      'name': ''}
-        return p_utils.create_port(self._core_plugin, context,
-                                   {'port': port_data}), [subnet], True
+        return plugin_utils.create_port(
+            self._core_plugin, context, {'port': port_data}), [subnet], True
 
     @staticmethod
     def _make_router_interface_info(
@@ -1307,10 +1306,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         # 'status' in port dict could not be updated by default, use
         # check_allow_post to stop the verification of system
-        external_port = p_utils.create_port(self._core_plugin,
-                                            context.elevated(),
-                                            {'port': port},
-                                            check_allow_post=False)
+        external_port = plugin_utils.create_port(
+            self._core_plugin, context.elevated(),
+            {'port': port}, check_allow_post=False)
 
         with plugin_utils.delete_port_on_error(
                 self._core_plugin, context.elevated(),

@@ -49,7 +49,6 @@ from neutron.objects import agent as ag_obj
 from neutron.objects import base as base_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.objects import router as l3_obj
-from neutron.plugins.common import utils as p_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -213,8 +212,8 @@ class DVRResourceOperationHandler(object):
                      'device_owner': const.DEVICE_OWNER_ROUTER_SNAT,
                      'admin_state_up': True,
                      'name': ''}
-        snat_port = p_utils.create_port(self._core_plugin, context,
-                                        {'port': port_data})
+        snat_port = plugin_utils.create_port(
+            self._core_plugin, context, {'port': port_data})
         if not snat_port:
             msg = _("Unable to create the SNAT Interface Port")
             raise n_exc.BadRequest(resource='router', msg=msg)
@@ -896,8 +895,8 @@ class _DVRAgentInterfaceMixin(object):
                              portbindings.HOST_ID: host,
                              'admin_state_up': True,
                              'name': ''}
-                agent_port = p_utils.create_port(self._core_plugin, context,
-                                                 {'port': port_data})
+                agent_port = plugin_utils.create_port(
+                    self._core_plugin, context, {'port': port_data})
                 if agent_port:
                     self._populate_mtu_and_subnets_for_ports(context,
                                                              [agent_port])

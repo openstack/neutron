@@ -23,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as p_utils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -36,7 +37,6 @@ from neutron.common import utils
 from neutron.db import api as db_api
 from neutron.db import provisioning_blocks
 from neutron.extensions import segment as segment_ext
-from neutron.plugins.common import utils as p_utils
 from neutron.quota import resource_registry
 
 
