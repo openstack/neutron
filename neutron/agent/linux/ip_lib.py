@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import errno
 import os
 import re
 import time
@@ -25,6 +26,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from pyroute2.netlink.rtnl import ifinfmsg
+from pyroute2 import NetlinkError
 from pyroute2 import netns
 import six
 
@@ -63,6 +65,11 @@ def remove_interface_suffix(interface):
 class AddressNotReady(exceptions.NeutronException):
     message = _("Failure waiting for address %(address)s to "
                 "become ready: %(reason)s")
+
+
+class InvalidArgument(exceptions.NeutronException):
+    message = _("Invalid value %(value)s for parameter %(parameter)s "
+                "provided.")
 
 
 class SubProcessBase(object):
@@ -508,8 +515,13 @@ class IpLinkCommand(IpDeviceCommandBase):
             self.name, self._parent.namespace, ifinfmsg.IFF_ALLMULTI)
 
     def set_mtu(self, mtu_size):
-        privileged.set_link_attribute(
-            self.name, self._parent.namespace, mtu=mtu_size)
+        try:
+            privileged.set_link_attribute(
+                self.name, self._parent.namespace, mtu=mtu_size)
+        except NetlinkError as e:
+            if e.code == errno.EINVAL:
+                raise InvalidArgument(parameter="MTU", value=mtu_size)
+            raise
 
     def set_up(self):
         privileged.set_link_attribute(
