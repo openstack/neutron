@@ -171,7 +171,7 @@ class ResourceRegistry(object):
         """
 
         if (not cfg.CONF.QUOTAS.track_quota_usage or
-            resource_name not in self._tracked_resource_mappings):
+                resource_name not in self._tracked_resource_mappings):
             LOG.info("Creating instance of CountableResource for "
                      "resource:%s", resource_name)
             return resource.CountableResource(

@@ -595,7 +595,7 @@ class VethFixture(fixtures.Fixture):
         for port in self.ports:
             ip_wrapper = ip_lib.IPWrapper(port.namespace)
             if (ip_wrapper.netns.exists(port.namespace) or
-                port.namespace is None):
+                    port.namespace is None):
                 try:
                     ip_wrapper.del_veth(port.name)
                     break
@@ -666,7 +666,7 @@ class MacvtapFixture(fixtures.Fixture):
 
     def destroy(self):
         if (ip_lib.network_namespace_exists(self.ip_dev.namespace) or
-            self.ip_dev.namespace is None):
+                self.ip_dev.namespace is None):
             try:
                 self.ip_dev.link.delete()
             except RuntimeError:

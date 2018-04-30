@@ -341,7 +341,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 data['subnet'][arg] = kwargs[arg]
 
         if ('gateway_ip' in kwargs and
-            kwargs['gateway_ip'] is not constants.ATTR_NOT_SPECIFIED):
+                kwargs['gateway_ip'] is not constants.ATTR_NOT_SPECIFIED):
             data['subnet']['gateway_ip'] = kwargs['gateway_ip']
 
         subnet_req = self.new_create_request('subnets', data, fmt)
@@ -401,9 +401,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 data['port'][arg] = kwargs[arg]
         # create a dhcp port device id if one hasn't been supplied
         if ('device_owner' in kwargs and
-            kwargs['device_owner'] == constants.DEVICE_OWNER_DHCP and
-            'host' in kwargs and
-            'device_id' not in kwargs):
+                kwargs['device_owner'] == constants.DEVICE_OWNER_DHCP and
+                'host' in kwargs and
+                'device_id' not in kwargs):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
             data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt)
@@ -4351,8 +4351,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                               ipv6_ra_mode=addr_mode,
                                               ipv6_address_mode=addr_mode)
             if (insert_db_reference_error or insert_address_allocated or
-                device_owner == constants.DEVICE_OWNER_ROUTER_SNAT or
-                device_owner in constants.ROUTER_INTERFACE_OWNERS):
+                    device_owner == constants.DEVICE_OWNER_ROUTER_SNAT or
+                    device_owner in constants.ROUTER_INTERFACE_OWNERS):
                 # DVR SNAT, router interfaces and DHCP ports should not have
                 # been updated with addresses from the new auto-address subnet
                 self.assertEqual(1, len(port['port']['fixed_ips']))

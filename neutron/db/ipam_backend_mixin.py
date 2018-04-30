@@ -238,7 +238,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             subnet_list = self._get_subnets(context)
         for subnet in subnet_list:
             if ((netaddr.IPSet([subnet.cidr]) & new_subnet_ipset) and
-                str(subnet.cidr) != const.PROVISIONAL_IPV6_PD_PREFIX):
+                    str(subnet.cidr) != const.PROVISIONAL_IPV6_PD_PREFIX):
                 # don't give out details of the overlapping subnet
                 err_msg = ("Requested subnet with cidr: %(cidr)s for "
                            "network: %(network_id)s overlaps with another "

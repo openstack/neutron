@@ -1220,7 +1220,7 @@ class TestDnsmasq(TestBase):
         possible_leases = 0
         for i, s in enumerate(network.subnets):
             if (s.ip_version != 6 or
-                s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
+                    s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
                 if s.ip_version == 4:
                     expected.extend([prefix % (
                         i, s.cidr.split('/')[0],

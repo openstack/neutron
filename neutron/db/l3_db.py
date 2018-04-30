@@ -333,7 +333,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if (not extensions.is_extension_supported(
                 l3_plugin,
                 constants.L3_AGENT_SCHEDULER_EXT_ALIAS) or
-            l3_plugin.router_scheduler is None):
+                l3_plugin.router_scheduler is None):
             # that might mean that we are dealing with non-agent-based
             # implementation of l3 services
             return
@@ -801,7 +801,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     'subnet_id': subnet['id']}
 
         if (subnet['ip_version'] == 6 and not
-            ipv6_utils.is_ipv6_pd_enabled(subnet)):
+                ipv6_utils.is_ipv6_pd_enabled(subnet)):
             # Add new prefix to an existing ipv6 port with the same network id
             # if one exists
             port = self._find_ipv6_router_port_by_network(context, router,

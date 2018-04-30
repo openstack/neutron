@@ -141,7 +141,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
         orig = context.original
 
         if (orig['mac_address'] != port['mac_address'] and
-            context.status == const.PORT_STATUS_ACTIVE):
+                context.status == const.PORT_STATUS_ACTIVE):
             msg = _("unable to modify mac_address of ACTIVE port "
                     "%s") % port['id']
             raise exceptions.InvalidInput(error_message=msg)

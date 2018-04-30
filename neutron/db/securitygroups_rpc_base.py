@@ -117,7 +117,7 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
             # since it includes the legacy router interface device owners
             # and DVR router interface device owners.
             if (port['device_owner'] not in
-                [const.DEVICE_OWNER_DHCP, const.ROUTER_INTERFACE_OWNERS]):
+                    [const.DEVICE_OWNER_DHCP, const.ROUTER_INTERFACE_OWNERS]):
                 sec_groups |= set(port.get(ext_sg.SECURITYGROUPS))
 
         if sec_groups:
@@ -172,7 +172,7 @@ class SecurityGroupInfoAPIMixin(object):
             security_group_id = rule_in_db.get('security_group_id')
             ethertype = rule_in_db['ethertype']
             if ('security_group_source_groups'
-                not in sg_info['devices'][port_id]):
+                    not in sg_info['devices'][port_id]):
                 sg_info['devices'][port_id][
                     'security_group_source_groups'] = []
 

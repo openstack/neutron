@@ -85,7 +85,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if profile:
             capabilities = profile.get('capabilities', [])
         if (vnic_type == portbindings.VNIC_DIRECT and
-            'switchdev' not in capabilities):
+                'switchdev' not in capabilities):
             LOG.debug("Refusing to bind due to unsupported vnic_type: %s with "
                       "no switchdev capability", portbindings.VNIC_DIRECT)
             return
@@ -96,8 +96,8 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if (any(x in caps.get('iface_types', []) for x
                 in [a_const.OVS_DPDK_VHOST_USER,
                     a_const.OVS_DPDK_VHOST_USER_CLIENT]) and
-            agent['configurations'].get('datapath_type') ==
-            a_const.OVS_DATAPATH_NETDEV):
+                agent['configurations'].get('datapath_type') ==
+                a_const.OVS_DATAPATH_NETDEV):
             return portbindings.VIF_TYPE_VHOST_USER
         return self.vif_type
 

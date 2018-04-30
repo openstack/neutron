@@ -143,7 +143,7 @@ class DNSExtensionDriver(api.ExtensionDriver):
             is_dns_domain_changed = (dns_domain is not None and
                 dns_data_db[dns_apidef.DNSDOMAIN] != dns_domain)
             if (is_dns_name_changed or is_dns_domain_changed or
-                (has_fixed_ips and dns_data_db['current_dns_name'])):
+                    (has_fixed_ips and dns_data_db['current_dns_name'])):
                 dns_data_db = self._populate_previous_external_dns_data(
                     dns_data_db)
                 dns_data_db = self._populate_current_external_dns_data(

@@ -215,7 +215,7 @@ class AgentSchedulerTestMixIn(object):
         agents = self._list_agents()
         for agent_data in agents['agents']:
             if (agent_data['agent_type'] == agent_type and
-                agent_data['host'] == host):
+                    agent_data['host'] == host):
                 return agent_data['id']
 
 
@@ -1139,7 +1139,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             default = l3agents['agents'][0]['id']
             for com in agents['agents']:
                 if (com['id'] != default and
-                    com['agent_type'] == constants.AGENT_TYPE_L3):
+                        com['agent_type'] == constants.AGENT_TYPE_L3):
                     another_l3_agent_id = com['id']
                     another_l3_agent_host = com['host']
                     break

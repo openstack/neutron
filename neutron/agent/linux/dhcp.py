@@ -813,7 +813,7 @@ class Dnsmasq(DhcpLocalProcess):
                     (iaid, ip, client_id) = parts[1], parts[2], parts[4]
                     ip = ip.strip('[]')
                     if (ip_version and
-                        netaddr.IPAddress(ip).version != ip_version):
+                            netaddr.IPAddress(ip).version != ip_version):
                         continue
                     leases[ip] = {'iaid': iaid,
                                   'client_id': client_id,
@@ -1122,7 +1122,8 @@ class Dnsmasq(DhcpLocalProcess):
                 continue
             for alloc in port.fixed_ips:
                 if (alloc.subnet_id in subnets and
-                    subnets[alloc.subnet_id].gateway_ip == alloc.ip_address):
+                        subnets[alloc.subnet_id].gateway_ip ==
+                        alloc.ip_address):
                     isolated_subnets[alloc.subnet_id] = False
 
         return isolated_subnets
@@ -1165,7 +1166,7 @@ class Dnsmasq(DhcpLocalProcess):
             return False
 
         if (conf.enable_metadata_network and
-            cls.has_metadata_subnet(all_subnets)):
+                cls.has_metadata_subnet(all_subnets)):
             return True
 
         isolated_subnets = cls.get_isolated_subnets(network)

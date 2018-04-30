@@ -456,7 +456,7 @@ class L3NATAgent(ha.AgentMixin,
 
     def _process_router_if_compatible(self, router):
         if (self.conf.external_network_bridge and
-            not ip_lib.device_exists(self.conf.external_network_bridge)):
+                not ip_lib.device_exists(self.conf.external_network_bridge)):
             LOG.error("The external network bridge '%s' does not exist",
                       self.conf.external_network_bridge)
             return

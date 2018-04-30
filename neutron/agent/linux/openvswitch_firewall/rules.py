@@ -142,7 +142,7 @@ def merge_port_ranges(rule_conj_list):
             cur_conj.remove(conj_id)
 
     if (len(result) == 1 and result[0][0]['port_range_min'] == 1 and
-        result[0][0]['port_range_max'] == 65535):
+            result[0][0]['port_range_max'] == 65535):
         del result[0][0]['port_range_min']
         del result[0][0]['port_range_max']
     return result

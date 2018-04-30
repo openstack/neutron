@@ -51,7 +51,7 @@ def pull(resource_type, resource_id, **kwargs):
     obj = callback(resource_type, resource_id, **kwargs)
     if obj:
         if (not isinstance(obj, base.NeutronObject) or
-            resource_type != obj.obj_name()):
+                resource_type != obj.obj_name()):
             raise exceptions.CallbackWrongResourceType(
                 resource_type=resource_type)
     return obj

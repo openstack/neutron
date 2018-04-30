@@ -278,7 +278,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # raise if multiple tenants found or if the only tenant found
         # is not the owner of the network
         if (len(tenant_ids) > 1 or len(tenant_ids) == 1 and
-            original.tenant_id not in tenant_ids):
+                original.tenant_id not in tenant_ids):
             self._validate_projects_have_access_to_network(
                 original, tenant_ids)
 
@@ -570,7 +570,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             error_message = _("Subnet has a prefix length that is "
                               "incompatible with DHCP service enabled")
             if ((ip_ver == 4 and subnet_prefixlen > 30) or
-                (ip_ver == 6 and subnet_prefixlen > 126)):
+                    (ip_ver == 6 and subnet_prefixlen > 126)):
                 raise exc.InvalidInput(error_message=error_message)
 
             net = netaddr.IPNetwork(s['cidr'])
@@ -937,7 +937,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 for ip in port['fixed_ips']:
                     if ip['subnet_id'] == result['id']:
                         if (port['device_owner'] in
-                            constants.ROUTER_INTERFACE_OWNERS):
+                                constants.ROUTER_INTERFACE_OWNERS):
                             routers.append(port['device_id'])
                             ip['ip_address'] = result['gateway_ip']
                         else:
@@ -1244,7 +1244,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
         if (device_owner and
-            device_owner.startswith(constants.DEVICE_OWNER_NETWORK_PREFIX)):
+            device_owner.startswith(
+                constants.DEVICE_OWNER_NETWORK_PREFIX)):
             raise n_exc.UnsupportedPortDeviceOwner(
                 op=_("mac address update"), port_id=id,
                 device_owner=device_owner)

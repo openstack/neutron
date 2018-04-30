@@ -1425,7 +1425,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def _setup_tunnel_port(self, br, port_name, remote_ip, tunnel_type):
         try:
             if (netaddr.IPAddress(self.local_ip).version !=
-                netaddr.IPAddress(remote_ip).version):
+                    netaddr.IPAddress(remote_ip).version):
                 LOG.error("IP version mismatch, cannot create tunnel: "
                           "local_ip=%(lip)s remote_ip=%(rip)s",
                           {'lip': self.local_ip, 'rip': remote_ip})
@@ -2065,8 +2065,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     # Secure and wire/unwire VIFs and update their status
                     # on Neutron server
                     if (self._port_info_has_changes(port_info) or
-                        self.sg_agent.firewall_refresh_needed() or
-                        ovs_restarted):
+                            self.sg_agent.firewall_refresh_needed() or
+                            ovs_restarted):
                         LOG.debug("Starting to process devices in:%s",
                                   port_info)
                         failed_devices = self.process_network_ports(
@@ -2153,7 +2153,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _check_agent_configurations(self):
         if (self.enable_distributed_routing and self.enable_tunneling and
-            not self.l2_pop):
+                not self.l2_pop):
 
             raise ValueError(_("DVR deployments for VXLAN/GRE/Geneve "
                                "underlays require L2-pop to be enabled, "

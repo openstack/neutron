@@ -196,7 +196,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         #          prefix = mix_interface.1 (backward compatible)
         #          prefix = mix_iHASHED.1111
         if (len(physical_interface) + len(vlan_postfix) >
-            constants.DEVICE_NAME_MAX_LEN):
+                constants.DEVICE_NAME_MAX_LEN):
             physical_interface = plugin_utils.get_interface_name(
                 physical_interface, max_len=(constants.DEVICE_NAME_MAX_LEN -
                                              MAX_VLAN_POSTFIX_LEN))

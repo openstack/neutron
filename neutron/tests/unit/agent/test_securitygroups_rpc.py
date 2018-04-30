@@ -275,7 +275,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
     def _port_with_addr_pairs_and_security_group(self):
         plugin_obj = directory.get_plugin()
         if ('allowed-address-pairs'
-            not in plugin_obj.supported_extension_aliases):
+                not in plugin_obj.supported_extension_aliases):
             self.skipTest("Test depends on allowed-address-pairs extension")
         fake_prefix = FAKE_PREFIX['IPv4']
         with self.network() as n,\

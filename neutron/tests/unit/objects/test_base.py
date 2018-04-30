@@ -1152,10 +1152,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                        return_value={'a': 'a', 'b': 'b', 'c': 'c'})
     def test_update_changes_forbidden(self, *mocks):
         with mock.patch.object(
-            self._test_class,
-            'fields_no_update',
-            new_callable=mock.PropertyMock(return_value=['a', 'c']),
-            create=True):
+                self._test_class,
+                'fields_no_update',
+                new_callable=mock.PropertyMock(return_value=['a', 'c']),
+                create=True):
             obj = self._test_class(self.context, **self.obj_fields[0])
             self.assertRaises(o_exc.NeutronObjectUpdateForbidden, obj.update)
 

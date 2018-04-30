@@ -364,7 +364,7 @@ class ConjIPFlowManager(object):
             for sg_conj_id_map in vlan_conj_id_map.values():
                 for remote_sg_id, unused in unused_dict.items():
                     if (remote_sg_id in sg_conj_id_map and
-                        sg_conj_id_map[remote_sg_id] & unused):
+                            sg_conj_id_map[remote_sg_id] & unused):
                         sg_conj_id_map[remote_sg_id] -= unused
                         if not sg_conj_id_map[remote_sg_id]:
                             del sg_conj_id_map[remote_sg_id]

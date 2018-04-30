@@ -625,8 +625,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         if int_port_addr_value is None:
             return False
         if ((key != lib_constants.IP_VERSION_6) and
-            int_port_addr_scopes.get(str(key)) in
-            ext_port_addr_scopes.values()):
+                int_port_addr_scopes.get(str(key)) in
+                ext_port_addr_scopes.values()):
             return True
         return False
 

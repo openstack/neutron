@@ -2114,7 +2114,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         self.assertEqual(400, res.status_int)
                     for p in self._list('ports')['ports']:
                         if (p['device_owner'] ==
-                            lib_constants.DEVICE_OWNER_FLOATINGIP):
+                                lib_constants.DEVICE_OWNER_FLOATINGIP):
                             self.fail('garbage port is not deleted')
 
     def test_floatingip_with_assoc_fails(self):

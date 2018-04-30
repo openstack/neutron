@@ -134,7 +134,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             policy_obj = super(QosPolicy, cls).get_object(admin_context,
                                                           **kwargs)
             if (not policy_obj or
-                not cls.is_accessible(context, policy_obj)):
+                    not cls.is_accessible(context, policy_obj)):
                 return
 
             policy_obj.obj_load_attr('rules')

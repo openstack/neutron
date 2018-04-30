@@ -134,7 +134,7 @@ class DNSDbMixin(object):
                 context, floatingip_data))
         if dns_data_db:
             if (dns_data_db['published_dns_name'] != current_dns_name or
-                dns_data_db['published_dns_domain'] != current_dns_domain):
+                    dns_data_db['published_dns_domain'] != current_dns_domain):
                 dns_actions_data = DNSActionsData(
                     previous_dns_name=dns_data_db['published_dns_name'],
                     previous_dns_domain=dns_data_db['published_dns_domain'])

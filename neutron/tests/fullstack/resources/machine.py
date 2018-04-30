@@ -109,7 +109,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         subnet_id = fixed_ip['subnet_id']
         subnet = self.safe_client.client.show_subnet(subnet_id)
         if (netaddr.IPAddress(fixed_ip['ip_address']).version ==
-            constants.IP_VERSION_6):
+                constants.IP_VERSION_6):
             # v6Address/default_route is auto-configured.
             self._ipv6 = fixed_ip['ip_address']
             self.gateway_ipv6 = subnet['subnet']['gateway_ip']

@@ -147,7 +147,7 @@ def get_limit_and_marker(request):
 def _get_pagination_max_limit():
     max_limit = -1
     if (cfg.CONF.pagination_max_limit.lower() !=
-        constants.PAGINATION_INFINITE):
+            constants.PAGINATION_INFINITE):
         try:
             max_limit = int(cfg.CONF.pagination_max_limit)
             if max_limit == 0:

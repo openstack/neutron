@@ -105,7 +105,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._process_port_port_security_create(context, p, neutron_db)
 
         if (validators.is_attr_set(p.get(ext_sg.SECURITYGROUPS)) and
-            not (port_security and has_ip)):
+                not (port_security and has_ip)):
             raise psec_exc.PortSecurityAndIPRequiredForSecurityGroups()
 
         # Port requires ip and port_security enabled for security group
