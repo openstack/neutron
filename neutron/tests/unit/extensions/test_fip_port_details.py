@@ -12,10 +12,10 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import fip_port_details as apidef
 from oslo_config import cfg
 
 from neutron.db import l3_fip_port_details
-from neutron.extensions import _fip_port_details_lib as apiref
 from neutron.extensions import l3
 from neutron.tests.unit.extensions import test_l3
 
@@ -36,13 +36,13 @@ class TestFloatingIPPortDetailsIntPlugin(
         test_l3.TestL3NatIntPlugin,
         l3_fip_port_details.Fip_port_details_db_mixin):
     supported_extension_aliases = ["external-net", "router",
-                                   apiref.ALIAS]
+                                   apidef.ALIAS]
 
 
 class TestFloatingIPPortDetailsL3NatServicePlugin(
         test_l3.TestL3NatServicePlugin,
         l3_fip_port_details.Fip_port_details_db_mixin):
-    supported_extension_aliases = ["router", apiref.ALIAS]
+    supported_extension_aliases = ["router", apidef.ALIAS]
 
 
 class FloatingIPPortDetailsDBTestCaseBase(test_l3.L3NatTestCaseMixin):
