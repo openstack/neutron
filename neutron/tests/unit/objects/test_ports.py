@@ -393,3 +393,28 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         # downgrade of the binding object
         binding_v1_0 = binding.obj_to_primitive(target_version='1.0')
         self.assertEqual(binding_v1_0, lvl)
+
+    def test_v1_3_to_v1_2_unlists_distributed_bindings(self):
+        port_new = self._create_test_port()
+
+        # empty list transforms into None
+        port_v1_2 = port_new.obj_to_primitive(target_version='1.2')
+        port_data = port_v1_2['versioned_object.data']
+        self.assertIsNone(port_data['distributed_binding'])
+
+        # now insert a distributed binding
+        binding = ports.DistributedPortBinding(
+            self.context,
+            host='host1', port_id=port_new.id, status='ACTIVE',
+            vnic_type='vnic_type1', vif_type='vif_type1')
+        binding.create()
+
+        # refetch port object to include binding
+        port_new = ports.Port.get_object(self.context, id=port_new.id)
+
+        # new primitive should contain the binding data
+        port_v1_2 = port_new.obj_to_primitive(target_version='1.2')
+        port_data = port_v1_2['versioned_object.data']
+        binding_data = (
+            port_data['distributed_binding']['versioned_object.data'])
+        self.assertEqual(binding.host, binding_data['host'])
