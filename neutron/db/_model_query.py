@@ -24,7 +24,6 @@ from oslo_db.sqlalchemy import utils as sa_utils
 from sqlalchemy import sql, or_, and_
 from sqlalchemy.ext import associationproxy
 
-from neutron.db import _utils as ndb_utils
 
 # Classes implementing extensions will register hooks into this dictionary
 # for "augmenting" the "core way" of building a query for retrieving objects
@@ -137,7 +136,7 @@ def query_with_hooks(context, model):
     query = context.session.query(model)
     # define basic filter condition for model query
     query_filter = None
-    if ndb_utils.model_query_scope_is_project(context, model):
+    if db_utils.model_query_scope_is_project(context, model):
         if hasattr(model, 'rbac_entries'):
             query = query.outerjoin(model.rbac_entries)
             rbac_model = model.rbac_entries.property.mapper.class_
@@ -237,8 +236,8 @@ def apply_filters(query, model, filters, context=None):
                         query.session.query(rbac.object_id).filter(is_shared)
                     )
                 elif (not context or
-                      not ndb_utils.model_query_scope_is_project(context,
-                                                                 model)):
+                      not db_utils.model_query_scope_is_project(
+                          context, model)):
                     # we only want to join if we aren't using the subquery
                     # and if we aren't already joined because this is a
                     # scoped query

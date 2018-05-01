@@ -17,10 +17,9 @@ NOTE: This module shall not be used by external projects. It will be moved
 
 import contextlib
 
-from neutron_lib.api import attributes
+from neutron_lib.db import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
-from sqlalchemy.ext import associationproxy
 
 
 LOG = logging.getLogger(__name__)
@@ -72,68 +71,13 @@ def safe_creation(context, create_fn, delete_fn, create_bindings,
         return obj, value
 
 
-def model_query_scope_is_project(context, model):
-    # Unless a context has 'admin' or 'advanced-service' rights the
-    # query will be scoped to a single project_id
-    return ((not context.is_admin and hasattr(model, 'project_id')) and
-            (not context.is_advsvc and hasattr(model, 'project_id')))
-
-
 def model_query(context, model):
     query = context.session.query(model)
     # define basic filter condition for model query
     query_filter = None
-    if model_query_scope_is_project(context, model):
+    if db_utils.model_query_scope_is_project(context, model):
         query_filter = (model.tenant_id == context.tenant_id)
 
     if query_filter is not None:
         query = query.filter(query_filter)
     return query
-
-
-# NOTE: This used to be CommonDbMixin._fields()
-def resource_fields(resource, fields):
-    """Return only the resource items that are in fields.
-
-    :param resource: a resource dictionary
-    :type resource: dict
-    :param fields: a list of fields to select from the resource
-    :type fields: list
-
-    """
-    if fields:
-        resource = {key: item for key, item in resource.items()
-                    if key in fields}
-    return attributes.populate_project_info(resource)
-
-
-# NOTE: This used to be CommonDbMixin._filter_non_model_columns
-def filter_non_model_columns(data, model):
-    """Return the attributes from data which are model columns.
-
-    Return a new dict with items from data that whose keys are columns in
-    the model or are association proxies of the model.
-    """
-    columns = [c.name for c in model.__table__.columns]
-    return dict((k, v) for (k, v) in
-                data.items() if k in columns or
-                isinstance(getattr(model, k, None),
-                           associationproxy.AssociationProxy))
-
-
-# NOTE: This used to be CommonDbMixin._get_marker_obj
-def get_marker_obj(plugin, context, resource, limit, marker):
-    """Retrieve a resource marker object.
-
-    This function is used to invoke:
-        plugin._get_<resource>(context, marker)
-    It is used for pagination.
-
-    :param plugin: The plugin processing the request.
-    :param context: The request context.
-    :param resource: The resource name.
-    :param limit: Indicates if pagination is in effect.
-    :param marker: The id of the marker object.
-    """
-    if limit and marker:
-        return getattr(plugin, '_get_%s' % resource)(context, marker)

@@ -18,11 +18,11 @@ import copy
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
 from neutron_lib import context
+from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
 from webob import exc
 
-from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
