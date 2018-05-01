@@ -20,13 +20,6 @@ from neutron.db import _resource_extend
 from neutron.db import _utils as ndb_utils
 
 
-# TODO(HenryG): Remove these when available in neutron-lib
-safe_creation = ndb_utils.safe_creation
-model_query_scope = ndb_utils.model_query_scope_is_project
-model_query = ndb_utils.model_query
-resource_fields = ndb_utils.resource_fields
-
-
 # TODO(HenryG): Deprecate and schedule for removal
 class CommonDbMixin(object):
     """Deprecated."""
