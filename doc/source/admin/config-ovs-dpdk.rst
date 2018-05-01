@@ -117,7 +117,7 @@ is enabled in the extra specs:
 
 .. code-block:: console
 
-   $ openstack image set --property hw_vif_mutliqueue_enabled=true IMAGE_NAME
+   $ openstack image set --property hw_vif_multiqueue_enabled=true IMAGE_NAME
 
 Support of ``virtio-net`` multiqueue needs to be present in kernel of
 guest VM and is available starting from Linux kernel 3.8.
