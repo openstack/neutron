@@ -59,8 +59,6 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                        'LoggingServiceDriverManager.supported_logging_types',
                        new_callable=log_types).start()
         self.ctxt = context.Context('admin', 'fake_tenant')
-        mock.patch.object(self.ctxt.session, 'refresh').start()
-        mock.patch.object(self.ctxt.session, 'expunge').start()
 
     def test_get_logs(self):
         with mock.patch.object(log_object.Log, 'get_objects')\

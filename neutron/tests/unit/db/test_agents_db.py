@@ -159,7 +159,6 @@ class TestAgentsDbMixin(TestAgentsDbBase):
         mock.patch(
             'neutron.objects.base.NeutronDbObject.modify_fields_from_db'
         ).start()
-        mock.patch.object(self.context.session, 'expunge').start()
 
         with mock.patch('neutron.objects.db.api.create_object') as add_mock:
             add_mock.side_effect = [
