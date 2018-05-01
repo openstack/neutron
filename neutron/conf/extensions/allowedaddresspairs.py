@@ -18,7 +18,7 @@ from neutron._i18n import _
 
 
 allowed_address_pair_opts = [
-    #TODO(limao): use quota framework when it support quota for attributes
+    # TODO(limao): use quota framework when it support quota for attributes
     cfg.IntOpt('max_allowed_address_pair', default=10,
                help=_("Maximum number of allowed address pairs")),
 ]

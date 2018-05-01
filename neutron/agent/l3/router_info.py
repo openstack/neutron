@@ -150,7 +150,7 @@ class RouterInfo(object):
             for del_route in removes:
                 if route['destination'] == del_route['destination']:
                     removes.remove(del_route)
-            #replace success even if there is no existing route
+            # replace success even if there is no existing route
             self.update_routing_table('replace', route)
         for route in removes:
             LOG.debug("Removed route entry is '%s'", route)

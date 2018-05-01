@@ -187,10 +187,10 @@ class EmbSwitch(object):
         @param rate_kbps: device rate in kbps
         """
         vf_index = self._get_vf_index(pci_slot)
-        #NOTE(ralonsoh): ip link sets rate in Mbps therefore we need to convert
-        #the rate_kbps value from kbps to Mbps.
-        #Zero means to disable the rate so the lowest rate available is 1Mbps.
-        #Floating numbers are not allowed
+        # NOTE(ralonsoh): ip link sets rate in Mbps therefore we need to
+        # convert the rate_kbps value from kbps to Mbps.
+        # Zero means to disable the rate so the lowest rate available is 1Mbps.
+        # Floating numbers are not allowed
         if rate_kbps > 0 and rate_kbps < 1000:
             rate_mbps = 1
         else:
@@ -441,15 +441,15 @@ class ESwitchManager(object):
         @param pci_slot: VF PCI slot
         @param rate_type: rate to clear ('rate', 'min_tx_rate')
         """
-        #NOTE(Moshe Levi): we don't use the self._get_emb_eswitch here, because
-        #when clearing the VF it may be not assigned. This happens when
-        #libvirt releases the VF back to the hypervisor on delete VM. Therefore
-        #we should just clear the VF rate according to pci_slot no matter
-        #if VF is assigned or not.
+        # NOTE(Moshe Levi): we don't use the self._get_emb_eswitch here,
+        # because when clearing the VF it may be not assigned. This happens
+        # when libvirt releases the VF back to the hypervisor on delete VM.
+        # Therefore we should just clear the VF rate according to pci_slot no
+        # matter if VF is assigned or not.
         embedded_switch = self.pci_slot_map.get(pci_slot)
         if embedded_switch:
-            #NOTE(Moshe Levi): check the pci_slot is not assigned to some
-            #other port before resetting the rate.
+            # NOTE(Moshe Levi): check the pci_slot is not assigned to some
+            # other port before resetting the rate.
             if embedded_switch.get_pci_device(pci_slot) is None:
                 embedded_switch.set_device_rate(pci_slot, rate_type, 0)
             else:

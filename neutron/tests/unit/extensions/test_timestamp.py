@@ -157,7 +157,7 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
         self.assertIn(new_second[resource_type]['id'],
                       [n['id'] for n in resources[resource_type + 's']])
 
-        #test first < second < changed_since
+        # test first < second < changed_since
         resources = self._return_by_timedelay(new_second, 3)
         self.assertEqual({resource_type + 's': []}, resources)
 

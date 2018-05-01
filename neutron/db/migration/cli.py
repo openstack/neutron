@@ -649,7 +649,7 @@ def main():
     CONF(project='neutron')
     return_val = False
     for config in get_alembic_configs():
-        #TODO(gongysh) enable logging
+        # TODO(gongysh) enable logging
         return_val |= bool(CONF.command.func(config, CONF.command.name))
 
     if CONF.command.name == 'has_offline_migrations' and not return_val:

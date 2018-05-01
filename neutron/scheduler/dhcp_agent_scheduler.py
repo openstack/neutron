@@ -222,7 +222,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
            network is already hosted by enough number of agents.
         """
         agents_per_network = cfg.CONF.dhcp_agents_per_network
-        #TODO(gongysh) don't schedule the networks with only
+        # TODO(gongysh) don't schedule the networks with only
         # subnets whose enable_dhcp is false
         with context.session.begin(subtransactions=True):
             network_hosted_agents = plugin.get_dhcp_agents_hosting_networks(

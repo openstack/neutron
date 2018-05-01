@@ -285,9 +285,9 @@ class QosAgentExtension(l2_agent_extension.L2AgentExtension):
         if old_qos_policy:
             if self._policy_rules_modified(old_qos_policy, qos_policy):
                 for port in self.policy_map.get_ports(qos_policy):
-                    #NOTE(QoS): for now, just reflush the rules on the port.
-                    #           Later, we may want to apply the difference
-                    #           between the old and new rule lists.
+                    # NOTE(QoS): for now, just reflush the rules on the port.
+                    #            Later, we may want to apply the difference
+                    #            between the old and new rule lists.
                     self.qos_driver.delete(port, old_qos_policy)
                     self.qos_driver.update(port, qos_policy)
             self.policy_map.update_policy(qos_policy)

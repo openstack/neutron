@@ -13,8 +13,8 @@
 from neutron.api.rpc.callbacks import resource_manager
 
 
-#TODO(ajo): consider adding locking to _get_manager, it's
-#           safe for eventlet, but not for normal threading.
+# TODO(ajo): consider adding locking to _get_manager, it's
+#            safe for eventlet, but not for normal threading.
 def _get_manager():
     return resource_manager.ConsumerResourceCallbacksManager()
 

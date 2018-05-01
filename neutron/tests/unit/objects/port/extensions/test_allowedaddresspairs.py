@@ -20,7 +20,7 @@ class AllowedAddrPairsIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = allowedaddresspairs.AllowedAddressPair
 
 
-#TODO(mhickey): Add common base db test class specifically for port extensions
+# TODO(mhickey): Add common base db test class specifically for port extensions
 class AllowedAddrPairsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
                                     testlib_api.SqlTestCase):
 

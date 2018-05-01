@@ -51,7 +51,7 @@ def update_existing_records():
         for row in session.query(TBL_MODEL):
             # NOTE from kevinbenton: without this disabled, pylint complains
             # about a missing 'dml' argument.
-            #pylint: disable=no-value-for-parameter
+            # pylint: disable=no-value-for-parameter
             res = session.execute(
                 standardattrs.insert().values(resource_type=TBL)
             )

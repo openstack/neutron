@@ -88,7 +88,7 @@ class CommonAgentLoop(service.Service):
         configurations = {'extensions': self.ext_manager.names()}
         configurations.update(self.mgr.get_agent_configurations())
 
-        #TODO(mangelajo): optimize resource_versions (see ovs agent)
+        # TODO(mangelajo): optimize resource_versions (see ovs agent)
         self.agent_state = {
             'binary': self.agent_binary,
             'host': cfg.CONF.host,

@@ -49,7 +49,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         r = router['router']
         if 'routes' in r:
             with context.session.begin(subtransactions=True):
-                #check if route exists and have permission to access
+                # check if route exists and have permission to access
                 router_db = self._get_router(context, id)
                 self._update_extra_routes(context, router_db, r['routes'])
             # NOTE(yamamoto): expire to ensure the following update_router
@@ -59,14 +59,14 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
             context, id, router)
 
     def _validate_routes_nexthop(self, cidrs, ips, routes, nexthop):
-        #Note(nati): Nexthop should be connected,
+        # Note(nati): Nexthop should be connected,
         # so we need to check
         # nexthop belongs to one of cidrs of the router ports
         if not netaddr.all_matching_cidrs(nexthop, cidrs):
             raise xroute_exc.InvalidRoutes(
                 routes=routes,
                 reason=_('the nexthop is not connected with router'))
-        #Note(nati) nexthop should not be same as fixed_ips
+        # Note(nati) nexthop should not be same as fixed_ips
         if nexthop in ips:
             raise xroute_exc.InvalidRoutes(
                 routes=routes,

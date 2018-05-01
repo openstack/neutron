@@ -640,7 +640,7 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
                 eventlet.sleep(sleep)
     except eventlet.Timeout:
         if exception is not None:
-            #pylint: disable=raising-bad-type
+            # pylint: disable=raising-bad-type
             raise exception
         raise WaitTimeout("Timed out after %d seconds" % timeout)
 
@@ -803,5 +803,5 @@ def bytes_to_bits(value):
 
 
 def bits_to_kilobits(value, base):
-    #NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result
+    # NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result
     return int((value + (base - 1)) / base)

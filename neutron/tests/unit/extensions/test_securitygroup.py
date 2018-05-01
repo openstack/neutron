@@ -1546,7 +1546,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_bulk_emulated(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -1617,7 +1617,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_duplicate_rule_in_post_emulated(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False
@@ -1654,7 +1654,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group_rule_duplicate_rule_db_emulated(self):
         real_has_attr = hasattr
 
-        #ensures the API choose the emulation code path
+        # ensures the API choose the emulation code path
         def fakehasattr(item, attr):
             if attr.endswith('__native_bulk_support'):
                 return False

@@ -34,12 +34,12 @@ from neutron.tests.unit.api.v2 import test_base
 
 
 _uuid = test_base._uuid
-#TODO(mangelajo): replace all 'IPv4', 'IPv6' to constants
+# TODO(mangelajo): replace all 'IPv4', 'IPv6' to constants
 FAKE_PREFIX = {'IPv4': '10.0.0.0/24',
                'IPv6': 'fe80::/48'}
 FAKE_IP = {'IPv4': '10.0.0.1',
            'IPv6': 'fe80::1'}
-#TODO(mangelajo): replace all '*_sgid' strings for the constants
+# TODO(mangelajo): replace all '*_sgid' strings for the constants
 FAKE_SGID = 'fake_sgid'
 OTHER_SGID = 'other_sgid'
 _IPv6 = constants.IPv6

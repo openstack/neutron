@@ -1363,7 +1363,7 @@ class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
             None, security_groups=[])
         self.assertFalse(self.mock_cast.called)
 
-#Note(nati) bn -> binary_name
+# Note(nati) bn -> binary_name
 # id -> device_id
 
 PHYSDEV_MOD = '-m physdev'
@@ -3217,7 +3217,7 @@ class TestSecurityGroupAgentWithOVSIptables(
         self._verify_mock_calls()
 
     def _regex(self, value):
-        #Note(nati): tap is prefixed on the device
+        # Note(nati): tap is prefixed on the device
         # in the OVSHybridIptablesFirewallDriver
 
         value = value.replace('tap_port', 'taptap_port')

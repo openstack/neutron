@@ -105,9 +105,9 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         port_name = vif_port.port_name
         port = self.br_int.get_port_ofport(port_name)
         mark = rule.dscp_mark
-        #mark needs to be bit shifted 2 left to not overwrite the
-        #lower 2 bits of type of service packet header.
-        #source: man ovs-ofctl (/mod_nw_tos)
+        # mark needs to be bit shifted 2 left to not overwrite the
+        # lower 2 bits of type of service packet header.
+        # source: man ovs-ofctl (/mod_nw_tos)
         mark = str(mark << 2)
 
         # reg2 is a metadata field that does not alter packets.

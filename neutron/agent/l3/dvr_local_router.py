@@ -124,7 +124,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         fixed_ip = fip['fixed_ip_address']
         self._add_floating_ip_rule(floating_ip, fixed_ip)
         fip_2_rtr_name = self.fip_ns.get_int_device_name(self.router_id)
-        #Add routing rule in fip namespace
+        # Add routing rule in fip namespace
         fip_ns_name = self.fip_ns.get_name()
         if self.rtr_fip_subnet is None:
             self.rtr_fip_subnet = self.fip_ns.local_subnets.allocate(
@@ -156,7 +156,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                 table=dvr_fip_ns.FIP_RT_TBL,
                                 priority=rule_pr)
             self.fip_ns.deallocate_rule_priority(floating_ip)
-            #TODO(rajeev): Handle else case - exception/log?
+            # TODO(rajeev): Handle else case - exception/log?
 
     def floating_ip_removed_dist(self, fip_cidr):
         """Remove floating IP from FIP namespace."""

@@ -50,9 +50,9 @@ class QosRule(base.NeutronDbObject):
     #         1.2: Added QosMinimumBandwidthRule
     #         1.3: Added direction for BandwidthLimitRule
     #
-    #NOTE(mangelajo): versions need to be handled from the top QosRule object
-    #                 because it's the only reference QosPolicy can make
-    #                 to them via obj_relationships version map
+    # NOTE(mangelajo): versions need to be handled from the top QosRule object
+    #                  because it's the only reference QosPolicy can make
+    #                  to them via obj_relationships version map
     VERSION = '1.3'
 
     fields = {

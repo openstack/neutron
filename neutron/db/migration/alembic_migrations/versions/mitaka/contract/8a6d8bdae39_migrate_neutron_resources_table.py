@@ -74,7 +74,7 @@ def generate_records_for_existing():
             for row in session.query(model):
                 # NOTE(kevinbenton): without this disabled, pylint complains
                 # about a missing 'dml' argument.
-                #pylint: disable=no-value-for-parameter
+                # pylint: disable=no-value-for-parameter
                 res = session.execute(
                     standardattrs.insert().values(resource_type=table))
                 session.execute(
