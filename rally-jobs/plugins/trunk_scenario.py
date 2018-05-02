@@ -11,18 +11,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from rally.common import validation
 from rally import consts
 from rally.plugins.openstack import scenario
 from rally.plugins.openstack.scenarios.neutron import utils
 from rally.task import atomic
-from rally.task import validation
 
 
 """Scenarios for VLAN Aware VMs."""
 
 
-@validation.required_services(consts.Service.NEUTRON)
-@validation.required_openstack(users=True)
+@validation.add("required_services", services=[consts.Service.NEUTRON])
+@validation.add("required_platform", platform="openstack", users=True)
 @scenario.configure(context={"cleanup@openstack": ["neutron"]},
                     name="NeutronTrunks.create_and_list_trunk_subports")
 class TrunkLifeCycle(utils.NeutronScenario):
