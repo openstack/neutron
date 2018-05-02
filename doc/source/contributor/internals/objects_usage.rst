@@ -360,6 +360,10 @@ following database session decorators:
 ``db_context_reader`` and ``db_context_writer`` decorators abstract the choice
 of engine facade used for particular object from action implementation.
 
+Alternatively, you can call all OVO actions under an active ``reader.using`` /
+``writer.using`` context manager (or ``session.begin``). In this case, OVO will
+pick the appropriate method to open a subtransaction.
+
 Synthetic fields
 ----------------
 :code:`synthetic_fields` is a list of fields, that are not directly backed by

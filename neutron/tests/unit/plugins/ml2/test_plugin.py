@@ -1685,7 +1685,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
                                             {'subnet_id': s['subnet']['id']})
 
         # lie to turn the port into an SNAT interface
-        with db_api.context_manager.reader.using(self.context):
+        with db_api.context_manager.writer.using(self.context):
             pager = base_obj.Pager(limit=1)
             rp = l3_obj.RouterPort.get_objects(
                 self.context, _pager=pager, port_id=p['port_id'])
