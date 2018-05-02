@@ -12,8 +12,6 @@
 #    under the License.
 #
 
-import functools
-
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
@@ -24,7 +22,6 @@ from neutron.db import _resource_extend as resource_extend
 from neutron.db import api as db_api
 from neutron.db import common_db_mixin
 from neutron.db import standard_attr
-from neutron.db import tag_db as tag_methods
 from neutron.extensions import tagging
 from neutron.objects import tag as tag_obj
 
@@ -43,14 +40,7 @@ class TagPlugin(common_db_mixin.CommonDbMixin, tagging.TagPluginBase):
 
     def __new__(cls, *args, **kwargs):
         inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
-        inst._filter_methods = []  # prevent GC of our partial functions
-        for model in resource_model_map.values():
-            method = functools.partial(tag_methods.apply_tag_filters, model)
-            inst._filter_methods.append(method)
-            model_query.register_hook(model, "tag",
-                                      query_hook=None,
-                                      filter_hook=None,
-                                      result_filters=method)
+        tag_obj.register_tag_hooks()
         return inst
 
     @staticmethod
