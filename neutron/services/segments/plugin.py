@@ -35,11 +35,10 @@ from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.db import _resource_extend as resource_extend
-from neutron.db import api as db_api
-from neutron.db.models import segment as segment_model
-from neutron.db import models_v2
 from neutron.extensions import segment
 from neutron.notifiers import batch_notifier
+from neutron.objects import network as net_obj
+from neutron.objects import subnet as subnet_obj
 from neutron.services.segments import db
 from neutron.services.segments import exceptions
 from neutron.services.segments import placement_client
@@ -110,11 +109,10 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
         if for_net_delete:
             # don't check if this is a part of a network delete operation
             return
-        with db_api.context_manager.reader.using(context):
-            segment_id = segment['id']
-            query = context.session.query(models_v2.Subnet.id)
-            query = query.filter(models_v2.Subnet.segment_id == segment_id)
-            subnet_ids = [s[0] for s in query]
+        segment_id = segment['id']
+        subnets = subnet_obj.Subnet.get_objects(context,
+                                                segment_id=segment_id)
+        subnet_ids = [s.id for s in subnets]
 
         if subnet_ids:
             reason = _("The segment is still associated with subnet(s) "
@@ -183,13 +181,12 @@ class NovaSegmentNotifier(object):
             return
         total, reserved = self._calculate_inventory_total_and_reserved(subnet)
         if total:
-            query = (
-                context.session.query(segment_model.SegmentHostMapping).
-                filter_by(segment_id=segment_id)
-            )
+            segment_host_mappings = net_obj.SegmentHostMapping.get_objects(
+                context, segment_id=segment_id)
             self.batch_notifier.queue_event(Event(
                 self._create_or_update_nova_inventory, segment_id, total=total,
-                reserved=reserved, segment_host_mappings=query.all()))
+                reserved=reserved,
+                segment_host_mappings=segment_host_mappings))
 
     def _create_or_update_nova_inventory(self, event):
         try:
@@ -238,7 +235,7 @@ class NovaSegmentNotifier(object):
         aggregate_uuid = self._get_nova_aggregate_uuid(aggregate)
         self.p_client.associate_aggregates(segment_id, [aggregate_uuid])
         for mapping in segment_host_mappings:
-            self.n_client.aggregates.add_host(aggregate.id, mapping['host'])
+            self.n_client.aggregates.add_host(aggregate.id, mapping.host)
         ipv4_inventory = {'total': total, 'reserved': reserved,
                           'min_unit': 1, 'max_unit': 1, 'step_size': 1,
                           'allocation_ratio': 1.0,
@@ -285,9 +282,8 @@ class NovaSegmentNotifier(object):
         if total or reserved:
             segment_host_mappings = None
             if not original_subnet['allocation_pools']:
-                segment_host_mappings = context.session.query(
-                    segment_model.SegmentHostMapping).filter_by(
-                        segment_id=segment_id).all()
+                segment_host_mappings = net_obj.SegmentHostMapping.get_objects(
+                    context, segment_id=segment_id)
             self.batch_notifier.queue_event(Event(
                 self._create_or_update_nova_inventory, segment_id, total=total,
                 reserved=reserved,
@@ -334,9 +330,9 @@ class NovaSegmentNotifier(object):
     def _notify_host_addition_to_aggregate(self, resource, event, trigger,
                                            context, host, current_segment_ids,
                                            **kwargs):
-        query = context.session.query(models_v2.Subnet).filter(
-            models_v2.Subnet.segment_id.in_(current_segment_ids))
-        segment_ids = {subnet['segment_id'] for subnet in query}
+        subnets = subnet_obj.Subnet.get_objects(context,
+                                                segment_id=current_segment_ids)
+        segment_ids = {s.segment_id for s in subnets}
         self.batch_notifier.queue_event(Event(self._add_host_to_aggregate,
             segment_ids, host=host))
 
@@ -402,12 +398,11 @@ class NovaSegmentNotifier(object):
         ipv4_subnet_ids = self._get_ipv4_subnet_ids(port)
         if not ipv4_subnet_ids:
             return 0, None
-        segment_id = context.session.query(
-            models_v2.Subnet).filter_by(id=ipv4_subnet_ids[0]).one()[
-                    'segment_id']
-        if not segment_id:
-            return 0, None
-        return len(ipv4_subnet_ids), segment_id
+        subnet = subnet_obj.Subnet.get_object(context, id=ipv4_subnet_ids[0])
+        if subnet and subnet.segment_id:
+            return len(ipv4_subnet_ids), subnet.segment_id
+
+        return 0, None
 
     def _does_port_require_nova_inventory_update(self, port):
         device_owner = port.get('device_owner')
