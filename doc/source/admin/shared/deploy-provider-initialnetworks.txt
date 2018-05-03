@@ -16,7 +16,7 @@ simplicity, the following procedure creates one flat provider network.
       | name                      | provider1 |
       | port_security_enabled     | True      |
       | provider:network_type     | flat      |
-      | provider:physical_network | provider  | 
+      | provider:physical_network | provider  |
       | provider:segmentation_id  | None      |
       | router:external           | Internal  |
       | shared                    | True      |
@@ -31,9 +31,8 @@ simplicity, the following procedure creates one flat provider network.
    .. note::
 
       To create a VLAN network instead of a flat network, change
-      ``--provider:network_type flat`` to ``--provider-network-type vlan``
-      and add ``--provider-segment`` with a value referencing
-      the VLAN ID.
+      ``--provider-network-type flat`` to ``--provider-network-type vlan``
+      and add ``--provider-segment`` with a value referencing the VLAN ID.
 
 #. Create a IPv4 subnet on the provider network.
 
