@@ -133,7 +133,7 @@ these attributes:
        is used.
      - The name of the physical network over which the virtual network
        is implemented for flat and VLAN networks. Not applicable to the
-       ``local`` or ``gre`` network types.
+       ``local``, ``vxlan`` or ``gre`` network types.
    * - provider:segmentation_id
      - Integer
      - N/A
