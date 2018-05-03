@@ -31,6 +31,7 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.common import exceptions
 from neutron.conf import quota
+from neutron.extensions import standardattrdescription as stdattr_ext
 from neutron.quota import resource_registry
 
 
@@ -224,10 +225,6 @@ RESOURCE_ATTRIBUTE_MAP = {
                  'is_visible': True, 'default': '',
                  'validate': {
                      'type:name_not_default': db_const.NAME_FIELD_SIZE}},
-        'description': {'allow_post': True, 'allow_put': True,
-                        'validate': {
-                            'type:string': db_const.DESCRIPTION_FIELD_SIZE},
-                        'is_visible': True, 'default': ''},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,
                       'validate': {
@@ -337,6 +334,9 @@ class Securitygroup(api_extensions.ExtensionDescriptor):
                         list(RESOURCE_ATTRIBUTE_MAP.items()))
         else:
             return {}
+
+    def get_required_extensions(self):
+        return [stdattr_ext.Standardattrdescription.get_alias()]
 
 
 @six.add_metaclass(abc.ABCMeta)
