@@ -208,6 +208,22 @@ class TestLegacyL3Agent(TestL3Agent):
         # Verify north-south connectivity using ping6 to external_vm.
         vm.block_until_ping(external_vm.ipv6)
 
+        # Now let's remove and create again phys bridge and check connectivity
+        # once again
+        br_phys = self.environment.hosts[0].br_phys
+        br_phys.destroy()
+        br_phys.create()
+        self.environment.hosts[0].connect_to_internal_network_via_vlans(
+            br_phys)
+
+        # ping floating ip from external vm
+        external_vm.block_until_ping(fip['floating_ip_address'])
+
+        # Verify VM is able to reach the router interface.
+        vm.block_until_ping(vm.gateway_ipv6)
+        # Verify north-south connectivity using ping6 to external_vm.
+        vm.block_until_ping(external_vm.ipv6)
+
 
 class TestHAL3Agent(TestL3Agent):
 
