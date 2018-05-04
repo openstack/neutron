@@ -97,6 +97,24 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                      'ports': []}]
         self.assertEqual(expected, networks)
 
+    def _test_get_active_networks_info_enable_dhcp_filter(self,
+                                                          enable_dhcp_filter):
+        plugin_retval = [{'id': 'a'}, {'id': 'b'}]
+        self.plugin.get_networks.return_value = plugin_retval
+        self.callbacks.get_active_networks_info(mock.Mock(), host='host',
+            enable_dhcp_filter=enable_dhcp_filter)
+        filters = {'network_id': ['a', 'b']}
+        if enable_dhcp_filter:
+            filters['enable_dhcp'] = [True]
+        self.plugin.get_subnets.assert_called_once_with(mock.ANY,
+                                                        filters=filters)
+
+    def test_get_active_networks_info_enable_dhcp_filter_false(self):
+        self._test_get_active_networks_info_enable_dhcp_filter(False)
+
+    def test_get_active_networks_info_enable_dhcp_filter_true(self):
+        self._test_get_active_networks_info_enable_dhcp_filter(True)
+
     def _test__port_action_with_failures(self, exc=None, action=None):
         port = {
             'network_id': 'foo_network_id',
