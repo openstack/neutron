@@ -240,6 +240,7 @@ class UnixDomainMetadataProxy(object):
 
     def _init_state_reporting(self):
         self.context = context.get_admin_context_without_session()
+        self.failed_state_report = False
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.agent_state = {
             'binary': 'neutron-metadata-agent',
@@ -272,8 +273,12 @@ class UnixDomainMetadataProxy(object):
             self.heartbeat.stop()
             return
         except Exception:
+            self.failed_state_report = True
             LOG.exception("Failed reporting state!")
             return
+        if self.failed_state_report:
+            self.failed_state_report = False
+            LOG.info('Successfully reported state after a previous failure.')
         self.agent_state.pop('start_flag', None)
 
     def _get_socket_mode(self):
