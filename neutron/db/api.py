@@ -175,17 +175,6 @@ def _is_nested_instance(e, etypes):
     return False
 
 
-@contextlib.contextmanager
-def exc_to_retry(etypes):
-    try:
-        yield
-    except Exception as e:
-        with excutils.save_and_reraise_exception() as ctx:
-            if _is_nested_instance(e, etypes):
-                ctx.reraise = False
-                raise db_exc.RetryRequest(e)
-
-
 def get_reader_session():
     """Helper to get reader session"""
     return context_manager.reader.get_sessionmaker()()
