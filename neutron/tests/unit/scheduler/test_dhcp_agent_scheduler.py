@@ -282,7 +282,7 @@ class TestAutoScheduleNetworks(TestDhcpSchedulerBaseTestCase):
         expected_hosted_agents = (1 if expected_result and
                                   self.valid_host else 0)
         if (self.az_hints and
-            agents[0]['availability_zone'] not in self.az_hints):
+                agents[0]['availability_zone'] not in self.az_hints):
             expected_hosted_agents = 0
         host = "host-a" if self.valid_host else "host-b"
         observed_ret_value = scheduler.auto_schedule_networks(

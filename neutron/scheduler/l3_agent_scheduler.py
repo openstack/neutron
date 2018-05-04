@@ -106,7 +106,7 @@ class L3Scheduler(object):
 
         for router, count in plugin.get_routers_l3_agents_count(context):
             if (count < 1 or
-                router.get('ha', False) and count < max_agents_for_ha):
+                    router.get('ha', False) and count < max_agents_for_ha):
                 # Either the router was un-scheduled (scheduled to 0 agents),
                 # or it's an HA router and it was under-scheduled (scheduled to
                 # less than max_agents_for_ha). Either way, it should be added

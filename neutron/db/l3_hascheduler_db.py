@@ -63,8 +63,8 @@ def _notify_l3_agent_ha_port_update(resource, event, trigger, **kwargs):
     if new_port and original_port and host:
         new_device_owner = new_port.get('device_owner', '')
         if (new_device_owner == constants.DEVICE_OWNER_ROUTER_HA_INTF and
-            new_port['status'] == constants.PORT_STATUS_ACTIVE and
-            original_port['status'] != new_port['status']):
+                new_port['status'] == constants.PORT_STATUS_ACTIVE and
+                original_port['status'] != new_port['status']):
             l3plugin = directory.get_plugin(plugin_constants.L3)
             l3plugin.l3_rpc_notifier.routers_updated_on_host(
                 context, [new_port['device_id']], host)

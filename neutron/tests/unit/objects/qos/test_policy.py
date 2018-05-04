@@ -90,9 +90,9 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             return_value=[self.db_objs[0]]) as get_objects_mock:
 
             with mock.patch.object(
-                self.context,
-                'elevated',
-                return_value=admin_context) as context_mock:
+                    self.context,
+                    'elevated',
+                    return_value=admin_context) as context_mock:
 
                 objs = self._test_class.get_objects(
                     self.context,

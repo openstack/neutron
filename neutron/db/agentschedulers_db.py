@@ -73,8 +73,9 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         agent_data = agent['agent']
         agent_notifier = self.agent_notifiers.get(original_agent['agent_type'])
         if (agent_notifier and
-            'admin_state_up' in agent_data and
-            original_agent['admin_state_up'] != agent_data['admin_state_up']):
+                'admin_state_up' in agent_data and
+                original_agent['admin_state_up'] !=
+                agent_data['admin_state_up']):
             agent_notifier.agent_updated(context,
                                          agent_data['admin_state_up'],
                                          original_agent['host'])

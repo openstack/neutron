@@ -361,7 +361,7 @@ class DVRResourceOperationHandler(object):
                     # dvr service ports except for the compute port and
                     # dhcp port.
                     if (port['device_owner'] == "" or
-                        port['device_owner'] in allowed_device_owners):
+                            port['device_owner'] in allowed_device_owners):
                         addr_pair_active_service_port_list = (
                             self._get_ports_for_allowed_address_pair_ip(
                                 admin_ctx, port['network_id'],
@@ -458,8 +458,8 @@ class DVRResourceOperationHandler(object):
         for port in router.attached_ports:
             p = port['port']
             if (p['network_id'] == net_id and
-                p['device_owner'] == device_owner and
-                self.l3plugin._port_has_ipv6_address(p)):
+                    p['device_owner'] == device_owner and
+                    self.l3plugin._port_has_ipv6_address(p)):
                 return self.l3plugin._core_plugin._make_port_dict(p)
 
     def _check_for_multiprefix_csnat_port_and_update(
@@ -678,7 +678,7 @@ class _DVRAgentInterfaceMixin(object):
         # Skip if it is bound, but not to the given host
         fip_dest_host = floating_ip.get('dest_host')
         if (fip_host != l3_const.FLOATING_IP_HOST_NEEDS_BINDING and
-            fip_host != host and fip_dest_host is None):
+                fip_host != host and fip_dest_host is None):
             return True
 
         # not being skipped, log host
@@ -721,8 +721,7 @@ class _DVRAgentInterfaceMixin(object):
                 # All unbound ports with floatingip irrespective of
                 # the device owner should be included as valid ports
                 # and updated.
-                if (port_in_migration or
-                    self._is_unbound_port(port)):
+                if port_in_migration or self._is_unbound_port(port):
                     port_dict.update({port['id']: port})
                     continue
                 port_host = port[portbindings.HOST_ID]

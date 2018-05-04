@@ -309,8 +309,8 @@ class FipNamespace(namespaces.Namespace):
 
     def _update_gateway_port(self, agent_gateway_port, interface_name):
         if (self.agent_gateway_port and
-            not self._check_for_gateway_ip_change(agent_gateway_port)):
-                return
+                not self._check_for_gateway_ip_change(agent_gateway_port)):
+            return
         # Caller already holding lock
         self._update_gateway_route(
             agent_gateway_port, interface_name, tbl_index=None)

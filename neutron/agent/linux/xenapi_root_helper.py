@@ -62,7 +62,7 @@ class XenAPIClient(object):
         # [XENAPI_PLUGIN_FAILURE_ID, methodname, except_class_name, message]
         # We can distinguish the error type by checking the message string.
         if (len(failure_details) == 4 and
-            XENAPI_PLUGIN_FAILURE_ID == failure_details[0]):
+                XENAPI_PLUGIN_FAILURE_ID == failure_details[0]):
             if (MSG_UNAUTHORIZED == failure_details[3]):
                 return oslo_rootwrap_cmd.RC_UNAUTHORIZED
             elif (MSG_NOT_FOUND == failure_details[3]):

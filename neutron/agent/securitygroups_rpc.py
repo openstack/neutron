@@ -113,7 +113,7 @@ class SecurityGroupAgentRpc(object):
         @functools.wraps(func)
         def decorated_function(self, *args, **kwargs):
             if (isinstance(self.firewall, firewall.NoopFirewallDriver) or
-                not is_firewall_enabled()):
+                    not is_firewall_enabled()):
                 LOG.info("Skipping method %s as firewall is disabled "
                          "or configured as NoopFirewallDriver.",
                          func.__name__)

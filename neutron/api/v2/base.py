@@ -169,11 +169,12 @@ class Controller(object):
             attr_data = self._attr_info.get(attr_name)
             if attr_data and attr_data['is_visible']:
                 if policy.check(
-                    context,
-                    '%s:%s' % (self._plugin_handlers[self.SHOW], attr_name),
-                    data,
-                    might_not_exist=True,
-                    pluralized=self._collection):
+                        context,
+                        '%s:%s' % (self._plugin_handlers[self.SHOW],
+                                   attr_name),
+                        data,
+                        might_not_exist=True,
+                        pluralized=self._collection):
                     # this attribute is visible, check next one
                     continue
             # if the code reaches this point then either the policy check

@@ -1243,8 +1243,8 @@ class L3DvrSchedulerTestCase(testlib_api.SqlTestCase):
         }
 
         with mock.patch(
-            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
-            return_value=[dvr_port]):
+                'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
+                return_value=[dvr_port]):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
             self.assertEqual(sub_ids.pop(),

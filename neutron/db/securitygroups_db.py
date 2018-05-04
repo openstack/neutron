@@ -440,8 +440,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
 
     def _validate_port_range(self, rule):
         """Check that port_range is valid."""
-        if (rule['port_range_min'] is None and
-            rule['port_range_max'] is None):
+        if rule['port_range_min'] is None and rule['port_range_max'] is None:
             return
         if not rule['protocol']:
             raise ext_sg.SecurityGroupProtocolRequiredWithPorts()
@@ -474,8 +473,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
             # Only the protocols above support port ranges, raise otherwise.
             # When min/max are the same it is just a single port.
             if (rule['port_range_min'] is not None and
-                rule['port_range_max'] is not None and
-                rule['port_range_min'] != rule['port_range_max']):
+                    rule['port_range_max'] is not None and
+                    rule['port_range_min'] != rule['port_range_max']):
                 raise ext_sg.SecurityGroupInvalidProtocolForPortRange(
                     protocol=ip_proto)
 

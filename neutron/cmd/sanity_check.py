@@ -375,7 +375,7 @@ def enable_tests_from_config():
     if cfg.CONF.SECURITYGROUP.enable_security_group:
         cfg.CONF.set_default('ip6tables_installed', True)
     if ('sriovnicswitch' in cfg.CONF.ml2.mechanism_drivers and
-        'qos' in cfg.CONF.ml2.extension_drivers):
+            'qos' in cfg.CONF.ml2.extension_drivers):
         cfg.CONF.set_default('vf_extended_management', True)
     if cfg.CONF.SECURITYGROUP.firewall_driver in (
         'iptables',

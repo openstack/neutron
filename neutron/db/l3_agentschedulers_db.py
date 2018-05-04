@@ -99,7 +99,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             raise l3agentscheduler.DVRL3CannotAssignToDvrAgent()
 
         if (agent_mode == constants.L3_AGENT_MODE_LEGACY and
-            router.get('distributed')):
+                router.get('distributed')):
             raise l3agentscheduler.RouterL3AgentMismatch(
                 router_id=router['id'], agent_id=agent['id'])
 

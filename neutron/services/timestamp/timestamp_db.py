@@ -58,7 +58,7 @@ def _update_timestamp(session, context, instances):
     while objs_list:
         obj = objs_list.pop()
         if (isinstance(obj, standard_attr.HasStandardAttributes) and
-            obj.standard_attr_id):
+                obj.standard_attr_id):
             obj.updated_at = timeutils.utcnow()
 
 

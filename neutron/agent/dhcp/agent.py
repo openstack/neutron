@@ -162,8 +162,8 @@ class DhcpAgent(manager.Manager):
                 # will automatically be retried on the notification
                 self.schedule_resync(e, network.id)
             if (isinstance(e, oslo_messaging.RemoteError) and
-                e.exc_type == 'NetworkNotFound' or
-                isinstance(e, exceptions.NetworkNotFound)):
+                    e.exc_type == 'NetworkNotFound' or
+                    isinstance(e, exceptions.NetworkNotFound)):
                 LOG.debug("Network %s has been deleted.", network.id)
             else:
                 LOG.exception('Unable to %(action)s dhcp for %(net_id)s.',
@@ -521,7 +521,7 @@ class DhcpAgent(manager.Manager):
 
     def disable_isolated_metadata_proxy(self, network):
         if (self.conf.enable_metadata_network and
-            network.id in self._metadata_routers):
+                network.id in self._metadata_routers):
             uuid = self._metadata_routers[network.id]
             is_router_id = True
         else:

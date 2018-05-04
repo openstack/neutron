@@ -92,7 +92,7 @@ class TestMechanismDriver(api.MechanismDriver):
         if context.vif_type in (portbindings.VIF_TYPE_UNBOUND,
                                 portbindings.VIF_TYPE_BINDING_FAILED):
             if (context.segments_to_bind and
-                context.segments_to_bind[0][api.NETWORK_TYPE] == 'vlan'):
+                    context.segments_to_bind[0][api.NETWORK_TYPE] == 'vlan'):
                 # Partially bound.
                 self._check_bound(context.binding_levels,
                                   context.top_bound_segment,
@@ -188,7 +188,7 @@ class TestMechanismDriver(api.MechanismDriver):
     def update_port_precommit(self, context):
         if ((context.original_top_bound_segment and
              not context.top_bound_segment) or
-            (context.host == "host-fail")):
+                (context.host == "host-fail")):
             self.bound_ports.remove((context.original['id'],
                                      context.original_host))
         self._check_port_context(context, True)

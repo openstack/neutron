@@ -234,13 +234,13 @@ class PolicyHook(hooks.PecanHook):
             attr_data = controller.resource_info.get(attr_name)
             if attr_data and attr_data['is_visible']:
                 if policy.check(
-                    context,
-                    # NOTE(kevinbenton): this used to reference a
-                    # _plugin_handlers dict, why?
-                    'get_%s:%s' % (resource, attr_name),
-                    data,
-                    might_not_exist=True,
-                    pluralized=collection):
+                        context,
+                        # NOTE(kevinbenton): this used to reference a
+                        # _plugin_handlers dict, why?
+                        'get_%s:%s' % (resource, attr_name),
+                        data,
+                        might_not_exist=True,
+                        pluralized=collection):
                     # this attribute is visible, check next one
                     continue
             # if the code reaches this point then either the policy check

@@ -407,7 +407,7 @@ class NovaSegmentNotifier(object):
     def _does_port_require_nova_inventory_update(self, port):
         device_owner = port.get('device_owner')
         if (device_owner.startswith(constants.DEVICE_OWNER_COMPUTE_PREFIX) or
-            device_owner == constants.DEVICE_OWNER_DHCP):
+                device_owner == constants.DEVICE_OWNER_DHCP):
             return False
         return True
 

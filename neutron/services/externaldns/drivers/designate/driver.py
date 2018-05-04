@@ -69,16 +69,16 @@ class Designate(driver.ExternalDNSService):
         ipv6_ptr_zone_size = CONF.designate.ipv6_ptr_zone_prefix_size
 
         if (ipv4_ptr_zone_size < IPV4_PTR_ZONE_PREFIX_MIN_SIZE or
-            ipv4_ptr_zone_size > IPV4_PTR_ZONE_PREFIX_MAX_SIZE or
-            (ipv4_ptr_zone_size % 8) != 0):
+                ipv4_ptr_zone_size > IPV4_PTR_ZONE_PREFIX_MAX_SIZE or
+                (ipv4_ptr_zone_size % 8) != 0):
             raise dns_exc.InvalidPTRZoneConfiguration(
                 parameter='ipv4_ptr_zone_size', number='8',
                 maximum=str(IPV4_PTR_ZONE_PREFIX_MAX_SIZE),
                 minimum=str(IPV4_PTR_ZONE_PREFIX_MIN_SIZE))
 
         if (ipv6_ptr_zone_size < IPV6_PTR_ZONE_PREFIX_MIN_SIZE or
-            ipv6_ptr_zone_size > IPV6_PTR_ZONE_PREFIX_MAX_SIZE or
-            (ipv6_ptr_zone_size % 4) != 0):
+                ipv6_ptr_zone_size > IPV6_PTR_ZONE_PREFIX_MAX_SIZE or
+                (ipv6_ptr_zone_size % 4) != 0):
             raise dns_exc.InvalidPTRZoneConfiguration(
                 parameter='ipv6_ptr_zone_size', number='4',
                 maximum=str(IPV6_PTR_ZONE_PREFIX_MAX_SIZE),

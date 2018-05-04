@@ -122,7 +122,7 @@ def do_upgrade(config, cmd):
     branch = None
 
     if ((CONF.command.revision or CONF.command.delta) and
-        (CONF.command.expand or CONF.command.contract)):
+            (CONF.command.expand or CONF.command.contract)):
         raise SystemExit(_(
             'Phase upgrade options do not accept revision specification'))
 

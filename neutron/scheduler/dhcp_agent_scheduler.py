@@ -85,7 +85,7 @@ class AutoScheduler(object):
                     az_hints = (net.get(az_def.AZ_HINTS) or
                                 cfg.CONF.default_availability_zones)
                     if (az_hints and
-                        dhcp_agent['availability_zone'] not in az_hints):
+                            dhcp_agent['availability_zone'] not in az_hints):
                         continue
                     bindings_to_add.append((dhcp_agent, net_id))
         # do it outside transaction so particular scheduling results don't

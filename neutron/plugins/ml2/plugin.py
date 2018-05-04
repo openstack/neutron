@@ -329,14 +329,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             host = attrs.get(portbindings.HOST_ID) or ''
 
         original_host = binding.host
-        if (validators.is_attr_set(host) and
-            original_host != host):
+        if validators.is_attr_set(host) and original_host != host:
             binding.host = host
             changes = True
 
         vnic_type = attrs and attrs.get(portbindings.VNIC_TYPE)
         if (validators.is_attr_set(vnic_type) and
-            binding.vnic_type != vnic_type):
+                binding.vnic_type != vnic_type):
             binding.vnic_type = vnic_type
             changes = True
 
@@ -564,7 +563,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                 # Update the port status if requested by the bound driver.
                 if (bind_context._binding_levels and
-                    bind_context._new_port_status):
+                        bind_context._new_port_status):
                     port_db.status = bind_context._new_port_status
                     port['status'] = bind_context._new_port_status
 
@@ -886,13 +885,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # relationship can be updated.
             context.session.expire(db_network)
 
-            if (
-                mtuw_apidef.MTU in net_data or
+            if (mtuw_apidef.MTU in net_data or
                 # NOTE(ihrachys) mtu may be null for existing networks,
                 # calculate and update it as needed; the conditional can be
                 # removed in Queens when we populate all mtu attributes and
                 # enforce it's not nullable on database level
-                db_network.mtu is None):
+                    db_network.mtu is None):
                 db_network.mtu = self._get_network_mtu(db_network,
                                                        validate=False)
                 # agents should now update all ports to reflect new MTU
@@ -1747,7 +1745,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port_id = port.id
         if ((port.status != status and
                 port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE) or
-            port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
+                port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
             attr = {
                 'id': port.id,
                 portbindings.HOST_ID: host,
@@ -1759,7 +1757,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.context_manager.writer.using(context):
             context.session.add(port)  # bring port into writer session
             if (port.status != status and
-                port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE):
+                    port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE):
                 original_port = self._make_port_dict(port)
                 port.status = status
                 # explicit flush before _make_port_dict to ensure extensions
@@ -1783,7 +1781,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     updated = True
 
         if (updated and
-            port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
+                port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
             with db_api.context_manager.writer.using(context):
                 port = db.get_port(context, port_id)
                 if not port:
@@ -1915,7 +1913,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                            events.AFTER_DELETE))
     def _handle_segment_change(self, rtype, event, trigger, context, segment):
         if (event == events.PRECOMMIT_CREATE and
-            not isinstance(trigger, segments_plugin.Plugin)):
+                not isinstance(trigger, segments_plugin.Plugin)):
             # TODO(xiaohhui): Now, when create network, ml2 will reserve
             # segment and trigger this event handler. This event handler
             # will reserve segment again, which will lead to error as the
@@ -1957,7 +1955,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self, context, network_with_segments,
             original_network=network_with_segments)
         if (event == events.PRECOMMIT_CREATE or
-            event == events.PRECOMMIT_DELETE):
+                event == events.PRECOMMIT_DELETE):
             self.mechanism_manager.update_network_precommit(mech_context)
         elif event == events.AFTER_CREATE or event == events.AFTER_DELETE:
             self.mechanism_manager.update_network_postcommit(mech_context)

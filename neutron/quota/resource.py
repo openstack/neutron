@@ -264,7 +264,7 @@ class TrackedResource(BaseResource):
         # or if data migrations do not take care of usage counters, the
         # assumption will not hold anymore
         if (tenant_id in self._dirty_tenants or
-            not usage_info or usage_info.dirty):
+                not usage_info or usage_info.dirty):
             LOG.debug(("Usage tracker for resource:%(resource)s and tenant:"
                        "%(tenant_id)s is out of sync, need to count used "
                        "quota"), {'resource': self.name,
