@@ -33,7 +33,7 @@ class LoggingApiSkeleton(object):
         version='1.0', namespace=log_const.RPC_NAMESPACE_LOGGING)
 
     def __init__(self):
-        self.conn = n_rpc.create_connection()
+        self.conn = n_rpc.Connection()
         self.conn.create_consumer(log_const.LOGGING_PLUGIN, [self],
                                   fanout=False)
 

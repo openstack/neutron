@@ -45,7 +45,7 @@ class TrunkSkeleton(object):
         registry.register(self.handle_trunks, resources.TRUNK)
         registry.register(self.handle_subports, resources.SUBPORT)
 
-        self._connection = n_rpc.create_connection()
+        self._connection = n_rpc.Connection()
         endpoints = [resources_rpc.ResourcesPushRpcCallback()]
         topic = resources_rpc.resource_type_versioned_topic(resources.SUBPORT)
         self._connection.create_consumer(topic, endpoints, fanout=True)

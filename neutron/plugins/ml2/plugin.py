@@ -279,7 +279,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         """Start the RPC loop to let the plugin communicate with agents."""
         self._setup_rpc()
         self.topic = topics.PLUGIN
-        self.conn = n_rpc.create_connection()
+        self.conn = n_rpc.Connection()
         self.conn.create_consumer(self.topic, self.endpoints, fanout=False)
         self.conn.create_consumer(
             topics.SERVER_RESOURCE_VERSIONS,
@@ -292,7 +292,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return self.conn.consume_in_threads()
 
     def start_rpc_state_reports_listener(self):
-        self.conn_reports = n_rpc.create_connection()
+        self.conn_reports = n_rpc.Connection()
         self.conn_reports.create_consumer(topics.REPORTS,
                                           [agents_db.AgentExtRpcCallback()],
                                           fanout=False)

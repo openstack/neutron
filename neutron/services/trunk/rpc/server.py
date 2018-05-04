@@ -67,7 +67,7 @@ class TrunkSkeleton(object):
     def __init__(self):
         # Used to provide trunk lookups for the agent.
         registry.provide(trunk_by_port_provider, resources.TRUNK)
-        self._connection = n_rpc.create_connection()
+        self._connection = n_rpc.Connection()
         self._connection.create_consumer(
             constants.TRUNK_BASE_TOPIC, [self], fanout=False)
         self._connection.consume_in_threads()

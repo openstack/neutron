@@ -47,7 +47,7 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
     :returns: A common Connection.
     """
 
-    connection = n_rpc.create_connection()
+    connection = n_rpc.Connection()
     for details in topic_details:
         topic, operation, node_name = itertools.islice(
             itertools.chain(details, [None]), 3)

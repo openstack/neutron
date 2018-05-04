@@ -121,7 +121,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
     def start_rpc_listeners(self):
         # RPC support
         self.topic = topics.L3PLUGIN
-        self.conn = n_rpc.create_connection()
+        self.conn = n_rpc.Connection()
         self.endpoints = [l3_rpc.L3RpcCallback()]
         self.conn.create_consumer(self.topic, self.endpoints,
                                   fanout=False)
