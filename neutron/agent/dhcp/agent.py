@@ -183,7 +183,8 @@ class DhcpAgent(manager.Manager):
         known_network_ids = set(self.cache.get_network_ids())
 
         try:
-            active_networks = self.plugin_rpc.get_active_networks_info()
+            active_networks = self.plugin_rpc.get_active_networks_info(
+                enable_dhcp_filter=False)
             LOG.info(_LI('All active networks have been fetched through RPC.'))
             active_network_ids = set(network.id for network in active_networks)
             for deleted_id in known_network_ids - active_network_ids:
@@ -561,11 +562,11 @@ class DhcpPluginApi(object):
         # can be independently tracked server side.
         return context.get_admin_context_without_session()
 
-    def get_active_networks_info(self):
+    def get_active_networks_info(self, **kwargs):
         """Make a remote process call to retrieve all network info."""
         cctxt = self.client.prepare(version='1.1')
         networks = cctxt.call(self.context, 'get_active_networks_info',
-                              host=self.host)
+                              host=self.host, **kwargs)
         return [dhcp.NetModel(n) for n in networks]
 
     def get_network_info(self, network_id):
