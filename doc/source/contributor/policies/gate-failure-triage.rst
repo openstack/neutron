@@ -72,6 +72,111 @@ Troubleshooting functional/fullstack job
    from testr_results.html.gz.
 5. Create an :ref:`Elastic Recheck Query <elastic-recheck-query>`
 
+Advanced Troubleshooting of Gate Jobs
+-------------------------------------
+As a first step of troubleshooting a failing gate job, you should always check
+the logs of the job as described above.
+Unfortunately, sometimes when a tempest/functional/fullstack job is
+failing, it might be hard to reproduce it in a local environment, and might
+also be hard to understand the reason of such a failure from only reading
+the logs of the failed job.  In such cases there are some additional ways
+to debug the job directly on the test node in a ``live`` setting.
+
+This can be done in two ways:
+
+1. Using the `remote_pdb <https://pypi.python.org/pypi/remote-pdb>`_ python
+   module and ``telnet`` to directly access the python debugger while in the
+   failed test.
+
+   To achieve this, you need to send a ``Do not merge`` patch to gerrit with
+   changes as described below:
+
+   * Add an iptables rule to accept incoming telnet connections to remote_pdb.
+     This can be done in the ``neutron/tests/contrib/post_test_hook.sh`` file,
+     in the proper section according to the test that you want to debug::
+
+        sudo iptables -I openstack-INPUT -p tcp -m state --state NEW -m tcp --dport 44444 -j ACCEPT
+
+   * Increase the ``OS_TEST_TIMEOUT`` value to make the test wait longer when
+     remote_pdb is active to make debugging easier.  This change can also be
+     done in the ``neutron/tests/contrib/post_test_hook.sh`` file, in the
+     same section where the iptables rule was added::
+
+        export OS_TEST_TIMEOUT=999999
+
+     Please note that the overall job will be limited by the job timeout,
+     and that cannot be changed from within the job.
+
+   * To make it easier to find the IP address of the test node, you should
+     add a line to the ``neutron/tests/contrib/post_test_hook.sh`` file to
+     print the IPs configured on the test node.  For example::
+
+        hostname -I
+
+   * Add the package ``remote_pdb`` to the ``test-requirements.txt`` file.
+     That way it will be automatically installed in the venv of the test
+     before it is run::
+
+         $ tail -1 test-requirements.txt
+         remote_pdb
+
+   * Finally, you need to import and call the remote_pdb module in the part
+     of your test code where you want to start the debugger::
+
+        $ diff --git a/neutron/tests/fullstack/test_connectivity.py b/neutron/tests/fullstack/test_connectivity.py
+        index c8650b0..260207b 100644
+        --- a/neutron/tests/fullstack/test_connectivity.py
+        +++ b/neutron/tests/fullstack/test_connectivity.py
+        @@ -189,6 +189,8 @@ class
+        TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
+                ]
+
+             def test_connectivity(self):
+        +        import remote_pdb; remote_pdb.set_trace('0.0.0.0', port=44444)
+        +
+        self._test_connectivity()
+
+     Please note that discovery of public IP addresses is necessary because by
+     default remote_pdb will only bind to the ``127.0.0.1`` IP address.
+     Above is just an example of one of possible method, there could be other
+     ways to do this as well.
+
+   When all the above changes are done, you must commit them and go to the
+   `Zuul status page <https://zuul.openstack.org>`_ to find the status of the
+   tests for your ``Do not merge`` patch.  Open the console log for your job
+   and wait there until ``remote_pdb`` is started.
+   You then need to find the IP address of the test node in the console log.
+   This is necessary to connect via ``telnet`` and start debugging. It will be
+   something like::
+
+        RemotePdb session open at 172.99.68.50:44444, waiting for connection ...
+
+   An example of such a ``Do not merge`` patch described above can be found at
+   `<https://review.openstack.org/#/c/558259/>`_.
+
+   Please note that after adding new packages to the ``requirements.txt`` file,
+   the ``requirements-check`` job for your test patch will fail, but it is not
+   important for debugging.
+
+2. If root access to the test node is necessary, for example, to check if VMs
+   have really been spawned, or if router/dhcp namespaces have been configured
+   properly, etc., you can ask a member of the infra-team to hold the
+   job for troubleshooting.  You can ask someone to help with that on the
+   ``openstack-infra`` IRC channel.  In that case, the infra-team will need to
+   add your SSH key to the test node, and configure things so that if the job
+   fails, the node will not be destroyed.  You will then be able to SSH to it
+   and debug things further.  Please remember to tell the infra-team when you
+   finish debugging so they can unlock and destroy the node being held.
+
+The above two solutions can be used together. For example, you should be
+able to connect to the test node with both methods:
+
+* using ``remote_pdb`` to connect via ``telnet``;
+* using ``SSH`` to connect as a root to the test node.
+
+You can then ask the infra-team to add your key to the specific node on
+which you have already started your ``remote_pdb`` session.
+
 Root Causing a Gate Failure
 ---------------------------
 Time-based identification, i.e. find the naughty patch by log scavenging.
