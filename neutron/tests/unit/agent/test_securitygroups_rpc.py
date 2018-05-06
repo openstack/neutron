@@ -3183,6 +3183,20 @@ class TestSecurityGroupAgentWithOVSIptables(
 
         self._verify_mock_calls()
 
+    def test_prepare_remove_port_no_ct_zone(self):
+        self.ipconntrack.get_device_zone = mock.Mock()
+        self.ipconntrack.get_device_zone.side_effect = [{}, {}]
+        self.rpc.security_group_rules_for_devices.return_value = self.devices1
+        self._replay_iptables(IPTABLES_FILTER_1, IPTABLES_FILTER_V6_1,
+                              IPTABLES_RAW_DEFAULT)
+        self._replay_iptables(IPTABLES_FILTER_EMPTY, IPTABLES_FILTER_V6_EMPTY,
+                              IPTABLES_RAW_DEFAULT)
+
+        self.agent.prepare_devices_filter(['tap_port1'])
+        self.agent.remove_devices_filter(['tap_port1'])
+
+        self._verify_mock_calls()
+
     def test_security_group_member_updated(self):
         self.ipconntrack._device_zone_map = {}
         self.rpc.security_group_rules_for_devices.return_value = self.devices1
