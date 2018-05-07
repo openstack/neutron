@@ -19,6 +19,7 @@ from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
+from neutron.db.models import segment as segment_models
 from neutron.db import models_v2
 
 BINDING_PROFILE_LEN = 4095
@@ -90,6 +91,9 @@ class PortBindingLevel(model_base.BASEV2):
         load_on_pending=True,
         backref=orm.backref("binding_levels", lazy='subquery',
                             cascade='delete'))
+    segment = orm.relationship(
+        segment_models.NetworkSegment,
+        load_on_pending=True)
     revises_on_change = ('port', )
 
 

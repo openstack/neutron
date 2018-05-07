@@ -107,7 +107,8 @@ class DistributedPortBinding(PortBindingBase):
 @base.NeutronObjectRegistry.register
 class PortBindingLevel(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Added segment_id
+    VERSION = '1.1'
 
     db_model = ml2_models.PortBindingLevel
 
@@ -121,6 +122,9 @@ class PortBindingLevel(base.NeutronDbObject):
         'segment': obj_fields.ObjectField(
             'NetworkSegment', nullable=True
         ),
+        # arguably redundant but allows us to define foreign key for 'segment'
+        # synthetic field inside NetworkSegment definition
+        'segment_id': common_types.UUIDField(nullable=True),
     }
 
     synthetic_fields = ['segment']
@@ -139,6 +143,11 @@ class PortBindingLevel(base.NeutronDbObject):
             _pager.sorts = [('port_id', True), ('level', True)]
         return super(PortBindingLevel, cls).get_objects(
             context, _pager, validate_filters, **kwargs)
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('segment_id', None)
 
 
 @base.NeutronObjectRegistry.register
@@ -253,7 +262,8 @@ class SecurityGroupPortBinding(base.NeutronDbObject):
 class Port(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Add data_plane_status field
-    VERSION = '1.1'
+    # Version 1.2: Added segment_id to binding_levels
+    VERSION = '1.2'
 
     db_model = models_v2.Port
 
@@ -450,9 +460,13 @@ class Port(base.NeutronDbObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
-
         if _target_version < (1, 1):
             primitive.pop('data_plane_status', None)
+        if _target_version < (1, 2):
+            binding_levels = primitive.get('binding_levels', [])
+            for lvl in binding_levels:
+                lvl['versioned_object.version'] = '1.0'
+                lvl['versioned_object.data'].pop('segment_id', None)
 
     @classmethod
     def get_ports_by_router(cls, context, router_id, owner, subnet):
