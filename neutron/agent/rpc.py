@@ -18,8 +18,10 @@ import itertools
 
 import netaddr
 from neutron_lib.agent import topics
+from neutron_lib.api.definitions import portbindings_extended as pb_ext
 from neutron_lib.callbacks import events as callback_events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants
 from oslo_log import log as logging
 import oslo_messaging
@@ -199,15 +201,53 @@ class CacheBackedPluginApi(PluginApi):
         the payloads the handlers are expecting (an ID).
         """
         rtype = rtype.lower()  # all legacy handlers don't camelcase
-        is_delete = event == callback_events.AFTER_DELETE
-        suffix = 'delete' if is_delete else 'update'
-        method = "%s_%s" % (rtype, suffix)
+        method, host = self._get_method_host(rtype, event, **kwargs)
         if not hasattr(self._legacy_interface, method):
             # TODO(kevinbenton): once these notifications are stable, emit
             # a deprecation warning for legacy handlers
             return
-        payload = {rtype: {'id': resource_id}, '%s_id' % rtype: resource_id}
+        payload = {rtype: {'id': resource_id}, '%s_id' % rtype: resource_id,
+                   'host': host}
         getattr(self._legacy_interface, method)(context, **payload)
+
+    def _get_method_host(self, rtype, event, **kwargs):
+        """Constructs the name of method to be called in the legacy interface.
+
+        If the event received is a port update that contains a binding
+        activation where a previous binding is deactivated, the method name
+        is 'binding_deactivate' and the host where the binding has to be
+        deactivated is returned. Otherwise, the method name is constructed from
+        rtype and the event received and the host is None.
+        """
+        is_delete = event == callback_events.AFTER_DELETE
+        suffix = 'delete' if is_delete else 'update'
+        method = "%s_%s" % (rtype, suffix)
+        host = None
+        if is_delete or rtype != callback_resources.PORT:
+            return method, host
+
+        # A port update was received. Find out if it is a binding activation
+        # where a previous binding was deactivated
+        BINDINGS = pb_ext.COLLECTION_NAME
+        if BINDINGS in kwargs.get('changed_fields', set()):
+            existing_active_binding = (
+                utils.get_port_binding_by_status_and_host(
+                    getattr(kwargs['existing'], 'bindings', []),
+                    constants.ACTIVE))
+            updated_active_binding = (
+                utils.get_port_binding_by_status_and_host(
+                    getattr(kwargs['updated'], 'bindings', []),
+                    constants.ACTIVE))
+            if (existing_active_binding and updated_active_binding and
+                    existing_active_binding.host !=
+                    updated_active_binding.host):
+                if (utils.get_port_binding_by_status_and_host(
+                        getattr(kwargs['updated'], 'bindings', []),
+                        constants.INACTIVE,
+                        host=existing_active_binding.host)):
+                    method = 'binding_deactivate'
+                    host = existing_active_binding.host
+        return method, host
 
     def get_devices_details_list_and_failed_devices(self, context, devices,
                                                     agent_id, host=None):

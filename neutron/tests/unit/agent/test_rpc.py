@@ -16,9 +16,15 @@
 import datetime
 
 import mock
+from neutron_lib.agent import topics as lib_topics
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import resources
+from neutron_lib import constants
 from oslo_context import context as oslo_context
+from oslo_utils import uuidutils
 
 from neutron.agent import rpc
+from neutron.objects import ports
 from neutron.tests import base
 
 
@@ -162,3 +168,100 @@ class AgentRPCMethods(base.BaseTestCase):
         with mock.patch(call_to_patch) as create_connection:
             rpc.create_consumers(endpoints, 'foo', [('topic', 'op', 'node1')])
             create_connection.assert_has_calls(expected)
+
+
+class TestCacheBackedPluginApi(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestCacheBackedPluginApi, self).setUp()
+        self._api = rpc.CacheBackedPluginApi(lib_topics.PLUGIN)
+        self._api._legacy_interface = mock.Mock()
+        self._port_id = uuidutils.generate_uuid()
+        self._port = ports.Port(
+            id=self._port_id,
+            bindings=[ports.PortBinding(port_id=self._port_id,
+                                        host='host1',
+                                        status=constants.ACTIVE)])
+
+    def test__legacy_notifier_resource_delete(self):
+        self._api._legacy_notifier(resources.PORT, events.AFTER_DELETE, self,
+                                   mock.ANY, resource_id=self._port_id,
+                                   existing=self._port)
+        self._api._legacy_interface.port_update.assert_not_called()
+        self._api._legacy_interface.port_delete.assert_called_once_with(
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
+            host=None)
+        self._api._legacy_interface.binding_deactivate.assert_not_called()
+
+    def test__legacy_notifier_resource_update(self):
+        updated_port = ports.Port(id=self._port_id, name='updated_port')
+        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
+                                   mock.ANY, changed_fields=set(['name']),
+                                   resource_id=self._port_id,
+                                   existing=self._port, updated=updated_port)
+        self._api._legacy_interface.port_delete.assert_not_called()
+        self._api._legacy_interface.port_update.assert_called_once_with(
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
+            host=None)
+        self._api._legacy_interface.binding_deactivate.assert_not_called()
+
+    def _test__legacy_notifier_binding_activated(self):
+        updated_port = ports.Port(
+            id=self._port_id, name='updated_port',
+            bindings=[ports.PortBinding(port_id=self._port_id,
+                                        host='host2',
+                                        status=constants.ACTIVE),
+                      ports.PortBinding(port_id=self._port_id,
+                                        host='host1',
+                                        status=constants.INACTIVE)])
+        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
+                                   mock.ANY,
+                                   changed_fields=set(['name', 'bindings']),
+                                   resource_id=self._port_id,
+                                   existing=self._port, updated=updated_port)
+        self._api._legacy_interface.port_update.assert_not_called()
+        self._api._legacy_interface.port_delete.assert_not_called()
+
+    def test__legacy_notifier_new_binding_activated(self):
+        self._test__legacy_notifier_binding_activated()
+        self._api._legacy_interface.binding_deactivate.assert_called_once_with(
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
+            host='host1')
+
+    def test__legacy_notifier_no_new_binding_activated(self):
+        updated_port = ports.Port(
+            id=self._port_id, name='updated_port',
+            bindings=[ports.PortBinding(port_id=self._port_id,
+                                        host='host2',
+                                        status=constants.ACTIVE)])
+        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
+                                   mock.ANY,
+                                   changed_fields=set(['name', 'bindings']),
+                                   resource_id=self._port_id,
+                                   existing=self._port, updated=updated_port)
+        self._api._legacy_interface.port_update.assert_called_once_with(
+            mock.ANY, port={'id': self._port_id}, port_id=self._port_id,
+            host=None)
+        self._api._legacy_interface.port_delete.assert_not_called()
+        self._api._legacy_interface.binding_deactivate.assert_not_called()
+
+    def test__legacy_notifier_existing_or_updated_is_none(self):
+        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE,
+                                   self, mock.ANY,
+                                   changed_fields=set(['name', 'bindings']),
+                                   resource_id=self._port_id,
+                                   existing=None, updated=None)
+        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
+                                   mock.ANY,
+                                   changed_fields=set(['name', 'bindings']),
+                                   resource_id=self._port_id,
+                                   existing=self._port, updated=None)
+        call = mock.call(mock.ANY, port={'id': self._port_id},
+                         port_id=self._port_id, host=None)
+        self._api._legacy_interface.port_update.assert_has_calls([call, call])
+        self._api._legacy_interface.port_delete.assert_not_called()
+        self._api._legacy_interface.binding_deactivate.assert_not_called()
+
+    def test__legacy_notifier_binding_activated_not_supported(self):
+        del self._api._legacy_interface.binding_deactivate
+        self._test__legacy_notifier_binding_activated()
