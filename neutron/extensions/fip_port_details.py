@@ -10,9 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import fip_port_details as apidef
 from neutron_lib.api import extensions
-
-from neutron.extensions import _fip_port_details_lib as apidef
 
 
 class Fip_port_details(extensions.APIExtensionDescriptor):
