@@ -46,7 +46,6 @@ from neutron.db import _model_query as model_query
 from neutron.db import _resource_extend as resource_extend
 from neutron.db import _utils as db_utils
 from neutron.db import api as db_api
-from neutron.db import common_db_mixin
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
@@ -249,9 +248,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         delete = functools.partial(self.delete_router, context)
         update_gw = functools.partial(self._update_gw_for_create_router,
                                       context, gw_info)
-        router_db, _unused = common_db_mixin.safe_creation(context, create,
-                                                           delete, update_gw,
-                                                           transaction=False)
+        router_db, _unused = db_utils.safe_creation(context, create,
+                                                    delete, update_gw,
+                                                    transaction=False)
         new_router = self._make_router_dict(router_db)
         registry.notify(resources.ROUTER, events.AFTER_CREATE, self,
                         context=context, router_id=router_db.id,
