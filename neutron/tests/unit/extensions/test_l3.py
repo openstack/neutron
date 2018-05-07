@@ -349,6 +349,9 @@ class L3NatTestCaseMixin(object):
             data['router']['name'] = name
         if admin_state_up is not None:
             data['router']['admin_state_up'] = admin_state_up
+        flavor_id = kwargs.get('flavor_id', None)
+        if flavor_id:
+            data['router']['flavor_id'] = flavor_id
         for arg in (('admin_state_up', 'tenant_id',
                      'availability_zone_hints') +
                     (arg_list or ())):
@@ -484,11 +487,15 @@ class L3NatTestCaseMixin(object):
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
                               public_cidr='11.0.0.0/24', set_context=False,
-                              tenant_id=None, **kwargs):
+                              tenant_id=None, flavor_id=None, **kwargs):
         with self.subnet(cidr=public_cidr,
                          set_context=set_context,
                          tenant_id=tenant_id) as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
+            args_list = {'set_context': set_context,
+                         'tenant_id': tenant_id}
+            if flavor_id:
+                args_list['flavor_id'] = flavor_id
             private_port = None
             if port_id:
                 private_port = self._show('ports', port_id)
@@ -496,8 +503,7 @@ class L3NatTestCaseMixin(object):
                     private_port, self.port,
                     set_context=set_context,
                     tenant_id=tenant_id) as private_port:
-                with self.router(set_context=set_context,
-                                 tenant_id=tenant_id) as r:
+                with self.router(**args_list) as r:
                     sid = private_port['port']['fixed_ips'][0]['subnet_id']
                     private_sub = {'subnet': {'id': sid}}
                     floatingip = None
@@ -526,9 +532,16 @@ class L3NatTestCaseMixin(object):
     @contextlib.contextmanager
     def floatingip_no_assoc_with_public_sub(
         self, private_sub, fmt=None, set_context=False,
-        public_sub=None, **kwargs):
+        public_sub=None, flavor_id=None, **kwargs):
         self._set_net_external(public_sub['subnet']['network_id'])
-        with self.router() as r:
+        args_list = {}
+        if flavor_id:
+            # NOTE(manjeets) Flavor id None is not accepted
+            # and return Flavor None not found error. So for
+            # neutron testing this argument should not be passed
+            # at all to router.
+            args_list['flavor_id'] = flavor_id
+        with self.router(**args_list) as r:
             floatingip = None
 
             self._add_external_gateway_to_router(
@@ -551,11 +564,11 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def floatingip_no_assoc(self, private_sub, fmt=None,
-                            set_context=False, **kwargs):
+                            set_context=False, flavor_id=None, **kwargs):
         with self.subnet(cidr='12.0.0.0/24') as public_sub:
             with self.floatingip_no_assoc_with_public_sub(
                 private_sub, fmt, set_context, public_sub,
-                **kwargs) as (f, r):
+                flavor_id, **kwargs) as (f, r):
                 # Yield only the floating ip object
                 yield f
 
