@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add support for filtering attributes with value as empty string. A shim
+    extension is added to indicate if this feature is supported.
