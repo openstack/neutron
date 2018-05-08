@@ -32,7 +32,11 @@ Configure a host to run Neutron's functional test suite.
 
 Warning: This script relies on devstack to perform extensive
 modification to the underlying host.  It is recommended that it be
-invoked only on a throw-away VM."
+invoked only on a throw-away VM.
+
+NOTE: Default values in this file, such as passwords, have been taken
+from the devstack samples/local.conf file, but can be over-ridden by
+setting them in your environment if necessary."
     exit 1
 fi
 
@@ -74,6 +78,10 @@ function _init {
     FILES=$DEVSTACK_PATH/files
     TOP_DIR=$DEVSTACK_PATH
 
+    if [ -f source $DEVSTACK_PATH/local.conf ]; then
+        source $DEVSTACK_PATH/local.conf 2> /dev/null
+    fi
+
     source $DEVSTACK_PATH/stackrc
 
     # Allow the gate to override values set by stackrc.
@@ -101,7 +109,7 @@ function _install_rpc_backend {
 
     RABBIT_USERID=${RABBIT_USERID:-stackrabbit}
     RABBIT_HOST=${RABBIT_HOST:-$SERVICE_HOST}
-    RABBIT_PASSWORD=${RABBIT_PASSWORD:-secretrabbit}
+    RABBIT_PASSWORD=${RABBIT_PASSWORD:-stackqueue}
 
     source $DEVSTACK_PATH/lib/rpc_backend
 
@@ -124,8 +132,8 @@ function _install_databases {
         return 0
     fi
 
-    MYSQL_PASSWORD=${MYSQL_PASSWORD:-secretmysql}
-    DATABASE_PASSWORD=${DATABASE_PASSWORD:-secretdatabase}
+    MYSQL_PASSWORD=${MYSQL_PASSWORD:-stackdb}
+    DATABASE_PASSWORD=${DATABASE_PASSWORD:-stackdb}
 
     source $DEVSTACK_PATH/lib/database
 
