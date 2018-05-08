@@ -19,7 +19,7 @@ from neutron.db import standard_attr
 REVISION = 'revision_number'
 REVISION_BODY = {
     REVISION: {'allow_post': False, 'allow_put': False,
-               'is_visible': True, 'default': None},
+               'is_visible': True, 'default': None, 'is_filter': True},
 }
 
 
