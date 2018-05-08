@@ -522,36 +522,53 @@ class DbListCommand(BaseCommand):
 
     def run_idl(self, txn):
         table_schema = self.api._tables[self.table]
+        idx = idlutils.get_index_column(table_schema)
         columns = self.columns or list(table_schema.columns.keys()) + ['_uuid']
-        if self.records:
-            row_uuids = []
+        # If there's an index for this table, we'll fetch all columns and
+        # remove the unwanted ones based on self.records. Otherwise, let's try
+        # to get the uuid of the wanted ones which is an O(n^2) operation.
+        if not idx and self.records:
+            rows = []
             for record in self.records:
                 try:
-                    row_uuids.append(idlutils.row_by_record(
-                                     self.api.idl, self.table, record).uuid)
+                    rows.append(idlutils.row_by_record(
+                                self.api.idl, self.table, record))
                 except idlutils.RowNotFound:
                     if self.if_exists:
                         continue
-                    # NOTE(kevinbenton): this is converted to a RuntimeError
-                    # for compat with the vsctl version. It might make more
-                    # sense to change this to a RowNotFoundError in the future.
-                    raise RuntimeError(_(
-                          "Row doesn't exist in the DB. Request info: "
-                          "Table=%(table)s. Columns=%(columns)s. "
-                          "Records=%(records)s.") % {
-                              "table": self.table,
-                              "columns": self.columns,
-                              "records": self.records,
-                          })
+                    self._raise_notfound()
         else:
-            row_uuids = table_schema.rows.keys()
+            rows = table_schema.rows.values()
+
+        if idx and self.records:
+            match = lambda row: getattr(row, idx) in self.records
+        else:
+            match = lambda row: True
+
         self.result = [
             {
-                c: idlutils.get_column_value(table_schema.rows[uuid], c)
+                c: idlutils.get_column_value(row, c)
                 for c in columns
             }
-            for uuid in row_uuids
+            for row in rows if match(row)
         ]
+
+        if (not self.if_exists and idx and self.records and
+            len(self.result) < len(self.records)):
+            self._raise_notfound()
+
+    def _raise_notfound(self):
+        # NOTE(kevinbenton): this is converted to a RuntimeError
+        # for compat with the vsctl version. It might make more
+        # sense to change this to a RowNotFoundError in the future.
+        raise RuntimeError(_(
+              "Row doesn't exist in the DB. Request info: "
+              "Table=%(table)s. Columns=%(columns)s. "
+              "Records=%(records)s.") % {
+                  "table": self.table,
+                  "columns": self.columns,
+                  "records": self.records,
+              })
 
 
 class DbFindCommand(BaseCommand):
