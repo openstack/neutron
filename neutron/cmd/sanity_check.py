@@ -22,23 +22,23 @@ from neutron._i18n import _
 from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
+from neutron.conf.agent import securitygroups_rpc
 from neutron.conf.db import l3_hamode_db
+from neutron.conf.plugins.ml2 import config as ml2_conf
+from neutron.conf.plugins.ml2.drivers import linuxbridge as lb_conf
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 
 
 LOG = logging.getLogger(__name__)
 
 
 def setup_conf():
-    cfg.CONF.import_group('AGENT', 'neutron.plugins.ml2.drivers.openvswitch.'
-                          'agent.common.config')
-    cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.'
-                          'agent.common.config')
-    cfg.CONF.import_group('VXLAN', 'neutron.plugins.ml2.drivers.linuxbridge.'
-                          'agent.common.config')
-    cfg.CONF.import_group('ml2', 'neutron.conf.plugins.ml2.config')
-    cfg.CONF.import_group('SECURITYGROUP', 'neutron.agent.securitygroups_rpc')
+    ovs_conf.register_ovs_agent_opts(cfg.CONF)
+    lb_conf.register_linuxbridge_opts(cfg.CONF)
+    ml2_conf.register_ml2_plugin_opts(cfg.CONF)
+    securitygroups_rpc.register_securitygroups_opts(cfg.CONF)
     dhcp_agent.register_options(cfg.CONF)
-    cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
+    l3_hamode_db.register_db_l3_hamode_opts(cfg.CONF)
 
 
 class BoolOptCallback(cfg.BoolOpt):
