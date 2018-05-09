@@ -43,9 +43,6 @@ class NeutronDebugAgent(object):
 
     def create_probe(self, network_id, device_owner='network'):
         network = self._get_network(network_id)
-        bridge = None
-        if network.external:
-            bridge = self.conf.external_network_bridge
 
         port = self._create_port(network, device_owner)
         interface_name = self.driver.get_device_name(port)
@@ -58,7 +55,6 @@ class NeutronDebugAgent(object):
                              port.id,
                              interface_name,
                              port.mac_address,
-                             bridge=bridge,
                              namespace=namespace)
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
@@ -94,22 +90,16 @@ class NeutronDebugAgent(object):
 
     def delete_probe(self, port_id):
         port = dhcp.DictModel(self.client.show_port(port_id)['port'])
-        network = self._get_network(port.network_id)
-        bridge = None
-        if network.external:
-            bridge = self.conf.external_network_bridge
         namespace = self._get_namespace(port)
         if ip_lib.network_namespace_exists(namespace):
             self.driver.unplug(self.driver.get_device_name(port),
-                               bridge=bridge,
                                namespace=namespace)
             try:
                 ip_lib.delete_network_namespace(namespace)
             except Exception:
                 LOG.warning('Failed to delete namespace %s', namespace)
         else:
-            self.driver.unplug(self.driver.get_device_name(port),
-                               bridge=bridge)
+            self.driver.unplug(self.driver.get_device_name(port))
         self.client.delete_port(port.id)
 
     def list_probes(self):

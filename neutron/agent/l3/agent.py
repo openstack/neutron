@@ -50,7 +50,6 @@ from neutron.agent.l3 import l3_agent_extensions_manager as l3_ext_manager
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.linux import external_process
-from neutron.agent.linux import ip_lib
 from neutron.agent.linux import pd
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
@@ -359,12 +358,6 @@ class L3NATAgent(ha.AgentMixin,
         if self.conf.gateway_external_network_id:
             return self.conf.gateway_external_network_id
 
-        # L3 agent doesn't use external_network_bridge to handle external
-        # networks, so bridge_mappings with provider networks will be used
-        # and the L3 agent is able to handle any external networks.
-        if not self.conf.external_network_bridge:
-            return
-
         if not force and self.target_ex_net_id:
             return self.target_ex_net_id
 
@@ -542,12 +535,6 @@ class L3NATAgent(ha.AgentMixin,
                 self._resync_router(update)
 
     def _process_router_if_compatible(self, router):
-        if (self.conf.external_network_bridge and
-                not ip_lib.device_exists(self.conf.external_network_bridge)):
-            LOG.error("The external network bridge '%s' does not exist",
-                      self.conf.external_network_bridge)
-            return
-
         # Either ex_net_id or handle_internal_only_routers must be set
         ex_net_id = (router['external_gateway_info'] or {}).get('network_id')
         if not ex_net_id and not self.conf.handle_internal_only_routers:
@@ -844,7 +831,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
                 'agent_mode': self.conf.agent_mode,
                 'handle_internal_only_routers':
                 self.conf.handle_internal_only_routers,
-                'external_network_bridge': self.conf.external_network_bridge,
                 'gateway_external_network_id':
                 self.conf.gateway_external_network_id,
                 'interface_driver': self.conf.interface_driver,

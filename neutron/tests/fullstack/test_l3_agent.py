@@ -25,7 +25,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.tests.common.exclusive_resources import ip_network
-from neutron.tests.common import machine_fixtures
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
@@ -80,10 +79,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
     def _test_gateway_ip_changed(self):
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
-        external_vm = self.useFixture(
-            machine_fixtures.FakeMachine(
-                self.environment.central_bridge,
-                common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
+        external_vm = self._create_external_vm(ext_net, ext_sub)
 
         router = self.safe_client.create_router(tenant_id,
                                                 external_network=ext_net['id'])
@@ -209,10 +205,7 @@ class TestLegacyL3Agent(TestL3Agent):
         # 3. IPv6 ext connectivity: using ping6 from tenant vm to external_vm.
         tenant_id = uuidutils.generate_uuid()
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
-        external_vm = self.useFixture(
-            machine_fixtures.FakeMachine(
-                self.environment.central_bridge,
-                common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
+        external_vm = self._create_external_vm(ext_net, ext_sub)
         # Create an IPv6 subnet in the external network
         v6network = self.useFixture(
             ip_network.ExclusiveIPNetwork(
@@ -278,7 +271,7 @@ class TestHAL3Agent(TestL3Agent):
             for _ in range(2)]
         env = environment.Environment(
             environment.EnvironmentDescription(
-                network_type='vxlan', l2_pop=True),
+                network_type='vlan', l2_pop=True),
             host_descriptions)
         super(TestHAL3Agent, self).setUp(env)
 
@@ -386,10 +379,7 @@ class TestHAL3Agent(TestL3Agent):
         router = self.safe_client.create_router(tenant_id, ha=True,
                                                 external_network=ext_net['id'])
 
-        external_vm = self.useFixture(
-            machine_fixtures.FakeMachine(
-                self.environment.central_bridge,
-                common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
+        external_vm = self._create_external_vm(ext_net, ext_sub)
 
         common_utils.wait_until_true(
             lambda:

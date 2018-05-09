@@ -37,7 +37,6 @@ class TestDebugCommands(base.BaseTestCase):
     def setUp(self):
         super(TestDebugCommands, self).setUp()
         config.register_interface_opts()
-        cfg.CONF.register_opts(config.EXT_NET_BRIDGE_OPTS)
         common_config.init([])
         config.register_interface_driver_opts_helper(cfg.CONF)
 
@@ -132,7 +131,6 @@ class TestDebugCommands(base.BaseTestCase):
                                                      'fake_port',
                                                      'tap12345678-12',
                                                      'aa:bb:cc:dd:ee:ffa',
-                                                     bridge=None,
                                                      namespace=namespace),
                                       mock.call.init_l3('tap12345678-12',
                                                         ['10.0.0.3/24'],
@@ -177,7 +175,6 @@ class TestDebugCommands(base.BaseTestCase):
                                                      'fake_port',
                                                      'tap12345678-12',
                                                      'aa:bb:cc:dd:ee:ffa',
-                                                     bridge='',
                                                      namespace=namespace),
                                       mock.call.init_l3('tap12345678-12',
                                                         ['10.0.0.3/24'],
@@ -200,13 +197,10 @@ class TestDebugCommands(base.BaseTestCase):
         cmd.run(parsed_args)
         namespace = 'qprobe-fake_port'
         self.client.assert_has_calls([mock.call.show_port('fake_port'),
-                                      mock.call.show_network('fake_net'),
-                                      mock.call.show_subnet('fake_subnet'),
                                       mock.call.delete_port('fake_port')])
         self.driver.assert_has_calls([mock.call.get_device_name(mock.ANY),
                                       mock.call.unplug('tap12345678-12',
-                                                       namespace=namespace,
-                                                       bridge=None)])
+                                                       namespace=namespace)])
 
     def test_delete_probe_external(self):
         fake_network = {'network': {'id': 'fake_net',
@@ -221,13 +215,10 @@ class TestDebugCommands(base.BaseTestCase):
         cmd.run(parsed_args)
         namespace = 'qprobe-fake_port'
         self.client.assert_has_calls([mock.call.show_port('fake_port'),
-                                      mock.call.show_network('fake_net'),
-                                      mock.call.show_subnet('fake_subnet'),
                                       mock.call.delete_port('fake_port')])
         self.driver.assert_has_calls([mock.call.get_device_name(mock.ANY),
                                       mock.call.unplug('tap12345678-12',
-                                                       namespace=namespace,
-                                                       bridge='')])
+                                                       namespace=namespace)])
 
     def test_list_probe(self):
         cmd = commands.ListProbe(self.app, None)
@@ -263,13 +254,10 @@ class TestDebugCommands(base.BaseTestCase):
                 device_owner=[debug_agent.DEVICE_OWNER_NETWORK_PROBE,
                               debug_agent.DEVICE_OWNER_COMPUTE_PROBE]),
              mock.call.show_port('fake_port'),
-             mock.call.show_network('fake_net'),
-             mock.call.show_subnet('fake_subnet'),
              mock.call.delete_port('fake_port')])
         self.driver.assert_has_calls([mock.call.get_device_name(mock.ANY),
                                       mock.call.unplug('tap12345678-12',
-                                                       namespace=namespace,
-                                                       bridge=None)])
+                                                       namespace=namespace)])
 
     def test_ping_all_with_ensure_port(self):
         fake_ports = self.fake_ports

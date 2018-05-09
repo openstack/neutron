@@ -97,10 +97,6 @@ Network node
       [DEFAULT]
       agent_mode = dvr_snat
 
-   .. note::
-
-      The ``external_network_bridge`` option intentionally contains
-      no value.
 
 #. Restart the following services:
 
@@ -125,13 +121,7 @@ Compute nodes
 
       [DEFAULT]
       interface_driver = openvswitch
-      external_network_bridge =
       agent_mode = dvr
-
-   .. note::
-
-      The ``external_network_bridge`` option intentionally contains
-      no value.
 
 #. Restart the following services:
 

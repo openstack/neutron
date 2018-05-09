@@ -19,6 +19,7 @@ import mock
 from neutron_lib import constants
 import testtools
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.linux import ip_lib
 from neutron.common import ipv6_utils
@@ -380,6 +381,28 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         veth2.link.set_up()
         br_int_1.add_port(veth1.name)
         br_int_2.add_port(veth2.name)
+
+    @staticmethod
+    def fail_gw_router_port(router):
+        # NOTE(slaweq): in HA failover tests there are two integration bridges
+        # connected with veth pair to each other. To stop traffic from router's
+        # namespace to gw ip (19.4.4.1) it needs to be blocked by openflow rule
+        # as simple setting ovs_integration_bridge device DOWN will not be
+        # enough because same IP address is also configured on
+        # ovs_integration_bridge device from second router and it will still
+        # respond to ping
+        r_br = ovs_lib.OVSBridge(router.driver.conf.ovs_integration_bridge)
+        external_port = router.get_ex_gw_port()
+        for subnet in external_port['subnets']:
+            r_br.add_flow(
+                proto='ip', nw_dst=subnet['gateway_ip'], actions='drop')
+
+    @staticmethod
+    def restore_gw_router_port(router):
+        r_br = ovs_lib.OVSBridge(router.driver.conf.ovs_integration_bridge)
+        external_port = router.get_ex_gw_port()
+        for subnet in external_port['subnets']:
+            r_br.delete_flows(proto='ip', nw_dst=subnet['gateway_ip'])
 
     def test_ha_router_failover(self):
         router1, router2 = self.create_ha_routers()

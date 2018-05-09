@@ -58,8 +58,7 @@ class FakePlugin(common_db_mixin.CommonDbMixin,
 
 
 def _get_l3_agent_dict(host, agent_mode, internal_only=True,
-                       ext_net_id='', ext_bridge='',
-                       az=DEFAULT_AZ):
+                       ext_net_id='', az=DEFAULT_AZ):
     return {
         'agent_type': constants.AGENT_TYPE_L3,
         'binary': 'neutron-l3-agent',
@@ -68,7 +67,6 @@ def _get_l3_agent_dict(host, agent_mode, internal_only=True,
         'availability_zone': az,
         'configurations': {'agent_mode': agent_mode,
                            'handle_internal_only_routers': internal_only,
-                           'external_network_bridge': ext_bridge,
                            'gateway_external_network_id': ext_net_id}}
 
 
@@ -82,10 +80,8 @@ def _register_agent(agent, plugin=None):
 
 
 def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
-                      internal_only=True, ext_net_id='', ext_bridge='',
-                      az=DEFAULT_AZ):
-    agent = _get_l3_agent_dict(host, agent_mode, internal_only, ext_net_id,
-                               ext_bridge, az)
+                      internal_only=True, ext_net_id='', az=DEFAULT_AZ):
+    agent = _get_l3_agent_dict(host, agent_mode, internal_only, ext_net_id, az)
     return _register_agent(agent)
 
 

@@ -143,7 +143,6 @@ class RouterNamespace(Namespace):
             elif d.name.startswith(EXTERNAL_DEV_PREFIX):
                 self.driver.unplug(
                     d.name,
-                    bridge=self.agent_conf.external_network_bridge,
                     namespace=self.name,
                     prefix=EXTERNAL_DEV_PREFIX)
 

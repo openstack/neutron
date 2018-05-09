@@ -564,9 +564,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
                             'foo_router_id',
                             {'distributed': True, 'gw_port_host': HOSTNAME})
         ri = dvr_router.DvrLocalRouter(HOSTNAME, **self.ri_kwargs)
-        with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as f:
-            ri._update_arp_entry(mock.ANY, mock.ANY, 'foo_subnet_id', 'add')
-        self.assertFalse(f.call_count)
+        ri.get_internal_device_name = mock.Mock()
+        ri._update_arp_entry(mock.ANY, mock.ANY, 'foo_subnet_id', 'add')
+        self.assertFalse(ri.get_internal_device_name.call_count)
 
     def _setup_test_for_arp_entry_cache(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -581,7 +581,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
     def test__update_arp_entry_calls_arp_cache_with_no_device(self):
         ri, subnet_id = self._setup_test_for_arp_entry_cache()
         state = True
-        with mock.patch.object(l3_agent.ip_lib, 'IPDevice') as rtrdev,\
+        with mock.patch('neutron.agent.linux.ip_lib.IPDevice') as rtrdev,\
                 mock.patch.object(ri, '_cache_arp_entry') as arp_cache:
             rtrdev.return_value.exists.return_value = False
             state = ri._update_arp_entry(

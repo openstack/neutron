@@ -23,6 +23,7 @@ from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.tests import base as tests_base
 from neutron.tests.common import helpers
+from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack.resources import client as client_resource
 from neutron.tests import tools
@@ -137,3 +138,15 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
                     return available_ips
 
         self.fail("Cannot find enough free IP addresses.")
+
+    def _create_external_vm(self, network, subnet):
+        vm = self.useFixture(
+            machine_fixtures.FakeMachine(
+                self.environment.central_bridge,
+                common_utils.ip_to_cidr(subnet['gateway_ip'], 24)))
+        # NOTE(slaweq): as ext_net is 'vlan' network type external_vm needs to
+        # send packets with proper vlan also
+        vm.bridge.set_db_attribute(
+            "Port", vm.port.name,
+            "tag", network.get("provider:segmentation_id"))
+        return vm

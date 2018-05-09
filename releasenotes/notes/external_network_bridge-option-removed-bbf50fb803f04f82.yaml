@@ -1,0 +1,6 @@
+---
+upgrade:
+  - The ``external_network_bridge`` config option has been removed.
+    Existing users of this option will now have their router's gateway
+    interface created in the integration bridge and it will be wired by
+    the L2 agent.

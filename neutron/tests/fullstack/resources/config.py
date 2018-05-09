@@ -166,11 +166,13 @@ class OVSConfigFixture(ConfigFixture):
             base_filename='openvswitch_agent.ini')
 
         self.tunneling_enabled = self.env_desc.tunneling_enabled
+        ext_dev = utils.get_rand_device_name(prefix='br-eth')
         self.config.update({
             'ovs': {
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
                 'of_interface': host_desc.of_interface,
+                'bridge_mappings': '%s:%s' % (PHYSICAL_NETWORK_NAME, ext_dev)
             },
             'securitygroup': {
                 'firewall_driver': host_desc.firewall_driver,
@@ -190,12 +192,9 @@ class OVSConfigFixture(ConfigFixture):
                 'int_peer_patch_port': self._generate_int_peer(),
                 'tun_peer_patch_port': self._generate_tun_peer()})
         else:
-            device = utils.get_rand_device_name(prefix='br-eth')
-            self.config['ovs']['bridge_mappings'] = '%s:%s' % (
-                    PHYSICAL_NETWORK_NAME, device)
             if env_desc.report_bandwidths:
                 self.config['ovs'][c_const.RP_BANDWIDTHS] = \
-                    '%s:%s:%s' % (device, MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                    '%s:%s:%s' % (ext_dev, MINIMUM_BANDWIDTH_EGRESS_KBPS,
                                   MINIMUM_BANDWIDTH_INGRESS_KBPS)
 
         if env_desc.qos:
@@ -350,7 +349,6 @@ class L3ConfigFixture(ConfigFixture):
                 'interface_driver': ('neutron.agent.linux.interface.'
                                      'OVSInterfaceDriver'),
                 'ovs_integration_bridge': integration_bridge,
-                'external_network_bridge': self._generate_external_bridge(),
             }
         })
 
@@ -361,12 +359,6 @@ class L3ConfigFixture(ConfigFixture):
                                      'BridgeInterfaceDriver'),
             }
         })
-
-    def _generate_external_bridge(self):
-        return utils.get_rand_device_name(prefix='br-ex')
-
-    def get_external_bridge(self):
-        return self.config.DEFAULT.external_network_bridge
 
 
 class DhcpConfigFixture(ConfigFixture):

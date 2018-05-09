@@ -118,12 +118,6 @@ Network node 2
 
       [DEFAULT]
       interface_driver = linuxbridge
-      external_network_bridge =
-
-   .. note::
-
-      The ``external_network_bridge`` option intentionally contains
-      no value.
 
 #. Start the following services:
 

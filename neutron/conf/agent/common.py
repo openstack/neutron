@@ -154,17 +154,6 @@ AVAILABILITY_ZONE_OPTS = [
                help=_("Availability zone of this node")),
 ]
 
-EXT_NET_BRIDGE_OPTS = [
-    cfg.StrOpt('external_network_bridge', default='',
-               deprecated_for_removal=True,
-               help=_("Name of bridge used for external network "
-                      "traffic. When this parameter is set, the L3 agent will "
-                      "plug an interface directly into an external bridge "
-                      "which will not allow any wiring by the L2 agent. Using "
-                      "this will result in incorrect port statuses. This "
-                      "option is deprecated and will be removed in Ocata."))
-]
-
 
 def get_log_args(conf, log_file_name, **kwargs):
     cmd_args = []

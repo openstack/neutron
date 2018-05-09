@@ -136,13 +136,8 @@ Network nodes
       [DEFAULT]
       ha_vrrp_auth_password = password
       interface_driver = openvswitch
-      external_network_bridge =
       agent_mode = dvr_snat
 
-   .. note::
-
-      The ``external_network_bridge`` option intentionally contains
-      no value.
 
 Compute nodes
 -------------
@@ -170,7 +165,6 @@ Compute nodes
 
       [DEFAULT]
       interface_driver = openvswitch
-      external_network_bridge =
       agent_mode = dvr
 
    Replace ``TUNNEL_INTERFACE_IP_ADDRESS`` with the IP address of the interface

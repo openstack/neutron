@@ -303,13 +303,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _check_router_needs_rescheduling(self, context, router_id, gw_info):
         """Checks whether router's l3 agent can handle the given network
 
-        When external_network_bridge is set, each L3 agent can be associated
-        with at most one external network. If router's new external gateway
-        is on other network then the router needs to be rescheduled to the
-        proper l3 agent.
-        If external_network_bridge is not set then the agent
-        can support multiple external networks and rescheduling is not needed
-
         :return: list of candidate agents if rescheduling needed,
         None otherwise; raises exception if there is no eligible l3 agent
         associated with target external network
@@ -344,10 +337,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         for agent in cur_agents:
             ext_net_id = agent['configurations'].get(
                 'gateway_external_network_id')
-            ext_bridge = agent['configurations'].get(
-                'external_network_bridge', '')
-            if (ext_net_id == network_id or
-                    (not ext_net_id and not ext_bridge)):
+            if ext_net_id == network_id or not ext_net_id:
                 return
 
         # otherwise find l3 agent with matching gateway_external_network_id

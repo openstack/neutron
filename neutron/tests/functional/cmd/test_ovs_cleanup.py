@@ -34,26 +34,23 @@ class TestOVSCLIConfig(base.BaseOVSLinuxTestCase):
 
     def test_do_main_default_options(self):
         int_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        ext_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.conf.set_override("ovs_integration_bridge", int_br.br_name)
-        self.conf.set_override("external_network_bridge", ext_br.br_name)
         self.conf.set_override("ovs_all_ports", False)
 
         noskip = collections.defaultdict(list)
         skip = collections.defaultdict(list)
-        # add two vifs, one skipped, and a non-vif port to int_br and ext_br
-        for br in (int_br, ext_br):
-            for collection in (noskip, skip):
-                collection[br].append(
-                    self.useFixture(net_helpers.OVSPortFixture(br)).port.name)
-            # set skippable vif to be skipped
-            br.ovsdb.db_set(
-                'Interface', skip[br][0],
-                ('external_ids', {constants.SKIP_CLEANUP: "True"})
-            ).execute(check_error=True)
-            device_name = utils.get_rand_name()
-            skip[br].append(device_name)
-            br.add_port(device_name, ('type', 'internal'))
+        # add two vifs, one skipped, and a non-vif port to int_br
+        for collection in (noskip, skip):
+            collection[int_br].append(
+                self.useFixture(net_helpers.OVSPortFixture(int_br)).port.name)
+        # set skippable vif to be skipped
+        int_br.ovsdb.db_set(
+            'Interface', skip[int_br][0],
+            ('external_ids', {constants.SKIP_CLEANUP: "True"})
+        ).execute(check_error=True)
+        device_name = utils.get_rand_name()
+        skip[int_br].append(device_name)
+        int_br.add_port(device_name, ('type', 'internal'))
         # sanity check
         for collection in (noskip, skip):
             for bridge, ports in collection.items():
@@ -61,9 +58,8 @@ class TestOVSCLIConfig(base.BaseOVSLinuxTestCase):
                 for port in ports:
                     self.assertIn(port, port_list)
         ovs_cleanup.do_main(self.conf)
-        for br in (int_br, ext_br):
-            ports = br.get_port_name_list()
-            for vif in noskip[br]:
-                self.assertNotIn(vif, ports)
-            for port in skip[br]:
-                self.assertIn(port, ports)
+        ports = int_br.get_port_name_list()
+        for vif in noskip[int_br]:
+            self.assertNotIn(vif, ports)
+        for port in skip[int_br]:
+            self.assertIn(port, ports)

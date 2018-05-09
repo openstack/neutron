@@ -95,7 +95,6 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             return
 
         self.driver.unplug(interface_name,
-                           bridge=self.agent_conf.external_network_bridge,
                            namespace=self.snat_namespace.name,
                            prefix=router.EXTERNAL_DEV_PREFIX)
 
@@ -270,7 +269,6 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
                 LOG.debug('Deleting stale external router device: %s', d.name)
                 self.driver.unplug(
                     d.name,
-                    bridge=self.agent_conf.external_network_bridge,
                     namespace=self.snat_namespace.name,
                     prefix=router.EXTERNAL_DEV_PREFIX)
 
