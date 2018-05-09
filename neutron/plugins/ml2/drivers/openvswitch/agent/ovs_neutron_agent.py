@@ -828,7 +828,8 @@ class OVSNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "other_config", other_config)
                 # Uninitialized port has tag set to []
-                if cur_info['tag']:
+                if (cur_info['tag'] and
+                        cur_info['tag'] != constants.DEAD_VLAN_TAG):
                     self.int_br.delete_flows(in_port=port.ofport)
 
     def _bind_devices(self, need_binding_ports):
