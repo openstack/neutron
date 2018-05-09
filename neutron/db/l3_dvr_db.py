@@ -395,7 +395,7 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
     @db_api.retry_if_session_inactive()
-    def _update_snat_v6_addrs_after_intf_update(self, resource, event, triger,
+    def _update_snat_v6_addrs_after_intf_update(self, resource, event, trigger,
                                                 context, subnets, port,
                                                 router_id, new_interface,
                                                 **kwargs):
