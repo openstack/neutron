@@ -349,6 +349,32 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
             self.fip_qos_ext.add_router(self.context, self.router)
             tc_wrapper.set_ip_rate_limit.assert_not_called()
 
+    def _test_process_ip_rates(self, with_cache):
+        rates = {'egress': {'rate': 333, 'burst': 444},
+                 'ingress': {'rate': 111, 'burst': 222}}
+        fip = '123.123.123.123'
+        device = mock.Mock()
+        tc_wrapper = mock.Mock()
+        with mock.patch.object(
+                self.fip_qos_ext, '_get_tc_wrapper',
+                return_value=tc_wrapper) as get_tc_wrapper:
+            with mock.patch.object(
+                    self.fip_qos_ext, 'process_ip_rate_limit') as process_ip:
+                self.fip_qos_ext.process_ip_rates(
+                    fip, device, rates, with_cache=with_cache)
+                if with_cache:
+                    self.assertEqual(2, process_ip.call_count)
+                else:
+                    self.assertEqual(2, get_tc_wrapper.call_count)
+                    self.assertEqual(
+                        2, tc_wrapper.set_ip_rate_limit.call_count)
+
+    def test_process_ip_rates_with_cache(self):
+        self._test_process_ip_rates(with_cache=True)
+
+    def test_process_ip_rates_without_cache(self):
+        self._test_process_ip_rates(with_cache=False)
+
 
 class RouterFipRateLimitMapsTestCase(base.BaseTestCase):
 
