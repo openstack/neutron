@@ -1615,7 +1615,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 context, values, fixed_port_id=port_id)
             for fip in floating_ip_objs:
                 registry.notify(resources.FLOATING_IP, events.PRECOMMIT_UPDATE,
-                                self,
+                                self, context=context,
                                 floatingip={l3_apidef.FLOATINGIP: values},
                                 floatingip_db=fip,
                                 old_floatingip=old_fips[fip.id],
