@@ -48,11 +48,11 @@ class ExtensionTestCase(testlib_api.WebTestCase):
         return self.setup_extension(
             plugin, service_type,
             extension_class,
-            resource_prefix, plural_mappings=None,
-            translate_resource_name=False,
-            allow_pagination=False, allow_sorting=False,
-            supported_extension_aliases=None,
-            use_quota=False)
+            resource_prefix, plural_mappings,
+            translate_resource_name,
+            allow_pagination, allow_sorting,
+            supported_extension_aliases,
+            use_quota)
 
     def setup_extension(self, plugin, service_type,
                         extension_class,
