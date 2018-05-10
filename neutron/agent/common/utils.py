@@ -37,7 +37,11 @@ agents_db.register_db_agents_opts()
 INTERFACE_NAMESPACE = 'neutron.interface_drivers'
 
 
+create_process = utils.create_process
+kill_process = utils.kill_process
 execute = utils.execute
+get_root_helper_child_pid = utils.get_root_helper_child_pid
+pid_invoked_with_cmdline = utils.pid_invoked_with_cmdline
 
 
 def load_interface_driver(conf):

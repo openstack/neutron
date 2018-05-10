@@ -381,3 +381,9 @@ class FilterIDForIPNotFound(e.NotFound):
 class FailedToAddQdiscToDevice(e.NeutronException):
     message = _("Failed to add %(direction)s qdisc "
                 "to device %(device)s.")
+
+
+class ProcessExecutionError(RuntimeError):
+    def __init__(self, message, returncode):
+        super(ProcessExecutionError, self).__init__(message)
+        self.returncode = returncode

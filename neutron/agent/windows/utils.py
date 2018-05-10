@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import os
 
 import eventlet
@@ -20,8 +21,13 @@ from eventlet import tpool
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import encodeutils
+import six
 
 from neutron._i18n import _
+from neutron.common import exceptions
+
+if os.name == 'nt':
+    import wmi
 
 LOG = logging.getLogger(__name__)
 
@@ -32,7 +38,8 @@ subprocess = eventlet.patcher.original('subprocess')
 subprocess.threading = eventlet.patcher.original('threading')
 
 
-def create_process(cmd, addl_env=None):
+def create_process(cmd, run_as_root=False, addl_env=None,
+                   tpool_proxy=True):
     cmd = list(map(str, cmd))
 
     LOG.debug("Running command: %s", cmd)
@@ -48,8 +55,37 @@ def create_process(cmd, addl_env=None):
                 env=env,
                 preexec_fn=None,
                 close_fds=False)
+    if tpool_proxy and eventlet.getcurrent().parent:
+        # If we intend to access the process streams, we need to wrap this
+        # in a tpool proxy object, avoding blocking other greenthreads.
+        #
+        # The 'file' type is not available on Python 3.x.
+        file_type = getattr(six.moves.builtins, 'file', io.IOBase)
+        obj = tpool.Proxy(obj, autowrap=(file_type, ))
 
     return obj, cmd
+
+
+def _get_wmi_process(pid):
+    if not pid:
+        return None
+
+    conn = wmi.WMI()
+    processes = conn.Win32_Process(ProcessId=pid)
+    if processes:
+        return processes[0]
+    return None
+
+
+def kill_process(pid, signal, run_as_root=False):
+    """Kill the process with the given pid using the given signal."""
+    process = _get_wmi_process(pid)
+    try:
+        if process:
+            process.Terminate()
+    except Exception:
+        if _get_wmi_process(pid):
+            raise
 
 
 def execute(cmd, process_input=None, addl_env=None,
@@ -60,7 +96,7 @@ def execute(cmd, process_input=None, addl_env=None,
         _process_input = encodeutils.to_utf8(process_input)
     else:
         _process_input = None
-    obj, cmd = create_process(cmd, addl_env=addl_env)
+    obj, cmd = create_process(cmd, addl_env=addl_env, tpool_proxy=False)
     _stdout, _stderr = avoid_blocking_call(obj.communicate, _process_input)
     obj.stdin.close()
     _stdout = helpers.safe_decode_utf8(_stdout)
@@ -85,7 +121,7 @@ def execute(cmd, process_input=None, addl_env=None,
         LOG.debug(log_msg)
 
     if obj.returncode and check_exit_code:
-        raise RuntimeError(m)
+        raise exceptions.ProcessExecutionError(m, returncode=obj.returncode)
 
     return (_stdout, _stderr) if return_stderr else _stdout
 
@@ -107,3 +143,22 @@ def avoid_blocking_call(f, *args, **kwargs):
         return tpool.execute(f, *args, **kwargs)
     else:
         return f(*args, **kwargs)
+
+
+def get_root_helper_child_pid(pid, expected_cmd, run_as_root=False):
+    # We don't use a root helper on Windows.
+    return str(pid)
+
+
+def process_is_running(pid):
+    """Find if the given PID is running in the system."""
+    return _get_wmi_process(pid) is not None
+
+
+def pid_invoked_with_cmdline(pid, expected_cmd):
+    process = _get_wmi_process(pid)
+    if not process:
+        return False
+
+    command = process.CommandLine
+    return command == " ".join(expected_cmd)
