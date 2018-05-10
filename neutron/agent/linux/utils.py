@@ -35,18 +35,13 @@ from six.moves import http_client as httplib
 
 from neutron._i18n import _
 from neutron.agent.linux import xenapi_root_helper
+from neutron.common import exceptions
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron import wsgi
 
 
 LOG = logging.getLogger(__name__)
-
-
-class ProcessExecutionError(RuntimeError):
-    def __init__(self, message, returncode):
-        super(ProcessExecutionError, self).__init__(message)
-        self.returncode = returncode
 
 
 class RootwrapDaemonHelper(object):
@@ -148,7 +143,8 @@ def execute(cmd, process_input=None, addl_env=None,
             if log_fail_as_error:
                 LOG.error(msg)
             if check_exit_code:
-                raise ProcessExecutionError(msg, returncode=returncode)
+                raise exceptions.ProcessExecutionError(msg,
+                                                       returncode=returncode)
 
     finally:
         # NOTE(termie): this appears to be necessary to let the subprocess
@@ -167,7 +163,7 @@ def find_child_pids(pid, recursive=False):
     try:
         raw_pids = execute(['ps', '--ppid', pid, '-o', 'pid='],
                            log_fail_as_error=False)
-    except ProcessExecutionError as e:
+    except exceptions.ProcessExecutionError as e:
         # Unexpected errors are the responsibility of the caller
         with excutils.save_and_reraise_exception() as ctxt:
             # Exception has already been logged by execute
@@ -191,7 +187,7 @@ def find_parent_pid(pid):
     try:
         ppid = execute(['ps', '-o', 'ppid=', pid],
                        log_fail_as_error=False)
-    except ProcessExecutionError as e:
+    except exceptions.ProcessExecutionError as e:
         # Unexpected errors are the responsibility of the caller
         with excutils.save_and_reraise_exception() as ctxt:
             # Exception has already been logged by execute
@@ -221,7 +217,7 @@ def kill_process(pid, signal, run_as_root=False):
     """Kill the process with the given pid using the given signal."""
     try:
         execute(['kill', '-%d' % signal, pid], run_as_root=run_as_root)
-    except ProcessExecutionError:
+    except exceptions.ProcessExecutionError:
         if process_is_running(pid):
             raise
 
