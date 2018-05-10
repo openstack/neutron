@@ -1672,14 +1672,59 @@ class TestOvsNeutronAgent(object):
             self.agent.reclaim_local_vlan('net2')
             tun_br.delete_port.assert_called_once_with('gre-02020202')
 
-    def test_daemon_loop_uses_polling_manager(self):
+    def test_ext_br_recreated(self):
+        bridge_mappings = {'physnet0': 'br-ex0',
+                           'physnet1': 'br-ex1'}
+        ex_br_mocks = [mock.Mock(br_name='br-ex0'),
+                       mock.Mock(br_name='br-ex1')]
+        phys_bridges = {'physnet0': ex_br_mocks[0],
+                        'physnet1': ex_br_mocks[1]},
+        bm_mock = mock.Mock()
         with mock.patch(
-            'neutron.agent.common.polling.get_polling_manager') as mock_get_pm:
-            with mock.patch.object(self.agent, 'rpc_loop') as mock_loop:
-                self.agent.daemon_loop()
+            'neutron.agent.linux.ovsdb_monitor.get_bridges_monitor',
+            return_value=bm_mock),\
+                mock.patch.object(
+                    self.agent,
+                    'check_ovs_status',
+                    return_value=constants.OVS_NORMAL),\
+                mock.patch.object(
+                    self.agent,
+                    '_agent_has_updates',
+                    side_effect=TypeError('loop exit')),\
+                mock.patch.dict(
+                    self.agent.bridge_mappings, bridge_mappings, clear=True),\
+                mock.patch.dict(
+                    self.agent.phys_brs, phys_bridges, clear=True),\
+                mock.patch.object(
+                    self.agent,
+                    'setup_physical_bridges') as setup_physical_bridges:
+            bm_mock.bridges_added = ['br-ex0']
+            try:
+                self.agent.rpc_loop(polling_manager=mock.Mock(),
+                                    bridges_monitor=bm_mock)
+            except TypeError:
+                pass
+        setup_physical_bridges.assert_called_once_with(
+            {'physnet0': 'br-ex0'})
+
+    def test_daemon_loop_uses_polling_manager(self):
+        ex_br_mock = mock.Mock(br_name="br-ex0")
+        with mock.patch(
+            'neutron.agent.common.polling.get_polling_manager'
+        ) as mock_get_pm, mock.patch(
+            'neutron.agent.linux.ovsdb_monitor.get_bridges_monitor'
+        ) as mock_get_bm, mock.patch.object(
+            self.agent, 'rpc_loop'
+        ) as mock_loop, mock.patch.dict(
+            self.agent.phys_brs, {'physnet0': ex_br_mock}, clear=True):
+
+            self.agent.daemon_loop()
         mock_get_pm.assert_called_with(True,
                                        constants.DEFAULT_OVSDBMON_RESPAWN)
-        mock_loop.assert_called_once_with(polling_manager=mock.ANY)
+        mock_get_bm.assert_called_once_with(
+            ['br-ex0'], constants.DEFAULT_OVSDBMON_RESPAWN)
+        mock_loop.assert_called_once_with(
+            polling_manager=mock.ANY, bridges_monitor=mock.ANY)
 
     def test_setup_tunnel_port_invalid_ofport(self):
         remote_ip = '1.2.3.4'

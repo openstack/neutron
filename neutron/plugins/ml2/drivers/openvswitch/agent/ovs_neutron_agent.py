@@ -45,6 +45,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
+from neutron.agent.linux import ovsdb_monitor
 from neutron.agent.linux import xenapi_root_helper
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc
@@ -774,7 +775,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def port_bound(self, port, net_uuid,
                    network_type, physical_network,
                    segmentation_id, fixed_ips, device_owner,
-                   ovs_restarted):
+                   provisioning_needed):
         '''Bind port to net_uuid/lsw_id and install flow for inbound traffic
         to vm.
 
@@ -785,9 +786,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         :param segmentation_id: the VID for 'vlan' or tunnel ID for 'tunnel'
         :param fixed_ips: the ip addresses assigned to this port
         :param device_owner: the string indicative of owner of this port
-        :param ovs_restarted: indicates if this is called for an OVS restart.
+        :param provisioning_needed: indicates if this is called for an OVS
+                                    restart or recreated physical bridges
+                                    and requires to do local vlan provisioning
         '''
-        if net_uuid not in self.vlan_manager or ovs_restarted:
+        if net_uuid not in self.vlan_manager or provisioning_needed:
             self.provision_local_vlan(net_uuid, network_type,
                                       physical_network, segmentation_id)
         lvm = self.vlan_manager.get(net_uuid)
@@ -1085,6 +1088,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         '''
         self.tun_br.setup_default_table(self.patch_int_ofport,
                                         self.arp_responder_enabled)
+
+    def _reconfigure_physical_bridges(self, bridges):
+        sync = False
+        bridge_mappings = {}
+        for bridge in bridges:
+            LOG.info("Physical bridge %s was just re-created.", bridge)
+            for phys_net, phys_br in self.bridge_mappings.items():
+                if bridge == phys_br:
+                    bridge_mappings[phys_net] = bridge
+        if bridge_mappings:
+            sync = True
+            self.setup_physical_bridges(bridge_mappings)
+        return sync
 
     def setup_physical_bridges(self, bridge_mappings):
         '''Setup the physical network bridges.
@@ -1417,7 +1433,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
                        physical_network, segmentation_id, admin_state_up,
-                       fixed_ips, device_owner, ovs_restarted):
+                       fixed_ips, device_owner, provisioning_needed):
         # When this function is called for a port, the port should have
         # an OVS ofport configured, as only these ports were considered
         # for being treated. If that does not happen, it is a potential
@@ -1432,7 +1448,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_needs_binding = self.port_bound(
                     vif_port, network_id, network_type,
                     physical_network, segmentation_id,
-                    fixed_ips, device_owner, ovs_restarted)
+                    fixed_ips, device_owner, provisioning_needed)
             else:
                 LOG.info("VIF port: %s admin state up disabled, "
                          "putting on the dead VLAN", vif_port.vif_id)
@@ -1516,7 +1532,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     br.cleanup_tunnel_port(ofport)
                     self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
 
-    def treat_devices_added_or_updated(self, devices, ovs_restarted):
+    def treat_devices_added_or_updated(self, devices, provisioning_needed):
         skipped_devices = []
         need_binding_devices = []
         devices_details_list = (
@@ -1554,7 +1570,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                                    details['admin_state_up'],
                                                    details['fixed_ips'],
                                                    details['device_owner'],
-                                                   ovs_restarted)
+                                                   provisioning_needed)
                 if need_binding:
                     need_binding_devices.append(details)
                 self._update_port_network(details['port_id'],
@@ -1641,7 +1657,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if failed_devices:
             LOG.debug("Port down failed for %s", failed_devices)
 
-    def process_network_ports(self, port_info, ovs_restarted):
+    def process_network_ports(self, port_info, provisioning_needed):
         failed_devices = {'added': set(), 'removed': set()}
         # TODO(salv-orlando): consider a solution for ensuring notifications
         # are processed exactly in the same order in which they were
@@ -1663,7 +1679,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             (skipped_devices, need_binding_devices,
             failed_devices['added']) = (
                 self.treat_devices_added_or_updated(
-                    devices_added_updated, ovs_restarted))
+                    devices_added_updated, provisioning_needed))
             LOG.debug("process_network_ports - iteration:%(iter_num)d - "
                       "treat_devices_added_or_updated completed. "
                       "Skipped %(num_skipped)d devices of "
@@ -1974,7 +1990,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             ancillary_devices_not_to_retry)
         return new_failed_devices_retries_map
 
-    def rpc_loop(self, polling_manager=None):
+    def rpc_loop(self, polling_manager=None, bridges_monitor=None):
         if not polling_manager:
             polling_manager = polling.get_polling_manager(
                 minimize_polling=False)
@@ -1996,6 +2012,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 LOG.info("rpc_loop doing a full sync.")
                 sync = True
                 self.fullsync = False
+            bridges_recreated = False
             port_info = {}
             ancillary_port_info = {}
             start = time.time()
@@ -2038,6 +2055,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_stats = self.get_port_stats({}, {})
                 self.loop_count_and_wait(start, port_stats)
                 continue
+            # Check if any physical bridge wasn't recreated recently
+            if bridges_monitor:
+                bridges_recreated = self._reconfigure_physical_bridges(
+                    bridges_monitor.bridges_added)
+                sync |= bridges_recreated
             # Notify the plugin of tunnel IP
             if self.enable_tunneling and tunnel_sync:
                 try:
@@ -2086,8 +2108,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         ovs_restarted):
                         LOG.debug("Starting to process devices in:%s",
                                   port_info)
+                        provisioning_needed = (
+                                ovs_restarted or bridges_recreated)
                         failed_devices = self.process_network_ports(
-                            port_info, ovs_restarted)
+                            port_info, provisioning_needed)
                         if need_clean_stale_flow:
                             self.cleanup_stale_flows()
                             need_clean_stale_flow = False
@@ -2132,11 +2156,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         signal.signal(signal.SIGTERM, self._handle_sigterm)
         if hasattr(signal, 'SIGHUP'):
             signal.signal(signal.SIGHUP, self._handle_sighup)
+        br_names = [br.br_name for br in self.phys_brs.values()]
         with polling.get_polling_manager(
-            self.minimize_polling,
-            self.ovsdb_monitor_respawn_interval) as pm:
+                self.minimize_polling,
+                self.ovsdb_monitor_respawn_interval) as pm,\
+            ovsdb_monitor.get_bridges_monitor(
+                br_names,
+                self.ovsdb_monitor_respawn_interval) as bm:
 
-            self.rpc_loop(polling_manager=pm)
+            self.rpc_loop(polling_manager=pm, bridges_monitor=bm)
 
     def _handle_sigterm(self, signum, frame):
         self.catch_sigterm = True
