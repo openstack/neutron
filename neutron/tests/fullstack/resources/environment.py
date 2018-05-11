@@ -138,10 +138,10 @@ class Host(fixtures.Fixture):
                     agent_cfg_fixture.get_br_tun_name())).bridge
             self.connect_to_internal_network_via_tunneling()
         else:
-            br_phys = self.useFixture(
+            self.br_phys = self.useFixture(
                 net_helpers.OVSBridgeFixture(
                     agent_cfg_fixture.get_br_phys_name())).bridge
-            self.connect_to_internal_network_via_vlans(br_phys)
+            self.connect_to_internal_network_via_vlans(self.br_phys)
 
         self.ovs_agent = self.useFixture(
             process.OVSAgentFixture(
