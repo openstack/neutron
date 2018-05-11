@@ -143,7 +143,7 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-    nodeset: legacy-ubuntu-xenial-2-node
+    nodeset: ubuntu-xenial-2-node
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
@@ -165,7 +165,7 @@
       - openstack-dev/grenade
       - openstack-infra/devstack-gate
       - openstack/neutron
-    nodeset: legacy-ubuntu-xenial-2-node
+    nodeset: ubuntu-xenial-2-node
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
@@ -187,7 +187,7 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
-    nodeset: legacy-ubuntu-xenial-2-node
+    nodeset: ubuntu-xenial-2-node
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
@@ -210,7 +210,7 @@
       - openstack-infra/devstack-gate
       - openstack/neutron
       - openstack/tempest
-    nodeset: legacy-ubuntu-xenial-3-node
+    nodeset: ubuntu-xenial-3-node
     irrelevant-files:
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
