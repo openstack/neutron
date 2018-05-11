@@ -204,6 +204,7 @@ class TestOVSCookieBridgeRyu(native_ovs_bridge_test_base.OVSBridgeTestBase):
                     instructions=[],
                     match=ofpp.OFPMatch(in_port=in_port),
                     priority=priority,
-                    table_id=0)),
+                    table_id=0),
+                active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
