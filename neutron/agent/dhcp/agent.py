@@ -389,14 +389,32 @@ class DhcpAgent(manager.Manager):
     # Use the update handler for the subnet create event.
     subnet_create_end = subnet_update_end
 
+    def _get_network_lock_id(self, payload):
+        """Determine which lock to hold when servicing an RPC event"""
+        # TODO(alegacy): in a future release this function can be removed and
+        # uses of it can be replaced with payload['network_id'].  It exists
+        # only to satisfy backwards compatibility between older servers and
+        # newer agents.  Once the 'network_id' attribute is guaranteed to be
+        # sent by the server on all *_delete_end events then it can be removed.
+        if 'network_id' in payload:
+            return payload['network_id']
+        elif 'subnet_id' in payload:
+            subnet_id = payload['subnet_id']
+            network = self.cache.get_network_by_subnet_id(subnet_id)
+            return network.id if network else None
+        elif 'port_id' in payload:
+            port_id = payload['port_id']
+            port = self.cache.get_port_by_id(port_id)
+            return port.network_id if port else None
+
     @_wait_if_syncing
     def subnet_delete_end(self, context, payload):
         """Handle the subnet.delete.end notification event."""
-        subnet_id = payload['subnet_id']
-        network = self.cache.get_network_by_subnet_id(subnet_id)
-        if not network:
+        network_id = self._get_network_lock_id(payload)
+        if not network_id:
             return
-        with _net_lock(network.id):
+        with _net_lock(network_id):
+            subnet_id = payload['subnet_id']
             network = self.cache.get_network_by_subnet_id(subnet_id)
             if not network:
                 return
@@ -453,12 +471,13 @@ class DhcpAgent(manager.Manager):
     @_wait_if_syncing
     def port_delete_end(self, context, payload):
         """Handle the port.delete.end notification event."""
-        port = self.cache.get_port_by_id(payload['port_id'])
-        self.cache.deleted_ports.add(payload['port_id'])
-        if not port:
+        network_id = self._get_network_lock_id(payload)
+        if not network_id:
             return
-        with _net_lock(port.network_id):
-            port = self.cache.get_port_by_id(payload['port_id'])
+        with _net_lock(network_id):
+            port_id = payload['port_id']
+            port = self.cache.get_port_by_id(port_id)
+            self.cache.deleted_ports.add(port_id)
             if not port:
                 return
             network = self.cache.get_network_by_id(port.network_id)
