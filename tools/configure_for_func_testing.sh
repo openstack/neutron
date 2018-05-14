@@ -306,7 +306,8 @@ fi
 
 if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
     _configure_iptables_rules
-    sudo modprobe ip_conntrack_proto_sctp
+    # This module only exists on older kernels, built-in otherwise
+    modinfo ip_conntrack_proto_sctp 1> /dev/null 2>&1 && sudo modprobe ip_conntrack_proto_sctp
 fi
 
 echo "Phew, we're done!"
