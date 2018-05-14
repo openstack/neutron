@@ -528,7 +528,7 @@ tools/configure_for_func_testing.sh should be followed.
 IMPORTANT: configure_for_func_testing.sh relies on DevStack to perform
 extensive modification to the underlying host. Execution of the
 script requires sudo privileges and it is recommended that the
-following commands be invoked only on a clean and disposeable VM.
+following commands be invoked only on a clean and disposable VM.
 A VM that has had DevStack previously installed on it is also fine. ::
 
     git clone https://git.openstack.org/openstack-dev/devstack ../devstack
@@ -543,21 +543,37 @@ to deploy Neutron to the target host.
 Fullstack Tests
 ~~~~~~~~~~~~~~~
 
-To run all the full-stack tests, you may use: ::
+To run all the fullstack tests, you may use: ::
 
     tox -e dsvm-fullstack
 
-Since full-stack tests often require the same resources and
+Since fullstack tests often require the same resources and
 dependencies as the functional tests, using the configuration script
-tools/configure_for_func_testing.sh is advised (As described above).
-When running full-stack tests on a clean VM for the first time, we
-advise to run ./stack.sh successfully to make sure all Neutron's
-dependencies are met. Full-stack based Neutron daemons produce logs to a
-sub-folder in /opt/stack/logs/dsvm-fullstack-logs (for example, a test named
-"test_example" will produce logs to /opt/stack/logs/dsvm-fullstack-logs/test_example.log),
-so that will be a good place to look if your test is failing.
-Fullstack test suite assumes 240.0.0.0/4 (Class E) range in root namespace of
-the test machine is available for its usage.
+tools/configure_for_func_testing.sh is advised (as described above).
+Before running the script, you must first set the following environment
+variable so things are setup correctly ::
+
+    export VENV=dsvm-fullstack
+
+When running fullstack tests on a clean VM for the first time, it is
+important to make sure all of Neutron's package dependencies have been met.
+As mentioned in the functional test section above, this can be done by
+running the configure script with the '-i' argument ::
+
+    ./tools/configure_for_func_testing.sh ../devstack -i
+
+You can also run './stack.sh', and if successful, it will have also
+verified the package dependencies have been met.
+
+Fullstack-based Neutron daemons produce logs to a sub-folder in the
+$OS_LOG_PATH directory (default: /opt/stack/logs) called 'dsvm-fullstack-logs'.
+For example, a test named "test_example" will produce logs in
+$OS_LOG_PATH/dsvm-fullstack-logs/test_example/, as well as create
+$OS_LOG_PATH/dsvm-fullstack-logs/test_example.txt, so that is a good place
+to look if your test is failing.
+
+The fullstack test suite assumes 240.0.0.0/4 (Class E) range in the root
+namespace of the test machine is available for its usage.
 
 API & Scenario Tests
 ~~~~~~~~~~~~~~~~~~~~
