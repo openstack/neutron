@@ -18,7 +18,7 @@ from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as neutron_l3_agent
-from neutron.agent.l3.extensions import fip_qos
+from neutron.agent.l3.extensions.qos import fip as fip_qos
 from neutron.agent.linux import ip_lib
 from neutron.common import exceptions
 from neutron.common import utils as common_utils

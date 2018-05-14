@@ -20,7 +20,7 @@ from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as l3_agent
-from neutron.agent.l3.extensions import fip_qos
+from neutron.agent.l3.extensions.qos import fip as fip_qos
 from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api
 from neutron.agent.l3 import router_info as l3router
 from neutron.api.rpc.callbacks.consumer import registry
@@ -32,11 +32,6 @@ from neutron.tests import base
 from neutron.tests.unit.agent.l3 import test_agent
 
 _uuid = uuidutils.generate_uuid
-TEST_POLICY = policy.QosPolicy(context=None,
-                               name='test1', id=_uuid())
-TEST_POLICY2 = policy.QosPolicy(context=None,
-                                name='test2', id=_uuid())
-
 
 TEST_QOS_FIP = "3.3.3.3"
 
@@ -381,50 +376,6 @@ class RouterFipRateLimitMapsTestCase(base.BaseTestCase):
     def setUp(self):
         super(RouterFipRateLimitMapsTestCase, self).setUp()
         self.policy_map = fip_qos.RouterFipRateLimitMaps()
-
-    def test_update_policy(self):
-        self.policy_map.update_policy(TEST_POLICY)
-        self.assertEqual(TEST_POLICY,
-                         self.policy_map.known_policies[TEST_POLICY.id])
-
-    def _set_fips(self):
-        self.policy_map.set_fip_policy(TEST_FIP, TEST_POLICY)
-        self.policy_map.set_fip_policy(TEST_FIP2, TEST_POLICY2)
-
-    def test_set_fip_policy(self):
-        self._set_fips()
-        self.assertEqual(TEST_POLICY,
-                         self.policy_map.known_policies[TEST_POLICY.id])
-        self.assertIn(TEST_FIP,
-                      self.policy_map.qos_policy_fips[TEST_POLICY.id])
-
-    def test_get_fip_policy(self):
-        self._set_fips()
-        self.assertEqual(TEST_POLICY,
-                         self.policy_map.get_fip_policy(TEST_FIP))
-        self.assertEqual(TEST_POLICY2,
-                         self.policy_map.get_fip_policy(TEST_FIP2))
-
-    def test_get_fips(self):
-        self._set_fips()
-        self.assertEqual([TEST_FIP],
-                         list(self.policy_map.get_fips(TEST_POLICY)))
-
-        self.assertEqual([TEST_FIP2],
-                         list(self.policy_map.get_fips(TEST_POLICY2)))
-
-    def test_clean_by_fip(self):
-        self._set_fips()
-        self.policy_map.clean_by_fip(TEST_FIP)
-        self.assertNotIn(TEST_POLICY.id, self.policy_map.known_policies)
-        self.assertNotIn(TEST_FIP, self.policy_map.fip_policies)
-        self.assertIn(TEST_POLICY2.id, self.policy_map.known_policies)
-
-    def test_clean_by_fip_for_unknown_fip(self):
-        self.policy_map._clean_policy_info = mock.Mock()
-        self.policy_map.clean_by_fip(TEST_FIP)
-
-        self.policy_map._clean_policy_info.assert_not_called()
 
     def test_find_fip_router_id(self):
         router_id = _uuid()
