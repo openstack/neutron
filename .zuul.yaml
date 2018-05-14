@@ -30,6 +30,10 @@
         - neutron-functional
         - neutron-tempest-postgres-full
         - neutron-tempest-with-ryu-master
+    experimental:
+      jobs:
+        - neutron-functional-python35
+        - neutron-fullstack-python35
 
 - job:
     name: neutron-functional
@@ -47,6 +51,22 @@
       - ^releasenotes/.*$
 
 - job:
+    name: neutron-functional-python35
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-functional-python35/run.yaml
+    post-run: playbooks/legacy/neutron-functional-python35/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+    voting: false
+
+- job:
     name: neutron-fullstack
     parent: legacy-dsvm-base
     run: playbooks/legacy/neutron-fullstack/run.yaml
@@ -60,6 +80,22 @@
       - ^doc/.*$
       - ^neutron/locale/.*$
       - ^releasenotes/.*$
+
+- job:
+    name: neutron-fullstack-python35
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/neutron-fullstack-python35/run.yaml
+    post-run: playbooks/legacy/neutron-fullstack-python35/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/neutron
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^releasenotes/.*$
+    voting: false
 
 - job:
     name: neutron-rally-neutron
