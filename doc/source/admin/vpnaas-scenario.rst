@@ -61,7 +61,7 @@ they provide their version of manuals.
 
    .. note::
 
-      In order to run the above command, you need to have `neutron-vpnaas <https://pypi.python.org/pypi/neutron-vpnaas>`__
+      In order to run the above command, you need to have `neutron-vpnaas <https://pypi.org/project/neutron-vpnaas>`__
       package installed on controller node.
 
 #. Restart the ``neutron-server`` in controller node to apply the settings.
