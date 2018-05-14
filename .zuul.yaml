@@ -21,6 +21,7 @@
         - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
+        - neutron-tempest-ovsfw
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
