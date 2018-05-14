@@ -395,22 +395,31 @@ class Port(base.NeutronDbObject):
         return super(Port, cls).get_objects(context, _pager, validate_filters,
                                             **kwargs)
 
-    # TODO(rossella_s): get rid of it once we switch the db model to using
-    # custom types.
     @classmethod
     def modify_fields_to_db(cls, fields):
         result = super(Port, cls).modify_fields_to_db(fields)
+
+        # TODO(rossella_s): get rid of it once we switch the db model to using
+        # custom types.
         if 'mac_address' in result:
             result['mac_address'] = cls.filter_to_str(result['mac_address'])
+
+        # convert None to []
+        if 'distributed_port_binding' in result:
+            result['distributed_port_binding'] = (
+                result['distributed_port_binding'] or []
+            )
         return result
 
-    # TODO(rossella_s): get rid of it once we switch the db model to using
-    # custom types.
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         fields = super(Port, cls).modify_fields_from_db(db_obj)
+
+        # TODO(rossella_s): get rid of it once we switch the db model to using
+        # custom types.
         if 'mac_address' in fields:
             fields['mac_address'] = utils.AuthenticEUI(fields['mac_address'])
+
         distributed_port_binding = fields.get('distributed_binding')
         if distributed_port_binding:
             fields['distributed_binding'] = fields['distributed_binding'][0]

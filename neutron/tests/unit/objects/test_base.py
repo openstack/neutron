@@ -2014,12 +2014,16 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
         fields_to_update = self.get_updatable_fields(self.obj_fields[1])
         if fields_to_update:
-            old_model = copy.deepcopy(obj.db_obj)
+            old_fields = {}
             for key, val in fields_to_update.items():
+                db_model_attr = (
+                    obj.fields_need_translation.get(key, key))
+                old_fields[db_model_attr] = obj.db_obj[db_model_attr]
                 setattr(obj, key, val)
             obj.update()
             self.assertIsNotNone(obj.db_obj)
-            self.assertNotEqual(old_model, obj.db_obj)
+            for k, v in obj.modify_fields_to_db(fields_to_update).items():
+                self.assertEqual(v, obj.db_obj[k], '%s attribute differs' % k)
 
         obj.delete()
         self.assertIsNone(obj.db_obj)

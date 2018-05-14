@@ -28,6 +28,7 @@ from oslo_versionedobjects import base as obj_base
 from oslo_versionedobjects import exception as obj_exception
 from oslo_versionedobjects import fields as obj_fields
 import six
+from sqlalchemy import orm
 
 from neutron._i18n import _
 from neutron.db import api as db_api
@@ -484,6 +485,10 @@ class NeutronDbObject(NeutronObject):
         for field, field_db in cls.fields_need_translation.items():
             if field_db in result:
                 result[field] = result.pop(field_db)
+        for k, v in result.items():
+            # don't allow sqlalchemy lists to propagate outside
+            if isinstance(v, orm.collections.InstrumentedList):
+                result[k] = list(v)
         return result
 
     @classmethod
