@@ -55,6 +55,11 @@ class SecurityGroupTestExtensionManager(object):
                 ext_sg.RESOURCE_ATTRIBUTE_MAP[ext_sg.SECURITYGROUPRULES])
             sg_rule_attr_desc = ext_res[ext_sg.SECURITYGROUPRULES]
             existing_sg_rule_attr_map.update(sg_rule_attr_desc)
+        if ext_sg.SECURITYGROUPS in ext_res:
+            existing_sg_attr_map = (
+                ext_sg.RESOURCE_ATTRIBUTE_MAP[ext_sg.SECURITYGROUPS])
+            sg_attr_desc = ext_res[ext_sg.SECURITYGROUPS]
+            existing_sg_attr_map.update(sg_attr_desc)
         return ext_sg.Securitygroup.get_resources()
 
     def get_actions(self):
