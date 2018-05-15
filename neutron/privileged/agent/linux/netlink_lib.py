@@ -139,7 +139,7 @@ class ConntrackManager(object):
                                conntrack, type_,
                                nl_constants.NFCT_O_PLAIN,
                                nl_constants.NFCT_OF_TIME)
-            entries.append(raw_entry.value)
+            entries.append(raw_entry.value.decode('utf-8'))
             return nl_constants.NFCT_CB_CONTINUE
 
         self._callback_register(nl_constants.NFCT_T_ALL,
