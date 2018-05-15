@@ -1546,11 +1546,29 @@ class ListArgsTestCase(base.BaseTestCase):
         self.assertEqual([], api_common.list_args(request, 'fields'))
 
 
+class SortingTestCase(base.BaseTestCase):
+    def test_get_sorts(self):
+        path = '/?sort_key=foo&sort_dir=desc&sort_key=bar&sort_dir=asc'
+        request = webob.Request.blank(path)
+        attr_info = {'foo': {'key': 'val'}, 'bar': {'key': 'val'}}
+        expect_val = [('foo', False), ('bar', True)]
+        actual_val = api_common.get_sorts(request, attr_info)
+        self.assertEqual(expect_val, actual_val)
+
+    def test_get_sorts_with_project_id(self):
+        path = '/?sort_key=project_id&sort_dir=desc'
+        request = webob.Request.blank(path)
+        attr_info = {'tenant_id': {'key': 'val'}}
+        expect_val = [('project_id', False)]
+        actual_val = api_common.get_sorts(request, attr_info)
+        self.assertEqual(expect_val, actual_val)
+
+
 class FiltersTestCase(base.BaseTestCase):
     def test_all_skip_args(self):
         path = '/?fields=4&fields=3&fields=2&fields=1'
         request = webob.Request.blank(path)
-        self.assertEqual({}, api_common.get_filters(request, None,
+        self.assertEqual({}, api_common.get_filters(request, {},
                                                     ["fields"]))
 
     @mock.patch('neutron.api.api_common.is_empty_string_filtering_supported',
@@ -1574,6 +1592,17 @@ class FiltersTestCase(base.BaseTestCase):
         expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
         actual_val = api_common.get_filters(request, {})
         self.assertEqual(expect_val, actual_val)
+
+    def test_attr_info_with_project_info_populated(self):
+        path = '/?foo=4&bar=3&baz=2&qux=1'
+        request = webob.Request.blank(path)
+        attr_info = {'tenant_id': {'key': 'val'}}
+        expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
+        actual_val = api_common.get_filters(request, attr_info)
+        self.assertEqual(expect_val, actual_val)
+        expect_attr_info = {'tenant_id': {'key': 'val'},
+                            'project_id': {'key': 'val'}}
+        self.assertEqual(expect_attr_info, attr_info)
 
     def test_attr_info_without_conversion(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
