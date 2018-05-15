@@ -23,7 +23,7 @@ DESCRIPTION_BODY = {
     'description': {'allow_post': True, 'allow_put': True,
                     'validate': {
                         'type:string': db_const.DESCRIPTION_FIELD_SIZE},
-                    'is_visible': True, 'default': ''}
+                    'is_visible': True, 'default': '', 'is_filter': True}
 }
 
 
