@@ -90,6 +90,8 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertTrue(self.br.port_exists(port_name))
         self.assertEqual('test', self.br.db_get_val('Interface', port_name,
                                                     'external_ids')['test'])
+        self.assertEqual(agent_const.DEAD_VLAN_TAG,
+                         self.br.db_get_val('Port', port_name, 'tag'))
 
     def test_attribute_lifecycle(self):
         (port_name, ofport) = self.create_ovs_port()
