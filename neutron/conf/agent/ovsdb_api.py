@@ -51,6 +51,9 @@ API_OPTS = [
                       'when interacting with OVSDB.  Required when using an '
                       '"ssl:" prefixed ovsdb_connection'
                       )),
+    cfg.BoolOpt('ovsdb_debug',
+                default=False,
+                help=_('Enable OVSDB debug logs')),
 ]
 
 
