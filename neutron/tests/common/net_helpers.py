@@ -772,6 +772,10 @@ class OVSPortFixture(PortFixture):
             self.mac,
             bridge=self.bridge.br_name,
             namespace=self.namespace)
+        # NOTE(mangelajo): for OVS implementations remove the DEAD VLAN tag
+        # on ports that we intend to use as fake vm interfaces, they
+        # need to be flat. This is related to lp#1767422
+        self.bridge.clear_db_attribute("Port", port_name, "tag")
         self.addCleanup(self.bridge.delete_port, port_name)
         self.port = ip_lib.IPDevice(port_name, self.namespace)
 
