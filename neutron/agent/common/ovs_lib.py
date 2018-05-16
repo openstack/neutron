@@ -862,12 +862,12 @@ class OVSBridge(BaseOVS):
             max_bw_in_bytes = other_config.get("cir")
             if max_bw_in_bytes is not None:
                 max_kbps = common_utils.bits_to_kilobits(
-                    common_utils.bytes_to_bits(int(max_bw_in_bytes)),
+                    common_utils.bytes_to_bits(int(float(max_bw_in_bytes))),
                     common_constants.SI_BASE)
             max_burst_in_bytes = other_config.get("cbs")
             if max_burst_in_bytes is not None:
                 max_burst_kbit = common_utils.bits_to_kilobits(
-                    common_utils.bytes_to_bits(int(max_burst_in_bytes)),
+                    common_utils.bytes_to_bits(int(float(max_burst_in_bytes))),
                     common_constants.SI_BASE)
         return max_kbps, max_burst_kbit
 
