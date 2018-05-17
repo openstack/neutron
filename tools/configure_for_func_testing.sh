@@ -260,6 +260,11 @@ function _configure_iptables_rules {
 }
 
 
+function _enable_ipv6 {
+    sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+}
+
+
 function configure_host_for_func_testing {
     echo_summary "Configuring host for functional testing"
 
@@ -287,6 +292,7 @@ if [[ "$IS_GATE" != "True" ]]; then
 fi
 
 if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
+    _enable_ipv6
     _configure_iptables_rules
     sudo modprobe ip_conntrack_proto_sctp
 fi

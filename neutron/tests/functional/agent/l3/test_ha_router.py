@@ -335,6 +335,28 @@ class L3HATestCase(framework.L3AgentTestFramework):
             raise
         self.assertEqual(0, ip_nonlocal_bind_value)
 
+    def test_ha_router_namespace_has_ipv6_forwarding_disabled(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router_info[constants.HA_INTERFACE_KEY]['status'] = (
+            constants.PORT_STATUS_DOWN)
+        router = self.manage_router(self.agent, router_info)
+        external_port = router.get_ex_gw_port()
+        external_device_name = router.get_external_device_name(
+            external_port['id'])
+
+        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+        self.assertEqual(
+            0, ip_lib.get_ipv6_forwarding(device=external_device_name,
+                                          namespace=router.ns_name))
+
+        router.router[constants.HA_INTERFACE_KEY]['status'] = (
+            constants.PORT_STATUS_ACTIVE)
+        self.agent._process_updated_router(router.router)
+        common_utils.wait_until_true(lambda: router.ha_state == 'master')
+        self.assertEqual(
+            1, ip_lib.get_ipv6_forwarding(device=external_device_name,
+                                          namespace=router.ns_name))
+
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
