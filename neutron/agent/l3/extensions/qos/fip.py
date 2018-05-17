@@ -13,52 +13,23 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import collections
-
 from neutron_lib.agent import l3_extension
 from neutron_lib import constants
-from neutron_lib.db import constants as db_consts
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
 
+from neutron.agent.l3.extensions.qos import base as qos_base
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import l3_tc_lib as tc_lib
-from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import rpc as n_rpc
 
 LOG = logging.getLogger(__name__)
 
-SUPPORTED_RULES = {
-    qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: {
-        qos_consts.MAX_KBPS: {
-            'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
-        qos_consts.MAX_BURST: {
-            'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
-        qos_consts.DIRECTION: {
-            'type:values': constants.VALID_DIRECTIONS}
-    }
-}
 
-# We use the default values to illustrate:
-# 1. QoS policy does not have some direction `bandwidth_limit`, then we use
-#    the default value.
-# 2. default value 0 will be treated as no limit.
-# 3. if one floating IP's rate was changed from x to 0, the extension will do
-#    a tc filter clean procedure.
-FIP_DEFAULT_RATE = 0
-FIP_DEFAULT_BURST = 0
-
-
-class RouterFipRateLimitMaps(object):
+class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
     def __init__(self):
-        self.qos_policy_fips = collections.defaultdict(dict)
-        self.known_policies = {}
-        self.fip_policies = {}
-
         """
         The router_floating_ips will be:
             router_floating_ips = {
@@ -72,52 +43,14 @@ class RouterFipRateLimitMaps(object):
         The rate limits dict will be:
             xxx_ratelimits = {
                 fip_1: (rate, burst),
-                fip_2: (FIP_DEFAULT_RATE, FIP_DEFAULT_BURST), # default
+                fip_2: (IP_DEFAULT_RATE, IP_DEFAULT_BURST), # default
                 fip_3: (1, 2),
                 fip_4: (3, 4),
             }
         """
         self.ingress_ratelimits = {}
         self.egress_ratelimits = {}
-
-    def update_policy(self, policy):
-        self.known_policies[policy.id] = policy
-
-    def get_policy(self, policy_id):
-        return self.known_policies.get(policy_id)
-
-    def get_fips(self, policy):
-        return self.qos_policy_fips[policy.id].values()
-
-    def get_fip_policy(self, fip):
-        policy_id = self.fip_policies.get(fip)
-        return self.get_policy(policy_id)
-
-    def set_fip_policy(self, fip, policy):
-        """Attach a fip to policy and return any previous policy on fip."""
-        old_policy = self.get_fip_policy(fip)
-        self.update_policy(policy)
-        self.fip_policies[fip] = policy.id
-        self.qos_policy_fips[policy.id][fip] = fip
-        if old_policy and old_policy.id != policy.id:
-            del self.qos_policy_fips[old_policy.id][fip]
-
-    def clean_by_fip(self, fip):
-        """Detach fip from policy and cleanup data we don't need anymore."""
-        if fip in self.fip_policies:
-            del self.fip_policies[fip]
-            for qos_policy_id, fip_dict in self.qos_policy_fips.items():
-                if fip in fip_dict:
-                    del fip_dict[fip]
-                    if not fip_dict:
-                        self._clean_policy_info(qos_policy_id)
-                    return
-        LOG.debug("Floating IP QoS extension did not have "
-                  "information on floating IP %s", fip)
-
-    def _clean_policy_info(self, qos_policy_id):
-        del self.qos_policy_fips[qos_policy_id]
-        del self.known_policies[qos_policy_id]
+        super(RouterFipRateLimitMaps, self).__init__()
 
     def find_fip_router_id(self, fip):
         for router_id, ips in self.router_floating_ips.items():
@@ -125,17 +58,14 @@ class RouterFipRateLimitMaps(object):
                 return router_id
 
 
-class FipQosAgentExtension(l3_extension.L3AgentExtension):
-    SUPPORTED_RESOURCE_TYPES = [resources.QOS_POLICY]
+class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
+                           l3_extension.L3AgentExtension):
 
     def initialize(self, connection, driver_type):
         """Initialize agent extension."""
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self.fip_qos_map = RouterFipRateLimitMaps()
         self._register_rpc_consumers()
-
-    def consume_api(self, agent_api):
-        self.agent_api = agent_api
 
     @lockutils.synchronized('qos-fip')
     def _handle_notification(self, context, resource_type,
@@ -144,15 +74,11 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
             for qos_policy in qos_policies:
                 self._process_update_policy(qos_policy)
 
-    def _policy_rules_modified(self, old_policy, policy):
-        return not (len(old_policy.rules) == len(policy.rules) and
-                    all(i in old_policy.rules for i in policy.rules))
-
     def _process_update_policy(self, qos_policy):
         old_qos_policy = self.fip_qos_map.get_policy(qos_policy.id)
         if old_qos_policy:
             if self._policy_rules_modified(old_qos_policy, qos_policy):
-                for fip in self.fip_qos_map.get_fips(qos_policy):
+                for fip in self.fip_qos_map.get_resources(qos_policy):
                     router_id = self.fip_qos_map.find_fip_router_id(fip)
                     router_info = self._get_router_info(router_id)
                     if not router_info:
@@ -172,27 +98,13 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
             self.fip_qos_map.update_policy(qos_policy)
 
     def _process_reset_fip(self, fip):
-        self.fip_qos_map.clean_by_fip(fip)
-
-    def _register_rpc_consumers(self):
-        registry.register(self._handle_notification, resources.QOS_POLICY)
-
-        self._connection = n_rpc.Connection()
-        endpoints = [resources_rpc.ResourcesPushRpcCallback()]
-        topic = resources_rpc.resource_type_versioned_topic(
-            resources.QOS_POLICY)
-        self._connection.create_consumer(topic, endpoints, fanout=True)
-        self._connection.consume_in_threads()
-
-    def _get_tc_wrapper(self, device):
-        return tc_lib.FloatingIPTcCommand(device.name,
-                                          namespace=device.namespace)
+        self.fip_qos_map.clean_by_resource(fip)
 
     def process_ip_rate_limit(self, ip, direction, device, rate, burst):
         rate_limits_direction = direction + "_ratelimits"
         rate_limits = getattr(self.fip_qos_map, rate_limits_direction, {})
-        old_rate, old_burst = rate_limits.get(ip, (FIP_DEFAULT_RATE,
-                                                   FIP_DEFAULT_BURST))
+        old_rate, old_burst = rate_limits.get(ip, (qos_base.IP_DEFAULT_RATE,
+                                                   qos_base.IP_DEFAULT_BURST))
 
         if old_rate == rate and old_burst == burst:
             # Two possibilities here:
@@ -202,7 +114,8 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
 
         tc_wrapper = self._get_tc_wrapper(device)
 
-        if rate == FIP_DEFAULT_RATE and burst == FIP_DEFAULT_BURST:
+        if (rate == qos_base.IP_DEFAULT_RATE and
+                burst == qos_base.IP_DEFAULT_BURST):
             # According to the agreements of default value definition,
             # floating IP bandwidth was changed to default value (no limit).
             # NOTE: l3_tc_lib will ignore exception FilterIDForIPNotFound.
@@ -255,36 +168,16 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
             self._process_reset_fip(fip)
             # process_ip_rate_limit will treat value 0 as
             # cleaning the tc filters if exits or no action.
-            return {constants.INGRESS_DIRECTION: {"rate": FIP_DEFAULT_RATE,
-                                                  "burst": FIP_DEFAULT_BURST},
-                    constants.EGRESS_DIRECTION: {"rate": FIP_DEFAULT_RATE,
-                                                 "burst": FIP_DEFAULT_BURST}}
+            return {constants.INGRESS_DIRECTION: {
+                        "rate": qos_base.IP_DEFAULT_RATE,
+                        "burst": qos_base.IP_DEFAULT_BURST},
+                    constants.EGRESS_DIRECTION: {
+                        "rate": qos_base.IP_DEFAULT_RATE,
+                        "burst": qos_base.IP_DEFAULT_BURST}}
         policy = self.resource_rpc.pull(
             context, resources.QOS_POLICY, policy_id)
-        self.fip_qos_map.set_fip_policy(fip, policy)
+        self.fip_qos_map.set_resource_policy(fip, policy)
         return self.get_policy_rates(policy)
-
-    def get_policy_rates(self, policy):
-        rates = {}
-        for rule in policy.rules:
-            # NOTE(liuyulong): for now, the L3 agent floating IP QoS
-            # extension only uses ``bandwidth_limit`` rules..
-            if rule.rule_type in SUPPORTED_RULES:
-                if rule.direction not in rates:
-                    rates[rule.direction] = {"rate": rule.max_kbps,
-                                             "burst": rule.max_burst_kbps}
-
-        # The return rates dict must contain all directions. If there is no
-        # one specific direction QoS rule, use the default values.
-        for direction in constants.VALID_DIRECTIONS:
-            if direction not in rates:
-                LOG.debug("Policy %(id)s does not have '%(direction)s' "
-                          "bandwidth_limit rule, use default value instead.",
-                          {"id": policy.id,
-                           "direction": direction})
-                rates[direction] = {"rate": FIP_DEFAULT_RATE,
-                                    "burst": FIP_DEFAULT_BURST}
-        return rates
 
     def process_ip_rates(self, fip, device, rates, with_cache=True):
         for direction in constants.VALID_DIRECTIONS:
@@ -379,14 +272,6 @@ class FipQosAgentExtension(l3_extension.L3AgentExtension):
             if dvr_fip_device:
                 self._remove_fip_rate_limit(dvr_fip_device, fip)
             self._process_reset_fip(fip)
-
-    def _get_router_info(self, router_id):
-        router_info = self.agent_api.get_router_info(router_id)
-        if router_info:
-            return router_info
-        LOG.debug("Router %s is not managed by this agent. "
-                  "It was possibly deleted concurrently.",
-                  router_id)
 
     @lockutils.synchronized('qos-fip')
     def add_router(self, context, data):
