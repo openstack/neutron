@@ -2300,16 +2300,17 @@ class PlacementAPIClientTestCase(base.DietTestCase):
         self.mock_request = self.mock_request_p.start()
         self.client = placement_client.PlacementAPIClient()
 
-    @mock.patch('keystoneauth1.session.Session')
+    @mock.patch('keystoneauth1.loading.load_session_from_conf_options')
     @mock.patch('keystoneauth1.loading.load_auth_from_conf_options')
-    def test_constructor(self, load_auth_mock, ks_sess_mock):
+    def test_constructor(self, load_auth_mock, load_sess_mock):
+        mock_auth = mock.Mock()
+        load_auth_mock.return_value = mock_auth
+
         placement_client.PlacementAPIClient()
 
         load_auth_mock.assert_called_once_with(cfg.CONF, 'placement')
-        ks_sess_mock.assert_called_once_with(auth=load_auth_mock.return_value,
-                                             cert=None,
-                                             timeout=None,
-                                             verify=True)
+        load_sess_mock.assert_called_once_with(
+            cfg.CONF, 'placement', auth=mock_auth)
 
     def test_create_resource_provider(self):
         expected_payload = 'fake_resource_provider'
