@@ -74,7 +74,7 @@ Once this is done, the user has to take the following steps and restart
       [designate]
       url = http://192.0.2.240:9001/v2
       auth_type = password
-      auth_url = http://192.0.2.240:35357
+      auth_url = http://192.0.2.240:5000
       username = neutron
       password = PASSWORD
       project_name = service

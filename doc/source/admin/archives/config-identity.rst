@@ -301,6 +301,6 @@ running Compute and Networking with an IP address of 192.168.1.2:
    admin_tenant_name=service
    admin_username=neutron
    admin_password=password
-   admin_auth_url=http://192.168.1.2:35357/v2.0
+   admin_auth_url=http://192.168.1.2:5000/v2.0
    service_metadata_proxy=true
    metadata_proxy_shared_secret=foo
