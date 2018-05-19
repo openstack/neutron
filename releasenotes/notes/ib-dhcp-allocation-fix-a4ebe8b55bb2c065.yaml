@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    For Infiniband support, Ironic needs to send the 'client-id' DHCP option
+    as a number in order for IP address assignment to work.
+    This is now supported in Neutron, and can be specified as option number
+    61 as defined in RFC 4776.  For more information see bug
+    `1770932 <https://bugs.launchpad.net/neutron/+bug/1770932>`_
