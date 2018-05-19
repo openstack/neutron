@@ -12,10 +12,10 @@
 #    under the License.
 
 from rally.common import validation
-from rally import consts
-from rally.plugins.openstack import scenario
-from rally.plugins.openstack.scenarios.neutron import utils
 from rally.task import atomic
+from rally_openstack import consts
+from rally_openstack import scenario
+from rally_openstack.scenarios.neutron import utils
 
 
 """Scenarios for VLAN Aware VMs."""
