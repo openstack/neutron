@@ -21,7 +21,7 @@ class TestIPMonitorEvent(base.BaseTestCase):
     def test_from_text_parses_added_line(self):
         event = ip_monitor.IPMonitorEvent.from_text(
             '3: wlp3s0    inet 192.168.3.59/24 brd 192.168.3.255 '
-            'scope global dynamic wlp3s0\       valid_lft 300sec '
+            r'scope global dynamic wlp3s0\       valid_lft 300sec '
             'preferred_lft 300sec')
         self.assertEqual('wlp3s0', event.interface)
         self.assertTrue(event.added)

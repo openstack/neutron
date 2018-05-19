@@ -279,7 +279,7 @@ config_generator_config_file = [
 
 linkcheck_anchors_ignore = [
     # skip gerrit anchors
-    '\/q\/.*',
-    'q\,.*',
-    '\/c\/.*'
+    r'\/q\/.*',
+    r'q\,.*',
+    r'\/c\/.*'
 ]
