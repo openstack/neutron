@@ -37,8 +37,8 @@ high-availability building blocks typically add a second network node for a
 total of five nodes. Each building block could also require additional
 infrastructure or changes to existing infrastructure such as networks.
 
-For basic configuration of prerequisites, see the
-`Pike Install Tutorials and Guides <../install/>`__.
+For basic configuration of prerequisites, see the latest
+`Install Tutorials and Guides <../install/>`__.
 
 .. note::
 
