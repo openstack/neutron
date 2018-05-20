@@ -94,7 +94,7 @@ Controller node
    * Disable service plug-ins because provider networks do not require
      any. However, this breaks portions of the dashboard that manage
      the Networking service. See the
-     `Pike Install Tutorials and Guides
+     `Queens Install Tutorials and Guides
      <../install/>`__ for more
      information.
 
