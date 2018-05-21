@@ -465,6 +465,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase):
                     rule['port_range_max'] is not None):
                 raise ext_sg.SecurityGroupMissingIcmpType(
                     value=rule['port_range_max'])
+        else:
+            # Only the protocols above support port ranges, raise otherwise.
+            # When min/max are the same it is just a single port.
+            if (rule['port_range_min'] is not None and
+                rule['port_range_max'] is not None and
+                rule['port_range_min'] != rule['port_range_max']):
+                raise ext_sg.SecurityGroupInvalidProtocolForPortRange(
+                    protocol=ip_proto)
 
     def _validate_ethertype_and_protocol(self, rule):
         """Check if given ethertype and  protocol are valid or not"""

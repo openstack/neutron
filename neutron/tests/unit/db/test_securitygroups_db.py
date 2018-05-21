@@ -440,3 +440,16 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                     {'port_range_min': pmin,
                      'port_range_max': pmax,
                      'protocol': protocol})
+
+    def test__validate_port_range_exception(self):
+        self.assertRaises(securitygroup.SecurityGroupInvalidPortValue,
+                          self.mixin._validate_port_range,
+                          {'port_range_min': 0,
+                           'port_range_max': None,
+                           'protocol': constants.PROTO_NAME_TCP})
+        self.assertRaises(
+            securitygroup.SecurityGroupInvalidProtocolForPortRange,
+            self.mixin._validate_port_range,
+            {'port_range_min': 100,
+             'port_range_max': 200,
+             'protocol': '111'})
