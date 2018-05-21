@@ -26,6 +26,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as ctx
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -471,7 +472,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                           "The port has already been deleted.", port_id)
         # clean up subnets
         subnets = self._get_subnets_by_network(context, id)
-        with db_api.exc_to_retry(os_db_exc.DBReferenceError):
+        with lib_db_api.exc_to_retry(os_db_exc.DBReferenceError):
             # retry reference errors so we can check the port type and
             # cleanup if a network-owned port snuck in without failing
             for subnet in subnets:
@@ -1032,7 +1033,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         self._delete_subnet(context, subnet)
 
     def _delete_subnet(self, context, subnet):
-        with db_api.exc_to_retry(sql_exc.IntegrityError), \
+        with lib_db_api.exc_to_retry(sql_exc.IntegrityError), \
                 db_api.context_manager.writer.using(context):
             registry.notify(resources.SUBNET, events.PRECOMMIT_DELETE,
                             self, context=context, subnet_id=subnet.id)
