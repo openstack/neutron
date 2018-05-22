@@ -17,6 +17,7 @@ import sys
 
 from neutron_lib import constants as p_const
 from neutron_lib import context
+from neutron_lib.db import api as lib_db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as plugin_utils
@@ -60,7 +61,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             sys.exit(1)
         LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
 
-    @db_api.retry_db_errors
+    @lib_db_api.retry_db_errors
     def _sync_vlan_allocations(self):
         ctx = context.get_admin_context()
         with db_api.context_manager.writer.using(ctx):

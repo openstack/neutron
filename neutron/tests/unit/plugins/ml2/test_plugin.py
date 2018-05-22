@@ -30,6 +30,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as exc
+from neutron_lib import fixture
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api as driver_api
@@ -361,8 +362,8 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
 
     def test_create_network_segment_allocation_fails(self):
         plugin = directory.get_plugin()
-        mock.patch.object(db_api._retry_db_errors, 'max_retries',
-                          new=2).start()
+        retry_fixture = fixture.DBRetryErrorsFixture(max_retries=2)
+        retry_fixture.setUp()
         with mock.patch.object(
             plugin.type_manager, 'create_network_segments',
             side_effect=db_exc.RetryRequest(ValueError())
@@ -374,6 +375,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             self.assertEqual(500, res.status_int)
             # 1 + retry count
             self.assertEqual(3, f.call_count)
+        retry_fixture.cleanUp()
 
 
 class TestExternalNetwork(Ml2PluginV2TestCase):

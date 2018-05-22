@@ -22,7 +22,6 @@ from neutron_lib.db import model_base
 from neutron_lib import exceptions
 from neutron_lib.objects import exceptions as obj_exc
 from oslo_config import cfg
-from oslo_db import api as oslo_db_api
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -69,14 +68,6 @@ def is_retriable(e):
     return _is_nested_instance(e, db_exc.DBError) and '1305' in str(e)
 
 
-_retry_db_errors = oslo_db_api.wrap_db_retry(
-    max_retries=MAX_RETRIES,
-    retry_interval=0.1,
-    inc_retry_interval=True,
-    exception_checker=is_retriable
-)
-
-
 def _tag_retriables_as_unretriable(f):
     """Puts a flag on retriable exceptions so is_retriable returns False.
 
@@ -99,36 +90,6 @@ def _copy_if_lds(item):
     return copy.deepcopy(item) if isinstance(item, (list, dict, set)) else item
 
 
-def retry_db_errors(f):
-    """Nesting-safe retry decorator with auto-arg-copy and logging.
-
-    Retry decorator for all functions which do not accept a context as an
-    argument. If the function accepts a context, use
-    'retry_if_session_inactive' below.
-
-    If retriable errors are retried and exceed the count, they will be tagged
-    with a flag so is_retriable will no longer recognize them as retriable.
-    This prevents multiple applications of this decorator (and/or the one
-    below) from retrying the same exception.
-    """
-
-    @_tag_retriables_as_unretriable
-    @_retry_db_errors
-    @six.wraps(f)
-    def wrapped(*args, **kwargs):
-        try:
-            # copy mutable args and kwargs to make retries safe. this doesn't
-            # prevent mutations of complex objects like the context or 'self'
-            dup_args = [_copy_if_lds(a) for a in args]
-            dup_kwargs = {k: _copy_if_lds(v) for k, v in kwargs.items()}
-            return f(*dup_args, **dup_kwargs)
-        except Exception as e:
-            with excutils.save_and_reraise_exception():
-                if is_retriable(e):
-                    LOG.debug("Retry wrapper got retriable exception: %s", e)
-    return wrapped
-
-
 def retry_if_session_inactive(context_var_name='context'):
     """Retries only if the session in the context is inactive.
 
@@ -149,7 +110,7 @@ def retry_if_session_inactive(context_var_name='context'):
         except ValueError:
             raise RuntimeError("Could not find position of var %s" %
                                context_var_name)
-        f_with_retry = retry_db_errors(f)
+        f_with_retry = api.retry_db_errors(f)
 
         @six.wraps(f)
         def wrapped(*args, **kwargs):

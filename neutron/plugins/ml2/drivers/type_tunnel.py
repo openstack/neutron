@@ -137,7 +137,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver):
         LOG.info("%(type)s ID ranges: %(range)s",
                  {'type': self.get_type(), 'range': current_range})
 
-    @db_api.retry_db_errors
+    @lib_db_api.retry_db_errors
     def sync_allocations(self):
         # determine current configured allocatable tunnel ids
         tunnel_ids = set()

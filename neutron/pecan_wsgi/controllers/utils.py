@@ -19,6 +19,7 @@ import functools
 
 from neutron_lib.api import attributes
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from oslo_log import log as logging
 from oslo_utils import excutils
 import pecan
@@ -26,7 +27,6 @@ from pecan import request
 
 from neutron._i18n import _
 from neutron.api import api_common
-from neutron.db import api as db_api
 from neutron import manager
 from neutron_lib import exceptions
 
