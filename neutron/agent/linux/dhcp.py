@@ -58,6 +58,9 @@ WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
 DNSMASQ_SERVICE_NAME = 'dnsmasq'
 
+# this variable will be removed when neutron-lib is updated with this value
+DHCP_OPT_CLIENT_ID_NUM = 61
+
 
 class DictModel(dict):
     """Convert dict into an object that provides attribute access to values."""
@@ -724,7 +727,8 @@ class Dnsmasq(DhcpLocalProcess):
     def _get_client_id(self, port):
         if self._get_port_extra_dhcp_opts(port):
             for opt in port.extra_dhcp_opts:
-                if opt.opt_name == edo_ext.DHCP_OPT_CLIENT_ID:
+                if opt.opt_name in (edo_ext.DHCP_OPT_CLIENT_ID,
+                                    DHCP_OPT_CLIENT_ID_NUM):
                     return opt.opt_value
 
     def _read_hosts_file_leases(self, filename):
@@ -960,7 +964,8 @@ class Dnsmasq(DhcpLocalProcess):
                     [netaddr.IPAddress(ip.ip_address).version
                      for ip in port.fixed_ips])
                 for opt in port.extra_dhcp_opts:
-                    if opt.opt_name == edo_ext.DHCP_OPT_CLIENT_ID:
+                    if opt.opt_name in (edo_ext.DHCP_OPT_CLIENT_ID,
+                                        DHCP_OPT_CLIENT_ID_NUM):
                         continue
                     opt_ip_version = opt.ip_version
                     if opt_ip_version in port_ip_versions:
