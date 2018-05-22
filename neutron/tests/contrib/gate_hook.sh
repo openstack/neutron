@@ -74,10 +74,13 @@ case $VENV in
     # we need a fix for VXLAN local tunneling.
     if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
         # The OVS_BRANCH variable is used by git checkout. In the case below,
-        # we use v2.6.1 openvswitch tag that contains a fix for usage of VXLAN
-        # tunnels on a single node and is compatible with Ubuntu Xenial kernel:
-        # https://github.com/openvswitch/ovs/commit/741f47cf35df2bfc7811b2cff75c9bb8d05fd26f
-        OVS_BRANCH="v2.6.1"
+        # we use openvswitch commit 138df3e563de9da0e5a4155b3534a69621495742
+        # that contains a fix for usage of VXLAN tunnels on a single node
+        # (commit 741f47cf35df2bfc7811b2cff75c9bb8d05fd26f) and is compatible
+        # with kernel 4.4.119
+        # NOTE(slaweq): Replace with a release tag when one is available.
+        # See commit 138df3e563de9da0e5a4155b3534a69621495742 (on the ovs repo).
+        OVS_BRANCH="138df3e563de9da0e5a4155b3534a69621495742"
         compile_ovs_kernel_module
     fi
 
