@@ -61,7 +61,6 @@ openstackdocstheme==1.18.1
 openstacksdk==0.11.2
 os-client-config==1.28.0
 os-service-types==1.2.0
-os-testr==1.0.0
 os-xenapi==0.3.1
 osc-lib==1.8.0
 oslo.cache==1.26.0
