@@ -74,10 +74,13 @@ case $VENV in
     # we need a fix for VXLAN local tunneling.
     if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
         # The OVS_BRANCH variable is used by git checkout. In the case below,
-        # we use v2.6.1 openvswitch tag that contains a fix for usage of VXLAN
-        # tunnels on a single node and is compatible with Ubuntu Xenial kernel:
-        # https://github.com/openvswitch/ovs/commit/741f47cf35df2bfc7811b2cff75c9bb8d05fd26f
-        OVS_BRANCH="v2.6.1"
+        # we use openvswitch commit 138df3e563de9da0e5a4155b3534a69621495742
+        # that contains a fix for usage of VXLAN tunnels on a single node
+        # (commit 741f47cf35df2bfc7811b2cff75c9bb8d05fd26f) and is compatible
+        # with kernel 4.4.119
+        # NOTE(slaweq): Replace with a release tag when one is available.
+        # See commit 138df3e563de9da0e5a4155b3534a69621495742 (on the ovs repo).
+        OVS_BRANCH="138df3e563de9da0e5a4155b3534a69621495742"
         compile_ovs_kernel_module
     fi
 
@@ -89,19 +92,6 @@ case $VENV in
     ;;
 
 "api"|"api-pecan"|"full-ovsfw"|"full-pecan"|"dsvm-scenario-ovs"|"dsvm-scenario-linuxbridge")
-    if [[ "$VENV" =~ "full-ovsfw" ]]; then
-        source $DEVSTACK_PATH/functions
-        source $NEUTRON_PATH/devstack/lib/ovs
-        # In the above case, this is done in configure_for_func_testing.sh
-        DEST=${GATE_DEST:-$DEST}
-        # The OVS_BRANCH variable is used by git checkout. In the case below,
-        # we use v2.8 branch that contains a fix for ovs-vswtichd crash.
-        # NOTE(toshii): Replace with a release tag when one is available.
-        # See commit 3a23430b573e8ab (on the ovs repo).
-        OVS_BRANCH="064f8465022856654648b4b8fa11898024316e11"
-        compile_ovs True /usr /var
-    fi
-
     # TODO(ihrachys) consider feeding result of ext-list into tempest.conf
     load_rc_hook api_all_extensions
     if [ "${FLAVOR}" = "dvrskip" ]; then
