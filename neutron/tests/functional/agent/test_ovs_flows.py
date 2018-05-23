@@ -36,9 +36,9 @@ from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent import test_ovs_lib
-from neutron.tests.functional import base
 from neutron.tests import tools
 
+load_tests = testscenarios.load_tests_apply_scenarios
 
 OVS_TRACE_FINAL_FLOW = 'Final flow'
 OVS_TRACE_DATAPATH_ACTIONS = 'Datapath actions'
@@ -47,14 +47,12 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
                       'common.config')
 
 
-class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
-                       base.BaseSudoTestCase):
-    scenarios = testscenarios.multiply_scenarios([
+class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase):
+    scenarios = [
         ('ofctl', {'main_module': ('neutron.plugins.ml2.drivers.openvswitch.'
                                   'agent.openflow.ovs_ofctl.main')}),
         ('native', {'main_module': ('neutron.plugins.ml2.drivers.openvswitch.'
-                                  'agent.openflow.native.main')})],
-        test_ovs_lib.OVSBridgeTestBase.scenarios)
+                                  'agent.openflow.native.main')})]
 
     def setUp(self):
         super(OVSAgentTestBase, self).setUp()

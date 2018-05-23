@@ -12,8 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import testscenarios
-
 from neutron.tests.common.exclusive_resources import ip_address
 from neutron.tests.functional import base
 
@@ -26,18 +24,7 @@ MARKED_BLOCK_RULE = '-m mark --mark %s -j DROP' % MARK_VALUE
 ICMP_BLOCK_RULE = '-p icmp -j DROP'
 
 
-# Regarding MRO, it goes BaseOVSLinuxTestCase, WithScenarios,
-# BaseSudoTestCase, ..., UnitTest, object. setUp is not defined in
-# WithScenarios, so it will correctly be found in BaseSudoTestCase.
-class BaseOVSLinuxTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
-    scenarios = [
-        ('vsctl', dict(ovsdb_interface='vsctl')),
-        ('native', dict(ovsdb_interface='native')),
-    ]
-
-    def setUp(self):
-        super(BaseOVSLinuxTestCase, self).setUp()
-        self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
+class BaseOVSLinuxTestCase(base.BaseSudoTestCase):
 
     def get_test_net_address(self, block):
         """Return exclusive address based on RFC 5737.

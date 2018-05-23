@@ -15,7 +15,6 @@
 import collections
 
 import mock
-from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
@@ -24,23 +23,9 @@ import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
-from neutron.conf.agent import common as config
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as p_const
 from neutron.tests import base
-from neutron.tests import tools
-
-
-OVS_LINUX_KERN_VERS_WITHOUT_VXLAN = "3.12.0"
-
-# some test data for get_vif_port_to_ofport_map that exhibited bug 1444269
-OVSLIST_WITH_UNSET_PORT = (
-    '{"data":[["patch-tun",["map",[]],1],["tap2ab72a72-44",["map",[["attached-'
-    'mac","fa:16:3e:b0:f8:38"],["iface-id","2ab72a72-4407-4ef3-806a-b2172f3e4d'
-    'c7"],["iface-status","active"]]],2],["tap6b108774-15",["map",[["attached-'
-    'mac","fa:16:3e:02:f5:91"],["iface-id","6b108774-1559-45e9-a7c3-b714f11722'
-    'cf"],["iface-status","active"]]],["set",[]]]],"headings":["name","externa'
-    'l_ids","ofport"]}')
 
 
 class OFCTLParamListMatcher(object):
@@ -84,16 +69,6 @@ class StringSetMatcher(object):
         return '<comma-separated string for %s%s>' % (self.set, sep)
 
 
-def vsctl_only(f):
-    # NOTE(ivasilevskaya) as long as some tests rely heavily on mocking
-    # direct vsctl commands, need to ensure that ovsdb_interface = 'vsctl'
-    # TODO(ivasilevskaya) introduce alternative tests for native interface?
-    def wrapper(*args, **kwargs):
-        config.cfg.CONF.set_override("ovsdb_interface", "vsctl", group="OVS")
-        return f(*args, **kwargs)
-    return wrapper
-
-
 class OVS_Lib_Test(base.BaseTestCase):
     """A test suite to exercise the OVS libraries shared by Neutron agents.
 
@@ -101,32 +76,15 @@ class OVS_Lib_Test(base.BaseTestCase):
     can run on any system.  That does, however, limit their scope.
     """
 
-    @vsctl_only
     def setUp(self):
         super(OVS_Lib_Test, self).setUp()
         self.BR_NAME = "br-int"
 
+        # Don't attempt to connect to ovsdb
+        mock.patch('neutron.agent.ovsdb.impl_idl.api_factory').start()
         self.br = ovs_lib.OVSBridge(self.BR_NAME)
         self.execute = mock.patch.object(
             utils, "execute", spec=utils.execute).start()
-
-    @property
-    def TO(self):
-        return "--timeout=%s" % self.br.vsctl_timeout
-
-    def _vsctl_args(self, *args):
-        cmd = ['ovs-vsctl', self.TO, '--oneline', '--format=json', '--']
-        cmd += args
-        return cmd
-
-    def _vsctl_mock(self, *args):
-        cmd = self._vsctl_args(*args)
-        return mock.call(cmd, run_as_root=True, log_fail_as_error=False)
-
-    def _verify_vsctl_mock(self, *args):
-        cmd = self._vsctl_args(*args)
-        self.execute.assert_called_once_with(cmd, run_as_root=True,
-                                             log_fail_as_error=False)
 
     def test_vifport(self):
         """Create and stringify vif port, confirm no exceptions."""
@@ -146,9 +104,6 @@ class OVS_Lib_Test(base.BaseTestCase):
 
         # test __str__
         str(port)
-
-    def _build_timeout_opt(self, exp_timeout):
-        return "--timeout=%d" % exp_timeout if exp_timeout else self.TO
 
     def test_add_flow(self):
         ofport = "99"
@@ -275,32 +230,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             "add-flows", self.BR_NAME, '-',
             process_input="hard_timeout=0,idle_timeout=0,priority=1,"
                           "cookie=1234,actions=normal")
-
-    def _test_get_port_ofport(self, ofport, expected_result):
-        pname = "tap99"
-        self.br.vsctl_timeout = 0  # Don't waste precious time retrying
-        self.execute.return_value = self._encode_ovs_json(
-            ['ofport'], [[ofport]])
-        self.assertEqual(self.br.get_port_ofport(pname), expected_result)
-        self._verify_vsctl_mock("--columns=ofport", "list", "Interface", pname)
-
-    def test_get_port_ofport_succeeds_for_valid_ofport(self):
-        self._test_get_port_ofport(6, 6)
-
-    def test_get_port_ofport_returns_invalid_ofport_for_non_int(self):
-        self._test_get_port_ofport([], ovs_lib.INVALID_OFPORT)
-
-    def test_get_port_ofport_returns_invalid_for_invalid(self):
-        self._test_get_port_ofport(ovs_lib.INVALID_OFPORT,
-                                   ovs_lib.INVALID_OFPORT)
-
-    def test_get_port_mac(self):
-        pname = "tap99"
-        self.br.vsctl_timeout = 0  # Don't waste precious time retrying
-        self.execute.return_value = self._encode_ovs_json(
-            ['mac_in_use'], [['00:01:02:03:04:05']])
-        expected_result = '00:01:02:03:04:05'
-        self.assertEqual(self.br.get_port_mac(pname), expected_result)
 
     def test_default_datapath(self):
         # verify kernel datapath is default
@@ -444,37 +373,6 @@ class OVS_Lib_Test(base.BaseTestCase):
                           self.br.mod_flow,
                           **params)
 
-    def test_ofctl_of_version_use_highest(self):
-        self.br.add_flow(in_port=1, actions="drop")
-        self.execute.assert_has_calls([
-            mock.call(['ovs-ofctl', 'add-flows', '-O', p_const.OPENFLOW10,
-                       mock.ANY, '-'], process_input=mock.ANY,
-                      run_as_root=mock.ANY)
-        ])
-        self.br.use_at_least_protocol(p_const.OPENFLOW12)
-        self.execute.reset_mock()
-        self.br.add_flow(in_port=1, actions="drop")
-        self.execute.assert_has_calls([
-            mock.call(['ovs-ofctl', 'add-flows', '-O', p_const.OPENFLOW12,
-                       mock.ANY, '-'], process_input=mock.ANY,
-                      run_as_root=mock.ANY),
-        ])
-
-    def test_ofctl_of_version_keep_highest(self):
-        self.br.use_at_least_protocol(p_const.OPENFLOW13)
-        self.br.use_at_least_protocol(p_const.OPENFLOW12)
-        self.execute.reset_mock()
-        self.br.add_flow(in_port=1, actions="drop")
-        self.execute.assert_has_calls([
-            mock.call(['ovs-ofctl', 'add-flows', '-O', p_const.OPENFLOW13,
-                       mock.ANY, '-'], process_input=mock.ANY,
-                      run_as_root=mock.ANY),
-        ])
-
-    def test_ofctl_of_version_use_unknown(self):
-        with testtools.ExpectedException(Exception):
-            self.br.use_at_least_protocol("OpenFlow42")
-
     def test_run_ofctl_retry_on_socket_error(self):
         err = RuntimeError('failed to connect to socket')
         self.execute.side_effect = [err] * 5
@@ -489,134 +387,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             self.br.run_ofctl('add-flows', [])
         self.assertEqual(0, sleep.call_count)
         self.assertEqual(1, self.execute.call_count)
-
-    def test_add_tunnel_port(self):
-        pname = "tap99"
-        local_ip = "1.1.1.1"
-        remote_ip = "9.9.9.9"
-        ofport = 6
-        command = ["--may-exist", "add-port",
-                   self.BR_NAME, pname]
-        command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=gre", "options:df_default=true",
-                        "options:remote_ip=" + remote_ip,
-                        "options:local_ip=" + local_ip,
-                        "options:in_key=flow",
-                        "options:out_key=flow"])
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock(*command), None),
-            (self._vsctl_mock("--columns=ofport", "list", "Interface", pname),
-             self._encode_ovs_json(['ofport'], [[ofport]])),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.assertEqual(
-            self.br.add_tunnel_port(pname, remote_ip, local_ip),
-            ofport)
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_add_vxlan_fragmented_tunnel_port(self):
-        pname = "tap99"
-        local_ip = "1.1.1.1"
-        remote_ip = "9.9.9.9"
-        ofport = 6
-        vxlan_udp_port = "9999"
-        dont_fragment = False
-        command = ["--may-exist", "add-port", self.BR_NAME, pname]
-        command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=" + constants.TYPE_VXLAN,
-                        "options:dst_port=" + vxlan_udp_port,
-                        "options:df_default=false",
-                        "options:remote_ip=" + remote_ip,
-                        "options:local_ip=" + local_ip,
-                        "options:in_key=flow",
-                        "options:out_key=flow"])
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock(*command), None),
-            (self._vsctl_mock("--columns=ofport", "list", "Interface", pname),
-             self._encode_ovs_json(['ofport'], [[ofport]])),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.assertEqual(
-            self.br.add_tunnel_port(pname, remote_ip, local_ip,
-                                    constants.TYPE_VXLAN, vxlan_udp_port,
-                                    dont_fragment),
-            ofport)
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_add_vxlan_csum_tunnel_port(self):
-        pname = "tap99"
-        local_ip = "1.1.1.1"
-        remote_ip = "9.9.9.9"
-        ofport = 6
-        vxlan_udp_port = "9999"
-        dont_fragment = True
-        tunnel_csum = True
-        command = ["--may-exist", "add-port", self.BR_NAME, pname]
-        command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=" + constants.TYPE_VXLAN,
-                        "options:dst_port=" + vxlan_udp_port,
-                        "options:df_default=true",
-                        "options:remote_ip=" + remote_ip,
-                        "options:local_ip=" + local_ip,
-                        "options:in_key=flow",
-                        "options:out_key=flow",
-                        "options:csum=true"])
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock(*command), None),
-            (self._vsctl_mock("--columns=ofport", "list", "Interface", pname),
-             self._encode_ovs_json(['ofport'], [[ofport]])),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.assertEqual(
-            self.br.add_tunnel_port(pname, remote_ip, local_ip,
-                                    constants.TYPE_VXLAN, vxlan_udp_port,
-                                    dont_fragment, tunnel_csum),
-            ofport)
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_add_vxlan_tos_tunnel_port(self):
-        pname = "tap99"
-        local_ip = "1.1.1.1"
-        remote_ip = "9.9.9.9"
-        ofport = 6
-        vxlan_udp_port = "9999"
-        dont_fragment = True
-        tunnel_csum = False
-        tos = 8
-        command = ["--may-exist", "add-port", self.BR_NAME, pname]
-        command.extend(["--", "set", "Interface", pname])
-        command.extend(["type=" + constants.TYPE_VXLAN,
-                        "options:dst_port=" + vxlan_udp_port,
-                        "options:df_default=true",
-                        "options:remote_ip=" + remote_ip,
-                        "options:local_ip=" + local_ip,
-                        "options:in_key=flow",
-                        "options:out_key=flow",
-                        "options:tos=" + str(tos)])
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock(*command), None),
-            (self._vsctl_mock("--columns=ofport", "list", "Interface", pname),
-             self._encode_ovs_json(['ofport'], [[ofport]])),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        self.assertEqual(
-            self.br.add_tunnel_port(pname, remote_ip, local_ip,
-                                    constants.TYPE_VXLAN, vxlan_udp_port,
-                                    dont_fragment, tunnel_csum, tos),
-            ofport)
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
 
     def _encode_ovs_json(self, headings, data):
         # See man ovs-vsctl(8) for the encoding details.
@@ -636,12 +406,6 @@ class OVS_Lib_Test(base.BaseTestCase):
                     raise TypeError('%r not int, str, list, set or dict' %
                                     type(cell))
         return jsonutils.dumps(r)
-
-    def test_get_vif_port_to_ofport_map(self):
-        self.execute.return_value = OVSLIST_WITH_UNSET_PORT
-        results = self.br.get_vif_port_to_ofport_map()
-        expected = {'2ab72a72-4407-4ef3-806a-b2172f3e4dc7': 2, 'patch-tun': 1}
-        self.assertEqual(expected, results)
 
     def test_get_vif_ports(self):
         pname = "tap99"
@@ -665,120 +429,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             columns=['name', 'external_ids', 'ofport'],
             if_exists=True)
 
-    def test_get_vif_port_set(self):
-        id_key = 'iface-id'
-        headings = ['name', 'external_ids', 'ofport']
-        data = [
-            # A vif port on this bridge:
-            ['tap99', {id_key: 'tap99id', 'attached-mac': 'tap99mac'}, 1],
-            # A vif port on this bridge not yet configured
-            ['tap98', {id_key: 'tap98id', 'attached-mac': 'tap98mac'}, []],
-            # Another vif port on this bridge not yet configured
-            ['tap97', {id_key: 'tap97id', 'attached-mac': 'tap97mac'},
-             ['set', []]],
-
-            # Non-vif port on this bridge:
-            ['bogus', {}, 2],
-        ]
-
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), 'tap99\\ntun22'),
-            (self._vsctl_mock("--if-exists",
-                              "--columns=name,external_ids,ofport",
-                              "list", "Interface", 'tap99', 'tun22'),
-             self._encode_ovs_json(headings, data)),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        port_set = self.br.get_vif_port_set()
-        self.assertEqual(set(['tap99id']), port_set)
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_get_vif_ports_list_ports_error(self):
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), RuntimeError()),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        self.assertRaises(RuntimeError, self.br.get_vif_ports)
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_get_vif_port_set_list_ports_error(self):
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), RuntimeError()),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        self.assertRaises(RuntimeError, self.br.get_vif_port_set)
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_get_vif_port_set_list_interface_error(self):
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), 'tap99\n'),
-            (self._vsctl_mock("--if-exists",
-                              "--columns=name,external_ids,ofport",
-                              "list", "Interface", "tap99"), RuntimeError()),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        self.assertRaises(RuntimeError, self.br.get_vif_port_set)
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_get_port_tag_dict(self):
-        headings = ['name', 'tag']
-        data = [
-            ['int-br-eth2', set()],
-            ['patch-tun', set()],
-            ['qr-76d9e6b6-21', 1],
-            ['tapce5318ff-78', 1],
-            ['tape1400310-e6', 1],
-        ]
-
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME),
-             '\\n'.join((iface for iface, tag in data))),
-            (self._vsctl_mock("--columns=name,tag", "list", "Port"),
-             self._encode_ovs_json(headings, data)),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-
-        port_tags = self.br.get_port_tag_dict()
-        self.assertEqual(
-            port_tags,
-            {u'int-br-eth2': [],
-             u'patch-tun': [],
-             u'qr-76d9e6b6-21': 1,
-             u'tapce5318ff-78': 1,
-             u'tape1400310-e6': 1}
-        )
-
-    def test_clear_db_attribute(self):
-        pname = "tap77"
-        self.br.clear_db_attribute("Port", pname, "tag")
-        self._verify_vsctl_mock("clear", "Port", pname, "tag")
-
-    def _test_iface_to_br(self, exp_timeout=None):
-        iface = 'tap0'
-        br = 'br-int'
-        if exp_timeout:
-            self.br.vsctl_timeout = exp_timeout
-        self.execute.return_value = 'br-int'
-        self.assertEqual(self.br.get_bridge_for_iface(iface), br)
-        self._verify_vsctl_mock("iface-to-br", iface)
-
-    def test_iface_to_br(self):
-        self._test_iface_to_br()
-
-    def test_iface_to_br_non_default_timeout(self):
-        new_timeout = 5
-        self._test_iface_to_br(new_timeout)
-
-    def test_iface_to_br_handles_ovs_vsctl_exception(self):
-        iface = 'tap0'
-        self.execute.side_effect = Exception
-
-        self.assertIsNone(self.br.get_bridge_for_iface(iface))
-        self._verify_vsctl_mock("iface-to-br", iface)
-
     def test_delete_all_ports(self):
         with mock.patch.object(self.br, 'get_port_name_list',
                                return_value=['port1']) as get_port:
@@ -801,21 +451,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             mock.call('tap1234'),
             mock.call('tap5678')
         ])
-
-    def test_delete_neutron_ports_list_error(self):
-        expected_calls_and_values = [
-            (self._vsctl_mock("list-ports", self.BR_NAME), RuntimeError()),
-        ]
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        self.assertRaises(RuntimeError, self.br.delete_ports, all_ports=False)
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-
-    def test_get_bridges_not_default_timeout(self):
-        bridges = ['br-int', 'br-ex']
-        self.br.vsctl_timeout = 5
-        self.execute.return_value = 'br-int\\nbr-ex\n'
-        self.assertEqual(self.br.get_bridges(), bridges)
-        self._verify_vsctl_mock("list-br")
 
     def test_get_local_port_mac_succeeds(self):
         with mock.patch('neutron.agent.linux.ip_lib.IpLinkCommand',
@@ -875,88 +510,6 @@ class OVS_Lib_Test(base.BaseTestCase):
             [mock.call('Interface', columns=['name', 'external_ids', 'ofport'],
                        if_exists=True)])
 
-    def _test_get_vif_port_by_id(self, iface_id, data, br_name=None,
-                                 extra_calls_and_values=None):
-        headings = ['external_ids', 'name', 'ofport']
-
-        # Each element is a tuple of (expected mock call, return_value)
-        expected_calls_and_values = [
-            (self._vsctl_mock("--columns=external_ids,name,ofport", "find",
-                              "Interface",
-                              'external_ids:iface-id=%s' % iface_id,
-                              'external_ids:attached-mac!=""'),
-             self._encode_ovs_json(headings, data))]
-        if data:
-            if not br_name:
-                br_name = self.BR_NAME
-
-            # Only the last information list in 'data' is used, so if more
-            # than one vif is described in data, the rest must be declared
-            # in the argument 'expected_calls_and_values'.
-            if extra_calls_and_values:
-                expected_calls_and_values.extend(extra_calls_and_values)
-
-            expected_calls_and_values.append(
-                (self._vsctl_mock("iface-to-br",
-                                  data[-1][headings.index('name')]), br_name))
-        tools.setup_mock_calls(self.execute, expected_calls_and_values)
-        vif_port = self.br.get_vif_port_by_id(iface_id)
-
-        tools.verify_mock_calls(self.execute, expected_calls_and_values)
-        return vif_port
-
-    def _assert_vif_port(self, vif_port, ofport=None, mac=None):
-        if not ofport or ofport == -1 or not mac:
-            self.assertIsNone(vif_port, "Got %s" % vif_port)
-            return
-        self.assertEqual('tap99id', vif_port.vif_id)
-        self.assertEqual(mac, vif_port.vif_mac)
-        self.assertEqual('tap99', vif_port.port_name)
-        self.assertEqual(ofport, vif_port.ofport)
-
-    def _test_get_vif_port_by_id_with_data(self, ofport=None, mac=None):
-        external_ids = [["iface-id", "tap99id"],
-                        ["iface-status", "active"],
-                        ["attached-mac", mac]]
-        data = [[["map", external_ids], "tap99",
-                 ofport if ofport else ["set", []]]]
-        vif_port = self._test_get_vif_port_by_id('tap99id', data)
-        self._assert_vif_port(vif_port, ofport, mac)
-
-    def test_get_vif_by_port_id_with_ofport(self):
-        self._test_get_vif_port_by_id_with_data(
-            ofport=1, mac="aa:bb:cc:dd:ee:ff")
-
-    def test_get_vif_by_port_id_without_ofport(self):
-        self._test_get_vif_port_by_id_with_data(mac="aa:bb:cc:dd:ee:ff")
-
-    def test_get_vif_by_port_id_with_invalid_ofport(self):
-        self._test_get_vif_port_by_id_with_data(
-            ofport=-1, mac="aa:bb:cc:dd:ee:ff")
-
-    def test_get_vif_by_port_id_with_no_data(self):
-        self.assertIsNone(self._test_get_vif_port_by_id('whatever', []))
-
-    def test_get_vif_by_port_id_different_bridge(self):
-        external_ids = [["iface-id", "tap99id"],
-                        ["iface-status", "active"]]
-        data = [[["map", external_ids], "tap99", 1]]
-        self.assertIsNone(self._test_get_vif_port_by_id('tap99id', data,
-                                                        "br-ext"))
-
-    def test_get_vif_by_port_id_multiple_vifs(self):
-        external_ids = [["iface-id", "tap99id"],
-                        ["iface-status", "active"],
-                        ["attached-mac", "de:ad:be:ef:13:37"]]
-        data = [[["map", external_ids], "dummytap", 1],
-                [["map", external_ids], "tap99", 1337]]
-        extra_calls_and_values = [
-            (self._vsctl_mock("iface-to-br", "dummytap"), "br-ext")]
-
-        vif_port = self._test_get_vif_port_by_id(
-            'tap99id', data, extra_calls_and_values=extra_calls_and_values)
-        self._assert_vif_port(vif_port, ofport=1337, mac="de:ad:be:ef:13:37")
-
     def test_get_port_ofport_retry(self):
         with mock.patch.object(
                 self.br, 'db_get_val',
@@ -965,7 +518,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_get_port_ofport_retry_fails(self):
         # reduce timeout for faster execution
-        self.br.vsctl_timeout = 1
+        self.br.ovsdb_timeout = 1
         # after 7 calls the retry will timeout and raise
         with mock.patch.object(
                 self.br, 'db_get_val',
@@ -985,7 +538,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 
     def test_get_port_external_ids_retry_fails(self):
         # reduce timeout for faster execution
-        self.br.vsctl_timeout = 1
+        self.br.ovsdb_timeout = 1
         # after 7 calls the retry will timeout and raise
         with mock.patch.object(
                 self.br, 'db_get_val',
@@ -1141,35 +694,3 @@ class TestDeferredOVSBridge(base.BaseTestCase):
     def test_getattr_unallowed_attr_failure(self):
         with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
             self.assertRaises(AttributeError, getattr, deferred_br, 'failure')
-
-    @vsctl_only
-    def test_default_cookie(self):
-        self.br = ovs_lib.OVSBridge("br-tun")
-        uuid_stamp1 = self.br.default_cookie
-        self.assertEqual(uuid_stamp1, self.br.default_cookie)
-
-    @vsctl_only
-    def test_cookie_passed_to_addmod(self):
-        self.br = ovs_lib.OVSBridge("br-tun")
-        stamp = str(self.br.default_cookie)
-        expected_calls = [
-            mock.call('add-flows', ['-'],
-                      'hard_timeout=0,idle_timeout=0,priority=1,'
-                      'cookie=' + stamp + ',actions=drop'),
-            mock.call('mod-flows', ['-'],
-                      'cookie=' + stamp + ',actions=drop')
-        ]
-        with mock.patch.object(self.br, 'run_ofctl') as f:
-            with ovs_lib.DeferredOVSBridge(self.br) as deferred_br:
-                deferred_br.add_flow(actions='drop')
-                deferred_br.mod_flow(actions='drop')
-            f.assert_has_calls(expected_calls)
-
-    @vsctl_only
-    def test_add_flow_with_bundle(self):
-        br = ovs_lib.OVSBridge("foo")
-        deferred = br.deferred(use_bundle=True)
-        with mock.patch.object(utils, "execute", spec=utils.execute) as mexec:
-            deferred.add_flow(in_port=1, actions='drop')
-            deferred.apply_flows()
-        self.assertIn('--bundle', mexec.call_args[0][0])

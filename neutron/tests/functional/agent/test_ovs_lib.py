@@ -528,7 +528,6 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                                        if_exists=False))
                 txn.add(ovsdb.db_set('Interface', port_name,
                                      ('type', 'internal')))
-        # native gives a more specific exception than vsctl
         self.assertRaises((RuntimeError, idlutils.RowNotFound),
                           del_port_mod_iface)
 
@@ -583,7 +582,7 @@ class OVSLibTestCase(base.BaseOVSLinuxTestCase):
         self.assertIn(conn_uri, self.ovs.get_manager())
         self.assertEqual(self.ovs.db_get_val('Manager', conn_uri,
                                              'inactivity_probe'),
-                         self.ovs.vsctl_timeout * 1000)
+                         self.ovs.ovsdb_timeout * 1000)
         self.ovs.remove_manager(conn_uri)
         self.assertNotIn(conn_uri, self.ovs.get_manager())
 

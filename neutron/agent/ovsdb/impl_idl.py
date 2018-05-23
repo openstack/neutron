@@ -42,7 +42,7 @@ ovs_conf.register_ovs_agent_opts()
 _connection = None
 
 
-def api_factory(context):
+def api_factory():
     global _connection
     if _connection is None:
         _connection = connection.Connection(

@@ -36,7 +36,6 @@ from neutron.conf.agent import securitygroups_rpc as security_config
 from neutron.tests.common import conn_testers
 from neutron.tests.common import helpers
 from neutron.tests.functional.agent.linux import base as linux_base
-from neutron.tests.functional import base
 from neutron.tests.functional import constants as test_constants
 
 LOG = logging.getLogger(__name__)
@@ -76,7 +75,7 @@ def _add_rule(sg_rules, base, port_range_min=None, port_range_max=None):
     sg_rules.append(rule)
 
 
-class BaseFirewallTestCase(base.BaseSudoTestCase):
+class BaseFirewallTestCase(linux_base.BaseOVSLinuxTestCase):
     FAKE_SECURITY_GROUP_ID = uuidutils.generate_uuid()
     MAC_SPOOFED = "fa:16:3e:9a:2f:48"
     scenarios_iptables = testscenarios.multiply_scenarios(
@@ -87,8 +86,7 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
 
     scenarios_ovs_fw_interfaces = testscenarios.multiply_scenarios(
         [('OVS Firewall Driver', {'initialize': 'initialize_ovs',
-                                  'firewall_name': 'openvswitch'})],
-        linux_base.BaseOVSLinuxTestCase.scenarios)
+                                  'firewall_name': 'openvswitch'})])
 
     scenarios = scenarios_iptables + scenarios_ovs_fw_interfaces
 
@@ -126,7 +124,6 @@ class BaseFirewallTestCase(base.BaseSudoTestCase):
         return tester, firewall_drv
 
     def initialize_ovs(self):
-        self.config(group='OVS', ovsdb_interface=self.ovsdb_interface)
         # Tests for ovs requires kernel >= 4.3 and OVS >= 2.5
         if not checks.ovs_conntrack_supported():
             self.skipTest("Open vSwitch with conntrack is not installed "

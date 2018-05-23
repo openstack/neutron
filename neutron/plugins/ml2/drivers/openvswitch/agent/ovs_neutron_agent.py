@@ -1021,7 +1021,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         '''
         # Ensure the integration bridge is created.
-        # ovs_lib.OVSBridge.create() will run
+        # ovs_lib.OVSBridge.create() will run the equivalent of
         #   ovs-vsctl -- --may-exist add-br BRIDGE_NAME
         # which does nothing if bridge already exists.
         self.int_br.create()
