@@ -28,7 +28,6 @@ from sqlalchemy.orm import query
 from neutron.db import api as db_api
 from neutron.db import db_base_plugin_v2
 from neutron.db.models import l3 as l3_models
-from neutron.db import models_v2
 from neutron.db import segments_db
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
@@ -410,36 +409,38 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
     def test_distributed_port_binding_deleted_by_port_deletion(self):
         network_id = uuidutils.generate_uuid()
         network_obj.Network(self.ctx, id=network_id).create()
-        with db_api.context_manager.writer.using(self.ctx):
-            device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
-            port = models_v2.Port(
-                id='port_id',
-                network_id=network_id,
-                mac_address='00:11:22:33:44:55',
-                admin_state_up=True,
-                status=constants.PORT_STATUS_ACTIVE,
-                device_id='device_id',
-                device_owner=device_owner)
-            self.ctx.session.add(port)
-            binding_kwarg = {
-                'port_id': 'port_id',
-                'host': 'host',
-                'vif_type': portbindings.VIF_TYPE_UNBOUND,
-                'vnic_type': portbindings.VNIC_NORMAL,
-                'router_id': 'router_id',
-                'status': constants.PORT_STATUS_DOWN
-            }
-            self.ctx.session.add(models.DistributedPortBinding(
-                **binding_kwarg))
-            binding_kwarg['host'] = 'another-host'
-            self.ctx.session.add(models.DistributedPortBinding(
-                **binding_kwarg))
+        device_owner = constants.DEVICE_OWNER_DVR_INTERFACE
+        port = port_obj.Port(
+            self.ctx,
+            id=uuidutils.generate_uuid(),
+            network_id=network_id,
+            mac_address=netaddr.EUI('00-11-22-33-44-55'),
+            admin_state_up=True,
+            status=constants.PORT_STATUS_ACTIVE,
+            device_id='device_id',
+            device_owner=device_owner)
+        port.create()
+        port_obj.DistributedPortBinding(
+            self.ctx,
+            port_id=port.id,
+            host='host',
+            vif_type=portbindings.VIF_TYPE_UNBOUND,
+            vnic_type=portbindings.VNIC_NORMAL,
+            router_id='router_id',
+            status=constants.PORT_STATUS_DOWN).create()
+        port_obj.DistributedPortBinding(
+            self.ctx,
+            port_id=port.id,
+            host='another-host',
+            vif_type=portbindings.VIF_TYPE_UNBOUND,
+            vnic_type=portbindings.VNIC_NORMAL,
+            router_id='router_id',
+            status=constants.PORT_STATUS_DOWN).create()
         with warnings.catch_warnings(record=True) as warning_list:
-            with db_api.context_manager.writer.using(self.ctx):
-                self.ctx.session.delete(port)
+            port.delete()
             self.assertEqual(
                 [], warning_list,
                 'Warnings: %s' % ';'.join([str(w) for w in warning_list]))
         ports = ml2_db.get_distributed_port_bindings(self.ctx,
-                                                     'port_id')
+                                                     port.id)
         self.assertEqual(0, len(ports))
