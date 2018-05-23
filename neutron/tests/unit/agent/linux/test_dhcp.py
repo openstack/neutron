@@ -356,6 +356,13 @@ class FakePortMultipleAgents2(object):
         self.extra_dhcp_opts = []
 
 
+class FakePortWithClientIdNum(object):
+    def __init__(self):
+        self.extra_dhcp_opts = [
+            DhcpOpt(opt_name=dhcp.DHCP_OPT_CLIENT_ID_NUM,
+                    opt_value='test_client_id_num')]
+
+
 class FakeV4HostRoute(object):
     def __init__(self):
         self.destination = '20.0.0.1/24'
@@ -620,6 +627,14 @@ class FakeV4NetworkClientId(object):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
         self.ports = [FakePort1(), FakePort5(), FakePort6()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeV4NetworkClientIdNum(object):
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePortWithClientIdNum()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -2615,6 +2630,11 @@ class TestDnsmasq(TestBase):
         config = {'enable_isolated_metadata': False,
                   'force_metadata': True}
         self._test__generate_opts_per_subnet_helper(config, True)
+
+    def test_client_id_num(self):
+        dm = self._get_dnsmasq(FakeV4NetworkClientIdNum())
+        self.assertEqual('test_client_id_num',
+                         dm._get_client_id(FakePortWithClientIdNum()))
 
 
 class TestDeviceManager(TestConfBase):
