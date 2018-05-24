@@ -428,6 +428,9 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                   port['fixed_ips'])
 
     def update_db_subnet(self, context, id, s, old_pools):
+        if 'segment_id' in s:
+            self._validate_segment(context, s['network_id'], s['segment_id'],
+                                   action='update')
         # 'allocation_pools' is removed from 's' in
         # _update_subnet_allocation_pools (ipam_backend_mixin),
         # so create unchanged copy for ipam driver

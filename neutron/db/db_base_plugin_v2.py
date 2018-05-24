@@ -869,6 +869,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         s['project_id'] = subnet_obj.project_id
         s['tenant_id'] = subnet_obj.project_id
         s['subnetpool_id'] = subnet_obj.subnetpool_id
+        # Fill 'network_id' field with the current value since this is expected
+        # by _validate_segment() in ipam_pluggable_backend.
+        s['network_id'] = subnet_obj.network_id
         self._validate_subnet(context, s, cur_subnet=subnet_obj)
         db_pools = [netaddr.IPRange(p.start, p.end)
                     for p in subnet_obj.allocation_pools]

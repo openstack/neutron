@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Add support for setting the ``segment_id`` for an existing
+    subnet. This enables users to convert a non-routed network
+    with no subnet/segment association to a routed one. It is
+    only possible to do this migration if both of the following
+    conditions are met - the current ``segment_id`` is ``None``
+    and the network contains a single segment and subnet.
+

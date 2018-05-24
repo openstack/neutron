@@ -471,3 +471,75 @@ segment contains one IPv4 subnet and one IPv6 subnet.
          | status                | DOWN                                 |
          | tags                  | []                                   |
          +-----------------------+--------------------------------------+
+
+Migrating non-routed networks to routed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Migration of existing non-routed networks is only possible if there is only one
+segment and one subnet on the network. To migrate a candidate network, update
+the subnet and set ``id`` of the existing network segment as ``segment_id``.
+
+.. note::
+
+   In the case where there are multiple subnets or segments it is not
+   possible to safely migrate. The reason for this is that in non-routed
+   networks addresses from the subnet's allocation pools are assigned to
+   ports without considering to which network segment the port is bound.
+
+Example
+-------
+
+The following steps migrate an existing non-routed network with one subnet and
+one segment to a routed one.
+
+#. Source the administrative project credentials.
+#. Get the ``id`` of the current network segment on the network that is being
+   migrated.
+
+   .. code-block:: console
+
+      $ openstack network segment list --network my_network
+      +--------------------------------------+------+--------------------------------------+--------------+---------+
+      | ID                                   | Name | Network                              | Network Type | Segment |
+      +--------------------------------------+------+--------------------------------------+--------------+---------+
+      | 81e5453d-4c9f-43a5-8ddf-feaf3937e8c7 | None | 45e84575-2918-471c-95c0-018b961a2984 | flat         | None    |
+      +--------------------------------------+------+--------------------------------------+--------------+---------+
+
+#. Get the ``id`` or ``name`` of the current subnet on the network.
+
+   .. code-block:: console
+
+      $ openstack subnet list --network my_network
+      +--------------------------------------+-----------+--------------------------------------+---------------+
+      | ID                                   | Name      | Network                              | Subnet        |
+      +--------------------------------------+-----------+--------------------------------------+---------------+
+      | 71d931d2-0328-46ae-93bc-126caf794307 | my_subnet | 45e84575-2918-471c-95c0-018b961a2984 | 172.24.4.0/24 |
+      +--------------------------------------+-----------+--------------------------------------+---------------+
+
+#. Verify the current ``segment_id`` of the subnet is ``None``.
+
+   .. code-block:: console
+
+      $ openstack subnet show my_subnet --c segment_id
+      +------------+-------+
+      | Field      | Value |
+      +------------+-------+
+      | segment_id | None  |
+      +------------+-------+
+
+#. Update the ``segment_id`` of the subnet.
+
+   .. code-block:: console
+
+      $ openstack subnet set --network-segment 81e5453d-4c9f-43a5-8ddf-feaf3937e8c7 my_subnet
+
+#. Verify that the subnet is now associated with the desired network segment.
+
+   .. code-block:: console
+
+      $ openstack subnet show my_subnet --c segment_id
+      +------------+--------------------------------------+
+      | Field      | Value                                |
+      +------------+--------------------------------------+
+      | segment_id | 81e5453d-4c9f-43a5-8ddf-feaf3937e8c7 |
+      +------------+--------------------------------------+

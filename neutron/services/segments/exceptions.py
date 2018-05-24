@@ -23,6 +23,13 @@ class SegmentNotFound(exceptions.NotFound):
     message = _("Segment %(segment_id)s could not be found.")
 
 
+class NoUpdateSubnetWhenMultipleSegmentsOnNetwork(
+    exceptions.BadRequest):
+    message = _("The network '%(network_id)s' has multiple segments, it is "
+                "only possible to associate an existing subnet with a segment "
+                "on networks with a single segment.")
+
+
 class SubnetsNotAllAssociatedWithSegments(exceptions.BadRequest):
     message = _("All of the subnets on network '%(network_id)s' must either "
                 "all be associated with segments or all not associated with "
@@ -31,6 +38,11 @@ class SubnetsNotAllAssociatedWithSegments(exceptions.BadRequest):
 
 class SubnetCantAssociateToDynamicSegment(exceptions.BadRequest):
     message = _("A subnet cannot be associated with a dynamic segment.")
+
+
+class SubnetSegmentAssociationChangeNotAllowed(exceptions.BadRequest):
+    message = _("A subnet that is already associated with a segment cannot "
+                "have its segment association changed.")
 
 
 class NetworkIdsDontMatch(exceptions.BadRequest):
