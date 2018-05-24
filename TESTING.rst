@@ -322,10 +322,6 @@ present in current Ubuntu Xenial 16.04 kernel. Kernel was fixed with this
 and backported with this
 `openvswitch commit <https://github.com/openvswitch/ovs/commit/b1c74f35273122db4ce2728a70fd34b98f525434>`_.
 
-Currently we compile openvswitch userland and kernel module from source for
-the ovsfw tempest job on the gate. This is to avoid ovs-vswitchd core dumps.
-See the gate_hook.sh comments for details.
-
 API Tests
 ~~~~~~~~~
 
