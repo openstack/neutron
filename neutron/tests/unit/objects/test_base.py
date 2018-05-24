@@ -1816,15 +1816,42 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             for local_field, foreign_key in foreign_keys.items():
                 objclass_fields[local_field] = obj.get(foreign_key)
 
+            # remember which fields were nullified so that later we know what
+            # to assert for each child field
+            nullified_fields = set()
+
+            # cut off more depth levels to simplify object field generation
+            # (for example, nullify segment field for PortBindingLevel objects
+            # to avoid creating a Segment object (and back-linking it to the
+            # original network of the port)
+            for child_field in self._get_object_synthetic_fields(objclass):
+                if objclass.fields[child_field].nullable:
+                    objclass_fields[child_field] = None
+                    nullified_fields.add(child_field)
+
+            # initialize the child object
             synth_field_obj = objclass(self.context, **objclass_fields)
+
+            # nullify nullable UUID fields since they may otherwise trigger
+            # foreign key violations
+            for field_name in get_obj_persistent_fields(synth_field_obj):
+                child_field = objclass.fields[field_name]
+                if child_field.nullable:
+                    if isinstance(child_field, common_types.UUIDField):
+                        synth_field_obj[field_name] = None
+                        nullified_fields.add(field_name)
+
             synth_field_obj.create()
 
             # reload the parent object under test
             obj = cls_.get_object(self.context, **obj._get_composite_keys())
 
-            # check that the stored database model now has filled relationships
+            # check that the stored database model now has correct attr values
             dbattr = obj.fields_need_translation.get(field, field)
-            self.assertTrue(getattr(obj.db_obj, dbattr, None))
+            if field in nullified_fields:
+                self.assertIsNone(getattr(obj.db_obj, dbattr, None))
+            else:
+                self.assertIsNotNone(getattr(obj.db_obj, dbattr, None))
 
             # reset the object so that we can compare it to other clean objects
             obj.obj_reset_changes([field])
