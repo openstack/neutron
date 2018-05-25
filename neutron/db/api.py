@@ -175,16 +175,6 @@ def _is_nested_instance(e, etypes):
     return False
 
 
-def get_reader_session():
-    """Helper to get reader session"""
-    return context_manager.reader.get_sessionmaker()()
-
-
-def get_writer_session():
-    """Helper to get writer session"""
-    return context_manager.writer.get_sessionmaker()()
-
-
 @contextlib.contextmanager
 def autonested_transaction(sess):
     """This is a convenience method to not bother with 'nested' parameter."""

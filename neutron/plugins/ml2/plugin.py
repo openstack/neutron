@@ -33,6 +33,7 @@ from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
+from neutron_lib.db import api as lib_db_api
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import allowedaddresspairs as addr_exc
@@ -663,7 +664,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _object_session_or_new_session(sql_obj):
         session = sqlalchemy.inspect(sql_obj).session
         if not session:
-            session = db_api.get_reader_session()
+            session = lib_db_api.get_reader_session()
         return session
 
     def _notify_port_updated(self, mech_context):

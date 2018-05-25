@@ -15,13 +15,13 @@
 import mock
 from neutron_lib.api.definitions import metering as metering_apidef
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.agentnotifiers import metering_rpc_agent_api
 from neutron.common import utils
-from neutron.db import api as db_api
 from neutron.db.metering import metering_rpc
 from neutron.extensions import l3 as ext_l3
 from neutron.extensions import metering as ext_metering
