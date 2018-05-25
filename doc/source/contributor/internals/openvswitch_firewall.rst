@@ -199,6 +199,7 @@ bridge. Tracked packets are sent back for processing by the same table after
 conntrack information is cleared.
 
 ::
+
  table=71, priority=110,ct_state=+trk actions=ct_clear,resubmit(,71)
 
 Rules below allow ICMPv6 traffic for multicast listeners, neighbour
