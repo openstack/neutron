@@ -1808,7 +1808,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             plugin = directory.get_plugin()
             binding = utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
-                                 port['port']['id']).port_binding,
+                                 port['port']['id']).port_bindings,
                 constants.ACTIVE)
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
@@ -1831,7 +1831,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             plugin = directory.get_plugin()
             binding = utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
-                                 port['port']['id']).port_binding,
+                                 port['port']['id']).port_bindings,
                 constants.ACTIVE)
             binding['host'] = 'fake_host'
             binding['vif_type'] = port_vif_type
@@ -1948,7 +1948,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             plugin = directory.get_plugin()
             binding = utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
-                                 port['port']['id']).port_binding,
+                                 port['port']['id']).port_bindings,
                 constants.ACTIVE)
             with self.context.session.begin(subtransactions=True):
                 binding.host = 'test'
@@ -1970,7 +1970,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             plugin = directory.get_plugin()
             binding = utils.get_port_binding_by_status_and_host(
                 plugin._get_port(self.context,
-                                 port['port']['id']).port_binding,
+                                 port['port']['id']).port_bindings,
                 constants.ACTIVE)
             binding['host'] = 'test'
             mech_context = driver_context.PortContext(
@@ -2959,7 +2959,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             with db_api.context_manager.writer.using(self.context):
                 binding = utils.get_port_binding_by_status_and_host(
                     plugin._get_port(self.context,
-                                     port['port']['id']).port_binding,
+                                     port['port']['id']).port_bindings,
                     constants.ACTIVE)
                 binding['host'] = 'host-ovs-no_filter'
                 mech_context = driver_context.PortContext(

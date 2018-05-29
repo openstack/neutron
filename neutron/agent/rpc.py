@@ -241,7 +241,7 @@ class CacheBackedPluginApi(PluginApi):
         mac_addr = str(netaddr.EUI(str(port_obj.mac_address),
                                    dialect=netaddr.mac_unix_expanded))
         binding = utils.get_port_binding_by_status_and_host(
-            port_obj.binding, constants.ACTIVE, raise_if_not_found=True,
+            port_obj.bindings, constants.ACTIVE, raise_if_not_found=True,
             port_id=port_obj.id)
         entry = {
             'device': device,

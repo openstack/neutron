@@ -283,7 +283,7 @@ class Port(base.NeutronDbObject):
         'allowed_address_pairs': obj_fields.ListOfObjectsField(
             'AllowedAddressPair', nullable=True
         ),
-        'binding': obj_fields.ListOfObjectsField(
+        'bindings': obj_fields.ListOfObjectsField(
             'PortBinding', nullable=True
         ),
         'data_plane_status': obj_fields.ObjectField(
@@ -324,7 +324,7 @@ class Port(base.NeutronDbObject):
 
     synthetic_fields = [
         'allowed_address_pairs',
-        'binding',
+        'bindings',
         'binding_levels',
         'data_plane_status',
         'dhcp_options',
@@ -337,7 +337,7 @@ class Port(base.NeutronDbObject):
     ]
 
     fields_need_translation = {
-        'binding': 'port_binding',
+        'bindings': 'port_bindings',
         'dhcp_options': 'dhcp_opts',
         'distributed_bindings': 'distributed_port_binding',
         'security': 'port_security',
@@ -479,10 +479,10 @@ class Port(base.NeutronDbObject):
             # Previous versions only support one port binding. The following
             # lines look for the active port binding, which is the only one
             # needed in previous versions
-            if 'binding' in primitive:
-                original_binding = primitive['binding']
+            if 'bindings' in primitive:
+                original_bindings = primitive.pop('bindings')
                 primitive['binding'] = None
-                for a_binding in original_binding:
+                for a_binding in original_bindings:
                     if (a_binding['versioned_object.data']['status'] ==
                             constants.ACTIVE):
                         primitive['binding'] = a_binding
