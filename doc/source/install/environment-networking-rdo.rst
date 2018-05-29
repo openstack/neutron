@@ -7,7 +7,7 @@ recommend that you disable any automated network management tools and
 manually edit the appropriate configuration files for your distribution.
 For more information on how to configure networking on your
 distribution, see the `documentation
-<https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec-Using_the_Command_Line_Interface.html>`__ .
+<https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-network_config_using_cli>`__ .
 
 All nodes require Internet access for administrative purposes such as package
 installation, security updates, Domain Name System (DNS), and
