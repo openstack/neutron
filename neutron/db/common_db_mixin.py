@@ -34,10 +34,6 @@ class CommonDbMixin(object):
         _resource_extend.register_funcs(resource, funcs)
 
     @staticmethod
-    def model_query_scope(context, model):
-        return ndb_utils.model_query_scope_is_project(context, model)
-
-    @staticmethod
     def _model_query(context, model):
         return _model_query.query_with_hooks(context, model)
 
