@@ -257,6 +257,34 @@ Whitelist PCI devices nova-compute (Compute)
    SR-IOV PF, all VFs under the PF will match the entry. Multiple
    ``pci_passthrough_whitelist`` entries per host are supported.
 
+   In order to enable SR-IOV to request "trusted mode", the
+   ``[pci]/pci_passthrough_whitelist`` parameter also supports a ``trusted``
+   tag.
+
+   .. note::
+
+      This capability is only supported starting with version 18.0.0
+      (Rocky) release of the compute service configured to use the
+      libvirt driver.
+
+   .. important::
+
+      There are security implications of enabling trusted ports. The
+      trusted VFs can be set into VF promiscuous mode which will
+      enable it to receive unmatched and multicast traffic sent to the
+      physical function.
+
+   For example, to allow users to request SR-IOV devices with trusted
+   capabilities on device ``eth3``:
+
+   .. code-block:: ini
+
+      [pci]
+      passthrough_whitelist = { "devname": "eth3", "physical_network": "physnet2", "trusted":"true" }
+
+   The ports will have to be created with a binding profile to match the
+   ``trusted`` tag, see `Launching instances with SR-IOV ports`_.
+
 #. Restart the ``nova-compute`` service for the changes to go into effect.
 
 .. _configure_sriov_neutron_server:
@@ -396,6 +424,13 @@ Once configuration is complete, you can launch instances with SR-IOV ports.
    .. code-block:: console
 
       $ port_id=`neutron port-create $net_id --name sriov_port --binding:vnic_type direct | grep "\ id\ " | awk '{ print $4 }'`
+
+   To request that the SR-IOV port accept trusted capabilities, the
+   binding profile should be enhanced with the ``trusted`` tag.
+
+   .. code-block:: console
+
+      $ port_id=`neutron port-create $net_id --name sriov_port --binding:vnic_type direct --binding:profile type=dict trusted=true | grep "\ id\ " | awk '{ print $4 }'`
 
 #. Create the instance. Specify the SR-IOV port created in step two for the
    NIC:
