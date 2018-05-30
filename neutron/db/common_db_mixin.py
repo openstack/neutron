@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import weakref
-
 from neutron.db import _model_query
 from neutron.db import _resource_extend
 from neutron.db import _utils as ndb_utils
@@ -34,11 +32,6 @@ class CommonDbMixin(object):
     @staticmethod
     def register_dict_extend_funcs(resource, funcs):
         _resource_extend.register_funcs(resource, funcs)
-
-    @property
-    # TODO(HenryG): Remove; used only by vmware-nsx.
-    def safe_reference(self):
-        return weakref.proxy(self)
 
     @staticmethod
     def model_query_scope(context, model):
