@@ -28,7 +28,6 @@ import webob.exc
 
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
-from neutron.db import models_v2
 from neutron.ipam import requests as ipam_req
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as obj_subnet
@@ -738,13 +737,12 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         context = self.admin_context
         subnet = {'id': uuidutils.generate_uuid(),
                   'ip_version': constants.IP_VERSION_4,
-                  'cidr': '192.1.1.0/24',
+                  'cidr': netaddr.IPNetwork('192.1.1.0/24'),
                   'ipv6_address_mode': None,
                   'ipv6_ra_mode': None}
         subnet_with_pools = subnet.copy()
-        subnet_db = models_v2.Subnet(**subnet_with_pools)
-        context.session.add(subnet_db)
-        context.session.flush()
+        subnet_obj = obj_subnet.Subnet(context, **subnet_with_pools)
+        subnet_obj.create()
         subnet_with_pools['allocation_pools'] = old_pools
         # if subnet has no allocation pools set, then old pools has to
         # be added to subnet dict passed to request factory
@@ -757,15 +755,14 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         context = self.admin_context
         subnet = {'id': uuidutils.generate_uuid(),
                   'ip_version': constants.IP_VERSION_4,
-                  'cidr': '192.1.1.0/24',
+                  'cidr': netaddr.IPNetwork('192.1.1.0/24'),
                   'ipv6_address_mode': None,
                   'ipv6_ra_mode': None}
         # make a copy of subnet for validation, since update_subnet changes
         # incoming subnet dict
         expected_subnet = subnet.copy()
-        subnet_db = models_v2.Subnet(**subnet)
-        context.session.add(subnet_db)
-        context.session.flush()
+        subnet_obj = obj_subnet.Subnet(context, **subnet)
+        subnet_obj.create()
         subnet['allocation_pools'] = [
             netaddr.IPRange('192.1.1.10', '192.1.1.254')]
         expected_subnet = subnet.copy()
@@ -773,7 +770,6 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                     subnet_id=subnet['id'],
                                     start='192.1.1.10',
                                     end='192.1.1.254').create()
-        context.session.refresh(subnet_db)
         # validate that subnet passed to request factory is the same as
         # incoming one, i.e. new pools in it are not overwritten by old pools
         self._test_update_db_subnet(pool_mock, subnet, expected_subnet,
@@ -789,8 +785,9 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                                    'subnet_id': uuidutils.generate_uuid()},
                                   {'ip_address': '192.168.1.50',
                                    'subnet_id': uuidutils.generate_uuid()}]}
-        db_port = models_v2.Port(id=uuidutils.generate_uuid(),
-                                 network_id=uuidutils.generate_uuid())
+        db_port = port_obj.Port(context,
+                                id=uuidutils.generate_uuid(),
+                                network_id=uuidutils.generate_uuid())
         old_port = {'fixed_ips': [{'ip_address': '192.168.1.10',
                                    'subnet_id': uuidutils.generate_uuid()},
                                   {'ip_address': '192.168.1.50',
