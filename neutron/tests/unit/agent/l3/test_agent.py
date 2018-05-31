@@ -3594,3 +3594,49 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             pass
         self.assertTrue(mock_delete.called)
         self.assertFalse(mock_dscm.called)
+
+    @mock.patch.object(lla.LinkLocalAllocator, '_write')
+    @mock.patch.object(l3router.RouterInfo, '_get_gw_ips_cidr')
+    def test_process_floating_ip_addresses_not_care_port_forwarding(
+            self, mock_get_gw_cidr, mock_lla_write):
+        pf_used_fip = [{'cidr': '15.1.2.4/32'}, {'cidr': '15.1.2.5/32'}]
+        gw_cidr = {'cidr': '15.1.2.79/24'}
+        need_to_remove_fip = [{'cidr': '15.1.2.99/32'}]
+        fake_floatingips = {'floatingips': [
+            {'id': _uuid(),
+             'floating_ip_address': '15.1.2.3',
+             'fixed_ip_address': '192.168.0.1',
+             'status': 'DOWN',
+             'floating_network_id': _uuid(),
+             'port_id': _uuid(),
+             'host': HOSTNAME}]}
+
+        router = l3_test_common.prepare_router_data(enable_snat=True)
+        router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        ri = l3router.RouterInfo(agent, router['id'],
+                                 router, **self.ri_kwargs)
+        ri.centralized_port_forwarding_fip_set = set(
+            [i['cidr'] for i in pf_used_fip])
+        ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
+        ri.get_external_device_name = mock.Mock(return_value='exgw')
+        floating_ips = ri.get_floating_ips()
+        fip_id = floating_ips[0]['id']
+        device = self.mock_ip_dev
+        device.addr.list.return_value = (
+                pf_used_fip + need_to_remove_fip + [gw_cidr])
+        ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
+        mock_get_gw_cidr.return_value = set([gw_cidr['cidr']])
+        ri.get_centralized_router_cidrs = mock.Mock(
+            return_value=set())
+        ri.add_floating_ip = mock.Mock(
+            return_value=lib_constants.FLOATINGIP_STATUS_ACTIVE)
+        ri.remove_floating_ip = mock.Mock()
+        fip_statuses = ri.process_floating_ip_addresses(
+            mock.sentinel.interface_name)
+        self.assertEqual({fip_id: lib_constants.FLOATINGIP_STATUS_ACTIVE},
+                         fip_statuses)
+        ri.add_floating_ip.assert_called_once_with(
+            floating_ips[0], mock.sentinel.interface_name, device)
+        ri.remove_floating_ip.assert_called_once_with(
+            device, need_to_remove_fip[0]['cidr'])

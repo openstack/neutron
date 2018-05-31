@@ -1791,3 +1791,21 @@ class TestSysctl(base.BaseTestCase):
                                return_value=False):
             dev.disable_ipv6()
             self.assertFalse(self.execute.called)
+
+
+class TestConntrack(base.BaseTestCase):
+    def setUp(self):
+        super(TestConntrack, self).setUp()
+        self.execute_p = mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
+        self.execute = self.execute_p.start()
+
+    def test_delete_socket_conntrack_state(self):
+        device = ip_lib.IPDevice('tap0', 'ns1')
+        ip_str = '1.1.1.1'
+        dport = '3378'
+        protocol = 'tcp'
+        expect_cmd = ["conntrack", "-D", "-d", ip_str, '-p', protocol,
+                      '--dport', dport]
+        device.delete_socket_conntrack_state(ip_str, dport, protocol)
+        self.execute.assert_called_once_with(expect_cmd, check_exit_code=True,
+                                             extra_ok_codes=[1])

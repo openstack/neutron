@@ -331,6 +331,20 @@ class IPDevice(SubProcessBase):
             LOG.exception("Failed deleting egress connection state of"
                           " floatingip %s", ip_str)
 
+    def delete_socket_conntrack_state(self, cidr, dport, protocol):
+        ip_str = str(netaddr.IPNetwork(cidr).ip)
+        ip_wrapper = IPWrapper(namespace=self.namespace)
+        cmd = ["conntrack", "-D", "-d", ip_str, '-p', protocol,
+               '--dport', dport]
+        try:
+            ip_wrapper.netns.execute(cmd, check_exit_code=True,
+                                     extra_ok_codes=[1])
+
+        except RuntimeError:
+            LOG.exception("Failed deleting ingress connection state of "
+                          "socket %(ip)s:%(port)s", {'ip': ip_str,
+                                                     'port': dport})
+
     def disable_ipv6(self):
         if not ipv6_utils.is_enabled_and_bind_by_default():
             return
