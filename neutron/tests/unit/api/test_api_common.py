@@ -13,6 +13,7 @@
 #    under the License.
 
 from oslo_config import cfg
+import webob
 
 from neutron.api import api_common
 from neutron.tests import base
@@ -31,3 +32,40 @@ class PrepareUrlTestCase(base.BaseTestCase):
         requrl = 'http://neutron.example/sub/ports.json?test=1'
         expected = 'http://quantum.example/sub/ports.json?test=1'
         self.assertEqual(expected, api_common.prepare_url(requrl))
+
+
+class GetPathUrlTestCase(base.BaseTestCase):
+
+    def test_no_headers(self):
+        base_http_url = 'http://neutron.example/sub/ports.json'
+        base_https_url = 'https://neutron.example/sub/ports.json'
+        path = ''
+
+        http_req = webob.Request.blank(path, base_url=base_http_url)
+        https_req = webob.Request.blank(path, base_url=base_https_url)
+
+        # should be unchanged
+        self.assertEqual(base_http_url, api_common.get_path_url(http_req))
+        self.assertEqual(base_https_url, api_common.get_path_url(https_req))
+
+    def test_http_to_https(self):
+        base_url = 'http://neutron.example/sub/ports.json'
+        path = ''
+
+        request = webob.Request.blank(
+            path, base_url=base_url, headers={'X-Forwarded-Proto': 'https'})
+
+        path_url = api_common.get_path_url(request)
+        # should replace http:// with https://
+        self.assertTrue(path_url.startswith("https://"))
+
+    def test_https_to_http(self):
+        base_url = 'https://neutron.example/sub/ports.json'
+        path = ''
+
+        request = webob.Request.blank(
+            path, base_url=base_url, headers={'X-Forwarded-Proto': 'http'})
+
+        path_url = api_common.get_path_url(request)
+        # should replace https:// with http://
+        self.assertTrue(path_url.startswith("http://"))
