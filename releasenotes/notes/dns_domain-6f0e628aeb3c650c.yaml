@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Previously a network's dns_domain attribute was ignored by the DHCP agent.
+    With this release, OpenStack deployments using Neutron's DHCP agent will
+    be able to specify a per network dns_domain and have instances configure
+    that domain in their dns resolver configuration files (Linux's
+    /etc/resolv.conf) to allow for local partial DNS lookups. The per-network
+    dns_domain value will override the DHCP agent's default dns_domain
+    configuration value. Note that it's also possible to update a network's
+    dns_domain, and that new value will be propogated to new instances
+    or when instances renew their DHCP lease. However, existing leases will
+    live on with the old dns_domain value.
