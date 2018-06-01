@@ -37,9 +37,6 @@ from neutron.objects import network as net_obj
 from neutron.objects import router as l3_obj
 
 
-DEVICE_OWNER_ROUTER_GW = constants.DEVICE_OWNER_ROUTER_GW
-
-
 def _network_filter_hook(context, original_model, conditions):
     if conditions is not None and not hasattr(conditions, '__iter__'):
         conditions = (conditions, )
@@ -128,7 +125,7 @@ class External_net_db_mixin(object):
             # (and thus, possible floating IPs) on this network before
             # allow it to be update to external=False
             port = context.session.query(models_v2.Port).filter_by(
-                device_owner=DEVICE_OWNER_ROUTER_GW,
+                device_owner=constants.DEVICE_OWNER_ROUTER_GW,
                 network_id=net_data['id']).first()
             if port:
                 raise extnet_exc.ExternalNetworkInUse(net_id=net_id)
@@ -201,7 +198,7 @@ class External_net_db_mixin(object):
                 # nothing to validate if the tenant didn't change
                 return
         gw_ports = context.session.query(models_v2.Port.id).filter_by(
-            device_owner=DEVICE_OWNER_ROUTER_GW,
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW,
             network_id=policy['object_id'])
         gw_ports = [gw_port[0] for gw_port in gw_ports]
         rbac = rbac_db.NetworkRBAC
