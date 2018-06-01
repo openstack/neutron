@@ -18,11 +18,11 @@ NOTE: This module shall not be used by external projects. It will be moved
 
 from neutron_lib.api import attributes
 from neutron_lib.db import utils as db_utils
+from neutron_lib.utils import helpers
 from oslo_db.sqlalchemy import utils as sa_utils
 from sqlalchemy import sql, or_, and_
 from sqlalchemy.ext import associationproxy
 
-from neutron.common import utils
 from neutron.db import _utils as ndb_utils
 from neutron.objects import utils as obj_utils
 
@@ -108,11 +108,11 @@ def register_hook(model, name, query_hook, filter_hook,
 
     """
     if callable(query_hook):
-        query_hook = utils.make_weak_ref(query_hook)
+        query_hook = helpers.make_weak_ref(query_hook)
     if callable(filter_hook):
-        filter_hook = utils.make_weak_ref(filter_hook)
+        filter_hook = helpers.make_weak_ref(filter_hook)
     if callable(result_filters):
-        result_filters = utils.make_weak_ref(result_filters)
+        result_filters = helpers.make_weak_ref(result_filters)
     _model_query_hooks.setdefault(model, {})[name] = {
         'query': query_hook,
         'filter': filter_hook,
@@ -153,11 +153,11 @@ def query_with_hooks(context, model):
             query_filter = (model.tenant_id == context.tenant_id)
     # Execute query hooks registered from mixins and plugins
     for hook in get_hooks(model):
-        query_hook = utils.resolve_ref(hook.get('query'))
+        query_hook = helpers.resolve_ref(hook.get('query'))
         if query_hook:
             query = query_hook(context, model, query)
 
-        filter_hook = utils.resolve_ref(hook.get('filter'))
+        filter_hook = helpers.resolve_ref(hook.get('filter'))
         if filter_hook:
             query_filter = filter_hook(context, model, query_filter)
 
@@ -245,7 +245,8 @@ def apply_filters(query, model, filters, context=None):
                     query = query.outerjoin(model.rbac_entries)
                 query = query.filter(is_shared)
         for hook in get_hooks(model):
-            result_filter = utils.resolve_ref(hook.get('result_filters', None))
+            result_filter = helpers.resolve_ref(
+                hook.get('result_filters', None))
             if result_filter:
                 query = result_filter(query, filters)
     return query
