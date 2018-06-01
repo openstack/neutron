@@ -14,10 +14,10 @@
 # backends
 
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import utils as obj_utils
 from oslo_utils import uuidutils
 
 from neutron.db import _model_query as model_query
-from neutron.objects import utils as obj_utils
 
 
 # Common database operation implementations

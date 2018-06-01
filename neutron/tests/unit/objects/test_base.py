@@ -22,6 +22,7 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
+from neutron_lib.objects import utils as obj_utils
 from neutron_lib.utils import helpers
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import utils as db_utils
@@ -48,7 +49,6 @@ from neutron.objects import router
 from neutron.objects import securitygroup
 from neutron.objects import stdattrs
 from neutron.objects import subnet
-from neutron.objects import utils as obj_utils
 from neutron.tests import base as test_base
 from neutron.tests import tools
 from neutron.tests.unit.db import test_db_base_plugin_v2

@@ -72,7 +72,7 @@ using example of DNSNameServer:
     # will return list of all dns name servers from DB
 
     # for fetching objects with substrings in a string field:
-    from neutron.objects import utils as obj_utils
+    from neutron_lib.objects import utils as obj_utils
     dnses = DNSNameServer.get_objects(context, address=obj_utils.StringContains('10.0.0'))
     # will return list of all dns name servers from DB that has '10.0.0' in their addresses
 
@@ -668,7 +668,7 @@ objects :code:`get_objects()` method, for example:
         return subnet_obj.Subnet.get_objects(context, **filters)
 
 The :code:`convert_filters` method is available in
-``neutron.objects.utils`` [#]_.
+``neutron_lib.objects.utils`` [#]_.
 
 References
 ----------
@@ -678,4 +678,4 @@ References
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n542
 .. [#] https://docs.openstack.org/neutron/latest/contributor/internals/db_layer.html#the-standard-attribute-table
 .. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/rbac_db.py?h=stable/ocata#n291
-.. [#] https://git.openstack.org/cgit/openstack/neutron/tree/neutron/objects/utils.py?h=stable/ocata
+.. [#] https://git.openstack.org/cgit/openstack/neutron-lib/tree/neutron_lib/objects/utils.py

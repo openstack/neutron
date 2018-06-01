@@ -18,13 +18,13 @@ NOTE: This module shall not be used by external projects. It will be moved
 
 from neutron_lib.api import attributes
 from neutron_lib.db import utils as db_utils
+from neutron_lib.objects import utils as obj_utils
 from neutron_lib.utils import helpers
 from oslo_db.sqlalchemy import utils as sa_utils
 from sqlalchemy import sql, or_, and_
 from sqlalchemy.ext import associationproxy
 
 from neutron.db import _utils as ndb_utils
-from neutron.objects import utils as obj_utils
 
 # Classes implementing extensions will register hooks into this dictionary
 # for "augmenting" the "core way" of building a query for retrieving objects
