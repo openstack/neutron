@@ -69,6 +69,7 @@ object_data = {
     'PortDNS': '1.1-c5ca2dc172bdd5fafee3fc986d1d7023',
     'PortForwarding': '1.1-db61273978c497239be5389a8aeb1c61',
     'PortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
+    'PortUplinkStatusPropagation': '1.0-3cfb3f7da716ca9687e4f04ca72b081d',
     'ProviderResourceAssociation': '1.0-05ab2d5a3017e5ce9dd381328f285f34',
     'ProvisioningBlock': '1.0-c19d6d05bfa8143533471c1296066125',
     'QosBandwidthLimitRule': '1.3-51b662b12a8d1dfa89288d826c6d26d3',

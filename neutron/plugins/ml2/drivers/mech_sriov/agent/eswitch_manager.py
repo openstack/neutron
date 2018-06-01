@@ -169,14 +169,15 @@ class EmbSwitch(object):
         vf_index = self._get_vf_index(pci_slot)
         return self.pci_dev_wrapper.get_vf_state(vf_index)
 
-    def set_device_state(self, pci_slot, state):
+    def set_device_state(self, pci_slot, state, propagate_uplink_state):
         """Set device state.
 
         @param pci_slot: Virtual Function address
         @param state: link state
         """
         vf_index = self._get_vf_index(pci_slot)
-        return self.pci_dev_wrapper.set_vf_state(vf_index, state)
+        return self.pci_dev_wrapper.set_vf_state(vf_index, state,
+                                                 auto=propagate_uplink_state)
 
     def set_device_rate(self, pci_slot, rate_type, rate_kbps):
         """Set device rate: rate (max_tx_rate), min_tx_rate
@@ -293,15 +294,15 @@ class ESwitchManager(object):
     def get_device_state(self, device_mac, pci_slot):
         """Get device state.
 
-        Get the device state (up/True or down/False)
+        Get the device state (up/enable, down/disable, or auto)
         @param device_mac: device mac
         @param pci_slot: VF PCI slot
-        @return: device state (True/False) None if failed
+        @return: device state (enable/disable/auto) None if failed
         """
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             return embedded_switch.get_device_state(pci_slot)
-        return False
+        return pci_lib.LinkState.DISABLE
 
     def set_device_max_rate(self, device_mac, pci_slot, max_kbps):
         """Set device max rate
@@ -333,18 +334,21 @@ class ESwitchManager(object):
                 ip_link_support.IpLinkConstants.IP_LINK_CAPABILITY_MIN_TX_RATE,
                 min_kbps)
 
-    def set_device_state(self, device_mac, pci_slot, admin_state_up):
+    def set_device_state(self, device_mac, pci_slot, admin_state_up,
+                         propagate_uplink_state):
         """Set device state
 
         Sets the device state (up or down)
         @param device_mac: device mac
         @param pci_slot: pci slot
         @param admin_state_up: device admin state True/False
+        @param propagate_uplink_state: follow uplink state True/False
         """
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             embedded_switch.set_device_state(pci_slot,
-                                             admin_state_up)
+                                             admin_state_up,
+                                             propagate_uplink_state)
 
     def set_device_spoofcheck(self, device_mac, pci_slot, enabled):
         """Set device spoofcheck

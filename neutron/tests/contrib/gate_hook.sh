@@ -98,6 +98,7 @@ case $VENV in
         load_rc_hook disable_dvr_tests
     fi
     load_conf_hook quotas
+    load_rc_hook uplink_status_propagation
     load_rc_hook dns
     load_rc_hook qos
     load_rc_hook segments

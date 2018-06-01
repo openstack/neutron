@@ -81,14 +81,14 @@ class TestPciLib(base.BaseTestCase):
                                "_as_root") as mock_as_root:
             mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_vf_state(self.VF_INDEX)
-            self.assertTrue(result)
+            self.assertEqual('enable', result)
 
     def test_get_vf_state_disable(self):
         with mock.patch.object(self.pci_wrapper,
                                "_as_root") as mock_as_root:
             mock_as_root.return_value = self.VF_LINK_SHOW
             result = self.pci_wrapper.get_vf_state(self.VF_INDEX_DISABLE)
-            self.assertFalse(result)
+            self.assertEqual('disable', result)
 
     def test_get_vf_state_fail(self):
         with mock.patch.object(self.pci_wrapper,

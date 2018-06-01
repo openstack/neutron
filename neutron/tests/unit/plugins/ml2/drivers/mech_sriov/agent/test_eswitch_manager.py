@@ -158,27 +158,38 @@ class TestESwitchManagerApi(base.BaseTestCase):
             self.assertIn(devices_info['p6p1'][0], list(result))
             self.assertIn(devices_info['p6p2'][0], list(result))
 
-    def test_get_device_status_true(self):
+    def test_get_device_status_enable(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.EmbSwitch.get_pci_device",
                         return_value=self.ASSIGNED_MAC),\
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.EmbSwitch.get_device_state",
-                           return_value=True):
+                           return_value='enable'):
             result = self.eswitch_mgr.get_device_state(self.ASSIGNED_MAC,
                                                        self.PCI_SLOT)
-            self.assertTrue(result)
+            self.assertEqual('enable', result)
 
-    def test_get_device_status_false(self):
+    def test_get_device_status_disable(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.EmbSwitch.get_pci_device",
                         return_value=self.ASSIGNED_MAC),\
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.EmbSwitch.get_device_state",
-                           return_value=False):
+                           return_value='disable'):
             result = self.eswitch_mgr.get_device_state(self.ASSIGNED_MAC,
                                                        self.PCI_SLOT)
-            self.assertFalse(result)
+            self.assertEqual('disable', result)
+
+    def test_get_device_status_auto(self):
+        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                        "eswitch_manager.EmbSwitch.get_pci_device",
+                        return_value=self.ASSIGNED_MAC),\
+                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
+                           "eswitch_manager.EmbSwitch.get_device_state",
+                           return_value='auto'):
+            result = self.eswitch_mgr.get_device_state(self.ASSIGNED_MAC,
+                                                       self.PCI_SLOT)
+            self.assertEqual('auto', result)
 
     def test_get_device_status_mismatch(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -186,7 +197,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
                         return_value=self.ASSIGNED_MAC),\
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.EmbSwitch.get_device_state",
-                           return_value=True):
+                           return_value='enable'):
             with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                             "eswitch_manager.LOG.warning") as log_mock:
                 result = self.eswitch_mgr.get_device_state(self.WRONG_MAC,
@@ -195,7 +206,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
                                             '%(device_mac)s - %(pci_slot)s',
                                             {'pci_slot': self.PCI_SLOT,
                                              'device_mac': self.WRONG_MAC})
-                self.assertFalse(result)
+                self.assertEqual('disable', result)
 
     def test_set_device_status(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -204,7 +215,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                            "eswitch_manager.EmbSwitch.set_device_state"):
             self.eswitch_mgr.set_device_state(self.ASSIGNED_MAC,
-                                              self.PCI_SLOT, True)
+                                              self.PCI_SLOT, True, False)
 
     def test_set_device_max_rate(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -241,7 +252,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
             with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                             "eswitch_manager.LOG.warning") as log_mock:
                 self.eswitch_mgr.set_device_state(self.WRONG_MAC,
-                                                  self.PCI_SLOT, True)
+                                                  self.PCI_SLOT, True, False)
                 log_mock.assert_called_with('device pci mismatch: '
                                             '%(device_mac)s - %(pci_slot)s',
                                             {'pci_slot': self.PCI_SLOT,
@@ -463,7 +474,7 @@ class TestEmbSwitch(base.BaseTestCase):
                         "PciDeviceIPWrapper.set_vf_state"):
             with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                             "pci_lib.LOG.warning") as log_mock:
-                self.emb_switch.set_device_state(self.PCI_SLOT, True)
+                self.emb_switch.set_device_state(self.PCI_SLOT, True, False)
                 self.assertEqual(0, log_mock.call_count)
 
     def test_set_device_state_fail(self):
@@ -471,7 +482,7 @@ class TestEmbSwitch(base.BaseTestCase):
                         "PciDeviceIPWrapper.set_vf_state"):
             self.assertRaises(exc.InvalidPciSlotError,
                               self.emb_switch.set_device_state,
-                              self.WRONG_PCI_SLOT, True)
+                              self.WRONG_PCI_SLOT, True, False)
 
     def test_set_device_spoofcheck_ok(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."

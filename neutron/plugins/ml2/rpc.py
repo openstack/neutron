@@ -16,6 +16,7 @@
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import uplink_status_propagation as usp
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import directory
@@ -156,7 +157,9 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                  'port_security_enabled': port.get(psec.PORTSECURITY, True),
                  'qos_policy_id': port.get(qos_consts.QOS_POLICY_ID),
                  'network_qos_policy_id': network_qos_policy_id,
-                 'profile': port[portbindings.PROFILE]}
+                 'profile': port[portbindings.PROFILE],
+                 'propagate_uplink_status': port.get(
+                     usp.PROPAGATE_UPLINK_STATUS, False)}
         LOG.debug("Returning: %s", entry)
         return entry
 
