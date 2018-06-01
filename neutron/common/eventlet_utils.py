@@ -20,6 +20,12 @@ from oslo_utils import importutils
 
 
 def monkey_patch():
+    # NOTE(slaweq): to workaround issue with import cycles in
+    # eventlet < 0.22.0;
+    # This issue is fixed in eventlet with patch
+    # https://github.com/eventlet/eventlet/commit/b756447bab51046dfc6f1e0e299cc997ab343701
+    # For details please check https://bugs.launchpad.net/neutron/+bug/1745013
+    eventlet.hubs.get_hub()
     eventlet.monkey_patch()
     if os.name != 'nt':
         p_c_e = importutils.import_module('pyroute2.config.asyncio')
