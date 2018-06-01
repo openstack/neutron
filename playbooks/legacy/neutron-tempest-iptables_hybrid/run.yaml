@@ -1,5 +1,5 @@
 - hosts: all
-  name: Autoconverted job legacy-tempest-dsvm-neutron-ovsfw from old job gate-tempest-dsvm-neutron-ovsfw-ubuntu-xenial-nv
+  name: Neutron Tempest iptables-hybrid job
   tasks:
 
     - name: Ensure legacy workspace directory
@@ -37,7 +37,7 @@
           fi
 
           function gate_hook {
-              bash -xe $BASE/new/neutron/neutron/tests/contrib/gate_hook.sh full-ovsfw
+              bash -xe $BASE/new/neutron/neutron/tests/contrib/gate_hook.sh full-iptables_hybrid
           }
           export -f gate_hook
 

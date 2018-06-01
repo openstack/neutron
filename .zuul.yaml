@@ -12,7 +12,7 @@
         - neutron-grenade-dvr-multinode
         - neutron-tempest-multinode-full
         - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-ovsfw
+        - neutron-tempest-iptables_hybrid
         - neutron-grenade
         - openstack-tox-lower-constraints
     gate:
@@ -21,7 +21,7 @@
         - neutron-fullstack
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-tempest-ovsfw
+        - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade
@@ -255,10 +255,10 @@
     voting: false
 
 - job:
-    name: neutron-tempest-ovsfw
+    name: neutron-tempest-iptables_hybrid
     parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-tempest-ovsfw/run.yaml
-    post-run: playbooks/legacy/neutron-tempest-ovsfw/post.yaml
+    run: playbooks/legacy/neutron-tempest-iptables_hybrid/run.yaml
+    post-run: playbooks/legacy/neutron-tempest-iptables_hybrid/post.yaml
     timeout: 7800
     required-projects:
       - openstack-infra/devstack-gate
