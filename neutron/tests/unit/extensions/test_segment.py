@@ -42,6 +42,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import portbindings_db
 from neutron.db import segments_db
 from neutron.extensions import segment as ext_segment
+from neutron.extensions import standardattrdescription as ext_stddesc
 from neutron.objects import network
 from neutron.services.segments import db
 from neutron.services.segments import exceptions as segment_exc
@@ -62,6 +63,8 @@ HTTP_NOT_FOUND = 404
 class SegmentTestExtensionManager(object):
 
     def get_resources(self):
+        ext_segment.Segment().update_attributes_map(
+            {ext_segment.SEGMENTS: ext_stddesc.DESCRIPTION_BODY})
         return ext_segment.Segment.get_resources()
 
     def get_actions(self):
@@ -161,14 +164,14 @@ class TestSegmentNameDescription(SegmentTestCase):
                 continue
             d.setdefault('network_id', self.network['id'])
             d.setdefault('name', None)
-            d.setdefault('description', None)
+            d.setdefault('description', 'desc')
             d.setdefault('physical_network', 'phys_net')
             d.setdefault('network_type', 'net_type')
             d.setdefault('segmentation_id', 200)
         return super(TestSegmentNameDescription, self)._test_create_segment(
             expected, **kwargs)
 
-    def test_create_segment_no_name_description(self):
+    def test_create_segment_no_name(self):
         self._test_create_segment(expected={})
 
     def test_create_segment_with_name(self):
@@ -209,11 +212,9 @@ class TestSegmentNameDescription(SegmentTestCase):
     def test_update_segment_set_description_to_none(self):
         segment = self._test_create_segment(
             description='A segment', name='segment')
-        result = self._update('segments',
-                              segment['segment']['id'],
-                              {'segment': {'description': None}},
-                              expected_code=webob.exc.HTTPOk.code)
-        self.assertIsNone(result['segment']['description'])
+        self._update('segments', segment['segment']['id'],
+                     {'segment': {'description': None}},
+                     expected_code=webob.exc.HTTPBadRequest.code)
 
 
 class TestSegment(SegmentTestCase):
