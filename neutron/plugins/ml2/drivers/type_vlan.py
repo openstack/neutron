@@ -130,7 +130,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                   {'vlan_id': alloc.vlan_id,
                                    'physical_network':
                                    alloc.physical_network})
-                        ctx.session.delete(alloc)
+                        alloc.delete()
 
     def get_type(self):
         return p_const.TYPE_VLAN
