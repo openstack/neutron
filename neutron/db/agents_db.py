@@ -72,7 +72,7 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
     def _list_availability_zones(self, context, filters=None):
         result = {}
         filters = filters or {}
-        agents = agent_obj.Agent.get_objects(context, filters)
+        agents = agent_obj.Agent.get_objects(context, **filters)
         for agent in agents:
             if not agent.availability_zone:
                 continue
