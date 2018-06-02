@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+
 import mock
 
 from neutron_lib.agent import topics
@@ -351,6 +353,37 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                          router['id'], interface_info)
                 self.mock_fanout.assert_called_with(
                     mock.ANY, 'remove_fdb_entries', expected)
+
+    def test_ovs_agent_restarted_with_dvr_port(self):
+        plugin = directory.get_plugin()
+        router = self._create_dvr_router()
+        with mock.patch.object(l2pop_mech_driver.L2populationMechanismDriver,
+                               'agent_restarted', return_value=True):
+            with self.subnet(network=self._network,
+                             enable_dhcp=False) as snet:
+                with self.port(
+                        subnet=snet,
+                        device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)\
+                            as port:
+                    port_id = port['port']['id']
+                    plugin.update_distributed_port_binding(self.adminContext,
+                        port_id, {'port': {portbindings.HOST_ID: HOST_4,
+                        'device_id': router['id']}})
+                    port = self._show('ports', port_id)
+                    self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
+                                    port['port'][portbindings.VIF_TYPE])
+                    self.callbacks.update_device_up(self.adminContext,
+                                                agent_id=HOST_4,
+                                                device=port_id,
+                                                host=HOST_4)
+                    fanout_expected = {port['port']['network_id']: {
+                        'network_type': u'vxlan',
+                        'ports': {
+                            u'20.0.0.4': [('00:00:00:00:00:00', '0.0.0.0')]},
+                        'segment_id': 1}}
+                    self.mock_fanout.assert_called_with(mock.ANY,
+                                                        'add_fdb_entries',
+                                                        fanout_expected)
 
     def test_ha_agents_with_dvr_rtr_does_not_get_other_fdb(self):
         router = self._create_dvr_router()
@@ -1359,3 +1392,25 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
         mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
         with testtools.ExpectedException(exceptions.InvalidInput):
             mech_driver.update_port_precommit(ctx)
+
+    def test_agent_restarted(self):
+        mech_driver = l2pop_mech_driver.L2populationMechanismDriver()
+        ctx = mock.Mock()
+        ctx.host = "__host1__"
+        ctx._plugin_context = {}
+        agent = mock.Mock()
+        agent.started_at = datetime.datetime(2018, 5, 25, 15, 51, 20)
+        agent.heartbeat_timestamp = datetime.datetime(2018, 5, 25, 15,
+                                                      51, 50)
+
+        with mock.patch.object(l2pop_db, 'get_agent_by_host',
+                               return_value=agent):
+            res = mech_driver.agent_restarted(ctx)
+            self.assertTrue(res)
+
+        agent.heartbeat_timestamp = datetime.datetime(2018, 5, 25, 15,
+                                                      58, 30)
+        with mock.patch.object(l2pop_db, 'get_agent_by_host',
+                               return_value=agent):
+            res = mech_driver.agent_restarted(ctx)
+            self.assertFalse(res)
