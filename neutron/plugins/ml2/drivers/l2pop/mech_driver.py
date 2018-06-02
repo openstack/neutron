@@ -238,6 +238,14 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
         return agents
 
+    def agent_restarted(self, context):
+        agent_host = context.host
+        port_context = context._plugin_context
+        agent = l2pop_db.get_agent_by_host(port_context, agent_host)
+        if l2pop_db.get_agent_uptime(agent) < cfg.CONF.l2pop.agent_boot_time:
+            return True
+        return False
+
     def update_port_down(self, context):
         port = context.current
         agent_host = context.host
@@ -278,8 +286,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
             segment, agent_ip, network_id)
         other_fdb_ports = other_fdb_entries[network_id]['ports']
 
-        if agent_active_ports == 1 or (l2pop_db.get_agent_uptime(agent) <
-                                       cfg.CONF.l2pop.agent_boot_time):
+        if agent_active_ports == 1 or self.agent_restarted(context):
             # First port activated on current agent in this network,
             # we have to provide it with the whole list of fdb entries
             agent_fdb_entries = self._create_agent_fdb(port_context,
