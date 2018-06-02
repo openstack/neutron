@@ -248,6 +248,14 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
         return agents
 
+    def agent_restarted(self, context):
+        agent_host = context.host
+        session = db_api.get_reader_session()
+        agent = l2pop_db.get_agent_by_host(session, agent_host)
+        if l2pop_db.get_agent_uptime(agent) < cfg.CONF.l2pop.agent_boot_time:
+            return True
+        return False
+
     def update_port_down(self, context):
         port = context.current
         agent_host = context.host
@@ -296,9 +304,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
         # with high concurrency more than 1 port may be activated on an agent
         # at the same time (like VM port + a DVR port) so checking for 1 or 2
         is_first_port = agent_active_ports in (1, 2)
-        if is_first_port or (l2pop_db.get_agent_uptime(agent) <
-                             cfg.CONF.l2pop.agent_boot_time):
-            # First port(s) activated on current agent in this network,
+        if is_first_port or self.agent_restarted(context):
+            # First port activated on current agent in this network,
             # we have to provide it with the whole list of fdb entries
             agent_fdb_entries = self._create_agent_fdb(session,
                                                        agent,
