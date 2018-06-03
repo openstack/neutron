@@ -804,9 +804,9 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
                               True,
                               group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(cert=None,
-                                               timeout=None,
-                                               verify=False)
+        args, kwargs = self.driver_session.call_args
+        self.assertIn('verify', kwargs)
+        self.assertFalse(kwargs['verify'], False)
 
     def test_secure_client(self):
         cfg.CONF.set_override('insecure',
@@ -816,9 +816,9 @@ class TestDesignateClientKeystoneV2(testtools.TestCase):
                               self.TEST_CA_CERT,
                               group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(cert=None,
-                                               timeout=None,
-                                               verify=self.TEST_CA_CERT)
+        args, kwargs = self.driver_session.call_args
+        self.assertIn('verify', kwargs)
+        self.assertEqual(kwargs['verify'], self.TEST_CA_CERT)
 
     def test_auth_type_not_defined(self):
         driver.get_clients(self.TEST_CONTEXT)
@@ -892,9 +892,9 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
                               True,
                               group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(cert=None,
-                                               timeout=None,
-                                               verify=False)
+        args, kwargs = self.driver_session.call_args
+        self.assertIn('verify', kwargs)
+        self.assertFalse(kwargs['verify'], False)
 
     def test_secure_client(self):
         cfg.CONF.set_override('insecure',
@@ -904,9 +904,9 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
                               self.TEST_CA_CERT,
                               group='designate')
         driver.get_clients(self.TEST_CONTEXT)
-        self.driver_session.assert_called_with(cert=None,
-                                               timeout=None,
-                                               verify=self.TEST_CA_CERT)
+        args, kwargs = self.driver_session.call_args
+        self.assertIn('verify', kwargs)
+        self.assertEqual(kwargs['verify'], self.TEST_CA_CERT)
 
     def test_auth_type_password(self):
         driver.get_clients(self.TEST_CONTEXT)
