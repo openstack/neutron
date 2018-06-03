@@ -737,7 +737,8 @@ class Dnsmasq(DhcpLocalProcess):
         if self._get_port_extra_dhcp_opts(port):
             for opt in port.extra_dhcp_opts:
                 if opt.opt_name in (edo_ext.DHCP_OPT_CLIENT_ID,
-                                    DHCP_OPT_CLIENT_ID_NUM):
+                                    DHCP_OPT_CLIENT_ID_NUM,
+                                    str(DHCP_OPT_CLIENT_ID_NUM)):
                     return opt.opt_value
 
     def _read_hosts_file_leases(self, filename):
@@ -1026,7 +1027,8 @@ class Dnsmasq(DhcpLocalProcess):
                      for ip in port.fixed_ips])
                 for opt in port.extra_dhcp_opts:
                     if opt.opt_name in (edo_ext.DHCP_OPT_CLIENT_ID,
-                                        DHCP_OPT_CLIENT_ID_NUM):
+                                        DHCP_OPT_CLIENT_ID_NUM,
+                                        str(DHCP_OPT_CLIENT_ID_NUM)):
                         continue
                     opt_ip_version = opt.ip_version
                     if opt_ip_version in port_ip_versions:
