@@ -321,3 +321,33 @@ class TestHAL3Agent(TestL3Agent):
             self.assertEqual(
                 "master",
                 self._get_keepalived_state(keepalived_state_file))
+
+    def test_ha_router_restart_agents_no_packet_lost(self):
+        tenant_id = uuidutils.generate_uuid()
+        ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
+        router = self.safe_client.create_router(tenant_id, ha=True,
+                                                external_network=ext_net['id'])
+
+        external_vm = self.useFixture(
+            machine_fixtures.FakeMachine(
+                self.environment.central_external_bridge,
+                common_utils.ip_to_cidr(ext_sub['gateway_ip'], 24)))
+
+        common_utils.wait_until_true(
+            lambda:
+            len(self.client.list_l3_agent_hosting_routers(
+                router['id'])['agents']) == 2,
+            timeout=90)
+
+        common_utils.wait_until_true(
+            functools.partial(
+                self._is_ha_router_active_on_one_agent,
+                router['id']),
+            timeout=90)
+
+        router_ip = router['external_gateway_info'][
+            'external_fixed_ips'][0]['ip_address']
+        l3_agents = [host.agents['l3'] for host in self.environment.hosts]
+
+        self._assert_ping_during_agents_restart(
+            l3_agents, external_vm.namespace, [router_ip], count=60)
