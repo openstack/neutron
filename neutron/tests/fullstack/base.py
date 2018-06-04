@@ -99,8 +99,11 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             # It is necessary to give agents time to initialize
             # because some crucial steps (e.g. setting up bridge flows)
             # happen only after RPC is established
+            agent_names = ', '.join({agent.process_fixture.process_name
+                                     for agent in agents})
             common_utils.wait_until_true(
                 done,
                 timeout=count * (ping_timeout + 1),
-                exception=RuntimeError("Could not ping the other VM, L2 agent "
-                                       "restart leads to network disruption"))
+                exception=RuntimeError("Could not ping the other VM, "
+                                       "re-starting %s leads to network "
+                                       "disruption" % agent_names))
