@@ -260,7 +260,7 @@ class ServiceTestCase(base.DietTestCase):
         self.target_mock.start()
 
         self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
-        self.messaging_conf.transport_driver = 'fake'
+        self.messaging_conf.transport_url = 'fake://'
         self.messaging_conf.response_timeout = 0
         self.useFixture(self.messaging_conf)
 
@@ -285,7 +285,7 @@ class TimeoutTestCase(base.DietTestCase):
         super(TimeoutTestCase, self).setUp()
 
         self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
-        self.messaging_conf.transport_driver = 'fake'
+        self.messaging_conf.transport_url = 'fake://'
         self.messaging_conf.response_timeout = 0
         self.useFixture(self.messaging_conf)
 
@@ -442,7 +442,7 @@ class CastExceptionTestCase(base.DietTestCase):
         super(CastExceptionTestCase, self).setUp()
 
         self.messaging_conf = messaging_conffixture.ConfFixture(CONF)
-        self.messaging_conf.transport_driver = 'fake'
+        self.messaging_conf.transport_url = 'fake://'
         self.messaging_conf.response_timeout = 0
         self.useFixture(self.messaging_conf)
 
