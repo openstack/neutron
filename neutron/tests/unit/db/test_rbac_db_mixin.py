@@ -155,20 +155,44 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                               self.plugin.delete_rbac_policy,
                               self.context, netrbac['id'])
 
-    def test_delete_networkrbac(self):
+    def test_port_presence_prevents_network_rbac_policy_deletion(self):
         with self.network() as net:
             netrbac, port = self._setup_networkrbac_and_port(
-                network=net, target_tenant='test-tenant-4')
+                network=net, target_tenant='alice')
             self.assertRaises(ext_rbac.RbacPolicyInUse,
                               self.plugin.delete_rbac_policy,
                               self.context, netrbac['id'])
 
-            self.plugin.delete_port(self.context, port['id'])
+            # a wildcard policy should allow the specific policy to be deleted
+            # since it allows the remaining port
+            wild_policy = self._make_networkrbac(net, '*')
+            wild_policy = self.plugin.create_rbac_policy(self.context,
+                                                         wild_policy)
             self.plugin.delete_rbac_policy(self.context, netrbac['id'])
 
+            # now that wildcard is the only remaining, it should be subjected
+            # to to the same restriction
+            self.assertRaises(ext_rbac.RbacPolicyInUse,
+                              self.plugin.delete_rbac_policy,
+                              self.context, wild_policy['id'])
+
+            # similarly, we can't update the policy to a different tenant
+            update_policy = {'rbac_policy': {'target_tenant': 'bob'}}
+            self.assertRaises(ext_rbac.RbacPolicyInUse,
+                              self.plugin.update_rbac_policy,
+                              self.context, wild_policy['id'],
+                              update_policy)
+
+            # after port anchor is gone, update and delete should pass
+            self.plugin.delete_port(self.context, port['id'])
+            self.plugin.update_rbac_policy(
+                self.context, wild_policy['id'], update_policy)
+            self.plugin.delete_rbac_policy(self.context, wild_policy['id'])
+
+            # check that policy is indeed gone
             self.assertRaises(ext_rbac.RbacPolicyNotFound,
                               self.plugin.get_rbac_policy,
-                              self.context, netrbac['id'])
+                              self.context, wild_policy['id'])
 
     def test_delete_networkrbac_self_share(self):
         net_id = 'my-network'
