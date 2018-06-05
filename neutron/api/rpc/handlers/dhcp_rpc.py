@@ -143,7 +143,9 @@ class DhcpRpcCallback(object):
         plugin = directory.get_plugin()
         filters = {'network_id': [network['id'] for network in networks]}
         ports = plugin.get_ports(context, filters=filters)
-        filters['enable_dhcp'] = [True]
+        # default is to filter subnets based on 'enable_dhcp' flag
+        if kwargs.get('enable_dhcp_filter', True):
+            filters['enable_dhcp'] = [True]
         # NOTE(kevinbenton): we sort these because the agent builds tags
         # based on position in the list and has to restart the process if
         # the order changes.
