@@ -61,15 +61,22 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
 
     def assert_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
+
+        def test_connectivity():
+            try:
+                return netcat.test_connectivity()
+            except RuntimeError:
+                return False
+
         try:
-            self.assertTrue(netcat.test_connectivity())
+            common_utils.wait_until_true(test_connectivity)
         finally:
             netcat.stop_processes()
 
     def assert_no_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
         try:
-            self.assertRaises(RuntimeError, netcat.test_connectivity)
+            common_utils.wait_until_true(netcat.test_no_connectivity)
         finally:
             netcat.stop_processes()
 
@@ -133,9 +140,9 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         self.assert_connection(
             vms[2].namespace, vms[0].namespace, vms[0].ip, 3333,
             net_helpers.NetcatTester.TCP)
-        net_helpers.assert_ping(vms[0].namespace, vms[1].ip)
-        net_helpers.assert_ping(vms[0].namespace, vms[2].ip)
-        net_helpers.assert_ping(vms[1].namespace, vms[2].ip)
+        vms[0].block_until_ping(vms[1].ip)
+        vms[0].block_until_ping(vms[2].ip)
+        vms[1].block_until_ping(vms[2].ip)
 
         # Apply security groups to the ports
         for port, sg in zip(ports, self.index_to_sg):
@@ -162,9 +169,9 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             net_helpers.NetcatTester.TCP)
 
         # 3. check if traffic not explicitly allowed (eg. ICMP) is blocked
-        net_helpers.assert_no_ping(vms[0].namespace, vms[1].ip)
-        net_helpers.assert_no_ping(vms[0].namespace, vms[2].ip)
-        net_helpers.assert_no_ping(vms[1].namespace, vms[2].ip)
+        vms[0].block_until_no_ping(vms[1].ip)
+        vms[0].block_until_no_ping(vms[2].ip)
+        vms[1].block_until_no_ping(vms[2].ip)
 
         # 4. check if a security group update takes effect
         self.assert_no_connection(
@@ -305,9 +312,9 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         self.verify_no_connectivity_between_vms(
             vms[1], vms[0], net_helpers.NetcatTester.TCP, 22)
 
-        net_helpers.assert_no_ping(vms[0].namespace, vms[1].ip)
-        net_helpers.assert_no_ping(vms[0].namespace, vms[2].ip)
-        net_helpers.assert_no_ping(vms[1].namespace, vms[2].ip)
+        vms[0].block_until_no_ping(vms[1].ip)
+        vms[0].block_until_no_ping(vms[2].ip)
+        vms[1].block_until_no_ping(vms[2].ip)
 
         # Add SSH and ICMP allowed in the same security group
         self.safe_client.create_security_group_rule(
@@ -329,8 +336,8 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             ethertype=constants.IPv4,
             protocol=constants.PROTO_NAME_ICMP)
 
-        net_helpers.assert_ping(vms[1].namespace, vms[0].ip)
-        net_helpers.assert_no_ping(vms[2].namespace, vms[0].ip)
+        vms[1].block_until_ping(vms[0].ip)
+        vms[2].block_until_no_ping(vms[0].ip)
 
         # Update vm0 to use two security groups
         # Add security group rules(ICMP) in another security group
@@ -345,10 +352,10 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             ethertype=constants.IPv4,
             protocol=constants.PROTO_NAME_ICMP)
 
-        net_helpers.assert_ping(vms[0].namespace, vms[2].ip)
-        net_helpers.assert_ping(vms[1].namespace, vms[2].ip)
-        net_helpers.assert_no_ping(vms[2].namespace, vms[0].ip)
-        net_helpers.assert_no_ping(vms[2].namespace, vms[1].ip)
+        vms[0].block_until_ping(vms[2].ip)
+        vms[1].block_until_ping(vms[2].ip)
+        vms[2].block_until_no_ping(vms[0].ip)
+        vms[2].block_until_no_ping(vms[1].ip)
 
         self.verify_connectivity_between_vms(
             vms[1], vms[0], net_helpers.NetcatTester.TCP, 22)
@@ -361,10 +368,10 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                 ports[0]['id'],
                 body={'port': {'security_groups': [sgs[1]['id']]}})
 
-        net_helpers.assert_ping(vms[0].namespace, vms[2].ip)
-        net_helpers.assert_ping(vms[1].namespace, vms[2].ip)
-        net_helpers.assert_no_ping(vms[2].namespace, vms[0].ip)
-        net_helpers.assert_no_ping(vms[2].namespace, vms[1].ip)
+        vms[0].block_until_ping(vms[2].ip)
+        vms[1].block_until_ping(vms[2].ip)
+        vms[2].block_until_no_ping(vms[0].ip)
+        vms[2].block_until_no_ping(vms[1].ip)
 
         self.verify_no_connectivity_between_vms(
             vms[1], vms[0], net_helpers.NetcatTester.TCP, 22)
